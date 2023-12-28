@@ -379,218 +379,239 @@ When('the user enters {string} on Add file type modal', function (name) {
     .type(name, { delay: 200, force: true });
 });
 
-When('the user enters {string}, {string}, {string} on file type page', function (readRole, updateRole, retention) {
-  cy.viewport(1920, 1080);
-  cy.wait(4000); //Wait for the client roles in the modal to show up
+When(
+  'the user enters {string}, {string}, {string}, {string} on file type page',
+  function (classification, readRole, updateRole, retention) {
+    cy.viewport(1920, 1080);
+    cy.wait(4000); //Wait for the client roles in the modal to show up
 
-  //Select roles
-  if (readRole == 'public') {
-    fileServiceObj
-      .fileTypePagePublicCheckbox()
-      .shadow()
-      .find('.goa-checkbox-container')
-      .invoke('attr', 'class')
-      .then((classAttr) => {
-        if (classAttr?.includes('--selected')) {
-          cy.log('Make public checkbox is already checked off. ');
-        } else {
-          fileServiceObj.fileTypePagePublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
-          cy.wait(1000);
-        }
-      });
-
-    //Unselect all checkboxes
-    fileServiceObj
-      .fileTypePageCheckboxesTables()
-      .shadow()
-      .find('goa-checkbox')
-      .shadow()
-      .find('.goa-checkbox-container')
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].getAttribute('class')?.includes('--selected')) {
-            elements[i].click();
+    //Enter security classification
+    if (classification !== 'skip') {
+      fileServiceObj
+        .fileTypeClassificationDropdown()
+        .invoke('attr', 'value')
+        .then((classificationValue) => {
+          if (classificationValue !== classification.toLowerCase()) {
+            fileServiceObj.fileTypeClassificationDropdown().shadow().find('goa-input').click({ force: true });
+            fileServiceObj
+              .fileTypeClassificationDropdown()
+              .shadow()
+              .find('li')
+              .contains(classification)
+              .click({ force: true });
           }
-        }
-      });
+        });
+    }
 
-    //Select modify roles
-    if (updateRole.toLowerCase() != 'empty') {
-      const updateRoles = updateRole.split(',');
-      for (let i = 0; i < updateRoles.length; i++) {
-        if (updateRoles[i].includes(':')) {
-          const clientRoleStringArray = updateRoles[i].split(':');
-          let clientName = '';
-          for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
-            if (j !== clientRoleStringArray.length - 2) {
-              clientName = clientName + clientRoleStringArray[j].trim() + ':';
-            } else {
-              clientName = clientName + clientRoleStringArray[j];
+    //Select roles
+    if (readRole == 'public') {
+      fileServiceObj
+        .fileTypePagePublicCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (classAttr?.includes('--selected')) {
+            cy.log('Make public checkbox is already checked off. ');
+          } else {
+            fileServiceObj.fileTypePagePublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
+            cy.wait(1000);
+          }
+        });
+
+      //Unselect all checkboxes
+      fileServiceObj
+        .fileTypePageCheckboxesTables()
+        .shadow()
+        .find('goa-checkbox')
+        .shadow()
+        .find('.goa-checkbox-container')
+        .then((elements) => {
+          for (let i = 0; i < elements.length; i++) {
+            if (elements[i].getAttribute('class')?.includes('--selected')) {
+              elements[i].click();
             }
           }
-          const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
-          fileServiceObj
-            .fileTypePageClientRolesTable(clientName)
-            .shadow()
-            .find('.role-name')
-            .contains(roleName)
-            .next()
-            .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('.goa-checkbox-container')
-            .scrollIntoView()
-            .click({ force: true });
-        } else {
-          fileServiceObj
-            .fileTypePageRolesTable()
-            .shadow()
-            .find('.role-name')
-            .contains(updateRoles[i].trim())
-            .next()
-            .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('.goa-checkbox-container')
-            .scrollIntoView()
-            .click({ force: true }); // The checkbox clicking doesn't work properly (selects and unselects the checkbox).Need further investigation
+        });
+
+      //Select modify roles
+      if (updateRole.toLowerCase() != 'empty') {
+        const updateRoles = updateRole.split(',');
+        for (let i = 0; i < updateRoles.length; i++) {
+          if (updateRoles[i].includes(':')) {
+            const clientRoleStringArray = updateRoles[i].split(':');
+            let clientName = '';
+            for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+              if (j !== clientRoleStringArray.length - 2) {
+                clientName = clientName + clientRoleStringArray[j].trim() + ':';
+              } else {
+                clientName = clientName + clientRoleStringArray[j];
+              }
+            }
+            const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+            fileServiceObj
+              .fileTypePageClientRolesTable(clientName)
+              .shadow()
+              .find('.role-name')
+              .contains(roleName)
+              .next()
+              .next()
+              .find('goa-checkbox')
+              .shadow()
+              .find('.goa-checkbox-container')
+              .scrollIntoView()
+              .click({ force: true });
+          } else {
+            fileServiceObj
+              .fileTypePageRolesTable()
+              .shadow()
+              .find('.role-name')
+              .contains(updateRoles[i].trim())
+              .next()
+              .next()
+              .find('goa-checkbox')
+              .shadow()
+              .find('.goa-checkbox-container')
+              .scrollIntoView()
+              .click({ force: true }); // The checkbox clicking doesn't work properly (selects and unselects the checkbox).Need further investigation
+          }
         }
       }
-    }
-  } else {
-    //Unselect Make public checkbox if not already unchecked
-    fileServiceObj
-      .fileTypePagePublicCheckbox()
-      .shadow()
-      .find('.goa-checkbox-container')
-      .invoke('attr', 'class')
-      .then((classAttr) => {
-        if (classAttr?.includes('-selected')) {
+    } else {
+      //Unselect Make public checkbox if not already unchecked
+      fileServiceObj
+        .fileTypePagePublicCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (classAttr?.includes('-selected')) {
+            fileServiceObj
+              .fileTypePagePublicCheckbox()
+              .shadow()
+              .find('.goa-checkbox-container')
+              .click({ force: true, multiple: true });
+            cy.wait(1000);
+            cy.log('Make public checkbox has been unchecked. ');
+            cy.wait(1000); // Wait for read roles to be enabled
+          } else {
+            cy.log('Make public checkbox is already unchecked. ');
+          }
+        });
+
+      //Unselect all checkboxes
+      fileServiceObj
+        .fileTypePageCheckboxesTables()
+        .shadow()
+        .find('goa-checkbox')
+        .shadow()
+        .find('.goa-checkbox-container')
+        .then((elements) => {
+          for (let i = 0; i < elements.length; i++) {
+            if (elements[i].getAttribute('class')?.includes('--selected')) {
+              elements[i].click();
+              cy.wait(1000);
+            }
+          }
+        });
+
+      //Select read roles
+      if (readRole.toLowerCase() != 'empty') {
+        const readRoles = readRole.split(',');
+        for (let i = 0; i < readRoles.length; i++) {
           fileServiceObj
-            .fileTypePagePublicCheckbox()
+            .fileTypePageCheckboxesTables()
+            .shadow()
+            .find('goa-checkbox[data-testid="FileType-read-role-checkbox-' + readRoles[i].trim() + '"]')
             .shadow()
             .find('.goa-checkbox-container')
             .click({ force: true, multiple: true });
-          cy.wait(1000);
-          cy.log('Make public checkbox has been unchecked. ');
-          cy.wait(1000); // Wait for read roles to be enabled
-        } else {
-          cy.log('Make public checkbox is already unchecked. ');
         }
-      });
+      }
 
-    //Unselect all checkboxes
-    fileServiceObj
-      .fileTypePageCheckboxesTables()
-      .shadow()
-      .find('goa-checkbox')
-      .shadow()
-      .find('.goa-checkbox-container')
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].getAttribute('class')?.includes('--selected')) {
-            elements[i].click();
+      //Select modify roles
+      if (updateRole.toLowerCase() != 'empty') {
+        const updateRoles = updateRole.split(',');
+        for (let i = 0; i < updateRoles.length; i++) {
+          if (updateRoles[i].includes(':')) {
+            const clientRoleStringArray = updateRoles[i].split(':');
+            let clientName = '';
+            for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+              if (j !== clientRoleStringArray.length - 2) {
+                clientName = clientName + clientRoleStringArray[j].trim() + ':';
+              } else {
+                clientName = clientName + clientRoleStringArray[j];
+              }
+            }
+            const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+            fileServiceObj
+              .fileTypePageClientRolesTable(clientName)
+              .shadow()
+              .find('.role-name')
+              .contains(roleName)
+              .next()
+              .next()
+              .find('goa-checkbox')
+              .shadow()
+              .find('.goa-checkbox-container')
+              .scrollIntoView()
+              .click({ force: true });
+          } else {
+            fileServiceObj
+              .fileTypePageRolesTable()
+              .shadow()
+              .find('.role-name')
+              .contains(updateRoles[i].trim())
+              .next()
+              .next()
+              .find('goa-checkbox')
+              .shadow()
+              .find('.goa-checkbox-container')
+              .scrollIntoView()
+              .click({ force: true });
+          }
+        }
+      }
+    }
+    cy.wait(2000); //Wait the checkbox to be selected before proceeding
+
+    //Enter retention
+    if (retention == 'N/A') {
+      fileServiceObj
+        .fileRetentionCheckBox()
+        .invoke('prop', 'checked')
+        .then((checkedAttr) => {
+          if (checkedAttr == 'true') {
+            fileServiceObj
+              .fileRetentionCheckBox()
+              .shadow()
+              .find('.goa-checkbox-container')
+              .clear()
+              .click({ force: true });
+          } else {
+            cy.log('Active retention policy checkbox is already unselected. ');
+          }
+        });
+    } else {
+      fileServiceObj
+        .fileRetentionCheckBox()
+        .invoke('prop', 'checked')
+        .then((checkedAttr) => {
+          cy.log(checkedAttr!);
+          if (checkedAttr != 'true') {
+            fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
             cy.wait(1000);
           }
-        }
-      });
-
-    //Select read roles
-    if (readRole.toLowerCase() != 'empty') {
-      const readRoles = readRole.split(',');
-      for (let i = 0; i < readRoles.length; i++) {
-        fileServiceObj
-          .fileTypePageCheckboxesTables()
-          .shadow()
-          .find('goa-checkbox[data-testid="FileType-read-role-checkbox-' + readRoles[i].trim() + '"]')
-          .shadow()
-          .find('.goa-checkbox-container')
-          .click({ force: true, multiple: true });
-      }
-    }
-
-    //Select modify roles
-    if (updateRole.toLowerCase() != 'empty') {
-      const updateRoles = updateRole.split(',');
-      for (let i = 0; i < updateRoles.length; i++) {
-        if (updateRoles[i].includes(':')) {
-          const clientRoleStringArray = updateRoles[i].split(':');
-          let clientName = '';
-          for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
-            if (j !== clientRoleStringArray.length - 2) {
-              clientName = clientName + clientRoleStringArray[j].trim() + ':';
-            } else {
-              clientName = clientName + clientRoleStringArray[j];
-            }
-          }
-          const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
           fileServiceObj
-            .fileTypePageClientRolesTable(clientName)
+            .fileRetentionPeriodInput()
             .shadow()
-            .find('.role-name')
-            .contains(roleName)
-            .next()
-            .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('.goa-checkbox-container')
-            .scrollIntoView()
-            .click({ force: true });
-        } else {
-          fileServiceObj
-            .fileTypePageRolesTable()
-            .shadow()
-            .find('.role-name')
-            .contains(updateRoles[i].trim())
-            .next()
-            .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('.goa-checkbox-container')
-            .scrollIntoView()
-            .click({ force: true });
-        }
-      }
+            .find('input')
+            .clear({ force: true })
+            .type(retention, { delay: 200, force: true });
+        });
     }
   }
-  cy.wait(2000); //Wait the checkbox to be selected before proceeding
-
-  //Enter retention
-  if (retention == 'N/A') {
-    fileServiceObj
-      .fileRetentionCheckBox()
-      .invoke('prop', 'checked')
-      .then((checkedAttr) => {
-        if (checkedAttr == 'true') {
-          fileServiceObj
-            .fileRetentionCheckBox()
-            .shadow()
-            .find('.goa-checkbox-container')
-            .clear()
-            .click({ force: true });
-        } else {
-          cy.log('Active retention policy checkbox is already unselected. ');
-        }
-      });
-  } else {
-    fileServiceObj
-      .fileRetentionCheckBox()
-      .invoke('prop', 'checked')
-      .then((checkedAttr) => {
-        cy.log(checkedAttr!);
-        if (checkedAttr != 'true') {
-          fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
-          cy.wait(1000);
-        }
-        fileServiceObj
-          .fileRetentionPeriodInput()
-          .shadow()
-          .find('input')
-          .clear({ force: true })
-          .type(retention, { delay: 200, force: true });
-      });
-  }
-});
+);
 
 When('the user clicks Save button on file type page', function () {
   fileServiceObj.fileTypePageSaveButton().shadow().find('button').click({ force: true });
@@ -612,36 +633,42 @@ When('the user clicks Cancel button on file type modal', function () {
   cy.wait(1000); // Wait the file type list to refresh
 });
 
-Then('the user {string} the file type of {string}, {string}', function (action, name, retention) {
-  findFileType(name, retention).then((rowNumber) => {
-    switch (action) {
-      case 'views':
-        expect(rowNumber).to.be.greaterThan(0, 'File type of ' + name + ' has row #' + rowNumber);
-        break;
-      case 'should not view':
-        expect(rowNumber).to.equal(0, 'File type of ' + name + ' has row #' + rowNumber);
-        break;
-      default:
-        expect(action).to.be.oneOf(['views', 'should not view']);
-    }
-  });
-});
+Then(
+  'the user {string} the file type of {string}, {string}, {string}',
+  function (action, name, classification, retention) {
+    findFileType(name, classification, retention).then((rowNumber) => {
+      switch (action) {
+        case 'views':
+          expect(rowNumber).to.be.greaterThan(0, 'File type of ' + name + ' has row #' + rowNumber);
+          break;
+        case 'should not view':
+          expect(rowNumber).to.equal(0, 'File type of ' + name + ' has row #' + rowNumber);
+          break;
+        default:
+          expect(action).to.be.oneOf(['views', 'should not view']);
+      }
+    });
+  }
+);
 
-When('the user clicks {string} button for the file type of {string}, {string}', function (button, name, retention) {
-  findFileType(name, retention).then((rowNumber) => {
-    switch (button) {
-      case 'Edit':
-        fileServiceObj.fileTypeEditButton(rowNumber).shadow().find('button').click({ force: true });
-        break;
-      case 'Delete':
-        cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
-        fileServiceObj.fileTypeDeleteButton(rowNumber).shadow().find('button').click({ force: true });
-        break;
-      default:
-        expect(button).to.be.oneOf(['Edit', 'Delete']);
-    }
-  });
-});
+When(
+  'the user clicks {string} button for the file type of {string}, {string}, {string}',
+  function (button, name, classification, retention) {
+    findFileType(name, classification, retention).then((rowNumber) => {
+      switch (button) {
+        case 'Edit':
+          fileServiceObj.fileTypeEditButton(rowNumber).shadow().find('button').click({ force: true });
+          break;
+        case 'Delete':
+          cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
+          fileServiceObj.fileTypeDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+          break;
+        default:
+          expect(button).to.be.oneOf(['Edit', 'Delete']);
+      }
+    });
+  }
+);
 
 Then('the user views Delete file type modal for {string}', function (fileTypeName) {
   cy.wait(1000); // Wait for modal
@@ -657,13 +684,16 @@ When('the user clicks Delete button on file type modal', function () {
 });
 
 //Find file type with name and retention number
-//Input: file name and retention number
+//Input: file name, file security classification and retention number
 //Return: row number if the file type is found; zero if the file type isn't found
-function findFileType(name, retention) {
+function findFileType(name, classification, retention) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
-      const targetedNumber = 2;
+      let targetedNumber = 2;
+      if (classification != 'empty') {
+        targetedNumber = targetedNumber + 1;
+      }
       fileServiceObj
         .fileTypeTableBody()
         .find('tr')
@@ -673,6 +703,11 @@ function findFileType(name, retention) {
             // cy.log(rowElement.cells[0].innerHTML); // Print out the name cell innerHTML for debug purpose
             if (rowElement.cells[0].innerHTML.includes(name)) {
               counter = counter + 1;
+            }
+            if (classification != 'empty') {
+              if (rowElement.cells[1].innerHTML.includes(classification.toLowerCase())) {
+                counter = counter + 1;
+              }
             }
             if (rowElement.cells[2].innerHTML.includes(retention)) {
               counter = counter + 1;

@@ -112,7 +112,6 @@ Feature: File service
     When the user goes to the web link of the API docs
     Then the user views "File service" API documentation
 
-  # Selecting checkboxs in file type modal doesn't work properly and role selection is removed for now until further investigation
   @TEST_CS-315 @REQ_CS-196 @FileTypes @regression
   Scenario: As a tenant admin, I can add, update and remove file types
     Given a service owner user is on Files overview page
@@ -123,18 +122,18 @@ Feature: File service
     When the user enters "autotest-addEditDelete" on Add file type modal
     And the user clicks Save button on Add file type modal
     Then the user views file type page of "autotest-addEditDelete"
-    When the user enters "public", "auto-test-role1", "30" on file type page
+    When the user enters "Protected B", "public", "auto-test-role1", "30" on file type page
     And the user clicks Save button on file type page
-    Then the user "views" the file type of "autotest-addEditDelete", "30"
-    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "30"
+    Then the user "views" the file type of "autotest-addEditDelete", "Protected B", "30"
+    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "Protected B", "30"
     Then the user views file type page of "autotest-addEditDelete"
-    When the user enters "auto-test-role1", "auto-test-role2", "10" on file type page
+    When the user enters "Protected C", "auto-test-role1", "auto-test-role2", "10" on file type page
     And the user clicks Save button on file type page
-    Then the user "views" the file type of "autotest-addEditDelete", "10"
-    When the user clicks "Delete" button for the file type of "autotest-addEditDelete", "10"
+    Then the user "views" the file type of "autotest-addEditDelete", "Protected C", "10"
+    When the user clicks "Delete" button for the file type of "autotest-addEditDelete", "Protected C", "10"
     Then the user views Delete file type modal for "autotest-addEditDelete"
     When the user clicks Delete button on file type modal
-    Then the user "should not view" the file type of "autotest-addEditDelete", "10"
+    Then the user "should not view" the file type of "autotest-addEditDelete", "Protected C", "10"
 
   # TODO: This is broken after removal of the file service specific 'feedback zone'; re-enable after feedback zone implementation.
   @FileTypes @regression @ignore
@@ -166,10 +165,10 @@ Feature: File service
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
     Then the user views file types page
-    When the user clicks "Delete" button for the file type of "autotest-type5", "N/A"
+    When the user clicks "Delete" button for the file type of "autotest-type5", "empty", "N/A"
     Then the user views file type current in use modal for "autotest-type5"
     When the user clicks Okay button on file type current in use modal
-    Then the user "views" the file type of "autotest-type5", "N/A"
+    Then the user "views" the file type of "autotest-type5", "empty", "N/A"
 
   @TEST_CS-1411 @REQ_CS-1358 @FileTypes @regression
   Scenario: As a tenant admin, can see core file types

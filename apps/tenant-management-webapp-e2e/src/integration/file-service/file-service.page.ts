@@ -188,5 +188,9 @@ class FileServicePage {
       `//tbody//td[text()="${fileName}"]/following-sibling::td//goa-icon-button[@data-testid="download-icon"]`
     );
   }
+
+  fileTypeClassificationDropdown() {
+    return cy.xpath('//goa-dropdown[@name="securityClassifications"]');
+  }
 }
 export default FileServicePage;
