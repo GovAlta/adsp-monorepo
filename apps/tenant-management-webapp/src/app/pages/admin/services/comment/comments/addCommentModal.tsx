@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { GoAButton, GoAButtonGroup, GoAFormItem, GoAIcon, GoAModal, GoATextArea } from '@abgov/react-components-new';
 
 import { Comment, TopicItem, defaultComment } from '@store/comment/model';
-import { wordMaxLengthCheck, isNotEmptyCheck, Validator } from '@lib/validation/checkInput';
+import { wordMaxLengthCheck, isNotEmptyCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 
 import { DescriptionItem, HelpText, ErrorMsg } from '../styled-components';
