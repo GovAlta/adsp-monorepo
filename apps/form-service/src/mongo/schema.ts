@@ -36,6 +36,13 @@ export const formSchema = new Schema(
       name: { type: String, required: true },
     },
     locked: Date,
+    dispositionStates: [
+      {
+        id: { type: String, required: true },
+        name: { type: String, required: true },
+        description: { type: String, required: false },
+      },
+    ],
     submitted: Date,
     lastAccessed: { type: Date, required: true },
     status: {

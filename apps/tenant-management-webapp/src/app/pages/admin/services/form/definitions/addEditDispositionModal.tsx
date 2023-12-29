@@ -2,8 +2,7 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { DispositionFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
-import { PageIndicator } from '@components/Indicator';
+import { DispositionFormItem, DescriptionItem } from '../styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { GoATextArea, GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
@@ -26,7 +25,6 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
   existingDispositions,
 }) => {
   const [template, setTemplate] = useState<Disposition>(initialValue);
-  const [spinner, setSpinner] = useState<boolean>(false);
 
   const templateIds = (existingDispositions || []).map((disposition) => disposition.name);
   const indicator = useSelector((state: RootState) => {

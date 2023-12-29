@@ -289,9 +289,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   };
 
   const updateDispositionFunction = (dispositions) => {
-    definition.dispositionStates = dispositions;
+    const tempDefinition = { ...definition };
+    tempDefinition.dispositionStates = dispositions;
 
-    setDefinition(JSON.parse(JSON.stringify(definition)));
+    setDefinition(JSON.parse(JSON.stringify(tempDefinition)));
   };
 
   const openDeleteModalFunction = (disposition) => {
@@ -623,13 +624,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               {`${
                 definition?.dispositionStates &&
                 JSON.stringify(definition.dispositionStates[selectedDeleteDispositionIndex]?.name)
-              }`}{' '}
-              name
+              }`}
             </div>
           </div>
         }
         onDelete={() => {
-          setDefinition(definition);
+          const tempDefinition = { ...definition };
+          delete tempDefinition.dispositionStates[selectedDeleteDispositionIndex];
+          tempDefinition.dispositionStates = tempDefinition.dispositionStates.filter((s) => s !== null);
+          setDefinition(tempDefinition);
           setSelectedDeleteDispositionIndex(null);
         }}
       />
@@ -654,9 +657,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         initialValue={definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex]}
         onSave={(currentDispositions) => {
           const dispositionStates = definition.dispositionStates || [];
+          const tempDefinition = { ...definition };
           dispositionStates.push(currentDispositions);
-          definition.dispositionStates = dispositionStates;
-          setDefinition(definition);
+          tempDefinition.dispositionStates = dispositionStates;
+          setDefinition(tempDefinition);
         }}
         onClose={() => {
           setNewDisposition(false);
