@@ -19,7 +19,7 @@ export interface Form {
   createdBy: { id: string; name: string };
   locked: Date;
   submitted: Date;
-  dispositionStates: Array<Disposition>;
+  dispositionStates?: Array<Disposition>;
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;

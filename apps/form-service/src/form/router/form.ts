@@ -147,11 +147,7 @@ export function createForm(
         throw new NotFoundError('form definition', definitionId);
       }
 
-      console.log(JSON.stringify(definition, getCircularReplacer()) + '<definition');
-
       const form = await definition.createForm(user, repository, notificationService, applicantInfo);
-
-      console.log(JSON.stringify(form, getCircularReplacer()) + '<form');
 
       end();
       res.send(mapForm(apiId, form));
@@ -162,19 +158,6 @@ export function createForm(
     }
   };
 }
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
 
 const FORM = 'form';
 export function getForm(repository: FormRepository): RequestHandler {
