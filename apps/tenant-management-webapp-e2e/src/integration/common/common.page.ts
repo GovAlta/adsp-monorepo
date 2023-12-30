@@ -51,8 +51,16 @@ class Common {
     return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::*//a[contains(text(), "See the code")]');
   }
 
+  seeTheCodeIcon() {
+    return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::*//*[@data-testid="icon-open"]');
+  }
+
   supportLink(link) {
     return cy.xpath(`//h3[text()="Support"]/following-sibling::*/*[contains(text(), "${link}")]`);
+  }
+
+  getSupportIcon() {
+    return cy.xpath('//h3[text()="Support"]/following-sibling::*/goa-icon[@type="mail"]');
   }
 
   serviceOverviewContent(serviceOverviewTitle) {
