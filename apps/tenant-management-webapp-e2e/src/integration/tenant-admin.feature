@@ -164,3 +164,11 @@ Feature: Tenant admin
     And the user selects "Service roles" tab for "Access"
     Then the user views "autotest-role2", "role 2 for automated test", "No" under "urn:ads:autotest:autotest-service"
     And the user views "file-service-admin", "Administrator role for the file service.", "Yes" under "urn:ads:platform:file-service"
+
+  @TEST_CS-2272 @REQ_CS-1601 @regression
+  Scenario: As a tenant admin, I can see support and helpful information about Access service
+    Given a tenant admin user is on tenant admin page
+    When the user selects the "Access" menu item
+    Then the user views the "Access service" overview content "Access allows you to"
+    And the user views the link of See the code for "access-service"
+    And the user views the link of "Get support" under Support
