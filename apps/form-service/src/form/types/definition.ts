@@ -8,4 +8,11 @@ export interface FormDefinition {
   clerkRoles: string[];
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
+  dispositionStates?: Array<Disposition>;
+}
+
+export interface Disposition {
+  id: string;
+  name: string;
+  description: string;
 }

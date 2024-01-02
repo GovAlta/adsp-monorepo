@@ -218,6 +218,7 @@ Then('the user views the link of See the code for {string}', function (serviceNa
     .then((href) => {
       expect(href).to.contain(serviceName);
     });
+  commonObj.seeTheCodeIcon().should('be.visible');
 });
 
 Then('the user views the link of {string} under Support', function (asideLink) {
@@ -227,6 +228,7 @@ Then('the user views the link of {string} under Support', function (asideLink) {
     .then((href) => {
       expect(href).to.contain('mailto:adsp@gov.ab.ca');
     });
+  commonObj.getSupportIcon().should('be.visible');
 });
 
 Then('the user views the {string} overview content {string}', function (serviceTitle, content) {

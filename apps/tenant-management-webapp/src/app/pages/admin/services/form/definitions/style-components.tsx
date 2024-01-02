@@ -12,3 +12,16 @@ export const ReviewItem = styled.div`
   margin: 5px;
   padding: 10px;
 `;
+
+export const RowFlex = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+`;
+export const EmptyBoxSpace = styled.div`
+  height: 1.5rem;
+  width: 1.5rem;
+`;
+export const Flex = styled.div`
+  display: flex;
+`;

@@ -84,7 +84,7 @@ export const initializeQueue = createAsyncThunk(
 
       dispatch(loadQueueMetrics({ namespace, name }));
       dispatch(loadQueueTasks({ namespace, name }));
-      dispatch(loadQueuePeople({ namespace, name }));
+      dispatch(loadQueuePeople(definition));
       dispatch(connectStream({ namespace, name }));
 
       return definition;
@@ -215,7 +215,7 @@ export const loadQueueTasks = createAsyncThunk(
 
 export const loadQueuePeople = createAsyncThunk(
   'task/load-queue-people',
-  async ({ namespace, name }: { namespace: string; name: string }, { getState }) => {
+  async ({ namespace, name, assignerRoles, workerRoles }: QueueDefinition, { getState }) => {
     const state = getState() as AppState;
     const { user } = state.user;
     const { directory } = state.config;
@@ -254,8 +254,8 @@ export const loadQueuePeople = createAsyncThunk(
         id: user.id,
         name: user.name,
         email: user.email,
-        isAssigner: !!assigners.find((a) => a.id === user.id),
-        isWorker: !!workers.find((w) => w.id === user.id),
+        isAssigner: !!assignerRoles.find((r) => user.roles.includes(r)),
+        isWorker: !!workerRoles.find((r) => user.roles.includes(r)),
       },
     };
   }

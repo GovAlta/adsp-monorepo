@@ -14,9 +14,21 @@ export const configurationSchema = {
         clerkRoles: { type: 'array', items: { type: 'string' } },
         dataSchema: { type: 'object', $ref: 'http://json-schema.org/draft-07/schema#' },
         uiSchema: { type: 'object' },
+        dispositionStates: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              description: { type: 'string' },
+            },
+            required: ['id', 'name'],
+          },
+        },
+        required: ['id', 'name', 'formDraftUrlTemplate', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
       },
-      required: ['id', 'name', 'formDraftUrlTemplate', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
     },
+    additionalProperties: false,
   },
-  additionalProperties: false,
 };

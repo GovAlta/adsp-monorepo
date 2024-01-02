@@ -1,16 +1,15 @@
 import React from 'react';
 import { useState } from 'react';
 import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
-import { materialRenderers, materialCells } from '@jsonforms/material-renderers';
 import { JsonForms } from '@jsonforms/react';
 import { Grid, GridItem } from '@core-services/app-common';
-import { categorizationRendererTester } from './formStepperTester';
-import FormStepperControl from './FormStepperControl';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 import { ControlElement, Categorization, UISchemaElement, Layout, Category } from '@jsonforms/core';
 
 import { ControlProps } from '@jsonforms/core';
 
-import { ReviewItem } from './style-components';
+import { ReviewItem } from './styled-components';
+import { GoABaseRenderers, GoACells } from '../../../index';
 
 export interface FunObject {
   elements: Array<string>;
@@ -36,14 +35,10 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = useState<number>(-1);
   const [stepData, setStepData] = useState(data as Record<string, Record<string, string>>);
-
-  const renderers = [
-    ...materialRenderers,
-    {
-      tester: categorizationRendererTester,
-      renderer: FormStepperControl,
-    },
-  ];
+  if (uiSchema.elements?.length < 1) {
+    // eslint-disable-next-line
+    return <></>;
+  }
 
   function setPage(page: number) {
     if (page < 1 || page > uiSchema.elements?.length + 1) return;
@@ -80,11 +75,11 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
                 uischema={step}
                 data={stepData[index]}
                 validationMode={'NoValidation'}
-                renderers={renderers}
-                cells={materialCells}
-                onChange={(xxx) => {
+                renderers={GoABaseRenderers}
+                cells={GoACells}
+                onChange={(value) => {
                   const tempData = stepData;
-                  tempData[index] = xxx.data;
+                  tempData[index] = value.data;
                   setStepData(tempData);
                 }}
               />
@@ -127,12 +122,18 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
         </div>
       </GoAPages>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
-          Previous
-        </GoAButton>
-        <GoAButton type="primary" onClick={() => setPage(step + 1)}>
-          Next
-        </GoAButton>
+        {step !== 1 ? (
+          <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
+            Previous
+          </GoAButton>
+        ) : (
+          <div></div>
+        )}
+        {step !== null && step < uiSchema.elements?.length + 1 && (
+          <GoAButton type="primary" onClick={() => setPage(step + 1)}>
+            Next
+          </GoAButton>
+        )}
       </div>
     </div>
   );
@@ -170,3 +171,9 @@ export const flattenObject = (obj: Record<string, string>): Record<string, strin
 
   return flattened;
 };
+
+const FormStepperWrapper = (props: ControlProps) => {
+  return <FormStepper {...props} />;
+};
+
+export const FormStepperControl = withJsonFormsControlProps(FormStepperWrapper);

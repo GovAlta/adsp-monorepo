@@ -4,7 +4,7 @@ import * as hasha from 'hasha';
 import { FormDefinitionEntity } from '../model';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { Form, FormStatus } from '../types';
+import { Disposition, Form, FormStatus } from '../types';
 import { NotificationService, Subscriber } from '../../notification';
 import { FileService } from '../../file';
 
@@ -22,6 +22,7 @@ export class FormEntity implements Form {
   createdBy: { id: string; name: string };
   locked: Date;
   submitted: Date;
+  dispositionStates: Disposition[];
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;
@@ -47,6 +48,7 @@ export class FormEntity implements Form {
       createdBy: { id: user.id, name: user.name },
       locked: null,
       submitted: null,
+      dispositionStates: definition.dispositionStates,
       lastAccessed: new Date(),
       status: FormStatus.Draft,
       data: {},
@@ -70,6 +72,7 @@ export class FormEntity implements Form {
     this.created = form.created;
     this.createdBy = form.createdBy;
     this.locked = form.locked;
+    this.dispositionStates = form?.dispositionStates || [];
     this.submitted = form.submitted;
     this.lastAccessed = form.lastAccessed;
     this.status = form.status;

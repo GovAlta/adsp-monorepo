@@ -9,10 +9,10 @@ import {
   loginUser,
   logoutUser,
   tenantSelector,
-  userInitializedSelector,
   userSelector,
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
+import { AuthorizeUser } from './AuthorizeUser';
 
 const TaskQueue = lazy(() => import('./TaskQueue'));
 const TaskQueues = lazy(() => import('./TaskQueues'));
@@ -24,8 +24,7 @@ export const TaskTenant = () => {
 
   const tenant = useSelector(tenantSelector);
   const configInitialized = useSelector(configInitializedSelector);
-  const userInitialized = useSelector(userInitializedSelector);
-  const user = useSelector(userSelector);
+  const { initialized: userInitialized, user } = useSelector(userSelector);
 
   useEffect(() => {
     if (configInitialized) {
@@ -54,7 +53,7 @@ export const TaskTenant = () => {
       </GoAAppHeader>
       <FeedbackNotification />
       <main>
-        {user && (
+        <AuthorizeUser>
           <section>
             <Switch>
               <Route path={`/:tenantName/:namespace/:name`}>
@@ -70,12 +69,7 @@ export const TaskTenant = () => {
               <Redirect to={`/${tenantName}`} />
             </Switch>
           </section>
-        )}
-        {userInitialized && !user && (
-          <section>
-            <div>Sign in to access task queues.</div>
-          </section>
-        )}
+        </AuthorizeUser>
       </main>
     </React.Fragment>
   );

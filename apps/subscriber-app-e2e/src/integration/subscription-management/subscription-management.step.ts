@@ -83,7 +83,11 @@ And('the user clicks Save button in contact information', function () {
 });
 
 And('the user views an error message for the invalid phone number in contact information', function () {
-  subscriptionManagementObj.phoneNumberErrorMsg().should('contain', 'Please enter a valid 10 digit phone number');
+  subscriptionManagementObj
+    .phoneNumberFormItemWithError()
+    .shadow()
+    .find('.error-msg')
+    .should('contain', 'Please enter a valid 10 digit phone number');
 });
 
 And('the user removes phone number value in contact information', function () {
@@ -100,7 +104,9 @@ When('the user selects {string} as the preferred channel in contact information'
 
 Then('the user views an error messsage for missing phone number', function () {
   subscriptionManagementObj
-    .phoneNumberErrorMsg()
+    .phoneNumberFormItemWithError()
+    .shadow()
+    .find('.error-msg')
     .should('contain', 'SMS is set as the preferred channel. A valid SMS number is required.');
 });
 
@@ -109,7 +115,11 @@ When('the user removes email value in contact information', function () {
 });
 
 Then('the user views an error messsage for missing email', function () {
-  subscriptionManagementObj.emailErrorMsg().should('contain', 'You must enter a valid email.');
+  subscriptionManagementObj
+    .emailFormItemWithError()
+    .shadow()
+    .find('.error-msg')
+    .should('contain', 'You must enter a valid email.');
 });
 
 When(
