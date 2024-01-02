@@ -16,8 +16,17 @@ export const EditorPadding = styled.div`
   .margin-view-overlays {
     margin-top: 5px !important;
   }
+`;
 
-  .
+export const RightAlign = styled.div`
+  margin-top: 8px;
+  margin-bottom: 24px;
+  text-align: end;
+`;
+export const DispositionFormItem = styled.div`
+  margin-bottom: 1.5rem;
+  margin-left: 3px;
+  margin-right: 3px;
 `;
 
 export const EntryDetail = styled.div`

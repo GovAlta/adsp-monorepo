@@ -29,6 +29,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     clerkRoles: entity.clerkRoles,
     formDraftUrlTemplate: entity.formDraftUrlTemplate,
     dataSchema: entity.dataSchema,
+    dispositionStates: entity.dispositionStates,
   };
 }
 
@@ -46,6 +47,7 @@ export function mapForm(
     definitionId: entity.definition.id,
     formDraftUrl: entity.formDraftUrl,
     anonymousApplicant: entity.anonymousApplicant,
+    dispositionStates: entity.dispositionStates,
     status: entity.status,
     created: entity.created,
     createdBy: entity.createdBy,

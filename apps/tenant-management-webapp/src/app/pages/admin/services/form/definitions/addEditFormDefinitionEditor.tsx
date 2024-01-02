@@ -24,6 +24,7 @@ import {
   FormEditor,
   ScrollPane,
   MonacoDivTabBody,
+  RightAlign,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -44,6 +45,10 @@ import { schema } from './categorization';
 import { PageIndicator } from '@components/Indicator';
 import { ErrorBoundary } from '@components/ErrorBoundary';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
+import DataTable from '@components/DataTable';
+import { DispositionItems } from './dispositionItems';
+import { DeleteModal } from '@components/DeleteModal';
+import { AddEditDispositionModal } from './addEditDispositionModal';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -54,6 +59,7 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.assessorRoles) !== JSON.stringify(tempNext?.assessorRoles) ||
     JSON.stringify(tempPrev?.clerkRoles) !== JSON.stringify(tempNext?.clerkRoles) ||
     JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
+    JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema)
   );
 };
@@ -73,7 +79,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
 
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
-  const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(defaultFormDefinition);
+  const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(
+    JSON.parse(JSON.stringify(defaultFormDefinition))
+  );
 
   const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify({}, null, 2));
@@ -81,6 +89,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
   const [data, setData] = useState<unknown>({});
+  const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
+  const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
+  const [newDisposition, setNewDisposition] = useState<boolean>(false);
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
@@ -143,7 +154,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         setTempDataSchema(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
         setDataSchemaBounced(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
       }
-      setInitialDefinition(formDefinitions[id]);
+      setInitialDefinition(JSON.parse(JSON.stringify(formDefinitions[id])));
       setDefinition(formDefinitions[id]);
     }
   }, [formDefinitions]);
@@ -271,6 +282,25 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   }, [definitions]);
 
+  const openModalFunction = (disposition) => {
+    const currentDispositions = definition.dispositionStates;
+    const dispIndex = currentDispositions.findIndex((disp) => disp.id === disposition.id);
+    setSelectedEditModalIndex(dispIndex);
+  };
+
+  const updateDispositionFunction = (dispositions) => {
+    const tempDefinition = { ...definition };
+    tempDefinition.dispositionStates = dispositions;
+
+    setDefinition(JSON.parse(JSON.stringify(tempDefinition)));
+  };
+
+  const openDeleteModalFunction = (disposition) => {
+    const currentDispositions = definition.dispositionStates;
+    const dispIndex = currentDispositions.findIndex((disp) => disp.id === disposition.id);
+    setSelectedDeleteDispositionIndex(dispIndex);
+  };
+
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
@@ -393,6 +423,43 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     )}
                   </ScrollPane>
                 </MonacoDivTabBody>
+              </Tab>
+              <Tab label="Disposition states" data-testid="disposition-states">
+                <div style={{ height: EditorHeight + 7 }}>
+                  <RightAlign>
+                    <GoAButton
+                      type="secondary"
+                      testId="Add state"
+                      onClick={() => {
+                        setNewDisposition(true);
+                      }}
+                    >
+                      Add state
+                    </GoAButton>
+                  </RightAlign>
+                  <div style={{ overflowY: 'auto', height: EditorHeight - 23 }}>
+                    <DataTable>
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Description</th>
+                          <th>Order</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {definition && (
+                          <DispositionItems
+                            openModalFunction={openModalFunction}
+                            updateDispositions={updateDispositionFunction}
+                            openDeleteModalFunction={openDeleteModalFunction}
+                            dispositions={definition.dispositionStates}
+                          />
+                        )}
+                      </tbody>
+                    </DataTable>
+                  </div>
+                </div>
               </Tab>
             </Tabs>
 
@@ -542,6 +609,61 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         }
         onCancel={() => {
           setSaveModal({ visible: false, closeEditor: false });
+        }}
+      />
+      <DeleteModal
+        title="Delete subscriber"
+        isOpen={selectedDeleteDispositionIndex !== null}
+        onCancel={() => {
+          setSelectedDeleteDispositionIndex(null);
+        }}
+        content={
+          <div>
+            <div>
+              Are you sure you wish to delete{' '}
+              {`${
+                definition?.dispositionStates &&
+                JSON.stringify(definition.dispositionStates[selectedDeleteDispositionIndex]?.name)
+              }`}
+            </div>
+          </div>
+        }
+        onDelete={() => {
+          const tempDefinition = { ...definition };
+          delete tempDefinition.dispositionStates[selectedDeleteDispositionIndex];
+          tempDefinition.dispositionStates = tempDefinition.dispositionStates.filter((s) => s !== null);
+          setDefinition(tempDefinition);
+          setSelectedDeleteDispositionIndex(null);
+        }}
+      />
+      <AddEditDispositionModal
+        open={selectedEditModalIndex !== null}
+        isEdit={true}
+        existingDispositions={definition?.dispositionStates}
+        initialValue={definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex]}
+        onSave={(currentDispositions) => {
+          definition.dispositionStates[selectedEditModalIndex] = currentDispositions;
+
+          setDefinition(definition);
+        }}
+        onClose={() => {
+          setSelectedEditModalIndex(null);
+        }}
+      />
+      <AddEditDispositionModal
+        open={newDisposition}
+        isEdit={false}
+        existingDispositions={definition?.dispositionStates}
+        initialValue={definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex]}
+        onSave={(currentDispositions) => {
+          const dispositionStates = definition.dispositionStates || [];
+          const tempDefinition = { ...definition };
+          dispositionStates.push(currentDispositions);
+          tempDefinition.dispositionStates = dispositionStates;
+          setDefinition(tempDefinition);
+        }}
+        onClose={() => {
+          setNewDisposition(false);
         }}
       />
     </FormEditor>

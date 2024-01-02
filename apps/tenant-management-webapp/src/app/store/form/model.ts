@@ -9,6 +9,13 @@ export interface FormDefinition {
   formDraftUrlTemplate: string;
   anonymousApply: boolean;
   uiSchema?: Record<string, unknown>;
+  dispositionStates: Array<Disposition>;
+}
+
+export interface Disposition {
+  id: string;
+  name: string;
+  description: string;
 }
 
 export const defaultFormDefinition: FormDefinition = {
@@ -22,6 +29,7 @@ export const defaultFormDefinition: FormDefinition = {
   assessorRoles: [],
   formDraftUrlTemplate: 'http://test.com',
   anonymousApply: false,
+  dispositionStates: [],
 };
 
 export interface FormState {
