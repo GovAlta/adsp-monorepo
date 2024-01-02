@@ -308,6 +308,11 @@ export const createTask =
     }
   };
 
+interface ClientRepresentation {
+  id: string;
+  clientId: string;
+}
+
 export const getRoleUsers =
   (logger: Logger, KEYCLOAK_ROOT_URL: string, rolesKey: 'assignerRoles' | 'workerRoles'): RequestHandler =>
   async (req, res, next) => {
@@ -325,14 +330,36 @@ export const getRoleUsers =
 
       const users: Record<string, UserInformation> = {};
       for (let i = 0; i < roles.length; i++) {
-        const role = roles[i];
-        let first = 0;
+        let role = roles[i];
         try {
-          do {
-            const { data: roleUsers = [] } = await axios.get<UserInformation[]>(
-              `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/roles/${role}/users?first=${first}&max=${max}`,
+          let client: string = null;
+
+          // ADSP convention is that client roles are flattened to qualified names with the client as prefix.
+          const roleElements = role.split(':');
+          if (roleElements.length > 1) {
+            role = roleElements[roleElements.length - 1];
+            roleElements.splice(roleElements.length - 1);
+            const clientId = roleElements.join(':');
+            const { data: clients } = await axios.get<ClientRepresentation[]>(
+              `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/clients`,
               {
                 headers: { Authorization: `Bearer ${user.token.bearer}` },
+                params: { clientId },
+              }
+            );
+
+            client = clients?.[0]?.id;
+          }
+
+          let first = 0;
+          do {
+            const { data: roleUsers = [] } = await axios.get<UserInformation[]>(
+              `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/${
+                client ? `clients/${client}/` : ''
+              }roles/${encodeURIComponent(role)}/users`,
+              {
+                headers: { Authorization: `Bearer ${user.token.bearer}` },
+                params: { first, max },
               }
             );
 

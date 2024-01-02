@@ -58,7 +58,7 @@ describe('queue', () => {
     namespace: 'test-service',
     name: 'test',
     context: {},
-    workerRoles: ['test-worker'],
+    workerRoles: ['test-worker', 'urn:ads:platform:test-service:tester'],
     assignerRoles: ['test-assigner'],
   });
 
@@ -518,12 +518,33 @@ describe('queue', () => {
           { id: 'user-2', username: 'user-2' },
         ],
       });
+
+      axiosMock.get.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'my-client',
+            clientId: 'urn:ads:platform:test-service',
+          },
+        ],
+      });
+      axiosMock.get.mockResolvedValueOnce({
+        data: [{ id: 'user-2', username: 'user-2' }],
+      });
       await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(axiosMock.get).toHaveBeenCalledTimes(3);
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        `${KEYCLOAK_ROOT_URL}/auth/admin/realms/test/clients`,
+        expect.any(Object)
+      );
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        `${KEYCLOAK_ROOT_URL}/auth/admin/realms/test/clients/my-client/roles/tester/users`,
+        expect.any(Object)
+      );
       expect(res.send).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledTimes(0);
     });
 
-    it('can call next with unauthorized users error', async () => {
+    it('can call next with unauthorized user error', async () => {
       const req = {
         user: { tenantId, id: 'user-1', roles: ['test-worker'], token: { bearer: 'test' } },
         tenant: null,
@@ -534,9 +555,6 @@ describe('queue', () => {
       };
       const next = jest.fn();
 
-      axiosMock.get.mockResolvedValueOnce({
-        data: [{ id: 'user-1', firstName: 'Testy', lastName: 'McTester', email: 'user-1@test.co' }],
-      });
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
@@ -554,8 +572,8 @@ describe('queue', () => {
 
       const error = new Error('something terribly wrong.');
       error['response'] = { status: 403 };
-      axiosMock.get.mockRejectedValueOnce(error);
-      axiosMock.isAxiosError.mockReturnValueOnce(true);
+      axiosMock.get.mockRejectedValue(error);
+      axiosMock.isAxiosError.mockReturnValue(true);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
