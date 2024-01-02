@@ -1,3 +1,6 @@
-import { rankWith, RankedTester, uiTypeIs } from '@jsonforms/core';
+import { rankWith, RankedTester, uiTypeIs, and, optionIs, categorizationHasCategory } from '@jsonforms/core';
 
-export const CategorizationRendererTester: RankedTester = rankWith(6, uiTypeIs('Categorization'));
+export const CategorizationRendererTester: RankedTester = rankWith(
+  2,
+  and(uiTypeIs('Categorization'), categorizationHasCategory, optionIs('variant', 'stepper'))
+);
