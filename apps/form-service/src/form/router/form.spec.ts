@@ -65,6 +65,7 @@ describe('form router', () => {
     created: new Date(),
     createdBy: { id: 'tester', name: 'tester' },
     status: FormStatus.Draft,
+    dispositionStates: [{ id: 'failed', name: 'failed', description: 'the form has indeterminate errors' }],
     locked: null,
     submitted: null,
     lastAccessed: new Date(),

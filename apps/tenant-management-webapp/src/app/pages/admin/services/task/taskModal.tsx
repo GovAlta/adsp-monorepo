@@ -22,7 +22,6 @@ import {
 } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { RootState } from '@store/index';
-import { toKebabName } from '@lib/kebabName';
 import { DescriptionItem, HelpText, ErrorMsg } from './styled-components';
 interface TaskModalProps {
   initialValue?: QueueTaskDefinition;
@@ -148,7 +147,6 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             onChange={(name, value) => {
               validators.remove('name');
               validators['name'].check(value);
-              value = toKebabName(value);
               setTask({ ...task, name: value });
             }}
           />

@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSelector, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
 import axios from 'axios';
 import keycloak, { KeycloakInstance } from 'keycloak-js';
 import { ConfigState } from './config.slice';
@@ -20,8 +20,8 @@ export interface UserState {
     id: string;
     name: string;
     email: string;
+    roles: string[];
   };
-  roles: [];
 }
 
 let client: KeycloakInstance;
@@ -85,6 +85,13 @@ export const initializeUser = createAsyncThunk('user/initialize-user', async (te
       id: client.tokenParsed.sub,
       name: client.tokenParsed['preferred_username'] || client.tokenParsed['email'],
       email: client.tokenParsed['email'],
+      roles: Object.entries(client.tokenParsed.resource_access || {}).reduce(
+        (roles, [client, clientAccess]) => [
+          ...roles,
+          ...(clientAccess.roles?.map((clientRole) => `${client}:${clientRole}`) || []),
+        ],
+        client.tokenParsed.realm_access?.roles || []
+      ),
     };
   } else {
     return null;
@@ -122,7 +129,6 @@ const initialUserState: UserState = {
   initialized: false,
   tenant: null,
   user: null,
-  roles: [],
 };
 
 const userSlice = createSlice({
@@ -154,17 +160,6 @@ const userSlice = createSlice({
 
 export const userReducer = userSlice.reducer;
 
-export const tenantSelector = createSelector(
-  (state: AppState) => state.user,
-  (user) => user.tenant
-);
+export const tenantSelector = (state: AppState) => state.user.tenant;
 
-export const userInitializedSelector = createSelector(
-  (state: AppState) => state.user,
-  (user) => user.initialized
-);
-
-export const userSelector = createSelector(
-  (state: AppState) => state.user,
-  (user) => user.user
-);
+export const userSelector = (state: AppState) => state.user;

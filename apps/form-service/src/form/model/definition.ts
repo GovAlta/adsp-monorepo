@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { NotificationService, Subscriber } from '../../notification';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDefinition } from '../types';
+import { FormDefinition, Disposition } from '../types';
 import { FormEntity } from './form';
 
 export class FormDefinitionEntity implements FormDefinition {
@@ -16,6 +16,7 @@ export class FormDefinitionEntity implements FormDefinition {
   applicantRoles: string[];
   assessorRoles: string[];
   clerkRoles: string[];
+  dispositionStates: Array<Disposition>;
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
@@ -28,6 +29,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.applicantRoles = definition.applicantRoles || [];
     this.assessorRoles = definition.assessorRoles || [];
     this.clerkRoles = definition.clerkRoles || [];
+    this.dispositionStates = definition.dispositionStates || [];
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
     this.dataSchema = definition.dataSchema || {};
