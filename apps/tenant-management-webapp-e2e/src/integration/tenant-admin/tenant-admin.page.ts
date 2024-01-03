@@ -142,5 +142,9 @@ class TenantAdminPage {
       `//*[contains(@data-testid,"${tenantOrCore}-service-role-id") and text()="${serviceName}"]/following-sibling::div//table[@data-testid="service-role-table"]/tbody`
     );
   }
+
+  portraitModeMessage() {
+    return cy.xpath('//h1[text()="Portrait mode is currently not supported"]');
+  }
 }
 export default TenantAdminPage;

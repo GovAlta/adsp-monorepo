@@ -1199,3 +1199,15 @@ Then(
       });
   }
 );
+
+When('the user changes the resolution to a low resolution not supported by tenant management app', function () {
+  // Use resolution of iPhone 12 Pro for testing
+  cy.viewport(390, 844);
+  cy.wait(2000);
+});
+
+Then('the user views a message of Portrait mode is currently not supported', function () {
+  tenantAdminObj.portraitModeMessage().should('be.visible');
+  // Set the resolution to a supported one
+  cy.viewport(1920, 1080);
+});
