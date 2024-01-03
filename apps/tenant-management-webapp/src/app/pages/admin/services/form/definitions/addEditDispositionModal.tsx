@@ -57,7 +57,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
-            testId="form-cancel"
+            testId={`disposition-form-cancel-${isEdit ? 'edit' : 'add'}`}
             type="secondary"
             onClick={() => {
               validators.clear();
