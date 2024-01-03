@@ -349,14 +349,32 @@ export const CommentsHeader = styled.div`
     justify-content: space-between;
   }
 `;
+export const CommentsHeadGroup = styled.div`
+   {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+  }
+`;
 export const CommentsHeading = styled.div`
    {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     line-height: 24px;
     letter-spacing: 0em;
     text-align: left;
     color: #333333;
+  }
+`;
+export const CommentsDate = styled.div`
+   {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: #666666;
+    margin-left: 1rem;
   }
 `;
 export const CommentsActions = styled.div`
