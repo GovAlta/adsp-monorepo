@@ -150,7 +150,7 @@ const userSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
       })
-      .addMatcher(isRejectedWithValue, (state, { payload }) => {
+      .addMatcher(isRejectedWithValue(), (state, { payload }) => {
         if (isAxiosErrorPayload(payload) && payload.status === 401) {
           state.user = null;
         }
