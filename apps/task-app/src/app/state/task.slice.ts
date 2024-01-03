@@ -125,10 +125,15 @@ export const connectStream = createAsyncThunk(
         stream: UPDATE_STREAM_ID,
       },
       withCredentials: true,
-      auth: async (cb) =>
-        cb({
-          token: await getAccessToken(),
-        }),
+      auth: async (cb) => {
+        try {
+          const token = await getAccessToken();
+          cb({ token });
+        } catch (err) {
+          // Token retrieval failed and connection (using auth result) will also fail after.
+          cb(null);
+        }
+      },
     });
 
     socket.on('connect', () => {
@@ -139,41 +144,19 @@ export const connectStream = createAsyncThunk(
       dispatch(taskActions.streamConnectionChanged(false));
     });
 
-    socket.on('task-service:task-created', ({ payload }: TaskEvent) => {
+    const onTaskUpdate = ({ payload }: TaskEvent) => {
       if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
+        // Add or update the task and reload queue metrics.
         dispatch(taskActions.setTask(payload.task));
+        dispatch(loadQueueMetrics({ namespace, name }));
       }
-    });
-
-    socket.on('task-service:task-assigned', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
-
-    socket.on('task-service:task-priority-set', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
-
-    socket.on('task-service:task-started', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
-
-    socket.on('task-service:task-completed', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
-
-    socket.on('task-service:task-cancelled', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
+    };
+    socket.on('task-service:task-created', onTaskUpdate);
+    socket.on('task-service:task-assigned', onTaskUpdate);
+    socket.on('task-service:task-priority-set', onTaskUpdate);
+    socket.on('task-service:task-started', onTaskUpdate);
+    socket.on('task-service:task-completed', onTaskUpdate);
+    socket.on('task-service:task-cancelled', onTaskUpdate);
   }
 );
 
