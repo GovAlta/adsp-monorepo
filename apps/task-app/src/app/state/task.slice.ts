@@ -125,10 +125,15 @@ export const connectStream = createAsyncThunk(
         stream: UPDATE_STREAM_ID,
       },
       withCredentials: true,
-      auth: async (cb) =>
-        cb({
-          token: await getAccessToken(),
-        }),
+      auth: async (cb) => {
+        try {
+          const token = await getAccessToken();
+          cb({ token });
+        } catch (err) {
+          // Token retrieval failed and connection (using auth result) will also fail after.
+          cb(null);
+        }
+      },
     });
 
     socket.on('connect', () => {
