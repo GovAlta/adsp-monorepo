@@ -25,6 +25,7 @@ import {
   ScrollPane,
   MonacoDivTabBody,
   RightAlign,
+  PRE,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -576,7 +577,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </div>
               </Tab>
               <Tab label="Data" data-testid="data-view">
-                {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
+                {data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}
               </Tab>
             </Tabs>
           </FormPreviewContainer>

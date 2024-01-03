@@ -10,6 +10,8 @@ import {
   CommentBody,
   IconDiv,
   LoadMoreCommentsWrapper,
+  CommentsHeadGroup,
+  CommentsDate,
 } from '../styled-components';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
@@ -101,9 +103,10 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
           return (
             <CommentsList>
               <CommentsHeader>
-                <CommentsHeading>
-                  {comment.lastUpdatedBy.name} {formatDate(date)}
-                </CommentsHeading>
+                <CommentsHeadGroup>
+                  <CommentsHeading> {comment.lastUpdatedBy.name}</CommentsHeading>
+                  <CommentsDate> {formatDate(date)} </CommentsDate>
+                </CommentsHeadGroup>
                 <CommentsActions>
                   <IconDiv>
                     <GoAContextMenuIcon

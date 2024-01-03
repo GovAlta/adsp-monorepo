@@ -474,3 +474,12 @@ export const HeadingDiv = styled.div`
     margin-bottom: 4px;
   }
 `;
+
+export const PRE = styled.div`
+  background: #f3f3f3;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 16px;
+  padding: 16px;
+`;
