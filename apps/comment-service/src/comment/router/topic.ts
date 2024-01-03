@@ -45,19 +45,18 @@ export function getTopics(apiId: AdspId, repository: TopicRepository): RequestHa
       const top = topValue ? parseInt(topValue as string) : 10;
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
 
-      if (!isAllowedUser(user, tenantId, [ServiceRoles.Admin, ServiceRoles.TopicSetter])) {
-        throw new UnauthorizedUserError('get topics', user);
-      }
-
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
         tenantId
       );
-      const result = await repository.getTopics(types, top, after as string, {
+      const { page, results } = await repository.getTopics(types, top, after as string, {
         ...criteria,
         tenantIdEquals: tenantId,
       });
 
-      res.send({ ...result, results: result.results.map((r) => mapTopic(apiId, r)) });
+      res.send({
+        page,
+        results: results.filter((r) => r.canRead(user)).map((r) => mapTopic(apiId, r)),
+      });
     } catch (err) {
       next(err);
     }
@@ -123,7 +122,7 @@ export function getTopic(repository: TopicRepository): RequestHandler {
         throw new NotFoundError('topic', topicIdValue);
       }
 
-      if (!entity.canRead(user) && !isAllowedUser(user, tenantId, ServiceRoles.TopicSetter)) {
+      if (!entity.canRead(user) && !isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
         throw new UnauthorizedUserError('get topic', user);
       }
 
