@@ -67,5 +67,72 @@ export const formSchema = new Schema(
   { _id: false }
 );
 
+export const formDeposition = {
+  id: {
+    type: String,
+    required: true,
+  },
+  status: {
+    type: String,
+    required: true,
+  },
+  reason: {
+    type: String,
+    required: true,
+  },
+  depositionDate: {
+    type: Date,
+    required: true,
+  },
+};
+
+export const formSubmissionSchema = new Schema(
+  {
+    id: {
+      type: String,
+      required: true,
+    },
+    formDefinitionId: {
+      type: String,
+      required: true,
+    },
+    formId: {
+      type: String,
+      required: true,
+    },
+    tenantId: {
+      type: String,
+      required: true,
+    },
+    formData: {
+      type: Schema.Types.Mixed,
+      required: true,
+    },
+    formFiles: {
+      type: Schema.Types.Map,
+      of: String,
+      required: true,
+    },
+    created: {
+      type: Date,
+      required: true,
+    },
+    createdBy: {
+      type: String,
+      required: true,
+    },
+    updatedBy: {
+      type: String,
+      required: true,
+    },
+    updatedDateTime: {
+      type: Date,
+      required: true,
+    },
+    disposition: { type: formDeposition, required: false },
+  },
+  { _id: false }
+);
+
 formSchema.index({ tenantId: 1, id: 1 }, { unique: true });
 formSchema.index({ tenantId: 1, definitionId: 1, applicantId: 1 }, { unique: true });

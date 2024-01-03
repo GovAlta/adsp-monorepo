@@ -5,7 +5,7 @@ import { formSubmitted, formUnlocked } from '..';
 import { formArchived, formCreated, formDeleted } from '../events';
 import { FormDefinitionEntity, FormEntity } from '../model';
 import { NotificationService } from '../../notification';
-import { FormRepository } from '../repository';
+import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { Form, FormCriteria, FormDefinition } from '../types';
 import {
@@ -200,6 +200,26 @@ export function accessForm(notificationService: NotificationService): RequestHan
     }
   };
 }
+export function getSubmissionRecords(notificationService: NotificationService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
+      const user = req.user;
+      const { code } = req.query;
+      const form: FormEntity = req[FORM];
+
+      const result = await (code
+        ? form.accessByCode(user, notificationService, code as string)
+        : form.accessByUser(user));
+
+      end();
+      res.send(mapFormData(result));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export const updateFormData: RequestHandler = async (req, res, next) => {
   try {
@@ -224,7 +244,8 @@ export const updateFormData: RequestHandler = async (req, res, next) => {
 export function formOperation(
   apiId: AdspId,
   eventService: EventService,
-  notificationService: NotificationService
+  notificationService: NotificationService,
+  submissionRepository: FormSubmissionRepository
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -247,7 +268,7 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          result = await form.submit(user);
+          result = await form.submit(user, submissionRepository);
           event = formSubmitted(user, result);
           break;
         }
@@ -301,6 +322,7 @@ interface FormRouterProps {
   eventService: EventService;
   notificationService: NotificationService;
   fileService: FileService;
+  submissionRepository: FormSubmissionRepository;
 }
 
 export function createFormRouter({
@@ -309,6 +331,7 @@ export function createFormRouter({
   eventService,
   notificationService,
   fileService,
+  submissionRepository,
 }: FormRouterProps): Router {
   const apiId = adspId`${serviceId}:v1`;
 
@@ -359,7 +382,7 @@ export function createFormRouter({
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService)
+    formOperation(apiId, eventService, notificationService, submissionRepository)
   );
   router.delete(
     '/forms/:formId',
@@ -376,6 +399,15 @@ export function createFormRouter({
     ),
     getForm(repository),
     accessForm(notificationService)
+  );
+  router.get(
+    '/forms/:formId/submissions/:submissionId',
+    createValidationHandler(
+      param('formId').isUUID(),
+      query('code').optional().isString().isLength({ min: 1, max: 10 })
+    ),
+    getForm(repository),
+    getSubmissionRecords(notificationService)
   );
   router.put(
     '/forms/:formId/data',

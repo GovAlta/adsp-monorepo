@@ -2,11 +2,13 @@ import { AdspId, assertAdspId, isAllowedUser, UnauthorizedUserError, User } from
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import * as hasha from 'hasha';
 import { FormDefinitionEntity } from '../model';
-import { FormRepository } from '../repository';
+import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { Disposition, Form, FormStatus } from '../types';
 import { NotificationService, Subscriber } from '../../notification';
 import { FileService } from '../../file';
+import { v4 as uuidv4 } from 'uuid';
+import { FormSubmissionEntity } from './formSubmission';
 
 // Any form created by user with the intake app role is treated as anonymous.
 function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
@@ -207,11 +209,7 @@ export class FormEntity implements Form {
     return await this.repository.save(this);
   }
 
-  async submit(user: User): Promise<FormEntity> {
-    if (this.status !== FormStatus.Draft) {
-      throw new InvalidOperationError('Cannot submit form not in draft.');
-    }
-
+  async submit(user: User, submissionRepository: FormSubmissionRepository): Promise<FormEntity> {
     if (
       !isAllowedUser(user, this.tenantId, this.definition.clerkRoles) &&
       !(this.definition.canApply(user) && user.id === this.createdBy.id)
@@ -223,6 +221,13 @@ export class FormEntity implements Form {
     this.submitted = new Date();
     // Hash the form data on submit for duplicate detection.
     this.hash = await hasha.async(JSON.stringify(this.data), { algorithm: 'sha1' });
+
+    const id = uuidv4();
+
+    if (this.dispositionStates.length > 0) {
+      // If disposition states exist, create a form submission record
+      await FormSubmissionEntity.create(user, submissionRepository, this, id);
+    }
 
     return await this.repository.save(this);
   }
