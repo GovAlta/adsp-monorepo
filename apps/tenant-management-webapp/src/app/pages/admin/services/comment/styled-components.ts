@@ -358,23 +358,23 @@ export const CommentsHeadGroup = styled.div`
 `;
 export const CommentsHeading = styled.div`
    {
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 24px;
+    font-size: var(--goa-font-size-4);
+    font-weight: var(--goa-font-weight-bold);
+    line-height: var(--goa-line-height-3);
     letter-spacing: 0em;
     text-align: left;
-    color: #333333;
+    color: var(--goa-color-text-default);
   }
 `;
 export const CommentsDate = styled.div`
    {
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 24px;
+    font-size: var(--goa-font-size-2);
+    font-weight: var(--goa-font-weight-regular);
+    line-height: var(--goa-line-height-2);
     letter-spacing: 0em;
     text-align: left;
-    color: #666666;
-    margin-left: 1rem;
+    color: var(--goa-color-text-disabled);
+    margin-left: var(--goa-space-m);
   }
 `;
 export const CommentsActions = styled.div`
