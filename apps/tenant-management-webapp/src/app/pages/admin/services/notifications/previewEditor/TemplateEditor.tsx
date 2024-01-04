@@ -9,6 +9,7 @@ import { SaveFormModal } from '@components/saveModal';
 import { subjectEditorConfig, bodyEditorConfig } from './config';
 import { Tab, Tabs } from '@components/Tabs';
 import { GoAButton, GoAButtonGroup, GoABadge, GoAFormItem } from '@abgov/react-components-new';
+import { areObjectsEqual } from '@lib/objectUtil';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -225,7 +226,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             }}
             type="primary"
             testId="template-form-save"
-            disabled={!validateEventTemplateFields()}
+            disabled={!validateEventTemplateFields() || areObjectsEqual(savedTemplates, templates)}
           >
             {eventTemplateFormState.saveOrAddActionText}
           </GoAButton>
