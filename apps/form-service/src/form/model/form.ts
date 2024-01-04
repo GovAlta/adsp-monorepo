@@ -209,7 +209,26 @@ export class FormEntity implements Form {
     return await this.repository.save(this);
   }
 
+  async setToDraft(user: User): Promise<FormEntity> {
+    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin)) {
+      throw new UnauthorizedUserError('unlock form', user);
+    }
+
+    if (this.status !== FormStatus.Submitted) {
+      throw new InvalidOperationError('Can only set submitted forms to draft');
+    }
+
+    // Unlock updates last access so that the form is not immediately locked again.
+    this.status = FormStatus.Draft;
+    this.lastAccessed = new Date();
+    return await this.repository.save(this);
+  }
+
   async submit(user: User, submissionRepository: FormSubmissionRepository): Promise<FormEntity> {
+    if (this.status !== FormStatus.Draft) {
+      throw new InvalidOperationError('Cannot submit form not in draft.');
+    }
+
     if (
       !isAllowedUser(user, this.tenantId, this.definition.clerkRoles) &&
       !(this.definition.canApply(user) && user.id === this.createdBy.id)

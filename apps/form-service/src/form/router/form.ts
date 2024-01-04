@@ -1,7 +1,7 @@
 import { adspId, AdspId, DomainEvent, EventService, isAllowedUser, startBenchmark } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
-import { formSubmitted, formUnlocked } from '..';
+import { formSubmitted, formUnlocked, formSetToDraft } from '..';
 import { formArchived, formCreated, formDeleted } from '../events';
 import { FormDefinitionEntity, FormEntity } from '../model';
 import { NotificationService } from '../../notification';
@@ -14,6 +14,7 @@ import {
   SEND_CODE_OPERATION,
   SUBMIT_FORM_OPERATION,
   UNLOCK_FORM_OPERATION,
+  SET_TO_DRAFT_FORM_OPERATION,
 } from './types';
 import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
@@ -272,6 +273,11 @@ export function formOperation(
           event = formSubmitted(user, result);
           break;
         }
+        case SET_TO_DRAFT_FORM_OPERATION: {
+          result = await form.setToDraft(user);
+          event = formSetToDraft(user, result);
+          break;
+        }
         case ARCHIVE_FORM_OPERATION: {
           result = await form.archive(user);
           event = formArchived(user, result);
@@ -379,6 +385,7 @@ export function createFormRouter({
         UNLOCK_FORM_OPERATION,
         SUBMIT_FORM_OPERATION,
         ARCHIVE_FORM_OPERATION,
+        SET_TO_DRAFT_FORM_OPERATION,
       ])
     ),
     getForm(repository),

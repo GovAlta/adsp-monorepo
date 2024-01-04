@@ -33,9 +33,9 @@ export class FormSubmissionEntity implements FormSubmission {
       formData: form.data,
       formFiles: form.files,
       formDefinitionId: form.definition?.id,
-      formId: null,
-      tenantId: null,
-      submissionStatus: null,
+      formId: form.id,
+      tenantId: form.tenantId,
+      submissionStatus: form.status,
       deposition: null,
     });
 
