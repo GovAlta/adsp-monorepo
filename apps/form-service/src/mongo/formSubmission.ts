@@ -1,0 +1,139 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
+import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
+import { Model, model } from 'mongoose';
+import { FormRepository, FormSubmissionCriteria, FormSubmissionEntity, FormSubmissionRepository } from '../form';
+import { formSubmissionSchema } from './schema';
+import { FormSubmissionDoc } from './types';
+
+export class MongoFormSubmissionRepository implements FormSubmissionRepository {
+  private submissionModel: Model<Document & FormSubmissionDoc>;
+
+  constructor(private formRepository: FormRepository) {
+    this.submissionModel = model<Document & FormSubmissionDoc>('formSubmission', formSubmissionSchema);
+  }
+
+  find(top: number, after: string, criteria: FormSubmissionCriteria): Promise<Results<FormSubmissionEntity>> {
+    const skip = decodeAfter(after);
+    const query: Record<string, unknown> = {};
+
+    if (criteria?.tenantIdEquals) {
+      query.tenantId = criteria.tenantIdEquals.toString();
+    }
+
+    if (criteria?.definitionIdEquals) {
+      query.definitionId = criteria?.definitionIdEquals;
+    }
+
+    if (criteria?.statusEquals) {
+      query.status = criteria.statusEquals;
+    }
+
+    if (criteria?.updateDateTime) {
+      query.updateDateTime = { $lt: criteria.updateDateTime };
+    }
+
+    if (criteria?.createdByIdEquals) {
+      query['createdBy.id'] = criteria.createdByIdEquals;
+    }
+
+    if (criteria?.depositionDateEquals) {
+      query['deposition.date'] = criteria.depositionDateEquals;
+    }
+    if (criteria?.depositionStatusEquals) {
+      query['deposition.status'] = criteria.depositionStatusEquals;
+    }
+
+    return new Promise<FormSubmissionEntity[]>((resolve, reject) => {
+      this.submissionModel
+        .find(query, null, { lean: true })
+        .skip(skip)
+        .limit(top)
+        .sort({ created: -1 })
+        .exec((err, docs) => (err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(doc))))));
+    }).then((docs) => ({
+      results: docs,
+      page: {
+        after,
+        next: encodeNext(docs.length, top, skip),
+        size: docs.length,
+      },
+    }));
+  }
+
+  get(tenantId: AdspId, id: string): Promise<FormSubmissionEntity> {
+    return new Promise<FormSubmissionEntity>((resolve, reject) => {
+      this.submissionModel
+        .findOne({ tenantId: tenantId.toString(), id }, null, { lean: true })
+        .exec(async (err, doc) => {
+          if (err) {
+            reject(err);
+          } else {
+            const entity = doc ? this.fromDoc(doc) : null;
+            resolve(entity);
+          }
+        });
+    });
+  }
+
+  async save(entity: FormSubmissionEntity): Promise<FormSubmissionEntity> {
+    try {
+      const doc = await this.submissionModel.findOneAndUpdate(
+        { tenantId: entity.tenantId.toString(), id: entity.id },
+        this.toDoc(entity),
+        { upsert: true, new: true, lean: true }
+      );
+
+      return this.fromDoc(doc);
+    } catch (err) {
+      if (err?.code == 11000) {
+        throw new InvalidOperationError('Cannot create duplicate form.');
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  delete(entity: FormSubmissionEntity): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      this.submissionModel
+        .findOneAndDelete({ tenantId: entity.tenantId.toString(), id: entity.id })
+        .exec((err, doc) => (err ? reject(err) : resolve(!!doc)));
+    });
+  }
+
+  private toDoc(entity: FormSubmissionEntity): FormSubmissionDoc {
+    return {
+      tenantId: entity.tenantId,
+      id: entity.id,
+      formId: entity.form?.id,
+      formDefinitionId: entity.formDefinitionId,
+      created: entity.created,
+      createdBy: entity.createdBy,
+      updatedBy: entity.updatedBy,
+      submissionStatus: entity.submissionStatus,
+      updateDateTime: entity.updateDateTime,
+      formData: entity.formData,
+      formFiles: Object.entries(entity.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
+      deposition: entity.deposition,
+    };
+  }
+
+  private fromDoc = async (doc: FormSubmissionDoc): Promise<FormSubmissionEntity> => {
+    const form = await this.formRepository.get(doc.tenantId, doc.formId);
+
+    return new FormSubmissionEntity(this, form, {
+      tenantId: doc.tenantId,
+      id: doc.id,
+      formId: doc.formId,
+      formDefinitionId: doc.formDefinitionId,
+      created: doc.created,
+      createdBy: doc.createdBy,
+      updatedBy: doc.updatedBy,
+      submissionStatus: doc.submissionStatus,
+      updateDateTime: doc.updateDateTime,
+      formData: doc.formData,
+      formFiles: Object.entries(doc.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
+      deposition: doc.deposition,
+    });
+  };
+}
