@@ -310,7 +310,7 @@ function validateMimeType(mimeType: string) {
   if (!mimeType) return 'application/octet-stream';
 
   // Need to add base64 to the end of the mime so that the pdf can embed the svg correctly.
-  if (mimeType == 'image/svg+xml') {
+  if (mimeType.indexOf('image/svg+xml') > 0) {
     mimeType = `${mimeType};base64`;
   }
 
