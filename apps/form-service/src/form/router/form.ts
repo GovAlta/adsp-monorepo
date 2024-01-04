@@ -201,26 +201,6 @@ export function accessForm(notificationService: NotificationService): RequestHan
     }
   };
 }
-export function getSubmissionRecords(notificationService: NotificationService): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const end = startBenchmark(req, 'operation-handler-time');
-
-      const user = req.user;
-      const { code } = req.query;
-      const form: FormEntity = req[FORM];
-
-      const result = await (code
-        ? form.accessByCode(user, notificationService, code as string)
-        : form.accessByUser(user));
-
-      end();
-      res.send(mapFormData(result));
-    } catch (err) {
-      next(err);
-    }
-  };
-}
 
 export const updateFormData: RequestHandler = async (req, res, next) => {
   try {
@@ -407,15 +387,7 @@ export function createFormRouter({
     getForm(repository),
     accessForm(notificationService)
   );
-  router.get(
-    '/forms/:formId/submissions/:submissionId',
-    createValidationHandler(
-      param('formId').isUUID(),
-      query('code').optional().isString().isLength({ min: 1, max: 10 })
-    ),
-    getForm(repository),
-    getSubmissionRecords(notificationService)
-  );
+
   router.put(
     '/forms/:formId/data',
     createValidationHandler(
