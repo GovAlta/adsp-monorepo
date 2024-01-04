@@ -90,7 +90,7 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
-            testId="form-cancel"
+            testId="add-edit-form-cancel"
             type="secondary"
             onClick={() => {
               validators.clear();

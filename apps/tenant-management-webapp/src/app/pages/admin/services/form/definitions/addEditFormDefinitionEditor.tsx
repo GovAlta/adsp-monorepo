@@ -508,7 +508,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   Save
                 </GoAButton>
                 <GoAButton
-                  testId="form-cancel"
+                  testId="form-editor-cancel"
                   type="secondary"
                   onClick={() => {
                     if (
