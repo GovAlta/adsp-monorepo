@@ -58,6 +58,7 @@ function mapFile(apiId: AdspId, entity: FileEntity, entityFileType?: FileTypeEnt
     lastAccessed: entity.lastAccessed,
     scanned: entity.scanned,
     infected: entity.infected,
+    mimeType: entity.mimeType,
     securityClassification: '',
   };
 
@@ -276,7 +277,7 @@ export function downloadFile(logger: Logger): RequestHandler {
       end();
 
       res.status(200);
-      res.setHeader('Content-Type', fileEntity.mimeType || 'application/octet-stream');
+      res.setHeader('Content-Type', validateMimeType(fileEntity.mimeType));
       res.setHeader('Content-Length', fileEntity.size);
       if (embed === 'true') {
         res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
@@ -304,6 +305,16 @@ export function downloadFile(logger: Logger): RequestHandler {
       next(err);
     }
   };
+}
+function validateMimeType(mimeType: string) {
+  if (!mimeType) return 'application/octet-stream';
+
+  // Need to add base64 to the end of the mime so that the pdf can embed the svg correctly.
+  if (mimeType == 'image/svg+xml') {
+    mimeType = `${mimeType};base64`;
+  }
+
+  return mimeType;
 }
 
 function isSupportedVideoType(mimeType: string): boolean {

@@ -41,6 +41,7 @@ export type NewFile = {
   filename: string;
 };
 
-export type SecurityClassificationInfo = {
+export type SecurityClassificationMimeTypeInfo = {
   securityClassification: string;
+  mimeType: string;
 };
