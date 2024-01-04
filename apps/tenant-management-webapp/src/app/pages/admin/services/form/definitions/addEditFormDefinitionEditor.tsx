@@ -41,8 +41,6 @@ import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
-import { uischema } from './categorization-stepper-nav-buttons';
-import { schema } from './categorization';
 import { PageIndicator } from '@components/Indicator';
 import { ErrorBoundary } from '@components/ErrorBoundary';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
@@ -528,19 +526,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   }}
                 >
                   Back
-                </GoAButton>
-
-                <GoAButton
-                  type="tertiary"
-                  testId="form-generate"
-                  onClick={() => {
-                    setTempUiSchemaBounced(JSON.stringify(uischema, null, 2));
-                    setDataSchemaBounced(JSON.stringify(schema, null, 2));
-                    setTempUiSchema(JSON.stringify(uischema, null, 2));
-                    setTempDataSchema(JSON.stringify(schema, null, 2));
-                  }}
-                >
-                  Generate multi-step form
                 </GoAButton>
               </GoAButtonGroup>
             </FinalButtonPadding>

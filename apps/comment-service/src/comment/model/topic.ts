@@ -15,7 +15,7 @@ export class TopicEntity implements Topic {
   resourceId?: AdspId | string;
   commenters?: string[] = [];
 
-  @AssertRole('create topic', [ServiceRoles.Admin, ServiceRoles.TopicSetter])
+  @AssertRole('create topic', [ServiceRoles.Admin, ServiceRoles.TopicSetter], null, true)
   public static async create(
     _user: User,
     repository: TopicRepository,
@@ -41,7 +41,7 @@ export class TopicEntity implements Topic {
     }
   }
 
-  @AssertRole('update topic', [ServiceRoles.Admin, ServiceRoles.TopicSetter])
+  @AssertRole('update topic', [ServiceRoles.Admin, ServiceRoles.TopicSetter], null, true)
   public async update(
     _user: User,
     { name, description, commenters }: Pick<Topic, 'name' | 'description' | 'commenters'>
@@ -61,7 +61,7 @@ export class TopicEntity implements Topic {
     return await this.repository.save(this);
   }
 
-  @AssertRole('delete topic', [ServiceRoles.Admin, ServiceRoles.TopicSetter])
+  @AssertRole('delete topic', [ServiceRoles.Admin, ServiceRoles.TopicSetter], null, true)
   public async delete(_user: User): Promise<boolean> {
     return await this.repository.delete(this);
   }
