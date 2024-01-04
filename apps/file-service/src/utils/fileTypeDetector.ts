@@ -18,9 +18,7 @@ export class FileTypeDetector {
 
   async detect() {
     const start = Date.now();
-    let response = (await this.createCustomConcatStream(this.content)) as CustomConcatStream;
-
-    response = this.validateSVGMimeType(response);
+    const response = (await this.createCustomConcatStream(this.content)) as CustomConcatStream;
 
     const fullStream = response.fileStream;
     const fileType = response.fileType;
@@ -31,14 +29,6 @@ export class FileTypeDetector {
     this.logger.debug('File type as determined: ' + fileType?.mime);
     this.logger.debug('Time to determine file type: ' + (end - start) / 1000 + 's');
 
-    return response;
-  }
-
-  // Need to add base64 to the end of the mime so that the pdf can embed the svg correctly.
-  validateSVGMimeType(response: CustomConcatStream) {
-    if (response?.fileType?.mime == 'image/svg+xml') {
-      response.fileType.mime = `${response?.fileType.mime};base64`;
-    }
     return response;
   }
 
