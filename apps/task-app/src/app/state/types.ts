@@ -12,6 +12,7 @@ export interface QueueDefinition {
 export type TaskStatus = 'Pending' | 'In Progress' | 'Stopped' | 'Cancelled' | 'Completed';
 export type TaskPriority = 'Normal' | 'High' | 'Urgent';
 export interface Task {
+  urn: string;
   id: string;
   recordId?: string;
   queue: { namespace: string; name: string };
