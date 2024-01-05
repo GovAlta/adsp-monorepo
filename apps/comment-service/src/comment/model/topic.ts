@@ -38,6 +38,7 @@ export class TopicEntity implements Topic {
     const record = topic as Topic;
     if (record.id) {
       this.id = record.id;
+      this.securityClassification = record.securityClassification;
     }
   }
 

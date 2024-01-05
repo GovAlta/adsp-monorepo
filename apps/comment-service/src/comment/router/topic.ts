@@ -7,7 +7,7 @@ import { commentCreated, commentDeleted, commentUpdated, topicCreated, topicDele
 import { TopicEntity, TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
 import { ServiceRoles } from '../roles';
-import { Topic } from '../types';
+import { Topic, TopicType } from '../types';
 
 interface TopicRouterProps {
   apiId: AdspId;
@@ -16,15 +16,21 @@ interface TopicRouterProps {
   repository: TopicRepository;
 }
 
+function mapTopicType(type: TopicType) {
+  return type ? {
+    id: type.id,
+    name: type.name,
+    adminRoles: type.adminRoles,
+    readerRoles: type.readerRoles,
+    commenterRoles: type.commenterRoles,
+    securityClassification: type.securityClassification,
+  } : null;
+}
+
 function mapTopic(apiId: AdspId, topic: Topic) {
   return topic
     ? {
-        type: topic.type
-          ? {
-              id: topic.type?.id,
-              name: topic.type?.name,
-            }
-          : null,
+        type: mapTopicType(topic.type),
         id: topic.id,
         urn: adspId`${apiId}:/topics/${topic.id}`.toString(),
         name: topic.name,
