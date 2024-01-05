@@ -380,8 +380,8 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
     '/topics/:topicId/comments',
     createValidationHandler(
       param('topicId').isInt(),
-      body('title').optional().isString().isLength({ min: 1, max: 255 }),
-      body('content').isString().isLength({ min: 1 })
+      body('title').optional({ nullable: true }).isString().isLength({ min: 1, max: 255 }),
+      body('content').optional({ nullable: true }).isString().isLength({ min: 1 })
     ),
     getTopic(repository),
     createTopicComment(logger, eventService)

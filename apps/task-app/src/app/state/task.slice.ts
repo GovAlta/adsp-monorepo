@@ -5,6 +5,7 @@ import { AppState } from './store';
 import { Person, PUSH_SERVICE_ID, QueueDefinition, Task, TASK_SERVICE_ID } from './types';
 import { getAccessToken } from './user.slice';
 import { loadQueueMetrics, QueueMetrics } from './queue.slice';
+import { loadTopic } from './comment.slice';
 
 export const TASK_FEATURE_KEY = 'task';
 const UPDATE_STREAM_ID = 'task-updates';
@@ -244,6 +245,18 @@ export const loadQueuePeople = createAsyncThunk(
   }
 );
 
+export const openTask = createAsyncThunk(
+  'task/open-task',
+  async ({ taskId }: { taskId?: string }, { getState, dispatch }) => {
+    const { task } = getState() as AppState;
+    if (task.opened !== taskId && taskId) {
+      const toOpen = task.tasks[taskId];
+      dispatch(loadTopic({ resourceId: toOpen.urn }));
+    }
+    return taskId;
+  }
+);
+
 export const setTaskPriority = createAsyncThunk(
   'task/set-task-priority',
   async ({ taskId, priority }: { taskId: string; priority: string }, { dispatch, getState, rejectWithValue }) => {
@@ -462,9 +475,6 @@ export const taskSlice = createSlice({
     setFilter: (state, { payload }: PayloadAction<TaskFilter>) => {
       state.filter = payload;
     },
-    setOpenTask: (state, { payload }: PayloadAction<string>) => {
-      state.opened = payload;
-    },
     setTaskToAssign: (state, { payload }: PayloadAction<Task>) => {
       state.modal.taskToAssign = payload;
     },
@@ -519,6 +529,9 @@ export const taskSlice = createSlice({
       })
       .addCase(loadQueueTasks.rejected, (state) => {
         state.busy.initializing = false;
+      })
+      .addCase(openTask.fulfilled, (state, { payload }) => {
+        state.opened = payload;
       })
       .addCase(assignTask.pending, (state) => {
         state.busy.executing = true;
