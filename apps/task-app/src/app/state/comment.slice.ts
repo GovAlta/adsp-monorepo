@@ -3,16 +3,22 @@ import axios from 'axios';
 import moment from 'moment';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
+import { hasRole } from './util';
 
 export const COMMENT_FEATURE_KEY = 'comment';
+
+interface TopicType {
+  id: string;
+  name: string;
+  readerRoles: string[];
+  commenterRoles: string[];
+}
 
 interface Topic {
   resourceId: string;
   id: number;
   name: string;
-  type: {
-    name: string;
-  };
+  typeId: string;
 }
 
 interface Comment {
@@ -45,12 +51,15 @@ export const loadTopic = createAsyncThunk(
 
     try {
       const token = await getAccessToken();
-      const { data } = await axios.get<{ results: Topic[] }>(new URL('/comment/v1/topics', commentServiceUrl).href, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          criteria: JSON.stringify({ resourceIdEquals: resourceId }),
-        },
-      });
+      const { data } = await axios.get<{ results: (Omit<Topic, 'typeId'> & { type?: TopicType })[] }>(
+        new URL('/comment/v1/topics', commentServiceUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            criteria: JSON.stringify({ resourceIdEquals: resourceId }),
+          },
+        }
+      );
 
       const [topic] = data.results;
 
@@ -103,10 +112,25 @@ export const loadComments = createAsyncThunk(
 export const selectTopic = createAsyncThunk(
   'comment/select-topic',
   async ({ resourceId }: { resourceId: string }, { dispatch, getState }) => {
-    const { comment } = getState() as AppState;
-    if (comment.selected !== resourceId && comment.topics[resourceId]) {
-      dispatch(loadComments({ topic: comment.topics[resourceId] }));
+    const { comment, user } = getState() as AppState;
+
+    let canComment = false;
+    let canRead = false;
+    const toSelect = comment.topics[resourceId];
+
+    if (toSelect) {
+      const type = comment.topicTypes[toSelect.typeId];
+      canComment =
+        hasRole('urn:ads:platform:comment-service:comment-admin', user.user) || hasRole(type.commenterRoles, user.user);
+      canRead = canComment || hasRole(type.readerRoles, user.user);
     }
+
+    // Load comments if this is changing the selected topic, and user can read the new topic.
+    if (comment.selected.resourceId !== resourceId && canRead) {
+      dispatch(loadComments({ topic: toSelect }));
+    }
+
+    return { canComment, canRead };
   }
 );
 
@@ -141,8 +165,13 @@ export const addComment = createAsyncThunk(
 );
 
 interface CommentState {
+  topicTypes: Record<string, TopicType>;
   topics: Record<string, Topic>;
-  selected: string;
+  selected: {
+    resourceId: string;
+    canRead: boolean;
+    canComment: boolean;
+  };
   comments: {
     results: Comment[];
     next: string;
@@ -155,8 +184,13 @@ interface CommentState {
 }
 
 const initialCommentState: CommentState = {
+  topicTypes: {},
   topics: {},
-  selected: null,
+  selected: {
+    resourceId: null,
+    canRead: false,
+    canComment: false,
+  },
   comments: {
     results: [],
     next: null,
@@ -187,13 +221,21 @@ const commentSlice = createSlice({
       })
       .addCase(loadTopic.fulfilled, (state, { payload, meta }) => {
         state.busy.loading = false;
-        state.topics[meta.arg.resourceId] = payload;
+        if (payload) {
+          const { type, ...topic } = payload;
+          state.topics[meta.arg.resourceId] = { ...topic, typeId: type?.id };
+          if (type) {
+            state.topicTypes[type.id] = type;
+          }
+        }
       })
       .addCase(loadTopic.rejected, (state) => {
         state.busy.loading = false;
       })
-      .addCase(selectTopic.fulfilled, (state, { meta }) => {
-        state.selected = meta.arg.resourceId;
+      .addCase(selectTopic.fulfilled, (state, { meta, payload }) => {
+        state.selected.resourceId = meta.arg.resourceId;
+        state.selected.canComment = payload.canComment;
+        state.selected.canRead = payload.canRead;
       })
       .addCase(loadComments.pending, (state, { meta }) => {
         state.busy.loading = true;
@@ -233,15 +275,16 @@ export const topicsSelector = (state: AppState) => state.comment.topics;
 
 export const selectedTopicSelector = createSelector(
   (state: AppState) => state.comment.topics,
-  (state: AppState) => state.comment.selected,
-  (topics, selected) => (selected ? topics[selected] : null)
+  (state: AppState) => state.comment.selected.resourceId,
+  (topics, resourceId) => (resourceId ? topics[resourceId] : null)
 );
 
 export const commentsSelector = createSelector(
   (state: AppState) => state.comment.comments,
-  ({ results, next }) => ({
+  (state: AppState) => state.user.user?.id,
+  ({ results, next }, userId) => ({
     results: [...results]
-      .map((r) => ({ ...r, createdOn: moment(r.createdOn) }))
+      .map((r) => ({ ...r, createdOn: moment(r.createdOn), byCurrentUser: r.createdBy.id === userId }))
       .sort((a, b) => b.createdOn.unix() - a.createdOn.unix()),
     next,
   })
@@ -252,3 +295,5 @@ export const commentExecutingSelector = (state: AppState) => state.comment.busy.
 export const commentLoadingSelector = (state: AppState) => state.comment.busy.loading;
 
 export const draftSelector = (state: AppState) => state.comment.draft;
+
+export const canCommentSelector = (state: AppState) => state.comment.selected.canComment;
