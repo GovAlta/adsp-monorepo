@@ -112,7 +112,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(
     '/comment',
     metricsHandler,
-    passport.authenticate(['tenant'], { session: false }),
+    passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
     configurationHandler
   );

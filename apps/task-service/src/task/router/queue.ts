@@ -21,6 +21,7 @@ import { TaskRepository } from '../repository';
 import { Queue, TaskPriority, TaskServiceConfiguration, TaskStatus } from '../types';
 import { getTask, mapTask, taskOperation, TASK_KEY } from './task';
 import { UserInformation } from './types';
+import { CommentService } from '../comment';
 
 interface QueueRouterProps {
   apiId: AdspId;
@@ -29,6 +30,7 @@ interface QueueRouterProps {
   tokenProvider: TokenProvider;
   taskRepository: TaskRepository;
   eventService: EventService;
+  commentService: CommentService;
   KEYCLOAK_ROOT_URL: string;
 }
 
@@ -38,6 +40,7 @@ export function mapQueue(entity: QueueEntity): Omit<Queue, 'tenantId'> {
   return {
     namespace: entity.namespace,
     name: entity.name,
+    displayName: entity.displayName,
     context: entity.context,
     assignerRoles: entity.assignerRoles,
     workerRoles: entity.workerRoles,
@@ -287,7 +290,12 @@ export const getQueuedTasks =
   };
 
 export const createTask =
-  (apiId: AdspId, repository: TaskRepository, eventService: EventService): RequestHandler =>
+  (
+    apiId: AdspId,
+    repository: TaskRepository,
+    eventService: EventService,
+    commentService: CommentService
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -300,9 +308,11 @@ export const createTask =
         priority: priority ? TaskPriority[priority] : null,
         ...task,
       });
-      res.send(mapTask(apiId, entity));
+      const result = mapTask(apiId, entity);
+      res.send(result);
 
       eventService.send(taskCreated(apiId, user, entity));
+      commentService.createTopic(entity, result.urn);
     } catch (err) {
       next(err);
     }
@@ -406,6 +416,7 @@ export function createQueueRouter({
   tokenProvider,
   taskRepository: repository,
   eventService,
+  commentService,
 }: QueueRouterProps): Router {
   const router = Router();
 
@@ -465,7 +476,7 @@ export function createQueueRouter({
       )
     ),
     getQueue,
-    createTask(apiId, repository, eventService)
+    createTask(apiId, repository, eventService, commentService)
   );
   router.get(
     '/queues/:namespace/:name/tasks/:id',

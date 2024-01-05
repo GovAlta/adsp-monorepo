@@ -52,6 +52,10 @@ describe('queue', () => {
 
   const getConfigurationMock = jest.fn();
 
+  const commentServiceMock = {
+    createTopic: jest.fn(),
+  };
+
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const queue = new QueueEntity({
     tenantId,
@@ -96,6 +100,7 @@ describe('queue', () => {
         logger: loggerMock,
         taskRepository: repositoryMock,
         eventService: eventServiceMock,
+        commentService: commentServiceMock,
       });
 
       expect(router).toBeTruthy();
@@ -435,10 +440,10 @@ describe('queue', () => {
   });
 
   describe('createTask', () => {
-    const handler = createTask(apiId, repositoryMock, eventServiceMock);
+    const handler = createTask(apiId, repositoryMock, eventServiceMock, commentServiceMock);
 
     it('can create handler', () => {
-      const result = createTask(apiId, repositoryMock, eventServiceMock);
+      const result = createTask(apiId, repositoryMock, eventServiceMock, commentServiceMock);
       expect(result).toBeTruthy();
     });
 
@@ -457,6 +462,7 @@ describe('queue', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'task-created' }));
+      expect(commentServiceMock.createTopic).toHaveBeenCalled();
     });
 
     it('can handle create task request with priority', async () => {

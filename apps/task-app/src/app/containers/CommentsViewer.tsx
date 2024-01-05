@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import {
   AppDispatch,
   addComment,
+  canCommentSelector,
   commentActions,
   commentExecutingSelector,
   commentLoadingSelector,
@@ -35,6 +36,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({ class
   const loading = useSelector(commentLoadingSelector);
   const executing = useSelector(commentExecutingSelector);
   const { title, content } = useSelector(draftSelector);
+  const canComment = useSelector(canCommentSelector);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -43,26 +45,29 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({ class
       <h3>Comments</h3>
       <div className="comments">
         {results.map((result) => (
-          <div key={result.id} className="comment">
+          <div key={result.id} className="comment" data-user-comment={result.byCurrentUser}>
             <div>
               <span>{result.createdBy.name}</span>
               <span>{formatTimestamp(result.createdOn)}</span>
             </div>
-            <p>{result.content}</p>
+            <div>
+              <p>{result.content}</p>
+            </div>
           </div>
         ))}
+        <GoACircularProgress variant="inline" size="small" visible={loading} />
         {!loading && next && (
           <GoAButton type="tertiary" onClick={() => dispatch(loadComments({ next, topic }))}>
             Load more
           </GoAButton>
         )}
-        <GoACircularProgress variant="inline" size="small" visible={loading} />
       </div>
       <form>
         <GoAFormItem label="New comment">
           <GoATextArea
             name="comment"
             value={content}
+            disabled={!canComment}
             onChange={(_, value) => dispatch(commentActions.setDraftComment({ title, content: value }))}
             placeholder="Write your comment..."
             width="100%"
@@ -111,7 +116,7 @@ export const CommentsViewer = styled(CommentsViewerComponent)`
     flex: 1 1 0;
     overflow-y: auto;
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     padding-left: var(--goa-spacing-l);
     padding-right: var(--goa-spacing-l);
     > .comment {
@@ -132,15 +137,32 @@ export const CommentsViewer = styled(CommentsViewerComponent)`
         margin-left: var(--goa-space-m);
       }
 
+      div {
+        display: flex;
+        p {
+          margin-top: var(--goa-space-2xs);
+          margin-right: auto;
+          padding-right: var(--goa-space-2xl);
+          font-size: 16px;
+          font-weight: 400;
+          line-height: 24px;
+          color: rgb(51, 51, 51);
+          letter-spacing: 0em;
+          text-align: left;
+          text-wrap: wrap;
+        }
+      }
+    }
+    > .comment[data-user-comment='true'] {
+      div {
+        > :first-child {
+          margin-left: auto;
+          margin-right: 0;
+        }
+      }
       p {
-        margin-top: var(--goa-space-2xs);
-        font-size: 16px;
-        font-weight: 400;
-        line-height: 24px;
-        color: rgb(51, 51, 51);
-        letter-spacing: 0em;
-        text-align: left;
-        text-wrap: wrap;
+        padding-left: var(--goa-space-2xl);
+        padding-right: 0;
       }
     }
     & > * {
