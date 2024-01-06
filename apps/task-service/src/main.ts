@@ -127,7 +127,7 @@ const initializeApp = async (): Promise<express.Application> => {
         {
           serviceId: adspId`urn:ads:platform:comment-service`,
           configuration: {
-            COMMENT_TOPIC_TYPE_ID: {
+            [COMMENT_TOPIC_TYPE_ID]: {
               id: COMMENT_TOPIC_TYPE_ID,
               name: 'Task comments',
               adminRoles: [`${serviceId}:${TaskServiceRoles.Admin}`],

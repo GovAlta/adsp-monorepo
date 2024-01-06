@@ -23,7 +23,7 @@ class CommentServiceImpl implements CommentService {
         {
           typeId: this.topicTypeId,
           resourceId: urn,
-          name: `Task ${task.name} (ID: ${task.id}) comments`,
+          name: `Task (${task.id})`,
           description: `Topic created by task service for comments related to task ${task.name} (ID: ${task.id}) in queue ${task.queue.namespace}:${task.queue.name}.`,
         },
         {
@@ -33,7 +33,11 @@ class CommentServiceImpl implements CommentService {
       );
       this.logger.info(`Created comment topic for task (${urn}) at ${data.urn}.`);
     } catch (err) {
-      this.logger.error(`Failed to create comment topic for task (${urn}): ${err}`);
+      this.logger.error(
+        `Failed to create comment topic for task (${urn}): ${
+          axios.isAxiosError(err) ? err.response?.data?.errorMessage || err.message : err
+        }`
+      );
     }
   }
 }
