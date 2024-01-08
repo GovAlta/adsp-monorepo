@@ -3,7 +3,7 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 export interface Comment {
   topicId: number;
   id: number;
-  title: string;
+  title?: string;
   content: string;
   createdBy: {
     id: string;

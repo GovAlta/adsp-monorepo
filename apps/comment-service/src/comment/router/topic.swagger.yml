@@ -373,7 +373,6 @@ components:
               content:
                 type: string
                 description: Content of the comment.
-            required: [title]
     responses:
       200:
         description: Request completed successfully.

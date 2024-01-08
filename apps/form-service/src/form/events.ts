@@ -6,6 +6,7 @@ export const FORM_DELETED = 'form-deleted';
 
 export const FORM_LOCKED = 'form-locked';
 export const FORM_UNLOCKED = 'form-unlocked';
+export const FORM_SET_TO_DRAFT = 'form-to-draft';
 export const FORM_SUBMITTED = 'form-submitted';
 export const FORM_ARCHIVED = 'form-archived';
 
@@ -189,6 +190,22 @@ export const formUnlocked = (user: User, form: FormEntity): DomainEvent => ({
   payload: {
     form: mapForm(form),
     unlockedBy: {
+      id: user.id,
+      name: user.name,
+    },
+  },
+});
+export const formSetToDraft = (user: User, form: FormEntity): DomainEvent => ({
+  name: FORM_SET_TO_DRAFT,
+  timestamp: new Date(),
+  tenantId: form.tenantId,
+  correlationId: form.id,
+  context: {
+    definitionId: form.definition.id,
+  },
+  payload: {
+    form: mapForm(form),
+    toDraftBy: {
       id: user.id,
       name: user.name,
     },

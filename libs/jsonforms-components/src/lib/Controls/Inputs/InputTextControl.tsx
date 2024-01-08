@@ -17,6 +17,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
       disabled={!enabled}
       value={data}
+      width={'100%'}
       placeholder={placeholder}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}

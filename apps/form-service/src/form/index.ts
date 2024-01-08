@@ -4,7 +4,7 @@ import { Logger } from 'winston';
 import { FileService } from '../file';
 import { NotificationService } from '../notification';
 import { scheduleFormJobs } from './jobs';
-import { Repositories } from './repository';
+import { FormSubmissionRepository, Repositories } from './repository';
 import { createFormRouter } from './router';
 
 export * from './roles';
@@ -21,15 +21,31 @@ interface FormMiddlewareProps extends Repositories {
   eventService: EventService;
   notificationService: NotificationService;
   fileService: FileService;
+  formSubmissionRepository: FormSubmissionRepository;
 }
 
 export const applyFormMiddleware = (
   app: Application,
-  { serviceId, logger, formRepository: repository, eventService, notificationService, fileService }: FormMiddlewareProps
+  {
+    serviceId,
+    logger,
+    formRepository: repository,
+    eventService,
+    notificationService,
+    fileService,
+    formSubmissionRepository: submissionRepository,
+  }: FormMiddlewareProps
 ): Application => {
   scheduleFormJobs({ logger, repository, eventService, fileService, notificationService });
 
-  const router = createFormRouter({ serviceId, repository, eventService, notificationService, fileService });
+  const router = createFormRouter({
+    serviceId,
+    repository,
+    eventService,
+    notificationService,
+    fileService,
+    submissionRepository,
+  });
   app.use('/form/v1', router);
 
   return app;
