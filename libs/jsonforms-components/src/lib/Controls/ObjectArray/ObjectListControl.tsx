@@ -349,6 +349,7 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
 
     const controlElement = uischema as ControlElement;
     const isObjectSchema = schema.type === 'object';
+    // eslint-disable-next-line
     const headerCells: any = isObjectSchema ? GenerateRows(TableHeaderCell, schema, path, enabled, cells) : undefined;
     const listTitle = label || uischema.options?.title;
 
