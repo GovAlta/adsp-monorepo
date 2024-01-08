@@ -25,6 +25,7 @@ import {
   ScrollPane,
   MonacoDivTabBody,
   RightAlign,
+  PRE,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -40,8 +41,6 @@ import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
-import { uischema } from './categorization-stepper-nav-buttons';
-import { schema } from './categorization';
 import { PageIndicator } from '@components/Indicator';
 import { ErrorBoundary } from '@components/ErrorBoundary';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
@@ -509,7 +508,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   Save
                 </GoAButton>
                 <GoAButton
-                  testId="form-cancel"
+                  testId="form-editor-cancel"
                   type="secondary"
                   onClick={() => {
                     if (
@@ -527,19 +526,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   }}
                 >
                   Back
-                </GoAButton>
-
-                <GoAButton
-                  type="tertiary"
-                  testId="form-generate"
-                  onClick={() => {
-                    setTempUiSchemaBounced(JSON.stringify(uischema, null, 2));
-                    setDataSchemaBounced(JSON.stringify(schema, null, 2));
-                    setTempUiSchema(JSON.stringify(uischema, null, 2));
-                    setTempDataSchema(JSON.stringify(schema, null, 2));
-                  }}
-                >
-                  Generate multi-step form
                 </GoAButton>
               </GoAButtonGroup>
             </FinalButtonPadding>
@@ -576,7 +562,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </div>
               </Tab>
               <Tab label="Data" data-testid="data-view">
-                {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
+                {data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}
               </Tab>
             </Tabs>
           </FormPreviewContainer>

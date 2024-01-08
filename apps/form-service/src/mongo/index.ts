@@ -5,6 +5,7 @@ import { Repositories } from '../form';
 import { NotificationService } from '../notification';
 import { ConfigurationFormDefinitionRepository } from './definition';
 import { MongoFormRepository } from './form';
+import { MongoFormSubmissionRepository } from './formSubmission';
 
 interface MongoRepositoryProps {
   MONGO_URI: string;
@@ -49,8 +50,10 @@ export const createRepositories = ({
             configurationService
           );
           const formRepository = new MongoFormRepository(definitionRepository, notificationService);
+          const formSubmissionRepository = new MongoFormSubmissionRepository(formRepository);
           resolve({
             formRepository,
+            formSubmissionRepository,
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
             // Possible that express js module doesn't actually export anything for ConnectionStates and
             // type definition is wrong (or intended to be substituted at transpile time... but doesn't happen)

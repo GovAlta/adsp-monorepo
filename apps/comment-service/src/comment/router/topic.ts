@@ -7,7 +7,7 @@ import { commentCreated, commentDeleted, commentUpdated, topicCreated, topicDele
 import { TopicEntity, TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
 import { ServiceRoles } from '../roles';
-import { Topic } from '../types';
+import { Topic, TopicType } from '../types';
 
 interface TopicRouterProps {
   apiId: AdspId;
@@ -16,15 +16,21 @@ interface TopicRouterProps {
   repository: TopicRepository;
 }
 
+function mapTopicType(type: TopicType) {
+  return type ? {
+    id: type.id,
+    name: type.name,
+    adminRoles: type.adminRoles,
+    readerRoles: type.readerRoles,
+    commenterRoles: type.commenterRoles,
+    securityClassification: type.securityClassification,
+  } : null;
+}
+
 function mapTopic(apiId: AdspId, topic: Topic) {
   return topic
     ? {
-        type: topic.type
-          ? {
-              id: topic.type?.id,
-              name: topic.type?.name,
-            }
-          : null,
+        type: mapTopicType(topic.type),
         id: topic.id,
         urn: adspId`${apiId}:/topics/${topic.id}`.toString(),
         name: topic.name,
@@ -45,19 +51,18 @@ export function getTopics(apiId: AdspId, repository: TopicRepository): RequestHa
       const top = topValue ? parseInt(topValue as string) : 10;
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
 
-      if (!isAllowedUser(user, tenantId, [ServiceRoles.Admin, ServiceRoles.TopicSetter])) {
-        throw new UnauthorizedUserError('get topics', user);
-      }
-
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
         tenantId
       );
-      const result = await repository.getTopics(types, top, after as string, {
+      const { page, results } = await repository.getTopics(types, top, after as string, {
         ...criteria,
         tenantIdEquals: tenantId,
       });
 
-      res.send({ ...result, results: result.results.map((r) => mapTopic(apiId, r)) });
+      res.send({
+        page,
+        results: results.filter((r) => r.canRead(user)).map((r) => mapTopic(apiId, r)),
+      });
     } catch (err) {
       next(err);
     }
@@ -123,7 +128,7 @@ export function getTopic(repository: TopicRepository): RequestHandler {
         throw new NotFoundError('topic', topicIdValue);
       }
 
-      if (!entity.canRead(user) && !isAllowedUser(user, tenantId, ServiceRoles.TopicSetter)) {
+      if (!entity.canRead(user) && !isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
         throw new UnauthorizedUserError('get topic', user);
       }
 
@@ -381,8 +386,8 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
     '/topics/:topicId/comments',
     createValidationHandler(
       param('topicId').isInt(),
-      body('title').isString().isLength({ min: 1 }),
-      body('content').isString().isLength({ min: 1 })
+      body('title').optional({ nullable: true }).isString().isLength({ min: 1, max: 255 }),
+      body('content').optional({ nullable: true }).isString().isLength({ min: 1 })
     ),
     getTopic(repository),
     createTopicComment(logger, eventService)

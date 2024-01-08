@@ -16,6 +16,7 @@ import {
   ServiceRoles,
   TopicCreatedEventDefinition,
   TopicDeletedEventDefinition,
+  TopicType,
   TopicUpdatedEventDefinition,
   applyCommentMiddleware,
 } from './comment';
@@ -84,12 +85,11 @@ const initializeApp = async (): Promise<express.Application> => {
         description: 'Topic types with configuration of topic administrator, commenter, and reader roles.',
         schema: CommentConfigurationSchema,
       },
-      configurationConverter: (config, tenantId) =>
-        Object.entries(config || {}).reduce(
+      combineConfiguration: (tenant: Record<string, TopicType>, core: Record<string, TopicType>, tenantId) =>
+        Object.entries({ ...core, ...tenant }).reduce(
           (entities, [id, type]) => ({ ...entities, [id]: new TopicTypeEntity(tenantId, type) }),
           {} as Record<string, TopicTypeEntity>
         ),
-      combineConfiguration: (tenant) => tenant,
       enableConfigurationInvalidation: true,
       values: [ServiceMetricsValueDefinition],
     },
@@ -112,7 +112,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(
     '/comment',
     metricsHandler,
-    passport.authenticate(['tenant'], { session: false }),
+    passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
     configurationHandler
   );

@@ -54,6 +54,7 @@ describe('upload', () => {
     deleted: false,
     scanned: true,
     size: 123,
+    mimeType: 'application/pdf',
     created: new Date(),
     createdBy: { id: 'tester', name: 'Tester' },
   });

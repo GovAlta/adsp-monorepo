@@ -1,5 +1,5 @@
 import { Channel, NotificationType } from '@abgov/adsp-service-sdk';
-import { FORM_CREATED, FORM_LOCKED, FORM_SUBMITTED, FORM_UNLOCKED } from './events';
+import { FORM_CREATED, FORM_LOCKED, FORM_SUBMITTED, FORM_UNLOCKED, FORM_SET_TO_DRAFT } from './events';
 
 const FORM_EVENT_NAMESPACE = 'form-service';
 
@@ -68,6 +68,26 @@ export const FormStatusNotificationType: NotificationType = {
           subject: '{{ event.payload.form.definition.name }} unlocked',
           body:
             'Your draft {{ event.payload.form.definition.name }} form has been unlocked. Go to {{ event.payload.form.formDraftUrl }} ' +
+            'to get back to your draft.',
+        },
+      },
+    },
+    {
+      namespace: FORM_EVENT_NAMESPACE,
+      name: FORM_SET_TO_DRAFT,
+      templates: {
+        email: {
+          subject: '{{ event.payload.form.definition.name }} set to draft',
+          body: `
+<section>
+  <p>Your {{ event.payload.form.definition.name }} form has been set to draft.</p>
+  <p>Click <a href="{{ event.payload.form.formDraftUrl }}">here</a> to get back to your draft.</p>
+</section>`,
+        },
+        sms: {
+          subject: '{{ event.payload.form.definition.name }} unlocked',
+          body:
+            'Your {{ event.payload.form.definition.name }} form has been set to draft, making it editable. Go to {{ event.payload.form.formDraftUrl }} ' +
             'to get back to your draft.',
         },
       },

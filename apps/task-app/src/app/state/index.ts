@@ -1,3 +1,4 @@
+export * from './comment.slice';
 export * from './config.slice';
 export * from './feedback.slice';
 export * from './file.slice';
