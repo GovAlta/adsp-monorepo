@@ -278,3 +278,76 @@ Then(
     configurationObj.exportServiceInfoBubble(namespace, name).invoke('text').should('contain', desc);
   }
 );
+
+Given('a tenant admin user is on configuration revisions page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Configuration', 4000);
+  commonObj.serviceTab('Configuration', 'Revisions').click();
+  cy.wait(3000);
+});
+
+When('the user selects {string} from select definition dropdown', function (definition) {
+  configurationObj.selectDefinitionDropdown().shadow().find('goa-input').click({ force: true });
+  configurationObj.selectDefinitionDropdown().shadow().find('li').contains(definition).click({ force: true });
+  cy.wait(1000);
+});
+
+Then('the user views a list of configuration revisions with a latest revision', function () {
+  configurationObj.revisionTableWithHeaderTitles().should('be.visible');
+  configurationObj.revisionTableLatestBadge().should('be.visible');
+});
+
+When('the user clicks add icon of the latest revision', function () {
+  configurationObj.revisionTableAddIconForLatestRevision().shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});
+
+Then('the user views the revision creation confirmation modal for {string}', function (definition) {
+  configurationObj.revisionCreationConfirmationModalHeading().should('contain', 'Create a revision for ' + definition);
+});
+
+When('the user clicks Create button in the revision creation confirmation modal', function () {
+  configurationObj.revisionCreationConfirmationModalCreateButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});
+
+Then('the user views a new revision is created with the current timestamp', function () {
+  configurationObj
+    .revisionTableLatestRevisionDate()
+    .invoke('text')
+    .then((revDateTimeString) => {
+      const revDateTimeStringArray = revDateTimeString.split('at');
+      const revDate = revDateTimeStringArray[0].trim();
+      const revTime = revDateTimeStringArray[1].trim();
+      const revDateTime = new Date(revDate + ', ' + revTime);
+      Cypress.log({
+        name: 'Revision time : ',
+        message: revDateTime.toLocaleString(),
+      });
+      const nowDateTime = new Date();
+      Cypress.log({
+        name: 'Current time : ',
+        message: nowDateTime.toLocaleString(),
+      });
+      const millisecondDifference = nowDateTime.getTime() - revDateTime.getTime();
+      expect(millisecondDifference).to.be.lt(90000); // Revision time is less than 90 seconds ago
+    });
+});
+
+Then('the user views the details of the latest revision and the second last revision are the same', function () {
+  // Get the latest revision details
+  configurationObj
+    .revisionTableLatestRevisionNumber()
+    .invoke('text')
+    .then((revNumberString) => {
+      const latestRevNumber = Number(revNumberString);
+    });
+  // Get the second last revision details
+
+  // Compare
+});

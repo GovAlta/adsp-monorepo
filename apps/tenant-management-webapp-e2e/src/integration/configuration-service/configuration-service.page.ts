@@ -108,5 +108,63 @@ class ConfigurationServicePage {
       `//h3[text()="${namespace}"]/following-sibling::div//div[text()="${name}"]/parent::div/parent::div/following-sibling::div//div[@class="overflow-wrap bubble-border"]`
     );
   }
+
+  selectDefinitionDropdown() {
+    return cy.xpath('//goa-dropdown[@data-testid="configuration-select-definition-dropdown"]');
+  }
+
+  selectDefinitionDropdownItems() {
+    return cy.xpath('//goa-dropdown[@data-testid="configuration-select-definition-dropdown"]/goa-dropdown-item');
+  }
+
+  revisionTableWithHeaderTitles() {
+    return cy.xpath(
+      '//table/thead/tr/th[@id="revision number"]/following-sibling::th[@id="revision date"]/following-sibling::th[@id="action"]/ancestor::table'
+    );
+  }
+
+  revisionTableLatestBadge() {
+    return cy.xpath('//tbody//goa-badge[@content="latest"]');
+  }
+
+  revisionTableAddIconForLatestRevision() {
+    return cy.xpath('//tbody/tr[1]/td/div/goa-icon-button[@icon="add"]');
+  }
+
+  revisionCreationConfirmationModalHeading() {
+    return cy.xpath('//goa-modal[@open="true"]//div[@slot="heading"]');
+  }
+
+  revisionCreationConfirmationModalCreateButton() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[@data-testid="revision-create-button"]');
+  }
+
+  revisionTableLatestRevisionDate() {
+    return cy.xpath('//tbody//goa-badge[@content="latest"]/ancestor::tr/td[2]');
+  }
+
+  revisionTableRevisionDetails() {
+    return cy.xpath(
+      '//tbody//*[@class="number-badge"]/ancestor::tr/following-sibling::tr/td[@class="revision-details"]/div'
+    );
+  }
+
+  revisionTableEyeIcon(revNumber) {
+    return cy.xpath(
+      `//tbody//*[@class="number-badge" and text()="${revNumber}"]/ancestor::td/following-sibling::td//goa-icon-button[@icon="eye"]`
+    );
+  }
+
+  revisionTableEyeOffIcon(revNumber) {
+    return cy.xpath(
+      `//tbody//*[@class="number-badge" and text()="${revNumber}"]/ancestor::td/following-sibling::td//goa-icon-button[@icon="eye-off"]`
+    );
+  }
+
+  revisionTableLatestRevisionNumber() {
+    return cy.xpath(
+      '//tbody//*[@class="number-badge"]//goa-badge[@content="latest"]/ancestor::div[@class="number-badge"]'
+    );
+  }
 }
 export default ConfigurationServicePage;
