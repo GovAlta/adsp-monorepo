@@ -18,6 +18,68 @@ export const EditorPadding = styled.div`
   }
 `;
 
+export const FakeButton = styled.div`
+  height: 42px;
+`;
+
+export const InlinePadding = styled.div`
+  position: fixed;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  .triangle {
+    margin-top: 5px;
+    margin-bottom: -10px;
+    z-index: 3;
+  }
+  .bubble-helper {
+    margin-bottom: -11px;
+    display: flex;
+    flex-direction: column;
+  }
+  .triangle-width {
+    width: 25px;
+  }
+`;
+
+export const InfoCirclePadding = styled.div`
+  margin-top: 8px;
+`;
+
+export const ViewBox = styled.div`
+  position: fixed;
+  z-index: 2;
+  margin-top: -20px;
+  .bubble-border {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 10px 12px 8px 12px;
+    margin-right: 10px;
+    gap: 8px;
+
+    width: 372px;
+    height: 100%;
+    left: 0px;
+    top: 12px;
+
+    background: #ffffff;
+    box-shadow: 0px -1px 6px rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+  }
+
+  .overflow-wrap {
+    overflow-wrap: anywhere;
+  }
+
+  .small-close-button {
+    width: 10px;
+    margin-left: auto;
+    margin-top: -10px;
+  }
+`;
+
 export const RightAlign = styled.div`
   margin-top: 8px;
   margin-bottom: 24px;
@@ -138,6 +200,10 @@ export const FormEditor = styled.div`
   .hr-resize-bottom {
     margin-bottom: var(--goa-spacing-2xs);
     margin-top: var(--goa-spacing-xl);
+  }
+
+  .info-circle {
+    margin: 5px 0 0 5px;
   }
 `;
 

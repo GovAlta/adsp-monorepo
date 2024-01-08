@@ -43,6 +43,10 @@ export const formSchema = new Schema(
         description: { type: String, required: false },
       },
     ],
+    submissionRecords: {
+      type: Boolean,
+      required: false,
+    },
     submitted: Date,
     lastAccessed: { type: Date, required: true },
     status: {

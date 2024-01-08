@@ -31,6 +31,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     formDraftUrlTemplate: entity.formDraftUrlTemplate,
     dataSchema: entity.dataSchema,
     dispositionStates: entity.dispositionStates,
+    submissionRecords: entity.submissionRecords,
   };
 }
 
@@ -49,6 +50,7 @@ export function mapForm(
     formDraftUrl: entity.formDraftUrl,
     anonymousApplicant: entity.anonymousApplicant,
     dispositionStates: entity.dispositionStates,
+    submissionRecords: entity.submissionRecords,
     status: entity.status,
     created: entity.created,
     createdBy: entity.createdBy,

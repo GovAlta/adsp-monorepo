@@ -22,6 +22,7 @@ describe('form router', () => {
     anonymousApply: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
+    submissionRecords: false,
     clerkRoles: [],
     dataSchema: null,
   });

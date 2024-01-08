@@ -5,7 +5,6 @@ import { vanillaCells } from '@jsonforms/vanilla-renderers';
 import { GoARenderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { FormDefinition } from '@store/form/model';
-
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -26,6 +25,10 @@ import {
   MonacoDivTabBody,
   RightAlign,
   PRE,
+  InfoCirclePadding,
+  InlinePadding,
+  ViewBox,
+  FakeButton,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -37,7 +40,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useHistory, useParams } from 'react-router-dom';
-import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
@@ -48,6 +51,10 @@ import DataTable from '@components/DataTable';
 import { DispositionItems } from './dispositionItems';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditDispositionModal } from './addEditDispositionModal';
+import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
+import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
+import { ReactComponent as TriangleLeft } from '@assets/icons/TriangleLeft.svg';
+import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -59,7 +66,8 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.clerkRoles) !== JSON.stringify(tempNext?.clerkRoles) ||
     JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
     JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
-    JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema)
+    JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
+    JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords)
   );
 };
 
@@ -86,6 +94,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify({}, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
+  const [viewSubmissionInclineHelp, setViewSubmissionInclineHelp] = useState<boolean>(false);
 
   const [data, setData] = useState<unknown>({});
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
@@ -423,40 +432,120 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </ScrollPane>
                 </MonacoDivTabBody>
               </Tab>
-              <Tab label="Disposition states" data-testid="disposition-states">
+              <Tab label="Submission configuration" data-testid="disposition-states">
                 <div style={{ height: EditorHeight + 7 }}>
-                  <RightAlign>
-                    <GoAButton
-                      type="secondary"
-                      testId="Add state"
-                      onClick={() => {
-                        setNewDisposition(true);
+                  <FlexRow>
+                    <GoACheckbox
+                      name="submission-records"
+                      key="submission-records"
+                      checked={definition.submissionRecords}
+                      testId="submission-records"
+                      onChange={() => {
+                        const records = definition.submissionRecords ? false : true;
+                        console.log(JSON.stringify(records) + '<records');
+                        console.log(JSON.stringify(definition.submissionRecords) + '<definition.submissionRecords');
+                        setDefinition({ ...definition, submissionRecords: records });
                       }}
                     >
-                      Add state
-                    </GoAButton>
-                  </RightAlign>
-                  <div style={{ overflowY: 'auto', height: EditorHeight - 23 }}>
-                    <DataTable>
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Description</th>
-                          <th>Order</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {definition && (
-                          <DispositionItems
-                            openModalFunction={openModalFunction}
-                            updateDispositions={updateDispositionFunction}
-                            openDeleteModalFunction={openDeleteModalFunction}
-                            dispositions={definition.dispositionStates}
-                          />
-                        )}
-                      </tbody>
-                    </DataTable>
+                      Generates form submission records on submit
+                    </GoACheckbox>
+                    <div
+                      className="info-circle"
+                      onClick={() => {
+                        setViewSubmissionInclineHelp(viewSubmissionInclineHelp ? false : true);
+                      }}
+                    >
+                      <InlinePadding>
+                        <InfoCirclePadding>
+                          <InfoCircle />
+                        </InfoCirclePadding>
+                        <div className="triangle-width">
+                          {viewSubmissionInclineHelp && (
+                            <div className="bubble-helper">
+                              <div className="triangle">
+                                <TriangleLeft />
+                              </div>
+                              <Rectangle />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          {viewSubmissionInclineHelp && (
+                            <ViewBox>
+                              <div className="overflow-wrap bubble-border">
+                                {definition.submissionRecords ? (
+                                  <div>
+                                    Forms of this type will create submission records. This submission record can be
+                                    used for processing of the application and to record an adjudication decision
+                                    (disposition state).
+                                  </div>
+                                ) : (
+                                  <div>
+                                    Forms of this type will not create a submission record when submitted. Applications
+                                    are responsible for managing how forms are processed after they are submitted.
+                                  </div>
+                                )}
+                                <div
+                                  className="small-close-button"
+                                  onClick={() => {
+                                    setViewSubmissionInclineHelp(false);
+                                  }}
+                                >
+                                  <SmallClose />
+                                </div>
+                              </div>
+                            </ViewBox>
+                          )}
+                        </div>
+                      </InlinePadding>
+                    </div>
+                  </FlexRow>
+
+                  <div style={{ padding: '10px', background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
+                    <RightAlign>
+                      {definition.submissionRecords ? (
+                        <GoAButton
+                          type="secondary"
+                          testId="Add state"
+                          disabled={!definition.submissionRecords}
+                          onClick={() => {
+                            setNewDisposition(true);
+                          }}
+                        >
+                          Add state
+                        </GoAButton>
+                      ) : (
+                        <FakeButton />
+                      )}
+                    </RightAlign>
+                    <div
+                      style={{
+                        overflowY: 'auto',
+                        height: EditorHeight - 93,
+                      }}
+                    >
+                      <DataTable>
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Order</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {definition && (
+                            <DispositionItems
+                              openModalFunction={openModalFunction}
+                              updateDispositions={updateDispositionFunction}
+                              openDeleteModalFunction={openDeleteModalFunction}
+                              dispositions={definition.dispositionStates}
+                              submissionRecords={definition.submissionRecords}
+                            />
+                          )}
+                        </tbody>
+                      </DataTable>
+                    </div>
                   </div>
                 </div>
               </Tab>
