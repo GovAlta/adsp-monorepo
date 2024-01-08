@@ -4,8 +4,6 @@ import {
   MaterialAllOfRenderer,
   materialAnyOfControlTester,
   MaterialAnyOfRenderer,
-  MaterialArrayControlRenderer,
-  materialArrayControlTester,
   materialObjectControlTester,
   MaterialObjectRenderer,
   materialOneOfControlTester,

@@ -2,7 +2,7 @@ import React from 'react';
 import { ControlElement, createDefaultValue, JsonSchema, ArrayTranslations } from '@jsonforms/core';
 import { GoAButton } from '@abgov/react-components-new';
 
-export interface MaterialTableToolbarProps {
+export interface ObjectArrayToolbarProps {
   numColumns: number;
   errors: string;
   label: string;
@@ -12,6 +12,7 @@ export interface MaterialTableToolbarProps {
   rootSchema: JsonSchema;
   enabled: boolean;
   translations: ArrayTranslations;
+  // eslint-disable-next-line
   addItem(path: string, value: any): () => void;
 }
 
@@ -25,7 +26,7 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
   enabled,
   translations,
   rootSchema,
-}: MaterialTableToolbarProps) {
+}: ObjectArrayToolbarProps) {
   return (
     <>
       {/* Note: Paul 2024-01-05: need to add the GoATooltip after the upgrade of the ui components */}

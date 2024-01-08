@@ -28,8 +28,10 @@ const extractScopesFromUISchema = (uischema: any): string[] => {
   const scopes: string[] = [];
 
   if (uischema?.elements) {
+    // eslint-disable-next-line
     uischema?.elements?.forEach((element: any) => {
       if (element?.elements) {
+        // eslint-disable-next-line
         element?.elements?.forEach((internalElement: any) => {
           if (internalElement?.scope) {
             scopes.push(internalElement?.scope);
@@ -177,18 +179,21 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
   };
   return (
     <>
-      {(uischema as unknown as any)?.elements?.map((element) => {
-        return (
-          <JsonFormsDispatch
-            schema={schema}
-            uischema={element}
-            path={rowPath}
-            enabled={enabled}
-            renderers={renderers}
-            cells={cells}
-          />
-        );
-      })}
+      {
+        // eslint-disable-next-line
+        (uischema as unknown as any)?.elements?.map((element) => {
+          return (
+            <JsonFormsDispatch
+              schema={schema}
+              uischema={element}
+              path={rowPath}
+              enabled={enabled}
+              renderers={renderers}
+              cells={cells}
+            />
+          );
+        })
+      }
       <JsonFormsDispatch
         schema={schema}
         uischema={uiSchemaElementsForNotDefined}
@@ -265,6 +270,7 @@ interface TableRowsProp {
   path: string;
   schema: JsonSchema;
   uischema: ControlElement;
+  //eslint-disable-next-line
   config?: any;
   enabled: boolean;
   cells?: JsonFormsCellRendererRegistryEntry[];
@@ -322,7 +328,9 @@ const TableRows = ({
   );
 };
 
+// eslint-disable-next-line
 export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithDeleteDialogSupport, any> {
+  // eslint-disable-next-line
   addItem = (path: string, value: any) => this.props.addItem(path, value);
   render() {
     const {

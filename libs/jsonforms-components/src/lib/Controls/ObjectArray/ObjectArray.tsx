@@ -27,10 +27,13 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
     [setOpen, setPath, setRowData]
   );
   const deleteCancel = useCallback(() => setOpen(false), [setOpen]);
+
+  // eslint-disable-next-line
   const deleteConfirm = useCallback(() => {
     const p = path.substring(0, path.lastIndexOf('.'));
     removeItems(p, [rowData])();
     setOpen(false);
+    // eslint-disable-next-line
   }, [setOpen, path, rowData]);
 
   return (
