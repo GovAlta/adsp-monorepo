@@ -8,7 +8,7 @@ class FormPage {
   }
 
   addDefinitionModalCancelButton() {
-    return cy.get('[data-testid="form-cancel"]');
+    return cy.get('[data-testid="add-edit-form-cancel"]');
   }
 
   definitionTable() {
@@ -44,7 +44,7 @@ class FormPage {
   }
 
   editorBackButton() {
-    return cy.xpath('//*[@data-testid="form-cancel" and @disabled="false"]');
+    return cy.xpath('//*[@data-testid="form-editor-cancel" and @disabled="false"]');
   }
 
   editorCheckboxesTables() {
