@@ -86,6 +86,8 @@ import {
   FormStepperControl,
   ArrayControlRenderer,
   ArrayControlTester,
+  MultiLineTextControl,
+  MultiLineTextControlTester,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 
@@ -154,6 +156,10 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   {
     tester: materialEnumArrayRendererTester,
     renderer: MaterialEnumArrayRenderer,
+  },
+  {
+    tester: MultiLineTextControlTester,
+    renderer: MultiLineTextControl,
   },
 ];
 
