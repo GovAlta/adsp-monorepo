@@ -18,7 +18,6 @@ import {
 
 interface CommentsViewerProps {
   className?: string;
-  resourceId: string;
 }
 
 function formatTimestamp(value: Moment): string {
