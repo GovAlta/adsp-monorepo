@@ -27,6 +27,7 @@ import {
   PRE,
   FakeButton,
   SubmissionRecordsBox,
+  NegativeMarginSmall,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -461,12 +462,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       <h3>Disposition states</h3>
                       <div>
                         {definition.submissionRecords ? (
-                          <div style={{ marginTop: '-5px' }}>
+                          <NegativeMarginSmall>
                             <InfoCircleWithInlineHelp
                               text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
                               width={450}
                             />
-                          </div>
+                          </NegativeMarginSmall>
                         ) : (
                           <FakeButton />
                         )}

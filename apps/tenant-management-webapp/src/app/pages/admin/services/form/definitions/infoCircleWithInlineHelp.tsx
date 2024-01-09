@@ -2,24 +2,18 @@ import React, { useState } from 'react';
 
 import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
-import { ReactComponent as TriangleLeft } from '@assets/icons/TriangleLeft.svg';
 import { ReactComponent as TriangleRight } from '@assets/icons/TriangleRight.svg';
 import { ReactComponent as RectangleVertical } from '@assets/icons/rectangleVertical.svg';
 import styled from 'styled-components';
 
 export interface InfoCircleWithInlineHelpProps {
   text: string;
-  faceLeft?: boolean;
   width?: number;
 }
 
-export const InfoCircleWithInlineHelp = ({
-  text,
-  faceLeft,
-  width = 320,
-}: InfoCircleWithInlineHelpProps): JSX.Element => {
+export const InfoCircleWithInlineHelp = ({ text, width = 320 }: InfoCircleWithInlineHelpProps): JSX.Element => {
   const [viewSubmissionInclineHelp, setViewSubmissionInclineHelp] = useState<boolean>(false);
-  console.log(JSON.stringify(faceLeft) + '<faceleft');
+
   return (
     <div
       className="info-circle"
@@ -27,15 +21,17 @@ export const InfoCircleWithInlineHelp = ({
         setViewSubmissionInclineHelp(viewSubmissionInclineHelp ? false : true);
       }}
     >
-      <InlinePadding style={{ flexDirection: faceLeft ? 'row-reverse' : 'row' }}>
+      <InlinePadding>
         <InfoCirclePadding>
           <InfoCircle />
         </InfoCirclePadding>
         <div className="triangle-width">
           {viewSubmissionInclineHelp && (
             <div className="bubble-helper">
-              <div className="triangle">{faceLeft ? <TriangleLeft /> : <TriangleRight />}</div>
-              <div style={{ marginLeft: '-6px', marginTop: '-1px', zIndex: 100000 }}>
+              <div className="triangle">
+                <TriangleRight />
+              </div>
+              <div className="rectangle">
                 <RectangleVertical />
               </div>
             </div>
@@ -43,9 +39,9 @@ export const InfoCircleWithInlineHelp = ({
         </div>
         <div>
           {viewSubmissionInclineHelp && (
-            <ViewBox style={{ marginLeft: faceLeft ? '-440px' : '0' }}>
+            <ViewBox>
               <div className="overflow-wrap bubble-border" style={{ width: `${width}px` }}>
-                <div style={{ fontSize: '14px', lineHeight: '19px' }}>{text}</div>
+                <div className="small-text">{text}</div>
                 <div
                   className="small-close-button"
                   onClick={() => {
@@ -67,7 +63,11 @@ export const ViewBox = styled.div`
   position: fixed;
   margin-top: -50px;
 
-  z-index: 2000;
+  .small-text {
+    font-size: 14px;
+    line-height: 19px;
+  }
+
   .bubble-border {
     display: flex;
     flex-direction: row;
@@ -109,7 +109,12 @@ export const InlinePadding = styled.div`
   .triangle {
     margin-top: -4px;
     margin-bottom: -14px;
-    z-index: 10000;
+    z-index: 10;
+  }
+  .rectangle {
+    margin-left: -6px;
+    margin-rop: -1px;
+    z-index: 12;
   }
   .bubble-helper {
     margin-bottom: -11px;
