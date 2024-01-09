@@ -54,9 +54,7 @@ import {
   materialCategorizationTester,
   MaterialGroupLayout,
   materialGroupTester,
-  MaterialHorizontalLayout,
   materialHorizontalLayoutTester,
-  MaterialVerticalLayout,
   materialVerticalLayoutTester,
 } from '@jsonforms/material-renderers';
 import {
@@ -88,7 +86,7 @@ import {
   ArrayControlTester,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
-
+import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
   {
@@ -105,6 +103,7 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: materialIntegerControlTester, renderer: MaterialIntegerControl },
   { tester: materialNumberControlTester, renderer: MaterialNumberControl },
   { tester: GoATextControlTester, renderer: GoAInputTextControl },
+
   { tester: materialDateTimeControlTester, renderer: MaterialDateTimeControl },
   { tester: materialDateControlTester, renderer: MaterialDateControl },
   { tester: materialTimeControlTester, renderer: MaterialTimeControl },
@@ -129,9 +128,9 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: materialGroupTester, renderer: MaterialGroupLayout },
   {
     tester: materialHorizontalLayoutTester,
-    renderer: MaterialHorizontalLayout,
+    renderer: GoAHorizontalLayout,
   },
-  { tester: materialVerticalLayoutTester, renderer: MaterialVerticalLayout },
+  { tester: materialVerticalLayoutTester, renderer: GoAVerticalLayout },
   {
     tester: materialCategorizationTester,
     renderer: MaterialCategorizationLayout,
