@@ -243,10 +243,10 @@ export class FormEntity implements Form {
 
     const id = uuidv4();
 
-    // if (this.dispositionStates.length > 0) {
-    // If disposition states exist, create a form submission record
-    await FormSubmissionEntity.create(user, submissionRepository, this, id);
-    //}
+    if (this.dispositionStates.length > 0) {
+      // If disposition states exist, create a form submission record
+      await FormSubmissionEntity.create(user, submissionRepository, this, id);
+    }
 
     return await this.repository.save(this);
   }

@@ -34,7 +34,7 @@ export interface FormSubmissionTenant {
   formData: Record<string, unknown>;
   formFiles: Record<string, AdspId>;
   created: Date;
-  createdBy: string;
+  createdBy: FormSubmissionCreatedBy;
   updatedBy: string;
   updateDateTime: Date;
   submissionStatus: string;
@@ -42,13 +42,14 @@ export interface FormSubmissionTenant {
 }
 
 export interface FormSubmissionCriteria {
+  formIdEquals: string;
   tenantIdEquals?: AdspId;
   definitionIdEquals?: string;
-  statusEquals?: string;
+  submissionStatusEquals?: string;
   createDateBefore?: Date;
   createDateAfter?: Date;
-  updateDateTime?: Date;
   dispositionStatusEquals?: string;
-  dispositionDateEquals?: Date;
+  dispositionDateBefore?: Date;
+  dispositionDateAfter?: Date;
   createdByIdEquals?: string;
 }

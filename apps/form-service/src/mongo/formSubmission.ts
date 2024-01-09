@@ -16,6 +16,10 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     const skip = decodeAfter(after);
     const query: Record<string, unknown> = {};
 
+    if (criteria?.formIdEquals) {
+      query.formId = criteria?.formIdEquals;
+    }
+
     if (criteria?.tenantIdEquals) {
       query.tenantId = criteria.tenantIdEquals.toString();
     }
@@ -24,8 +28,8 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       query.formDefinitionId = criteria?.definitionIdEquals;
     }
 
-    if (criteria?.statusEquals) {
-      query.status = criteria.statusEquals;
+    if (criteria?.submissionStatusEquals) {
+      query.status = criteria.submissionStatusEquals;
     }
 
     if (criteria?.createDateBefore) {
@@ -36,16 +40,16 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       query.created = { $gt: new Date(criteria.createDateAfter).toISOString() };
     }
 
-    if (criteria?.updateDateTime) {
-      query.updateDateTime = { $lte: new Date(criteria.updateDateTime).toISOString() };
-    }
-
     if (criteria?.createdByIdEquals) {
       query['createdBy.name'] = criteria.createdByIdEquals;
     }
 
-    if (criteria?.dispositionDateEquals) {
-      query['disposition.date'] = { $lte: new Date(criteria.dispositionDateEquals).toISOString() };
+    if (criteria?.dispositionDateBefore) {
+      query['disposition.date'] = { $lt: new Date(criteria.dispositionDateBefore).toISOString() };
+    }
+
+    if (criteria?.dispositionDateAfter) {
+      query['disposition.date'] = { $gt: new Date(criteria?.dispositionDateAfter).toISOString() };
     }
 
     if (criteria?.dispositionStatusEquals) {

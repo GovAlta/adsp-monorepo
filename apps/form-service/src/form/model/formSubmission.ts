@@ -5,6 +5,7 @@ import { FormServiceRoles } from '../roles';
 import { FormDisposition, FormSubmission, FormSubmissionCreatedBy } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
+// Testing purposes only until update form disposition CS-2469 is completed
 export const FormDepositionDefault: FormDisposition = {
   id: uuidv4(),
   status: 'rejected',
@@ -44,7 +45,7 @@ export class FormSubmissionEntity implements FormSubmission {
       formId: form.id,
       tenantId: form.tenantId,
       submissionStatus: '',
-      disposition: FormDepositionDefault,
+      disposition: null, //  FormDepositionDefault,
     });
 
     return await repository.save(formSubmission);

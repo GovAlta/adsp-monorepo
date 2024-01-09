@@ -86,7 +86,7 @@ export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmiss
     formData: entity.formData,
     formFiles: entity.formFiles,
     created: entity.created,
-    createdBy: entity.createdBy.name,
+    createdBy: entity.createdBy,
     submissionStatus: entity.submissionStatus || '',
     disposition: entity.disposition,
     updateDateTime: entity.updatedDateTime,
@@ -158,8 +158,9 @@ export function findFormSubmissions(repository: FormSubmissionRepository): Reque
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
+      const { formId } = req.params;
       const { top: topValue, after, criteria: criteriaValue } = req.query;
-      const top = topValue ? parseInt(topValue as string) : 10;
+      const top = topValue ? parseInt(topValue as string) : 1;
       const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin)) {
@@ -169,6 +170,7 @@ export function findFormSubmissions(repository: FormSubmissionRepository): Reque
       if (user.tenantId) {
         criteria.tenantIdEquals = user.tenantId;
       }
+      criteria.formIdEquals = formId;
 
       const { results, page } = await repository.find(top, after as string, criteria);
 
