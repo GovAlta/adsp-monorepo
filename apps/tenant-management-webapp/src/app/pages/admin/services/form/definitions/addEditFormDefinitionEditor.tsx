@@ -440,8 +440,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         testId="submission-records"
                         onChange={() => {
                           const records = definition.submissionRecords ? false : true;
-                          console.log(JSON.stringify(records) + '<records');
-                          console.log(JSON.stringify(definition.submissionRecords) + '<definition.submissionRecords');
                           setDefinition({ ...definition, submissionRecords: records });
                         }}
                       >
