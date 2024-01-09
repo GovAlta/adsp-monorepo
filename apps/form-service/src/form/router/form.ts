@@ -441,14 +441,24 @@ export function createFormRouter({
         .optional()
         .custom(async (value) => {
           const criteria = JSON.parse(value);
-          if (criteria?.lastAccessedBefore !== undefined) {
+          if (criteria?.createDateBefore !== undefined) {
             if (!validator.isISO8601(criteria?.createDateBefore)) {
               throw new InvalidOperationError('createDateBefore requires ISO-8061 date string.');
             }
           }
-          if (criteria?.lastAccessedAfter !== undefined) {
+          if (criteria?.createDateAfter !== undefined) {
             if (!validator.isISO8601(criteria?.createDateAfter)) {
-              throw new InvalidOperationError('lastAccessedBefore requires ISO-8061 date string.');
+              throw new InvalidOperationError('createDateAfter requires ISO-8061 date string.');
+            }
+          }
+          if (criteria?.dispositionDateBefore !== undefined) {
+            if (!validator.isISO8601(criteria?.dispositionDateBefore)) {
+              throw new InvalidOperationError('dispositionDateBefore requires ISO-8061 date string.');
+            }
+          }
+          if (criteria?.dispositionDateAfter !== undefined) {
+            if (!validator.isISO8601(criteria?.dispositionDateAfter)) {
+              throw new InvalidOperationError('dispositionDateAfter requires ISO-8061 date string.');
             }
           }
         })
