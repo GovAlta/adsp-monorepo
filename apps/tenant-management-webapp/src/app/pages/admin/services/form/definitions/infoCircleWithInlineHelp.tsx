@@ -4,7 +4,7 @@ import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { ReactComponent as TriangleLeft } from '@assets/icons/TriangleLeft.svg';
 import { ReactComponent as TriangleRight } from '@assets/icons/TriangleRight.svg';
-import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
+import { ReactComponent as RectangleVertical } from '@assets/icons/rectangleVertical.svg';
 import styled from 'styled-components';
 
 export interface InfoCircleWithInlineHelpProps {
@@ -35,7 +35,9 @@ export const InfoCircleWithInlineHelp = ({
           {viewSubmissionInclineHelp && (
             <div className="bubble-helper">
               <div className="triangle">{faceLeft ? <TriangleLeft /> : <TriangleRight />}</div>
-              <Rectangle />
+              <div style={{ marginLeft: '-6px', marginTop: '-1px', zIndex: 100000 }}>
+                <RectangleVertical />
+              </div>
             </div>
           )}
         </div>
@@ -79,7 +81,7 @@ export const ViewBox = styled.div`
     left: 0px;
     top: 12px;
 
-    z-index: 2000;
+    z-index: 3;
 
     background: #ffffff;
     background-color: #ffffff;
@@ -107,12 +109,12 @@ export const InlinePadding = styled.div`
   .triangle {
     margin-top: -4px;
     margin-bottom: -14px;
-    z-index: 3;
+    z-index: 10000;
   }
   .bubble-helper {
     margin-bottom: -11px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
   }
   .triangle-width {
     width: 25px;
