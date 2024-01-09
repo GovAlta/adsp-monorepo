@@ -2,7 +2,15 @@ import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-
 import { FormEntity } from '.';
 import { FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDeposition, FormSubmission } from '../types';
+import { FormDisposition, FormSubmission, FormSubmissionCreatedBy } from '../types';
+import { v4 as uuidv4 } from 'uuid';
+
+export const FormDepositionDefault: FormDisposition = {
+  id: uuidv4(),
+  status: 'rejected',
+  reason: 'bad data',
+  date: new Date(),
+};
 
 export class FormSubmissionEntity implements FormSubmission {
   id: string;
@@ -12,11 +20,11 @@ export class FormSubmissionEntity implements FormSubmission {
   formData: Record<string, unknown>;
   formFiles: Record<string, AdspId>;
   created: Date;
-  createdBy: string;
+  createdBy: FormSubmissionCreatedBy;
   updatedBy: string;
-  updateDateTime: Date;
+  updatedDateTime: Date;
   submissionStatus: string;
-  deposition: FormDeposition;
+  disposition: FormDisposition;
 
   static async create(
     user: User,
@@ -27,39 +35,34 @@ export class FormSubmissionEntity implements FormSubmission {
     const formSubmission = new FormSubmissionEntity(repository, form, {
       id,
       created: new Date(),
-      createdBy: user.name,
+      createdBy: { id: uuidv4(), name: user.name },
       updatedBy: user.name,
-      updateDateTime: new Date(),
+      updatedDateTime: new Date(),
       formData: form.data,
       formFiles: form.files,
       formDefinitionId: form.definition?.id,
       formId: form.id,
       tenantId: form.tenantId,
-      submissionStatus: form.status,
-      deposition: null,
+      submissionStatus: '',
+      disposition: FormDepositionDefault,
     });
 
     return await repository.save(formSubmission);
   }
 
-  constructor(
-    private repository: FormSubmissionRepository,
-    public form: FormEntity,
-
-    formSubmission: FormSubmission
-  ) {
+  constructor(private repository: FormSubmissionRepository, public form: FormEntity, formSubmission: FormSubmission) {
     this.id = formSubmission.id;
     this.created = formSubmission.created;
     this.createdBy = formSubmission.createdBy;
     this.updatedBy = formSubmission.updatedBy;
-    this.updateDateTime = formSubmission.updateDateTime;
+    this.updatedDateTime = formSubmission.updatedDateTime;
     this.formData = formSubmission.formData || {};
     this.formFiles = formSubmission.formFiles || {};
     this.formDefinitionId = formSubmission.formDefinitionId || '';
     this.formId = formSubmission.formId || '';
     this.tenantId = form.definition?.tenantId;
     this.submissionStatus = formSubmission.submissionStatus || '';
-    this.deposition = formSubmission.deposition || null;
+    this.disposition = formSubmission.disposition || null;
   }
 
   async delete(user: User): Promise<boolean> {

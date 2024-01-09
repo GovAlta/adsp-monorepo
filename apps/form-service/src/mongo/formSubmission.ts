@@ -21,26 +21,35 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     }
 
     if (criteria?.definitionIdEquals) {
-      query.definitionId = criteria?.definitionIdEquals;
+      query.formDefinitionId = criteria?.definitionIdEquals;
     }
 
     if (criteria?.statusEquals) {
       query.status = criteria.statusEquals;
     }
 
+    if (criteria?.createDateBefore) {
+      query.created = { $lt: new Date(criteria.createDateBefore).toISOString() };
+    }
+
+    if (criteria?.createDateAfter) {
+      query.created = { $gt: new Date(criteria.createDateAfter).toISOString() };
+    }
+
     if (criteria?.updateDateTime) {
-      query.updateDateTime = { $lt: criteria.updateDateTime };
+      query.updateDateTime = { $lte: new Date(criteria.updateDateTime).toISOString() };
     }
 
     if (criteria?.createdByIdEquals) {
-      query['createdBy.id'] = criteria.createdByIdEquals;
+      query['createdBy.name'] = criteria.createdByIdEquals;
     }
 
-    if (criteria?.depositionDateEquals) {
-      query['deposition.date'] = criteria.depositionDateEquals;
+    if (criteria?.dispositionDateEquals) {
+      query['disposition.date'] = { $lte: new Date(criteria.dispositionDateEquals).toISOString() };
     }
-    if (criteria?.depositionStatusEquals) {
-      query['deposition.status'] = criteria.depositionStatusEquals;
+
+    if (criteria?.dispositionStatusEquals) {
+      query['disposition.status'] = criteria.dispositionStatusEquals;
     }
 
     return new Promise<FormSubmissionEntity[]>((resolve, reject) => {
@@ -64,6 +73,21 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     return new Promise<FormSubmissionEntity>((resolve, reject) => {
       this.submissionModel
         .findOne({ tenantId: tenantId.toString(), id }, null, { lean: true })
+        .exec(async (err, doc) => {
+          if (err) {
+            reject(err);
+          } else {
+            const entity = doc ? this.fromDoc(doc) : null;
+            resolve(entity);
+          }
+        });
+    });
+  }
+
+  getByFormIdAndSubmissionId(tenantId: AdspId, id: string, formId: string): Promise<FormSubmissionEntity> {
+    return new Promise<FormSubmissionEntity>((resolve, reject) => {
+      this.submissionModel
+        .findOne({ tenantId: tenantId.toString(), formId: formId, id: id }, null, { lean: true })
         .exec(async (err, doc) => {
           if (err) {
             reject(err);
@@ -111,10 +135,10 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       createdBy: entity.createdBy,
       updatedBy: entity.updatedBy,
       submissionStatus: entity.submissionStatus,
-      updateDateTime: entity.updateDateTime,
+      updatedDateTime: entity.updatedDateTime,
       formData: entity.formData,
       formFiles: Object.entries(entity.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
-      deposition: entity.deposition,
+      disposition: entity.disposition,
     };
   }
 
@@ -130,10 +154,10 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       createdBy: doc.createdBy,
       updatedBy: doc.updatedBy,
       submissionStatus: doc.submissionStatus,
-      updateDateTime: doc.updateDateTime,
+      updatedDateTime: doc.updatedDateTime,
       formData: doc.formData,
       formFiles: Object.entries(doc.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
-      deposition: doc.deposition,
+      disposition: doc.disposition,
     });
   };
 }

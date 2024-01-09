@@ -1,13 +1,19 @@
 import { adspId, AdspId, DomainEvent, EventService, isAllowedUser, startBenchmark } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import {
+  createValidationHandler,
+  decodeAfter,
+  InvalidOperationError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { formSubmitted, formUnlocked, formSetToDraft } from '..';
 import { formArchived, formCreated, formDeleted } from '../events';
-import { FormDefinitionEntity, FormEntity } from '../model';
+import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { NotificationService } from '../../notification';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { Form, FormCriteria, FormDefinition } from '../types';
+import { Form, FormCriteria, FormDefinition, FormSubmissionCriteria, FormSubmissionTenant } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -18,6 +24,7 @@ import {
 } from './types';
 import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
+import validator from 'validator';
 
 export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
   return {
@@ -68,6 +75,22 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
     id: entity.id,
     data: entity.data,
     files: Object.entries(entity.files || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
+  };
+}
+export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmissionTenant {
+  return {
+    id: entity.id,
+    formId: entity.formId,
+    definitionId: entity.formDefinitionId,
+    tenantId: entity.tenantId.toString(),
+    formData: entity.formData,
+    formFiles: entity.formFiles,
+    created: entity.created,
+    createdBy: entity.createdBy.name,
+    submissionStatus: entity.submissionStatus || '',
+    disposition: entity.disposition,
+    updateDateTime: entity.updatedDateTime,
+    updatedBy: entity.updatedBy,
   };
 }
 
@@ -129,6 +152,37 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
   };
 }
 
+export function findFormSubmissions(repository: FormSubmissionRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
+      const user = req.user;
+      const { top: topValue, after, criteria: criteriaValue } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 10;
+      const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+
+      if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin)) {
+        throw new UnauthorizedError('You do not have the specified role');
+      }
+
+      if (user.tenantId) {
+        criteria.tenantIdEquals = user.tenantId;
+      }
+
+      const { results, page } = await repository.find(top, after as string, criteria);
+
+      end();
+      res.send({
+        results: results.map((r) => mapFormSubmissionData(r)),
+        page,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function createForm(
   apiId: AdspId,
   repository: FormRepository,
@@ -165,8 +219,8 @@ export function getForm(repository: FormRepository): RequestHandler {
   return async (req, _res, next) => {
     try {
       const end = startBenchmark(req, 'get-entity-time');
-
       const { formId } = req.params;
+
       const form = await repository.get(req.tenant.id, formId);
       if (!form) {
         throw new NotFoundError('form', formId);
@@ -181,6 +235,24 @@ export function getForm(repository: FormRepository): RequestHandler {
   };
 }
 
+export function getFormSubmission(submissionRepository: FormSubmissionRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'get-entity-time');
+      const { formId, submissionId } = req.params;
+
+      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
+      if (!formSubmission) {
+        throw new NotFoundError('formSubmission', submissionId);
+      }
+
+      end();
+      res.send(mapFormSubmissionData(formSubmission));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 export function accessForm(notificationService: NotificationService): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -231,7 +303,7 @@ export function formOperation(
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
-
+      console.log('formOperation submitting');
       const user = req.user;
       const form: FormEntity = req[FORM];
       const request: FormOperations = req.body;
@@ -341,6 +413,45 @@ export function createFormRouter({
       )
     ),
     findForms(apiId, repository)
+  );
+
+  router.get(
+    '/forms/:formId/submissions/:submissionId',
+    createValidationHandler(
+      param('formId').isUUID(),
+      param('submissionId').isUUID(),
+      getFormSubmission(submissionRepository)
+    )
+  );
+
+  router.get(
+    '/forms/:formId/submissions',
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          console.log('afterthis', val);
+          return !isNaN(decodeAfter(val));
+        }),
+      query('criteria')
+        .optional()
+        .custom(async (value) => {
+          const criteria = JSON.parse(value);
+          if (criteria?.lastAccessedBefore !== undefined) {
+            if (!validator.isISO8601(criteria?.createDateBefore)) {
+              throw new InvalidOperationError('createDateBefore requires ISO-8061 date string.');
+            }
+          }
+          if (criteria?.lastAccessedAfter !== undefined) {
+            if (!validator.isISO8601(criteria?.createDateAfter)) {
+              throw new InvalidOperationError('lastAccessedBefore requires ISO-8061 date string.');
+            }
+          }
+        })
+    ),
+    findFormSubmissions(submissionRepository)
   );
   router.post(
     '/forms',

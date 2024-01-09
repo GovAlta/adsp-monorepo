@@ -67,6 +67,17 @@ export const formSchema = new Schema(
   { _id: false }
 );
 
+export const createdBy = {
+  id: {
+    type: String,
+    required: true,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+};
+
 export const formDeposition = {
   id: {
     type: String,
@@ -80,7 +91,7 @@ export const formDeposition = {
     type: String,
     required: true,
   },
-  depositionDate: {
+  date: {
     type: Date,
     required: true,
   },
@@ -118,7 +129,7 @@ export const formSubmissionSchema = new Schema(
       required: true,
     },
     createdBy: {
-      type: String,
+      type: createdBy,
       required: true,
     },
     updatedBy: {
@@ -128,6 +139,10 @@ export const formSubmissionSchema = new Schema(
     updatedDateTime: {
       type: Date,
       required: true,
+    },
+    submissionStatus: {
+      type: String,
+      required: false,
     },
     disposition: { type: formDeposition, required: false },
   },
