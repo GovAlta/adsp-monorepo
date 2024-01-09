@@ -38,7 +38,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
 
   useEffect(() => {
     if (params.taskId !== open?.id) {
-      dispatch(openTask({ taskId: params.taskId }));
+      dispatch(openTask({ namespace: params.namespace, name: params.name, taskId: params.taskId }));
     }
   }, [dispatch, params, open]);
 

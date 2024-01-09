@@ -19,6 +19,7 @@ import {
   taskActions,
   metricsLoadingSelector,
   openTask,
+  loadQueueMetrics,
 } from '../state';
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
 import { TaskPriorityModal } from '../components/TaskPriorityModal';
@@ -48,7 +49,8 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
 
   useEffect(() => {
     dispatch(initializeQueue({ namespace: params.namespace, name: params.name }));
-    dispatch(openTask({}));
+    dispatch(loadQueueMetrics({ namespace: params.namespace, name: params.name }));
+    dispatch(openTask({ namespace: params.namespace, name: params.name }));
   }, [dispatch, params]);
 
   const history = useHistory();

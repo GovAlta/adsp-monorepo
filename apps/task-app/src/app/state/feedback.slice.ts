@@ -1,4 +1,4 @@
-import { createSelector, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
+import { createSelector, createSlice, isRejected } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 import { AppState } from './store';
 import { FeedbackMessage } from './types';
@@ -32,7 +32,7 @@ const feedbackSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addMatcher(isRejectedWithValue, (state, { type, payload, error }) => {
+    builder.addMatcher(isRejected(), (state, { type, payload, error }) => {
       let item: FeedbackMessage;
       if (isFeedbackPayload(payload)) {
         item = payload;
