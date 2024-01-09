@@ -9,6 +9,8 @@ import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
+import { uischema } from './categorization-stepper-nav-buttons';
+import { schema } from './categorization';
 
 import {
   GoATextArea,
@@ -18,6 +20,7 @@ import {
   GoAFormItem,
   GoAButton,
   GoAIcon,
+  GoACheckbox,
 } from '@abgov/react-components-new';
 interface AddEditFormDefinitionProps {
   open: boolean;
@@ -37,6 +40,7 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
   const { url } = useRouteMatch();
   const history = useHistory();
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
+  const [multiForm, setMultiForm] = useState<boolean>(false);
   const [spinner, setSpinner] = useState<boolean>(false);
 
   const definitions = useSelector((state: RootState) => {
@@ -86,7 +90,7 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
-            testId="form-cancel"
+            testId="add-edit-form-cancel"
             type="secondary"
             onClick={() => {
               validators.clear();
@@ -109,6 +113,10 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
                   };
                   if (!validators.checkAll(validations)) {
                     return;
+                  }
+                  if (multiForm) {
+                    definition.dataSchema = schema;
+                    definition.uiSchema = uischema;
                   }
                 }
                 setSpinner(true);
@@ -195,6 +203,21 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
               </HelpText>
             </DescriptionItem>
           </GoAFormItem>
+
+          {!isEdit && (
+            <GoACheckbox
+              name={'populate-form'}
+              key={'populate-form'}
+              ariaLabel={'populate-form-checkbox'}
+              checked={multiForm}
+              testId={'populate-template'}
+              onChange={() => {
+                setMultiForm(multiForm ? false : true);
+              }}
+            >
+              Populate form with a default multi-page form
+            </GoACheckbox>
+          )}
         </>
       )}
     </GoAModal>

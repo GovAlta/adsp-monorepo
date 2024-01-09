@@ -21,6 +21,7 @@ import { TaskRepository } from '../repository';
 import { Queue, TaskPriority, TaskServiceConfiguration, TaskStatus } from '../types';
 import { getTask, mapTask, taskOperation, TASK_KEY } from './task';
 import { UserInformation } from './types';
+import { CommentService } from '../comment';
 
 interface QueueRouterProps {
   apiId: AdspId;
@@ -29,6 +30,7 @@ interface QueueRouterProps {
   tokenProvider: TokenProvider;
   taskRepository: TaskRepository;
   eventService: EventService;
+  commentService: CommentService;
   KEYCLOAK_ROOT_URL: string;
 }
 
@@ -38,6 +40,7 @@ export function mapQueue(entity: QueueEntity): Omit<Queue, 'tenantId'> {
   return {
     namespace: entity.namespace,
     name: entity.name,
+    displayName: entity.displayName,
     context: entity.context,
     assignerRoles: entity.assignerRoles,
     workerRoles: entity.workerRoles,
@@ -287,7 +290,12 @@ export const getQueuedTasks =
   };
 
 export const createTask =
-  (apiId: AdspId, repository: TaskRepository, eventService: EventService): RequestHandler =>
+  (
+    apiId: AdspId,
+    repository: TaskRepository,
+    eventService: EventService,
+    commentService: CommentService
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -300,13 +308,20 @@ export const createTask =
         priority: priority ? TaskPriority[priority] : null,
         ...task,
       });
-      res.send(mapTask(apiId, entity));
+      const result = mapTask(apiId, entity);
+      res.send(result);
 
       eventService.send(taskCreated(apiId, user, entity));
+      commentService.createTopic(entity, result.urn);
     } catch (err) {
       next(err);
     }
   };
+
+interface ClientRepresentation {
+  id: string;
+  clientId: string;
+}
 
 export const getRoleUsers =
   (logger: Logger, KEYCLOAK_ROOT_URL: string, rolesKey: 'assignerRoles' | 'workerRoles'): RequestHandler =>
@@ -325,14 +340,36 @@ export const getRoleUsers =
 
       const users: Record<string, UserInformation> = {};
       for (let i = 0; i < roles.length; i++) {
-        const role = roles[i];
-        let first = 0;
+        let role = roles[i];
         try {
-          do {
-            const { data: roleUsers = [] } = await axios.get<UserInformation[]>(
-              `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/roles/${role}/users?first=${first}&max=${max}`,
+          let client: string = null;
+
+          // ADSP convention is that client roles are flattened to qualified names with the client as prefix.
+          const roleElements = role.split(':');
+          if (roleElements.length > 1) {
+            role = roleElements[roleElements.length - 1];
+            roleElements.splice(roleElements.length - 1);
+            const clientId = roleElements.join(':');
+            const { data: clients } = await axios.get<ClientRepresentation[]>(
+              `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/clients`,
               {
                 headers: { Authorization: `Bearer ${user.token.bearer}` },
+                params: { clientId },
+              }
+            );
+
+            client = clients?.[0]?.id;
+          }
+
+          let first = 0;
+          do {
+            const { data: roleUsers = [] } = await axios.get<UserInformation[]>(
+              `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/${
+                client ? `clients/${client}/` : ''
+              }roles/${encodeURIComponent(role)}/users`,
+              {
+                headers: { Authorization: `Bearer ${user.token.bearer}` },
+                params: { first, max },
               }
             );
 
@@ -379,6 +416,7 @@ export function createQueueRouter({
   tokenProvider,
   taskRepository: repository,
   eventService,
+  commentService,
 }: QueueRouterProps): Router {
   const router = Router();
 
@@ -438,7 +476,7 @@ export function createQueueRouter({
       )
     ),
     getQueue,
-    createTask(apiId, repository, eventService)
+    createTask(apiId, repository, eventService, commentService)
   );
   router.get(
     '/queues/:namespace/:name/tasks/:id',

@@ -134,7 +134,7 @@ describe('topic', () => {
       );
     });
 
-    it('can call next with error for unauthorized user', async () => {
+    it('can call filter results for unauthorized user', async () => {
       const req = {
         user: { ...user, roles: [] },
         tenant: {
@@ -156,8 +156,7 @@ describe('topic', () => {
       const handler = getTopics(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(res.send).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ results: expect.arrayContaining([]) }));
     });
   });
 

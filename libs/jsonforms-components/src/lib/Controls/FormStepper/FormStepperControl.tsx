@@ -1,15 +1,13 @@
 import React from 'react';
 import { useState } from 'react';
 import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
-import { JsonForms } from '@jsonforms/react';
 import { Grid, GridItem } from '@core-services/app-common';
-import { withJsonFormsControlProps } from '@jsonforms/react';
-import { ControlElement, Categorization, UISchemaElement, Layout, Category } from '@jsonforms/core';
+import { ControlElement, Categorization, UISchemaElement, Layout, Category, StatePropsOfLayout } from '@jsonforms/core';
 
-import { ControlProps } from '@jsonforms/core';
-
+import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
+import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { ReviewItem } from './styled-components';
-import { GoABaseRenderers, GoACells } from '../../../index';
+import { JsonFormsDispatch } from '@jsonforms/react';
 
 export interface FunObject {
   elements: Array<string>;
@@ -31,14 +29,31 @@ export interface UiSchema {
   elements: Array<ControlElement>;
 }
 
-export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
+export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
+  // eslint-disable-next-line
+  data: any;
+}
+
+export const FormStepper = ({
+  uischema,
+  data,
+  schema,
+  // eslint-disable-next-line
+  ajv,
+  path,
+  cells,
+  renderers,
+  config,
+}: CategorizationStepperLayoutRendererProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
-  const [step, setStep] = useState<number>(-1);
-  const [stepData, setStepData] = useState(data as Record<string, Record<string, string>>);
+  const [step, setStep] = useState<number>(0);
   if (uiSchema.elements?.length < 1) {
     // eslint-disable-next-line
     return <></>;
   }
+
+  // Note: [Jan-02-2023] the Options here will be used in the feature
+  const appliedUiSchemaOptions = { ...config, ...uiSchema?.options };
 
   function setPage(page: number) {
     if (page < 1 || page > uiSchema.elements?.length + 1) return;
@@ -46,79 +61,53 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
   }
 
   return (
-    <div id="#/properties/formStepper" className="formStepper">
+    <div id={`${path}-form-stepper`} className="formStepper">
       <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
-        {uiSchema.elements?.map((step, index) => {
-          const flattedStep = flattenArray(step?.elements || []);
+        {uiSchema.elements?.map((category, index) => {
+          const flattedStep = flattenArray(category?.elements || []);
           const count = flattedStep.filter((e) => {
             return e?.toString().substring(0, 12) === '#/properties';
           }).length;
-          const completedSteps = Object.keys(flattenObject(stepData[index]) || {}).length;
-          return (
-            <GoAFormStep
-              text={step.label as string}
-              status={completedSteps === count ? 'complete' : completedSteps === 0 ? undefined : 'incomplete'}
-            />
-          );
+          return <GoAFormStep text={`${category.label}`} />;
         })}
         <GoAFormStep text="Review" />
       </GoAFormStepper>
       <GoAPages current={step} mb="xl">
         {uiSchema.elements?.map((step, index) => {
-          step.type = 'VerticalLayout';
-          delete step.rule;
-
           return (
             <div>
-              <JsonForms
-                schema={rootSchema}
-                uischema={step}
-                data={stepData[index]}
-                validationMode={'NoValidation'}
-                renderers={GoABaseRenderers}
-                cells={GoACells}
-                onChange={(value) => {
-                  const tempData = stepData;
-                  tempData[index] = value.data;
-                  setStepData(tempData);
-                }}
-              />
+              {step.elements.map((fieldUiSchema) => {
+                return (
+                  <JsonFormsDispatch
+                    schema={schema}
+                    uischema={fieldUiSchema}
+                    renderers={renderers}
+                    cells={cells}
+                    path={path}
+                  />
+                );
+              })}
             </div>
           );
         })}
         <div>
-          {uiSchema.elements?.map((step, index) => (
-            <ReviewItem>
-              <h3 style={{ flex: 1 }}>{step?.label}</h3>
-              <div style={{ display: 'flex', width: '70%' }}>
-                <div style={{ width: '100%' }}>
-                  {Object.keys(flattenObject(stepData[index] || {})).map((key, ix) => {
-                    const flattedData = flattenObject(stepData[index] || ({} as Record<string, string>));
-                    const indexPlus = Object.keys(flattedData)[ix + 1];
-                    return (
-                      <div>
-                        {0 === ix % 2 && (
-                          <Grid>
-                            <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                              <b>{key}</b>: {flattedData[key]?.toString()}
-                            </GridItem>
+          <h3 style={{ flex: 1 }}>Summary</h3>
 
-                            {Object.keys(flattenObject(stepData[index] || {}))[ix + 1] && (
-                              <GridItem key={ix + 1} md={6} vSpacing={1} hSpacing={0.5}>
-                                <>
-                                  <b>{indexPlus}</b>: {flattedData[indexPlus].toString()}
-                                </>
-                              </GridItem>
-                            )}
-                          </Grid>
-                        )}
-                      </div>
+          <ReviewItem>
+            <div style={{ width: '100%' }}>
+              {Object.keys(data)?.length > 0 && (
+                <Grid>
+                  {Object.keys(flattenObject(data)).map((key, ix) => {
+                    return (
+                      <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
+                        <b>{key}</b> : {flattenObject(data)[key]}
+                      </GridItem>
                     );
                   })}
-                </div>
-              </div>
-            </ReviewItem>
-          ))}
+                </Grid>
+              )}
+            </div>
+          </ReviewItem>
         </div>
       </GoAPages>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -172,8 +161,4 @@ export const flattenObject = (obj: Record<string, string>): Record<string, strin
   return flattened;
 };
 
-const FormStepperWrapper = (props: ControlProps) => {
-  return <FormStepper {...props} />;
-};
-
-export const FormStepperControl = withJsonFormsControlProps(FormStepperWrapper);
+export const FormStepperControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormStepper)));

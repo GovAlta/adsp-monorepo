@@ -18,6 +18,9 @@ export const configurationSchema = {
               type: 'string',
               pattern: '^[a-zA-Z0-9-_ ]{1,50}$',
             },
+            displayName: {
+              type: ['string', 'null'],
+            },
             context: {
               type: 'object',
               additionalProperties: {

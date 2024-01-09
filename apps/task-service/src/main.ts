@@ -5,7 +5,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -24,6 +24,7 @@ import {
   TaskUpdatedDefinition,
 } from './task';
 import { createRepositories } from './postgres';
+import { createCommentService } from './comment';
 
 const logger = createLogger('task-service', environment.LOG_LEVEL);
 
@@ -38,6 +39,8 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  const COMMENT_TOPIC_TYPE_ID = 'task-comments';
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -120,6 +123,21 @@ const initializeApp = async (): Promise<express.Application> => {
           ],
         },
       ],
+      serviceConfigurations: [
+        {
+          serviceId: adspId`urn:ads:platform:comment-service`,
+          configuration: {
+            [COMMENT_TOPIC_TYPE_ID]: {
+              id: COMMENT_TOPIC_TYPE_ID,
+              name: 'Task comments',
+              adminRoles: [`${serviceId}:${TaskServiceRoles.Admin}`],
+              readerRoles: [],
+              commenterRoles: [`${serviceId}:${TaskServiceRoles.TaskReader}`],
+              securityClassification: 'protected a',
+            },
+          },
+        },
+      ],
       configuration: {
         schema: configurationSchema,
         description: 'Task queues where tasks are created for processing by workers.',
@@ -159,6 +177,12 @@ const initializeApp = async (): Promise<express.Application> => {
   );
 
   const repositories = await createRepositories({ logger, ...environment });
+  const commentService = await createCommentService({
+    logger,
+    directory,
+    tokenProvider,
+    topicTypeId: COMMENT_TOPIC_TYPE_ID,
+  });
   applyTaskMiddleware(app, {
     KEYCLOAK_ROOT_URL: environment.KEYCLOAK_ROOT_URL,
     serviceId,
@@ -167,6 +191,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     taskRepository: repositories.taskRepository,
     eventService,
+    commentService,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));

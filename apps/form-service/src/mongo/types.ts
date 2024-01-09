@@ -1,4 +1,5 @@
-import { Form } from '../form';
+import { AdspId } from '@abgov/adsp-service-sdk';
+import { Form, FormSubmission } from '../form';
 
 export type FormDoc = Omit<Form, 'definition' | 'applicant' | 'files'> & {
   tenantId: string;
@@ -6,4 +7,7 @@ export type FormDoc = Omit<Form, 'definition' | 'applicant' | 'files'> & {
   applicantId: string;
   hash: string;
   files: Record<string, string>;
+};
+export type FormSubmissionDoc = Omit<FormSubmission, 'files'> & {
+  tenantId: AdspId;
 };

@@ -172,3 +172,9 @@ Feature: Tenant admin
     Then the user views the "Access service" overview content "Access allows you to"
     And the user views the link of See the code for "access-service"
     And the user views the link of "Get support" under Support
+
+  @TEST_CS-2501 @REQ_CS-1401 @regression
+  Scenario: As a tenant admin, I can see that the tenant admin app does not support mobile view
+    Given a tenant admin user is on tenant admin page
+    When the user changes the resolution to a low resolution not supported by tenant management app
+    Then the user views a message of Portrait mode is currently not supported

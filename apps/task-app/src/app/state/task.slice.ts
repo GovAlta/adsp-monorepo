@@ -5,6 +5,8 @@ import { AppState } from './store';
 import { Person, PUSH_SERVICE_ID, QueueDefinition, Task, TASK_SERVICE_ID } from './types';
 import { getAccessToken } from './user.slice';
 import { loadQueueMetrics, QueueMetrics } from './queue.slice';
+import { loadTopic } from './comment.slice';
+import { hasRole } from './util';
 
 export const TASK_FEATURE_KEY = 'task';
 const UPDATE_STREAM_ID = 'task-updates';
@@ -125,10 +127,15 @@ export const connectStream = createAsyncThunk(
         stream: UPDATE_STREAM_ID,
       },
       withCredentials: true,
-      auth: async (cb) =>
-        cb({
-          token: await getAccessToken(),
-        }),
+      auth: async (cb) => {
+        try {
+          const token = await getAccessToken();
+          cb({ token });
+        } catch (err) {
+          // Token retrieval failed and connection (using auth result) will also fail after.
+          cb(null);
+        }
+      },
     });
 
     socket.on('connect', () => {
@@ -139,41 +146,19 @@ export const connectStream = createAsyncThunk(
       dispatch(taskActions.streamConnectionChanged(false));
     });
 
-    socket.on('task-service:task-created', ({ payload }: TaskEvent) => {
+    const onTaskUpdate = ({ payload }: TaskEvent) => {
       if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
+        // Add or update the task and reload queue metrics.
         dispatch(taskActions.setTask(payload.task));
+        dispatch(loadQueueMetrics({ namespace, name }));
       }
-    });
-
-    socket.on('task-service:task-assigned', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
-
-    socket.on('task-service:task-priority-set', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
-
-    socket.on('task-service:task-started', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
-
-    socket.on('task-service:task-completed', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
-
-    socket.on('task-service:task-cancelled', ({ payload }: TaskEvent) => {
-      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
-        dispatch(taskActions.setTask(payload.task));
-      }
-    });
+    };
+    socket.on('task-service:task-created', onTaskUpdate);
+    socket.on('task-service:task-assigned', onTaskUpdate);
+    socket.on('task-service:task-priority-set', onTaskUpdate);
+    socket.on('task-service:task-started', onTaskUpdate);
+    socket.on('task-service:task-completed', onTaskUpdate);
+    socket.on('task-service:task-cancelled', onTaskUpdate);
   }
 );
 
@@ -254,10 +239,27 @@ export const loadQueuePeople = createAsyncThunk(
         id: user.id,
         name: user.name,
         email: user.email,
-        isAssigner: !!assignerRoles.find((r) => user.roles.includes(r)),
-        isWorker: !!workerRoles.find((r) => user.roles.includes(r)),
+        isAssigner: hasRole(assignerRoles, user),
+        isWorker: hasRole(workerRoles, user),
       },
     };
+  }
+);
+
+export const openTask = createAsyncThunk(
+  'task/open-task',
+  async ({ taskId }: { taskId?: string }, { getState, dispatch }) => {
+    const { task } = getState() as AppState;
+    if (task.opened !== taskId && taskId) {
+      const toOpen = task.tasks[taskId];
+      dispatch(loadTopic({ resourceId: toOpen.urn }));
+      // If the task is associated with some record (in different domain model), load any topic related to that.
+      // This should generally be a more meaningful context for comments; e.g. intake submission, case file, support ticket, etc.
+      if (toOpen.recordId) {
+        dispatch(loadTopic({ resourceId: toOpen.recordId }));
+      }
+    }
+    return taskId;
   }
 );
 
@@ -479,9 +481,6 @@ export const taskSlice = createSlice({
     setFilter: (state, { payload }: PayloadAction<TaskFilter>) => {
       state.filter = payload;
     },
-    setOpenTask: (state, { payload }: PayloadAction<string>) => {
-      state.opened = payload;
-    },
     setTaskToAssign: (state, { payload }: PayloadAction<Task>) => {
       state.modal.taskToAssign = payload;
     },
@@ -536,6 +535,9 @@ export const taskSlice = createSlice({
       })
       .addCase(loadQueueTasks.rejected, (state) => {
         state.busy.initializing = false;
+      })
+      .addCase(openTask.fulfilled, (state, { payload }) => {
+        state.opened = payload;
       })
       .addCase(assignTask.pending, (state) => {
         state.busy.executing = true;

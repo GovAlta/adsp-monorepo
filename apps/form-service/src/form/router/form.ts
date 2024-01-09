@@ -1,11 +1,11 @@
 import { adspId, AdspId, DomainEvent, EventService, isAllowedUser, startBenchmark } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
-import { formSubmitted, formUnlocked } from '..';
+import { formSubmitted, formUnlocked, formSetToDraft } from '..';
 import { formArchived, formCreated, formDeleted } from '../events';
 import { FormDefinitionEntity, FormEntity } from '../model';
 import { NotificationService } from '../../notification';
-import { FormRepository } from '../repository';
+import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { Form, FormCriteria, FormDefinition } from '../types';
 import {
@@ -14,6 +14,7 @@ import {
   SEND_CODE_OPERATION,
   SUBMIT_FORM_OPERATION,
   UNLOCK_FORM_OPERATION,
+  SET_TO_DRAFT_FORM_OPERATION,
 } from './types';
 import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
@@ -224,7 +225,8 @@ export const updateFormData: RequestHandler = async (req, res, next) => {
 export function formOperation(
   apiId: AdspId,
   eventService: EventService,
-  notificationService: NotificationService
+  notificationService: NotificationService,
+  submissionRepository: FormSubmissionRepository
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -247,8 +249,13 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          result = await form.submit(user);
+          result = await form.submit(user, submissionRepository);
           event = formSubmitted(user, result);
+          break;
+        }
+        case SET_TO_DRAFT_FORM_OPERATION: {
+          result = await form.setToDraft(user);
+          event = formSetToDraft(user, result);
           break;
         }
         case ARCHIVE_FORM_OPERATION: {
@@ -301,6 +308,7 @@ interface FormRouterProps {
   eventService: EventService;
   notificationService: NotificationService;
   fileService: FileService;
+  submissionRepository: FormSubmissionRepository;
 }
 
 export function createFormRouter({
@@ -309,6 +317,7 @@ export function createFormRouter({
   eventService,
   notificationService,
   fileService,
+  submissionRepository,
 }: FormRouterProps): Router {
   const apiId = adspId`${serviceId}:v1`;
 
@@ -356,10 +365,11 @@ export function createFormRouter({
         UNLOCK_FORM_OPERATION,
         SUBMIT_FORM_OPERATION,
         ARCHIVE_FORM_OPERATION,
+        SET_TO_DRAFT_FORM_OPERATION,
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService)
+    formOperation(apiId, eventService, notificationService, submissionRepository)
   );
   router.delete(
     '/forms/:formId',
@@ -377,6 +387,7 @@ export function createFormRouter({
     getForm(repository),
     accessForm(notificationService)
   );
+
   router.put(
     '/forms/:formId/data',
     createValidationHandler(
