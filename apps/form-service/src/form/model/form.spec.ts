@@ -37,6 +37,7 @@ describe('FormEntity', () => {
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
+    getByFormIdAndSubmissionId: jest.fn(),
   };
 
   const notificationMock = {

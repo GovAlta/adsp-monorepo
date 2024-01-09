@@ -40,6 +40,7 @@ describe('form router', () => {
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
+    getByFormIdAndSubmissionId: jest.fn(),
   };
 
   const eventServiceMock = {

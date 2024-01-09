@@ -36,34 +36,3 @@ export interface FormCriteria {
   hashEquals?: string;
   anonymousApplicantEquals?: boolean;
 }
-
-export interface FormDeposition {
-  id: string;
-  status: string;
-  reason: string;
-  date: Date;
-}
-export interface FormSubmission {
-  id: string;
-  formDefinitionId: string;
-  formId: string;
-  tenantId: AdspId;
-  formData: Record<string, unknown>;
-  formFiles: Record<string, AdspId>;
-  created: Date;
-  createdBy: string;
-  updatedBy: string;
-  updateDateTime: Date;
-  submissionStatus: string;
-  deposition: FormDeposition;
-}
-
-export interface FormSubmissionCriteria {
-  tenantIdEquals?: AdspId;
-  definitionIdEquals?: string;
-  statusEquals?: FormStatus;
-  updateDateTime?: Date;
-  depositionStatusEquals?: string;
-  depositionDateEquals?: Date;
-  createdByIdEquals?: string;
-}
