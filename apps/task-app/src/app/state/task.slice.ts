@@ -65,13 +65,13 @@ interface TaskResults {
 }
 
 export const initializeQueue = createAsyncThunk(
-  'task/initialize-definition',
+  'task/initialize-queue',
   async ({ namespace, name }: { namespace: string; name: string }, { dispatch, getState, rejectWithValue }) => {
-    const state = getState() as AppState;
-    const { directory } = state.config;
+    const { config, queue, task } = getState() as AppState;
+    const { directory } = config;
 
     try {
-      let definition = state.queue.queues[`${namespace}:${name}`];
+      let definition = queue.queues[`${namespace}:${name}`];
       if (!definition) {
         const accessToken = await getAccessToken();
         const { data } = await axios.get<QueueDefinition>(
@@ -84,10 +84,12 @@ export const initializeQueue = createAsyncThunk(
         definition = data;
       }
 
-      dispatch(loadQueueMetrics({ namespace, name }));
-      dispatch(loadQueueTasks({ namespace, name }));
-      dispatch(loadQueuePeople(definition));
-      dispatch(connectStream({ namespace, name }));
+      // If the target queue is changing, then load additional information.
+      if (task.queue?.namespace !== definition.namespace || task.queue?.name !== definition.name) {
+        dispatch(loadQueueTasks({ namespace, name }));
+        dispatch(loadQueuePeople(definition));
+        dispatch(connectStream({ namespace, name }));
+      }
 
       return definition;
     } catch (err) {
@@ -248,18 +250,51 @@ export const loadQueuePeople = createAsyncThunk(
 
 export const openTask = createAsyncThunk(
   'task/open-task',
-  async ({ taskId }: { taskId?: string }, { getState, dispatch }) => {
+  async ({ namespace, name, taskId }: { namespace: string; name: string; taskId?: string }, { getState, dispatch }) => {
     const { task } = getState() as AppState;
     if (task.opened !== taskId && taskId) {
-      const toOpen = task.tasks[taskId];
-      dispatch(loadTopic({ resourceId: toOpen.urn }));
-      // If the task is associated with some record (in different domain model), load any topic related to that.
-      // This should generally be a more meaningful context for comments; e.g. intake submission, case file, support ticket, etc.
-      if (toOpen.recordId) {
-        dispatch(loadTopic({ resourceId: toOpen.recordId }));
-      }
+      dispatch(loadTask({ namespace, name, taskId }));
     }
     return taskId;
+  }
+);
+
+export const loadTask = createAsyncThunk(
+  'task/load-task',
+  async (
+    { namespace, name, taskId }: { namespace: string; name: string; taskId: string },
+    { getState, dispatch, rejectWithValue }
+  ) => {
+    const state = getState() as AppState;
+    const { directory } = state.config;
+
+    try {
+      const accessToken = await getAccessToken();
+      const { data: task } = await axios.get<Task>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}/tasks/${taskId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      dispatch(loadTopic({ resourceId: task.urn }));
+      // If the task is associated with some record (in different domain model), load any topic related to that.
+      // This should generally be a more meaningful context for comments; e.g. intake submission, case file, support ticket, etc.
+      if (task.recordId) {
+        dispatch(loadTopic({ resourceId: task.recordId }));
+      }
+
+      return task;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
   }
 );
 
@@ -490,10 +525,12 @@ export const taskSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(initializeQueue.pending, (state) => {
+      .addCase(initializeQueue.pending, (state, { meta }) => {
         state.busy.initializing = true;
-        state.queue = null;
-        state.results = [];
+        if (meta.arg.namespace !== state.queue?.namespace || meta.arg.name !== state.queue.name) {
+          state.queue = null;
+          state.results = [];
+        }
       })
       .addCase(initializeQueue.fulfilled, (state, { payload }) => {
         state.busy.initializing = false;
@@ -534,10 +571,20 @@ export const taskSlice = createSlice({
         state.next = payload.page.next;
       })
       .addCase(loadQueueTasks.rejected, (state) => {
-        state.busy.initializing = false;
+        state.busy.loading = false;
       })
       .addCase(openTask.fulfilled, (state, { payload }) => {
         state.opened = payload;
+      })
+      .addCase(loadTask.pending, (state) => {
+        state.busy.loading = true;
+      })
+      .addCase(loadTask.fulfilled, (state, { payload }) => {
+        state.busy.loading = false;
+        state.tasks[payload.id] = payload;
+      })
+      .addCase(loadTask.rejected, (state) => {
+        state.busy.loading = false;
       })
       .addCase(assignTask.pending, (state) => {
         state.busy.executing = true;
