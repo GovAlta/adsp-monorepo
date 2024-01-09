@@ -133,6 +133,7 @@ const initializeApp = async (): Promise<express.Application> => {
               adminRoles: [`${serviceId}:${TaskServiceRoles.Admin}`],
               readerRoles: [],
               commenterRoles: [`${serviceId}:${TaskServiceRoles.TaskReader}`],
+              securityClassification: 'protected a',
             },
           },
         },

@@ -38,7 +38,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
 
   useEffect(() => {
     if (params.taskId !== open?.id) {
-      dispatch(openTask({ taskId: params.taskId }));
+      dispatch(openTask({ namespace: params.namespace, name: params.name, taskId: params.taskId }));
     }
   }, [dispatch, params, open]);
 
@@ -69,16 +69,16 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
       )}
       {open && (
         <div className="commentsPane" data-show={showComments}>
-          <CommentsViewer resourceId={open.urn} />
+          <CommentsViewer key={open.urn} />
         </div>
       )}
       <GoAIconButton
         disabled={!open || !topics[open.urn]}
-        icon={showComments ? 'chatbubble' : 'chatbubble-ellipses'}
+        icon={showComments ? 'chatbubble-ellipses' : 'chatbubble'}
         size="large"
         onClick={() => {
           setShowComments(!showComments);
-          if (!topic) {
+          if (topic?.resourceId !== open?.urn) {
             dispatch(selectTopic({ resourceId: open.urn }));
           }
         }}

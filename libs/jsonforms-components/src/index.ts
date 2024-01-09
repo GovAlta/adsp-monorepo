@@ -4,8 +4,6 @@ import {
   MaterialAllOfRenderer,
   materialAnyOfControlTester,
   MaterialAnyOfRenderer,
-  MaterialArrayControlRenderer,
-  materialArrayControlTester,
   materialObjectControlTester,
   MaterialObjectRenderer,
   materialOneOfControlTester,
@@ -86,14 +84,16 @@ import {
   GoAInputTextControl,
   CategorizationRendererTester,
   FormStepperControl,
+  ArrayControlRenderer,
+  ArrayControlTester,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
   {
-    tester: materialArrayControlTester,
-    renderer: MaterialArrayControlRenderer,
+    tester: ArrayControlTester,
+    renderer: ArrayControlRenderer,
   },
   { tester: materialBooleanControlTester, renderer: MaterialBooleanControl },
   {
