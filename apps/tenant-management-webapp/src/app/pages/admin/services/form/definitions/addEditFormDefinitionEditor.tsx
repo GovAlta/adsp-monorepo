@@ -25,10 +25,8 @@ import {
   MonacoDivTabBody,
   RightAlign,
   PRE,
-  InfoCirclePadding,
-  InlinePadding,
-  ViewBox,
   FakeButton,
+  SubmissionRecordsBox,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -51,10 +49,9 @@ import DataTable from '@components/DataTable';
 import { DispositionItems } from './dispositionItems';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditDispositionModal } from './addEditDispositionModal';
-import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
-import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
-import { ReactComponent as TriangleLeft } from '@assets/icons/TriangleLeft.svg';
-import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
+
+import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
+import { RowFlex } from './style-components';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -94,7 +91,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify({}, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
-  const [viewSubmissionInclineHelp, setViewSubmissionInclineHelp] = useState<boolean>(false);
 
   const [data, setData] = useState<unknown>({});
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
@@ -435,116 +431,96 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Submission configuration" data-testid="disposition-states">
                 <div style={{ height: EditorHeight + 7 }}>
                   <FlexRow>
-                    <GoACheckbox
-                      name="submission-records"
-                      key="submission-records"
-                      checked={definition.submissionRecords}
-                      testId="submission-records"
-                      onChange={() => {
-                        const records = definition.submissionRecords ? false : true;
-                        console.log(JSON.stringify(records) + '<records');
-                        console.log(JSON.stringify(definition.submissionRecords) + '<definition.submissionRecords');
-                        setDefinition({ ...definition, submissionRecords: records });
-                      }}
-                    >
-                      Generates form submission records on submit
-                    </GoACheckbox>
-                    <div
-                      className="info-circle"
-                      onClick={() => {
-                        setViewSubmissionInclineHelp(viewSubmissionInclineHelp ? false : true);
-                      }}
-                    >
-                      <InlinePadding>
-                        <InfoCirclePadding>
-                          <InfoCircle />
-                        </InfoCirclePadding>
-                        <div className="triangle-width">
-                          {viewSubmissionInclineHelp && (
-                            <div className="bubble-helper">
-                              <div className="triangle">
-                                <TriangleLeft />
-                              </div>
-                              <Rectangle />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          {viewSubmissionInclineHelp && (
-                            <ViewBox>
-                              <div className="overflow-wrap bubble-border">
-                                {definition.submissionRecords ? (
-                                  <div>
-                                    Forms of this type will create submission records. This submission record can be
-                                    used for processing of the application and to record an adjudication decision
-                                    (disposition state).
-                                  </div>
-                                ) : (
-                                  <div>
-                                    Forms of this type will not create a submission record when submitted. Applications
-                                    are responsible for managing how forms are processed after they are submitted.
-                                  </div>
-                                )}
-                                <div
-                                  className="small-close-button"
-                                  onClick={() => {
-                                    setViewSubmissionInclineHelp(false);
-                                  }}
-                                >
-                                  <SmallClose />
-                                </div>
-                              </div>
-                            </ViewBox>
-                          )}
-                        </div>
-                      </InlinePadding>
-                    </div>
+                    <SubmissionRecordsBox>
+                      <GoACheckbox
+                        name="submission-records"
+                        key="submission-records"
+                        checked={definition.submissionRecords}
+                        testId="submission-records"
+                        onChange={() => {
+                          const records = definition.submissionRecords ? false : true;
+                          console.log(JSON.stringify(records) + '<records');
+                          console.log(JSON.stringify(definition.submissionRecords) + '<definition.submissionRecords');
+                          setDefinition({ ...definition, submissionRecords: records });
+                        }}
+                      >
+                        Create submission records on submit
+                      </GoACheckbox>
+                    </SubmissionRecordsBox>
+                    <InfoCircleWithInlineHelp
+                      text={
+                        definition.submissionRecords
+                          ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
+                          : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
+                      }
+                    />
                   </FlexRow>
 
                   <div style={{ padding: '10px', background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
-                    <RightAlign>
-                      {definition.submissionRecords ? (
-                        <GoAButton
-                          type="secondary"
-                          testId="Add state"
-                          disabled={!definition.submissionRecords}
-                          onClick={() => {
-                            setNewDisposition(true);
-                          }}
-                        >
-                          Add state
-                        </GoAButton>
-                      ) : (
-                        <FakeButton />
-                      )}
-                    </RightAlign>
+                    <RowFlex>
+                      <h3>Disposition states</h3>
+                      <div>
+                        {definition.submissionRecords ? (
+                          <div style={{ marginTop: '-5px' }}>
+                            <InfoCircleWithInlineHelp
+                              text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                              width={450}
+                            />
+                          </div>
+                        ) : (
+                          <FakeButton />
+                        )}
+                      </div>
+                      <RightAlign>
+                        {definition.submissionRecords ? (
+                          <GoAButton
+                            type="secondary"
+                            testId="Add state"
+                            disabled={!definition.submissionRecords}
+                            onClick={() => {
+                              setNewDisposition(true);
+                            }}
+                          >
+                            Add state
+                          </GoAButton>
+                        ) : (
+                          <FakeButton />
+                        )}
+                      </RightAlign>
+                    </RowFlex>
+
                     <div
                       style={{
                         overflowY: 'auto',
                         height: EditorHeight - 93,
+                        zIndex: 0,
                       }}
                     >
-                      <DataTable>
-                        <thead>
-                          <tr>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th>Order</th>
-                            <th>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {definition && (
-                            <DispositionItems
-                              openModalFunction={openModalFunction}
-                              updateDispositions={updateDispositionFunction}
-                              openDeleteModalFunction={openDeleteModalFunction}
-                              dispositions={definition.dispositionStates}
-                              submissionRecords={definition.submissionRecords}
-                            />
-                          )}
-                        </tbody>
-                      </DataTable>
+                      {definition.dispositionStates.length === 0 ? (
+                        'No disposition states'
+                      ) : (
+                        <DataTable>
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Description</th>
+                              <th>Order</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {definition && (
+                              <DispositionItems
+                                openModalFunction={openModalFunction}
+                                updateDispositions={updateDispositionFunction}
+                                openDeleteModalFunction={openDeleteModalFunction}
+                                dispositions={definition.dispositionStates}
+                                submissionRecords={definition.submissionRecords}
+                              />
+                            )}
+                          </tbody>
+                        </DataTable>
+                      )}
                     </div>
                   </div>
                 </div>

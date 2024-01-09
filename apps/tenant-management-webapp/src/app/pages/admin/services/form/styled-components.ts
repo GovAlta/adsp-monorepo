@@ -22,68 +22,10 @@ export const FakeButton = styled.div`
   height: 42px;
 `;
 
-export const InlinePadding = styled.div`
-  position: fixed;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  .triangle {
-    margin-top: 5px;
-    margin-bottom: -10px;
-    z-index: 3;
-  }
-  .bubble-helper {
-    margin-bottom: -11px;
-    display: flex;
-    flex-direction: column;
-  }
-  .triangle-width {
-    width: 25px;
-  }
-`;
-
-export const InfoCirclePadding = styled.div`
-  margin-top: 8px;
-`;
-
-export const ViewBox = styled.div`
-  position: fixed;
-  z-index: 2;
-  margin-top: -20px;
-  .bubble-border {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    padding: 10px 12px 8px 12px;
-    margin-right: 10px;
-    gap: 8px;
-
-    width: 372px;
-    height: 100%;
-    left: 0px;
-    top: 12px;
-
-    background: #ffffff;
-    box-shadow: 0px -1px 6px rgba(0, 0, 0, 0.25);
-    border-radius: 4px;
-  }
-
-  .overflow-wrap {
-    overflow-wrap: anywhere;
-  }
-
-  .small-close-button {
-    width: 10px;
-    margin-left: auto;
-    margin-top: -10px;
-  }
-`;
-
 export const RightAlign = styled.div`
   margin-top: 8px;
-  margin-bottom: 24px;
-  text-align: end;
+  margin-bottom: 8px;
+  margin-left: auto;
 `;
 export const DispositionFormItem = styled.div`
   margin-bottom: 1.5rem;
@@ -415,6 +357,10 @@ export const FormEditorLabelWrapper = styled.div`
   }
 `;
 
+export const SubmissionRecordsBox = styled.div`
+  margin-bottom: 12px;
+`;
+
 export const SpinnerSpace = styled.div`
   margin: 10px 9px 10px 14px;
   float: right;
@@ -423,11 +369,6 @@ export const SpinnerSpace = styled.div`
 export const SpinnerPadding = styled.div`
   margin: 200px 0 0 0;
 `;
-
-// export const SpinnerModalPadding = styled.div`
-//   margin: 0 0 0 0;
-//   height: 467px;
-// `;
 
 export const SpinnerPaddingSmall = styled.div`
   margin: 0 0 0 5px;
