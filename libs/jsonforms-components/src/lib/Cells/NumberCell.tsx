@@ -1,9 +1,9 @@
 import React from 'react';
 import { CellProps, isNumberControl, RankedTester, rankWith, WithClassname } from '@jsonforms/core';
 import { withJsonFormsCellProps } from '@jsonforms/react';
-import { GoAInputNumber } from '../Controls';
+import { GoANumberInput } from '../Controls';
 
-export const GoANumberCell = (props: CellProps & WithClassname) => <GoAInputNumber {...props} />;
+export const GoANumberCell = (props: CellProps & WithClassname) => <GoANumberInput {...props} />;
 
 export const GoANumberCellTester: RankedTester = rankWith(1, isNumberControl);
 

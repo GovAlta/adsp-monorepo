@@ -1,12 +1,12 @@
 import React from 'react';
-import { CellProps, WithClassname, ControlProps, isNumberControl, RankedTester, rankWith } from '@jsonforms/core';
+import { CellProps, WithClassname, ControlProps, isIntegerControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInputNumber } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-type GoAInputNumberProps = CellProps & WithClassname & WithInputProps;
+type GoAInputIntegerProps = CellProps & WithClassname & WithInputProps;
 
-export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
+export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
@@ -16,8 +16,8 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
     <GoAInputNumber
       disabled={!enabled}
       value={InputValue}
+      step={1}
       placeholder={placeholder}
-      step={0.01}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name, value) => handleChange(path, value)}
@@ -25,7 +25,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   );
 };
 
-export const GoANumberControl = (props: ControlProps) => <GoAInputBaseControl {...props} input={GoANumberInput} />;
+export const GoAIntegerControl = (props: ControlProps) => <GoAInputBaseControl {...props} input={GoAInputInteger} />;
 
-export const GoANumberControlTester: RankedTester = rankWith(2, isNumberControl);
-export const GoAInputNumberControl = withJsonFormsControlProps(GoANumberControl);
+export const GoAIntegerControlTester: RankedTester = rankWith(2, isIntegerControl);
+export const GoAInputIntegerControl = withJsonFormsControlProps(GoAIntegerControl);

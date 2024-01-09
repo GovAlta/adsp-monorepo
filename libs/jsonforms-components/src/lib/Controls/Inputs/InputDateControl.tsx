@@ -1,9 +1,9 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isDateControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInputDate } from '@abgov/react-components-new';
-import { WithInputProps } from '../Controls/Inputs/type';
+import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoAInputBaseControl } from '../Controls/Inputs/InputBaseControl';
+import { GoAInputBaseControl } from './InputBaseControl';
 type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 
 export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
@@ -15,14 +15,20 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   return (
     <GoAInputDate
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-      value={data}
+      value={data ? new Date(data).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10)}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onChange={(name, value) => handleChange(path, value)}
+      // onChange={(name, value) => {
+      //   handleChange(path, value);
+      // }}
+      onChange={(name, value) => {
+        value = new Date(value).toISOString().substring(0, 10);
+        handleChange(path, value);
+      }}
     />
   );
 };
 
 export const GoADateControl = (props: ControlProps) => <GoAInputBaseControl {...props} input={GoADateInput} />;
 
-export const GoADateControlTester: RankedTester = rankWith(1, isDateControl);
+export const GoADateControlTester: RankedTester = rankWith(4, isDateControl);
 export const GoAInputDateControl = withJsonFormsControlProps(GoADateControl);
