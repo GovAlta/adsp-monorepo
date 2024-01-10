@@ -84,6 +84,8 @@ export const EventFilterWrapper = styled.div`
   width: 37.5rem;
   margin-top: calc(var(--goa-spacing-l) - 8px);
   margin-bottom: var(--goa-spacing-l);
+  position: relative;
+  z-index: 0;
 `;
 
 export const EventFilterButtonWrapper = styled.div`
