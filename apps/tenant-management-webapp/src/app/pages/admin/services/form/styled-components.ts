@@ -18,10 +18,18 @@ export const EditorPadding = styled.div`
   }
 `;
 
+export const FakeButton = styled.div`
+  height: 42px;
+`;
+
+export const NegativeMarginSmall = styled.div`
+  margin-top: -5px;
+`;
+
 export const RightAlign = styled.div`
   margin-top: 8px;
-  margin-bottom: 24px;
-  text-align: end;
+  margin-bottom: 8px;
+  margin-left: auto;
 `;
 export const DispositionFormItem = styled.div`
   margin-bottom: 1.5rem;
@@ -138,6 +146,10 @@ export const FormEditor = styled.div`
   .hr-resize-bottom {
     margin-bottom: var(--goa-spacing-2xs);
     margin-top: var(--goa-spacing-xl);
+  }
+
+  .info-circle {
+    margin: 5px 0 0 5px;
   }
 `;
 
@@ -349,6 +361,10 @@ export const FormEditorLabelWrapper = styled.div`
   }
 `;
 
+export const SubmissionRecordsBox = styled.div`
+  margin-bottom: 12px;
+`;
+
 export const SpinnerSpace = styled.div`
   margin: 10px 9px 10px 14px;
   float: right;
@@ -357,11 +373,6 @@ export const SpinnerSpace = styled.div`
 export const SpinnerPadding = styled.div`
   margin: 200px 0 0 0;
 `;
-
-// export const SpinnerModalPadding = styled.div`
-//   margin: 0 0 0 0;
-//   height: 467px;
-// `;
 
 export const SpinnerPaddingSmall = styled.div`
   margin: 0 0 0 5px;

@@ -26,6 +26,7 @@ export const configurationSchema = {
             required: ['id', 'name'],
           },
         },
+        submissionRecords: { type: 'boolean' },
         required: ['id', 'name', 'formDraftUrlTemplate', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
       },
     },

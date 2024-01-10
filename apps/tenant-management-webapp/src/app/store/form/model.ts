@@ -10,6 +10,7 @@ export interface FormDefinition {
   anonymousApply: boolean;
   uiSchema?: Record<string, unknown>;
   dispositionStates: Array<Disposition>;
+  submissionRecords: boolean;
 }
 
 export interface Disposition {
@@ -30,6 +31,7 @@ export const defaultFormDefinition: FormDefinition = {
   formDraftUrlTemplate: 'http://test.com',
   anonymousApply: false,
   dispositionStates: [],
+  submissionRecords: false,
 };
 
 export interface FormState {

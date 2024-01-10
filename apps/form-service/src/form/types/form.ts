@@ -20,6 +20,7 @@ export interface Form {
   locked: Date;
   submitted: Date;
   dispositionStates?: Array<Disposition>;
+  submissionRecords?: boolean;
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;
