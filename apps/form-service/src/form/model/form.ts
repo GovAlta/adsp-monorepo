@@ -25,6 +25,7 @@ export class FormEntity implements Form {
   locked: Date;
   submitted: Date;
   dispositionStates: Disposition[];
+  submissionRecords: boolean;
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;
@@ -75,6 +76,7 @@ export class FormEntity implements Form {
     this.createdBy = form.createdBy;
     this.locked = form.locked;
     this.dispositionStates = form?.dispositionStates || [];
+    this.submissionRecords = definition.submissionRecords;
     this.submitted = form.submitted;
     this.lastAccessed = form.lastAccessed;
     this.status = form.status;
@@ -243,7 +245,7 @@ export class FormEntity implements Form {
 
     const id = uuidv4();
 
-    if (this.dispositionStates.length > 0) {
+    if (this.submissionRecords) {
       // If disposition states exist, create a form submission record
       await FormSubmissionEntity.create(user, submissionRepository, this, id);
     }

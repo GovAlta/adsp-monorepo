@@ -17,6 +17,7 @@ describe('FormEntity', () => {
     formDraftUrlTemplate: 'https://my-form/{{ id }}',
     description: null,
     anonymousApply: true,
+    submissionRecords: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     clerkRoles: ['test-clerk'],
@@ -37,6 +38,7 @@ describe('FormEntity', () => {
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
+    getByFormIdAndSubmissionId: jest.fn(),
   };
 
   const notificationMock = {

@@ -5,7 +5,6 @@ import { vanillaCells } from '@jsonforms/vanilla-renderers';
 import { GoARenderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { FormDefinition } from '@store/form/model';
-
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -26,6 +25,9 @@ import {
   MonacoDivTabBody,
   RightAlign,
   PRE,
+  FakeButton,
+  SubmissionRecordsBox,
+  NegativeMarginSmall,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -37,7 +39,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useHistory, useParams } from 'react-router-dom';
-import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
@@ -49,6 +51,9 @@ import { DispositionItems } from './dispositionItems';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 
+import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
+import { RowFlex } from './style-components';
+
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
   const tempNext = JSON.parse(JSON.stringify(next));
@@ -59,7 +64,8 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.clerkRoles) !== JSON.stringify(tempNext?.clerkRoles) ||
     JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
     JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
-    JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema)
+    JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
+    JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords)
   );
 };
 
@@ -87,7 +93,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
-  const [data, setData] = useState<unknown>({});
+  const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
@@ -423,40 +429,98 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </ScrollPane>
                 </MonacoDivTabBody>
               </Tab>
-              <Tab label="Disposition states" data-testid="disposition-states">
+              <Tab label="Submission configuration" data-testid="disposition-states">
                 <div style={{ height: EditorHeight + 7 }}>
-                  <RightAlign>
-                    <GoAButton
-                      type="secondary"
-                      testId="Add state"
-                      onClick={() => {
-                        setNewDisposition(true);
+                  <FlexRow>
+                    <SubmissionRecordsBox>
+                      <GoACheckbox
+                        name="submission-records"
+                        key="submission-records"
+                        checked={definition.submissionRecords}
+                        testId="submission-records"
+                        onChange={() => {
+                          const records = definition.submissionRecords ? false : true;
+                          setDefinition({ ...definition, submissionRecords: records });
+                        }}
+                      >
+                        Create submission records on submit
+                      </GoACheckbox>
+                    </SubmissionRecordsBox>
+                    <InfoCircleWithInlineHelp
+                      text={
+                        definition.submissionRecords
+                          ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
+                          : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
+                      }
+                    />
+                  </FlexRow>
+
+                  <div style={{ padding: '10px', background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
+                    <RowFlex>
+                      <h3>Disposition states</h3>
+                      <div>
+                        {definition.submissionRecords ? (
+                          <NegativeMarginSmall>
+                            <InfoCircleWithInlineHelp
+                              text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                              width={450}
+                            />
+                          </NegativeMarginSmall>
+                        ) : (
+                          <FakeButton />
+                        )}
+                      </div>
+                      <RightAlign>
+                        {definition.submissionRecords ? (
+                          <GoAButton
+                            type="secondary"
+                            testId="Add state"
+                            disabled={!definition.submissionRecords}
+                            onClick={() => {
+                              setNewDisposition(true);
+                            }}
+                          >
+                            Add state
+                          </GoAButton>
+                        ) : (
+                          <FakeButton />
+                        )}
+                      </RightAlign>
+                    </RowFlex>
+
+                    <div
+                      style={{
+                        overflowY: 'auto',
+                        height: EditorHeight - 93,
+                        zIndex: 0,
                       }}
                     >
-                      Add state
-                    </GoAButton>
-                  </RightAlign>
-                  <div style={{ overflowY: 'auto', height: EditorHeight - 23 }}>
-                    <DataTable>
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Description</th>
-                          <th>Order</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {definition && (
-                          <DispositionItems
-                            openModalFunction={openModalFunction}
-                            updateDispositions={updateDispositionFunction}
-                            openDeleteModalFunction={openDeleteModalFunction}
-                            dispositions={definition.dispositionStates}
-                          />
-                        )}
-                      </tbody>
-                    </DataTable>
+                      {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
+                        'No disposition states'
+                      ) : (
+                        <DataTable>
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Description</th>
+                              <th>Order</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {definition && (
+                              <DispositionItems
+                                openModalFunction={openModalFunction}
+                                updateDispositions={updateDispositionFunction}
+                                openDeleteModalFunction={openDeleteModalFunction}
+                                dispositions={definition.dispositionStates}
+                                submissionRecords={definition.submissionRecords}
+                              />
+                            )}
+                          </tbody>
+                        </DataTable>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Tab>

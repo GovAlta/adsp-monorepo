@@ -9,6 +9,7 @@ export interface FormDefinition {
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
   dispositionStates?: Array<Disposition>;
+  submissionRecords: boolean;
 }
 
 export interface Disposition {

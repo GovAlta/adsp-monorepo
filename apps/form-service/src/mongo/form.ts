@@ -122,6 +122,7 @@ export class MongoFormRepository implements FormRepository {
       createdBy: entity.createdBy,
       locked: entity.locked,
       dispositionStates: entity.dispositionStates,
+      submissionRecords: entity.submissionRecords,
       submitted: entity.submitted,
       lastAccessed: entity.lastAccessed,
       hash: entity.hash,

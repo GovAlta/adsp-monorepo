@@ -21,6 +21,7 @@ describe('FormDefinitionEntity', () => {
       assessorRoles: ['test-assessor'],
       clerkRoles: [],
       dataSchema: null,
+      submissionRecords: false,
     });
     expect(entity).toBeTruthy();
     expect(validationService.setSchema).toHaveBeenCalledWith(entity.id, expect.any(Object));
@@ -37,6 +38,7 @@ describe('FormDefinitionEntity', () => {
       assessorRoles: ['test-assessor'],
       clerkRoles: [],
       dataSchema: null,
+      submissionRecords: false,
     });
 
     it('can return true for user with applicant role', () => {
@@ -60,6 +62,7 @@ describe('FormDefinitionEntity', () => {
         assessorRoles: ['test-assessor'],
         clerkRoles: [],
         dataSchema: null,
+        submissionRecords: false,
       });
       const result = anonymousApplyEntity.canApply({
         tenantId,
@@ -100,6 +103,7 @@ describe('FormDefinitionEntity', () => {
       assessorRoles: ['test-assessor'],
       clerkRoles: [],
       dataSchema: { type: 'object' },
+      submissionRecords: false,
     });
 
     it('can validate data', () => {
@@ -150,6 +154,7 @@ describe('FormDefinitionEntity', () => {
       assessorRoles: ['test-assessor'],
       clerkRoles: [],
       dataSchema: null,
+      submissionRecords: false,
     });
 
     it('can create form', async () => {
