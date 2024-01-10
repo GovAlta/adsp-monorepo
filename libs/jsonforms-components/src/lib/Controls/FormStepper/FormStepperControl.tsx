@@ -95,7 +95,7 @@ export const FormStepper = ({
 
           <ReviewItem>
             <div style={{ width: '100%' }}>
-              {Object.keys(data)?.length > 0 && (
+              {data && Object.keys(data)?.length > 0 && (
                 <Grid>
                   {Object.keys(flattenObject(data)).map((key, ix) => {
                     return (
