@@ -11,13 +11,19 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const InputValue = data ? data : 0;
+  const InputValue = data ? data : 0.0;
+  const clonedSchema = JSON.parse(JSON.stringify(schema));
+  const StepValue = clonedSchema.step ? clonedSchema.step : 0.01;
+  const MinValue = clonedSchema.min ? clonedSchema.min : 0;
+  const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
   return (
     <GoAInputNumber
       disabled={!enabled}
       value={InputValue}
       placeholder={placeholder}
-      step={0.01}
+      step={StepValue}
+      min={MinValue}
+      max={MaxValue}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name, value) => handleChange(path, value)}

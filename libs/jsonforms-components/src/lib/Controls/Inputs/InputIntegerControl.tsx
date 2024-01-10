@@ -12,11 +12,17 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const InputValue = data ? data : 0;
+  const clonedSchema = JSON.parse(JSON.stringify(schema));
+  const StepValue = clonedSchema.step ? clonedSchema.step : 0;
+  const MinValue = clonedSchema.min ? clonedSchema.min : 0;
+  const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
   return (
     <GoAInputNumber
       disabled={!enabled}
       value={InputValue}
-      step={1}
+      step={StepValue}
+      min={MinValue}
+      max={MaxValue}
       placeholder={placeholder}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
