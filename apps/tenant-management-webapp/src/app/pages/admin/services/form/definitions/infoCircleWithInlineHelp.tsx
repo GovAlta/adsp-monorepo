@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
-import { ReactComponent as TriangleRight } from '@assets/icons/TriangleRight.svg';
+import { ReactComponent as TriangleRight } from '@assets/icons/triangleRight.svg';
 import { ReactComponent as RectangleVertical } from '@assets/icons/rectangleVertical.svg';
 import styled from 'styled-components';
 
