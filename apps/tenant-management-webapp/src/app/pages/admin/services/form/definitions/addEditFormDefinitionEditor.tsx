@@ -93,7 +93,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
-  const [data, setData] = useState<unknown>({});
+  const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
