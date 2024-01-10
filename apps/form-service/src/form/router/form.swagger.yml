@@ -454,29 +454,11 @@ components:
       - Form Submission
     description: |
       Retrieves form submissions from a set of search criteria.
-      - You begin by asking for the top (first) N files, e.g. ```top=N&criteria={"definitionId": "Form1"}```.  If unspecified, top defaults to 50.
-      - The API responds by returning the form submissions and the starting point for the **next** set of results, if any more are available.
-      - In subsequent calls, pass the returned **next** value as the *after* parameter, e.g. ```top=N&after=next&criteria={"definitionId": "Form1"}```
-      - Continue iterating until **next** is undefined.
     parameters:
       - name: formId
         description: ID of the form.
         in: path
         required: true
-        schema:
-          type: string
-      - name: top
-        description: Number of form submissions to return in the page, e.g. the top N files.
-        example: 10
-        in: query
-        required: false
-        schema:
-          type: number
-      - name: after
-        description: Cursor for retrieving additional pages.  Use the **next** value returned by the previous call to GET /form/v1/forms/{formId}/submissions.
-        example: Mw==
-        in: query
-        required: false
         schema:
           type: string
       - name: criteria

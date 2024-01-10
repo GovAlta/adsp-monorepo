@@ -12,8 +12,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     this.submissionModel = model<Document & FormSubmissionDoc>('formSubmission', formSubmissionSchema);
   }
 
-  find(top: number, after: string, criteria: FormSubmissionCriteria): Promise<Results<FormSubmissionEntity>> {
-    const skip = decodeAfter(after);
+  find(criteria: FormSubmissionCriteria): Promise<Results<FormSubmissionEntity>> {
     const query: Record<string, unknown> = {};
 
     if (criteria?.formIdEquals) {
@@ -59,15 +58,12 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     return new Promise<FormSubmissionEntity[]>((resolve, reject) => {
       this.submissionModel
         .find(query, null, { lean: true })
-        .skip(skip)
-        .limit(top)
         .sort({ created: -1 })
         .exec((err, docs) => (err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(doc))))));
     }).then((docs) => ({
       results: docs,
       page: {
-        after,
-        next: encodeNext(docs.length, top, skip),
+        after: '',
         size: docs.length,
       },
     }));
