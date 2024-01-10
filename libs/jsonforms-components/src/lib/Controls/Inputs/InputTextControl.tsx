@@ -19,6 +19,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       value={data}
       width={'100%'}
       placeholder={placeholder}
+      // maxLength={appliedUiSchemaOptions?.maxLength}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name: string, value: string) => handleChange(path, value)}
