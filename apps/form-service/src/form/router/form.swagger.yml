@@ -483,9 +483,12 @@ components:
                   type: string
                 dispositionDateBefore:
                   description: The disposition before date for the form submission was updated.
+                  type: string
+                  format: date-time
                 dispositionDateAfter:
                   description: The disposition after date for the form submission was updated
                   type: string
+                  format: date-time
                 createdByIdEquals:
                   description: The id the form submission was created by.
                   type: string
