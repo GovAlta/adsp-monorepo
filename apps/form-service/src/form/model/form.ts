@@ -76,6 +76,7 @@ export class FormEntity implements Form {
     this.createdBy = form.createdBy;
     this.locked = form.locked;
     this.dispositionStates = form?.dispositionStates || [];
+    this.submissionRecords = definition.submissionRecords;
     this.submitted = form.submitted;
     this.lastAccessed = form.lastAccessed;
     this.status = form.status;

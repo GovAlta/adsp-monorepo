@@ -159,8 +159,8 @@ export function findFormSubmissions(repository: FormSubmissionRepository): Reque
 
       const user = req.user;
       const { formId } = req.params;
-      const { top: topValue, after, criteria: criteriaValue } = req.query;
-      const top = topValue ? parseInt(topValue as string) : 1;
+      const { criteria: criteriaValue } = req.query;
+
       const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin)) {
@@ -172,7 +172,7 @@ export function findFormSubmissions(repository: FormSubmissionRepository): Reque
       }
       criteria.formIdEquals = formId;
 
-      const { results, page } = await repository.find(top, after as string, criteria);
+      const { results, page } = await repository.find(criteria);
 
       end();
       res.send({
