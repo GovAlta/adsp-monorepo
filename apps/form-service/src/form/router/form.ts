@@ -56,8 +56,6 @@ export function mapForm(
     definitionId: entity.definition.id,
     formDraftUrl: entity.formDraftUrl,
     anonymousApplicant: entity.anonymousApplicant,
-    dispositionStates: entity.dispositionStates,
-    submissionRecords: entity.submissionRecords,
     status: entity.status,
     created: entity.created,
     createdBy: entity.createdBy,
