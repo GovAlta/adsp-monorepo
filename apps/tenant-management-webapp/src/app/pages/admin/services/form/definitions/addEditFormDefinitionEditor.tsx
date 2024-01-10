@@ -495,7 +495,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         zIndex: 0,
                       }}
                     >
-                      {definition.dispositionStates.length === 0 ? (
+                      {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
                         'No disposition states'
                       ) : (
                         <DataTable>
