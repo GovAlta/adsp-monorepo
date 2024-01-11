@@ -252,7 +252,7 @@ function formatRate(since: Date, count: number) {
   const hours = (Date.now() - since.getTime()) / 36e5;
   const perHour = count / hours;
   const perDay = (count * 24) / hours;
-  return perDay < 1 ? '' : perHour > 1 ? `${Math.round(perHour)}/h` : `${Math.round(perDay)}/d`;
+  return perDay < 1 ? '< 1/d' : perHour > 1 ? `${Math.round(perHour)}/h` : `${Math.round(perDay)}/d`;
 }
 
 interface RateMetricProps {
