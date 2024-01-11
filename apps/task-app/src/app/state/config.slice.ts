@@ -61,7 +61,7 @@ export const loadExtensions = createAsyncThunk(
       const configurationServiceUrl = config.directory[CONFIGURATION_SERVICE_ID];
 
       const accessToken = await getAccessToken();
-      const { data } = await axios.get<{ extensions: Extension[] }>(
+      const { data } = await axios.get<{ configuration: { extensions: Extension[] } }>(
         new URL('/configuration/v2/configuration/platform/task-service/active', configurationServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -69,14 +69,14 @@ export const loadExtensions = createAsyncThunk(
         }
       );
 
-      if (!config.environment.extensions?.[tenantId] && data.extensions?.length) {
+      if (!config.environment.extensions?.[tenantId] && data.configuration?.extensions?.length) {
         return rejectWithValue({
           level: 'error',
           message: 'There are task extensions, but extensions are not enabled for the tenant.',
         } as FeedbackMessage);
       } else {
         return (
-          data.extensions ||
+          data.configuration?.extensions ||
           [
             // {
             //   src: '{URL to extension script bundle}',
