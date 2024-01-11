@@ -2,7 +2,17 @@ export interface Results<T> {
   results: T[];
   page: {
     after: string | number;
-    size: number;
+    size?: number;
+    next?: string;
+    total?: number;
+  };
+}
+
+export interface OptionalResults<T> {
+  results: T[];
+  page: {
+    after?: string | number;
+    size?: number;
     next?: string;
     total?: number;
   };
