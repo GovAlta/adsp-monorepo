@@ -1,5 +1,5 @@
 import '@abgov/web-components/index.css';
-import { Redirect, Route, BrowserRouter as Router, Switch } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import { Landing } from './components/Landing';
 import { TaskTenant } from './containers/TaskTenant';
 

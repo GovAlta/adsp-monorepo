@@ -2,15 +2,22 @@ import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios';
 import { environment as envStatic } from '../../environments/environment';
 import { AppState } from './store';
+import { getAccessToken } from './user.slice';
+import { FeedbackMessage } from './types';
 
 export const CONFIG_FEATURE_KEY = 'config';
 
 type Environment = typeof envStatic;
 
+interface Extension {
+  src: string;
+  integrity: string;
+}
 export interface ConfigState {
   initialized: boolean;
   environment: Partial<Environment>;
   directory: Record<string, string>;
+  extensions: Record<string, Extension[]>;
 }
 
 export const initializeConfig = createAsyncThunk('config/initialize', async () => {
@@ -45,10 +52,57 @@ export const initializeConfig = createAsyncThunk('config/initialize', async () =
   return { directory, environment };
 });
 
+const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service';
+export const loadExtensions = createAsyncThunk(
+  'config/load-extensions',
+  async (tenantId: string, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationServiceUrl = config.directory[CONFIGURATION_SERVICE_ID];
+
+      const accessToken = await getAccessToken();
+      const { data } = await axios.get<{ extensions: Extension[] }>(
+        new URL('/configuration/v2/configuration/platform/task-service/active', configurationServiceUrl).href,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { tenantId, orLatest: true },
+        }
+      );
+
+      if (!config.environment.extensions?.[tenantId] && data.extensions?.length) {
+        return rejectWithValue({
+          level: 'error',
+          message: 'There are task extensions, but extensions are not enabled for the tenant.',
+        } as FeedbackMessage);
+      } else {
+        return (
+          data.extensions ||
+          [
+            // {
+            //   src: '{URL to extension script bundle}',
+            //   integrity: 'sha384-{digest value}',
+            // },
+          ]
+        );
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 const initialConfigState: ConfigState = {
   initialized: false,
   environment: {},
   directory: {},
+  extensions: {},
 };
 
 const configSlice = createSlice({
@@ -56,11 +110,15 @@ const configSlice = createSlice({
   initialState: initialConfigState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(initializeConfig.fulfilled, (state, { payload }) => {
-      state.environment = payload.environment;
-      state.directory = payload.directory;
-      state.initialized = true;
-    });
+    builder
+      .addCase(initializeConfig.fulfilled, (state, { payload }) => {
+        state.environment = payload.environment;
+        state.directory = payload.directory;
+        state.initialized = true;
+      })
+      .addCase(loadExtensions.fulfilled, (state, { payload, meta }) => {
+        state.extensions[meta.arg] = payload;
+      });
   },
 });
 
@@ -69,4 +127,11 @@ export const configReducer = configSlice.reducer;
 export const configInitializedSelector = createSelector(
   (state: AppState) => state.config,
   (config) => config.initialized
+);
+
+export const extensionsSelector = createSelector(
+  (state: AppState) => state.user.tenant?.id,
+  (state: AppState) => state.config.extensions,
+  (tenantId, extensions) =>
+    (tenantId && extensions[tenantId]?.map((extension) => ({ ...extension, src: new URL(extension.src) }))) || []
 );
