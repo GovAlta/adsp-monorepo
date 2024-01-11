@@ -25,6 +25,7 @@ export interface Form {
   status: FormStatus;
   data: Record<string, unknown>;
   files: Record<string, AdspId>;
+  submissionId?: string;
 }
 
 export interface FormCriteria {

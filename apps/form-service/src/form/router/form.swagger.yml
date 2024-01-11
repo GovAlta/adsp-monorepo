@@ -64,6 +64,9 @@ components:
         submitted:
           type: string
           format: date-time
+        submissionId:
+          type: string
+          description: When a form submission is submitted will this property have a value.
     FormData:
       type: object
       properties:
@@ -140,7 +143,6 @@ components:
         updatedDateTime:
           type: string
           format: date-time
-
     SendCodeOperation:
       type: object
       properties:

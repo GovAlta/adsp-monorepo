@@ -52,12 +52,15 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
 
 export function mapForm(
   apiId: AdspId,
-  entity: FormEntity
+  entity: FormEntity,
+  submissionId?: string | null
 ): Omit<Form, 'definition' | 'applicant' | 'data' | 'files'> & {
   urn: string;
   definitionId: string;
   applicant: { addressAs: string };
+  submissionId: string;
 } {
+  submissionId = submissionId ? submissionId : null;
   return {
     urn: adspId`${apiId}:/forms/${entity.id}`.toString(),
     id: entity.id,
@@ -70,6 +73,7 @@ export function mapForm(
     locked: entity.locked,
     submitted: entity.submitted,
     lastAccessed: entity.lastAccessed,
+    submissionId: submissionId ? submissionId : null,
     applicant: entity.applicant
       ? {
           addressAs: entity.applicant.addressAs,
@@ -94,9 +98,14 @@ export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmiss
     formData: entity.formData,
     formFiles: entity.formFiles,
     created: entity.created,
-    createdBy: entity.createdBy,
+    createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
     submissionStatus: entity.submissionStatus || '',
-    disposition: entity.disposition,
+    disposition: {
+      id: entity.disposition?.id,
+      date: entity.disposition?.date,
+      status: entity.disposition?.status,
+      reason: entity.disposition?.reason,
+    },
     updateDateTime: entity.updatedDateTime,
     updatedBy: entity.updatedBy,
   };
@@ -357,7 +366,9 @@ export function formOperation(
       const request: FormOperations = req.body;
 
       let result: FormEntity = null;
+      let formResult: Form = null;
       let event: DomainEvent = null;
+
       switch (request.operation) {
         case SEND_CODE_OPERATION: {
           result = await form.sendCode(user, notificationService);
@@ -369,7 +380,8 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          result = await form.submit(user, submissionRepository);
+          formResult = await form.submit(user, submissionRepository);
+          result = formResult as FormEntity;
           event = formSubmitted(user, result);
           break;
         }
@@ -388,7 +400,7 @@ export function formOperation(
       }
 
       end();
-      res.send(mapForm(apiId, result));
+      res.send(mapForm(apiId, result, formResult?.submissionId));
 
       if (event) {
         eventService.send(event);
