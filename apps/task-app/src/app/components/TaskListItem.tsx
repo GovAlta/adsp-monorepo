@@ -2,12 +2,12 @@ import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { FunctionComponent } from 'react';
 import { Task, TaskUser } from '../state';
 
-export function formatTaskAge(createdOn: string): string {
+export function formatTaskAge(createdOn: Date): string {
   if (!createdOn) {
     return '';
   }
 
-  const hours = Math.round((Date.now() - new Date(createdOn).getTime()) / 36e5);
+  const hours = Math.round((Date.now() - createdOn.getTime()) / 36e5);
   if (hours < 24) {
     return `${hours} hours`;
   } else {
