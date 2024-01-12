@@ -5,7 +5,9 @@ import { Redirect, Route, Switch, useLocation, useParams } from 'react-router-do
 import {
   AppDispatch,
   configInitializedSelector,
+  extensionsSelector,
   initializeTenant,
+  loadExtensions,
   loginUser,
   logoutUser,
   tenantSelector,
@@ -13,9 +15,40 @@ import {
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
 import { AuthorizeUser } from './AuthorizeUser';
+import { useScripts } from '../useScripts';
 
 const TaskQueue = lazy(() => import('./TaskQueue'));
 const TaskQueues = lazy(() => import('./TaskQueues'));
+
+interface TaskTenantSectionProps {
+  tenantName: string;
+}
+
+const TaskTenantSection = ({ tenantName }: TaskTenantSectionProps) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const tenant = useSelector(tenantSelector);
+  useEffect(() => {
+    dispatch(loadExtensions(tenant.id));
+  }, [dispatch, tenant]);
+
+  return (
+    <section>
+      <Switch>
+        <Route path={`/:tenantName/:namespace/:name`}>
+          <Suspense>
+            <TaskQueue />
+          </Suspense>
+        </Route>
+        <Route exact path={`/:tenantName`}>
+          <Suspense>
+            <TaskQueues />
+          </Suspense>
+        </Route>
+        <Redirect to={`/${tenantName}`} />
+      </Switch>
+    </section>
+  );
+};
 
 export const TaskTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -23,6 +56,10 @@ export const TaskTenant = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const tenant = useSelector(tenantSelector);
+  const extensions = useSelector(extensionsSelector);
+
+  useScripts(extensions, [extensions]);
+
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
 
@@ -54,21 +91,7 @@ export const TaskTenant = () => {
       <FeedbackNotification />
       <main>
         <AuthorizeUser>
-          <section>
-            <Switch>
-              <Route path={`/:tenantName/:namespace/:name`}>
-                <Suspense>
-                  <TaskQueue />
-                </Suspense>
-              </Route>
-              <Route exact path={`/:tenantName`}>
-                <Suspense>
-                  <TaskQueues />
-                </Suspense>
-              </Route>
-              <Redirect to={`/${tenantName}`} />
-            </Switch>
-          </section>
+          <TaskTenantSection tenantName={tenantName} />
         </AuthorizeUser>
       </main>
     </React.Fragment>

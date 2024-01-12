@@ -6,4 +6,7 @@ export interface TaskDetailsProps {
   task: Task;
   isExecuting: boolean;
   onClose: () => void;
+  onStart: () => void;
+  onCancel: (reason: string) => void;
+  onComplete: () => void;
 }

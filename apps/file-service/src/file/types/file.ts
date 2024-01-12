@@ -36,12 +36,4 @@ export interface FileCriteria {
   lastAccessedAfter?: string;
 }
 
-export type NewFile = {
-  recordId: string;
-  filename: string;
-};
-
-export type SecurityClassificationMimeTypeInfo = {
-  securityClassification: string;
-  mimeType?: string;
-};
+export type NewFile = Pick<File, 'recordId' | 'filename' | 'mimeType'>;

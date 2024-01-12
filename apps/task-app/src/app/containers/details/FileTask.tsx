@@ -5,8 +5,9 @@ import styled from 'styled-components';
 import { AppDispatch, completeTask } from '../../state';
 import FileViewer from '../FileViewer';
 import { TaskDetailsProps } from './types';
+import { registerDetailsComponent } from './register';
 
-const FileTask: FunctionComponent<TaskDetailsProps> = ({ className, user, task, isExecuting, onClose }) => {
+const FileTaskComponent: FunctionComponent<TaskDetailsProps> = ({ className, user, task, isExecuting, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   return (
@@ -24,7 +25,7 @@ const FileTask: FunctionComponent<TaskDetailsProps> = ({ className, user, task, 
   );
 };
 
-export default styled(FileTask)`
+const FileTask = styled(FileTaskComponent)`
   display: flex;
   flex-direction: column;
   & > :first-child {
@@ -34,3 +35,5 @@ export default styled(FileTask)`
     flex: 0;
   }
 `;
+
+registerDetailsComponent((task) => task?.recordId.startsWith('urn:ads:platform:file-service:v1:/files/'), FileTask);
