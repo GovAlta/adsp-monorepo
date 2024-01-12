@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 import { environment as envStatic } from '../../environments/environment';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
@@ -71,6 +72,7 @@ export const loadExtensions = createAsyncThunk(
 
       if (!config.environment.extensions?.[tenantId] && data.configuration?.extensions?.length) {
         return rejectWithValue({
+          id: uuidv4(),
           level: 'error',
           message: 'There are task extensions, but extensions are not enabled for the tenant.',
         } as FeedbackMessage);

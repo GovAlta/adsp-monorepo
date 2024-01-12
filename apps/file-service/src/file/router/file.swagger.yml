@@ -156,6 +156,10 @@ components:
                 description: The application-supplied name of the file.
                 example: TestFile23
                 type: string
+              mimeType:
+                description: Default MIME type of the file unless detected to be different.
+                example: application/octet-stream
+                type: string
               file:
                 description: File contents.
                 type: string

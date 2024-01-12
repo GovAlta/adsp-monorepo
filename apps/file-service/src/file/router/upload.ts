@@ -42,7 +42,7 @@ export class FileStorageEngine implements multer.StorageEngine {
       benchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const { type = null, recordId = null, filename = null } = { ...req.query, ...req.body };
+      const { type = null, recordId = null, filename = null, mimeType = null } = { ...req.query, ...req.body };
 
       if (!type) {
         throw new InvalidOperationError('Type of file not specified.');
@@ -78,7 +78,7 @@ export class FileStorageEngine implements multer.StorageEngine {
         {
           filename: filename || file.originalname,
           recordId,
-          securityClassification: fileType.securityClassification,
+          mimeType,
         },
         file.stream
       );
