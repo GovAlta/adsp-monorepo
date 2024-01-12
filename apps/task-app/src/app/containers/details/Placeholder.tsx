@@ -3,8 +3,16 @@ import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { TaskDetailsProps } from './types';
 
+const PlaceholderDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  > *:first-child {
+    flex-grow: 1;
+  }
+`;
+
 const Placeholder: FunctionComponent<TaskDetailsProps> = ({
-  className,
   user,
   task,
   isExecuting,
@@ -14,7 +22,7 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
   onCancel,
 }) => {
   return (
-    <div className={className}>
+    <PlaceholderDiv>
       <div>
         <GoACallout type="information" heading="Task detail view">
           This is a placeholder for the task detail view. Replace with your own custom view for the specific type of
@@ -50,15 +58,8 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
           </>
         )}
       </GoAButtonGroup>
-    </div>
+    </PlaceholderDiv>
   );
 };
 
-export default styled(Placeholder)`
-  display: flex;
-  flex-direction: column;
-
-  > *:first-child {
-    flex-grow: 1;
-  }
-`;
+export default Placeholder;
