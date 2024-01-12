@@ -131,6 +131,7 @@ export const formSubmissionSchema = new Schema(
     created: {
       type: Date,
       required: true,
+      index: true,
     },
     createdBy: {
       type: createdBy,
