@@ -213,11 +213,7 @@ export class FormEntity implements Form {
 
   async setToDraft(user: User): Promise<FormEntity> {
     if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin)) {
-      throw new UnauthorizedUserError('unlock form', user);
-    }
-
-    if (this.status === FormStatus.Draft) {
-      throw new InvalidOperationError('form is already in draft');
+      throw new UnauthorizedUserError('set to draft form', user);
     }
 
     if (this.status !== FormStatus.Submitted) {

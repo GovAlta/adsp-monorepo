@@ -52,15 +52,12 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
 
 export function mapForm(
   apiId: AdspId,
-  entity: FormEntity,
-  submissionId?: string | null
+  entity: Form
 ): Omit<Form, 'definition' | 'applicant' | 'data' | 'files'> & {
   urn: string;
   definitionId: string;
   applicant: { addressAs: string };
-  submissionId: string;
 } {
-  submissionId = submissionId ? submissionId : null;
   return {
     urn: adspId`${apiId}:/forms/${entity.id}`.toString(),
     id: entity.id,
@@ -73,7 +70,7 @@ export function mapForm(
     locked: entity.locked,
     submitted: entity.submitted,
     lastAccessed: entity.lastAccessed,
-    submissionId: submissionId ? submissionId : null,
+    submissionId: entity.submissionId ? entity.submissionId : null,
     applicant: entity.applicant
       ? {
           addressAs: entity.applicant.addressAs,
@@ -400,7 +397,7 @@ export function formOperation(
       }
 
       end();
-      res.send(mapForm(apiId, result, formResult?.submissionId));
+      res.send(mapForm(apiId, result));
 
       if (event) {
         eventService.send(event);

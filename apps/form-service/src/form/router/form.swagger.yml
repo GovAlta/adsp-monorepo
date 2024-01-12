@@ -66,7 +66,7 @@ components:
           format: date-time
         submissionId:
           type: string
-          description: When a form submission is submitted will this property have a value.
+          description: When a form submission is submitted this property have a string value.
     FormData:
       type: object
       properties:
