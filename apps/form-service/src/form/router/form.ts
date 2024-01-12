@@ -1,8 +1,8 @@
 import { adspId, AdspId, DomainEvent, EventService, isAllowedUser, startBenchmark } from '@abgov/adsp-service-sdk';
 import {
   createValidationHandler,
-  decodeAfter,
   InvalidOperationError,
+  InvalidValueError,
   NotFoundError,
   UnauthorizedError,
 } from '@core-services/core-common';
@@ -13,7 +13,14 @@ import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model
 import { NotificationService } from '../../notification';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { Form, FormCriteria, FormDefinition, FormSubmissionCriteria, FormSubmissionTenant } from '../types';
+import {
+  Form,
+  FormCriteria,
+  FormDefinition,
+  FormDisposition,
+  FormSubmissionCriteria,
+  FormSubmissionTenant,
+} from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -25,6 +32,7 @@ import {
 import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
+import { v4 as uuidv4 } from 'uuid';
 
 export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
   return {
@@ -44,7 +52,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
 
 export function mapForm(
   apiId: AdspId,
-  entity: FormEntity
+  entity: Form
 ): Omit<Form, 'definition' | 'applicant' | 'data' | 'files'> & {
   urn: string;
   definitionId: string;
@@ -62,6 +70,7 @@ export function mapForm(
     locked: entity.locked,
     submitted: entity.submitted,
     lastAccessed: entity.lastAccessed,
+    submissionId: entity.submissionId ? entity.submissionId : null,
     applicant: entity.applicant
       ? {
           addressAs: entity.applicant.addressAs,
@@ -86,9 +95,14 @@ export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmiss
     formData: entity.formData,
     formFiles: entity.formFiles,
     created: entity.created,
-    createdBy: entity.createdBy,
+    createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
     submissionStatus: entity.submissionStatus || '',
-    disposition: entity.disposition,
+    disposition: {
+      id: entity.disposition?.id,
+      date: entity.disposition?.date,
+      status: entity.disposition?.status,
+      reason: entity.disposition?.reason,
+    },
     updateDateTime: entity.updatedDateTime,
     updatedBy: entity.updatedBy,
   };
@@ -255,6 +269,45 @@ export function getFormSubmission(submissionRepository: FormSubmissionRepository
     }
   };
 }
+
+export function updateFormDisposition(submissionRepository: FormSubmissionRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+      const { formId, submissionId } = req.params;
+      const { dispositionStatus, dispositionReason } = req.body;
+      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
+
+      if (!formSubmission) throw new NotFoundError('FormSubmission', submissionId);
+
+      const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
+      const definition = configuration[formSubmission.formDefinitionId];
+
+      const hasStateToUpdate = definition.dispositionStates.find((status) => status.name === dispositionStatus);
+      if (!hasStateToUpdate) {
+        throw new InvalidValueError(
+          'Status',
+          `Invalid Form Disposition Status for Form Submission ID: ${submissionId}`
+        );
+      }
+      const dispositionToUpdate: FormDisposition = {
+        id: uuidv4(),
+        reason: dispositionReason,
+        status: dispositionStatus,
+        date: new Date(),
+      };
+
+      formSubmission.disposition = { ...dispositionToUpdate };
+      const updatedFormSubmmission = await submissionRepository.save(formSubmission);
+      end();
+
+      res.send(mapFormSubmissionData(updatedFormSubmmission));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function accessForm(notificationService: NotificationService): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -305,13 +358,14 @@ export function formOperation(
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
-      console.log('formOperation submitting');
       const user = req.user;
       const form: FormEntity = req[FORM];
       const request: FormOperations = req.body;
 
       let result: FormEntity = null;
+      let formResult: Form = null;
       let event: DomainEvent = null;
+
       switch (request.operation) {
         case SEND_CODE_OPERATION: {
           result = await form.sendCode(user, notificationService);
@@ -323,7 +377,8 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          result = await form.submit(user, submissionRepository);
+          formResult = await form.submit(user, submissionRepository);
+          result = formResult as FormEntity;
           event = formSubmitted(user, result);
           break;
         }
@@ -425,18 +480,18 @@ export function createFormRouter({
       getFormSubmission(submissionRepository)
     )
   );
+  router.post(
+    '/forms/:formId/submissions/:submissionId',
+    createValidationHandler(
+      body('dispositionStatus').isString().isLength({ min: 1 }),
+      body('dispositionReason').isString().isLength({ min: 1 })
+    ),
+    updateFormDisposition(submissionRepository)
+  );
 
   router.get(
     '/forms/:formId/submissions',
     createValidationHandler(
-      query('top').optional().isInt({ min: 1, max: 5000 }),
-      query('after')
-        .optional()
-        .isString()
-        .custom((val) => {
-          console.log('afterthis', val);
-          return !isNaN(decodeAfter(val));
-        }),
       query('criteria')
         .optional()
         .custom(async (value) => {

@@ -99,6 +99,18 @@ export const FormStatusSubmittedDefinition: DomainEventDefinition = {
   },
 };
 
+export const FormStatusSetToDraftDefinition: DomainEventDefinition = {
+  name: FORM_SET_TO_DRAFT,
+  description: 'Signalled when a form is set back to draft.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      form: formSchema,
+      submittedBy: userInfoSchema,
+    },
+  },
+};
+
 export const FormStatusArchivedDefinition: DomainEventDefinition = {
   name: FORM_ARCHIVED,
   description: 'Signalled when a form is archived.',
