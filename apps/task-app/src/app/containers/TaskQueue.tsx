@@ -80,8 +80,8 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
             onSelect={() => {
               // not used
             }}
-            onAssign={(task) => dispatch(taskActions.setTaskToAssign(task))}
-            onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task))}
+            onAssign={(task) => dispatch(taskActions.setTaskToAssign(task.id))}
+            onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task.id))}
             onOpen={(task) => history.push(`/${params.tenantName}/${params.namespace}/${params.name}/${task.id}`)}
           />
         </Route>
