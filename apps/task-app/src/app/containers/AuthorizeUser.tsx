@@ -1,8 +1,8 @@
-import { FunctionComponent, ReactElement, ReactNode } from 'react';
-import { useSelector } from 'react-redux';
-import { userSelector } from '../state';
 import { GoACallout } from '@abgov/react-components-new';
+import { FunctionComponent, ReactElement } from 'react';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { userSelector } from '../state';
 
 interface AuthorizeUserProps {
   roles?: string[];

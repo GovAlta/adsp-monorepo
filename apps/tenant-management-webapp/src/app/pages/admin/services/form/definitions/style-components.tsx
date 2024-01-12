@@ -25,3 +25,7 @@ export const EmptyBoxSpace = styled.div`
 export const Flex = styled.div`
   display: flex;
 `;
+export const ActionSpace = styled.div`
+  height: 29px;
+  width: 56px;
+`;

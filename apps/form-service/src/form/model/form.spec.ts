@@ -17,6 +17,7 @@ describe('FormEntity', () => {
     formDraftUrlTemplate: 'https://my-form/{{ id }}',
     description: null,
     anonymousApply: true,
+    submissionRecords: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     clerkRoles: ['test-clerk'],
@@ -37,6 +38,7 @@ describe('FormEntity', () => {
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
+    getByFormIdAndSubmissionId: jest.fn(),
   };
 
   const notificationMock = {
@@ -517,7 +519,10 @@ describe('FormEntity', () => {
 
     it('can submit form', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-      const submitted = await entity.submit({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      const submitted = (await entity.submit(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        repositoryMock
+      )) as FormEntity;
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
       expect(submitted.hash).toBeTruthy();
@@ -526,14 +531,17 @@ describe('FormEntity', () => {
 
     it('can throw for different user', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-      await expect(entity.submit({ tenantId, id: 'tester-2', roles: ['test-applicant'] } as User)).rejects.toThrow(
-        UnauthorizedUserError
-      );
+      await expect(
+        entity.submit({ tenantId, id: 'tester-2', roles: ['test-applicant'] } as User, repositoryMock)
+      ).rejects.toThrow(UnauthorizedUserError);
     });
 
     it('can submit form by clerk', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-      const submitted = await entity.submit({ tenantId, id: 'tester-2', roles: ['test-clerk'] } as User);
+      const submitted = (await entity.submit(
+        { tenantId, id: 'tester-2', roles: ['test-clerk'] } as User,
+        repositoryMock
+      )) as FormEntity;
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
       expect(submitted.hash).toBeTruthy();
@@ -542,7 +550,9 @@ describe('FormEntity', () => {
 
     it('can throw for user without applicant role', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-      await expect(entity.submit({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(UnauthorizedUserError);
+      await expect(entity.submit({ tenantId, id: 'tester', roles: [] } as User, repositoryMock)).rejects.toThrow(
+        UnauthorizedUserError
+      );
     });
 
     it('can throw for form not in draft', async () => {
@@ -550,9 +560,9 @@ describe('FormEntity', () => {
         ...formInfo,
         status: FormStatus.Submitted,
       });
-      await expect(entity.submit({ tenantId, id: 'tester', roles: ['test-applicant'] } as User)).rejects.toThrow(
-        InvalidOperationError
-      );
+      await expect(
+        entity.submit({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, repositoryMock)
+      ).rejects.toThrow(InvalidOperationError);
     });
   });
 

@@ -25,6 +25,8 @@ interface UploadProps {
   fileRepository: FileRepository;
 }
 
+const DEFAULT_MIME_TYPE = 'application/octet-stream';
+
 export class FileStorageEngine implements multer.StorageEngine {
   constructor(
     private logger: Logger,
@@ -42,7 +44,12 @@ export class FileStorageEngine implements multer.StorageEngine {
       benchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const { type = null, recordId = null, filename = null } = { ...req.query, ...req.body };
+      const {
+        type = null,
+        recordId = null,
+        filename = null,
+        mimeType = DEFAULT_MIME_TYPE,
+      } = { ...req.query, ...req.body };
 
       if (!type) {
         throw new InvalidOperationError('Type of file not specified.');
@@ -78,7 +85,7 @@ export class FileStorageEngine implements multer.StorageEngine {
         {
           filename: filename || file.originalname,
           recordId,
-          securityClassification: fileType.securityClassification,
+          mimeType,
         },
         file.stream
       );

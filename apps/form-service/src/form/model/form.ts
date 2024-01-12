@@ -2,11 +2,13 @@ import { AdspId, assertAdspId, isAllowedUser, UnauthorizedUserError, User } from
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import * as hasha from 'hasha';
 import { FormDefinitionEntity } from '../model';
-import { FormRepository } from '../repository';
+import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { Disposition, Form, FormStatus } from '../types';
 import { NotificationService, Subscriber } from '../../notification';
 import { FileService } from '../../file';
+import { v4 as uuidv4 } from 'uuid';
+import { FormSubmissionEntity } from './formSubmission';
 
 // Any form created by user with the intake app role is treated as anonymous.
 function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
@@ -23,6 +25,7 @@ export class FormEntity implements Form {
   locked: Date;
   submitted: Date;
   dispositionStates: Disposition[];
+  submissionRecords: boolean;
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;
@@ -73,6 +76,7 @@ export class FormEntity implements Form {
     this.createdBy = form.createdBy;
     this.locked = form.locked;
     this.dispositionStates = form?.dispositionStates || [];
+    this.submissionRecords = definition.submissionRecords;
     this.submitted = form.submitted;
     this.lastAccessed = form.lastAccessed;
     this.status = form.status;
@@ -207,7 +211,22 @@ export class FormEntity implements Form {
     return await this.repository.save(this);
   }
 
-  async submit(user: User): Promise<FormEntity> {
+  async setToDraft(user: User): Promise<FormEntity> {
+    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin)) {
+      throw new UnauthorizedUserError('set to draft form', user);
+    }
+
+    if (this.status !== FormStatus.Submitted) {
+      throw new InvalidOperationError('Can only set submitted forms to draft');
+    }
+
+    // Unlock updates last access so that the form is not immediately locked again.
+    this.status = FormStatus.Draft;
+    this.lastAccessed = new Date();
+    return await this.repository.save(this);
+  }
+
+  async submit(user: User, submissionRepository: FormSubmissionRepository): Promise<Form> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
     }
@@ -224,7 +243,16 @@ export class FormEntity implements Form {
     // Hash the form data on submit for duplicate detection.
     this.hash = await hasha.async(JSON.stringify(this.data), { algorithm: 'sha1' });
 
-    return await this.repository.save(this);
+    const id = uuidv4();
+
+    if (this.submissionRecords) {
+      // If disposition states exist, create a form submission record
+      await FormSubmissionEntity.create(user, submissionRepository, this, id);
+    }
+    // We need the submissionId so that it is available for updates/lookups of the submission.
+    const savedFormEntity = await this.repository.save(this);
+    const formData: Form = { ...savedFormEntity, submissionId: id };
+    return formData;
   }
 
   async archive(user: User): Promise<FormEntity> {

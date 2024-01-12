@@ -18,13 +18,15 @@ import {
   setTaskPriority,
   taskActions,
   metricsLoadingSelector,
+  openTask,
+  loadQueueMetrics,
 } from '../state';
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
 import { TaskPriorityModal } from '../components/TaskPriorityModal';
 import { TaskHeader } from '../components/TaskHeader';
 import { TaskList } from '../components/TaskList';
-import { TaskDetailsHost } from './details/TaskDetailsHost';
 import { LoadingIndicator } from '../components/LoadingIndicator';
+import { TaskDetailsHost } from './details/TaskDetailsHost';
 
 interface TaskQueueComponentProps {
   className?: string;
@@ -47,7 +49,8 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
 
   useEffect(() => {
     dispatch(initializeQueue({ namespace: params.namespace, name: params.name }));
-    dispatch(taskActions.setOpenTask());
+    dispatch(loadQueueMetrics({ namespace: params.namespace, name: params.name }));
+    dispatch(openTask({ namespace: params.namespace, name: params.name }));
   }, [dispatch, params]);
 
   const history = useHistory();
@@ -77,8 +80,8 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
             onSelect={() => {
               // not used
             }}
-            onAssign={(task) => dispatch(taskActions.setTaskToAssign(task))}
-            onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task))}
+            onAssign={(task) => dispatch(taskActions.setTaskToAssign(task.id))}
+            onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task.id))}
             onOpen={(task) => history.push(`/${params.tenantName}/${params.namespace}/${params.name}/${task.id}`)}
           />
         </Route>

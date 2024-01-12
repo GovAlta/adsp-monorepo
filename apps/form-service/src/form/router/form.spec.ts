@@ -22,6 +22,7 @@ describe('form router', () => {
     anonymousApply: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
+    submissionRecords: false,
     clerkRoles: [],
     dataSchema: null,
   });
@@ -40,6 +41,7 @@ describe('form router', () => {
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
+    getByFormIdAndSubmissionId: jest.fn(),
   };
 
   const eventServiceMock = {
@@ -92,6 +94,7 @@ describe('form router', () => {
       eventService: eventServiceMock,
       fileService: fileServiceMock,
       notificationService: notificationServiceMock,
+      submissionRepository: repositoryMock,
     });
     expect(router).toBeTruthy();
   });
@@ -531,7 +534,7 @@ describe('form router', () => {
 
   describe('formOperation', () => {
     it('can create handler', () => {
-      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock);
+      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -552,7 +555,7 @@ describe('form router', () => {
 
       notificationServiceMock.sendCode.mockResolvedValueOnce(null);
 
-      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock);
+      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(notificationServiceMock.sendCode).toHaveBeenCalled();
@@ -576,7 +579,7 @@ describe('form router', () => {
 
       notificationServiceMock.sendCode.mockResolvedValueOnce(null);
 
-      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock);
+      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Submitted }));
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: FORM_SUBMITTED }));
@@ -597,7 +600,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock);
+      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Archived }));
@@ -633,7 +636,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock);
+      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(locked);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Draft }));
@@ -654,7 +657,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock);
+      const handler = formOperation(apiId, eventServiceMock, notificationServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));

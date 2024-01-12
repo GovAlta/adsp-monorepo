@@ -12,6 +12,7 @@ export interface QueueDefinition {
 export type TaskStatus = 'Pending' | 'In Progress' | 'Stopped' | 'Cancelled' | 'Completed';
 export type TaskPriority = 'Normal' | 'High' | 'Urgent';
 export interface Task {
+  urn: string;
   id: string;
   recordId?: string;
   queue: { namespace: string; name: string };
@@ -19,9 +20,9 @@ export interface Task {
   description: string;
   priority: TaskPriority;
   status: TaskStatus;
-  createdOn: string;
-  startedOn: string;
-  endedOn: string;
+  createdOn: Date;
+  startedOn?: Date;
+  endedOn?: Date;
   assignment: {
     assignedTo: {
       id: string;

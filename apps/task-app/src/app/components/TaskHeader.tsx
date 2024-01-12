@@ -35,7 +35,7 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({ className, op
           )}
         </span>
       </div>
-      <GoADivider mb="m" />
+      <GoADivider />
     </React.Fragment>
   );
 };

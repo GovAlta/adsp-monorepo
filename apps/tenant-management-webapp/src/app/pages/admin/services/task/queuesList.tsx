@@ -29,7 +29,9 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   const taskQueues = useSelector((state: RootState) => {
     return Object.entries(state?.task?.queues)
       .sort((template1, template2) => {
-        return template1[1].name.localeCompare(template2[1].name);
+        return `${template1[1].namespace}:${template1[1].name}`.localeCompare(
+          `${template2[1].namespace}:${template2[1].name}`
+        );
       })
       .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
         tempObj[taskDefinitionId] = taskDefinitionData;

@@ -9,6 +9,7 @@ export class QueueEntity implements Queue {
   tenantId: AdspId;
   namespace: string;
   name: string;
+  displayName?: string;
   assignerRoles: string[] = [];
   workerRoles: string[] = [];
   context: Record<string, string | number | boolean>;
@@ -17,6 +18,7 @@ export class QueueEntity implements Queue {
     this.tenantId = queue.tenantId;
     this.namespace = queue.namespace;
     this.name = queue.name;
+    this.displayName = queue.displayName;
     this.assignerRoles = queue.assignerRoles || [];
     this.workerRoles = queue.workerRoles || [];
     this.context = queue.context || {};

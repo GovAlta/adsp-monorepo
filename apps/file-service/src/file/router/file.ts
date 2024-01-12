@@ -45,7 +45,7 @@ function mapFileType(entity: FileTypeEntity) {
   };
 }
 
-function mapFile(apiId: AdspId, entity: FileEntity, entityFileType?: FileTypeEntity) {
+function mapFile(apiId: AdspId, entity: FileEntity) {
   const mappedFile = {
     urn: adspId`${apiId}:/files/${entity.id}`.toString(),
     id: entity.id,
@@ -58,24 +58,12 @@ function mapFile(apiId: AdspId, entity: FileEntity, entityFileType?: FileTypeEnt
     lastAccessed: entity.lastAccessed,
     scanned: entity.scanned,
     infected: entity.infected,
-    securityClassification: '',
+    mimeType: entity.mimeType,
+    // For old files Security Classification doesn't exist.
+    // So, if they have updated the File Types with a security classification
+    // then the security classification should be added to the object.
+    securityClassification: entity.securityClassification || entity.type?.securityClassification,
   };
-
-  // For old files Security Classification doesnt exist.
-  // So, if they have updated the File Types with a security classification
-  // then the security classification should be added to the object.
-  if (entity?.typeId && entity.securityClassification !== undefined) {
-    return {
-      ...mappedFile,
-      securityClassification: entity.securityClassification,
-    };
-  }
-  if (entity?.typeId && entityFileType?.securityClassification !== undefined) {
-    return {
-      ...mappedFile,
-      securityClassification: entityFileType.securityClassification,
-    };
-  }
 
   return mappedFile;
 }
@@ -229,16 +217,9 @@ export function getFile(repository: FileRepository): RequestHandler {
         throw new UnauthorizedError('User not authorized to access file.');
       }
 
-      const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
-      if (fileEntity.typeId) {
-        const fileType = configuration?.[fileEntity?.typeId];
-
-        if (fileType) {
-          req.fileTypeEntity = fileType;
-        }
-      }
       req.fileEntity = fileEntity;
 
+      // This is to record the timing metric against the tenant of the file for anonymous download.
       if (!req.tenant) {
         req.tenant = { id: fileEntity.tenantId, name: null, realm: null };
       }
@@ -276,7 +257,7 @@ export function downloadFile(logger: Logger): RequestHandler {
       end();
 
       res.status(200);
-      res.setHeader('Content-Type', fileEntity.mimeType || 'application/octet-stream');
+      res.setHeader('Content-Type', validateMimeType(fileEntity.mimeType));
       res.setHeader('Content-Length', fileEntity.size);
       if (embed === 'true') {
         res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
@@ -305,6 +286,16 @@ export function downloadFile(logger: Logger): RequestHandler {
     }
   };
 }
+function validateMimeType(mimeType: string) {
+  if (!mimeType) return 'application/octet-stream';
+
+  // Need to add base64 to the end of the mime so that the pdf can embed the svg correctly.
+  if (mimeType.indexOf('image/svg+xml') > 0) {
+    mimeType = `${mimeType};base64`;
+  }
+
+  return mimeType;
+}
 
 function isSupportedVideoType(mimeType: string): boolean {
   // supporting mp4, avi, or mov
@@ -318,7 +309,6 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
 
       const user = req.user;
       const fileEntity = req.fileEntity;
-      const fileTypeEntity = req.fileTypeEntity;
       await fileEntity.markForDeletion(user);
 
       logger.info(
@@ -343,7 +333,8 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
           created: fileEntity.created,
           lastAccessed: fileEntity.lastAccessed,
           createdBy: fileEntity.createdBy,
-          securityClassification: fileTypeEntity.securityClassification,
+          mimeType: fileEntity.mimeType,
+          securityClassification: fileEntity.securityClassification,
         })
       );
     } catch (err) {
@@ -416,7 +407,7 @@ export const createFileRouter = ({
     '/files/:fileId',
     createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository),
-    (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity, req.fileTypeEntity))
+    (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity))
   );
   fileRouter.get(
     '/files/:fileId/download',
