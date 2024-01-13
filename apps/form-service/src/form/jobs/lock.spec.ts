@@ -64,6 +64,7 @@ describe('lock', () => {
       clerkRoles: [],
       formDraftUrlTemplate: '',
       dataSchema: null,
+      submissionRecords: false,
     }),
     subscriber,
     {

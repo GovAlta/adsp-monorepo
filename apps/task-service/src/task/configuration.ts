@@ -4,6 +4,20 @@ export const configurationSchema = {
     definitions: {
       type: 'object',
     },
+    extensions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          src: {
+            type: 'string',
+            pattern: '^https://',
+          },
+          integrity: { type: 'string' },
+        },
+        required: ['src', 'integrity'],
+      },
+    },
     queues: {
       type: 'object',
       patternProperties: {

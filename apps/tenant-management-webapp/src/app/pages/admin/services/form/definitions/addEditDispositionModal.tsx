@@ -52,7 +52,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
     <GoAModal
       testId="template-form"
       open={open}
-      heading={`${isEdit ? 'Edit' : 'Add'} disposition`}
+      heading={`${isEdit ? 'Edit' : 'Add'} disposition state`}
       width="640px"
       actions={
         <GoAButtonGroup alignment="end">

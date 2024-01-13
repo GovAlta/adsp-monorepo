@@ -82,7 +82,10 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
 
             return (
               <tr key={`${service}-row-${role}`}>
-                <td className="role-name">{role}</td>
+                {/* Cannot use class to change the overflow-wrap */}
+                <td className="role-name" style={{ overflowWrap: 'anywhere' }}>
+                  {role}
+                </td>
                 {checkedRoles.map((checkedRole, index) => {
                   return (
                     <td className="role" key={`${service}-${role}-checkbox-${index}`}>

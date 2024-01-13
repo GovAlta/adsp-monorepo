@@ -26,10 +26,15 @@ export interface TaskMetric {
 }
 
 export interface TaskUser extends Person {
-  id: string;
   isAssigner: boolean;
   isWorker: boolean;
 }
+
+type SerializedTask = Omit<Task, 'createdOn' | 'startedOn' | 'endedOn'> & {
+  createdOn: string;
+  startedOn: string;
+  endedOn: string;
+};
 
 export interface TaskState {
   user: TaskUser;
@@ -38,7 +43,7 @@ export interface TaskState {
   people: Record<string, Person>;
   assigners: string[];
   workers: string[];
-  tasks: Record<string, Task>;
+  tasks: Record<string, SerializedTask>;
   results: string[];
   filter: TaskFilter;
   next: string;
@@ -50,13 +55,13 @@ export interface TaskState {
     executing: boolean;
   };
   modal: {
-    taskToAssign: Task;
-    taskToPrioritize: Task;
+    taskToAssign: SerializedTask;
+    taskToPrioritize: SerializedTask;
   };
 }
 
 interface TaskResults {
-  results: Task[];
+  results: SerializedTask[];
   page: {
     after?: string;
     next?: string;
@@ -65,13 +70,13 @@ interface TaskResults {
 }
 
 export const initializeQueue = createAsyncThunk(
-  'task/initialize-definition',
+  'task/initialize-queue',
   async ({ namespace, name }: { namespace: string; name: string }, { dispatch, getState, rejectWithValue }) => {
-    const state = getState() as AppState;
-    const { directory } = state.config;
+    const { config, queue, task } = getState() as AppState;
+    const { directory } = config;
 
     try {
-      let definition = state.queue.queues[`${namespace}:${name}`];
+      let definition = queue.queues[`${namespace}:${name}`];
       if (!definition) {
         const accessToken = await getAccessToken();
         const { data } = await axios.get<QueueDefinition>(
@@ -84,10 +89,12 @@ export const initializeQueue = createAsyncThunk(
         definition = data;
       }
 
-      dispatch(loadQueueMetrics({ namespace, name }));
-      dispatch(loadQueueTasks({ namespace, name }));
-      dispatch(loadQueuePeople(definition));
-      dispatch(connectStream({ namespace, name }));
+      // If the target queue is changing, then load additional information.
+      if (task.queue?.namespace !== definition.namespace || task.queue?.name !== definition.name) {
+        dispatch(loadQueueTasks({ namespace, name }));
+        dispatch(loadQueuePeople(definition));
+        dispatch(connectStream({ namespace, name }));
+      }
 
       return definition;
     } catch (err) {
@@ -106,7 +113,7 @@ export const initializeQueue = createAsyncThunk(
 interface TaskEvent {
   timestamp: string;
   payload: {
-    task: Task;
+    task: SerializedTask;
   };
 }
 
@@ -248,18 +255,51 @@ export const loadQueuePeople = createAsyncThunk(
 
 export const openTask = createAsyncThunk(
   'task/open-task',
-  async ({ taskId }: { taskId?: string }, { getState, dispatch }) => {
+  async ({ namespace, name, taskId }: { namespace: string; name: string; taskId?: string }, { getState, dispatch }) => {
     const { task } = getState() as AppState;
     if (task.opened !== taskId && taskId) {
-      const toOpen = task.tasks[taskId];
-      dispatch(loadTopic({ resourceId: toOpen.urn }));
-      // If the task is associated with some record (in different domain model), load any topic related to that.
-      // This should generally be a more meaningful context for comments; e.g. intake submission, case file, support ticket, etc.
-      if (toOpen.recordId) {
-        dispatch(loadTopic({ resourceId: toOpen.recordId }));
-      }
+      dispatch(loadTask({ namespace, name, taskId }));
     }
     return taskId;
+  }
+);
+
+export const loadTask = createAsyncThunk(
+  'task/load-task',
+  async (
+    { namespace, name, taskId }: { namespace: string; name: string; taskId: string },
+    { getState, dispatch, rejectWithValue }
+  ) => {
+    const state = getState() as AppState;
+    const { directory } = state.config;
+
+    try {
+      const accessToken = await getAccessToken();
+      const { data: task } = await axios.get<SerializedTask>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}/tasks/${taskId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      dispatch(loadTopic({ resourceId: task.urn }));
+      // If the task is associated with some record (in different domain model), load any topic related to that.
+      // This should generally be a more meaningful context for comments; e.g. intake submission, case file, support ticket, etc.
+      if (task.recordId) {
+        dispatch(loadTopic({ resourceId: task.recordId }));
+      }
+
+      return task;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
   }
 );
 
@@ -272,7 +312,7 @@ export const setTaskPriority = createAsyncThunk(
 
     try {
       const accessToken = await getAccessToken();
-      const { data } = await axios.post<Task>(
+      const { data } = await axios.post<SerializedTask>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
           operation: 'set-priority',
@@ -308,7 +348,7 @@ export const assignTask = createAsyncThunk(
 
     try {
       const accessToken = await getAccessToken();
-      const { data } = await axios.post<Task>(
+      const { data } = await axios.post<SerializedTask>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
           operation: 'assign',
@@ -344,7 +384,7 @@ export const startTask = createAsyncThunk(
 
     try {
       const accessToken = await getAccessToken();
-      const { data } = await axios.post<Task>(
+      const { data } = await axios.post<SerializedTask>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
           operation: 'start',
@@ -377,7 +417,7 @@ export const completeTask = createAsyncThunk(
 
     try {
       const accessToken = await getAccessToken();
-      const { data } = await axios.post<Task>(
+      const { data } = await axios.post<SerializedTask>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
           operation: 'complete',
@@ -410,7 +450,7 @@ export const cancelTask = createAsyncThunk(
 
     try {
       const accessToken = await getAccessToken();
-      const { data } = await axios.post<Task>(
+      const { data } = await axios.post<SerializedTask>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
           operation: 'cancel',
@@ -472,7 +512,7 @@ export const taskSlice = createSlice({
     streamConnectionChanged: (state, { payload }: PayloadAction<boolean>) => {
       state.live = payload;
     },
-    setTask: (state, { payload }: PayloadAction<Task>) => {
+    setTask: (state, { payload }: PayloadAction<SerializedTask>) => {
       state.tasks[payload.id] = payload;
       if (!state.results.includes(payload.id)) {
         state.results = [...state.results, payload.id];
@@ -481,19 +521,21 @@ export const taskSlice = createSlice({
     setFilter: (state, { payload }: PayloadAction<TaskFilter>) => {
       state.filter = payload;
     },
-    setTaskToAssign: (state, { payload }: PayloadAction<Task>) => {
-      state.modal.taskToAssign = payload;
+    setTaskToAssign: (state, { payload }: PayloadAction<string>) => {
+      state.modal.taskToAssign = payload ? state.tasks[payload] : null;
     },
-    setTaskToPrioritize: (state, { payload }: PayloadAction<Task>) => {
-      state.modal.taskToPrioritize = payload;
+    setTaskToPrioritize: (state, { payload }: PayloadAction<string>) => {
+      state.modal.taskToPrioritize = payload ? state.tasks[payload] : null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(initializeQueue.pending, (state) => {
+      .addCase(initializeQueue.pending, (state, { meta }) => {
         state.busy.initializing = true;
-        state.queue = null;
-        state.results = [];
+        if (meta.arg.namespace !== state.queue?.namespace || meta.arg.name !== state.queue.name) {
+          state.queue = null;
+          state.results = [];
+        }
       })
       .addCase(initializeQueue.fulfilled, (state, { payload }) => {
         state.busy.initializing = false;
@@ -534,10 +576,20 @@ export const taskSlice = createSlice({
         state.next = payload.page.next;
       })
       .addCase(loadQueueTasks.rejected, (state) => {
-        state.busy.initializing = false;
+        state.busy.loading = false;
       })
       .addCase(openTask.fulfilled, (state, { payload }) => {
         state.opened = payload;
+      })
+      .addCase(loadTask.pending, (state) => {
+        state.busy.loading = true;
+      })
+      .addCase(loadTask.fulfilled, (state, { payload }) => {
+        state.busy.loading = false;
+        state.tasks[payload.id] = payload;
+      })
+      .addCase(loadTask.rejected, (state) => {
+        state.busy.loading = false;
       })
       .addCase(assignTask.pending, (state) => {
         state.busy.executing = true;
@@ -611,20 +663,30 @@ export const taskReducer = taskSlice.reducer;
 
 export const taskActions = taskSlice.actions;
 
-export const getTaskState = (rootState: AppState): TaskState => rootState.task;
+// Date is not serializable value for the redux state, so make it part of selector projection.
+function deserializeTask(serialized: SerializedTask): Task {
+  return serialized
+    ? {
+        ...serialized,
+        createdOn: new Date(serialized.createdOn),
+        startedOn: serialized.startedOn ? new Date(serialized.startedOn) : undefined,
+        endedOn: serialized.endedOn ? new Date(serialized.endedOn) : undefined,
+      }
+    : null;
+}
 
-export const filterSelector = createSelector(getTaskState, (state) => state.filter);
+export const filterSelector = (state: AppState) => state.task.filter;
 
-export const liveSelector = createSelector(getTaskState, (state) => state.live);
+export const liveSelector = (state: AppState) => state.task.live;
 
 export const tasksSelector = createSelector(
   (state: AppState) => state.user.user.id,
   (state: AppState) => state.task.results,
   (state: AppState) => state.task.tasks,
   filterSelector,
-  (userId: string, results: string[], tasks: Record<string, Task>, filter: string) =>
+  (userId, results, tasks, filter) =>
     results
-      .map((r) => tasks[r])
+      .map((r) => deserializeTask(tasks[r]))
       .filter((r) => {
         switch (filter) {
           case 'pending':
@@ -640,23 +702,35 @@ export const tasksSelector = createSelector(
       .sort((a, b) => {
         let result = TaskPriority[b.priority] - TaskPriority[a.priority];
         if (!result) {
-          result = new Date(a.createdOn).getTime() - new Date(b.createdOn).getTime();
+          result = a.createdOn.getTime() - b.createdOn.getTime();
         }
         return result;
       })
 );
 
-export const busySelector = createSelector(getTaskState, (state) => state.busy);
+export const busySelector = (state: AppState) => state.task.busy;
 
-export const modalSelector = createSelector(getTaskState, (state) => state.modal);
-
-export const openTaskSelector = createSelector(getTaskState, (state) => state.opened && state.tasks[state.opened]);
-
-export const queueWorkersSelector = createSelector(getTaskState, (state) =>
-  state.workers.map((worker) => state.people[worker])
+export const modalSelector = createSelector(
+  (state: AppState) => state.task.modal,
+  ({ taskToAssign, taskToPrioritize }) => ({
+    taskToAssign: deserializeTask(taskToAssign),
+    taskToPrioritize: deserializeTask(taskToPrioritize),
+  })
 );
 
-export const queueUserSelector = createSelector(getTaskState, (state) => state.user);
+export const openTaskSelector = createSelector(
+  (state: AppState) => state.task.opened,
+  (state: AppState) => state.task.tasks,
+  (opened, tasks) => (opened ? deserializeTask(tasks[opened]) : null)
+);
+
+export const queueWorkersSelector = createSelector(
+  (state: AppState) => state.task.workers,
+  (state: AppState) => state.task.people,
+  (workers, people) => workers.map((worker) => people[worker])
+);
+
+export const queueUserSelector = (state: AppState) => state.task.user;
 
 export const metricsSelector = createSelector(
   (state: AppState) => state.queue.metrics,
