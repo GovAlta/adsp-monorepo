@@ -5,6 +5,7 @@ import common from '../common/common.page';
 
 const commonObj = new common();
 const configurationObj = new ConfigurationServicePage();
+const randomNumber = Math.floor(Math.random() * 99) + 1; // random integer between 1 to 99
 
 Then('the user views a heading of {string} namespace', function (namespace) {
   configurationObj.namespaceTitle(namespace).invoke('text').should('contain', namespace);
@@ -213,17 +214,12 @@ When('the user enters {string} in description in configuration definition modal'
     .type(desc, { force: true });
 });
 
-When('the user enters "{string}" in payload schema in configuration definition modal', function (desc) {
-  configurationObj
-    .addConfigurationDefinitionModalDescField()
-    .shadow()
-    .find('.goa-textarea')
-    .clear()
-    .type(desc, { force: true });
-});
-
+//Asterisk inside payload will be replaced to a random number to introduce some randomness to the test data
 When('the user enters {string} in payload schema in configuration definition modal', function (payload) {
   cy.wait(1000); // Wait for the schema field to be editable
+  // Replace * inside the payload to a random number
+  const payloadWithoutAsterisk = payload.replace(/\*/g, randomNumber.toString()); // replace * to a random number
+
   // Clearing schema field doesn't always work. Try 3 times of clearing before entering user data
   for (let j = 0; j < 3; j++) {
     configurationObj
@@ -239,7 +235,7 @@ When('the user enters {string} in payload schema in configuration definition mod
     .configurationDefinitionModalPayloadEditor()
     .click({ force: true })
     .focus()
-    .type(payload, { force: true });
+    .type(payloadWithoutAsterisk, { force: true, parseSpecialCharSequences: false });
 });
 
 // payload parameter has payload content without "{}"
@@ -340,14 +336,201 @@ Then('the user views a new revision is created with the current timestamp', func
 });
 
 Then('the user views the details of the latest revision and the second last revision are the same', function () {
-  // Get the latest revision details
+  // Get latest details
+  let latestRevDetails, previousRevDetails;
   configurationObj
     .revisionTableLatestRevisionNumber()
     .invoke('text')
     .then((revNumberString) => {
       const latestRevNumber = Number(revNumberString);
+      configurationObj
+        .revisionTableEyeIcon(latestRevNumber)
+        .shadow()
+        .find('button')
+        .scrollIntoView()
+        .click({ force: true })
+        .then(() => {
+          configurationObj
+            .revisionTableRevisionDetails()
+            .invoke('text')
+            .then((revDetails) => {
+              latestRevDetails = revDetails;
+            });
+          configurationObj
+            .revisionTableEyeOffIcon(latestRevNumber)
+            .shadow()
+            .find('button')
+            .scrollIntoView()
+            .click({ force: true });
+        })
+        .then(() => {
+          // Get the 2nd last revision details
+          const previousRevNumber = Number(revNumberString) - 1;
+          Cypress.log({
+            name: 'The second last revision number : ',
+            message: previousRevNumber,
+          });
+          configurationObj
+            .revisionTableEyeIcon(previousRevNumber)
+            .shadow()
+            .find('button')
+            .scrollIntoView()
+            .click({ force: true })
+            .then(() => {
+              configurationObj
+                .revisionTableRevisionDetails()
+                .invoke('text')
+                .then((revDetails) => {
+                  previousRevDetails = revDetails;
+                });
+              configurationObj
+                .revisionTableEyeOffIcon(previousRevNumber)
+                .shadow()
+                .find('button')
+                .scrollIntoView()
+                .click({ force: true });
+            });
+        });
     });
-  // Get the second last revision details
+  // Compare details
+  expect(latestRevDetails).to.eq(previousRevDetails);
+});
 
-  // Compare
+When('the user clicks {string} icon for the latest revision', function (button) {
+  switch (button) {
+    case 'edit':
+      configurationObj.revisionTableEditButton().shadow().find('button').click({ force: true });
+      cy.wait(1000);
+      break;
+    case 'eye':
+      configurationObj
+        .revisionTableLatestRevisionNumber()
+        .invoke('text')
+        .then((revNumberString) => {
+          const latestRevNumber = Number(revNumberString);
+          configurationObj
+            .revisionTableEyeIcon(latestRevNumber)
+            .shadow()
+            .find('button')
+            .scrollIntoView()
+            .click({ force: true });
+          cy.wait(2000);
+        });
+      break;
+    default:
+      expect(button).to.be.oneOf(['edit', 'eye']);
+  }
+});
+
+Then('the user views Edit revision modal for {string}', function (definition) {
+  configurationObj.revisionTableEditRevisionModalTitle().should('contain', 'Edit Revision for ' + definition);
+});
+
+Then('the user views the error message of {string}', function (errorMsg) {
+  cy.wait(1000); // Wait for error message to show
+  configurationObj.revisionTableEditRevisionModalFormItem().invoke('attr', 'error').should('contain', errorMsg);
+});
+
+Then('the save button in Edit revision modal is disabled', function () {
+  configurationObj.revisionTableEditRevisionModalSaveButton().invoke('attr', 'disabled').should('eq', 'disabled');
+});
+
+When('the user clicks Save button in Edit revision modal', function () {
+  configurationObj.revisionTableEditRevisionModalSaveButton().shadow().find('button').click({ force: true });
+});
+
+//Asterisk inside payload will be replaced to a random number to introduce some randomness to the test data
+Then('the user views {string} for the latest revision', function (jsonText) {
+  // Replace * inside the json text to a random number
+  const jsonTextWithoutAsterisk = jsonText.replace(/\*/g, randomNumber.toString()); // replace * to a random number
+
+  // Check eye off icon is showing for the latest revision before checking details
+  configurationObj
+    .revisionTableLatestRevisionNumber()
+    .invoke('text')
+    .then((revNumberString) => {
+      const latestRevNumber = Number(revNumberString);
+      configurationObj
+        .revisionTableEyeOffIcon(latestRevNumber)
+        .should('be.visible')
+        .then(() => {
+          configurationObj
+            .revisionTableRevisionDetails()
+            .invoke('text')
+            .then((revDetails) => {
+              expect(
+                revDetails
+                  .replace(/\s+/g, ' ') // replace multiple whitespaces with one whitespace
+                  .replace(/(\r\n|\n|\r)/gm, '') // remove line breakers
+                  .replace(/{\s/g, '{') // remove whitespace after {
+                  .replace(/\s}/g, '}') // remove whitespace before }
+              ).to.eq(jsonTextWithoutAsterisk);
+            });
+        });
+    });
+});
+
+When('the user clicks power icon on the second last revision', function () {
+  configurationObj
+    .revisionTableLatestRevisionNumber()
+    .invoke('text')
+    .then((revNumberString) => {
+      const previousRevNumber = Number(revNumberString) - 1;
+      Cypress.log({
+        name: 'The second last revision number : ',
+        message: previousRevNumber,
+      });
+      configurationObj.revisionTablePowerIcon(previousRevNumber).shadow().find('button').click({ force: true });
+    });
+});
+
+Then(
+  'the user views set active revision confirmation modal for the second last revision of {string}',
+  function (configuration) {
+    configurationObj
+      .revisionTableLatestRevisionNumber()
+      .invoke('text')
+      .then((revNumberString) => {
+        const previousRevNumber = Number(revNumberString) - 1;
+        Cypress.log({
+          name: 'The second last revision number : ',
+          message: previousRevNumber,
+        });
+        configurationObj
+          .revisionTableSetActiveRevisionModalHeading()
+          .invoke('text')
+          .should('contain', 'Set active revision for ' + configuration + ' revision ' + previousRevNumber.toString());
+      });
+  }
+);
+
+When('the user click Set Active button in set active revision confirmation modal', function () {
+  configurationObj.revisionTableSetActiveRevisionModalSetActiveButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});
+
+Then('the user views the active label on the second last revision', function () {
+  configurationObj
+    .revisionTableLatestRevisionNumber()
+    .invoke('text')
+    .then((latestRevNumberString) => {
+      const previousRevNumber = Number(latestRevNumberString) - 1;
+      Cypress.log({
+        name: 'The second last revision number : ',
+        message: previousRevNumber,
+      });
+      configurationObj
+        .revisionTableActiveRevisionNumberBadge()
+        .invoke('text')
+        .should('eq', previousRevNumber.toString());
+    });
+});
+
+Then('the user should not view power icon on the active revision', function () {
+  configurationObj
+    .revisionTableActiveRevisionNumberBadge()
+    .invoke('text')
+    .then((activeRevNumberString) => {
+      configurationObj.revisionTablePowerIcon(activeRevNumberString).should('not.exist');
+    });
 });

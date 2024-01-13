@@ -127,6 +127,10 @@ class ConfigurationServicePage {
     return cy.xpath('//tbody//goa-badge[@content="latest"]');
   }
 
+  revisionTableActiveBadge() {
+    return cy.xpath('//tbody//goa-badge[@content="active"]');
+  }
+
   revisionTableAddIconForLatestRevision() {
     return cy.xpath('//tbody/tr[1]/td/div/goa-icon-button[@icon="add"]');
   }
@@ -161,10 +165,44 @@ class ConfigurationServicePage {
     );
   }
 
+  revisionTablePowerIcon(revNumber) {
+    return cy.xpath(
+      `//tbody//*[@class="number-badge" and text()="${revNumber}"]/ancestor::td/following-sibling::td//goa-icon-button[@icon="power"]`
+    );
+  }
+
   revisionTableLatestRevisionNumber() {
     return cy.xpath(
       '//tbody//*[@class="number-badge"]//goa-badge[@content="latest"]/ancestor::div[@class="number-badge"]'
     );
+  }
+
+  revisionTableEditButton() {
+    return cy.xpath('//goa-icon-button[@title="Edit"]');
+  }
+
+  revisionTableEditRevisionModalTitle() {
+    return cy.xpath('//goa-modal[@data-testid="definition-form" and @open="true"]/*[@slot="heading"]');
+  }
+
+  revisionTableEditRevisionModalFormItem() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item');
+  }
+
+  revisionTableEditRevisionModalSaveButton() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save"]');
+  }
+
+  revisionTableSetActiveRevisionModalHeading() {
+    return cy.xpath('//goa-modal[@open="true"]//*[@slot="heading"]');
+  }
+
+  revisionTableSetActiveRevisionModalSetActiveButton() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Set Active"]');
+  }
+
+  revisionTableActiveRevisionNumberBadge() {
+    return cy.xpath('//tbody//goa-badge[@content="active"]/ancestor::div[@class="number-badge"]');
   }
 }
 export default ConfigurationServicePage;
