@@ -64,6 +64,9 @@ components:
         submitted:
           type: string
           format: date-time
+        submissionId:
+          type: string
+          description: When a form submission is submitted this property have a string value.
     FormData:
       type: object
       properties:
@@ -140,7 +143,6 @@ components:
         updatedDateTime:
           type: string
           format: date-time
-
     SendCodeOperation:
       type: object
       properties:
@@ -165,6 +167,12 @@ components:
         operation:
           type: string
           enum: [archive]
+    SetToDraftOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [to-draft]
 
 /form/v1/definitions:
   get:
@@ -336,6 +344,7 @@ components:
               - $ref: '#/components/schemas/SubmitFormOperation'
               - $ref: '#/components/schemas/ArchiveFormOperation'
               - $ref: '#/components/schemas/SendCodeOperation'
+              - $ref: '#/components/schemas/SetToDraftOperation'
             discriminator:
               propertyName: operation
               mapping:
@@ -343,6 +352,7 @@ components:
                 submit: '#/components/schemas/SubmitFormOperation'
                 archive: '#/components/schemas/ArchiveFormOperation'
                 send-code: '#/components/schemas/SendCodeOperation'
+                to-draft: '#/components/schemas/SetToDraftOperation'
     responses:
       200:
         description: Successfully executed operation.
@@ -441,6 +451,22 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormSubmission'
+  post:
+    tags:
+      - Form Submission
+    description: Update the form disposition for the form submission.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              dispositionStatus:
+                type: string
+              dispositionReason:
+                type: string
+
 /form/v1/forms/{formId}/submissions:
   parameters:
     - name: formId

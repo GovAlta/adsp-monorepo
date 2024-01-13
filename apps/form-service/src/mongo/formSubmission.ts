@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, Results } from '@core-services/core-common';
+import { InvalidOperationError, OptionalResults } from '@core-services/core-common';
 import { Model, model } from 'mongoose';
 import { FormRepository, FormSubmissionCriteria, FormSubmissionEntity, FormSubmissionRepository } from '../form';
 import { formSubmissionSchema } from './schema';
@@ -12,7 +12,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     this.submissionModel = model<Document & FormSubmissionDoc>('formSubmission', formSubmissionSchema);
   }
 
-  find(criteria: FormSubmissionCriteria): Promise<Results<FormSubmissionEntity>> {
+  find(criteria: FormSubmissionCriteria): Promise<OptionalResults<FormSubmissionEntity>> {
     const query: Record<string, unknown> = {};
 
     if (criteria?.formIdEquals) {
@@ -63,7 +63,6 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     }).then((docs) => ({
       results: docs,
       page: {
-        after: '',
         size: docs.length,
       },
     }));
