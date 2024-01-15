@@ -156,7 +156,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             }
           }}
           nameColumnWidth={40}
-          service="FileType"
+          service="Comment"
           checkedRoles={[
             { title: types[0].name, selectedRoles: topicType[types[0].type] },
             { title: types[1].name, selectedRoles: topicType[types[1].type] },
