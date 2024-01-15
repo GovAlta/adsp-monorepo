@@ -1,8 +1,9 @@
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
-import { select, call, put, takeEvery } from 'redux-saga/effects';
+import { put, select, call, all, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
+import axios from 'axios';
 import {
   UpdateCommentTopicTypesAction,
   getCommentTopicTypesSuccess,
@@ -60,9 +61,21 @@ export function* fetchCommentTopicTypess(): SagaIterator {
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
     try {
-      const url = `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest`;
-      const TopicTypess = yield call(fetchCommentTopicTypesApi, token, url);
-      yield put(getCommentTopicTypesSuccess(TopicTypess));
+      // const url = `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest?core`;
+      // const TopicTypess = yield call(fetchCommentTopicTypesApi, token, url);
+      const { TopicTypess, core } = yield all({
+        TopicTypess: call(
+          axios.get,
+          `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        ),
+        core: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest?core`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      });
+      yield put(getCommentTopicTypesSuccess({ TopicTypess: TopicTypess.data, core: core.data }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -77,6 +90,52 @@ export function* fetchCommentTopicTypess(): SagaIterator {
       );
     }
   }
+  // if (configBaseUrl && token) {
+  //   try {
+  //     const { data: configuration } = yield call(
+  //       axios.get,
+  //       `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest`,
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+  //     const tenantDefinitions = Object.getOwnPropertyNames(configuration || {}).reduce((defs, namespace) => {
+  //       Object.getOwnPropertyNames(configuration[namespace].definitions).forEach((name) => {
+  //         defs.push({ ...configuration[namespace].definitions[name], namespace, isCore: false });
+  //       });
+  //       return defs;
+  //     }, []);
+
+  //     const { data: serviceData = {} } = yield call(
+  //       axios.get,
+  //       `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest?core`,
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+
+  //     const serviceDefinitions = Object.getOwnPropertyNames(serviceData).reduce((defs, namespace) => {
+  //       Object.getOwnPropertyNames(serviceData[namespace].definitions).forEach((name) => {
+  //         defs.push({ ...serviceData[namespace].definitions[name], namespace, isCore: true });
+  //       });
+  //       return defs;
+  //     }, []);
+
+  //     yield put(getCommentTopicTypesSuccess([...tenantDefinitions, ...serviceDefinitions]));
+  //     yield put(
+  //       UpdateIndicator({
+  //         show: false,
+  //       })
+  //     );
+  //   } catch (err) {
+  //     yield put(ErrorNotification({ error: err }));
+  //     yield put(
+  //       UpdateIndicator({
+  //         show: false,
+  //       })
+  //     );
+  //   }
+  // }
 }
 
 export function* updateCommentTopicTypes({ topicType, options }: UpdateCommentTopicTypesAction): SagaIterator {
