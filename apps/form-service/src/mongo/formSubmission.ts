@@ -28,7 +28,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     }
 
     if (criteria?.submissionStatusEquals) {
-      query.status = criteria.submissionStatusEquals;
+      query.submissionStatus = criteria.submissionStatusEquals;
     }
 
     if (criteria?.createDateBefore) {

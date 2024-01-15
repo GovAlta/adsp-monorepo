@@ -122,9 +122,10 @@ export const HideTablet = styled.div`
 `;
 
 export const Modal = styled.div`
-  display: flex;
-  position: absolute;
+  display: block;
+  position: fixed;
   left: 0;
+  z-index: 10000;
   width: 100%;
 `;
 
@@ -142,9 +143,8 @@ export const FileTypeTemplateEditorContainer = styled.div`
 
 export const OuterFileTypeTemplateEditorContainer = styled.div`
   width: 100%;
-  height: 95vh;
+  height: 100vh;
   overflow: hidden;
-  position: absolute;
 `;
 
 export const DropDownZIndex = styled.div`
@@ -174,7 +174,6 @@ export const FileTypeModalContent = styled.div`
   background: var(--goa-color-greyscale-white);
   margin-top: -23px;
   padding-top: 23px;
-  width: 100%;
 `;
 
 export const FileTypesEditorTitle = styled.div`

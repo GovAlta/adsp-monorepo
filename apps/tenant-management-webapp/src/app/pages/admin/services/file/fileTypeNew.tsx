@@ -61,7 +61,6 @@ export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Elemen
 
       <FileTypeModal
         isOpen={willAddNew}
-        type="new"
         roles={roles}
         fileTypeNames={fileTypeNames}
         initialValue={FileTypeDefault}
