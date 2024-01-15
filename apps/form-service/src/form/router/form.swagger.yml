@@ -80,21 +80,18 @@ components:
     FormSubmissionCriteria:
       type: object
       properties:
-        tenantIdEquals:
-          type: string
-        definitionIdEquals:
-          type: string
-        statusEquals:
-          type: string
         createDateBefore:
           type: string
           format: date-time
         createDateAfter:
           type: string
-          fFFilGFormat: date-time
+          format: date-time
         dispositionStatusEquals:
           type: string
-        dispositionDateEquals:
+        dispositionDateBefore:
+          type: string
+          format: date-time
+        dispositionDateAfter:
           type: string
           format: date-time
         createdByIdEquals:

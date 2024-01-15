@@ -12,15 +12,12 @@ import { useSelector } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { cloneDeep } from 'lodash';
 import { useHistory } from 'react-router-dom';
-import { PageLoader } from '@core-services/app-common';
 interface FileTypeModalProps {
   isOpen: boolean;
   initialValue?: FileTypeItem;
   onCancel: () => void;
   fileTypeNames?: string[];
-  type: 'new' | 'edit';
   roles: Role[];
   onSwitch?: () => void;
 }
@@ -35,17 +32,12 @@ const validateRetentionPolicy = (type: FileTypeItem): boolean => {
 export const FileTypeModal = ({
   initialValue,
   isOpen,
-  type,
+
   fileTypeNames,
   onCancel,
 }: FileTypeModalProps): JSX.Element => {
-  const isNew = type === 'new';
   const [fileType, setFileType] = useState(initialValue);
-  const [spinner, setSpinner] = useState(false);
-
-  const title = isNew ? 'Add file type' : 'Edit file type';
-  const cloneFileType = cloneDeep(initialValue);
-
+  const title = 'Add file type';
   const history = useHistory();
   const { errors, validators } = useValidators(
     'name',
@@ -71,27 +63,24 @@ export const FileTypeModal = ({
   }, [isOpen]);
 
   const handleCancelClick = () => {
-    if (isNew) {
-      const defaultRetention: RetentionPolicy = {
-        ...fileType.rules?.retention,
-        active: false,
-        deleteInDays: '',
-      };
-      setFileType({
-        ...fileType,
-        name: '',
-        id: '',
-        readRoles: [],
-        updateRoles: [],
-        anonymousRead: false,
-        rules: {
-          ...fileType?.rules,
-          retention: defaultRetention,
-        },
-      });
-    } else {
-      setFileType(cloneFileType);
-    }
+    const defaultRetention: RetentionPolicy = {
+      ...fileType.rules?.retention,
+      active: false,
+      deleteInDays: '',
+    };
+    setFileType({
+      ...fileType,
+      name: '',
+      id: '',
+      readRoles: [],
+      updateRoles: [],
+      anonymousRead: false,
+      rules: {
+        ...fileType?.rules,
+        retention: defaultRetention,
+      },
+    });
+
     validators.clear();
     onCancel();
   };
@@ -118,14 +107,11 @@ export const FileTypeModal = ({
               disabled={!fileType?.name || validators.haveErrors() || !validateRetentionPolicy(fileType)}
               testId="file-type-modal-save"
               onClick={() => {
-                setSpinner(true);
                 const validations = {
                   name: fileType.name,
                 };
 
-                if (type === 'new') {
-                  validations['duplicated'] = fileType.name;
-                }
+                validations['duplicated'] = fileType.name;
 
                 if (!validators.checkAll(validations)) {
                   return;
@@ -144,55 +130,50 @@ export const FileTypeModal = ({
           </GoAButtonGroup>
         }
       >
-        {spinner ? (
-          <PageLoader />
-        ) : (
-          <>
-            <GoAFormItem error={errors?.['name']} label="Name">
-              <GoAInput
-                type="text"
-                name="name"
-                disabled={type === 'edit'}
-                value={fileType.name}
-                width="100%"
-                testId={`file-type-modal-name-input`}
-                onChange={(name, value) => {
-                  const newFileType = {
-                    ...fileType,
-                    name: value,
-                    id: isNew ? toKebabName(value) : fileType.id,
-                  };
+        <>
+          <GoAFormItem error={errors?.['name']} label="Name">
+            <GoAInput
+              type="text"
+              name="name"
+              value={fileType.name}
+              width="100%"
+              testId={`file-type-modal-name-input`}
+              onChange={(name, value) => {
+                const newFileType = {
+                  ...fileType,
+                  name: value,
+                  id: toKebabName(value),
+                };
 
-                  const validations = {
-                    name: value,
-                  };
-                  validators.remove('name');
-                  if (isNew) {
-                    validations['duplicated'] = value;
-                  }
-                  validators.checkAll(validations);
-                  setFileType(newFileType);
-                }}
-                aria-label="name"
+                const validations = {
+                  name: value,
+                };
+                validators.remove('name');
+
+                validations['duplicated'] = value;
+
+                validators.checkAll(validations);
+                setFileType(newFileType);
+              }}
+              aria-label="name"
+            />
+          </GoAFormItem>
+          <GoAFormItem label="Type ID">
+            <FileIdItem>
+              <GoAInput
+                testId={`file-type-modal-id`}
+                value={fileType?.id}
+                disabled={true}
+                width="100%"
+                name="file-type-id"
+                type="text"
+                aria-label="goa-input-file-type-id"
+                //eslint-disable-next-line
+                onChange={() => {}}
               />
-            </GoAFormItem>
-            <GoAFormItem label="Type ID">
-              <FileIdItem>
-                <GoAInput
-                  testId={`file-type-modal-id`}
-                  value={fileType?.id}
-                  disabled={true}
-                  width="100%"
-                  name="file-type-id"
-                  type="text"
-                  aria-label="goa-input-file-type-id"
-                  //eslint-disable-next-line
-                  onChange={() => {}}
-                />
-              </FileIdItem>
-            </GoAFormItem>
-          </>
-        )}
+            </FileIdItem>
+          </GoAFormItem>
+        </>
       </GoAModal>
     </ModalOverwrite>
   );

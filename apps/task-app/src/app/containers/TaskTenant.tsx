@@ -1,7 +1,7 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
 import React, { Suspense, lazy, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Redirect, Route, Switch, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom-6';
 import {
   AppDispatch,
   configInitializedSelector,
@@ -33,19 +33,25 @@ const TaskTenantSection = ({ tenantName }: TaskTenantSectionProps) => {
 
   return (
     <section>
-      <Switch>
-        <Route path={`/:tenantName/:namespace/:name`}>
-          <Suspense>
-            <TaskQueue />
-          </Suspense>
-        </Route>
-        <Route exact path={`/:tenantName`}>
-          <Suspense>
-            <TaskQueues />
-          </Suspense>
-        </Route>
-        <Redirect to={`/${tenantName}`} />
-      </Switch>
+      <Routes>
+        <Route
+          path={`/:namespace/:name/*`}
+          element={
+            <Suspense>
+              <TaskQueue />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <Suspense>
+              <TaskQueues />
+            </Suspense>
+          }
+        />
+        <Route path="*" element={<Navigate to={`/${tenantName}`} replace />} />
+      </Routes>
     </section>
   );
 };

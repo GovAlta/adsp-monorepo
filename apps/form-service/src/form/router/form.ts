@@ -1,10 +1,17 @@
-import { adspId, AdspId, DomainEvent, EventService, isAllowedUser, startBenchmark } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  DomainEvent,
+  EventService,
+  isAllowedUser,
+  startBenchmark,
+  UnauthorizedUserError,
+} from '@abgov/adsp-service-sdk';
 import {
   createValidationHandler,
   InvalidOperationError,
   InvalidValueError,
   NotFoundError,
-  UnauthorizedError,
 } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { formSubmitted, formUnlocked, formSetToDraft } from '..';
@@ -166,7 +173,10 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
   };
 }
 
-export function findFormSubmissions(repository: FormSubmissionRepository): RequestHandler {
+export function findFormSubmissions(
+  repository: FormSubmissionRepository,
+  formRepository: FormRepository
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -174,11 +184,14 @@ export function findFormSubmissions(repository: FormSubmissionRepository): Reque
       const user = req.user;
       const { formId } = req.params;
       const { criteria: criteriaValue } = req.query;
-
       const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
+      const formEntity: FormEntity = await formRepository.get(req.user.tenantId, formId);
 
-      if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin)) {
-        throw new UnauthorizedError('You do not have the specified role');
+      const definition = configuration[formEntity?.definition?.id || ''];
+
+      if (definition && !isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ...definition.assessorRoles])) {
+        throw new UnauthorizedUserError('find form submissions', req.user);
       }
 
       if (user.tenantId) {
@@ -274,14 +287,18 @@ export function updateFormDisposition(submissionRepository: FormSubmissionReposi
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
+      const user = req.user;
       const { formId, submissionId } = req.params;
       const { dispositionStatus, dispositionReason } = req.body;
       const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
-
       if (!formSubmission) throw new NotFoundError('FormSubmission', submissionId);
 
       const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
       const definition = configuration[formSubmission.formDefinitionId];
+
+      if (!isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ...definition.assessorRoles])) {
+        throw new UnauthorizedUserError('updated form disposition', req.user);
+      }
 
       const hasStateToUpdate = definition.dispositionStates.find((status) => status.name === dispositionStatus);
       if (!hasStateToUpdate) {
@@ -518,7 +535,7 @@ export function createFormRouter({
           }
         })
     ),
-    findFormSubmissions(submissionRepository)
+    findFormSubmissions(submissionRepository, repository)
   );
   router.post(
     '/forms',

@@ -1,6 +1,5 @@
 import { GoAContainer, GoAIconButton } from '@abgov/react-components-new';
 import { FunctionComponent } from 'react';
-import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { QueueDefinition, QueueMetrics as QueueMetricsValue } from '../state';
 import { QueueMetrics } from './QueueMetrics';
