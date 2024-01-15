@@ -1,8 +1,5 @@
 import React from 'react';
 import { CommentTopicTypes } from '@store/comment/model';
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface PdfTemplateItemProps {
   commentTopicType: CommentTopicTypes;
@@ -10,9 +7,6 @@ interface PdfTemplateItemProps {
 }
 
 export const CommentCoreTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplateItemProps): JSX.Element => {
-  const { url } = useRouteMatch();
-
-  const history = useHistory();
   return (
     <>
       <tr>
