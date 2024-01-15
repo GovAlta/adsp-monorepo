@@ -123,5 +123,9 @@ Feature: Configuration-service
     When the user click Set Active button in set active revision confirmation modal
     Then the user views the active label on the second last revision
     And the user should not view power icon on the active revision
+    # Load more
+    When the user clicks Load more button on configuration service revisions page
+    Then the user views more than ten revision records
+
 
 

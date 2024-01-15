@@ -534,3 +534,12 @@ Then('the user should not view power icon on the active revision', function () {
       configurationObj.revisionTablePowerIcon(activeRevNumberString).should('not.exist');
     });
 });
+
+When('the user clicks Load more button on configuration service revisions page', function () {
+  configurationObj.revisionTableLoadMoreButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});
+
+Then('the user views more than ten revision records', function () {
+  configurationObj.revisionTableRevisionRows().should('have.length.above', 10);
+});

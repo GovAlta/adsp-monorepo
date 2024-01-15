@@ -204,5 +204,13 @@ class ConfigurationServicePage {
   revisionTableActiveRevisionNumberBadge() {
     return cy.xpath('//tbody//goa-badge[@content="active"]/ancestor::div[@class="number-badge"]');
   }
+
+  revisionTableLoadMoreButton() {
+    return cy.xpath('//*[@data-testid="configuration-revisions-tab"]//goa-button[text()="Load more"]');
+  }
+
+  revisionTableRevisionRows() {
+    return cy.xpath('//*[@data-testid="configuration-revisions-tab"]//tbody/tr');
+  }
 }
 export default ConfigurationServicePage;
