@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import styled from 'styled-components';
 import { QueuesHeader } from '../components/QueuesHeader';
 import { QueueList } from '../components/QueueList';
@@ -20,7 +20,7 @@ export const TaskQueues: FunctionComponent<TaskQueuesProps> = ({ className }) =>
   const metrics = useSelector(queueMetricsSelector);
   const metricsLoading = useSelector(metricsLoadingSelector);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   return (
     <div className={className}>
@@ -29,7 +29,7 @@ export const TaskQueues: FunctionComponent<TaskQueuesProps> = ({ className }) =>
         queues={queues}
         metrics={metrics}
         metricsLoading={metricsLoading}
-        onOpenQueue={(queue) => history.push(`${history.location.pathname}/${queue.namespace}/${queue.name}`)}
+        onOpenQueue={(queue) => navigate(`${queue.namespace}/${queue.name}`)}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { FunctionComponent, Suspense, lazy, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-6';
 import styled from 'styled-components';
 import {
   AppDispatch,
@@ -29,16 +29,17 @@ const Placeholder = lazy(() => import('./Placeholder'));
 
 interface TaskDetailsHostProps {
   className?: string;
+  onClose: () => void;
 }
 
-const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ className }) => {
+const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ className, onClose }) => {
   const user = useSelector(queueUserSelector);
   const open = useSelector(openTaskSelector);
   const busy = useSelector(busySelector);
   const topics = useSelector(topicsSelector);
   const topic = useSelector(selectedTopicSelector);
 
-  const params = useParams<{ tenantName: string; namespace: string; name: string; taskId: string }>();
+  const params = useParams<{ namespace: string; name: string; taskId: string }>();
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
@@ -46,8 +47,6 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
       dispatch(openTask({ namespace: params.namespace, name: params.name, taskId: params.taskId }));
     }
   }, [dispatch, params, open]);
-
-  const history = useHistory();
 
   const [showComments, setShowComments] = useState(false);
 
@@ -69,7 +68,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
             task={open}
             user={user}
             isExecuting={busy.executing}
-            onClose={() => history.push(`/${params.tenantName}/${params.namespace}/${params.name}`)}
+            onClose={onClose}
             onStart={() => dispatch(startTask({ taskId: open.id }))}
             onComplete={() => dispatch(completeTask({ taskId: open.id }))}
             onCancel={(reason) => dispatch(cancelTask({ taskId: open.id, reason }))}
