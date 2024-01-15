@@ -19,7 +19,7 @@ import {
   RetentionToolTip,
   ScrollPane,
   TextLoadingIndicator,
-} from './styled-components';
+} from '../styled-components';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -40,6 +40,7 @@ import { UpdateFileTypeService } from '@store/file/actions';
 import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
 import { PageLoader } from '@core-services/app-common';
+import { areObjectsEqual } from '@lib/objectUtil';
 
 export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -135,19 +136,6 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   )
     .add('duplicated', 'name', duplicateNameCheck(fileTypeNames, 'File type'))
     .build();
-
-  const isFileTypeUpdated = (prev: FileTypeItem, next: FileTypeItem): boolean => {
-    const isUpdated =
-      prev?.name !== next?.name ||
-      prev?.id !== next?.id ||
-      prev?.anonymousRead !== next?.anonymousRead ||
-      prev?.securityClassification !== next?.securityClassification ||
-      prev?.readRoles !== next?.readRoles ||
-      prev?.updateRoles !== next?.updateRoles ||
-      prev?.rules?.retention !== next?.rules?.retention ||
-      prev?.rules?.retention?.active !== next?.rules?.retention?.active;
-    return isUpdated;
-  };
 
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
   let clientElements = null;
@@ -340,7 +328,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                 <GoAButton
                   type="primary"
                   testId="form-save"
-                  disabled={!isFileTypeUpdated(initialFileType, fileType) || !fileType?.name || validators.haveErrors()}
+                  disabled={areObjectsEqual(initialFileType, fileType) || validators.haveErrors()}
                   onClick={() => {
                     if (indicator.show === true) {
                       setSpinner(true);
@@ -382,7 +370,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   testId="form-cancel"
                   type="secondary"
                   onClick={() => {
-                    if (isFileTypeUpdated(initialFileType, fileType)) {
+                    if (!areObjectsEqual(initialFileType, fileType)) {
                       setSaveModal({ visible: true, closeEditor: false });
                     } else {
                       validators.clear();
@@ -418,7 +406,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
           setSpinner(true);
           setSaveModal({ visible: false, closeEditor: true });
         }}
-        saveDisable={!isFileTypeUpdated(initialFileType, fileType)}
+        saveDisable={areObjectsEqual(initialFileType, fileType)}
         onCancel={() => {
           setSaveModal({ visible: false, closeEditor: false });
         }}
