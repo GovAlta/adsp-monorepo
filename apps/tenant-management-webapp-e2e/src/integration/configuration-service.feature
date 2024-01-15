@@ -126,6 +126,3 @@ Feature: Configuration-service
     # Load more
     When the user clicks Load more button on configuration service revisions page
     Then the user views more than ten revision records
-
-
-
