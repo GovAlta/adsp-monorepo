@@ -33,6 +33,7 @@ export const TopicsList = (): JSX.Element => {
   const [openAddTopic, setOpenAddTopic] = useState(false);
   const [modalType, setModalType] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  const [showActions, setShowActions] = useState(true);
   const [selectedTopic, setSelectedTopic] = useState<TopicItem>(defaultTopic);
 
   const indicator = useSelector((state: RootState) => {
@@ -41,6 +42,9 @@ export const TopicsList = (): JSX.Element => {
 
   const topicTypes = useSelector((state: RootState) => {
     return state?.comment?.topicTypes;
+  });
+  const coreTopicTypes = useSelector((state: RootState) => {
+    return state?.comment?.core;
   });
   const next = useSelector((state: RootState) => state.comment.nextEntries);
   const topics = useSelector((state: RootState) => state.comment.topics);
@@ -52,8 +56,14 @@ export const TopicsList = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    if (selectedType) {
-      dispatch(fetchTopicsRequest(topicTypes[selectedType]));
+    if (selectedType && selectedType !== '') {
+      if (coreTopicTypes[selectedType]) {
+        setShowActions(false);
+        dispatch(fetchTopicsRequest(coreTopicTypes[selectedType]));
+      } else {
+        setShowActions(true);
+        dispatch(fetchTopicsRequest(topicTypes[selectedType]));
+      }
     }
   }, [selectedType, topicList]);
 
@@ -112,6 +122,15 @@ export const TopicsList = (): JSX.Element => {
                   testId={`${item}-get-comment-options`}
                 />
               ))}
+              {Object.keys(coreTopicTypes).map((item) => (
+                <GoADropdownItem
+                  name="CoreTopicTypes"
+                  key={item}
+                  label={item}
+                  value={item}
+                  testId={`${item}-get-comment-options`}
+                />
+              ))}
             </GoADropdown>
           )}
         </GoAFormItem>
@@ -143,6 +162,7 @@ export const TopicsList = (): JSX.Element => {
             <TopicListTable
               topics={topics}
               selectedType={selectedType}
+              showActions={showActions}
               onDeleteTopic={(topicSelected) => {
                 setSelectedTopic(topicSelected);
                 setShowDeleteConfirmation(true);
