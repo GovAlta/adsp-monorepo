@@ -252,6 +252,7 @@ export const MoreDetails = styled.div`
       margin-bottom: var(--goa-spacing-xs);
     }
     span {
+      white-space: normal;
     }
   }
 `;
