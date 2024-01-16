@@ -16,7 +16,6 @@ export const CommentCoreTopicTypesItem = ({ commentTopicType, onDelete }: PdfTem
         <td data-testid="comment-topic-types-security-classification" style={{ textTransform: 'capitalize' }}>
           {commentTopicType.securityClassification}
         </td>
-        <td data-testid="comment-topic-types-action"></td>
       </tr>
     </>
   );

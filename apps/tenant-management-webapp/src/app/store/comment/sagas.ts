@@ -46,7 +46,7 @@ import {
   updateCommentApi,
 } from './api';
 
-export function* fetchCommentTopicTypess(): SagaIterator {
+export function* fetchCommentTopicTypes(): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
@@ -60,19 +60,15 @@ export function* fetchCommentTopicTypess(): SagaIterator {
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
     try {
-      const { TopicTypess, core } = yield all({
-        TopicTypess: call(
-          axios.get,
-          `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
+      const { TopicTypes, core } = yield all({
+        TopicTypes: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
         core: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest?core`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       });
-      yield put(getCommentTopicTypesSuccess({ TopicTypess: TopicTypess.data, core: core.data }));
+      yield put(getCommentTopicTypesSuccess({ TopicTypes: TopicTypes.data, core: core.data }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -254,7 +250,7 @@ function* deleteCommentSaga(action): SagaIterator {
 }
 
 export function* watchCommentSagas(): Generator {
-  yield takeEvery(FETCH_COMMENT_TOPIC_TYPES_ACTION, fetchCommentTopicTypess);
+  yield takeEvery(FETCH_COMMENT_TOPIC_TYPES_ACTION, fetchCommentTopicTypes);
   yield takeEvery(UPDATE_COMMENT_TOPIC_TYPE_ACTION, updateCommentTopicTypes);
   yield takeEvery(DELETE_COMMENT_TOPIC_TYPE_ACTION, deleteCommentTopicTypes);
   yield takeEvery(CREATE_COMMENT_TOPIC_ACTION, addTopicSaga);
