@@ -59,8 +59,8 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
 
 export function mapForm(
   apiId: AdspId,
-  entity: Form
-): Omit<Form, 'definition' | 'applicant' | 'data' | 'files'> & {
+  entity: FormEntity
+): Omit<Form, 'definition' | 'applicant'> & {
   urn: string;
   definitionId: string;
   applicant: { addressAs: string };
@@ -71,6 +71,39 @@ export function mapForm(
     definitionId: entity.definition.id,
     formDraftUrl: entity.formDraftUrl,
     anonymousApplicant: entity.anonymousApplicant,
+    data: entity.data,
+    files: entity.files,
+    status: entity.status,
+    created: entity.created,
+    createdBy: entity.createdBy,
+    locked: entity.locked,
+    submitted: entity.submitted,
+    lastAccessed: entity.lastAccessed,
+    submissionId: null,
+    applicant: entity.applicant
+      ? {
+          addressAs: entity.applicant.addressAs,
+        }
+      : null,
+  };
+}
+
+export function mapFormForFormSubmitted(
+  apiId: AdspId,
+  entity: Form
+): Omit<Form, 'definition' | 'applicant'> & {
+  urn: string;
+  definitionId: string;
+  applicant: { addressAs: string };
+} {
+  return {
+    urn: adspId`${apiId}:/forms/${entity.id}`.toString(),
+    id: entity.id,
+    definitionId: entity.definition.id,
+    formDraftUrl: entity.formDraftUrl,
+    anonymousApplicant: entity.anonymousApplicant,
+    data: entity.data,
+    files: entity.files,
     status: entity.status,
     created: entity.created,
     createdBy: entity.createdBy,
@@ -264,15 +297,27 @@ export function getForm(repository: FormRepository): RequestHandler {
   };
 }
 
-export function getFormSubmission(submissionRepository: FormSubmissionRepository): RequestHandler {
+export function getFormSubmission(
+  submissionRepository: FormSubmissionRepository,
+  formRepository: FormRepository
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'get-entity-time');
       const { formId, submissionId } = req.params;
+      const user = req.user;
+      const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
+      const formEntity: FormEntity = await formRepository.get(user.tenantId, formId);
+
+      const definition = configuration[formEntity?.definition?.id || ''];
+
+      if (definition && !isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ...definition.assessorRoles])) {
+        throw new UnauthorizedUserError('find form submission', user);
+      }
 
       const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
       if (!formSubmission) {
-        throw new NotFoundError('formSubmission', submissionId);
+        throw new NotFoundError('Form Submission', submissionId);
       }
 
       end();
@@ -382,7 +427,7 @@ export function formOperation(
       let result: FormEntity = null;
       let formResult: Form = null;
       let event: DomainEvent = null;
-
+      let mappedForm = null;
       switch (request.operation) {
         case SEND_CODE_OPERATION: {
           result = await form.sendCode(user, notificationService);
@@ -397,6 +442,7 @@ export function formOperation(
           formResult = await form.submit(user, submissionRepository);
           result = formResult as FormEntity;
           event = formSubmitted(user, result);
+          mappedForm = mapFormForFormSubmitted(apiId, result);
           break;
         }
         case SET_TO_DRAFT_FORM_OPERATION: {
@@ -414,8 +460,12 @@ export function formOperation(
       }
 
       end();
-      res.send(mapForm(apiId, result));
 
+      if (mappedForm) {
+        res.send(mappedForm);
+      } else {
+        res.send(mapForm(apiId, result));
+      }
       if (event) {
         eventService.send(event);
       }
@@ -494,7 +544,7 @@ export function createFormRouter({
     createValidationHandler(
       param('formId').isUUID(),
       param('submissionId').isUUID(),
-      getFormSubmission(submissionRepository)
+      getFormSubmission(submissionRepository, repository)
     )
   );
   router.post(

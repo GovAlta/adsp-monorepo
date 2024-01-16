@@ -23,7 +23,7 @@ export interface FormSubmission {
   createdBy: FormSubmissionCreatedBy;
   updatedBy: string;
   updatedDateTime: Date;
-  submissionStatus: string;
+  submissionStatus?: string;
   disposition: FormDisposition;
 }
 export interface FormSubmissionTenant {
