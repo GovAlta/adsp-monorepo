@@ -1,13 +1,10 @@
-import React from 'react';
 import { Provider } from 'react-redux';
-import { getDefaultMiddleware } from '@reduxjs/toolkit';
 import { render } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 
 import App from './app';
 
-const mockStore = configureStore(getDefaultMiddleware());
+const mockStore = configureStore();
 
 describe('App', () => {
   let store, userManager;
@@ -27,11 +24,9 @@ describe('App', () => {
 
   it('should render successfully', () => {
     const { baseElement } = render(
-      <BrowserRouter>
-        <Provider store={store}>
-          <App />
-        </Provider>
-      </BrowserRouter>
+      <Provider store={store}>
+        <App />
+      </Provider>
     );
 
     expect(baseElement).toBeTruthy();

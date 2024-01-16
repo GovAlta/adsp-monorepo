@@ -1,5 +1,5 @@
 import '@abgov/web-components/index.css';
-import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom-6';
 import { Landing } from './components/Landing';
 import { TaskTenant } from './containers/TaskTenant';
 
@@ -10,17 +10,11 @@ export function App() {
   return (
     <div className={styles.app}>
       <Router>
-        <Switch>
-          <Route exact path="/auth/callback">
-            <AuthCallback />
-          </Route>
-          <Route path="/:tenant">
-            <TaskTenant />
-          </Route>
-          <Route>
-            <Landing />
-          </Route>
-        </Switch>
+        <Routes>
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/:tenant/*" element={<TaskTenant />} />
+          <Route path="*" element={<Landing />}/>
+        </Routes>
       </Router>
     </div>
   );

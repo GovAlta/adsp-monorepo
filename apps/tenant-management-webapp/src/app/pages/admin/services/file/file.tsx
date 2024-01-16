@@ -1,8 +1,8 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import FileOverview from './fileOverview';
-import { FileTypes } from './fileTypes';
-import FileList from './fileList';
+import { FileTypes } from './fileTypes/fileTypes';
+import FileList from './uploadedFiles/fileList';
 import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
