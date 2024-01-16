@@ -9,10 +9,15 @@ import styled from 'styled-components';
 export interface InfoCircleWithInlineHelpProps {
   text: string;
   width?: number;
+  label?: string;
 }
 
-export const InfoCircleWithInlineHelp = ({ text, width = 320 }: InfoCircleWithInlineHelpProps): JSX.Element => {
+export const InfoCircleWithInlineHelp = ({ text, label, width = 320 }: InfoCircleWithInlineHelpProps): JSX.Element => {
   const [viewSubmissionInclineHelp, setViewSubmissionInclineHelp] = useState<boolean>(false);
+
+  const addLabelText = () => {
+    return <>{label ? `${label}  ` : null}</>;
+  };
 
   return (
     <div
@@ -23,6 +28,7 @@ export const InfoCircleWithInlineHelp = ({ text, width = 320 }: InfoCircleWithIn
     >
       <InlinePadding>
         <InfoCirclePadding>
+          {addLabelText()}
           <InfoCircle />
         </InfoCirclePadding>
         <div className="triangle-width">
@@ -62,6 +68,7 @@ export const InfoCircleWithInlineHelp = ({ text, width = 320 }: InfoCircleWithIn
 export const ViewBox = styled.div`
   position: fixed;
   margin-top: -50px;
+  z-index: 1000;
 
   .small-text {
     font-size: 14px;
@@ -101,7 +108,6 @@ export const ViewBox = styled.div`
 `;
 
 export const InlinePadding = styled.div`
-  position: fixed;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -128,4 +134,8 @@ export const InlinePadding = styled.div`
 
 export const InfoCirclePadding = styled.div`
   margin-top: 8px;
+`;
+
+export const LabelPadding = styled.div`
+  margin-bottom: 8px;
 `;

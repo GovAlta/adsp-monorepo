@@ -39,7 +39,14 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useHistory, useParams } from 'react-router-dom';
-import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
+import {
+  GoAButtonGroup,
+  GoAButton,
+  GoAFormItem,
+  GoACheckbox,
+  GoADropdown,
+  GoADropdownItem,
+} from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
@@ -53,6 +60,7 @@ import { AddEditDispositionModal } from './addEditDispositionModal';
 
 import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 import { RowFlex } from './style-components';
+import { getTaskQueues } from '@store/task/action';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -94,6 +102,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
   const [data, setData] = useState<unknown>();
+  const [selectedQueue, setSelectedQueue] = useState('No Task Created');
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
@@ -125,6 +134,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getFormDefinitions());
+    dispatch(getTaskQueues());
   }, []);
 
   const types = [
@@ -141,6 +151,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       return serviceRoles?.keycloak || {};
     }
   );
+  const taskQueues = useSelector((state: RootState) => {
+    return Object.entries(state?.task?.queues)
+      .sort((template1, template2) => {
+        return template1[1].name.localeCompare(template2[1].name);
+      })
+      .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
+        tempObj[taskDefinitionId] = taskDefinitionData;
+        return tempObj;
+      }, {});
+  });
 
   useEffect(() => {
     if (saveModal.closeEditor) {
@@ -430,7 +450,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </MonacoDivTabBody>
               </Tab>
               <Tab label="Submission configuration" data-testid="disposition-states">
-                <div style={{ height: EditorHeight + 7 }}>
+                <div style={{ height: EditorHeight + 100 }}>
                   <FlexRow>
                     <SubmissionRecordsBox>
                       <GoACheckbox
@@ -456,6 +476,43 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </FlexRow>
 
                   <div style={{ padding: '10px', background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
+                    {definition.submissionRecords ? (
+                      <InfoCircleWithInlineHelp
+                        label="Task Queue to create"
+                        text={
+                          definition.submissionRecords
+                            ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                            : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                        }
+                      />
+                    ) : null}
+
+                    {Object.keys(taskQueues).length > 0 && (
+                      <GoAFormItem label="test  ">
+                        <GoADropdown
+                          name="Queues"
+                          value={selectedQueue}
+                          onChange={(name: string, task: string) => {
+                            setSelectedQueue(task);
+                          }}
+                          aria-label="select-task-dropdown"
+                          width="50%"
+                          testId="task-select-definition-dropdown"
+                        >
+                          <GoADropdownItem key="No Task Created" value="No Task Created" label="No Task Created" />
+
+                          {Object.keys(taskQueues).map((item) => (
+                            <GoADropdownItem
+                              name="Queues"
+                              key={item}
+                              label={item}
+                              value={item}
+                              testId={`${item}-form-submission-taskQueue`}
+                            />
+                          ))}
+                        </GoADropdown>
+                      </GoAFormItem>
+                    )}
                     <RowFlex>
                       <h3>Disposition states</h3>
                       <div>

@@ -190,6 +190,7 @@ export function findFormSubmissions(
 
       const definition = configuration[formEntity?.definition?.id || ''];
 
+      console.log(`AssessorRoles =  ${user.roles}`);
       if (definition && !isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ...definition.assessorRoles])) {
         throw new UnauthorizedUserError('find form submissions', req.user);
       }
