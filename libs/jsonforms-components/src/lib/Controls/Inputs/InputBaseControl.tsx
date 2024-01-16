@@ -29,7 +29,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const InnerComponent = input;
 
   return (
-    <GoAFormItem error={errors} label={label}>
+    <GoAFormItem error={errors} label={label} helpText={uischema?.options?.help}>
       <InnerComponent {...props} />
     </GoAFormItem>
   );
