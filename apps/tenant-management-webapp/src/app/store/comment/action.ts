@@ -35,7 +35,7 @@ export interface FetchCommentTopicTypesAction {
 export interface FetchCommentTopicTypesSuccessAction {
   type: typeof FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION;
   payload: {
-    types: { TopicTypess: CommentTopicTypes[]; core: CommentTopicTypes[] };
+    types: { TopicTypes: CommentTopicTypes[]; core: CommentTopicTypes[] };
   };
 }
 
@@ -207,7 +207,7 @@ export const getCommentTopicTypes = (): FetchCommentTopicTypesAction => ({
 });
 
 export const getCommentTopicTypesSuccess = (types: {
-  TopicTypess: CommentTopicTypes[];
+  TopicTypes: CommentTopicTypes[];
   core: CommentTopicTypes[];
 }): FetchCommentTopicTypesSuccessAction => ({
   type: FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION,

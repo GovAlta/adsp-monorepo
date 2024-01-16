@@ -35,7 +35,7 @@ export default function (state: CommentState = defaultState, action: CommentActi
     case FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION:
       return {
         ...state,
-        topicTypes: action.payload.types.TopicTypess,
+        topicTypes: action.payload.types.TopicTypes,
         core: action.payload.types.core,
       };
 

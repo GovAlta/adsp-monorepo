@@ -26,9 +26,6 @@ export const CommentCoreTopicTypesTable: FunctionComponent<CommentTemplatesTable
             >
               Security classification
             </th>
-            <th id="comment-topic-types-action" data-testid="comment-topic-types-table-header-action">
-              Actions
-            </th>
           </tr>
         </thead>
         <tbody>
