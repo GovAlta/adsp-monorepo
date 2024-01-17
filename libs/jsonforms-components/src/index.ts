@@ -80,37 +80,16 @@ import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
 import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
 
 export class Renderers {
-  token: string;
-  uploadPath: string;
-
   GoARenderers: JsonFormsRendererRegistryEntry[];
-  constructor(
-    token: string,
-    uploadPath: string,
-    uploadTrigger?: (file: File) => void,
-    downloadTrigger?: (file: File) => void,
-    latestFile?: any
-  ) {
-    this.token = token;
-    this.uploadPath = uploadPath;
-    //  this.uploadTrigger = this.uploadTrigger;
-
+  constructor(uploadTrigger?: (file: File) => void, downloadTrigger?: (file: File) => void, latestFile?: any) {
     this.GoARenderers = [
       ...this.GoABaseRenderers,
       { tester: CategorizationRendererTester, renderer: FormStepperControl },
       {
         tester: FileUploaderTester,
-        renderer: FileUploaderWrapper(this.token, this.uploadPath, uploadTrigger, downloadTrigger, latestFile),
+        renderer: FileUploaderWrapper({ uploadTrigger, downloadTrigger, latestFile }),
       },
     ];
-  }
-
-  getToken() {
-    return this.token;
-  }
-
-  withToken(props: any) {
-    return props({ ...props.props, token: this.token });
   }
 
   GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [

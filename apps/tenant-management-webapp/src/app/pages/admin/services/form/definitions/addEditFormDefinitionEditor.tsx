@@ -12,7 +12,6 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
-import { FileItem } from '@store/file/models';
 
 import {
   TextLoadingIndicator,
@@ -86,12 +85,6 @@ export const formEditorJsonConfig = {
 const invalidJsonMsg = 'Invalid JSON syntax';
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
-  const token = useSelector((state: RootState) => {
-    return state?.session.credentials.token;
-  });
-  const url = useSelector((state: RootState) => {
-    return `${state?.config.fileApi.host}${state?.config.fileApi.endpoints.fileAdmin}`;
-  });
   const latestFile = useSelector((state: RootState) => {
     return state?.fileService.latestFile;
   });
@@ -112,7 +105,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(DownloadFileService(file));
   };
 
-  const renderer = new Renderers(token, url, uploadFile, downloadFile, latestFile);
+  const renderer = new Renderers(uploadFile, downloadFile, latestFile);
 
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
 

@@ -15,31 +15,13 @@ export interface GoAFileUploaderSchemaProps extends Omit<Categorization, 'elemen
 export interface FileUploaderLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
   data: any;
-  token: string;
-  uploadPath: string;
+  // eslint-disable-next-line
+  latestFile: any;
   uploadTrigger?: (file: File) => void;
   downloadTrigger?: (file: File) => void;
-  latestFile: any;
 }
 
-export const FileUploader = ({
-  uischema,
-  data,
-  schema,
-  // eslint-disable-next-line
-  ajv,
-  path,
-  cells,
-  renderers,
-  config,
-  token,
-  uploadPath,
-  uploadTrigger,
-  downloadTrigger,
-  latestFile,
-}: FileUploaderLayoutRendererProps) => {
-  const uiSchema = uischema as unknown as GoAFileUploaderSchemaProps;
-
+export const FileUploader = ({ uploadTrigger, downloadTrigger, latestFile }: FileUploaderLayoutRendererProps) => {
   function uploadFile(file: File) {
     if (uploadTrigger) {
       uploadTrigger(file);
