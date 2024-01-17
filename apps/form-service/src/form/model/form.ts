@@ -213,7 +213,7 @@ export class FormEntity implements Form {
 
   async setToDraft(user: User): Promise<FormEntity> {
     if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin)) {
-      throw new UnauthorizedUserError('unlock form', user);
+      throw new UnauthorizedUserError('set to draft form', user);
     }
 
     if (this.status !== FormStatus.Submitted) {
@@ -226,7 +226,7 @@ export class FormEntity implements Form {
     return await this.repository.save(this);
   }
 
-  async submit(user: User, submissionRepository: FormSubmissionRepository): Promise<FormEntity> {
+  async submit(user: User, submissionRepository: FormSubmissionRepository): Promise<Form> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
     }
@@ -249,8 +249,10 @@ export class FormEntity implements Form {
       // If disposition states exist, create a form submission record
       await FormSubmissionEntity.create(user, submissionRepository, this, id);
     }
-
-    return await this.repository.save(this);
+    // We need the submissionId so that it is available for updates/lookups of the submission.
+    const savedFormEntity = await this.repository.save(this);
+    const formData: Form = { ...savedFormEntity, submissionId: id };
+    return formData;
   }
 
   async archive(user: User): Promise<FormEntity> {

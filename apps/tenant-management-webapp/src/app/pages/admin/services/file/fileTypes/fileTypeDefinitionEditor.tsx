@@ -5,10 +5,10 @@ import {
   Modal,
   HideTablet,
   FileTypeModalContent,
-} from './styled-components';
+} from '../styled-components';
 import { TabletMessage } from '@components/TabletMessage';
 import { useHistory } from 'react-router-dom';
-import { AddEditFileTypeDefinitionEditor } from './addEditFileTypeDefinitionEditor';
+import { EditFileTypeDefinitionEditor } from './editFileTypeDefinitionEditor';
 
 export const FileTypeDefinitionEditor = (): JSX.Element => {
   const history = useHistory();
@@ -27,7 +27,7 @@ export const FileTypeDefinitionEditor = (): JSX.Element => {
             <TabletMessage goBack={goBack} />
             <HideTablet>
               <FileTypeTemplateEditorContainer>
-                <AddEditFileTypeDefinitionEditor />
+                <EditFileTypeDefinitionEditor />
               </FileTypeTemplateEditorContainer>
             </HideTablet>
           </OuterFileTypeTemplateEditorContainer>

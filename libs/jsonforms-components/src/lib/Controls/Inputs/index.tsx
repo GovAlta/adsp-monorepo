@@ -1,5 +1,6 @@
 export * from './InputBaseControl';
 export * from './InputTextControl';
+export * from './InputMultiLineTextControl';
 export * from './InputDateControl';
 export * from './InputNumberControl';
 export * from './InputIntegerControl';

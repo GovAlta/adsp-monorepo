@@ -22,7 +22,8 @@ function updateSpecifiedCommentType(comments, comment) {
 }
 
 export const defaultState: CommentState = {
-  topicTypes: {},
+  topicTypes: [],
+  core: [],
   topics: [],
   comments: [],
   nextEntries: null,
@@ -34,7 +35,8 @@ export default function (state: CommentState = defaultState, action: CommentActi
     case FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION:
       return {
         ...state,
-        topicTypes: action.payload,
+        topicTypes: action.payload.types.TopicTypes,
+        core: action.payload.types.core,
       };
 
     case UPDATE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION:

@@ -20,9 +20,9 @@ export interface Task {
   description: string;
   priority: TaskPriority;
   status: TaskStatus;
-  createdOn: string;
-  startedOn: string;
-  endedOn: string;
+  createdOn: Date;
+  startedOn?: Date;
+  endedOn?: Date;
   assignment: {
     assignedTo: {
       id: string;

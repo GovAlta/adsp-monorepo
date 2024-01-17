@@ -1,9 +1,13 @@
 import { FunctionComponent } from 'react';
-import { TaskDetailsProps } from './types';
 import styled from 'styled-components';
+import { TaskDetailsProps } from './types';
+import { registerDetailsComponent } from './register';
 
-const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({ className, user, task, isExecuting }) => {
-  return <div className={className}></div>;
+const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting }) => {
+  return <div></div>;
 };
 
-export default styled(FormSubmissionReviewTask)``;
+registerDetailsComponent(
+  (task) => task?.recordId.startsWith('urn:ads:platform:file-service:v1:/forms/'),
+  FormSubmissionReviewTask
+);

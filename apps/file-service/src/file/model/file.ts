@@ -1,7 +1,7 @@
 import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { Readable } from 'stream';
-import { File, FileRecord, NewFile, SecurityClassificationMimeTypeInfo, ServiceUserRoles, UserInfo } from '../types';
+import { File, FileRecord, NewFile, ServiceUserRoles, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
@@ -32,7 +32,7 @@ export class FileEntity implements File {
     repository: FileRepository,
     user: User,
     type: FileTypeEntity,
-    values: NewFile & SecurityClassificationMimeTypeInfo,
+    values: NewFile,
     content: Readable
   ): Promise<FileEntity> {
     if (!type.canUpdateFile(user)) {
@@ -51,8 +51,10 @@ export class FileEntity implements File {
     const fileTypeDetector = new FileTypeDetector(logger, content);
     const result = await fileTypeDetector.detect();
 
-    entity.mimeType = result.fileType?.mime;
-    entity.securityClassification = type?.securityClassification;
+    if (result.fileType?.mime) {
+      // Detected value takes precedence
+      entity.mimeType = result.fileType?.mime;
+    }
 
     entity = await repository.save(entity);
     const saved = await storageProvider.saveFile(entity, type, result.fileStream);
@@ -69,14 +71,14 @@ export class FileEntity implements File {
     private storageProvider: FileStorageProvider,
     private repository: FileRepository,
     public type: FileTypeEntity,
-    values: (NewFile & SecurityClassificationMimeTypeInfo & { createdBy: UserInfo; created: Date }) | FileRecord
+    values: (NewFile & { createdBy: UserInfo; created: Date }) | FileRecord
   ) {
     this.recordId = values.recordId;
     this.filename = values.filename;
     this.createdBy = values.createdBy;
     this.created = values.created;
     this.lastAccessed = values.created;
-    this.securityClassification = values.securityClassification || null;
+    this.mimeType = values.mimeType;
     const record = values as FileRecord;
 
     if (record.id) {
@@ -88,10 +90,11 @@ export class FileEntity implements File {
       this.deleted = record.deleted;
       this.infected = record.infected;
       this.size = record.size;
-      this.mimeType = record.mimeType;
+      this.securityClassification = record.securityClassification;
     } else {
       this.tenantId = type.tenantId;
       this.id = uuidv4();
+      this.securityClassification = type.securityClassification;
     }
   }
 
