@@ -616,7 +616,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 >
                   Back
                 </GoAButton>
-                {/* <GoAFileUploadInput variant="button" onSelectFile={uploadFile} /> */}
               </GoAButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>

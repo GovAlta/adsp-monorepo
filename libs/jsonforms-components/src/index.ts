@@ -67,8 +67,6 @@ import {
   CategorizationRendererTester,
   FormStepperControl,
   FileUploaderTester,
-  ArrayControlRenderer,
-  ArrayControlTester,
   MultiLineTextControl,
   MultiLineTextControlTester,
 } from './lib/Controls';
@@ -79,7 +77,7 @@ import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWra
 
 export class Renderers {
   GoARenderers: JsonFormsRendererRegistryEntry[];
-  constructor(uploadTrigger?: (file: File) => void, downloadTrigger?: (file: File) => void, latestFile?: any) {
+  constructor(uploadTrigger?: (file: File) => void, downloadTrigger?: (file: File) => void, latestFile?: unknown) {
     this.GoARenderers = [
       ...this.GoABaseRenderers,
       { tester: CategorizationRendererTester, renderer: FormStepperControl },
