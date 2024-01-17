@@ -25,17 +25,11 @@ export const FileUploader = ({ uploadTrigger, downloadTrigger, latestFile }: Fil
   function uploadFile(file: File) {
     if (uploadTrigger) {
       uploadTrigger(file);
-    } else {
-      console.log('Upload trigger is not defined');
-      console.log('pretending to upload file');
     }
   }
   function downloadFile(file: File) {
     if (downloadTrigger) {
       downloadTrigger(file);
-    } else {
-      console.log('Download trigger is not defined');
-      console.log('pretending to download file');
     }
   }
 
