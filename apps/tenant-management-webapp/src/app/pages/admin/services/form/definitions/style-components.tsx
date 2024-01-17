@@ -29,3 +29,8 @@ export const ActionSpace = styled.div`
   height: 29px;
   width: 56px;
 `;
+
+export const TaskQueuesDropdown = styled.div`
+  width: 50%;
+  margin-bottom: 3rem;
+`;

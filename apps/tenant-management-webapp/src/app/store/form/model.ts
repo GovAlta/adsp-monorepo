@@ -11,6 +11,7 @@ export interface FormDefinition {
   uiSchema?: Record<string, unknown>;
   dispositionStates: Array<Disposition>;
   submissionRecords: boolean;
+  taskQueueToProcess: string;
 }
 
 export interface Disposition {
@@ -32,6 +33,7 @@ export const defaultFormDefinition: FormDefinition = {
   anonymousApply: false,
   dispositionStates: [],
   submissionRecords: false,
+  taskQueueToProcess: '',
 };
 
 export interface FormState {

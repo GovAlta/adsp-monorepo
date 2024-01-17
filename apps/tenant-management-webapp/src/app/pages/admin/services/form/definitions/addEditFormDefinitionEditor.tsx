@@ -39,14 +39,9 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useHistory, useParams } from 'react-router-dom';
-import {
-  GoAButtonGroup,
-  GoAButton,
-  GoAFormItem,
-  GoACheckbox,
-  GoADropdown,
-  GoADropdownItem,
-} from '@abgov/react-components-new';
+import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
+
+import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox, GoADropdownItem } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
@@ -59,7 +54,7 @@ import { DeleteModal } from '@components/DeleteModal';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 
 import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
-import { RowFlex } from './style-components';
+import { RowFlex, TaskQueuesDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
@@ -477,42 +472,41 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
                   <div style={{ padding: '10px', background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                     {definition.submissionRecords ? (
-                      <InfoCircleWithInlineHelp
-                        label="Task Queue to create"
-                        text={
-                          definition.submissionRecords
-                            ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
-                            : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
-                        }
-                      />
+                      <>
+                        <InfoCircleWithInlineHelp
+                          label="Task Queue to create"
+                          text={
+                            definition.submissionRecords
+                              ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                              : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                          }
+                        />
+                      </>
                     ) : null}
-
-                    {Object.keys(taskQueues).length > 0 && (
-                      <GoAFormItem label="test  ">
+                    <TaskQueuesDropdown>
+                      {Object.keys(taskQueues).length > 0 && (
                         <GoADropdown
-                          name="Queues"
-                          value={selectedQueue}
-                          onChange={(name: string, task: string) => {
-                            setSelectedQueue(task);
+                          data-test-id="formsubmission-select-task-queue-dropdown"
+                          name="taskQueues"
+                          disabled={!definition.submissionRecords}
+                          selectedValues={[selectedQueue]}
+                          multiSelect={false}
+                          onChange={(name, taskQueue) => {
+                            setDefinition({ ...definition, taskQueueToProcess: taskQueue[0] });
                           }}
-                          aria-label="select-task-dropdown"
-                          width="50%"
-                          testId="task-select-definition-dropdown"
                         >
-                          <GoADropdownItem key="No Task Created" value="No Task Created" label="No Task Created" />
-
+                          <GoADropdownOption
+                            data-testId={`task-Queue-ToCreate-DropDown`}
+                            key={`No-Task-Created`}
+                            value={`No Task Created`}
+                            label={`No Task Created`}
+                          />
                           {Object.keys(taskQueues).map((item) => (
-                            <GoADropdownItem
-                              name="Queues"
-                              key={item}
-                              label={item}
-                              value={item}
-                              testId={`${item}-form-submission-taskQueue`}
-                            />
+                            <GoADropdownOption data-testId={item} key={item} value={item} label={item} />
                           ))}
                         </GoADropdown>
-                      </GoAFormItem>
-                    )}
+                      )}
+                    </TaskQueuesDropdown>
                     <RowFlex>
                       <h3>Disposition states</h3>
                       <div>
