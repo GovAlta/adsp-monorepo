@@ -20,10 +20,6 @@ import {
 import {
   MaterialAnyOfStringOrEnumControl,
   materialAnyOfStringOrEnumControlTester,
-  MaterialBooleanControl,
-  materialBooleanControlTester,
-  MaterialBooleanToggleControl,
-  materialBooleanToggleControlTester,
   MaterialEnumControl,
   materialEnumControlTester,
   MaterialOneOfEnumControl,
@@ -70,94 +66,95 @@ import {
   GoAInputIntegerControl,
   CategorizationRendererTester,
   FormStepperControl,
-  ArrayControlRenderer,
-  ArrayControlTester,
+  FileUploaderTester,
   MultiLineTextControl,
   MultiLineTextControlTester,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
-export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
-  // controls
-  {
-    tester: ArrayControlTester,
-    renderer: ArrayControlRenderer,
-  },
-  { tester: materialBooleanControlTester, renderer: MaterialBooleanControl },
-  {
-    tester: materialBooleanToggleControlTester,
-    renderer: MaterialBooleanToggleControl,
-  },
 
-  { tester: materialEnumControlTester, renderer: MaterialEnumControl },
-  { tester: GoAIntegerControlTester, renderer: GoAInputIntegerControl },
-  { tester: GoANumberControlTester, renderer: GoAInputNumberControl },
-  { tester: GoATextControlTester, renderer: GoAInputTextControl },
-  { tester: GoADateControlTester, renderer: GoAInputDateControl },
-  { tester: GoADateTimeControlTester, renderer: GoAInputDateTimeControl },
-  { tester: GoATimeControlTester, renderer: GoAInputTimeControl },
-  { tester: materialSliderControlTester, renderer: MaterialSliderControl },
-  { tester: materialObjectControlTester, renderer: MaterialObjectRenderer },
-  { tester: materialAllOfControlTester, renderer: MaterialAllOfRenderer },
-  { tester: materialAnyOfControlTester, renderer: MaterialAnyOfRenderer },
-  { tester: materialOneOfControlTester, renderer: MaterialOneOfRenderer },
-  {
-    tester: materialRadioGroupControlTester,
-    renderer: MaterialRadioGroupControl,
-  },
-  {
-    tester: materialOneOfRadioGroupControlTester,
-    renderer: MaterialOneOfRadioGroupControl,
-  },
-  {
-    tester: materialOneOfEnumControlTester,
-    renderer: MaterialOneOfEnumControl,
-  },
-  // layouts
-  { tester: materialGroupTester, renderer: MaterialGroupLayout },
-  {
-    tester: materialHorizontalLayoutTester,
-    renderer: GoAHorizontalLayout,
-  },
-  { tester: materialVerticalLayoutTester, renderer: GoAVerticalLayout },
-  {
-    tester: materialCategorizationTester,
-    renderer: MaterialCategorizationLayout,
-  },
-  { tester: materialArrayLayoutTester, renderer: MaterialArrayLayout },
-  // additional
-  { tester: materialLabelRendererTester, renderer: MaterialLabelRenderer },
-  {
-    tester: materialListWithDetailTester,
-    renderer: MaterialListWithDetailRenderer,
-  },
-  {
-    tester: materialAnyOfStringOrEnumControlTester,
-    renderer: MaterialAnyOfStringOrEnumControl,
-  },
-  {
-    tester: materialEnumArrayRendererTester,
-    renderer: MaterialEnumArrayRenderer,
-  },
-  {
-    tester: materialEnumArrayRendererTester,
-    renderer: MaterialEnumArrayRenderer,
-  },
-  {
-    tester: MultiLineTextControlTester,
-    renderer: MultiLineTextControl,
-  },
-];
+import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
 
-export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
-  ...GoABaseRenderers,
-  { tester: CategorizationRendererTester, renderer: FormStepperControl },
-];
+export class Renderers {
+  GoARenderers: JsonFormsRendererRegistryEntry[];
+  constructor(uploadTrigger?: (file: File) => void, downloadTrigger?: (file: File) => void, latestFile?: unknown) {
+    this.GoARenderers = [
+      ...this.GoABaseRenderers,
+      { tester: CategorizationRendererTester, renderer: FormStepperControl },
+      {
+        tester: FileUploaderTester,
+        renderer: FileUploaderWrapper({ uploadTrigger, downloadTrigger, latestFile }),
+      },
+    ];
+  }
 
-export const GoACells: JsonFormsCellRendererRegistryEntry[] = [
-  { tester: materialBooleanCellTester, cell: MaterialBooleanCell },
-  { tester: materialBooleanToggleCellTester, cell: MaterialBooleanToggleCell },
-  { tester: materialEnumCellTester, cell: MaterialEnumCell },
-  { tester: materialOneOfEnumCellTester, cell: MaterialOneOfEnumCell },
-  ...InputCells,
-];
+  GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
+    // controls
+    { tester: materialEnumControlTester, renderer: MaterialEnumControl },
+    { tester: GoAIntegerControlTester, renderer: GoAInputIntegerControl },
+    { tester: GoANumberControlTester, renderer: GoAInputNumberControl },
+    { tester: GoATextControlTester, renderer: GoAInputTextControl },
+    { tester: GoADateControlTester, renderer: GoAInputDateControl },
+    { tester: GoADateTimeControlTester, renderer: GoAInputDateTimeControl },
+    { tester: GoATimeControlTester, renderer: GoAInputTimeControl },
+    { tester: materialSliderControlTester, renderer: MaterialSliderControl },
+    { tester: materialObjectControlTester, renderer: MaterialObjectRenderer },
+    { tester: materialAllOfControlTester, renderer: MaterialAllOfRenderer },
+    { tester: materialAnyOfControlTester, renderer: MaterialAnyOfRenderer },
+    { tester: materialOneOfControlTester, renderer: MaterialOneOfRenderer },
+    {
+      tester: materialRadioGroupControlTester,
+      renderer: MaterialRadioGroupControl,
+    },
+    {
+      tester: materialOneOfRadioGroupControlTester,
+      renderer: MaterialOneOfRadioGroupControl,
+    },
+    {
+      tester: materialOneOfEnumControlTester,
+      renderer: MaterialOneOfEnumControl,
+    },
+    // layouts
+    { tester: materialGroupTester, renderer: MaterialGroupLayout },
+    {
+      tester: materialHorizontalLayoutTester,
+      renderer: GoAHorizontalLayout,
+    },
+    { tester: materialVerticalLayoutTester, renderer: GoAVerticalLayout },
+    {
+      tester: materialCategorizationTester,
+      renderer: MaterialCategorizationLayout,
+    },
+    { tester: materialArrayLayoutTester, renderer: MaterialArrayLayout },
+    // additional
+    { tester: materialLabelRendererTester, renderer: MaterialLabelRenderer },
+    {
+      tester: materialListWithDetailTester,
+      renderer: MaterialListWithDetailRenderer,
+    },
+    {
+      tester: materialAnyOfStringOrEnumControlTester,
+      renderer: MaterialAnyOfStringOrEnumControl,
+    },
+    {
+      tester: materialEnumArrayRendererTester,
+      renderer: MaterialEnumArrayRenderer,
+    },
+    {
+      tester: materialEnumArrayRendererTester,
+      renderer: MaterialEnumArrayRenderer,
+    },
+    {
+      tester: MultiLineTextControlTester,
+      renderer: MultiLineTextControl,
+    },
+  ];
+
+  GoACells: JsonFormsCellRendererRegistryEntry[] = [
+    { tester: materialBooleanCellTester, cell: MaterialBooleanCell },
+    { tester: materialBooleanToggleCellTester, cell: MaterialBooleanToggleCell },
+    { tester: materialEnumCellTester, cell: MaterialEnumCell },
+    { tester: materialOneOfEnumCellTester, cell: MaterialOneOfEnumCell },
+    ...InputCells,
+  ];
+}
