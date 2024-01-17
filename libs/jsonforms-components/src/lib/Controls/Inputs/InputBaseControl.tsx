@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAFormItem } from '@abgov/react-components-new';
+import { GoAFormItem, GoADetails } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 
 export type GoAInputType =
@@ -30,6 +30,9 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
 
   return (
     <GoAFormItem error={errors} label={label} helpText={uischema?.options?.help}>
+      {uischema.options?.variant && uischema.options?.variant === 'details' && (
+        <GoADetails heading={uischema?.options?.help?.label}>{uischema?.options?.help?.content}</GoADetails>
+      )}
       <InnerComponent {...props} />
     </GoAFormItem>
   );
