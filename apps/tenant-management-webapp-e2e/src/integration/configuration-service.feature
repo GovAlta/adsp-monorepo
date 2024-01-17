@@ -102,7 +102,7 @@ Feature: Configuration-service
     # Create a new revision and view the new revision
     When the user selects "autotest:test" from select definition dropdown
     Then the user views a list of configuration revisions with a latest revision
-    When the user clicks add icon of the latest revision
+    When the user clicks add revision icon of the latest revision
     Then the user views the revision creation confirmation modal for "autotest:test"
     When the user clicks Create button in the revision creation confirmation modal
     Then the user views a new revision is created with the current timestamp

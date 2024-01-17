@@ -298,7 +298,7 @@ Then('the user views a list of configuration revisions with a latest revision', 
   configurationObj.revisionTableLatestBadge().should('be.visible');
 });
 
-When('the user clicks add icon of the latest revision', function () {
+When('the user clicks add revision icon of the latest revision', function () {
   configurationObj.revisionTableAddIconForLatestRevision().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
