@@ -72,7 +72,8 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
     JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
-    JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords)
+    JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
+    JSON.stringify(tempPrev?.taskQueueToProcess) !== JSON.stringify(tempNext?.taskQueueToProcess)
   );
 };
 
@@ -86,6 +87,7 @@ export const formEditorJsonConfig = {
 };
 
 const invalidJsonMsg = 'Invalid JSON syntax';
+const NO_TASK_CREATED_OPTION = `No Task Created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const latestFile = useSelector((state: RootState) => {
