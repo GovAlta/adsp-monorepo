@@ -46,6 +46,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       return {
         ...state,
         fileList: uploadFile(state.fileList, action.payload.result),
+        latestFile: action.payload.result,
       };
     case DELETE_FILE_SUCCESSES:
       return {
@@ -69,7 +70,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       };
     }
     case FETCH_FILE_SUCCESS: {
-      const fileList = [action.payload.results.data, ...state.fileList];
+      const fileList = [action.payload.results, ...state.fileList];
       return {
         ...state,
         fileList: fileList,

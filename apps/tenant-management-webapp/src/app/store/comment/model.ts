@@ -86,8 +86,8 @@ export const defaultComment: Comment = {
 };
 
 export interface CommentState {
-  topicTypes: Record<string, CommentTopicTypes>;
-  // topics: Record<string, Topic[]>;
+  topicTypes: CommentTopicTypes[];
+  core: CommentTopicTypes[];
   topics: TopicItem[];
   comments: Comment[];
   nextEntries: string;

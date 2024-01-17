@@ -75,23 +75,23 @@ export type ActionTypes =
   | CheckFileTypeHasFileAction
   | CheckFileTypeHasFileSuccessAction;
 
-  export interface CheckFileTypeHasFileAction {
-    type: typeof CHECK_FILE_TYPE_HAS_FILE;
-    payload: string;
-  }
+export interface CheckFileTypeHasFileAction {
+  type: typeof CHECK_FILE_TYPE_HAS_FILE;
+  payload: string;
+}
 
-  interface CheckFileTypeHasFileSuccessAction {
-    type: typeof CHECK_FILE_TYPE_HAS_FILE_SUCCESS;
-    payload: {
-      hasFile: boolean;
-      fileTypeId: string;
-    };
-  }
+interface CheckFileTypeHasFileSuccessAction {
+  type: typeof CHECK_FILE_TYPE_HAS_FILE_SUCCESS;
+  payload: {
+    hasFile: boolean;
+    fileTypeId: string;
+  };
+}
 
-  export const checkFileTypeHasFile = (fileTypeId: string): CheckFileTypeHasFileAction => ({
-    type: CHECK_FILE_TYPE_HAS_FILE,
-    payload: fileTypeId,
-  });
+export const checkFileTypeHasFile = (fileTypeId: string): CheckFileTypeHasFileAction => ({
+  type: CHECK_FILE_TYPE_HAS_FILE,
+  payload: fileTypeId,
+});
 
 // | SetupFileAction;
 export interface UploadFileAction {
@@ -100,7 +100,7 @@ export interface UploadFileAction {
 }
 interface UploadFileSuccessAction {
   type: typeof UPLOAD_FILE_SUCCESSES;
-  payload: { result: { data: FileItem } };
+  payload: { result: FileItem };
 }
 interface UploadFileFailAction {
   type: typeof UPLOAD_FILE_FAILED;
@@ -133,7 +133,7 @@ interface FetchFilesFailedAction {
 interface FetchFileSuccessAction {
   type: typeof FETCH_FILE_SUCCESS;
   payload: {
-    results: { data: FileItem };
+    results: FileItem;
   };
 }
 
@@ -244,7 +244,7 @@ export const UploadFileService = (data: Record<string, unknown>): UploadFileActi
     data,
   },
 });
-export const UploadFileSuccessService = (result: { data: FileItem }): UploadFileSuccessAction => ({
+export const UploadFileSuccessService = (result: FileItem): UploadFileSuccessAction => ({
   type: UPLOAD_FILE_SUCCESSES,
   payload: {
     result,
@@ -273,7 +273,7 @@ export const FetchFileService = (fileId?: string, after?: string): FetchFileActi
   fileId,
 });
 
-export const FetchFileSuccessService = (results: { data: FileItem }): FetchFileSuccessAction => ({
+export const FetchFileSuccessService = (results: FileItem): FetchFileSuccessAction => ({
   type: FETCH_FILE_SUCCESS,
   payload: {
     results,

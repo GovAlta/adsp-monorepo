@@ -35,8 +35,13 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
   const topicTypes = useSelector((state: RootState) => {
     return state?.comment?.topicTypes;
   });
+  const coreTopicTypes = useSelector((state: RootState) => {
+    return state?.comment?.core;
+  });
 
-  const topicTypeNames = Object.values(topicTypes).map((val) => {
+  const allTopicTypes = { ...topicTypes, ...coreTopicTypes };
+
+  const topicTypeNames = Object.values(allTopicTypes).map((val: CommentTopicTypes) => {
     return val.name;
   });
 
@@ -46,12 +51,9 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
 
   useEffect(() => {
     if (spinner && Object.keys(topicTypes).length > 0 && !isEdit) {
-      if (validators['duplicate'].check(topicType.id)) {
-        setSpinner(false);
-
-        onClose();
-        history.push({ pathname: `${url}/edit/${topicType.id}` });
-      }
+      onClose();
+      history.push({ pathname: `${url}/edit/${topicType.id}` });
+      setSpinner(false);
     }
   }, [topicTypes]);
 

@@ -5,7 +5,7 @@ import {
   Modal,
   HideTablet,
   FileTypeModalContent,
-} from './styled-components';
+} from '../styled-components';
 import { TabletMessage } from '@components/TabletMessage';
 import { useHistory } from 'react-router-dom';
 import { EditFileTypeDefinitionEditor } from './editFileTypeDefinitionEditor';
