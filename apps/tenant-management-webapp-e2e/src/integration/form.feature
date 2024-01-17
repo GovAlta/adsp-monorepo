@@ -9,9 +9,8 @@ Feature: Form
     And the user views the link of See the code for "form-service"
     And the user views the link of "Get support" under Support
 
-  # Ignore this test due to the pending task to change the test for the recent UI change of roles
   @TEST_CS-2366 @TEST_CS-2356 @TEST_CS-2332 @TEST_CS-2406 @REQ_CS-1848 @REQ_CS-2170 @REQ_CS-2169 @REQ_CS-2254 @regression
-  Scenario: As a tenant admin, I can add and delete a form definition
+  Scenario: As a tenant admin, I can add, edit and delete a form definition
     Given a tenant admin user is on form service overview page
     When the user clicks Add definition button on form service overview page
     Then the user views Add form definition modal
