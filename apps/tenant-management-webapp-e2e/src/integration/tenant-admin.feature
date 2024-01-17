@@ -132,7 +132,7 @@ Feature: Tenant admin
     Then the "Event log" landing page is displayed
     When the user searches with "configuration-service:configuration-updated"
     Then the user views the events matching the search filter of "configuration-service:configuration-updated"
-    When the user clicks Load more button
+    When the user clicks Load more button on event log page
     Then the user views more events matching the search filter of "configuration-service:configuration-updated"
     When the user resets event log views
     And the user searches with "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
