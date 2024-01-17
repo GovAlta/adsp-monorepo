@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import Editor from '@monaco-editor/react';
 import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { GoARenderers } from '@abgov/jsonforms-components';
+import { Renderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
@@ -12,6 +12,8 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
+import { FileItem } from '@store/file/models';
+
 import {
   TextLoadingIndicator,
   FlexRow,
@@ -54,6 +56,9 @@ import { AddEditDispositionModal } from './addEditDispositionModal';
 import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 import { RowFlex } from './style-components';
 
+import { UploadFileService, DownloadFileService } from '@store/file/actions';
+import { FetchFileTypeService } from '@store/file/actions';
+
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
   const tempNext = JSON.parse(JSON.stringify(next));
@@ -81,6 +86,34 @@ export const formEditorJsonConfig = {
 const invalidJsonMsg = 'Invalid JSON syntax';
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
+  const token = useSelector((state: RootState) => {
+    return state?.session.credentials.token;
+  });
+  const url = useSelector((state: RootState) => {
+    return `${state?.config.fileApi.host}${state?.config.fileApi.endpoints.fileAdmin}`;
+  });
+  const latestFile = useSelector((state: RootState) => {
+    return state?.fileService.latestFile;
+  });
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(FetchFileTypeService());
+  }, [dispatch]);
+
+  const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
+
+  const uploadFile = (file: File) => {
+    const fileInfo = { file: file, type: fileTypes[0]?.id };
+    dispatch(UploadFileService(fileInfo));
+  };
+  const downloadFile = (file) => {
+    dispatch(DownloadFileService(file));
+  };
+
+  const renderer = new Renderers(token, url, uploadFile, downloadFile, latestFile);
+
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
 
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
@@ -107,7 +140,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const isEdit = !!id;
 
-  const dispatch = useDispatch();
   const latestNotification = useSelector(
     (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
   );
@@ -591,6 +623,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 >
                   Back
                 </GoAButton>
+                {/* <GoAFileUploadInput variant="button" onSelectFile={uploadFile} /> */}
               </GoAButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
@@ -607,7 +640,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           uischema={JSON.parse(UiSchemaBounced)}
                           data={data}
                           validationMode={'ValidateAndShow'}
-                          renderers={GoARenderers}
+                          renderers={renderer.GoARenderers}
                           cells={vanillaCells}
                           onChange={({ data }) => setData(data)}
                         />
@@ -616,7 +649,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           schema={JSON.parse(dataSchemaBounced)}
                           data={data}
                           validationMode={'ValidateAndShow'}
-                          renderers={GoARenderers}
+                          renderers={renderer.GoARenderers}
                           cells={vanillaCells}
                           onChange={({ data }) => setData(data)}
                         />
