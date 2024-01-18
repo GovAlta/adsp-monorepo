@@ -687,7 +687,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         }}
       />
       <DeleteModal
-        title="Delete subscriber"
+        title="Delete disposition state"
         isOpen={selectedDeleteDispositionIndex !== null}
         onCancel={() => {
           setSelectedDeleteDispositionIndex(null);
