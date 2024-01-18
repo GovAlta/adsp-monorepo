@@ -4,6 +4,7 @@ import {
   DomainEvent,
   EventService,
   isAllowedUser,
+  ServiceDirectory,
   startBenchmark,
   UnauthorizedUserError,
 } from '@abgov/adsp-service-sdk';
@@ -40,6 +41,7 @@ import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
+import { createTaskForQueueApi } from './queueTaskApi';
 
 export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
   return {
@@ -54,6 +56,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     dataSchema: entity.dataSchema,
     dispositionStates: entity.dispositionStates,
     submissionRecords: entity.submissionRecords,
+    taskQueuesToProcess: entity.taskQueuesToProcess,
   };
 }
 
@@ -415,11 +418,13 @@ export function formOperation(
   apiId: AdspId,
   eventService: EventService,
   notificationService: NotificationService,
+  directory: ServiceDirectory,
   submissionRepository: FormSubmissionRepository
 ): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const form: FormEntity = req[FORM];
       const request: FormOperations = req.body;
@@ -428,6 +433,7 @@ export function formOperation(
       let formResult: Form = null;
       let event: DomainEvent = null;
       let mappedForm = null;
+
       switch (request.operation) {
         case SEND_CODE_OPERATION: {
           result = await form.sendCode(user, notificationService);
@@ -439,6 +445,13 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
+          const directoryServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:form-service`);
+          const taskServiceUrl = `${directoryServiceUrl}task/v1/`;
+
+          console.log(`TaskServiceUrl = ${taskServiceUrl}`);
+          const token = await this.tokenProvider.getAccessToken();
+          //createTaskForQueueApi(token, taskServiceUrl,form.definition.taskQueuesToProcess);
+
           formResult = await form.submit(user, submissionRepository);
           result = formResult as FormEntity;
           event = formSubmitted(user, result);
@@ -500,6 +513,7 @@ export function deleteForm(
 
 interface FormRouterProps {
   serviceId: AdspId;
+  directory: ServiceDirectory;
   repository: FormRepository;
   eventService: EventService;
   notificationService: NotificationService;
@@ -510,14 +524,15 @@ interface FormRouterProps {
 export function createFormRouter({
   serviceId,
   repository,
+  directory,
   eventService,
   notificationService,
   fileService,
   submissionRepository,
 }: FormRouterProps): Router {
   const apiId = adspId`${serviceId}:v1`;
-
   const router = Router();
+
   router.get('/definitions', getFormDefinitions);
   router.get(
     '/definitions/:definitionId',
@@ -614,7 +629,7 @@ export function createFormRouter({
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService, submissionRepository)
+    formOperation(apiId, eventService, notificationService, directory, submissionRepository)
   );
   router.delete(
     '/forms/:formId',

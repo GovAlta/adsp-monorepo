@@ -125,7 +125,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
   const [data, setData] = useState<unknown>();
-  const [selectedQueue, setSelectedQueue] = useState('No Task Created');
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
@@ -516,17 +515,26 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           data-test-id="formsubmission-select-task-queue-dropdown"
                           name="taskQueues"
                           disabled={!definition.submissionRecords}
-                          selectedValues={[selectedQueue]}
+                          selectedValues={[
+                            `${definition.taskQueueToProcess.queueNameSpace}:${definition.taskQueueToProcess.queueName}`,
+                          ]}
                           multiSelect={false}
                           onChange={(name, taskQueue) => {
-                            setDefinition({ ...definition, taskQueueToProcess: taskQueue[0] });
+                            const seperatedTaskQueue = taskQueue[0].split(':');
+                            setDefinition({
+                              ...definition,
+                              taskQueueToProcess: {
+                                queueNameSpace: seperatedTaskQueue[0],
+                                queueName: seperatedTaskQueue[1],
+                              },
+                            });
                           }}
                         >
                           <GoADropdownOption
                             data-testId={`task-Queue-ToCreate-DropDown`}
                             key={`No-Task-Created`}
-                            value={`No Task Created`}
-                            label={`No Task Created`}
+                            value={NO_TASK_CREATED_OPTION}
+                            label={NO_TASK_CREATED_OPTION}
                           />
                           {Object.keys(taskQueues).map((item) => (
                             <GoADropdownOption data-testId={item} key={item} value={item} label={item} />

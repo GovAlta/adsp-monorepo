@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { NotificationService, Subscriber } from '../../notification';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDefinition, Disposition } from '../types';
+import { FormDefinition, Disposition, TaskQueueToProcess } from '../types';
 import { FormEntity } from './form';
 
 export class FormDefinitionEntity implements FormDefinition {
@@ -20,6 +20,8 @@ export class FormDefinitionEntity implements FormDefinition {
   submissionRecords: boolean;
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
+  taskQueuesToProcess: TaskQueueToProcess;
+
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
   constructor(private validationService: ValidationService, public tenantId: AdspId, definition: FormDefinition) {

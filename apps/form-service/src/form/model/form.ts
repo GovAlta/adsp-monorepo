@@ -226,6 +226,14 @@ export class FormEntity implements Form {
     return await this.repository.save(this);
   }
 
+  async createTaskForTaskQueue(form: Form): Promise<boolean> {
+    if (!form) throw new InvalidOperationError('Cannot create task for form');
+
+    const taskQueuesToProcess = this.definition.taskQueuesToProcess;
+
+    return true;
+  }
+
   async submit(user: User, submissionRepository: FormSubmissionRepository): Promise<Form> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');

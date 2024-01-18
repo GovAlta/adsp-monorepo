@@ -22,6 +22,7 @@ import {
   FormStatusNotificationType,
   FormStatusSubmittedDefinition,
   FormStatusUnlockedDefinition,
+  FormStatusSetToDraftDefinition,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -77,6 +78,7 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusUnlockedDefinition,
         FormStatusSubmittedDefinition,
         FormStatusArchivedDefinition,
+        FormStatusSetToDraftDefinition,
       ],
       notifications: [FormStatusNotificationType],
       values: [ServiceMetricsValueDefinition],
@@ -132,7 +134,15 @@ const initializeApp = async (): Promise<express.Application> => {
     notificationService,
   });
 
-  applyFormMiddleware(app, { ...repositories, serviceId, logger, eventService, notificationService, fileService });
+  applyFormMiddleware(app, {
+    ...repositories,
+    serviceId,
+    directory,
+    logger,
+    eventService,
+    notificationService,
+    fileService,
+  });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
