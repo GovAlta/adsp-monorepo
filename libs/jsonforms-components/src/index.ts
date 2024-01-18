@@ -69,6 +69,8 @@ import {
   FileUploaderTester,
   MultiLineTextControl,
   MultiLineTextControlTester,
+  ArrayControlTester,
+  ArrayControlRenderer,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
@@ -115,6 +117,8 @@ export class Renderers {
       renderer: MaterialOneOfEnumControl,
     },
     // layouts
+    { tester: ArrayControlTester, renderer: ArrayControlRenderer },
+
     { tester: materialGroupTester, renderer: MaterialGroupLayout },
     {
       tester: materialHorizontalLayoutTester,
