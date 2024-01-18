@@ -4,6 +4,7 @@ export const PUSH_SERVICE_ID = 'urn:ads:platform:push-service';
 export interface QueueDefinition {
   namespace: string;
   name: string;
+  displayName?: string;
   description: string;
   assignerRoles: string[];
   workerRoles: string[];

@@ -132,7 +132,13 @@ export const queueReducers = queueSlice.reducer;
 export const queuesSelector = createSelector(
   (state: AppState) => state.queue.queues,
   (state: AppState) => state.queue.results,
-  (queues, results) => results.map((result) => queues[result]).filter((value) => !!value)
+  (queues, results) =>
+    results
+      .map((result) => queues[result])
+      .filter((value) => !!value)
+      .sort((a, b) => {
+        return a.displayName < b.displayName || a.namespace < b.namespace || a.name < b.name ? -1 : 1;
+      })
 );
 
 export const queueMetricsSelector = createSelector(
