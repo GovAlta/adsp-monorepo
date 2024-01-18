@@ -148,7 +148,7 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
                 onChange={(name, value) => {
                   const validations = {
                     name: value,
-                    duplicate: definition.name,
+                    duplicate: value,
                   };
                   validators.remove('name');
 

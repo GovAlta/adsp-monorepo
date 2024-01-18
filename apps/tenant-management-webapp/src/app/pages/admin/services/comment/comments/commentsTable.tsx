@@ -91,7 +91,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
   return (
     <>
       <HeaderFont>
-        <label>Comments list</label>
+        <h3>Comments list</h3>
         <GoAButton size="compact" type="secondary" testId="add-comment" onClick={addNewComment}>
           Add Comment
         </GoAButton>
@@ -132,6 +132,11 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
             </CommentsList>
           );
         })}
+      {comments && !comments.length && (
+        <>
+          <b>No comments found</b>{' '}
+        </>
+      )}
       {next && (
         <LoadMoreCommentsWrapper>
           <GoAButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>

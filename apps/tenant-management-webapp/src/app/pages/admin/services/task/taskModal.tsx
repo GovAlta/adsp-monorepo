@@ -68,13 +68,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add(
-      'duplicated',
-      'name',
-      isNotEmptyCheck('name'),
-      wordMaxLengthCheck(180, 'Description'),
-      duplicateNameCheck(taskNames, 'Task')
-    )
+    .add('duplicated', 'name', isNotEmptyCheck('name'), wordMaxLengthCheck(180, 'Description'))
     .add('description', 'description', isNotEmptyCheck('name'), wordMaxLengthCheck(180, 'Description'))
     .add('priority', 'priority', isNotEmptyCheck('priority'))
     .build();
