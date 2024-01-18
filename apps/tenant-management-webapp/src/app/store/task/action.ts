@@ -12,6 +12,8 @@ export const UPDATE_TASK_QUEUE_SUCCESS_ACTION = 'queue/UPDATE_TASK_QUEUE_SUCCESS
 export const GET_TASKS_ACTION = 'task/GET_TASKS_ACTION';
 export const GET_TASKS_SUCCESS_ACTION = 'task/GET_TASKS_SUCCESS_ACTION';
 
+export const CLEAR_Tasks_ACTION = 'comment/CLEAR_Tasks_ACTION';
+
 export const GET_TASK_ACTION = 'task/GET_TASK_ACTION';
 export const GET_TASK_SUCCESS_ACTION = 'task/GET_TASK_SUCCESS_ACTION';
 // tasks actions
@@ -170,12 +172,20 @@ export const updateQueueTaskSuccess = (results: QueueTaskDefinition[]): UpdateQu
   payload: results,
 });
 
+export const clearTasks = (): ClearTasksAction => ({
+  type: CLEAR_Tasks_ACTION,
+});
+
 export interface FetchQueueTasksAction {
   type: typeof FETCH_QUEUE_TASKS_ACTION;
 }
 export interface FetchQueueTasksSuccessAction {
   type: typeof FETCH_QUEUE_TASKS_SUCCESS_ACTION;
   payload: QueueTaskDefinition[];
+}
+
+export interface ClearTasksAction {
+  type: typeof CLEAR_Tasks_ACTION;
 }
 
 export const getQueueTasks = (): FetchQueueTasksAction => ({

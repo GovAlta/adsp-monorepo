@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
-import { getTaskQueues, getTasks, SetQueueTask, updateQueueTask } from '@store/task/action';
+import { clearTasks, getTaskQueues, getTasks, SetQueueTask, updateQueueTask } from '@store/task/action';
 import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 
 import { renderNoItem } from '@components/NoItem';
@@ -101,6 +101,7 @@ export const TasksList = (): JSX.Element => {
               name="Queues"
               value={selectedTask}
               onChange={(name: string, selectedTask: string) => {
+                dispatch(clearTasks());
                 setSelectedTask(selectedTask);
               }}
               aria-label="select-task-dropdown"
@@ -149,7 +150,7 @@ export const TasksList = (): JSX.Element => {
         Object.keys(tasks).length === 0 &&
         renderNoItem('queue tasks')}
       {selectedTask !== '' && tasks && Object.keys(tasks).length !== 0 && (
-        <Visible visible={!indicator.show && selectedTask !== '' && tasks && Object.keys(tasks).length !== 0}>
+        <Visible visible={selectedTask !== '' && tasks && Object.keys(tasks).length !== 0}>
           <TaskListTable
             tasks={tasks}
             onEditTask={(updatedTask) => {

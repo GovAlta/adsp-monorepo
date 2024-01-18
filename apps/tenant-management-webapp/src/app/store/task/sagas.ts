@@ -11,6 +11,7 @@ import {
   DeleteTaskDefinitionAction,
   deleteTaskQueueSuccess,
   GET_TASKS_ACTION,
+  CLEAR_Tasks_ACTION,
   GET_TASK_ACTION,
   GetsTasksAction,
   GetsTaskAction,
@@ -240,11 +241,16 @@ export function* createTask({ payload }: SetQueueTaskAction): SagaIterator {
   }
 }
 
+function* clearTasksSaga(): SagaIterator {
+  yield put(getTasksSuccess([], '', ''));
+}
+
 export function* watchTaskSagas(): Generator {
   yield takeEvery(FETCH_TASK_QUEUES_ACTION, fetchTaskQueues);
   yield takeEvery(UPDATE_TASK_QUEUE_ACTION, updateTaskQueue);
   yield takeEvery(DELETE_TASK_QUEUE_ACTION, deleteTaskDefinition);
   yield takeEvery(GET_TASKS_ACTION, getTasks);
+  yield takeEvery(CLEAR_Tasks_ACTION, clearTasksSaga);
   yield takeEvery(GET_TASK_ACTION, getTask);
   yield takeEvery(SET_QUEUE_TASK_ACTION, createTask);
   yield takeEvery(UPDATE_QUEUE_TASK_ACTION, updateQueueTask);
