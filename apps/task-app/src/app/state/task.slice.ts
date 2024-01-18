@@ -149,7 +149,7 @@ export const connectStream = createAsyncThunk(
       dispatch(taskActions.streamConnectionChanged(true));
     });
 
-    socket.on('disconnected', () => {
+    socket.on('disconnect', () => {
       dispatch(taskActions.streamConnectionChanged(false));
     });
 
