@@ -74,6 +74,20 @@ import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
 
 import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
+import { createContext } from 'react';
+
+export interface enumerators {
+  getters: Map<string, () => string[]>;
+}
+
+const getters = new Map<string, () => string[]>();
+getters.set('first-dropdown', () => ['default', 'values']);
+const defaultEnumerator: enumerators = {
+  getters: getters,
+};
+
+export const enumContext = createContext(defaultEnumerator);
+//export const enumContextProvider = enumContext.Provider;
 
 export class Renderers {
   GoARenderers: JsonFormsRendererRegistryEntry[];

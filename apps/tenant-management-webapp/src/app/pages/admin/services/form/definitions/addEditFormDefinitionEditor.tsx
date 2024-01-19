@@ -57,6 +57,7 @@ import { RowFlex } from './style-components';
 
 import { UploadFileService, DownloadFileService } from '@store/file/actions';
 import { FetchFileTypeService } from '@store/file/actions';
+import { enumContext, enumerators } from '@abgov/jsonforms-components';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -345,6 +346,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
+  const enumValues = new Map<string, () => string[]>();
+  enumValues.set('first-dropdown', () => ['alpha', 'beta', 'gamma', 'bing']);
+  const myEnumerator: enumerators = {
+    getters: enumValues,
+  };
+
   return (
     <FormEditor>
       {spinner ? (
@@ -625,28 +632,30 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <GoAFormItem error={error} label="">
-                    <ErrorBoundary>
-                      {UiSchemaBounced !== '{}' ? (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          uischema={JSON.parse(UiSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      ) : (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      )}
-                    </ErrorBoundary>
+                    <enumContext.Provider value={myEnumerator}>
+                      <ErrorBoundary>
+                        {UiSchemaBounced !== '{}' ? (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            uischema={JSON.parse(UiSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
+                        ) : (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
+                        )}
+                      </ErrorBoundary>
+                    </enumContext.Provider>
                   </GoAFormItem>
                 </div>
               </Tab>
