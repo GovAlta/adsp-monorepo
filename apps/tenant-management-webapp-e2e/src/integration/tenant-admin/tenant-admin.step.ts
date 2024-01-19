@@ -525,7 +525,7 @@ Then('the user views the events matching the search filter of {string}', functio
   });
 });
 
-When('the user clicks Load more button', function () {
+When('the user clicks Load more button on event log page', function () {
   // count numbers of row in the table before clicking Load more...
   tenantAdminObj
     .eventTableBody()

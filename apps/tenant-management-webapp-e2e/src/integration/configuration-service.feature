@@ -46,7 +46,7 @@ Feature: Configuration-service
     When the user enters "autotest desc modified" in description in configuration definition modal
     ## Monaco editor doesn't work constantly with Cypress and modifying payload schema doesn't happen from time to time causing the test to fail.
     ## Commented the change of payload schema from the test for now.
-    # And the user enters "{{}\"test\": \"\"}" in payload schema in configuration definition modal
+    # And the user enters "{\"test\": \"\"}" in payload schema in configuration definition modal
     And the user clicks Save button in configuration definition modal
     # And the user clicks "eye" button for the configuration definition of "autotest-addEditDeleteConfig", "autotest desc modified" under "autotest"
     # Then the user views the payload schema containing "\"test\": \"\"" for "autotest-addEditDeleteConfig", "autotest desc modified" under "autotest"
@@ -91,6 +91,38 @@ Feature: Configuration-service
     # Then no critical or serious accessibility issues on "configuration revisions page"
     When the user selects "Import" tab for "Configuration"
     Then no critical or serious accessibility issues on "configuration import page"
-# CS-1833 pending for fix
-# When the user selects "Export" tab for "Configuration"
-# Then no critical or serious accessibility issues on "configuration export page"
+  # CS-1833 pending for fix
+  # When the user selects "Export" tab for "Configuration"
+  # Then no critical or serious accessibility issues on "configuration export page"
+
+  # TEST DATA: autotest:test configuration with some existing revisions
+  @TEST_CS-1871 @REQ_CS-1797 @TEST_CS-2231 @REQ_CS-1792 @TEST_2226 @REQ_CS-1791 @TEST_CS-1414 @REQ_CS-1790 @regression
+  Scenario: As a tenant admin, I can create, edit, view and set configuration revision
+    Given a tenant admin user is on configuration revisions page
+    # Create a new revision and view the new revision
+    When the user selects "autotest:test" from select definition dropdown
+    Then the user views a list of configuration revisions with a latest revision
+    When the user clicks add revision icon of the latest revision
+    Then the user views the revision creation confirmation modal for "autotest:test"
+    When the user clicks Create button in the revision creation confirmation modal
+    Then the user views a new revision is created with the current timestamp
+    And the user views the details of the latest revision and the second last revision are the same
+    # Edit the latest revision
+    When the user clicks "edit" icon for the latest revision
+    Then the user views Edit revision modal for "autotest:test"
+    When the user enters "{\"test\"}" in payload schema in configuration definition modal
+    Then the user views the error message of "Please provide a valid json configuration"
+    And the save button in Edit revision modal is disabled
+    When the user enters "{\"autotest-*\": {\"id\": \"autotest-*\", \"name\": \"autotest-*\", \"description\": \"test\"}}" in payload schema in configuration definition modal
+    And the user clicks Save button in Edit revision modal
+    And the user clicks "eye" icon for the latest revision
+    And the user views "{\"autotest-*\": {\"id\": \"autotest-*\", \"name\": \"autotest-*\", \"description\": \"test\"}}" for the latest revision
+    # Set a new active revision
+    When the user clicks power icon on the second last revision
+    Then the user views set active revision confirmation modal for the second last revision of "autotest:test"
+    When the user click Set Active button in set active revision confirmation modal
+    Then the user views the active label on the second last revision
+    And the user should not view power icon on the active revision
+    # Load more
+    When the user clicks Load more button on configuration service revisions page
+    Then the user views more than ten revision records

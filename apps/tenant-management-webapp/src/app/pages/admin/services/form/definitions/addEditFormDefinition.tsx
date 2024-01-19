@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormDefinition } from '@store/form/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
@@ -30,13 +30,13 @@ interface AddEditFormDefinitionProps {
   onSave: (definition: FormDefinition) => void;
 }
 
-export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps> = ({
+export const AddEditFormDefinition = ({
   initialValue,
   isEdit,
   onClose,
   open,
   onSave,
-}) => {
+}: AddEditFormDefinitionProps): JSX.Element => {
   const { url } = useRouteMatch();
   const history = useHistory();
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
@@ -57,9 +57,7 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
     if (spinner && Object.keys(definitions).length > 0 && !isEdit) {
       if (validators['duplicate'].check(definition.id)) {
         setSpinner(false);
-
         onClose();
-        history.push({ pathname: `${url}/edit/${definition.id}` });
       }
     }
   }, [definitions]);
@@ -123,6 +121,8 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
                 onSave(definition);
                 if (isEdit) {
                   onClose();
+                } else {
+                  history.push({ pathname: `${url}/edit/${definition.id}` });
                 }
               }
             }}
@@ -148,7 +148,7 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
                 onChange={(name, value) => {
                   const validations = {
                     name: value,
-                    duplicate: definition.name,
+                    duplicate: value,
                   };
                   validators.remove('name');
 

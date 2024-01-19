@@ -68,6 +68,7 @@ export class FormEntity implements Form {
     form: Omit<Form, 'definition' | 'applicant'>,
     public hash: string = null
   ) {
+    this.definition = definition;
     this.tenantId = definition.tenantId;
     this.id = form.id;
     this.formDraftUrl = form.formDraftUrl;
@@ -212,7 +213,7 @@ export class FormEntity implements Form {
   }
 
   async setToDraft(user: User): Promise<FormEntity> {
-    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin)) {
+    if (!isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, ...this.definition.assessorRoles])) {
       throw new UnauthorizedUserError('set to draft form', user);
     }
 
