@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { TopicItem, defaultComment } from '@store/comment/model';
+import { renderNoItem } from '@components/NoItem';
 
 import {
   HeaderFont,
@@ -91,7 +92,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
   return (
     <>
       <HeaderFont>
-        <label>Comments list</label>
+        <h3>Comments list</h3>
         <GoAButton size="compact" type="secondary" testId="add-comment" onClick={addNewComment}>
           Add Comment
         </GoAButton>
@@ -132,6 +133,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
             </CommentsList>
           );
         })}
+      {comments && !comments.length && renderNoItem('comments')}
       {next && (
         <LoadMoreCommentsWrapper>
           <GoAButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>

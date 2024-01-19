@@ -7,7 +7,7 @@ import App from './app';
 const mockStore = configureStore();
 
 describe('App', () => {
-  let store, userManager;
+  let store;
 
   beforeEach(() => {
     store = mockStore({
@@ -15,11 +15,6 @@ describe('App', () => {
       intake: {},
       start: {},
     });
-
-    userManager = {
-      signoutRedirect: jest.fn(),
-      signinRedirect: jest.fn(),
-    };
   });
 
   it('should render successfully', () => {

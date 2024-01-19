@@ -108,7 +108,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
             />
             {Object.keys(commentCoreTopicTypes).length > 0 && (
               <>
-                <h1>Core Types</h1>
+                <h3>Core types</h3>
                 <CommentCoreTopicTypesTable
                   topicTypes={commentCoreTopicTypes}
                   onDelete={(currentTemplate) => {
