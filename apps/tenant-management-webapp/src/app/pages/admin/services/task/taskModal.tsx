@@ -11,17 +11,11 @@ import {
   GoARadioItem,
   GoATextArea,
 } from '@abgov/react-components-new';
-import { useSelector } from 'react-redux';
+
 import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
-import {
-  badCharsCheck,
-  wordMaxLengthCheck,
-  isNotEmptyCheck,
-  duplicateNameCheck,
-  Validator,
-} from '@lib/validation/checkInput';
+import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, Validator } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
-import { RootState } from '@store/index';
+
 import { DescriptionItem, HelpText, ErrorMsg } from './styled-components';
 interface TaskModalProps {
   initialValue?: QueueTaskDefinition;
@@ -48,11 +42,8 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     setTask(initialValue);
   }, [initialValue]);
 
-  const tasks = useSelector((state: RootState) => {
-    return state?.task?.tasks;
-  });
   const descErrMessage = 'Description can not be over 180 characters';
-  const taskNames = tasks && Array.isArray(tasks) ? tasks.map((t) => t.name) : [];
+
   const title = isNew ? 'Add task' : 'Edit task';
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
