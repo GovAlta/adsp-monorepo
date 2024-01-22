@@ -67,23 +67,28 @@ import {
   CategorizationRendererTester,
   FormStepperControl,
   FileUploaderTester,
+  FileUploader,
   MultiLineTextControl,
   MultiLineTextControlTester,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 
-import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
+//import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
 import { createContext } from 'react';
 
 export interface enumerators {
-  getters: Map<string, () => string[]>;
+  getters: Map<string, () => any>;
+  functions: Map<string, () => (file: File) => void>;
 }
 
 const getters = new Map<string, () => string[]>();
+const functions = new Map<string, () => (file: File) => void>();
 getters.set('first-dropdown', () => ['default', 'values']);
 const defaultEnumerator: enumerators = {
   getters: getters,
+  functions: functions,
 };
 
 export const enumContext = createContext(defaultEnumerator);
@@ -91,16 +96,15 @@ export const enumContext = createContext(defaultEnumerator);
 
 export class Renderers {
   GoARenderers: JsonFormsRendererRegistryEntry[];
-  constructor(uploadTrigger?: (file: File) => void, downloadTrigger?: (file: File) => void, latestFile?: unknown) {
+  constructor() {
     this.GoARenderers = [
       ...this.GoABaseRenderers,
       { tester: CategorizationRendererTester, renderer: FormStepperControl },
-      {
-        tester: FileUploaderTester,
-        renderer: FileUploaderWrapper({ uploadTrigger, downloadTrigger, latestFile }),
-      },
+      { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
     ];
   }
+
+  // FileUploaderWrapper({ uploadTrigger, downloadTrigger, latestFile })
 
   GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
     // controls

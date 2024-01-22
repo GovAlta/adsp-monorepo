@@ -12,6 +12,7 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
+import { FileItem } from '@store/file/models';
 
 import {
   TextLoadingIndicator,
@@ -106,7 +107,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(DownloadFileService(file));
   };
 
-  const renderer = new Renderers(uploadFile, downloadFile, latestFile);
+  const renderer = new Renderers();
 
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
 
@@ -346,10 +347,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
-  const enumValues = new Map<string, () => string[]>();
-  enumValues.set('first-dropdown', () => ['alpha', 'beta', 'gamma', 'bing']);
+  const enumValues = new Map<string, () => FileItem>();
+  const enumFunctions = new Map<string, () => (file: File) => void>();
+  enumValues.set('last-file', () => latestFile);
+  enumFunctions.set('upload-file', () => uploadFile);
+  enumFunctions.set('download-file', () => downloadFile);
+  enumFunctions.set('first-ddd', () => () => ['a', 'b', 'c', 'd']);
   const myEnumerator: enumerators = {
     getters: enumValues,
+    functions: enumFunctions,
   };
 
   return (
