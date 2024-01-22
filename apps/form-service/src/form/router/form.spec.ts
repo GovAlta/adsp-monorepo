@@ -550,7 +550,6 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        directoryServiceMock,
         repositoryMock
       );
       expect(handler).toBeTruthy();
@@ -578,7 +577,6 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        directoryServiceMock,
         repositoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -609,7 +607,6 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        directoryServiceMock,
         repositoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -637,7 +634,6 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        directoryServiceMock,
         repositoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -680,7 +676,6 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        directoryServiceMock,
         repositoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -708,7 +703,6 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        directoryServiceMock,
         repositoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);

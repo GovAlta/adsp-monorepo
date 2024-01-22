@@ -28,6 +28,7 @@ import {
   FormDisposition,
   FormSubmissionCriteria,
   FormSubmissionTenant,
+  QueueTaskToProcess,
 } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
@@ -422,7 +423,6 @@ export function formOperation(
   eventService: EventService,
   notificationService: NotificationService,
   queueTaskService: QueueTaskService,
-  directory: ServiceDirectory,
   submissionRepository: FormSubmissionRepository
 ): RequestHandler {
   return async (req, res, next) => {
@@ -449,26 +449,13 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          const directoryServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:task-service`);
-          const taskServiceUrl = `${directoryServiceUrl}task/v1/`;
-
-          formResult = await form.submit(user, queueTaskService, submissionRepository);
+          formResult = await form.submit(user, submissionRepository);
           result = formResult as FormEntity;
           event = formSubmitted(user, result);
           mappedForm = mapFormForFormSubmitted(apiId, result);
-          if (mappedForm) {
-            const { queueName, queueNameSpace } = form.definition.queueTaskToProcess;
 
-            const queueTaskDefinition: QueueTaskDefinition = {
-              id: '',
-              name: form.id,
-              namespace: queueNameSpace,
-              createdOn: '',
-              priority: 'Normal',
-              description: `Task for form submission ID: ${formResult.submissionId}`,
-              recordId: `${queueNameSpace}:${queueName}`,
-            };
-            queueTaskService.createTaskForQueueTask(taskServiceUrl, queueTaskDefinition, result.tenantId, form);
+          if (mappedForm) {
+            queueTaskService.createTaskForQueueTask(createQueueTaskDefinition(formResult), result.tenantId, form);
           }
 
           break;
@@ -646,7 +633,7 @@ export function createFormRouter({
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService, queueTaskService, directory, submissionRepository)
+    formOperation(apiId, eventService, notificationService, queueTaskService, submissionRepository)
   );
   router.delete(
     '/forms/:formId',
@@ -678,3 +665,16 @@ export function createFormRouter({
 
   return router;
 }
+
+const createQueueTaskDefinition = (form: Form) => {
+  const { queueNameSpace, queueName } = form.definition.queueTaskToProcess;
+  return {
+    id: '',
+    name: form.id,
+    namespace: queueNameSpace,
+    createdOn: '',
+    priority: 'Normal',
+    description: `Task for form submission ID: ${form.submissionId}`,
+    recordId: `${queueNameSpace}:${queueName}`,
+  } as QueueTaskDefinition;
+};

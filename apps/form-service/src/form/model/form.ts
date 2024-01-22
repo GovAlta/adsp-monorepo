@@ -227,17 +227,9 @@ export class FormEntity implements Form {
     return await this.repository.save(this);
   }
 
-  async createTaskForTaskQueue(form: Form): Promise<boolean> {
-    if (!form) throw new InvalidOperationError(`Cannot create task for form ID: ${form.id}`);
-
-    const queueTaskToProcess = this.definition.queueTaskToProcess;
-
-    return true;
-  }
-
   async submit(
     user: User,
-    queueTaskService: QueueTaskService,
+    // queueTaskService: QueueTaskService,
     submissionRepository: FormSubmissionRepository
   ): Promise<Form> {
     if (this.status !== FormStatus.Draft) {
@@ -266,12 +258,6 @@ export class FormEntity implements Form {
     const savedFormEntity = await this.repository.save(this);
     const formData: Form = { ...savedFormEntity, submissionId: id };
 
-    if (formData) {
-      const { queueName, queueNameSpace } = this.definition.queueTaskToProcess;
-      if (queueName !== '' && queueNameSpace !== '') {
-        //queueTaskService.createTaskForQueueTask()
-      }
-    }
     return formData;
   }
 

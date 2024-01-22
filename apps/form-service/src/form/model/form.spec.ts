@@ -1,7 +1,7 @@
 import { adspId, Channel, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { FormServiceRoles } from '../roles';
-import { FormStatus } from '../types';
+import { FormStatus, QueueTaskToProcess } from '../types';
 import { FormDefinitionEntity } from './definition';
 import { FormEntity } from './form';
 
@@ -22,6 +22,7 @@ describe('FormEntity', () => {
     assessorRoles: ['test-assessor'],
     clerkRoles: ['test-clerk'],
     dataSchema: null,
+    queueTaskToProcess: { queueNameSpace: 'test-queue-namespace', queueName: 'test-queue' } as QueueTaskToProcess,
   });
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;

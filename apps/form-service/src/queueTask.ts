@@ -1,25 +1,29 @@
 import axios from 'axios';
-import { Form, QueueTaskToProcess } from './form/types';
+import { Form } from './form/types';
 import { QueueTaskDefinition } from './form/model/queueTask';
-import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TokenProvider, adspId } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 
 export interface QueueTaskService {
-  createTaskForQueueTask(url: string, body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<any>;
+  createTaskForQueueTask(body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<any>;
 }
 
 const LOG_CONTEXT = { context: 'QueueTaskService' };
 
 export class QueueTaskServiceImpl implements QueueTaskService {
-  constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) {}
+  directory: ServiceDirectory;
 
-  async createTaskForQueueTask(url: string, body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<any> {
+  constructor(private logger: Logger, public serviceDirectory: ServiceDirectory, private tokenProvider: TokenProvider) {
+    this.directory = serviceDirectory;
+  }
+
+  async createTaskForQueueTask(body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<any> {
     try {
+      const directoryServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:task-service`);
+
       const { queueNameSpace, queueName } = form.definition.queueTaskToProcess;
       const token = await this.tokenProvider.getAccessToken();
-
-      const taskServiceUrl = `${url}queues/${queueNameSpace}/${queueName}/tasks?tenantId=${tenantId.toString()}`;
-      this.logger.debug(`URL =${taskServiceUrl}, Token = ${token}}`);
+      const taskServiceUrl = `${directoryServiceUrl}task/v1/queues/${queueNameSpace}/${queueName}/tasks?tenantId=${tenantId.toString()}`;
 
       const res = await axios.post(taskServiceUrl, body, { headers: { Authorization: `Bearer ${token}` } });
       return res.data;

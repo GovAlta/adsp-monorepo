@@ -27,6 +27,7 @@ import {
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
 import { createFileService } from './file';
+import { createQueueTaskService } from './queueTask';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -125,6 +126,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const notificationService = createNotificationService(logger, directory, tokenProvider);
   const fileService = createFileService(logger, directory, tokenProvider);
+  const queueTaskService = createQueueTaskService(logger, directory, tokenProvider);
   const repositories = await createRepositories({
     ...environment,
     serviceId,
@@ -142,6 +144,7 @@ const initializeApp = async (): Promise<express.Application> => {
     eventService,
     notificationService,
     fileService,
+    queueTaskService,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
