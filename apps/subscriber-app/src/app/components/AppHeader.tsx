@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { GoAHeader } from '@abgov/react-components';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
 import { RootState } from '@store/index';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
@@ -21,7 +20,6 @@ interface HeaderProps {
 const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
   const dispatch = useDispatch();
   const [menuState, setMenuState] = useState<MenuState>({ state: 'closed' });
-
   function toggleMenu() {
     setMenuState({ state: menuState.state === 'closed' ? 'open' : 'closed' });
   }
@@ -30,6 +28,10 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
     tenant: state.tenant,
     authenticated: state.session.authenticated,
   }));
+
+  const handleLogout = () => {
+    dispatch(TenantLogout());
+  };
 
   return (
     <Actions>
@@ -43,9 +45,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
             {(authenticated === true || props.admin) && (
               <UserIconBox>
                 <UserIcon />
-                <Link to={''} onClick={() => dispatch(TenantLogout())}>
-                  Sign out
-                </Link>
+                <a onClick={handleLogout}>Sign out</a>
               </UserIconBox>
             )}
             {!authenticated && tenant?.realm && <a href={`/subscriptions/${tenant?.realm}`}>Login</a>}
@@ -58,9 +58,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
           {(authenticated === true || props.admin) && (
             <UserIconBox>
               <UserIcon />
-              <Link to={''} onClick={() => dispatch(TenantLogout())}>
-                Sign out
-              </Link>
+              <a onClick={handleLogout}>Sign out</a>
             </UserIconBox>
           )}
 
