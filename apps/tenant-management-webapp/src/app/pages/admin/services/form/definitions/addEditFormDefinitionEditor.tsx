@@ -55,9 +55,8 @@ import { DeleteModal } from '@components/DeleteModal';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 
 import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
-import { InfoCircleWithInlineHelpWithLabel } from './infoCircleWithInlineHelpWithLabel';
 
-import { RowFlex, TaskQueuesDropdown } from './style-components';
+import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
 
 import { UploadFileService, DownloadFileService } from '@store/file/actions';
@@ -515,7 +514,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
                   <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                     <>
-                      <InfoCircleWithInlineHelpWithLabel
+                      <InfoCircleWithInlineHelp
                         label="Task queue to process"
                         text={
                           definition.submissionRecords
@@ -525,7 +524,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       />
                     </>
 
-                    <TaskQueuesDropdown>
+                    <QueueTaskDropdown>
                       {Object.keys(queueTasks).length > 0 && (
                         <GoADropdown
                           data-test-id="formsubmission-select-queue-task-dropdown"
@@ -565,7 +564,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           ))}
                         </GoADropdown>
                       )}
-                    </TaskQueuesDropdown>
+                    </QueueTaskDropdown>
                     <RowFlex>
                       <h3>Disposition states</h3>
                       <div>

@@ -5,13 +5,7 @@ import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk
 import { Logger } from 'winston';
 
 export interface QueueTaskService {
-  createTaskForQueueTask(
-    url: string,
-    body: QueueTaskDefinition,
-    tenantId: AdspId,
-    form: Form,
-    QueueTaskToProcess: QueueTaskToProcess
-  ): Promise<any>;
+  createTaskForQueueTask(url: string, body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<any>;
 }
 
 const LOG_CONTEXT = { context: 'QueueTaskService' };
@@ -19,18 +13,14 @@ const LOG_CONTEXT = { context: 'QueueTaskService' };
 export class QueueTaskServiceImpl implements QueueTaskService {
   constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) {}
 
-  async createTaskForQueueTask(
-    url: string,
-    body: QueueTaskDefinition,
-    tenantId: AdspId,
-    form: Form,
-    QueueTaskToProcess: QueueTaskToProcess
-  ): Promise<any> {
-    this.logger.debug(`createTaskForQueueTask got called.... }`);
+  async createTaskForQueueTask(url: string, body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<any> {
     try {
+      const { queueNameSpace, queueName } = form.definition.queueTaskToProcess;
       const token = await this.tokenProvider.getAccessToken();
 
-      const taskServiceUrl = `${url}/${QueueTaskToProcess.queueNameSpace}/${QueueTaskToProcess.queueName}/tasks`;
+      const taskServiceUrl = `${url}queues/${queueNameSpace}/${queueName}/tasks?tenantId=${tenantId.toString()}`;
+      this.logger.debug(`URL =${taskServiceUrl}, Token = ${token}}`);
+
       const res = await axios.post(taskServiceUrl, body, { headers: { Authorization: `Bearer ${token}` } });
       return res.data;
     } catch (err) {

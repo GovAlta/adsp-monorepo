@@ -43,6 +43,7 @@ import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueTaskDefinition } from '../model/queueTask';
 import { QueueTaskService } from '../../queueTask';
+import { defaultMaxListeners } from 'events';
 
 export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
   return {
@@ -447,35 +448,26 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          const directoryServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:form-service`);
+          const directoryServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:task-service`);
           const taskServiceUrl = `${directoryServiceUrl}task/v1/`;
-          console.log(`TaskServiceUrl = ${taskServiceUrl}`);
 
           formResult = await form.submit(user, queueTaskService, submissionRepository);
           result = formResult as FormEntity;
           event = formSubmitted(user, result);
           mappedForm = mapFormForFormSubmitted(apiId, result);
           if (mappedForm) {
-            // queueTaskService.createTaskForQueueTask('', null, apiId, mappedForm, null);
-            // const token = await this.tokenProvider.getAccessToken();
             const { queueName, queueNameSpace } = form.definition.queueTaskToProcess;
 
-            console.log(`JSON = ${queueNameSpace}:${queueName} `);
-            // const queueTaskDefinition: QueueTaskDefinition = {
-            //   id: '',
-            //   name: mappedForm.id,
-            //   namespace: queueNameSpace,
-            //   createdOn: '',
-            //   priority: 'Normal',
-            //   description: `Task for form submission ID: ${formResult.submissionId}`,
-            //   recordId: `${queueNameSpace}:${queueName}`,
-            // };
-            // createTaskForQueueApi(
-            //   token,
-            //   taskServiceUrl,
-            //   {} as QueueTaskDefinition,
-            //   form.definition.taskQueuesToProcess
-            // );
+            const queueTaskDefinition: QueueTaskDefinition = {
+              id: '',
+              name: form.id,
+              namespace: queueNameSpace,
+              createdOn: '',
+              priority: 'Normal',
+              description: `Task for form submission ID: ${formResult.submissionId}`,
+              recordId: `${queueNameSpace}:${queueName}`,
+            };
+            queueTaskService.createTaskForQueueTask(taskServiceUrl, queueTaskDefinition, result.tenantId, form);
           }
 
           break;

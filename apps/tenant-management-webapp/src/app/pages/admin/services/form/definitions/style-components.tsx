@@ -30,7 +30,8 @@ export const ActionSpace = styled.div`
   width: 56px;
 `;
 
-export const TaskQueuesDropdown = styled.div`
+export const QueueTaskDropdown = styled.div`
   width: 50%;
+  margin-top: 0.25rem;
   margin-bottom: 3rem;
 `;
