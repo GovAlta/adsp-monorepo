@@ -8,6 +8,7 @@ interface TopicTableItemProps {
   id: string;
   topic: TopicItem;
   selectedType: string;
+  showActions: boolean;
   showDetails: boolean;
   onDeleteTopic?: (Topic) => void;
   onToggleDetails: () => void;
@@ -17,6 +18,7 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
   id,
   topic,
   selectedType,
+  showActions,
   showDetails,
   onDeleteTopic,
   onToggleDetails,
@@ -34,12 +36,14 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
               onClick={onToggleDetails}
               testId="toggle-details-visibility"
             />
-            <GoAContextMenuIcon
-              testId="topic-definition-edit"
-              title="Delete"
-              type="trash"
-              onClick={() => onDeleteTopic(topic)}
-            />
+            {showActions && (
+              <GoAContextMenuIcon
+                testId="topic-definition-edit"
+                title="Delete"
+                type="trash"
+                onClick={() => onDeleteTopic(topic)}
+              />
+            )}
           </IconDiv>
         </td>
       </tr>

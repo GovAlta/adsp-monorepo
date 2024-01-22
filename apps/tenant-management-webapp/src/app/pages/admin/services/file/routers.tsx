@@ -2,7 +2,7 @@ import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { File } from './file';
 import { useRouteMatch } from 'react-router';
-import { FileTypeDefinitionEditor } from './fileTypeDefinitionEditor';
+import { FileTypeDefinitionEditor } from './fileTypes/fileTypeDefinitionEditor';
 
 export const FileRouter = () => {
   const { url } = useRouteMatch();

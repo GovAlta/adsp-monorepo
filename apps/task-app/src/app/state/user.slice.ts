@@ -1,9 +1,11 @@
 import { createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
 import axios from 'axios';
 import keycloak, { KeycloakInstance } from 'keycloak-js';
+import { v4 as uuidv4 } from 'uuid';
 import { ConfigState } from './config.slice';
 import { AppState } from './store';
 import { isAxiosErrorPayload } from './util';
+import { FeedbackMessage } from './types';
 
 export const USER_FEATURE_KEY = 'user';
 
@@ -46,15 +48,19 @@ async function initializeKeycloakClient(realm: string, config: ConfigState) {
 export async function getAccessToken(): Promise<string> {
   let token = null;
   if (client) {
-    await client.updateToken(60);
-    token = client.token;
+    try {
+      await client.updateToken(60);
+      token = client.token;
+    } catch (err) {
+      // If we're unable to update token, return no value and the request will fail on 401.
+    }
   }
   return token;
 }
 
 export const initializeTenant = createAsyncThunk(
   'user/initialize-tenant',
-  async (name: string, { getState, dispatch }) => {
+  async (name: string, { getState, dispatch, rejectWithValue }) => {
     const { config } = getState() as AppState;
     const url = config.directory['urn:ads:platform:tenant-service'];
     if (!url) {
@@ -68,11 +74,16 @@ export const initializeTenant = createAsyncThunk(
     });
 
     const tenant = data?.results?.[0];
-    if (tenant) {
+    if (!tenant) {
+      return rejectWithValue({
+        id: uuidv4(),
+        level: 'error',
+        message: `Tenant "${name}" not found.`,
+      } as FeedbackMessage);
+    } else {
       dispatch(initializeUser(tenant));
+      return tenant;
     }
-
-    return tenant;
   }
 );
 

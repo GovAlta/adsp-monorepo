@@ -1,14 +1,28 @@
 import { GoACallout, GoADetails, GoAButtonGroup, GoAButton } from '@abgov/react-components-new';
 import { FunctionComponent } from 'react';
-import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { startTask, cancelTask, completeTask, AppDispatch } from '../../state';
 import { TaskDetailsProps } from './types';
 
-const Placeholder: FunctionComponent<TaskDetailsProps> = ({ className, user, task, isExecuting, onClose }) => {
-  const dispatch = useDispatch<AppDispatch>();
+const PlaceholderDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  > *:first-child {
+    flex-grow: 1;
+  }
+`;
+
+const Placeholder: FunctionComponent<TaskDetailsProps> = ({
+  user,
+  task,
+  isExecuting,
+  onClose,
+  onStart,
+  onComplete,
+  onCancel,
+}) => {
   return (
-    <div className={className}>
+    <PlaceholderDiv>
       <div>
         <GoACallout type="information" heading="Task detail view">
           This is a placeholder for the task detail view. Replace with your own custom view for the specific type of
@@ -29,37 +43,23 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({ className, user, tas
           Close
         </GoAButton>
         {task?.status === 'Pending' && (
-          <GoAButton disabled={!user.isWorker || isExecuting} onClick={() => dispatch(startTask({ taskId: task?.id }))}>
+          <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
             Start task
           </GoAButton>
         )}
         {task?.status === 'In Progress' && (
           <>
-            <GoAButton
-              type="secondary"
-              disabled={!user.isWorker || isExecuting}
-              onClick={() => dispatch(cancelTask({ taskId: task?.id, reason: null }))}
-            >
+            <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>
               Cancel task
             </GoAButton>
-            <GoAButton
-              disabled={!user.isWorker || isExecuting}
-              onClick={() => dispatch(completeTask({ taskId: task?.id }))}
-            >
+            <GoAButton disabled={!user.isWorker || isExecuting} onClick={onComplete}>
               Complete task
             </GoAButton>
           </>
         )}
       </GoAButtonGroup>
-    </div>
+    </PlaceholderDiv>
   );
 };
 
-export default styled(Placeholder)`
-  display: flex;
-  flex-direction: column;
-
-  > *:first-child {
-    flex-grow: 1;
-  }
-`;
+export default Placeholder;

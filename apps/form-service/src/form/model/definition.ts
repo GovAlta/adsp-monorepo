@@ -17,6 +17,7 @@ export class FormDefinitionEntity implements FormDefinition {
   assessorRoles: string[];
   clerkRoles: string[];
   dispositionStates: Array<Disposition>;
+  submissionRecords: boolean;
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
@@ -30,6 +31,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.assessorRoles = definition.assessorRoles || [];
     this.clerkRoles = definition.clerkRoles || [];
     this.dispositionStates = definition.dispositionStates || [];
+    this.submissionRecords = definition.submissionRecords || false;
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
     this.dataSchema = definition.dataSchema || {};

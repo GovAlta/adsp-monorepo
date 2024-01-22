@@ -17,6 +17,7 @@ describe('FormEntity', () => {
     formDraftUrlTemplate: 'https://my-form/{{ id }}',
     description: null,
     anonymousApply: true,
+    submissionRecords: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     clerkRoles: ['test-clerk'],
@@ -37,6 +38,7 @@ describe('FormEntity', () => {
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
+    getByFormIdAndSubmissionId: jest.fn(),
   };
 
   const notificationMock = {
@@ -517,10 +519,10 @@ describe('FormEntity', () => {
 
     it('can submit form', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-      const submitted = await entity.submit(
+      const submitted = (await entity.submit(
         { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
         repositoryMock
-      );
+      )) as FormEntity;
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
       expect(submitted.hash).toBeTruthy();
@@ -536,10 +538,10 @@ describe('FormEntity', () => {
 
     it('can submit form by clerk', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-      const submitted = await entity.submit(
+      const submitted = (await entity.submit(
         { tenantId, id: 'tester-2', roles: ['test-clerk'] } as User,
         repositoryMock
-      );
+      )) as FormEntity;
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
       expect(submitted.hash).toBeTruthy();

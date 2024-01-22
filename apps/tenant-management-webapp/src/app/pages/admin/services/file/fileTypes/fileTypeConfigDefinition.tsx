@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileTypeItem } from '@store/file/models';
-import { ConfigTombStoneWrapper } from './styled-components';
+import { ConfigTombStoneWrapper } from '../styled-components';
 
 interface FileTypeConfigFormProps {
   fileType: FileTypeItem;

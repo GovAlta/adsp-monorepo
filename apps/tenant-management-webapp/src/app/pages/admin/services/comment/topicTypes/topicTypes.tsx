@@ -7,6 +7,7 @@ import { getCommentTopicTypes, updateCommentTopicType, deleteCommentTopicType } 
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
 import { CommentTopicTypesTable } from './definitionsList';
+import { CommentCoreTopicTypesTable } from './commentCoreTopicTypes';
 import { PageIndicator } from '@components/Indicator';
 import { defaultCommentTopicType } from '@store/comment/model';
 
@@ -22,6 +23,16 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
   const commentTopicTypes = useSelector((state: RootState) => {
     return Object.entries(state?.comment?.topicTypes)
+      .sort((template1, template2) => {
+        return template1[1].name.localeCompare(template2[1].name);
+      })
+      .reduce((tempObj, [commentDefinitionId, commentDefinitionData]) => {
+        tempObj[commentDefinitionId] = commentDefinitionData;
+        return tempObj;
+      }, {});
+  });
+  const commentCoreTopicTypes = useSelector((state: RootState) => {
+    return Object.entries(state?.comment?.core)
       .sort((template1, template2) => {
         return template1[1].name.localeCompare(template2[1].name);
       })
@@ -87,13 +98,27 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
         {!indicator.show && Object.keys(commentTopicTypes).length === 0 && renderNoItem('topic types')}
         {!indicator.show && Object.keys(commentTopicTypes).length > 0 && (
-          <CommentTopicTypesTable
-            topicTypes={commentTopicTypes}
-            onDelete={(currentTemplate) => {
-              setShowDeleteConfirmation(true);
-              setCurrentDefinition(currentTemplate);
-            }}
-          />
+          <>
+            <CommentTopicTypesTable
+              topicTypes={commentTopicTypes}
+              onDelete={(currentTemplate) => {
+                setShowDeleteConfirmation(true);
+                setCurrentDefinition(currentTemplate);
+              }}
+            />
+            {Object.keys(commentCoreTopicTypes).length > 0 && (
+              <>
+                <h3>Core types</h3>
+                <CommentCoreTopicTypesTable
+                  topicTypes={commentCoreTopicTypes}
+                  onDelete={(currentTemplate) => {
+                    setShowDeleteConfirmation(true);
+                    setCurrentDefinition(currentTemplate);
+                  }}
+                />
+              </>
+            )}
+          </>
         )}
 
         <DeleteModal

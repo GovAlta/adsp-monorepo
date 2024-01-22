@@ -149,7 +149,7 @@ export function* fetchFile(action: FetchFileAction): SagaIterator {
 
     const file = yield call([api, api.fetchFile], action.fileId);
 
-    yield put(FetchFileSuccessService({ data: file }));
+    yield put(FetchFileSuccessService(file));
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
     yield put(

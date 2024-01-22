@@ -22,6 +22,7 @@ describe('form router', () => {
     anonymousApply: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
+    submissionRecords: false,
     clerkRoles: [],
     dataSchema: null,
   });
@@ -40,6 +41,7 @@ describe('form router', () => {
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
+    getByFormIdAndSubmissionId: jest.fn(),
   };
 
   const eventServiceMock = {

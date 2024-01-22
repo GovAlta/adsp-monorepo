@@ -1,6 +1,6 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInput } from '@abgov/react-components-new';
+import { GoAInput, GoAInputDate, GoAInputTime, GoAInputDateTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -17,7 +17,9 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
       disabled={!enabled}
       value={data}
+      width={'100%'}
       placeholder={placeholder}
+      // maxLength={appliedUiSchemaOptions?.maxLength}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name: string, value: string) => handleChange(path, value)}

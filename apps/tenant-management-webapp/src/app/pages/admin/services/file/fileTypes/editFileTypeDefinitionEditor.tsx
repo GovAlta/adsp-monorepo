@@ -19,9 +19,9 @@ import {
   RetentionToolTip,
   ScrollPane,
   TextLoadingIndicator,
-} from './styled-components';
+} from '../styled-components';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
-import { useWindowDimensions } from '@lib/useWindowDimensions';
+
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACallout, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
@@ -36,16 +36,17 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { ActionState } from '@store/session/models';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
-import { CreateFileTypeService, UpdateFileTypeService } from '@store/file/actions';
+import { UpdateFileTypeService } from '@store/file/actions';
 import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
 import { PageLoader } from '@core-services/app-common';
+import { areObjectsEqual } from '@lib/objectUtil';
 
-export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
+export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
-  const isEdit = !!id;
+
   const fileTypeNames = useSelector(selectFileTyeNames);
   const [spinner, setSpinner] = useState<boolean>(false);
   const [isSecurityClassificationCalloutOpen, setIsSecurityClassificationCalloutIsOpen] = useState<boolean>(false);
@@ -56,8 +57,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   }));
 
-  const { height } = useWindowDimensions();
-
   const selectServiceKeyCloakRoles = createSelector(
     (state: RootState) => state.serviceRoles,
     (serviceRoles) => {
@@ -66,12 +65,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   );
 
   const keyCloakClientRoles = useSelector(selectServiceKeyCloakRoles);
-
-  //This is to add padding under the input text controls to space them vertically
-  //out between the text controls and the back and cancel buttons.
-  const heightCover = {
-    height: height - (!isSecurityClassificationCalloutOpen ? 800 : 875),
-  };
 
   const close = () => {
     history.push({
@@ -144,19 +137,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     .add('duplicated', 'name', duplicateNameCheck(fileTypeNames, 'File type'))
     .build();
 
-  const isFileTypeUpdated = (prev: FileTypeItem, next: FileTypeItem): boolean => {
-    const isUpdated =
-      prev?.name !== next?.name ||
-      prev?.id !== next?.id ||
-      prev?.anonymousRead !== next?.anonymousRead ||
-      prev?.securityClassification !== next?.securityClassification ||
-      prev?.readRoles !== next?.readRoles ||
-      prev?.updateRoles !== next?.updateRoles ||
-      prev?.rules?.retention !== next?.rules?.retention ||
-      prev?.rules?.retention?.active !== next?.rules?.retention?.active;
-    return isUpdated;
-  };
-
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
   let clientElements = null;
 
@@ -196,7 +176,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
             }
           }}
           service="FileType"
-          nameColumnWidth={80}
+          nameColumnWidth={40}
           checkedRoles={[
             { title: 'read', selectedRoles: fileType?.readRoles },
             { title: 'modify', selectedRoles: fileType?.updateRoles },
@@ -215,137 +195,132 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
           <NameDescriptionDataSchema>
             <FileTypeEditorTitle>File type</FileTypeEditorTitle>
             <hr className="hr-resize" />
-
-            {isEdit && <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />}
-            <MakePublicPadding>
-              <DropDownZIndex>
-                <GoAFormItem label="Select a security classification">
-                  <GoADropdown
-                    name="securityClassifications"
-                    width="25rem"
-                    value={fileType?.securityClassification}
-                    onChange={(name: string, value: SecurityClassification) => {
-                      setFileType({
-                        ...fileType,
-                        securityClassification: value,
-                      });
+            <EditorPadding>
+              <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />
+              <MakePublicPadding>
+                <DropDownZIndex>
+                  <GoAFormItem label="Select a security classification">
+                    <GoADropdown
+                      name="securityClassifications"
+                      width="25rem"
+                      value={fileType?.securityClassification}
+                      onChange={(name: string, value: SecurityClassification) => {
+                        setFileType({
+                          ...fileType,
+                          securityClassification: value,
+                        });
+                        if (
+                          (fileType?.securityClassification !== undefined || value !== undefined) &&
+                          fileType?.securityClassification !== '' &&
+                          value !== SecurityClassification.Public &&
+                          fileType?.anonymousRead
+                        ) {
+                          setIsSecurityClassificationCalloutIsOpen(true);
+                        } else {
+                          setIsSecurityClassificationCalloutIsOpen(false);
+                        }
+                      }}
+                    >
+                      <GoADropdownItem value={SecurityClassification.Public} label="Public" />
+                      <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                      <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                      <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
+                    </GoADropdown>
+                  </GoAFormItem>
+                  <GoACheckbox
+                    checked={fileType?.anonymousRead}
+                    name="file-type-anonymousRead-checkbox"
+                    testId="file-type-anonymousRead-checkbox"
+                    ariaLabel={`file-type-anonymousRead-checkbox`}
+                    onChange={() => {
+                      //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
                       if (
-                        (fileType?.securityClassification !== undefined || value !== undefined) &&
+                        fileType?.securityClassification !== undefined &&
                         fileType?.securityClassification !== '' &&
-                        value !== SecurityClassification.Public &&
-                        fileType?.anonymousRead
+                        fileType?.securityClassification !== SecurityClassification.Public &&
+                        !fileType?.anonymousRead
                       ) {
                         setIsSecurityClassificationCalloutIsOpen(true);
                       } else {
                         setIsSecurityClassificationCalloutIsOpen(false);
                       }
+                      setFileType({
+                        ...fileType,
+                        anonymousRead: !fileType.anonymousRead,
+                      });
                     }}
-                  >
-                    <GoADropdownItem value={SecurityClassification.Public} label="Public" />
-                    <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
-                    <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
-                    <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
-                  </GoADropdown>
-                </GoAFormItem>
-                <GoACheckbox
-                  checked={fileType?.anonymousRead}
-                  name="file-type-anonymousRead-checkbox"
-                  testId="file-type-anonymousRead-checkbox"
-                  ariaLabel={`file-type-anonymousRead-checkbox`}
-                  onChange={() => {
-                    //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
-                    if (
-                      fileType?.securityClassification !== undefined &&
-                      fileType?.securityClassification !== '' &&
-                      fileType?.securityClassification !== SecurityClassification.Public &&
-                      !fileType?.anonymousRead
-                    ) {
-                      setIsSecurityClassificationCalloutIsOpen(true);
-                    } else {
-                      setIsSecurityClassificationCalloutIsOpen(false);
-                    }
-                    setFileType({
-                      ...fileType,
-                      anonymousRead: !fileType.anonymousRead,
-                    });
-                  }}
-                  text={'Make public (read only)'}
-                />
-              </DropDownZIndex>
-              {isSecurityClassificationCalloutOpen && (
-                <FileTypeEditorWarningCalloutWrapper>
-                  <GoACallout type="important" heading="">
-                    The protected file is publicly accessible.
-                  </GoACallout>
-                </FileTypeEditorWarningCalloutWrapper>
-              )}
-            </MakePublicPadding>
+                    text={'Make public (read only)'}
+                  />
+                </DropDownZIndex>
+                {isSecurityClassificationCalloutOpen && (
+                  <FileTypeEditorWarningCalloutWrapper>
+                    <GoACallout type="important" heading="">
+                      The protected file is publicly accessible.
+                    </GoACallout>
+                  </FileTypeEditorWarningCalloutWrapper>
+                )}
+              </MakePublicPadding>
 
-            <GoAFormItem label="">
-              <RetentionPolicyLabel>
-                Retention policy
-                <InfoCircleWrapper>
-                  <GoAPopover testId={'file-type-retention-tooltip'} target={<InfoCircle />} maxWidth="260px">
-                    <RetentionToolTip>
-                      The untouched files within the file type will be deleted after the retention period provided.
-                    </RetentionToolTip>
-                  </GoAPopover>
-                </InfoCircleWrapper>
-              </RetentionPolicyLabel>
-              <RetentionPolicyWrapper>
-                <GoACheckbox
-                  name="retentionActive"
-                  key="retention-period-active-checkbox"
-                  checked={fileType?.rules?.retention?.active === true}
-                  onChange={(name, checked) => {
+              <GoAFormItem label="">
+                <RetentionPolicyLabel>
+                  Retention policy
+                  <InfoCircleWrapper>
+                    <GoAPopover testId={'file-type-retention-tooltip'} target={<InfoCircle />} maxWidth="260px">
+                      <RetentionToolTip>
+                        The untouched files within the file type will be deleted after the retention period provided.
+                      </RetentionToolTip>
+                    </GoAPopover>
+                  </InfoCircleWrapper>
+                </RetentionPolicyLabel>
+                <RetentionPolicyWrapper>
+                  <GoACheckbox
+                    name="retentionActive"
+                    key="retention-period-active-checkbox"
+                    checked={fileType?.rules?.retention?.active === true}
+                    onChange={(name, checked) => {
+                      setFileType({
+                        ...fileType,
+                        rules: {
+                          ...fileType?.rules,
+                          retention: {
+                            ...fileType?.rules?.retention,
+                            active: checked,
+                          },
+                        },
+                      });
+                    }}
+                    text={'Active retention policy'}
+                  />
+                  <RetentionPeriodText>Enter retention period</RetentionPeriodText>
+                </RetentionPolicyWrapper>
+              </GoAFormItem>
+              <GoAInput
+                onChange={(name, day) => {
+                  if (parseInt(day) > 0) {
                     setFileType({
                       ...fileType,
                       rules: {
                         ...fileType?.rules,
                         retention: {
                           ...fileType?.rules?.retention,
-                          active: checked,
+                          deleteInDays: parseInt(day),
+                          active: fileType?.rules?.retention?.active || false,
+                          createdAt: fileType?.rules?.retention?.createdAt || new Date().toISOString(),
                         },
                       },
                     });
-                  }}
-                  text={'Active retention policy'}
-                />
-                <RetentionPeriodText>Enter retention period</RetentionPeriodText>
-              </RetentionPolicyWrapper>
-            </GoAFormItem>
-            <GoAInput
-              onChange={(name, day) => {
-                if (parseInt(day) > 0) {
-                  setFileType({
-                    ...fileType,
-                    rules: {
-                      ...fileType?.rules,
-                      retention: {
-                        ...fileType?.rules?.retention,
-                        deleteInDays: parseInt(day),
-                        active: fileType?.rules?.retention?.active || false,
-                        createdAt: fileType?.rules?.retention?.createdAt || new Date().toISOString(),
-                      },
-                    },
-                  });
-                }
-              }}
-              testId={'delete-in-days-input'}
-              name="delete-in-days"
-              value={fileType?.rules?.retention?.deleteInDays?.toString()}
-              type="number"
-              disabled={fileType?.rules?.retention?.active !== true}
-              aria-label="goa-input-delete-in-days"
-              leadingContent="Days"
-              width="265px"
-            />
-
-            <GoAFormItem label="">
-              <EditorPadding>
-                <div style={heightCover}></div>
-              </EditorPadding>
-            </GoAFormItem>
+                  }
+                }}
+                testId={'delete-in-days-input'}
+                name="delete-in-days"
+                value={fileType?.rules?.retention?.deleteInDays?.toString()}
+                type="number"
+                disabled={fileType?.rules?.retention?.active !== true}
+                aria-label="goa-input-delete-in-days"
+                leadingContent="Days"
+                width="265px"
+              />
+            </EditorPadding>
 
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
@@ -353,20 +328,11 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                 <GoAButton
                   type="primary"
                   testId="form-save"
-                  disabled={!isFileTypeUpdated(initialFileType, fileType) || !fileType?.name || validators.haveErrors()}
+                  disabled={areObjectsEqual(initialFileType, fileType) || validators.haveErrors()}
                   onClick={() => {
                     if (indicator.show === true) {
                       setSpinner(true);
                     } else {
-                      if (!isEdit) {
-                        const validations = {
-                          name: fileType.name,
-                        };
-                        if (!validators.checkAll(validations)) {
-                          return;
-                        }
-                      }
-
                       setSpinner(true);
                       let elementNames = [];
                       elements.forEach((e) => {
@@ -385,18 +351,15 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       );
 
                       //Default to Protected A if there was no security classification
-                      if (!fileType?.securityClassification && fileType?.securityClassification?.length > 0 && isEdit) {
+                      if (!fileType?.securityClassification && fileType?.securityClassification?.length > 0) {
                         fileType.securityClassification = SecurityClassification.ProtectedA;
                       }
 
                       fileType.readRoles = cleanReadRoles;
                       fileType.updateRoles = cleanUpdateRoles;
 
-                      if (!isEdit) {
-                        dispatch(CreateFileTypeService(fileType));
-                      } else {
-                        dispatch(UpdateFileTypeService(fileType));
-                      }
+                      dispatch(UpdateFileTypeService(fileType));
+
                       close();
                     }
                   }}
@@ -407,7 +370,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                   testId="form-cancel"
                   type="secondary"
                   onClick={() => {
-                    if (isFileTypeUpdated(initialFileType, fileType)) {
+                    if (!areObjectsEqual(initialFileType, fileType)) {
                       setSaveModal({ visible: true, closeEditor: false });
                     } else {
                       validators.clear();
@@ -420,7 +383,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
               </GoAButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
-          <FileTypePermissions className="task-permissions-wrapper">
+          <FileTypePermissions>
             <FileTypesEditorTitle>Roles</FileTypesEditorTitle>
             <hr className="hr-resize" />
             <ScrollPane>
@@ -440,18 +403,10 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
           setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
-          if (!isEdit) {
-            const validations = {
-              duplicate: fileType.name,
-            };
-            if (!validators.checkAll(validations)) {
-              return;
-            }
-          }
           setSpinner(true);
           setSaveModal({ visible: false, closeEditor: true });
         }}
-        saveDisable={!isFileTypeUpdated(initialFileType, fileType)}
+        saveDisable={areObjectsEqual(initialFileType, fileType)}
         onCancel={() => {
           setSaveModal({ visible: false, closeEditor: false });
         }}
