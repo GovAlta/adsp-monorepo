@@ -41,7 +41,8 @@ import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
-import { createTaskForQueueApi } from './queueTaskApi';
+import { QueueTaskDefinition } from '../model/queueTask';
+import { QueueTaskService } from '../../queueTask';
 
 export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
   return {
@@ -56,7 +57,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     dataSchema: entity.dataSchema,
     dispositionStates: entity.dispositionStates,
     submissionRecords: entity.submissionRecords,
-    taskQueuesToProcess: entity.taskQueuesToProcess,
+    queueTaskToProcess: entity.queueTaskToProcess,
   };
 }
 
@@ -418,6 +419,7 @@ export function formOperation(
   apiId: AdspId,
   eventService: EventService,
   notificationService: NotificationService,
+  queueTaskService: QueueTaskService,
   directory: ServiceDirectory,
   submissionRepository: FormSubmissionRepository
 ): RequestHandler {
@@ -447,15 +449,35 @@ export function formOperation(
         case SUBMIT_FORM_OPERATION: {
           const directoryServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:form-service`);
           const taskServiceUrl = `${directoryServiceUrl}task/v1/`;
-
           console.log(`TaskServiceUrl = ${taskServiceUrl}`);
-          const token = await this.tokenProvider.getAccessToken();
-          //createTaskForQueueApi(token, taskServiceUrl,form.definition.taskQueuesToProcess);
 
-          formResult = await form.submit(user, submissionRepository);
+          formResult = await form.submit(user, queueTaskService, submissionRepository);
           result = formResult as FormEntity;
           event = formSubmitted(user, result);
           mappedForm = mapFormForFormSubmitted(apiId, result);
+          if (mappedForm) {
+            // queueTaskService.createTaskForQueueTask('', null, apiId, mappedForm, null);
+            // const token = await this.tokenProvider.getAccessToken();
+            const { queueName, queueNameSpace } = form.definition.queueTaskToProcess;
+
+            console.log(`JSON = ${queueNameSpace}:${queueName} `);
+            // const queueTaskDefinition: QueueTaskDefinition = {
+            //   id: '',
+            //   name: mappedForm.id,
+            //   namespace: queueNameSpace,
+            //   createdOn: '',
+            //   priority: 'Normal',
+            //   description: `Task for form submission ID: ${formResult.submissionId}`,
+            //   recordId: `${queueNameSpace}:${queueName}`,
+            // };
+            // createTaskForQueueApi(
+            //   token,
+            //   taskServiceUrl,
+            //   {} as QueueTaskDefinition,
+            //   form.definition.taskQueuesToProcess
+            // );
+          }
+
           break;
         }
         case SET_TO_DRAFT_FORM_OPERATION: {
@@ -517,6 +539,7 @@ interface FormRouterProps {
   repository: FormRepository;
   eventService: EventService;
   notificationService: NotificationService;
+  queueTaskService: QueueTaskService;
   fileService: FileService;
   submissionRepository: FormSubmissionRepository;
 }
@@ -527,6 +550,7 @@ export function createFormRouter({
   directory,
   eventService,
   notificationService,
+  queueTaskService,
   fileService,
   submissionRepository,
 }: FormRouterProps): Router {
@@ -629,7 +653,7 @@ export function createFormRouter({
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService, directory, submissionRepository)
+    formOperation(apiId, eventService, notificationService, queueTaskService, directory, submissionRepository)
   );
   router.delete(
     '/forms/:formId',

@@ -26,7 +26,7 @@ export const configurationSchema = {
             required: ['id', 'name'],
           },
         },
-        taskQueueToProcess: {
+        queueTaskToProcess: {
           type: 'object',
           properties: { queueNameSpace: { type: 'string' }, queueName: { type: 'string' } },
         },

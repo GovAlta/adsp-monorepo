@@ -10,10 +10,10 @@ export interface FormDefinition {
   dataSchema: Record<string, unknown>;
   dispositionStates?: Array<Disposition>;
   submissionRecords: boolean;
-  taskQueuesToProcess: TaskQueueToProcess;
+  queueTaskToProcess: QueueTaskToProcess;
 }
 
-export interface TaskQueueToProcess {
+export interface QueueTaskToProcess {
   queueNameSpace: string;
   queueName: string;
 }

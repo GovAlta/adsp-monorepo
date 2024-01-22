@@ -5,8 +5,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { NotificationService, Subscriber } from '../../notification';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDefinition, Disposition, TaskQueueToProcess } from '../types';
+import { FormDefinition, Disposition, QueueTaskToProcess } from '../types';
 import { FormEntity } from './form';
+
+const defaultQueueTaskToProcess: QueueTaskToProcess = { queueName: '', queueNameSpace: '' };
 
 export class FormDefinitionEntity implements FormDefinition {
   id: string;
@@ -20,7 +22,7 @@ export class FormDefinitionEntity implements FormDefinition {
   submissionRecords: boolean;
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
-  taskQueuesToProcess: TaskQueueToProcess;
+  queueTaskToProcess: QueueTaskToProcess;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
@@ -34,6 +36,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.clerkRoles = definition.clerkRoles || [];
     this.dispositionStates = definition.dispositionStates || [];
     this.submissionRecords = definition.submissionRecords || false;
+    this.queueTaskToProcess = definition.queueTaskToProcess || defaultQueueTaskToProcess;
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
     this.dataSchema = definition.dataSchema || {};

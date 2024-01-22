@@ -2,7 +2,7 @@ import { adspId, Channel, UnauthorizedUserError } from '@abgov/adsp-service-sdk'
 import { InvalidOperationError, NotFoundError, ValidationService } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { accessForm, deleteForm, findForms, formOperation, getForm, getFormDefinition, updateFormData } from '.';
-import { FormServiceRoles, FormStatus, FORM_SUBMITTED, TaskQueueToProcess } from '..';
+import { FormServiceRoles, FormStatus, FORM_SUBMITTED, QueueTaskToProcess } from '..';
 import { FormDefinitionEntity, FormEntity } from '../model';
 import { createForm, createFormRouter, getFormDefinitions } from './form';
 
@@ -25,7 +25,7 @@ describe('form router', () => {
     submissionRecords: false,
     clerkRoles: [],
     dataSchema: null,
-    taskQueuesToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as TaskQueueToProcess,
+    queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
   });
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
@@ -54,6 +54,9 @@ describe('form router', () => {
     getResourceUrl: jest.fn(),
   };
 
+  const queueTaskServiceMock = {
+    createTaskForQueueTask: jest.fn(),
+  };
   const notificationServiceMock = {
     getSubscriber: jest.fn(),
     subscribe: jest.fn(),
@@ -102,6 +105,7 @@ describe('form router', () => {
       notificationService: notificationServiceMock,
       submissionRepository: repositoryMock,
       directory: directoryServiceMock,
+      queueTaskService: queueTaskServiceMock,
     });
     expect(router).toBeTruthy();
   });
@@ -545,6 +549,7 @@ describe('form router', () => {
         apiId,
         eventServiceMock,
         notificationServiceMock,
+        queueTaskServiceMock,
         directoryServiceMock,
         repositoryMock
       );
@@ -572,6 +577,7 @@ describe('form router', () => {
         apiId,
         eventServiceMock,
         notificationServiceMock,
+        queueTaskServiceMock,
         directoryServiceMock,
         repositoryMock
       );
@@ -602,6 +608,7 @@ describe('form router', () => {
         apiId,
         eventServiceMock,
         notificationServiceMock,
+        queueTaskServiceMock,
         directoryServiceMock,
         repositoryMock
       );
@@ -629,6 +636,7 @@ describe('form router', () => {
         apiId,
         eventServiceMock,
         notificationServiceMock,
+        queueTaskServiceMock,
         directoryServiceMock,
         repositoryMock
       );
@@ -671,6 +679,7 @@ describe('form router', () => {
         apiId,
         eventServiceMock,
         notificationServiceMock,
+        queueTaskServiceMock,
         directoryServiceMock,
         repositoryMock
       );
@@ -698,6 +707,7 @@ describe('form router', () => {
         apiId,
         eventServiceMock,
         notificationServiceMock,
+        queueTaskServiceMock,
         directoryServiceMock,
         repositoryMock
       );

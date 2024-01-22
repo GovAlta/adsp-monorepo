@@ -9,6 +9,7 @@ import { NotificationService, Subscriber } from '../../notification';
 import { FileService } from '../../file';
 import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionEntity } from './formSubmission';
+import { QueueTaskService } from '../../queueTask';
 
 // Any form created by user with the intake app role is treated as anonymous.
 function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
@@ -221,21 +222,24 @@ export class FormEntity implements Form {
       throw new InvalidOperationError('Can only set submitted forms to draft');
     }
 
-    // Unlock updates last access so that the form is not immediately locked again.
     this.status = FormStatus.Draft;
     this.lastAccessed = new Date();
     return await this.repository.save(this);
   }
 
   async createTaskForTaskQueue(form: Form): Promise<boolean> {
-    if (!form) throw new InvalidOperationError('Cannot create task for form');
+    if (!form) throw new InvalidOperationError(`Cannot create task for form ID: ${form.id}`);
 
-    const taskQueuesToProcess = this.definition.taskQueuesToProcess;
+    const queueTaskToProcess = this.definition.queueTaskToProcess;
 
     return true;
   }
 
-  async submit(user: User, submissionRepository: FormSubmissionRepository): Promise<Form> {
+  async submit(
+    user: User,
+    queueTaskService: QueueTaskService,
+    submissionRepository: FormSubmissionRepository
+  ): Promise<Form> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
     }
@@ -251,16 +255,23 @@ export class FormEntity implements Form {
     this.submitted = new Date();
     // Hash the form data on submit for duplicate detection.
     this.hash = await hasha.async(JSON.stringify(this.data), { algorithm: 'sha1' });
-
-    const id = uuidv4();
+    let id = null;
 
     if (this.submissionRecords) {
       // If disposition states exist, create a form submission record
+      // We need the submissionId so that it is available for updates/lookups of the submission.
+      id = uuidv4();
       await FormSubmissionEntity.create(user, submissionRepository, this, id);
     }
-    // We need the submissionId so that it is available for updates/lookups of the submission.
     const savedFormEntity = await this.repository.save(this);
     const formData: Form = { ...savedFormEntity, submissionId: id };
+
+    if (formData) {
+      const { queueName, queueNameSpace } = this.definition.queueTaskToProcess;
+      if (queueName !== '' && queueNameSpace !== '') {
+        //queueTaskService.createTaskForQueueTask()
+      }
+    }
     return formData;
   }
 
