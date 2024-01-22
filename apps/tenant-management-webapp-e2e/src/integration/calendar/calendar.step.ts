@@ -54,50 +54,95 @@ Then('the user views the error message of {string} on namespace in calendar moda
     .should('contain', errorMsg);
 });
 
-When('the user enters {string}, {string}, {string} in Add calendar modal', function (name, desc, role) {
-  cy.viewport(1920, 1080);
-  calendarObj.addCalendarModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
-  calendarObj.addCalendarModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
-  // Select roles or client roles
-  const roles = role.split(',');
-  for (let i = 0; i < roles.length; i++) {
-    if (roles[i].includes(':')) {
-      const clientRoleStringArray = roles[i].split(':');
-      let clientName = '';
-      for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
-        if (j !== clientRoleStringArray.length - 2) {
-          clientName = clientName + clientRoleStringArray[j].trim() + ':';
-        } else {
-          clientName = clientName + clientRoleStringArray[j];
+When(
+  'the user enters {string}, {string}, {string}, {string} in Add calendar modal',
+  function (name, desc, readRole, modifyRole) {
+    cy.viewport(1920, 1080);
+    calendarObj.addCalendarModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
+    calendarObj.addCalendarModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
+    // Select read roles or client roles
+    const readRoles = readRole.split(',');
+    for (let i = 0; i < readRoles.length; i++) {
+      if (readRoles[i].includes(':')) {
+        const clientReadRoleStringArray = readRoles[i].split(':');
+        let clientName = '';
+        for (let j = 0; j < clientReadRoleStringArray.length - 1; j++) {
+          if (j !== clientReadRoleStringArray.length - 2) {
+            clientName = clientName + clientReadRoleStringArray[j].trim() + ':';
+          } else {
+            clientName = clientName + clientReadRoleStringArray[j];
+          }
         }
+        const roleName = clientReadRoleStringArray[clientReadRoleStringArray.length - 1];
+        calendarObj
+          .addCalendarModalClientRolesTable(clientName)
+          .shadow()
+          .find('.role-name')
+          .contains(roleName)
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
+      } else {
+        calendarObj
+          .addCalendarModalRolesTable()
+          .shadow()
+          .find('.role-name')
+          .contains(readRoles[i].trim())
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
       }
-      const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
-      calendarObj
-        .addCalendarModalClientRolesTable(clientName)
-        .shadow()
-        .find('.role-name')
-        .contains(roleName)
-        .next()
-        .find('goa-checkbox')
-        .shadow()
-        .find('.goa-checkbox-container')
-        .scrollIntoView()
-        .click({ force: true });
-    } else {
-      calendarObj
-        .addCalendarModalRolesTable()
-        .shadow()
-        .find('.role-name')
-        .contains(roles[i].trim())
-        .next()
-        .find('goa-checkbox')
-        .shadow()
-        .find('.goa-checkbox-container')
-        .scrollIntoView()
-        .click({ force: true });
+    }
+
+    // Select modify roles or client roles
+    const modifyRoles = modifyRole.split(',');
+    for (let i = 0; i < modifyRoles.length; i++) {
+      if (modifyRoles[i].includes(':')) {
+        const clientModifyRoleStringArray = modifyRoles[i].split(':');
+        let clientName = '';
+        for (let j = 0; j < clientModifyRoleStringArray.length - 1; j++) {
+          if (j !== clientModifyRoleStringArray.length - 2) {
+            clientName = clientName + clientModifyRoleStringArray[j].trim() + ':';
+          } else {
+            clientName = clientName + clientModifyRoleStringArray[j];
+          }
+        }
+        const roleName = clientModifyRoleStringArray[clientModifyRoleStringArray.length - 1];
+        calendarObj
+          .addCalendarModalClientRolesTable(clientName)
+          .shadow()
+          .find('.role-name')
+          .contains(roleName)
+          .next()
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
+      } else {
+        calendarObj
+          .addCalendarModalRolesTable()
+          .shadow()
+          .find('.role-name')
+          .contains(modifyRoles[i].trim())
+          .next()
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
+      }
     }
   }
-});
+);
 
 Then('the user {string} the calendar of {string}, {string}', function (viewOrNot, name, desc) {
   findCalendar(name, desc).then((rowNumber) => {
@@ -177,42 +222,49 @@ Then('the user views Edit calendar modal', function () {
 });
 
 When(
-  'the user enters {string} as description and selects {string} as role in Edit calendar modal',
-  function (description, role) {
+  'the user enters {string} as description and selects {string}, {string} as roles in Edit calendar modal',
+  function (description, readRole, modifyRole) {
     calendarObj
       .editCalendarModalDescriptionField()
       .shadow()
       .find('.goa-textarea')
       .clear()
       .type(description, { force: true });
+
     //Unselect all checkboxes
-    calendarObj
-      .editCalendarModalTable()
-      .shadow()
-      .find('goa-checkbox')
-      .shadow()
-      .find('.goa-checkbox-container')
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].getAttribute('class')?.includes('--selected')) {
-            elements[i].click();
+    //Looks like checkboxes can't handle fast clicking to uncheck multiple checkboxes and seems only the last checked checkboxes are unchecked.
+    //Didn't find a way to add a delay between clicks. Use 5 loops to make sure missed checked checkboxes are unchecked.
+    for (let j = 0; j < 5; j++) {
+      cy.wait(500);
+      calendarObj
+        .editCalendarModalTable()
+        .shadow()
+        .find('goa-checkbox')
+        .shadow()
+        .find('.goa-checkbox-container')
+        .then((elements) => {
+          for (let i = 0; i < elements.length; i++) {
+            if (elements[i].getAttribute('class')?.includes('--selected')) {
+              elements[i].click();
+            }
           }
-        }
-      });
-    // Select roles
-    const roles = role.split(',');
-    for (let i = 0; i < roles.length; i++) {
-      if (roles[i].includes(':')) {
-        const clientRoleStringArray = roles[i].split(':');
+        });
+    }
+
+    // Select read roles
+    const readRoles = readRole.split(',');
+    for (let i = 0; i < readRoles.length; i++) {
+      if (readRoles[i].includes(':')) {
+        const clientReadRoleStringArray = readRoles[i].split(':');
         let clientName = '';
-        for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
-          if (j !== clientRoleStringArray.length - 2) {
-            clientName = clientName + clientRoleStringArray[j].trim() + ':';
+        for (let j = 0; j < clientReadRoleStringArray.length - 1; j++) {
+          if (j !== clientReadRoleStringArray.length - 2) {
+            clientName = clientName + clientReadRoleStringArray[j].trim() + ':';
           } else {
-            clientName = clientName + clientRoleStringArray[j];
+            clientName = clientName + clientReadRoleStringArray[j];
           }
         }
-        const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+        const roleName = clientReadRoleStringArray[clientReadRoleStringArray.length - 1];
         calendarObj
           .addCalendarModalClientRolesTable(clientName)
           .shadow()
@@ -229,7 +281,49 @@ When(
           .addCalendarModalRolesTable()
           .shadow()
           .find('.role-name')
-          .contains(roles[i].trim())
+          .contains(readRoles[i].trim())
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
+      }
+    }
+
+    // Select modify roles
+    const modifyRoles = modifyRole.split(',');
+    for (let i = 0; i < modifyRoles.length; i++) {
+      if (modifyRoles[i].includes(':')) {
+        const clientModifyRoleStringArray = modifyRoles[i].split(':');
+        let clientName = '';
+        for (let j = 0; j < clientModifyRoleStringArray.length - 1; j++) {
+          if (j !== clientModifyRoleStringArray.length - 2) {
+            clientName = clientName + clientModifyRoleStringArray[j].trim() + ':';
+          } else {
+            clientName = clientName + clientModifyRoleStringArray[j];
+          }
+        }
+        const roleName = clientModifyRoleStringArray[clientModifyRoleStringArray.length - 1];
+        calendarObj
+          .addCalendarModalClientRolesTable(clientName)
+          .shadow()
+          .find('.role-name')
+          .contains(roleName)
+          .next()
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
+      } else {
+        calendarObj
+          .addCalendarModalRolesTable()
+          .shadow()
+          .find('.role-name')
+          .contains(modifyRoles[i].trim())
+          .next()
           .next()
           .find('goa-checkbox')
           .shadow()

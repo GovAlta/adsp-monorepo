@@ -8,6 +8,7 @@ export interface FormDefinition {
   clerkRoles: string[];
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
+  uiSchema?: Record<string, unknown>;
   dispositionStates?: Array<Disposition>;
   submissionRecords: boolean;
   queueTaskToProcess: QueueTaskToProcess;

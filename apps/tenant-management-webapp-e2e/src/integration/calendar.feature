@@ -40,14 +40,14 @@ Feature: Calendar
     # Invalid data
     When the user enters "auto-test-1A $" in name field in calendar modal
     Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" on namespace in calendar modal
-    # Validate data
-    When the user enters "autotest-addcalendar", "autotest calendar desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin" in Add calendar modal
+    # Valid data
+    When the user enters "autotest-addcalendar", "autotest calendar desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin", "auto-test-role2" in Add calendar modal
     And the user clicks Save button in Add calendar modal
     Then the user "views" the calendar of "autotest-addcalendar", "autotest calendar desc"
     # Edit
     When the user clicks "Edit" button for the calendar of "autotest-addcalendar", "autotest calendar desc"
     Then the user views Edit calendar modal
-    When the user enters "autotest calendar desc edit" as description and selects "auto-test-role2" as role in Edit calendar modal
+    When the user enters "autotest calendar desc edit" as description and selects "auto-test-role2", "auto-test-role1" as roles in Edit calendar modal
     And the user clicks Save button in Edit calendar modal
     Then the user "views" the calendar of "autotest-addcalendar", "autotest calendar desc edit"
     # Delete
