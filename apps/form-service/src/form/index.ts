@@ -6,6 +6,7 @@ import { NotificationService } from '../notification';
 import { scheduleFormJobs } from './jobs';
 import { FormSubmissionRepository, Repositories } from './repository';
 import { createFormRouter } from './router';
+import { QueueTaskService } from '../queueTask';
 
 export * from './roles';
 export * from './configuration';
@@ -21,6 +22,7 @@ interface FormMiddlewareProps extends Repositories {
   eventService: EventService;
   notificationService: NotificationService;
   fileService: FileService;
+  queueTaskService: QueueTaskService;
   formSubmissionRepository: FormSubmissionRepository;
 }
 
@@ -33,6 +35,7 @@ export const applyFormMiddleware = (
     eventService,
     notificationService,
     fileService,
+    queueTaskService,
     formSubmissionRepository: submissionRepository,
   }: FormMiddlewareProps
 ): Application => {
@@ -42,6 +45,7 @@ export const applyFormMiddleware = (
     serviceId,
     repository,
     eventService,
+    queueTaskService,
     notificationService,
     fileService,
     submissionRepository,

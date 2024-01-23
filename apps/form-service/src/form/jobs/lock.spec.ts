@@ -65,6 +65,7 @@ describe('lock', () => {
       formDraftUrlTemplate: '',
       dataSchema: null,
       submissionRecords: false,
+      queueTaskToProcess: { queueName: 'test-queue', queueNameSpace: 'test-queuenamespace' },
     }),
     subscriber,
     {

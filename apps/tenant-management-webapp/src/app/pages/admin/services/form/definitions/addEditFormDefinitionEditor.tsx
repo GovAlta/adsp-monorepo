@@ -41,6 +41,8 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useHistory, useParams } from 'react-router-dom';
+import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
+
 import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
@@ -54,7 +56,9 @@ import { DeleteModal } from '@components/DeleteModal';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 
 import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
-import { RowFlex } from './style-components';
+
+import { RowFlex, QueueTaskDropdown } from './style-components';
+import { getTaskQueues } from '@store/task/action';
 
 import { UploadFileService, DownloadFileService } from '@store/file/actions';
 import { FetchFileTypeService } from '@store/file/actions';
@@ -71,7 +75,8 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
     JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
-    JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords)
+    JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
+    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess)
   );
 };
 
@@ -85,6 +90,7 @@ export const formEditorJsonConfig = {
 };
 
 const invalidJsonMsg = 'Invalid JSON syntax';
+const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const latestFile = useSelector((state: RootState) => {
@@ -171,6 +177,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getFormDefinitions());
+    dispatch(getTaskQueues());
   }, []);
 
   const types = [
@@ -187,6 +194,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       return serviceRoles?.keycloak || {};
     }
   );
+  const queueTasks = useSelector((state: RootState) => {
+    return Object.entries(state?.task?.queues)
+      .sort((template1, template2) => {
+        return template1[1].name.localeCompare(template2[1].name);
+      })
+      .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
+        tempObj[taskDefinitionId] = taskDefinitionData;
+        return tempObj;
+      }, {});
+  });
 
   useEffect(() => {
     if (saveModal.closeEditor) {
@@ -366,6 +383,21 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
+  const getQueueTaskToProcessValue = () => {
+    let value = NO_TASK_CREATED_OPTION;
+
+    if (definition.queueTaskToProcess) {
+      const { queueNameSpace, queueName } = definition.queueTaskToProcess;
+      if (queueNameSpace !== '' && queueName !== '') {
+        value = `${queueNameSpace}:${queueName}`;
+      } else {
+        value = NO_TASK_CREATED_OPTION;
+      }
+    }
+
+    return value;
+  };
+
   return (
     <FormEditor>
       {spinner ? (
@@ -475,7 +507,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </ScrollPane>
                 </MonacoDivTabBody>
               </Tab>
-              <Tab label="Submission configuration" data-testid="disposition-states">
+              <Tab label="Submission configuration" data-testid="submission-configuration">
                 <div style={{ height: EditorHeight + 7 }}>
                   <FlexRow>
                     <SubmissionRecordsBox>
@@ -501,7 +533,59 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     />
                   </FlexRow>
 
-                  <div style={{ padding: '10px', background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
+                  <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
+                    <>
+                      <InfoCircleWithInlineHelp
+                        label="Task queue to process"
+                        text={
+                          getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                            ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                            : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                        }
+                      />
+                    </>
+
+                    <QueueTaskDropdown>
+                      {Object.keys(queueTasks).length > 0 && (
+                        <GoADropdown
+                          data-test-id="formsubmission-select-queue-task-dropdown"
+                          name="queueTasks"
+                          disabled={!definition.submissionRecords}
+                          selectedValues={[getQueueTaskToProcessValue()]}
+                          multiSelect={false}
+                          onChange={(name, queueTask) => {
+                            const seperatedQueueTask = queueTask[0].split(':');
+                            if (seperatedQueueTask.length > 1) {
+                              setDefinition({
+                                ...definition,
+                                queueTaskToProcess: {
+                                  queueNameSpace: seperatedQueueTask[0],
+                                  queueName: seperatedQueueTask[1],
+                                },
+                              });
+                            } else {
+                              setDefinition({
+                                ...definition,
+                                queueTaskToProcess: {
+                                  queueNameSpace: '',
+                                  queueName: '',
+                                },
+                              });
+                            }
+                          }}
+                        >
+                          <GoADropdownOption
+                            data-testId={`task-Queue-ToCreate-DropDown`}
+                            key={`No-Task-Created`}
+                            value={NO_TASK_CREATED_OPTION}
+                            label={NO_TASK_CREATED_OPTION}
+                          />
+                          {Object.keys(queueTasks).map((item) => (
+                            <GoADropdownOption data-testId={item} key={item} value={item} label={item} />
+                          ))}
+                        </GoADropdown>
+                      )}
+                    </QueueTaskDropdown>
                     <RowFlex>
                       <h3>Disposition states</h3>
                       <div>
@@ -537,7 +621,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     <div
                       style={{
                         overflowY: 'auto',
-                        height: EditorHeight - 93,
+                        height: EditorHeight - 228,
                         zIndex: 0,
                       }}
                     >

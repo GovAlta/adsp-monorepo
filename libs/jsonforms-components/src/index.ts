@@ -20,12 +20,8 @@ import {
 import {
   MaterialAnyOfStringOrEnumControl,
   materialAnyOfStringOrEnumControlTester,
-  MaterialEnumControl,
   materialEnumControlTester,
   MaterialOneOfEnumControl,
-  materialOneOfEnumControlTester,
-  MaterialRadioGroupControl,
-  materialRadioGroupControlTester,
   MaterialSliderControl,
   materialSliderControlTester,
   MaterialOneOfRadioGroupControl,
@@ -69,6 +65,10 @@ import {
   FileUploaderTester,
   MultiLineTextControl,
   MultiLineTextControlTester,
+  GoAEnumControl,
+  GoAEnumControlTester,
+  GoAEnumRadioGroupControl,
+  GoARadioGroupControlTester,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
@@ -90,7 +90,7 @@ export class Renderers {
 
   GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
     // controls
-    { tester: materialEnumControlTester, renderer: MaterialEnumControl },
+    { tester: GoAEnumControlTester, renderer: GoAEnumControl },
     { tester: GoAIntegerControlTester, renderer: GoAInputIntegerControl },
     { tester: GoANumberControlTester, renderer: GoAInputNumberControl },
     { tester: GoATextControlTester, renderer: GoAInputTextControl },
@@ -103,15 +103,15 @@ export class Renderers {
     { tester: materialAnyOfControlTester, renderer: MaterialAnyOfRenderer },
     { tester: materialOneOfControlTester, renderer: MaterialOneOfRenderer },
     {
-      tester: materialRadioGroupControlTester,
-      renderer: MaterialRadioGroupControl,
+      tester: GoARadioGroupControlTester,
+      renderer: GoAEnumRadioGroupControl,
     },
     {
       tester: materialOneOfRadioGroupControlTester,
       renderer: MaterialOneOfRadioGroupControl,
     },
     {
-      tester: materialOneOfEnumControlTester,
+      tester: materialEnumControlTester,
       renderer: MaterialOneOfEnumControl,
     },
     // layouts

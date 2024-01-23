@@ -69,6 +69,7 @@ describe('delete', () => {
       formDraftUrlTemplate: '',
       dataSchema: null,
       submissionRecords: false,
+      queueTaskToProcess: { queueName: 'test-queue', queueNameSpace: 'test-queuename' },
     }),
     subscriber,
     {
