@@ -40,6 +40,15 @@ export class FormDefinitionEntity implements FormDefinition {
     this.validationService.setSchema(this.id, this.dataSchema);
   }
 
+  public canAccessDefinition(user: User): boolean {
+    return isAllowedUser(user, this.tenantId, [
+      FormServiceRoles.Admin,
+      FormServiceRoles.IntakeApp,
+      ...this.applicantRoles,
+      ...this.clerkRoles,
+    ]);
+  }
+
   public canApply(user: User): boolean {
     return isAllowedUser(
       user,

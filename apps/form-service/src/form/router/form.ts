@@ -151,8 +151,12 @@ export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmiss
 
 export const getFormDefinitions: RequestHandler = async (req, res, next) => {
   try {
+    const user = req.user;
+
     const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-    const definitions = Object.entries(configuration).map(([_id, entity]) => mapFormDefinition(entity));
+    const definitions = Object.entries(configuration)
+      .filter(([_id, entity]) => entity.canAccessDefinition(user))
+      .map(([_id, entity]) => mapFormDefinition(entity));
     res.send(definitions);
   } catch (err) {
     next(err);
@@ -162,11 +166,16 @@ export const getFormDefinitions: RequestHandler = async (req, res, next) => {
 export const getFormDefinition: RequestHandler = async (req, res, next) => {
   try {
     const { definitionId } = req.params;
+    const user = req.user;
 
     const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
     const definition = configuration[definitionId];
     if (!definition) {
       throw new NotFoundError('form definition', definitionId);
+    }
+
+    if (!definition.canAccessDefinition(user)) {
+      throw new UnauthorizedUserError('access definition', user);
     }
 
     res.send(mapFormDefinition(definition));
