@@ -20,6 +20,7 @@ export class FormDefinitionEntity implements FormDefinition {
   submissionRecords: boolean;
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
+  uiSchema: Record<string, unknown>;
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
   constructor(private validationService: ValidationService, public tenantId: AdspId, definition: FormDefinition) {
@@ -35,6 +36,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
     this.dataSchema = definition.dataSchema || {};
+    this.uiSchema = definition.uiSchema || {};
     this.validationService.setSchema(this.id, this.dataSchema);
   }
 

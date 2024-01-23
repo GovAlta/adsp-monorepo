@@ -52,6 +52,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     clerkRoles: entity.clerkRoles,
     formDraftUrlTemplate: entity.formDraftUrlTemplate,
     dataSchema: entity.dataSchema,
+    uiSchema: entity.uiSchema,
     dispositionStates: entity.dispositionStates,
     submissionRecords: entity.submissionRecords,
   };

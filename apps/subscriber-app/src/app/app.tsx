@@ -1,7 +1,7 @@
 import '@style/app.css';
 import '@style/colors.scss';
 import React, { useEffect } from 'react';
-import { Route, Routes, BrowserRouter as Router } from 'react-router-dom-6';
+import { Route, Routes } from 'react-router-dom-6';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store, RootState } from '@store/index';
 import { PrivateApp } from './privateApp';
@@ -15,12 +15,10 @@ import '@abgov/web-components/index.css';
 
 const AppRouters = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/subscriptions/:realm/*" element={<PrivateApp />} />
-        <Route path="/*" element={<PublicApp />} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/subscriptions/:realm/*" element={<PrivateApp />} />
+      <Route path="/*" element={<PublicApp />} />
+    </Routes>
   );
 };
 
