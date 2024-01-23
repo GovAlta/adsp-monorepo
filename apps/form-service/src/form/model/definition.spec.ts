@@ -27,6 +27,63 @@ describe('FormDefinitionEntity', () => {
     expect(validationService.setSchema).toHaveBeenCalledWith(entity.id, expect.any(Object));
   });
 
+  describe('canAccessDefinition', () => {
+    const entity = new FormDefinitionEntity(validationService, tenantId, {
+      id: 'test',
+      name: 'test-form-definition',
+      description: null,
+      formDraftUrlTemplate: 'https://my-form/{{ id }}',
+      anonymousApply: false,
+      applicantRoles: ['test-applicant'],
+      assessorRoles: ['test-assessor'],
+      clerkRoles: [],
+      dataSchema: null,
+      submissionRecords: false,
+    });
+
+    it('can return true for user with applicant role', () => {
+      const result = entity.canAccessDefinition({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return false for user without applicant role', () => {
+      const result = entity.canAccessDefinition({ tenantId, id: 'tester', roles: [] } as User);
+      expect(result).toBe(false);
+    });
+
+    it('can return true for intake app', () => {
+      const result = entity.canAccessDefinition({
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.IntakeApp],
+      } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return true for form admin', () => {
+      const result = entity.canAccessDefinition({
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return false for core user', () => {
+      const result = entity.canAccessDefinition({ isCore: true, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result).toBe(false);
+    });
+
+    it('can return false for user of different tenant', () => {
+      const result = entity.canAccessDefinition({
+        tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test2`,
+        id: 'tester',
+        roles: ['test-applicant'],
+      } as User);
+      expect(result).toBe(false);
+    });
+  });
+
   describe('canApply', () => {
     const entity = new FormDefinitionEntity(validationService, tenantId, {
       id: 'test',
