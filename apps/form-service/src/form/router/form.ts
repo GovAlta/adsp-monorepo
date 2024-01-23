@@ -456,15 +456,10 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          formResult = await form.submit(user, submissionRepository);
+          formResult = await form.submit(user, queueTaskService, submissionRepository);
           result = formResult as FormEntity;
           event = formSubmitted(user, result);
           mappedForm = mapFormForFormSubmitted(apiId, result);
-          const { queueNameSpace, queueName } = formResult.definition.queueTaskToProcess;
-
-          if (mappedForm && queueNameSpace !== '' && queueName !== '') {
-            queueTaskService.createTaskForQueueTask(createQueueTaskDefinition(formResult), result.tenantId, form);
-          }
 
           break;
         }
@@ -671,16 +666,3 @@ export function createFormRouter({
 
   return router;
 }
-
-const createQueueTaskDefinition = (form: Form) => {
-  const { queueNameSpace, queueName } = form.definition.queueTaskToProcess;
-  return {
-    id: '',
-    name: form.id,
-    namespace: queueNameSpace,
-    createdOn: '',
-    priority: 'Normal',
-    description: `Task for form submission ID: ${form.submissionId}`,
-    recordId: `${queueNameSpace}:${queueName}`,
-  } as QueueTaskDefinition;
-};

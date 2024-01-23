@@ -10,6 +10,7 @@ import { FileService } from '../../file';
 import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionEntity } from './formSubmission';
 import { QueueTaskService } from '../../queueTask';
+import { QueueTaskDefinition } from './queueTask';
 
 // Any form created by user with the intake app role is treated as anonymous.
 function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
@@ -229,7 +230,7 @@ export class FormEntity implements Form {
 
   async submit(
     user: User,
-    // queueTaskService: QueueTaskService,
+    queueTaskService: QueueTaskService,
     submissionRepository: FormSubmissionRepository
   ): Promise<Form> {
     if (this.status !== FormStatus.Draft) {
@@ -258,6 +259,17 @@ export class FormEntity implements Form {
     const savedFormEntity = await this.repository.save(this);
     const formData: Form = { ...savedFormEntity, submissionId: id };
 
+    if (this.submissionRecords) {
+      const { queueNameSpace, queueName } = formData.definition.queueTaskToProcess;
+
+      if (formData && queueNameSpace !== '' && queueName !== '') {
+        queueTaskService.createTaskForQueueTask(
+          createQueueTaskDefinition(formData),
+          savedFormEntity.tenantId,
+          formData
+        );
+      }
+    }
     return formData;
   }
 
@@ -288,3 +300,15 @@ export class FormEntity implements Form {
     return deleted;
   }
 }
+const createQueueTaskDefinition = (form: Form) => {
+  const { queueNameSpace, queueName } = form.definition.queueTaskToProcess;
+  return {
+    id: '',
+    name: form.id,
+    namespace: queueNameSpace,
+    createdOn: '',
+    priority: 'Normal',
+    description: `Task for form submission ID: ${form.submissionId}`,
+    recordId: `${queueNameSpace}:${queueName}`,
+  } as QueueTaskDefinition;
+};
