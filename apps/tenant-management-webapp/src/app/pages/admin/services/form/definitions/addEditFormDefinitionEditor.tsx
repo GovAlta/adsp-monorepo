@@ -487,7 +487,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </MonacoDivTabBody>
               </Tab>
               <Tab label="Submission configuration" data-testid="submission-configuration">
-                <div style={{ height: EditorHeight + 100 }}>
+                <div>
                   <FlexRow>
                     <SubmissionRecordsBox>
                       <GoACheckbox
@@ -517,7 +517,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       <InfoCircleWithInlineHelp
                         label="Task queue to process"
                         text={
-                          definition.submissionRecords
+                          getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
                             ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
                             : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
                         }
@@ -600,7 +600,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     <div
                       style={{
                         overflowY: 'auto',
-                        height: EditorHeight - 93,
+                        height: EditorHeight - 228,
                         zIndex: 0,
                       }}
                     >

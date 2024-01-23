@@ -20,9 +20,13 @@ export const FormDefinitionEditor = (): JSX.Element => {
       <Modal data-testid="template-form">
         <ModalContent>
           <OuterFormTemplateEditorContainer>
-            <FormTemplateEditorContainer>
-              <AddEditFormDefinitionEditor />
-            </FormTemplateEditorContainer>
+            <TabletMessage goBack={goBack} />
+
+            <HideTablet>
+              <FormTemplateEditorContainer>
+                <AddEditFormDefinitionEditor />
+              </FormTemplateEditorContainer>
+            </HideTablet>
           </OuterFormTemplateEditorContainer>
         </ModalContent>
       </Modal>

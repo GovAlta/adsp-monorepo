@@ -453,8 +453,9 @@ export function formOperation(
           result = formResult as FormEntity;
           event = formSubmitted(user, result);
           mappedForm = mapFormForFormSubmitted(apiId, result);
+          const { queueNameSpace, queueName } = formResult.definition.queueTaskToProcess;
 
-          if (mappedForm) {
+          if (mappedForm && queueNameSpace !== '' && queueName !== '') {
             queueTaskService.createTaskForQueueTask(createQueueTaskDefinition(formResult), result.tenantId, form);
           }
 

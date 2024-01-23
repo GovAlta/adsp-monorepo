@@ -296,12 +296,10 @@ export const TemplateEditorContainerForm = styled.div`
     }
   }
 `;
-// z-index: 10000;
 export const Modal = styled.div`
   display: block;
-  position: absolute;
+  position: fixed;
   left: 0;
-
   width: 100%;
 `;
 
