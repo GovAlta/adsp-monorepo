@@ -5,7 +5,7 @@ import { AdspId, ServiceDirectory, TokenProvider, adspId } from '@abgov/adsp-ser
 import { Logger } from 'winston';
 
 export interface QueueTaskService {
-  createTaskForQueueTask(body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<any>;
+  createTaskForQueueTask(body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<boolean>;
 }
 
 const LOG_CONTEXT = { context: 'QueueTaskService' };
@@ -17,7 +17,7 @@ export class QueueTaskServiceImpl implements QueueTaskService {
     this.directory = serviceDirectory;
   }
 
-  async createTaskForQueueTask(body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<any> {
+  async createTaskForQueueTask(body: QueueTaskDefinition, tenantId: AdspId, form: Form): Promise<boolean> {
     try {
       const directoryServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:task-service`);
 
@@ -26,7 +26,7 @@ export class QueueTaskServiceImpl implements QueueTaskService {
       const taskServiceUrl = `${directoryServiceUrl}task/v1/queues/${queueNameSpace}/${queueName}/tasks?tenantId=${tenantId.toString()}`;
 
       const res = await axios.post(taskServiceUrl, body, { headers: { Authorization: `Bearer ${token}` } });
-      return res.data;
+      return res.data ? true : false;
     } catch (err) {
       this.logger.warn(`Error encountered creating a task for form  ${form.id}. ${err}`, {
         ...LOG_CONTEXT,
