@@ -35,11 +35,15 @@ async function initializeKeycloakClient(realm: string, config: ConfigState) {
       realm,
     });
 
-    await client.init({
-      onLoad: 'check-sso',
-      pkceMethod: 'S256',
-      silentCheckSsoRedirectUri: new URL('/silent-check-sso.html', window.location.href).href,
-    });
+    try {
+      await client.init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        silentCheckSsoRedirectUri: new URL('/silent-check-sso.html', window.location.href).href,
+      });
+    } catch (err) {
+      // Keycloak client throws undefined in certain cases.
+    }
   }
 
   return client;
