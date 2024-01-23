@@ -115,7 +115,7 @@ describe('form router', () => {
       const user = {
         tenantId,
         id: 'tester',
-        roles: [],
+        roles: ['test-applicant'],
       };
       const req = {
         user,
@@ -133,10 +133,53 @@ describe('form router', () => {
         expect.arrayContaining([expect.objectContaining({ id: 'test', name: 'test-form-definition' })])
       );
     });
+
+    it('can filter out definitions not accessible to user', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [],
+      };
+      const req = {
+        user,
+        getConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const configuration = { test: definition };
+      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      await getFormDefinitions(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getConfiguration).toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([]));
+    });
   });
 
   describe('getFormDefinition', () => {
     it('can get definition', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['test-applicant'],
+      };
+      const req = {
+        user,
+        params: { definitionId: 'test' },
+        getConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const configuration = { test: definition };
+      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      await getFormDefinition(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getConfiguration).toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'test-form-definition' }));
+    });
+
+    it('can call next with unauthorized', async () => {
       const user = {
         tenantId,
         id: 'tester',
@@ -155,7 +198,8 @@ describe('form router', () => {
       await getFormDefinition(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getConfiguration).toHaveBeenCalled();
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'test-form-definition' }));
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
 
     it('can call next with not found', async () => {

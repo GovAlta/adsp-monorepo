@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
+import { languages } from 'monaco-editor';
 
-import Editor from '@monaco-editor/react';
 import { vanillaCells } from '@jsonforms/vanilla-renderers';
 import { Renderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
@@ -61,6 +62,7 @@ import { getTaskQueues } from '@store/task/action';
 
 import { UploadFileService, DownloadFileService } from '@store/file/actions';
 import { FetchFileTypeService } from '@store/file/actions';
+import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -114,7 +116,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const renderer = new Renderers(uploadFile, downloadFile, latestFile);
 
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
-
+  const monaco = useMonaco();
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(
     JSON.parse(JSON.stringify(defaultFormDefinition))
@@ -151,6 +153,25 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dataSchemaJSON: null,
     dataSchemaJSONSchema: null,
   });
+  const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
+
+  useEffect(() => {
+    if (monaco) {
+      const provider = monaco.languages.registerCompletionItemProvider('json', {
+        triggerCharacters: ['"'],
+        provideCompletionItems: (model, position) => {
+          const suggestions = formatEditorSuggestions(dataSchemaSuggestion);
+          return {
+            suggestions,
+          } as languages.ProviderResult<languages.CompletionList>;
+        },
+      });
+      return function cleanup() {
+        provider.dispose();
+      };
+    }
+  }, [monaco, dataSchemaSuggestion]);
+
   useEffect(() => {
     dispatch(FetchRealmRoles());
 
@@ -395,7 +416,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   label=""
                 >
                   <EditorPadding>
-                    <Editor
+                    <MonacoEditor
                       data-testid="form-data-schema"
                       height={EditorHeight}
                       value={tempDataSchema}
@@ -442,7 +463,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="UI schema" data-testid="form-editor-ui-schema-tab">
                 <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
                   <EditorPadding>
-                    <Editor
+                    <MonacoEditor
                       data-testid="form-ui-schema"
                       height={EditorHeight}
                       value={tempUiSchema}

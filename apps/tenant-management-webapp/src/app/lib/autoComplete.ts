@@ -275,3 +275,68 @@ export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
     },
   ];
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco): EditorSuggestion[] => {
+  const suggestions = [];
+  if (schema.properties) {
+    for (const property in schema.properties) {
+      if (
+        typeof schema.properties[property]?.properties === 'object' &&
+        schema.properties[property]?.properties !== null &&
+        !Array.isArray(schema.properties[property].properties)
+      ) {
+        suggestions.push({
+          label: property,
+          kind: monaco.languages.CompletionItemKind.Property,
+          insertText: `/properties/${property}`,
+          detail: 'Property',
+          children: convertDataSchemaToSuggestion(schema.properties[property], monaco),
+        });
+      } else {
+        suggestions.push({
+          label: property,
+          kind: monaco.languages.CompletionItemKind.Property,
+          insertText: `/properties/${property}`,
+          detail: 'Property',
+        });
+      }
+    }
+  }
+  return suggestions;
+};
+
+const flattenEditorSuggestions = (suggestions: EditorSuggestion[], parentInsertText = ''): EditorSuggestion[] => {
+  let flattened: EditorSuggestion[] = [];
+
+  for (const suggestion of suggestions) {
+    // Concatenate parent insertText with current insertText
+    const combinedInsertText = parentInsertText + suggestion.insertText;
+
+    // Create a new object with combined insertText
+    const flattenedSuggestion: EditorSuggestion = {
+      ...suggestion,
+      insertText: combinedInsertText,
+    };
+
+    // Add the current suggestion to the flattened list
+    if (!suggestion.children) {
+      flattened.push(flattenedSuggestion);
+    }
+    // If there are children, recursively flatten them
+    if (suggestion.children && suggestion.children.length > 0) {
+      const childSuggestions = flattenEditorSuggestions(suggestion.children, combinedInsertText);
+      flattened = flattened.concat(childSuggestions);
+    }
+  }
+
+  return flattened;
+};
+
+export const formatEditorSuggestions = (suggestions: EditorSuggestion[]): EditorSuggestion[] => {
+  const flattenedSuggestions: EditorSuggestion[] = flattenEditorSuggestions(suggestions);
+  for (const suggestion of flattenedSuggestions) {
+    suggestion.insertText = `#${suggestion.insertText}`;
+  }
+  return flattenedSuggestions;
+};
