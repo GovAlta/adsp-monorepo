@@ -4,6 +4,7 @@ import {
   DomainEvent,
   EventService,
   isAllowedUser,
+  ServiceDirectory,
   startBenchmark,
   UnauthorizedUserError,
 } from '@abgov/adsp-service-sdk';
@@ -40,6 +41,8 @@ import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
+import { QueueTaskDefinition } from '../model/queueTask';
+import { QueueTaskService } from '../../queueTask';
 
 export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
   return {
@@ -55,6 +58,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     uiSchema: entity.uiSchema,
     dispositionStates: entity.dispositionStates,
     submissionRecords: entity.submissionRecords,
+    queueTaskToProcess: entity.queueTaskToProcess,
   };
 }
 
@@ -425,11 +429,13 @@ export function formOperation(
   apiId: AdspId,
   eventService: EventService,
   notificationService: NotificationService,
+  queueTaskService: QueueTaskService,
   submissionRepository: FormSubmissionRepository
 ): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const form: FormEntity = req[FORM];
       const request: FormOperations = req.body;
@@ -438,6 +444,7 @@ export function formOperation(
       let formResult: Form = null;
       let event: DomainEvent = null;
       let mappedForm = null;
+
       switch (request.operation) {
         case SEND_CODE_OPERATION: {
           result = await form.sendCode(user, notificationService);
@@ -449,10 +456,11 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          formResult = await form.submit(user, submissionRepository);
+          formResult = await form.submit(user, queueTaskService, submissionRepository);
           result = formResult as FormEntity;
           event = formSubmitted(user, result);
           mappedForm = mapFormForFormSubmitted(apiId, result);
+
           break;
         }
         case SET_TO_DRAFT_FORM_OPERATION: {
@@ -513,6 +521,7 @@ interface FormRouterProps {
   repository: FormRepository;
   eventService: EventService;
   notificationService: NotificationService;
+  queueTaskService: QueueTaskService;
   fileService: FileService;
   submissionRepository: FormSubmissionRepository;
 }
@@ -522,12 +531,13 @@ export function createFormRouter({
   repository,
   eventService,
   notificationService,
+  queueTaskService,
   fileService,
   submissionRepository,
 }: FormRouterProps): Router {
   const apiId = adspId`${serviceId}:v1`;
-
   const router = Router();
+
   router.get('/definitions', getFormDefinitions);
   router.get(
     '/definitions/:definitionId',
@@ -624,7 +634,7 @@ export function createFormRouter({
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService, submissionRepository)
+    formOperation(apiId, eventService, notificationService, queueTaskService, submissionRepository)
   );
   router.delete(
     '/forms/:formId',

@@ -26,6 +26,10 @@ export const configurationSchema = {
             required: ['id', 'name'],
           },
         },
+        queueTaskToProcess: {
+          type: 'object',
+          properties: { queueNameSpace: { type: 'string' }, queueName: { type: 'string' } },
+        },
         submissionRecords: { type: 'boolean' },
       },
       required: ['id', 'name', 'formDraftUrlTemplate', 'anonymousApply', 'applicantRoles', 'assessorRoles'],

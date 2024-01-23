@@ -1,7 +1,7 @@
 import { adspId, Channel, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { FormServiceRoles } from '../roles';
-import { FormStatus } from '../types';
+import { FormStatus, QueueTaskToProcess } from '../types';
 import { FormDefinitionEntity } from './definition';
 import { FormEntity } from './form';
 
@@ -22,6 +22,7 @@ describe('FormEntity', () => {
     assessorRoles: ['test-assessor'],
     clerkRoles: ['test-clerk'],
     dataSchema: null,
+    queueTaskToProcess: { queueNameSpace: 'test-queue-namespace', queueName: 'test-queue' } as QueueTaskToProcess,
   });
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
@@ -40,6 +41,7 @@ describe('FormEntity', () => {
     delete: jest.fn(),
     getByFormIdAndSubmissionId: jest.fn(),
   };
+  const queueTaskServiceMock = { createTaskForQueueTask: jest.fn() };
 
   const notificationMock = {
     getSubscriber: jest.fn(),
@@ -521,6 +523,7 @@ describe('FormEntity', () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       const submitted = (await entity.submit(
         { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        queueTaskServiceMock,
         repositoryMock
       )) as FormEntity;
       expect(submitted.status).toBe(FormStatus.Submitted);
@@ -532,7 +535,11 @@ describe('FormEntity', () => {
     it('can throw for different user', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       await expect(
-        entity.submit({ tenantId, id: 'tester-2', roles: ['test-applicant'] } as User, repositoryMock)
+        entity.submit(
+          { tenantId, id: 'tester-2', roles: ['test-applicant'] } as User,
+          queueTaskServiceMock,
+          repositoryMock
+        )
       ).rejects.toThrow(UnauthorizedUserError);
     });
 
@@ -540,6 +547,7 @@ describe('FormEntity', () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       const submitted = (await entity.submit(
         { tenantId, id: 'tester-2', roles: ['test-clerk'] } as User,
+        queueTaskServiceMock,
         repositoryMock
       )) as FormEntity;
       expect(submitted.status).toBe(FormStatus.Submitted);
@@ -550,9 +558,9 @@ describe('FormEntity', () => {
 
     it('can throw for user without applicant role', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-      await expect(entity.submit({ tenantId, id: 'tester', roles: [] } as User, repositoryMock)).rejects.toThrow(
-        UnauthorizedUserError
-      );
+      await expect(
+        entity.submit({ tenantId, id: 'tester', roles: [] } as User, queueTaskServiceMock, repositoryMock)
+      ).rejects.toThrow(UnauthorizedUserError);
     });
 
     it('can throw for form not in draft', async () => {
@@ -561,7 +569,11 @@ describe('FormEntity', () => {
         status: FormStatus.Submitted,
       });
       await expect(
-        entity.submit({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, repositoryMock)
+        entity.submit(
+          { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+          queueTaskServiceMock,
+          repositoryMock
+        )
       ).rejects.toThrow(InvalidOperationError);
     });
   });

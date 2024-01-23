@@ -77,6 +77,7 @@ export const getQueue: RequestHandler = async (req, res, next) => {
     const key = `${namespace}:${name}`;
 
     const [{ queues = {} }] = await req.getConfiguration<TaskServiceConfiguration>();
+
     const queue = queues[key];
     if (!queue) {
       throw new NotFoundError('queue', key);
@@ -303,11 +304,13 @@ export const createTask =
       const { priority, ...task } = req.body;
 
       const queue: QueueEntity = req[QUEUE_KEY];
+
       const entity = await TaskEntity.create(user, repository, queue, {
         tenantId,
         priority: priority ? TaskPriority[priority] : null,
         ...task,
       });
+
       const result = mapTask(apiId, entity);
       res.send(result);
 

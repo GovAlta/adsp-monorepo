@@ -2,6 +2,7 @@ import { adspId, Channel, User } from '@abgov/adsp-service-sdk';
 import { FormServiceRoles } from '../roles';
 import { FormDefinitionEntity } from './definition';
 import { ValidationService } from '@core-services/core-common';
+import { QueueTaskToProcess } from '../types';
 
 describe('FormDefinitionEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -22,6 +23,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
     });
     expect(entity).toBeTruthy();
     expect(validationService.setSchema).toHaveBeenCalledWith(entity.id, expect.any(Object));
@@ -39,6 +41,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
     it('can return true for user with applicant role', () => {
@@ -96,6 +99,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
     it('can return true for user with applicant role', () => {
@@ -120,6 +124,7 @@ describe('FormDefinitionEntity', () => {
         clerkRoles: [],
         dataSchema: null,
         submissionRecords: false,
+        queueTaskToProcess: {} as QueueTaskToProcess,
       });
       const result = anonymousApplyEntity.canApply({
         tenantId,
@@ -161,6 +166,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: { type: 'object' },
       submissionRecords: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
     it('can validate data', () => {
@@ -212,6 +218,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
     it('can create form', async () => {
