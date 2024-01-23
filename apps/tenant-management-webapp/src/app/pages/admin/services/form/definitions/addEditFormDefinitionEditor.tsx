@@ -90,7 +90,7 @@ export const formEditorJsonConfig = {
 };
 
 const invalidJsonMsg = 'Invalid JSON syntax';
-const NO_TASK_CREATED_OPTION = `No Task Created`;
+const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const latestFile = useSelector((state: RootState) => {
@@ -508,7 +508,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </MonacoDivTabBody>
               </Tab>
               <Tab label="Submission configuration" data-testid="submission-configuration">
-                <div>
+                <div style={{ height: EditorHeight + 7 }}>
                   <FlexRow>
                     <SubmissionRecordsBox>
                       <GoACheckbox

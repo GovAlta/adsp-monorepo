@@ -32,7 +32,7 @@ export const InfoCircleWithInlineHelp = ({ text, label, width = 320 }: InfoCircl
     >
       <InlinePadding>
         <InfoCirclePadding>
-          {addLabelText()}
+          {label && addLabelText()}
           <InfoCircle />
         </InfoCirclePadding>
         <div className="triangle-width">
