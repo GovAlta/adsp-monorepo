@@ -49,14 +49,10 @@ describe('form router', () => {
     send: jest.fn(),
   };
 
-  const directoryServiceMock = {
-    getServiceUrl: jest.fn(),
-    getResourceUrl: jest.fn(),
-  };
-
   const queueTaskServiceMock = {
     createTaskForQueueTask: jest.fn(),
   };
+
   const notificationServiceMock = {
     getSubscriber: jest.fn(),
     subscribe: jest.fn(),
@@ -101,11 +97,10 @@ describe('form router', () => {
       serviceId,
       repository: repositoryMock,
       eventService: eventServiceMock,
-      fileService: fileServiceMock,
       notificationService: notificationServiceMock,
-      submissionRepository: repositoryMock,
-      directory: directoryServiceMock,
       queueTaskService: queueTaskServiceMock,
+      fileService: fileServiceMock,
+      submissionRepository: repositoryMock,
     });
     expect(router).toBeTruthy();
   });

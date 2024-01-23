@@ -28,7 +28,6 @@ import {
   FormDisposition,
   FormSubmissionCriteria,
   FormSubmissionTenant,
-  QueueTaskToProcess,
 } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
@@ -44,7 +43,6 @@ import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueTaskDefinition } from '../model/queueTask';
 import { QueueTaskService } from '../../queueTask';
-import { defaultMaxListeners } from 'events';
 
 export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
   return {
@@ -525,7 +523,6 @@ export function deleteForm(
 
 interface FormRouterProps {
   serviceId: AdspId;
-  directory: ServiceDirectory;
   repository: FormRepository;
   eventService: EventService;
   notificationService: NotificationService;
@@ -537,7 +534,6 @@ interface FormRouterProps {
 export function createFormRouter({
   serviceId,
   repository,
-  directory,
   eventService,
   notificationService,
   queueTaskService,

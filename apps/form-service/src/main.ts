@@ -139,7 +139,6 @@ const initializeApp = async (): Promise<express.Application> => {
   applyFormMiddleware(app, {
     ...repositories,
     serviceId,
-    directory,
     logger,
     eventService,
     notificationService,

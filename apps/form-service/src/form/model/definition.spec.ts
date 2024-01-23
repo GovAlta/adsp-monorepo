@@ -41,6 +41,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
     it('can return true for user with applicant role', () => {
