@@ -1,7 +1,7 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom-6';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom-6';
 import {
   AppDispatch,
   configInitializedSelector,
@@ -13,6 +13,7 @@ import {
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
 import { AuthorizeUser } from './AuthorizeUser';
+import { FormDefinition } from './FormDefinition';
 
 export const FormTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -52,7 +53,13 @@ export const FormTenant = () => {
       <FeedbackNotification />
       <main>
         <AuthorizeUser>
-          <section>Signed in to {tenant?.name}</section>
+          <section>
+            <Routes>
+              <Route path={`/:definitionId/*`} element={<FormDefinition />} />
+              <Route path="/" element={<div>{tenant?.name || tenantName}</div>} />
+              <Route path="*" element={<Navigate to={`/${tenantName}`} replace />} />
+            </Routes>
+          </section>
         </AuthorizeUser>
       </main>
     </React.Fragment>
