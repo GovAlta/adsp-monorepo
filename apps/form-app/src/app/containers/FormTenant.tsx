@@ -34,7 +34,7 @@ export const FormTenant = () => {
   return (
     <React.Fragment>
       <GoAMicrositeHeader type="alpha" />
-      <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Task management`}>
+      <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
         {userInitialized && (
           <span>
             <span>{user?.name}</span>

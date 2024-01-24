@@ -21,9 +21,10 @@ export interface Form {
   id: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
   created: Date;
+  submitted?: Date;
 }
 
-type SerializedForm = Omit<Form, 'created'> & { created: string };
+type SerializedForm = Omit<Form, 'created' | 'submitted'> & { created: string; submitted?: string };
 
 interface FormState {
   definitions: Record<string, FormDefinition>;
@@ -386,7 +387,10 @@ export const formSelector = createSelector(
   (state: AppState) => state.form.form,
   (initialized, form) => ({
     initialized,
-    form: initialized && form ? { ...form, created: new Date(form.created) } : null,
+    form:
+      initialized && form
+        ? { ...form, created: new Date(form.created), submitted: form.submitted ? new Date(form.submitted) : null }
+        : null,
   })
 );
 
