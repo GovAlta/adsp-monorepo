@@ -16,17 +16,13 @@ export const StartApplication: FunctionComponent<StartApplicationProps> = ({ def
         <Grid>
           <GridItem md={1} />
           <GridItem md={10}>
-            <Grid>
-              <GridItem md={12} className="center">
-                <div>
-                  <GoAButtonGroup alignment="end">
-                    <GoAButton type="primary" onClick={onStart}>
-                      Start application
-                    </GoAButton>
-                  </GoAButtonGroup>
-                </div>
-              </GridItem>
-            </Grid>
+            <div>
+              <GoAButtonGroup alignment="end">
+                <GoAButton type="primary" onClick={onStart}>
+                  Start application
+                </GoAButton>
+              </GoAButtonGroup>
+            </div>
           </GridItem>
           <GridItem md={1} />
         </Grid>
