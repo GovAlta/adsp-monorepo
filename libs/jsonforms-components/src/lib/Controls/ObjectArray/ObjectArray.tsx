@@ -50,5 +50,5 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
   );
 };
 
-export const ArrayControlTester: RankedTester = rankWith(3, or(isObjectArrayControl, isPrimitiveArrayControl));
-export const ArrayControlRenderer = withJsonFormsArrayLayoutProps(ArrayControl);
+export const GoAArrayControlTester: RankedTester = rankWith(3, or(isObjectArrayControl, isPrimitiveArrayControl));
+export const GoAArrayControlRenderer = withJsonFormsArrayLayoutProps(ArrayControl);

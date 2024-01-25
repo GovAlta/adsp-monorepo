@@ -69,6 +69,8 @@ import {
   GoAEnumControlTester,
   GoAEnumRadioGroupControl,
   GoARadioGroupControlTester,
+  GoAArrayControlTester,
+  GoAArrayControlRenderer,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
@@ -105,6 +107,10 @@ export class Renderers {
     {
       tester: GoARadioGroupControlTester,
       renderer: GoAEnumRadioGroupControl,
+    },
+    {
+      tester: GoAArrayControlTester,
+      renderer: GoAArrayControlRenderer,
     },
     {
       tester: materialOneOfRadioGroupControlTester,
