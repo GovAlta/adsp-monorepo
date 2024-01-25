@@ -18,6 +18,13 @@ export const FETCH_REALM_ROLES = 'FETCH_REALM_ROLES';
 export const FETCH_REALM_ROLES_SUCCESS = 'FETCH_REALM_ROLES_SUCCESS';
 export const UPDATE_ACCESS_TOKEN = 'UPDATE_ACCESS_TOKEN';
 
+/*
+ * The tenant object has a boolean field to indicate whether or not a
+ * user's login attempt was successful.  With an unsuccessful login
+ * the user is redirected to the application's landing page.
+ */
+export const UPDATE_LOGIN_SUCCESS = 'UPDATE_LOGIN_SUCCESS';
+
 interface SelectTenantAction {
   type: typeof SELECT_TENANT;
   payload: string;
@@ -69,6 +76,11 @@ export interface TenantAdminLoginAction {
   payload: string;
 }
 
+export interface UpdateLoginSuccessAction {
+  type: typeof UPDATE_LOGIN_SUCCESS;
+  payload?: boolean;
+}
+
 export interface TenantCreationLoginInitAction {
   type: typeof TENANT_CREATION_LOGIN_INIT;
   payload: string;
@@ -118,7 +130,8 @@ export type ActionType =
   | FetchRealmRolesAction
   | FetchRealmRolesSuccessAction
   | UpdateAccessTokenAction
-  | UpdateTenantCreatedAction;
+  | UpdateTenantCreatedAction
+  | UpdateLoginSuccessAction;
 
 export const SelectTenant = (realm: string): SelectTenantAction => ({
   type: 'SELECT_TENANT',
@@ -162,6 +175,11 @@ export const TenantCreationLoginInit = (idpHint: string): TenantCreationLoginIni
 export const TenantLogin = (realm: string): TenantLoginAction => ({
   type: 'TENANT_LOGIN',
   payload: realm,
+});
+
+export const UpdateLoginSuccess = (value?: boolean): UpdateLoginSuccessAction => ({
+  type: UPDATE_LOGIN_SUCCESS,
+  payload: value,
 });
 
 export const KeycloakCheckSSO = (realm: string): KeycloakCheckSSOAction => ({
