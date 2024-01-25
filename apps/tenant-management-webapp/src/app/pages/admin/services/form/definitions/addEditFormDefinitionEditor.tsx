@@ -59,6 +59,7 @@ import { RowFlex } from './style-components';
 import { UploadFileService, DownloadFileService } from '@store/file/actions';
 import { FetchFileTypeService } from '@store/file/actions';
 import { enumContext, enumerators } from '@abgov/jsonforms-components';
+import { updateFormData } from '@store/form/api';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -91,6 +92,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     return state?.fileService.latestFile;
   });
 
+  const token: string = useSelector((state: RootState) => state.session.credentials.token);
+
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -99,8 +102,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
-  const uploadFile = (file: File) => {
-    const fileInfo = { file: file, type: fileTypes[0]?.id };
+  const uploadFile = (file: File, propertyId: string) => {
+    const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
     dispatch(UploadFileService(fileInfo));
   };
   const downloadFile = (file) => {
@@ -347,8 +350,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
-  const enumValues = new Map<string, () => FileItem>();
-  const enumFunctions = new Map<string, () => (file: File) => void>();
+  const enumValues = new Map<string, () => Record<string, FileItem>>();
+  const enumFunctions = new Map<string, () => (file: File, propertyId: string) => void>();
   enumValues.set('last-file', () => latestFile);
   enumFunctions.set('upload-file', () => uploadFile);
   enumFunctions.set('download-file', () => downloadFile);
@@ -629,6 +632,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 >
                   Back
                 </GoAButton>
+                <GoAButton
+                  testId="form-editor-cancel"
+                  type="secondary"
+                  onClick={() => {
+                    updateFormData(token, definition.id, data);
+                  }}
+                >
+                  Submit data to already existing linked form
+                </GoAButton>
               </GoAButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
@@ -648,7 +660,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             validationMode={'ValidateAndShow'}
                             renderers={renderer.GoARenderers}
                             cells={vanillaCells}
-                            onChange={({ data }) => setData(data)}
+                            onChange={({ data }) => {
+                              console.log(JSON.stringify(data) + '<data=----------------');
+                              setData(data);
+                            }}
                           />
                         ) : (
                           <JsonForms
@@ -657,7 +672,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             validationMode={'ValidateAndShow'}
                             renderers={renderer.GoARenderers}
                             cells={vanillaCells}
-                            onChange={({ data }) => setData(data)}
+                            onChange={({ data }) => {
+                              console.log(JSON.stringify(data) + '<data=----------------');
+                              setData(data);
+                            }}
                           />
                         )}
                       </ErrorBoundary>

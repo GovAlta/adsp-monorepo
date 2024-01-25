@@ -74,17 +74,15 @@ import {
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-
-//import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
 import { createContext } from 'react';
 
 export interface enumerators {
   getters: Map<string, () => any>;
-  functions: Map<string, () => (file: File) => void>;
+  functions: Map<string, () => (file: File, propertyId: string) => void>;
 }
 
 const getters = new Map<string, () => string[]>();
-const functions = new Map<string, () => (file: File) => void>();
+const functions = new Map<string, () => (file: File, propertyId: string) => void>();
 getters.set('first-dropdown', () => ['default', 'values']);
 const defaultEnumerator: enumerators = {
   getters: getters,
@@ -92,7 +90,6 @@ const defaultEnumerator: enumerators = {
 };
 
 export const enumContext = createContext(defaultEnumerator);
-//export const enumContextProvider = enumContext.Provider;
 
 export class Renderers {
   GoARenderers: JsonFormsRendererRegistryEntry[];
@@ -103,8 +100,6 @@ export class Renderers {
       { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
     ];
   }
-
-  // FileUploaderWrapper({ uploadTrigger, downloadTrigger, latestFile })
 
   GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
     // controls

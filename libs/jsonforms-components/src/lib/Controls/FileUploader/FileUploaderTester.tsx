@@ -1,6 +1,6 @@
-import { rankWith, RankedTester, scopeEndsWith } from '@jsonforms/core';
+import { rankWith, RankedTester, schemaTypeIs, and, formatIs } from '@jsonforms/core';
 
-export const FileUploaderTester: RankedTester = rankWith(2, scopeEndsWith('FileUploader'));
+export const FileUploaderTester: RankedTester = rankWith(3, and(schemaTypeIs('string'), formatIs('uri')));
 
 // {
 //   "type": "Control",

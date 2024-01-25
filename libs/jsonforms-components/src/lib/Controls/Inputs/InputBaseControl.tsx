@@ -33,9 +33,6 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const getter = enumerators.getters.get(uischema?.options?.enumContext);
   const values = getter ? getter() : ['null', 'values'];
 
-  console.log(JSON.stringify(uischema) + '<--uischema');
-  console.log(JSON.stringify(uischema?.options?.enumContext) + '<--uischema?.options?.enumContext');
-
   if (uischema?.options?.enumContext) {
     if (typeof values === 'function') {
       console.log('FUNCTION PUTT PUTT: ' + 'values()');
