@@ -534,16 +534,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </FlexRow>
 
                   <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
-                    <>
-                      <InfoCircleWithInlineHelp
-                        label="Task queue to process"
-                        text={
-                          getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
-                            ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
-                            : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
-                        }
-                      />
-                    </>
+                    <InfoCircleWithInlineHelp
+                      initialLabelValue={definition.submissionRecords}
+                      label="Task queue to process"
+                      text={
+                        getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                          ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                          : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                      }
+                    />
 
                     <QueueTaskDropdown>
                       {Object.keys(queueTasks).length > 0 && (
