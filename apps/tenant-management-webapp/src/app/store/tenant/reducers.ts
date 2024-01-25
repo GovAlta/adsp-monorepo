@@ -1,4 +1,4 @@
-import { ActionType } from './actions';
+import { ActionType, UPDATE_LOGIN_SUCCESS } from './actions';
 import { TENANT_INIT, Tenant } from './models';
 
 export default (state = TENANT_INIT, action: ActionType): Tenant => {
@@ -39,6 +39,13 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
         ...state,
         realmRoles: action.payload,
       };
+
+    case UPDATE_LOGIN_SUCCESS: {
+      return {
+        ...state,
+        loginSucceeded: action.payload,
+      };
+    }
 
     default:
       return state;
