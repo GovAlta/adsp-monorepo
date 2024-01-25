@@ -153,13 +153,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dataSchemaJSON: null,
     dataSchemaJSONSchema: null,
   });
-  const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
 
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('json', {
         triggerCharacters: ['"'],
         provideCompletionItems: (model, position) => {
+          const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
           const suggestions = formatEditorSuggestions(dataSchemaSuggestion);
           return {
             suggestions,
@@ -170,7 +170,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         provider.dispose();
       };
     }
-  }, [monaco, dataSchemaSuggestion]);
+  }, [monaco, tempDataSchema]);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
