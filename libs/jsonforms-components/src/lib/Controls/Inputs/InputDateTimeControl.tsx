@@ -15,7 +15,7 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   return (
     <GoAInputDateTime
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-      value={data ? new Date(data).toISOString() : new Date().toISOString()}
+      value={data ? new Date(data).toISOString() : ''}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name, value) => {
         value = new Date(value).toISOString();
