@@ -19,6 +19,7 @@ import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid, GoAIconButton, GoAContainer } from '@abgov/react-components-new';
 import { ToolBarHeader, ObjectArrayTitle } from './styled-components';
+import { capitalizeFirstLetter } from '../../util/stringutils';
 
 // eslint-disable-next-line
 const extractScopesFromUISchema = (uischema: any): string[] => {
@@ -322,8 +323,7 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
 
     const controlElement = uischema as ControlElement;
     // eslint-disable-next-line
-    const listTitle = label || uischema.options?.title;
-
+    const listTitle = capitalizeFirstLetter(label) || capitalizeFirstLetter(uischema.options?.title);
     return (
       <Hidden xsUp={!visible}>
         <div>
