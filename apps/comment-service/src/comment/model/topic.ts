@@ -68,7 +68,7 @@ export class TopicEntity implements Topic {
   }
 
   public canRead(user: User): boolean {
-    return this.type?.canRead(user);
+    return this.type?.canRead(user) || (user && this.commenters.includes(user.id));
   }
 
   public canComment(user: User): boolean {

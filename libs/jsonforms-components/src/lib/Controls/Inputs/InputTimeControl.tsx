@@ -17,6 +17,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data}
       step={1}
+      width="100%"
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name: string, value: string) => handleChange(path, value)}
     />
