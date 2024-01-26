@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect } from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom-6';
 import {
@@ -6,9 +6,10 @@ import {
   busySelector,
   createForm,
   definitionSelector,
-  formSelector,
   findUserForm,
   selectedDefinition,
+  Form as FormObject,
+  userFormSelector,
 } from '../state';
 import { Form } from './Form';
 import { LoadingIndicator } from '../components/LoadingIndicator';
@@ -30,15 +31,25 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
 
   const definition = useSelector(definitionSelector);
   const busy = useSelector(busySelector);
-  const { initialized, form } = useSelector(formSelector);
+  const { form, initialized } = useSelector(userFormSelector);
 
   return (
     <>
-      <LoadingIndicator isLoading={busy.loading} />
-      {!busy.loading && initialized && definition && (
+      <LoadingIndicator isLoading={!initialized} />
+      {initialized && (
         <AuthorizeUser roles={[...definition.applicantRoles, ...definition.clerkRoles]}>
           {!form ? (
-            <StartApplication definition={definition} onStart={() => dispatch(createForm(definitionId))} />
+            <StartApplication
+              definition={definition}
+              canStart={!busy.creating}
+              onStart={async () => {
+                const { payload } = await dispatch(createForm(definitionId));
+                const form = payload as FormObject;
+                if (form?.id) {
+                  navigate(`${form.id}`);
+                }
+              }}
+            />
           ) : (
             <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
           )}
