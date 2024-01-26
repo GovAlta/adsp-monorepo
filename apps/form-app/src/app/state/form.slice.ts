@@ -4,23 +4,7 @@ import axios from 'axios';
 import { debounce } from 'lodash';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
-
-const encoder = new TextEncoder();
-async function hashData(data: unknown) {
-  let result = null;
-  if (data) {
-    const digestOutput = await crypto.subtle.digest('SHA-256', encoder.encode(JSON.stringify(data)));
-    result = await new Promise((resolved) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(new Blob([digestOutput]));
-      reader.onload = (ev) => {
-        const [_, digestBase64] = (ev.target.result as string).split(',');
-        resolved(digestBase64);
-      };
-    });
-  }
-  return result;
-}
+import { hashData } from './util';
 
 export const FORM_FEATURE_KEY = 'form';
 
