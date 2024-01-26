@@ -6,6 +6,8 @@ import {
   isPrimitiveArrayControl,
   or,
   rankWith,
+  uiTypeIs,
+  and,
 } from '@jsonforms/core';
 import { withJsonFormsArrayLayoutProps } from '@jsonforms/react';
 import { ObjectArrayControl } from './ObjectListControl';
@@ -52,3 +54,4 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
 
 export const GoAArrayControlTester: RankedTester = rankWith(3, or(isObjectArrayControl, isPrimitiveArrayControl));
 export const GoAArrayControlRenderer = withJsonFormsArrayLayoutProps(ArrayControl);
+export const GoAListWithDetailsTester: RankedTester = rankWith(3, and(uiTypeIs('ListWithDetails')));

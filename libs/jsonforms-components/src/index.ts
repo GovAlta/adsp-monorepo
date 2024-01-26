@@ -71,6 +71,7 @@ import {
   GoARadioGroupControlTester,
   GoAArrayControlTester,
   GoAArrayControlRenderer,
+  GoAListWithDetailsTester,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
@@ -110,6 +111,10 @@ export class Renderers {
     },
     {
       tester: GoAArrayControlTester,
+      renderer: GoAArrayControlRenderer,
+    },
+    {
+      tester: GoAListWithDetailsTester,
       renderer: GoAArrayControlRenderer,
     },
     {

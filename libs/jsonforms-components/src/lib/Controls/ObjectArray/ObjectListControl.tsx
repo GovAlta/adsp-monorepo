@@ -74,6 +74,7 @@ const getValidColumnProps = (scopedSchema: JsonSchema) => {
   if (scopedSchema.type === 'object' && typeof scopedSchema.properties === 'object') {
     return Object.keys(scopedSchema.properties).filter((prop) => scopedSchema.properties[prop].type !== 'array');
   }
+  // primitives
   return [''];
 };
 
@@ -319,7 +320,6 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
     } = this.props;
 
     const controlElement = uischema as ControlElement;
-    const isObjectSchema = schema.type === 'object';
     // eslint-disable-next-line
     const listTitle = label || uischema.options?.title;
 
