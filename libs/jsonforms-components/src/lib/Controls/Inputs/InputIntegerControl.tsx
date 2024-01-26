@@ -18,6 +18,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
   return (
     <GoAInputNumber
+      width="100%"
       disabled={!enabled}
       value={InputValue}
       step={StepValue}
