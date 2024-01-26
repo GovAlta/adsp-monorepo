@@ -8,6 +8,7 @@ import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@j
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { ReviewItem } from './styled-components';
 import { JsonFormsDispatch } from '@jsonforms/react';
+import { capitalizeFirstLetter } from '../../util/stringutils';
 
 export interface FunObject {
   elements: Array<string>;
@@ -68,7 +69,7 @@ export const FormStepper = ({
           const count = flattedStep.filter((e) => {
             return e?.toString().substring(0, 12) === '#/properties';
           }).length;
-          return <GoAFormStep key={index} text={`${category.label}`} />;
+          return <GoAFormStep key={index} text={`${capitalizeFirstLetter(category.label)}`} />;
         })}
         <GoAFormStep text="Review" />
       </GoAFormStepper>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { GoAFormItem, GoADetails } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
+import { capitalizeFirstLetter } from '../../util/stringutils';
 
 export type GoAInputType =
   | 'text'
@@ -31,7 +32,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   return (
     <GoAFormItem
       error={errors}
-      label={label}
+      label={capitalizeFirstLetter(label)}
       helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
     >
       {(!uischema.options?.variant || uischema.options?.variant !== 'details') &&
