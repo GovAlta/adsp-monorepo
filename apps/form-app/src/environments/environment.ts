@@ -8,6 +8,6 @@ export const environment = {
   },
   access: {
     url: 'https://access.adsp-dev.gov.ab.ca',
-    client_id: 'urn:ads:platform:task-app',
+    client_id: 'urn:ads:platform:form-app',
   },
 };

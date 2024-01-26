@@ -68,17 +68,18 @@ export const FormStepper = ({
           const count = flattedStep.filter((e) => {
             return e?.toString().substring(0, 12) === '#/properties';
           }).length;
-          return <GoAFormStep text={`${category.label}`} />;
+          return <GoAFormStep key={index} text={`${category.label}`} />;
         })}
         <GoAFormStep text="Review" />
       </GoAFormStepper>
       <GoAPages current={step} mb="xl">
         {uiSchema.elements?.map((step, index) => {
           return (
-            <div>
-              {step.elements.map((fieldUiSchema) => {
+            <div key={index}>
+              {step.elements.map((fieldUiSchema, index) => {
                 return (
                   <JsonFormsDispatch
+                    key={index}
                     schema={schema}
                     uischema={fieldUiSchema}
                     renderers={renderers}
