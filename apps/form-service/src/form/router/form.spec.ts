@@ -23,6 +23,7 @@ describe('form router', () => {
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     submissionRecords: false,
+    supportTopic: true,
     clerkRoles: [],
     dataSchema: null,
     queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
@@ -65,6 +66,10 @@ describe('form router', () => {
     delete: jest.fn(),
   };
 
+  const commentServiceMock = {
+    createSupportTopic: jest.fn(),
+  };
+
   const formInfo = {
     id: 'test-form',
     formDraftUrl: 'https://my-form/test-form',
@@ -90,6 +95,7 @@ describe('form router', () => {
     notificationServiceMock.sendCode.mockReset();
     notificationServiceMock.verifyCode.mockReset();
     eventServiceMock.send.mockReset();
+    commentServiceMock.createSupportTopic.mockClear();
   });
 
   it('can create router', () => {
@@ -100,6 +106,7 @@ describe('form router', () => {
       notificationService: notificationServiceMock,
       queueTaskService: queueTaskServiceMock,
       fileService: fileServiceMock,
+      commentService: commentServiceMock,
       submissionRepository: repositoryMock,
     });
     expect(router).toBeTruthy();
@@ -279,7 +286,7 @@ describe('form router', () => {
 
   describe('createForm', () => {
     it('can create handler', () => {
-      const handler = createForm(apiId, repositoryMock, eventServiceMock, notificationServiceMock);
+      const handler = createForm(apiId, repositoryMock, eventServiceMock, notificationServiceMock, commentServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -305,11 +312,12 @@ describe('form router', () => {
       req.getConfiguration.mockResolvedValueOnce([configuration]);
       notificationServiceMock.subscribe.mockResolvedValueOnce(subscriber);
 
-      const handler = createForm(apiId, repositoryMock, eventServiceMock, notificationServiceMock);
+      const handler = createForm(apiId, repositoryMock, eventServiceMock, notificationServiceMock, commentServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Draft }));
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
+      expect(commentServiceMock.createSupportTopic).toHaveBeenCalledTimes(1);
     });
 
     it('can call next with unauthorized user', async () => {
@@ -333,7 +341,7 @@ describe('form router', () => {
       const configuration = { test: definition };
       req.getConfiguration.mockResolvedValueOnce([configuration]);
 
-      const handler = createForm(apiId, repositoryMock, eventServiceMock, notificationServiceMock);
+      const handler = createForm(apiId, repositoryMock, eventServiceMock, notificationServiceMock, commentServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -360,7 +368,7 @@ describe('form router', () => {
       const configuration = { test: definition };
       req.getConfiguration.mockResolvedValueOnce([configuration]);
 
-      const handler = createForm(apiId, repositoryMock, eventServiceMock, notificationServiceMock);
+      const handler = createForm(apiId, repositoryMock, eventServiceMock, notificationServiceMock, commentServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
