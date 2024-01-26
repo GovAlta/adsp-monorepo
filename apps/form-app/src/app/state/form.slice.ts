@@ -240,7 +240,7 @@ export const saveForm = createAsyncThunk(
         const formServiceUrl = config.directory[FORM_SERVICE_ID];
 
         const update = { data: form.data, files: form.files };
-        let digest = await hashData({ id: formId, ...update });
+        const digest = await hashData({ id: formId, ...update });
 
         if (digest === form.saved) {
           dispatch(formActions.setSaving(false));
