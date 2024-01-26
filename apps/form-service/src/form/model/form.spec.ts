@@ -18,6 +18,7 @@ describe('FormEntity', () => {
     description: null,
     anonymousApply: true,
     submissionRecords: false,
+    supportTopic: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     clerkRoles: ['test-clerk'],
