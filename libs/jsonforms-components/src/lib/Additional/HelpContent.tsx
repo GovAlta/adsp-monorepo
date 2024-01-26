@@ -1,7 +1,18 @@
 import React from 'react';
-import { LabelProps, RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-import { withJsonFormsLabelProps } from '@jsonforms/react';
+import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
+
 import { GoADetails } from '@abgov/react-components-new';
+
+export interface LabelProps {
+  uischema: {
+    label?: string;
+    options?: {
+      ariaLabel?: string;
+      help?: string | { content?: string | string[]; variant?: string };
+      variant?: string;
+    };
+  };
+}
 
 export const HelpContent = (props: LabelProps): JSX.Element => {
   // eslint-disable-next-line
@@ -10,15 +21,15 @@ export const HelpContent = (props: LabelProps): JSX.Element => {
 
   return (
     <div aria-label={uischema.options?.ariaLabel}>
-      <h4>{uischema?.options?.label}</h4>
+      <h4>{uischema?.label}</h4>
       {typeof uischema?.options?.help === 'string' && <p>{uischema?.options?.help}</p>}
       {(!uischema.options?.variant || uischema.options?.variant !== 'details') &&
-        typeof uischema?.options?.help?.content === 'string' && <p>{uischema?.options?.help?.content}</p>}
+        typeof uischema?.options?.help === 'string' && <p>{uischema?.options?.help}</p>}
 
       {uischema.options?.variant &&
         uischema.options?.variant === 'details' &&
         typeof uischema?.options?.help === 'object' && (
-          <GoADetails heading={uischema?.options?.help?.label}>
+          <GoADetails heading={uischema?.label ? uischema?.label : ''}>
             {Array.isArray(uischema?.options?.help?.content) ? (
               <ul>
                 {uischema?.options?.help?.content.map((line: string, index: number) => (
@@ -34,5 +45,3 @@ export const HelpContent = (props: LabelProps): JSX.Element => {
   );
 };
 export const HelpContentTester: RankedTester = rankWith(1, uiTypeIs('HelpContent'));
-
-export default withJsonFormsLabelProps(HelpContent);
