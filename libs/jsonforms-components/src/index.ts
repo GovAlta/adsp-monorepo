@@ -69,10 +69,13 @@ import {
   GoAEnumControlTester,
   GoAEnumRadioGroupControl,
   GoARadioGroupControlTester,
+  GoAArrayControlTester,
+  GoAArrayControlRenderer,
+  GoAListWithDetailsTester,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
-
+import { HelpContent, HelpContentTester } from './lib/Additional';
 import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
 
 export class Renderers {
@@ -105,6 +108,14 @@ export class Renderers {
     {
       tester: GoARadioGroupControlTester,
       renderer: GoAEnumRadioGroupControl,
+    },
+    {
+      tester: GoAArrayControlTester,
+      renderer: GoAArrayControlRenderer,
+    },
+    {
+      tester: GoAListWithDetailsTester,
+      renderer: GoAArrayControlRenderer,
     },
     {
       tester: materialOneOfRadioGroupControlTester,
@@ -147,6 +158,10 @@ export class Renderers {
     {
       tester: MultiLineTextControlTester,
       renderer: MultiLineTextControl,
+    },
+    {
+      tester: HelpContentTester,
+      renderer: HelpContent,
     },
   ];
 

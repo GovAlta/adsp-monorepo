@@ -5,10 +5,11 @@ import { FormDefinition } from '../state';
 
 interface StartApplicationProps {
   definition: FormDefinition;
+  canStart: boolean;
   onStart: () => void;
 }
 
-export const StartApplication: FunctionComponent<StartApplicationProps> = ({ definition, onStart }) => {
+export const StartApplication: FunctionComponent<StartApplicationProps> = ({ definition, canStart, onStart }) => {
   return (
     <div>
       <Band title="Start a new application">Start your application for {definition.name}.</Band>
@@ -16,17 +17,13 @@ export const StartApplication: FunctionComponent<StartApplicationProps> = ({ def
         <Grid>
           <GridItem md={1} />
           <GridItem md={10}>
-            <Grid>
-              <GridItem md={12} className="center">
-                <div>
-                  <GoAButtonGroup alignment="end">
-                    <GoAButton type="primary" onClick={onStart}>
-                      Start application
-                    </GoAButton>
-                  </GoAButtonGroup>
-                </div>
-              </GridItem>
-            </Grid>
+            <div>
+              <GoAButtonGroup alignment="end">
+                <GoAButton type="primary" disabled={!canStart} onClick={onStart}>
+                  Start application
+                </GoAButton>
+              </GoAButtonGroup>
+            </div>
           </GridItem>
           <GridItem md={1} />
         </Grid>

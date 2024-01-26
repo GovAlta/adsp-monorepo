@@ -10,19 +10,29 @@ export interface InfoCircleWithInlineHelpProps {
   text: string;
   width?: number;
   label?: string;
+  initialLabelValue?: boolean;
 }
 
-export const InfoCircleWithInlineHelp = ({ text, label, width = 320 }: InfoCircleWithInlineHelpProps): JSX.Element => {
+export const InfoCircleWithInlineHelp = ({
+  text,
+  label,
+  initialLabelValue = false,
+  width = 320,
+}: InfoCircleWithInlineHelpProps): JSX.Element => {
   const [viewSubmissionInclineHelp, setViewSubmissionInclineHelp] = useState<boolean>(false);
 
-  const addLabelText = () => {
-    return (
-      <>
-        <DropDownLabelStyle>{label ? `${label}  ` : null}</DropDownLabelStyle>
-      </>
-    );
-  };
+  const displayInfoCircle = (): JSX.Element => {
+    if (label) {
+      return (
+        <>
+          <DropDownLabelStyle>{label ? `${label}  ` : null}</DropDownLabelStyle>
+          {initialLabelValue ? <InfoCircle /> : null}
+        </>
+      );
+    }
 
+    return <InfoCircle />;
+  };
   return (
     <div
       className="info-circle"
@@ -31,10 +41,7 @@ export const InfoCircleWithInlineHelp = ({ text, label, width = 320 }: InfoCircl
       }}
     >
       <InlinePadding>
-        <InfoCirclePadding>
-          {label && addLabelText()}
-          <InfoCircle />
-        </InfoCirclePadding>
+        <InfoCirclePadding>{displayInfoCircle()}</InfoCirclePadding>
         <div className="triangle-width">
           {viewSubmissionInclineHelp && (
             <div className="bubble-helper">

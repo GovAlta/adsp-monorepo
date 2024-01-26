@@ -4,7 +4,6 @@ import {
   DomainEvent,
   EventService,
   isAllowedUser,
-  ServiceDirectory,
   startBenchmark,
   UnauthorizedUserError,
 } from '@abgov/adsp-service-sdk';
@@ -24,7 +23,6 @@ import { FormServiceRoles } from '../roles';
 import {
   Form,
   FormCriteria,
-  FormDefinition,
   FormDisposition,
   FormSubmissionCriteria,
   FormSubmissionTenant,
@@ -41,10 +39,10 @@ import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
-import { QueueTaskDefinition } from '../model/queueTask';
 import { QueueTaskService } from '../../queueTask';
+import { CommentService } from '../comment';
 
-export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
+export function mapFormDefinition(entity: FormDefinitionEntity) {
   return {
     id: entity.id,
     name: entity.name,
@@ -56,9 +54,6 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     formDraftUrlTemplate: entity.formDraftUrlTemplate,
     dataSchema: entity.dataSchema,
     uiSchema: entity.uiSchema,
-    dispositionStates: entity.dispositionStates,
-    submissionRecords: entity.submissionRecords,
-    queueTaskToProcess: entity.queueTaskToProcess,
   };
 }
 
@@ -263,7 +258,8 @@ export function createForm(
   apiId: AdspId,
   repository: FormRepository,
   eventService: EventService,
-  notificationService: NotificationService
+  notificationService: NotificationService,
+  commentService: CommentService
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -281,9 +277,13 @@ export function createForm(
       const form = await definition.createForm(user, repository, notificationService, applicantInfo);
 
       end();
-      res.send(mapForm(apiId, form));
+      const result = mapForm(apiId, form);
+      res.send(result);
 
       eventService.send(formCreated(user, form));
+      if (definition.supportTopic) {
+        commentService.createSupportTopic(form, result.urn);
+      }
     } catch (err) {
       next(err);
     }
@@ -523,6 +523,7 @@ interface FormRouterProps {
   notificationService: NotificationService;
   queueTaskService: QueueTaskService;
   fileService: FileService;
+  commentService: CommentService;
   submissionRepository: FormSubmissionRepository;
 }
 
@@ -533,6 +534,7 @@ export function createFormRouter({
   notificationService,
   queueTaskService,
   fileService,
+  commentService,
   submissionRepository,
 }: FormRouterProps): Router {
   const apiId = adspId`${serviceId}:v1`;
@@ -615,7 +617,7 @@ export function createFormRouter({
       body('applicant.userId').optional().isString(),
       body('applicant.channels').optional().isArray()
     ),
-    createForm(apiId, repository, eventService, notificationService)
+    createForm(apiId, repository, eventService, notificationService, commentService)
   );
 
   router.get('/forms/:formId', createValidationHandler(param('formId').isUUID()), getForm(repository), (req, res) =>

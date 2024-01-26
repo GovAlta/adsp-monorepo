@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
+import { Dispatch, createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
 import axios from 'axios';
 import keycloak, { KeycloakInstance } from 'keycloak-js';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,7 +27,7 @@ export interface UserState {
 }
 
 let client: KeycloakInstance;
-async function initializeKeycloakClient(realm: string, config: ConfigState) {
+async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
   if (client?.realm !== realm) {
     client = keycloak({
       url: `${config.environment.access.url}/auth`,
@@ -35,11 +35,18 @@ async function initializeKeycloakClient(realm: string, config: ConfigState) {
       realm,
     });
 
-    await client.init({
-      onLoad: 'check-sso',
-      pkceMethod: 'S256',
-      silentCheckSsoRedirectUri: new URL('/silent-check-sso.html', window.location.href).href,
-    });
+    try {
+      await client.init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        silentCheckSsoRedirectUri: new URL('/silent-check-sso.html', window.location.href).href,
+      });
+      client.onAuthLogout = () => {
+        dispatch(userActions.clearUser());
+      };
+    } catch (err) {
+      // Keycloak client throws undefined in certain cases.
+    }
   }
 
   return client;
@@ -87,34 +94,37 @@ export const initializeTenant = createAsyncThunk(
   }
 );
 
-export const initializeUser = createAsyncThunk('user/initialize-user', async (tenant: Tenant, { getState }) => {
-  const { config } = getState() as AppState;
+export const initializeUser = createAsyncThunk(
+  'user/initialize-user',
+  async (tenant: Tenant, { getState, dispatch }) => {
+    const { config } = getState() as AppState;
 
-  const client = await initializeKeycloakClient(tenant.realm, config);
-  if (client.tokenParsed) {
-    return {
-      id: client.tokenParsed.sub,
-      name: client.tokenParsed['preferred_username'] || client.tokenParsed['email'],
-      email: client.tokenParsed['email'],
-      roles: Object.entries(client.tokenParsed.resource_access || {}).reduce(
-        (roles, [client, clientAccess]) => [
-          ...roles,
-          ...(clientAccess.roles?.map((clientRole) => `${client}:${clientRole}`) || []),
-        ],
-        client.tokenParsed.realm_access?.roles || []
-      ),
-    };
-  } else {
-    return null;
+    const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+    if (client.tokenParsed) {
+      return {
+        id: client.tokenParsed.sub,
+        name: client.tokenParsed['preferred_username'] || client.tokenParsed['email'],
+        email: client.tokenParsed['email'],
+        roles: Object.entries(client.tokenParsed.resource_access || {}).reduce(
+          (roles, [client, clientAccess]) => [
+            ...roles,
+            ...(clientAccess.roles?.map((clientRole) => `${client}:${clientRole}`) || []),
+          ],
+          client.tokenParsed.realm_access?.roles || []
+        ),
+      };
+    } else {
+      return null;
+    }
   }
-});
+);
 
 export const loginUser = createAsyncThunk(
   'user/login',
-  async ({ tenant, from }: { tenant: Tenant; from: string }, { getState }) => {
+  async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
     const { config } = getState() as AppState;
 
-    const client = await initializeKeycloakClient(tenant.realm, config);
+    const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
     await client.login({
       idpHint: 'core',
       redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
@@ -126,10 +136,10 @@ export const loginUser = createAsyncThunk(
 
 export const logoutUser = createAsyncThunk(
   'user/logout',
-  async ({ tenant, from }: { tenant: Tenant; from: string }, { getState }) => {
+  async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
     const { config } = getState() as AppState;
 
-    const client = await initializeKeycloakClient(tenant.realm, config);
+    const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
     await client.logout({
       redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
     });
@@ -145,7 +155,11 @@ const initialUserState: UserState = {
 const userSlice = createSlice({
   name: USER_FEATURE_KEY,
   initialState: initialUserState,
-  reducers: {},
+  reducers: {
+    clearUser: (state) => {
+      state.user = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(initializeTenant.fulfilled, (state, { payload }) => {
@@ -170,6 +184,7 @@ const userSlice = createSlice({
 });
 
 export const userReducer = userSlice.reducer;
+export const userActions = userSlice.actions;
 
 export const tenantSelector = (state: AppState) => state.user.tenant;
 

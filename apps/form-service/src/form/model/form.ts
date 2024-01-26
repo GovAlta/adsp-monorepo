@@ -301,14 +301,16 @@ export class FormEntity implements Form {
   }
 }
 const createQueueTaskDefinition = (form: Form) => {
-  const { queueNameSpace, queueName } = form.definition.queueTaskToProcess;
+  const { queueNameSpace } = form.definition.queueTaskToProcess;
+  const { name: definitionName } = form.definition;
+
   return {
     id: '',
-    name: form.id,
+    name: 'Process form submission',
     namespace: queueNameSpace,
     createdOn: '',
     priority: 'Normal',
-    description: `Task for form submission ID: ${form.submissionId}`,
-    recordId: `${queueNameSpace}:${queueName}`,
+    description: `Process form '${definitionName}' (ID: ${form.id}) submission: (${form.submissionId})`,
+    recordId: `urn:ads:platform:form-service:v1:/forms/${form.id}/submissions/${form.submissionId}`,
   } as QueueTaskDefinition;
 };
