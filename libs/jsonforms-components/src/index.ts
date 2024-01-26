@@ -72,7 +72,7 @@ import {
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
-
+import { HelpContent, HelpContentTester } from './lib/Additional';
 import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
 
 export class Renderers {
@@ -147,6 +147,10 @@ export class Renderers {
     {
       tester: MultiLineTextControlTester,
       renderer: MultiLineTextControl,
+    },
+    {
+      tester: HelpContentTester,
+      renderer: HelpContent,
     },
   ];
 
