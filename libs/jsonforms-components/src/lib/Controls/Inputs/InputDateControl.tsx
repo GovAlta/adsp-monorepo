@@ -14,6 +14,7 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
 
   return (
     <GoAInputDate
+      width="100%"
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data ? new Date(data).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10)}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}

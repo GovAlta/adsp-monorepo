@@ -29,7 +29,7 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
       }}
     >
       {enumData.map((item) => {
-        return <GoADropdownItem value={`${item}`} label={`${item}`} />;
+        return <GoADropdownItem key={`json-form-dropdown-${item}`} value={`${item}`} label={`${item}`} />;
       })}
     </GoADropdown>
   );

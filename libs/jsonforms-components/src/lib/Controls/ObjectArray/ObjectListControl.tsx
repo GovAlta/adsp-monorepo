@@ -173,6 +173,7 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
         (uischema as unknown as any)?.elements?.map((element) => {
           return (
             <JsonFormsDispatch
+              key={rowPath}
               schema={schema}
               uischema={element}
               path={rowPath}

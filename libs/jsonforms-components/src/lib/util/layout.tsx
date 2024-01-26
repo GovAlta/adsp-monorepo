@@ -24,6 +24,7 @@ export const renderLayoutElements = (
       <JsonFormsDispatch
         uischema={child}
         schema={schema}
+        key={path}
         path={path}
         enabled={enabled}
         renderers={renderers}
