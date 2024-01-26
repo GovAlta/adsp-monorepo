@@ -36,7 +36,7 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
   return (
     <>
       <LoadingIndicator isLoading={!initialized} />
-      {initialized && (
+      {initialized && definition && (
         <AuthorizeUser roles={[...definition.applicantRoles, ...definition.clerkRoles]}>
           {!form ? (
             <StartApplication
