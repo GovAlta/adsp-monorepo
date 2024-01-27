@@ -73,3 +73,59 @@ Feature: Comment
     When the user clicks "Edit" button for the topic type of "autotest-topicTypesAccessibility", "Protected A"
     Then the user views topic type editor for "autotest-topicTypesAccessibility"
     And no critical or serious accessibility issues on "comment topic type editor page"
+
+  # TEST DATA: a topic type called "autotest-autoTopicType" is created with more than 10 but less than 20 pre-created topics to test Load more button
+  # TEST DATA: a topic called "autotest-submission001" with resource id of "auto-001" under topic type of "autotest-autoTopicType" has more than 10 comments to test Load more button
+  @TEST_CS-2655 @TEST_CS-2677 @TEST_CS-2696 @TEST_CS-2692 @TEST_CS-2691 @REQ_CS-2549 @REQ_CS-2535 @REQ_CS-2550 @REQ_CS-2551 @REQ_CS-2536 @regression
+  Scenario: As a tenant admin, I can add, view and delete topics and comments
+    Given a tenant admin user is on comment service overview page
+    When the user selects "Comments" tab for "Comment"
+    # Add topic
+    And the user selects "autotest-autoTopicType" in Select a topic type dropdown
+    Then the user views a topic list
+    When the user clicks Add topic type button on comments page
+    Then the user views Add topic modal
+    When the user enters "autotest-addDeleteTopic", "autotest topic desc", "autotest123" in Add topic modal
+    And the user clicks Save button in Add topic modal
+    # View topic with Load more button
+    And the user clicks Load more button for topic list
+    Then the user views more than 10 topics
+    And the user "views" a topic of "autotest-addDeleteTopic", "autotest123"
+    When the user clicks "eye" icon for the topic of "autotest-addDeleteTopic", "autotest123"
+    Then the user views the description of "autotest topic desc" for the topic of "autotest-addDeleteTopic", "autotest123"
+    And the user views the message of No comments found for the topic of "autotest-addDeleteTopic", "autotest123"
+    # Add comment
+    When the user clicks Add comment button for the topic
+    Then the user views Add comment modal
+    When the user enters "Comment number one" as comment
+    And the user clicks Save button in Add comment modal
+    Then the user views "Comment number one" with user info and current timestamp
+    # Edit comment
+    When the user clicks "edit" icon for the comment of "Comment number one"
+    Then the user views Edit comment modal
+    When the user enters "Comment number one edited" in Edit comment modal
+    And the user clicks Save button in Edit comment modal
+    Then the user views "Comment number one edited" with user info and current timestamp
+    # Add another comment after one minute and check sorting
+    When the user waits "60" seconds
+    When the user clicks Add comment button for the topic
+    Then the user views Add comment modal
+    When the user enters "Comment number two" as comment
+    And the user clicks Save button in Add comment modal
+    Then the user views "Comment number two" with user info and current timestamp
+    And the user views "Comment number two" shows on top of "Comment number one edited"
+    # Delete comment
+    When the user clicks "delete" icon for the comment of "Comment number two"
+    Then the user views Delete comment modal for "Comment number two"
+    When the user clicks Delete button in Delete comment modal
+    Then the user "should not view" the comment of "Comment number two"
+    # Delete topic
+    When the user clicks "delete" icon for the topic of "autotest-addDeleteTopic", "autotest123"
+    Then the user views Delete topic modal for "autotest-addDeleteTopic"
+    When the user clicks Delete button in Delete topic modal
+    Then the user "should not view" a topic of "autotest-addDeleteTopic", "autotest123"
+    # Load more button for comments
+    When the user clicks "eye" icon for the topic of "autotest-submission001", "auto-001"
+    Then the user views "10" comments
+    When the user clicks View older comments button
+    Then the user views more than "10" comments

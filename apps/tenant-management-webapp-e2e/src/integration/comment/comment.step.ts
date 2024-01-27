@@ -505,3 +505,318 @@ Then(
     }
   }
 );
+
+When('the user selects {string} in Select a topic type dropdown', function (dropdownItemName) {
+  commentObj.selectTopicTypeDropdown().shadow().find('goa-input').click({ force: true });
+  commentObj.selectTopicTypeDropdown().shadow().find('li').contains(dropdownItemName).click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views a topic list', function () {
+  commentObj.topicTable().should('be.visible');
+});
+
+When('the user clicks Add topic type button on comments page', function () {
+  commentObj.addTopicButton().shadow().find('button').click({ force: true });
+});
+
+Then('the user views Add topic modal', function () {
+  commentObj.addTopicModalHeading().invoke('text').should('eq', 'Add topic');
+});
+
+When(
+  'the user enters {string}, {string}, {string} in Add topic modal',
+  function (topicName, topicDesc, topicResourceId) {
+    commentObj.addTopicModalName().shadow().find('input').clear().type(topicName, { force: true, delay: 200 });
+    commentObj.addTopicModalDesc().shadow().find('.goa-textarea').clear().type(topicDesc, { force: true, delay: 100 });
+    commentObj
+      .addTopicModalResourceId()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(topicResourceId, { force: true, delay: 100 });
+  }
+);
+
+When('the user clicks Save button in Add topic modal', function () {
+  commentObj.addTopicModalSaveBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+When('the user clicks Load more button for topic list', function () {
+  commentObj.topicLoadMoreButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views more than 10 topics', function () {
+  commentObj.topicTableRows().should('have.length.above', 10);
+});
+
+Then('the user {string} a topic of {string}, {string}', function (viewOrNot, name, resourceId) {
+  findTopic(name, resourceId).then((rowNumber) => {
+    switch (viewOrNot) {
+      case 'views':
+        expect(rowNumber).to.be.greaterThan(0, 'Topic of ' + name + ', ' + resourceId + ' has row #' + rowNumber);
+        break;
+      case 'should not view':
+        expect(rowNumber).to.equal(0, 'Topic of ' + name + ', ' + resourceId + ', ' + ' has row #' + rowNumber);
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  });
+});
+
+//Find a topic with name, resource id
+//Input: name, resource id
+//Return: row number if a record is found; zero if record isn't found
+function findTopic(name, id) {
+  return new Cypress.Promise((resolve, reject) => {
+    try {
+      let rowNumber = 0;
+      const targetedNumber = 2; // number of cells need to match to find the record
+      commentObj
+        .topicTableBody()
+        .find('tr')
+        .then((rows) => {
+          rows.toArray().forEach((rowElement) => {
+            let counter = 0;
+            if (rowElement.cells.length == 3) {
+              // only check rows with 3 cells (exclude details row)
+              // cy.log(rowElement.cells[0].innerHTML); // Print out the name cell innerHTML for debug purpose
+              if (rowElement.cells[0].innerHTML.includes(name)) {
+                counter = counter + 1;
+              }
+              // cy.log(rowElement.cells[1].innerHTML); // Print out the description cell innerHTML for debug purpose
+              if (rowElement.cells[1].innerHTML.includes(id)) {
+                counter = counter + 1;
+              }
+              Cypress.log({
+                name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
+                message: String(String(counter)),
+              });
+            }
+            if (counter == targetedNumber) {
+              rowNumber = rowElement.rowIndex;
+            }
+          });
+          Cypress.log({
+            name: 'Row number for the found record: ',
+            message: String(rowNumber),
+          });
+          resolve(rowNumber);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+When('the user clicks {string} icon for the topic of {string}, {string}', function (iconName, name, resourceId) {
+  findTopic(name, resourceId).then((rowNumber) => {
+    switch (iconName) {
+      case 'eye':
+        commentObj.topicEyeIcon(rowNumber).shadow().find('button').click({ force: true });
+        cy.wait(2000);
+        break;
+      case 'eye-off':
+        commentObj.topicEyeOffIcon(rowNumber).shadow().find('button').click({ force: true });
+        break;
+      case 'delete':
+        commentObj.topicDeleteIcon(rowNumber).shadow().find('button').click({ force: true });
+        break;
+      default:
+        expect(iconName).to.be.oneOf(['eye', 'eye-off', 'delete']);
+    }
+  });
+});
+
+Then(
+  'the user views the description of {string} for the topic of {string}, {string}',
+  function (desc, name, resourceId) {
+    findTopic(name, resourceId).then((rowNumber) => {
+      const topicDetailsRowNumber = (Number(rowNumber) + 1).toString();
+      commentObj.topicDescription(topicDetailsRowNumber).should('contain', desc);
+    });
+  }
+);
+
+Then(
+  'the user views the message of No comments found for the topic of {string}, {string}',
+  function (name, resourceId) {
+    findTopic(name, resourceId).then((rowNumber) => {
+      const topicDetailsRowNumber = (Number(rowNumber) + 1).toString();
+      commentObj.topicDetailsNoCommentsFoundMessage(topicDetailsRowNumber).should('exist');
+    });
+  }
+);
+
+When('the user clicks Add comment button for the topic', function () {
+  commentObj.addCommentButton().shadow().find('button').click({ force: true });
+});
+
+Then('the user views Add comment modal', function () {
+  commentObj.addCommentModalHeading().invoke('text').should('eq', 'Add comment');
+});
+
+When('the user enters {string} as comment', function (comment) {
+  commentObj
+    .addCommentModalComment()
+    .shadow()
+    .find('.goa-textarea')
+    .clear({ force: true })
+    .type(comment, { force: true, delay: 200 });
+});
+
+When('the user clicks Save button in Add comment modal', function () {
+  commentObj.addCommentModalSaveBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views {string} with user info and current timestamp', function (comment) {
+  commentObj.commentContent(comment).should('exist');
+  commentObj
+    .commentUser(comment)
+    .invoke('text')
+    .then((user) => {
+      expect(user).to.contain('Auto Test');
+    });
+  commentObj
+    .commentDateTime(comment)
+    .invoke('text')
+    .then((dateTimeString) => {
+      // verify that the comment date time is within the last 60 seconds
+      const commentDateTimeStringArray = dateTimeString.split(',');
+      const commentDate = commentDateTimeStringArray[0].trim();
+      const commentTime = commentDateTimeStringArray[1].trim();
+      const commentDateTime = new Date(commentDate + ', ' + commentTime);
+      Cypress.log({
+        name: 'Comment time : ',
+        message: commentDateTime.toLocaleString(),
+      });
+      const nowDateTime = new Date();
+      Cypress.log({
+        name: 'Current time : ',
+        message: nowDateTime.toLocaleString(),
+      });
+      const millisecondDifference = nowDateTime.getTime() - commentDateTime.getTime();
+      expect(millisecondDifference).to.be.lt(60000); // Comment time is less than 60 seconds ago
+    });
+});
+
+When('the user clicks {string} icon for the comment of {string}', function (iconName, comment) {
+  findComment(comment).then((rowNumber) => {
+    switch (iconName) {
+      case 'edit':
+        commentObj.commentEditIcon(rowNumber).shadow().find('button').click({ force: true });
+        break;
+      case 'delete':
+        commentObj.commentDeleteIcon(rowNumber).shadow().find('button').click({ force: true });
+        break;
+      default:
+        expect(iconName).to.be.oneOf(['edit', 'delete']);
+    }
+  });
+});
+
+//Find a comment with content
+//Input: comment content
+//Return: row number if a record is found; zero if record isn't found
+function findComment(comment) {
+  return new Cypress.Promise((resolve, reject) => {
+    try {
+      let rowNumber = 0;
+      commentObj
+        .commentsListContents()
+        .then((contents) => {
+          for (let i = 0; i < contents.length; i++) {
+            if (contents[i].innerHTML.includes(comment)) {
+              rowNumber = i + 1;
+              break;
+            }
+          }
+        })
+        .then(() => {
+          Cypress.log({
+            name: 'Row number for the found record: ',
+            message: String(rowNumber),
+          });
+          resolve(rowNumber);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+Then('the user views Edit comment modal', function () {
+  commentObj.editCommentModalHeading().invoke('text').should('eq', 'Edit comment');
+});
+
+When('the user enters {string} in Edit comment modal', function (content) {
+  commentObj
+    .editCommentModalComment()
+    .shadow()
+    .find('.goa-textarea')
+    .clear({ force: true })
+    .type(content, { force: true, delay: 200 });
+});
+
+When('the user clicks Save button in Edit comment modal', function () {
+  commentObj.editCommentModalSaveBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views {string} shows on top of {string}', function (content1, content2) {
+  findComment(content1).then((rowNumber1) => {
+    findComment(content2).then((rowNumber2) => {
+      expect(Number(rowNumber1)).to.lt(Number(rowNumber2));
+    });
+  });
+});
+
+Then('the user views Delete comment modal for {string}', function (comment) {
+  commentObj.deleteCommentModalHeading().invoke('text').should('eq', 'Delete comment');
+  commentObj.deleteCommentModalContent().invoke('text').should('contain', comment);
+});
+
+When('the user clicks Delete button in Delete comment modal', function () {
+  commentObj.deleteCommentModalDeleteBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user {string} the comment of {string}', function (viewOrNotView, comment) {
+  switch (viewOrNotView) {
+    case 'views':
+      commentObj.commentContent(comment).should('exist');
+      break;
+    case 'should not view':
+      commentObj.commentContent(comment).should('not.exist');
+      break;
+    default:
+      expect(viewOrNotView).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+Then('the user views Delete topic modal for {string}', function (topic) {
+  commentObj.deleteTopicModalHeading().invoke('text').should('eq', 'Delete topic');
+  commentObj.deleteTopicModalContentTopicName().invoke('text').should('contain', topic);
+});
+
+When('the user clicks Delete button in Delete topic modal', function () {
+  commentObj.deleteTopicModalDeleteBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views {string} comments', function (number) {
+  commentObj.commentsList().should('have.length', Number(number));
+});
+
+When('the user clicks View older comments button', function () {
+  commentObj.commentsListViewOlderCommentsBtn().shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});
+
+Then('the user views more than {string} comments', function (number) {
+  commentObj.commentsList().should('have.length.above', Number(number));
+});
