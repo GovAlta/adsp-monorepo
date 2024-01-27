@@ -4,7 +4,7 @@ import '@style/colors.scss';
 import '@style/goa-core.scss';
 import { fetchConfig } from './store/config/actions';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
+import { Route, Routes, BrowserRouter as Router } from 'react-router-dom-6';
 import ServiceStatusPage from './pages/status';
 import Recaptcha from './components/Recaptcha';
 import { RootState } from '@store/index';
@@ -25,14 +25,10 @@ export function App(): JSX.Element {
     <div>
       {config.envLoaded && (
         <Router>
-          <Switch>
-            <Route exact path="/">
-              <ServiceStatusPage />
-            </Route>
-            <Route exact path="/:name">
-              <ServiceStatusPage />
-            </Route>
-          </Switch>
+          <Routes>
+            <Route path="/" element={<ServiceStatusPage />}></Route>
+            <Route path="/:name" element={<ServiceStatusPage />}></Route>
+          </Routes>
         </Router>
       )}
       <Recaptcha siteKey={config.recaptchaKey} />

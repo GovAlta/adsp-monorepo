@@ -23,7 +23,6 @@ import { FormServiceRoles } from '../roles';
 import {
   Form,
   FormCriteria,
-  FormDefinition,
   FormDisposition,
   FormSubmissionCriteria,
   FormSubmissionTenant,
@@ -40,8 +39,10 @@ import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
+import { QueueTaskService } from '../../queueTask';
+import { CommentService } from '../comment';
 
-export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
+export function mapFormDefinition(entity: FormDefinitionEntity) {
   return {
     id: entity.id,
     name: entity.name,
@@ -53,8 +54,6 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     formDraftUrlTemplate: entity.formDraftUrlTemplate,
     dataSchema: entity.dataSchema,
     uiSchema: entity.uiSchema,
-    dispositionStates: entity.dispositionStates,
-    submissionRecords: entity.submissionRecords,
   };
 }
 
@@ -151,8 +150,12 @@ export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmiss
 
 export const getFormDefinitions: RequestHandler = async (req, res, next) => {
   try {
+    const user = req.user;
+
     const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-    const definitions = Object.entries(configuration).map(([_id, entity]) => mapFormDefinition(entity));
+    const definitions = Object.entries(configuration)
+      .filter(([_id, entity]) => entity.canAccessDefinition(user))
+      .map(([_id, entity]) => mapFormDefinition(entity));
     res.send(definitions);
   } catch (err) {
     next(err);
@@ -162,11 +165,16 @@ export const getFormDefinitions: RequestHandler = async (req, res, next) => {
 export const getFormDefinition: RequestHandler = async (req, res, next) => {
   try {
     const { definitionId } = req.params;
+    const user = req.user;
 
     const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
     const definition = configuration[definitionId];
     if (!definition) {
       throw new NotFoundError('form definition', definitionId);
+    }
+
+    if (!definition.canAccessDefinition(user)) {
+      throw new UnauthorizedUserError('access definition', user);
     }
 
     res.send(mapFormDefinition(definition));
@@ -250,7 +258,8 @@ export function createForm(
   apiId: AdspId,
   repository: FormRepository,
   eventService: EventService,
-  notificationService: NotificationService
+  notificationService: NotificationService,
+  commentService: CommentService
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -268,9 +277,13 @@ export function createForm(
       const form = await definition.createForm(user, repository, notificationService, applicantInfo);
 
       end();
-      res.send(mapForm(apiId, form));
+      const result = mapForm(apiId, form);
+      res.send(result);
 
       eventService.send(formCreated(user, form));
+      if (definition.supportTopic) {
+        commentService.createSupportTopic(form, result.urn);
+      }
     } catch (err) {
       next(err);
     }
@@ -416,11 +429,13 @@ export function formOperation(
   apiId: AdspId,
   eventService: EventService,
   notificationService: NotificationService,
+  queueTaskService: QueueTaskService,
   submissionRepository: FormSubmissionRepository
 ): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const form: FormEntity = req[FORM];
       const request: FormOperations = req.body;
@@ -429,6 +444,7 @@ export function formOperation(
       let formResult: Form = null;
       let event: DomainEvent = null;
       let mappedForm = null;
+
       switch (request.operation) {
         case SEND_CODE_OPERATION: {
           result = await form.sendCode(user, notificationService);
@@ -440,10 +456,11 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          formResult = await form.submit(user, submissionRepository);
+          formResult = await form.submit(user, queueTaskService, submissionRepository);
           result = formResult as FormEntity;
           event = formSubmitted(user, result);
           mappedForm = mapFormForFormSubmitted(apiId, result);
+
           break;
         }
         case SET_TO_DRAFT_FORM_OPERATION: {
@@ -504,7 +521,9 @@ interface FormRouterProps {
   repository: FormRepository;
   eventService: EventService;
   notificationService: NotificationService;
+  queueTaskService: QueueTaskService;
   fileService: FileService;
+  commentService: CommentService;
   submissionRepository: FormSubmissionRepository;
 }
 
@@ -513,12 +532,14 @@ export function createFormRouter({
   repository,
   eventService,
   notificationService,
+  queueTaskService,
   fileService,
+  commentService,
   submissionRepository,
 }: FormRouterProps): Router {
   const apiId = adspId`${serviceId}:v1`;
-
   const router = Router();
+
   router.get('/definitions', getFormDefinitions);
   router.get(
     '/definitions/:definitionId',
@@ -596,7 +617,7 @@ export function createFormRouter({
       body('applicant.userId').optional().isString(),
       body('applicant.channels').optional().isArray()
     ),
-    createForm(apiId, repository, eventService, notificationService)
+    createForm(apiId, repository, eventService, notificationService, commentService)
   );
 
   router.get('/forms/:formId', createValidationHandler(param('formId').isUUID()), getForm(repository), (req, res) =>
@@ -615,7 +636,7 @@ export function createFormRouter({
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService, submissionRepository)
+    formOperation(apiId, eventService, notificationService, queueTaskService, submissionRepository)
   );
   router.delete(
     '/forms/:formId',

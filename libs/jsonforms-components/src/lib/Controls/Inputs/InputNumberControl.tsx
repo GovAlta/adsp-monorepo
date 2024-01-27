@@ -24,6 +24,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       step={StepValue}
       min={MinValue}
       max={MaxValue}
+      width="100%"
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name, value) => handleChange(path, value)}

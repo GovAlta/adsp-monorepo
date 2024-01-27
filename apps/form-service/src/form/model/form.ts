@@ -9,6 +9,8 @@ import { NotificationService, Subscriber } from '../../notification';
 import { FileService } from '../../file';
 import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionEntity } from './formSubmission';
+import { QueueTaskService } from '../../queueTask';
+import { QueueTaskDefinition } from './queueTask';
 
 // Any form created by user with the intake app role is treated as anonymous.
 function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
@@ -221,13 +223,16 @@ export class FormEntity implements Form {
       throw new InvalidOperationError('Can only set submitted forms to draft');
     }
 
-    // Unlock updates last access so that the form is not immediately locked again.
     this.status = FormStatus.Draft;
     this.lastAccessed = new Date();
     return await this.repository.save(this);
   }
 
-  async submit(user: User, submissionRepository: FormSubmissionRepository): Promise<Form> {
+  async submit(
+    user: User,
+    queueTaskService: QueueTaskService,
+    submissionRepository: FormSubmissionRepository
+  ): Promise<Form> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
     }
@@ -243,16 +248,28 @@ export class FormEntity implements Form {
     this.submitted = new Date();
     // Hash the form data on submit for duplicate detection.
     this.hash = await hasha.async(JSON.stringify(this.data), { algorithm: 'sha1' });
-
-    const id = uuidv4();
+    let id = null;
 
     if (this.submissionRecords) {
       // If disposition states exist, create a form submission record
+      // We need the submissionId so that it is available for updates/lookups of the submission.
+      id = uuidv4();
       await FormSubmissionEntity.create(user, submissionRepository, this, id);
     }
-    // We need the submissionId so that it is available for updates/lookups of the submission.
     const savedFormEntity = await this.repository.save(this);
     const formData: Form = { ...savedFormEntity, submissionId: id };
+
+    if (this.submissionRecords) {
+      const { queueNameSpace, queueName } = formData.definition.queueTaskToProcess;
+
+      if (formData && queueNameSpace !== '' && queueName !== '') {
+        queueTaskService.createTaskForQueueTask(
+          createQueueTaskDefinition(formData),
+          savedFormEntity.tenantId,
+          formData
+        );
+      }
+    }
     return formData;
   }
 
@@ -283,3 +300,17 @@ export class FormEntity implements Form {
     return deleted;
   }
 }
+const createQueueTaskDefinition = (form: Form) => {
+  const { queueNameSpace } = form.definition.queueTaskToProcess;
+  const { name: definitionName } = form.definition;
+
+  return {
+    id: '',
+    name: 'Process form submission',
+    namespace: queueNameSpace,
+    createdOn: '',
+    priority: 'Normal',
+    description: `Process form '${definitionName}' (ID: ${form.id}) submission: (${form.submissionId})`,
+    recordId: `urn:ads:platform:form-service:v1:/forms/${form.id}/submissions/${form.submissionId}`,
+  } as QueueTaskDefinition;
+};

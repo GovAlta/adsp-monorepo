@@ -20,10 +20,11 @@ export const renderLayoutElements = (
   cells?: JsonFormsCellRendererRegistryEntry[]
 ) => {
   return elements.map((child, index) => (
-    <div>
+    <div key={index}>
       <JsonFormsDispatch
         uischema={child}
         schema={schema}
+        key={path}
         path={path}
         enabled={enabled}
         renderers={renderers}
