@@ -1,7 +1,6 @@
-import { withRouter, RouteComponentProps } from 'react-router';
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom-6';
 import styled from 'styled-components';
 import LogoutIcon from '@icons/log-out-outline.svg';
 
@@ -16,7 +15,7 @@ interface SidebarProps {
   type: 'mobile' | 'desktop';
 }
 
-const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
+const Sidebar = ({ type }: SidebarProps) => {
   const tenantAdminRole = 'tenant-admin';
   const dispatch = useDispatch();
 
@@ -50,17 +49,27 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
           <div style={{ paddingBottom: '1rem' }}>
             <Title>{tenantName}</Title>
           </div>
-          <NavLink to="/admin" exact={true} activeClassName="current" title="Dashboard" data-testid="menu-dashboard">
+          <NavLink
+            to="./"
+            className={({ isActive }) => (isActive ? 'current' : '')}
+            title="Dashboard"
+            data-testid="menu-dashboard"
+          >
             <span>Dashboard</span>
           </NavLink>
           {hasAdminRole && (
             <>
-              <NavLink to="/admin/event-log" activeClassName="current" title="Event log" data-testid="menu-eventLog">
+              <NavLink
+                to="event-log"
+                className={({ isActive }) => (isActive ? 'current' : '')}
+                title="Event log"
+                data-testid="menu-eventLog"
+              >
                 <span>Event log</span>
               </NavLink>
               <NavLink
-                to="/admin/service-metrics"
-                activeClassName="current"
+                to="service-metrics"
+                className={({ isActive }) => (isActive ? 'current' : '')}
                 title="Service metrics"
                 data-testid="menu-service-metrics"
               >
@@ -71,7 +80,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 <NavLink
                   key={index}
                   to={service.link}
-                  activeClassName="current"
+                  className={({ isActive }) => (isActive ? 'current' : '')}
                   title={service.name}
                   data-testid={`menu-${service.name.toLowerCase()}`}
                 >
@@ -90,22 +99,9 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
           <LogoutWrapper>
             <img src={LogoutIcon} width="16" alt="Access" />
             {authenticated ? (
-              <span
-                onClick={() => {
-                  dispatch(TenantLogout());
-                }}
-              >
-                Sign out
-              </span>
+              <span onClick={() => dispatch(TenantLogout())}>Sign out</span>
             ) : (
-              <span
-                onClick={() => {
-                  const idpHint = getIdpHint();
-                  dispatch(TenantAdminLogin(idpHint));
-                }}
-              >
-                Sign In
-              </span>
+              <span onClick={() => dispatch(TenantAdminLogin(getIdpHint()))}>Sign In</span>
             )}
           </LogoutWrapper>
         </SignOutLink>
@@ -114,7 +110,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
   );
 };
 
-export default withRouter(Sidebar);
+export default Sidebar;
 
 const LogoutWrapper = styled.a`
   display: flex;

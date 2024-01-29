@@ -40,7 +40,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-6';
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
 
 import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
@@ -249,13 +249,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   }, [debouncedRenderDataSchema]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const close = () => {
-    history.push({
-      pathname: '/admin/services/form',
-      search: '?definitions=true',
-    });
+    navigate('/admin/services/form?definitions=true');
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({

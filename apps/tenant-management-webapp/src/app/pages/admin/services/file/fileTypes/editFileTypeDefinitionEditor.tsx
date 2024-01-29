@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-6';
 import {
   DropDownZIndex,
   EditorPadding,
@@ -44,7 +44,7 @@ import { areObjectsEqual } from '@lib/objectUtil';
 
 export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
-  const history = useHistory();
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
   const fileTypeNames = useSelector(selectFileTyeNames);
@@ -67,10 +67,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const keyCloakClientRoles = useSelector(selectServiceKeyCloakRoles);
 
   const close = () => {
-    history.push({
-      pathname: '/admin/services/file',
-      search: 'fileTypes=true',
-    });
+    navigate('/admin/services/file?fileTypes=true');
   };
 
   const indicator = useSelector((state: RootState) => {

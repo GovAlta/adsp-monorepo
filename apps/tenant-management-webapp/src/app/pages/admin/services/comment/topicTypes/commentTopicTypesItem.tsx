@@ -1,7 +1,6 @@
 import React from 'react';
 import { CommentTopicTypes } from '@store/comment/model';
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface PdfTemplateItemProps {
@@ -10,9 +9,7 @@ interface PdfTemplateItemProps {
 }
 
 export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplateItemProps): JSX.Element => {
-  const { url } = useRouteMatch();
-
-  const history = useHistory();
+  const navigate = useNavigate();
   return (
     <>
       <tr>
@@ -28,7 +25,7 @@ export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplat
               testId="comment-topic-types-edit"
               title="Edit"
               type="create"
-              onClick={() => history.push(`${url}/edit/${commentTopicType.id}`)}
+              onClick={() => navigate(`edit/${commentTopicType.id}`)}
             />
             <GoAContextMenuIcon
               testId={`comment-topic-types-delete`}

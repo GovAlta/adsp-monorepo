@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 
 interface TaskOverviewProps {
   setOpenAddDefinition: (val: boolean) => void;
@@ -10,12 +10,10 @@ interface TaskOverviewProps {
 export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.Element => {
   useEffect(() => {
     setOpenAddDefinition(false);
-    history.push({
-      pathname: '/admin/services/task',
-    });
+    navigate('/admin/services/task');
   }, []);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   return (
     <OverviewLayout
@@ -33,10 +31,7 @@ export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.E
             testId="add-queue"
             onClick={() => {
               setOpenAddDefinition(true);
-              history.push({
-                pathname: '/admin/services/task',
-                search: '?definitions=true',
-              });
+              navigate('/admin/services/task?definitions=true');
             }}
           >
             Add queue
