@@ -1,6 +1,7 @@
 import React from 'react';
 import { GoAFormItem, GoADetails } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
+import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
 
 export type GoAInputType =
   | 'text'
@@ -27,11 +28,18 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const { id, description, errors, label, uischema, visible, required, config, input } = props;
   const isValid = errors.length === 0;
   const InnerComponent = input;
+  let labelToUpdate = '';
+
+  if (controlScopeMatchesLabel(uischema.scope, label)) {
+    labelToUpdate = capitalizeFirstLetter(label);
+  } else {
+    labelToUpdate = label;
+  }
 
   return (
     <GoAFormItem
       error={errors}
-      label={label}
+      label={labelToUpdate}
       helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
     >
       <InnerComponent {...props} />
