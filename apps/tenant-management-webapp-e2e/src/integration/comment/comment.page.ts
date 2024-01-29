@@ -133,6 +133,10 @@ class CommentPage {
     return cy.xpath('//goa-modal[@data-testid="add-topic-modal"]//goa-button[text()="Save" and @disabled="false"]');
   }
 
+  addTopicModalCancelBtn() {
+    return cy.xpath('//goa-modal[@data-testid="add-topic-modal"]//goa-button[text()="Cancel" and @disabled="false"]');
+  }
+
   topicLoadMoreButton() {
     return cy.xpath('//goa-button[text()="Load more"]');
   }
@@ -186,6 +190,10 @@ class CommentPage {
     return cy.xpath('//goa-modal[@data-testid="add-comment-modal"]//goa-button[text()="Save" and @disabled="false"]');
   }
 
+  addCommentModalCancelBtn() {
+    return cy.xpath('//goa-modal[@data-testid="add-comment-modal"]//goa-button[text()="Cancel" and @disabled="false"]');
+  }
+
   commentContent(content) {
     return cy.xpath(
       `//table[@data-testid="topic-table"]/tbody//h3[text()="Comments list"]/parent::div/parent::div//div[text()="${content}"]`
@@ -229,15 +237,15 @@ class CommentPage {
   }
 
   editCommentModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @data-testid="add-comment-modal"]/div[@slot="heading"]');
+    return cy.xpath('//goa-modal[@open="true" and @data-testid="edit-comment-modal"]/div[@slot="heading"]');
   }
 
   editCommentModalComment() {
-    return cy.xpath('//goa-modal[@data-testid="add-comment-modal"]//goa-textarea[@data-testid="content"]');
+    return cy.xpath('//goa-modal[@data-testid="edit-comment-modal"]//goa-textarea[@data-testid="content"]');
   }
 
   editCommentModalSaveBtn() {
-    return cy.xpath('//goa-modal[@data-testid="add-comment-modal"]//goa-button[text()="Save" and @disabled="false"]');
+    return cy.xpath('//goa-modal[@data-testid="edit-comment-modal"]//goa-button[text()="Save" and @disabled="false"]');
   }
 
   deleteCommentModalHeading() {

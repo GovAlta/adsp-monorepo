@@ -538,9 +538,19 @@ When(
   }
 );
 
-When('the user clicks Save button in Add topic modal', function () {
-  commentObj.addTopicModalSaveBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+When('the user clicks {string} button in Add topic modal', function (button) {
+  switch (button.toLowerCase()) {
+    case 'save':
+      commentObj.addTopicModalSaveBtn().shadow().find('button').click({ force: true });
+      cy.wait(2000);
+      break;
+    case 'cancel':
+      commentObj.addTopicModalCancelBtn().shadow().find('button').click({ force: true });
+      cy.wait(1000);
+      break;
+    default:
+      expect(button).to.be.oneOf(['save', 'cancel']);
+  }
 });
 
 When('the user clicks Load more button for topic list', function () {
@@ -668,9 +678,19 @@ When('the user enters {string} as comment', function (comment) {
     .type(comment, { force: true, delay: 200 });
 });
 
-When('the user clicks Save button in Add comment modal', function () {
-  commentObj.addCommentModalSaveBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+When('the user clicks {string} button in Add comment modal', function (button) {
+  switch (button.toLowerCase()) {
+    case 'save':
+      commentObj.addCommentModalSaveBtn().shadow().find('button').click({ force: true });
+      cy.wait(2000);
+      break;
+    case 'cancel':
+      commentObj.addCommentModalCancelBtn().shadow().find('button').click({ force: true });
+      cy.wait(1000);
+      break;
+    default:
+      expect(button).to.be.oneOf(['save', 'cancel']);
+  }
 });
 
 Then('the user views {string} with user info and current timestamp', function (comment) {

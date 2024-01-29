@@ -86,7 +86,12 @@ Feature: Comment
     When the user clicks Add topic type button on comments page
     Then the user views Add topic modal
     When the user enters "autotest-addDeleteTopic", "autotest topic desc", "autotest123" in Add topic modal
-    And the user clicks Save button in Add topic modal
+    And the user clicks "Cancel" button in Add topic modal
+    Then the user "should not view" a topic of "autotest-addDeleteTopic", "autotest123"
+    When the user clicks Add topic type button on comments page
+    Then the user views Add topic modal
+    When the user enters "autotest-addDeleteTopic", "autotest topic desc", "autotest123" in Add topic modal
+    And the user clicks "Save" button in Add topic modal
     # View topic with Load more button
     And the user clicks Load more button for topic list
     Then the user views more than 10 topics
@@ -98,7 +103,12 @@ Feature: Comment
     When the user clicks Add comment button for the topic
     Then the user views Add comment modal
     When the user enters "Comment number one" as comment
-    And the user clicks Save button in Add comment modal
+    And the user clicks "Cancel" button in Add comment modal
+    Then the user "should not view" the comment of "Comment number one"
+    When the user clicks Add comment button for the topic
+    Then the user views Add comment modal
+    When the user enters "Comment number one" as comment
+    And the user clicks "Save" button in Add comment modal
     Then the user views "Comment number one" with user info and current timestamp
     # Edit comment
     When the user clicks "edit" icon for the comment of "Comment number one"
@@ -111,7 +121,7 @@ Feature: Comment
     When the user clicks Add comment button for the topic
     Then the user views Add comment modal
     When the user enters "Comment number two" as comment
-    And the user clicks Save button in Add comment modal
+    And the user clicks "Save" button in Add comment modal
     Then the user views "Comment number two" with user info and current timestamp
     And the user views "Comment number two" shows on top of "Comment number one edited"
     # Delete comment
