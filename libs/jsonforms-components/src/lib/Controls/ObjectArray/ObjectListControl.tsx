@@ -323,7 +323,7 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
 
     const controlElement = uischema as ControlElement;
     // eslint-disable-next-line
-    const listTitle = capitalizeFirstLetter(label) || capitalizeFirstLetter(uischema.options?.title);
+    const listTitle = label || uischema.options?.title;
 
     return (
       <Hidden xsUp={!visible}>
