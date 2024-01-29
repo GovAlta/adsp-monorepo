@@ -11,7 +11,7 @@ import { EnumCellProps, WithClassname } from '@jsonforms/core';
 type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
-  const { data, id, enabled, schema, path, handleChange, options, config, label, t } = props;
+  const { data, id, enabled, schema, path, handleChange, options, config, label, uischema } = props;
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
 
