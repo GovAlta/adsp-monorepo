@@ -26,8 +26,8 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
   return (
     <>
       <tr>
-        <td data-testid="topic-list-namespace">{topic.name}</td>
-        <td data-testid="topic-list-name">{topic.resourceId}</td>
+        <td data-testid="topic-list-name">{topic.name}</td>
+        <td data-testid="topic-list-resource-id">{topic.resourceId}</td>
         <td data-testid="topic-list-action">
           <IconDiv>
             <GoAContextMenuIcon
@@ -38,7 +38,7 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
             />
             {showActions && (
               <GoAContextMenuIcon
-                testId="topic-definition-edit"
+                testId="topic-definition-delete"
                 title="Delete"
                 type="trash"
                 onClick={() => onDeleteTopic(topic)}
