@@ -19,7 +19,6 @@ import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid, GoAIconButton, GoAContainer } from '@abgov/react-components-new';
 import { ToolBarHeader, ObjectArrayTitle } from './styled-components';
-import { capitalizeFirstLetter } from '../../util/stringUtils';
 
 // eslint-disable-next-line
 const extractScopesFromUISchema = (uischema: any): string[] => {
