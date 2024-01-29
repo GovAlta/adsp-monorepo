@@ -1,0 +1,70 @@
+import { createContext } from 'react';
+
+interface enumerators {
+  data: Map<string, () => any>;
+  functions: Map<string, () => (file: File, propertyId: string) => void>;
+}
+
+export class Context {
+  fileList: any;
+  uploadFile: (file: File, propertyId: string) => void;
+  downloadFile: (file: any) => void;
+  enumFunctions: Map<string, () => (file: File, propertyId: string) => void>;
+  enumValues: Map<string, () => Record<string, any>>;
+  baseEnumerator: enumerators;
+  jsonFormContext: React.Context<enumerators>;
+
+  empty(): void {
+    console.log('do nothing');
+  }
+
+  constructor() {
+    this.fileList = null;
+    this.uploadFile = this.empty;
+    this.downloadFile = this.empty;
+
+    this.enumFunctions = new Map<string, () => (file: File, propertyId: string) => void>();
+    this.enumValues = new Map<string, () => Record<string, any>>();
+
+    this.baseEnumerator = {
+      data: this.enumValues,
+      functions: this.enumFunctions,
+    };
+
+    this.jsonFormContext = createContext(this.baseEnumerator);
+  }
+
+  setFileManagement(
+    fileList: any,
+    uploadFile: (file: File, propertyId: string) => void,
+    downloadFile: (file: any) => void
+  ): void {
+    this.fileList = fileList;
+    this.uploadFile = uploadFile;
+    this.downloadFile = downloadFile;
+
+    this.enumValues.set('file-list', () => this.fileList);
+    this.enumFunctions.set('upload-file', () => this.uploadFile);
+    this.enumFunctions.set('download-file', () => this.downloadFile);
+  }
+
+  /**
+   * Allows additional data to be added under a given key
+   *
+   * This data will then be available inside the context
+   */
+  addData(key: string, data: Record<string, string>) {
+    this.enumValues.set(key, () => data);
+  }
+
+  /**
+   * Grabs data stored under a given key
+   *
+   */
+  getData(key: string) {
+    const dataFunction = this.baseEnumerator.data.get(key);
+    return dataFunction && dataFunction();
+  }
+}
+
+export const JsonFormContextInstance = new Context();

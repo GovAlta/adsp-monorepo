@@ -63,6 +63,7 @@ import {
   CategorizationRendererTester,
   FormStepperControl,
   FileUploaderTester,
+  FileUploader,
   MultiLineTextControl,
   MultiLineTextControlTester,
   GoAEnumControl,
@@ -72,19 +73,16 @@ import {
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
-
-import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
+import { withJsonFormsControlProps } from '@jsonforms/react';
+export * from './lib/Context';
 
 export class Renderers {
   GoARenderers: JsonFormsRendererRegistryEntry[];
-  constructor(uploadTrigger?: (file: File) => void, downloadTrigger?: (file: File) => void, latestFile?: unknown) {
+  constructor() {
     this.GoARenderers = [
       ...this.GoABaseRenderers,
       { tester: CategorizationRendererTester, renderer: FormStepperControl },
-      {
-        tester: FileUploaderTester,
-        renderer: FileUploaderWrapper({ uploadTrigger, downloadTrigger, latestFile }),
-      },
+      { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
     ];
   }
 

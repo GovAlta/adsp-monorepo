@@ -63,6 +63,15 @@ import { getTaskQueues } from '@store/task/action';
 import { UploadFileService, DownloadFileService } from '@store/file/actions';
 import { FetchFileTypeService } from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
+import { JsonFormContextInstance } from '@abgov/jsonforms-components';
+
+const { jsonFormContext, baseEnumerator } = JsonFormContextInstance;
+
+const data = { asdf: '532' };
+
+JsonFormContextInstance.enumValues.set('some-data', () => data);
+
+JsonFormContextInstance.addData('a', { b: 'c' });
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -93,9 +102,11 @@ const invalidJsonMsg = 'Invalid JSON syntax';
 const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
-  const latestFile = useSelector((state: RootState) => {
+  const fileList = useSelector((state: RootState) => {
     return state?.fileService.latestFile;
   });
+
+  const token: string = useSelector((state: RootState) => state.session.credentials.token);
 
   const dispatch = useDispatch();
 
@@ -105,15 +116,18 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
-  const uploadFile = (file: File) => {
-    const fileInfo = { file: file, type: fileTypes[0]?.id };
+  const uploadFile = (file: File, propertyId: string) => {
+    console.log(JSON.stringify(file) + '<---file');
+    const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
     dispatch(UploadFileService(fileInfo));
   };
   const downloadFile = (file) => {
     dispatch(DownloadFileService(file));
   };
 
-  const renderer = new Renderers(uploadFile, downloadFile, latestFile);
+  JsonFormContextInstance.setFileManagement(fileList, uploadFile, downloadFile);
+
+  const renderer = new Renderers();
 
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const monaco = useMonaco();
@@ -729,28 +743,36 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <GoAFormItem error={error} label="">
-                    <ErrorBoundary>
-                      {UiSchemaBounced !== '{}' ? (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          uischema={JSON.parse(UiSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      ) : (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      )}
-                    </ErrorBoundary>
+                    <jsonFormContext.Provider value={baseEnumerator}>
+                      <ErrorBoundary>
+                        {UiSchemaBounced !== '{}' ? (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            uischema={JSON.parse(UiSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => {
+                              console.log(JSON.stringify(data) + '<data=----------------');
+                              setData(data);
+                            }}
+                          />
+                        ) : (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => {
+                              console.log(JSON.stringify(data) + '<data=----------------');
+                              setData(data);
+                            }}
+                          />
+                        )}
+                      </ErrorBoundary>
+                    </jsonFormContext.Provider>
                   </GoAFormItem>
                 </div>
               </Tab>

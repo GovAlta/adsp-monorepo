@@ -1,58 +1,73 @@
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import { GoAFileUploadInput } from '@abgov/react-components-new';
-import { Categorization, Category, StatePropsOfLayout } from '@jsonforms/core';
+import { WithClassname, ControlProps } from '@jsonforms/core';
 
-import { TranslateProps } from '@jsonforms/react';
-import { AjvProps } from '@jsonforms/material-renderers';
 import styled from 'styled-components';
+import { JsonFormContextInstance } from '../../../index';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 
-export interface GoAFileUploaderSchemaProps extends Omit<Categorization, 'elements'> {
-  elements: (Category | Categorization)[];
-}
+type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
 
-export interface FileUploaderLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
-  // eslint-disable-next-line
-  data: any;
-  // eslint-disable-next-line
-  latestFile: any;
-  uploadTrigger?: (file: File) => void;
-  downloadTrigger?: (file: File) => void;
-}
+export const FileUploader = ({ data, path, handleChange, ...props }: FileUploaderLayoutRendererProps) => {
+  const enumerators = useContext(JsonFormContextInstance.jsonFormContext);
+  const uploadTriggerFunction = enumerators.functions.get('upload-file');
+  const uploadTrigger = uploadTriggerFunction && uploadTriggerFunction();
+  const downloadTriggerFunction = enumerators.functions.get('download-file');
+  const downloadTrigger = downloadTriggerFunction && downloadTriggerFunction();
+  const lastFileValue = enumerators.data.get('file-list');
+  const lastFile = lastFileValue && lastFileValue();
 
-export const FileUploader = ({ uploadTrigger, downloadTrigger, latestFile }: FileUploaderLayoutRendererProps) => {
+  const aFunction = enumerators.data.get('a');
+  const a = aFunction && aFunction();
+  const somedataFunction = enumerators.data.get('some-data');
+  const somedata = somedataFunction && somedataFunction();
+
+  console.log(JSON.stringify(a) + '<aaaaaaa');
+  console.log(JSON.stringify(somedata) + '<somedata');
+
+  console.log(JSON.stringify(somedata) + '<somedata');
+
+  console.log(JSON.stringify(JsonFormContextInstance.getData('a')) + '<rrrrr');
+
+  const propertyId = props.i18nKeyPrefix as string;
+
   function uploadFile(file: File) {
     if (uploadTrigger) {
-      uploadTrigger(file);
+      handleChange(propertyId, 'lastFile?.urn');
+      uploadTrigger(file, propertyId);
     }
   }
   function downloadFile(file: File) {
     if (downloadTrigger) {
-      downloadTrigger(file);
+      downloadTrigger(file, propertyId);
     }
   }
 
+  if (lastFile && data !== lastFile[propertyId]?.urn) {
+    handleChange(propertyId, lastFile && lastFile[propertyId]?.urn);
+  }
   return (
-    <div id="file-upload" className="FileUploader">
+    <FileUploaderStyle id="file-upload" className="FileUploader">
+      <div className="label">{props.label}</div>
       <GoAFileUploadInput variant="button" onSelectFile={uploadFile} />
-      {latestFile && (
+      {lastFile && lastFile[props.i18nKeyPrefix as string] && (
         <div>
           <AttachmentBorder>
-            <div>{latestFile.filename}</div>
+            <div>{lastFile && lastFile[props.i18nKeyPrefix as string].filename}</div>
 
             <GoAContextMenu>
               <GoAContextMenuIcon
                 testId="download-icon"
                 title="Download"
                 type="download"
-                onClick={() => downloadFile(latestFile)}
+                onClick={() => downloadFile(lastFile && lastFile[props.i18nKeyPrefix as string])}
               />
             </GoAContextMenu>
           </AttachmentBorder>
         </div>
       )}
-    </div>
+    </FileUploaderStyle>
   );
 };
 
@@ -64,4 +79,14 @@ const AttachmentBorder = styled.div`
   padding: 0.5rem;
   width: fit-content;
   margin-top: 5px;
+`;
+
+const FileUploaderStyle = styled.div`
+  .label {
+    display: block;
+    font-weight: var(--goa-font-weight-bold);
+    color: var(--goa-color-text-default);
+    font-size: var(--goa-font-size-4);
+    padding: 0.5rem 0;
+  }
 `;
