@@ -5,7 +5,7 @@ import { GoAButton } from '@abgov/react-components-new';
 import { FileMetrics } from './metrics';
 import { FetchFileMetrics } from '@store/file/actions';
 import { OverviewLayout } from '@components/Overview';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 
 interface FileOverviewProps {
   setActiveEdit: (boolean) => void;
@@ -14,7 +14,7 @@ interface FileOverviewProps {
 
 const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps): JSX.Element => {
   const dispatch = useDispatch();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(FetchFileMetrics());
@@ -26,9 +26,7 @@ const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps):
 
   useEffect(() => {
     setOpenAddFileType(false);
-    history.push({
-      pathname: '/admin/services/file',
-    });
+    navigate('/admin/services/file');
   }, []);
   return (
     <OverviewLayout
@@ -53,10 +51,7 @@ const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps):
           onClick={() => {
             setOpenAddFileType(true);
             setActiveEdit(true);
-            history.push({
-              pathname: '/admin/services/file',
-              search: '?fileTypes=true',
-            });
+            navigate('/admin/services/file?fileTypes=true');
           }}
         >
           Add file type

@@ -3,34 +3,34 @@ import { Page } from '@components/Html';
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { KeycloakCheckSSO } from '@store/tenant/actions';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { LOGIN_TYPES } from '@lib/keycloak';
+
 interface LoginProps {
   location?: string;
 }
+
 const LoginRedirect = (props: LoginProps): JSX.Element => {
   const dispatch = useDispatch();
-  const history = useHistory();
+  const navigate = useNavigate();
 
-  const { isTenantAdmin, tenantRealm } = useSelector((state: RootState) => ({
+  const { isTenantAdmin, tenantRealm, isAuthenticated } = useSelector((state: RootState) => ({
     isTenantAdmin: state.tenant.isTenantAdmin,
     tenantRealm: state.tenant.realm,
+    isAuthenticated: state.session?.authenticated ?? false,
   }));
 
-  // TODO: isAuthenticated shall be same as the validation in the PrivateApp. Need to create a global function for both.
-  const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
   const urlParams = new URLSearchParams(window.location.search);
   const realm = encodeURIComponent(urlParams.get('realm'));
-  useEffect(() => {
-    dispatch(KeycloakCheckSSO(realm));
-  }, []);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    dispatch(KeycloakCheckSSO(realm));
+  }, [dispatch, realm]);
+
+  useEffect(() => {
     const type = encodeURIComponent(urlParams.get('type'));
     const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
-    const location: string = window.location.href;
-    const skipSSO = location.indexOf('kc_idp_hint=') > -1;
+    const skipSSO = window.location.href.includes('kc_idp_hint=');
 
     if (skipSSO) {
       localStorage.setItem('idpFromUrl', idpFromUrl);
@@ -38,57 +38,25 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
 
     if (type === LOGIN_TYPES.tenantAdmin) {
       if (isTenantAdmin) {
-        if (skipSSO && !idpFromUrl) {
-          history.push({
-            pathname: `/${tenantRealm}/login`,
-            search: `?kc_idp_hint=`,
-          });
-        } else if (idpFromUrl) {
-          history.push({
-            pathname: `/${tenantRealm}/login`,
-            search: `?kc_idp_hint=${idpFromUrl}`,
-          });
-        } else {
-          history.push({
-            pathname: `/${tenantRealm}/login`,
-          });
-        }
-      }
-
-      if (isTenantAdmin === false) {
-        // non-admin user login through tenantAdmin
-        history.push({
-          pathname: `/login-error`,
-        });
+        const searchQuery = skipSSO ? (idpFromUrl ? `?kc_idp_hint=${idpFromUrl}` : '?kc_idp_hint=') : '';
+        navigate(`/${tenantRealm}/login${searchQuery}`);
+      } else {
+        navigate('/login-error');
       }
     }
 
     if (type === LOGIN_TYPES.tenant) {
       if (isAuthenticated) {
         localStorage.setItem('realm', `${tenantRealm}`);
-
-        history.push({
-          pathname: '/admin',
-          search: `?realm=${realm}`,
-          state: { from: props.location },
-        });
+        navigate(`/admin?realm=${realm}`);
       }
     }
 
     if (type === LOGIN_TYPES.tenantCreationInit) {
-      // TODO: state check for navigation
-
-      let search = '';
-      if (skipSSO) {
-        search = '?kc_idp_hint=';
-      }
-      history.push({
-        pathname: '/tenant/creation',
-        search: search,
-        state: { from: props.location },
-      });
+      const searchQuery = skipSSO ? '?kc_idp_hint=' : '';
+      navigate(`/tenant/creation${searchQuery}`, { state: { from: props.location } });
     }
-  }, [tenantRealm, isTenantAdmin]);
+  }, [navigate, tenantRealm, isTenantAdmin, isAuthenticated, props.location]);
 
   return <Page></Page>;
 };

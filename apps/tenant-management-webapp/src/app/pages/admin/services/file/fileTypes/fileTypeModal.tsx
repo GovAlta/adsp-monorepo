@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 interface FileTypeModalProps {
   isOpen: boolean;
   initialValue?: FileTypeItem;
@@ -38,7 +38,7 @@ export const FileTypeModal = ({
 }: FileTypeModalProps): JSX.Element => {
   const [fileType, setFileType] = useState(initialValue);
   const title = 'Add file type';
-  const history = useHistory();
+  const navigate = useNavigate();
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -119,10 +119,7 @@ export const FileTypeModal = ({
 
                 dispatch(CreateFileTypeService(fileType));
 
-                history.push({
-                  pathname: `/admin/services/file/edit/${fileType.id}`,
-                  search: '?fileTypes=true',
-                });
+                navigate(`/admin/services/file/edit/${fileType.id}?fileTypes=true`);
               }}
             >
               Save

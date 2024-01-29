@@ -7,18 +7,15 @@ import {
   ModalContent,
   HideTablet,
 } from './styled-components';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { QueueModalEditor } from './queueModalEditor';
 import { TabletMessage } from '@components/TabletMessage';
 
 export const TaskDefinitionEditor = (): JSX.Element => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const goBack = () => {
-    history.push({
-      pathname: '/admin/services/task',
-      search: '?templates=true',
-    });
+    navigate('/admin/services/task?templates=true');
   };
 
   return (

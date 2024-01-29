@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { FormDefinition } from '@store/form/model';
 import { OverflowWrap, EntryDetail } from '../styled-components';
-
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface PdfTemplateItemProps {
@@ -12,13 +10,12 @@ interface PdfTemplateItemProps {
 }
 
 export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItemProps): JSX.Element => {
-  const { url } = useRouteMatch();
   const [showSchema, setShowSchema] = useState(false);
   const formDescription =
     formDefinition.description?.length > 80
       ? formDefinition.description?.substring(0, 80) + '...'
       : formDefinition.description;
-  const history = useHistory();
+  const navigate = useNavigate();
   return (
     <>
       <tr>
@@ -38,7 +35,7 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
               testId="form-definition-edit"
               title="Edit"
               type="create"
-              onClick={() => history.push(`${url}/edit/${formDefinition.id}`)}
+              onClick={() => navigate(`edit/${formDefinition.id}`)}
             />
             <GoAContextMenuIcon
               testId={`form-definition-delete`}
