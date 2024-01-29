@@ -8,7 +8,7 @@ export interface LabelProps {
     label?: string;
     options?: {
       ariaLabel?: string;
-      help?: string | { content?: string | string[]; variant?: string };
+      help?: string | string[];
       variant?: string;
     };
   };
@@ -19,28 +19,24 @@ export const HelpContent = (props: LabelProps): JSX.Element => {
 
   const { uischema } = props;
 
+  const renderHelp = () =>
+    Array.isArray(uischema?.options?.help) ? (
+      <ul>
+        {uischema?.options?.help.map((line: string, index: number) => (
+          <li key={index}>{`${line}`}</li>
+        ))}
+      </ul>
+    ) : (
+      uischema?.options?.help
+    );
+
   return (
     <div aria-label={uischema.options?.ariaLabel}>
-      <h4>{uischema?.label}</h4>
-      {typeof uischema?.options?.help === 'string' && <p>{uischema?.options?.help}</p>}
-      {(!uischema.options?.variant || uischema.options?.variant !== 'details') &&
-        typeof uischema?.options?.help === 'string' && <p>{uischema?.options?.help}</p>}
-
-      {uischema.options?.variant &&
-        uischema.options?.variant === 'details' &&
-        typeof uischema?.options?.help === 'object' && (
-          <GoADetails heading={uischema?.label ? uischema?.label : ''}>
-            {Array.isArray(uischema?.options?.help?.content) ? (
-              <ul>
-                {uischema?.options?.help?.content.map((line: string, index: number) => (
-                  <li key={index}>{`${line}`}</li>
-                ))}
-              </ul>
-            ) : (
-              uischema?.options?.help?.content
-            )}
-          </GoADetails>
-        )}
+      {!uischema.options?.variant && uischema.options?.variant !== 'details' && <h4>{uischema?.label}</h4>}
+      {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
+      {uischema.options?.variant && uischema.options?.variant === 'details' && (
+        <GoADetails heading={uischema.label ? uischema.label : ''}>{renderHelp()}</GoADetails>
+      )}
     </div>
   );
 };
