@@ -14,7 +14,7 @@ import { serviceVariables } from '../../../../featureFlag';
 import useWindowDimensions from '@lib/useWindowDimensions';
 
 const Dashboard = (): JSX.Element => {
-  const [oldWindowSize, setOldWindowSize] = useState(null);
+  const [oldWindowSize, setOldWindowSize] = useState({ width: 0 });
   const [fixedHeights, setFixedHeights] = useState([]);
   const [resetHeight, setResetHeight] = useState(true);
 
@@ -89,9 +89,11 @@ const Dashboard = (): JSX.Element => {
     });
 
     if (oldWindowSize?.width !== size?.width || fixedHeights.length === 0 || resetHeight) {
-      setFixedHeights(tempFixedHeights);
-      setOldWindowSize(JSON.parse(JSON.stringify(size)));
-      setResetHeight(false);
+      if (tempFixedHeights.length) {
+        setFixedHeights(tempFixedHeights);
+        setOldWindowSize(JSON.parse(JSON.stringify(size)));
+        setResetHeight(false);
+      }
     }
   }, [services, resetHeight]);
 
