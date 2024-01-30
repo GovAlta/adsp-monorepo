@@ -2,7 +2,6 @@ import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
-import { hasRole } from './util';
 
 export const COMMENT_FEATURE_KEY = 'comment';
 
@@ -18,6 +17,7 @@ interface Topic {
   id: number;
   name: string;
   typeId: string;
+  commenters: string[];
 }
 
 interface Comment {
@@ -40,7 +40,7 @@ const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
 
 export const loadTopic = createAsyncThunk(
   'comment/load-topic',
-  async ({ resourceId }: { resourceId: string }, { getState, rejectWithValue }) => {
+  async ({ resourceId, typeId }: { resourceId: string; typeId: string }, { getState, rejectWithValue }) => {
     if (!resourceId) {
       throw new Error('resourceId not specified');
     }
@@ -55,7 +55,7 @@ export const loadTopic = createAsyncThunk(
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {
-            criteria: JSON.stringify({ resourceIdEquals: resourceId }),
+            criteria: JSON.stringify({ resourceIdEquals: resourceId, typeIdEquals: typeId }),
           },
         }
       );
@@ -118,10 +118,8 @@ export const selectTopic = createAsyncThunk(
     const toSelect = comment.topics[resourceId];
 
     if (toSelect) {
-      const type = comment.topicTypes[toSelect.typeId];
-      canComment =
-        hasRole('urn:ads:platform:comment-service:comment-admin', user.user) || hasRole(type.commenterRoles, user.user);
-      canRead = canComment || hasRole(type.readerRoles, user.user);
+      canComment = toSelect.commenters?.includes(user.user.id);
+      canRead = canComment;
     }
 
     // Load comments if this is changing the selected topic, and user can read the new topic.
