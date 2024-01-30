@@ -26,6 +26,7 @@ export const CommentsViewer: FunctionComponent = () => {
 
   return (
     <CommentsViewerComponent
+      typeLabel="question"
       comments={results}
       canComment={canComment}
       canLoadMore={!!next}
