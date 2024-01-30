@@ -108,7 +108,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
         comments.map((comment, index) => {
           const date = new Date(comment.lastUpdatedOn);
           return (
-            <CommentsList>
+            <CommentsList data-testid={`commentsList-${index}`}>
               <CommentsHeader>
                 <CommentsHeadGroup>
                   <CommentsHeading data-testid={`updatedBy-${index}`}> {comment.lastUpdatedBy.name}</CommentsHeading>
