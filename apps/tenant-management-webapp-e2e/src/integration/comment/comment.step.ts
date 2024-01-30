@@ -518,6 +518,7 @@ Then('the user views a topic list', function () {
 
 When('the user clicks Add topic type button on comments page', function () {
   commentObj.addTopicButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
 });
 
 Then('the user views Add topic modal', function () {
@@ -546,7 +547,7 @@ When('the user clicks {string} button in Add topic modal', function (button) {
       break;
     case 'cancel':
       commentObj.addTopicModalCancelBtn().shadow().find('button').click({ force: true });
-      cy.wait(1000);
+      cy.wait(2000);
       break;
     default:
       expect(button).to.be.oneOf(['save', 'cancel']);

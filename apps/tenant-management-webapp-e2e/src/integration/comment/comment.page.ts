@@ -195,45 +195,35 @@ class CommentPage {
   }
 
   commentContent(content) {
-    return cy.xpath(
-      `//table[@data-testid="topic-table"]/tbody//h3[text()="Comments list"]/parent::div/parent::div//div[text()="${content}"]`
-    );
+    return cy.xpath(`//div[contains(@data-testid, "comment-content") and text()="${content}"]`);
   }
 
   commentUser(content) {
     return cy.xpath(
-      `//table[@data-testid="topic-table"]/tbody//h3[text()="Comments list"]/parent::div/parent::div//div[text()="${content}"]/preceding-sibling::div/div[1]/div[1]`
+      `//div[contains(@data-testid, "comment-content") and text()="${content}"]//preceding-sibling::div//div[contains(@data-testid, "updatedBy")]`
     );
   }
 
   commentDateTime(content) {
     return cy.xpath(
-      `//table[@data-testid="topic-table"]/tbody//h3[text()="Comments list"]/parent::div/parent::div//div[text()="${content}"]/preceding-sibling::div/div[1]/div[2]`
+      `//div[contains(@data-testid, "comment-content") and text()="${content}"]//preceding-sibling::div//div[contains(@data-testid, "commentDate")]`
     );
   }
 
   commentsList() {
-    return cy.xpath(
-      '//h3[text()="Comments list"]/parent::div/parent::div//goa-icon-button/parent::div/parent::div/parent::div/parent::div'
-    );
+    return cy.xpath('//div[contains(@data-testid, "commentsList")]');
   }
 
   commentsListContents() {
-    return cy.xpath(
-      '//h3[text()="Comments list"]/parent::div/parent::div//goa-icon-button/parent::div/parent::div/parent::div/parent::div/div[2]'
-    );
+    return cy.xpath('//div[contains(@data-testid, "comment-content")]');
   }
 
   commentEditIcon(rowNumber) {
-    return cy.xpath(
-      `(//h3[text()="Comments list"]/parent::div/parent::div//goa-icon-button/parent::div/parent::div/parent::div/parent::div)[${rowNumber}]//goa-icon-button[@title="Edit"]`
-    );
+    return cy.xpath(`(//goa-icon-button[@data-testid="comment-edit"])[${rowNumber}]`);
   }
 
   commentDeleteIcon(rowNumber) {
-    return cy.xpath(
-      `(//h3[text()="Comments list"]/parent::div/parent::div//goa-icon-button/parent::div/parent::div/parent::div/parent::div)[${rowNumber}]//goa-icon-button[@title="Delete"]`
-    );
+    return cy.xpath(`(//goa-icon-button[@data-testid="comment-delete"])[${rowNumber}]`);
   }
 
   editCommentModalHeading() {

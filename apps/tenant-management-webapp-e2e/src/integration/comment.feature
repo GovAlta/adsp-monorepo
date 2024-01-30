@@ -116,8 +116,7 @@ Feature: Comment
     When the user enters "Comment number one edited" in Edit comment modal
     And the user clicks Save button in Edit comment modal
     Then the user views "Comment number one edited" with user info and current timestamp
-    # Add another comment after one minute and check sorting
-    When the user waits "60" seconds
+    # Add another comment and check sorting
     When the user clicks Add comment button for the topic
     Then the user views Add comment modal
     When the user enters "Comment number two" as comment
