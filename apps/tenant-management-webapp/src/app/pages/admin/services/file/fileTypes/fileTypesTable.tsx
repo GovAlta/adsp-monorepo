@@ -127,7 +127,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                     key={`file-type-row-${fileType?.id}`}
                     {...rowProps}
                     onEdit={() => {
-                      navigate(`/edit/${fileType?.id}`);
+                      navigate(`edit/${fileType?.id}`);
                       setEditId(fileType?.id);
                     }}
                     onDelete={() => {

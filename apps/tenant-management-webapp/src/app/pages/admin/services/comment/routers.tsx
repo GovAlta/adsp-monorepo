@@ -7,7 +7,7 @@ export const CommentRouter = () => {
   return (
     <Routes>
       <Route path="/" element={<Comment />} />
-      <Route path="/edit/:id" element={<CommentTopicTypesEditor />} />
+      <Route path="edit/:id" element={<CommentTopicTypesEditor />} />
       <Route path="/new" element={<CommentTopicTypesEditor />} />
     </Routes>
   );
