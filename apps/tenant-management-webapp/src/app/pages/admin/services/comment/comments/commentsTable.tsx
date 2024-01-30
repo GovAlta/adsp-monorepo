@@ -131,7 +131,6 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
                       title="Delete"
                       type="trash"
                       onClick={() => onDeleteComment(comment)}
-                      testId={`deleteCommentBtn-${index}`}
                     />
                   </IconDiv>
                 </CommentsActions>
