@@ -94,19 +94,19 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
       <HeaderFont>
         <h3>Comments list</h3>
         <GoAButton size="compact" type="secondary" testId="add-comment" onClick={addNewComment}>
-          Add Comment
+          Add comment
         </GoAButton>
       </HeaderFont>
       {comments &&
         comments.length > 0 &&
-        comments.map((comment) => {
+        comments.map((comment, index) => {
           const date = new Date(comment.lastUpdatedOn);
           return (
             <CommentsList>
               <CommentsHeader>
                 <CommentsHeadGroup>
-                  <CommentsHeading> {comment.lastUpdatedBy.name}</CommentsHeading>
-                  <CommentsDate> {formatDate(date)} </CommentsDate>
+                  <CommentsHeading data-testid={`updatedBy-${index}`}> {comment.lastUpdatedBy.name}</CommentsHeading>
+                  <CommentsDate data-testid={`commentDate-${index}`}> {formatDate(date)} </CommentsDate>
                 </CommentsHeadGroup>
                 <CommentsActions>
                   <IconDiv>
@@ -118,13 +118,13 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
                         setSelectedComment(comment);
                         setShowAddComment(true);
                       }}
-                      testId="toggle-details-visibility"
+                      testId={`editCommentBtn-${index}`}
                     />
                     <GoAContextMenuIcon
-                      testId="topic-definition-edit"
                       title="Delete"
                       type="trash"
                       onClick={() => onDeleteComment(comment)}
+                      testId={`deleteCommentBtn-${index}`}
                     />
                   </IconDiv>
                 </CommentsActions>
