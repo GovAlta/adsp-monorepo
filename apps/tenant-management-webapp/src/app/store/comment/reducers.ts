@@ -5,7 +5,7 @@ import {
   CREATE_COMMENT_TOPIC_SUCCESS_ACTION,
   FETCH_COMMENT_COMMENTS_SUCCESS,
   SET_COMMENT_TOPICS_ACTION,
-  CREAT_COMMENT_COMMENTS_SUCCESS,
+  CREATE_COMMENT_COMMENTS_SUCCESS,
   DELETE_COMMENT_TOPIC_SUCCESS,
   DELETE_COMMENT_COMMENTS_SUCCESS,
   CommentActionTypes,
@@ -72,7 +72,7 @@ export default function (state: CommentState = defaultState, action: CommentActi
         nextEntries: action.next,
       };
 
-    case CREAT_COMMENT_COMMENTS_SUCCESS:
+    case CREATE_COMMENT_COMMENTS_SUCCESS:
       return {
         ...state,
         comments: [action.payload, ...state.comments],

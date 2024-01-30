@@ -1,3 +1,4 @@
+import { ActionState } from '@store/session/models';
 export interface CommentTopicTypes {
   id: string;
   name: string;
@@ -41,6 +42,9 @@ export enum SecurityClassification {
   protectedB = 'protected b',
   protectedC = 'protected c',
   public = 'public',
+}
+export interface Indicator {
+  details?: Record<string, ActionState>;
 }
 
 export const defaultEditCommentTopicType: CommentTopicTypes = {

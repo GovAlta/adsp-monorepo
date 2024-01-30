@@ -13,10 +13,11 @@ import {
   LoadMoreCommentsWrapper,
   CommentsHeadGroup,
   CommentsDate,
+  CommentLoader,
 } from '../styled-components';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoACircularProgress } from '@abgov/react-components-new';
 import { AddCommentModal } from '../comments/addCommentModal';
 import { DeleteConfirmationsView } from '../comments/deleteConfirmationsView';
 import { addCommentRequest, fetchComments, updateComment } from '@store/comment/action';
@@ -88,7 +89,11 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
     setDeleteAction(true);
     comment.topicId = topic.id;
   };
-
+  const elementIndicator = useSelector((state: RootState) => {
+    return state?.session?.elementIndicator;
+  });
+  // eslint-disable-next-line
+  useEffect(() => {}, [elementIndicator]);
   return (
     <>
       <HeaderFont>
@@ -97,6 +102,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
           Add comment
         </GoAButton>
       </HeaderFont>
+
       {comments &&
         comments.length > 0 &&
         comments.map((comment, index) => {
@@ -118,9 +124,10 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
                         setSelectedComment(comment);
                         setShowAddComment(true);
                       }}
-                      testId={`editCommentBtn-${index}`}
+                      testId="comment-edit"
                     />
                     <GoAContextMenuIcon
+                      testId="comment-delete"
                       title="Delete"
                       type="trash"
                       onClick={() => onDeleteComment(comment)}
@@ -133,6 +140,12 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
             </CommentsList>
           );
         })}
+
+      {elementIndicator?.show && (
+        <CommentLoader>
+          <GoACircularProgress size="small" visible={true} />
+        </CommentLoader>
+      )}
       {comments && !comments.length && renderNoItem('comments')}
       {next && (
         <LoadMoreCommentsWrapper>
