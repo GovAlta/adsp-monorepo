@@ -6,10 +6,13 @@ import {
   MaterialAnyOfRenderer,
   materialObjectControlTester,
   MaterialObjectRenderer,
+  materialArrayControlTester,
+  MaterialArrayControlRenderer,
   materialOneOfControlTester,
   MaterialOneOfRenderer,
   MaterialEnumArrayRenderer,
   materialEnumArrayRendererTester,
+  MuiAutocomplete,
 } from '@jsonforms/material-renderers';
 import {
   MaterialLabelRenderer,
@@ -19,13 +22,20 @@ import {
 } from '@jsonforms/material-renderers';
 import {
   MaterialAnyOfStringOrEnumControl,
-  materialAnyOfStringOrEnumControlTester,
   materialEnumControlTester,
+  materialAnyOfStringOrEnumControlTester,
   MaterialOneOfEnumControl,
   MaterialSliderControl,
   materialSliderControlTester,
   MaterialOneOfRadioGroupControl,
   materialOneOfRadioGroupControlTester,
+  materialBooleanControlTester,
+  MaterialBooleanControl,
+  materialOneOfEnumControlTester,
+  materialBooleanToggleControlTester,
+  MaterialBooleanToggleControl,
+  MaterialNativeControl,
+  materialNativeControlTester,
 } from '@jsonforms/material-renderers';
 import {
   MaterialArrayLayout,
@@ -47,6 +57,7 @@ import {
   MaterialOneOfEnumCell,
   materialOneOfEnumCellTester,
 } from '@jsonforms/material-renderers';
+//import { MaterialEnumControl } from '@jsonforms/material-renderers/lib/controls/MaterialEnumControl';
 import {
   GoATextControlTester,
   GoAInputTextControl,
@@ -109,7 +120,7 @@ export class Renderers {
       renderer: MaterialOneOfRadioGroupControl,
     },
     {
-      tester: materialEnumControlTester,
+      tester: materialOneOfEnumControlTester,
       renderer: MaterialOneOfEnumControl,
     },
     // layouts

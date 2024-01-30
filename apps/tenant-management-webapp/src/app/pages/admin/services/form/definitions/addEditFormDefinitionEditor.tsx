@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
-import { vanillaCells } from '@jsonforms/vanilla-renderers';
+import { vanillaCells, vanillaRenderers } from '@jsonforms/vanilla-renderers';
 import { Renderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
+import { materialRenderers } from '@jsonforms/material-renderers';
 import { FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';

@@ -65,6 +65,19 @@ export class Context {
     const dataFunction = this.baseEnumerator.data.get(key);
     return dataFunction && dataFunction();
   }
+
+  /**
+   * Grabs all data
+   *
+   */
+  getAllData() {
+    const allData: string[] = [];
+    this.baseEnumerator.data.forEach((d, index) => {
+      allData.push(d());
+    });
+    console.log(JSON.stringify(allData) + '<allData');
+    return allData;
+  }
 }
 
 export const JsonFormContextInstance = new Context();
