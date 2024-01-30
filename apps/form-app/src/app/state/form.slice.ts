@@ -5,6 +5,7 @@ import { debounce } from 'lodash';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
 import { hashData } from './util';
+import { loadTopic, selectTopic } from './comment.slice';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -20,6 +21,7 @@ export interface FormDefinition {
 export interface Form {
   definitionId: string;
   id: string;
+  urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
   created: Date;
   submitted?: Date;
@@ -142,33 +144,45 @@ export const findUserForm = createAsyncThunk(
   }
 );
 
-export const loadForm = createAsyncThunk('form/load-form', async (formId: string, { getState, rejectWithValue }) => {
-  try {
-    const { config } = getState() as AppState;
-    const formServiceUrl = config.directory[FORM_SERVICE_ID];
+const SUPPORT_TOPIC_TYPE_ID = 'form-questions';
 
-    let token = await getAccessToken();
-    const { data: form } = await axios.get<SerializedForm>(new URL(`/form/v1/forms/${formId}`, formServiceUrl).href, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+export const loadForm = createAsyncThunk(
+  'form/load-form',
+  async (formId: string, { getState, dispatch, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
 
-    token = await getAccessToken();
-    const { data } = await axios.get<FormDataResponse>(new URL(`/form/v1/forms/${formId}/data`, formServiceUrl).href, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return { ...data, form, digest: await hashData(data) };
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      return rejectWithValue({
-        status: err.response?.status,
-        message: err.response?.data?.errorMessage || err.message,
+      let token = await getAccessToken();
+      const { data: form } = await axios.get<SerializedForm>(new URL(`/form/v1/forms/${formId}`, formServiceUrl).href, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-    } else {
-      throw err;
+
+      token = await getAccessToken();
+      const { data } = await axios.get<FormDataResponse>(
+        new URL(`/form/v1/forms/${formId}/data`, formServiceUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      dispatch(loadTopic({ resourceId: form.urn, typeId: SUPPORT_TOPIC_TYPE_ID })).then(() =>
+        dispatch(selectTopic({ resourceId: form.urn }))
+      );
+
+      return { ...data, form, digest: await hashData(data) };
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
     }
   }
-});
+);
 
 export const createForm = createAsyncThunk(
   'form/create-form',

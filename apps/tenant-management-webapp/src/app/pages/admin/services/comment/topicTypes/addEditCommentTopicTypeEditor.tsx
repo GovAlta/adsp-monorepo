@@ -31,7 +31,6 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { ConfigServiceRole } from '@store/access/models';
 import { getCommentTopicTypes } from '@store/comment/action';
 import { updateCommentTopicType } from '@store/comment/action';
-import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 
 import { createSelector } from 'reselect';
 
@@ -43,7 +42,7 @@ import { TopicConfigTopicType } from './topicConfigTopicType';
 
 import { useHistory, useParams } from 'react-router-dom';
 
-import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAButton, GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 
 const isCommentUpdated = (prev: CommentTopicTypes, next: CommentTopicTypes): boolean => {

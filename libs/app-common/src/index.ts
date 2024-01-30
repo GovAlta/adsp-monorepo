@@ -1,4 +1,5 @@
 export * from './components/Band';
+export * from './components/CommentsViewer';
 export * from './components/Container';
 export * from './components/Footer';
 export * from './components/Grid';
