@@ -50,7 +50,8 @@ const Sidebar = ({ type }: SidebarProps) => {
             <Title>{tenantName}</Title>
           </div>
           <NavLink
-            to="./"
+            to="/admin"
+            end
             className={({ isActive }) => (isActive ? 'current' : '')}
             title="Dashboard"
             data-testid="menu-dashboard"

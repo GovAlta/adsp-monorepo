@@ -119,7 +119,7 @@ export const FileTypeModal = ({
 
                 dispatch(CreateFileTypeService(fileType));
 
-                navigate(`/admin/services/file/edit/${fileType.id}?fileTypes=true`);
+                navigate(`edit/${fileType.id}?fileTypes=true`, { relative: 'path' });
               }}
             >
               Save

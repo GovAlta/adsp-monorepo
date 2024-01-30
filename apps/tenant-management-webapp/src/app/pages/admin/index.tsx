@@ -26,6 +26,11 @@ import { FileRouter } from './services/file';
 import { serviceVariables } from '../../../featureFlag';
 
 import { Script } from './services/script';
+import { CommentTopicTypesEditor } from './services/comment/topicTypes/commentTopicTypesEditor';
+import { PdfTemplatesEditor } from './services/pdf/templates/pdfTemplateEditor';
+import { FormDefinitionEditor } from './services/form/definitions/formDefinitionEditor';
+import { FileTypeDefinitionEditor } from './services/file/fileTypes/fileTypeDefinitionEditor';
+import { TaskDefinitionEditor } from './services/task/TaskDefinationEditor';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
@@ -73,11 +78,11 @@ const TenantManagement = (): JSX.Element => {
     <AdminLayout>
       <Routes>
         {/* These paths forces the scrollbars to be hidden when in the editor */}
-        <Route path="services/form/edit"></Route>
-        <Route path="services/pdf/edit"></Route>
-        <Route path="services/task/edit"></Route>
-        <Route path="services/comment/edit"></Route>
-        <Route path="services/file/edit"></Route>
+        <Route path="services/form/edit/:id" element={<FormDefinitionEditor />} />
+        <Route path="services/pdf/edit/:id" element={<PdfTemplatesEditor />} />
+        <Route path="services/task/edit/:id" element={<TaskDefinitionEditor />} />
+        <Route path="services/comment/edit/:id" element={<CommentTopicTypesEditor />} />
+        <Route path="services/file/edit/:id" element={<FileTypeDefinitionEditor />} />
         <Route
           path="*"
           element={
@@ -97,8 +102,6 @@ const TenantManagement = (): JSX.Element => {
           {serviceVariables(config.featureFlags).map((service) => {
             return <Route path={service.link} key={service.link} element={renderServices(service.name)} />;
           })}
-
-          <Route path="*" element={<Navigate to="/404" />} />
         </Routes>
         <Outlet />
       </Container>
