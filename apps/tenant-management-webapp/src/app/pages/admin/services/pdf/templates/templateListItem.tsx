@@ -2,16 +2,14 @@ import React from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Edit, OverflowWrap } from '../styled-components';
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 
 interface PdfTemplateItemProps {
   pdfTemplate: PdfTemplate;
   onDelete?: (PdfTemplate) => void;
 }
 export const PdfTemplateItem = ({ pdfTemplate, onDelete }: PdfTemplateItemProps): JSX.Element => {
-  const { url } = useRouteMatch();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -27,7 +25,7 @@ export const PdfTemplateItem = ({ pdfTemplate, onDelete }: PdfTemplateItemProps)
               <GoAContextMenuIcon
                 type="create"
                 title="Edit"
-                onClick={() => history.push(`${url}/edit/${pdfTemplate.id}`)}
+                onClick={() => navigate(`edit/${pdfTemplate.id}`)}
                 testId={`edit-pdf-item`}
               />
               <GoAContextMenuIcon

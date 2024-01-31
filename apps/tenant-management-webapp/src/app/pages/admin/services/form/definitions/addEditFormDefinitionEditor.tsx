@@ -13,8 +13,6 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
-import $RefParser from '@apidevtools/json-schema-ref-parser';
-import JsonRefs from 'json-refs';
 
 import {
   TextLoadingIndicator,
@@ -42,7 +40,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-6';
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
 
 import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
@@ -72,8 +70,7 @@ const { jsonFormContext, baseEnumerator } = JsonFormContextInstance;
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
   const tempNext = JSON.parse(JSON.stringify(next));
-
-  return (
+  const isUpdated =
     JSON.stringify(tempPrev?.applicantRoles) !== JSON.stringify(tempNext?.applicantRoles) ||
     JSON.stringify(tempPrev?.assessorRoles) !== JSON.stringify(tempNext?.assessorRoles) ||
     JSON.stringify(tempPrev?.clerkRoles) !== JSON.stringify(tempNext?.clerkRoles) ||
@@ -81,8 +78,9 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
     JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
-    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess)
-  );
+    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess);
+
+  return isUpdated;
 };
 
 export const formEditorJsonConfig = {
@@ -130,7 +128,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   );
 
   const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
-  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify({}, null, 2));
+  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(definition?.dataSchema || {}, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
@@ -223,11 +221,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   useEffect(() => {
     if (id && formDefinitions[id]) {
       const tempFormDefinition = formDefinitions[id] as FormDefinition;
-      if (Object.keys(tempFormDefinition.dataSchema || {}).length > 0) {
+      if (Object.keys(tempFormDefinition.uiSchema || {}).length > 0) {
         setTempUiSchema(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
         setTempUiSchemaBounced(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
       }
-      if (Object.keys(tempFormDefinition.uiSchema || {}).length > 0) {
+      if (Object.keys(tempFormDefinition.dataSchema || {}).length > 0) {
         setTempDataSchema(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
         setDataSchemaBounced(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
       }
@@ -258,13 +256,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   }, [debouncedRenderDataSchema]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const close = () => {
-    history.push({
-      pathname: '/admin/services/form',
-      search: '?definitions=true',
-    });
+    navigate('/admin/services/form?definitions=true');
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
@@ -431,9 +426,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       value={tempDataSchema}
                       onChange={(value) => {
                         const jsonSchemaValidResult = JSONSchemaValidator(value);
+                        setTempDataSchema(value);
 
                         if (jsonSchemaValidResult === '') {
-                          setTempDataSchema(value);
                           setEditorErrors({
                             ...editorErrors,
                             dataSchemaJSONSchema: null,

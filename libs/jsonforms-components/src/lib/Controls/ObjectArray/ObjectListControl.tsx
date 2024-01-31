@@ -2,15 +2,12 @@ import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
 import React from 'react';
-import { FormHelperText, Hidden, TableCell, TableRow, Typography } from '@mui/material';
+import { FormHelperText, Hidden, Typography } from '@mui/material';
 import {
   ArrayLayoutProps,
   ControlElement,
-  errorsAt,
-  formatErrorMessage,
   JsonSchema,
   Paths,
-  Resolve,
   JsonFormsRendererRegistryEntry,
   JsonFormsCellRendererRegistryEntry,
   ArrayTranslations,
@@ -20,7 +17,7 @@ import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid, GoAIconButton, GoADivider, GoAContainer } from '@abgov/react-components-new';
+import { GoAGrid, GoAIconButton, GoAContainer } from '@abgov/react-components-new';
 import { ToolBarHeader, ObjectArrayTitle } from './styled-components';
 
 // eslint-disable-next-line
@@ -45,7 +42,7 @@ const extractScopesFromUISchema = (uischema: any): string[] => {
 };
 
 const GenerateRows = (
-  Cell: React.ComponentType<OwnPropsOfNonEmptyCell | TableHeaderCellProps>,
+  Cell: React.ComponentType<OwnPropsOfNonEmptyCell>,
   schema: JsonSchema,
   rowPath: string,
   enabled: boolean,
@@ -81,26 +78,18 @@ const getValidColumnProps = (scopedSchema: JsonSchema) => {
   return [''];
 };
 
-export interface EmptyTableProps {
+export interface EmptyListProps {
   numColumns: number;
   translations: ArrayTranslations;
 }
 
-const EmptyTable = ({ numColumns, translations }: EmptyTableProps) => (
+const EmptyList = ({ numColumns, translations }: EmptyListProps) => (
   <GoAGrid minChildWidth="30ch">
     <Typography align="center">
       <b>{translations.noDataMessage}</b>
     </Typography>
   </GoAGrid>
 );
-
-interface TableHeaderCellProps {
-  title: string;
-}
-
-const TableHeaderCell = React.memo(function TableHeaderCell({ title }: TableHeaderCellProps) {
-  return <TableCell>{title}</TableCell>;
-});
 
 interface NonEmptyCellProps extends OwnPropsOfNonEmptyCell {
   rootSchema: JsonSchema;
@@ -184,6 +173,7 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
         (uischema as unknown as any)?.elements?.map((element) => {
           return (
             <JsonFormsDispatch
+              key={rowPath}
               schema={schema}
               uischema={element}
               path={rowPath}
@@ -219,10 +209,6 @@ interface NonEmptyRowProps {
   childPath: string;
   schema: JsonSchema;
   rowIndex: number;
-  moveUpCreator: (path: string, position: number) => () => void;
-  moveDownCreator: (path: string, position: number) => () => void;
-  enableUp: boolean;
-  enableDown: boolean;
   showSortButtons: boolean;
   enabled: boolean;
   cells?: JsonFormsCellRendererRegistryEntry[];
@@ -236,11 +222,6 @@ const NonEmptyRowComponent = ({
   schema,
   rowIndex,
   openDeleteDialog,
-  moveUpCreator,
-  moveDownCreator,
-  enableUp,
-  enableDown,
-  showSortButtons,
   enabled,
   cells,
   path,
@@ -264,7 +245,7 @@ const NonEmptyRowComponent = ({
     </div>
   );
 };
-export const NonEmptyRow = React.memo(NonEmptyRowComponent);
+export const NonEmptyList = React.memo(NonEmptyRowComponent);
 interface TableRowsProp {
   data: number;
   path: string;
@@ -274,27 +255,23 @@ interface TableRowsProp {
   config?: any;
   enabled: boolean;
   cells?: JsonFormsCellRendererRegistryEntry[];
-  moveUp?(path: string, toMove: number): () => void;
-  moveDown?(path: string, toMove: number): () => void;
   translations: ArrayTranslations;
 }
-const TableRows = ({
+const ObjectArrayList = ({
   data,
   path,
   schema,
   openDeleteDialog,
-  moveUp,
-  moveDown,
   uischema,
   config,
   enabled,
   cells,
   translations,
 }: TableRowsProp & WithDeleteDialogSupport) => {
-  const isEmptyTable = data === 0;
+  const isEmptyList = data === 0;
 
-  if (isEmptyTable) {
-    return <EmptyTable numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
+  if (isEmptyList) {
+    return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
   }
 
   const appliedUiSchemaOptions = merge({}, config, uischema.options);
@@ -305,16 +282,12 @@ const TableRows = ({
         const childPath = Paths.compose(path, `${index}`);
 
         return (
-          <NonEmptyRow
+          <NonEmptyList
             key={childPath}
             childPath={childPath}
             rowIndex={index}
             schema={schema}
             openDeleteDialog={openDeleteDialog}
-            moveUpCreator={moveUp}
-            moveDownCreator={moveDown}
-            enableUp={index !== 0}
-            enableDown={index !== data - 1}
             showSortButtons={appliedUiSchemaOptions.showSortButtons || appliedUiSchemaOptions.showArrayTableSortButtons}
             enabled={enabled}
             cells={cells}
@@ -348,9 +321,7 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
     } = this.props;
 
     const controlElement = uischema as ControlElement;
-    const isObjectSchema = schema.type === 'object';
     // eslint-disable-next-line
-    const headerCells: any = isObjectSchema ? GenerateRows(TableHeaderCell, schema, path, enabled, cells) : undefined;
     const listTitle = label || uischema.options?.title;
 
     return (
@@ -362,7 +333,7 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
               errors={errors}
               label={label}
               addItem={this.addItem}
-              numColumns={isObjectSchema ? headerCells.length : 1}
+              numColumns={0}
               path={path}
               uischema={controlElement}
               schema={schema}
@@ -372,7 +343,7 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
             />
           </ToolBarHeader>
           <div>
-            <TableRows openDeleteDialog={openDeleteDialog} translations={translations} {...this.props} />
+            <ObjectArrayList openDeleteDialog={openDeleteDialog} translations={translations} {...this.props} />
           </div>
         </div>
       </Hidden>

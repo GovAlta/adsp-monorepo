@@ -2,7 +2,7 @@ import '@style/app.css';
 import '@style/colors.scss';
 
 import React, { useEffect } from 'react';
-import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-6';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import LandingPage from '@pages/public/Landing';
 import { SignInError } from '@pages/public/SignInError';
@@ -13,7 +13,7 @@ import Admin from '@pages/admin';
 import { TenantsRouter } from '@pages/admin/tenants';
 import GetStarted from '@pages/public/GetStarted';
 import { store, RootState } from '@store/index';
-import { PrivateApp, PrivateRoute } from './privateApp';
+import { PrivateApp } from './privateApp';
 import { fetchConfig } from '@store/config/actions';
 import AuthContext from '@lib/authContext';
 import CreateTenant from '@pages/admin/tenants/CreateTenant';
@@ -33,40 +33,23 @@ const AppRouters = () => {
         <h3>For the best experience, please use a Desktop</h3>
       </MobileMessage>
       <HideMobile>
-        <Router>
-          <Switch>
-            <Route exact path="/">
-              <LandingPage />
-            </Route>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
 
-            <Route path="/admin">
-              <PrivateApp>
-                <PrivateRoute path="/admin" component={Admin} />
-                <PrivateRoute path="/admin/tenants" component={TenantsRouter} />
-              </PrivateApp>
-            </Route>
-            <PublicApp>
-              <Route path="/:realm/login">
-                <Login />
-              </Route>
-              <Route path="/get-started">
-                <GetStarted />
-              </Route>
-              <Route exact path="/login-redirect">
-                <LoginRedirect />
-              </Route>
-              <Route exact path="/login-error">
-                <SignInError />
-              </Route>
-              <Route exact path="/logout-redirect">
-                <LogoutRedirect />
-              </Route>
-              <Route exact path="/tenant/creation">
-                <CreateTenant />
-              </Route>
-            </PublicApp>
-          </Switch>
-        </Router>
+          <Route path="/admin//*" element={<PrivateApp />}>
+            <Route path="*" element={<Admin />} />
+            <Route path="tenants" element={<TenantsRouter />} />
+          </Route>
+
+          <Route path="/*" element={<PublicApp />}>
+            <Route path=":realm/login" element={<Login />} />
+            <Route path="get-started" element={<GetStarted />} />
+            <Route path="login-redirect" element={<LoginRedirect />} />
+            <Route path="login-error" element={<SignInError />} />
+            <Route path="logout-redirect" element={<LogoutRedirect />} />
+            <Route path="tenant/creation" element={<CreateTenant />} />
+          </Route>
+        </Routes>
       </HideMobile>
     </>
   );

@@ -31,7 +31,6 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { ConfigServiceRole } from '@store/access/models';
 import { getCommentTopicTypes } from '@store/comment/action';
 import { updateCommentTopicType } from '@store/comment/action';
-import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 
 import { createSelector } from 'reselect';
 
@@ -41,9 +40,9 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultCommentTopicType, defaultEditCommentTopicType, SecurityClassification } from '@store/comment/model';
 import { TopicConfigTopicType } from './topicConfigTopicType';
 
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-6';
 
-import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAButton, GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 
 const isCommentUpdated = (prev: CommentTopicTypes, next: CommentTopicTypes): boolean => {
@@ -113,13 +112,10 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     }
   }, [commentTopicTypes]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const close = () => {
-    history.push({
-      pathname: '/admin/services/comment',
-      search: '?topicTypes=true',
-    });
+    navigate('/admin/services/comment?topicTypes=true');
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({

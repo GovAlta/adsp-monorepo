@@ -70,11 +70,17 @@ import {
   GoAEnumControlTester,
   GoAEnumRadioGroupControl,
   GoARadioGroupControlTester,
+  GoAArrayControlTester,
+  GoAArrayControlRenderer,
+  GoAListWithDetailsTester,
+  GoABooleanControlTester,
+  GoABooleanControl,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { JsonFormContextInstance } from './lib/Context';
+import { HelpContent, HelpContentTester } from './lib/Additional';
 
 export * from './lib/Context';
 
@@ -127,6 +133,15 @@ export class Renderers {
       tester: GoARadioGroupControlTester,
       renderer: GoAEnumRadioGroupControl,
     },
+    { tester: GoABooleanControlTester, renderer: GoABooleanControl },
+    {
+      tester: GoAArrayControlTester,
+      renderer: GoAArrayControlRenderer,
+    },
+    {
+      tester: GoAListWithDetailsTester,
+      renderer: GoAArrayControlRenderer,
+    },
     {
       tester: materialOneOfRadioGroupControlTester,
       renderer: MaterialOneOfRadioGroupControl,
@@ -168,6 +183,10 @@ export class Renderers {
     {
       tester: MultiLineTextControlTester,
       renderer: MultiLineTextControl,
+    },
+    {
+      tester: HelpContentTester,
+      renderer: HelpContent,
     },
   ];
 

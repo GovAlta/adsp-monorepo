@@ -1,5 +1,5 @@
 import { SagaIterator } from '@redux-saga/core';
-import { UpdateIndicator } from '@store/session/actions';
+import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
 import { RootState } from '../index';
 import { put, select, call, all, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
@@ -16,7 +16,7 @@ import {
   CREATE_COMMENT_TOPIC_ACTION,
   FETCH_COMMENT_TOPICS_ACTION,
   FETCH_COMMENT_TOPIC_COMMENTS,
-  CREAT_COMMENT_COMMENTS_ACTION,
+  CREATE_COMMENT_COMMENTS_ACTION,
   DELETE_COMMENT_TOPIC_ACTION,
   DELETE_COMMENT,
   UPDATE_COMMENT_COMMENTS_ACTION,
@@ -185,6 +185,11 @@ function* clearCommentSaga(): SagaIterator {
   yield put(fetchCommentSuccess([], '', ''));
 }
 function* fetchCommentSaga(action): SagaIterator {
+  yield put(
+    UpdateElementIndicator({
+      show: true,
+    })
+  );
   const baseUrl = yield select((state) => state.config.serviceUrls?.commentServiceApiUrl);
   const token = yield call(getAccessToken);
   const next = action.next ? action.next : '';
@@ -193,8 +198,19 @@ function* fetchCommentSaga(action): SagaIterator {
     const url = `${baseUrl}/comment/v1/topics/${action.payload}/comments?top=10&after=${next}`;
     const { results, page } = yield call(fetchCommentsApi, token, url);
     yield put(fetchCommentSuccess(results, page.after, page.next));
+    yield put(
+      UpdateElementIndicator({
+        show: false,
+      })
+    );
   } catch (error) {
     yield put(ErrorNotification(error.toString()));
+
+    yield put(
+      UpdateElementIndicator({
+        show: false,
+      })
+    );
   }
 }
 function* addCommentSaga(action): SagaIterator {
@@ -255,7 +271,7 @@ export function* watchCommentSagas(): Generator {
   yield takeEvery(DELETE_COMMENT_TOPIC_TYPE_ACTION, deleteCommentTopicTypes);
   yield takeEvery(CREATE_COMMENT_TOPIC_ACTION, addTopicSaga);
   yield takeEvery(FETCH_COMMENT_TOPICS_ACTION, fetchTopicsSaga);
-  yield takeEvery(CREAT_COMMENT_COMMENTS_ACTION, addCommentSaga);
+  yield takeEvery(CREATE_COMMENT_COMMENTS_ACTION, addCommentSaga);
   yield takeEvery(CLEAR_COMMENT_COMMENTS_ACTION, clearCommentSaga);
   yield takeEvery(UPDATE_COMMENT_COMMENTS_ACTION, updateCommentSaga);
   yield takeEvery(FETCH_COMMENT_TOPIC_COMMENTS, fetchCommentSaga);

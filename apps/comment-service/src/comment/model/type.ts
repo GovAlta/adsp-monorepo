@@ -22,7 +22,7 @@ export class TopicTypeEntity implements TopicType {
   }
 
   public canRead(user: User): boolean {
-    return this.canAdmin(user) || this.canComment(user) || isAllowedUser(user, this.tenantId, this.readerRoles);
+    return this.canComment(user) || isAllowedUser(user, this.tenantId, this.readerRoles);
   }
 
   public canComment(user: User): boolean {

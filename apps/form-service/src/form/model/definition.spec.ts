@@ -23,6 +23,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
     expect(entity).toBeTruthy();
@@ -41,6 +42,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
@@ -99,6 +101,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
@@ -124,6 +127,7 @@ describe('FormDefinitionEntity', () => {
         clerkRoles: [],
         dataSchema: null,
         submissionRecords: false,
+        supportTopic: false,
         queueTaskToProcess: {} as QueueTaskToProcess,
       });
       const result = anonymousApplyEntity.canApply({
@@ -166,6 +170,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: { type: 'object' },
       submissionRecords: false,
+      supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
@@ -218,6 +223,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
 

@@ -13,10 +13,11 @@ import {
   LoadMoreCommentsWrapper,
   CommentsHeadGroup,
   CommentsDate,
+  CommentLoader,
 } from '../styled-components';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoACircularProgress } from '@abgov/react-components-new';
 import { AddCommentModal } from '../comments/addCommentModal';
 import { DeleteConfirmationsView } from '../comments/deleteConfirmationsView';
 import { addCommentRequest, fetchComments, updateComment } from '@store/comment/action';
@@ -88,25 +89,30 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
     setDeleteAction(true);
     comment.topicId = topic.id;
   };
-
+  const elementIndicator = useSelector((state: RootState) => {
+    return state?.session?.elementIndicator;
+  });
+  // eslint-disable-next-line
+  useEffect(() => {}, [elementIndicator]);
   return (
     <>
       <HeaderFont>
         <h3>Comments list</h3>
         <GoAButton size="compact" type="secondary" testId="add-comment" onClick={addNewComment}>
-          Add Comment
+          Add comment
         </GoAButton>
       </HeaderFont>
+
       {comments &&
         comments.length > 0 &&
-        comments.map((comment) => {
+        comments.map((comment, index) => {
           const date = new Date(comment.lastUpdatedOn);
           return (
-            <CommentsList>
-              <CommentsHeader>
-                <CommentsHeadGroup>
-                  <CommentsHeading> {comment.lastUpdatedBy.name}</CommentsHeading>
-                  <CommentsDate> {formatDate(date)} </CommentsDate>
+            <CommentsList data-testid={`commentsList-${index}`}>
+              <CommentsHeader data-testid={`commentsHeader-${index}`}>
+                <CommentsHeadGroup data-testid={`commentsHeadGroup-${index}`}>
+                  <CommentsHeading data-testid={`updatedBy-${index}`}> {comment.lastUpdatedBy.name}</CommentsHeading>
+                  <CommentsDate data-testid={`commentDate-${index}`}> {formatDate(date)} </CommentsDate>
                 </CommentsHeadGroup>
                 <CommentsActions>
                   <IconDiv>
@@ -118,10 +124,10 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
                         setSelectedComment(comment);
                         setShowAddComment(true);
                       }}
-                      testId="toggle-details-visibility"
+                      testId="comment-edit"
                     />
                     <GoAContextMenuIcon
-                      testId="topic-definition-edit"
+                      testId="comment-delete"
                       title="Delete"
                       type="trash"
                       onClick={() => onDeleteComment(comment)}
@@ -129,10 +135,16 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
                   </IconDiv>
                 </CommentsActions>
               </CommentsHeader>
-              <CommentBody>{comment.content}</CommentBody>
+              <CommentBody data-testid={`comment-content-${index}`}>{comment.content}</CommentBody>
             </CommentsList>
           );
         })}
+
+      {elementIndicator?.show && (
+        <CommentLoader>
+          <GoACircularProgress size="small" visible={true} />
+        </CommentLoader>
+      )}
       {comments && !comments.length && renderNoItem('comments')}
       {next && (
         <LoadMoreCommentsWrapper>

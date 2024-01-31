@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
-import moment from 'moment';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
 import { hasRole } from './util';
@@ -284,8 +283,8 @@ export const commentsSelector = createSelector(
   (state: AppState) => state.user.user?.id,
   ({ results, next }, userId) => ({
     results: [...results]
-      .map((r) => ({ ...r, createdOn: moment(r.createdOn), byCurrentUser: r.createdBy.id === userId }))
-      .sort((a, b) => b.createdOn.unix() - a.createdOn.unix()),
+      .map((r) => ({ ...r, createdOn: new Date(r.createdOn), byCurrentUser: r.createdBy.id === userId }))
+      .sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()),
     next,
   })
 );

@@ -11,6 +11,7 @@ export interface FormDefinition {
   uiSchema?: Record<string, unknown>;
   dispositionStates?: Array<Disposition>;
   submissionRecords: boolean;
+  supportTopic: boolean;
   queueTaskToProcess: QueueTaskToProcess;
 }
 
