@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { GoAFormItem, GoADetails } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';

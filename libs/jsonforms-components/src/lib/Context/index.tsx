@@ -24,8 +24,10 @@ export class Context {
 
   constructor() {
     this.fileList = null;
-    this.uploadFile = this.empty;
-    this.downloadFile = this.empty;
+    /* eslint-disable @typescript-eslint/no-empty-function */
+    this.uploadFile = () => {};
+    this.downloadFile = () => {};
+    /* eslint-enable @typescript-eslint/no-empty-function */
 
     this.enumFunctions = new Map<string, () => (file: File, propertyId: string) => void>();
     this.enumValues = new Map<string, () => Record<string, any>>();
