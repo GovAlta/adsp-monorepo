@@ -60,8 +60,6 @@ export const FormStepper = ({
     setStep(page);
   }
 
-  console.log(JSON.stringify(uiSchema.elements) + '<uiSchema.elements');
-
   return (
     <div id={`${path}-form-stepper`} className="formStepper">
       <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
@@ -76,12 +74,9 @@ export const FormStepper = ({
       </GoAFormStepper>
       <GoAPages current={step} mb="xl">
         {uiSchema.elements?.map((step, index) => {
-          console.log(JSON.stringify(step) + '<stepxxx');
           return (
             <div>
               {step.elements.map((fieldUiSchema) => {
-                // console.log(JSON.stringify(fieldUiSchema) + '<fieldUiSchema');
-                // console.log(JSON.stringify(schema) + '<schema');
                 return (
                   <JsonFormsDispatch
                     schema={schema}

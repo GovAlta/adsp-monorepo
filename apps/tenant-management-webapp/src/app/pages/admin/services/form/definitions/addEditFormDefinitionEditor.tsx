@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
-import { vanillaCells, vanillaRenderers } from '@jsonforms/vanilla-renderers';
+import { vanillaCells } from '@jsonforms/vanilla-renderers';
 import { Renderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
-import { materialRenderers } from '@jsonforms/material-renderers';
 import { FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
@@ -14,6 +13,8 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
+import $RefParser from '@apidevtools/json-schema-ref-parser';
+import JsonRefs from 'json-refs';
 
 import {
   TextLoadingIndicator,
@@ -63,16 +64,10 @@ import { getTaskQueues } from '@store/task/action';
 
 import { UploadFileService, DownloadFileService } from '@store/file/actions';
 import { FetchFileTypeService } from '@store/file/actions';
-import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
+import { convertDataSchemaToSuggestion, formatEditorSuggestions, oneOfGenerator } from '@lib/autoComplete';
 import { JsonFormContextInstance } from '@abgov/jsonforms-components';
 
 const { jsonFormContext, baseEnumerator } = JsonFormContextInstance;
-
-const data = { asdf: '532' };
-
-JsonFormContextInstance.enumValues.set('some-data', () => data);
-
-JsonFormContextInstance.addData('a', { b: 'c' });
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -107,8 +102,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     return state?.fileService.latestFile;
   });
 
-  const token: string = useSelector((state: RootState) => state.session.credentials.token);
-
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -118,7 +111,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const uploadFile = (file: File, propertyId: string) => {
-    console.log(JSON.stringify(file) + '<---file');
     const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
     dispatch(UploadFileService(fileInfo));
   };
@@ -175,7 +167,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         triggerCharacters: ['"'],
         provideCompletionItems: (model, position) => {
           const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
-          const suggestions = formatEditorSuggestions(dataSchemaSuggestion);
+          let suggestions = formatEditorSuggestions(dataSchemaSuggestion);
+          const newSuggestions = oneOfGenerator(JsonFormContextInstance.getAllData());
+          suggestions = suggestions.concat(newSuggestions);
           return {
             suggestions,
           } as languages.ProviderResult<languages.CompletionList>;
@@ -755,7 +749,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             renderers={renderer.GoARenderers}
                             cells={vanillaCells}
                             onChange={({ data }) => {
-                              console.log(JSON.stringify(data) + '<data=----------------');
                               setData(data);
                             }}
                           />
@@ -767,7 +760,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             renderers={renderer.GoARenderers}
                             cells={vanillaCells}
                             onChange={({ data }) => {
-                              console.log(JSON.stringify(data) + '<data=----------------');
                               setData(data);
                             }}
                           />

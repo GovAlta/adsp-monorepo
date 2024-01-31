@@ -5,6 +5,10 @@ interface enumerators {
   functions: Map<string, () => (file: File, propertyId: string) => void>;
 }
 
+export interface AllData {
+  [x: string]: any;
+}
+
 export class Context {
   fileList: any;
   uploadFile: (file: File, propertyId: string) => void;
@@ -53,7 +57,7 @@ export class Context {
    *
    * This data will then be available inside the context
    */
-  addData(key: string, data: Record<string, string>) {
+  addData(key: string, data: Record<string, string> | string[]) {
     this.enumValues.set(key, () => data);
   }
 
@@ -71,11 +75,10 @@ export class Context {
    *
    */
   getAllData() {
-    const allData: string[] = [];
-    this.baseEnumerator.data.forEach((d, index) => {
-      allData.push(d());
+    const allData: AllData = [];
+    this.baseEnumerator.data.forEach((d, key) => {
+      allData.push({ [key]: d() });
     });
-    console.log(JSON.stringify(allData) + '<allData');
     return allData;
   }
 }

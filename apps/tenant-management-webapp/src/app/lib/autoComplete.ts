@@ -340,3 +340,31 @@ export const formatEditorSuggestions = (suggestions: EditorSuggestion[]): Editor
   }
   return flattenedSuggestions;
 };
+
+export const oneOfGenerator = (MasterContextData: { [x: string]: any }): any => {
+  const currentSuggestions = [];
+  MasterContextData.forEach((dataObject) => {
+    let change = ``;
+    const name = Object.keys(dataObject)[0];
+    if (Array.isArray(dataObject[name])) {
+      dataObject[name].forEach((item, index) => {
+        change += `
+{
+  "const": "${item}",
+  "title": "${item}"
+}`;
+        if (index < dataObject[name].length - 1) change += `,`;
+      });
+    }
+
+    const suggestion = {
+      label: name,
+      kind: 9,
+      insertText: change,
+      detail: 'Property',
+    };
+
+    currentSuggestions.push(suggestion);
+  });
+  return currentSuggestions;
+};

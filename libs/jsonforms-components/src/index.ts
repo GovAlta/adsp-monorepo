@@ -6,13 +6,10 @@ import {
   MaterialAnyOfRenderer,
   materialObjectControlTester,
   MaterialObjectRenderer,
-  materialArrayControlTester,
-  MaterialArrayControlRenderer,
   materialOneOfControlTester,
   MaterialOneOfRenderer,
   MaterialEnumArrayRenderer,
   materialEnumArrayRendererTester,
-  MuiAutocomplete,
 } from '@jsonforms/material-renderers';
 import {
   MaterialLabelRenderer,
@@ -22,20 +19,13 @@ import {
 } from '@jsonforms/material-renderers';
 import {
   MaterialAnyOfStringOrEnumControl,
-  materialEnumControlTester,
   materialAnyOfStringOrEnumControlTester,
   MaterialOneOfEnumControl,
   MaterialSliderControl,
   materialSliderControlTester,
   MaterialOneOfRadioGroupControl,
   materialOneOfRadioGroupControlTester,
-  materialBooleanControlTester,
-  MaterialBooleanControl,
   materialOneOfEnumControlTester,
-  materialBooleanToggleControlTester,
-  MaterialBooleanToggleControl,
-  MaterialNativeControl,
-  materialNativeControlTester,
 } from '@jsonforms/material-renderers';
 import {
   MaterialArrayLayout,
@@ -57,7 +47,6 @@ import {
   MaterialOneOfEnumCell,
   materialOneOfEnumCellTester,
 } from '@jsonforms/material-renderers';
-//import { MaterialEnumControl } from '@jsonforms/material-renderers/lib/controls/MaterialEnumControl';
 import {
   GoATextControlTester,
   GoAInputTextControl,
@@ -85,7 +74,30 @@ import {
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
 import { withJsonFormsControlProps } from '@jsonforms/react';
+import { JsonFormContextInstance } from './lib/Context';
+
 export * from './lib/Context';
+
+const firstNames = ['Alice', 'Charlie', 'Eva', 'Frank', 'Grace', 'Liam', 'Nina', 'Oliver', 'Sophia', 'Zoe'];
+const lastNames = ['Anderson', 'Baker', 'Clark', 'Davis', 'Evans', 'Fisher', 'Graham', 'Harrison', 'Irwin', 'Jackson'];
+const countries = ['Argentina', 'Brazil', 'Canada', 'Denmark', 'Egypt', 'France', 'Greece', 'India', 'Japan', 'Kenya'];
+const canadianCities = [
+  'Toronto',
+  'Montreal',
+  'Vancouver',
+  'Calgary',
+  'Edmonton',
+  'Ottawa',
+  'Quebec City',
+  'Winnipeg',
+  'Mississauga',
+  'Hamilton',
+];
+
+JsonFormContextInstance.addData('firstNames', firstNames);
+JsonFormContextInstance.addData('lastNames', lastNames);
+JsonFormContextInstance.addData('countries', countries);
+JsonFormContextInstance.addData('canadianCities', canadianCities);
 
 export class Renderers {
   GoARenderers: JsonFormsRendererRegistryEntry[];

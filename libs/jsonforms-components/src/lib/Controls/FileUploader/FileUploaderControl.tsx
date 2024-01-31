@@ -18,18 +18,6 @@ export const FileUploader = ({ data, path, handleChange, ...props }: FileUploade
   const lastFileValue = enumerators.data.get('file-list');
   const lastFile = lastFileValue && lastFileValue();
 
-  const aFunction = enumerators.data.get('a');
-  const a = aFunction && aFunction();
-  const somedataFunction = enumerators.data.get('some-data');
-  const somedata = somedataFunction && somedataFunction();
-
-  console.log(JSON.stringify(a) + '<aaaaaaa');
-  console.log(JSON.stringify(somedata) + '<somedata');
-
-  console.log(JSON.stringify(somedata) + '<somedata');
-
-  console.log(JSON.stringify(JsonFormContextInstance.getData('a')) + '<rrrrr');
-
   const propertyId = props.i18nKeyPrefix as string;
 
   function uploadFile(file: File) {
