@@ -21,6 +21,7 @@ describe('createEmailProvider', () => {
       SMTP_PORT: 25,
       SMTP_USER: null,
       SMTP_PASSWORD: null,
+      FROM_ADDRESS: 'noreply@gov.ab.ca',
     });
     expect(provider).toBeTruthy();
   });
@@ -31,6 +32,7 @@ describe('createEmailProvider', () => {
       SMTP_PORT: 25,
       SMTP_USER: 'tester',
       SMTP_PASSWORD: 'tester',
+      FROM_ADDRESS: 'noreply@gov.ab.ca',
     });
     expect(provider).toBeTruthy();
   });
@@ -42,6 +44,7 @@ describe('createEmailProvider', () => {
         SMTP_PORT: 25,
         SMTP_USER: null,
         SMTP_PASSWORD: null,
+        FROM_ADDRESS: 'noreply@gov.ab.ca',
       });
 
       await provider.send({

@@ -21,6 +21,7 @@ export type GoAInputType =
 export interface WithInput {
   //eslint-disable-next-line
   input: any;
+  noLabel?: boolean;
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
@@ -39,7 +40,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   return (
     <GoAFormItem
       error={errors}
-      label={labelToUpdate}
+      label={props?.noLabel === true ? '' : labelToUpdate}
       helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
     >
       <InnerComponent {...props} />
