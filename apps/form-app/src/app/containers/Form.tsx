@@ -59,7 +59,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   return (
     <div key={formId}>
       <LoadingIndicator isLoading={busy.loading} />
-      <div className={className}>
+      <div className={className} data-show={showComments}>
         <Container vs={3} hs={1} key={formId}>
           <Grid>
             <GridItem md={1} />
@@ -90,7 +90,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
             <GridItem md={1} />
           </Grid>
         </Container>
-        <div className="commentsPane" data-show={showComments}>
+        <div className="commentsPane">
           <CommentsViewer />
         </div>
         {topic ? (
@@ -122,6 +122,10 @@ export const Form = styled(FormComponent)`
   display: flex;
   flex-direction: row-reverse;
 
+  @media (max-width: 639px) {
+    flex-direction: column;
+  }
+
   > :first-child {
     overflow: auto;
     flex-grow: 1;
@@ -140,9 +144,18 @@ export const Form = styled(FormComponent)`
       min-width: 300px;
       height: 100%;
     }
+
+    @media (max-width: 639px) {
+      z-index: 2;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
   }
 
-  .commentsPane[data-show='true'] {
+  &[data-show='true'] .commentsPane {
     display: block;
   }
 
@@ -159,9 +172,14 @@ export const Form = styled(FormComponent)`
   }
 
   & > :last-child {
-    z-index: 2;
+    z-index: 3;
     position: absolute;
     bottom: var(--goa-spacing-l);
     left: var(--goa-spacing-l);
+    background: white;
+  }
+
+  &[data-show='true'] > :last-child {
+    background: var(--goa-color-greyscale-100);
   }
 `;
