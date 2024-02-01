@@ -131,6 +131,7 @@ Feature: Comment
     # Delete topic
     When the user clicks "delete" icon for the topic of "autotest-addDeleteTopic", "autotest123"
     Then the user views Delete topic modal for "autotest-addDeleteTopic"
+    And the user views the message of associated comments with "autotest-addDeleteTopic" to be deleted
     When the user clicks Delete button in Delete topic modal
     Then the user "should not view" a topic of "autotest-addDeleteTopic", "autotest123"
     # Load more button for comments

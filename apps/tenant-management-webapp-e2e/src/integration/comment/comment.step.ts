@@ -664,6 +664,7 @@ Then(
 
 When('the user clicks Add comment button for the topic', function () {
   commentObj.addCommentButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
 
 Then('the user views Add comment modal', function () {
@@ -819,9 +820,16 @@ Then('the user {string} the comment of {string}', function (viewOrNotView, comme
   }
 });
 
-Then('the user views Delete topic modal for {string}', function (topic) {
+Then('the user views Delete topic modal for {string}', function (topicName) {
   commentObj.deleteTopicModalHeading().invoke('text').should('eq', 'Delete topic');
-  commentObj.deleteTopicModalContentTopicName().invoke('text').should('contain', topic);
+  commentObj.deleteTopicModalContentTopicName().invoke('text').should('contain', topicName);
+});
+
+Then('the user views the message of associated comments with {string} to be deleted', function (topicName) {
+  commentObj
+    .deleteTopicModalContentNote()
+    .invoke('text')
+    .should('contains', '*Please note that all associated comments with ' + topicName + ' will be deleted as well.');
 });
 
 When('the user clicks Delete button in Delete topic modal', function () {

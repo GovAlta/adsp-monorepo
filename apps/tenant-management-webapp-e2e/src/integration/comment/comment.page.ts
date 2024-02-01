@@ -264,6 +264,12 @@ class CommentPage {
     );
   }
 
+  deleteTopicModalContentNote() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @data-testid="delete-confirmation"]/div/div/div[contains(text(), "note")]'
+    );
+  }
+
   deleteTopicModalDeleteBtn() {
     return cy.xpath(
       '//goa-modal[@open="true" and @data-testid="delete-confirmation"]//goa-button[@data-testid="delete-confirm"]'
