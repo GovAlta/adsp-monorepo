@@ -30,6 +30,7 @@ import {
   FakeButton,
   SubmissionRecordsBox,
   NegativeMarginSmall,
+  FormStepperPagesLayout,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -195,7 +196,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   );
   const queueTasks = useSelector((state: RootState) => {
-    return Object.entries(state?.task?.queues)
+    const values = Object.entries(state?.task?.queues)
       .sort((template1, template2) => {
         return template1[1].name.localeCompare(template2[1].name);
       })
@@ -203,6 +204,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         tempObj[taskDefinitionId] = taskDefinitionData;
         return tempObj;
       }, {});
+    return values;
   });
 
   useEffect(() => {
@@ -576,9 +578,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             value={NO_TASK_CREATED_OPTION}
                             label={NO_TASK_CREATED_OPTION}
                           />
-                          {Object.keys(queueTasks).map((item) => (
-                            <GoADropdownOption data-testId={item} key={item} value={item} label={item} />
-                          ))}
+                          {Object.keys(queueTasks)
+                            .sort((a, b) => {
+                              return a.toLowerCase().localeCompare(b.toLocaleLowerCase());
+                            })
+                            .map((item) => (
+                              <GoADropdownOption data-testId={item} key={item} value={item} label={item} />
+                            ))}
                         </GoADropdown>
                       )}
                     </QueueTaskDropdown>
@@ -725,30 +731,32 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <Tabs activeIndex={0} data-testid="preview-tabs">
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
-                  <GoAFormItem error={error} label="">
-                    <ErrorBoundary>
-                      {UiSchemaBounced !== '{}' ? (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          uischema={JSON.parse(UiSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      ) : (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      )}
-                    </ErrorBoundary>
-                  </GoAFormItem>
+                  <FormStepperPagesLayout>
+                    <GoAFormItem error={error} label="">
+                      <ErrorBoundary>
+                        {UiSchemaBounced !== '{}' ? (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            uischema={JSON.parse(UiSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
+                        ) : (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
+                        )}
+                      </ErrorBoundary>
+                    </GoAFormItem>
+                  </FormStepperPagesLayout>
                 </div>
               </Tab>
               <Tab label="Data" data-testid="data-view">

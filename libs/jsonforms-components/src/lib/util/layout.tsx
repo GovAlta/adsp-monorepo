@@ -57,7 +57,7 @@ const LayoutRendererComponent = ({
         </GoAGrid>
       );
     } else {
-      return <VerticalLayout>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</VerticalLayout>;
+      return <>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</>;
     }
   }
 };

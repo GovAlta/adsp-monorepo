@@ -493,3 +493,10 @@ export const PRE = styled.div`
   line-height: var(--goa-line-height-05);
   padding: var(--goa-space-m);
 `;
+
+export const FormStepperPagesLayout = styled.div`
+  overflow-y: auto;
+  height: 70vh;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+`;

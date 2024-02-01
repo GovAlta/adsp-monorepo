@@ -60,8 +60,27 @@ export const FormStepper = ({
     setStep(page);
   }
 
+  const renderStepElements = (step: Category | Categorization | VerticalLayout) => {
+    return (
+      <>
+        {step.elements.map((fieldUiSchema, index) => {
+          return (
+            <JsonFormsDispatch
+              key={index}
+              schema={schema}
+              uischema={fieldUiSchema}
+              renderers={renderers}
+              cells={cells}
+              path={path}
+            />
+          );
+        })}
+      </>
+    );
+  };
+
   return (
-    <div id={`${path}-form-stepper`} className="formStepper">
+    <div id={`${path || `goa`}-form-stepper`} className="formStepper">
       <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
         {uiSchema.elements?.map((category, index) => {
           const flattedStep = flattenArray(category?.elements || []);
@@ -75,19 +94,8 @@ export const FormStepper = ({
       <GoAPages current={step} mb="xl">
         {uiSchema.elements?.map((step, index) => {
           return (
-            <div key={index}>
-              {step.elements.map((fieldUiSchema, index) => {
-                return (
-                  <JsonFormsDispatch
-                    key={index}
-                    schema={schema}
-                    uischema={fieldUiSchema}
-                    renderers={renderers}
-                    cells={cells}
-                    path={path}
-                  />
-                );
-              })}
+            <div data-testId={`step_${index}`} key={index}>
+              {renderStepElements(step)}
             </div>
           );
         })}
