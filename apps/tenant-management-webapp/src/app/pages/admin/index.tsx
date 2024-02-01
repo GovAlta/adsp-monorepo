@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom-6';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { HeaderCtx } from '@lib/headerContext';
@@ -26,6 +26,11 @@ import { FileRouter } from './services/file';
 import { serviceVariables } from '../../../featureFlag';
 
 import { Script } from './services/script';
+import { CommentTopicTypesEditor } from './services/comment/topicTypes/commentTopicTypesEditor';
+import { PdfTemplatesEditor } from './services/pdf/templates/pdfTemplateEditor';
+import { FormDefinitionEditor } from './services/form/definitions/formDefinitionEditor';
+import { FileTypeDefinitionEditor } from './services/file/fileTypes/fileTypeDefinitionEditor';
+import { TaskDefinitionEditor } from './services/task/TaskDefinationEditor';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
@@ -65,48 +70,40 @@ const TenantManagement = (): JSX.Element => {
       case 'Task':
         return <TaskRouter />;
       default:
-        return <Redirect to="/404" />;
+        return <Navigate to="/404" />;
     }
   };
 
   return (
     <AdminLayout>
-      <Switch>
+      <Routes>
         {/* These paths forces the scrollbars to be hidden when in the editor */}
-        <Route path="/admin/services/form/edit"></Route>
-        <Route path="/admin/services/pdf/edit"></Route>
-        <Route path="/admin/services/task/edit"></Route>
-        <Route path="/admin/services/comment/edit"></Route>
-        <Route path="/admin/services/file/edit"></Route>
-        <Route path="*">
-          <SidebarWrapper>
-            <Sidebar type="desktop" />
-          </SidebarWrapper>
-        </Route>
-      </Switch>
+        <Route path="services/form/edit/:id" element={<FormDefinitionEditor />} />
+        <Route path="services/pdf/edit/:id" element={<PdfTemplatesEditor />} />
+        <Route path="services/task/edit/:id" element={<TaskDefinitionEditor />} />
+        <Route path="services/comment/edit/:id" element={<CommentTopicTypesEditor />} />
+        <Route path="services/file/edit/:id" element={<FileTypeDefinitionEditor />} />
+        <Route
+          path="*"
+          element={
+            <SidebarWrapper>
+              <Sidebar type="desktop" />
+            </SidebarWrapper>
+          }
+        />
+      </Routes>
 
       <Container hs={1}>
-        <Switch>
-          <Route exact path="/admin">
-            <Dashboard />
-          </Route>
-          <Route exact path="/admin/event-log">
-            <EventLog />
-          </Route>
-          <Route exact path="/admin/service-metrics">
-            <ServiceMetrics />
-          </Route>
+        <Routes>
+          <Route index element={<Dashboard />} />
+          <Route path="/event-log" element={<EventLog />} />
+          <Route path="/service-metrics" element={<ServiceMetrics />} />
 
           {serviceVariables(config.featureFlags).map((service) => {
-            return (
-              <Route path={service.link} key={service.link}>
-                {renderServices(service.name)}
-              </Route>
-            );
+            return <Route path={service.link} key={service.link} element={renderServices(service.name)} />;
           })}
-
-          <Route path="*" render={() => <Redirect to="/404" />} />
-        </Switch>
+        </Routes>
+        <Outlet />
       </Container>
     </AdminLayout>
   );

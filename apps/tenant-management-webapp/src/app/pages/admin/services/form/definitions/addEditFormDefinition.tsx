@@ -5,8 +5,7 @@ import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { FormFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { uischema } from './categorization-stepper-nav-buttons';
@@ -37,8 +36,7 @@ export const AddEditFormDefinition = ({
   open,
   onSave,
 }: AddEditFormDefinitionProps): JSX.Element => {
-  const { url } = useRouteMatch();
-  const history = useHistory();
+  const navigate = useNavigate();
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
   const [multiForm, setMultiForm] = useState<boolean>(false);
   const [spinner, setSpinner] = useState<boolean>(false);
@@ -122,7 +120,7 @@ export const AddEditFormDefinition = ({
                 if (isEdit) {
                   onClose();
                 } else {
-                  history.push({ pathname: `${url}/edit/${definition.id}` });
+                  navigate(`edit/${definition.id}`);
                 }
               }
             }}

@@ -2,7 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { render, fireEvent, screen } from '@testing-library/react';
-import { MemoryRouter, Route } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom-6';
 import { PDFConfigForm } from './PDFConfigForm';
 import '@testing-library/jest-dom';
 import { TemplateEditor } from './TemplateEditor';
@@ -82,9 +82,12 @@ describe('Test pdf template preview', () => {
     const { queryByTestId } = render(
       <Provider store={store}>
         <MemoryRouter initialEntries={['https://mock-host.com/admin/services/pdf/edit/mock-id']}>
-          <Route path="https://mock-host.com/admin/services/pdf/edit/:id">
-            <TemplateEditor modalOpen={true} errors={null} />
-          </Route>
+          <Routes>
+            <Route
+              path="https://mock-host.com/admin/services/pdf/edit/:id"
+              element={<TemplateEditor modalOpen={true} errors={null} />}
+            />
+          </Routes>
         </MemoryRouter>
       </Provider>
     );
@@ -122,9 +125,7 @@ describe('Test pdf template preview', () => {
     render(
       <Provider store={store}>
         <MemoryRouter initialEntries={['https://mock-host.com/admin/services/pdf/edit/mock-id-wrong']}>
-          <Route path="https://mock-host.com/admin/services/pdf/edit/:id">
-            <TemplateEditor modalOpen={true} errors={null} />
-          </Route>
+          <TemplateEditor modalOpen={true} />
         </MemoryRouter>
       </Provider>
     );
@@ -161,9 +162,7 @@ describe('Test pdf template preview', () => {
     render(
       <Provider store={store}>
         <MemoryRouter initialEntries={['https://mock-host.com/admin/services/pdf/edit/mock-id']}>
-          <Route path="https://mock-host.com/admin/services/pdf/edit/:id">
-            <TemplateEditor modelOpen={true} errors={null} />
-          </Route>
+          <TemplateEditor modelOpen={true} errors={null} />
         </MemoryRouter>
       </Provider>
     );
@@ -311,9 +310,12 @@ describe('Test pdf template preview', () => {
     const { queryByTestId } = render(
       <Provider store={store}>
         <MemoryRouter initialEntries={['https://mock-host.com/admin/services/pdf/edit/mock-id']}>
-          <Route path="https://mock-host.com/admin/services/pdf/edit/:id">
-            <PreviewTemplate channelTitle={'test'} />
-          </Route>
+          <Routes>
+            <Route
+              path="https://mock-host.com/admin/services/pdf/edit/:id"
+              element={<PreviewTemplate channelTitle={'test'} />}
+            ></Route>
+          </Routes>
         </MemoryRouter>
       </Provider>
     );

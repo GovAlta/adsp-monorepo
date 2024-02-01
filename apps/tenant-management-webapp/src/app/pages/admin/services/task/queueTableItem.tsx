@@ -1,8 +1,6 @@
 import React from 'react';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { TaskDefinition } from '@store/task/model';
 
 interface QueueTableItemProps {
@@ -12,8 +10,7 @@ interface QueueTableItemProps {
 }
 
 export const QueueTableItem = ({ id, queue, onDelete }: QueueTableItemProps): JSX.Element => {
-  const { url } = useRouteMatch();
-  const history = useHistory();
+  const navigate = useNavigate();
   return (
     <>
       <tr>
@@ -24,7 +21,7 @@ export const QueueTableItem = ({ id, queue, onDelete }: QueueTableItemProps): JS
             testId="task-definition-edit"
             title="Edit"
             type="create"
-            onClick={() => history.push(`${url}/edit/${queue.namespace}:${queue.name}`)}
+            onClick={() => navigate(`edit/${queue.namespace}:${queue.name}`)}
           />
           <GoAContextMenuIcon
             testId={`task-definition-delete`}

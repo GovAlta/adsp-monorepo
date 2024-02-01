@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Link, LinkProps } from 'react-router-dom';
+import { Link, LinkProps } from 'react-router-dom-6';
 
 interface LinkButtonProps {
   to: string;

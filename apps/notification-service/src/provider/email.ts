@@ -6,6 +6,7 @@ interface EmailProviderProps {
   SMTP_PORT: number;
   SMTP_USER: string;
   SMTP_PASSWORD: string;
+  FROM_ADDRESS: string;
 }
 
 export const createEmailProvider = ({
@@ -13,6 +14,7 @@ export const createEmailProvider = ({
   SMTP_PORT,
   SMTP_USER,
   SMTP_PASSWORD,
+  FROM_ADDRESS,
 }: EmailProviderProps): NotificationProvider => {
   const transport = nodemailer.createTransport({
     host: SMTP_HOST,
@@ -30,7 +32,7 @@ export const createEmailProvider = ({
   return {
     send: async (notification) => {
       await transport.sendMail({
-        from: { name: 'Government of Alberta', address: 'noreply@gov.ab.ca' },
+        from: { name: 'Government of Alberta', address: FROM_ADDRESS },
         to: notification.to,
         subject: notification.message.subject,
         html: notification.message.body,
