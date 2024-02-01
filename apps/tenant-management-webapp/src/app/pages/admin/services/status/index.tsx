@@ -1,15 +1,13 @@
 import React from 'react';
-import { Switch, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-6';
 import StatusPage from './status';
 
-function index(): JSX.Element {
+function Index(): JSX.Element {
   return (
-    <Switch>
-      <Route path="/admin/services/status">
-        <StatusPage />
-      </Route>
-    </Switch>
+    <Routes>
+      <Route path="/" element={<StatusPage />} />
+    </Routes>
   );
 }
 
-export default index;
+export default Index;

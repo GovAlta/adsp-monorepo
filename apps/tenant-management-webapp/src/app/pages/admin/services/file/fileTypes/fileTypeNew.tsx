@@ -6,7 +6,7 @@ import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 
 import { createSelector } from 'reselect';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { FileTypeDefault } from '@store/file/models';
 interface AddFileTypeProps {
   roles: Role[];
@@ -36,7 +36,7 @@ export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Elemen
   const [willAddNew, setWillAddNew] = useState<boolean>(false);
   const fileTypeNames = useSelector(selectFileTyeNames);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (activeEdit) {
@@ -50,10 +50,7 @@ export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Elemen
         testId="add-file-type-btn"
         onClick={() => {
           setWillAddNew(true);
-          history.push({
-            pathname: '/admin/services/file',
-            search: '?fileTypes=true',
-          });
+          navigate('/admin/services/file?fileTypes=true');
         }}
       >
         Add file type
