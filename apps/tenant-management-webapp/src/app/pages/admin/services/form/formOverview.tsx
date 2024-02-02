@@ -10,7 +10,6 @@ interface FormOverviewProps {
 const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
   useEffect(() => {
     setOpenAddDefinition(false);
-    //navigate('/admin/services/form');
   }, []);
 
   const navigate = useNavigate();
