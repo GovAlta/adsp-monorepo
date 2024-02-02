@@ -20,9 +20,9 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
       name={`${label}`}
       value={data}
       disabled={!enabled}
-      width="100%"
+      relative={true}
       key={`${id}-jsonform-key`}
-      data-testid={`${id || label}-jsonform`}
+      testId={`${id || label}-jsonform`}
       {...appliedUiSchemaOptions}
       onChange={(name, value) => {
         handleChange(path, value);
