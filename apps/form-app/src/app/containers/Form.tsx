@@ -1,8 +1,6 @@
 import { Renderers } from '@abgov/jsonforms-components';
-import { GoABadge, GoACallout, GoAIconButton } from '@abgov/react-components-new';
-import { Container, Grid, GridItem } from '@core-services/app-common';
-import { JsonForms } from '@jsonforms/react';
-import moment from 'moment';
+import { GoAIconButton } from '@abgov/react-components-new';
+import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom-6';
@@ -16,11 +14,14 @@ import {
   loadForm,
   selectTopic,
   selectedTopicSelector,
+  submitForm,
   updateForm,
 } from '../state';
 import styled from 'styled-components';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import CommentsViewer from './CommentsViewer';
+import { DraftForm } from '../components/DraftForm';
+import { SubmittedForm } from '../components/SubmittedForm';
 
 const renderer = new Renderers();
 
@@ -61,34 +62,22 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
       <LoadingIndicator isLoading={busy.loading} />
       <div className={className} data-show={showComments}>
         <Container vs={3} hs={1} key={formId}>
-          <Grid>
-            <GridItem md={1} />
-            <GridItem md={10}>
-              <div className="savingIndicator" data-saving={busy.saving}>
-                <GoABadge type="information" content="Saving..." />
-              </div>
-              {definition && form && (
-                <>
-                  {form.status === 'submitted' && (
-                    <GoACallout type="success" heading="We're processing your application">
-                      Your application was received on {moment(form.submitted).format('MMMM D, YYYY')}, and we're
-                      working on it.
-                    </GoACallout>
-                  )}
-                  <JsonForms
-                    readonly={form.status !== 'draft'}
-                    schema={definition.dataSchema}
-                    uischema={definition.uiSchema}
-                    data={data}
-                    validationMode="ValidateAndShow"
-                    renderers={renderer.GoARenderers}
-                    onChange={({ data }) => dispatch(updateForm({ data, files }))}
-                  />
-                </>
+          {definition && form && (
+            <>
+              {form.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
+              {form.status === 'draft' && (
+                <DraftForm
+                  definition={definition}
+                  form={form}
+                  data={data}
+                  submitting={busy.submitting}
+                  saving={busy.saving}
+                  onChange={({ data }) => dispatch(updateForm({ data: data as Record<string, unknown>, files }))}
+                  onSubmit={(form) => dispatch(submitForm(form.id))}
+                />
               )}
-            </GridItem>
-            <GridItem md={1} />
-          </Grid>
+            </>
+          )}
         </Container>
         <div className="commentsPane">
           <CommentsViewer />

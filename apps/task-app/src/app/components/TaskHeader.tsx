@@ -21,7 +21,7 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({ className, op
             </GoAButton>
             <span>/</span>
             <span>
-              {open?.name} - {open?.description}
+              {open?.name}
             </span>
           </>
         ) : (
