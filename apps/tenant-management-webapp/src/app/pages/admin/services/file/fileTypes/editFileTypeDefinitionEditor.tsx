@@ -201,6 +201,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                       name="securityClassifications"
                       width="25rem"
                       value={fileType?.securityClassification}
+                      relative={true}
                       onChange={(name: string, value: SecurityClassification) => {
                         setFileType({
                           ...fileType,
@@ -224,30 +225,32 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                       <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
                     </GoADropdown>
                   </GoAFormItem>
-                  <GoACheckbox
-                    checked={fileType?.anonymousRead}
-                    name="file-type-anonymousRead-checkbox"
-                    testId="file-type-anonymousRead-checkbox"
-                    ariaLabel={`file-type-anonymousRead-checkbox`}
-                    onChange={() => {
-                      //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
-                      if (
-                        fileType?.securityClassification !== undefined &&
-                        fileType?.securityClassification !== '' &&
-                        fileType?.securityClassification !== SecurityClassification.Public &&
-                        !fileType?.anonymousRead
-                      ) {
-                        setIsSecurityClassificationCalloutIsOpen(true);
-                      } else {
-                        setIsSecurityClassificationCalloutIsOpen(false);
-                      }
-                      setFileType({
-                        ...fileType,
-                        anonymousRead: !fileType.anonymousRead,
-                      });
-                    }}
-                    text={'Make public (read only)'}
-                  />
+                  <div style={{ paddingTop: '10px' }}>
+                    <GoACheckbox
+                      checked={fileType?.anonymousRead}
+                      name="file-type-anonymousRead-checkbox"
+                      testId="file-type-anonymousRead-checkbox"
+                      ariaLabel={`file-type-anonymousRead-checkbox`}
+                      onChange={() => {
+                        //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
+                        if (
+                          fileType?.securityClassification !== undefined &&
+                          fileType?.securityClassification !== '' &&
+                          fileType?.securityClassification !== SecurityClassification.Public &&
+                          !fileType?.anonymousRead
+                        ) {
+                          setIsSecurityClassificationCalloutIsOpen(true);
+                        } else {
+                          setIsSecurityClassificationCalloutIsOpen(false);
+                        }
+                        setFileType({
+                          ...fileType,
+                          anonymousRead: !fileType.anonymousRead,
+                        });
+                      }}
+                      text={'Make public (read only)'}
+                    />
+                  </div>
                 </DropDownZIndex>
                 {isSecurityClassificationCalloutOpen && (
                   <FileTypeEditorWarningCalloutWrapper>

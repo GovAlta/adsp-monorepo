@@ -16,7 +16,7 @@ import {
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
 import { ServiceRoleConfig } from '@store/access/models';
-import { AnonymousWrapper, EditStyles, IdField } from './styledComponents';
+import { EditStyles, IdField } from './styledComponents';
 import { useValidators } from '@lib/validation/useValidators';
 import {
   isNotEmptyCheck,
@@ -282,21 +282,20 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             )}
           </GoAFormItem>
         </div>
-        <AnonymousWrapper>
-          <GoACheckbox
-            checked={type.publicSubscribe}
-            name="anonymousRead-checkbox"
-            testId="anonymousRead-checkbox"
-            onChange={() => {
-              setType({
-                ...type,
-                publicSubscribe: !type.publicSubscribe,
-              });
-            }}
-            ariaLabel={`anonymousRead-checkbox`}
-          />
-          Make notification public
-        </AnonymousWrapper>
+        <GoACheckbox
+          checked={type.publicSubscribe}
+          name="anonymousRead-checkbox"
+          testId="anonymousRead-checkbox"
+          onChange={() => {
+            setType({
+              ...type,
+              publicSubscribe: !type.publicSubscribe,
+            });
+          }}
+          ariaLabel={`anonymousRead-checkbox`}
+          text="Make notification public"
+        />
+
         <GoAFormItem label="Select Notify subscribers or Notify address" error={errors?.['priority']}>
           <GoARadioGroup
             name="notify"
