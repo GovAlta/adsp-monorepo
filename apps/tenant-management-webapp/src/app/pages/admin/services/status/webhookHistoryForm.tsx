@@ -11,7 +11,7 @@ import { GoABadge, GoAButton, GoAInput, GoAButtonGroup, GoAFormItem, GoAModal } 
 import styled from 'styled-components';
 
 import { PageIndicator } from '@components/Indicator';
-import { RootState } from '../../../../store/index';
+import { RootState } from '@store/index';
 import { HoverWrapper, ToolTip } from './styled-components';
 import { ResetModalState } from '@store/session/actions';
 

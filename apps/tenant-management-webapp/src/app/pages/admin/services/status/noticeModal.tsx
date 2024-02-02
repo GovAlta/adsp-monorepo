@@ -185,7 +185,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         <div>
           <ErrorWrapper className={errors?.['applications'] && 'error'}>
             <label className="notice-title">Application</label>
-            <div>
+            <div style={{ marginTop: '5px' }}>
               <GoACheckbox
                 name="isAllApplications"
                 checked={isAllApplications}
@@ -194,9 +194,8 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                 onChange={() => {
                   setIsAllApplications(!isAllApplications);
                 }}
-              >
-                <span>All applications</span>
-              </GoACheckbox>
+                text="All applications"
+              />
             </div>
             {isAllApplications === false && (
               <MultiDropdownStyle>
