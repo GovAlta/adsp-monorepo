@@ -10,7 +10,6 @@ import {
 } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid } from '@abgov/react-components-new';
-import { VerticalLayout } from './style-component';
 export const renderLayoutElements = (
   elements: UISchemaElement[],
   schema: JsonSchema,

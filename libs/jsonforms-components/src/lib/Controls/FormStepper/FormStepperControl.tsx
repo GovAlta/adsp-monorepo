@@ -94,7 +94,7 @@ export const FormStepper = ({
       <GoAPages current={step} mb="xl">
         {uiSchema.elements?.map((step, index) => {
           return (
-            <div data-testId={`step_${index}`} key={index}>
+            <div data-testid={`step_${index}`} key={index}>
               {renderStepElements(step)}
             </div>
           );

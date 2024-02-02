@@ -30,7 +30,7 @@ import {
   FakeButton,
   SubmissionRecordsBox,
   NegativeMarginSmall,
-  FormStepperPagesLayout,
+  FormPreviewScrollPane,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -731,7 +731,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <Tabs activeIndex={0} data-testid="preview-tabs">
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
-                  <FormStepperPagesLayout>
+                  <FormPreviewScrollPane>
                     <GoAFormItem error={error} label="">
                       <ErrorBoundary>
                         {UiSchemaBounced !== '{}' ? (
@@ -756,7 +756,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         )}
                       </ErrorBoundary>
                     </GoAFormItem>
-                  </FormStepperPagesLayout>
+                  </FormPreviewScrollPane>
                 </div>
               </Tab>
               <Tab label="Data" data-testid="data-view">

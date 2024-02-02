@@ -494,7 +494,7 @@ export const PRE = styled.div`
   padding: var(--goa-space-m);
 `;
 
-export const FormStepperPagesLayout = styled.div`
+export const FormPreviewScrollPane = styled.div`
   overflow-y: auto;
   height: 70vh;
   padding-left: 0.25rem;
