@@ -39,8 +39,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
-import { useHistory, useParams } from 'react-router-dom';
-
+import { useNavigate, useParams } from 'react-router-dom-6';
 import {
   GoAButtonGroup,
   GoAButton,
@@ -254,13 +253,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   }, [debouncedRenderDataSchema]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const close = () => {
-    history.push({
-      pathname: '/admin/services/form',
-      search: '?definitions=true',
-    });
+    navigate('/admin/services/form?definitions=true');
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({

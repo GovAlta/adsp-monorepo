@@ -374,7 +374,7 @@ export const ScrollPane = styled.div`
 
 export const TriggerEventScrollPane = styled.div`
   overflow-y: scroll;
-  height: calc(30vh);
+  height: 288px;
   width: 100%;
   margin-bottom: var(--goa-spacing-xs) !important;
 `;

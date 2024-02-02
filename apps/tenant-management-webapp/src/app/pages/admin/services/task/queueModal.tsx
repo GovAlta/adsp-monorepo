@@ -3,8 +3,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components-new';
 
 import { useSelector } from 'react-redux';
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { TaskDefinition } from '@store/task/model';
 import {
   badCharsCheck,
@@ -32,8 +31,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
   open,
 }: QueueModalProps): JSX.Element => {
   const isNew = type === 'new';
-  const { url } = useRouteMatch();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const [queue, setQueue] = useState<TaskDefinition>(initialValue);
 
@@ -79,7 +77,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
     }
     onSave(queue);
 
-    history.push({ pathname: `${url}/edit/${queue.namespace}:${queue.name}`, state: queue });
+    navigate(`edit/${queue.namespace}:${queue.name}`, { state: queue });
     onCancel();
     validators.clear();
   };

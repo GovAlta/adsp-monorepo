@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 
 interface FormOverviewProps {
   setOpenAddDefinition: (val: boolean) => void;
@@ -10,12 +10,9 @@ interface FormOverviewProps {
 const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
   useEffect(() => {
     setOpenAddDefinition(false);
-    history.push({
-      pathname: '/admin/services/form',
-    });
   }, []);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   return (
     <OverviewLayout
@@ -38,10 +35,7 @@ const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element 
             testId="add-definition"
             onClick={() => {
               setOpenAddDefinition(true);
-              history.push({
-                pathname: '/admin/services/form',
-                search: '?definitions=true',
-              });
+              navigate('/admin/services/form?definitions=true');
             }}
           >
             Add definition

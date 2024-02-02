@@ -3,17 +3,15 @@ import React, { ReactNode } from 'react';
 import Container from '@components/Container';
 import styled from 'styled-components';
 import Header from '@components/AppHeader';
+import { Outlet } from 'react-router-dom-6';
 
-interface publicAppProps {
-  children: ReactNode;
-}
-export function PublicApp({ children }: publicAppProps): JSX.Element {
+export function PublicApp(): JSX.Element {
   return (
     <PublicCss>
       <Header />
       <hr />
       <Container hs={4} vs={2}>
-        {children}
+        <Outlet />
       </Container>
     </PublicCss>
   );

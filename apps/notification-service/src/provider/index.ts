@@ -21,6 +21,7 @@ interface ProviderProps {
   SMTP_PORT: number;
   SMTP_USER: string;
   SMTP_PASSWORD: string;
+  FROM_ADDRESS: string;
   NOTIFY_URL: string;
   NOTIFY_API_KEY: string;
   NOTIFY_TEMPLATE_ID: string;

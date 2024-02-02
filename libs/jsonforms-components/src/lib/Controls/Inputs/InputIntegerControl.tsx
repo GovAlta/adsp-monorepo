@@ -13,7 +13,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const InputValue = data ? data : 0;
   const clonedSchema = JSON.parse(JSON.stringify(schema));
-  const StepValue = clonedSchema.step ? clonedSchema.step : 0;
+  const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
   const MinValue = clonedSchema.min ? clonedSchema.min : 0;
   const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
   return (
