@@ -3,7 +3,7 @@ import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent } from 'react';
-import { Form, FormDefinition } from '../state';
+import { Form, FormDefinition, ValidationError } from '../state';
 
 const renderer = new Renderers();
 
@@ -11,9 +11,9 @@ interface DraftFormProps {
   definition: FormDefinition;
   form: Form;
   data: Record<string, unknown>;
-  submitting: boolean;
   saving: boolean;
-  onChange: ({ data }: { data: unknown }) => void;
+  canSubmit: boolean;
+  onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
 }
 
@@ -21,7 +21,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   definition,
   form,
   data,
-  submitting,
+  canSubmit,
   saving,
   onChange,
   onSubmit,
@@ -43,7 +43,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
           onChange={onChange}
         />
         <GoAButtonGroup alignment="end">
-          <GoAButton disabled={!submitting && !saving} type="primary" onClick={() => onSubmit(form)}>
+          <GoAButton mt="2xl" disabled={!canSubmit} type="primary" onClick={() => onSubmit(form)}>
             Submit
           </GoAButton>
         </GoAButtonGroup>

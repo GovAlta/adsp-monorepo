@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom-6';
 import {
   AppDispatch,
   busySelector,
+  canSubmitSelector,
   dataSelector,
   definitionSelector,
   filesSelector,
@@ -50,6 +51,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const files = useSelector(filesSelector);
   const busy = useSelector(busySelector);
   const topic = useSelector(selectedTopicSelector);
+  const canSubmit = useSelector(canSubmitSelector);
 
   useEffect(() => {
     dispatch(loadForm(formId));
@@ -70,9 +72,11 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   definition={definition}
                   form={form}
                   data={data}
-                  submitting={busy.submitting}
+                  canSubmit={canSubmit}
                   saving={busy.saving}
-                  onChange={({ data }) => dispatch(updateForm({ data: data as Record<string, unknown>, files }))}
+                  onChange={({ data, errors }) =>
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }))
+                  }
                   onSubmit={(form) => dispatch(submitForm(form.id))}
                 />
               )}
