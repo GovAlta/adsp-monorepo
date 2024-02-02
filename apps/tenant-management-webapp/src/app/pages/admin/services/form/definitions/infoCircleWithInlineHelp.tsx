@@ -41,7 +41,7 @@ export const InfoCircleWithInlineHelp = ({
       }}
     >
       <InlinePadding>
-        <InfoCirclePadding>{displayInfoCircle()}</InfoCirclePadding>
+        {displayInfoCircle()}
         <div className="triangle-width">
           {viewSubmissionInclineHelp && (
             <div className="bubble-helper">
@@ -141,14 +141,6 @@ export const InlinePadding = styled.div`
   .triangle-width {
     width: 25px;
   }
-`;
-
-export const InfoCirclePadding = styled.div`
-  margin-top: 8px;
-`;
-
-export const LabelPadding = styled.div`
-  margin-bottom: 8px;
 `;
 
 export const DropDownLabelStyle = styled.div`

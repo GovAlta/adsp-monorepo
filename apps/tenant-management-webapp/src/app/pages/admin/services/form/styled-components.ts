@@ -22,10 +22,6 @@ export const FakeButton = styled.div`
   height: 42px;
 `;
 
-export const NegativeMarginSmall = styled.div`
-  margin-top: -5px;
-`;
-
 export const RightAlign = styled.div`
   margin-top: 8px;
   margin-bottom: 8px;

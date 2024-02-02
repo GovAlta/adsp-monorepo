@@ -17,11 +17,6 @@ export const TableDiv = styled.div`
     text-overflow: ellipsis;
   }
 `;
-export const UseServiceAccountWrapper = styled.div`
-  line-height: 2.5em;
-  display: flex;
-  padding-left: 3px;
-`;
 
 export const HeadingDiv = styled.div`
   display: flex;
