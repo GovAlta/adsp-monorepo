@@ -10,7 +10,7 @@ interface TaskOverviewProps {
 export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.Element => {
   useEffect(() => {
     setOpenAddDefinition(false);
-    navigate('/admin/services/task');
+    //navigate('/admin/services/task');
   }, []);
 
   const navigate = useNavigate();

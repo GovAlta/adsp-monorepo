@@ -100,7 +100,7 @@ const TenantManagement = (): JSX.Element => {
           <Route path="/service-metrics" element={<ServiceMetrics />} />
 
           {serviceVariables(config.featureFlags).map((service) => {
-            return <Route path={service.link} key={service.link} element={renderServices(service.name)} />;
+            return <Route path={service.link + '/*'} key={service.link} element={renderServices(service.name)} />;
           })}
         </Routes>
         <Outlet />
