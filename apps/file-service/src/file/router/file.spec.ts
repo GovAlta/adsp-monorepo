@@ -368,7 +368,7 @@ describe('file router', () => {
       const handler = downloadFile(loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'inline');
+      expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', "inline; filename*=UTF-8''test.txt");
     });
 
     it('can call next with invalid for not scanned', async () => {
