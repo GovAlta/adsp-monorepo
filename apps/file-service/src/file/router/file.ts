@@ -259,9 +259,10 @@ export function downloadFile(logger: Logger): RequestHandler {
       res.status(200);
       res.setHeader('Content-Type', validateMimeType(fileEntity.mimeType));
       res.setHeader('Content-Length', fileEntity.size);
+
       if (embed === 'true') {
         res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
-        res.setHeader('Content-Disposition', 'inline');
+        res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
       } else {
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
