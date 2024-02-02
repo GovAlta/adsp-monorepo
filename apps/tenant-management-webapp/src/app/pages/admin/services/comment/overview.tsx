@@ -10,7 +10,6 @@ interface CommentOverviewProps {
 export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOpenAddTopicTypes }) => {
   useEffect(() => {
     setOpenAddTopicTypes(false);
-    navigate('/admin/services/comment');
   }, []);
 
   const navigate = useNavigate();
