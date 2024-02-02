@@ -29,6 +29,7 @@ import { createNotificationService } from './notification';
 import { createFileService } from './file';
 import { createQueueTaskService } from './queueTask';
 import { createCommentService } from './comment';
+import { GeneratedSupportingDocFileType } from './form/types/fileTypes';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -79,6 +80,7 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Support role for viewing and responding to form question topics.',
         },
       ],
+      fileTypes: [GeneratedSupportingDocFileType],
       events: [
         FormCreatedDefinition,
         FormDeletedDefinition,
