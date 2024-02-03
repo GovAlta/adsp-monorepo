@@ -33,8 +33,8 @@ export function generateCsrfToken(req: Request, res: Response) {
 }
 
 export function csrfHandler(req: Request, _res: Response, next: NextFunction) {
-  // Skip check for HEAD and OPTIONS requests. GETs are included since APIs are not guaranteed to have no side effects on GET.
-  if (['HEAD', 'OPTIONS'].includes(req.method)) {
+  // Skip check for HEAD, OPTIONS and GET requests. Note that this means APIs should not use GET for mutations.
+  if (['HEAD', 'OPTIONS', 'GET'].includes(req.method)) {
     next();
   } else if (!req.session) {
     next(new Error('No session when verifying CSRF token.'));
