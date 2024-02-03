@@ -62,7 +62,7 @@ export class AuthenticationClient {
     this.successRedirectUrl = client.successRedirectUrl || '/';
     this.failureRedirectUrl = client.failureRedirectUrl || '/';
     this.targets = Object.entries(client.targets).reduce(
-      (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(this, directory, target) }),
+      (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(logger, this, directory, target) }),
       {}
     );
     this.callbackUrl = new URL(this.authCallbackUrl);
