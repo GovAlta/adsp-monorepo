@@ -1,10 +1,9 @@
 import React, { FunctionComponent, useState } from 'react';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components-new';
+
 import { useSelector } from 'react-redux';
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { TaskDefinition } from '@store/task/model';
 import {
   badCharsCheck,
@@ -32,8 +31,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
   open,
 }: QueueModalProps): JSX.Element => {
   const isNew = type === 'new';
-  const { url } = useRouteMatch();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const [queue, setQueue] = useState<TaskDefinition>(initialValue);
 
@@ -79,66 +77,17 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
     }
     onSave(queue);
 
-    history.push({ pathname: `${url}/edit/${queue.namespace}:${queue.name}`, state: queue });
+    navigate(`edit/${queue.namespace}:${queue.name}`, { state: queue });
     onCancel();
     validators.clear();
   };
 
   return (
-    <GoAModal testId="add-queue-modal" isOpen={open}>
-      <GoAModalTitle>{title}</GoAModalTitle>
-      <GoAModalContent>
-        <GoAForm>
-          <GoAFormItem error={errors?.['namespace']}>
-            <label>Namespace</label>
-            <GoAInput
-              type="text"
-              name="namespace"
-              value={queue.namespace}
-              data-testid={`queue-modal-namespace-input`}
-              aria-label="namespace"
-              disabled={!isNew}
-              onChange={(namespace, value) => {
-                const validations = {
-                  namespace: value,
-                };
-                validators.remove('namespace');
-                validators.remove('name');
-                if (isNew) {
-                  validations['namespace'] = value;
-                }
-                validators.checkAll(validations);
-                value = toKebabName(value);
-                setQueue({ ...queue, namespace: value });
-              }}
-            />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['name']}>
-            <label>Name</label>
-            <GoAInput
-              type="text"
-              name="name"
-              value={queue.name}
-              data-testid={`queue-modal-name-input`}
-              aria-label="name"
-              disabled={!isNew}
-              onChange={(name, value) => {
-                const validations = {
-                  name: value,
-                };
-                validators.remove('name');
-                if (isNew) {
-                  validations['duplicated'] = value;
-                }
-                validators.checkAll(validations);
-                value = toKebabName(value);
-                setQueue({ ...queue, name: value });
-              }}
-            />
-          </GoAFormItem>
-        </GoAForm>
-      </GoAModalContent>
-      <GoAModalActions>
+    <GoAModal
+      testId="add-queue-modal"
+      open={open}
+      heading={title}
+      actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
@@ -161,7 +110,55 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
             Save
           </GoAButton>
         </GoAButtonGroup>
-      </GoAModalActions>
+      }
+    >
+      <GoAFormItem error={errors?.['namespace']} label="Namespace">
+        <GoAInput
+          type="text"
+          name="namespace"
+          value={queue.namespace}
+          width="100%"
+          data-testid={`queue-modal-namespace-input`}
+          aria-label="namespace"
+          disabled={!isNew}
+          onChange={(namespace, value) => {
+            const validations = {
+              namespace: value,
+            };
+            validators.remove('namespace');
+            validators.remove('name');
+            if (isNew) {
+              validations['namespace'] = value;
+            }
+            validators.checkAll(validations);
+            value = toKebabName(value);
+            setQueue({ ...queue, namespace: value });
+          }}
+        />
+      </GoAFormItem>
+      <GoAFormItem error={errors?.['name']} label="Name">
+        <GoAInput
+          type="text"
+          name="name"
+          width="100%"
+          value={queue.name}
+          data-testid={`queue-modal-name-input`}
+          aria-label="name"
+          disabled={!isNew}
+          onChange={(name, value) => {
+            const validations = {
+              name: value,
+            };
+            validators.remove('name');
+            if (isNew) {
+              validations['duplicated'] = value;
+            }
+            validators.checkAll(validations);
+            value = toKebabName(value);
+            setQueue({ ...queue, name: value });
+          }}
+        />
+      </GoAFormItem>
     </GoAModal>
   );
 };

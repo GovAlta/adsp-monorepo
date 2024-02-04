@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
 import { OverviewLayout } from '@components/Overview';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 
 interface CommentOverviewProps {
   setOpenAddTopicTypes: (val: boolean) => void;
@@ -10,12 +10,9 @@ interface CommentOverviewProps {
 export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOpenAddTopicTypes }) => {
   useEffect(() => {
     setOpenAddTopicTypes(false);
-    history.push({
-      pathname: '/admin/services/comment',
-    });
   }, []);
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const description =
     'Comment services allows users to create topics and post comments against the topics. Topics are of a particular topic type, and the type determines the roles permitted to administer, read, or comment on a topic.';
   return (
@@ -28,10 +25,7 @@ export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOp
             testId="add-definition"
             onClick={() => {
               setOpenAddTopicTypes(true);
-              history.push({
-                pathname: '/admin/services/comment',
-                search: '?topicTypes=true',
-              });
+              navigate('/admin/services/comment?topicTypes=true');
             }}
           >
             Add topic type

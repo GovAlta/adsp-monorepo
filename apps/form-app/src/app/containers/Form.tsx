@@ -1,14 +1,13 @@
 import { Renderers } from '@abgov/jsonforms-components';
-import { GoABadge, GoACallout, GoAIconButton } from '@abgov/react-components-new';
-import { Container, Grid, GridItem } from '@core-services/app-common';
-import { JsonForms } from '@jsonforms/react';
-import moment from 'moment';
+import { GoAIconButton } from '@abgov/react-components-new';
+import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom-6';
 import {
   AppDispatch,
   busySelector,
+  canSubmitSelector,
   dataSelector,
   definitionSelector,
   filesSelector,
@@ -16,11 +15,14 @@ import {
   loadForm,
   selectTopic,
   selectedTopicSelector,
+  submitForm,
   updateForm,
 } from '../state';
 import styled from 'styled-components';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import CommentsViewer from './CommentsViewer';
+import { DraftForm } from '../components/DraftForm';
+import { SubmittedForm } from '../components/SubmittedForm';
 
 const renderer = new Renderers();
 
@@ -49,6 +51,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const files = useSelector(filesSelector);
   const busy = useSelector(busySelector);
   const topic = useSelector(selectedTopicSelector);
+  const canSubmit = useSelector(canSubmitSelector);
 
   useEffect(() => {
     dispatch(loadForm(formId));
@@ -59,38 +62,28 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   return (
     <div key={formId}>
       <LoadingIndicator isLoading={busy.loading} />
-      <div className={className}>
+      <div className={className} data-show={showComments}>
         <Container vs={3} hs={1} key={formId}>
-          <Grid>
-            <GridItem md={1} />
-            <GridItem md={10}>
-              <div className="savingIndicator" data-saving={busy.saving}>
-                <GoABadge type="information" content="Saving..." />
-              </div>
-              {definition && form && (
-                <>
-                  {form.status === 'submitted' && (
-                    <GoACallout type="success" heading="We're processing your application">
-                      Your application was received on {moment(form.submitted).format('MMMM D, YYYY')}, and we're
-                      working on it.
-                    </GoACallout>
-                  )}
-                  <JsonForms
-                    readonly={form.status !== 'draft'}
-                    schema={definition.dataSchema}
-                    uischema={definition.uiSchema}
-                    data={data}
-                    validationMode="ValidateAndShow"
-                    renderers={renderer.GoARenderers}
-                    onChange={({ data }) => dispatch(updateForm({ data, files }))}
-                  />
-                </>
+          {definition && form && (
+            <>
+              {form.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
+              {form.status === 'draft' && (
+                <DraftForm
+                  definition={definition}
+                  form={form}
+                  data={data}
+                  canSubmit={canSubmit}
+                  saving={busy.saving}
+                  onChange={({ data, errors }) =>
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }))
+                  }
+                  onSubmit={(form) => dispatch(submitForm(form.id))}
+                />
               )}
-            </GridItem>
-            <GridItem md={1} />
-          </Grid>
+            </>
+          )}
         </Container>
-        <div className="commentsPane" data-show={showComments}>
+        <div className="commentsPane">
           <CommentsViewer />
         </div>
         {topic ? (
@@ -122,6 +115,10 @@ export const Form = styled(FormComponent)`
   display: flex;
   flex-direction: row-reverse;
 
+  @media (max-width: 639px) {
+    flex-direction: column;
+  }
+
   > :first-child {
     overflow: auto;
     flex-grow: 1;
@@ -140,9 +137,18 @@ export const Form = styled(FormComponent)`
       min-width: 300px;
       height: 100%;
     }
+
+    @media (max-width: 639px) {
+      z-index: 2;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
   }
 
-  .commentsPane[data-show='true'] {
+  &[data-show='true'] .commentsPane {
     display: block;
   }
 
@@ -159,9 +165,14 @@ export const Form = styled(FormComponent)`
   }
 
   & > :last-child {
-    z-index: 2;
+    z-index: 3;
     position: absolute;
     bottom: var(--goa-spacing-l);
     left: var(--goa-spacing-l);
+    background: white;
+  }
+
+  &[data-show='true'] > :last-child {
+    background: var(--goa-color-greyscale-100);
   }
 `;

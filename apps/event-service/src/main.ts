@@ -1,21 +1,21 @@
-import * as express from 'express';
-import { readFile } from 'fs';
-import { promisify } from 'util';
-import * as passport from 'passport';
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as helmet from 'helmet';
 import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import type { User } from '@abgov/adsp-service-sdk';
 import {
   AjvValidationService,
   createAmqpConfigUpdateService,
   createLogger,
   createErrorHandler,
 } from '@core-services/core-common';
+import * as compression from 'compression';
+import * as cors from 'cors';
+import * as express from 'express';
+import { readFile } from 'fs';
+import * as helmet from 'helmet';
+import * as passport from 'passport';
+import { promisify } from 'util';
 import { environment } from './environments/environment';
 import { createEventService } from './amqp';
 import { applyEventMiddleware, configurationSchema, EventServiceRoles, Namespace, NamespaceEntity } from './event';
-import type { User } from '@abgov/adsp-service-sdk';
 
 const logger = createLogger('event-service', environment.LOG_LEVEL);
 

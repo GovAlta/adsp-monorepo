@@ -4,9 +4,7 @@ import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { CommentCommentItem } from '../styled-components';
-
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
@@ -27,8 +25,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
   open,
   onSave,
 }) => {
-  const { url } = useRouteMatch();
-  const history = useHistory();
+  const navigate = useNavigate();
   const [topicType, setTopicType] = useState<CommentTopicTypes>(initialValue);
   const [spinner, setSpinner] = useState<boolean>(false);
 
@@ -52,7 +49,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
   useEffect(() => {
     if (spinner && Object.keys(topicTypes).length > 0 && !isEdit) {
       onClose();
-      history.push({ pathname: `${url}/edit/${topicType.id}` });
+      navigate(`edit/${topicType.id}`, { relative: 'path' });
       setSpinner(false);
     }
   }, [topicTypes]);

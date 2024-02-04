@@ -40,7 +40,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultCommentTopicType, defaultEditCommentTopicType, SecurityClassification } from '@store/comment/model';
 import { TopicConfigTopicType } from './topicConfigTopicType';
 
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-6';
 
 import { GoAButtonGroup, GoAButton, GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
@@ -112,13 +112,10 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     }
   }, [commentTopicTypes]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const close = () => {
-    history.push({
-      pathname: '/admin/services/comment',
-      search: '?topicTypes=true',
-    });
+    navigate('/admin/services/comment?topicTypes=true');
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
@@ -260,6 +257,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                         securityClassification: value,
                       });
                     }}
+                    relative={true}
                     width="25rem"
                   >
                     <GoADropdownItem value={SecurityClassification.public} label="Public" />

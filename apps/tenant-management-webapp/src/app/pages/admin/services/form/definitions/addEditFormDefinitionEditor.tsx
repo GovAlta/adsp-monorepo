@@ -29,7 +29,7 @@ import {
   PRE,
   FakeButton,
   SubmissionRecordsBox,
-  NegativeMarginSmall,
+  FormPreviewScrollPane,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -40,10 +40,15 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
-import { useHistory, useParams } from 'react-router-dom';
-import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
-
-import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
+import { useNavigate, useParams } from 'react-router-dom-6';
+import {
+  GoAButtonGroup,
+  GoAButton,
+  GoAFormItem,
+  GoACheckbox,
+  GoADropdownItem,
+  GoADropdown,
+} from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
@@ -195,7 +200,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   );
   const queueTasks = useSelector((state: RootState) => {
-    return Object.entries(state?.task?.queues)
+    const values = Object.entries(state?.task?.queues)
       .sort((template1, template2) => {
         return template1[1].name.localeCompare(template2[1].name);
       })
@@ -203,6 +208,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         tempObj[taskDefinitionId] = taskDefinitionData;
         return tempObj;
       }, {});
+    return values;
   });
 
   useEffect(() => {
@@ -249,13 +255,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   }, [debouncedRenderDataSchema]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const close = () => {
-    history.push({
-      pathname: '/admin/services/form',
-      search: '?definitions=true',
-    });
+    navigate('/admin/services/form?definitions=true');
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
@@ -520,9 +523,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           const records = definition.submissionRecords ? false : true;
                           setDefinition({ ...definition, submissionRecords: records });
                         }}
-                      >
-                        Create submission records on submit
-                      </GoACheckbox>
+                        text="  Create submission records on submit"
+                      />
                     </SubmissionRecordsBox>
                     <InfoCircleWithInlineHelp
                       text={
@@ -536,7 +538,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                     <InfoCircleWithInlineHelp
                       initialLabelValue={definition.submissionRecords}
-                      label="Task queue to process"
+                      label="Task queue to process &nbsp;"
                       text={
                         getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
                           ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
@@ -547,19 +549,19 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     <QueueTaskDropdown>
                       {Object.keys(queueTasks).length > 0 && (
                         <GoADropdown
-                          data-test-id="formsubmission-select-queue-task-dropdown"
+                          data-test-id="form-submission-select-queue-task-dropdown"
                           name="queueTasks"
                           disabled={!definition.submissionRecords}
-                          selectedValues={[getQueueTaskToProcessValue()]}
-                          multiSelect={false}
+                          value={[getQueueTaskToProcessValue()]}
+                          relative={true}
                           onChange={(name, queueTask) => {
-                            const seperatedQueueTask = queueTask[0].split(':');
-                            if (seperatedQueueTask.length > 1) {
+                            const separatedQueueTask = queueTask[0].split(':');
+                            if (separatedQueueTask.length > 1) {
                               setDefinition({
                                 ...definition,
                                 queueTaskToProcess: {
-                                  queueNameSpace: seperatedQueueTask[0],
-                                  queueName: seperatedQueueTask[1],
+                                  queueNameSpace: separatedQueueTask[0],
+                                  queueName: separatedQueueTask[1],
                                 },
                               });
                             } else {
@@ -573,14 +575,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             }
                           }}
                         >
-                          <GoADropdownOption
+                          <GoADropdownItem
                             data-testId={`task-Queue-ToCreate-DropDown`}
                             key={`No-Task-Created`}
                             value={NO_TASK_CREATED_OPTION}
                             label={NO_TASK_CREATED_OPTION}
                           />
                           {Object.keys(queueTasks).map((item) => (
-                            <GoADropdownOption data-testId={item} key={item} value={item} label={item} />
+                            <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
                           ))}
                         </GoADropdown>
                       )}
@@ -589,12 +591,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       <h3>Disposition states</h3>
                       <div>
                         {definition.submissionRecords ? (
-                          <NegativeMarginSmall>
-                            <InfoCircleWithInlineHelp
-                              text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                              width={450}
-                            />
-                          </NegativeMarginSmall>
+                          <InfoCircleWithInlineHelp
+                            text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                            width={450}
+                          />
                         ) : (
                           <FakeButton />
                         )}
@@ -728,30 +728,32 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <Tabs activeIndex={0} data-testid="preview-tabs">
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
-                  <GoAFormItem error={error} label="">
-                    <ErrorBoundary>
-                      {UiSchemaBounced !== '{}' ? (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          uischema={JSON.parse(UiSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      ) : (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      )}
-                    </ErrorBoundary>
-                  </GoAFormItem>
+                  <FormPreviewScrollPane>
+                    <GoAFormItem error={error} label="">
+                      <ErrorBoundary>
+                        {UiSchemaBounced !== '{}' ? (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            uischema={JSON.parse(UiSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
+                        ) : (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
+                        )}
+                      </ErrorBoundary>
+                    </GoAFormItem>
+                  </FormPreviewScrollPane>
                 </div>
               </Tab>
               <Tab label="Data" data-testid="data-view">

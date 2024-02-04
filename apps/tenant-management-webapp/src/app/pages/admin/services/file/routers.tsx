@@ -1,18 +1,14 @@
 import React from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-6';
 import { File } from './file';
-import { useRouteMatch } from 'react-router';
 import { FileTypeDefinitionEditor } from './fileTypes/fileTypeDefinitionEditor';
 
 export const FileRouter = () => {
-  const { url } = useRouteMatch();
   return (
-    <Switch>
-      <Route exact path={`${url}/`}>
-        <File />
-      </Route>
-      <Route path={`${url}/edit/:id`} component={FileTypeDefinitionEditor} />
-      <Route path={`${url}/new`} component={FileTypeDefinitionEditor} />
-    </Switch>
+    <Routes>
+      <Route path="/" element={<File />} />
+      <Route path="/edit/:id" element={<FileTypeDefinitionEditor />} />
+      <Route path="/new" element={<FileTypeDefinitionEditor />} />
+    </Routes>
   );
 };

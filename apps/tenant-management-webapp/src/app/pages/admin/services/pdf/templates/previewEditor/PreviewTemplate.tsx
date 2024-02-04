@@ -15,7 +15,7 @@ import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
 import { streamPdfSocket } from '@store/pdf/action';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-6';
 import { PageIndicator } from '@components/Indicator';
 
 interface PreviewTemplateProps {

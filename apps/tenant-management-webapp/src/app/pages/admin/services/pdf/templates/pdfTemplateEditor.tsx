@@ -9,17 +9,14 @@ import {
 import { ModalContent } from '../../styled-components';
 import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { TabletMessage } from '@components/TabletMessage';
 
 export const PdfTemplatesEditor = (): JSX.Element => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const goBack = () => {
-    history.push({
-      pathname: '/admin/services/pdf',
-      search: '?templates=true',
-    });
+    navigate('/admin/services/pdf?templates=true');
   };
 
   return (

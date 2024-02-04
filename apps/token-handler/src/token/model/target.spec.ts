@@ -3,8 +3,15 @@ import { InvalidOperationError } from '@core-services/core-common';
 import { Request } from 'express';
 import { TargetProxy } from './target';
 import { AuthenticationClient } from './client';
+import { Logger } from 'winston';
 
 describe('TargetProxy', () => {
+  const loggerMock = {
+    warn: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+  };
+
   const directoryMock = {
     getServiceUrl: jest.fn(),
     getResourceUrl: jest.fn(),
@@ -17,10 +24,15 @@ describe('TargetProxy', () => {
   });
 
   it('can be created', () => {
-    const proxy = new TargetProxy(clientMock as unknown as AuthenticationClient, directoryMock, {
-      id: 'test',
-      upstream: adspId`urn:ads:platform:test-service`,
-    });
+    const proxy = new TargetProxy(
+      loggerMock as unknown as Logger,
+      clientMock as unknown as AuthenticationClient,
+      directoryMock,
+      {
+        id: 'test',
+        upstream: adspId`urn:ads:platform:test-service`,
+      }
+    );
     expect(proxy).toBeTruthy();
   });
 
@@ -30,7 +42,12 @@ describe('TargetProxy', () => {
         id: 'test',
         upstream: adspId`urn:ads:platform:test-service`,
       };
-      const proxy = new TargetProxy(clientMock as unknown as AuthenticationClient, directoryMock, target);
+      const proxy = new TargetProxy(
+        loggerMock as unknown as Logger,
+        clientMock as unknown as AuthenticationClient,
+        directoryMock,
+        target
+      );
 
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://test-service'));
       const handler = await proxy.getProxyHandler();
@@ -39,10 +56,15 @@ describe('TargetProxy', () => {
     });
 
     it('can throw for upstream not in directory', async () => {
-      const proxy = new TargetProxy(clientMock as unknown as AuthenticationClient, directoryMock, {
-        id: 'test',
-        upstream: adspId`urn:ads:platform:test-service`,
-      });
+      const proxy = new TargetProxy(
+        loggerMock as unknown as Logger,
+        clientMock as unknown as AuthenticationClient,
+        directoryMock,
+        {
+          id: 'test',
+          upstream: adspId`urn:ads:platform:test-service`,
+        }
+      );
 
       directoryMock.getServiceUrl.mockResolvedValueOnce(null);
       await expect(proxy.getProxyHandler()).rejects.toThrow(InvalidOperationError);
@@ -55,7 +77,12 @@ describe('TargetProxy', () => {
         id: 'test',
         upstream: adspId`urn:ads:platform:test-service`,
       };
-      const proxy = new TargetProxy(clientMock as unknown as AuthenticationClient, directoryMock, target);
+      const proxy = new TargetProxy(
+        loggerMock as unknown as Logger,
+        clientMock as unknown as AuthenticationClient,
+        directoryMock,
+        target
+      );
 
       const req = {
         user: { accessToken: 'abc-123', exp: Date.now() / 1000 + 300, authenticatedBy: 'test' },
@@ -74,7 +101,12 @@ describe('TargetProxy', () => {
       const client = {
         refreshTokens: jest.fn(),
       };
-      const proxy = new TargetProxy(client as unknown as AuthenticationClient, directoryMock, target);
+      const proxy = new TargetProxy(
+        loggerMock as unknown as Logger,
+        client as unknown as AuthenticationClient,
+        directoryMock,
+        target
+      );
 
       const req = {
         user: { accessToken: 'abc-123', exp: Date.now() / 1000, authenticatedBy: 'test' },

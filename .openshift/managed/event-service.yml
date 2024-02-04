@@ -108,7 +108,7 @@ objects:
         ## queue master locator
         queue_master_locator = min-masters
         ## Disk space
-        disk_free_limit.relative = 1.5
+        disk_free_limit.absolute = 1.5GB
       enabled_plugins: |
         [rabbitmq_management,rabbitmq_peer_discovery_k8s,rabbitmq_shovel,rabbitmq_shovel_management].
   - apiVersion: v1
@@ -250,8 +250,8 @@ objects:
                   value: /var/lib/rabbitmq/rabbitmq
               resources:
                 limits:
-                  cpu: 200m
-                  memory: 1Gi
+                  cpu: 1000m
+                  memory: 4Gi
                 requests:
                   cpu: 100m
                   memory: 200Mi
@@ -275,7 +275,7 @@ objects:
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
-                storage: 5Gi
+                storage: 10Gi
       podManagementPolicy: Parallel
   - apiVersion: route.openshift.io/v1
     kind: Route

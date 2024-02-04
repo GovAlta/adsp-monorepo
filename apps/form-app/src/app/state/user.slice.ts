@@ -130,6 +130,7 @@ export const loginUser = createAsyncThunk(
       redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
     });
 
+    // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
     return await client.loadUserProfile();
   }
 );

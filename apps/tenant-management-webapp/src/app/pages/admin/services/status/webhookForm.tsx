@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { saveWebhook } from '../../../../store/status/actions';
-import { Webhooks } from '../../../../store/status/models';
+import { saveWebhook } from '@store/status/actions';
+import { Webhooks } from '@store/status/models';
 import DataTable from '@components/DataTable';
 import { selectWebhookInStatus } from '@store/status/selectors';
 import {
@@ -28,7 +28,7 @@ import {
   Validator,
   wordMaxLengthCheck,
 } from '@lib/validation/checkInput';
-import { RootState } from '../../../../store/index';
+import { RootState } from '@store/index';
 import { v4 as uuidv4 } from 'uuid';
 import { ResetModalState } from '@store/session/actions';
 import { PageIndicator } from '@components/Indicator';
@@ -232,7 +232,8 @@ export const WebhookFormModal = (): JSX.Element => {
                 })
               }
               aria-label="select-webhook-dropdown"
-              width="100%"
+              relative={true}
+              width="55ch"
               testId="webhook-application-dropdown"
             >
               {applications.map((application) => (

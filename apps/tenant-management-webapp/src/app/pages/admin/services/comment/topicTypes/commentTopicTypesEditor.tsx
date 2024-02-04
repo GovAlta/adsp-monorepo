@@ -7,18 +7,15 @@ import {
 } from '../styled-components';
 import { ModalContent } from '../../styled-components';
 
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { AddEditCommentTopicTypeEditor } from './addEditCommentTopicTypeEditor';
 import { TabletMessage } from '@components/TabletMessage';
 
 export const CommentTopicTypesEditor = (): JSX.Element => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const goBack = () => {
-    history.push({
-      pathname: '/admin/services/form',
-      search: '?templates=true',
-    });
+    navigate('/admin/services/form?templates=true');
   };
 
   return (

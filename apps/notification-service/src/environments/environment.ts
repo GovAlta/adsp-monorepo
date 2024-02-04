@@ -24,6 +24,7 @@ export const environment = envalid.cleanEnv(
     SMTP_PORT: envalid.num({ default: 587 }),
     SMTP_USER: envalid.str({ default: '' }),
     SMTP_PASSWORD: envalid.str({ default: '' }),
+    FROM_ADDRESS: envalid.str({ default: 'noreply@gov.ab.ca' }),
     NOTIFY_URL: envalid.str({ default: '' }),
     NOTIFY_API_KEY: envalid.str({ default: '' }),
     NOTIFY_TEMPLATE_ID: envalid.str({ default: '' }),
