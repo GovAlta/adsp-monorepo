@@ -159,8 +159,3 @@ export const DataTableWrapper = styled.div`
     padding-top: 1.25rem;
   }
 `;
-
-export const AnonymousWrapper = styled.div`
-  line-height: 2.5em;
-  display: flex;
-`;

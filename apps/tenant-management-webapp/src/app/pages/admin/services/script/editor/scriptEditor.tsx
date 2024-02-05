@@ -7,7 +7,6 @@ import {
   ScriptPane,
   ResponseTableStyles,
   TestInputDivBody,
-  UseServiceAccountWrapper,
   ScrollPane,
   TextLoadingIndicator,
   MonacoDivTabBody,
@@ -315,24 +314,20 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         <ScriptEditorTitle>Script editor</ScriptEditorTitle>
         <hr className="hr-resize" />
         <TombStone selectedScript={selectedScript} onSave={onSave} />
-
-        <UseServiceAccountWrapper>
-          <GoACheckbox
-            checked={isServiceAccountChecked()}
-            name="script-use-service-account-checkbox"
-            testId="script-use-service-account-checkbox"
-            disabled={isServiceAccountDisabled()}
-            onChange={() => {
-              setScript({
-                ...script,
-                useServiceAccount: !script.useServiceAccount,
-              });
-            }}
-            ariaLabel={`script-use-service-account-checkbox`}
-          />
-          Use service account
-        </UseServiceAccountWrapper>
-
+        <GoACheckbox
+          checked={isServiceAccountChecked()}
+          name="script-use-service-account-checkbox"
+          testId="script-use-service-account-checkbox"
+          disabled={isServiceAccountDisabled()}
+          text="Use service account"
+          onChange={() => {
+            setScript({
+              ...script,
+              useServiceAccount: !script.useServiceAccount,
+            });
+          }}
+          ariaLabel={`script-use-service-account-checkbox`}
+        />
         <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
           <Tab label="Lua script" data-testid="script-editor-tab">
             <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>

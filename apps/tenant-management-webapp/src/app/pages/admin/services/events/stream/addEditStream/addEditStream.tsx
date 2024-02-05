@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
-import { AnonymousWrapper, ChipsWrapper, IdField, StreamModalStyles } from '../styleComponents';
+import { ChipsWrapper, IdField, StreamModalStyles } from '../styleComponents';
 import { Stream, EditModalType, AddModalType } from '@store/stream/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, duplicateNameCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
@@ -190,21 +190,20 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
           })}
         </ChipsWrapper>
 
-        <AnonymousWrapper>
-          <GoACheckbox
-            checked={stream.publicSubscribe}
-            name="stream-anonymousRead-checkbox"
-            testId="stream-anonymousRead-checkbox"
-            onChange={() => {
-              setStream({
-                ...stream,
-                publicSubscribe: !stream.publicSubscribe,
-              });
-            }}
-            ariaLabel={`stream-anonymousRead-checkbox`}
-          />
-          Make stream public
-        </AnonymousWrapper>
+        <GoACheckbox
+          checked={stream.publicSubscribe}
+          name="stream-anonymousRead-checkbox"
+          testId="stream-anonymousRead-checkbox"
+          onChange={() => {
+            setStream({
+              ...stream,
+              publicSubscribe: !stream.publicSubscribe,
+            });
+          }}
+          ariaLabel={`stream-anonymousRead-checkbox`}
+          text="Make stream public"
+        />
+
         {rolesObj ? '' : <GoASkeleton type="text" />}
         {!stream.publicSubscribe && rolesObj ? (
           Object.entries(rolesObj).map(([clientId, roles]) => {
@@ -242,7 +241,6 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
             }}
           ></div>
         )}
-
         <br />
         <br />
       </GoAModal>

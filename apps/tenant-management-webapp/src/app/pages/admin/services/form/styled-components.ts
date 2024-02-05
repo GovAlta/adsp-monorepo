@@ -22,10 +22,6 @@ export const FakeButton = styled.div`
   height: 42px;
 `;
 
-export const NegativeMarginSmall = styled.div`
-  margin-top: -5px;
-`;
-
 export const RightAlign = styled.div`
   margin-top: 8px;
   margin-bottom: 8px;
@@ -492,4 +488,11 @@ export const PRE = styled.div`
   font-size: var(--goa-font-size-1);
   line-height: var(--goa-line-height-05);
   padding: var(--goa-space-m);
+`;
+
+export const FormPreviewScrollPane = styled.div`
+  overflow-y: auto;
+  height: 70vh;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
 `;

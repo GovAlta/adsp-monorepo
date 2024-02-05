@@ -1,6 +1,8 @@
 import styled from 'styled-components';
 
 export const VerticalLayout = styled.div`
-  max-height: 80vh;
+  height: 70vh;
   overflow-y: auto;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
 `;
