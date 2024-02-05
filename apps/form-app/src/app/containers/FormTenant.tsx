@@ -1,7 +1,8 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom-6';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom-6';
+import styled from 'styled-components';
 import {
   AppDispatch,
   configInitializedSelector,
@@ -13,6 +14,15 @@ import {
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
 import { AuthorizeUser } from './AuthorizeUser';
+import { FormDefinition } from './FormDefinition';
+
+const AccountActionsSpan = styled.span`
+  .username {
+    @media (max-width: 639px) {
+      display: none;
+    }
+  }
+`;
 
 export const FormTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -33,10 +43,10 @@ export const FormTenant = () => {
   return (
     <React.Fragment>
       <GoAMicrositeHeader type="alpha" />
-      <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Task management`}>
+      <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
         {userInitialized && (
-          <span>
-            <span>{user?.name}</span>
+          <AccountActionsSpan>
+            <span className="username">{user?.name}</span>
             {user ? (
               <GoAButton type="tertiary" onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}>
                 Sign out
@@ -46,13 +56,19 @@ export const FormTenant = () => {
                 Sign in
               </GoAButton>
             )}
-          </span>
+          </AccountActionsSpan>
         )}
       </GoAAppHeader>
       <FeedbackNotification />
       <main>
         <AuthorizeUser>
-          <section>Signed in to {tenant?.name}</section>
+          <section>
+            <Routes>
+              <Route path={`/:definitionId/*`} element={<FormDefinition />} />
+              <Route path="/" element={<div>{tenant?.name || tenantName}</div>} />
+              <Route path="*" element={<Navigate to={`/${tenantName}`} replace />} />
+            </Routes>
+          </section>
         </AuthorizeUser>
       </main>
     </React.Fragment>

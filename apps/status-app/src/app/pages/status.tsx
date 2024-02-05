@@ -5,7 +5,6 @@ import { IndicatorWithDelay } from '@components/Indicator';
 import { Grid, GridItem } from '@core-services/app-common';
 import { Footer } from '@core-services/app-common';
 import ServiceStatus from './statusCard';
-import { useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
 import {
@@ -41,8 +40,8 @@ const ServiceStatusPage = (): JSX.Element => {
   const { config } = useSelector((state: RootState) => ({
     config: state.config,
   }));
-  const location = useLocation();
-  const realm = location.pathname.slice(1) || config.platformTenantRealm;
+
+  const realm = window.location.pathname.slice(1) || config.platformTenantRealm;
   const dispatch = useDispatch();
 
   const { tenantName, loaded, subscriber, applications, error, contact, indicator } = useSelector(
@@ -89,8 +88,10 @@ const ServiceStatusPage = (): JSX.Element => {
             <Title data-testid="service-name">All {capitalizeFirstLetter(tenantName)} services</Title>
             <div className="section-vs">
               These are the services currently being offered by{' '}
-              {location.pathname.slice(1) ? capitalizeFirstLetter(tenantName) : 'the Alberta Digital Service Platform'}.
-              All statuses are in real time and reflect current states of the individual services. Please{' '}
+              {window.location.pathname.slice(1)
+                ? capitalizeFirstLetter(tenantName)
+                : 'the Alberta Digital Service Platform'}
+              . All statuses are in real time and reflect current states of the individual services. Please{' '}
               <a href={`mailto: ${contactEmail}`}>contact support</a> for additional information, or to report issues,
               or for any other inquiries regarding service statuses.
             </div>

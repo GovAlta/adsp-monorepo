@@ -5,8 +5,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { NotificationService, Subscriber } from '../../notification';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDefinition, Disposition } from '../types';
+import { FormDefinition, Disposition, QueueTaskToProcess } from '../types';
 import { FormEntity } from './form';
+
+const defaultQueueTaskToProcess: QueueTaskToProcess = { queueName: '', queueNameSpace: '' };
 
 export class FormDefinitionEntity implements FormDefinition {
   id: string;
@@ -18,8 +20,12 @@ export class FormDefinitionEntity implements FormDefinition {
   clerkRoles: string[];
   dispositionStates: Array<Disposition>;
   submissionRecords: boolean;
+  supportTopic: boolean;
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
+  uiSchema: Record<string, unknown>;
+  queueTaskToProcess: QueueTaskToProcess;
+
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
   constructor(private validationService: ValidationService, public tenantId: AdspId, definition: FormDefinition) {
@@ -32,10 +38,22 @@ export class FormDefinitionEntity implements FormDefinition {
     this.clerkRoles = definition.clerkRoles || [];
     this.dispositionStates = definition.dispositionStates || [];
     this.submissionRecords = definition.submissionRecords || false;
+    this.supportTopic = definition.supportTopic || false;
+    this.queueTaskToProcess = definition.queueTaskToProcess || defaultQueueTaskToProcess;
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
     this.dataSchema = definition.dataSchema || {};
+    this.uiSchema = definition.uiSchema || {};
     this.validationService.setSchema(this.id, this.dataSchema);
+  }
+
+  public canAccessDefinition(user: User): boolean {
+    return isAllowedUser(user, this.tenantId, [
+      FormServiceRoles.Admin,
+      FormServiceRoles.IntakeApp,
+      ...this.applicantRoles,
+      ...this.clerkRoles,
+    ]);
   }
 
   public canApply(user: User): boolean {

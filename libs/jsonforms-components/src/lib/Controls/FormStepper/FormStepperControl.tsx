@@ -60,33 +60,42 @@ export const FormStepper = ({
     setStep(page);
   }
 
+  const renderStepElements = (step: Category | Categorization | VerticalLayout) => {
+    return (
+      <>
+        {step.elements.map((fieldUiSchema, index) => {
+          return (
+            <JsonFormsDispatch
+              key={index}
+              schema={schema}
+              uischema={fieldUiSchema}
+              renderers={renderers}
+              cells={cells}
+              path={path}
+            />
+          );
+        })}
+      </>
+    );
+  };
+
   return (
-    <div id={`${path}-form-stepper`} className="formStepper">
+    <div id={`${path || `goa`}-form-stepper`} className="formStepper">
       <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
         {uiSchema.elements?.map((category, index) => {
           const flattedStep = flattenArray(category?.elements || []);
           const count = flattedStep.filter((e) => {
             return e?.toString().substring(0, 12) === '#/properties';
           }).length;
-          return <GoAFormStep text={`${category.label}`} />;
+          return <GoAFormStep key={index} text={`${category.label}`} />;
         })}
         <GoAFormStep text="Review" />
       </GoAFormStepper>
       <GoAPages current={step} mb="xl">
         {uiSchema.elements?.map((step, index) => {
           return (
-            <div>
-              {step.elements.map((fieldUiSchema) => {
-                return (
-                  <JsonFormsDispatch
-                    schema={schema}
-                    uischema={fieldUiSchema}
-                    renderers={renderers}
-                    cells={cells}
-                    path={path}
-                  />
-                );
-              })}
+            <div data-testid={`step_${index}`} key={index}>
+              {renderStepElements(step)}
             </div>
           );
         })}

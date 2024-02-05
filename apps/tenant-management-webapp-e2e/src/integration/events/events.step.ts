@@ -422,7 +422,7 @@ When('the user clicks {string} button for the stream of {string}', function (but
       eventsObj.streamDeleteBtn(streamName).shadow().find('button').click({ force: true });
       break;
     default:
-      expect(button).to.be.oneOf(['Eye', 'Edit', 'Delete']);
+      expect(button).to.be.oneOf(['Eye', 'Edit', 'Eye-Off', 'Delete']);
   }
 });
 

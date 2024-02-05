@@ -28,6 +28,7 @@ import {
   TenantAdminLoginAction,
   TenantCreationLoginInitAction,
   UPDATE_ACCESS_TOKEN,
+  UpdateLoginSuccess,
 } from './actions';
 
 import { CredentialRefresh, SessionLoginSuccess, UpdateIndicator, SetSessionExpired } from '@store/session/actions';
@@ -37,6 +38,7 @@ import { getOrCreateKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloa
 import { SagaIterator } from '@redux-saga/core';
 import { Credentials, Session } from '@store/session/models';
 import { getIdpHint } from '@lib/keycloak';
+import { isUUID, getRealm } from './realmUtils';
 
 export function* initializeKeycloakAuth(realm?: string): SagaIterator {
   const keycloakConfig = yield select((state: RootState) => state.config.keycloakApi);
@@ -154,7 +156,15 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
 
 export function* tenantLogin(action: TenantLoginAction): SagaIterator {
   try {
-    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, action.payload);
+    const tenantApi = yield select((state: RootState) => state.config.tenantApi);
+    const realm = isUUID(action.payload) ? action.payload : yield call(getRealm, action.payload, tenantApi?.host);
+
+    if (!realm) {
+      yield put(UpdateLoginSuccess(false));
+      return;
+    }
+
+    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
 
     let idp = 'core';
     const idpHint = getIdpHint();
@@ -165,7 +175,7 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
 
     yield call([keycloakAuth, keycloakAuth.loginByTenant], idp);
   } catch (e) {
-    yield put(ErrorNotification({ message: 'Failed to tenant login', error: e }));
+    yield put(ErrorNotification({ message: 'Failed to login tenant', error: e }));
   }
 }
 

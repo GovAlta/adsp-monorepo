@@ -55,28 +55,37 @@ internal sealed class ScriptSubscriber : IEventSubscriber<IDictionary<string, ob
     var definitions = configuration?.GetTriggeredScripts(received) ?? Enumerable.Empty<ScriptDefinition>();
     foreach (var definition in definitions)
     {
-      _logger.LogDebug(
-        "Found triggered script definition {DefinitionId} for event {Namespace}:{Name}...",
-        definition.Id, received.Namespace, received.Name
-      );
+      try
+      {
+        _logger.LogDebug(
+          "Found triggered script definition {DefinitionId} for event {Namespace}:{Name}...",
+          definition.Id, received.Namespace, received.Name
+        );
+        var inputs = received.Payload ?? new Dictionary<string, object?>();
+        var getToken = () => _tokenProvider.GetAccessToken();
+        await _scriptService.RunScript(
+          Guid.NewGuid().ToString(),
+          received.TenantId!,
+          definition,
+          inputs,
+          getToken,
+          received.CorrelationId,
+          null,
+          new EventIdentity(received.Namespace, received.Name)
+        );
 
-      var inputs = received.Payload ?? new Dictionary<string, object?>();
-      var getToken = () => _tokenProvider.GetAccessToken();
-      await _scriptService.RunScript(
-        Guid.NewGuid().ToString(),
-        received.TenantId!,
-        definition,
-        inputs,
-        getToken,
-        received.CorrelationId,
-        null,
-        new EventIdentity(received.Namespace, received.Name)
-      );
-
-      _logger.LogInformation(
-        "Triggered and completed execution of script definition {DefinitionId} for event {Namespace}:{Name}.",
-        definition.Id, received.Namespace, received.Name
-      );
+        _logger.LogInformation(
+          "Triggered and completed execution of script definition {DefinitionId} for event {Namespace}:{Name}.",
+          definition.Id, received.Namespace, received.Name
+        );
+      }
+      catch (ScriptRunException)
+      {
+        _logger.LogWarning(
+          "Execution of script definition {DefinitionId} for event {Namespace}:{Name} failed due to script error and will not be retried.",
+          definition.Id, received.Namespace, received.Name
+        );
+      }
     }
   }
 }

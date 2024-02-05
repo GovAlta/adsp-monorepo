@@ -1,6 +1,6 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route } from 'react-router-dom';
+import { Outlet } from 'react-router-dom-6';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
@@ -11,10 +11,8 @@ import styled from 'styled-components';
 import { LogoutModal } from '@components/LogoutModal';
 import { useTokenExpiryCount, useTokenWillExpiryCount } from '@lib/useTokenExpiryCount';
 import { CenterWidthPageLoader } from '@core-services/app-common';
-interface privateAppProps {
-  children: ReactNode;
-}
-export function PrivateApp({ children }: privateAppProps): JSX.Element {
+
+export function PrivateApp(): JSX.Element {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
@@ -29,20 +27,25 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   if (realmFromParams) {
     localStorage.setItem('realm', realmFromParams);
   }
-
   useEffect(() => {
     dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
 
+  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
+  const ready = !!userInfo;
+
   return (
-    <HeaderCtx.Provider value={{ setTitle }}>
-      <ScrollBarFixTop>
-        <FixedContainer>
-          <Header serviceName={title} admin={true} />
-          {/*
+    <>
+      {!ready && <CenterWidthPageLoader />}
+      {ready && (
+        <HeaderCtx.Provider value={{ setTitle }}>
+          <ScrollBarFixTop>
+            <FixedContainer>
+              <Header serviceName={title} admin={true} />
+              {/*
       NOTE: we might need to add the following function in the near feature
       */}
-          {/* <IdleTimer
+              {/* <IdleTimer
         checkInterval={10}
         timeoutFn={() => {
           dispatch(TenantLogout());
@@ -52,23 +55,19 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
         }}
       /> */}
 
-          <NotificationBanner />
-          <LogoutModal />
-        </FixedContainer>
-      </ScrollBarFixTop>
-      <ScrollBarFixMain notifications={notifications}>
-        <Container>{children}</Container>
-      </ScrollBarFixMain>
-    </HeaderCtx.Provider>
+              <NotificationBanner />
+              <LogoutModal />
+            </FixedContainer>
+          </ScrollBarFixTop>
+          <ScrollBarFixMain notifications={notifications}>
+            <Container>
+              <Outlet />
+            </Container>
+          </ScrollBarFixMain>
+        </HeaderCtx.Provider>
+      )}
+    </>
   );
-}
-
-// eslint-disable-next-line
-export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
-  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
-  const ready = !!userInfo;
-
-  return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <CenterWidthPageLoader />)} />;
 }
 
 export default PrivateApp;

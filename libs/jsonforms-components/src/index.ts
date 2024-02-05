@@ -20,12 +20,8 @@ import {
 import {
   MaterialAnyOfStringOrEnumControl,
   materialAnyOfStringOrEnumControlTester,
-  MaterialEnumControl,
   materialEnumControlTester,
   MaterialOneOfEnumControl,
-  materialOneOfEnumControlTester,
-  MaterialRadioGroupControl,
-  materialRadioGroupControlTester,
   MaterialSliderControl,
   materialSliderControlTester,
   MaterialOneOfRadioGroupControl,
@@ -69,10 +65,19 @@ import {
   FileUploaderTester,
   MultiLineTextControl,
   MultiLineTextControlTester,
+  GoAEnumControl,
+  GoAEnumControlTester,
+  GoAEnumRadioGroupControl,
+  GoARadioGroupControlTester,
+  GoAArrayControlTester,
+  GoAArrayControlRenderer,
+  GoAListWithDetailsTester,
+  GoABooleanControlTester,
+  GoABooleanControl,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
-
+import { HelpContent, HelpContentTester } from './lib/Additional';
 import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
 
 export class Renderers {
@@ -90,7 +95,7 @@ export class Renderers {
 
   GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
     // controls
-    { tester: materialEnumControlTester, renderer: MaterialEnumControl },
+    { tester: GoAEnumControlTester, renderer: GoAEnumControl },
     { tester: GoAIntegerControlTester, renderer: GoAInputIntegerControl },
     { tester: GoANumberControlTester, renderer: GoAInputNumberControl },
     { tester: GoATextControlTester, renderer: GoAInputTextControl },
@@ -103,15 +108,24 @@ export class Renderers {
     { tester: materialAnyOfControlTester, renderer: MaterialAnyOfRenderer },
     { tester: materialOneOfControlTester, renderer: MaterialOneOfRenderer },
     {
-      tester: materialRadioGroupControlTester,
-      renderer: MaterialRadioGroupControl,
+      tester: GoARadioGroupControlTester,
+      renderer: GoAEnumRadioGroupControl,
+    },
+    { tester: GoABooleanControlTester, renderer: GoABooleanControl },
+    {
+      tester: GoAArrayControlTester,
+      renderer: GoAArrayControlRenderer,
+    },
+    {
+      tester: GoAListWithDetailsTester,
+      renderer: GoAArrayControlRenderer,
     },
     {
       tester: materialOneOfRadioGroupControlTester,
       renderer: MaterialOneOfRadioGroupControl,
     },
     {
-      tester: materialOneOfEnumControlTester,
+      tester: materialEnumControlTester,
       renderer: MaterialOneOfEnumControl,
     },
     // layouts
@@ -147,6 +161,10 @@ export class Renderers {
     {
       tester: MultiLineTextControlTester,
       renderer: MultiLineTextControl,
+    },
+    {
+      tester: HelpContentTester,
+      renderer: HelpContent,
     },
   ];
 

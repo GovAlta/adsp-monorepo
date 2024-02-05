@@ -22,10 +22,6 @@ export const FakeButton = styled.div`
   height: 42px;
 `;
 
-export const NegativeMarginSmall = styled.div`
-  margin-top: -5px;
-`;
-
 export const RightAlign = styled.div`
   margin-top: 8px;
   margin-bottom: 8px;
@@ -185,7 +181,7 @@ export const FlexColumn = styled.div`
   flex-direction: column;
   padding-top: 1rem;
 `;
-export const NotificationTemplateEditorContainer = styled.div`
+export const FormTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 6px;
@@ -211,7 +207,7 @@ export const ScrollPane = styled.div`
   max-height: calc(100vh - 230px);
 `;
 
-export const OuterNotificationTemplateEditorContainer = styled.div`
+export const OuterFormTemplateEditorContainer = styled.div`
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -300,7 +296,6 @@ export const Modal = styled.div`
   display: block;
   position: fixed;
   left: 0;
-  z-index: 10000;
   width: 100%;
 `;
 
@@ -493,4 +488,11 @@ export const PRE = styled.div`
   font-size: var(--goa-font-size-1);
   line-height: var(--goa-line-height-05);
   padding: var(--goa-space-m);
+`;
+
+export const FormPreviewScrollPane = styled.div`
+  overflow-y: auto;
+  height: 70vh;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
 `;

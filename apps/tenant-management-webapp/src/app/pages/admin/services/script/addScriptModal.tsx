@@ -15,7 +15,6 @@ import { toKebabName } from '@lib/kebabName';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from './styled-components';
 import { RootState } from '@store/index';
-import { UseServiceAccountWrapper } from './styled-components';
 import { ClientRoleTable } from '@components/RoleTable';
 import { selectRoleList } from '@store/sharedSelectors/roles';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
@@ -168,21 +167,19 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
         />
       </GoAFormItem>
       {isNew && (
-        <UseServiceAccountWrapper>
-          <GoACheckbox
-            checked={script.useServiceAccount}
-            name="script-use-service-account-checkbox"
-            testId="script-use-service-account-checkbox"
-            onChange={() => {
-              setScript({
-                ...script,
-                useServiceAccount: !script.useServiceAccount,
-              });
-            }}
-            ariaLabel={`script-use-service-account-checkbox`}
-          />
-          Use service account
-        </UseServiceAccountWrapper>
+        <GoACheckbox
+          checked={script.useServiceAccount}
+          name="script-use-service-account-checkbox"
+          testId="script-use-service-account-checkbox"
+          onChange={() => {
+            setScript({
+              ...script,
+              useServiceAccount: !script.useServiceAccount,
+            });
+          }}
+          text="Use service account"
+          ariaLabel={`script-use-service-account-checkbox`}
+        />
       )}
       {roles &&
         isNew &&

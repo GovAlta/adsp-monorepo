@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 export const Topics = styled.div`
-  width: 721px;
+  padding-right: 3px;
 `;
 export const EditorPadding = styled.div`
   border: 0px solid grey;
@@ -411,4 +411,7 @@ export const CommentWrapper = styled.div`
   white-space: normal;
   display: inline;
   font-weight: bold;
+`;
+export const CommentLoader = styled.div`
+  text-align: center;
 `;

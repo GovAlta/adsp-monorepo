@@ -5,7 +5,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, ServiceMetricsValueDefinition, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceMetricsValueDefinition, adspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -22,10 +22,13 @@ import {
   FormStatusNotificationType,
   FormStatusSubmittedDefinition,
   FormStatusUnlockedDefinition,
+  FormStatusSetToDraftDefinition,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
 import { createFileService } from './file';
+import { createQueueTaskService } from './queueTask';
+import { createCommentService } from './comment';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -40,6 +43,8 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  const SUPPORT_COMMENT_TOPIC_TYPE_ID = 'form-questions';
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -69,6 +74,10 @@ const initializeApp = async (): Promise<express.Application> => {
           role: FormServiceRoles.IntakeApp,
           description: 'Intake application role for form service.',
         },
+        {
+          role: FormServiceRoles.Support,
+          description: 'Support role for viewing and responding to form question topics.',
+        },
       ],
       events: [
         FormCreatedDefinition,
@@ -77,9 +86,25 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusUnlockedDefinition,
         FormStatusSubmittedDefinition,
         FormStatusArchivedDefinition,
+        FormStatusSetToDraftDefinition,
       ],
       notifications: [FormStatusNotificationType],
       values: [ServiceMetricsValueDefinition],
+      serviceConfigurations: [
+        {
+          serviceId: adspId`urn:ads:platform:comment-service`,
+          configuration: {
+            [SUPPORT_COMMENT_TOPIC_TYPE_ID]: {
+              id: SUPPORT_COMMENT_TOPIC_TYPE_ID,
+              name: 'Form questions',
+              adminRoles: [`${serviceId}:${FormServiceRoles.Admin}`],
+              readerRoles: [],
+              commenterRoles: [`${serviceId}:${FormServiceRoles.Support}`],
+              securityClassification: 'protected b',
+            },
+          },
+        },
+      ],
       configuration: {
         description: 'Definitions of forms with configuration of roles allowed to submit and assess.',
         schema: configurationSchema,
@@ -123,6 +148,13 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const notificationService = createNotificationService(logger, directory, tokenProvider);
   const fileService = createFileService(logger, directory, tokenProvider);
+  const commentService = await createCommentService({
+    logger,
+    directory,
+    tokenProvider,
+    supportTopicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID,
+  });
+  const queueTaskService = createQueueTaskService(logger, directory, tokenProvider);
   const repositories = await createRepositories({
     ...environment,
     serviceId,
@@ -132,7 +164,16 @@ const initializeApp = async (): Promise<express.Application> => {
     notificationService,
   });
 
-  applyFormMiddleware(app, { ...repositories, serviceId, logger, eventService, notificationService, fileService });
+  applyFormMiddleware(app, {
+    ...repositories,
+    serviceId,
+    logger,
+    eventService,
+    notificationService,
+    fileService,
+    commentService,
+    queueTaskService,
+  });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

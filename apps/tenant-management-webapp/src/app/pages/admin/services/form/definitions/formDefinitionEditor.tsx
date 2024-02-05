@@ -1,38 +1,30 @@
 import React from 'react';
-import {
-  NotificationTemplateEditorContainer,
-  OuterNotificationTemplateEditorContainer,
-  Modal,
-  HideTablet,
-} from '../styled-components';
+import { Modal, HideTablet, FormTemplateEditorContainer, OuterFormTemplateEditorContainer } from '../styled-components';
 import { ModalContent } from '../../styled-components';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { AddEditFormDefinitionEditor } from './addEditFormDefinitionEditor';
 import { TabletMessage } from '@components/TabletMessage';
 
 export const FormDefinitionEditor = (): JSX.Element => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const goBack = () => {
-    history.push({
-      pathname: '/admin/services/form',
-      search: '?templates=true',
-    });
+    navigate('/admin/services/form?templates=true');
   };
 
   return (
     <>
       <Modal data-testid="template-form">
         <ModalContent>
-          <OuterNotificationTemplateEditorContainer>
+          <OuterFormTemplateEditorContainer>
             <TabletMessage goBack={goBack} />
 
             <HideTablet>
-              <NotificationTemplateEditorContainer>
+              <FormTemplateEditorContainer>
                 <AddEditFormDefinitionEditor />
-              </NotificationTemplateEditorContainer>
+              </FormTemplateEditorContainer>
             </HideTablet>
-          </OuterNotificationTemplateEditorContainer>
+          </OuterFormTemplateEditorContainer>
         </ModalContent>
       </Modal>
     </>

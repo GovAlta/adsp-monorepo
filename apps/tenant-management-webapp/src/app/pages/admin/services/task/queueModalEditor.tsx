@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-6';
 import {
   TextLoadingIndicator,
   FlexRow,
@@ -80,13 +80,10 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     // setQueue(selectedQueue);
   }, [queues]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const close = () => {
-    history.push({
-      pathname: '/admin/services/task',
-      search: '?definitions=true',
-    });
+    navigate('/admin/services/task?definitions=true');
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({

@@ -32,7 +32,7 @@ import {
 
 import { RootState } from '@store/index';
 import { FetchFileService } from '@store/file/actions';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-6';
 import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById } from '@store/pdf/selectors';
 
@@ -102,14 +102,11 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     dispatch(updatePdfTemplate(saveObject, options));
   };
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const cancel = () => {
     dispatch(setPdfDisplayFileId(null));
-    history.push({
-      pathname: '/admin/services/pdf',
-      search: '?templates=true',
-    });
+    navigate('/admin/services/pdf?templates=true');
   };
 
   useEffect(() => {

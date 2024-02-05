@@ -45,7 +45,7 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
   return (
     <GoAModal
       heading={title}
-      testId="add-comment-modal"
+      testId={`${isNew ? 'add' : 'edit'}-comment-modal`}
       open={open}
       actions={
         <GoAButtonGroup alignment="end">

@@ -21,8 +21,7 @@ import {
   ButtonMargin,
 } from '../private/Subscriptions/styled-components';
 
-import { useParams } from 'react-router-dom-6';
-import { useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom-6';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSubscriberDetails, signedOutUnsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
@@ -32,7 +31,7 @@ import { SubscriberChannel, Subscription } from '@store/subscription/models';
 const Subscriptions = (): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchParams, _] = useSearchParams();
-  const history = useHistory();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const EMAIL = 'email';
   const { subscriber } = useSelector((state: RootState) => ({
@@ -75,7 +74,7 @@ const Subscriptions = (): JSX.Element => {
 
   useEffect(() => {
     if (previouslyVerified.email && code !== 'null' && code) {
-      history.push(`${window.location.pathname}`);
+      navigate(`${window.location.pathname}`);
     }
   }, [previouslyVerified]);
 

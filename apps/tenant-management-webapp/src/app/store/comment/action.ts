@@ -13,10 +13,10 @@ export const CREATE_COMMENT_TOPIC_ACTION = 'comment/CREATE_COMMENT_TOPIC_ACTION'
 export const CREATE_COMMENT_TOPIC_SUCCESS_ACTION = 'comment/CREATE_COMMENT_TOPIC_SUCCESS_ACTION';
 export const FETCH_COMMENT_TOPICS_ACTION = 'comment/FETCH_COMMENT_TOPICS_ACTION';
 export const SET_COMMENT_TOPICS_ACTION = 'comment/SET_COMMENT_TOPICS_ACTION';
-export const CREAT_COMMENT_COMMENTS_ACTION = 'comment/CREAT_COMMENT_COMMENT_ACTION';
+export const CREATE_COMMENT_COMMENTS_ACTION = 'comment/CREATE_COMMENT_COMMENT_ACTION';
 export const CLEAR_COMMENT_COMMENTS_ACTION = 'comment/CLEAR_COMMENT_COMMENTS_ACTION';
 export const UPDATE_COMMENT_COMMENTS_ACTION = 'comment/UPDATE_COMMENT_COMMENTS_ACTION';
-export const CREAT_COMMENT_COMMENTS_SUCCESS = 'comment/CREAT_COMMENT_COMMENTS_SUCCESS';
+export const CREATE_COMMENT_COMMENTS_SUCCESS = 'comment/CREATE_COMMENT_COMMENTS_SUCCESS';
 export const UPDATE_COMMENT_COMMENTS_SUCCESS = 'comment/UPDATE_COMMENT_COMMENTS_SUCCESS';
 export const FETCH_COMMENT_COMMENTS_SUCCESS = 'comment/FETCH_COMMENT_COMMENTS_SUCCESS';
 export const DELETE_COMMENT_TOPIC_ACTION = 'comment/DELETE_COMMENT_TOPIC_ACTION';
@@ -113,7 +113,7 @@ export interface FetchCommentsFailureAction {
 }
 
 export interface AddCommentAction {
-  type: typeof CREAT_COMMENT_COMMENTS_ACTION;
+  type: typeof CREATE_COMMENT_COMMENTS_ACTION;
   payload: Comment[];
 }
 
@@ -133,7 +133,7 @@ export interface FetchCommentSuccessAction {
   next: string;
 }
 export interface AddCommentSuccessAction {
-  type: typeof CREAT_COMMENT_COMMENTS_SUCCESS;
+  type: typeof CREATE_COMMENT_COMMENTS_SUCCESS;
   payload: Comment;
   after: string;
   next: string;
@@ -267,7 +267,7 @@ export const fetchCommentsFailure = (error: string): FetchCommentsFailureAction 
 });
 
 export const addCommentRequest = (comment: Comment[]): AddCommentAction => ({
-  type: CREAT_COMMENT_COMMENTS_ACTION,
+  type: CREATE_COMMENT_COMMENTS_ACTION,
   payload: comment,
 });
 
@@ -280,7 +280,7 @@ export const deleteCommentComments = ({ comment, topicId }): DeleteCommentAction
   payload: { topicId, comment },
 });
 export const addCommentSuccess = (comment: Comment, after: string, next: string): AddCommentSuccessAction => ({
-  type: CREAT_COMMENT_COMMENTS_SUCCESS,
+  type: CREATE_COMMENT_COMMENTS_SUCCESS,
   payload: comment,
   after,
   next,

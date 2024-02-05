@@ -7,16 +7,14 @@ import {
   FileTypeModalContent,
 } from '../styled-components';
 import { TabletMessage } from '@components/TabletMessage';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 import { EditFileTypeDefinitionEditor } from './editFileTypeDefinitionEditor';
 
 export const FileTypeDefinitionEditor = (): JSX.Element => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const goBack = () => {
-    history.push({
-      pathname: '/admin/services/file',
-    });
+    navigate('/admin/services/file');
   };
 
   return (

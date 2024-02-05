@@ -10,7 +10,6 @@ import {
 } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid } from '@abgov/react-components-new';
-
 export const renderLayoutElements = (
   elements: UISchemaElement[],
   schema: JsonSchema,
@@ -20,10 +19,11 @@ export const renderLayoutElements = (
   cells?: JsonFormsCellRendererRegistryEntry[]
 ) => {
   return elements.map((child, index) => (
-    <div>
+    <div key={index}>
       <JsonFormsDispatch
         uischema={child}
         schema={schema}
+        key={path}
         path={path}
         enabled={enabled}
         renderers={renderers}
@@ -56,7 +56,7 @@ const LayoutRendererComponent = ({
         </GoAGrid>
       );
     } else {
-      return <div>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</div>;
+      return <>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</>;
     }
   }
 };

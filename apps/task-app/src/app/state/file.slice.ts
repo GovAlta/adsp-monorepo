@@ -30,43 +30,71 @@ async function getFileMetadata(fileServiceUrl: string, urn: string): Promise<Fil
   return data;
 }
 
-export const loadFileMetadata = createAsyncThunk('file/get-file-metadata', async (urn: string, { getState }) => {
-  const { config } = getState() as AppState;
-  const fileServiceUrl = config.directory[FILE_SERVICE_ID];
+export const loadFileMetadata = createAsyncThunk(
+  'file/get-file-metadata',
+  async (urn: string, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const fileServiceUrl = config.directory[FILE_SERVICE_ID];
 
-  const metadata = await getFileMetadata(fileServiceUrl, urn);
+      const metadata = await getFileMetadata(fileServiceUrl, urn);
 
-  return metadata;
-});
-
-export const downloadFile = createAsyncThunk('file/download-file', async (urn: string, { getState }) => {
-  const { config, file: fileState } = getState() as AppState;
-  const fileServiceUrl = config.directory[FILE_SERVICE_ID];
-
-  let metadata = fileState.metadata[urn];
-  if (!metadata) {
-    metadata = await getFileMetadata(fileServiceUrl, urn);
-  }
-
-  const token = await getAccessToken();
-  const { data, headers } = await axios.get(
-    new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}/download`, fileServiceUrl).href,
-    {
-      responseType: 'blob',
-      headers: { Authorization: `Bearer ${token}` },
+      return metadata;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
     }
-  );
-  const mimeType = headers['content-type']?.toString();
+  }
+);
 
-  const file = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(new File([data], metadata.filename, { type: mimeType }));
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-  });
+export const downloadFile = createAsyncThunk(
+  'file/download-file',
+  async (urn: string, { getState, rejectWithValue }) => {
+    try {
+      const { config, file: fileState } = getState() as AppState;
+      const fileServiceUrl = config.directory[FILE_SERVICE_ID];
 
-  return { file, metadata: { ...metadata, mimeType } };
-});
+      let metadata = fileState.metadata[urn];
+      if (!metadata) {
+        metadata = await getFileMetadata(fileServiceUrl, urn);
+      }
+
+      const token = await getAccessToken();
+      const { data, headers } = await axios.get(
+        new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}/download`, fileServiceUrl).href,
+        {
+          responseType: 'blob',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const mimeType = headers['content-type']?.toString();
+
+      const file = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(new File([data], metadata.filename, { type: mimeType }));
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+      });
+
+      return { file, metadata: { ...metadata, mimeType } };
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
 
 interface FileState {
   files: Record<string, string>;

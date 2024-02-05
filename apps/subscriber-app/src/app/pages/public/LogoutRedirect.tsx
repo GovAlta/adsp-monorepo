@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-6';
 
 const LogoutRedirect = (): JSX.Element => {
-  const history = useHistory();
+  const navigate = useNavigate();
   useEffect(() => {
-    history.push('/');
+    navigate('/');
   }, []);
 
   return <div></div>;

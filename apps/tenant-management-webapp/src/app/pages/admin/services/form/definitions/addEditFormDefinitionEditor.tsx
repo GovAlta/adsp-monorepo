@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
+import { languages } from 'monaco-editor';
 
-import Editor from '@monaco-editor/react';
 import { vanillaCells } from '@jsonforms/vanilla-renderers';
 import { Renderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
@@ -28,7 +29,7 @@ import {
   PRE,
   FakeButton,
   SubmissionRecordsBox,
-  NegativeMarginSmall,
+  FormPreviewScrollPane,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -39,8 +40,15 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
-import { useHistory, useParams } from 'react-router-dom';
-import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
+import { useNavigate, useParams } from 'react-router-dom-6';
+import {
+  GoAButtonGroup,
+  GoAButton,
+  GoAFormItem,
+  GoACheckbox,
+  GoADropdownItem,
+  GoADropdown,
+} from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
@@ -53,24 +61,28 @@ import { DeleteModal } from '@components/DeleteModal';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 
 import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
-import { RowFlex } from './style-components';
+
+import { RowFlex, QueueTaskDropdown } from './style-components';
+import { getTaskQueues } from '@store/task/action';
 
 import { UploadFileService, DownloadFileService } from '@store/file/actions';
 import { FetchFileTypeService } from '@store/file/actions';
+import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
   const tempNext = JSON.parse(JSON.stringify(next));
-
-  return (
+  const isUpdated =
     JSON.stringify(tempPrev?.applicantRoles) !== JSON.stringify(tempNext?.applicantRoles) ||
     JSON.stringify(tempPrev?.assessorRoles) !== JSON.stringify(tempNext?.assessorRoles) ||
     JSON.stringify(tempPrev?.clerkRoles) !== JSON.stringify(tempNext?.clerkRoles) ||
     JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
     JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
-    JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords)
-  );
+    JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
+    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess);
+
+  return isUpdated;
 };
 
 export const formEditorJsonConfig = {
@@ -83,6 +95,7 @@ export const formEditorJsonConfig = {
 };
 
 const invalidJsonMsg = 'Invalid JSON syntax';
+const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const latestFile = useSelector((state: RootState) => {
@@ -108,14 +121,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const renderer = new Renderers(uploadFile, downloadFile, latestFile);
 
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
-
+  const monaco = useMonaco();
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(
     JSON.parse(JSON.stringify(defaultFormDefinition))
   );
 
   const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
-  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify({}, null, 2));
+  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(definition?.dataSchema || {}, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
@@ -145,11 +158,31 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dataSchemaJSON: null,
     dataSchemaJSONSchema: null,
   });
+
+  useEffect(() => {
+    if (monaco) {
+      const provider = monaco.languages.registerCompletionItemProvider('json', {
+        triggerCharacters: ['"'],
+        provideCompletionItems: (model, position) => {
+          const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
+          const suggestions = formatEditorSuggestions(dataSchemaSuggestion);
+          return {
+            suggestions,
+          } as languages.ProviderResult<languages.CompletionList>;
+        },
+      });
+      return function cleanup() {
+        provider.dispose();
+      };
+    }
+  }, [monaco, tempDataSchema]);
+
   useEffect(() => {
     dispatch(FetchRealmRoles());
 
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getFormDefinitions());
+    dispatch(getTaskQueues());
   }, []);
 
   const types = [
@@ -166,6 +199,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       return serviceRoles?.keycloak || {};
     }
   );
+  const queueTasks = useSelector((state: RootState) => {
+    const values = Object.entries(state?.task?.queues)
+      .sort((template1, template2) => {
+        return template1[1].name.localeCompare(template2[1].name);
+      })
+      .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
+        tempObj[taskDefinitionId] = taskDefinitionData;
+        return tempObj;
+      }, {});
+    return values;
+  });
 
   useEffect(() => {
     if (saveModal.closeEditor) {
@@ -176,11 +220,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   useEffect(() => {
     if (id && formDefinitions[id]) {
       const tempFormDefinition = formDefinitions[id] as FormDefinition;
-      if (Object.keys(tempFormDefinition.dataSchema || {}).length > 0) {
+      if (Object.keys(tempFormDefinition.uiSchema || {}).length > 0) {
         setTempUiSchema(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
         setTempUiSchemaBounced(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
       }
-      if (Object.keys(tempFormDefinition.uiSchema || {}).length > 0) {
+      if (Object.keys(tempFormDefinition.dataSchema || {}).length > 0) {
         setTempDataSchema(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
         setDataSchemaBounced(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
       }
@@ -211,13 +255,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   }, [debouncedRenderDataSchema]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const close = () => {
-    history.push({
-      pathname: '/admin/services/form',
-      search: '?definitions=true',
-    });
+    navigate('/admin/services/form?definitions=true');
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
@@ -345,6 +386,21 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
+  const getQueueTaskToProcessValue = () => {
+    let value = NO_TASK_CREATED_OPTION;
+
+    if (definition.queueTaskToProcess) {
+      const { queueNameSpace, queueName } = definition.queueTaskToProcess;
+      if (queueNameSpace !== '' && queueName !== '') {
+        value = `${queueNameSpace}:${queueName}`;
+      } else {
+        value = NO_TASK_CREATED_OPTION;
+      }
+    }
+
+    return value;
+  };
+
   return (
     <FormEditor>
       {spinner ? (
@@ -363,15 +419,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   label=""
                 >
                   <EditorPadding>
-                    <Editor
+                    <MonacoEditor
                       data-testid="form-data-schema"
                       height={EditorHeight}
                       value={tempDataSchema}
                       onChange={(value) => {
                         const jsonSchemaValidResult = JSONSchemaValidator(value);
+                        setTempDataSchema(value);
 
                         if (jsonSchemaValidResult === '') {
-                          setTempDataSchema(value);
                           setEditorErrors({
                             ...editorErrors,
                             dataSchemaJSONSchema: null,
@@ -410,7 +466,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="UI schema" data-testid="form-editor-ui-schema-tab">
                 <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
                   <EditorPadding>
-                    <Editor
+                    <MonacoEditor
                       data-testid="form-ui-schema"
                       height={EditorHeight}
                       value={tempUiSchema}
@@ -454,7 +510,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </ScrollPane>
                 </MonacoDivTabBody>
               </Tab>
-              <Tab label="Submission configuration" data-testid="disposition-states">
+              <Tab label="Submission configuration" data-testid="submission-configuration">
                 <div style={{ height: EditorHeight + 7 }}>
                   <FlexRow>
                     <SubmissionRecordsBox>
@@ -467,9 +523,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           const records = definition.submissionRecords ? false : true;
                           setDefinition({ ...definition, submissionRecords: records });
                         }}
-                      >
-                        Create submission records on submit
-                      </GoACheckbox>
+                        text="  Create submission records on submit"
+                      />
                     </SubmissionRecordsBox>
                     <InfoCircleWithInlineHelp
                       text={
@@ -480,17 +535,66 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     />
                   </FlexRow>
 
-                  <div style={{ padding: '10px', background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
+                  <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
+                    <InfoCircleWithInlineHelp
+                      initialLabelValue={definition.submissionRecords}
+                      label="Task queue to process &nbsp;"
+                      text={
+                        getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                          ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                          : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                      }
+                    />
+
+                    <QueueTaskDropdown>
+                      {Object.keys(queueTasks).length > 0 && (
+                        <GoADropdown
+                          data-test-id="form-submission-select-queue-task-dropdown"
+                          name="queueTasks"
+                          disabled={!definition.submissionRecords}
+                          value={[getQueueTaskToProcessValue()]}
+                          relative={true}
+                          onChange={(name, queueTask) => {
+                            const separatedQueueTask = queueTask[0].split(':');
+                            if (separatedQueueTask.length > 1) {
+                              setDefinition({
+                                ...definition,
+                                queueTaskToProcess: {
+                                  queueNameSpace: separatedQueueTask[0],
+                                  queueName: separatedQueueTask[1],
+                                },
+                              });
+                            } else {
+                              setDefinition({
+                                ...definition,
+                                queueTaskToProcess: {
+                                  queueNameSpace: '',
+                                  queueName: '',
+                                },
+                              });
+                            }
+                          }}
+                        >
+                          <GoADropdownItem
+                            data-testId={`task-Queue-ToCreate-DropDown`}
+                            key={`No-Task-Created`}
+                            value={NO_TASK_CREATED_OPTION}
+                            label={NO_TASK_CREATED_OPTION}
+                          />
+                          {Object.keys(queueTasks).map((item) => (
+                            <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
+                          ))}
+                        </GoADropdown>
+                      )}
+                    </QueueTaskDropdown>
                     <RowFlex>
                       <h3>Disposition states</h3>
                       <div>
                         {definition.submissionRecords ? (
-                          <NegativeMarginSmall>
-                            <InfoCircleWithInlineHelp
-                              text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                              width={450}
-                            />
-                          </NegativeMarginSmall>
+                          <InfoCircleWithInlineHelp
+                            text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                            width={450}
+                          />
                         ) : (
                           <FakeButton />
                         )}
@@ -516,7 +620,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     <div
                       style={{
                         overflowY: 'auto',
-                        height: EditorHeight - 93,
+                        height: EditorHeight - 228,
                         zIndex: 0,
                       }}
                     >
@@ -624,30 +728,32 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <Tabs activeIndex={0} data-testid="preview-tabs">
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
-                  <GoAFormItem error={error} label="">
-                    <ErrorBoundary>
-                      {UiSchemaBounced !== '{}' ? (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          uischema={JSON.parse(UiSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      ) : (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      )}
-                    </ErrorBoundary>
-                  </GoAFormItem>
+                  <FormPreviewScrollPane>
+                    <GoAFormItem error={error} label="">
+                      <ErrorBoundary>
+                        {UiSchemaBounced !== '{}' ? (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            uischema={JSON.parse(UiSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
+                        ) : (
+                          <JsonForms
+                            schema={JSON.parse(dataSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={renderer.GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
+                        )}
+                      </ErrorBoundary>
+                    </GoAFormItem>
+                  </FormPreviewScrollPane>
                 </div>
               </Tab>
               <Tab label="Data" data-testid="data-view">
