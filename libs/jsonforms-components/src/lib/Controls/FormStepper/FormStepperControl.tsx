@@ -1,6 +1,6 @@
 import React from 'react';
-import { useState } from 'react';
-import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
+import { useState, useEffect } from 'react';
+import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton, GoAFormStepStatusType } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { ControlElement, Categorization, UISchemaElement, Layout, Category, StatePropsOfLayout } from '@jsonforms/core';
 
@@ -33,6 +33,18 @@ export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLa
   // eslint-disable-next-line
   data: any;
 }
+const usePersistentState = (initialState = 0) => {
+  const [state, setState] = useState(() => {
+    const storedState = localStorage.getItem('step');
+    return storedState ? JSON.parse(storedState) : initialState;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('step', JSON.stringify(state));
+  }, [state]);
+
+  return [state, setState];
+};
 
 export const FormStepper = ({
   uischema,
@@ -46,12 +58,11 @@ export const FormStepper = ({
   config,
 }: CategorizationStepperLayoutRendererProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
-  const [step, setStep] = useState<number>(0);
+  const [step, setStep] = usePersistentState(0);
   if (uiSchema.elements?.length < 1) {
     // eslint-disable-next-line
     return <></>;
   }
-
   // Note: [Jan-02-2023] the Options here will be used in the feature
   const appliedUiSchemaOptions = { ...config, ...uiSchema?.options };
 
@@ -59,7 +70,11 @@ export const FormStepper = ({
     if (page < 1 || page > uiSchema.elements?.length + 1) return;
     setStep(page);
   }
-
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    setStep(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const renderStepElements = (step: Category | Categorization | VerticalLayout) => {
     return (
       <>
