@@ -27,6 +27,7 @@ Then('the user views Add topic type modal', function () {
 
 When('the user clicks Cancel button in Add topic type modal', function () {
   commentObj.addTopicTypeModalCancelButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
 
 Then('the user views topic types page', function () {
