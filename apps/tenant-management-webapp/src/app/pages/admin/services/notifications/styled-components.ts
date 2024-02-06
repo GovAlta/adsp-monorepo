@@ -108,10 +108,6 @@ export const NotificationStyles = styled.div`
     padding: 20px;
   }
 
-  .smallPadding {
-    padding: 3px;
-  }
-
   .mail-outline {
     padding: 0px 3px;
   }

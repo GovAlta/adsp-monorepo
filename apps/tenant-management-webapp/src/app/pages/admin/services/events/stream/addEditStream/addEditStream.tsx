@@ -139,7 +139,6 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
           <IdField>{stream.id}</IdField>
         </GoAFormItem>
         <GoAFormItem label="Description">
-          <label></label>
           <GoATextArea
             name="stream-description"
             value={stream.description}

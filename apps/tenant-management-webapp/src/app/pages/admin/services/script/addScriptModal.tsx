@@ -166,6 +166,7 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
           }}
         />
       </GoAFormItem>
+      <br />
       {isNew && (
         <GoACheckbox
           checked={script.useServiceAccount}

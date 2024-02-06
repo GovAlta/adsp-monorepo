@@ -1,7 +1,7 @@
 import React from 'react';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
-
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 interface ExternalLinkProps {
   text: string;
   link: string;
@@ -10,6 +10,7 @@ interface ExternalLinkProps {
 
 const ExternalLinkWrapper = styled.div`
   display: inline-block;
+  color: #0070c4;
   .goa-icon {
     display: inline-block !important;
     position: relative;
@@ -24,8 +25,10 @@ export const ExternalLink = ({ text, testId, link }: ExternalLinkProps): JSX.Ele
     <ExternalLinkWrapper data-testid={`${testId}`}>
       <a href={link} rel="noopener noreferrer" target="_blank">
         {text}
+
+        <GoAContextMenuIcon type="open" title="Open" testId="open-icon" />
       </a>
-      <GoAIcon type="open" />
+      {/* <GoAIcon size="medium" data-testid="open-icon" type="open" /> */}
     </ExternalLinkWrapper>
   );
 };

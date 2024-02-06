@@ -160,6 +160,7 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
             <EventDetailsActionsWrapper>
               <GoAContextMenuIcon
                 type={showDetails ? 'eye-off' : 'eye'}
+                title="Toggle details"
                 onClick={() => setShowDetails(!showDetails)}
                 testId="directory-toggle-details-visibility"
               />
