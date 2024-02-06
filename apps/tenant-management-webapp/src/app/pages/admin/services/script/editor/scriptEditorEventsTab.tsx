@@ -43,6 +43,7 @@ const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptTriggerEven
           <GoAContextMenu>
             <GoAContextMenuIcon
               type={showDetails ? 'eye-off' : 'eye'}
+              title="Toggle details"
               onClick={() => setShowDetails(!showDetails)}
               testId="script-editor-trigger-events-toggle-details-visibility"
             />

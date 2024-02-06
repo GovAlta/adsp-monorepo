@@ -28,6 +28,7 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
           <GoAContextMenu>
             <GoAContextMenuIcon
               type={showSchema ? 'eye-off' : 'eye'}
+              title="Toggle details"
               onClick={() => setShowSchema(!showSchema)}
               testId="configuration-toggle-details-visibility"
             />

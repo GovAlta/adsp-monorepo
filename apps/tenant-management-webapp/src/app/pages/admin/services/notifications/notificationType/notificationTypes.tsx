@@ -1,13 +1,13 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoAContainer } from '@abgov/react-components-new';
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Grid, GridItem } from '@core-services/app-common';
 import { NotificationTypeModalForm } from '../addEditNotification/addEditNotification';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import * as handlebars from 'handlebars';
 import { DeleteModal } from '@components/DeleteModal';
-import { GoAIcon } from '@abgov/react-components/experimental';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { checkForProhibitedTags } from '@lib/EmailTemplateValidator';
@@ -22,8 +22,6 @@ import {
 } from '@store/notification/actions';
 import { NotificationItem, baseTemplate, Template, EventItem } from '@store/notification/models';
 import { RootState } from '@store/index';
-
-import { EditIcon } from '@components/icons/EditIcon';
 
 import { TemplateEditor } from '../previewEditor/TemplateEditor';
 import { PreviewTemplate } from '../previewEditor/PreviewTemplate';
@@ -385,31 +383,30 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   <div className="rowFlex">
                     <h2 className="flex1">{notificationType.name}</h2>
                     <MaxHeight height={30} className="rowFlex">
-                      <a
-                        className="flex1"
-                        data-testid="edit-notification-type"
-                        onClick={() => {
-                          setSelectedType(notificationType);
-                          setEditType(true);
-                          setFormTitle('Edit notification type');
-                        }}
-                      >
-                        <NotificationBorder className="smallPadding flex">
-                          <EditIcon size="small" />
-                        </NotificationBorder>
-                      </a>
-                      <a
-                        className="flex1"
-                        onClick={() => {
-                          setSelectedType(notificationType);
-                          setShowDeleteConfirmation(true);
-                        }}
-                        data-testid="delete-notification-type"
-                      >
-                        <NotificationBorder className="smallPadding">
-                          <GoAIcon type="trash" />
-                        </NotificationBorder>
-                      </a>
+                      <NotificationBorder className=" flex">
+                        <GoAContextMenuIcon
+                          type="create"
+                          title="Edit"
+                          onClick={() => {
+                            setSelectedType(notificationType);
+                            setEditType(true);
+                            setFormTitle('Edit notification type');
+                          }}
+                          testId="edit-notification-type"
+                        />
+                      </NotificationBorder>
+
+                      <NotificationBorder className=" flex">
+                        <GoAContextMenuIcon
+                          type="trash"
+                          title="Delete"
+                          onClick={() => {
+                            setSelectedType(notificationType);
+                            setShowDeleteConfirmation(true);
+                          }}
+                          testId="delete-notification-type"
+                        />
+                      </NotificationBorder>
                     </MaxHeight>
                   </div>
                   <div className="rowFlex smallFont">
@@ -459,18 +456,17 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               <div className="rowFlex">
                                 <MaxHeight height={34}>
                                   <NotificationBorder className="smallPadding">
-                                    <a
-                                      className="flex1 flex"
+                                    <GoAContextMenuIcon
+                                      type="trash"
+                                      title="Delete"
                                       onClick={() => {
                                         setSelectedEvent(event);
                                         setSelectedType(notificationType);
                                         setShowEventDeleteConfirmation(true);
                                         setCoreEvent(false);
                                       }}
-                                      data-testid="delete-event"
-                                    >
-                                      <GoAIcon type="trash" />
-                                    </a>
+                                      testId="delete-event"
+                                    />
                                   </NotificationBorder>
                                 </MaxHeight>
                               </div>
