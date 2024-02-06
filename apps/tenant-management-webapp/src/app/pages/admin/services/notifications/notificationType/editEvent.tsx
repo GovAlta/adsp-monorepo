@@ -138,7 +138,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
             onChange={onChange}
             value={selectedValues ? selectedValues : ''}
             aria-label="event-form-dropdown"
-            width="100%"
+            width="50ch"
             testId="event-dropdown"
           >
             {dropDownOptions.map((item, key) => (
