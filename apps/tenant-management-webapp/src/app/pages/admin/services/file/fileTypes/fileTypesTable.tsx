@@ -93,7 +93,6 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
   const deleteFileType = fileTypes.find((x) => x && x.id === deleteId);
   const hasFile = useSelector((state: RootState) => state.fileService.hasFile[deleteId]);
   const navigate = useNavigate();
-  const match = useMatch('/admin/services/file/*');
   const dispatch = useDispatch();
 
   return (
