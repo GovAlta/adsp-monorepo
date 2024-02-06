@@ -123,7 +123,6 @@ const Dashboard = (): JSX.Element => {
   }, [size]);
 
   const adminDashboard = () => {
-    console.log(`TenantName = ${tenantName}`);
     return (
       <DashboardDiv>
         <Page>
