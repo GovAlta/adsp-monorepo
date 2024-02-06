@@ -9,3 +9,4 @@ export * from './InputTimeControl';
 export * from './InputEnum';
 export * from './InputEnumRadios';
 export * from './InputBooleanControl';
+export * from './InputBooleanRadioControl';
