@@ -67,7 +67,9 @@ import {
   MultiLineTextControl,
   MultiLineTextControlTester,
   GoAEnumControl,
+  GoAEnumAutoCompleteControl,
   GoAEnumControlTester,
+  GoAEnumControlAutoCompleteTester,
   GoAEnumRadioGroupControl,
   GoARadioGroupControlTester,
   GoAArrayControlTester,
@@ -103,6 +105,7 @@ export class Renderers {
   GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
     // controls
     { tester: GoAEnumControlTester, renderer: GoAEnumControl },
+    { tester: GoAEnumControlAutoCompleteTester, renderer: GoAEnumAutoCompleteControl },
     { tester: GoAIntegerControlTester, renderer: GoAInputIntegerControl },
     { tester: GoANumberControlTester, renderer: GoAInputNumberControl },
     { tester: GoATextControlTester, renderer: GoAInputTextControl },

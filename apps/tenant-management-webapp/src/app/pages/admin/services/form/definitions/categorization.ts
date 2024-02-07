@@ -159,6 +159,7 @@ export const uischema = {
               type: 'Control',
               scope: '#/properties/basketballPlayers',
               options: {
+                autocomplete: true,
                 enumContext: {
                   key: 'basketball-players',
                   location: 'data',
@@ -171,6 +172,7 @@ export const uischema = {
               type: 'Control',
               scope: '#/properties/countries',
               options: {
+                autocomplete: true,
                 enumContext: {
                   key: 'countries',
                 },

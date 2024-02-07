@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith, Actions, Store } from '@jsonforms/core';
+import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import merge from 'lodash/merge';
@@ -12,7 +12,7 @@ import { JsonFormContextInstance } from '../../Context';
 type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
-  const { data, id, enabled, schema, path, handleChange, options, config, label, uischema, rootSchema } = props;
+  const { data, id, enabled, schema, path, handleChange, options, config, label, uischema } = props;
   let enumData = schema?.enum || [];
 
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
