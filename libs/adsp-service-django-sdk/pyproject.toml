@@ -24,7 +24,7 @@ readme = "README.md"
 
   [tool.poetry.dependencies]
   python = ">=3.9,<3.11"
-  django = "^4.2.7"
+  django = "^4.2.10"
 
     [tool.poetry.dependencies.adsp-py-common]
     path = "../adsp-py-common"
