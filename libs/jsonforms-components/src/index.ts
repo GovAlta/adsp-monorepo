@@ -20,12 +20,12 @@ import {
 import {
   MaterialAnyOfStringOrEnumControl,
   materialAnyOfStringOrEnumControlTester,
-  materialEnumControlTester,
   MaterialOneOfEnumControl,
   MaterialSliderControl,
   materialSliderControlTester,
   MaterialOneOfRadioGroupControl,
   materialOneOfRadioGroupControlTester,
+  materialOneOfEnumControlTester,
 } from '@jsonforms/material-renderers';
 import {
   MaterialArrayLayout,
@@ -63,6 +63,7 @@ import {
   CategorizationRendererTester,
   FormStepperControl,
   FileUploaderTester,
+  FileUploader,
   MultiLineTextControl,
   MultiLineTextControlTester,
   GoAEnumControl,
@@ -79,19 +80,23 @@ import {
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
 import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
+import { withJsonFormsControlProps } from '@jsonforms/react';
+import { JsonFormContextInstance } from './lib/Context';
 import { HelpContent, HelpContentTester } from './lib/Additional';
-import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
+
+export * from './lib/Context';
+
+const countries = ['Argentina', 'Brazil', 'Canada', 'Denmark', 'Egypt', 'France', 'Greece', 'India', 'Japan', 'Kenya'];
+
+JsonFormContextInstance.addData('countries', countries);
 
 export class Renderers {
   GoARenderers: JsonFormsRendererRegistryEntry[];
-  constructor(uploadTrigger?: (file: File) => void, downloadTrigger?: (file: File) => void, latestFile?: unknown) {
+  constructor() {
     this.GoARenderers = [
       ...this.GoABaseRenderers,
       { tester: CategorizationRendererTester, renderer: FormStepperControl },
-      {
-        tester: FileUploaderTester,
-        renderer: FileUploaderWrapper({ uploadTrigger, downloadTrigger, latestFile }),
-      },
+      { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
     ];
   }
 
@@ -129,7 +134,7 @@ export class Renderers {
       renderer: MaterialOneOfRadioGroupControl,
     },
     {
-      tester: materialEnumControlTester,
+      tester: materialOneOfEnumControlTester,
       renderer: MaterialOneOfEnumControl,
     },
     // layouts

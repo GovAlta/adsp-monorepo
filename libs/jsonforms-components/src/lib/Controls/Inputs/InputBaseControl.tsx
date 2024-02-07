@@ -37,9 +37,13 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     labelToUpdate = label;
   }
 
+  let modifiedErrors = errors;
+  if (errors === 'must be equal to one of the allowed values' && input?.name === 'EnumSelect') {
+    modifiedErrors = '';
+  }
   return (
     <GoAFormItem
-      error={errors}
+      error={modifiedErrors}
       label={props?.noLabel === true ? '' : labelToUpdate}
       helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
     >
