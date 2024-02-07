@@ -392,7 +392,7 @@ When(
         .invoke('attr', 'value')
         .then((classificationValue) => {
           if (classificationValue !== classification.toLowerCase()) {
-            fileServiceObj.fileTypeClassificationDropdown().shadow().find('goa-input').click({ force: true });
+            fileServiceObj.fileTypeClassificationDropdown().shadow().find('input').click({ force: true });
             fileServiceObj
               .fileTypeClassificationDropdown()
               .shadow()
@@ -451,7 +451,6 @@ When(
             const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
             fileServiceObj
               .fileTypePageClientRolesTable(clientName)
-              .shadow()
               .find('.role-name')
               .contains(roleName)
               .next()
@@ -464,7 +463,6 @@ When(
           } else {
             fileServiceObj
               .fileTypePageRolesTable()
-              .shadow()
               .find('.role-name')
               .contains(updateRoles[i].trim())
               .next()
@@ -546,7 +544,6 @@ When(
             const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
             fileServiceObj
               .fileTypePageClientRolesTable(clientName)
-              .shadow()
               .find('.role-name')
               .contains(roleName)
               .next()
@@ -559,7 +556,6 @@ When(
           } else {
             fileServiceObj
               .fileTypePageRolesTable()
-              .shadow()
               .find('.role-name')
               .contains(updateRoles[i].trim())
               .next()

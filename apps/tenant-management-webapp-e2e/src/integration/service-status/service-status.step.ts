@@ -47,7 +47,7 @@ Then('the user views Add notice dialog', function () {
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notice dialog',
   function (desc, app, startDate, startTime, endDate, endTime) {
-    statusObj.noticeModalDescField().shadow().find('.goa-textarea').clear({ force: true }).type(desc, { force: true });
+    statusObj.noticeModalDescField().shadow().find('textarea').clear({ force: true }).type(desc, { force: true });
     // Select Application
     if (app == 'All') {
       statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
@@ -493,7 +493,7 @@ When(
     statusObj
       .addEditApplicationDescriptionModalField()
       .shadow()
-      .find('.goa-textarea')
+      .find('textarea')
       .clear()
       .type(description, { force: true });
     statusObj
@@ -553,7 +553,7 @@ Then(
     statusObj
       .addEditApplicationDescriptionModalField()
       .shadow()
-      .find('.goa-textarea')
+      .find('textarea')
       .invoke('val')
       .then((val) => {
         expect(val).to.eq(description);
@@ -571,7 +571,7 @@ When('the user enters {string} as name and {string} as description fields', func
   statusObj
     .addEditApplicationDescriptionModalField()
     .shadow()
-    .find('.goa-textarea')
+    .find('textarea')
     .clear()
     .type(description, { force: true });
 });

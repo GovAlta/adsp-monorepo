@@ -42,7 +42,7 @@ When(
     notificationsObj
       .notificationTypeModalDescriptionField()
       .shadow()
-      .find('.goa-textarea')
+      .find('textarea')
       .clear()
       .type(description, { force: true });
     // Public or select roles
@@ -760,7 +760,7 @@ When(
     notificationsObj
       .editContactModalInstructions()
       .shadow()
-      .find('.goa-textarea')
+      .find('textarea')
       .clear()
       .type(instructionsInput, { force: true });
   }
