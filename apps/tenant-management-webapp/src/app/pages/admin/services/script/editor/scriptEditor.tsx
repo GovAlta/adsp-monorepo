@@ -314,20 +314,22 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         <ScriptEditorTitle>Script editor</ScriptEditorTitle>
         <hr className="hr-resize" />
         <TombStone selectedScript={selectedScript} onSave={onSave} />
-        <GoACheckbox
-          checked={isServiceAccountChecked()}
-          name="script-use-service-account-checkbox"
-          testId="script-use-service-account-checkbox"
-          disabled={isServiceAccountDisabled()}
-          text="Use service account"
-          onChange={() => {
-            setScript({
-              ...script,
-              useServiceAccount: !script.useServiceAccount,
-            });
-          }}
-          ariaLabel={`script-use-service-account-checkbox`}
-        />
+        <div style={{ paddingLeft: '4px' }}>
+          <GoACheckbox
+            checked={isServiceAccountChecked()}
+            name="script-use-service-account-checkbox"
+            testId="script-use-service-account-checkbox"
+            disabled={isServiceAccountDisabled()}
+            text="Use service account"
+            onChange={() => {
+              setScript({
+                ...script,
+                useServiceAccount: !script.useServiceAccount,
+              });
+            }}
+            ariaLabel={`script-use-service-account-checkbox`}
+          />
+        </div>
         <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
           <Tab label="Lua script" data-testid="script-editor-tab">
             <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>

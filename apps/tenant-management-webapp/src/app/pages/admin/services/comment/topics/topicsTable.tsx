@@ -31,8 +31,8 @@ export const TopicListTable = ({ topics, selectedType, showActions, onDeleteTopi
         <DataTable data-testid="topic-table">
           <thead data-testid="topic-table-header">
             <tr>
-              <th data-testid="topic-table-header-topicname">Topic name</th>
-              <th data-testid="topic-table-header-resourceid">Resource ID</th>
+              <th data-testid="topic-table-header-topic-name">Topic name</th>
+              <th data-testid="topic-table-header-resource-id">Resource ID</th>
               <th data-testid="topic-table-header-action">Action</th>
             </tr>
           </thead>
