@@ -15,6 +15,6 @@ const GoAGroupControl = (props: LayoutProps): JSX.Element => {
   );
 };
 
-export const groupLayoutTester: RankedTester = rankWith(3, uiTypeIs('Group'));
+export const groupLayoutTester: RankedTester = rankWith(1, uiTypeIs('Group'));
 
 export default withJsonFormsLayoutProps(GoAGroupControl);
