@@ -40,7 +40,9 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
       if (isTenantAdmin) {
         const searchQuery = skipSSO ? (idpFromUrl ? `?kc_idp_hint=${idpFromUrl}` : '?kc_idp_hint=') : '';
         navigate(`/${tenantRealm}/login${searchQuery}`);
-      } else {
+      }
+
+      if (isTenantAdmin === false) {
         navigate('/login-error');
       }
     }

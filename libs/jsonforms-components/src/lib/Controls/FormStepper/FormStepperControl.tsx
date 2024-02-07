@@ -6,7 +6,7 @@ import { ControlElement, Categorization, UISchemaElement, Layout, Category, Stat
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
-import { ReviewItem } from './styled-components';
+import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
 import { JsonFormsDispatch } from '@jsonforms/react';
 
 export interface FunObject {
@@ -124,7 +124,7 @@ export const FormStepper = ({
                   {Object.keys(flattenObject(data)).map((key, ix) => {
                     return (
                       <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                        <b>{key}</b> : {flattenObject(data)[key]}
+                        <b>{key}</b> : <PreventControlElement value={flattenObject(data)[key]} />
                       </GridItem>
                     );
                   })}
@@ -167,6 +167,43 @@ const flattenArray = function (data: Array<UISchemaElement>): Array<UISchemaElem
     }
     return r.concat(a);
   }, []);
+};
+
+interface PreventControlElement {
+  value: unknown;
+}
+
+const PreventControlElement = (props: PreventControlElement): JSX.Element => {
+  if (typeof props?.value === 'string') return <span>{props.value}</span>;
+
+  if (Array.isArray(props?.value)) {
+    return (
+      <div>
+        {props.value.map((item) => {
+          return (
+            <ReviewListWrapper>
+              {Object.keys(item).map((key) => {
+                if (typeof item[key] === 'string') {
+                  return (
+                    <ReviewListItem>
+                      {key}: {item[key]}
+                    </ReviewListItem>
+                  );
+                }
+                return (
+                  <ReviewListItem>
+                    {key}: {String(item[key])}
+                  </ReviewListItem>
+                );
+              })}
+            </ReviewListWrapper>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return <></>;
 };
 
 export const flattenObject = (obj: Record<string, string>): Record<string, string> => {
