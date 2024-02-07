@@ -81,10 +81,11 @@ import {
   GoABooleanRadioControl,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
-import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
+import { GoAVerticalLayout, GoAHorizontalLayout, groupLayoutTester } from './lib/layouts';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { JsonFormContextInstance } from './lib/Context';
 import { HelpContent, HelpContentTester } from './lib/Additional';
+import GroupControl from './lib/layouts/GroupControl';
 
 export * from './lib/Context';
 
@@ -142,6 +143,7 @@ export class Renderers {
     },
     // layouts
     { tester: materialGroupTester, renderer: MaterialGroupLayout },
+    { tester: groupLayoutTester, renderer: GroupControl },
     {
       tester: materialHorizontalLayoutTester,
       renderer: GoAHorizontalLayout,

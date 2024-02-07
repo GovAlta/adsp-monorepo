@@ -1,7 +1,6 @@
 import React from 'react';
-import { GoAIcon } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 interface ExternalLinkProps {
   text: string;
   link: string;
@@ -28,7 +27,6 @@ export const ExternalLink = ({ text, testId, link }: ExternalLinkProps): JSX.Ele
 
         <GoAContextMenuIcon type="open" title="Open" testId="open-icon" />
       </a>
-      {/* <GoAIcon size="medium" data-testid="open-icon" type="open" /> */}
     </ExternalLinkWrapper>
   );
 };
