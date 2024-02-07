@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 
 import Container from '@components/Container';
 import styled from 'styled-components';

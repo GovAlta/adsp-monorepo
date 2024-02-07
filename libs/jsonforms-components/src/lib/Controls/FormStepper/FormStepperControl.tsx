@@ -1,12 +1,12 @@
 import React from 'react';
-import { useState } from 'react';
-import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
+import { useState, useEffect } from 'react';
+import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton, GoAFormStepStatusType } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { ControlElement, Categorization, UISchemaElement, Layout, Category, StatePropsOfLayout } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
-import { ReviewItem } from './styled-components';
+import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
 import { JsonFormsDispatch } from '@jsonforms/react';
 
 export interface FunObject {
@@ -33,6 +33,18 @@ export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLa
   // eslint-disable-next-line
   data: any;
 }
+const usePersistentState = (initialState = 0) => {
+  const [state, setState] = useState(() => {
+    const storedState = localStorage.getItem('step');
+    return storedState ? JSON.parse(storedState) : initialState;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('step', JSON.stringify(state));
+  }, [state]);
+
+  return [state, setState];
+};
 
 export const FormStepper = ({
   uischema,
@@ -46,12 +58,11 @@ export const FormStepper = ({
   config,
 }: CategorizationStepperLayoutRendererProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
-  const [step, setStep] = useState<number>(0);
+  const [step, setStep] = usePersistentState(0);
   if (uiSchema.elements?.length < 1) {
     // eslint-disable-next-line
     return <></>;
   }
-
   // Note: [Jan-02-2023] the Options here will be used in the feature
   const appliedUiSchemaOptions = { ...config, ...uiSchema?.options };
 
@@ -59,7 +70,11 @@ export const FormStepper = ({
     if (page < 1 || page > uiSchema.elements?.length + 1) return;
     setStep(page);
   }
-
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    setStep(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const renderStepElements = (step: Category | Categorization | VerticalLayout) => {
     return (
       <>
@@ -109,7 +124,7 @@ export const FormStepper = ({
                   {Object.keys(flattenObject(data)).map((key, ix) => {
                     return (
                       <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                        <b>{key}</b> : {flattenObject(data)[key]}
+                        <b>{key}</b> : <PreventControlElement value={flattenObject(data)[key]} />
                       </GridItem>
                     );
                   })}
@@ -152,6 +167,43 @@ const flattenArray = function (data: Array<UISchemaElement>): Array<UISchemaElem
     }
     return r.concat(a);
   }, []);
+};
+
+interface PreventControlElement {
+  value: unknown;
+}
+
+const PreventControlElement = (props: PreventControlElement): JSX.Element => {
+  if (typeof props?.value === 'string') return <span>{props.value}</span>;
+
+  if (Array.isArray(props?.value)) {
+    return (
+      <div>
+        {props.value.map((item) => {
+          return (
+            <ReviewListWrapper>
+              {Object.keys(item).map((key) => {
+                if (typeof item[key] === 'string') {
+                  return (
+                    <ReviewListItem>
+                      {key}: {item[key]}
+                    </ReviewListItem>
+                  );
+                }
+                return (
+                  <ReviewListItem>
+                    {key}: {String(item[key])}
+                  </ReviewListItem>
+                );
+              })}
+            </ReviewListWrapper>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return <></>;
 };
 
 export const flattenObject = (obj: Record<string, string>): Record<string, string> => {

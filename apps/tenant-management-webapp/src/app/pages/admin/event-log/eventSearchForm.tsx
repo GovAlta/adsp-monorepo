@@ -161,6 +161,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 
               <GoAIconButton
                 icon={open ? 'close-circle' : 'chevron-down'}
+                title="dropdown"
                 size="medium"
                 testId="menu-open-close"
                 variant="dark"

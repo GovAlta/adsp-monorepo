@@ -5,7 +5,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
 import { GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components-new';
 import { FileTypeItem } from '@store/file/models';
-import { useNavigate, useMatch } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom-6';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { DeleteFileTypeService, checkFileTypeHasFile } from '@store/file/actions';
@@ -93,7 +93,6 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
   const deleteFileType = fileTypes.find((x) => x && x.id === deleteId);
   const hasFile = useSelector((state: RootState) => state.fileService.hasFile[deleteId]);
   const navigate = useNavigate();
-  const match = useMatch('/admin/services/file/*');
   const dispatch = useDispatch();
 
   return (

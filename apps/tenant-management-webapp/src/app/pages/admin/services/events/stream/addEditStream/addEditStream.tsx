@@ -139,14 +139,15 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
           <IdField>{stream.id}</IdField>
         </GoAFormItem>
         <GoAFormItem label="Description">
-          <label></label>
           <GoATextArea
             name="stream-description"
             value={stream.description}
             testId="stream-description"
             aria-label="stream-description"
             width="100%"
-            onChange={(name, value) => {
+            // eslint-disable-next-line
+            onChange={() => {}}
+            onKeyPress={(name, value) => {
               validators.remove('description');
               validators['description'].check(value);
               setStream({ ...stream, description: value });

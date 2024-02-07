@@ -92,6 +92,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
             {criteria && (criteria.correlationId || criteria.context) && (
               <GoAContextMenuIcon
                 type={showDetails ? 'eye-off' : 'eye'}
+                title="Toggle details"
                 onClick={() => {
                   setShowDetails(!showDetails);
                 }}

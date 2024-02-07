@@ -3,7 +3,7 @@ import { GoAContainer, GoACallout } from '@abgov/react-components-new';
 import { Link } from 'react-router-dom-6';
 import { Grid, GridItem } from '@core-services/app-common';
 import { Main, Page } from '@components/Html';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { ExternalLink } from '@components/icons/ExternalLink';
 import BetaBadge from '@icons/beta-badge.svg';
@@ -12,6 +12,7 @@ import SupportLinks from '@components/SupportLinks';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { serviceVariables } from '../../../../featureFlag';
 import useWindowDimensions from '@lib/useWindowDimensions';
+import { FetchTenant } from '@store/tenant/actions';
 
 const Dashboard = (): JSX.Element => {
   const [oldWindowSize, setOldWindowSize] = useState({ width: 0 });
@@ -21,23 +22,33 @@ const Dashboard = (): JSX.Element => {
   const size = useWindowDimensions();
 
   const elementRefs = useRef([]);
-
+  const dispatch = useDispatch();
   const [elRefs, setElRefs] = React.useState([]);
   const tenantAdminRole = 'tenant-admin';
-  const { config, session, tenantManagementWebApp, tenantName, adminEmail, hasAdminRole, keycloakConfig } = useSelector(
-    (state: RootState) => {
-      return {
-        config: state.config,
-        session: state.session,
-        tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
-        tenantName: state.tenant.name,
-        adminEmail: state.tenant.adminEmail,
-        keycloakConfig: state.config.keycloakApi,
-        hasAdminRole:
-          state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
-      };
-    }
-  );
+  const {
+    config,
+    realm,
+    authenticated,
+    session,
+    tenantManagementWebApp,
+    tenantName,
+    adminEmail,
+    hasAdminRole,
+    keycloakConfig,
+  } = useSelector((state: RootState) => {
+    return {
+      config: state.config,
+      session: state.session,
+      authenticated: state.session.authenticated,
+      tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
+      tenantName: state.tenant.name,
+      realm: state.session.realm,
+      adminEmail: state.tenant.adminEmail,
+      keycloakConfig: state.config.keycloakApi,
+      hasAdminRole:
+        state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
+    };
+  });
   const loginUrl = `${tenantManagementWebApp}/${session.realm}/login`;
 
   function getKeycloakAdminPortalUsers() {
@@ -96,6 +107,14 @@ const Dashboard = (): JSX.Element => {
       }
     }
   }, [services, resetHeight]);
+
+  useEffect(() => {
+    if (realm && authenticated) {
+      if (!tenantName) {
+        dispatch(FetchTenant(realm));
+      }
+    }
+  }, [realm, authenticated, dispatch]);
 
   useEffect(() => {
     if (oldWindowSize?.width !== size?.width) {

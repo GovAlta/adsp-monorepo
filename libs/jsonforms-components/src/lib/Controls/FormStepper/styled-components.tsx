@@ -7,3 +7,11 @@ export const ReviewItem = styled.div`
   margin: 5px;
   padding: 10px;
 `;
+
+export const ReviewListItem = styled.div`
+  margin-left: 1rem;
+`;
+
+export const ReviewListWrapper = styled.div`
+  margin-bottom: 1rem;
+`;
