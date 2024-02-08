@@ -42,12 +42,16 @@ function deleteFile(fileList, id) {
 }
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
-    case UPLOAD_FILE_SUCCESSES: // add file to fileList
+    case UPLOAD_FILE_SUCCESSES: {
+      // add file to fileList
+      const latestFile = state.latestFile || {};
+      latestFile[action.payload.result.propertyId] = action.payload.result;
       return {
         ...state,
         fileList: uploadFile(state.fileList, action.payload.result),
-        latestFile: action.payload.result,
+        latestFile: latestFile,
       };
+    }
     case DELETE_FILE_SUCCESSES:
       return {
         ...state, // remove delete file from reducer

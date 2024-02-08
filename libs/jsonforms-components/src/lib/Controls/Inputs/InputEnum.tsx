@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
@@ -7,13 +7,34 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '@jsonforms/material-renderers';
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
+import { JsonFormContextInstance } from '../../Context';
 
 type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
   const { data, id, enabled, schema, path, handleChange, options, config, label, uischema } = props;
-  const enumData = schema?.enum || [];
+  let enumData = schema?.enum || [];
+
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
+
+  const dataKey = uischema?.options?.enumContext?.key;
+
+  const url = uischema?.options?.enumContext?.url;
+  const location = uischema?.options?.enumContext?.location;
+  const type = uischema?.options?.enumContext?.type;
+  const values = uischema?.options?.enumContext?.values;
+
+  useEffect(() => {
+    if (dataKey && url) {
+      JsonFormContextInstance.addDataByOptions(dataKey, url, location, type, values);
+    }
+  }, [url, location, type, values, dataKey]);
+
+  if (dataKey && JsonFormContextInstance.getData(dataKey)) {
+    const newData = JsonFormContextInstance.getData(dataKey);
+
+    enumData = newData;
+  }
 
   return (
     <GoADropdown
@@ -28,7 +49,7 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
         handleChange(path, value);
       }}
     >
-      {enumData.map((item) => {
+      {enumData?.map((item) => {
         return <GoADropdownItem key={`json-form-dropdown-${item}`} value={`${item}`} label={`${item}`} />;
       })}
     </GoADropdown>
