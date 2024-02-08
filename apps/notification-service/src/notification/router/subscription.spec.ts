@@ -73,6 +73,7 @@ describe('subscription router', () => {
   beforeEach(() => {
     repositoryMock.findSubscribers.mockReset();
     repositoryMock.getSubscriber.mockReset();
+    repositoryMock.getSubscription.mockReset();
     repositoryMock.getSubscriptions.mockReset();
     repositoryMock.saveSubscriber.mockClear();
     repositoryMock.saveSubscription.mockReset();
@@ -315,6 +316,7 @@ describe('subscription router', () => {
         req.notificationType,
         subscriber
       );
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
@@ -356,6 +358,7 @@ describe('subscription router', () => {
         req.notificationType,
         subscriber
       );
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
@@ -403,6 +406,7 @@ describe('subscription router', () => {
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
       const handler = createTypeSubscription(apiId, repositoryMock);
@@ -444,6 +448,7 @@ describe('subscription router', () => {
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
       const handler = createTypeSubscription(apiId, repositoryMock);
@@ -472,7 +477,7 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
-        body: {},
+        body: { criteria: { correlationId: 'test' } },
         query: {},
         params: { subscriber: 'subscriber' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
@@ -544,10 +549,12 @@ describe('subscription router', () => {
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
         expect.objectContaining({
-          criteria: expect.objectContaining({
-            correlationId: req.body.criteria.correlationId,
-            context: req.body.criteria.context,
-          }),
+          criteria: expect.arrayContaining([
+            expect.objectContaining({
+              correlationId: req.body.criteria.correlationId,
+              context: req.body.criteria.context,
+            }),
+          ]),
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
@@ -565,7 +572,7 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
-        body: { criteria: { correlationId: '123', context: {} } },
+        body: { criteria: [{ correlationId: '123', context: {} }] },
         query: {},
         params: { subscriber: 'subscriber' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
@@ -594,10 +601,11 @@ describe('subscription router', () => {
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
         expect.objectContaining({
-          criteria: expect.objectContaining({
-            correlationId: req.body.criteria.correlationId,
-            context: req.body.criteria.context,
-          }),
+          criteria: expect.arrayContaining([
+            expect.objectContaining({
+              correlationId: req.body.criteria[0].correlationId,
+            }),
+          ]),
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
@@ -616,7 +624,7 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
-        body: {},
+        body: { criteria: { correlationId: 'test' } },
         query: {},
         params: { subscriber: 'subscriber' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
