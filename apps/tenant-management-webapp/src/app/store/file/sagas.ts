@@ -83,6 +83,8 @@ export function* uploadFile(file) {
     );
 
     const uploadFile = yield api.uploadFile(formData);
+
+    uploadFile.propertyId = file.payload.data.propertyId;
     yield put(UploadFileSuccessService(uploadFile));
 
     yield put(
