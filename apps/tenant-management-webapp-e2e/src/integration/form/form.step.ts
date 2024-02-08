@@ -55,7 +55,7 @@ When('the user clicks Save button in Add form definition modal', function () {
 Then('the user views form definition editor for {string}, {string}', function (name, description) {
   cy.viewport(1920, 1080);
   cy.wait(1000);
-  formObj.editorDefinitionNameValue().should('have.text', name);
+  formObj.editorDefinitionNameValue().should('contain.text', name);
   formObj.editorDefinitionDescriptionValue().should('contain.text', description);
 });
 

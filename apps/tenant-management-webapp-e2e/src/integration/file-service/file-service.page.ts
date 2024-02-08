@@ -99,6 +99,10 @@ class FileServicePage {
     return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-cancel"]');
   }
 
+  addFileTypeModalNameFormItem() {
+    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//goa-form-item[@label="Name"]');
+  }
+
   fileTypeTableBody() {
     return cy.xpath('//table[@data-testid="file-types-table"]//tbody');
   }
@@ -123,10 +127,6 @@ class FileServicePage {
 
   fileTypeDeleteModalFileTypeName() {
     return cy.xpath('//*[@data-testid="file-delete-modal-content"]/p[contains(text(),"Deleting")]/b');
-  }
-
-  fileTypesErrorMessage() {
-    return cy.get('[data-testid="FileType-0"]');
   }
 
   fileTypeDeleteModal() {
