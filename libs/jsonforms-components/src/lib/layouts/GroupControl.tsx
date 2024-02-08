@@ -3,15 +3,18 @@ import { GroupLayout, LayoutProps, RankedTester, rankWith, uiTypeIs } from '@jso
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import React from 'react';
 import { renderLayoutElements } from '../util/layout';
+import { Hidden } from '@mui/material';
 
 const GoAGroupControl = (props: LayoutProps): JSX.Element => {
-  const { uischema, schema, path, enabled, renderers, cells } = props;
+  const { uischema, schema, path, enabled, renderers, cells, visible } = props;
   const group = uischema as GroupLayout;
 
   return (
-    <GoAContainer {...group.options}>
-      {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
-    </GoAContainer>
+    <Hidden xsUp={!visible}>
+      <GoAContainer {...group.options}>
+        {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
+      </GoAContainer>
+    </Hidden>
   );
 };
 

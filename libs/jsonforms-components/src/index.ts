@@ -32,8 +32,6 @@ import {
   materialArrayLayoutTester,
   MaterialCategorizationLayout,
   materialCategorizationTester,
-  MaterialGroupLayout,
-  materialGroupTester,
   materialHorizontalLayoutTester,
   materialVerticalLayoutTester,
 } from '@jsonforms/material-renderers';
