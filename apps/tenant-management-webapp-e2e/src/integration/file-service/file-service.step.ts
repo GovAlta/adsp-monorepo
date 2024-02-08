@@ -621,7 +621,7 @@ When('the user clicks Save button on Add file type modal', function () {
 });
 
 Then('the user views file type page of {string}', function (name) {
-  fileServiceObj.fileTypePageNameField().should('have.text', name);
+  fileServiceObj.fileTypePageNameField().should('contain.text', name);
 });
 
 When('the user clicks Cancel button on file type modal', function () {
@@ -728,8 +728,11 @@ function findFileType(name, classification, retention) {
   });
 }
 
-Then('the user views an error message for duplicated file name', function () {
-  fileServiceObj.fileTypesErrorMessage().invoke('text').should('contain', 'status code 400');
+Then('the user views an error message for duplicated file name for {string} in Add file modal', function (name) {
+  fileServiceObj
+    .addFileTypeModalNameFormItem()
+    .invoke('attr', 'error')
+    .should('eq', 'Duplicate File type name ' + name + '. Must be unique.');
 });
 
 Then('the user views file type current in use modal for {string}', function (fileTypeName) {

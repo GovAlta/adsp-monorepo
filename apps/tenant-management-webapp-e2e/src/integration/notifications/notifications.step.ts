@@ -71,7 +71,6 @@ When(
           // Deselect all previously selected roles and then select new roles
           notificationsObj
             .notificationTypeModalRolesTable()
-            .shadow()
             .find('goa-checkbox')
             .shadow()
             .find('.goa-checkbox-container')
@@ -94,7 +93,6 @@ When(
                 } else {
                   notificationsObj
                     .notificationTypeModalRolesTable()
-                    .shadow()
                     .find('goa-checkbox[name="Notifications-type-subscribe-role-checkbox-' + roles[i].trim() + '"]')
                     .shadow()
                     .find('.goa-checkbox-container')
@@ -249,11 +247,11 @@ Then('the user views Add notification type button on Notification types page', f
 When('the user clicks {string} button for the notification type card of {string}', function (buttonType, cardTitle) {
   switch (buttonType) {
     case 'edit':
-      notificationsObj.notificationTypeEditBtn(cardTitle).click({ force: true });
+      notificationsObj.notificationTypeEditBtn(cardTitle).shadow().find('button').click({ force: true });
       cy.wait(2000); // wait for roles to show up for editing
       break;
     case 'delete':
-      notificationsObj.notificationTypeDeleteBtn(cardTitle).click({ force: true });
+      notificationsObj.notificationTypeDeleteBtn(cardTitle).shadow().find('button').click({ force: true });
       break;
     default:
       expect(buttonType).to.be.oneOf(['edit', 'delete']);
@@ -368,7 +366,7 @@ When('the user clicks {string} button for {string} in {string}', function (butto
       cy.wait(2000);
       break;
     case 'delete':
-      notificationsObj.eventDeleteIcon(cardTitle, event).click();
+      notificationsObj.eventDeleteIcon(cardTitle, event).shadow().find('button').click({ force: true });
       break;
     case 'reset':
       notificationsObj.notificationTypeEventResetBtn(cardTitle, event).click();

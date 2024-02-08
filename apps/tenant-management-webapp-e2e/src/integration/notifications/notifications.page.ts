@@ -75,7 +75,7 @@ class NotificationsPage {
 
   notificationTypeDeleteBtn(notificationTypeTitle) {
     return cy.xpath(
-      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="icon-trash"]`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="delete-notification-type"]`
     );
   }
 
@@ -173,7 +173,7 @@ class NotificationsPage {
 
   eventDeleteIcon(cardTitle, eventName) {
     return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="icon-trash"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="delete-event"]`
     );
   }
 
