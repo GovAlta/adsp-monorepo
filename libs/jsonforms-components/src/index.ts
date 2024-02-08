@@ -32,8 +32,6 @@ import {
   materialArrayLayoutTester,
   MaterialCategorizationLayout,
   materialCategorizationTester,
-  MaterialGroupLayout,
-  materialGroupTester,
   materialHorizontalLayoutTester,
   materialVerticalLayoutTester,
 } from '@jsonforms/material-renderers';
@@ -134,7 +132,6 @@ export class Renderers {
       renderer: MaterialOneOfEnumControl,
     },
     // layouts
-    { tester: materialGroupTester, renderer: MaterialGroupLayout },
     { tester: groupLayoutTester, renderer: GroupControl },
     {
       tester: materialHorizontalLayoutTester,
