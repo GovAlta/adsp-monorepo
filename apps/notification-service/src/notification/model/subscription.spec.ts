@@ -4,6 +4,7 @@ import { Channel, NotificationTypeEvent, ServiceUserRoles } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
 import { NotificationTypeEntity } from './type';
+import { InvalidOperationError } from '@core-services/core-common';
 
 describe('SubscriptionEntity', () => {
   const repositoryMock: unknown = {
@@ -135,9 +136,14 @@ describe('SubscriptionEntity', () => {
         {
           tenantId,
           typeId: 'test',
-          criteria: {
-            correlationId: ['test2', 'test'],
-          },
+          criteria: [
+            {
+              correlationId: 'test2',
+            },
+            {
+              correlationId: 'test',
+            },
+          ],
           subscriberId: 'test',
         },
         type
@@ -314,7 +320,7 @@ describe('SubscriptionEntity', () => {
         {
           tenantId,
           typeId: 'test',
-          criteria: {},
+          criteria: { correlationId: 'test2' },
           subscriberId: 'test',
         },
         type,
@@ -322,13 +328,51 @@ describe('SubscriptionEntity', () => {
       );
 
       const criteria = {
-        correlationId: ['test'],
+        correlationId: 'test',
         context: {
           value: 'test',
         },
       };
       const updated = await entity.updateCriteria(user, criteria);
-      expect(updated.criteria).toMatchObject(criteria);
+      expect(updated.criteria).toMatchObject(expect.arrayContaining([expect.any(Object), criteria]));
+    });
+
+    it('can throw for additive update to empty criteria', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: null,
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const criteria = {
+        correlationId: 'test',
+        context: {
+          value: 'test',
+        },
+      };
+      await expect(entity.updateCriteria(user, criteria)).rejects.toThrow(InvalidOperationError);
+    });
+
+    it('can throw for update to empty criteria', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: null,
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      await expect(entity.updateCriteria(user, [])).rejects.toThrow(InvalidOperationError);
     });
 
     it('can throw for user not allowed to subscribe', async () => {
@@ -345,12 +389,12 @@ describe('SubscriptionEntity', () => {
       );
 
       const criteria = {
-        correlationId: ['test'],
+        correlationId: 'test',
         context: {
           value: 'test',
         },
       };
-      expect(() => entity.updateCriteria({ ...user, roles: [] }, criteria)).toThrow(UnauthorizedUserError);
+      await expect(entity.updateCriteria({ ...user, roles: [] }, criteria)).rejects.toThrow(UnauthorizedUserError);
     });
   });
 });
