@@ -75,6 +75,7 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
               {!service.api && (
                 <GoAContextMenuIcon
                   type={showDetails ? 'eye-off' : 'eye'}
+                  title="Toggle details"
                   onClick={() => setDetails(service)}
                   testId="directory-toggle-details-visibility"
                 />

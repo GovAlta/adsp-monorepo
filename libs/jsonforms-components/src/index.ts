@@ -20,20 +20,18 @@ import {
 import {
   MaterialAnyOfStringOrEnumControl,
   materialAnyOfStringOrEnumControlTester,
-  materialEnumControlTester,
   MaterialOneOfEnumControl,
   MaterialSliderControl,
   materialSliderControlTester,
   MaterialOneOfRadioGroupControl,
   materialOneOfRadioGroupControlTester,
+  materialOneOfEnumControlTester,
 } from '@jsonforms/material-renderers';
 import {
   MaterialArrayLayout,
   materialArrayLayoutTester,
   MaterialCategorizationLayout,
   materialCategorizationTester,
-  MaterialGroupLayout,
-  materialGroupTester,
   materialHorizontalLayoutTester,
   materialVerticalLayoutTester,
 } from '@jsonforms/material-renderers';
@@ -63,10 +61,13 @@ import {
   CategorizationRendererTester,
   FormStepperControl,
   FileUploaderTester,
+  FileUploader,
   MultiLineTextControl,
   MultiLineTextControlTester,
   GoAEnumControl,
+  GoAEnumAutoCompleteControl,
   GoAEnumControlTester,
+  GoAEnumControlAutoCompleteTester,
   GoAEnumRadioGroupControl,
   GoARadioGroupControlTester,
   GoAArrayControlTester,
@@ -74,28 +75,36 @@ import {
   GoAListWithDetailsTester,
   GoABooleanControlTester,
   GoABooleanControl,
+  GoABooleanRadioControlTester,
+  GoABooleanRadioControl,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
-import { GoAVerticalLayout, GoAHorizontalLayout } from './lib/layouts';
+import { GoAVerticalLayout, GoAHorizontalLayout, groupLayoutTester } from './lib/layouts';
+import { withJsonFormsControlProps } from '@jsonforms/react';
+import { JsonFormContextInstance } from './lib/Context';
 import { HelpContent, HelpContentTester } from './lib/Additional';
-import { FileUploaderWrapper } from './lib/Controls/FileUploader/FileUploaderWrapper';
+import GroupControl from './lib/layouts/GroupControl';
+
+export * from './lib/Context';
+
+const countries = ['Argentina', 'Brazil', 'Canada', 'Denmark', 'Egypt', 'France', 'Greece', 'India', 'Japan', 'Kenya'];
+
+JsonFormContextInstance.addData('countries', countries);
 
 export class Renderers {
   GoARenderers: JsonFormsRendererRegistryEntry[];
-  constructor(uploadTrigger?: (file: File) => void, downloadTrigger?: (file: File) => void, latestFile?: unknown) {
+  constructor() {
     this.GoARenderers = [
       ...this.GoABaseRenderers,
       { tester: CategorizationRendererTester, renderer: FormStepperControl },
-      {
-        tester: FileUploaderTester,
-        renderer: FileUploaderWrapper({ uploadTrigger, downloadTrigger, latestFile }),
-      },
+      { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
     ];
   }
 
   GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
     // controls
     { tester: GoAEnumControlTester, renderer: GoAEnumControl },
+    { tester: GoAEnumControlAutoCompleteTester, renderer: GoAEnumAutoCompleteControl },
     { tester: GoAIntegerControlTester, renderer: GoAInputIntegerControl },
     { tester: GoANumberControlTester, renderer: GoAInputNumberControl },
     { tester: GoATextControlTester, renderer: GoAInputTextControl },
@@ -112,6 +121,8 @@ export class Renderers {
       renderer: GoAEnumRadioGroupControl,
     },
     { tester: GoABooleanControlTester, renderer: GoABooleanControl },
+
+    { tester: GoABooleanRadioControlTester, renderer: GoABooleanRadioControl },
     {
       tester: GoAArrayControlTester,
       renderer: GoAArrayControlRenderer,
@@ -125,11 +136,11 @@ export class Renderers {
       renderer: MaterialOneOfRadioGroupControl,
     },
     {
-      tester: materialEnumControlTester,
+      tester: materialOneOfEnumControlTester,
       renderer: MaterialOneOfEnumControl,
     },
     // layouts
-    { tester: materialGroupTester, renderer: MaterialGroupLayout },
+    { tester: groupLayoutTester, renderer: GroupControl },
     {
       tester: materialHorizontalLayoutTester,
       renderer: GoAHorizontalLayout,

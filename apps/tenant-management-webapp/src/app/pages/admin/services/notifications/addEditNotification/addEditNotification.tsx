@@ -215,12 +215,14 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             value={type.description}
             aria-label="description"
             width="100%"
-            onChange={(name, value) => {
+            onKeyPress={(name, value) => {
               const description = value;
               validators.remove('description');
               validators['description'].check(description);
               setType({ ...type, description: description });
             }}
+            // eslint-disable-next-line
+            onChange={() => {}}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['channels']} label="Select Notification Channels">

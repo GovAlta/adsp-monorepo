@@ -16,7 +16,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { ResetModalState } from '@store/session/actions';
-import { CheckBoxWrapper } from '../styled-components';
 import { CalendarEvent } from '@store/calendar/models';
 import { CreateEventsByCalendar, UpdateEventsByCalendar } from '@store/calendar/actions';
 import { areObjectsEqual } from '@lib/objectUtil';
@@ -167,33 +166,34 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           testId={`calendar-event-modal-description-input`}
           aria-label="description"
           width="100%"
-          onChange={(name, value) => {
+          // eslint-disable-next-line
+          onChange={() => {}}
+          onKeyPress={(name, value) => {
             validators.remove('description');
             validators['description'].check(value);
             setCalendarEvent({ ...calendarEvent, description: value });
           }}
         />
       </GoAFormItem>
-      <CheckBoxWrapper>
-        <GoACheckbox
-          name="isPublicCheckbox"
-          checked={calendarEvent?.isPublic}
-          text={'Is public '}
-          onChange={(name, value) => {
-            setCalendarEvent({ ...calendarEvent, isPublic: value });
-          }}
-        />
-      </CheckBoxWrapper>
-      <CheckBoxWrapper>
-        <GoACheckbox
-          name="isAllDayCheckbox"
-          checked={calendarEvent?.isAllDay}
-          text={'Is all day'}
-          onChange={(name, value) => {
-            setCalendarEvent({ ...calendarEvent, isAllDay: value });
-          }}
-        />
-      </CheckBoxWrapper>
+      <br />
+      <GoACheckbox
+        name="isPublicCheckbox"
+        checked={calendarEvent?.isPublic}
+        text={'Is public '}
+        onChange={(name, value) => {
+          setCalendarEvent({ ...calendarEvent, isPublic: value });
+        }}
+      />
+
+      <GoACheckbox
+        name="isAllDayCheckbox"
+        checked={calendarEvent?.isAllDay}
+        text={'Is all day'}
+        onChange={(name, value) => {
+          setCalendarEvent({ ...calendarEvent, isAllDay: value });
+        }}
+      />
+
       <GoAGrid minChildWidth="25ch" gap="s">
         <GoAFormItem label="Start Date" error={errors?.['start']}>
           <GoAInputDate

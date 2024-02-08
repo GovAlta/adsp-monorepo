@@ -7,5 +7,7 @@ export * from './InputIntegerControl';
 export * from './InputDateTimeControl';
 export * from './InputTimeControl';
 export * from './InputEnum';
+export * from './InputEnumAutoComplete';
 export * from './InputEnumRadios';
 export * from './InputBooleanControl';
+export * from './InputBooleanRadioControl';

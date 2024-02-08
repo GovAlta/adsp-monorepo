@@ -66,9 +66,9 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
             <th id={`${service}-roles-${getClientId()}`} style={nameColumnStyle}>
               Roles
             </th>
-            {props.checkedRoles.map((role) => {
+            {props.checkedRoles.map((role, index) => {
               return (
-                <th id={`${role.title}-role-action-${getClientId()}`} className="role">
+                <th key={`${role.title}-${index}`} id={`${role.title}-role-action-${getClientId()}`} className="role">
                   <div>{capitalizeFirstLetter(role.title)}</div>
                 </th>
               );

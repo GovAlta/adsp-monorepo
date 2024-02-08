@@ -54,7 +54,7 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
             style={{
               padding: '0px',
             }}
-            data-testId="showMoreDetails"
+            data-testId="show-more-details"
           >
             <MoreDetails>
               <p>Topic description</p>
