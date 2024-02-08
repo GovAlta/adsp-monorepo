@@ -108,7 +108,6 @@ When('the user enters {string} as Assigner roles and {string} as Worker roles', 
         const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
         taskObj
           .queuePageClientRolesTable(clientName)
-          .shadow()
           .find('.role-name')
           .contains(roleName)
           .next()
@@ -122,7 +121,6 @@ When('the user enters {string} as Assigner roles and {string} as Worker roles', 
       } else {
         taskObj
           .queuePageRolesTable()
-          .shadow()
           .find('.role-name')
           .contains(workerRoles[i].trim())
           .next()

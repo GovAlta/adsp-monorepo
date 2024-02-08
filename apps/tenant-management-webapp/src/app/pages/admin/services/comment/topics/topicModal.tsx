@@ -189,11 +189,13 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
               width="100%"
               testId="description"
               aria-label="description"
-              onChange={(name, value) => {
+              onKeyPress={(name, value) => {
                 validators.remove('description');
                 validators['description'].check(value);
                 setTopic({ ...topic, description: value });
               }}
+              // eslint-disable-next-line
+              onChange={() => {}}
             />
 
             <HelpText>

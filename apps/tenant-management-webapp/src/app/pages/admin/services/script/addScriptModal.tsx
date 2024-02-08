@@ -158,12 +158,14 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
           testId={`script-modal-description-input`}
           aria-label="description"
           width="100%"
-          onChange={(name, value) => {
+          onKeyPress={(name, value) => {
             const description = value;
             validators.remove('description');
             validators['description'].check(description);
             setScript({ ...script, description });
           }}
+          // eslint-disable-next-line
+          onChange={() => {}}
         />
       </GoAFormItem>
       <br />

@@ -175,11 +175,12 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
           testId={`calendar-modal-description-input`}
           aria-label="description"
           width="100%"
-          onChange={(name, value) => {
-            const description = value;
+          // eslint-disable-next-line
+          onChange={() => {}}
+          onKeyPress={(name, value) => {
             validators.remove('description');
-            validators['description'].check(description);
-            setCalendar({ ...calendar, description });
+            validators['description'].check(value);
+            setCalendar({ ...calendar, description: value });
           }}
         />
       </GoAFormItem>

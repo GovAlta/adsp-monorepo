@@ -85,7 +85,7 @@ When(
       .clear()
       .type(namespace, { delay: 100, force: true });
     eventsObj.definitionModalNameField().shadow().find('input').clear().type(name, { delay: 50, force: true });
-    eventsObj.definitionModalDescriptionField().shadow().find('.goa-textarea').type(desc);
+    eventsObj.definitionModalDescriptionField().shadow().find('textarea').type(desc);
   }
 );
 
@@ -123,7 +123,7 @@ When(
 );
 
 When('the user enters {string} in Description', function (desc) {
-  eventsObj.definitionModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
+  eventsObj.definitionModalDescriptionField().shadow().find('textarea').clear().type(desc, { force: true });
 });
 
 Given('a service owner user is on event definitions page', function () {
@@ -225,7 +225,7 @@ When(
     eventsObj
       .streamModalDescriptionInput()
       .shadow()
-      .find('.goa-textarea')
+      .find('textarea')
       .scrollIntoView()
       .clear()
       .type(description, { force: true });
@@ -271,7 +271,6 @@ When(
           const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
           eventsObj
             .streamModalClientRolesTable(clientName)
-            .shadow()
             .find('.role-name')
             .contains(roleName)
             .next()
@@ -283,7 +282,6 @@ When(
         } else {
           eventsObj
             .streamModalRolesTable()
-            .shadow()
             .find('.role-name')
             .contains(roles[i].trim())
             .next()
@@ -432,7 +430,7 @@ Then('the user views Edit stream modal', function () {
 
 //User can use "n/a" as input for event or role in case there is no selection of the event or role
 Then('the user enters {string}, {string}, {string} in Edit stream modal', function (description, event, role) {
-  eventsObj.streamModalDescriptionInput().shadow().find('.goa-textarea').clear().type(description, { force: true });
+  eventsObj.streamModalDescriptionInput().shadow().find('textarea').clear().type(description, { force: true });
   if (event == 'n/a') {
     eventsObj.streamModalEventDropdown().should('exist');
   } else {
@@ -483,7 +481,6 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
     // Unselect all roles
     eventsObj
       .streamModalRolesTables()
-      .shadow()
       .find('goa-checkbox')
       .shadow()
       .find('.goa-checkbox-container')
@@ -510,7 +507,6 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
         const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
         eventsObj
           .streamModalClientRolesTable(clientName)
-          .shadow()
           .find('.role-name')
           .contains(roleName)
           .next()
@@ -522,7 +518,6 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
       } else {
         eventsObj
           .streamModalRolesTable()
-          .shadow()
           .find('.role-name')
           .contains(roles[i].trim())
           .next()

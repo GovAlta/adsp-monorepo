@@ -99,7 +99,7 @@ class ConfigurationServicePage {
 
   exportServiceInfoIcon(namespace, name) {
     return cy.xpath(
-      `//h3[text()="${namespace}"]/following-sibling::div//div[text()="${name}"]/parent::*/following-sibling::div[@class="info-circle"]`
+      `//h3[text()="${namespace}"]/following-sibling::div//div[text()="${name}"]/parent::*/following-sibling::div/div[@class="info-circle-padding"]`
     );
   }
 

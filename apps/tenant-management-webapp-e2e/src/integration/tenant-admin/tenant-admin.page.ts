@@ -12,7 +12,7 @@ class TenantAdminPage {
   }
 
   keycloakLinkOpenIcon() {
-    return cy.xpath('//a[contains(text(), "Keycloak admin")]/following-sibling::*[@data-testid="icon-open"]');
+    return cy.xpath('//a[contains(text(), "Keycloak admin")]/goa-icon-button[@data-testid="open-icon"]');
   }
 
   userCount() {
