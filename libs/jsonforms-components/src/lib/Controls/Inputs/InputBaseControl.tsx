@@ -37,7 +37,16 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     labelToUpdate = label;
   }
 
-  return (
+  return required ? (
+    <GoAFormItem
+      requirement="required"
+      error={errors}
+      label={props?.noLabel === true ? '' : labelToUpdate}
+      helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
+    >
+      <InnerComponent {...props} />
+    </GoAFormItem>
+  ) : (
     <GoAFormItem
       error={errors}
       label={props?.noLabel === true ? '' : labelToUpdate}
