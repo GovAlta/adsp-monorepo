@@ -37,10 +37,10 @@ export class SubscriptionEntity implements Subscription {
       : [{}];
   }
 
-  private evaluateCriteria(event: DomainEvent, criteria: SubscriptionCriteria): boolean {
+  private evaluateCriteria(event: DomainEvent | SubscriptionCriteria, criteria: SubscriptionCriteria): boolean {
     return (
       (!criteria.correlationId || criteria.correlationId === event.correlationId) &&
-      !Object.entries(criteria.context || {}).find(([key, value]) => value !== event.context[key])
+      !Object.entries(criteria.context || {}).find(([key, value]) => value !== event.context?.[key])
     );
   }
 
@@ -72,7 +72,7 @@ export class SubscriptionEntity implements Subscription {
   }
 
   private isEmptyCriteria(criteria: SubscriptionCriteria): boolean {
-    return !criteria?.context && !criteria?.correlationId;
+    return !criteria?.correlationId && Object.entries(criteria?.context || {}).length < 1;
   }
 
   async updateCriteria(
@@ -90,7 +90,7 @@ export class SubscriptionEntity implements Subscription {
         throw new InvalidOperationError(
           'Cannot set criteria to an empty array. ' +
             'Delete the subscription to unsubscribe from all notifications on the type; ' +
-            'otherwise, include an empty criteria to subscribe include all notifications on type.'
+            'otherwise, include an empty criteria to subscribe to all notifications on type.'
         );
       }
 
@@ -111,11 +111,47 @@ export class SubscriptionEntity implements Subscription {
     // are overridden by the empty criteria.
     if (this.criteria.find((criteria) => this.isEmptyCriteria(criteria)) && this.criteria.length !== 1) {
       throw new InvalidOperationError(
-        'This subscription includes multiple criteria objects including an empty criteria which will always send when trigger. ' +
+        'This subscription has multiple criteria objects including an empty criteria which will always send when triggered. ' +
           'Update the array of criteria to remove extraneous criteria.'
       );
     }
 
     return this.repository.saveSubscription(this);
+  }
+
+  async deleteCriteria(user: User, toDelete: SubscriptionCriteria): Promise<boolean> {
+    if (!this.type.canSubscribe(user, this.subscriber)) {
+      throw new UnauthorizedUserError('update subscription', user);
+    }
+
+    if (this.isEmptyCriteria(toDelete)) {
+      throw new InvalidOperationError(
+        'Cannot remove criteria based on an empty criteria. Delete the subscription to unsubscribe from all notifications on the type.'
+      );
+    }
+
+    let hasUpdate = false;
+
+    // Build a collection of criteria objects that are being retained to determine the update.
+    const keep: SubscriptionCriteria[] = [];
+    this.criteria.forEach((item) => {
+      // Keep an item if it's not a match to the delete criteria.
+      if (!this.evaluateCriteria(item, toDelete)) {
+        keep.push(item);
+      } else {
+        hasUpdate = true;
+      }
+    });
+
+    if (hasUpdate) {
+      if (keep.length === 0) {
+        // Delete the subscription entirely if no criteria objects remain.
+        await this.repository.deleteSubscriptions(this.tenantId, this.typeId, this.subscriberId);
+      } else {
+        await this.updateCriteria(user, keep);
+      }
+    }
+
+    return hasUpdate;
   }
 }
