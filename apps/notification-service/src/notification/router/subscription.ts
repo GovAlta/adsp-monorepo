@@ -236,7 +236,30 @@ export function deleteTypeSubscription(repository: SubscriptionRepository): Requ
       const { subscriber } = req.params;
 
       const subscriberEntity = await repository.getSubscriber(tenantId, subscriber);
-      const result = await type.unsubscribe(repository, user, subscriberEntity);
+
+      const result = subscriberEntity ? await type.unsubscribe(repository, user, subscriberEntity) : false;
+      res.send({ deleted: result });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteTypeSubscriptionCriteria(repository: SubscriptionRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const type: NotificationTypeEntity = req[TYPE_KEY];
+      const user = req.user as User;
+      const { subscriber } = req.params;
+      const { criteria: criteriaValue } = req.query;
+      const criteria: SubscriptionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
+
+      let result = false;
+      const subscription = await repository.getSubscription(type, subscriber);
+      if (subscription) {
+        result = await subscription.deleteCriteria(user, criteria);
+      }
+
       res.send({ deleted: result });
     } catch (err) {
       next(err);
@@ -614,6 +637,13 @@ export const createSubscriptionRouter = ({
     ),
     getNotificationType,
     addOrUpdateTypeSubscription(apiId, subscriptionRepository)
+  );
+
+  subscriptionRouter.delete(
+    '/types/:type/subscriptions/:subscriber/criteria',
+    validateTypeAndSubscriberHandler,
+    getNotificationType,
+    deleteTypeSubscriptionCriteria(subscriptionRepository)
   );
 
   subscriptionRouter.get(
