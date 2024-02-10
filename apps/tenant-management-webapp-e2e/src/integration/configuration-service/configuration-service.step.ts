@@ -121,7 +121,7 @@ When(
     configurationObj
       .addConfigurationDefinitionModalDescField()
       .shadow()
-      .find('.goa-textarea')
+      .find('textarea')
       .clear({ force: true })
       .type(desc, { force: true });
   }
