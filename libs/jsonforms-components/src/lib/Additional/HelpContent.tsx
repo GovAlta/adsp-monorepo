@@ -1,7 +1,8 @@
 import React from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-
+import { Hidden } from '@mui/material';
 import { GoADetails } from '@abgov/react-components-new';
+import { ControlProps } from '@jsonforms/core';
 
 export interface LabelProps {
   uischema: {
@@ -14,10 +15,10 @@ export interface LabelProps {
   };
 }
 
-export const HelpContent = (props: LabelProps): JSX.Element => {
+export const HelpContent = (props: ControlProps & LabelProps): JSX.Element => {
   // eslint-disable-next-line
 
-  const { uischema } = props;
+  const { uischema, visible } = props;
 
   const renderHelp = () =>
     Array.isArray(uischema?.options?.help) ? (
@@ -31,13 +32,15 @@ export const HelpContent = (props: LabelProps): JSX.Element => {
     );
 
   return (
-    <div aria-label={uischema.options?.ariaLabel}>
-      {!uischema.options?.variant && uischema.options?.variant !== 'details' && <h4>{uischema?.label}</h4>}
-      {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
-      {uischema.options?.variant && uischema.options?.variant === 'details' && (
-        <GoADetails heading={uischema.label ? uischema.label : ''}>{renderHelp()}</GoADetails>
-      )}
-    </div>
+    <Hidden xsUp={!visible}>
+      <div aria-label={uischema.options?.ariaLabel}>
+        {!uischema.options?.variant && uischema.options?.variant !== 'details' && <h4>{uischema?.label}</h4>}
+        {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
+        {uischema.options?.variant && uischema.options?.variant === 'details' && (
+          <GoADetails heading={uischema.label ? uischema.label : ''}>{renderHelp()}</GoADetails>
+        )}
+      </div>
+    </Hidden>
   );
 };
 export const HelpContentTester: RankedTester = rankWith(1, uiTypeIs('HelpContent'));
