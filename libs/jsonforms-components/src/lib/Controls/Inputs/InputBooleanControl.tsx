@@ -35,7 +35,7 @@ export const BooleanComponent = ({
     text = `${description} ` + (required ? ' (required)' : '');
   }
   return (
-    <Hidden xsUp={!visible}>
+    <>
       <GoACheckbox
         testId={`${path}-checkbox-test-id`}
         disabled={!enabled}
@@ -46,7 +46,7 @@ export const BooleanComponent = ({
           handleChange(path, checked);
         }}
       ></GoACheckbox>
-    </Hidden>
+    </>
   );
 };
 export const BooleanControl = (props: ControlProps) => (

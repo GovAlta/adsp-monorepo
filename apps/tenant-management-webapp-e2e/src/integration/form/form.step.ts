@@ -69,7 +69,6 @@ When(
       cy.wait(500);
       formObj
         .editorCheckboxesTables()
-        .shadow()
         .find('goa-checkbox')
         .shadow()
         .find('.goa-checkbox-container')
@@ -363,7 +362,6 @@ Then(
       const applicantRoles = applicantRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Applicant roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -386,7 +384,6 @@ Then(
     } else {
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Applicant roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -404,7 +401,6 @@ Then(
       const clerkRoles = clerkRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Clerk roles"]')
         .then((cRoles) => {
           for (let i = 0; i < cRoles.length; i++) {
@@ -427,7 +423,6 @@ Then(
     } else {
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Clerk roles"]')
         .then((cRoles) => {
           for (let i = 0; i < cRoles.length; i++) {
@@ -445,7 +440,6 @@ Then(
       const assessorRoles = assessorRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Assessor roles"]')
         .then((assRoles) => {
           for (let i = 0; i < assRoles.length; i++) {
@@ -468,7 +462,6 @@ Then(
     } else {
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Assessor roles"]')
         .then((assRoles) => {
           for (let i = 0; i < assRoles.length; i++) {

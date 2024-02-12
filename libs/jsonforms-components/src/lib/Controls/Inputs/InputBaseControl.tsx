@@ -2,6 +2,7 @@ import React from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
+import { Hidden } from '@mui/material';
 
 export type GoAInputType =
   | 'text'
@@ -37,29 +38,15 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     labelToUpdate = label;
   }
 
-  let modifiedErrors = errors;
-  if (
-    errors === 'must be equal to one of the allowed values' &&
-    ['EnumSelect', 'EnumSelectAutoComplete'].includes(input?.name)
-  ) {
-    modifiedErrors = '';
-  }
-  return required ? (
-    <GoAFormItem
-      requirement="required"
-      error={modifiedErrors}
-      label={props?.noLabel === true ? '' : labelToUpdate}
-      helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
-    >
-      <InnerComponent {...props} />
-    </GoAFormItem>
-  ) : (
-    <GoAFormItem
-      error={modifiedErrors}
-      label={props?.noLabel === true ? '' : labelToUpdate}
-      helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
-    >
-      <InnerComponent {...props} />
-    </GoAFormItem>
+  return (
+    <Hidden xsUp={!visible}>
+      <GoAFormItem
+        error={errors}
+        label={props?.noLabel === true ? '' : labelToUpdate}
+        helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
+      >
+        <InnerComponent {...props} />
+      </GoAFormItem>
+    </Hidden>
   );
 };
