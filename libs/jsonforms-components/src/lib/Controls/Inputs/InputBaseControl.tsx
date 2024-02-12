@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAFormItem, GoADetails } from '@abgov/react-components-new';
+import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
 import { Hidden } from '@mui/material';
@@ -40,6 +40,16 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
 
   return (
     <Hidden xsUp={!visible}>
+      required ? (
+      <GoAFormItem
+        requirement="required"
+        error={errors}
+        label={props?.noLabel === true ? '' : labelToUpdate}
+        helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
+      >
+        <InnerComponent {...props} />
+      </GoAFormItem>
+      ) : (
       <GoAFormItem
         error={errors}
         label={props?.noLabel === true ? '' : labelToUpdate}
@@ -47,6 +57,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
       >
         <InnerComponent {...props} />
       </GoAFormItem>
+      )
     </Hidden>
   );
 };

@@ -14,6 +14,7 @@ export const BooleanComponent = ({
   path,
   config,
   label,
+  required,
   description,
 }: ControlProps) => {
   const appliedUiSchemaOptions = { ...config, ...uischema.options };
@@ -30,6 +31,9 @@ export const BooleanComponent = ({
     text = description;
   }
 
+  if (required) {
+    text = `${description} ` + (required ? ' (required)' : '');
+  }
   return (
     <>
       <GoACheckbox

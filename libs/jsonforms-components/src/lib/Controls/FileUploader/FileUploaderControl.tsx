@@ -1,5 +1,5 @@
-import React, { useContext, useState } from 'react';
-import { GoAFileUploadInput } from '@abgov/react-components-new';
+import React, { useContext } from 'react';
+import { GoAFileUploadInput, GoAFormItem } from '@abgov/react-components-new';
 import { WithClassname, ControlProps } from '@jsonforms/core';
 
 import styled from 'styled-components';
@@ -17,8 +17,9 @@ export const FileUploader = ({ data, path, handleChange, ...props }: FileUploade
   const downloadTrigger = downloadTriggerFunction && downloadTriggerFunction();
   const lastFileValue = enumerators.data.get('file-list');
   const lastFile = lastFileValue && lastFileValue();
+  const { required, label, i18nKeyPrefix } = props;
 
-  const propertyId = props.i18nKeyPrefix as string;
+  const propertyId = i18nKeyPrefix as string;
 
   function uploadFile(file: File) {
     if (uploadTrigger) {
@@ -36,10 +37,15 @@ export const FileUploader = ({ data, path, handleChange, ...props }: FileUploade
     handleChange(propertyId, lastFile && lastFile[propertyId]?.urn);
   }
   return (
-    <FileUploaderStyle id="file-upload" className="FileUploader">
-      <div className="label">{props.label}</div>
+    <>
+      {required ? (
+        <GoAFormItem label={label} requirement="required"></GoAFormItem>
+      ) : (
+        <GoAFormItem label={label}></GoAFormItem>
+      )}
+
       <GoAFileUploadInput variant="button" onSelectFile={uploadFile} />
-      {lastFile && lastFile[props.i18nKeyPrefix as string] && (
+      {lastFile && lastFile[i18nKeyPrefix as string] && (
         <div>
           <AttachmentBorder>
             <div>{lastFile && lastFile[props.i18nKeyPrefix as string].filename}</div>
@@ -55,7 +61,7 @@ export const FileUploader = ({ data, path, handleChange, ...props }: FileUploade
           </AttachmentBorder>
         </div>
       )}
-    </FileUploaderStyle>
+    </>
   );
 };
 
@@ -67,14 +73,4 @@ const AttachmentBorder = styled.div`
   padding: 0.5rem;
   width: fit-content;
   margin-top: 5px;
-`;
-
-const FileUploaderStyle = styled.div`
-  .label {
-    display: block;
-    font-weight: var(--goa-font-weight-bold);
-    color: var(--goa-color-text-default);
-    font-size: var(--goa-font-size-4);
-    padding: 0.5rem 0;
-  }
 `;
