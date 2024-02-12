@@ -1,7 +1,7 @@
 export interface Subscription {
   subscriberId: string;
   typeId: string;
-  criteria: SubscriptionCriteria;
+  criteria: SubscriptionCriteria[];
   type: SubscriptionType;
   subscriber?: Subscriber;
 }
@@ -9,6 +9,7 @@ export interface Subscription {
 export const expireMinutes = 60;
 
 export interface SubscriptionCriteria {
+  description?: string;
   correlationId?: string;
   context?: {
     [key: string]: unknown;
