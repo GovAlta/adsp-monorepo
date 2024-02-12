@@ -165,6 +165,7 @@ export const TriggerEventModal = ({
           data-test-id="script-trigger-event-name-dropDown"
           name="script-trigger-event-name-dropDown"
           value={`${triggerEvent.namespace}:${triggerEvent.name}`}
+          width="55ch"
           onChange={(name, values) => {
             setTriggerEvent({
               ...triggerEvent,
