@@ -18,6 +18,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       value={data}
       step={1}
       width="100%"
+      disabled={!enabled}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name: string, value: string) => handleChange(path, value)}
     />
