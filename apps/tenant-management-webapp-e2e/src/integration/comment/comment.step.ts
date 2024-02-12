@@ -99,7 +99,6 @@ When(
       cy.wait(500);
       commentObj
         .editorCheckboxesTables()
-        .shadow()
         .find('goa-checkbox')
         .shadow()
         .find('.goa-checkbox-container')
@@ -381,7 +380,6 @@ Then(
       const adminRoles = adminRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Admin roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -404,7 +402,6 @@ Then(
     } else {
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Admin roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -422,7 +419,6 @@ Then(
       const commenterRoles = commenterRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Commenter roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -445,7 +441,6 @@ Then(
     } else {
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Commenter roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -463,7 +458,6 @@ Then(
       const readerRoles = readerRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Reader roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -486,7 +480,6 @@ Then(
     } else {
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Reader roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {

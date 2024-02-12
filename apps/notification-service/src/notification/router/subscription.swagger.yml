@@ -75,6 +75,8 @@ components:
     SubscriptionCriteria:
       type: object
       properties:
+        description:
+          type: string
         correlationId:
           type: string
         context:
@@ -367,6 +369,42 @@ components:
     responses:
       200:
         description: Subscriptions successfully removed.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+
+/subscription/v1/types/{type}/subscriptions/{subscriber}/criteria:
+  parameters:
+    - name: type
+      description: ID of the notification type.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: subscriber
+      description: ID of the subscriber.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: criteria
+      description: Criteria for deletion of subscription criteria. Deletion criteria can match multiple subscription criteria.
+      in: query
+      required: true
+      schema:
+        $ref: "#/components/schemas/SubscriptionCriteria"
+
+  delete:
+    tags:
+      - Subscription
+    description: Removes a subscription criteria.
+    responses:
+      200:
+        description: Subscription criteria successfully removed.
         content:
           application/json:
             schema:

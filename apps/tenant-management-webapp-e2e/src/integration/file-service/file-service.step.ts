@@ -422,7 +422,6 @@ When(
       //Unselect all checkboxes
       fileServiceObj
         .fileTypePageCheckboxesTables()
-        .shadow()
         .find('goa-checkbox')
         .shadow()
         .find('.goa-checkbox-container')
@@ -500,7 +499,6 @@ When(
       //Unselect all checkboxes
       fileServiceObj
         .fileTypePageCheckboxesTables()
-        .shadow()
         .find('goa-checkbox')
         .shadow()
         .find('.goa-checkbox-container')
@@ -519,7 +517,6 @@ When(
         for (let i = 0; i < readRoles.length; i++) {
           fileServiceObj
             .fileTypePageCheckboxesTables()
-            .shadow()
             .find('goa-checkbox[data-testid="FileType-read-role-checkbox-' + readRoles[i].trim() + '"]')
             .shadow()
             .find('.goa-checkbox-container')
