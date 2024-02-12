@@ -48,11 +48,11 @@ export const FormTenant = () => {
           <AccountActionsSpan>
             <span className="username">{user?.name}</span>
             {user ? (
-              <GoAButton type="tertiary" onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}>
+              <GoAButton mt="s" mr="s" type="tertiary" onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}>
                 Sign out
               </GoAButton>
             ) : (
-              <GoAButton type="tertiary" onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}>
+              <GoAButton mt="s" mr="s" type="tertiary" onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}>
                 Sign in
               </GoAButton>
             )}
