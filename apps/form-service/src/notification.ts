@@ -2,6 +2,7 @@ import { adspId, AdspId, Channel, ServiceDirectory, TokenProvider } from '@abgov
 import { InvalidOperationError } from '@core-services/core-common';
 import axios from 'axios';
 import { Logger } from 'winston';
+import { FormDefinition } from './form';
 
 export interface Subscriber {
   id: string;
@@ -13,8 +14,13 @@ export interface Subscriber {
 
 export interface NotificationService {
   getSubscriber(tenantId: AdspId, urn: AdspId): Promise<Subscriber>;
-  subscribe(tenantId: AdspId, formId: string, subscriber?: Omit<Subscriber, 'urn'>): Promise<Subscriber>;
-  unsubscribe(tenantId: AdspId, urn: AdspId): Promise<boolean>;
+  subscribe(
+    tenantId: AdspId,
+    definition: FormDefinition,
+    formId: string,
+    subscriber?: Omit<Subscriber, 'urn'>
+  ): Promise<Subscriber>;
+  unsubscribe(tenantId: AdspId, urn: AdspId, formId: string): Promise<boolean>;
   sendCode(tenantId: AdspId, subscriber: Subscriber): Promise<void>;
   verifyCode(tenantId: AdspId, subscriber: Subscriber, code: string): Promise<boolean>;
 }
@@ -54,17 +60,23 @@ class NotificationServiceImpl implements NotificationService {
     }
   }
 
-  async subscribe(tenantId: AdspId, formId: string, subscriber: Omit<Subscriber, 'urn'>): Promise<Subscriber> {
+  async subscribe(
+    tenantId: AdspId,
+    definition: FormDefinition,
+    formId: string,
+    subscriber: Omit<Subscriber, 'urn'>
+  ): Promise<Subscriber> {
     try {
       const apiUrl = await this.directory.getServiceUrl(this.notificationApiId);
-      const subscriptionUrl = new URL(`v1/types/form-status-updates/subscriptions?tenantId=${tenantId}`, apiUrl);
+      const subscriptionUrl = new URL('v1/types/form-status-updates/subscriptions', apiUrl);
 
       const token = await this.tokenProvider.getAccessToken();
       const { data } = await axios.post<{ subscriber: Subscriber }>(
         subscriptionUrl.href,
-        { ...subscriber, criteria: { correlationId: formId } },
+        { ...subscriber, criteria: { description: `Updates on ${definition.name}.`, correlationId: formId } },
         {
           headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId.toString() },
         }
       );
 
@@ -81,20 +93,21 @@ class NotificationServiceImpl implements NotificationService {
     }
   }
 
-  async unsubscribe(tenantId: AdspId, urn: AdspId): Promise<boolean> {
+  async unsubscribe(tenantId: AdspId, urn: AdspId, formId: string): Promise<boolean> {
     try {
       let deleted = false;
       const subscriber = await this.getSubscriber(tenantId, urn);
       if (subscriber) {
         const apiUrl = await this.directory.getServiceUrl(this.notificationApiId);
-        const subscriptionUrl = new URL(
-          `v1/types/form-status-updates/subscriptions/${subscriber.id}?tenantId=${tenantId}`,
-          apiUrl
-        );
+        const subscriptionUrl = new URL(`v1/types/form-status-updates/subscriptions/${subscriber.id}/criteria`, apiUrl);
 
         const token = await this.tokenProvider.getAccessToken();
         const { data } = await axios.delete<{ deleted: boolean }>(subscriptionUrl.href, {
           headers: { Authorization: `Bearer ${token}` },
+          params: {
+            tenantId: tenantId.toString(),
+            criteria: JSON.stringify({ correlationId: formId }),
+          },
         });
         deleted = data.deleted;
       }
