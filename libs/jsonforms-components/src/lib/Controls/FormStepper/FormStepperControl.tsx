@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton, GoAFormStepStatusType } from '@abgov/react-components-new';
+import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { ControlElement, Categorization, UISchemaElement, Layout, Category, StatePropsOfLayout } from '@jsonforms/core';
 
@@ -8,6 +8,7 @@ import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@j
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
 import { JsonFormsDispatch } from '@jsonforms/react';
+import { Hidden } from '@mui/material';
 
 export interface FunObject {
   elements: Array<string>;
@@ -56,6 +57,8 @@ export const FormStepper = ({
   cells,
   renderers,
   config,
+  visible,
+  enabled,
 }: CategorizationStepperLayoutRendererProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = usePersistentState(0);
@@ -77,7 +80,7 @@ export const FormStepper = ({
   }, []);
   const renderStepElements = (step: Category | Categorization | VerticalLayout) => {
     return (
-      <>
+      <Hidden xsUp={!visible}>
         {step.elements.map((fieldUiSchema, index) => {
           return (
             <JsonFormsDispatch
@@ -87,10 +90,11 @@ export const FormStepper = ({
               renderers={renderers}
               cells={cells}
               path={path}
+              enabled={enabled}
             />
           );
         })}
-      </>
+      </Hidden>
     );
   };
 
@@ -203,6 +207,7 @@ const PreventControlElement = (props: PreventControlElement): JSX.Element => {
     );
   }
 
+  // eslint-disable-next-line
   return <></>;
 };
 

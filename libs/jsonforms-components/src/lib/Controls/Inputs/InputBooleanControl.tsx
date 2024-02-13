@@ -14,6 +14,7 @@ export const BooleanComponent = ({
   path,
   config,
   label,
+  required,
   description,
 }: ControlProps) => {
   const appliedUiSchemaOptions = { ...config, ...uischema.options };
@@ -30,19 +31,20 @@ export const BooleanComponent = ({
     text = description;
   }
 
+  if (required) {
+    text = `${description} ` + (required ? ' (required)' : '');
+  }
   return (
-    <>
-      <GoACheckbox
-        testId={`${path}-checkbox-test-id`}
-        disabled={!enabled}
-        text={text}
-        name={`${path}`}
-        checked={data}
-        onChange={(name: string, checked: boolean, value: string) => {
-          handleChange(path, checked);
-        }}
-      ></GoACheckbox>
-    </>
+    <GoACheckbox
+      testId={`${path}-checkbox-test-id`}
+      disabled={!enabled}
+      text={text}
+      name={`${path}`}
+      checked={data}
+      onChange={(name: string, checked: boolean, value: string) => {
+        handleChange(path, checked);
+      }}
+    ></GoACheckbox>
   );
 };
 export const BooleanControl = (props: ControlProps) => (
