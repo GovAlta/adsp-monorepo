@@ -1,11 +1,13 @@
-import { GoAContainer } from '@abgov/react-components-new';
-import { GroupLayout, LayoutProps, RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import React from 'react';
+import { GoAContainer } from '@abgov/react-components-new';
+import { GroupLayout, LayoutProps, RankedTester, rankWith, uiTypeIs, withIncreasedRank } from '@jsonforms/core';
+import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { renderLayoutElements } from '../util/layout';
 import { Hidden } from '@mui/material';
 
-const GoAGroupControl = (props: LayoutProps): JSX.Element => {
+export const groupTester: RankedTester = rankWith(1, uiTypeIs('Group'));
+
+const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
   const { uischema, schema, path, enabled, renderers, cells, visible } = props;
   const group = uischema as GroupLayout;
 
@@ -18,6 +20,6 @@ const GoAGroupControl = (props: LayoutProps): JSX.Element => {
   );
 };
 
-export const groupLayoutTester: RankedTester = rankWith(1, uiTypeIs('Group'));
+export const GoAGroupLayoutTester: RankedTester = withIncreasedRank(1, groupTester);
 
-export default withJsonFormsLayoutProps(GoAGroupControl);
+export const GoAGroupControl = withJsonFormsLayoutProps(GoAGroupControlComponent);

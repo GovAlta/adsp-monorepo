@@ -10,6 +10,8 @@ import {
 } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid } from '@abgov/react-components-new';
+import { Hidden } from '@mui/material';
+
 export const renderLayoutElements = (
   elements: UISchemaElement[],
   schema: JsonSchema,
@@ -37,6 +39,7 @@ export interface LayoutRendererProps extends OwnPropsOfRenderer {
   elements: UISchemaElement[];
   direction: 'row' | 'column';
 }
+
 const LayoutRendererComponent = ({
   elements,
   schema,
@@ -45,18 +48,21 @@ const LayoutRendererComponent = ({
   direction,
   renderers,
   cells,
+  visible,
 }: LayoutRendererProps) => {
   if (isEmpty(elements)) {
     return null;
   } else {
     if (direction === 'row') {
       return (
-        <GoAGrid minChildWidth="10ch">
-          {renderLayoutElements(elements, schema, path, enabled, renderers, cells)}
-        </GoAGrid>
+        <Hidden xsUp={!visible}>
+          <GoAGrid minChildWidth="10ch">
+            {renderLayoutElements(elements, schema, path, enabled, renderers, cells)}
+          </GoAGrid>
+        </Hidden>
       );
     } else {
-      return <>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</>;
+      return <Hidden xsUp={!visible}>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</Hidden>;
     }
   }
 };
