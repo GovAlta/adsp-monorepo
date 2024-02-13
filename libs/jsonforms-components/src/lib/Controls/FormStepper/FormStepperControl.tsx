@@ -207,6 +207,7 @@ const PreventControlElement = (props: PreventControlElement): JSX.Element => {
     );
   }
 
+  // eslint-disable-next-line
   return <></>;
 };
 
