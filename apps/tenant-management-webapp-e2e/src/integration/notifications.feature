@@ -277,8 +277,9 @@ Feature: Notifications
     When the user clicks Delete button in Reset email template modal
     Then the user "should not view" Reset button for "status-service:application-status-changed" in "Application status update"
 
+  # Ignore this test until https://goa-dio.atlassian.net/browse/CS-2854 is resolved
   # TEST DATA: a precreated subscription of "autotest-DO-NOT-DELETE", "test-criteria@gov.ab.ca" under "Application health check change" with some criteria details
-  @TEST_CS-1431 @REQ_CS-1404 @regression
+  @TEST_CS-1431 @REQ_CS-1404 @regression @ignore
   Scenario: As a tenant admin, I can see criteria details for a subscription with criteria, so I know the context for which a user receives notifications
     Given a tenant admin user is on notification subscriptions page
     When the user types "autotest-DO-NOT-DELETE" in Search subuscriber address as field and "test-criteria@gov.ab.ca" in Search subscriber email field
