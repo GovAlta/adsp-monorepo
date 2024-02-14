@@ -655,6 +655,7 @@ When(
         case 'Delete':
           cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
           fileServiceObj.fileTypeDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+          cy.wait(2000); // The delete modal showing takes time
           break;
         default:
           expect(button).to.be.oneOf(['Edit', 'Delete']);
