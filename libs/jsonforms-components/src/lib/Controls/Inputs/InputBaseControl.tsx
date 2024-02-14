@@ -40,10 +40,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
 
   let modifiedErrors = errors;
 
-  if (
-    errors === 'should be equal to one of the allowed values' &&
-    ['EnumSelect', 'EnumSelectAutoComplete'].includes(input?.name)
-  ) {
+  if (errors === 'should be equal to one of the allowed values' && uischema?.options?.enumContext) {
     modifiedErrors = '';
   }
 
