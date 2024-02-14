@@ -128,11 +128,10 @@ const Dashboard = (): JSX.Element => {
             {tenantName && (
               <>
                 <h1 data-testid="dashboard-title">{tenantName} dashboard</h1>
-
                 {elementRefs.current.map(
                   (ref, index) =>
                     0 === index % 2 && (
-                      <Grid>
+                      <Grid key={index}>
                         <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
                           <GoAContainer accent="thin" type="interactive">
                             <div style={{ height: resetHeight ? 'inherit' : `${fixedHeights[index]}px` }} ref={ref}>
