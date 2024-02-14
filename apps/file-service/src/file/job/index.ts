@@ -43,7 +43,13 @@ export const createFileJobs = (props: FileJobProps): void => {
     props.queueService.getItems().subscribe(({ item, done }) => {
       switch (item.work) {
         case 'scan':
-          digestJob(item.tenantId, item.file, done);
+          digestJob(item.tenantId, item.file, () => {
+            // TODO: This job should consume a distinct item on the work queue, but currently the items are just
+            // projections of file service domain events rather than dedicated work queue messages.
+            //
+            // Passing in work queue callback may result in interactions with the scan job; stubbing the callback
+            // effectively means failure in digest will not result in retry.
+          });
           scanJob(item.tenantId, item.file, done);
           break;
         case 'delete':
