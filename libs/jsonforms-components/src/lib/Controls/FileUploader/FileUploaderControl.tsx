@@ -42,13 +42,18 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     }
   }
 
-  function handleChangeWrapper(propertyId: string, urn: string) {
-    handleChange(propertyId, urn);
-  }
+  useEffect(() => {
+    // UseEffect is required because not having it causes a react update error, but
+    // it doesn't function correctly within jsonforms unless there is a minor delay here
+    const delayedFunction = () => {
+      if (lastFile && Array.isArray(data) && data[1] !== lastFile[propertyId]?.urn) {
+        handleChange(propertyId, lastFile && lastFile[propertyId]?.urn);
+      }
+    };
 
-  if (lastFile && Array.isArray(data) && data[1] !== lastFile[propertyId]?.urn) {
-    handleChangeWrapper(propertyId, lastFile && lastFile[propertyId]?.urn);
-  }
+    const timeoutId = setTimeout(delayedFunction, 1);
+    return () => clearTimeout(timeoutId);
+  }, [data, handleChange, lastFile, propertyId]);
 
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">
