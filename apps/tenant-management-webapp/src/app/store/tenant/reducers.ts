@@ -13,6 +13,10 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
       };
 
     case 'UPDATE_TENANT_ADMIN_INFO':
+      if (action.payload.isTenantAdmin === false) {
+        return { ...state, isTenantAdmin: false };
+      }
+
       return { ...state, ...action.payload };
 
     case 'CREATE_TENANT_SUCCESS':
