@@ -59,6 +59,7 @@ function mapFile(apiId: AdspId, entity: FileEntity) {
     scanned: entity.scanned,
     infected: entity.infected,
     mimeType: entity.mimeType,
+    digest: entity.digest,
     // For old files Security Classification doesn't exist.
     // So, if they have updated the File Types with a security classification
     // then the security classification should be added to the object.

@@ -356,14 +356,16 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             </MonacoDivTabBody>
           </Tab>
           <Tab label="Trigger events" data-testid="script-trigger-events-tab">
-            <ScriptEditorEventsTab
-              script={selectedScript}
-              eventNames={orderedEventNames}
-              onEditorSave={(script) => {
-                setScript(script);
-                saveAndReset(script);
-              }}
-            />
+            <MonacoDivTabBody data-testid="trigger-events-body">
+              <ScriptEditorEventsTab
+                script={selectedScript}
+                eventNames={orderedEventNames}
+                onEditorSave={(script) => {
+                  setScript(script);
+                  saveAndReset(script);
+                }}
+              />
+            </MonacoDivTabBody>
           </Tab>
         </Tabs>
 

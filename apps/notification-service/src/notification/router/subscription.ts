@@ -3,10 +3,10 @@ import { Logger } from 'winston';
 import { adspId, AdspId, isAllowedUser, TenantService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
-import { NotificationTypeEntity, SubscriberEntity } from '../model';
+import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
 import { NotificationConfiguration } from '../configuration';
-import { Channel, ServiceUserRoles, Subscriber } from '../types';
+import { Channel, ServiceUserRoles, Subscriber, SubscriptionCriteria } from '../types';
 import {
   SubscriberOperationRequests,
   SUBSCRIBER_CHECK_CODE,
@@ -93,6 +93,31 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
   };
 }
 
+async function addOrUpdateSubscription(
+  repository: SubscriptionRepository,
+  user: User,
+  type: NotificationTypeEntity,
+  subscriber: SubscriberEntity,
+  criteria: SubscriptionCriteria | SubscriptionCriteria[]
+): Promise<SubscriptionEntity> {
+  let subscription = await repository.getSubscription(type, subscriber?.id);
+  if (subscription) {
+    // If there is a pre-existing subscription, update the criteria.
+    subscription = await subscription.updateCriteria(user, criteria);
+  } else {
+    if (Array.isArray(criteria)) {
+      throw new InvalidOperationError('New subscription cannot be created with an array of criteria.');
+    }
+
+    subscription = await type.subscribe(repository, user, subscriber, {
+      description: criteria?.description,
+      correlationId: criteria?.correlationId,
+      context: criteria?.context,
+    });
+  }
+  return subscription;
+}
+
 export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -139,10 +164,7 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
         subscriberEntity = await SubscriberEntity.create(user, repository, newSubscriber);
       }
 
-      const subscription = await type.subscribe(repository, user, subscriberEntity, {
-        correlationId: criteria?.correlationId,
-        context: criteria?.context,
-      });
+      const subscription = await addOrUpdateSubscription(repository, user, type, subscriberEntity, criteria);
       res.send(mapSubscription(apiId, subscription));
     } catch (err) {
       next(err);
@@ -160,24 +182,16 @@ export function addOrUpdateTypeSubscription(apiId: AdspId, repository: Subscript
       const { subscriber } = req.params;
       const { criteria } = req.body;
 
+      if (!criteria) {
+        throw new InvalidOperationError('criteria value must be specified.');
+      }
+
       const subscriberEntity = await repository.getSubscriber(tenantId, subscriber, false);
       if (!subscriberEntity) {
         throw new NotFoundError('Subscriber', subscriber);
       }
 
-      let subscription = await repository.getSubscription(type, subscriber);
-      if (subscription) {
-        // If there is a pre-existing subscription, update the criteria.
-        subscription = await subscription.updateCriteria(user, {
-          correlationId: criteria?.correlationId,
-          context: criteria?.context,
-        });
-      } else {
-        subscription = await type.subscribe(repository, user, subscriberEntity, {
-          correlationId: criteria?.correlationId,
-          context: criteria?.context,
-        });
-      }
+      const subscription = await addOrUpdateSubscription(repository, user, type, subscriberEntity, criteria);
       res.send(mapSubscription(apiId, subscription));
     } catch (err) {
       next(err);
@@ -222,7 +236,30 @@ export function deleteTypeSubscription(repository: SubscriptionRepository): Requ
       const { subscriber } = req.params;
 
       const subscriberEntity = await repository.getSubscriber(tenantId, subscriber);
-      const result = await type.unsubscribe(repository, user, subscriberEntity);
+
+      const result = subscriberEntity ? await type.unsubscribe(repository, user, subscriberEntity) : false;
+      res.send({ deleted: result });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteTypeSubscriptionCriteria(repository: SubscriptionRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const type: NotificationTypeEntity = req[TYPE_KEY];
+      const user = req.user as User;
+      const { subscriber } = req.params;
+      const { criteria: criteriaValue } = req.query;
+      const criteria: SubscriptionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
+
+      let result = false;
+      const subscription = await repository.getSubscription(type, subscriber);
+      if (subscription) {
+        result = await subscription.deleteCriteria(user, criteria);
+      }
+
       res.send({ deleted: result });
     } catch (err) {
       next(err);
@@ -583,15 +620,30 @@ export const createSubscriptionRouter = ({
     '/types/:type/subscriptions/:subscriber',
     validateTypeAndSubscriberHandler,
     createValidationHandler(
-      body('criteria').optional().isObject(),
       oneOf([
-        body('criteria.correlationId').optional().isString(),
-        body('criteria.correlationId').optional().isArray({ min: 1, max: 100 }),
-      ]),
-      body('criteria.context').optional().isObject()
+        [
+          body('criteria').isArray({ min: 1, max: 200 }),
+          body('criteria.*.description').optional().isString(),
+          body('criteria.*.correlationId').optional().isString(),
+          body('criteria.*.context').optional().isObject(),
+        ],
+        [
+          body('criteria').isObject(),
+          body('criteria.description').optional().isString(),
+          body('criteria.correlationId').optional().isString(),
+          body('criteria.context').optional().isObject(),
+        ],
+      ])
     ),
     getNotificationType,
     addOrUpdateTypeSubscription(apiId, subscriptionRepository)
+  );
+
+  subscriptionRouter.delete(
+    '/types/:type/subscriptions/:subscriber/criteria',
+    validateTypeAndSubscriberHandler,
+    getNotificationType,
+    deleteTypeSubscriptionCriteria(subscriptionRepository)
   );
 
   subscriptionRouter.get(
