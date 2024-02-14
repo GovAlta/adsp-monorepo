@@ -90,6 +90,7 @@ export const MonacoDivTabBody = styled.div`
   min-height: 65px;
   height: calc(72vh - 310px);
   margin-bottom: 1rem;
+  flex-direction: column;
 `;
 export const ScriptEditorContainer = styled.div`
   width: 50%;
@@ -374,7 +375,6 @@ export const ScrollPane = styled.div`
 
 export const TriggerEventScrollPane = styled.div`
   overflow-y: scroll;
-  height: calc(31vh);
   width: 100%;
   margin-bottom: var(--goa-spacing-xs) !important;
 `;

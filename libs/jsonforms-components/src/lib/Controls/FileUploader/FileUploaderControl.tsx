@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import { GoAFileUploadInput, GoACircularProgress, GoAModal } from '@abgov/react-components-new';
+import { GoAFileUploadInput, GoAFormItem, GoACircularProgress, GoAModal } from '@abgov/react-components-new';
 import { WithClassname, ControlProps } from '@jsonforms/core';
 
 import styled from 'styled-components';
@@ -19,8 +19,9 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
   const lastFileValue = enumerators.data.get('file-list');
   const lastFile = lastFileValue && lastFileValue();
+  const { required, label, i18nKeyPrefix } = props;
 
-  const propertyId = props.i18nKeyPrefix as string;
+  const propertyId = i18nKeyPrefix as string;
 
   const variant = uischema?.options?.variant || 'button';
 
@@ -51,7 +52,12 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">
-      <div className="label">{props.label}</div>
+      {required ? (
+        <GoAFormItem label={label} requirement="required"></GoAFormItem>
+      ) : (
+        <div className="label">{props.label}</div>
+      )}
+
       <div className="file-upload">
         <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} />
       </div>

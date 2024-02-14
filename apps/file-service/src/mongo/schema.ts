@@ -59,4 +59,5 @@ export const fileSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  digest: String,
 });

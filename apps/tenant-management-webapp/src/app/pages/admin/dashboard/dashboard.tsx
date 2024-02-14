@@ -110,9 +110,7 @@ const Dashboard = (): JSX.Element => {
 
   useEffect(() => {
     if (realm && authenticated) {
-      if (!tenantName) {
-        dispatch(FetchTenant(realm));
-      }
+      dispatch(FetchTenant(realm));
     }
   }, [realm, authenticated, dispatch]);
 

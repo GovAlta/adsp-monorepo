@@ -67,17 +67,8 @@ import { getTaskQueues } from '@store/task/action';
 import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JsonFormContextInstance } from '@abgov/jsonforms-components';
-//import Ajv from 'ajv';
-// import addFormats from 'ajv-formats';
 
 const { jsonFormContext, baseEnumerator } = JsonFormContextInstance;
-
-// const ajv = new Ajv({ allErrors: true, verbose: true, strict: false });
-
-// ajv.addFormat('file-urn', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
-// addFormats(ajv);
-
-//ajv.addFormat('date', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));

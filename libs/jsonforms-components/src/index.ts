@@ -32,8 +32,6 @@ import {
   materialArrayLayoutTester,
   MaterialCategorizationLayout,
   materialCategorizationTester,
-  MaterialGroupLayout,
-  materialGroupTester,
   materialHorizontalLayoutTester,
   materialVerticalLayoutTester,
 } from '@jsonforms/material-renderers';
@@ -81,11 +79,10 @@ import {
   GoABooleanRadioControl,
 } from './lib/Controls';
 import { InputCells } from './lib/Cells';
-import { GoAVerticalLayout, GoAHorizontalLayout, groupLayoutTester } from './lib/layouts';
+import { GoAVerticalLayout, GoAHorizontalLayout, GoAGroupLayoutTester, GoAGroupControl } from './lib/layouts';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { JsonFormContextInstance } from './lib/Context';
 import { HelpContent, HelpContentTester } from './lib/Additional';
-import GroupControl from './lib/layouts/GroupControl';
 
 export * from './lib/Context';
 
@@ -142,8 +139,7 @@ export class Renderers {
       renderer: MaterialOneOfEnumControl,
     },
     // layouts
-    { tester: materialGroupTester, renderer: MaterialGroupLayout },
-    { tester: groupLayoutTester, renderer: GroupControl },
+    { tester: GoAGroupLayoutTester, renderer: GoAGroupControl },
     {
       tester: materialHorizontalLayoutTester,
       renderer: GoAHorizontalLayout,

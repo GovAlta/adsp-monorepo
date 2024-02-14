@@ -293,7 +293,7 @@ export class FormEntity implements Form {
     }
 
     if (this.applicant) {
-      await notificationService.unsubscribe(this.tenantId, this.applicant.urn);
+      await notificationService.unsubscribe(this.tenantId, this.applicant.urn, this.id);
     }
 
     const deleted = this.repository.delete(this);

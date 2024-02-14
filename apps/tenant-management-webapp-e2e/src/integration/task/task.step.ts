@@ -40,12 +40,12 @@ When('the user clicks Add queue button on Queues page', function () {
 });
 
 When('the user enters {string}, {string} in Add queue modal', function (namespace, name) {
-  taskObj.namespaceTextField().clear().type(namespace, { delay: 200 });
-  taskObj.nameTextField().clear().type(name, { delay: 200 });
+  taskObj.namespaceTextField().shadow().find('input').clear().type(namespace, { force: true, delay: 200 });
+  taskObj.nameTextField().shadow().find('input').clear().type(name, { force: true, delay: 200 });
 });
 
 Then('the user views the error message of {string} for Name field in Add queue modal', function (errorMsg) {
-  taskObj.nameErrorMessage().invoke('text').should('contain', errorMsg);
+  taskObj.nameFormItem().invoke('attr', 'error').should('contain', errorMsg);
 });
 
 When('the user clicks Save button in Add queue modal', function () {
@@ -64,7 +64,6 @@ When('the user enters {string} as Assigner roles and {string} as Worker roles', 
   //Unselect all checkboxes
   taskObj
     .queuePageCheckboxesTables()
-    .shadow()
     .find('goa-checkbox')
     .shadow()
     .find('.goa-checkbox-container')
@@ -82,7 +81,6 @@ When('the user enters {string} as Assigner roles and {string} as Worker roles', 
     for (let i = 0; i < assignerRoles.length; i++) {
       taskObj
         .queuePageCheckboxesTables()
-        .shadow()
         .find('goa-checkbox[data-testid="Queue-Assigner roles-role-checkbox-' + assignerRoles[i].trim() + '"]')
         .shadow()
         .find('.goa-checkbox-container')
@@ -108,7 +106,6 @@ When('the user enters {string} as Assigner roles and {string} as Worker roles', 
         const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
         taskObj
           .queuePageClientRolesTable(clientName)
-          .shadow()
           .find('.role-name')
           .contains(roleName)
           .next()
@@ -122,7 +119,6 @@ When('the user enters {string} as Assigner roles and {string} as Worker roles', 
       } else {
         taskObj
           .queuePageRolesTable()
-          .shadow()
           .find('.role-name')
           .contains(workerRoles[i].trim())
           .next()

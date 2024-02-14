@@ -97,7 +97,7 @@ export class FormDefinitionEntity implements FormDefinition {
     }
 
     const id = uuidv4();
-    const applicant = await notificationService.subscribe(this.tenantId, id, applicantInfo);
+    const applicant = await notificationService.subscribe(this.tenantId, this, id, applicantInfo);
     const formDraftUrl = this.urlTemplate({ id });
     const form = await FormEntity.create(user, repository, this, id, formDraftUrl, applicant);
 
