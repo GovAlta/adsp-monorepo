@@ -13,7 +13,7 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
-
+import { FileItem } from '@store/file/models';
 import {
   TextLoadingIndicator,
   FlexRow,
@@ -54,7 +54,7 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { PageIndicator } from '@components/Indicator';
 import { ErrorBoundary } from '@components/ErrorBoundary';
-import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
+import { isValidJSONSchemaCheck, ajv } from '@lib/validation/checkInput';
 import DataTable from '@components/DataTable';
 import { DispositionItems } from './dispositionItems';
 import { DeleteModal } from '@components/DeleteModal';
@@ -64,9 +64,7 @@ import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 
 import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
-
-import { UploadFileService, DownloadFileService } from '@store/file/actions';
-import { FetchFileTypeService } from '@store/file/actions';
+import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JsonFormContextInstance } from '@abgov/jsonforms-components';
 
@@ -102,7 +100,7 @@ const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const fileList = useSelector((state: RootState) => {
-    return state?.fileService.latestFile;
+    return state?.fileService.newFileList;
   });
 
   const dispatch = useDispatch();
@@ -121,8 +119,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(DownloadFileService(file));
   };
 
-  JsonFormContextInstance.setFileManagement(fileList, uploadFile, downloadFile);
-
   const renderer = new Renderers();
 
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
@@ -137,6 +133,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
+  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
+  const [selectedFile, setSelectFile] = useState<FileItem>(null);
   const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
@@ -163,6 +161,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dataSchemaJSON: null,
     dataSchemaJSONSchema: null,
   });
+
+  const deleteFile = (file) => {
+    setSelectFile(file);
+    setShowFileDeleteConfirmation(true);
+  };
+
+  JsonFormContextInstance.setFileManagement(fileList, uploadFile, downloadFile, deleteFile);
 
   useEffect(() => {
     if (monaco) {
@@ -740,6 +745,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         <ErrorBoundary>
                           {UiSchemaBounced !== '{}' ? (
                             <JsonForms
+                              ajv={ajv}
                               schema={JSON.parse(dataSchemaBounced)}
                               uischema={JSON.parse(UiSchemaBounced)}
                               data={data}
@@ -750,6 +756,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             />
                           ) : (
                             <JsonForms
+                              ajv={ajv}
                               schema={JSON.parse(dataSchemaBounced)}
                               data={data}
                               validationMode={'ValidateAndShow'}
@@ -823,6 +830,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           tempDefinition.dispositionStates = tempDefinition.dispositionStates.filter((s) => s !== null);
           setDefinition(tempDefinition);
           setSelectedDeleteDispositionIndex(null);
+        }}
+      />
+
+      <DeleteModal
+        isOpen={showFileDeleteConfirmation}
+        title="Delete file"
+        content={`Delete file ${selectedFile?.filename} ?`}
+        onCancel={() => setShowFileDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowFileDeleteConfirmation(false);
+          dispatch(DeleteFileService(selectedFile?.id));
         }}
       />
       <AddEditDispositionModal

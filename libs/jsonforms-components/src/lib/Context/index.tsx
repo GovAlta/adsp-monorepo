@@ -18,6 +18,8 @@ export class Context {
   uploadFile: (file: File, propertyId: string) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   downloadFile: (file: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deleteFile: (file: any) => void;
   enumFunctions: Map<string, () => (file: File, propertyId: string) => void>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   enumValues: Map<string, () => Record<string, any> | string[]>;
@@ -29,6 +31,7 @@ export class Context {
     /* eslint-disable @typescript-eslint/no-empty-function */
     this.uploadFile = () => {};
     this.downloadFile = () => {};
+    this.deleteFile = () => {};
     /* eslint-enable @typescript-eslint/no-empty-function */
 
     this.enumFunctions = new Map<string, () => (file: File, propertyId: string) => void>();
@@ -48,15 +51,19 @@ export class Context {
     fileList: any,
     uploadFile: (file: File, propertyId: string) => void,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    downloadFile: (file: any) => void
+    downloadFile: (file: any) => void,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    deleteFile: (file: any) => void
   ): void {
     this.fileList = fileList;
     this.uploadFile = uploadFile;
     this.downloadFile = downloadFile;
+    this.deleteFile = deleteFile;
 
     this.enumValues.set('file-list', () => this.fileList);
     this.enumFunctions.set('upload-file', () => this.uploadFile);
     this.enumFunctions.set('download-file', () => this.downloadFile);
+    this.enumFunctions.set('delete-file', () => this.deleteFile);
   }
 
   /**
