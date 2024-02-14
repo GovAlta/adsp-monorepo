@@ -53,14 +53,7 @@ export const subscriptionSchema = new Schema(
       ref: 'subscriber',
       required: true,
     },
-    criteria: {
-      _id: false,
-      correlationId: String,
-      context: {
-        type: Map,
-        of: Schema.Types.Mixed,
-      },
-    },
+    criteria: Schema.Types.Mixed,
   },
   { _id: false }
 );

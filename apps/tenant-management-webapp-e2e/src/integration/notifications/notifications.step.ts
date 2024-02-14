@@ -301,6 +301,7 @@ When('the user selects {string} in the event dropdown', function (event) {
     .find('li[data-value="' + event + '"]')
     .scrollIntoView()
     .click({ force: true });
+  cy.wait(1000);
 });
 
 When('the user cannot select {string} in the event dropdown', function (event) {

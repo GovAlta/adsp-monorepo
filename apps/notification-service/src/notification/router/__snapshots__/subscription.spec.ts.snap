@@ -2,7 +2,9 @@
 
 exports[`subscription router addOrUpdateTypeSubscription can add subscription 1`] = `
 Object {
-  "criteria": Object {},
+  "criteria": Array [
+    Object {},
+  ],
   "subscriber": Object {
     "addressAs": "tester",
     "channels": Array [],
@@ -19,10 +21,12 @@ Object {
 
 exports[`subscription router addOrUpdateTypeSubscription can update subscription criteria 1`] = `
 Object {
-  "criteria": Object {
-    "context": Object {},
-    "correlationId": "123",
-  },
+  "criteria": Array [
+    Object {
+      "context": Object {},
+      "correlationId": "123",
+    },
+  ],
   "subscriber": Object {
     "addressAs": "tester",
     "channels": Array [],
@@ -50,7 +54,9 @@ Object {
 
 exports[`subscription router createTypeSubscription can create subscription 1`] = `
 Object {
-  "criteria": Object {},
+  "criteria": Array [
+    Object {},
+  ],
   "subscriber": Object {
     "addressAs": "tester",
     "channels": Array [],
@@ -101,7 +107,9 @@ Object {
   "id": "subscriber",
   "subscriptions": Array [
     Object {
-      "criteria": Object {},
+      "criteria": Array [
+        Object {},
+      ],
       "subscriberId": "subscriber",
       "type": Object {
         "channels": Array [],
@@ -146,7 +154,9 @@ Array [
 
 exports[`subscription router getTypeSubscription can get subscription 1`] = `
 Object {
-  "criteria": Object {},
+  "criteria": Array [
+    Object {},
+  ],
   "subscriber": Object {
     "addressAs": "tester",
     "channels": Array [],

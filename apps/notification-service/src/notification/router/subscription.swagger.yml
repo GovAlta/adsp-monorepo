@@ -42,11 +42,11 @@ components:
                 type: object
                 properties:
                   email:
-                    $ref: '#/components/schemas/Template'
+                    $ref: "#/components/schemas/Template"
                   bot:
-                    $ref: '#/components/schemas/Template'
+                    $ref: "#/components/schemas/Template"
                   sms:
-                    $ref: '#/components/schemas/Template'
+                    $ref: "#/components/schemas/Template"
     Subscriber:
       type: object
       properties:
@@ -71,16 +71,14 @@ components:
         subscriptions:
           type: array
           items:
-            $ref: '#/components/schemas/Subscription'
+            $ref: "#/components/schemas/Subscription"
     SubscriptionCriteria:
       type: object
       properties:
+        description:
+          type: string
         correlationId:
-          oneOf:
-            - type: string
-            - type: array
-              items:
-                type: string
+          type: string
         context:
           type: object
           additionalProperties: true
@@ -90,9 +88,13 @@ components:
         typeId:
           type: string
         subscriber:
-          $ref: '#/components/schemas/Subscriber'
+          $ref: "#/components/schemas/Subscriber"
         criteria:
-          $ref: '#/components/schemas/SubscriptionCriteria'
+          anyOf:
+            - $ref: "#/components/schemas/SubscriptionCriteria"
+            - type: array
+              items:
+                $ref: "#/components/schemas/SubscriptionCriteria"
     SendVerifyCodeOperation:
       type: object
       properties:
@@ -113,9 +115,13 @@ components:
         typeId:
           type: string
         subscriber:
-          $ref: '#/components/schemas/Subscriber'
+          $ref: "#/components/schemas/Subscriber"
         criteria:
-          $ref: '#/components/schemas/SubscriptionCriteria'
+          anyOf:
+            - $ref: "#/components/schemas/SubscriptionCriteria"
+            - type: array
+              items:
+                $ref: "#/components/schemas/SubscriptionCriteria"
     MySubscriberDetails:
       type: object
       properties:
@@ -140,7 +146,7 @@ components:
         subscriptions:
           type: array
           items:
-            $ref: '#/components/schemas/MySubscriberSubscriptions'
+            $ref: "#/components/schemas/MySubscriberSubscriptions"
     CheckCodeOperation:
       type: object
       properties:
@@ -183,7 +189,7 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/NotificationType'
+                $ref: "#/components/schemas/NotificationType"
 /subscription/v1/types/{type}:
   get:
     tags:
@@ -202,7 +208,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationType'
+              $ref: "#/components/schemas/NotificationType"
 /subscription/v1/types/{type}/subscriptions:
   parameters:
     - name: type
@@ -250,7 +256,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Subscription'
+                    $ref: "#/components/schemas/Subscription"
                 page:
                   type: object
                   properties:
@@ -279,7 +285,7 @@ components:
             type: object
             properties:
               criteria:
-                $ref: '#/components/schemas/SubscriptionCriteria'
+                $ref: "#/components/schemas/SubscriptionCriteria"
               id:
                 type: string
               userId:
@@ -303,7 +309,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Subscription'
+              $ref: "#/components/schemas/Subscription"
 
 /subscription/v1/types/{type}/subscriptions/{subscriber}:
   parameters:
@@ -329,7 +335,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Subscription'
+              $ref: "#/components/schemas/Subscription"
   post:
     tags:
       - Subscription
@@ -342,7 +348,11 @@ components:
             type: object
             properties:
               criteria:
-                $ref: '#/components/schemas/SubscriptionCriteria'
+                anyOf:
+                  - $ref: "#/components/schemas/SubscriptionCriteria"
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/SubscriptionCriteria"
 
     responses:
       200:
@@ -350,7 +360,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Subscription'
+              $ref: "#/components/schemas/Subscription"
 
   delete:
     tags:
@@ -359,6 +369,42 @@ components:
     responses:
       200:
         description: Subscriptions successfully removed.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+
+/subscription/v1/types/{type}/subscriptions/{subscriber}/criteria:
+  parameters:
+    - name: type
+      description: ID of the notification type.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: subscriber
+      description: ID of the subscriber.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: criteria
+      description: Criteria for deletion of subscription criteria. Deletion criteria can match multiple subscription criteria.
+      in: query
+      required: true
+      schema:
+        $ref: "#/components/schemas/SubscriptionCriteria"
+
+  delete:
+    tags:
+      - Subscription
+    description: Removes a subscription criteria.
+    responses:
+      200:
+        description: Subscription criteria successfully removed.
         content:
           application/json:
             schema:
@@ -383,7 +429,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Subscriber'
+                    $ref: "#/components/schemas/Subscriber"
                 page:
                   type: object
                   properties:
@@ -436,7 +482,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Subscriber'
+                    $ref: "#/components/schemas/Subscriber"
                 page:
                   type: object
                   properties:
@@ -471,7 +517,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Subscriber'
+              $ref: "#/components/schemas/Subscriber"
   patch:
     tags:
       - Subscription
@@ -501,7 +547,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Subscriber'
+              $ref: "#/components/schemas/Subscriber"
   post:
     tags:
       - Subscription
@@ -512,15 +558,15 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/SendVerifyCodeOperation'
-              - $ref: '#/components/schemas/VerifyChannelOperation'
-              - $ref: '#/components/schemas/CheckCodeOperation'
+              - $ref: "#/components/schemas/SendVerifyCodeOperation"
+              - $ref: "#/components/schemas/VerifyChannelOperation"
+              - $ref: "#/components/schemas/CheckCodeOperation"
             discriminator:
               propertyName: operation
               mapping:
-                send-code: '#/components/schemas/SendVerifyCodeOperation'
-                check-code: '#/components/schemas/CheckCodeOperation'
-                verify-channel: '#/components/schemas/VerifyChannelOperation'
+                send-code: "#/components/schemas/SendVerifyCodeOperation"
+                check-code: "#/components/schemas/CheckCodeOperation"
+                verify-channel: "#/components/schemas/VerifyChannelOperation"
     responses:
       200:
         description: Subscriber successfully updated.
@@ -586,7 +632,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Subscription'
+                    $ref: "#/components/schemas/Subscription"
                 page:
                   type: object
                   properties:
@@ -615,4 +661,4 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MySubscriberDetails'
+              $ref: "#/components/schemas/MySubscriberDetails"

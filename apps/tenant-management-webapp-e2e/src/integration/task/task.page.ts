@@ -4,7 +4,7 @@ class TaskPage {
   }
 
   addQueueModalTitle() {
-    return cy.xpath('//*[@data-testid="add-queue-modal" and @data-state="visible"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="add-queue-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   queueModalCancelButton() {
@@ -16,19 +16,19 @@ class TaskPage {
   }
 
   namespaceTextField() {
-    return cy.xpath(
-      '//*[@class="goa-form-item"]/label[text()="Namespace"]/following-sibling::*[@class="goa-input"]/*[@data-testid="queue-modal-namespace-input"]'
-    );
+    return cy.xpath('//goa-input[@name="namespace"]');
   }
 
   nameTextField() {
-    return cy.xpath(
-      '//*[contains(@class, "goa-form-item")]/label[text()="Name"]/following-sibling::*[@class="goa-input"]/*[@data-testid="queue-modal-name-input"]'
-    );
+    return cy.xpath('//goa-input[@name="name"]');
   }
 
   nameErrorMessage() {
     return cy.xpath('//label[text()="Name"]/parent::*/*[@class="error-msg"]');
+  }
+
+  nameFormItem() {
+    return cy.xpath('//goa-form-item[@label="Name"]');
   }
 
   queueModalSaveButton() {

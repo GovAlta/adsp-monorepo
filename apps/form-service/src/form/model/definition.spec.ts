@@ -236,7 +236,7 @@ describe('FormDefinitionEntity', () => {
         subscriber
       );
       expect(form).toBeTruthy();
-      expect(notificationMock.subscribe).toHaveBeenCalledWith(entity.tenantId, expect.any(String), subscriber);
+      expect(notificationMock.subscribe).toHaveBeenCalledWith(entity.tenantId, entity, expect.any(String), subscriber);
     });
 
     it('can set applicant userId for user applicant', async () => {
@@ -245,6 +245,7 @@ describe('FormDefinitionEntity', () => {
       expect(form).toBeTruthy();
       expect(notificationMock.subscribe).toHaveBeenCalledWith(
         entity.tenantId,
+        entity,
         expect.any(String),
         expect.objectContaining({ userId: user.id })
       );
