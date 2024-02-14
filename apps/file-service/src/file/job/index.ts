@@ -1,14 +1,15 @@
 import { AdspId, EventService, TenantService, TokenProvider, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { WorkQueueService } from '@core-services/core-common';
+import * as schedule from 'node-schedule';
 import { Logger } from 'winston';
+import { environment, POD_TYPES } from '../../environments/environment';
 import { FileRepository } from '../repository';
 import { ScanService } from '../scan';
 import { File } from '../types';
 import { createDeleteJob } from './delete';
 import { createDeleteOldFilesJob } from './deleteOldFiles';
+import { createDigestJob } from './digest';
 import { createScanJob } from './scan';
-import * as schedule from 'node-schedule';
-import { environment, POD_TYPES } from '../../environments/environment';
 
 export interface FileServiceWorkItem {
   work: 'scan' | 'delete' | 'unknown';
@@ -31,6 +32,7 @@ interface FileJobProps {
 
 export const createFileJobs = (props: FileJobProps): void => {
   const scanJob = createScanJob(props);
+  const digestJob = createDigestJob(props);
   const deleteJob = createDeleteJob(props);
   const deleteOldFilesJob = createDeleteOldFilesJob(props);
 
@@ -41,26 +43,11 @@ export const createFileJobs = (props: FileJobProps): void => {
     props.queueService.getItems().subscribe(({ item, done }) => {
       switch (item.work) {
         case 'scan':
-          try {
-            scanJob(item.tenantId, item.file, done);
-          } catch (error) {
-            props.logger.error(
-              `Error in scanning file: ${item.file.filename} ${
-                item.file.id
-              } for tenant: ${item.tenantId.toString()} - ${error.message}`
-            );
-          }
+          digestJob(item.tenantId, item.file, done);
+          scanJob(item.tenantId, item.file, done);
           break;
         case 'delete':
-          try {
-            deleteJob(item.tenantId, item.file, done);
-          } catch (error) {
-            props.logger.error(
-              `Error in deleting file: ${item.file.filename} ${
-                item.file.id
-              } for tenant: ${item.tenantId.toString()} - ${error.message}`
-            );
-          }
+          deleteJob(item.tenantId, item.file, done);
           break;
         default: {
           props.logger.debug(
