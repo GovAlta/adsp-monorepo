@@ -19,7 +19,7 @@ export function createDigestJob({ logger, fileRepository }: DigestJobProps) {
         tenant: tenantId?.toString(),
       });
       const entity = await fileRepository.get(id);
-      if (entity && !entity.deleted) {
+      if (entity && !entity.deleted && !entity.digest) {
         const stream = await entity.readFile(user);
         const digest = await hasha.fromStream(stream, { algorithm: 'sha256', encoding: 'base64' });
 
