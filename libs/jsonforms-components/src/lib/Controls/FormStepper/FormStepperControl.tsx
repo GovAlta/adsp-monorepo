@@ -96,15 +96,15 @@ export const FormStepper = ({
 
   return (
     <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-      <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
+      <GoAFormStepper testId="form-stepper-test" step={step || 0} onChange={(step) => setStep(step)}>
         {uiSchema.elements?.map((category, index) => {
           const flattedStep = flattenArray(category?.elements || []);
           const count = flattedStep.filter((e) => {
             return e?.toString().substring(0, 12) === '#/properties';
           }).length;
-          return <GoAFormStep key={index} text={`${category.label}`} />;
+          return <GoAFormStep key={index} text={`${category.label}`} status="incomplete" />;
         })}
-        <GoAFormStep text="Review" />
+        <GoAFormStep text="Review" status="incomplete" />
       </GoAFormStepper>
       <GoAPages current={step} mb="xl">
         {uiSchema.elements?.map((step, index) => {
@@ -124,7 +124,7 @@ export const FormStepper = ({
                   {Object.keys(flattenObject(data)).map((key, ix) => {
                     return (
                       <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                        <b>{key}</b> : <PreventControlElement value={flattenObject(data)[key]} />
+                        <b>{key}</b> : <PreventControlElement key={ix} value={flattenObject(data)[key]} />
                       </GridItem>
                     );
                   })}
@@ -179,23 +179,24 @@ const PreventControlElement = (props: PreventControlElement): JSX.Element => {
   if (Array.isArray(props?.value)) {
     return (
       <div>
-        {props.value.map((item) => {
+        {props.value.map((item, index) => {
           return (
-            <ReviewListWrapper>
-              {Object.keys(item).map((key) => {
-                if (typeof item[key] === 'string') {
+            <ReviewListWrapper key={index}>
+              {item &&
+                Object.keys(item).map((key, innerIndex) => {
+                  if (typeof item[key] === 'string') {
+                    return (
+                      <ReviewListItem key={innerIndex}>
+                        {key}: {item[key]}
+                      </ReviewListItem>
+                    );
+                  }
                   return (
-                    <ReviewListItem>
-                      {key}: {item[key]}
+                    <ReviewListItem key={innerIndex}>
+                      {key}: {String(item[key])}
                     </ReviewListItem>
                   );
-                }
-                return (
-                  <ReviewListItem>
-                    {key}: {String(item[key])}
-                  </ReviewListItem>
-                );
-              })}
+                })}
             </ReviewListWrapper>
           );
         })}

@@ -27,6 +27,8 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
     getOptionLabel: (option: Array<string>) => option,
   };
 
+  const [inputValue, setInputValue] = React.useState('');
+
   useEffect(() => {
     if (dataKey && url) {
       JsonFormContextInstance.addDataByOptions(dataKey, url, location, type, values);
@@ -44,9 +46,11 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
       {...defaultProps}
       id="autocomplete"
       getOptionLabel={(option) => option}
-      defaultValue={data}
+      isOptionEqualToValue={(option, value) => option.id === value.id}
+      value={data || null}
       onChange={(name, value) => {
         handleChange(path, value);
+        setInputValue(value);
       }}
       renderInput={(params) => {
         return <TextField {...params} variant="outlined" size="small" placeholder={schema?.description} />;

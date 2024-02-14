@@ -44,19 +44,31 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
     case UPLOAD_FILE_SUCCESSES: {
       // add file to fileList
-      const latestFile = state.latestFile || {};
-      latestFile[action.payload.result.propertyId] = action.payload.result;
+      const newFileList = state.newFileList || {};
+      newFileList[action.payload.result.propertyId] = action.payload.result;
       return {
         ...state,
         fileList: uploadFile(state.fileList, action.payload.result),
-        latestFile: latestFile,
+        newFileList: newFileList,
       };
     }
-    case DELETE_FILE_SUCCESSES:
+    case DELETE_FILE_SUCCESSES: {
+      const newFileList = state.newFileList;
+
+      const keyList = Object.keys(newFileList);
+
+      keyList.forEach((file) => {
+        if (newFileList[file].id === action.payload.data) {
+          delete newFileList[file];
+        }
+      });
+
       return {
         ...state, // remove delete file from reducer
         fileList: deleteFile(state.fileList, action.payload.data),
+        newFileList: newFileList,
       };
+    }
     case FETCH_FILE_LIST:
       return {
         ...state,

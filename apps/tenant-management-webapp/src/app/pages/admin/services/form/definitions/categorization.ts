@@ -61,12 +61,12 @@ export const schema = {
     },
     FileUploader: {
       description: 'file uploader !!!',
-      format: 'uri',
+      format: 'file-urn',
       type: 'string',
     },
     FileUploader2: {
       description: 'file uploader !!!',
-      format: 'uri',
+      format: 'file-urn',
       type: 'string',
     },
     carBrands: {
@@ -109,10 +109,16 @@ export const uischema = {
             {
               type: 'Control',
               scope: '#/properties/FileUploader',
+              options: {
+                variant: 'button',
+              },
             },
             {
               type: 'Control',
               scope: '#/properties/FileUploader2',
+              options: {
+                variant: 'dragdrop',
+              },
             },
           ],
         },
