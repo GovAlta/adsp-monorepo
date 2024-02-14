@@ -39,7 +39,6 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
       return string;
     }
   }
-
   const displayOrder = ['email', 'sms', 'bot'];
   const sortedChannels = [];
   displayOrder.forEach((display) => {
@@ -89,7 +88,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
               type="trash"
               onClick={() => onDelete(subscriber, typeId)}
             />
-            {criteria && (criteria.correlationId || criteria.context) && (
+            {criteria[0] && (criteria[0].correlationId || criteria[0].context) && (
               <GoAContextMenuIcon
                 type={showDetails ? 'eye-off' : 'eye'}
                 title="Toggle details"
