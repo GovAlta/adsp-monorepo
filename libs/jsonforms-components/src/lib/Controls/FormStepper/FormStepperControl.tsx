@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useState, useEffect } from 'react';
 import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
-import { ControlElement, Categorization, UISchemaElement, Layout, Category, StatePropsOfLayout } from '@jsonforms/core';
+import {
+  ControlElement,
+  Categorization,
+  UISchemaElement,
+  Layout,
+  Category,
+  StatePropsOfLayout,
+  isVisible,
+} from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
@@ -62,7 +70,12 @@ export const FormStepper = ({
 }: CategorizationStepperLayoutRendererProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = usePersistentState(0);
-  if (uiSchema.elements?.length < 1) {
+  const categories = useMemo(
+    () => uiSchema.elements.filter((category) => isVisible(category, data, undefined, ajv)),
+    [uiSchema, data, ajv]
+  );
+
+  if (categories?.length < 1) {
     // eslint-disable-next-line
     return <></>;
   }
@@ -79,8 +92,10 @@ export const FormStepper = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const renderStepElements = (step: Category | Categorization | VerticalLayout) => {
+    // Ideally, we shall work with the ctx to determine the actual disable for not
+    const isDisabledOnCategoryLevel = step?.rule?.effect === 'DISABLE';
     return (
-      <Hidden xsUp={!visible}>
+      <>
         {step.elements.map((fieldUiSchema, index) => {
           return (
             <JsonFormsDispatch
@@ -90,69 +105,72 @@ export const FormStepper = ({
               renderers={renderers}
               cells={cells}
               path={path}
-              enabled={enabled}
+              visible={visible}
+              enabled={enabled && !isDisabledOnCategoryLevel}
             />
           );
         })}
-      </Hidden>
+      </>
     );
   };
 
   return (
-    <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-      <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
-        {uiSchema.elements?.map((category, index) => {
-          const flattedStep = flattenArray(category?.elements || []);
-          const count = flattedStep.filter((e) => {
-            return e?.toString().substring(0, 12) === '#/properties';
-          }).length;
-          return <GoAFormStep key={index} text={`${category.label}`} />;
-        })}
-        <GoAFormStep text="Review" />
-      </GoAFormStepper>
-      <GoAPages current={step} mb="xl">
-        {uiSchema.elements?.map((step, index) => {
-          return (
-            <div data-testid={`step_${index}`} key={index}>
-              {renderStepElements(step)}
-            </div>
-          );
-        })}
-        <div>
-          <h3 style={{ flex: 1 }}>Summary</h3>
+    <Hidden xsUp={!visible}>
+      <div id={`${path || `goa`}-form-stepper`} className="formStepper">
+        <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
+          {categories?.map((category, index) => {
+            const flattedStep = flattenArray(category?.elements || []);
+            const count = flattedStep.filter((e) => {
+              return e?.toString().substring(0, 12) === '#/properties';
+            }).length;
+            return <GoAFormStep key={index} text={`${category.label}`} />;
+          })}
+          <GoAFormStep text="Review" />
+        </GoAFormStepper>
+        <GoAPages current={step} mb="xl">
+          {categories?.map((step, index) => {
+            return (
+              <div data-testid={`step_${index}`} key={index}>
+                {renderStepElements(step)}
+              </div>
+            );
+          })}
+          <div>
+            <h3 style={{ flex: 1 }}>Summary</h3>
 
-          <ReviewItem>
-            <div style={{ width: '100%' }}>
-              {data && Object.keys(data)?.length > 0 && (
-                <Grid>
-                  {Object.keys(flattenObject(data)).map((key, ix) => {
-                    return (
-                      <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                        <b>{key}</b> : <PreventControlElement value={flattenObject(data)[key]} />
-                      </GridItem>
-                    );
-                  })}
-                </Grid>
-              )}
-            </div>
-          </ReviewItem>
+            <ReviewItem>
+              <div style={{ width: '100%' }}>
+                {data && Object.keys(data)?.length > 0 && (
+                  <Grid>
+                    {Object.keys(flattenObject(data)).map((key, ix) => {
+                      return (
+                        <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
+                          <b>{key}</b> : <PreventControlElement value={flattenObject(data)[key]} />
+                        </GridItem>
+                      );
+                    })}
+                  </Grid>
+                )}
+              </div>
+            </ReviewItem>
+          </div>
+        </GoAPages>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          {step !== 1 ? (
+            <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
+              Previous
+            </GoAButton>
+          ) : (
+            <div></div>
+          )}
+          {step !== null && step < uiSchema.elements?.length + 1 && (
+            <GoAButton type="primary" onClick={() => setPage(step + 1)}>
+              Next
+            </GoAButton>
+          )}
         </div>
-      </GoAPages>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        {step !== 1 ? (
-          <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
-            Previous
-          </GoAButton>
-        ) : (
-          <div></div>
-        )}
-        {step !== null && step < uiSchema.elements?.length + 1 && (
-          <GoAButton type="primary" onClick={() => setPage(step + 1)}>
-            Next
-          </GoAButton>
-        )}
       </div>
-    </div>
+    </Hidden>
   );
 };
 
