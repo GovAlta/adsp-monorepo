@@ -23,6 +23,7 @@ export interface FileRecord extends File {
   deleted: boolean;
   scanned: boolean;
   infected: boolean;
+  digest?: string;
 }
 
 export interface FileCriteria {
