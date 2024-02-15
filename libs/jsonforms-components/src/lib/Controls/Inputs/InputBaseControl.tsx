@@ -23,11 +23,23 @@ export interface WithInput {
   //eslint-disable-next-line
   input: any;
   noLabel?: boolean;
+  keyPressCode?: string;
+}
+export interface WithKeyPressInput {
+  keyPressCode?: string;
 }
 
-export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
+export const keyPressContains = (keyCode: string): boolean => {
+  const keysToTest = ['Backspace', 'Tab', 'Shift'];
+  return keysToTest.includes(keyCode);
+};
+
+type GoAWithInputProps = WithInput & WithKeyPressInput;
+
+export const GoAInputBaseControl = (props: ControlProps & GoAWithInputProps): JSX.Element => {
   // eslint-disable-next-line
-  const { id, description, errors, label, uischema, visible, required, config, input } = props;
+  const { id, description, errors, path, label, uischema, visible, required, config, input, data, keyPressCode } =
+    props;
   const isValid = errors.length === 0;
   const InnerComponent = input;
   let labelToUpdate = '';
@@ -39,6 +51,13 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   }
 
   let modifiedErrors = errors;
+
+  if (required && data !== undefined && data === '' && keyPressCode !== undefined && keyPressContains(keyPressCode)) {
+    modifiedErrors = `${label} is required. `;
+  }
+  if (errors.includes('should have required property')) {
+    modifiedErrors = `${label} is required. `;
+  }
 
   if (errors === 'should be equal to one of the allowed values' && uischema?.options?.enumContext) {
     modifiedErrors = '';
