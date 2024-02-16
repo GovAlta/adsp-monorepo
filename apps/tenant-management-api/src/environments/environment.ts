@@ -16,7 +16,6 @@ export const environment = envalid.cleanEnv(
     MONGO_TLS: envalid.bool({ default: false }),
     PORT: envalid.num({ default: 3333 }),
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access.adsp-dev.gov.ab.ca' }),
-    KEYCLOAK_INTERNAL_ROOT_URL: envalid.str({ default: ' http://access-service:8080' }),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID: envalid.str({ default: 'tenant-realm-admin' }),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET: envalid.str({ default: '' }),
     TENANT_WEB_APP_CLIENT_ID: envalid.str({ default: 'urn:ads:platform:tenant-admin-app' }),
@@ -28,9 +27,9 @@ export const environment = envalid.cleanEnv(
     CLIENT_SECRET: envalid.str({ default: '' }),
     APP_ENVIRONMENT: envalid.str({ default: 'dev' }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
-    DIRECTORY_URL: envalid.str({ default: 'https://directory-service.adsp-dev.gov.ab.ca' }),
+    DIRECTORY_URL: envalid.str({ default: 'https://directory-service.adsp-dev.gov.ab.ca' })
   },
-  {
+    {
     reporter: ({ errors }) => {
       if (Object.keys(errors).length !== 0) {
         console.error(`Invalidated env vars: ${util.inspect(errors)}`);

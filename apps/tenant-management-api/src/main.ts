@@ -83,10 +83,7 @@ async function initializeApp(): Promise<express.Application> {
   app.use(passport.initialize());
   app.use(traceHandler);
 
-  const realmService = createKeycloakRealmService({
-    logger,
-    KEYCLOAK_ROOT_URL: environment.KEYCLOAK_INTERNAL_ROOT_URL,
-  });
+  const realmService = createKeycloakRealmService({ logger, KEYCLOAK_ROOT_URL: environment.KEYCLOAK_ROOT_URL });
   applyTenantMiddleware(app, {
     ...repositories,
     logger,
