@@ -1,4 +1,4 @@
-import { Renderers } from '@abgov/jsonforms-components';
+import { GoARenderers } from '@abgov/jsonforms-components';
 import { GoAIconButton } from '@abgov/react-components-new';
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -23,8 +23,6 @@ import { LoadingIndicator } from '../components/LoadingIndicator';
 import CommentsViewer from './CommentsViewer';
 import { DraftForm } from '../components/DraftForm';
 import { SubmittedForm } from '../components/SubmittedForm';
-
-const renderer = new Renderers();
 
 const SavingIndicator = styled.span`
   display: flex;
