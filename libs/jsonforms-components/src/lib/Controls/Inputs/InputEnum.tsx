@@ -7,7 +7,8 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '@jsonforms/material-renderers';
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
-import { JsonFormContextInstance } from '../../Context';
+
+import { addDataByOptions, getData } from '../../Context';
 
 type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
@@ -26,12 +27,12 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
 
   useEffect(() => {
     if (dataKey && url) {
-      JsonFormContextInstance.addDataByOptions(dataKey, url, location, type, values);
+      addDataByOptions(dataKey, url, location, type, values);
     }
   }, [url, location, type, values, dataKey]);
 
-  if (dataKey && JsonFormContextInstance.getData(dataKey)) {
-    const newData = JsonFormContextInstance.getData(dataKey);
+  if (dataKey && getData(dataKey)) {
+    const newData = getData(dataKey) as any[];
 
     enumData = newData;
   }
