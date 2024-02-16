@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
 import { Hidden } from '@mui/material';
 import { KeyPressPathPair, WithKeyPressInput } from './type';
-
 export type GoAInputType =
   | 'text'
   | 'password'
@@ -25,6 +24,7 @@ export interface WithInput {
   input: any;
   noLabel?: boolean;
   //eslint-disable-next-line
+  //This can be used by any data we need to passedin to the base control
   additionalData?: any;
 }
 
@@ -36,7 +36,6 @@ export const keyPressContains = (keyCode: KeyPressPathPair): boolean => {
 type GoAWithInputProps = WithInput & WithKeyPressInput;
 
 export const GoAInputBaseControl = (props: ControlProps & GoAWithInputProps): JSX.Element => {
-  // eslint-disable-next-line
   const { id, description, schema, errors, additionalData, path, label, uischema, visible, required, input, data } =
     props;
   const isValid = errors.length === 0;
@@ -52,10 +51,13 @@ export const GoAInputBaseControl = (props: ControlProps & GoAWithInputProps): JS
   let modifiedErrors = errors;
 
   if (required && (errors.includes('should have required property') || data === '')) {
-    modifiedErrors = `${label} is required. `;
+    modifiedErrors = `${labelToUpdate} is required. `;
   }
   if (required && (schema.type === 'integer' || schema.type === 'number') && isNaN(+additionalData)) {
-    modifiedErrors = `${label} is required. `;
+    modifiedErrors = `${labelToUpdate} is required. `;
+  }
+  if (required && schema.type === 'boolean' && data === false) {
+    modifiedErrors = `${labelToUpdate} is required. `;
   }
 
   if (errors === 'should be equal to one of the allowed values' && uischema?.options?.enumContext) {

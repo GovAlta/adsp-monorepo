@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInput } from '@abgov/react-components-new';
 import { KeyPressPathPair, WithInputProps, WithKeyPressInput, WithRequiredProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoAInputBaseControl, keyPressContains } from './InputBaseControl';
+import { GoAInputBaseControl } from './InputBaseControl';
 
 type GoAInputTextProps = CellProps & WithClassname & WithInputProps & WithRequiredProps & WithKeyPressInput;
 
-const isGoAError = (props: GoAInputTextProps, keyPressCode: KeyPressPathPair) => {
+export const isGoAError = (props: GoAInputTextProps, keyPressCode: KeyPressPathPair) => {
   const { data, errors, required, path } = props;
   if (!required) return false;
 
@@ -29,6 +29,7 @@ const isGoAError = (props: GoAInputTextProps, keyPressCode: KeyPressPathPair) =>
 };
 
 let keyPressCode: KeyPressPathPair = { keyPressCode: '', path: '' };
+
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, errors, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
@@ -47,20 +48,24 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name: string, value: string) => {
-        handleChange(path, value);
+        if (keyPressCode.keyPressCode !== 'Tab' && keyPressCode.keyPressCode !== 'Shift') {
+          handleChange(path, value);
+        }
       }}
       onKeyPress={(name: string, value: string, key: string) => {
         // Need this to pass down what keypress was done and the control id, so that we can detect
         // what key presses were done to what control for simple validation.
         keyPressCode = { keyPressCode: key, path: props.path };
 
-        handleChange(path, value);
+        if (keyPressCode.keyPressCode !== 'Tab' && keyPressCode.keyPressCode !== 'Shift') {
+          handleChange(path, value);
+        }
       }}
     />
   );
 };
 
-export const GoATextControl = (props: ControlProps) => (
+export const GoATextControl = (props: ControlProps & WithKeyPressInput) => (
   <GoAInputBaseControl {...props} keyPressCode={keyPressCode} input={GoAInputText} />
 );
 

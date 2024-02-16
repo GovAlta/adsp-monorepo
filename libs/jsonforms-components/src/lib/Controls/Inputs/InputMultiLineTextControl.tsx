@@ -10,11 +10,13 @@ import {
   optionIs,
 } from '@jsonforms/core';
 import { GoATextArea } from '@abgov/react-components-new';
-import { WithInputProps } from './type';
+import { KeyPressPathPair, WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { isGoAError } from './InputTextControl';
 type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
+let keyPressCode: KeyPressPathPair = { keyPressCode: '', path: '' };
 export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
@@ -23,6 +25,7 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
 
   return (
     <GoATextArea
+      error={isGoAError(props, keyPressCode)}
       value={data}
       disabled={!enabled}
       placeholder={placeholder}
@@ -31,7 +34,14 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
       width={'100%'}
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
-      onKeyPress={(name: string, value: string) => handleChange(path, value)}
+      onKeyPress={(name: string, value: string, key: string) => {
+        // Need this to pass down what keypress was done and the control id, so that we can detect
+        // what key presses were done to what control for simple validation.
+        keyPressCode = { keyPressCode: key, path: props.path };
+        if (keyPressCode.keyPressCode !== 'Tab' && keyPressCode.keyPressCode !== 'Shift') {
+          handleChange(path, value);
+        }
+      }}
       // eslint-disable-next-line
       onChange={() => {}}
     />

@@ -7,6 +7,7 @@ import { GoAInputBaseControl } from './InputBaseControl';
 
 export const BooleanComponent = ({
   data,
+  errors,
   visible,
   enabled,
   uischema,
@@ -36,6 +37,7 @@ export const BooleanComponent = ({
   }
   return (
     <GoACheckbox
+      error={errors.length > 0 || (data === false && required)}
       testId={`${path}-checkbox-test-id`}
       disabled={!enabled}
       text={text}

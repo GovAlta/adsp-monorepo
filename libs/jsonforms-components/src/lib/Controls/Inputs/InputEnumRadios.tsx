@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith, optionIs, and } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
@@ -22,7 +22,9 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
       value={data}
       disabled={!enabled}
       {...appliedUiSchemaOptions}
-      onChange={(name: string, value: string) => handleChange(path, value)}
+      onChange={(name: string, value: string) => {
+        handleChange(path, value);
+      }}
     >
       {enumData.map((value) => {
         return <GoARadioItem name={value} value={`${value}`} label={value} {...appliedUiSchemaOptions} />;

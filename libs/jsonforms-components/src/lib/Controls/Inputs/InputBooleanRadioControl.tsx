@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
@@ -12,6 +12,7 @@ export const BooleanRadioComponent = ({
   uischema,
   handleChange,
   path,
+  errors,
   config,
   label,
   description,
@@ -23,15 +24,19 @@ export const BooleanRadioComponent = ({
   const TrueDescription = description || appliedUiSchemaOptions?.descriptionForTrue;
   const FalseDescription = description || appliedUiSchemaOptions?.descriptionForFalse;
   const BaseTestId = appliedUiSchemaOptions?.testId || `${path}-boolean-radio-jsonform`;
+  const [isTouched, setIsTouched] = useState<boolean>(false);
+  //console.log(`IsTouched ${label} = ${isTouched}`);
 
   return (
     <Hidden xsUp={!visible}>
       <GoARadioGroup
+        error={errors.length > 0}
         name={`${label}`}
         value={data === true ? TrueValue : data === false ? FalseValue : null}
         disabled={!enabled}
         testId={BaseTestId}
         onChange={(_name, value) => {
+          setIsTouched(true);
           if (value === TrueValue) {
             handleChange(path, true);
           }
