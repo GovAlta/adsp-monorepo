@@ -1,41 +1,43 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInput } from '@abgov/react-components-new';
-import { WithInputProps, WithRequiredProps } from './type';
+import { KeyPressPathPair, WithInputProps, WithKeyPressInput, WithRequiredProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoAInputBaseControl, WithKeyPressInput } from './InputBaseControl';
+import { GoAInputBaseControl, keyPressContains } from './InputBaseControl';
 
 type GoAInputTextProps = CellProps & WithClassname & WithInputProps & WithRequiredProps & WithKeyPressInput;
 
-export const isGoAError = (props: GoAInputTextProps) => {
-  const { errors, data, required } = props;
+const isGoAError = (props: GoAInputTextProps, keyPressCode: KeyPressPathPair) => {
+  const { data, errors, required, path } = props;
+  if (!required) return false;
+
   let isError = false;
 
-  if (required && data === undefined && errors.length === 0) {
+  if (data === undefined && errors.length === 0 && keyPressCode.path === path) {
     isError = false;
-  } else if (required && data !== undefined && errors.length === 0) {
+  } else if (data !== undefined && errors.length === 0 && keyPressCode.path !== path) {
     isError = false;
-  } else {
+  } else if (data !== undefined && errors.length > 0 && keyPressCode.path !== path) {
     isError = true;
   }
-  if (required && data !== undefined && data === '') {
+
+  if ((data !== undefined && data === '') || errors.length > 0) {
     isError = true;
   }
 
   return isError;
 };
 
-let keyPressCode = '';
-
+let keyPressCode: KeyPressPathPair = { keyPressCode: '', path: '' };
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, errors, config, id, enabled, uischema, isValid, required, path, handleChange, schema, label } = props;
+  const { data, errors, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
 
   return (
     <GoAInput
-      error={isGoAError(props)}
+      error={isGoAError(props, keyPressCode)}
       type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
       disabled={!enabled}
       value={data}
@@ -48,7 +50,10 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
         handleChange(path, value);
       }}
       onKeyPress={(name: string, value: string, key: string) => {
-        keyPressCode = key;
+        // Need this to pass down what keypress was done and the control id, so that we can detect
+        // what key presses were done to what control for simple validation.
+        keyPressCode = { keyPressCode: key, path: props.path };
+
         handleChange(path, value);
       }}
     />

@@ -12,7 +12,7 @@ import { JsonFormContextInstance } from '../../Context';
 type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
-  const { data, id, enabled, schema, path, handleChange, options, config, label, uischema } = props;
+  const { data, id, enabled, schema, errors, path, handleChange, options, config, label, uischema } = props;
   let enumData = schema?.enum || [];
 
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
@@ -38,6 +38,7 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
 
   return (
     <GoADropdown
+      error={errors.length > 0}
       name={`${label}`}
       value={data}
       disabled={!enabled}

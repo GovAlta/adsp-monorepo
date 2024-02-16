@@ -6,21 +6,31 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 type GoAInputIntegerProps = CellProps & WithClassname & WithInputProps;
 
+let additionalData: number;
 export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
+  const { data, config, id, enabled, uischema, isValid, errors, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const InputValue = data ? data : 0;
+  const inputValue = data ? data : 0;
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
   const MinValue = clonedSchema.min ? clonedSchema.min : 0;
   const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
+  const getValueToValidate = () => {
+    if (data === undefined) {
+      return inputValue;
+    }
+    return data;
+  };
+
+  additionalData = getValueToValidate();
   return (
     <GoAInputNumber
+      error={errors.length > 0}
       width="100%"
       disabled={!enabled}
-      value={InputValue}
+      value={inputValue}
       step={StepValue}
       min={MinValue}
       max={MaxValue}
@@ -32,7 +42,9 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   );
 };
 
-export const GoAIntegerControl = (props: ControlProps) => <GoAInputBaseControl {...props} input={GoAInputInteger} />;
+export const GoAIntegerControl = (props: ControlProps) => (
+  <GoAInputBaseControl {...props} additionalData={additionalData} input={GoAInputInteger} />
+);
 
 export const GoAIntegerControlTester: RankedTester = rankWith(2, isIntegerControl);
 export const GoAInputIntegerControl = withJsonFormsControlProps(GoAIntegerControl);

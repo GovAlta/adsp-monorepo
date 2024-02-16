@@ -3,6 +3,7 @@ import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
 import { Hidden } from '@mui/material';
+import { KeyPressPathPair, WithKeyPressInput } from './type';
 
 export type GoAInputType =
   | 'text'
@@ -23,22 +24,20 @@ export interface WithInput {
   //eslint-disable-next-line
   input: any;
   noLabel?: boolean;
-  keyPressCode?: string;
-}
-export interface WithKeyPressInput {
-  keyPressCode?: string;
+  //eslint-disable-next-line
+  additionalData?: any;
 }
 
-export const keyPressContains = (keyCode: string): boolean => {
-  const keysToTest = ['Backspace', 'Tab', 'Shift'];
-  return keysToTest.includes(keyCode);
+export const keyPressContains = (keyCode: KeyPressPathPair): boolean => {
+  const keysToTest = ['Tab', 'Shift'];
+  return keysToTest.includes(keyCode.keyPressCode);
 };
 
 type GoAWithInputProps = WithInput & WithKeyPressInput;
 
 export const GoAInputBaseControl = (props: ControlProps & GoAWithInputProps): JSX.Element => {
   // eslint-disable-next-line
-  const { id, description, errors, path, label, uischema, visible, required, config, input, data, keyPressCode } =
+  const { id, description, schema, errors, additionalData, path, label, uischema, visible, required, input, data } =
     props;
   const isValid = errors.length === 0;
   const InnerComponent = input;
@@ -52,10 +51,10 @@ export const GoAInputBaseControl = (props: ControlProps & GoAWithInputProps): JS
 
   let modifiedErrors = errors;
 
-  if (required && data !== undefined && data === '' && keyPressCode !== undefined && keyPressContains(keyPressCode)) {
+  if (required && (errors.includes('should have required property') || data === '')) {
     modifiedErrors = `${label} is required. `;
   }
-  if (errors.includes('should have required property')) {
+  if (required && (schema.type === 'integer' || schema.type === 'number') && isNaN(+additionalData)) {
     modifiedErrors = `${label} is required. `;
   }
 
