@@ -31,6 +31,7 @@ import {
   UpdateLoginSuccess,
 } from './actions';
 
+import { KeycloakApi } from '@store/access/api';
 import { CredentialRefresh, SessionLoginSuccess, UpdateIndicator, SetSessionExpired } from '@store/session/actions';
 import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
@@ -223,19 +224,24 @@ export function* tenantLogout(): SagaIterator {
 
 export function* fetchRealmRoles(): SagaIterator {
   try {
-    const realmRoles = yield select((state: RootState) => state.tenant?.realmRoles);
-    if (realmRoles) return;
+    const { config, session, tenant }: RootState = yield select();
 
-    const state: RootState = yield select();
+    if (tenant?.realmRoles) return;
+
     yield put(
       UpdateIndicator({
         show: true,
         message: 'Loading...',
       })
     );
+
+    const baseUrl = config.keycloakApi.url;
+    const realm = session.realm;
+
     const token = yield call(getAccessToken);
-    const api = new TenantApi(state.config.tenantApi, token);
-    const roles = yield call([api, api.fetchRealmRoles]);
+    const api = new KeycloakApi(baseUrl, realm, token);
+    const roles = yield call([api, api.getRoles]);
+
     yield put(FetchRealmRolesSuccess(roles));
     yield put(
       UpdateIndicator({
