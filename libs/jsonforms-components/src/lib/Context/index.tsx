@@ -13,19 +13,16 @@ export interface AllData {
 }
 
 export function addDataByUrl(key: string, url: string, processDataFunction: (url: string) => string[], token?: string) {
-  let header = { 'Content-Type': 'application/json' } as AxiosRequestConfig<unknown>;
+  let header = {} as AxiosRequestConfig<unknown>;
 
   if (token) {
     header = { ...header, ...{ Authorization: `Bearer ${token}` } };
   }
 
-  axios
-    .get(url, header)
-    .then((response) => {
-      const processedData = processDataFunction(response.data);
-      enumValues.set(key, () => processedData);
-    })
-    .catch((e) => console.log('Error: ' + JSON.stringify(e)));
+  axios.get(url, header).then((response) => {
+    const processedData = processDataFunction(response.data);
+    enumValues.set(key, () => processedData);
+  });
 }
 
 export function addDataByOptions(key: string, url: string, location: string[], type: string, values: string[]) {
