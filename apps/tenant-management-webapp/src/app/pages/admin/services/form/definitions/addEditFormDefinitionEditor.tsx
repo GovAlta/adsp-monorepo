@@ -3,7 +3,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
 import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { Renderers } from '@abgov/jsonforms-components';
+import { ContextProvider, GoARenderers, getAllData } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
@@ -66,9 +66,6 @@ import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
 import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
-import { JsonFormContextInstance } from '@abgov/jsonforms-components';
-
-const { jsonFormContext, baseEnumerator } = JsonFormContextInstance;
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -119,8 +116,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(DownloadFileService(file));
   };
 
-  const renderer = new Renderers();
-
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const monaco = useMonaco();
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
@@ -166,8 +161,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     setSelectFile(file);
     setShowFileDeleteConfirmation(true);
   };
-
-  JsonFormContextInstance.setFileManagement(fileList, uploadFile, downloadFile, deleteFile);
 
   useEffect(() => {
     if (monaco) {
@@ -411,6 +404,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
     return value;
   };
+
+  const conditionalUiSchema = UiSchemaBounced !== '{}' ? { uischema: JSON.parse(UiSchemaBounced) } : {};
 
   return (
     <FormEditor>
@@ -740,34 +735,29 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <FormPreviewScrollPane>
-                    <jsonFormContext.Provider value={baseEnumerator}>
+                    <ContextProvider
+                      fileManagement={{
+                        fileList: fileList,
+                        uploadFile: uploadFile,
+                        downloadFile: downloadFile,
+                        deleteFile: deleteFile,
+                      }}
+                    >
                       <GoAFormItem error={error} label="">
                         <ErrorBoundary>
-                          {UiSchemaBounced !== '{}' ? (
-                            <JsonForms
-                              ajv={ajv}
-                              schema={JSON.parse(dataSchemaBounced)}
-                              uischema={JSON.parse(UiSchemaBounced)}
-                              data={data}
-                              validationMode={'ValidateAndShow'}
-                              renderers={renderer.GoARenderers}
-                              cells={vanillaCells}
-                              onChange={({ data }) => setData(data)}
-                            />
-                          ) : (
-                            <JsonForms
-                              ajv={ajv}
-                              schema={JSON.parse(dataSchemaBounced)}
-                              data={data}
-                              validationMode={'ValidateAndShow'}
-                              renderers={renderer.GoARenderers}
-                              cells={vanillaCells}
-                              onChange={({ data }) => setData(data)}
-                            />
-                          )}
+                          <JsonForms
+                            {...conditionalUiSchema}
+                            ajv={ajv}
+                            schema={JSON.parse(dataSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
                         </ErrorBoundary>
                       </GoAFormItem>
-                    </jsonFormContext.Provider>
+                    </ContextProvider>
                   </FormPreviewScrollPane>
                 </div>
               </Tab>
