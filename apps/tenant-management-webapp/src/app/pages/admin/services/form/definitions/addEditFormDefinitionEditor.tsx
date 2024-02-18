@@ -3,7 +3,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
 import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { Renderers } from '@abgov/jsonforms-components';
+import { ContextProvider, GoARenderers, getAllData } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
@@ -13,7 +13,7 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
-
+import { FileItem } from '@store/file/models';
 import {
   TextLoadingIndicator,
   FlexRow,
@@ -54,7 +54,7 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { PageIndicator } from '@components/Indicator';
 import { ErrorBoundary } from '@components/ErrorBoundary';
-import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
+import { isValidJSONSchemaCheck, ajv } from '@lib/validation/checkInput';
 import DataTable from '@components/DataTable';
 import { DispositionItems } from './dispositionItems';
 import { DeleteModal } from '@components/DeleteModal';
@@ -65,13 +65,14 @@ import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
 
-import { UploadFileService, DownloadFileService } from '@store/file/actions';
 import { FetchFileTypeService } from '@store/file/actions';
-import { convertDataSchemaToSuggestion, determineCurrentPath } from '@lib/autoComplete';
+
 import { JsonFormContextInstance } from '@abgov/jsonforms-components';
 
-const { jsonFormContext, baseEnumerator } = JsonFormContextInstance;
+import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
+import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 
+const { jsonFormContext, baseEnumerator } = JsonFormContextInstance;
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
   const tempNext = JSON.parse(JSON.stringify(next));
@@ -102,7 +103,7 @@ const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const fileList = useSelector((state: RootState) => {
-    return state?.fileService.latestFile;
+    return state?.fileService.newFileList;
   });
 
   const dispatch = useDispatch();
@@ -121,10 +122,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(DownloadFileService(file));
   };
 
-  JsonFormContextInstance.setFileManagement(fileList, uploadFile, downloadFile);
-
-  const renderer = new Renderers();
-
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const monaco = useMonaco();
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
@@ -137,6 +134,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
+  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
+  const [selectedFile, setSelectFile] = useState<FileItem>(null);
   const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
@@ -163,6 +162,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dataSchemaJSON: null,
     dataSchemaJSONSchema: null,
   });
+
+  const deleteFile = (file) => {
+    setSelectFile(file);
+    setShowFileDeleteConfirmation(true);
+  };
 
   useEffect(() => {
     if (monaco) {
@@ -416,6 +420,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
     return value;
   };
+
+  const conditionalUiSchema = UiSchemaBounced !== '{}' ? { uischema: JSON.parse(UiSchemaBounced) } : {};
 
   return (
     <FormEditor>
@@ -745,32 +751,29 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <FormPreviewScrollPane>
-                    <jsonFormContext.Provider value={baseEnumerator}>
+                    <ContextProvider
+                      fileManagement={{
+                        fileList: fileList,
+                        uploadFile: uploadFile,
+                        downloadFile: downloadFile,
+                        deleteFile: deleteFile,
+                      }}
+                    >
                       <GoAFormItem error={error} label="">
                         <ErrorBoundary>
-                          {UiSchemaBounced !== '{}' ? (
-                            <JsonForms
-                              schema={JSON.parse(dataSchemaBounced)}
-                              uischema={JSON.parse(UiSchemaBounced)}
-                              data={data}
-                              validationMode={'ValidateAndShow'}
-                              renderers={renderer.GoARenderers}
-                              cells={vanillaCells}
-                              onChange={({ data }) => setData(data)}
-                            />
-                          ) : (
-                            <JsonForms
-                              schema={JSON.parse(dataSchemaBounced)}
-                              data={data}
-                              validationMode={'ValidateAndShow'}
-                              renderers={renderer.GoARenderers}
-                              cells={vanillaCells}
-                              onChange={({ data }) => setData(data)}
-                            />
-                          )}
+                          <JsonForms
+                            {...conditionalUiSchema}
+                            ajv={ajv}
+                            schema={JSON.parse(dataSchemaBounced)}
+                            data={data}
+                            validationMode={'ValidateAndShow'}
+                            renderers={GoARenderers}
+                            cells={vanillaCells}
+                            onChange={({ data }) => setData(data)}
+                          />
                         </ErrorBoundary>
                       </GoAFormItem>
-                    </jsonFormContext.Provider>
+                    </ContextProvider>
                   </FormPreviewScrollPane>
                 </div>
               </Tab>
@@ -833,6 +836,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           tempDefinition.dispositionStates = tempDefinition.dispositionStates.filter((s) => s !== null);
           setDefinition(tempDefinition);
           setSelectedDeleteDispositionIndex(null);
+        }}
+      />
+
+      <DeleteModal
+        isOpen={showFileDeleteConfirmation}
+        title="Delete file"
+        content={`Delete file ${selectedFile?.filename} ?`}
+        onCancel={() => setShowFileDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowFileDeleteConfirmation(false);
+          dispatch(DeleteFileService(selectedFile?.id));
         }}
       />
       <AddEditDispositionModal
