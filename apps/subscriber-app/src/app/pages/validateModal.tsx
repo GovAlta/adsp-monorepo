@@ -55,12 +55,10 @@ export const ValidateModal: FC<Props> = ({ isOpen, title, onClose, testId, onVal
   ];
 
   if (codeEmailExists || emailValidated) {
-    console.log('emailpush');
     buttons = buttons.filter((item) => item?.value !== 'email');
   }
 
   if (codeSMSExists || smsValidated || noSms) {
-    console.log('sms');
     buttons = buttons.filter((item) => item?.value !== 'SMS');
   }
 
