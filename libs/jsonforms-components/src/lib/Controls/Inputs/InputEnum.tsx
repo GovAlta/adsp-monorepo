@@ -14,7 +14,7 @@ type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInput
 
 export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
   const { data, id, enabled, schema, path, handleChange, options, config, label, uischema } = props;
-  let enumData = schema?.enum || [];
+  let enumData: unknown[] = schema?.enum || [];
 
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
 
@@ -32,7 +32,7 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
   }, [url, location, type, values, dataKey]);
 
   if (dataKey && getData(dataKey)) {
-    const newData = getData(dataKey) as any[];
+    const newData = getData(dataKey) as unknown[];
 
     enumData = newData;
   }

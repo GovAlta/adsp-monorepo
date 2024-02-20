@@ -3,8 +3,7 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2018,
-    "sourceType": "module",
-    "project": "./tsconfig.base.json"
+    "sourceType": "module"
   },
   "ignorePatterns": [],
   "plugins": ["@typescript-eslint", "@nx"],
@@ -41,6 +40,12 @@
   },
   "overrides": [
     {
+      "files": ["*.ts", "*.tsx"],
+      "parserOptions": {
+        "project": "./tsconfig.base.json"
+      }
+    },
+    {
       "files": "*.json",
       "parser": "jsonc-eslint-parser",
       "rules": {}
@@ -49,6 +54,9 @@
       "files": ["*.tsx"],
       "rules": {
         "@typescript-eslint/no-unused-vars": "off"
+      },
+      "parserOptions": {
+        "project": "./tsconfig.base.json"
       }
     }
   ]
