@@ -8,12 +8,14 @@ import {
   FetchTenantAction,
   FetchTenantSucceededService,
   FETCH_TENANT,
+  UpdateLoginSuccess
 } from './actions';
 
 import { SessionLoginSuccess } from '@store/session/actions';
 import { createKeycloakAuth, keycloakAuth } from '@lib/keycloak';
 import { convertToSession } from '@lib/session';
 import { SagaIterator } from '@redux-saga/core';
+import { isUUID, getRealm } from './realmUtils';
 
 import axios from 'axios';
 
@@ -83,7 +85,16 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
     const loginRedirectUrl = `${window.location.origin}/subscriptions`;
     const keycloakConfig = state.config.keycloakApi;
     createKeycloakAuth({ ...keycloakConfig }, loginRedirectUrl);
-    keycloakAuth.loginByIdP('core', action.payload);
+
+   const tenantApi = yield select((state: RootState) => state.config.tenantApi);
+    const realm = isUUID(action.payload) ? action.payload : yield call(getRealm, action.payload, tenantApi?.host);
+
+    if (!realm) {
+      yield put(UpdateLoginSuccess(false));
+      return;
+    }
+
+    keycloakAuth.loginByIdP('core', realm);
   } catch (err) {
     yield put(ErrorNotification({ message: 'Failed to check keycloak SSO', error: err }));
   }
