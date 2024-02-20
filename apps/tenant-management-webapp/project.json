@@ -34,8 +34,7 @@
         "extractCss": true,
         "styles": [],
         "webpackConfig": "apps/tenant-management-webapp/webpack.config.js",
-        "babelUpwardRootMode": true,
-        "isolatedConfig": true
+        "babelUpwardRootMode": true
       },
       "configurations": {
         "production": {
