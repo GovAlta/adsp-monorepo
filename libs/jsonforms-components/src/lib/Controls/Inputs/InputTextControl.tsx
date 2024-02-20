@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInput } from '@abgov/react-components-new';
 import { KeyPressPathPair, WithInputProps, WithKeyPressInput, WithRequiredProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { DirtyData, FormInputContext, FormInputContextProvider } from '../../Context/FormContext/formInputContext';
 
 type GoAInputTextProps = CellProps & WithClassname & WithInputProps & WithRequiredProps & WithKeyPressInput;
 
@@ -35,6 +36,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, errors, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
+  const ctx = useContext(FormInputContext);
 
   return (
     <GoAInput
@@ -48,6 +50,8 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name: string, value: string) => {
+        ctx.isDirty = true;
+        ctx.formInputPath = 'thang';
         if (keyPressCode.keyPressCode !== 'Tab' && keyPressCode.keyPressCode !== 'Shift') {
           handleChange(path, value);
         }
@@ -56,7 +60,10 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
         // Need this to pass down what keypress was done and the control id, so that we can detect
         // what key presses were done to what control for simple validation.
         keyPressCode = { keyPressCode: key, path: props.path };
+        ctx.isDirty = true;
+        ctx.formInputPath = 'thang';
 
+        //setFormInputPath('abc');
         if (keyPressCode.keyPressCode !== 'Tab' && keyPressCode.keyPressCode !== 'Shift') {
           handleChange(path, value);
         }
@@ -65,9 +72,13 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   );
 };
 
-export const GoATextControl = (props: ControlProps & WithKeyPressInput) => (
-  <GoAInputBaseControl {...props} keyPressCode={keyPressCode} input={GoAInputText} />
-);
+export const GoATextControl = (props: ControlProps & WithKeyPressInput) => {
+  return (
+    <FormInputContextProvider>
+      <GoAInputBaseControl {...props} keyPressCode={keyPressCode} input={GoAInputText} />
+    </FormInputContextProvider>
+  );
+};
 
 export const GoATextControlTester: RankedTester = rankWith(1, isStringControl);
 export const GoAInputTextControl = withJsonFormsControlProps(GoATextControl);

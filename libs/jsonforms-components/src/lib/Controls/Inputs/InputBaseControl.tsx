@@ -1,9 +1,10 @@
-import React, { useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
 import { Hidden } from '@mui/material';
 import { KeyPressPathPair, WithKeyPressInput } from './type';
+//import { FormInputContext, FormInputContextProvider } from '../../Context/FormContext/formInputContext';
 export type GoAInputType =
   | 'text'
   | 'password'
@@ -35,6 +36,17 @@ export const keyPressContains = (keyCode: KeyPressPathPair): boolean => {
 
 type GoAWithInputProps = WithInput & WithKeyPressInput;
 
+const DirtyData = {
+  isDirty: false,
+  // eslint-disable-next-line
+  setIsDirty: (dirty: boolean) => {},
+  formInputPath: '',
+  // eslint-disable-next-line
+  setFormInputPath: (path: string) => {},
+};
+
+export const FormInputContext = createContext(DirtyData);
+
 export const GoAInputBaseControl = (props: ControlProps & GoAWithInputProps): JSX.Element => {
   const { id, description, schema, errors, additionalData, path, label, uischema, visible, required, input, data } =
     props;
@@ -42,12 +54,16 @@ export const GoAInputBaseControl = (props: ControlProps & GoAWithInputProps): JS
   const InnerComponent = input;
   let labelToUpdate = '';
 
+  //
+  const ctx = useContext(FormInputContext);
+
   if (controlScopeMatchesLabel(uischema.scope, label)) {
     labelToUpdate = capitalizeFirstLetter(label);
   } else {
     labelToUpdate = label;
   }
 
+  console.log(`isDirty inBase ${JSON.stringify(ctx)}`);
   let modifiedErrors = errors;
 
   if (required && (errors.includes('should have required property') || data === '')) {
