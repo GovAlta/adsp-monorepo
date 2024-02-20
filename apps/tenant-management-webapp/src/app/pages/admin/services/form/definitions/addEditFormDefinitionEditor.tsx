@@ -62,7 +62,7 @@ import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
 import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
-import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
+import { convertDataSchemaToSuggestion, determineCurrentPath } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
@@ -163,11 +163,21 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('json', {
-        triggerCharacters: ['"'],
+        triggerCharacters: ['/', '#'],
         provideCompletionItems: (model, position) => {
-          const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
-          const suggestions = formatEditorSuggestions(dataSchemaSuggestion);
+          const textUntilPosition = model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          });
 
+          const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
+          const currentPath = determineCurrentPath(textUntilPosition);
+
+          const matchedSchemaItem = dataSchemaSuggestion.find((item) => item['label'].trim() === currentPath.trim());
+
+          const suggestions = matchedSchemaItem ? matchedSchemaItem.children : dataSchemaSuggestion;
           return {
             suggestions,
           } as languages.ProviderResult<languages.CompletionList>;
