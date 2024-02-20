@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
+import { JsonFormContext } from '../../Context';
 import { ControlProps } from '@jsonforms/core';
 import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
 import { Hidden } from '@mui/material';
-
 export type GoAInputType =
   | 'text'
   | 'password'
@@ -32,6 +32,13 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const InnerComponent = input;
   let labelToUpdate = '';
 
+  const enumerators = useContext(JsonFormContext);
+
+  const dirtyFunction = enumerators.data.get('dirty');
+  const dirty = dirtyFunction && dirtyFunction();
+
+  const formInputPathFunction = enumerators.data.get('formInputPath');
+  const formInputPath = formInputPathFunction && formInputPathFunction();
   if (controlScopeMatchesLabel(uischema.scope, label)) {
     labelToUpdate = capitalizeFirstLetter(label);
   } else {
@@ -44,6 +51,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     modifiedErrors = '';
   }
 
+  console.log(`InputBaseControl = ${dirty} input path = ${formInputPath}`);
   return (
     <Hidden xsUp={!visible}>
       {required ? (
