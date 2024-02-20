@@ -4,6 +4,7 @@ import { ControlProps } from '@jsonforms/core';
 import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
 import { Hidden } from '@mui/material';
 import { KeyPressPathPair, WithKeyPressInput } from './type';
+import { JsonFormContext } from '../../Context';
 //import { FormInputContext, FormInputContextProvider } from '../../Context/FormContext/formInputContext';
 export type GoAInputType =
   | 'text'
@@ -56,6 +57,10 @@ export const GoAInputBaseControl = (props: ControlProps & GoAWithInputProps): JS
 
   //
   const ctx = useContext(FormInputContext);
+  const enumerators = useContext(JsonFormContext);
+
+  const dirtyFunction = enumerators.data.get('dirty');
+  const dirty = dirtyFunction && dirtyFunction();
 
   if (controlScopeMatchesLabel(uischema.scope, label)) {
     labelToUpdate = capitalizeFirstLetter(label);
@@ -64,6 +69,7 @@ export const GoAInputBaseControl = (props: ControlProps & GoAWithInputProps): JS
   }
 
   console.log(`isDirty inBase ${JSON.stringify(ctx)}`);
+  console.log(`isDirty inBase dirty ${JSON.stringify(dirty)}`);
   let modifiedErrors = errors;
 
   if (required && (errors.includes('should have required property') || data === '')) {

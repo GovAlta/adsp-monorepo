@@ -5,6 +5,7 @@ import { KeyPressPathPair, WithInputProps, WithKeyPressInput, WithRequiredProps 
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { DirtyData, FormInputContext, FormInputContextProvider } from '../../Context/FormContext/formInputContext';
+import { JsonFormContext } from '../../../index';
 
 type GoAInputTextProps = CellProps & WithClassname & WithInputProps & WithRequiredProps & WithKeyPressInput;
 
@@ -37,6 +38,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const ctx = useContext(FormInputContext);
+  const enumerators = useContext(JsonFormContext);
 
   return (
     <GoAInput
@@ -52,6 +54,8 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       onChange={(name: string, value: string) => {
         ctx.isDirty = true;
         ctx.formInputPath = 'thang';
+        enumerators.data.set('dirty', () => ['true']);
+
         if (keyPressCode.keyPressCode !== 'Tab' && keyPressCode.keyPressCode !== 'Shift') {
           handleChange(path, value);
         }
@@ -59,6 +63,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       onKeyPress={(name: string, value: string, key: string) => {
         // Need this to pass down what keypress was done and the control id, so that we can detect
         // what key presses were done to what control for simple validation.
+
         keyPressCode = { keyPressCode: key, path: props.path };
         ctx.isDirty = true;
         ctx.formInputPath = 'thang';
