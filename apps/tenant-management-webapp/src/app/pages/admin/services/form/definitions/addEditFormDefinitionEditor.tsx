@@ -3,7 +3,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
 import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { ContextProvider, GoARenderers, getAllData } from '@abgov/jsonforms-components';
+import { ContextProvider, GoARenderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
@@ -64,15 +64,9 @@ import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 
 import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
-
-import { FetchFileTypeService } from '@store/file/actions';
-
-import { JsonFormContextInstance } from '@abgov/jsonforms-components';
-
 import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
-import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
+import { convertDataSchemaToSuggestion, determineCurrentPath } from '@lib/autoComplete';
 
-const { jsonFormContext, baseEnumerator } = JsonFormContextInstance;
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
   const tempNext = JSON.parse(JSON.stringify(next));
