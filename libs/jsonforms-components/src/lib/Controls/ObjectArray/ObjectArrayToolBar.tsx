@@ -38,7 +38,7 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
           disabled={!enabled}
           testId={`object-array-toolbar-${label}`}
           aria-label={translations.addAriaLabel}
-          onClick={addItem(path, createDefaultValue(schema))}
+          onClick={addItem(path, createDefaultValue(schema, rootSchema))}
         >
           {uischema?.options?.addButtonText || 'Add'}
         </GoAButton>
