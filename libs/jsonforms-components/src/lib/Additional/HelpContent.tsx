@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { Hidden } from '@mui/material';
@@ -37,7 +38,7 @@ export const HelpContentComponent = (props: CustomControlProps): JSX.Element => 
   return (
     <Hidden xsUp={!visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
-        {!uischema.options?.variant && uischema.options?.variant !== 'details' && (
+        {label && !uischema.options?.variant && uischema.options?.variant !== 'details' && (
           <div className="label">
             {label}
             <br />
@@ -45,7 +46,7 @@ export const HelpContentComponent = (props: CustomControlProps): JSX.Element => 
         )}
         {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
         {uischema.options?.variant && uischema.options?.variant === 'details' && (
-          <GoADetails heading={label ? label : ''} mt="xs" mb="xs">
+          <GoADetails heading={label ? label : ''} mt="3xs" mb="3xs">
             {renderHelp()}
             {uischema?.elements && uischema?.elements?.length > 0 && <HelpContents elements={uischema?.elements} />}
           </GoADetails>

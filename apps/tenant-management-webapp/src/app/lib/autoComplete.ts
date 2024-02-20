@@ -277,7 +277,7 @@ export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco): EditorSuggestion[] => {
+export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco, path = '#'): EditorSuggestion[] => {
   const suggestions = [];
   if (schema.properties) {
     for (const property in schema.properties) {
@@ -287,17 +287,21 @@ export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco): Edit
         !Array.isArray(schema.properties[property].properties)
       ) {
         suggestions.push({
-          label: property,
+          label: `${path}/properties/${property}`,
           kind: monaco.languages.CompletionItemKind.Property,
-          insertText: `/properties/${property}`,
+          insertText: `${path}/properties/${property}`,
           detail: 'Property',
-          children: convertDataSchemaToSuggestion(schema.properties[property], monaco),
+          children: convertDataSchemaToSuggestion(
+            schema.properties[property],
+            monaco,
+            `${path}/properties/${property}`
+          ),
         });
       } else {
         suggestions.push({
-          label: property,
+          label: `${path}/properties/${property}`,
           kind: monaco.languages.CompletionItemKind.Property,
-          insertText: `/properties/${property}`,
+          insertText: `"${path}/properties/${property}"`,
           detail: 'Property',
         });
       }
@@ -306,37 +310,8 @@ export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco): Edit
   return suggestions;
 };
 
-const flattenEditorSuggestions = (suggestions: EditorSuggestion[], parentInsertText = ''): EditorSuggestion[] => {
-  let flattened: EditorSuggestion[] = [];
-
-  for (const suggestion of suggestions) {
-    // Concatenate parent insertText with current insertText
-    const combinedInsertText = parentInsertText + suggestion.insertText;
-
-    // Create a new object with combined insertText
-    const flattenedSuggestion: EditorSuggestion = {
-      ...suggestion,
-      insertText: combinedInsertText,
-    };
-
-    // Add the current suggestion to the flattened list
-    if (!suggestion.children) {
-      flattened.push(flattenedSuggestion);
-    }
-    // If there are children, recursively flatten them
-    if (suggestion.children && suggestion.children.length > 0) {
-      const childSuggestions = flattenEditorSuggestions(suggestion.children, combinedInsertText);
-      flattened = flattened.concat(childSuggestions);
-    }
-  }
-
-  return flattened;
-};
-
-export const formatEditorSuggestions = (suggestions: EditorSuggestion[]): EditorSuggestion[] => {
-  const flattenedSuggestions: EditorSuggestion[] = flattenEditorSuggestions(suggestions);
-  for (const suggestion of flattenedSuggestions) {
-    suggestion.insertText = `#${suggestion.insertText}`;
-  }
-  return flattenedSuggestions;
+export const determineCurrentPath = (textUntilPosition) => {
+  const lines = textUntilPosition.split('\n');
+  const lastLine = lines[lines.length - 1];
+  return lastLine.split(':')[1].slice(0, -1);
 };

@@ -8,11 +8,9 @@ export const HelpContentDiv = styled.div`
     margin-bottom: 0.5rem;
   }
   ul {
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin: 0.5rem 0 0.5rem 0.5rem;
   }
   .single-line {
-    margin-top: 0.25rem;
-    margin-bottom: 0.5rem;
+    margin: 0.25rem 0 0.25rem 0;
   }
 `;
