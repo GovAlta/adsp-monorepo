@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
-import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { ContextProvider, GoARenderers, getAllData } from '@abgov/jsonforms-components';
-import { JsonForms } from '@jsonforms/react';
+import { ContextProvider } from '@abgov/jsonforms-components';
 import { FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
@@ -53,7 +51,6 @@ import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { PageIndicator } from '@components/Indicator';
-import { ErrorBoundary } from '@components/ErrorBoundary';
 import { isValidJSONSchemaCheck, ajv } from '@lib/validation/checkInput';
 import DataTable from '@components/DataTable';
 import { DispositionItems } from './dispositionItems';
@@ -66,6 +63,7 @@ import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
 import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
+import { JSONFormPreviewer } from './JsonFormPreviewer';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -405,8 +403,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     return value;
   };
 
-  const conditionalUiSchema = UiSchemaBounced !== '{}' ? { uischema: JSON.parse(UiSchemaBounced) } : {};
-
   return (
     <FormEditor>
       {spinner ? (
@@ -744,18 +740,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       }}
                     >
                       <GoAFormItem error={error} label="">
-                        <ErrorBoundary>
-                          <JsonForms
-                            {...conditionalUiSchema}
-                            ajv={ajv}
-                            schema={JSON.parse(dataSchemaBounced)}
-                            data={data}
-                            validationMode={'ValidateAndShow'}
-                            renderers={GoARenderers}
-                            cells={vanillaCells}
-                            onChange={({ data }) => setData(data)}
-                          />
-                        </ErrorBoundary>
+                        <JSONFormPreviewer
+                          uischema={UiSchemaBounced}
+                          schema={dataSchemaBounced}
+                          onChange={({ data }) => {
+                            setData(data);
+                          }}
+                          data={data}
+                        />
                       </GoAFormItem>
                     </ContextProvider>
                   </FormPreviewScrollPane>
