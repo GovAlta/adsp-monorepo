@@ -14,8 +14,8 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const InputValue = data ? data : 0;
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
-  const MinValue = clonedSchema.min ? clonedSchema.min : 0;
-  const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
+  const MinValue = clonedSchema.minimum ? clonedSchema.minimum : 0;
+  const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : 99;
   return (
     <GoAInputNumber
       width="100%"
