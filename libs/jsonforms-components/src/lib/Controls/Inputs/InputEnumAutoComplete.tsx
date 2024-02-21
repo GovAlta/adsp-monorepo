@@ -61,7 +61,7 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
   );
 };
 
-export const numControlAutoComplete = (props: ControlProps & OwnPropsOfEnum & WithOptionLabel & TranslateProps) => {
+const numControlAutoComplete = (props: ControlProps & OwnPropsOfEnum & WithOptionLabel & TranslateProps) => {
   return <GoAInputBaseControl {...props} input={EnumSelectAutoComplete} />;
 };
 
@@ -70,7 +70,4 @@ export const GoAEnumControlAutoCompleteTester: RankedTester = rankWith(
   and(isEnumControl, optionIs('autocomplete', true))
 );
 
-export const GoAEnumAutoCompleteControl = withJsonFormsEnumProps(
-  withTranslateProps(React.memo(numControlAutoComplete)),
-  false
-);
+export const GoAEnumAutoCompleteControl = withJsonFormsEnumProps(withTranslateProps(numControlAutoComplete), true);

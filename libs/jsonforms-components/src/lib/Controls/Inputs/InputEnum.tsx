@@ -64,4 +64,4 @@ export const numControl = (props: ControlProps & OwnPropsOfEnum & WithOptionLabe
 export const GoAEnumControlTester: RankedTester = rankWith(2, isEnumControl);
 
 // HOC order can be reversed with https://github.com/eclipsesource/jsonforms/issues/1987
-export const GoAEnumControl = withJsonFormsEnumProps(withTranslateProps(React.memo(numControl)), false);
+export const GoAEnumControl = withJsonFormsEnumProps(withTranslateProps(numControl), true);

@@ -27,4 +27,4 @@ export const GoAHorizontalLayoutComponent = ({
   return <LayoutRenderer {...childProps} renderers={renderers} cells={cells} />;
 };
 
-export const GoAHorizontalLayout = withJsonFormsLayoutProps(GoAHorizontalLayoutComponent);
+export const GoAHorizontalLayout = withJsonFormsLayoutProps(GoAHorizontalLayoutComponent, true);
