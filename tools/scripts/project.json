@@ -6,24 +6,30 @@
   "generators": {},
   "targets": {
     "build-encodeSecrets": {
-      "executor": "@nrwl/node:webpack",
+      "executor": "@nx/webpack:webpack",
       "options": {
         "outputPath": "dist/tools/scripts/encodeSecrets",
         "main": "tools/scripts/encodeSecrets/index.ts",
         "tsConfig": "tools/tsconfig.scripts.json",
         "assets": [],
-        "buildLibsFromSource": true
+        "buildLibsFromSource": true,
+        "compiler": "tsc",
+        "target": "node",
+        "webpackConfig": "tools/scripts/webpack.config.js"
       },
       "outputs": ["{options.outputPath}"]
     },
     "build-loadDirectoryData": {
-      "executor": "@nrwl/node:webpack",
+      "executor": "@nx/webpack:webpack",
       "options": {
         "outputPath": "dist/tools/scripts/loadDirectoryData",
         "main": "tools/scripts/loadDirectoryData/index.ts",
         "tsConfig": "tools/tsconfig.scripts.json",
         "assets": [],
-        "buildLibsFromSource": true
+        "buildLibsFromSource": true,
+        "compiler": "tsc",
+        "target": "node",
+        "webpackConfig": "tools/scripts/webpack.config.js"
       },
       "outputs": ["{options.outputPath}"]
     },
@@ -42,10 +48,9 @@
       }
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "options": {
-        "jestConfig": "tools/scripts/jest.config.ts",
-        "passWithNoTests": true
+        "jestConfig": "tools/scripts/jest.config.ts"
       },
       "outputs": ["{workspaceRoot}/coverage/tools/scripts"]
     }

@@ -6,7 +6,7 @@
   "generators": {},
   "targets": {
     "build": {
-      "executor": "@nrwl/webpack:webpack",
+      "executor": "@nx/webpack:webpack",
       "options": {
         "outputPath": "dist/apps/tenant-management-webapp",
         "index": "apps/tenant-management-webapp/src/index.html",
@@ -34,8 +34,7 @@
         "extractCss": true,
         "styles": [],
         "webpackConfig": "apps/tenant-management-webapp/webpack.config.js",
-        "babelUpwardRootMode": true,
-        "isolatedConfig": true
+        "babelUpwardRootMode": true
       },
       "configurations": {
         "production": {
@@ -71,7 +70,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@nrwl/webpack:dev-server",
+      "executor": "@nx/webpack:dev-server",
       "options": {
         "buildTarget": "tenant-management-webapp:build",
         "proxyConfig": "apps/tenant-management-webapp/proxy.conf.json"
@@ -87,16 +86,12 @@
       "defaultConfiguration": "development"
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "options": {
-        "lintFilePatterns": ["apps/tenant-management-webapp/**/*.{ts,tsx,js,jsx}"]
-      }
+      "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "options": {
-        "jestConfig": "apps/tenant-management-webapp/jest.config.ts",
-        "passWithNoTests": true
+        "jestConfig": "apps/tenant-management-webapp/jest.config.ts"
       },
       "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-webapp"]
     }

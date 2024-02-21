@@ -34,7 +34,7 @@ export const isScopedPrefixed = (scope: string): boolean => {
   return scopeComponents.length > 1 && scopeComponents[0] === '#';
 };
 
-export const isEmptyObject = (schema: any): boolean => {
+export const isEmptyObject = (schema: object): boolean => {
   return Object.keys(schema).length === 0;
 };
 
