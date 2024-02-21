@@ -43,7 +43,7 @@ jobs:
             echo 'affected-apps<<EOF'
             npx nx show projects --affected --type=app --base=${{ steps.last_successful_commit.outputs.base }})
             echo EOF
-          } >> "$GITHUB_ENV"
+          } >> "$GITHUB_OUTPUT"
 
   stagingRegression:
     runs-on: ubuntu-20.04
