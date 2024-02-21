@@ -38,7 +38,12 @@ jobs:
       - name: Get affected apps
         id: get-affected
         shell: bash
-        run: echo "affected_apps=$(npx nx show projects --affected --type=app --base=${{ steps.last_successful_commit.outputs.base }})" >> $GITHUB_OUTPUT
+        run: |
+          {
+            echo 'affected-apps<<EOF'
+            npx nx show projects --affected --type=app --base=${{ steps.last_successful_commit.outputs.base }})
+            echo EOF
+          } >> "$GITHUB_ENV"
 
   stagingRegression:
     runs-on: ubuntu-20.04
@@ -64,7 +69,7 @@ jobs:
         with:
           app: ${{ matrix.app }}
           environment: staging
-          tags: "@regression and not @ignore"
+          tags: '@regression and not @ignore'
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
@@ -132,7 +137,7 @@ jobs:
         with:
           app: ${{ matrix.app }}
           environment: prod
-          tags: "@smoke-test and not @ignore"
+          tags: '@smoke-test and not @ignore'
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
