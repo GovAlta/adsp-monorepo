@@ -4,6 +4,10 @@ export interface KeycloakApi {
   clientId: string;
 }
 
+export interface TenantApi {
+  host: string;
+}
+
 export interface ServiceUrls {
   eventServiceApiUrl: string;
   notificationServiceUrl: string;
@@ -24,6 +28,7 @@ export interface RecaptchaService {
 }
 export interface ConfigState {
   keycloakApi?: KeycloakApi;
+  tenantApi?: TenantApi;
   serviceUrls?: ServiceUrls;
   recaptchaKey?: string;
   grecaptcha?: RecaptchaService;

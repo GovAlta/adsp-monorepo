@@ -30,8 +30,6 @@ import {
 import {
   MaterialArrayLayout,
   materialArrayLayoutTester,
-  MaterialCategorizationLayout,
-  materialCategorizationTester,
   materialHorizontalLayoutTester,
   materialVerticalLayoutTester,
 } from '@jsonforms/material-renderers';
@@ -84,6 +82,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { addData } from './lib/Context';
 
 import { HelpContent, HelpContentTester } from './lib/Additional';
+import GoAErrorControl, { GoAErrorControlTester } from './lib/Additional/GoAErrorControl';
 
 export * from './lib/Context';
 const countries = ['Argentina', 'Brazil', 'Canada', 'Denmark', 'Egypt', 'France', 'Greece', 'India', 'Japan', 'Kenya'];
@@ -133,12 +132,9 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
     renderer: GoAHorizontalLayout,
   },
   { tester: materialVerticalLayoutTester, renderer: GoAVerticalLayout },
-  {
-    tester: materialCategorizationTester,
-    renderer: MaterialCategorizationLayout,
-  },
   { tester: materialArrayLayoutTester, renderer: MaterialArrayLayout },
   // additional
+  { tester: GoAErrorControlTester, renderer: GoAErrorControl },
   { tester: materialLabelRendererTester, renderer: MaterialLabelRenderer },
   {
     tester: materialListWithDetailTester,

@@ -5,18 +5,14 @@
   "projectType": "library",
   "targets": {
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["libs/stylesheets/scss/**/*.ts"]
-      }
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/libs/stylesheets/scss"],
       "options": {
-        "jestConfig": "libs/stylesheets/scss/jest.config.ts",
-        "passWithNoTests": true
+        "jestConfig": "libs/stylesheets/scss/jest.config.ts"
       }
     }
   },

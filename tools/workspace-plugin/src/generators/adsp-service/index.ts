@@ -9,9 +9,9 @@ import {
   readProjectConfiguration,
   readJsonFile,
   writeJsonFile,
-} from '@nrwl/devkit';
-import { applicationGenerator } from '@nrwl/express';
-import { Linter } from '@nrwl/linter';
+} from '@nx/devkit';
+import { applicationGenerator } from '@nx/express';
+import { Linter } from '@nx/eslint';
 import * as path from 'path';
 import { NormalizedSchema, Schema } from './schema';
 import { addService } from './utils/keycloak';

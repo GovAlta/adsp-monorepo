@@ -25,4 +25,4 @@ export const GoAVerticalLayoutComponent = ({
   return <LayoutRenderer {...childProps} renderers={renderers} cells={cells} />;
 };
 
-export const GoAVerticalLayout = withJsonFormsLayoutProps(GoAVerticalLayoutComponent);
+export const GoAVerticalLayout = withJsonFormsLayoutProps(GoAVerticalLayoutComponent, true);
