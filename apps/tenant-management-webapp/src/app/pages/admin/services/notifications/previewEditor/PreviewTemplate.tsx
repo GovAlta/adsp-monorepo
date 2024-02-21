@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { phoneWrapper } from '../utils';
 import { PreviewContainer, SubjectPreview, BodyPreview, SlackPreview, SMSBodyPreview } from './styled-components';
 import { sanitizeHtml } from '@lib/sanitize';
@@ -9,7 +9,7 @@ interface PreviewTemplateProps {
   contactPhoneNumber?: string;
 }
 
-export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = React.memo(
+export const PreviewTemplate = React.memo<PreviewTemplateProps>(
   ({ subjectPreviewContent, bodyPreviewContent, channel, contactPhoneNumber }) => {
     const channelTitle = `${channel} preview`;
     const EmailPreview = () => {
