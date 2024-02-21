@@ -33,6 +33,7 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
 
         handleChange(path, value);
       }}
+      {...uischema?.options?.componentProps}
     />
   );
 };

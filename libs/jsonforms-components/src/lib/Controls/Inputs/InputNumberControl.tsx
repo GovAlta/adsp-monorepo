@@ -28,6 +28,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name, value) => handleChange(path, value)}
+      {...uischema?.options?.componentProps}
     />
   );
 };
