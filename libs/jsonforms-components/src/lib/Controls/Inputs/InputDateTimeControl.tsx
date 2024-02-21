@@ -23,6 +23,7 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
         value = new Date(value).toISOString();
         handleChange(path, value);
       }}
+      {...uischema?.options?.componentProps}
     />
   );
 };

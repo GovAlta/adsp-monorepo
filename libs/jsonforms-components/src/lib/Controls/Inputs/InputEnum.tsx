@@ -49,6 +49,7 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
       onChange={(name, value) => {
         handleChange(path, value);
       }}
+      {...uischema?.options?.componentProps}
     >
       {enumData?.map((item) => {
         return <GoADropdownItem key={`json-form-dropdown-${item}`} value={`${item}`} label={`${item}`} />;

@@ -13,7 +13,7 @@ const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
 
   return (
     <Hidden xsUp={!visible}>
-      <GoAContainer {...group.options}>
+      <GoAContainer {...group.options} {...uischema?.options?.componentProps}>
         {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
       </GoAContainer>
     </Hidden>

@@ -44,6 +44,7 @@ export const BooleanComponent = ({
       onChange={(name: string, checked: boolean, value: string) => {
         handleChange(path, checked);
       }}
+      {...uischema?.options?.componentProps}
     ></GoACheckbox>
   );
 };
