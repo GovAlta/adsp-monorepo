@@ -80,7 +80,7 @@ export const FormStepper = ({
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const vslidateFormData = (formData: any) => {
+  const vslidateFormData = (formData: Array<UISchemaElement>) => {
     const validate = ajv.compile(schema);
     return validate(formData);
   };
