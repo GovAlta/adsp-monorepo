@@ -42,4 +42,4 @@ runs:
     - id: nx-affected
       name: Set affected-apps
       shell: bash
-      run: echo "affected-apps=$(npx nx affected:apps --plain --base=${{ inputs.affected-base }} | tr "\n" " ")" >> $GITHUB_OUTPUT
+      run: echo "affected-apps=$(npx nx show projects --affected --type=app --base=${{ inputs.affected-base }} | tr "\n" " ")" >> $GITHUB_OUTPUT
