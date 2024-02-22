@@ -5,7 +5,7 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nrwl/webpack:webpack",
+      "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
         "webpackConfig": "apps/verify-service/webpack.config.js",
@@ -28,23 +28,19 @@
       }
     },
     "serve": {
-      "executor": "@nrwl/node:node",
+      "executor": "@nx/js:node",
       "options": {
         "buildTarget": "verify-service:build"
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "options": {
-        "lintFilePatterns": ["apps/verify-service/**/*.ts"]
-      }
+      "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/apps/verify-service"],
       "options": {
-        "jestConfig": "apps/verify-service/jest.config.ts",
-        "passWithNoTests": true
+        "jestConfig": "apps/verify-service/jest.config.ts"
       }
     }
   },

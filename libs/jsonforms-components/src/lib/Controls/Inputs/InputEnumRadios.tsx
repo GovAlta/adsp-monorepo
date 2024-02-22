@@ -23,6 +23,7 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
       disabled={!enabled}
       {...appliedUiSchemaOptions}
       onChange={(name: string, value: string) => handleChange(path, value)}
+      {...uischema?.options?.componentProps}
     >
       {enumData.map((value) => {
         return <GoARadioItem name={value} value={`${value}`} label={value} {...appliedUiSchemaOptions} />;
@@ -35,5 +36,5 @@ export const EnumRadioControl = (props: ControlProps & OwnPropsOfEnum & WithOpti
   return <GoAInputBaseControl {...props} input={RadioGroup} />;
 };
 
-export const GoAEnumRadioGroupControl = withJsonFormsEnumProps(withTranslateProps(React.memo(EnumRadioControl)), false);
+export const GoAEnumRadioGroupControl = withJsonFormsEnumProps(withTranslateProps(EnumRadioControl), true);
 export const GoARadioGroupControlTester: RankedTester = rankWith(20, and(isEnumControl, optionIs('format', 'radio')));

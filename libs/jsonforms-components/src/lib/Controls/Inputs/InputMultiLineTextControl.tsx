@@ -34,6 +34,7 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
       onKeyPress={(name: string, value: string) => handleChange(path, value)}
       // eslint-disable-next-line
       onChange={() => {}}
+      {...uischema?.options?.componentProps}
     />
   );
 };

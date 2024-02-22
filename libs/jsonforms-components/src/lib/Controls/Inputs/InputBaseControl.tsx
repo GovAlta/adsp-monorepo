@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
@@ -38,12 +38,18 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     labelToUpdate = label;
   }
 
+  let modifiedErrors = errors;
+
+  if (errors === 'should be equal to one of the allowed values' && uischema?.options?.enumContext) {
+    modifiedErrors = '';
+  }
+
   return (
     <Hidden xsUp={!visible}>
       {required ? (
         <GoAFormItem
           requirement="required"
-          error={errors}
+          error={modifiedErrors}
           label={props?.noLabel === true ? '' : labelToUpdate}
           helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
         >
@@ -51,7 +57,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
         </GoAFormItem>
       ) : (
         <GoAFormItem
-          error={errors}
+          error={modifiedErrors}
           label={props?.noLabel === true ? '' : labelToUpdate}
           helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
         >

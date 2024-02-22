@@ -16,7 +16,7 @@ export const BooleanRadioComponent = ({
   label,
   description,
 }: ControlProps) => {
-  const appliedUiSchemaOptions = { ...config, ...uischema.options };
+  const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const TrueValue = appliedUiSchemaOptions?.textForTrue || 'Yes';
   const FalseValue = appliedUiSchemaOptions?.textForFalse || 'No';
   const EnableDescription = appliedUiSchemaOptions?.enableDescription === true;
@@ -40,6 +40,7 @@ export const BooleanRadioComponent = ({
             handleChange(path, false);
           }
         }}
+        {...uischema?.options?.componentProps}
       >
         <GoARadioItem
           value={TrueValue}

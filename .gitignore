@@ -64,3 +64,5 @@ libs/*/bin
 libs/*/obj
 
 coveragereport/*
+
+.nx/cache

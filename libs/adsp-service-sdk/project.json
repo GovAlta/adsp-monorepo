@@ -5,21 +5,17 @@
   "projectType": "library",
   "targets": {
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "options": {
-        "lintFilePatterns": ["libs/adsp-service-sdk/**/*.ts"]
-      }
+      "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/libs/adsp-service-sdk"],
       "options": {
-        "jestConfig": "libs/adsp-service-sdk/jest.config.ts",
-        "passWithNoTests": true
+        "jestConfig": "libs/adsp-service-sdk/jest.config.ts"
       }
     },
     "build": {
-      "executor": "@nrwl/js:tsc",
+      "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/adsp-service-sdk",

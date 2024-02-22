@@ -30,7 +30,10 @@ export interface ValidInput {
   onFailureMessage: string;
 }
 
-const ajv = new Ajv();
+export const ajv = new Ajv({ allErrors: true, verbose: true });
+
+ajv.addFormat('file-urn', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
+
 /**
  * Given a list of validators and name of the input field, report on its cleanliness
  */
@@ -171,11 +174,9 @@ const nonAction: ValidationAction = { onFailure: () => {} };
 export const jsonSchemaCheck = (schema: Record<string, unknown>, value: unknown): boolean | PromiseLike<any> => {
   const ajv = new Ajv();
   const draft4SchemaId = 'http://json-schema.org/draft-04/schema#';
-
   if (schema?.$schema === draft4SchemaId) {
     schemaMigration.draft7(schema);
   }
-
   ajv.compile(schema);
   return ajv.validate(schema, value);
 };

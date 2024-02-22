@@ -154,18 +154,27 @@ class KeycloakAuth {
 
       if (idpFromUrl) {
         idp = idpFromUrl;
-        redirectUri += `?kc_idp_hint=${idp}`;
-        if (code) {
-          redirectUri += `&code=${code}`;
+
+        let paramCount = 0;
+        if (idp && idp !== 'null') {
+          redirectUri += `?kc_idp_hint=${idp}`;
+          paramCount += 1;
         }
-        if (smscode) {
-          redirectUri += `&smscode=${smscode}`;
+
+        if (code && code !== 'null') {
+          redirectUri = redirectUri + (paramCount > 0 ? '&' : '?');
+          redirectUri += `&code=${code}`;
+          paramCount += 1;
+        }
+        if (smscode && smscode !== 'null') {
+          redirectUri = redirectUri + (paramCount > 0 ? '&' : '?');
+          redirectUri += `smscode=${smscode}`;
         }
       } else {
-        if (code) {
+        if (code && code !== 'null') {
           redirectUri += `?code=${code}`;
         }
-        if (smscode) {
+        if (smscode && smscode !== 'null') {
           redirectUri += `&smscode=${smscode}`;
         }
       }

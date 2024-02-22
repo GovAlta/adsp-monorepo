@@ -7,6 +7,8 @@ export const TENANT_LOGOUT = 'TENANT_LOGOUT';
 export const FETCH_TENANT = 'tenant/fetch';
 export const FETCH_TENANT_SUCCEEDED = 'tenant/fetch-success';
 
+export const UPDATE_LOGIN_SUCCESS = 'UPDATE_LOGIN_SUCCESS';
+
 export interface KeycloakCheckSSOAction {
   type: typeof KEYCLOAK_CHECK_SSO;
   payload: string;
@@ -27,6 +29,12 @@ interface KeycloakRefreshTokenAction {
   payload: string;
 }
 
+export interface UpdateLoginSuccessAction {
+  type: typeof UPDATE_LOGIN_SUCCESS;
+  payload?: boolean;
+}
+
+
 interface TenantLogoutAction {
   type: typeof TENANT_LOGOUT;
 }
@@ -36,7 +44,8 @@ export type ActionType =
   | TenantLogoutAction
   | KeycloakCheckSSOAction
   | FetchTenantSucceededAction
-  | FetchTenantAction;
+  | FetchTenantAction
+  | UpdateLoginSuccessAction;
 
 interface FetchTenantSucceededAction {
   type: typeof FETCH_TENANT_SUCCEEDED;
@@ -70,6 +79,11 @@ export const KeycloakCheckSSOWithLogout = (realm: string): KeycloakCheckSSOWithL
 export const KeycloakRefreshToken = (realm?: string): KeycloakRefreshTokenAction => ({
   type: 'KEYCLOAK_REFRESH_TOKEN',
   payload: realm,
+});
+
+export const UpdateLoginSuccess = (value?: boolean): UpdateLoginSuccessAction => ({
+  type: UPDATE_LOGIN_SUCCESS,
+  payload: value,
 });
 
 export const TenantLogout = (): TenantLogoutAction => ({

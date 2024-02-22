@@ -40,7 +40,7 @@ export interface LayoutRendererProps extends OwnPropsOfRenderer {
   direction: 'row' | 'column';
 }
 
-const LayoutRendererComponent = ({
+export const LayoutRenderer = ({
   elements,
   schema,
   path,
@@ -66,4 +66,3 @@ const LayoutRendererComponent = ({
     }
   }
 };
-export const LayoutRenderer = React.memo(LayoutRendererComponent);

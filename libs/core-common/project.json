@@ -6,16 +6,12 @@
   "generators": {},
   "targets": {
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "options": {
-        "lintFilePatterns": ["libs/core-common/**/*.ts"]
-      }
+      "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "options": {
-        "jestConfig": "libs/core-common/jest.config.ts",
-        "passWithNoTests": true
+        "jestConfig": "libs/core-common/jest.config.ts"
       },
       "outputs": ["{workspaceRoot}/coverage/libs/core-common"]
     }

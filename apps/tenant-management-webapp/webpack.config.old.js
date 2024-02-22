@@ -1,7 +1,4 @@
-const base = require('@nrwl/react/plugins/webpack');
-
 module.exports = (config) => {
-  base(config);
   return {
     ...config,
     resolve: {

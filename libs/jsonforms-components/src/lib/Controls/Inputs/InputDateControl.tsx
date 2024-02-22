@@ -6,11 +6,20 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 
+const isValidDate = function (date: Date | string) {
+  if (date instanceof Date && isFinite(date.getTime())) {
+    return true;
+  } else if (typeof date === 'string' && date.length > 0) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
 export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
-  const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
 
   return (
     <GoAInputDate
@@ -20,9 +29,11 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
       onChange={(name, value) => {
-        value = new Date(value).toISOString().substring(0, 10);
+        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
+
         handleChange(path, value);
       }}
+      {...uischema?.options?.componentProps}
     />
   );
 };

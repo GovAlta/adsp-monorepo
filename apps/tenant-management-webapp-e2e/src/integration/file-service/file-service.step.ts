@@ -399,6 +399,7 @@ When(
               .find('li')
               .contains(classification)
               .click({ force: true });
+            cy.wait(1000);
           }
         });
     }
@@ -614,7 +615,7 @@ When('the user clicks Save button on file type page', function () {
 When('the user clicks Save button on Add file type modal', function () {
   cy.wait(1000); // Wait for the button to be enabled
   fileServiceObj.addFileTypeModalSaveButton().shadow().find('button').click({ force: true });
-  cy.wait(2000); // Wait the file type list to refresh
+  cy.wait(4000); // Wait the file type list to refresh
 });
 
 Then('the user views file type page of {string}', function (name) {
@@ -655,6 +656,7 @@ When(
         case 'Delete':
           cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
           fileServiceObj.fileTypeDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+          cy.wait(2000); // The delete modal showing takes time
           break;
         default:
           expect(button).to.be.oneOf(['Edit', 'Delete']);

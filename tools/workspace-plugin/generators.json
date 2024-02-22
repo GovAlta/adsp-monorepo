@@ -1,0 +1,9 @@
+{
+  "generators": {
+    "adsp-service": {
+      "implementation": "./src/generators/adsp-service",
+      "schema": "./src/generators/adsp-service/schema.json",
+      "description": "Generator adsp-service"
+    }
+  }
+}

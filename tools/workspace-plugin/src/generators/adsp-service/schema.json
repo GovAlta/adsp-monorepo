@@ -23,7 +23,5 @@
       "x-prompt": "What port should it run on locally? (e.g. 3333)"
     }
   },
-  "required": [
-    "name"
-  ]
+  "required": ["name"]
 }

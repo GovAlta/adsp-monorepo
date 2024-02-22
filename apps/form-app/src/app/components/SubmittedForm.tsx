@@ -1,12 +1,10 @@
-import { Renderers } from '@abgov/jsonforms-components';
+import { GoARenderers } from '@abgov/jsonforms-components';
 import { GoACallout } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
 import moment from 'moment';
 import { FunctionComponent } from 'react';
 import { Form, FormDefinition } from '../state';
-
-const renderer = new Renderers();
 
 interface ApplicationStatusProps {
   definition: FormDefinition;
@@ -29,7 +27,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
           uischema={definition.uiSchema}
           data={data}
           validationMode="NoValidation"
-          renderers={renderer.GoARenderers}
+          renderers={GoARenderers}
         />
       </GridItem>
       <GridItem md={1} />

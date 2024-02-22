@@ -70,10 +70,25 @@ export const FormStepper = ({
 }: CategorizationStepperLayoutRendererProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = usePersistentState(0);
+  const [isFormValid, setIsFormValid] = useState(false);
   const categories = useMemo(
     () => uiSchema.elements.filter((category) => isVisible(category, data, undefined, ajv)),
     [uiSchema, data, ajv]
   );
+  const handleSubmit = () => {
+    console.log('submitted', data);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const vslidateFormData = (formData: Array<UISchemaElement>) => {
+    const validate = ajv.compile(schema);
+    return validate(formData);
+  };
+
+  useEffect(() => {
+    const valid = vslidateFormData(data);
+    setIsFormValid(valid);
+  }, [data, vslidateFormData]);
 
   if (categories?.length < 1) {
     // eslint-disable-next-line
@@ -123,9 +138,9 @@ export const FormStepper = ({
             const count = flattedStep.filter((e) => {
               return e?.toString().substring(0, 12) === '#/properties';
             }).length;
-            return <GoAFormStep key={index} text={`${category.label}`} />;
+            return <GoAFormStep key={index} text={`${category.label}`} status="incomplete" />;
           })}
-          <GoAFormStep text="Review" />
+          <GoAFormStep text="Review" status="incomplete" />
         </GoAFormStepper>
         <GoAPages current={step} mb="xl">
           {categories?.map((step, index) => {
@@ -145,7 +160,7 @@ export const FormStepper = ({
                     {Object.keys(flattenObject(data)).map((key, ix) => {
                       return (
                         <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                          <b>{key}</b> : <PreventControlElement value={flattenObject(data)[key]} />
+                          <b>{key}</b> : <PreventControlElement key={ix} value={flattenObject(data)[key]} />
                         </GridItem>
                       );
                     })}
@@ -163,10 +178,17 @@ export const FormStepper = ({
           ) : (
             <div></div>
           )}
-          {step !== null && step < uiSchema.elements?.length + 1 && (
+          {step !== null && step < uiSchema.elements?.length && (
             <GoAButton type="primary" onClick={() => setPage(step + 1)}>
               Next
             </GoAButton>
+          )}
+          {step === uiSchema.elements.length && (
+            <div>
+              <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid}>
+                Submit
+              </GoAButton>
+            </div>
           )}
         </div>
       </div>
@@ -201,23 +223,24 @@ const PreventControlElement = (props: PreventControlElement): JSX.Element => {
   if (Array.isArray(props?.value)) {
     return (
       <div>
-        {props.value.map((item) => {
+        {props.value.map((item, index) => {
           return (
-            <ReviewListWrapper>
-              {Object.keys(item).map((key) => {
-                if (typeof item[key] === 'string') {
+            <ReviewListWrapper key={index}>
+              {item &&
+                Object.keys(item).map((key, innerIndex) => {
+                  if (typeof item[key] === 'string') {
+                    return (
+                      <ReviewListItem key={innerIndex}>
+                        {key}: {item[key]}
+                      </ReviewListItem>
+                    );
+                  }
                   return (
-                    <ReviewListItem>
-                      {key}: {item[key]}
+                    <ReviewListItem key={innerIndex}>
+                      {key}: {String(item[key])}
                     </ReviewListItem>
                   );
-                }
-                return (
-                  <ReviewListItem>
-                    {key}: {String(item[key])}
-                  </ReviewListItem>
-                );
-              })}
+                })}
             </ReviewListWrapper>
           );
         })}

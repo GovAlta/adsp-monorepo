@@ -1,11 +1,9 @@
-import { Renderers } from '@abgov/jsonforms-components';
+import { GoARenderers } from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent } from 'react';
 import { Form, FormDefinition, ValidationError } from '../state';
-
-const renderer = new Renderers();
 
 interface DraftFormProps {
   definition: FormDefinition;
@@ -39,7 +37,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
           uischema={definition.uiSchema}
           data={data}
           validationMode="ValidateAndShow"
-          renderers={renderer.GoARenderers}
+          renderers={GoARenderers}
           onChange={onChange}
         />
         <GoAButtonGroup alignment="end">
