@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default {
   displayName: 'directory-service',
-  preset: '../../jest-cover.preset.js',
+  preset: '../../jest.preset.js',
   globals: {},
   testEnvironment: 'node',
   transform: {
