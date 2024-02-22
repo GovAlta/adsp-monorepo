@@ -4,6 +4,7 @@ import { GoAInputTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { isValidDate } from '../../util/stringUtils';
 type GoAInputTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
@@ -20,12 +21,17 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       width="100%"
       disabled={!enabled}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onChange={(name: string, value: string) => handleChange(path, value)}
+      onChange={(name: string, value: string) => {
+        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
+        handleChange(path, value);
+      }}
       onBlur={(name: string, value: string) => {
+        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
         handleChange(path, value);
       }}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
+          value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
           handleChange(path, value);
         }
       }}

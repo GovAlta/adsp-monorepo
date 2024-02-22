@@ -1,4 +1,5 @@
 import { ControlProps } from '@jsonforms/core';
+
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
  * @param words
@@ -25,6 +26,12 @@ export const controlScopeMatchesLabel = (scope: string, label: string) => {
   return false;
 };
 
+/**
+ * Gets the label text in sentence case
+ * @param scope
+ * @param label
+ * @returns
+ */
 export const getLabelText = (scope: string, label: string): string => {
   let labelToUpdate: string = '';
 
@@ -36,7 +43,7 @@ export const getLabelText = (scope: string, label: string): string => {
 
   return labelToUpdate;
 };
-// This const is defined in checkInput.ts configuration
+// This message is thrown when the isNotEmpty  is triggered by Ajv checkInput.ts configuration
 export const FIELD_REQUIRED = 'data should pass "isNotEmpty" keyword validation';
 
 /**
@@ -68,6 +75,9 @@ export const getErrorsToDisplay = (props: ControlProps) => {
   return '';
 };
 
+/**
+ * Check if the date is a valid date/time
+ */
 export const isValidDate = function (date: Date | string) {
   if (date instanceof Date && isFinite(date.getTime())) {
     return true;
