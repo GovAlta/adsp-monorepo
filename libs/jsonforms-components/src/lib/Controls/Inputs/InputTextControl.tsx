@@ -28,7 +28,10 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       // maxLength={appliedUiSchemaOptions?.maxLength}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onChange={(name: string, value: string) => handleChange(path, value)}
+      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
+      // If you use it onChange along with keyPress event it will cause a
+      // side effect that causes the validation to render when it shouldnt.
+      onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
           handleChange(path, value);

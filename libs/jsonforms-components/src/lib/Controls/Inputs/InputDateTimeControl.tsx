@@ -23,15 +23,19 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
       value={data ? new Date(data).toISOString() : ''}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
-      onChange={(name, value) => {
-        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
-        handleChange(path, value);
-      }}
+      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
+      // If you use it onChange along with keyPress event it will cause a
+      // side effect that causes the validation to render when it shouldnt.
+      onChange={(name, value) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
           value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
           handleChange(path, value);
         }
+      }}
+      onBlur={(name: string, value: string) => {
+        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
+        handleChange(path, value);
       }}
       {...uischema?.options?.componentProps}
     />

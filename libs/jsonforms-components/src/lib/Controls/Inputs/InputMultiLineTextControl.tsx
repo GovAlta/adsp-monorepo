@@ -40,7 +40,9 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
           handleChange(path, value);
         }
       }}
-      // eslint-disable-next-line
+      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
+      // If you use it onChange along with keyPress event it will cause a
+      // side effect that causes the validation to render when it shouldnt.
       onChange={() => {}}
       {...uischema?.options?.componentProps}
     />
