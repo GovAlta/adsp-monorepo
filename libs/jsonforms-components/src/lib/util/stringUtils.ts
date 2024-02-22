@@ -1,3 +1,5 @@
+import { ControlProps } from '@jsonforms/core';
+
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
  * @param words
@@ -22,4 +24,67 @@ export const controlScopeMatchesLabel = (scope: string, label: string) => {
     return true;
   }
   return false;
+};
+
+/**
+ * Gets the label text in sentence case
+ * @param scope
+ * @param label
+ * @returns
+ */
+export const getLabelText = (scope: string, label: string): string => {
+  let labelToUpdate: string = '';
+
+  if (controlScopeMatchesLabel(scope, label || '')) {
+    labelToUpdate = capitalizeFirstLetter(label || '');
+  } else {
+    labelToUpdate = label || '';
+  }
+
+  return labelToUpdate;
+};
+// This message is thrown when the isNotEmpty  is triggered by Ajv checkInput.ts configuration
+export const FIELD_REQUIRED = 'data should pass "isNotEmpty" keyword validation';
+
+/**
+ * Gets the error to display when there are validation messages.
+ * @param props
+ * @returns error message
+ */
+export const getErrorsToDisplay = (props: ControlProps) => {
+  const { data, errors: ajvErrors, required, label, uischema, schema } = props;
+  const labelToUpdate = getLabelText(uischema.scope, label);
+  const controlErrors = '';
+
+  if (required) {
+    if (data === undefined) return '';
+
+    if (data.toString().length > 0 && ajvErrors.length > 0) return ajvErrors;
+    if (
+      controlErrors.includes(FIELD_REQUIRED) ||
+      data === '' ||
+      ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))
+    ) {
+      return `${labelToUpdate} is required`;
+    }
+
+    if (controlErrors.length > 0) return controlErrors;
+
+    return ajvErrors;
+  }
+
+  return ajvErrors.length > 0 ? ajvErrors : '';
+};
+
+/**
+ * Check if the date is a valid date/time
+ */
+export const isValidDate = function (date: Date | string) {
+  if (date instanceof Date && isFinite(date.getTime())) {
+    return true;
+  } else if (typeof date === 'string' && date.length > 0) {
+    return true;
+  } else {
+    return false;
+  }
 };
