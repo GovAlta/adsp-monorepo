@@ -82,7 +82,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { addData } from './lib/Context';
 
 import { HelpContent, HelpContentTester } from './lib/Additional';
-// import GoAErrorControl, { GoAErrorControlTester } from './lib/Additional/GoAErrorControl';
+import GoAErrorControl, { GoAErrorControlTester } from './lib/Additional/GoAErrorControl';
 
 export * from './lib/Context';
 const countries = ['Argentina', 'Brazil', 'Canada', 'Denmark', 'Egypt', 'France', 'Greece', 'India', 'Japan', 'Kenya'];
@@ -134,7 +134,7 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: materialVerticalLayoutTester, renderer: GoAVerticalLayout },
   { tester: materialArrayLayoutTester, renderer: MaterialArrayLayout },
   // additional
-  // { tester: GoAErrorControlTester, renderer: GoAErrorControl },
+  { tester: GoAErrorControlTester, renderer: GoAErrorControl },
   // { tester: materialLabelRendererTester, renderer: MaterialLabelRenderer },
   {
     tester: materialListWithDetailTester,
