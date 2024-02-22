@@ -4,16 +4,20 @@ import { GoAInputDateTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { getErrorsToDisplay } from '../../util/stringUtils';
 type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
+  const { data, config, id, enabled, uischema, isValid, path, errors, handleChange, schema, label } = props;
+
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
+  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
 
   return (
     <GoAInputDateTime
+      error={errorsFormInput.length > 0}
       width="100%"
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data ? new Date(data).toISOString() : ''}

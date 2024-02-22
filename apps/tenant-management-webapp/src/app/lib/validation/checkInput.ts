@@ -31,6 +31,15 @@ export interface ValidInput {
 }
 
 export const ajv = new Ajv({ allErrors: true, verbose: true });
+export const FIELD_REQUIRED = 'Field_Required';
+
+ajv.addKeyword('isNotEmpty', {
+  validate: function (schema, data: string) {
+    return typeof data === 'string' && data.trim() !== '';
+  },
+  // This will get checked again in our GoA JsonForm controls to render user friendly error message
+  errors: true,
+});
 
 ajv.addFormat('file-urn', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
 

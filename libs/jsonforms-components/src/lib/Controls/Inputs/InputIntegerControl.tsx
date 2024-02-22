@@ -4,6 +4,7 @@ import { GoAInputNumber } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { getErrorsToDisplay } from '../../util/stringUtils';
 type GoAInputIntegerProps = CellProps & WithClassname & WithInputProps;
 
 export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
@@ -16,8 +17,11 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
   const MinValue = clonedSchema.min ? clonedSchema.min : 0;
   const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
+  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+
   return (
     <GoAInputNumber
+      error={errorsFormInput.length > 0}
       width="100%"
       disabled={!enabled}
       value={InputValue}

@@ -21,6 +21,14 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       disabled={!enabled}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onChange={(name: string, value: string) => handleChange(path, value)}
+      onBlur={(name: string, value: string) => {
+        handleChange(path, value);
+      }}
+      onKeyPress={(name: string, value: string, key: string) => {
+        if (!(key === 'Tab' || key === 'Shift')) {
+          handleChange(path, value);
+        }
+      }}
     />
   );
 };
