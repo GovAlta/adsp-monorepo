@@ -31,7 +31,6 @@ export interface ValidInput {
 }
 
 export const ajv = new Ajv({ allErrors: true, verbose: true });
-export const FIELD_REQUIRED = 'Field_Required';
 
 ajv.addKeyword('isNotEmpty', {
   validate: function (schema, data: string) {

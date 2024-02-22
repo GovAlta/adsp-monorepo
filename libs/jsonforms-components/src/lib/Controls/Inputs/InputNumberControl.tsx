@@ -9,8 +9,7 @@ type GoAInputNumberProps = CellProps & WithClassname & WithInputProps;
 
 export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, errors, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
-  const { required } = props as ControlProps;
+  const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';

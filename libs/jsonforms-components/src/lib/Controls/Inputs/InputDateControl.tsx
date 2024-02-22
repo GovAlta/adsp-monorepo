@@ -7,16 +7,6 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { getErrorsToDisplay, getLabelText, isValidDate } from '../../util/stringUtils';
 type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 
-// const isValidDate = function (date: Date | string) {
-//   if (date instanceof Date && isFinite(date.getTime())) {
-//     return true;
-//   } else if (typeof date === 'string' && date.length > 0) {
-//     return true;
-//   } else {
-//     return false;
-//   }
-// };
-
 export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, config, id, enabled, uischema, errors, isValid, path, handleChange, schema, label } = props;

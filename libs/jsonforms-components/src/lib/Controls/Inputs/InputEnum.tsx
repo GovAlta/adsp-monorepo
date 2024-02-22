@@ -5,7 +5,7 @@ import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '@jsonforms/material-renderers';
-import { GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 
 import { addDataByOptions, getData } from '../../Context';
