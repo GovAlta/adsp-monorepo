@@ -1,36 +1,26 @@
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
 import * as context from 'express-http-context';
 import TraceParent = require('traceparent');
 import type { Logger } from 'winston';
-
-const TRACE_PARENT_CTX = 'adsp_traceparent';
-const TRACE_PARENT_HEADER = 'traceparent';
-
-export function getContextTrace(): TraceParent {
-  let trace: TraceParent = null;
-  const value = context.get(TRACE_PARENT_CTX);
-  if (value instanceof TraceParent) {
-    trace = value;
-  }
-
-  return trace;
-}
+import { TRACE_PARENT_CTX, TRACE_PARENT_HEADER, getContextTrace } from './context';
 
 interface TraceHandlerOptions {
   logger: Logger;
   sampleRate: number;
 }
 
+export function traceRequestInterceptor(config: InternalAxiosRequestConfig) {
+  const trace = getContextTrace();
+  if (trace && !config.headers?.has(TRACE_PARENT_HEADER)) {
+    config.headers?.set(TRACE_PARENT_HEADER, trace.toString());
+  }
+  return config;
+}
+
 export function createTraceHandler({ logger, sampleRate }: TraceHandlerOptions): RequestHandler {
   // Use an axios interceptor to add the traceparent header if not already present.
-  axios.interceptors.request.use((config) => {
-    const trace = getContextTrace();
-    if (trace && !config.headers?.has(TRACE_PARENT_HEADER)) {
-      config.headers?.set(TRACE_PARENT_HEADER, trace.toString());
-    }
-    return config;
-  });
+  axios.interceptors.request.use(traceRequestInterceptor);
 
   return function (req, res, next) {
     context.middleware(req, res, (err: unknown) => {
