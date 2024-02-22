@@ -1,1 +1,2 @@
-export { getContextTrace, createTraceHandler } from './handler';
+export { getContextTrace } from './context';
+export { createTraceHandler } from './handler';

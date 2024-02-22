@@ -1,10 +1,11 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { Logger } from 'winston';
 import { adspId } from '../utils';
 import { EventServiceImpl } from './eventService';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
+const { AxiosError } = jest.requireActual('axios');
 
 describe('EventService', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -150,6 +151,43 @@ describe('EventService', () => {
     );
 
     axiosMock.post.mockRejectedValue(new Error('oh noes!'));
+
+    const event = {
+      tenantId,
+      name: 'test-event',
+      timestamp: new Date(),
+      payload: {},
+    };
+
+    await service.send(event);
+
+    expect(axiosMock.post).toHaveBeenCalledTimes(1);
+  });
+
+  it('can handle send error and log axios response', async () => {
+    const service = new EventServiceImpl(
+      true,
+      logger,
+      directoryMock,
+      tokenProviderMock,
+      adspId`urn:ads:platform:test-service`,
+      [
+        {
+          name: 'test-event',
+          description: 'signalled when unit testing',
+          payloadSchema: {
+            type: 'object',
+          },
+        },
+      ]
+    );
+
+    axiosMock.isAxiosError.mockReturnValueOnce(true);
+    axiosMock.post.mockRejectedValue(
+      new AxiosError('oh noes!', '400', null, null, {
+        data: { errorMessage: 'Oh noes! with details' },
+      } as unknown as AxiosResponse)
+    );
 
     const event = {
       tenantId,
