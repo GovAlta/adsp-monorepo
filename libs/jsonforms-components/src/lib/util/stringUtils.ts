@@ -72,7 +72,8 @@ export const getErrorsToDisplay = (props: ControlProps) => {
 
     return ajvErrors;
   }
-  return '';
+
+  return ajvErrors.length > 0 ? ajvErrors : '';
 };
 
 /**
