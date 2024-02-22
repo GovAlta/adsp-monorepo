@@ -135,7 +135,7 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: materialArrayLayoutTester, renderer: MaterialArrayLayout },
   // additional
   { tester: GoAErrorControlTester, renderer: GoAErrorControl },
-  { tester: materialLabelRendererTester, renderer: MaterialLabelRenderer },
+  // { tester: materialLabelRendererTester, renderer: MaterialLabelRenderer },
   {
     tester: materialListWithDetailTester,
     renderer: MaterialListWithDetailRenderer,

@@ -44,6 +44,7 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
         value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
         handleChange(path, value);
       }}
+      {...uischema?.options?.componentProps}
     />
   );
 };

@@ -35,15 +35,15 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
       width={'100%'}
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
-      onChange={(name: string, value: string) => {
-        //Dont use onChange event, use keyPress
-        handleChange(path, value);
-      }}
+
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
           handleChange(path, value);
         }
       }}
+      // eslint-disable-next-line
+      onChange={() => {}}
+      {...uischema?.options?.componentProps}
     />
   );
 };

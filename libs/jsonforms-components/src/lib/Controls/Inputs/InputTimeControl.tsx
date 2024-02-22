@@ -29,6 +29,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
           handleChange(path, value);
         }
       }}
+      {...uischema?.options?.componentProps}
     />
   );
 };

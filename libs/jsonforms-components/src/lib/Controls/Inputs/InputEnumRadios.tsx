@@ -26,6 +26,7 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
       disabled={!enabled}
       {...appliedUiSchemaOptions}
       onChange={(name: string, value: string) => handleChange(path, value)}
+      {...uischema?.options?.componentProps}
     >
       {enumData.map((value) => {
         return <GoARadioItem name={value} value={`${value}`} label={value} {...appliedUiSchemaOptions} />;

@@ -38,12 +38,7 @@ jobs:
       - name: Get affected apps
         id: get-affected
         shell: bash
-        run: |
-          {
-            echo 'affected-apps<<EOF'
-            npx nx show projects --affected --type=app --base=${{ steps.last_successful_commit.outputs.base }})
-            echo EOF
-          } >> "$GITHUB_ENV"
+        run: echo "affected_apps=$(npx nx show projects --affected --type=app --base=${{ steps.last_successful_commit.outputs.base }} | tr "\n" " ")" >> $GITHUB_OUTPUT
 
   stagingRegression:
     runs-on: ubuntu-20.04

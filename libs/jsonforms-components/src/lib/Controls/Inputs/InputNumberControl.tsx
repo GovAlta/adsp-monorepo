@@ -33,7 +33,6 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       width="100%"
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onChange={(name, value) => {}}
       onKeyPress={(name: string, value: number, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
           handleChange(path, value);
@@ -42,6 +41,8 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       onBlur={(name: string, value: number) => {
         handleChange(name, value);
       }}
+      onChange={(name, value) => handleChange(path, value)}
+      {...uischema?.options?.componentProps}
     />
   );
 };

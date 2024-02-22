@@ -28,9 +28,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       // maxLength={appliedUiSchemaOptions?.maxLength}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onChange={(name: string, value: string) => {
-        //Dont use onChange event, use keyPress instead.
-      }}
+      onChange={(name: string, value: string) => handleChange(path, value)}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
           handleChange(path, value);
@@ -39,6 +37,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       onBlur={(name: string, value: string) => {
         handleChange(path, value);
       }}
+      {...uischema?.options?.componentProps}
     />
   );
 };

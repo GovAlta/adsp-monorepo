@@ -70,10 +70,25 @@ export const FormStepper = ({
 }: CategorizationStepperLayoutRendererProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = usePersistentState(0);
+  const [isFormValid, setIsFormValid] = useState(false);
   const categories = useMemo(
     () => uiSchema.elements.filter((category) => isVisible(category, data, undefined, ajv)),
     [uiSchema, data, ajv]
   );
+  const handleSubmit = () => {
+    console.log('submitted', data);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const vslidateFormData = (formData: Array<UISchemaElement>) => {
+    const validate = ajv.compile(schema);
+    return validate(formData);
+  };
+
+  useEffect(() => {
+    const valid = vslidateFormData(data);
+    setIsFormValid(valid);
+  }, [data, vslidateFormData]);
 
   if (categories?.length < 1) {
     // eslint-disable-next-line
@@ -163,10 +178,17 @@ export const FormStepper = ({
           ) : (
             <div></div>
           )}
-          {step !== null && step < uiSchema.elements?.length + 1 && (
+          {step !== null && step < uiSchema.elements?.length && (
             <GoAButton type="primary" onClick={() => setPage(step + 1)}>
               Next
             </GoAButton>
+          )}
+          {step === uiSchema.elements.length && (
+            <div>
+              <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid}>
+                Submit
+              </GoAButton>
+            </div>
           )}
         </div>
       </div>
