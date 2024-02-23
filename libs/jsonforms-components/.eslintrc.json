@@ -26,7 +26,7 @@
               "@abgov/react-components-new"
             ],
             "ignoredFiles": [
-              "rollup.config.js"
+              "libs/jsonforms-components/rollup.config.js"
             ]
           }
         ]
