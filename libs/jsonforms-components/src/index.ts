@@ -12,12 +12,6 @@ import {
   materialEnumArrayRendererTester,
 } from '@jsonforms/material-renderers';
 import {
-  MaterialLabelRenderer,
-  materialLabelRendererTester,
-  MaterialListWithDetailRenderer,
-  materialListWithDetailTester,
-} from '@jsonforms/material-renderers';
-import {
   MaterialAnyOfStringOrEnumControl,
   materialAnyOfStringOrEnumControlTester,
   MaterialOneOfEnumControl,
@@ -135,11 +129,6 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: materialArrayLayoutTester, renderer: MaterialArrayLayout },
   // additional
   { tester: GoAErrorControlTester, renderer: GoAErrorControl },
-  // { tester: materialLabelRendererTester, renderer: MaterialLabelRenderer },
-  {
-    tester: materialListWithDetailTester,
-    renderer: MaterialListWithDetailRenderer,
-  },
   {
     tester: materialAnyOfStringOrEnumControlTester,
     renderer: MaterialAnyOfStringOrEnumControl,
