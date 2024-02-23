@@ -19,7 +19,7 @@ import {
   isEmptyObject,
   isKnownType,
   isLayoutType,
-  isListWithDetails,
+  isListWithDetail,
   isMissingProperties,
   isNullSchema,
   isScopedPrefixed,
@@ -59,8 +59,14 @@ const isValidUiSchema = (uiSchema: UISchemaElement, schema: JsonSchema): string 
     return 'Failed to render: a Control must have a scope';
   }
 
-  if (isListWithDetails(uiSchema) && !isValidScope(uiSchema, schema)) {
-    return 'Failed to render: a List With Details must have a scope';
+  if (isListWithDetail(uiSchema)) {
+    if ('scope' in uiSchema) {
+      if (!isValidScope(uiSchema, schema)) {
+        return `Failed to render ListWithDetail: scope ${uiSchema.scope} is not valid`;
+      }
+    } else {
+      return 'Failed to render ListWithDetail: scope is required';
+    }
   }
 
   // Make an explicit check for Categorization, as this requires Category elements.

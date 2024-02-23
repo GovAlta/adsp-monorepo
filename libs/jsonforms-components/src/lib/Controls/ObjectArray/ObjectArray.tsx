@@ -54,4 +54,4 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
 
 export const GoAArrayControlTester: RankedTester = rankWith(3, or(isObjectArrayControl, isPrimitiveArrayControl));
 export const GoAArrayControlRenderer = withJsonFormsArrayLayoutProps(ArrayControl);
-export const GoAListWithDetailsTester: RankedTester = rankWith(3, and(uiTypeIs('ListWithDetails')));
+export const GoAListWithDetailsTester: RankedTester = rankWith(3, and(uiTypeIs('ListWithDetail')));
