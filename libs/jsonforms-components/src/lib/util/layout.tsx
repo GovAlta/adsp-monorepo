@@ -14,9 +14,9 @@ import { Hidden } from '@mui/material';
 
 export const renderLayoutElements = (
   elements: UISchemaElement[],
-  schema: JsonSchema,
-  path: string,
-  enabled: boolean,
+  schema?: JsonSchema,
+  path?: string,
+  enabled?: boolean,
   renderers?: JsonFormsRendererRegistryEntry[],
   cells?: JsonFormsCellRendererRegistryEntry[]
 ) => {
