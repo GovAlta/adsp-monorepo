@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`router createServiceConfigurationRevision can create revision 1`] = `
-Object {
-  "latest": Object {
-    "configuration": Object {},
+{
+  "latest": {
+    "configuration": {},
     "created": Any<Date>,
     "revision": 1,
   },
@@ -13,7 +13,7 @@ Object {
 `;
 
 exports[`router createServiceConfigurationRevision can set the active revision 1`] = `
-Object {
+{
   "active": 2,
   "name": "test-service",
   "namespace": "platform",
@@ -29,8 +29,8 @@ Object {
 `;
 
 exports[`router getActiveRevision can fallback to latest for active revision not found 1`] = `
-Object {
-  "data": Object {
+{
+  "data": {
     "a": 42,
   },
   "name": "test-service",
@@ -40,8 +40,8 @@ Object {
 `;
 
 exports[`router getActiveRevision can fallback to latest for no active revision 1`] = `
-Object {
-  "data": Object {
+{
+  "data": {
     "a": 42,
   },
   "name": "test-service",
@@ -51,8 +51,8 @@ Object {
 `;
 
 exports[`router getActiveRevision can get active revision 1`] = `
-Object {
-  "data": Object {
+{
+  "data": {
     "a": 42,
   },
   "name": "test-service",
@@ -62,8 +62,8 @@ Object {
 `;
 
 exports[`router getActiveRevision can get active revision at revision 0 1`] = `
-Object {
-  "data": Object {
+{
+  "data": {
     "a": 42,
   },
   "name": "test-service",
@@ -72,10 +72,10 @@ Object {
 }
 `;
 
-exports[`router getRevisions can get revisions 1`] = `Object {}`;
+exports[`router getRevisions can get revisions 1`] = `{}`;
 
 exports[`router getServiceConfiguration can get configuration 1`] = `
-Object {
+{
   "latest": null,
   "name": "test-service",
   "namespace": "platform",
@@ -83,9 +83,9 @@ Object {
 `;
 
 exports[`router patchServiceConfigurationRevision can delete 1`] = `
-Object {
-  "latest": Object {
-    "configuration": Object {
+{
+  "latest": {
+    "configuration": {
       "old": "old",
     },
     "lastUpdated": Any<Date>,
@@ -97,10 +97,10 @@ Object {
 `;
 
 exports[`router patchServiceConfigurationRevision can delete at path 1`] = `
-Object {
-  "latest": Object {
-    "configuration": Object {
-      "old": Object {
+{
+  "latest": {
+    "configuration": {
+      "old": {
         "nested": "old",
       },
     },
@@ -113,9 +113,9 @@ Object {
 `;
 
 exports[`router patchServiceConfigurationRevision can replace 1`] = `
-Object {
-  "latest": Object {
-    "configuration": Object {
+{
+  "latest": {
+    "configuration": {
       "old": "old",
     },
     "lastUpdated": Any<Date>,
@@ -127,9 +127,9 @@ Object {
 `;
 
 exports[`router patchServiceConfigurationRevision can update 1`] = `
-Object {
-  "latest": Object {
-    "configuration": Object {
+{
+  "latest": {
+    "configuration": {
       "old": "old",
     },
     "lastUpdated": Any<Date>,
