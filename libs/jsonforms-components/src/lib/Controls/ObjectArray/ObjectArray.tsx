@@ -16,8 +16,8 @@ import { DeleteDialog } from './DeleteDialog';
 
 export const ArrayControl = (props: ArrayLayoutProps) => {
   const [open, setOpen] = useState(false);
-  const [path, setPath] = useState(undefined);
-  const [rowData, setRowData] = useState(undefined);
+  const [path, setPath] = useState<string | undefined>(undefined);
+  const [rowData, setRowData] = useState<number | undefined>(undefined);
   const { removeItems, visible } = props;
 
   const openDeleteDialog = useCallback(
@@ -45,8 +45,8 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
         open={open}
         onCancel={deleteCancel}
         onConfirm={deleteConfirm}
-        title={props.translations.deleteDialogTitle}
-        message={props.translations.deleteDialogMessage}
+        title={props.translations.deleteDialogTitle || ''}
+        message={props.translations.deleteDialogMessage || ''}
       />
     </Hidden>
   );

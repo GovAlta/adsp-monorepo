@@ -1,4 +1,4 @@
-import { JsonSchema, UISchemaElement } from '@jsonforms/core';
+import { JsonSchema, UISchemaElement, hasType, isControl } from '@jsonforms/core';
 
 export const isNullSchema = (schema: UISchemaElement): boolean => {
   return schema === undefined || schema === null;
@@ -25,8 +25,17 @@ export const isValidScope = (uiSchema: UISchemaElement, schema: JsonSchema): boo
   return true;
 };
 
-export const isLayoutType = (type: string): boolean => {
-  return type === 'VerticalLayout' || type === 'HorizontalLayout' || type === 'Categorization' || type === 'Group';
+export const isLayoutType = (schema: UISchemaElement): boolean => {
+  return (
+    hasType(schema, 'VerticalLayout') ||
+    hasType(schema, 'HorizontalLayout') ||
+    hasType(schema, 'Categorization') ||
+    hasType(schema, 'Group')
+  );
+};
+
+export const isListWithDetails = (schema: UISchemaElement): boolean => {
+  return hasType(schema, 'ListWithDetails');
 };
 
 export const isScopedPrefixed = (scope: string): boolean => {
