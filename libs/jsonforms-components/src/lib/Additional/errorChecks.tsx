@@ -36,12 +36,12 @@ export const isLayoutType = (schema: UISchemaElement): boolean => {
 
 export const isKnownType = (schema: UISchemaElement): boolean => {
   return (
-    hasType(schema, 'Control') || isLayoutType(schema) || hasType(schema, 'HelpContent') || isListWithDetails(schema)
+    hasType(schema, 'Control') || isLayoutType(schema) || hasType(schema, 'HelpContent') || isListWithDetail(schema)
   );
 };
 
-export const isListWithDetails = (schema: UISchemaElement): boolean => {
-  return hasType(schema, 'ListWithDetails');
+export const isListWithDetail = (schema: UISchemaElement): boolean => {
+  return hasType(schema, 'ListWithDetail');
 };
 
 export const isScopedPrefixed = (scope: string): boolean => {
