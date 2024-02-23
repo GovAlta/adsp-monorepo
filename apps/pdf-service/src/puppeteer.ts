@@ -10,13 +10,13 @@ class PuppeteerPdfService implements PdfService {
       page = await this.browser.newPage();
       await page.setJavaScriptEnabled(false);
       await page.setContent(content, { waitUntil: 'load', timeout: 2 * 60 * 1000 });
-      if (header !== null || footer !== null) {
-        const _header = header === null ? '' : header;
-        const _footer = footer === null ? '' : footer;
+      if (header || footer) {
+        const headerTemplate = !header ? '' : header;
+        const footerTemplate = !footer ? '' : footer;
 
         return await page.pdf({
-          footerTemplate: _footer,
-          headerTemplate: _header,
+          headerTemplate,
+          footerTemplate,
           printBackground: true,
           displayHeaderFooter: true,
           omitBackground: true,
