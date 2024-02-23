@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`calendar router addEventAttendee can add attendee 1`] = `
-Object {
+{
   "email": "tester@test.co",
   "id": undefined,
   "name": "tester",
@@ -9,7 +9,7 @@ Object {
 `;
 
 exports[`calendar router createCalendarEvent can create event 1`] = `
-Object {
+{
   "description": "Test 1 2 3",
   "end": null,
   "id": undefined,
@@ -21,21 +21,21 @@ Object {
 `;
 
 exports[`calendar router deleteCalendarEvent can delete event 1`] = `
-Object {
+{
   "deleted": true,
 }
 `;
 
 exports[`calendar router deleteEventAttendee can delete attendee 1`] = `
-Object {
+{
   "deleted": true,
 }
 `;
 
 exports[`calendar router exportCalendarEvents can export events 1`] = `
-Object {
+{
   "description": "Testing 1 2 3",
-  "events": Array [],
+  "events": [],
   "name": "Test",
   "prodId": "//Government of Alberta//urn:ads:platform:calendar-service//EN",
   "url": "https://calendar-service/undefined",
@@ -43,42 +43,42 @@ Object {
 `;
 
 exports[`calendar router getCalendarEvents can get events 1`] = `
-Object {
-  "page": Object {},
-  "results": Array [],
+{
+  "page": {},
+  "results": [],
 }
 `;
 
 exports[`calendar router getCalendars can get calendars 1`] = `
-Array [
-  Object {
+[
+  {
     "description": "Testing 1 2 3",
     "displayName": "Test",
     "name": "test",
-    "readRoles": Array [
+    "readRoles": [
       "test-reader",
     ],
-    "updateRoles": Array [
+    "updateRoles": [
       "test-updater",
     ],
   },
 ]
 `;
 
-exports[`calendar router getCalendars can handle no configuration 1`] = `Array []`;
+exports[`calendar router getCalendars can handle no configuration 1`] = `[]`;
 
 exports[`calendar router getEventAttendee can delete attendee 1`] = `
-Object {
+{
   "email": "tester@test.co",
   "id": 23,
   "name": "tester",
 }
 `;
 
-exports[`calendar router getEventAttendees can get attendees 1`] = `Array []`;
+exports[`calendar router getEventAttendees can get attendees 1`] = `[]`;
 
 exports[`calendar router retrieveCalendarEvent can retrieve event 1`] = `
-Object {
+{
   "description": "Test 1 2 3",
   "end": Any<DateTime>,
   "id": 12,
@@ -90,7 +90,7 @@ Object {
 `;
 
 exports[`calendar router setEventAttendee can set attendee 1`] = `
-Object {
+{
   "email": "tester@test.co",
   "id": 23,
   "name": "tester 2",
@@ -98,7 +98,7 @@ Object {
 `;
 
 exports[`calendar router updateCalendarEvent can update event 1`] = `
-Object {
+{
   "description": "Test 1 2 3",
   "end": Any<DateTime>,
   "id": 12,
