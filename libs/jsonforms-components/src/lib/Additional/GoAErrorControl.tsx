@@ -16,6 +16,7 @@ import {
   isControlWithNoScope,
   isEmptyElements,
   isEmptyObject,
+  isKnownType,
   isLayoutType,
   isListWithDetails,
   isMissingProperties,
@@ -112,8 +113,11 @@ const isValidUiSchema = (uiSchema: UISchemaElement, schema: JsonSchema): string 
     }
   }
 
-  if (!isControl(uiSchema) && !isLayoutType(uiSchema)) {
-    return `Unknown layout: ${uiSchema.type}. (Note: Layout names are case sensitive)`;
+  if (!isKnownType(uiSchema)) {
+    if (uiSchema.type === undefined || uiSchema.type.length < 1) {
+      return `UI schema element must have a type`;
+    }
+    return `Unknown schema type: ${uiSchema.type}. (Note: Names are case sensitive)`;
   }
 
   return null;
@@ -141,13 +145,13 @@ const getMissingType = (schema: JsonSchema, parent?: string): string | null => {
 };
 
 const isValidJsonSchema = (schema: JsonSchema): string | null => {
-  if (isMissingProperties(schema)) {
-    return 'Please define properties on your object.';
-  }
-  const err = getMissingType(schema);
-  if (err) {
-    return err;
-  }
+  // if (isMissingProperties(schema)) {
+  //   return 'Please define properties on your object.';
+  // }
+  // const err = getMissingType(schema);
+  // if (err) {
+  //   return err;
+  // }
   return null;
 };
 

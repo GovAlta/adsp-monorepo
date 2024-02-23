@@ -34,6 +34,12 @@ export const isLayoutType = (schema: UISchemaElement): boolean => {
   );
 };
 
+export const isKnownType = (schema: UISchemaElement): boolean => {
+  return (
+    hasType(schema, 'Control') || isLayoutType(schema) || hasType(schema, 'HelpContent') || isListWithDetails(schema)
+  );
+};
+
 export const isListWithDetails = (schema: UISchemaElement): boolean => {
   return hasType(schema, 'ListWithDetails');
 };
