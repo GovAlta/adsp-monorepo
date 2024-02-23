@@ -3,7 +3,7 @@ import { GoAFileUploadInput, GoAFormItem, GoACircularProgress, GoAModal } from '
 import { WithClassname, ControlProps } from '@jsonforms/core';
 
 import styled from 'styled-components';
-import { JsonFormContext } from '../../../index';
+import { JsonFormContext } from '../../Context';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 
