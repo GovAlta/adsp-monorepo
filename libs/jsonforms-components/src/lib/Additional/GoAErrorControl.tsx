@@ -4,6 +4,7 @@ import {
   JsonSchema,
   RankedTester,
   UISchemaElement,
+  hasType,
   isCategorization,
   isControl,
   isLayout,
@@ -44,14 +45,7 @@ const isValidUiSchema = (uiSchema: UISchemaElement, schema: JsonSchema): string 
   }
 
   // Check control elements
-  if (isControl(uiSchema)) {
-    // isControl doesn't actually check that the type is 'Control', just that it has a 'type'.
-    // Put an explicit check in so we don't get the wrong error message.
-    if (uiSchema.type !== 'Control') {
-      return !uiSchema.type
-        ? `Failed to render: type is unknown for scope ${uiSchema.scope}.`
-        : `Failed to render: unknown type "${uiSchema.type}" for scope ${uiSchema.scope}. (Note: type names are case sensitive)`;
-    }
+  if (isControl(uiSchema) && hasType(uiSchema, 'Control')) {
     if (!isScopedPrefixed(uiSchema.scope)) {
       return `Scope ${uiSchema.scope} must be prefixed with '#/'.`;
     }
