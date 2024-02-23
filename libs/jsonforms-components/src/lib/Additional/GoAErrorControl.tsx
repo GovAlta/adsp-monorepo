@@ -17,6 +17,7 @@ import {
   isEmptyElements,
   isEmptyObject,
   isLayoutType,
+  isListWithDetails,
   isMissingProperties,
   isNullSchema,
   isScopedPrefixed,
@@ -30,12 +31,13 @@ import {
  * toward fixing the error.
  */
 
-const isValidUiSchema = (uiSchema: UISchemaElement, rootSchema: JsonSchema): string | null => {
+const isValidUiSchema = (uiSchema: UISchemaElement, schema: JsonSchema): string | null => {
   // Sometimes the UISchema is null.  Ignore those cases, as all checks are done on the UIschema.
   if (isNullSchema(uiSchema)) {
     return null;
   }
 
+  // silently ignore empty objects
   if (isEmptyObject(uiSchema)) {
     return '';
   }
@@ -52,7 +54,7 @@ const isValidUiSchema = (uiSchema: UISchemaElement, rootSchema: JsonSchema): str
     if (!isScopedPrefixed(uiSchema.scope)) {
       return `Scope ${uiSchema.scope} must be prefixed with '#/'.`;
     }
-    if (!isValidScope(uiSchema, rootSchema)) {
+    if (!isValidScope(uiSchema, schema)) {
       return `Failed to render: unknown scope ${uiSchema.scope}`;
     }
   }
@@ -60,6 +62,10 @@ const isValidUiSchema = (uiSchema: UISchemaElement, rootSchema: JsonSchema): str
   // isControl will fail if scope is not present, so make the test explicit...
   if (isControlWithNoScope(uiSchema)) {
     return 'Failed to render: a Control must have a scope';
+  }
+
+  if (isListWithDetails(uiSchema) && !isValidScope(uiSchema, schema)) {
+    return 'Failed to render: a List With Details must have a scope';
   }
 
   // Make an explicit check for Categorization, as this requires Category elements.
@@ -97,7 +103,7 @@ const isValidUiSchema = (uiSchema: UISchemaElement, rootSchema: JsonSchema): str
   }
 
   // Check layout
-  if (isLayoutType(uiSchema.type)) {
+  if (isLayoutType(uiSchema)) {
     if (!hasElements(uiSchema)) {
       return `A ${uiSchema.type} must contain elements.`;
     }
@@ -106,7 +112,7 @@ const isValidUiSchema = (uiSchema: UISchemaElement, rootSchema: JsonSchema): str
     }
   }
 
-  if (!isControl(uiSchema) && !isLayoutType(uiSchema.type)) {
+  if (!isControl(uiSchema) && !isLayoutType(uiSchema)) {
     return `Unknown layout: ${uiSchema.type}. (Note: Layout names are case sensitive)`;
   }
 
@@ -149,14 +155,14 @@ const isValidJsonSchema = (schema: JsonSchema): string | null => {
 // here.  e.g.  A layout with empty elements should be quietly ignored.
 // this is handled by the errors !== '' check.
 const ErrorControl = (props: ControlProps): JSX.Element => {
-  const { schema, uischema, rootSchema } = props;
+  const { schema, uischema } = props;
   // Report data schema errors over ui schema ones, as errors in the former
   // can cause cascading errors in the latter.
   const dataSchemaErrors = isValidJsonSchema(schema);
   if (dataSchemaErrors && dataSchemaErrors !== '') {
     return <p>{dataSchemaErrors}</p>;
   }
-  const uiSchemaErrors = isValidUiSchema(uischema, rootSchema);
+  const uiSchemaErrors = isValidUiSchema(uischema, schema);
   if (uiSchemaErrors && uiSchemaErrors !== '') {
     return <p>{uiSchemaErrors}</p>;
   }
@@ -169,7 +175,7 @@ const ErrorControl = (props: ControlProps): JSX.Element => {
  */
 export const GoAErrorControlTester: RankedTester = rankWith(1000, (uischema, schema, context) => {
   const validJsonSchema = isValidJsonSchema(schema);
-  const validUiSchema = isValidUiSchema(uischema, context.rootSchema);
+  const validUiSchema = isValidUiSchema(uischema, schema);
   return validUiSchema != null || validJsonSchema != null;
 });
 
