@@ -24,6 +24,9 @@
             "ignoredDependencies": [
               "@abgov/react-components",
               "@abgov/react-components-new"
+            ],
+            "ignoredFiles": [
+              "rollup.config.js"
             ]
           }
         ]
