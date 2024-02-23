@@ -16,8 +16,8 @@ import { DeleteDialog } from './DeleteDialog';
 
 export const ArrayControl = (props: ArrayLayoutProps) => {
   const [open, setOpen] = useState(false);
-  const [path, setPath] = useState<string | undefined>(undefined);
-  const [rowData, setRowData] = useState<number | undefined>(undefined);
+  const [path, setPath] = useState<string>();
+  const [rowData, setRowData] = useState<number>(0);
   const { removeItems, visible } = props;
 
   const openDeleteDialog = useCallback(
@@ -32,8 +32,10 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
 
   // eslint-disable-next-line
   const deleteConfirm = useCallback(() => {
-    const p = path.substring(0, path.lastIndexOf('.'));
-    removeItems(p, [rowData])();
+    const p = path?.substring(0, path.lastIndexOf('.'));
+    if (removeItems && p) {
+      removeItems(p, [rowData])();
+    }
     setOpen(false);
     // eslint-disable-next-line
   }, [setOpen, path, rowData]);
