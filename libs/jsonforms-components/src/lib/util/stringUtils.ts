@@ -54,21 +54,15 @@ export const FIELD_REQUIRED = 'data should pass "isNotEmpty" keyword validation'
 export const getErrorsToDisplay = (props: ControlProps) => {
   const { data, errors: ajvErrors, required, label, uischema, schema } = props;
   const labelToUpdate = getLabelText(uischema.scope, label);
-  const controlErrors = '';
 
   if (required) {
     if (data === undefined) return '';
 
-    if (data.toString().length > 0 && ajvErrors.length > 0) return ajvErrors;
-    if (
-      controlErrors.includes(FIELD_REQUIRED) ||
-      data === '' ||
-      ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))
-    ) {
+    if (data === '' || ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))) {
       return `${labelToUpdate} is required`;
     }
 
-    if (controlErrors.length > 0) return controlErrors;
+    if (data.toString().length > 0 && ajvErrors.length > 0) return ajvErrors;
 
     return ajvErrors;
   }
