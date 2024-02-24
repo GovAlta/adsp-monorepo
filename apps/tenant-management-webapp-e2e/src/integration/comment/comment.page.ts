@@ -102,7 +102,7 @@ class CommentPage {
   }
 
   selectTopicTypeDropdown() {
-    return cy.xpath('//goa-dropdown[@data-testid="comment-select-topictype-dropdown"]');
+    return cy.xpath('//goa-dropdown[@data-testid="comment-select-topic-type-dropdown"]');
   }
 
   topicTable() {
