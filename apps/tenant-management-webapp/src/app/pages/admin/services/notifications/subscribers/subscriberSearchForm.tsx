@@ -2,7 +2,6 @@ import React, { FunctionComponent, useState } from 'react';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 
 import { GoAButton, GoAButtonGroup, GoAInput, GoAGrid, GoAFormItem } from '@abgov/react-components-new';
-import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface EventSearchFormProps {
   onSearch?: (searchCriteria: SubscriberSearchCriteria) => void;

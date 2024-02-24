@@ -165,8 +165,8 @@ export const Form = styled(FormComponent)`
   & > :last-child {
     z-index: 3;
     position: absolute;
-    bottom: var(--goa-spacing-l);
-    left: var(--goa-spacing-l);
+    bottom: var(--goa-space-l);
+    left: var(--goa-space-l);
     background: white;
   }
 

@@ -36,8 +36,6 @@
   },
   "private": true,
   "dependencies": {
-    "@abgov/design-tokens": "^1.1.1",
-    "@abgov/web-components": "^1.6.0",
     "@azure/storage-blob": "^12.9.0",
     "@emotion/react": "11.11.1",
     "@emotion/styled": "11.11.0",
@@ -121,14 +119,13 @@
     "xss": "^1.0.10"
   },
   "devDependencies": {
-    "@abgov/core-css": "^1.7.0-beta.11",
     "@abgov/nx-adsp": "^8.1.0",
     "@abgov/nx-oc": "^8.1.0",
     "@abgov/nx-release": "^8.1.4",
     "@abgov/react-components": "^3.4.0-beta.65",
     "@abgov/react-components-new": "npm:@abgov/react-components@4.18.1",
     "@abgov/semantic-release-nuget": "^3.1.0",
-    "@abgov/styles": "^1.0.0-alpha.14",
+    "@abgov/web-components": "^1.19.0",
     "@babel/core": "^7.14.5",
     "@babel/preset-react": "^7.14.5",
     "@conveyal/maven-semantic-release": "^5.0.0",
