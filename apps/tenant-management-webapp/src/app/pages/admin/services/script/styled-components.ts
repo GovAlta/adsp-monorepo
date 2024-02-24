@@ -69,8 +69,8 @@ export const TestInputDivBody = styled.div`
 export const ScriptPanelContainer = styled.div`
   display: flex;
   flex: auto;
-  padding-left: var(--goa-spacing-xl);
-  padding-right: var(--goa-spacing-xl);
+  padding-left: var(--goa-space-xl);
+  padding-right: var(--goa-space-xl);
   height: 100vh;
   margin-top: 0px;
   overflow: hidden;
@@ -80,7 +80,7 @@ export const EditScriptActions = styled.div`
   display: flex;
   justify-content: left;
   gap: 1rem;
-  padding-top: var(--goa-spacing-l);
+  padding-top: var(--goa-space-l);
   border-top: 1px solid #adadad;
 `;
 export const MonacoDivTabBody = styled.div`
@@ -119,7 +119,7 @@ export const ScriptEditorContainer = styled.div`
 export const EditModalStyle = styled.div`
   width: 100%;
   display: flex;
-  padding-top: var(--goa-spacing-xl);
+  padding-top: var(--goa-space-xl);
   .half-width {
     width: 50%;
     display: flex;
@@ -148,7 +148,7 @@ export const EditModalStyle = styled.div`
   }
 
   .execute-button {
-    margin: 0 0 var(--goa-spacing-s) 0px;
+    margin: 0 0 var(--goa-space-s) 0px;
     display: flex;
     justify-content: right;
   }
@@ -165,7 +165,7 @@ export const EditModalStyle = styled.div`
   }
 
   .hr-resize {
-    margin-top: var(--goa-spacing-s);
+    margin-top: var(--goa-space-s);
   }
 `;
 
@@ -226,7 +226,7 @@ export const ResponseTableStyles = styled.div`
     width: 40%;
   }
   td {
-    padding: var(--goa-spacing-s) var(--goa-spacing-m) var(--goa-spacing-xs) var(--goa-spacing-m);
+    padding: var(--goa-space-s) var(--goa-space-m) var(--goa-space-xs) var(--goa-space-m);
   }
 
   tr + tr {
@@ -245,7 +245,7 @@ export const ResponseTableStyles = styled.div`
     color: var(--color-th);
     font-size: var(--fs-base);
     font-weight: var(--fw-bold);
-    padding: 0 var(--goa-spacing-m) var(--goa-spacing-xs) var(--goa-spacing-m);
+    padding: 0 var(--goa-space-m) var(--goa-space-xs) var(--goa-space-m);
     text-align: left;
     white-space: nowrap;
     background: white;
@@ -274,7 +274,7 @@ export const ResponseTableStyles = styled.div`
 `;
 
 export const TombStoneWrapper = styled.div`
-  margin-top: var(--goa-spacing-xl);
+  margin-top: var(--goa-space-xl);
   font-size: var(--goa-font-size-3);
   color: var(--goa-color-text-default);
   border-radius: var(--goa-borderRadius-m);
@@ -283,32 +283,32 @@ export const TombStoneWrapper = styled.div`
   border: 1px solid #adadad;
 
   display: flex;
-  margin-bottom: var(--goa-spacing-l);
+  margin-bottom: var(--goa-space-l);
   .nameColumn {
     width: 92px;
     float: left;
-    margin: var(--goa-spacing-m);
+    margin: var(--goa-space-m);
   }
   .idColumn {
     width: 94px;
     float: left;
     height: 100%;
-    margin: var(--goa-spacing-m);
+    margin: var(--goa-space-m);
   }
   .descColumn {
     width: calc(100% - 304px);
     float: left;
-    margin: var(--goa-spacing-m);
+    margin: var(--goa-space-m);
   }
   .editColumn {
     width: 57px;
     float: right;
     min-width: 50px;
-    margin-top: var(--goa-spacing-m);
-    margin-right: var(--goa-spacing-m);
+    margin-top: var(--goa-space-m);
+    margin-right: var(--goa-space-m);
   }
   .separator {
-    margin-top: var(--goa-spacing-m);
+    margin-top: var(--goa-space-m);
     width: 1px;
     height: 5.375rem;
 
@@ -321,7 +321,7 @@ export const TombStoneWrapper = styled.div`
   }
   th {
     text-align: left;
-    padding-bottom: var(--goa-spacing-xs);
+    padding-bottom: var(--goa-space-xs);
     font-size: 18px;
   }
 
@@ -359,7 +359,7 @@ export const Edit = styled.div`
   }
 
   a {
-    margin-right: var(--goa-spacing-2xs);
+    margin-right: var(--goa-space-2xs);
     text-decoration: underline;
     line-height: var(--goa-lineHeight-3);
     font-size: var(--goa-font-size-4);
@@ -376,7 +376,7 @@ export const ScrollPane = styled.div`
 export const TriggerEventScrollPane = styled.div`
   overflow-y: auto;
   width: 100%;
-  margin-bottom: var(--goa-spacing-xs) !important;
+  margin-bottom: var(--goa-space-xs) !important;
 `;
 
 export const TextLoadingIndicator = styled.div`
@@ -411,7 +411,7 @@ export const Tooltip = styled.div`
 `;
 
 export const AddTriggerButtonPadding = styled.div`
-  padding-bottom: var(--goa-spacing-l);
+  padding-bottom: var(--goa-space-l);
 `;
 
 export const ScriptEventTriggerListDefinition = styled.div`

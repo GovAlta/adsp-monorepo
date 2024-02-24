@@ -149,6 +149,6 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
 };
 
 const GoABadgeWrapper = styled.div`
-  margin-right: var(--goa-spacing-s);
+  margin-right: var(--goa-space-s);
   text-wrap: nowrap;
 `;

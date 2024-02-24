@@ -1,13 +1,13 @@
 import styled from 'styled-components';
 
 export const SelectCalendarHeader = styled.div`
-  margin-top: var(--goa-spacing-m);
+  margin-top: var(--goa-space-m);
   font-weight: var(--fw-bold);
-  margin-bottom: var(--goa-spacing-xs);
+  margin-bottom: var(--goa-space-xs);
 `;
 
 export const TitleSpace = styled.div`
-  height: var(--goa-spacing-m);
+  height: var(--goa-space-m);
 `;
 
 export const EventDetail = styled.div`
@@ -15,9 +15,9 @@ export const EventDetail = styled.div`
   white-space: pre-wrap;
   font-family: monospace;
   font-size: var(--goa-font-size-1);
-  line-height: var(--goa-spacing-m);
+  line-height: var(--goa-space-m);
   text-align: left;
-  padding: var(--goa-spacing-m);
+  padding: var(--goa-space-m);
 `;
 
 export const EventDetailRow = styled.tr`
@@ -32,7 +32,7 @@ export const ProgressWrapper = styled.div`
 `;
 
 export const EventDetailTd = styled.td`
-  padding: var(--goa-spacing-l) !important;
+  padding: var(--goa-space-l) !important;
 `;
 
 export const EventDetailName = styled.div`
@@ -48,11 +48,11 @@ export const EventDetailDescription = styled.div`
 export const EventDetailDate = styled.div`
   font-size: var(--goa-font-size-4);
   color: var(--goa-color-greyscale-700);
-  padding-bottom: var(--goa-spacing-m);
+  padding-bottom: var(--goa-space-m);
 `;
 
 export const CalendarEventListWrapper = styled.div`
-  padding-bottom: var(--goa-spacing-l);
+  padding-bottom: var(--goa-space-l);
 `;
 
 export const EventListNameTd = styled.td`
@@ -68,7 +68,7 @@ export const CalendarEventRow = styled.tr`
 `;
 
 export const EventDetailGap = styled.div`
-  height: var(--goa-spacing-m);
+  height: var(--goa-space-m);
 `;
 
 export const EventDetailsActionsWrapper = styled.div`
@@ -82,8 +82,8 @@ export const EventDetailsActionsWrapper = styled.div`
 
 export const EventFilterWrapper = styled.div`
   width: 37.5rem;
-  margin-top: calc(var(--goa-spacing-l) - 8px);
-  margin-bottom: var(--goa-spacing-l);
+  margin-top: calc(var(--goa-space-l) - 8px);
+  margin-bottom: var(--goa-space-l);
   position: relative;
   z-index: 0;
 `;
@@ -92,8 +92,8 @@ export const EventFilterButtonWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
   padding-right: 6px;
-  margin-top: var(--goa-spacing-l);
-  margin-bottom: var(--goa-spacing-xl);
+  margin-top: var(--goa-space-l);
+  margin-bottom: var(--goa-space-xl);
 `;
 
 export const CalendarEventFilterError = styled.span`
@@ -111,14 +111,14 @@ export const CalendarDropdownWrapper = styled.div`
 
 // There might be a bug for the scroll, we need more padding to show the load more button in some case
 // export const LoadMoreWrapper = styled.div`
-//   padding-bottom: var(--goa-spacing-4xl);
+//   padding-bottom: var(--goa-space-4xl);
 // `;
 
 export const EventTableHeader = styled.div`
   font-size: var(--goa-font-size-7);
-  line-height: var(--goa-spacing-xl);
-  margin-top: var(--goa-spacing-xl);
-  margin-bottom: var(--goa-spacing-l);
+  line-height: var(--goa-space-xl);
+  margin-top: var(--goa-space-xl);
+  margin-bottom: var(--goa-space-l);
 `;
 
 export const CalendarNameText = styled.span`

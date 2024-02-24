@@ -3,7 +3,7 @@ import styled from 'styled-components';
 export const RetentionPolicyLabel = styled.label`
   font-size: var(--goa-font-size-7) !important;
   line-height: var(--goa-line-height-4);
-  margin-top: var(--goa-spacing-l);
+  margin-top: var(--goa-space-l);
   font-weight: var(--goa-font-weight-regular) !important;
 `;
 
@@ -18,7 +18,7 @@ export const FileIdItem = styled.div`
 `;
 
 export const MakePublicPadding = styled.div`
-  margin-bottom: var(--goa-spacing-xl);
+  margin-bottom: var(--goa-space-xl);
 `;
 export const ModalOverwrite = styled.div`
   .modal {
@@ -40,8 +40,8 @@ export const AnonymousReadWrapper = styled.div`
 `;
 
 export const RetentionPolicyWrapper = styled.div`
-  margin-top: var(--goa-spacing-s);
-  margin-bottom: var(--goa-spacing-s);
+  margin-top: var(--goa-space-s);
+  margin-bottom: var(--goa-space-s);
 `;
 
 export const TextLoadingIndicator = styled.div`
@@ -60,7 +60,7 @@ export const InfoCircleWrapper = styled.div`
   position: relative;
   top: 3px;
   transform: scale(1.2);
-  margin-left: var(--goa-spacing-xs);
+  margin-left: var(--goa-space-xs);
   display: inline-block;
   z-index: 1000;
 `;
@@ -82,12 +82,12 @@ export const FileTypeEditor = styled.div`
   width: 100%;
 
   .hr-resize {
-    margin-top: var(--goa-spacing-s);
+    margin-top: var(--goa-space-s);
   }
 
   .hr-resize-bottom {
-    margin-bottom: var(--goa-spacing-1xs);
-    margin-top: var(--goa-spacing-xl);
+    margin-bottom: var(--goa-space-1xs);
+    margin-top: var(--goa-space-xl);
   }
 `;
 
@@ -133,8 +133,8 @@ export const FileTypeTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 6px;
-  padding-left: var(--goa-spacing-2xl);
-  padding-right: var(--goa-spacing-2xl);
+  padding-left: var(--goa-space-2xl);
+  padding-right: var(--goa-space-2xl);
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -159,7 +159,7 @@ export const FlexRow = styled.div`
 
 export const NameDescriptionDataSchema = styled.div`
   flex: 6;
-  padding-right: var(--goa-spacing-2xl);
+  padding-right: var(--goa-space-2xl);
 `;
 
 export const FileTypePermissions = styled.div`
@@ -183,7 +183,7 @@ export const FileTypesEditorTitle = styled.div`
 `;
 
 export const FinalButtonPadding = styled.div`
-  padding-top: var(--goa-spacing-xs);
+  padding-top: var(--goa-space-xs);
 `;
 
 export const EditorPadding = styled.div`
@@ -200,8 +200,8 @@ export const EditorPadding = styled.div`
 `;
 
 export const ConfigTombStoneWrapper = styled.div`
-  margin-top: var(--goa-spacing-xl);
-  margin-bottom: var(--goa-spacing-xl);
+  margin-top: var(--goa-space-xl);
+  margin-bottom: var(--goa-space-xl);
   font-size: var(--goa-fontSize-3);
   color: var(--goa-color-greyscale-black);
   padding-left: 3px;
@@ -209,7 +209,7 @@ export const ConfigTombStoneWrapper = styled.div`
   border-radius: 3px;
   height: 7.375rem;
   background-color: var(--goa-color-greyscale-100);
-  padding-right: var(--goa-spacing-m);
+  padding-right: var(--goa-space-m);
   border-bottom: solid 16px var(--goa-color-greyscale-100);
   border: solid 1px #dcdcdc;
 
@@ -241,10 +241,10 @@ export const ConfigTombStoneWrapper = styled.div`
     width: 56px;
     float: right;
     min-width: 50px;
-    margin-top: var(--goa-spacing-xs);
+    margin-top: var(--goa-space-xs);
   }
   .separator {
-    margin-top: var(--goa-spacing-m);
+    margin-top: var(--goa-space-m);
     width: 1px;
     height: 5.375rem;
 
@@ -254,11 +254,11 @@ export const ConfigTombStoneWrapper = styled.div`
     overflow: hidden;
   }
   table {
-    margin: var(--goa-spacing-m) var(--goa-spacing-m) var(--goa-spacing-m) var(--goa-spacing-m);
+    margin: var(--goa-space-m) var(--goa-space-m) var(--goa-space-m) var(--goa-space-m);
   }
   th {
     text-align: left;
-    padding-bottom: var(--goa-spacing-xs);
+    padding-bottom: var(--goa-space-xs);
   }
 `;
 

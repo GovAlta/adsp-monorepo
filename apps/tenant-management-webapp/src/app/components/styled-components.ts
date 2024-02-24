@@ -28,5 +28,5 @@ export const SpaceAdjust = styled.h3`
   padding-bottom: 1rem;
 `;
 export const LoadMoreWrapper = styled.div`
-  padding-bottom: var(--goa-spacing-4xl);
+  padding-bottom: var(--goa-space-4xl);
 `;
