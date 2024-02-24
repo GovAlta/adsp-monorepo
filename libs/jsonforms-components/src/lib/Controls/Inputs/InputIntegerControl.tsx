@@ -4,6 +4,7 @@ import { GoAInputNumber } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { getErrorsToDisplay, isValidDate } from '../../util/stringUtils';
 type GoAInputIntegerProps = CellProps & WithClassname & WithInputProps;
 
 export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
@@ -14,10 +15,13 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const InputValue = data ? data : 0;
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
-  const MinValue = clonedSchema.min ? clonedSchema.min : 0;
-  const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
+  const MinValue = clonedSchema.minimum ? clonedSchema.minimum : 0;
+  const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : 99;
+  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+
   return (
     <GoAInputNumber
+      error={errorsFormInput.length > 0}
       width="100%"
       disabled={!enabled}
       value={InputValue}
@@ -27,7 +31,17 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       placeholder={placeholder}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onChange={(name, value) => handleChange(path, value)}
+      onBlur={(name: string, value: string) => {
+        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
+        handleChange(path, value);
+      }}
+      onKeyPress={(name: string, value: string, key: string) => {
+        if (!(key === 'Tab' || key === 'Shift')) {
+          value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
+          handleChange(path, value);
+        }
+      }}
+      {...uischema?.options?.componentProps}
     />
   );
 };

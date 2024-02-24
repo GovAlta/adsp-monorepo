@@ -5,7 +5,7 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nrwl/webpack:webpack",
+      "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
         "webpackConfig": "apps/configuration-service/webpack.config.js",
@@ -28,24 +28,20 @@
       }
     },
     "serve": {
-      "executor": "@nrwl/node:node",
+      "executor": "@nx/js:node",
       "options": {
         "buildTarget": "configuration-service:build",
         "port": 7780
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "options": {
-        "lintFilePatterns": ["apps/configuration-service/**/*.ts"]
-      }
+      "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/apps/configuration-service"],
       "options": {
-        "jestConfig": "apps/configuration-service/jest.config.ts",
-        "passWithNoTests": true
+        "jestConfig": "apps/configuration-service/jest.config.ts"
       }
     }
   },

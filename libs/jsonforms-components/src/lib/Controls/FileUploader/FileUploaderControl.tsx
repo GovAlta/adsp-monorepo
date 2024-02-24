@@ -3,22 +3,23 @@ import { GoAFileUploadInput, GoAFormItem, GoACircularProgress, GoAModal } from '
 import { WithClassname, ControlProps } from '@jsonforms/core';
 
 import styled from 'styled-components';
-import { JsonFormContextInstance } from '../../../index';
+import { JsonFormContext } from '../../Context';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 
 type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
 
 export const FileUploader = ({ data, path, handleChange, uischema, ...props }: FileUploaderLayoutRendererProps) => {
-  const enumerators = useContext(JsonFormContextInstance.jsonFormContext);
+  const enumerators = useContext(JsonFormContext);
   const uploadTriggerFunction = enumerators.functions.get('upload-file');
   const uploadTrigger = uploadTriggerFunction && uploadTriggerFunction();
   const downloadTriggerFunction = enumerators.functions.get('download-file');
   const downloadTrigger = downloadTriggerFunction && downloadTriggerFunction();
   const deleteTriggerFunction = enumerators.functions.get('delete-file');
   const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
-  const lastFileValue = enumerators.data.get('file-list');
-  const lastFile = lastFileValue && lastFileValue();
+  const fileListValue = enumerators.data.get('file-list');
+  // eslint-disable-next-line
+  const fileList = fileListValue && (fileListValue() as Record<string, any>);
   const { required, label, i18nKeyPrefix } = props;
 
   const propertyId = i18nKeyPrefix as string;
@@ -46,14 +47,14 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     // UseEffect is required because not having it causes a react update error, but
     // it doesn't function correctly within jsonforms unless there is a minor delay here
     const delayedFunction = () => {
-      if (lastFile && Array.isArray(data) && data[1] !== lastFile[propertyId]?.urn) {
-        handleChange(propertyId, lastFile && lastFile[propertyId]?.urn);
+      if (fileList && Array.isArray(data) && data[1] !== fileList[propertyId]?.urn) {
+        handleChange(propertyId, fileList && fileList[propertyId]?.urn);
       }
     };
 
     const timeoutId = setTimeout(delayedFunction, 1);
     return () => clearTimeout(timeoutId);
-  }, [data, handleChange, lastFile, propertyId]);
+  }, [data, handleChange, fileList, propertyId]);
 
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">
@@ -75,21 +76,21 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
           </GoAModal>
         ) : (
           <div>
-            {lastFile && lastFile[props.i18nKeyPrefix as string] && (
+            {fileList && fileList[props.i18nKeyPrefix as string] && (
               <AttachmentBorder>
-                <div>{lastFile && lastFile[props.i18nKeyPrefix as string].filename}</div>
+                <div>{fileList && fileList[props.i18nKeyPrefix as string].filename}</div>
                 <GoAContextMenu>
                   <GoAContextMenuIcon
                     testId="download-icon"
                     title="Download"
                     type="download"
-                    onClick={() => downloadFile(lastFile && lastFile[props.i18nKeyPrefix as string])}
+                    onClick={() => downloadFile(fileList && fileList[props.i18nKeyPrefix as string])}
                   />
                   <GoAContextMenuIcon
                     data-testid="delete-icon"
                     title="Delete"
                     type="trash"
-                    onClick={() => deleteFile(lastFile && lastFile[props.i18nKeyPrefix as string])}
+                    onClick={() => deleteFile(fileList && fileList[props.i18nKeyPrefix as string])}
                   />
                 </GoAContextMenu>
               </AttachmentBorder>

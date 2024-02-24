@@ -5,9 +5,10 @@ import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '@jsonforms/material-renderers';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
-import { JsonFormContextInstance } from '../../Context';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
+
+import { addDataByOptions, getData } from '../../Context';
 
 type EnumSelectAutoCompleteProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
@@ -31,13 +32,14 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
 
   useEffect(() => {
     if (dataKey && url) {
-      JsonFormContextInstance.addDataByOptions(dataKey, url, location, type, values);
+      addDataByOptions(dataKey, url, location, type, values);
     }
   }, [url, location, type, values, dataKey]);
 
-  if (dataKey && JsonFormContextInstance.getData(dataKey)) {
-    const newData = JsonFormContextInstance.getData(dataKey);
-    enumData = newData;
+  if (dataKey && getData(dataKey)) {
+    const newData = getData(dataKey);
+    // eslint-disable-next-line
+    enumData = newData as any[];
     defaultProps.options = enumData;
   }
 
@@ -59,7 +61,7 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
   );
 };
 
-export const numControlAutoComplete = (props: ControlProps & OwnPropsOfEnum & WithOptionLabel & TranslateProps) => {
+const numControlAutoComplete = (props: ControlProps & OwnPropsOfEnum & WithOptionLabel & TranslateProps) => {
   return <GoAInputBaseControl {...props} input={EnumSelectAutoComplete} />;
 };
 
@@ -68,7 +70,4 @@ export const GoAEnumControlAutoCompleteTester: RankedTester = rankWith(
   and(isEnumControl, optionIs('autocomplete', true))
 );
 
-export const GoAEnumAutoCompleteControl = withJsonFormsEnumProps(
-  withTranslateProps(React.memo(numControlAutoComplete)),
-  false
-);
+export const GoAEnumAutoCompleteControl = withJsonFormsEnumProps(withTranslateProps(numControlAutoComplete), true);

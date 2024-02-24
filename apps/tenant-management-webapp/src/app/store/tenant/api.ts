@@ -44,10 +44,4 @@ export class TenantApi {
     const { data } = await this.http.get<TenantsResponse>(url, { params: { adminEmail } });
     return data.results[0];
   }
-
-  async fetchRealmRoles(): Promise<Role[]> {
-    const url = '/api/tenant/v1/realm/roles';
-    const res = await this.http.get(url);
-    return res.data.roles;
-  }
 }

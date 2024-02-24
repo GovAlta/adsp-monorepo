@@ -92,5 +92,22 @@ describe('file', () => {
         expect.any(Object)
       );
     });
+
+    it('can handle upload error', async () => {
+      const service = createFileService({
+        logger: loggerMock,
+        tokenProvider: tokenProviderMock,
+        directory: directoryMock,
+      });
+
+      const content = Buffer.from([]);
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      axiosMock.post.mockRejectedValueOnce(new Error('oh noes!'));
+
+      await expect(
+        service.upload(tenantId, GENERATED_PDF, 'my-domain-record-1', 'test.pdf', content)
+      ).rejects.toThrowError();
+    });
   });
 });

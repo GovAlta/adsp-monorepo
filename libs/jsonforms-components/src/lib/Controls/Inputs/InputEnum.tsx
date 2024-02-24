@@ -7,13 +7,17 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '@jsonforms/material-renderers';
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
-import { JsonFormContextInstance } from '../../Context';
+
+import { addDataByOptions, getData } from '../../Context';
+import { getErrorsToDisplay } from '../../util/stringUtils';
 
 type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
-  const { data, id, enabled, schema, path, handleChange, options, config, label, uischema } = props;
-  let enumData = schema?.enum || [];
+  const { data, id, enabled, errors, schema, path, handleChange, options, config, label, uischema } = props;
+  const { required } = props as ControlProps;
+
+  let enumData: unknown[] = schema?.enum || [];
 
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
 
@@ -24,20 +28,23 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
   const type = uischema?.options?.enumContext?.type;
   const values = uischema?.options?.enumContext?.values;
 
+  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+
   useEffect(() => {
     if (dataKey && url) {
-      JsonFormContextInstance.addDataByOptions(dataKey, url, location, type, values);
+      addDataByOptions(dataKey, url, location, type, values);
     }
   }, [url, location, type, values, dataKey]);
 
-  if (dataKey && JsonFormContextInstance.getData(dataKey)) {
-    const newData = JsonFormContextInstance.getData(dataKey);
+  if (dataKey && getData(dataKey)) {
+    const newData = getData(dataKey) as unknown[];
 
     enumData = newData;
   }
 
   return (
     <GoADropdown
+      error={errorsFormInput.length > 0}
       name={`${label}`}
       value={data}
       disabled={!enabled}
@@ -48,6 +55,7 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
       onChange={(name, value) => {
         handleChange(path, value);
       }}
+      {...uischema?.options?.componentProps}
     >
       {enumData?.map((item) => {
         return <GoADropdownItem key={`json-form-dropdown-${item}`} value={`${item}`} label={`${item}`} />;
@@ -63,4 +71,4 @@ export const numControl = (props: ControlProps & OwnPropsOfEnum & WithOptionLabe
 export const GoAEnumControlTester: RankedTester = rankWith(2, isEnumControl);
 
 // HOC order can be reversed with https://github.com/eclipsesource/jsonforms/issues/1987
-export const GoAEnumControl = withJsonFormsEnumProps(withTranslateProps(React.memo(numControl)), false);
+export const GoAEnumControl = withJsonFormsEnumProps(withTranslateProps(numControl), true);

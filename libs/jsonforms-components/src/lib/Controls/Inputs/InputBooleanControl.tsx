@@ -4,6 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
 import { GoACheckbox } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { getErrorsToDisplay } from '../../util/stringUtils';
 
 export const BooleanComponent = ({
   data,
@@ -15,6 +16,7 @@ export const BooleanComponent = ({
   config,
   label,
   required,
+  errors,
   description,
 }: ControlProps) => {
   const appliedUiSchemaOptions = { ...config, ...uischema.options };
@@ -25,6 +27,14 @@ export const BooleanComponent = ({
     false,
     appliedUiSchemaOptions.showUnfocusedDescription
   );
+  const errorsFormInput = getErrorsToDisplay({
+    data,
+    uischema,
+    label,
+    required,
+    errors,
+  } as ControlProps);
+
   let text = label;
 
   if (label && description) {
@@ -34,8 +44,10 @@ export const BooleanComponent = ({
   if (required) {
     text = `${description} ` + (required ? ' (required)' : '');
   }
+
   return (
     <GoACheckbox
+      error={errorsFormInput.length > 0}
       testId={`${path}-checkbox-test-id`}
       disabled={!enabled}
       text={text}
@@ -44,6 +56,7 @@ export const BooleanComponent = ({
       onChange={(name: string, checked: boolean, value: string) => {
         handleChange(path, checked);
       }}
+      {...uischema?.options?.componentProps}
     ></GoACheckbox>
   );
 };

@@ -1,10 +1,16 @@
 import axios from 'axios';
+import { Request, Response } from 'express';
+import * as responseTime from 'response-time';
 import { Logger } from 'winston';
 import { adspId } from '../utils';
 import { createMetricsHandler, writeMetrics } from './handler';
+import { benchmark } from './benchmark';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
+
+jest.mock('response-time');
+const responseTimeMock = responseTime as jest.MockedFunction<typeof responseTime>;
 
 describe('handler', () => {
   const serviceId = adspId`urn:ads:platform:test-service`;
@@ -26,10 +32,58 @@ describe('handler', () => {
 
   const valueUrl = new URL('https://value-service/value/v1/test-service/values/service-metrics');
 
+  beforeEach(() => {
+    responseTimeMock.mockClear();
+  });
+
   describe('createMetricsHandler', () => {
-    it('can create handler', () => {
-      const handler = createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock);
+    it('can create handler', async () => {
+      responseTimeMock.mockReturnValueOnce((req, res, next) => next());
+      const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock);
       expect(handler).toBeTruthy();
+    });
+
+    it('can handle request', async () => {
+      const req = { tenant: { id: tenantId } };
+      const res = {};
+      const next = jest.fn();
+
+      responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
+      const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock);
+      handler(req as unknown as Request, res as Response, next);
+    });
+
+    it('can handle request with user tenant context', async () => {
+      const req = { user: { tenantId } };
+      const res = {};
+      const next = jest.fn();
+
+      responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
+      const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock);
+      handler(req as unknown as Request, res as Response, next);
+    });
+
+    it('can handle request with static tenant context', async () => {
+      const req = { user: { tenantId } };
+      const res = {};
+      const next = jest.fn();
+
+      responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
+      const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock, tenantId);
+      handler(req as unknown as Request, res as Response, next);
+    });
+
+    it('can handle request with benchmark metric', async () => {
+      const req = { user: { tenantId } };
+      const res = {};
+      const next = jest.fn();
+
+      responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => {
+        benchmark(req, 'test', 321);
+        fn(req, res, 123);
+      });
+      const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock, tenantId);
+      handler(req as unknown as Request, res as Response, next);
     });
   });
 

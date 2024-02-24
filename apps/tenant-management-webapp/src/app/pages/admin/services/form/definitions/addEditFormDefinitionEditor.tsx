@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
-import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { Renderers } from '@abgov/jsonforms-components';
-import { JsonForms } from '@jsonforms/react';
+import { ContextProvider } from '@abgov/jsonforms-components';
 import { FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
@@ -53,7 +51,6 @@ import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { PageIndicator } from '@components/Indicator';
-import { ErrorBoundary } from '@components/ErrorBoundary';
 import { isValidJSONSchemaCheck, ajv } from '@lib/validation/checkInput';
 import DataTable from '@components/DataTable';
 import { DispositionItems } from './dispositionItems';
@@ -65,10 +62,8 @@ import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
 import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
-import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
-import { JsonFormContextInstance } from '@abgov/jsonforms-components';
-
-const { jsonFormContext, baseEnumerator } = JsonFormContextInstance;
+import { convertDataSchemaToSuggestion, determineCurrentPath } from '@lib/autoComplete';
+import { JSONFormPreviewer } from './JsonFormPreviewer';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -119,8 +114,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(DownloadFileService(file));
   };
 
-  const renderer = new Renderers();
-
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const monaco = useMonaco();
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
@@ -167,16 +160,24 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     setShowFileDeleteConfirmation(true);
   };
 
-  JsonFormContextInstance.setFileManagement(fileList, uploadFile, downloadFile, deleteFile);
-
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('json', {
-        triggerCharacters: ['"'],
+        triggerCharacters: ['/', '#'],
         provideCompletionItems: (model, position) => {
-          const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
-          const suggestions = formatEditorSuggestions(dataSchemaSuggestion);
+          const textUntilPosition = model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          });
 
+          const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
+          const currentPath = determineCurrentPath(textUntilPosition);
+
+          const matchedSchemaItem = dataSchemaSuggestion.find((item) => item['label'].trim() === currentPath.trim());
+
+          const suggestions = matchedSchemaItem ? matchedSchemaItem.children : dataSchemaSuggestion;
           return {
             suggestions,
           } as languages.ProviderResult<languages.CompletionList>;
@@ -740,34 +741,25 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <FormPreviewScrollPane>
-                    <jsonFormContext.Provider value={baseEnumerator}>
+                    <ContextProvider
+                      fileManagement={{
+                        fileList: fileList,
+                        uploadFile: uploadFile,
+                        downloadFile: downloadFile,
+                        deleteFile: deleteFile,
+                      }}
+                    >
                       <GoAFormItem error={error} label="">
-                        <ErrorBoundary>
-                          {UiSchemaBounced !== '{}' ? (
-                            <JsonForms
-                              ajv={ajv}
-                              schema={JSON.parse(dataSchemaBounced)}
-                              uischema={JSON.parse(UiSchemaBounced)}
-                              data={data}
-                              validationMode={'ValidateAndShow'}
-                              renderers={renderer.GoARenderers}
-                              cells={vanillaCells}
-                              onChange={({ data }) => setData(data)}
-                            />
-                          ) : (
-                            <JsonForms
-                              ajv={ajv}
-                              schema={JSON.parse(dataSchemaBounced)}
-                              data={data}
-                              validationMode={'ValidateAndShow'}
-                              renderers={renderer.GoARenderers}
-                              cells={vanillaCells}
-                              onChange={({ data }) => setData(data)}
-                            />
-                          )}
-                        </ErrorBoundary>
+                        <JSONFormPreviewer
+                          uischema={UiSchemaBounced}
+                          schema={dataSchemaBounced}
+                          onChange={({ data }) => {
+                            setData(data);
+                          }}
+                          data={data}
+                        />
                       </GoAFormItem>
-                    </jsonFormContext.Provider>
+                    </ContextProvider>
                   </FormPreviewScrollPane>
                 </div>
               </Tab>

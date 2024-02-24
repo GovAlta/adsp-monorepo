@@ -2,8 +2,9 @@ import React from 'react';
 import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
-import { GoARadioGroup, GoARadioItem } from '@abgov/react-components-new';
+import { GoARadioGroup, GoARadioItem, GoAFormItem } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { getErrorsToDisplay, getLabelText } from '../../util/stringUtils';
 
 export const BooleanRadioComponent = ({
   data,
@@ -14,19 +15,29 @@ export const BooleanRadioComponent = ({
   path,
   config,
   label,
+  required,
+  errors,
   description,
 }: ControlProps) => {
-  const appliedUiSchemaOptions = { ...config, ...uischema.options };
+  const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const TrueValue = appliedUiSchemaOptions?.textForTrue || 'Yes';
   const FalseValue = appliedUiSchemaOptions?.textForFalse || 'No';
   const EnableDescription = appliedUiSchemaOptions?.enableDescription === true;
   const TrueDescription = description || appliedUiSchemaOptions?.descriptionForTrue;
   const FalseDescription = description || appliedUiSchemaOptions?.descriptionForFalse;
   const BaseTestId = appliedUiSchemaOptions?.testId || `${path}-boolean-radio-jsonform`;
+  const errorsFormInput = getErrorsToDisplay({
+    data,
+    uischema,
+    label,
+    required,
+    errors,
+  } as ControlProps);
 
   return (
     <Hidden xsUp={!visible}>
       <GoARadioGroup
+        error={errorsFormInput.length > 0}
         name={`${label}`}
         value={data === true ? TrueValue : data === false ? FalseValue : null}
         disabled={!enabled}
@@ -35,11 +46,11 @@ export const BooleanRadioComponent = ({
           if (value === TrueValue) {
             handleChange(path, true);
           }
-
           if (value === FalseValue) {
             handleChange(path, false);
           }
         }}
+        {...uischema?.options?.componentProps}
       >
         <GoARadioItem
           value={TrueValue}

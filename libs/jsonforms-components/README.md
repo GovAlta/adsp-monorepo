@@ -222,3 +222,30 @@ export default [
   ...
 ]
 ```
+
+Another way to add data to ContextProvider (optional)
+
+```
+const animals = {
+  animals: [
+    { name: 'Elephant', type: 'Mammal', habitat: 'Land' },
+    { name: 'Penguin', type: 'Bird', habitat: 'Ice' },
+    { name: 'Kangaroo', type: 'Mammal', habitat: 'Grasslands' },
+    { name: 'Giraffe', type: 'Mammal', habitat: 'Savanna' },
+    { name: 'Octopus', type: 'Invertebrate', habitat: 'Ocean' },
+    { name: 'Cheetah', type: 'Mammal', habitat: 'Grasslands' },
+    { name: 'Koala', type: 'Mammal', habitat: 'Eucalyptus Forest' },
+    { name: 'Toucan', type: 'Bird', habitat: 'Rainforest' },
+    { name: 'Dolphin', type: 'Mammal', habitat: 'Ocean' },
+    { name: 'Arctic Fox', type: 'Mammal', habitat: 'Arctic Tundra' },
+  ],
+};
+
+
+  <ContextProvider data={[{ animals }]}
+    <JsonForms
+      ...
+    </>
+  </ContextProvider>
+
+```

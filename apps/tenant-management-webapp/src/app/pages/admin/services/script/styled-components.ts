@@ -368,13 +368,13 @@ export const Edit = styled.div`
   flex-direction: row;
 `;
 export const ScrollPane = styled.div`
-  overflow-y: scroll;
+  overflow-y: auto;
   max-height: calc(100vh - 30px);
   width: 100%;
 `;
 
 export const TriggerEventScrollPane = styled.div`
-  overflow-y: scroll;
+  overflow-y: auto;
   width: 100%;
   margin-bottom: var(--goa-spacing-xs) !important;
 `;

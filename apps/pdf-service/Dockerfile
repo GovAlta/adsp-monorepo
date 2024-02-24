@@ -15,7 +15,7 @@
 #   && yum install -y google-chrome-stable libXScrnSaver
 # # fipa-gothic-fonts wqy-zenhei-fonts thai-scalable-tlwgtypo-fonts kacst-one-fonts fonts-freefont-ttf
 
-FROM node:18
+FROM node:20
 
 USER 0
 
@@ -35,7 +35,7 @@ WORKDIR /usr/app
 # Puppeteer will check the $HOME/.cache for the chome.
 ENV HOME=/puppeteer
 # Puppeteer version shall be compatible with that in the package.json. Shall we add an arg here?
-RUN npm i puppeteer@20.9.0
+RUN npm i puppeteer@22.2.0
 # To avoid the potential OpenShift contianer permission issue.
 RUN chmod 777 -R /puppeteer
 

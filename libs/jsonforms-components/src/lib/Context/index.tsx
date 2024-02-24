@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import React, { createContext } from 'react';
 import axios, { AxiosRequestConfig } from 'axios';
 
 interface enumerators {
@@ -12,140 +12,140 @@ export interface AllData {
   [x: string]: any;
 }
 
-export class Context {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fileList: any;
-  uploadFile: (file: File, propertyId: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  downloadFile: (file: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deleteFile: (file: any) => void;
-  enumFunctions: Map<string, () => (file: File, propertyId: string) => void>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  enumValues: Map<string, () => Record<string, any> | string[]>;
-  baseEnumerator: enumerators;
-  jsonFormContext: React.Context<enumerators>;
+export function addDataByUrl(key: string, url: string, processDataFunction: (url: string) => string[], token?: string) {
+  let header = {} as AxiosRequestConfig<unknown>;
 
-  constructor() {
-    this.fileList = null;
-    /* eslint-disable @typescript-eslint/no-empty-function */
-    this.uploadFile = () => {};
-    this.downloadFile = () => {};
-    this.deleteFile = () => {};
-    /* eslint-enable @typescript-eslint/no-empty-function */
-
-    this.enumFunctions = new Map<string, () => (file: File, propertyId: string) => void>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.enumValues = new Map<string, () => Record<string, any>>();
-
-    this.baseEnumerator = {
-      data: this.enumValues,
-      functions: this.enumFunctions,
-    };
-
-    this.jsonFormContext = createContext(this.baseEnumerator);
+  if (token) {
+    header = { ...header, ...{ Authorization: `Bearer ${token}` } };
   }
 
-  setFileManagement(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    fileList: any,
-    uploadFile: (file: File, propertyId: string) => void,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    downloadFile: (file: any) => void,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    deleteFile: (file: any) => void
-  ): void {
-    this.fileList = fileList;
-    this.uploadFile = uploadFile;
-    this.downloadFile = downloadFile;
-    this.deleteFile = deleteFile;
-
-    this.enumValues.set('file-list', () => this.fileList);
-    this.enumFunctions.set('upload-file', () => this.uploadFile);
-    this.enumFunctions.set('download-file', () => this.downloadFile);
-    this.enumFunctions.set('delete-file', () => this.deleteFile);
-  }
-
-  /**
-   * Allows additional data to be added under a given key
-   *
-   * This data will then be available inside the context
-   */
-  addData(key: string, data: Record<string, unknown> | unknown[]) {
-    this.enumValues.set(key, () => data);
-  }
-  addDataByUrl(key: string, url: string, processDataFunction: (url: string) => string[], token?: string) {
-    let header = { 'Content-Type': 'application/json' } as AxiosRequestConfig<unknown>;
-
-    if (token) {
-      header = { ...header, ...{ Authorization: `Bearer ${token}` } };
-    }
-
-    axios
-      .get(url, header)
-      .then((response) => {
-        const processedData = processDataFunction(response.data);
-        this.enumValues.set(key, () => processedData);
-      })
-      .catch((e) => console.log('Error: ' + JSON.stringify(e)));
-  }
-
-  addDataByOptions(key: string, url: string, location: string[], type: string, values: string[]) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dataFunction = (data: any) => {
-      let dataLink = data;
-      let returnData = [''];
-
-      const locationArray = location && !Array.isArray(location) ? [location] : location;
-      locationArray?.forEach((attribute) => {
-        dataLink = dataLink[attribute];
-      });
-
-      const valuesArray = Array.isArray(values) ? values : [values];
-
-      if (type === 'keys') {
-        returnData = Object.keys(dataLink);
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        returnData = dataLink.map((entry: any) => {
-          let parse = '';
-          valuesArray.forEach((v, index) => {
-            parse += `${entry[v]}`;
-
-            if (index < valuesArray.length - 1) {
-              parse += ' ';
-            }
-          });
-          return parse;
-        });
-      }
-
-      return returnData;
-    };
-
-    this.addDataByUrl(key, url, dataFunction);
-  }
-
-  /**
-   * Grabs data stored under a given key
-   *
-   */
-  getData(key: string) {
-    const dataFunction = this.baseEnumerator.data.get(key);
-    return dataFunction && dataFunction();
-  }
-
-  /**
-   * Grabs all data
-   *
-   */
-  getAllData() {
-    const allData: AllData = [];
-    this.baseEnumerator.data.forEach((d, key) => {
-      allData.push({ [key]: d() });
-    });
-    return allData;
-  }
+  axios.get(url, header).then((response) => {
+    const processedData = processDataFunction(response.data);
+    enumValues.set(key, () => processedData);
+  });
 }
 
-export const JsonFormContextInstance = new Context();
+export function addDataByOptions(key: string, url: string, location: string[], type: string, values: string[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dataFunction = (data: any) => {
+    let dataLink = data;
+    let returnData = [''];
+
+    const locationArray = location && !Array.isArray(location) ? [location] : location;
+    locationArray?.forEach((attribute) => {
+      dataLink = dataLink[attribute];
+    });
+
+    const valuesArray = Array.isArray(values) ? values : [values];
+
+    if (type === 'keys') {
+      returnData = Object.keys(dataLink);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      returnData = dataLink.map((entry: any) => {
+        let parse = '';
+        valuesArray.forEach((v, index) => {
+          parse += `${entry[v]}`;
+
+          if (index < valuesArray.length - 1) {
+            parse += ' ';
+          }
+        });
+        return parse;
+      });
+    }
+
+    return returnData;
+  };
+
+  addDataByUrl(key, url, dataFunction);
+}
+
+interface FileManagement {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fileList?: any;
+  uploadFile?: (file: File, propertyId: string) => void;
+  downloadFile?: (file: File) => void;
+  deleteFile?: (file: File) => void;
+}
+
+type Props = {
+  children?: React.ReactNode;
+  fileManagement?: FileManagement;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const enumValues: Map<string, () => Record<string, any> | string[]> = new Map<string, () => Record<string, any>>();
+const enumFunctions: Map<string, () => (file: File, propertyId: string) => void> = new Map<
+  string,
+  () => (file: File, propertyId: string) => void
+>();
+
+const baseEnumerator = {
+  data: enumValues,
+  functions: enumFunctions,
+};
+
+export const JsonFormContext = createContext(baseEnumerator);
+
+export function ContextProvider(props: Props): JSX.Element | null {
+  const outerTheme = React.useContext(JsonFormContext);
+
+  if (props.fileManagement) {
+    const { fileList, uploadFile, downloadFile, deleteFile } = props.fileManagement;
+
+    /* eslint-disable @typescript-eslint/no-empty-function */
+    const uploadFileFunction = uploadFile ? uploadFile : () => {};
+    const downloadFileFunction = downloadFile ? downloadFile : () => {};
+    const deleteFileFunction = deleteFile ? deleteFile : () => {};
+
+    enumValues.set('file-list', () => fileList);
+    enumFunctions.set('upload-file', () => uploadFileFunction);
+    enumFunctions.set('download-file', () => downloadFileFunction);
+    enumFunctions.set('delete-file', () => deleteFileFunction);
+  }
+
+  if (props.data) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    props.data?.forEach((item: any) => {
+      enumValues.set(Object.keys(item)[0], () => item);
+    });
+  }
+
+  if (!props.children) {
+    return null;
+  }
+
+  return <JsonFormContext.Provider value={baseEnumerator}>{props.children}</JsonFormContext.Provider>;
+}
+
+/**
+ * Grabs data stored under a given key
+ *
+ */
+export function getData(key: string) {
+  const dataFunction = baseEnumerator.data.get(key);
+  return dataFunction && dataFunction();
+}
+
+/**
+ * Grabs all data
+ *
+ */
+export function getAllData() {
+  const allData: AllData = [];
+  baseEnumerator.data.forEach((d, key) => {
+    allData.push({ [key]: d() });
+  });
+  return allData;
+}
+/**
+ * Allows additional data to be added under a given key
+ *
+ * This data will then be available inside the context
+ */
+export function addData(key: string, data: Record<string, unknown> | unknown[]) {
+  enumValues.set(key, () => data);
+}

@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { useState, useEffect } from 'react';
 import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
-import { Grid, GridItem } from '@core-services/app-common';
 import {
   ControlElement,
   Categorization,
@@ -14,9 +13,11 @@ import {
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
-import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
+
+import { Grid, GridItem } from '../../common/Grid';
+import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
 
 export interface FunObject {
   elements: Array<string>;
@@ -70,10 +71,25 @@ export const FormStepper = ({
 }: CategorizationStepperLayoutRendererProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = usePersistentState(0);
+  const [isFormValid, setIsFormValid] = useState(false);
   const categories = useMemo(
-    () => uiSchema.elements.filter((category) => isVisible(category, data, undefined, ajv)),
+    () => uiSchema.elements.filter((category) => isVisible(category, data, '', ajv)),
     [uiSchema, data, ajv]
   );
+  const handleSubmit = () => {
+    console.log('submitted', data);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const vslidateFormData = (formData: Array<UISchemaElement>) => {
+    const validate = ajv.compile(schema);
+    return validate(formData);
+  };
+
+  useEffect(() => {
+    const valid = vslidateFormData(data);
+    setIsFormValid(valid);
+  }, [data, vslidateFormData]);
 
   if (categories?.length < 1) {
     // eslint-disable-next-line
@@ -163,10 +179,17 @@ export const FormStepper = ({
           ) : (
             <div></div>
           )}
-          {step !== null && step < uiSchema.elements?.length + 1 && (
+          {step !== null && step < uiSchema.elements?.length && (
             <GoAButton type="primary" onClick={() => setPage(step + 1)}>
               Next
             </GoAButton>
+          )}
+          {step === uiSchema.elements.length && (
+            <div>
+              <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid}>
+                Submit
+              </GoAButton>
+            </div>
           )}
         </div>
       </div>
@@ -174,8 +197,8 @@ export const FormStepper = ({
   );
 };
 
-const flattenArray = function (data: Array<UISchemaElement>): Array<UISchemaElement> {
-  return data?.reduce(function iter(r: Array<UISchemaElement>, a): Array<UISchemaElement> {
+const flattenArray = function <T>(data: Array<T>): Array<T> {
+  return data?.reduce(function iter(r: Array<T>, a: T): Array<T> {
     if (a === null) {
       return r;
     }
@@ -183,8 +206,8 @@ const flattenArray = function (data: Array<UISchemaElement>): Array<UISchemaElem
       return a.reduce(iter, r);
     }
     if (typeof a === 'object') {
-      return Object.keys(a)
-        .map((k) => a[k])
+      return Object.values(a)
+        .map((v) => v)
         .reduce(iter, r);
     }
     return r.concat(a);

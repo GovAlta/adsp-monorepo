@@ -1,4 +1,4 @@
-const { getJestProjects } = require('@nrwl/jest');
+const { getJestProjects } = require('@nx/jest');
 
 export default {
   testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
@@ -6,7 +6,7 @@ export default {
     '^.+\\.(ts|js|html)$': 'ts-jest',
   },
   preset: './jest.preset.js',
-  resolver: '@nrwl/jest/plugins/resolver',
+  resolver: '@nx/jest/plugins/resolver',
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageReporters: ['html'],
   projects: getJestProjects(),

@@ -7,7 +7,7 @@
   "generators": {},
   "targets": {
     "build": {
-      "executor": "@nrwl/webpack:webpack",
+      "executor": "@nx/webpack:webpack",
       "options": {
         "webpackConfig": "apps/value-service/webpack.config.js",
         "outputPath": "dist/apps/value-service",
@@ -37,23 +37,19 @@
       "outputs": ["{options.outputPath}"]
     },
     "serve": {
-      "executor": "@nrwl/node:node",
+      "executor": "@nx/js:node",
       "options": {
         "buildTarget": "value-service:build",
         "port": 7771
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "options": {
-        "lintFilePatterns": ["apps/value-service/**/*.{ts,tsx,js,jsx}"]
-      }
+      "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "options": {
-        "jestConfig": "apps/value-service/jest.config.ts",
-        "passWithNoTests": true
+        "jestConfig": "apps/value-service/jest.config.ts"
       },
       "outputs": ["{workspaceRoot}/coverage/apps/value-service"]
     }

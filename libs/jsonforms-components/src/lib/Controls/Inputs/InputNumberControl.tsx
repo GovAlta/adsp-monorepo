@@ -4,11 +4,13 @@ import { GoAInputNumber } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { getErrorsToDisplay } from '../../util/stringUtils';
 type GoAInputNumberProps = CellProps & WithClassname & WithInputProps;
 
 export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
+
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const InputValue = data ? data : 0.0;
@@ -16,8 +18,11 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0.01;
   const MinValue = clonedSchema.min ? clonedSchema.min : 0;
   const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
+  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+
   return (
     <GoAInputNumber
+      error={errorsFormInput.length > 0}
       disabled={!enabled}
       value={InputValue}
       placeholder={placeholder}
@@ -27,7 +32,16 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       width="100%"
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
+      onKeyPress={(name: string, value: number, key: string) => {
+        if (!(key === 'Tab' || key === 'Shift')) {
+          handleChange(path, value);
+        }
+      }}
+      onBlur={(name: string, value: number) => {
+        handleChange(name, value);
+      }}
       onChange={(name, value) => handleChange(path, value)}
+      {...uischema?.options?.componentProps}
     />
   );
 };
