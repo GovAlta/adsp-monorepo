@@ -38,5 +38,4 @@ const QueueListComponent: FunctionComponent<QueueListComponentProps> = ({
 export const QueueList = styled(QueueListComponent)`
   padding: 8px 32px 32px 32px;
   flex: 1;
-  overflow: scroll;
 `;
