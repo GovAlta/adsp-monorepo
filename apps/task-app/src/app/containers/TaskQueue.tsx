@@ -61,7 +61,7 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
   const { tenant: tenantName } = useParams<{ tenant: string }>();
   useEffect(() => {
     if (feedback?.message.includes('queue with ID') && feedback?.message.includes('could not be found')) {
-      navigate(`/tasks/${tenantName}`);
+      navigate(`/${tenantName}`);
     }
   }, [feedback, navigate, tenantName]);
 

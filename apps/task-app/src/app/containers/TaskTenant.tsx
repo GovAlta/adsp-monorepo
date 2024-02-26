@@ -53,7 +53,7 @@ const TaskTenantSection = ({ tenantName }: TaskTenantSectionProps) => {
             </Suspense>
           }
         />
-        <Route path="*" element={<Navigate to={`/tasks/${tenantName}`} replace />} />
+        <Route path="*" element={<Navigate to={`/${tenantName}`} replace />} />
       </Routes>
     </section>
   );

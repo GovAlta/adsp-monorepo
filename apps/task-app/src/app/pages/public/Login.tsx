@@ -31,7 +31,7 @@ const LoginLanding = (): JSX.Element => {
 
   useEffect(() => {
     if (tenant) {
-      dispatch(loginUser({ tenant, from: `/tasks/${tenantName}` }));
+      dispatch(loginUser({ tenant, from: `/${tenantName}` }));
     }
   }, [tenant, dispatch, tenantName]);
 
