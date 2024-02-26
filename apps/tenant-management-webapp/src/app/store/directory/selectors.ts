@@ -27,7 +27,7 @@ export const selectDirectory = createSelector(
   (state: RootState) => state.directory,
   (directory) => {
     return (
-      directory?.directory.map((dir) => {
+      directory?.directory?.map((dir) => {
         return { ...dir, hasApi: hasApi(dir, directory?.directory) };
       }) || []
     );
@@ -39,6 +39,14 @@ export const selectDirectoryByUrn = createSelector(
   (_, urn: string) => urn,
   (directory, urn) => {
     return directory.filter((dir) => dir.urn === urn)?.[0];
+  }
+);
+
+export const selectDirectoryByServiceName = createSelector(
+  selectDirectory,
+  (_, service: string) => service,
+  (directory, service) => {
+    return directory.filter((dir) => dir.service === service)?.[0];
   }
 );
 
