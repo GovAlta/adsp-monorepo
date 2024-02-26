@@ -1,4 +1,5 @@
 import '@abgov/web-components/index.css';
+import '@abgov/design-tokens/dist/tokens.css';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom-6';
 import { TaskTenant } from './containers/TaskTenant';
 

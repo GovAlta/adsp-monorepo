@@ -36,6 +36,6 @@ const QueueListComponent: FunctionComponent<QueueListComponentProps> = ({
 };
 
 export const QueueList = styled(QueueListComponent)`
-  padding: 8px 32px 32px 32px;
+  padding: var(--goa-space-xs) var(--goa-space-xl) var(--goa-space-xl) var(--goa-space-xl);
   flex: 1;
 `;
