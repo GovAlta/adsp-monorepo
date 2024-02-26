@@ -142,7 +142,6 @@ class KeycloakAuth {
 
     if (skipSSO && !idpFromUrl) {
       // kc_idp_hint with empty value, skip checkSSO
-      redirectUri += `?kc_idp_hint=`;
       Promise.all([
         this.keycloak.init({ checkLoginIframe: false }),
         this.keycloak.login({ idpHint: ' ', redirectUri }),
