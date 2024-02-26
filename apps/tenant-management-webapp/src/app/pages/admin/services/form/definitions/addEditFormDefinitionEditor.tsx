@@ -171,13 +171,19 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             endLineNumber: position.lineNumber,
             endColumn: position.column,
           });
+          let suggestions = [];
 
-          const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
-          const currentPath = determineCurrentPath(textUntilPosition);
+          try {
+            const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
+            const currentPath = determineCurrentPath(textUntilPosition);
 
-          const matchedSchemaItem = dataSchemaSuggestion.find((item) => item['label'].trim() === currentPath.trim());
+            const matchedSchemaItem = dataSchemaSuggestion.find((item) => item['label'].trim() === currentPath.trim());
 
-          const suggestions = matchedSchemaItem ? matchedSchemaItem.children : dataSchemaSuggestion;
+            suggestions = matchedSchemaItem ? matchedSchemaItem.children : dataSchemaSuggestion;
+          } catch (e) {
+            console.debug(`Error in JSON editor autocompletion: ${e.message}`);
+          }
+
           return {
             suggestions,
           } as languages.ProviderResult<languages.CompletionList>;
