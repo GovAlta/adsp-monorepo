@@ -1,37 +1,10 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "allowJs": true,
-    "esModuleInterop": true,
+    "allowJs": false,
+    "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./src",
-    "paths": {
-      "@assets/*": [
-        "assets/*"
-      ],
-      "@components/*": [
-        "app/components/*"
-      ],
-      "@icons/*": [
-        "assets/icons/*"
-      ],
-      "@lib/*": [
-        "app/lib/*"
-      ],
-      "@pages/*": [
-        "app/pages/*"
-      ],
-      "@store/*": [
-        "app/store/*"
-      ],
-      "@style/*": [
-        "../../../libs/stylesheets/scss/src/lib/*"
-      ],
-      "@core-services/app-common": [
-        "../../../libs/app-common/src/index.ts"
-      ]
-    }
+    "strict": false
   },
   "files": [],
   "include": [],
@@ -43,4 +16,5 @@
       "path": "./tsconfig.spec.json"
     }
   ],
+  "extends": "../../tsconfig.base.json"
 }

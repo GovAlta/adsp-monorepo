@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom-6';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom-6';
@@ -11,12 +11,12 @@ import {
   loginUser,
   tenantSelector,
   feedbackSelector,
-} from 'app/state';
+} from '../../state';
 
 const LoginLanding = (): JSX.Element => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const location = useLocation();
+
   const { tenant: tenantName } = useParams<{ tenant: string }>();
 
   const tenant = useSelector(tenantSelector);
