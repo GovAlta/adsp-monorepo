@@ -150,7 +150,7 @@ export const logoutUser = createAsyncThunk(
 const initialUserState: UserState = {
   initialized: false,
   tenant: null,
-  user: null,
+  user: undefined,
 };
 
 const userSlice = createSlice({
@@ -158,7 +158,7 @@ const userSlice = createSlice({
   initialState: initialUserState,
   reducers: {
     clearUser: (state) => {
-      state.user = null;
+      state.user = undefined;
     },
   },
   extraReducers: (builder) => {
