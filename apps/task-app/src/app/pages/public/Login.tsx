@@ -33,13 +33,13 @@ const LoginLanding = (): JSX.Element => {
     if (tenant) {
       dispatch(loginUser({ tenant, from: `/tasks/${tenantName}` }));
     }
-  }, [tenant]);
+  }, [tenant, dispatch, tenantName]);
 
   useEffect(() => {
     if (feedback?.message.includes('not found')) {
       navigate(`/overview`);
     }
-  }, [feedback]);
+  }, [feedback, navigate]);
 
   return <div></div>;
 };

@@ -3,7 +3,7 @@ import { GoACallout } from '@abgov/react-components-new';
 import { FunctionComponent, ReactElement } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { useSearchParams } from 'react-router-dom-6';
+import { useSearchParams, useLocation } from 'react-router-dom-6';
 import { userSelector, configInitializedSelector, AppDispatch, tenantSelector, loginUser } from '../state';
 
 interface AuthorizeUserProps {
@@ -16,8 +16,9 @@ const Placeholder = styled.div`
 `;
 
 export const AuthorizeUser: FunctionComponent<AuthorizeUserProps> = ({ roles, children }) => {
-  let [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, _] = useSearchParams();
   const loggedOut = searchParams.get('logout');
+  const location = useLocation();
 
   const dispatch = useDispatch<AppDispatch>();
   const { initialized, user } = useSelector(userSelector);
@@ -28,7 +29,7 @@ export const AuthorizeUser: FunctionComponent<AuthorizeUserProps> = ({ roles, ch
     if (tenant && user === null && !loggedOut) {
       dispatch(loginUser({ tenant, from: location.pathname }));
     }
-  }, [tenant, user]);
+  }, [tenant, user, dispatch, loggedOut]);
 
   return initialized ? (
     user && (!roles?.length || roles.find((r) => user.roles?.includes(r))) ? (

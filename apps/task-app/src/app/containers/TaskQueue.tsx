@@ -63,7 +63,7 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
     if (feedback?.message.includes('queue with ID') && feedback?.message.includes('could not be found')) {
       navigate(`/tasks/${tenantName}`);
     }
-  }, [feedback]);
+  }, [feedback, navigate, tenantName]);
 
   return (
     <div className={className}>
