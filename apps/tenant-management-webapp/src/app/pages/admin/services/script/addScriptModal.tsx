@@ -25,7 +25,7 @@ interface AddScriptModalProps {
   initialValue?: ScriptItem;
   onCancel?: () => void;
   onSave: (script: ScriptItem) => void;
-  openEditorOnAdd: (script: ScriptItem) => void;
+  openEditorOnAdd?: (script: ScriptItem) => void;
   open: boolean;
   isNew: boolean;
 }
@@ -77,7 +77,11 @@ export const AddScriptModal = ({
     }
 
     onSave(script);
-    openEditorOnAdd(script);
+    if (isNew) {
+      openEditorOnAdd(script);
+    } else {
+      onCancel();
+    }
     validators.clear();
   };
 
