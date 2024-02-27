@@ -46,7 +46,7 @@ export const HelpContentComponent = (props: CustomControlProps): JSX.Element => 
         )}
         {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
         {uischema.options?.variant && uischema.options?.variant === 'details' && (
-          <GoADetails heading={label ? label : ''} mt="3xs" mb="3xs">
+          <GoADetails heading={label ? label : ''} mt="3xs" mb="none">
             {renderHelp()}
             {uischema?.elements && uischema?.elements?.length > 0 && <HelpContents elements={uischema?.elements} />}
           </GoADetails>

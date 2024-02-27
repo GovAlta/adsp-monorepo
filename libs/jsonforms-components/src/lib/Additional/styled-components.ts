@@ -5,7 +5,7 @@ export const HelpContentDiv = styled.div`
     text-align: left;
     font-size: 24px;
     font-weight: bold;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
   }
   ul {
     margin: 0.5rem 0 0.5rem 0.5rem;

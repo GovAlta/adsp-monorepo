@@ -132,7 +132,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
       }
     >
       <GoAFormItem label="">
-        <div style={{ margin: '0 0 200px 0' }}>
+        <div style={{ margin: '0.25rem 0 12.5rem 0' }}>
           <GoADropdown
             name="event"
             onChange={onChange}
