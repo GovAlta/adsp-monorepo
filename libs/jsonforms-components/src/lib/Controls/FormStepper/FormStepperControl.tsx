@@ -98,7 +98,7 @@ export const FormStepper = ({
   // Note: [Jan-02-2023] the Options here will be used in the feature
   const appliedUiSchemaOptions = { ...config, ...uiSchema?.options };
 
-  const [showNextBtn, setShowNextBtn] = useState(true);
+
   const findHiddenCategories = () => {
     const hiddenCategories = uiSchema.elements.filter((element) => {
       if (element.rule) {
@@ -113,7 +113,7 @@ export const FormStepper = ({
     }).map((category) => category.label);
     return hiddenCategories;
   }
-
+  const [showNextBtn, setShowNextBtn] = useState(true);
   const isHiddenStep = (step: any) => {
     if (!step.rule) {
       return false;
