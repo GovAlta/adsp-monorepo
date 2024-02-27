@@ -12,7 +12,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const InputValue = data ? data : 0;
+  const InputValue = data ? data : '';
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
@@ -32,7 +32,15 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       placeholder={placeholder}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onChange={(name, value) => handleChange(path, value)}
+      onKeyPress={(name: string, value: string, key: string) => {
+        if (!(key === 'Tab' || key === 'Shift')) {
+          handleChange(path, +value);
+        }
+      }}
+      onBlur={(name: string, value: string) => {
+        handleChange(name, value);
+      }}
+      onChange={(name, value) => handleChange(path, +value)}
       {...uischema?.options?.componentProps}
     />
   );
