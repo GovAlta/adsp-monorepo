@@ -197,7 +197,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
 
             <GoAFormItem label="">
               <EditorPadding>
-                {/* <Editor height={height - 550} /> */}
                 <div style={heightCover}></div>
               </EditorPadding>
             </GoAFormItem>
