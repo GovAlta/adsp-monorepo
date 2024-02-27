@@ -9,6 +9,35 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     },
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/jsonforms-components",
+        "tsConfig": "libs/jsonforms-components/tsconfig.lib.json",
+        "project": "libs/jsonforms-components/package.json",
+        "entryFile": "libs/jsonforms-components/src/index.ts",
+        "external": [
+          "@abgov/react-components-new",
+          "@jsonforms/core",
+          "@jsonforms/material-renderers",
+          "@jsonforms/react",
+          "@mui/material",
+          "react",
+          "react-dom",
+          "react/jsx-runtime"
+        ],
+        "rollupConfig": "libs/jsonforms-components/rollup.config.js",
+        "compiler": "babel",
+        "assets": [
+          {
+            "glob": "libs/jsonforms-components/README.md",
+            "input": ".",
+            "output": "."
+          }
+        ]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { useState, useEffect } from 'react';
 import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
-import { Grid, GridItem } from '@core-services/app-common';
 import {
   ControlElement,
   Categorization,
@@ -14,9 +13,11 @@ import {
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
-import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
+
+import { Grid, GridItem } from '../../common/Grid';
+import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
 
 export interface FunObject {
   elements: Array<string>;
@@ -72,7 +73,7 @@ export const FormStepper = ({
   const [step, setStep] = usePersistentState(0);
   const [isFormValid, setIsFormValid] = useState(false);
   const categories = useMemo(
-    () => uiSchema.elements.filter((category) => isVisible(category, data, undefined, ajv)),
+    () => uiSchema.elements.filter((category) => isVisible(category, data, '', ajv)),
     [uiSchema, data, ajv]
   );
   const handleSubmit = () => {
@@ -196,8 +197,8 @@ export const FormStepper = ({
   );
 };
 
-const flattenArray = function (data: Array<UISchemaElement>): Array<UISchemaElement> {
-  return data?.reduce(function iter(r: Array<UISchemaElement>, a): Array<UISchemaElement> {
+const flattenArray = function <T>(data: Array<T>): Array<T> {
+  return data?.reduce(function iter(r: Array<T>, a: T): Array<T> {
     if (a === null) {
       return r;
     }
@@ -205,8 +206,8 @@ const flattenArray = function (data: Array<UISchemaElement>): Array<UISchemaElem
       return a.reduce(iter, r);
     }
     if (typeof a === 'object') {
-      return Object.keys(a)
-        .map((k) => a[k])
+      return Object.values(a)
+        .map((v) => v)
         .reduce(iter, r);
     }
     return r.concat(a);

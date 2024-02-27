@@ -1,4 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
+import { NotFoundError } from '@core-services/core-common';
 import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
 import { PDF_GENERATED, PDF_GENERATION_FAILED } from '../events';
@@ -113,6 +114,31 @@ describe('generate', () => {
         );
         done();
       });
+    });
+
+    it('can handle missing template', async () => {
+      const item: PdfServiceWorkItem = {
+        tenantId: `${tenantId}`,
+        work: 'generate',
+        jobId: uuid(),
+        timestamp: new Date(),
+        templateId: 'test-template',
+        fileType: GENERATED_PDF,
+        recordId: 'my-domain-record-1',
+        data: {},
+        filename: 'test.pdf',
+        requestedBy: {
+          id: 'tester',
+          name: 'Testy McTester',
+        },
+      };
+
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce([{}]);
+
+      const done = jest.fn();
+      await job(item, true, done);
+      expect(done).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
 
     it('can send failed event', (done) => {

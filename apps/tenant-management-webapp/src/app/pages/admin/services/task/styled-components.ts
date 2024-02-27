@@ -106,12 +106,12 @@ export const TaskEditor = styled.div`
   width: 100%;
 
   .hr-resize {
-    margin-top: var(--goa-spacing-s);
+    margin-top: var(--goa-space-s);
   }
 
   .hr-resize-bottom {
-    margin-bottom: var(--goa-spacing-2xs);
-    margin-top: var(--goa-spacing-xl);
+    margin-bottom: var(--goa-space-2xs);
+    margin-top: var(--goa-space-xl);
   }
   .task-permissions-wrapper {
     table {
@@ -301,12 +301,12 @@ export const HideTablet = styled.div`
   }
 `;
 export const ButtonPadding = styled.div`
-  padding-bottom: var(--goa-spacing-l);
-  padding-top: var(--goa-spacing-l);
+  padding-bottom: var(--goa-space-l);
+  padding-top: var(--goa-space-l);
 `;
 export const HeaderFont = styled.div`
   font: var(--goa-typography-heading-m);
-  padding-bottom: var(--goa-spacing-2xs);
+  padding-bottom: var(--goa-space-2xs);
 `;
 
 export const HelpText = styled.div`
@@ -335,13 +335,13 @@ export const ErrorMsg = styled.div`
 export const MoreDetails = styled.div`
    {
     background-color: var(--goa-color-greyscale-100);
-    padding: var(--goa-spacing-s) var(--goa-spacing-l) var(--goa-spacing-l) var(--goa-spacing-l);
+    padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
     width: 100%;
     text-align: left;
     p {
       font-weight: bold;
-      padding-top: var(--goa-spacing-s);
-      margin-bottom: var(--goa-spacing-xs);
+      padding-top: var(--goa-space-s);
+      margin-bottom: var(--goa-space-xs);
     }
     span {
     }

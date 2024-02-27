@@ -13,16 +13,20 @@ import { GoATextArea } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { getErrorsToDisplay } from '../../util/stringUtils';
 type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
+  const { data, config, id, enabled, uischema, path, handleChange, schema, label } = props;
+
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
+  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
 
   return (
     <GoATextArea
+      error={errorsFormInput.length > 0}
       value={data}
       disabled={!enabled}
       placeholder={placeholder}
@@ -31,8 +35,14 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
       width={'100%'}
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
-      onKeyPress={(name: string, value: string) => handleChange(path, value)}
-      // eslint-disable-next-line
+      onKeyPress={(name: string, value: string, key: string) => {
+        if (!(key === 'Tab' || key === 'Shift')) {
+          handleChange(path, value);
+        }
+      }}
+      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
+      // If you use it onChange along with keyPress event it will cause a
+      // side effect that causes the validation to render when it shouldnt.
       onChange={() => {}}
       {...uischema?.options?.componentProps}
     />

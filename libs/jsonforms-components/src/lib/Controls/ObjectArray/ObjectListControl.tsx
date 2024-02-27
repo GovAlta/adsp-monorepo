@@ -11,6 +11,8 @@ import {
   JsonFormsRendererRegistryEntry,
   JsonFormsCellRendererRegistryEntry,
   ArrayTranslations,
+  UISchemaElement,
+  Layout,
 } from '@jsonforms/core';
 
 import { WithDeleteDialogSupport } from './DeleteDialog';
@@ -72,7 +74,7 @@ const GenerateRows = (
 
 const getValidColumnProps = (scopedSchema: JsonSchema) => {
   if (scopedSchema.type === 'object' && typeof scopedSchema.properties === 'object') {
-    return Object.keys(scopedSchema.properties).filter((prop) => scopedSchema.properties[prop].type !== 'array');
+    return Object.keys(scopedSchema.properties).filter((prop) => scopedSchema.properties?.[prop].type !== 'array');
   }
   // primitives
   return [''];
@@ -92,7 +94,7 @@ const EmptyList = ({ numColumns, translations }: EmptyListProps) => (
 );
 
 interface NonEmptyCellProps extends OwnPropsOfNonEmptyCell {
-  rootSchema: JsonSchema;
+  rootSchema?: JsonSchema;
   errors: string;
   enabled: boolean;
 }
@@ -112,7 +114,7 @@ const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOf
     uischema: ownProps.uischema,
     rowPath: ownProps.rowPath,
     schema: ownProps.schema,
-    rootSchema: ctx.core.schema,
+    rootSchema: ctx.core?.schema,
     errors,
     enabled: ownProps.enabled,
     cells: ownProps.cells || ctx.cells,
@@ -123,14 +125,14 @@ const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOf
 interface NonEmptyRowComponentProps {
   propName?: string;
   schema: JsonSchema;
-  rootSchema: JsonSchema;
+  rootSchema?: JsonSchema;
   rowPath: string;
   errors: string;
   enabled: boolean;
   renderers?: JsonFormsRendererRegistryEntry[];
   cells?: JsonFormsCellRendererRegistryEntry[];
   isValid: boolean;
-  uischema?: ControlElement;
+  uischema?: ControlElement | Layout;
 }
 const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
   schema,
@@ -143,7 +145,7 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
   uischema,
 }: NonEmptyRowComponentProps) {
   const propNames = getValidColumnProps(schema);
-  const propScopes = uischema?.scope
+  const propScopes = (uischema as ControlElement)?.scope
     ? propNames.map((name) => {
         return `#/properties/${name}`;
       })
@@ -170,7 +172,7 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
     <>
       {
         // eslint-disable-next-line
-        (uischema as unknown as any)?.elements?.map((element) => {
+        (uischema as Layout)?.elements?.map((element: UISchemaElement) => {
           return (
             <JsonFormsDispatch
               key={rowPath}
@@ -318,6 +320,9 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
       enabled,
       cells,
       translations,
+      data,
+      config,
+      ...additionalProps
     } = this.props;
 
     const controlElement = uischema as ControlElement;
@@ -343,7 +348,18 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
             />
           </ToolBarHeader>
           <div>
-            <ObjectArrayList openDeleteDialog={openDeleteDialog} translations={translations} {...this.props} />
+            <ObjectArrayList
+              path={path}
+              schema={schema}
+              uischema={uischema}
+              enabled={enabled}
+              openDeleteDialog={openDeleteDialog}
+              translations={translations}
+              data={data}
+              cells={cells}
+              config={config}
+              {...additionalProps}
+            />
           </div>
         </div>
       </Hidden>

@@ -20,6 +20,7 @@ import {
   metricsLoadingSelector,
   openTask,
   loadQueueMetrics,
+  feedbackSelector,
 } from '../state';
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
 import { TaskPriorityModal } from '../components/TaskPriorityModal';
@@ -54,6 +55,15 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
   }, [dispatch, params]);
 
   const navigate = useNavigate();
+
+  const feedback = useSelector(feedbackSelector);
+
+  const { tenant: tenantName } = useParams<{ tenant: string }>();
+  useEffect(() => {
+    if (feedback?.message.includes('queue with ID') && feedback?.message.includes('could not be found')) {
+      navigate(`/${tenantName}`);
+    }
+  }, [feedback, navigate, tenantName]);
 
   return (
     <div className={className}>

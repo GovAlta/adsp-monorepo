@@ -19,13 +19,13 @@ export const FileTableStyles = styled.div`
     flex: auto;
   }
 
-  margin: var(--goa-spacing-xs) 0 var(--goa-spacing-m);
+  margin: var(--goa-space-xs) 0 var(--goa-space-m);
 
   .some-margin {
-    margin: var(--goa-spacing-xs);
+    margin: var(--goa-space-xs);
   }
   thead {
-    margin-bottom: var(--goa-spacing-xs);
+    margin-bottom: var(--goa-space-xs);
   }
 `;
 
@@ -36,7 +36,7 @@ export const PopulateTemplateWrapper = styled.div`
 `;
 
 export const BadgeWrapper = styled.div`
-  margin-left: var(--goa-spacing-m);
+  margin-left: var(--goa-space-m);
 `;
 
 export const ButtonBox = styled.div`
@@ -55,13 +55,13 @@ export const ButtonRight = styled.div`
 export const FlexRow = styled.div`
   display: flex;
   flex-direction: row;
-  padding-top: var(--goa-spacing-m);
+  padding-top: var(--goa-space-m);
 `;
 export const PDFTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 0px;
-  padding-left: var(--goa-spacing-xl);
+  padding-left: var(--goa-space-xl);
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -75,13 +75,13 @@ export const OuterPDFTemplateEditorContainer = styled.div`
 `;
 
 export const TemplateEditorContainerPdf = styled.div`
-  padding-right: var(--goa-spacing-m);
+  padding-right: var(--goa-space-m);
   overflow: hidden;
   &:hover {
     overflow: auto;
   }
   width: calc(100vw - 40vw - 9.9rem);
-  padding-top: var(--goa-spacing-xs);
+  padding-top: var(--goa-space-xs);
 
   .reduce-margin {
     margin-top: 5px;
@@ -103,13 +103,13 @@ export const TemplateEditorContainerPdf = styled.div`
   }
 
   .hr-resize {
-    margin-top: var(--goa-spacing-s);
+    margin-top: var(--goa-space-s);
   }
   .hr-resize-bottom {
-    margin-bottom: var(--goa-spacing-l);
+    margin-bottom: var(--goa-space-l);
   }
   .hr-resize-top {
-    margin-bottom: var(--goa-spacing-xl);
+    margin-bottom: var(--goa-space-xl);
   }
 
   .title {
@@ -139,10 +139,10 @@ export const Modal = styled.div`
 
 export const PreviewTemplateContainer = styled.div`
   width: calc(40vw + 3.9rem);
-  margin-right: var(--goa-spacing-xl);
-  margin-left: var(--goa-spacing-xl);
+  margin-right: var(--goa-space-xl);
+  margin-left: var(--goa-space-xl);
   overflow: hidden;
-  padding-top: var(--goa-spacing-xs);
+  padding-top: var(--goa-space-xs);
   &:hover {
     overflow: auto;
   }
@@ -151,23 +151,23 @@ export const MonacoDiv = styled.div`
   display: flex;
   border: var(--goa-border-width-s) solid var(--color-gray-700);
   border-radius: var(--goa-border-radius-m);
-  padding: var(--goa-spacing-3xs);
+  padding: var(--goa-space-3xs);
 `;
 export const MonacoDivBody = styled.div`
   display: flex;
   border: var(--goa-border-width-s) solid var(--color-gray-700);
   border-radius: var(--goa-border-radius-m);
-  padding-top: var(--goa-spacing-l);
-  padding: var(--goa-spacing-3xs);
-  min-height: var(--goa-spacing-xl);
+  padding-top: var(--goa-space-l);
+  padding: var(--goa-space-3xs);
+  min-height: var(--goa-space-xl);
   margin: 0;
 `;
 
 export const EditTemplateActions = styled.div`
   display: flex;
   justify-content: left;
-  gap: var(--goa-spacing-m);
-  margin: var(--goa-spacing-m) 0 var(--goa-spacing-xl) 0;
+  gap: var(--goa-space-m);
+  margin: var(--goa-space-m) 0 var(--goa-space-xl) 0;
 `;
 
 // preview template components
@@ -179,7 +179,7 @@ export const PreviewContainer = styled.div`
 
 export const SubjectPreview = styled.div`
   background-color: white;
-  padding-left: var(--goa-spacing-m);
+  padding-left: var(--goa-space-m);
 `;
 
 export const BodyPreview = styled(PreviewPortal)`
@@ -189,8 +189,8 @@ export const BodyPreview = styled(PreviewPortal)`
     overflow: auto;
   }
   flex-grow: 1;
-  margin-bottom: var(--goa-spacing-m);
-  border: var(--goa-spacing-l) solid var(--goa-color-info-light);
+  margin-bottom: var(--goa-space-m);
+  border: var(--goa-space-l) solid var(--goa-color-info-light);
 `;
 
 export const PdfEditorLabelWrapper = styled.div`
@@ -208,7 +208,7 @@ export const PdfEditorLabelWrapper = styled.div`
 `; // no spacing design token for 4.5rem and 3px
 
 export const PdfConfigFormWrapper = styled.div`
-  margin-top: var(--goa-spacing-xl);
+  margin-top: var(--goa-space-xl);
   font-size: var(--goa-fontSize-3);
   padding-left: 3px;
   border: var(--goa-border-width-s) solid var(--goa-color-greyscale-200);
@@ -218,21 +218,21 @@ export const PdfConfigFormWrapper = styled.div`
   padding-right: var(--goa-color-greyscale-100);
 
   display: flex;
-  margin-bottom: var(--goa-spacing-l);
+  margin-bottom: var(--goa-space-l);
   .nameColumn {
     width: 91px;
     height: 85px;
-    margin: var(--goa-spacing-m);
+    margin: var(--goa-space-m);
   }
   .idColumn {
     width: 105px;
     height: 118px;
-    margin: var(--goa-spacing-m);
+    margin: var(--goa-space-m);
   }
   .descColumn {
     width: 606px;
     height: 118px;
-    margin: var(--goa-spacing-m);
+    margin: var(--goa-space-m);
     p {
       bottom: -105px !important;
       max-width: 300px !important;
@@ -257,10 +257,10 @@ export const PdfConfigFormWrapper = styled.div`
     float: right;
     width: 53px;
 
-    margin: var(--goa-spacing-m) var(--goa-spacing-m) var(--goa-spacing-m) auto;
+    margin: var(--goa-space-m) var(--goa-space-m) var(--goa-space-m) auto;
   }
   .separator {
-    margin-top: var(--goa-spacing-m);
+    margin-top: var(--goa-space-m);
     width: 1px;
     height: 5.375rem;
 
@@ -301,7 +301,7 @@ export const Tooltip = styled.div`
 `;
 
 export const PdfEditActionLayout = styled.div`
-  bottom: var(--goa-spacing-3xl);
+  bottom: var(--goa-space-3xl);
 `;
 
 export const SpinnerSpace = styled.div`
@@ -362,15 +362,15 @@ export const Edit = styled.div`
 
   a {
     margin-top: 3px;
-    margin-right: var(--goa-spacing-xs);
+    margin-right: var(--goa-space-xs);
     text-decoration: underline;
     line-height: 28px;
   }
   display: flex;
   flex-direction: row;
-  margin-right: var(--goa-spacing-m);
+  margin-right: var(--goa-space-m);
   margin-top: 0;
-  padding-top: var(--goa-spacing-3xs);
+  padding-top: var(--goa-space-3xs);
 `;
 export const OverflowWrap = styled.div`
   overflow-wrap: break-word;
@@ -381,13 +381,13 @@ export const PreviewTopStyle = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: start;
-  gap: var(--goa-spacing-l);
+  gap: var(--goa-space-l);
   align-items: flex-start;
 `;
 
 export const PreviewTopStyleWrapper = styled.div`
   .hr-resize {
-    margin-bottom: var(--goa-spacing-xl);
+    margin-bottom: var(--goa-space-xl);
   }
 `;
 
@@ -396,7 +396,7 @@ export const PDFTitle = styled.div`
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
   font-family: var(--goa-font-family-sans);
-  margin-bottom: var(--goa-spacing-s);
+  margin-bottom: var(--goa-space-s);
 }
 `;
 
@@ -435,7 +435,7 @@ export const PdfFormItem = styled.div`
 export const HelpText = styled.div`
   font-size: var(--fs-sm);
   color: var(--color-gray-900);
-  line-height: calc(var(--fs-sm) + var(--goa-spacing-xs));
+  line-height: calc(var(--fs-sm) + var(--goa-space-xs));
   display: flex;
   display-direction: row;
   justify-content: space-between;
