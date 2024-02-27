@@ -133,7 +133,7 @@ class KeycloakAuth {
     const skipSSO = location.indexOf('kc_idp_hint') > -1;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
+    const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
     const code = encodeURIComponent(urlParams.get('code'));
     const smscode = encodeURIComponent(urlParams.get('smscode'));
 
