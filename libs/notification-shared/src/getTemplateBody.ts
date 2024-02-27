@@ -15,7 +15,13 @@ export const hasProperHtmlWrapper = (content: string): boolean => {
   return hasHtmlOpeningTag && hasHtmlClosingTag;
 };
 
-export const getTemplateBody = (body: string, channel: string, context?: Record<string, unknown>): string => {
+export const getTemplateBody = (
+  body: string,
+  channel: string,
+  context?: Record<string, unknown>,
+  title?: string,
+  subtitle?: string
+): string => {
   if (channel === 'pdf-footer') {
     return pdfFooterTemplate({ content: body, ...context });
   } else if (channel === 'pdf-header') {
@@ -23,7 +29,9 @@ export const getTemplateBody = (body: string, channel: string, context?: Record<
   } else {
     if (!hasProperHtmlWrapper(body)) {
       if (channel === 'email') {
-        return body ? emailWrapperTemplate({ content: body, ...context }) : body;
+        return body
+          ? emailWrapperTemplate({ content: { body: body, mainTitle: title, subtitle: subtitle }, ...context })
+          : body;
       } else if (channel === 'pdf') {
         return pdfWrapperTemplate({ content: body, ...context });
       } else {

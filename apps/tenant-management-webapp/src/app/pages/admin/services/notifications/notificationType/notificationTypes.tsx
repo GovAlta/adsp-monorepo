@@ -85,6 +85,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const templateDefaultError = {
     subject: '',
+    title: '',
+    subtitle: '',
     body: '',
   };
   const [templateEditErrors, setTemplateEditErrors] = useState(templateDefaultError);
@@ -97,10 +99,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
   const [templates, setTemplates] = useState<Template>(baseTemplate);
   const [savedTemplates, setSavedTemplates] = useState<Template>(baseTemplate);
   const debouncedRenderSubject = useDebounce(subject, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderBody = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderTitle = useDebounce(title, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderSubtitle = useDebounce(subtitle, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedXssCheckRenderSubject = useDebounce(subject, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
   const debouncedXssCheckRenderBody = useDebounce(body, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
 
@@ -153,11 +159,16 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         const combinedPreview = template?.body
           ? ('<style>' + template?.additionalStyles + '</style>').concat(template?.body)
           : template?.body;
-        const bodyPreview = generateMessage(getTemplateBody(combinedPreview, currentChannel, htmlPayload), htmlPayload);
+        const bodyPreview = generateMessage(
+          getTemplateBody(combinedPreview, currentChannel, htmlPayload, template?.title, template?.subtitle),
+          htmlPayload
+        );
         setBodyPreview(bodyPreview);
         setTemplateEditErrors({
           ...templateEditErrors,
           body: '',
+          title: '',
+          subtitle: '',
         });
       } catch (e) {
         setTemplateEditErrors({
@@ -223,7 +234,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     renderBodyPreview(debouncedRenderBody);
-  }, [debouncedRenderBody, setBodyPreview]);
+  }, [debouncedRenderBody, debouncedRenderTitle, debouncedRenderSubtitle, setBodyPreview]);
 
   useEffect(() => {
     const error = checkForProhibitedTags(debouncedXssCheckRenderBody as string);
@@ -268,11 +279,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const renderBodyPreview = (value) => {
     try {
-      const msg = generateMessage(getTemplateBody(value, currentChannel, htmlPayload), htmlPayload);
+      const msg = generateMessage(getTemplateBody(value, currentChannel, htmlPayload, title, subtitle), htmlPayload);
       setBodyPreview(msg);
       setTemplateEditErrors({
         ...templateEditErrors,
         body: '',
+        title: '',
+        subtitle: '',
       });
     } catch (e) {
       console.error('handlebar error', e);
@@ -733,7 +746,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
         onCancel={(closeEventModal: boolean) => {
           reset(closeEventModal);
-          // reset(true);
         }}
         onClickedOutside={() => {
           reset(true);
@@ -775,16 +787,44 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
                 setBody(value);
               }}
+              onTitleChange={(value, channel) => {
+                let newTemplates = templates;
+                if (templates[channel]) {
+                  newTemplates[channel].title = value;
+                } else {
+                  newTemplates = { ...templates, [channel]: { title: value } };
+                }
+                setTemplates(newTemplates);
+                setTitle(value);
+              }}
+              onSubtitleChange={(value, channel) => {
+                let newTemplates = templates;
+                if (templates[channel]) {
+                  newTemplates[channel].subtitle = value;
+                } else {
+                  newTemplates = { ...templates, [channel]: { subtitle: value } };
+                }
+                setTemplates(newTemplates);
+                setSubtitle(value);
+              }}
               setPreview={(channel) => {
                 if (templates && templates[channel] && templates[channel]?.additionalStyles) {
                   const combinedPreview = ('<style>' + templates[channel]?.additionalStyles + '</style>').concat(
                     templates[channel]?.body
                   );
-                  setBodyPreview(generateMessage(getTemplateBody(combinedPreview, channel, htmlPayload), htmlPayload));
+                  setBodyPreview(
+                    generateMessage(
+                      getTemplateBody(combinedPreview, channel, htmlPayload, title, subtitle),
+                      htmlPayload
+                    )
+                  );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                 } else {
                   setBodyPreview(
-                    generateMessage(getTemplateBody(templates[channel]?.body, channel, htmlPayload), htmlPayload)
+                    generateMessage(
+                      getTemplateBody(templates[channel]?.body, channel, htmlPayload, title, subtitle),
+                      htmlPayload
+                    )
                   );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                 }
