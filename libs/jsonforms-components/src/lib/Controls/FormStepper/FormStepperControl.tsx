@@ -98,9 +98,45 @@ export const FormStepper = ({
   // Note: [Jan-02-2023] the Options here will be used in the feature
   const appliedUiSchemaOptions = { ...config, ...uiSchema?.options };
 
+  const [showNextBtn, setShowNextBtn] = useState(true);
+  const findHiddenCategories = () => {
+    const hiddenCategories = uiSchema.elements.filter((element) => {
+      if (element.rule) {
+        const effect = element.rule.effect;
+        const condition = JSON.parse(JSON.stringify(element.rule.condition));
+        const getRuleProperty = condition.scope.split('/');
+        const ruleProperty = getRuleProperty[getRuleProperty.length - 1];
+        const value = data ? data[ruleProperty] : false;
+        return effect === 'SHOW' ? condition.schema.const !== value : condition.schema.const === value;
+      }
+      return false;
+    }).map((category) => category.label);
+    return hiddenCategories;
+  }
+
+  const isHiddenStep = (step: any) => {
+    if (!step.rule) {
+      return false;
+    } else if (step.rule && !data) {
+      return step.rule.effect === 'SHOW' ? true : false;
+    } else if (step.rule && data) {
+      const getRuleProperty = step.rule.condition.scope.split('/');
+      const ruleProperty = getRuleProperty[getRuleProperty.length - 1];
+      // return data[ruleProperty];
+      return step.rule.effect === 'SHOW' ? false : step.rule.effect === 'hide' && data[ruleProperty] ? true : data[ruleProperty];
+    }
+  }
+
+
   function setPage(page: number) {
     if (page < 1 || page > uiSchema.elements?.length + 1) return;
     setStep(page);
+    const hiddenCategories = findHiddenCategories();
+    if (uiSchema.elements.length + 1 === page + hiddenCategories.length) {
+      setShowNextBtn(false);
+    } else {
+      isHiddenStep(uiSchema.elements[page - 1]) ? setShowNextBtn(false) : setShowNextBtn(true);
+    }
   }
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -151,7 +187,7 @@ export const FormStepper = ({
               </div>
             );
           })}
-          <div>
+          <div data-testid={`step_${categories.length}`} key={categories.length}>
             <h3 style={{ flex: 1 }}>Summary</h3>
 
             <ReviewItem>
@@ -171,27 +207,29 @@ export const FormStepper = ({
             </ReviewItem>
           </div>
         </GoAPages>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          {step !== 1 ? (
-            <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
-              Previous
-            </GoAButton>
-          ) : (
-            <div></div>
-          )}
-          {step !== null && step < uiSchema.elements?.length && (
-            <GoAButton type="primary" onClick={() => setPage(step + 1)}>
-              Next
-            </GoAButton>
-          )}
-          {step === uiSchema.elements.length && (
-            <div>
-              <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid}>
-                Submit
+        {step && step !== 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {step !== 1 ? (
+              <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
+                Previous
               </GoAButton>
-            </div>
-          )}
-        </div>
+            ) : (
+              <div></div>
+            )}
+            {step !== null && showNextBtn && (
+              <GoAButton type="primary" onClick={() => setPage(step + 1)}>
+                Next
+              </GoAButton>
+            )}
+            {!showNextBtn && (
+              <div>
+                <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid}>
+                  Submit
+                </GoAButton>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Hidden>
   );
