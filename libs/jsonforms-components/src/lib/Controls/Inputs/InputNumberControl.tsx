@@ -1,6 +1,6 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isNumberControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInputNumber } from '@abgov/react-components-new';
+import { GoAInput} from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -16,12 +16,13 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const InputValue = data ? data : 0.0;
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0.01;
-  const MinValue = clonedSchema.min ? clonedSchema.min : 0;
-  const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
+  const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
+  const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const errorsFormInput = getErrorsToDisplay(props as ControlProps);
 
   return (
-    <GoAInputNumber
+    <GoAInput
+    type="number"
       error={errorsFormInput.length > 0}
       disabled={!enabled}
       value={InputValue}
