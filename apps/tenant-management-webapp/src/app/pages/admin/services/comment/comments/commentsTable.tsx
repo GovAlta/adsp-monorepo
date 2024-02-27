@@ -145,7 +145,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
           <GoACircularProgress size="small" visible={true} />
         </CommentLoader>
       )}
-      {comments && !comments.length && renderNoItem('comments')}
+      {!elementIndicator?.show && comments && !comments.length && renderNoItem('comments')}
       {next && (
         <LoadMoreCommentsWrapper>
           <GoAButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>
