@@ -12,6 +12,7 @@ import {
   FETCH_FILE_LIST,
   FETCH_FILE_SUCCESS,
   CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
+  CLEAR_NEW_FILE_LIST,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
@@ -136,6 +137,11 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
           ...state.hasFile,
           [action.payload.fileTypeId]: action.payload.hasFile,
         },
+      };
+    case CLEAR_NEW_FILE_LIST:
+      return {
+        ...state,
+        newFileList: null,
       };
     default:
       return state;

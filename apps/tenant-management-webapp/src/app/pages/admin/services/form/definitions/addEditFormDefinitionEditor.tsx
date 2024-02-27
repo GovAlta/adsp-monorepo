@@ -61,7 +61,13 @@ import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 
 import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
-import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
+import {
+  UploadFileService,
+  DownloadFileService,
+  DeleteFileService,
+  FetchFileTypeService,
+  ClearNewFileList,
+} from '@store/file/actions';
 import { convertDataSchemaToSuggestion, determineCurrentPath } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 
@@ -276,6 +282,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const navigate = useNavigate();
 
   const close = () => {
+    dispatch(ClearNewFileList());
     navigate('/admin/services/form?definitions=true');
   };
 
