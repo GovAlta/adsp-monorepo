@@ -3,6 +3,7 @@ export const subjectEditorConfig = {
   height: 50,
   options: {
     wordWrap: 'off' as const,
+    lineNumbers: 'off' as const,
     scrollbar: { horizontal: 'hidden' as const, vertical: 'hidden' as const },
     find: {
       addExtraSpaceOnTop: false,

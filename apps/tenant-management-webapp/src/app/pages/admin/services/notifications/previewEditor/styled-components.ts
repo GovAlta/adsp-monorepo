@@ -41,12 +41,15 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(100vh - 510px);
+  height: calc(88vh - 510px);
   min-height: 65px;
 
   @media (max-width: 1420px) {
-    height: calc(100vh - 560px);
+    height: calc(90vh - 560px);
   }
+`;
+export const InputDiv = styled.div`
+  padding-left: 0.125rem;
 `;
 export const EditTemplateActions = styled.div`
   display: flex;
