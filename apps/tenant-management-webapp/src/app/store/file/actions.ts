@@ -40,6 +40,7 @@ export const FETCH_FILE_METRICS_SUCCEEDED = 'file-service//metrics/fetch/success
 
 export const CHECK_FILE_TYPE_HAS_FILE = 'tenant/file-service/fileType/hasFile/check';
 export const CHECK_FILE_TYPE_HAS_FILE_SUCCESS = 'tenant/file-service/fileType/hasFile/check/success';
+export const CLEAR_NEW_FILE_LIST = 'tenant/file-service/CLEAR_NEW_FILE_LIST';
 
 // =============
 // Actions Types
@@ -73,13 +74,17 @@ export type ActionTypes =
   | FetchFileMetricsAction
   | FetchFileMetricsSucceededAction
   | CheckFileTypeHasFileAction
-  | CheckFileTypeHasFileSuccessAction;
+  | CheckFileTypeHasFileSuccessAction
+  | ClearNewFileListAction;
 
 export interface CheckFileTypeHasFileAction {
   type: typeof CHECK_FILE_TYPE_HAS_FILE;
   payload: string;
 }
 
+interface ClearNewFileListAction {
+  type: typeof CLEAR_NEW_FILE_LIST;
+}
 interface CheckFileTypeHasFileSuccessAction {
   type: typeof CHECK_FILE_TYPE_HAS_FILE_SUCCESS;
   payload: {
@@ -91,6 +96,10 @@ interface CheckFileTypeHasFileSuccessAction {
 export const checkFileTypeHasFile = (fileTypeId: string): CheckFileTypeHasFileAction => ({
   type: CHECK_FILE_TYPE_HAS_FILE,
   payload: fileTypeId,
+});
+
+export const ClearNewFileList = (): ClearNewFileListAction => ({
+  type: CLEAR_NEW_FILE_LIST,
 });
 
 // | SetupFileAction;

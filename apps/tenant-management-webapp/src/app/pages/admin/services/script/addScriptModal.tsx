@@ -25,11 +25,19 @@ interface AddScriptModalProps {
   initialValue?: ScriptItem;
   onCancel?: () => void;
   onSave: (script: ScriptItem) => void;
+  openEditorOnAdd?: (script: ScriptItem) => void;
   open: boolean;
   isNew: boolean;
 }
 
-export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: AddScriptModalProps): JSX.Element => {
+export const AddScriptModal = ({
+  initialValue,
+  onCancel,
+  onSave,
+  open,
+  openEditorOnAdd,
+  isNew,
+}: AddScriptModalProps): JSX.Element => {
   const [script, setScript] = useState<ScriptItem>(initialValue);
   const dispatch = useDispatch();
 
@@ -69,27 +77,29 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
     }
 
     onSave(script);
-    onCancel();
+    if (isNew) {
+      openEditorOnAdd(script);
+    } else {
+      onCancel();
+    }
     validators.clear();
   };
 
   const RunnerRole = ({ roleNames, clientId }) => {
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          roleSelectFunc={(roles) => {
-            setScript({
-              ...script,
-              runnerRoles: roles,
-            });
-          }}
-          nameColumnWidth={80}
-          service="Script"
-          checkedRoles={[{ title: 'runner', selectedRoles: script?.runnerRoles }]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        roleSelectFunc={(roles) => {
+          setScript({
+            ...script,
+            runnerRoles: roles,
+          });
+        }}
+        nameColumnWidth={80}
+        service="Script"
+        checkedRoles={[{ title: 'runner', selectedRoles: script?.runnerRoles }]}
+      />
     );
   };
 

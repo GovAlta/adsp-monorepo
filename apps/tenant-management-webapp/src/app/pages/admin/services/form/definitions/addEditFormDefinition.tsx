@@ -208,28 +208,6 @@ export const AddEditFormDefinition = ({
             </FormFormItem>
           </GoAFormItem>
 
-          <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form URL">
-            <FormFormItem>
-              <GoAInput
-                name="form-url-id"
-                value={definition?.formDraftUrlTemplate || defaultFormUrl}
-                testId="form-url-id"
-                disabled={!definition?.id?.length}
-                width="100%"
-                // eslint-disable-next-line
-                onChange={(name, value) => {
-                  validators.remove('formDraftUrlTemplate');
-                  const validations = {
-                    formDraftUrlTemplate: value,
-                  };
-                  validators.checkAll(validations);
-
-                  setDefinition({ ...definition, formDraftUrlTemplate: value });
-                }}
-              />
-            </FormFormItem>
-          </GoAFormItem>
-
           <GoAFormItem label="Description">
             <DescriptionItem>
               <GoATextArea
@@ -258,6 +236,28 @@ export const AddEditFormDefinition = ({
                 <div>{`${definition.description.length}/180`}</div>
               </HelpText>
             </DescriptionItem>
+          </GoAFormItem>
+
+          <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
+            <FormFormItem>
+              <GoAInput
+                name="form-url-id"
+                value={definition?.formDraftUrlTemplate || defaultFormUrl}
+                testId="form-url-id"
+                disabled={!definition?.id?.length}
+                width="100%"
+                // eslint-disable-next-line
+                onChange={(name, value) => {
+                  validators.remove('formDraftUrlTemplate');
+                  const validations = {
+                    formDraftUrlTemplate: value,
+                  };
+                  validators.checkAll(validations);
+
+                  setDefinition({ ...definition, formDraftUrlTemplate: value });
+                }}
+              />
+            </FormFormItem>
           </GoAFormItem>
 
           {!isEdit && (
