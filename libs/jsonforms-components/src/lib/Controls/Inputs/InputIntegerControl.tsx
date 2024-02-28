@@ -34,7 +34,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          let newValue = undefined;
+          let newValue: string | number = '';
           if (value !== '') {
             newValue = +value;
           }
@@ -49,7 +49,14 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
         }
         handleChange(path, newValue);
       }}
-      onChange={(name: string, value: string) => {}}
+      onChange={(name: string, value: string) => {
+        let newValue: string | number = '';
+        if (value !== '') {
+          newValue = +value;
+        }
+
+        handleChange(path, newValue);
+      }}
       {...uischema?.options?.componentProps}
     />
   );

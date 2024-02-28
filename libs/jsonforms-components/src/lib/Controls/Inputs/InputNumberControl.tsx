@@ -49,7 +49,14 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
         }
         handleChange(path, newValue);
       }}
-      onChange={(name: string, value: string) => {}}
+      onChange={(name: string, value: string) => {
+        let newValue: string | number = '';
+        if (value !== '') {
+          newValue = +value;
+        }
+
+        handleChange(path, newValue);
+      }}
       {...uischema?.options?.componentProps}
     />
   );
