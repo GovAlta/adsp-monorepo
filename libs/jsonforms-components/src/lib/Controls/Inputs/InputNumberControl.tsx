@@ -49,14 +49,9 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
         }
         handleChange(path, newValue);
       }}
-      onChange={(name: string, value: string) => {
-        let newValue: string | number = '';
-        if (value !== '') {
-          newValue = +value;
-        }
-
-        handleChange(path, newValue);
-      }}
+      //Dont trigger the handleChange event on the onChange event as it will cause
+      //issue with the error message from displaying, use keyPress or the onBlur event instead
+      onChange={(name: string, value: string) => {}}
       {...uischema?.options?.componentProps}
     />
   );
