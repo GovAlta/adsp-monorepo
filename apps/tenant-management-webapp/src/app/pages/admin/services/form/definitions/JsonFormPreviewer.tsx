@@ -1,10 +1,12 @@
 import React from 'react';
-import { isValidJSONSchemaCheck, ajv } from '@lib/validation/checkInput';
+import { ajv } from '@lib/validation/checkInput';
 import { JsonForms } from '@jsonforms/react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { GoARenderers } from '@abgov/jsonforms-components';
 import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { GoAButton, GoABadge } from '@abgov/react-components-new';
+import { parseDataSchema, parseUiSchema } from './schemaUtils';
+import { JsonSchema, UISchemaElement } from '@jsonforms/core';
+import { GoABadge, GoAButton } from '@abgov/react-components-new';
 
 function FallbackRender({ error, resetErrorBoundary }) {
   return (
@@ -30,13 +32,10 @@ interface JSONFormPreviewerProps {
 }
 
 export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element => {
-  const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const { schema, uischema, data, onChange } = props;
-  const conditionalUiSchema = uischema !== '{}' ? { uischema: JSON.parse(uischema) } : {};
-  const isValidSchema = JSONSchemaValidator(schema) === '';
-  if (!isValidSchema) {
-    return <></>;
-  }
+
+  const parsedUiSchema = parseUiSchema<UISchemaElement>(uischema).get();
+  const parsedSchema = parseDataSchema<JsonSchema>(schema).get();
 
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
@@ -47,8 +46,8 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
         onChange={onChange}
         data={data}
         validationMode={'ValidateAndShow'}
-        schema={JSON.parse(schema)}
-        {...conditionalUiSchema}
+        schema={parsedSchema}
+        uischema={parsedUiSchema}
       />
     </ErrorBoundary>
   );

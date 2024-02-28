@@ -1,6 +1,6 @@
 import { JsonSchema, UISchemaElement, hasType, isControl } from '@jsonforms/core';
 
-export const isNullSchema = (schema: UISchemaElement): boolean => {
+export const isNullSchema = (schema: UISchemaElement | JsonSchema): boolean => {
   return schema === undefined || schema === null;
 };
 
@@ -78,6 +78,9 @@ export const hasVariant = (schema: UISchemaElement): boolean => {
   return 'options' in schema && schema.options !== undefined && schema.options !== null && 'variant' in schema.options;
 };
 
-export const isMissingProperties = (schema: JsonSchema): boolean => {
-  return 'type' in schema && schema.type === 'object' && !('properties' in schema);
+export const isValidJsonObject = (schema: JsonSchema): boolean => {
+  return (
+    (typeof schema === 'object' && Object.keys(schema).length === 0) ||
+    ('properties' in schema && (('type' in schema && schema.type === 'object') || !('type' in schema)))
+  );
 };
