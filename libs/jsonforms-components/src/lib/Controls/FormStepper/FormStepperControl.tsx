@@ -198,7 +198,7 @@ export const FormStepper = ({
               </div>
             );
           })}
-          <div data-testid={`step_${categories.length}`} key={categories.length}>
+          <div>
             <h3 style={{ flex: 1 }}>Summary</h3>
 
             <ReviewItem>
