@@ -279,7 +279,16 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const renderBodyPreview = (value) => {
     try {
-      const msg = generateMessage(getTemplateBody(value, currentChannel, htmlPayload, title, subtitle), htmlPayload);
+      const msg = generateMessage(
+        getTemplateBody(
+          value ? value : templates[currentChannel]?.body,
+          currentChannel,
+          htmlPayload,
+          templates[currentChannel]?.title,
+          templates[currentChannel]?.subtitle
+        ),
+        htmlPayload
+      );
       setBodyPreview(msg);
       setTemplateEditErrors({
         ...templateEditErrors,

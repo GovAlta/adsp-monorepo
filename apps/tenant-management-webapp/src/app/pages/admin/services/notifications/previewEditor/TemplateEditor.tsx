@@ -212,12 +212,12 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     <GoAInput
                       type="text"
                       name="subtitle"
-                      value={templates[item.name]?.subtitle}
+                      value={templates[item.name]?.title ? templates[item.name]?.subtitle : ''}
                       testId="event-email-subtitle"
                       onChange={(name, value) => {
                         onSubtitleChange(value, item.name);
                       }}
-                      disabled={templates[item.name]?.title === ''}
+                      disabled={templates[item.name]?.title === undefined || templates[item.name]?.title === ''}
                       aria-label="event-email-subtitle"
                       width="100%"
                     />
