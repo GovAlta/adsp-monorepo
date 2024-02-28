@@ -12,7 +12,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const InputValue = data ? data : '';
+  const InputValue = data && data !== undefined ? data : '';
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
