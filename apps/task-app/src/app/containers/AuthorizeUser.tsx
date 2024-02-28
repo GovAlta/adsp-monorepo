@@ -4,7 +4,14 @@ import { FunctionComponent, ReactElement } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { useSearchParams, useLocation } from 'react-router-dom-6';
-import { userSelector, configInitializedSelector, AppDispatch, tenantSelector, loginUser } from '../state';
+import {
+  userSelector,
+  configInitializedSelector,
+  AppDispatch,
+  tenantSelector,
+  loginUser,
+  feedbackSelector,
+} from '../state';
 
 interface AuthorizeUserProps {
   roles?: string[];
@@ -22,11 +29,12 @@ export const AuthorizeUser: FunctionComponent<AuthorizeUserProps> = ({ roles, ch
 
   const dispatch = useDispatch<AppDispatch>();
   const { initialized, user } = useSelector(userSelector);
-  const configInitialized = useSelector(configInitializedSelector);
   const tenant = useSelector(tenantSelector);
+  const feedback = useSelector(feedbackSelector);
+  const error = feedback?.message.includes('Error encountered');
 
   useEffect(() => {
-    if (tenant && user === null && !loggedOut) {
+    if (tenant && user === null && !loggedOut && !error) {
       dispatch(loginUser({ tenant, from: location.pathname }));
     }
   }, [tenant, user, dispatch, loggedOut]);
@@ -38,8 +46,11 @@ export const AuthorizeUser: FunctionComponent<AuthorizeUserProps> = ({ roles, ch
       // Not authorized placeholder; in this state the user has been resolved and doesn't satisfy access requirement.
       <div>
         <Placeholder>
-          <GoACallout heading={loggedOut ? 'Successfully signed out' : 'Not authorized'} type="information">
-            {loggedOut ? '' : 'Logging in...'}
+          <GoACallout
+            heading={loggedOut ? 'Successfully signed out' : error ? 'Login failed' : 'Not authorized'}
+            type="information"
+          >
+            {loggedOut ? '' : error ? 'Error encountered' : 'Logging in...'}
           </GoACallout>
         </Placeholder>
       </div>
