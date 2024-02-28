@@ -1,6 +1,6 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isNumberControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInputNumber } from '@abgov/react-components-new';
+import { GoAInput} from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -13,15 +13,16 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const InputValue = data ? data : 0.0;
+  const InputValue = data ? data :'';
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0.01;
-  const MinValue = clonedSchema.min ? clonedSchema.min : 0;
-  const MaxValue = clonedSchema.max ? clonedSchema.max : 99;
+  const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
+  const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const errorsFormInput = getErrorsToDisplay(props as ControlProps);
 
   return (
-    <GoAInputNumber
+    <GoAInput
+    type="number"
       error={errorsFormInput.length > 0}
       disabled={!enabled}
       value={InputValue}
@@ -32,15 +33,15 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       width="100%"
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onKeyPress={(name: string, value: number, key: string) => {
+      onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          handleChange(path, value);
+          handleChange(path, +value);
         }
       }}
-      onBlur={(name: string, value: number) => {
+      onBlur={(name: string, value: string) => {
         handleChange(name, value);
       }}
-      onChange={(name, value) => handleChange(path, value)}
+      onChange={(name, value) => handleChange(path, +value)}
       {...uischema?.options?.componentProps}
     />
   );

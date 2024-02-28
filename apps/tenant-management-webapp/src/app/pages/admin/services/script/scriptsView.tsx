@@ -90,6 +90,14 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     validators.clear();
   };
 
+  const openEditorOnAdd = (script) => {
+    script.testInputs = testInput;
+    setOpenAddScript(false);
+    setSelectedScript(script);
+    setShowScriptEditForm(true);
+    validators.clear();
+  };
+
   const saveScript = (script) => {
     setSelectedScript(script);
     dispatch(UpdateScript(script, false));
@@ -111,6 +119,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setSelectedScript(script);
     setShowScriptEditForm(true);
   };
+
   const onNameChange = (value) => {
     validators.remove('name');
     const validations = {
@@ -160,6 +169,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
         onCancel={() => {
           reset();
         }}
+        openEditorOnAdd={openEditorOnAdd}
         onSave={saveScript}
       />
 
@@ -168,14 +178,12 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           {/* Hides body overflow when the modal is up */}
           <BodyGlobalStyles hideOverflow={showScriptEditForm} />
           <ModalContent>
-
             <OuterNotificationTemplateEditorContainer>
               <TabletMessage goBack={goBack} />
 
               <HideTablet>
                 <ScriptPanelContainer>
                   <ScriptEditor
-                  
                     name={name}
                     description={description}
                     scriptStr={script}

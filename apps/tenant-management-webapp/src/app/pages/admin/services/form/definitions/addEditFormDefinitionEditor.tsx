@@ -61,8 +61,14 @@ import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 
 import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
-import { UploadFileService, DownloadFileService, DeleteFileService, FetchFileTypeService } from '@store/file/actions';
-import { convertDataSchemaToSuggestion, determineCurrentPath } from '@lib/autoComplete';
+import {
+  UploadFileService,
+  DownloadFileService,
+  DeleteFileService,
+  FetchFileTypeService,
+  ClearNewFileList,
+} from '@store/file/actions';
+import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
@@ -163,7 +169,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('json', {
-        triggerCharacters: ['/', '#'],
+        triggerCharacters: ['/', '#', '"'],
         provideCompletionItems: (model, position) => {
           const textUntilPosition = model.getValueInRange({
             startLineNumber: 1,
@@ -175,11 +181,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
           try {
             const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
-            const currentPath = determineCurrentPath(textUntilPosition);
-
-            const matchedSchemaItem = dataSchemaSuggestion.find((item) => item['label'].trim() === currentPath.trim());
-
-            suggestions = matchedSchemaItem ? matchedSchemaItem.children : dataSchemaSuggestion;
+            suggestions = formatEditorSuggestions(dataSchemaSuggestion);
           } catch (e) {
             console.debug(`Error in JSON editor autocompletion: ${e.message}`);
           }
@@ -276,6 +278,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const navigate = useNavigate();
 
   const close = () => {
+    dispatch(ClearNewFileList());
     navigate('/admin/services/form?definitions=true');
   };
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isIntegerControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInputNumber } from '@abgov/react-components-new';
+import { GoAInput, GoAInputNumber } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -12,15 +12,16 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const InputValue = data ? data : 0;
+  const InputValue = data ? data : '';
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
-  const MinValue = clonedSchema.minimum ? clonedSchema.minimum : 0;
-  const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : 99;
+  const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
+  const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const errorsFormInput = getErrorsToDisplay(props as ControlProps);
 
   return (
-    <GoAInputNumber
+    <GoAInput
+    type="number"
       error={errorsFormInput.length > 0}
       width="100%"
       disabled={!enabled}
@@ -31,16 +32,15 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       placeholder={placeholder}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onBlur={(name: string, value: string) => {
-        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
-        handleChange(path, value);
-      }}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
-          handleChange(path, value);
+          handleChange(path, +value);
         }
       }}
+      onBlur={(name: string, value: string) => {
+        handleChange(name, value);
+      }}
+      onChange={(name, value) => handleChange(path, +value)}
       {...uischema?.options?.componentProps}
     />
   );
