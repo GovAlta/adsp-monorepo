@@ -1,6 +1,6 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isNumberControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInput} from '@abgov/react-components-new';
+import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -13,7 +13,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const InputValue = data ? data :'';
+  const InputValue = data && data !== undefined ? data : '';
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0.01;
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
@@ -22,7 +22,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
 
   return (
     <GoAInput
-    type="number"
+      type="number"
       error={errorsFormInput.length > 0}
       disabled={!enabled}
       value={InputValue}
@@ -35,13 +35,28 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          handleChange(path, +value);
+          let newValue: string | number = '';
+          if (value !== '') {
+            newValue = +value;
+          }
+          handleChange(path, newValue);
         }
       }}
       onBlur={(name: string, value: string) => {
-        handleChange(name, value);
+        let newValue: string | number = '';
+        if (value !== '') {
+          newValue = +value;
+        }
+        handleChange(path, newValue);
       }}
-      onChange={(name, value) => handleChange(path, +value)}
+      onChange={(name: string, value: string) => {
+        let newValue: string | number = '';
+        if (value !== '') {
+          newValue = +value;
+        }
+
+        handleChange(path, newValue);
+      }}
       {...uischema?.options?.componentProps}
     />
   );
