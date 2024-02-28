@@ -30,7 +30,17 @@ export interface VerticalLayout extends Layout {
   type: 'VerticalLayout';
   label: string;
 }
-
+export interface StepType {
+  rule?: {
+    effect: string;
+    condition: {
+      scope: string;
+      schema?: {
+        const?: boolean;
+      };
+    };
+  };
+}
 export interface GoAFormStepperSchemaProps extends Omit<Categorization, 'elements'> {
   elements: (Category | Categorization | VerticalLayout)[];
 }
@@ -72,6 +82,7 @@ export const FormStepper = ({
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = usePersistentState(0);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [showNextBtn, setShowNextBtn] = useState(true);
   const categories = useMemo(
     () => uiSchema.elements.filter((category) => isVisible(category, data, '', ajv)),
     [uiSchema, data, ajv]
@@ -113,29 +124,29 @@ export const FormStepper = ({
     }).map((category) => category.label);
     return hiddenCategories;
   }
-  const [showNextBtn, setShowNextBtn] = useState(true);
-  const isHiddenStep = (step: any) => {
-    if (!step.rule) {
+  function isHiddenStep (stepData: StepType) {
+    if (!stepData.rule) {
       return false;
-    } else if (step.rule && !data) {
-      return step.rule.effect === 'SHOW' ? true : false;
-    } else if (step.rule && data) {
-      const getRuleProperty = step.rule.condition.scope.split('/');
+    } else if (stepData.rule && !data) {
+      return false;
+    } else if (stepData.rule && data) {
+      const getRuleProperty = stepData.rule.condition.scope.split('/');
       const ruleProperty = getRuleProperty[getRuleProperty.length - 1];
       // return data[ruleProperty];
-      return step.rule.effect === 'SHOW' ? false : step.rule.effect === 'hide' && data[ruleProperty] ? true : data[ruleProperty];
+      return stepData.rule.effect === 'SHOW' ? false : stepData.rule.effect === 'HIDE' && data[ruleProperty] ? false : data[ruleProperty];
     }
   }
 
 
   function setPage(page: number) {
-    if (page < 1 || page > uiSchema.elements?.length + 1) return;
     setStep(page);
+    if (page < 1 || page > uiSchema.elements?.length + 1) return;
     const hiddenCategories = findHiddenCategories();
     if (uiSchema.elements.length + 1 === page + hiddenCategories.length) {
       setShowNextBtn(false);
     } else {
-      isHiddenStep(uiSchema.elements[page - 1]) ? setShowNextBtn(false) : setShowNextBtn(true);
+      const stepDetails = JSON.parse(JSON.stringify(uiSchema.elements[page - 1]))
+      isHiddenStep(stepDetails) ? setShowNextBtn(false) : setShowNextBtn(true);
     }
   }
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -169,7 +180,7 @@ export const FormStepper = ({
   return (
     <Hidden xsUp={!visible}>
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-        <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
+        <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setPage(step)}>
           {categories?.map((category, index) => {
             const flattedStep = flattenArray(category?.elements || []);
             const count = flattedStep.filter((e) => {
