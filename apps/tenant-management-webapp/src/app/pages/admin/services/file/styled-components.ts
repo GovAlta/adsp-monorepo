@@ -184,6 +184,10 @@ export const FileTypesEditorTitle = styled.div`
 
 export const FinalButtonPadding = styled.div`
   padding-top: var(--goa-space-xs);
+  position: fixed; /* Use fixed positioning to place the item relative to the viewport */
+  bottom: 0; /* Align the item at the bottom of the viewport */
+  width: 55%;
+  margin-bottom: 4rem;
 `;
 
 export const EditorPadding = styled.div`
