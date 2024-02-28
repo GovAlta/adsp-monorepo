@@ -87,7 +87,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
       const selectedFileType = foundFileType;
       setFileType(selectedFileType);
       setInitialFileType(selectedFileType);
-      //For backwards comptability
+      //For backwards compatibility
       if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
         fileType.securityClassification = '';
       }
@@ -105,7 +105,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
       const selectedFileType = foundFileType;
       setFileType(selectedFileType);
       setInitialFileType(selectedFileType);
-      //For backwards comptability
+      //For backwards compatibility
       if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
         fileType.securityClassification = '';
       }
@@ -225,7 +225,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                       <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
                     </GoADropdown>
                   </GoAFormItem>
-                  <div style={{ paddingTop: '10px' }}>
+                  <div style={{ paddingTop: '0.625rem' }}>
                     <GoACheckbox
                       checked={fileType?.anonymousRead}
                       name="file-type-anonymousRead-checkbox"
@@ -322,8 +322,9 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
               />
             </EditorPadding>
 
-            <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
+              <hr className="hr-resize-bottom" />
+              <br />
               <GoAButtonGroup alignment="start">
                 <GoAButton
                   type="primary"

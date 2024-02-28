@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 export const HelpContentDiv = styled.div`
+  margin-bottom: 1rem;
   .label {
     text-align: left;
     font-size: 24px;
