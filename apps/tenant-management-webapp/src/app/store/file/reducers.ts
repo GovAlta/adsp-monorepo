@@ -45,7 +45,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
     case UPLOAD_FILE_SUCCESSES: {
       // add file to fileList
-      const newFileList = state.newFileList || {};
+      const newFileList = JSON.parse(JSON.stringify(state.newFileList)) || {};
       newFileList[action.payload.result.propertyId] = action.payload.result;
       return {
         ...state,
