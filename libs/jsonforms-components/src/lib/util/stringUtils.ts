@@ -63,12 +63,16 @@ export const getErrorsToDisplay = (props: ControlProps) => {
         return `${labelToUpdate} is required`;
       }
 
-      if (data === '' || ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))) {
+      if (
+        data === '' ||
+        data === undefined ||
+        ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))
+      ) {
         return `${labelToUpdate} is required`;
       }
     }
 
-    if (data.toString().length > 0 && ajvErrors.length > 0) return ajvErrors;
+    if (data && data.toString().length > 0 && ajvErrors.length > 0) return ajvErrors;
 
     return ajvErrors;
   }

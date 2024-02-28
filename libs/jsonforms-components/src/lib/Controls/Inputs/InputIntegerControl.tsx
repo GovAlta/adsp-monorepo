@@ -21,7 +21,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
 
   return (
     <GoAInput
-    type="number"
+      type="number"
       error={errorsFormInput.length > 0}
       width="100%"
       disabled={!enabled}
@@ -34,13 +34,22 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          handleChange(path, +value);
+          let newValue = undefined;
+          if (value !== '') {
+            newValue = +value;
+          }
+
+          handleChange(path, newValue);
         }
       }}
       onBlur={(name: string, value: string) => {
-        handleChange(name, value);
+        let newValue: string | number = '';
+        if (value !== '') {
+          newValue = +value;
+        }
+        handleChange(path, newValue);
       }}
-      onChange={(name, value) => handleChange(path, +value)}
+      onChange={(name: string, value: string) => {}}
       {...uischema?.options?.componentProps}
     />
   );
