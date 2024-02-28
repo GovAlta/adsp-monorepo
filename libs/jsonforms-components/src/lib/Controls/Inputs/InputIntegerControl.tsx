@@ -12,7 +12,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const InputValue = data ? data : '';
+  const InputValue = data && data !== undefined ? data : '';
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
@@ -21,7 +21,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
 
   return (
     <GoAInput
-    type="number"
+      type="number"
       error={errorsFormInput.length > 0}
       width="100%"
       disabled={!enabled}
@@ -34,13 +34,24 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          handleChange(path, +value);
+          let newValue: string | number = '';
+          if (value !== '') {
+            newValue = +value;
+          }
+
+          handleChange(path, newValue);
         }
       }}
       onBlur={(name: string, value: string) => {
-        handleChange(name, value);
+        let newValue: string | number = '';
+        if (value !== '') {
+          newValue = +value;
+        }
+        handleChange(path, newValue);
       }}
-      onChange={(name, value) => handleChange(path, +value)}
+      //Dont trigger the handleChange event on the onChange event as it will cause
+      //issue with the error message from displaying, use keyPress or the onBlur event instead
+      onChange={(name: string, value: string) => {}}
       {...uischema?.options?.componentProps}
     />
   );

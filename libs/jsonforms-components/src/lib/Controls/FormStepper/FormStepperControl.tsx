@@ -30,7 +30,17 @@ export interface VerticalLayout extends Layout {
   type: 'VerticalLayout';
   label: string;
 }
-
+export interface StepType {
+  rule?: {
+    effect: string;
+    condition: {
+      scope: string;
+      schema?: {
+        const?: boolean;
+      };
+    };
+  };
+}
 export interface GoAFormStepperSchemaProps extends Omit<Categorization, 'elements'> {
   elements: (Category | Categorization | VerticalLayout)[];
 }
@@ -72,6 +82,7 @@ export const FormStepper = ({
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = usePersistentState(0);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [showNextBtn, setShowNextBtn] = useState(true);
   const categories = useMemo(
     () => uiSchema.elements.filter((category) => isVisible(category, data, '', ajv)),
     [uiSchema, data, ajv]
@@ -98,9 +109,45 @@ export const FormStepper = ({
   // Note: [Jan-02-2023] the Options here will be used in the feature
   const appliedUiSchemaOptions = { ...config, ...uiSchema?.options };
 
+
+  const findHiddenCategories = () => {
+    const hiddenCategories = uiSchema.elements.filter((element) => {
+      if (element.rule) {
+        const effect = element.rule.effect;
+        const condition = JSON.parse(JSON.stringify(element.rule.condition));
+        const getRuleProperty = condition.scope.split('/');
+        const ruleProperty = getRuleProperty[getRuleProperty.length - 1];
+        const value = data ? data[ruleProperty] : false;
+        return effect === 'SHOW' ? condition.schema.const !== value : condition.schema.const === value;
+      }
+      return false;
+    }).map((category) => category.label);
+    return hiddenCategories;
+  }
+  function isHiddenStep (stepData: StepType) {
+    if (!stepData.rule) {
+      return false;
+    } else if (stepData.rule && !data) {
+      return false;
+    } else if (stepData.rule && data) {
+      const getRuleProperty = stepData.rule.condition.scope.split('/');
+      const ruleProperty = getRuleProperty[getRuleProperty.length - 1];
+      // return data[ruleProperty];
+      return stepData.rule.effect === 'SHOW' ? false : stepData.rule.effect === 'HIDE' && data[ruleProperty] ? false : data[ruleProperty];
+    }
+  }
+
+
   function setPage(page: number) {
-    if (page < 1 || page > uiSchema.elements?.length + 1) return;
     setStep(page);
+    if (page < 1 || page > uiSchema.elements?.length + 1) return;
+    const hiddenCategories = findHiddenCategories();
+    if (uiSchema.elements.length + 1 === page + hiddenCategories.length) {
+      setShowNextBtn(false);
+    } else {
+      const stepDetails = JSON.parse(JSON.stringify(uiSchema.elements[page - 1]))
+      isHiddenStep(stepDetails) ? setShowNextBtn(false) : setShowNextBtn(true);
+    }
   }
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -133,7 +180,7 @@ export const FormStepper = ({
   return (
     <Hidden xsUp={!visible}>
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-        <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
+        <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setPage(step)}>
           {categories?.map((category, index) => {
             const flattedStep = flattenArray(category?.elements || []);
             const count = flattedStep.filter((e) => {
@@ -171,27 +218,29 @@ export const FormStepper = ({
             </ReviewItem>
           </div>
         </GoAPages>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          {step !== 1 ? (
-            <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
-              Previous
-            </GoAButton>
-          ) : (
-            <div></div>
-          )}
-          {step !== null && step < uiSchema.elements?.length && (
-            <GoAButton type="primary" onClick={() => setPage(step + 1)}>
-              Next
-            </GoAButton>
-          )}
-          {step === uiSchema.elements.length && (
-            <div>
-              <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid}>
-                Submit
+        {step && step !== 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {step !== 1 ? (
+              <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
+                Previous
               </GoAButton>
-            </div>
-          )}
-        </div>
+            ) : (
+              <div></div>
+            )}
+            {step !== null && showNextBtn && (
+              <GoAButton type="primary" onClick={() => setPage(step + 1)}>
+                Next
+              </GoAButton>
+            )}
+            {!showNextBtn && (
+              <div>
+                <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid}>
+                  Submit
+                </GoAButton>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Hidden>
   );

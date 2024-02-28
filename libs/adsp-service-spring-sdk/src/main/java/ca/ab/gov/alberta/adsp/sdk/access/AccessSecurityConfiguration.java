@@ -1,11 +1,14 @@
 package ca.ab.gov.alberta.adsp.sdk.access;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManagerResolver;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -24,7 +27,7 @@ import ca.ab.gov.alberta.adsp.sdk.metadata.ApiDocsMetadata;
 
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-class AccessSecurityConfiguration {
+public class AccessSecurityConfiguration {
 
   private final AdspId serviceId;
   private final String[] apiAntPatterns;
@@ -45,6 +48,13 @@ class AccessSecurityConfiguration {
     var authenticationManagerResolver = new JwtIssuerAuthenticationManagerResolver(
         new TenantAuthManagerResolver(this.serviceId, this.issuerCache));
 
+    return configureHttpSecurity(http, authenticationManagerResolver)
+        .build();
+  }
+
+  protected HttpSecurity configureHttpSecurity(HttpSecurity http,
+      AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver) throws Exception {
+
     return http
         .authorizeHttpRequests(
             authorize -> {
@@ -54,8 +64,7 @@ class AccessSecurityConfiguration {
               authorize.antMatchers(this.apiAntPatterns).authenticated();
             })
         .oauth2ResourceServer(
-            oauth2 -> oauth2.authenticationManagerResolver(authenticationManagerResolver))
-        .build();
+            oauth2 -> oauth2.authenticationManagerResolver(authenticationManagerResolver));
   }
 
   @Bean
