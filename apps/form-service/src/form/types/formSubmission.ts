@@ -7,11 +7,6 @@ export interface FormDisposition {
   date: Date;
 }
 
-export interface FormSubmissionCreatedBy {
-  id: string;
-  name: string;
-}
-
 export interface FormSubmission {
   id: string;
   formDefinitionId: string;
@@ -19,9 +14,15 @@ export interface FormSubmission {
   formData: Record<string, unknown>;
   formFiles: Record<string, AdspId>;
   created: Date;
-  createdBy: FormSubmissionCreatedBy;
-  updatedBy: string;
-  updatedDateTime: Date;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+  updatedBy: {
+    id: string;
+    name: string;
+  };
+  updated: Date;
   submissionStatus?: string;
   disposition: FormDisposition;
   hash: string;

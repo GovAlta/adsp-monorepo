@@ -10,7 +10,6 @@ import {
 import {
   createValidationHandler,
   InvalidOperationError,
-  InvalidValueError,
   NotFoundError,
 } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
@@ -20,7 +19,7 @@ import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model
 import { NotificationService } from '../../notification';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { Form, FormCriteria, FormDisposition, FormSubmission, FormSubmissionCriteria } from '../types';
+import { Form, FormCriteria, FormSubmission, FormSubmissionCriteria } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -32,7 +31,6 @@ import {
 import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
-import { v4 as uuidv4 } from 'uuid';
 import { QueueTaskService } from '../../task';
 import { CommentService } from '../comment';
 
@@ -98,15 +96,14 @@ export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmiss
     formFiles: entity.formFiles,
     created: entity.created,
     createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
-    submissionStatus: entity.submissionStatus || '',
     disposition: {
       id: entity.disposition?.id,
       date: entity.disposition?.date,
       status: entity.disposition?.status,
       reason: entity.disposition?.reason,
     },
-    updatedDateTime: entity.updatedDateTime,
-    updatedBy: entity.updatedBy,
+    updated: entity.updated,
+    updatedBy: { id: entity.updatedBy.id, name: entity.updatedBy.name },
     hash: entity.hash,
   };
 }
@@ -306,42 +303,23 @@ export function getFormSubmission(
   };
 }
 
-export function updateFormDisposition(submissionRepository: FormSubmissionRepository): RequestHandler {
+export function updateFormSubmissionDisposition(submissionRepository: FormSubmissionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
       const user = req.user;
       const { formId, submissionId } = req.params;
       const { dispositionStatus, dispositionReason } = req.body;
+
       const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
-      if (!formSubmission) throw new NotFoundError('FormSubmission', submissionId);
-
-      const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-      const definition = configuration[formSubmission.formDefinitionId];
-
-      if (!isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ...definition.assessorRoles])) {
-        throw new UnauthorizedUserError('updated form disposition', req.user);
+      if (!formSubmission) {
+        throw new NotFoundError('Form submission', submissionId);
       }
 
-      const hasStateToUpdate = definition.dispositionStates.find((status) => status.name === dispositionStatus);
-      if (!hasStateToUpdate) {
-        throw new InvalidValueError(
-          'Status',
-          `Invalid Form Disposition Status for Form Submission ID: ${submissionId}`
-        );
-      }
-      const dispositionToUpdate: FormDisposition = {
-        id: uuidv4(),
-        reason: dispositionReason,
-        status: dispositionStatus,
-        date: new Date(),
-      };
-
-      formSubmission.disposition = { ...dispositionToUpdate };
-      const updatedFormSubmmission = await submissionRepository.save(formSubmission);
+      const updated = await formSubmission.dispositionSubmission(user, dispositionStatus, dispositionReason);
       end();
 
-      res.send(mapFormSubmissionData(updatedFormSubmmission));
+      res.send(mapFormSubmissionData(updated));
     } catch (err) {
       next(err);
     }
@@ -532,7 +510,7 @@ export function createFormRouter({
       body('dispositionStatus').isString().isLength({ min: 1 }),
       body('dispositionReason').isString().isLength({ min: 1 })
     ),
-    updateFormDisposition(submissionRepository)
+    updateFormSubmissionDisposition(submissionRepository)
   );
 
   router.get(

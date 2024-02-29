@@ -1,9 +1,10 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { FormEntity } from '.';
+import { InvalidValueError } from '@core-services/core-common';
+import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDisposition, FormSubmission, FormSubmissionCreatedBy } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+import { FormDisposition, FormSubmission } from '../types';
+import { FormEntity } from './form';
 
 export class FormSubmissionEntity implements FormSubmission {
   id: string;
@@ -13,9 +14,9 @@ export class FormSubmissionEntity implements FormSubmission {
   formData: Record<string, unknown>;
   formFiles: Record<string, AdspId>;
   created: Date;
-  createdBy: FormSubmissionCreatedBy;
-  updatedBy: string;
-  updatedDateTime: Date;
+  createdBy: { id: string; name: string };
+  updatedBy: { id: string; name: string };
+  updated: Date;
   submissionStatus: string;
   disposition: FormDisposition;
   hash: string;
@@ -29,9 +30,9 @@ export class FormSubmissionEntity implements FormSubmission {
     const formSubmission = new FormSubmissionEntity(repository, form, {
       id,
       created: new Date(),
-      createdBy: { id: uuidv4(), name: user.name },
-      updatedBy: user.name,
-      updatedDateTime: new Date(),
+      createdBy: { id: user.id, name: user.name },
+      updatedBy: { id: user.id, name: user.name },
+      updated: new Date(),
       formData: form.data,
       formFiles: form.files,
       formDefinitionId: form.definition?.id,
@@ -49,7 +50,7 @@ export class FormSubmissionEntity implements FormSubmission {
     this.created = formSubmission.created;
     this.createdBy = formSubmission.createdBy;
     this.updatedBy = formSubmission.updatedBy;
-    this.updatedDateTime = formSubmission.updatedDateTime;
+    this.updated = formSubmission.updated;
     this.formData = formSubmission.formData || {};
     this.formFiles = formSubmission.formFiles || {};
     this.formDefinitionId = formSubmission.formDefinitionId || '';
@@ -67,5 +68,27 @@ export class FormSubmissionEntity implements FormSubmission {
 
     const deleted = this.repository.delete(this);
     return deleted;
+  }
+
+  async dispositionSubmission(user: User, status: string, reason?: string): Promise<FormSubmissionEntity> {
+    if (
+      !isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, ...(this.form?.definition?.assessorRoles || [])])
+    ) {
+      throw new UnauthorizedUserError('updated form disposition', user);
+    }
+
+    const hasStateToUpdate = this.form.definition.dispositionStates.find((states) => states.name === status);
+    if (!hasStateToUpdate) {
+      throw new InvalidValueError('Status', `Invalid Form Disposition Status for Form Submission ID: ${this.id}`);
+    }
+
+    this.disposition = {
+      id: uuidv4(),
+      reason,
+      status,
+      date: new Date(),
+    };
+
+    return await this.repository.save(this);
   }
 }

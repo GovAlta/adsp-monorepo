@@ -128,8 +128,6 @@ components:
           type: object
         formFiles:
           type: object
-        submissionStatus:
-          type: string
         created:
           type: string
           format: date-time
