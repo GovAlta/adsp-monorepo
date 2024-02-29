@@ -70,10 +70,11 @@ import {
 } from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
+import { hasSchemaErrors, parseDataSchema, parseUiSchema } from './schemaUtils';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
-  const tempPrev = JSON.parse(JSON.stringify(prev));
-  const tempNext = JSON.parse(JSON.stringify(next));
+  const tempPrev = parseUiSchema<FormDefinition>(JSON.stringify(prev)).get();
+  const tempNext = parseUiSchema<FormDefinition>(JSON.stringify(next)).get();
   const isUpdated =
     JSON.stringify(tempPrev?.applicantRoles) !== JSON.stringify(tempNext?.applicantRoles) ||
     JSON.stringify(tempPrev?.assessorRoles) !== JSON.stringify(tempNext?.assessorRoles) ||
@@ -123,9 +124,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const monaco = useMonaco();
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
-  const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(
-    JSON.parse(JSON.stringify(defaultFormDefinition))
-  );
+  const initialSchema = parseUiSchema<FormDefinition>(JSON.stringify(defaultFormDefinition)).get();
+  const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(initialSchema);
 
   const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(definition?.dataSchema || {}, null, 2));
@@ -180,7 +180,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           let suggestions = [];
 
           try {
-            const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
+            const parsedSchema = parseDataSchema(tempDataSchema);
+            const dataSchemaSuggestion = convertDataSchemaToSuggestion(parsedSchema.get(), monaco);
             suggestions = formatEditorSuggestions(dataSchemaSuggestion);
           } catch (e) {
             console.debug(`Error in JSON editor autocompletion: ${e.message}`);
@@ -240,6 +241,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   useEffect(() => {
     if (id && formDefinitions[id]) {
       const tempFormDefinition = formDefinitions[id] as FormDefinition;
+      if (hasSchemaErrors(tempFormDefinition.dataSchema) || hasSchemaErrors(tempFormDefinition?.uiSchema)) {
+        return;
+      }
       if (Object.keys(tempFormDefinition.uiSchema || {}).length > 0) {
         setTempUiSchema(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
         setTempUiSchemaBounced(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
@@ -248,7 +252,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         setTempDataSchema(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
         setDataSchemaBounced(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
       }
-      setInitialDefinition(JSON.parse(JSON.stringify(formDefinitions[id])));
+      setInitialDefinition(parseUiSchema<FormDefinition>(JSON.stringify(formDefinitions[id])).get());
       setDefinition(formDefinitions[id]);
     }
   }, [formDefinitions]);
@@ -384,7 +388,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     const tempDefinition = { ...definition };
     tempDefinition.dispositionStates = dispositions;
 
-    setDefinition(JSON.parse(JSON.stringify(tempDefinition)));
+    setDefinition(parseUiSchema<FormDefinition>(JSON.stringify(tempDefinition)).get());
   };
 
   const openDeleteModalFunction = (disposition) => {
@@ -685,8 +689,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   disabled={
                     !isFormUpdated(initialDefinition, {
                       ...definition,
-                      uiSchema: JSON.parse(UiSchemaBounced),
-                      dataSchema: JSON.parse(dataSchemaBounced),
+                      uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
+                      dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
                     }) ||
                     !definition.name ||
                     validators.haveErrors() ||
@@ -710,8 +714,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       dispatch(
                         updateFormDefinition({
                           ...definition,
-                          uiSchema: JSON.parse(UiSchemaBounced),
-                          dataSchema: JSON.parse(dataSchemaBounced),
+                          uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
+                          dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
                         })
                       );
 
@@ -728,8 +732,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     if (
                       isFormUpdated(initialDefinition, {
                         ...definition,
-                        uiSchema: JSON.parse(UiSchemaBounced),
-                        dataSchema: JSON.parse(dataSchemaBounced),
+                        uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
+                        dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
                       })
                     ) {
                       setSaveModal({ visible: true, closeEditor: false });
@@ -800,8 +804,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         saveDisable={
           !isFormUpdated(initialDefinition, {
             ...definition,
-            uiSchema: JSON.parse(UiSchemaBounced),
-            dataSchema: JSON.parse(dataSchemaBounced),
+            uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
+            dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
           })
         }
         onCancel={() => {

@@ -138,7 +138,12 @@ export const formSubmissionSchema = new Schema(
       type: createdBy,
       required: true,
     },
+    // Updated by defined as two distinct properties for backwards compatibility.
     updatedBy: {
+      type: String,
+      required: true,
+    },
+    updatedById: {
       type: String,
       required: true,
     },
@@ -151,6 +156,7 @@ export const formSubmissionSchema = new Schema(
       required: false,
     },
     disposition: { type: formDeposition, required: false },
+    hash: String,
   },
   { _id: false }
 );

@@ -132,12 +132,14 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       formDefinitionId: entity.formDefinitionId,
       created: entity.created,
       createdBy: entity.createdBy,
-      updatedBy: entity.updatedBy,
+      updatedBy: entity.updatedBy?.name,
+      updatedById: entity.updatedBy?.id,
       submissionStatus: entity.submissionStatus,
-      updatedDateTime: entity.updatedDateTime,
+      updatedDateTime: entity.updated,
       formData: entity.formData,
       formFiles: Object.entries(entity.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
       disposition: entity.disposition,
+      hash: entity.hash,
     };
   }
 
@@ -145,18 +147,18 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     const form = await this.formRepository.get(doc.tenantId, doc.formId);
 
     return new FormSubmissionEntity(this, form, {
-      tenantId: doc.tenantId,
       id: doc.id,
       formId: doc.formId,
       formDefinitionId: doc.formDefinitionId,
       created: doc.created,
       createdBy: doc.createdBy,
-      updatedBy: doc.updatedBy,
+      updatedBy: { id: doc.updatedById, name: doc.updatedBy },
       submissionStatus: doc.submissionStatus,
-      updatedDateTime: doc.updatedDateTime,
+      updated: doc.updatedDateTime,
       formData: doc.formData,
       formFiles: Object.entries(doc.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
       disposition: doc.disposition,
+      hash: doc.hash,
     });
   };
 }

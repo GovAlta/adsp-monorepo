@@ -18,6 +18,7 @@ import { Hidden } from '@mui/material';
 
 import { Grid, GridItem } from '../../common/Grid';
 import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
+import { parseSchema } from '../../util/schemaUtils';
 
 export interface FunObject {
   elements: Array<string>;
@@ -56,7 +57,7 @@ export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLa
 const usePersistentState = (initialState = 0) => {
   const [state, setState] = useState(() => {
     const storedState = localStorage.getItem('step');
-    return storedState ? JSON.parse(storedState) : initialState;
+    return storedState ? parseSchema(storedState) : initialState;
   });
 
   useEffect(() => {

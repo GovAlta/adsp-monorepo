@@ -12,7 +12,7 @@ export interface FormDefinition {
   dispositionStates?: Array<Disposition>;
   submissionRecords: boolean;
   supportTopic: boolean;
-  queueTaskToProcess: QueueTaskToProcess;
+  queueTaskToProcess?: QueueTaskToProcess;
 }
 
 export interface QueueTaskToProcess {

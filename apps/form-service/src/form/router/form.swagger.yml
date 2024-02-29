@@ -72,9 +72,6 @@ components:
         submitted:
           type: string
           format: date-time
-        submissionId:
-          type: string
-          description: When a form submission is submitted this property will have a string value.
     FormData:
       type: object
       properties:
@@ -131,8 +128,6 @@ components:
           type: object
         formFiles:
           type: object
-        submissionStatus:
-          type: string
         created:
           type: string
           format: date-time

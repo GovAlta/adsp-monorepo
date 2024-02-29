@@ -8,6 +8,10 @@ export type FormDoc = Omit<Form, 'definition' | 'applicant' | 'files'> & {
   hash: string;
   files: Record<string, string>;
 };
-export type FormSubmissionDoc = Omit<FormSubmission, 'files'> & {
+export type FormSubmissionDoc = Omit<FormSubmission, 'updatedBy' | 'updated'> & {
   tenantId: AdspId;
+  hash: string;
+  updatedBy: string;
+  updatedById: string;
+  updatedDateTime: Date;
 };

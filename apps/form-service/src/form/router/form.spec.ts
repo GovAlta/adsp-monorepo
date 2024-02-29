@@ -51,7 +51,7 @@ describe('form router', () => {
   };
 
   const queueTaskServiceMock = {
-    createTaskForQueueTask: jest.fn(),
+    createTask: jest.fn(),
   };
 
   const notificationServiceMock = {
