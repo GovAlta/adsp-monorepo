@@ -145,7 +145,6 @@
         font-weight: 500;
         letter-spacing: 0em;
         text-align: left;
-        line-height: 3rem;
       }
       .goa-footer-event {
         background-color: #f1f1f1;
@@ -210,8 +209,8 @@
       </div>
       <div id='goa-callout-custom'>
         <div class='title'>
-        {{#if content.mainTitle}}
-            {{content.mainTitle}}
+        {{#if mainTitle}}
+            {{mainTitle}}
           {{else}}
               {{#if tenant.name}}
                    {{tenant.name}}
@@ -225,15 +224,15 @@
         </div>
         <div class='subtitle'>
 
-          {{#if content.mainTitle}}
-            {{content.subtitle}}
+          {{#if mainTitle}}
+            {{subtitle}}
 
              {{/if}}
         </div>
       </div>
     </header>
     <div class='email-content'>
-      {{content.body}}
+      {{content}}
     </div>
     <footer>
       <div class='goa-footer-event'>

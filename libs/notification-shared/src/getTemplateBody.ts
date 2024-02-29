@@ -29,9 +29,7 @@ export const getTemplateBody = (
   } else {
     if (!hasProperHtmlWrapper(body)) {
       if (channel === 'email') {
-        return body
-          ? emailWrapperTemplate({ content: { body: body, mainTitle: title, subtitle: subtitle }, ...context })
-          : body;
+        return body ? emailWrapperTemplate({ content: body, mainTitle: title, subtitle: subtitle, ...context }) : body;
       } else if (channel === 'pdf') {
         return pdfWrapperTemplate({ content: body, ...context });
       } else {

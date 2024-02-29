@@ -9,7 +9,7 @@ export const HelpContentDiv = styled.div`
     margin-bottom: 1rem;
   }
   ul {
-    margin: 0.5rem 0 0.5rem 0.5rem;
+    margin: 0 0 0 0.5rem;
   }
   .single-line {
     margin: 0.25rem 0 0.25rem 0;
