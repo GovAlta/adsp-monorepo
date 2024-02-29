@@ -16,7 +16,6 @@ export interface FormSubmission {
   id: string;
   formDefinitionId: string;
   formId: string;
-  tenantId: AdspId;
   formData: Record<string, unknown>;
   formFiles: Record<string, AdspId>;
   created: Date;
@@ -25,20 +24,7 @@ export interface FormSubmission {
   updatedDateTime: Date;
   submissionStatus?: string;
   disposition: FormDisposition;
-}
-export interface FormSubmissionTenant {
-  id: string;
-  definitionId: string;
-  tenantId: string;
-  formId: string;
-  formData: Record<string, unknown>;
-  formFiles: Record<string, AdspId>;
-  created: Date;
-  createdBy: FormSubmissionCreatedBy;
-  updatedBy: string;
-  updateDateTime: Date;
-  submissionStatus: string;
-  disposition: FormDisposition;
+  hash: string;
 }
 
 export interface FormSubmissionCriteria {

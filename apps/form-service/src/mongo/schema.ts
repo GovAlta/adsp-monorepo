@@ -151,6 +151,7 @@ export const formSubmissionSchema = new Schema(
       required: false,
     },
     disposition: { type: formDeposition, required: false },
+    hash: String,
   },
   { _id: false }
 );

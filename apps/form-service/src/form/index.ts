@@ -6,7 +6,7 @@ import { NotificationService } from '../notification';
 import { scheduleFormJobs } from './jobs';
 import { FormSubmissionRepository, Repositories } from './repository';
 import { createFormRouter } from './router';
-import { QueueTaskService } from '../queueTask';
+import { QueueTaskService } from '../task';
 import { CommentService } from './comment';
 
 export * from './roles';
