@@ -12,8 +12,8 @@ import { Disposition, Form, FormStatus } from '../types';
 import { FormSubmissionEntity } from './formSubmission';
 
 // Any form created by user with the intake app role is treated as anonymous.
-function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
-  return user?.roles.find((role) => role === FormServiceRoles.IntakeApp) && applicant.userId !== user.id;
+function isAnonymousApplicant(user: User, applicant?: Subscriber): boolean {
+  return user?.roles.find((role) => role === FormServiceRoles.IntakeApp) && applicant && applicant.userId !== user.id;
 }
 
 export class FormEntity implements Form {
@@ -38,7 +38,7 @@ export class FormEntity implements Form {
     definition: FormDefinitionEntity,
     id: string,
     formDraftUrl: string,
-    applicant: Subscriber
+    applicant?: Subscriber
   ): Promise<FormEntity> {
     if (!definition.canApply(user)) {
       throw new UnauthorizedUserError('create form', user);

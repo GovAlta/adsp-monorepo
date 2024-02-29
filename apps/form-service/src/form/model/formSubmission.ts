@@ -27,25 +27,34 @@ export class FormSubmissionEntity implements FormSubmission {
     form: FormEntity,
     id: string
   ): Promise<FormSubmissionEntity> {
-    const formSubmission = new FormSubmissionEntity(repository, form, {
-      id,
-      created: new Date(),
-      createdBy: { id: user.id, name: user.name },
-      updatedBy: { id: user.id, name: user.name },
-      updated: new Date(),
-      formData: form.data,
-      formFiles: form.files,
-      formDefinitionId: form.definition?.id,
-      formId: form.id,
-      submissionStatus: '',
-      disposition: null,
-      hash: form.hash,
-    });
+    const formSubmission = new FormSubmissionEntity(
+      repository,
+      form.tenantId,
+      {
+        id,
+        created: new Date(),
+        createdBy: { id: user.id, name: user.name },
+        updatedBy: { id: user.id, name: user.name },
+        updated: new Date(),
+        formData: form.data,
+        formFiles: form.files,
+        formDefinitionId: form.definition?.id,
+        formId: form.id,
+        disposition: null,
+        hash: form.hash,
+      },
+      form
+    );
 
     return await repository.save(formSubmission);
   }
 
-  constructor(private repository: FormSubmissionRepository, public form: FormEntity, formSubmission: FormSubmission) {
+  constructor(
+    private repository: FormSubmissionRepository,
+    tenantId: AdspId,
+    formSubmission: FormSubmission,
+    public form?: FormEntity
+  ) {
     this.id = formSubmission.id;
     this.created = formSubmission.created;
     this.createdBy = formSubmission.createdBy;
@@ -53,10 +62,10 @@ export class FormSubmissionEntity implements FormSubmission {
     this.updated = formSubmission.updated;
     this.formData = formSubmission.formData || {};
     this.formFiles = formSubmission.formFiles || {};
-    this.formDefinitionId = formSubmission.formDefinitionId || '';
-    this.formId = formSubmission.formId || '';
-    this.tenantId = form.definition.tenantId;
-    this.submissionStatus = formSubmission.submissionStatus || '';
+    this.formDefinitionId = formSubmission.formDefinitionId;
+    this.formId = formSubmission.formId;
+    this.tenantId = tenantId;
+    this.submissionStatus = formSubmission.submissionStatus;
     this.disposition = formSubmission.disposition || null;
     this.hash = formSubmission.hash;
   }
@@ -77,7 +86,7 @@ export class FormSubmissionEntity implements FormSubmission {
       throw new UnauthorizedUserError('updated form disposition', user);
     }
 
-    const hasStateToUpdate = this.form.definition.dispositionStates.find((states) => states.name === status);
+    const hasStateToUpdate = this.form?.definition?.dispositionStates?.find((states) => states.name === status);
     if (!hasStateToUpdate) {
       throw new InvalidValueError('Status', `Invalid Form Disposition Status for Form Submission ID: ${this.id}`);
     }

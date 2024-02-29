@@ -85,9 +85,11 @@ export class MongoFormRepository implements FormRepository {
 
   async save(entity: FormEntity): Promise<FormEntity> {
     try {
+      const updateDoc = this.toDoc(entity);
+      const { data, files, status, lastAccessed, locked, submitted, hash, ...insertDoc } = updateDoc;
       const doc = await this.model.findOneAndUpdate(
         { tenantId: entity.tenantId.toString(), id: entity.id },
-        this.toDoc(entity),
+        { $setOnInsert: insertDoc, $set: { data, files, status, lastAccessed, locked, submitted, hash } },
         { upsert: true, new: true, lean: true }
       );
 
@@ -116,7 +118,10 @@ export class MongoFormRepository implements FormRepository {
       formDraftUrl: entity.formDraftUrl,
       anonymousApplicant: entity.anonymousApplicant,
       definitionId: entity.definition.id,
-      applicantId: entity.applicant?.urn.toString(),
+      // NOTE: This is only set on insert (create).
+      // The UUID is necessary due to backwards compatibility with a unique index on tenant, definition, and applicant IDs.
+      // Setting form ID makes the unique context effectively tenant, definition, form IDs.
+      applicantId: entity.applicant?.urn.toString() || entity.id,
       status: entity.status,
       created: entity.created,
       createdBy: entity.createdBy,
@@ -134,7 +139,10 @@ export class MongoFormRepository implements FormRepository {
   private fromDoc = async (doc: FormDoc): Promise<FormEntity> => {
     const tenantId = AdspId.parse(doc.tenantId);
     const definition = await this.definitionRepository.getDefinition(tenantId, doc.definitionId);
-    const applicant = doc.applicantId
+
+    // NOTE: The applicant ID is a UUID in case there's no associated Subscriber;
+    // this is necessary for backwards compatibility with index.
+    const applicant = AdspId.isAdspId(doc.applicantId)
       ? await this.notificationService.getSubscriber(tenantId, AdspId.parse(doc.applicantId))
       : null;
     return new FormEntity(
