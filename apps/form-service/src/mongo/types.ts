@@ -10,4 +10,5 @@ export type FormDoc = Omit<Form, 'definition' | 'applicant' | 'files'> & {
 };
 export type FormSubmissionDoc = Omit<FormSubmission, 'files'> & {
   tenantId: AdspId;
+  hash: string;
 };

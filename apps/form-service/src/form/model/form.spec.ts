@@ -42,7 +42,7 @@ describe('FormEntity', () => {
     delete: jest.fn(),
     getByFormIdAndSubmissionId: jest.fn(),
   };
-  const queueTaskServiceMock = { createTaskForQueueTask: jest.fn() };
+  const queueTaskServiceMock = { createTask: jest.fn() };
 
   const notificationMock = {
     getSubscriber: jest.fn(),
@@ -522,11 +522,11 @@ describe('FormEntity', () => {
 
     it('can submit form', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-      const submitted = (await entity.submit(
+      const [submitted] = await entity.submit(
         { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
         queueTaskServiceMock,
         repositoryMock
-      )) as FormEntity;
+      );
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
       expect(submitted.hash).toBeTruthy();
@@ -546,11 +546,11 @@ describe('FormEntity', () => {
 
     it('can submit form by clerk', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-      const submitted = (await entity.submit(
+      const [submitted] = await entity.submit(
         { tenantId, id: 'tester-2', roles: ['test-clerk'] } as User,
         queueTaskServiceMock,
         repositoryMock
-      )) as FormEntity;
+      );
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
       expect(submitted.hash).toBeTruthy();

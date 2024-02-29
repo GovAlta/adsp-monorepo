@@ -18,6 +18,7 @@ export class FormSubmissionEntity implements FormSubmission {
   updatedDateTime: Date;
   submissionStatus: string;
   disposition: FormDisposition;
+  hash: string;
 
   static async create(
     user: User,
@@ -35,9 +36,9 @@ export class FormSubmissionEntity implements FormSubmission {
       formFiles: form.files,
       formDefinitionId: form.definition?.id,
       formId: form.id,
-      tenantId: form.tenantId,
       submissionStatus: '',
       disposition: null,
+      hash: form.hash,
     });
 
     return await repository.save(formSubmission);
@@ -53,9 +54,10 @@ export class FormSubmissionEntity implements FormSubmission {
     this.formFiles = formSubmission.formFiles || {};
     this.formDefinitionId = formSubmission.formDefinitionId || '';
     this.formId = formSubmission.formId || '';
-    this.tenantId = form.definition?.tenantId;
+    this.tenantId = form.definition.tenantId;
     this.submissionStatus = formSubmission.submissionStatus || '';
     this.disposition = formSubmission.disposition || null;
+    this.hash = formSubmission.hash;
   }
 
   async delete(user: User): Promise<boolean> {

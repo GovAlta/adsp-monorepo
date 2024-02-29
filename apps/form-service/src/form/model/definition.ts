@@ -8,8 +8,6 @@ import { FormServiceRoles } from '../roles';
 import { FormDefinition, Disposition, QueueTaskToProcess } from '../types';
 import { FormEntity } from './form';
 
-const defaultQueueTaskToProcess: QueueTaskToProcess = { queueName: '', queueNameSpace: '' };
-
 export class FormDefinitionEntity implements FormDefinition {
   id: string;
   name: string;
@@ -24,7 +22,7 @@ export class FormDefinitionEntity implements FormDefinition {
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
   uiSchema: Record<string, unknown>;
-  queueTaskToProcess: QueueTaskToProcess;
+  queueTaskToProcess?: QueueTaskToProcess;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
@@ -39,7 +37,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.dispositionStates = definition.dispositionStates || [];
     this.submissionRecords = definition.submissionRecords || false;
     this.supportTopic = definition.supportTopic || false;
-    this.queueTaskToProcess = definition.queueTaskToProcess || defaultQueueTaskToProcess;
+    this.queueTaskToProcess = definition.queueTaskToProcess;
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
     this.dataSchema = definition.dataSchema || {};

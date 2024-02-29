@@ -20,13 +20,7 @@ import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model
 import { NotificationService } from '../../notification';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import {
-  Form,
-  FormCriteria,
-  FormDisposition,
-  FormSubmissionCriteria,
-  FormSubmissionTenant,
-} from '../types';
+import { Form, FormCriteria, FormDisposition, FormSubmission, FormSubmissionCriteria } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -39,7 +33,7 @@ import { FileService } from '../../file';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
-import { QueueTaskService } from '../../queueTask';
+import { QueueTaskService } from '../../task';
 import { CommentService } from '../comment';
 
 export function mapFormDefinition(entity: FormDefinitionEntity) {
@@ -79,38 +73,6 @@ export function mapForm(
     locked: entity.locked,
     submitted: entity.submitted,
     lastAccessed: entity.lastAccessed,
-    submissionId: null,
-    applicant: entity.applicant
-      ? {
-          addressAs: entity.applicant.addressAs,
-        }
-      : null,
-  };
-}
-
-export function mapFormForFormSubmitted(
-  apiId: AdspId,
-  entity: Form
-): Omit<Form, 'definition' | 'applicant'> & {
-  urn: string;
-  definitionId: string;
-  applicant: { addressAs: string };
-} {
-  return {
-    urn: adspId`${apiId}:/forms/${entity.id}`.toString(),
-    id: entity.id,
-    definitionId: entity.definition.id,
-    formDraftUrl: entity.formDraftUrl,
-    anonymousApplicant: entity.anonymousApplicant,
-    data: entity.data,
-    files: entity.files,
-    status: entity.status,
-    created: entity.created,
-    createdBy: entity.createdBy,
-    locked: entity.locked,
-    submitted: entity.submitted,
-    lastAccessed: entity.lastAccessed,
-    submissionId: entity.submissionId ? entity.submissionId : null,
     applicant: entity.applicant
       ? {
           addressAs: entity.applicant.addressAs,
@@ -126,12 +88,12 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
     files: Object.entries(entity.files || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
   };
 }
-export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmissionTenant {
+
+export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmission {
   return {
     id: entity.id,
     formId: entity.formId,
-    definitionId: entity.formDefinitionId,
-    tenantId: entity.tenantId.toString(),
+    formDefinitionId: entity.formDefinitionId,
     formData: entity.formData,
     formFiles: entity.formFiles,
     created: entity.created,
@@ -143,8 +105,9 @@ export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmiss
       status: entity.disposition?.status,
       reason: entity.disposition?.reason,
     },
-    updateDateTime: entity.updatedDateTime,
+    updatedDateTime: entity.updatedDateTime,
     updatedBy: entity.updatedBy,
+    hash: entity.hash,
   };
 }
 
@@ -224,24 +187,25 @@ export function findFormSubmissions(
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
+      const tenantId = req.tenant.id;
       const { formId } = req.params;
       const { criteria: criteriaValue } = req.query;
       const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+
       const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-      const formEntity: FormEntity = await formRepository.get(req.user.tenantId, formId);
+      const formEntity: FormEntity = await formRepository.get(tenantId, formId);
 
       const definition = configuration[formEntity?.definition?.id || ''];
 
-      if (definition && !isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ...definition.assessorRoles])) {
-        throw new UnauthorizedUserError('find form submissions', req.user);
+      if (definition && !isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...definition.assessorRoles])) {
+        throw new UnauthorizedUserError('find form submissions', user);
       }
 
-      if (user.tenantId) {
-        criteria.tenantIdEquals = user.tenantId;
-      }
-      criteria.formIdEquals = formId;
-
-      const { results, page } = await repository.find(criteria);
+      const { results, page } = await repository.find({
+        ...criteria,
+        tenantIdEquals: tenantId,
+        formIdEquals: formId,
+      });
 
       end();
       res.send({
@@ -441,9 +405,7 @@ export function formOperation(
       const request: FormOperations = req.body;
 
       let result: FormEntity = null;
-      let formResult: Form = null;
       let event: DomainEvent = null;
-      let mappedForm = null;
 
       switch (request.operation) {
         case SEND_CODE_OPERATION: {
@@ -456,10 +418,9 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          formResult = await form.submit(user, queueTaskService, submissionRepository);
-          result = formResult as FormEntity;
+          const [submittedForm, _submission] = await form.submit(user, queueTaskService, submissionRepository);
+          result = submittedForm;
           event = formSubmitted(user, result);
-          mappedForm = mapFormForFormSubmitted(apiId, result);
 
           break;
         }
@@ -479,11 +440,7 @@ export function formOperation(
 
       end();
 
-      if (mappedForm) {
-        res.send(mappedForm);
-      } else {
-        res.send(mapForm(apiId, result));
-      }
+      res.send(mapForm(apiId, result));
       if (event) {
         eventService.send(event);
       }

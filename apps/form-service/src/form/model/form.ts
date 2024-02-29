@@ -1,16 +1,15 @@
 import { AdspId, assertAdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import * as hasha from 'hasha';
+import { v4 as uuidv4 } from 'uuid';
+import { FileService } from '../../file';
+import { NotificationService, Subscriber } from '../../notification';
+import { QueueTaskService } from '../../task';
 import { FormDefinitionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { Disposition, Form, FormStatus } from '../types';
-import { NotificationService, Subscriber } from '../../notification';
-import { FileService } from '../../file';
-import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionEntity } from './formSubmission';
-import { QueueTaskService } from '../../queueTask';
-import { QueueTaskDefinition } from './queueTask';
 
 // Any form created by user with the intake app role is treated as anonymous.
 function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
@@ -232,7 +231,7 @@ export class FormEntity implements Form {
     user: User,
     queueTaskService: QueueTaskService,
     submissionRepository: FormSubmissionRepository
-  ): Promise<Form> {
+  ): Promise<[FormEntity, FormSubmissionEntity]> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
     }
@@ -248,29 +247,21 @@ export class FormEntity implements Form {
     this.submitted = new Date();
     // Hash the form data on submit for duplicate detection.
     this.hash = await hasha.async(JSON.stringify(this.data), { algorithm: 'sha1' });
-    let id = null;
+
+    const saved = await this.repository.save(this);
+    let submission: FormSubmissionEntity = null;
 
     if (this.submissionRecords) {
-      // If disposition states exist, create a form submission record
+      // If configured to create submission records, create a form submission record
       // We need the submissionId so that it is available for updates/lookups of the submission.
-      id = uuidv4();
-      await FormSubmissionEntity.create(user, submissionRepository, this, id);
-    }
-    const savedFormEntity = await this.repository.save(this);
-    const formData: Form = { ...savedFormEntity, submissionId: id };
+      submission = await FormSubmissionEntity.create(user, submissionRepository, this, uuidv4());
 
-    if (this.submissionRecords) {
-      const { queueNameSpace, queueName } = formData.definition.queueTaskToProcess;
-
-      if (formData && queueNameSpace !== '' && queueName !== '') {
-        queueTaskService.createTaskForQueueTask(
-          createQueueTaskDefinition(formData),
-          savedFormEntity.tenantId,
-          formData
-        );
+      if (saved.definition.queueTaskToProcess?.queueNameSpace && saved.definition.queueTaskToProcess?.queueName) {
+        queueTaskService.createTask(saved, submission);
       }
     }
-    return formData;
+
+    return [saved, submission];
   }
 
   async archive(user: User): Promise<FormEntity> {
@@ -300,17 +291,3 @@ export class FormEntity implements Form {
     return deleted;
   }
 }
-const createQueueTaskDefinition = (form: Form) => {
-  const { queueNameSpace } = form.definition.queueTaskToProcess;
-  const { name: definitionName } = form.definition;
-
-  return {
-    id: '',
-    name: 'Process form submission',
-    namespace: queueNameSpace,
-    createdOn: '',
-    priority: 'Normal',
-    description: `Process form '${definitionName}' (ID: ${form.id}) submission: (${form.submissionId})`,
-    recordId: `urn:ads:platform:form-service:v1:/forms/${form.id}/submissions/${form.submissionId}`,
-  } as QueueTaskDefinition;
-};
