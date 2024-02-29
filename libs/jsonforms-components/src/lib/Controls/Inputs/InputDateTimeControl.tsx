@@ -29,12 +29,12 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
       onChange={(name, value) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
+          value = isValidDate(value) ? new Date(value)?.toISOString() : '';
           handleChange(path, value);
         }
       }}
       onBlur={(name: string, value: string) => {
-        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
+        value = isValidDate(value) ? new Date(value).toISOString() : '';
         handleChange(path, value);
       }}
       {...uischema?.options?.componentProps}

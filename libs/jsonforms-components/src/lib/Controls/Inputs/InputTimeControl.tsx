@@ -24,7 +24,6 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       disabled={!enabled}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
-        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
         handleChange(path, value);
       }}
       // Dont use handleChange in the onChange event, use the keyPress or onBlur.
@@ -33,7 +32,6 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       onChange={(name, value) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
           handleChange(path, value);
         }
       }}
