@@ -1,6 +1,4 @@
-import Ajv from 'ajv';
-
-export const ajv = new Ajv({ allErrors: true, verbose: true });
+import { ajv } from '@lib/validation/checkInput';
 
 export interface ParserResult<T> {
   get: () => T;
