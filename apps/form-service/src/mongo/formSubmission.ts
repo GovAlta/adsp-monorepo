@@ -13,14 +13,17 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
   }
 
   find(criteria: FormSubmissionCriteria): Promise<OptionalResults<FormSubmissionEntity>> {
-    const query: Record<string, unknown> = {};
+    if (!criteria?.tenantIdEquals) {
+      throw new InvalidOperationError('Cannot retrieve submissions without tenant context.');
+    }
+
+    // tenantId is a required criteria.
+    const query: Record<string, unknown> = {
+      tenantId: criteria.tenantIdEquals.toString(),
+    };
 
     if (criteria?.formIdEquals) {
       query.formId = criteria?.formIdEquals;
-    }
-
-    if (criteria?.tenantIdEquals) {
-      query.tenantId = criteria.tenantIdEquals.toString();
     }
 
     if (criteria?.definitionIdEquals) {
@@ -59,7 +62,9 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       this.submissionModel
         .find(query, null, { lean: true })
         .sort({ created: -1 })
-        .exec((err, docs) => (err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(doc))))));
+        .exec((err, docs) =>
+          err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(criteria.tenantIdEquals, doc))))
+        );
     }).then((docs) => ({
       results: docs,
       page: {
@@ -76,7 +81,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
           if (err) {
             reject(err);
           } else {
-            const entity = doc ? this.fromDoc(doc) : null;
+            const entity = doc ? this.fromDoc(tenantId, doc) : null;
             resolve(entity);
           }
         });
@@ -91,7 +96,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
           if (err) {
             reject(err);
           } else {
-            const entity = doc ? this.fromDoc(doc) : null;
+            const entity = doc ? this.fromDoc(tenantId, doc) : null;
             resolve(entity);
           }
         });
@@ -106,7 +111,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         { upsert: true, new: true, lean: true }
       );
 
-      return this.fromDoc(doc);
+      return this.fromDoc(entity.tenantId, doc);
     } catch (err) {
       if (err?.code == 11000) {
         throw new InvalidOperationError('Cannot create duplicate form.');
@@ -126,7 +131,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
 
   private toDoc(entity: FormSubmissionEntity): FormSubmissionDoc {
     return {
-      tenantId: entity.tenantId,
+      tenantId: entity.tenantId.toString(),
       id: entity.id,
       formId: entity.form?.id,
       formDefinitionId: entity.formDefinitionId,
@@ -143,22 +148,27 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     };
   }
 
-  private fromDoc = async (doc: FormSubmissionDoc): Promise<FormSubmissionEntity> => {
-    const form = await this.formRepository.get(doc.tenantId, doc.formId);
+  private fromDoc = async (tenantId: AdspId, doc: FormSubmissionDoc): Promise<FormSubmissionEntity> => {
+    const form = await this.formRepository.get(tenantId, doc.formId);
 
-    return new FormSubmissionEntity(this, form, {
-      id: doc.id,
-      formId: doc.formId,
-      formDefinitionId: doc.formDefinitionId,
-      created: doc.created,
-      createdBy: doc.createdBy,
-      updatedBy: { id: doc.updatedById, name: doc.updatedBy },
-      submissionStatus: doc.submissionStatus,
-      updated: doc.updatedDateTime,
-      formData: doc.formData,
-      formFiles: Object.entries(doc.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
-      disposition: doc.disposition,
-      hash: doc.hash,
-    });
+    return new FormSubmissionEntity(
+      this,
+      tenantId,
+      {
+        id: doc.id,
+        formId: doc.formId,
+        formDefinitionId: doc.formDefinitionId,
+        created: doc.created,
+        createdBy: doc.createdBy,
+        updatedBy: { id: doc.updatedById, name: doc.updatedBy },
+        submissionStatus: doc.submissionStatus,
+        updated: doc.updatedDateTime,
+        formData: doc.formData,
+        formFiles: Object.entries(doc.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
+        disposition: doc.disposition,
+        hash: doc.hash,
+      },
+      form
+    );
   };
 }

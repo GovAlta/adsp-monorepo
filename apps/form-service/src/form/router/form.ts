@@ -7,11 +7,7 @@ import {
   startBenchmark,
   UnauthorizedUserError,
 } from '@abgov/adsp-service-sdk';
-import {
-  createValidationHandler,
-  InvalidOperationError,
-  NotFoundError,
-} from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { formSubmitted, formUnlocked, formSetToDraft } from '..';
 import { formArchived, formCreated, formDeleted } from '../events';
@@ -87,8 +83,9 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
   };
 }
 
-export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmission {
+export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntity): FormSubmission & { urn: string } {
   return {
+    urn: adspId`${apiId}:/forms/${entity.formId}/submissions/${entity.id}`.toString(),
     id: entity.id,
     formId: entity.formId,
     formDefinitionId: entity.formDefinitionId,
@@ -96,12 +93,14 @@ export function mapFormSubmissionData(entity: FormSubmissionEntity): FormSubmiss
     formFiles: entity.formFiles,
     created: entity.created,
     createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
-    disposition: {
-      id: entity.disposition?.id,
-      date: entity.disposition?.date,
-      status: entity.disposition?.status,
-      reason: entity.disposition?.reason,
-    },
+    disposition: entity.disposition
+      ? {
+          id: entity.disposition.id,
+          date: entity.disposition.date,
+          status: entity.disposition.status,
+          reason: entity.disposition.reason,
+        }
+      : null,
     updated: entity.updated,
     updatedBy: { id: entity.updatedBy.id, name: entity.updatedBy.name },
     hash: entity.hash,
@@ -176,6 +175,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
 }
 
 export function findFormSubmissions(
+  apiId: AdspId,
   repository: FormSubmissionRepository,
   formRepository: FormRepository
 ): RequestHandler {
@@ -206,7 +206,7 @@ export function findFormSubmissions(
 
       end();
       res.send({
-        results: results.map((r) => mapFormSubmissionData(r)),
+        results: results.map((r) => mapFormSubmissionData(apiId, r)),
         page,
       });
     } catch (err) {
@@ -273,6 +273,7 @@ export function getForm(repository: FormRepository): RequestHandler {
 }
 
 export function getFormSubmission(
+  apiId: AdspId,
   submissionRepository: FormSubmissionRepository,
   formRepository: FormRepository
 ): RequestHandler {
@@ -296,14 +297,17 @@ export function getFormSubmission(
       }
 
       end();
-      res.send(mapFormSubmissionData(formSubmission));
+      res.send(mapFormSubmissionData(apiId, formSubmission));
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function updateFormSubmissionDisposition(submissionRepository: FormSubmissionRepository): RequestHandler {
+export function updateFormSubmissionDisposition(
+  apiId: AdspId,
+  submissionRepository: FormSubmissionRepository
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -319,7 +323,7 @@ export function updateFormSubmissionDisposition(submissionRepository: FormSubmis
       const updated = await formSubmission.dispositionSubmission(user, dispositionStatus, dispositionReason);
       end();
 
-      res.send(mapFormSubmissionData(updated));
+      res.send(mapFormSubmissionData(apiId, updated));
     } catch (err) {
       next(err);
     }
@@ -501,7 +505,7 @@ export function createFormRouter({
     createValidationHandler(
       param('formId').isUUID(),
       param('submissionId').isUUID(),
-      getFormSubmission(submissionRepository, repository)
+      getFormSubmission(apiId, submissionRepository, repository)
     )
   );
   router.post(
@@ -510,7 +514,7 @@ export function createFormRouter({
       body('dispositionStatus').isString().isLength({ min: 1 }),
       body('dispositionReason').isString().isLength({ min: 1 })
     ),
-    updateFormSubmissionDisposition(submissionRepository)
+    updateFormSubmissionDisposition(apiId, submissionRepository)
   );
 
   router.get(
@@ -542,7 +546,7 @@ export function createFormRouter({
           }
         })
     ),
-    findFormSubmissions(submissionRepository, repository)
+    findFormSubmissions(apiId, submissionRepository, repository)
   );
   router.post(
     '/forms',

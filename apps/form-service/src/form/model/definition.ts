@@ -95,7 +95,13 @@ export class FormDefinitionEntity implements FormDefinition {
     }
 
     const id = uuidv4();
-    const applicant = await notificationService.subscribe(this.tenantId, this, id, applicantInfo);
+    // If applicant information is provided, then create a subscriber to keep that applicant updated;
+    // Otherwise, the form is anonymous and it will be up to the consuming app to support connecting the
+    // original person to the application.
+    const applicant = applicantInfo
+      ? await notificationService.subscribe(this.tenantId, this, id, applicantInfo)
+      : null;
+
     const formDraftUrl = this.urlTemplate({ id });
     const form = await FormEntity.create(user, repository, this, id, formDraftUrl, applicant);
 
