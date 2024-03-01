@@ -5,7 +5,6 @@ import {
   ControlElement,
   Categorization,
   UISchemaElement,
-  Layout,
   Category,
   StatePropsOfLayout,
   isVisible,
@@ -24,15 +23,6 @@ export interface FunObject {
   label: string;
   type: string;
   rule?: Record<string, string>;
-}
-
-export interface VerticalLayout extends Layout {
-  type: 'VerticalLayout';
-  label: string;
-}
-
-export interface GoAFormStepperSchemaProps extends Omit<Categorization, 'elements'> {
-  elements: (Category | Categorization | VerticalLayout)[];
 }
 
 export interface UiSchema {
@@ -69,7 +59,7 @@ export const FormStepper = ({
   visible,
   enabled,
 }: CategorizationStepperLayoutRendererProps) => {
-  const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
+  const uiSchema = uischema as Categorization;
   const [step, setStep] = usePersistentState(0);
   const [isFormValid, setIsFormValid] = useState(false);
   const categories = useMemo(
@@ -107,7 +97,7 @@ export const FormStepper = ({
     setStep(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const renderStepElements = (step: Category | Categorization | VerticalLayout) => {
+  const renderStepElements = (step: Category) => {
     // Ideally, we shall work with the ctx to determine the actual disable for not
     const isDisabledOnCategoryLevel = step?.rule?.effect === 'DISABLE';
     return (
@@ -135,19 +125,15 @@ export const FormStepper = ({
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
         <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
           {categories?.map((category, index) => {
-            const flattedStep = flattenArray(category?.elements || []);
-            const count = flattedStep.filter((e) => {
-              return e?.toString().substring(0, 12) === '#/properties';
-            }).length;
             return <GoAFormStep key={index} text={`${category.label}`} status="incomplete" />;
           })}
           <GoAFormStep text="Review" status="incomplete" />
         </GoAFormStepper>
         <GoAPages current={step} mb="xl">
-          {categories?.map((step, index) => {
+          {categories?.map((category, index) => {
             return (
-              <div data-testid={`step_${index}`} key={index}>
-                {renderStepElements(step)}
+              <div data-testid={`form-stepper-category-${index}`} key={index}>
+                {renderStepElements(category as Category)}
               </div>
             );
           })}
@@ -195,23 +181,6 @@ export const FormStepper = ({
       </div>
     </Hidden>
   );
-};
-
-const flattenArray = function <T>(data: Array<T>): Array<T> {
-  return data?.reduce(function iter(r: Array<T>, a: T): Array<T> {
-    if (a === null) {
-      return r;
-    }
-    if (Array.isArray(a)) {
-      return a.reduce(iter, r);
-    }
-    if (typeof a === 'object') {
-      return Object.values(a)
-        .map((v) => v)
-        .reduce(iter, r);
-    }
-    return r.concat(a);
-  }, []);
 };
 
 interface PreventControlElement {
