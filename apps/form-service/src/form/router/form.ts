@@ -329,6 +329,35 @@ export function updateFormSubmissionDisposition(
     }
   };
 }
+export function testFunc(
+  apiId: AdspId,
+  eventService: EventService,
+  repository: FormRepository,
+  submissionRepository: FormSubmissionRepository
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+      const user = req.user;
+      const { formId, submissionId } = req.params;
+      const { dispositionStatus, dispositionReason } = req.body;
+
+      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
+      if (!formSubmission) {
+        throw new NotFoundError('Form submission', submissionId);
+      }
+
+      const updated = await formSubmission.dispositionSubmission(user, dispositionStatus, dispositionReason);
+      const form = await repository.get(req.tenant.id, formId);
+      end();
+
+      res.send(formSubmission);
+      eventService.send(submissionDispositioned(user, form, updated));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export function accessForm(notificationService: NotificationService): RequestHandler {
   return async (req, res, next) => {

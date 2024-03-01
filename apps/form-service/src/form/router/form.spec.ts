@@ -1,10 +1,10 @@
 import { adspId, Channel, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError, ValidationService } from '@core-services/core-common';
+import { InvalidOperationError, InvalidValueError, NotFoundError, ValidationService } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { accessForm, deleteForm, findForms, formOperation, getForm, getFormDefinition, updateFormData } from '.';
-import { FormServiceRoles, FormStatus, FORM_SUBMITTED, QueueTaskToProcess } from '..';
-import { FormDefinitionEntity, FormEntity } from '../model';
-import { createForm, createFormRouter, getFormDefinitions } from './form';
+import { FormServiceRoles, FormStatus, FORM_SUBMITTED, QueueTaskToProcess, FormSubmission } from '..';
+import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
+import { createForm, createFormRouter, getFormDefinitions, updateFormSubmissionDisposition } from './form';
 
 describe('form router', () => {
   const serviceId = adspId`urn:ads:platform:form-service`;
@@ -26,6 +26,7 @@ describe('form router', () => {
     supportTopic: true,
     clerkRoles: [],
     dataSchema: null,
+    dispositionStates: [{ id: 'rejectedStatus', name: 'rejected', description: 'err' }],
     queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
   });
 
@@ -52,6 +53,19 @@ describe('form router', () => {
 
   const queueTaskServiceMock = {
     createTask: jest.fn(),
+  };
+
+  const formSubmissionMock = {
+    get: jest.fn(),
+    find: jest.fn(),
+    save: jest.fn(),
+    delete: jest.fn(),
+    getByFormIdAndSubmissionId: jest.fn(),
+    dispositionSubmission: jest.fn(),
+  };
+
+  const formSubmissionEntityMock = {
+    dispositionSubmission: jest.fn(),
   };
 
   const notificationServiceMock = {
@@ -84,13 +98,44 @@ describe('form router', () => {
     data: {},
     files: {},
   };
+
+  const formSubmissionInfo: FormSubmission = {
+    id: 'formSubmission-id',
+    formDefinitionId: 'test-formSubmission',
+    formId: 'test-form',
+    formData: {},
+    formFiles: {},
+    created: new Date(),
+    createdBy: { id: 'tester', name: 'tester' },
+    updatedBy: { id: 'tester', name: 'tester' },
+    updated: new Date(),
+    submissionStatus: '',
+    disposition: {
+      id: 'id',
+      status: 'rejected',
+      reason: 'invalid data',
+      date: new Date(),
+    },
+    hash: 'hashid',
+  };
+
   const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+
+  const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
 
   beforeEach(() => {
     repositoryMock.save.mockClear();
     repositoryMock.get.mockReset();
     repositoryMock.delete.mockReset();
     repositoryMock.find.mockReset();
+
+    formSubmissionMock.get.mockReset();
+    formSubmissionMock.save.mockReset();
+    formSubmissionMock.delete.mockReset();
+    formSubmissionMock.dispositionSubmission.mockReset();
+    formSubmissionMock.getByFormIdAndSubmissionId.mockReset();
+    formSubmissionEntityMock.dispositionSubmission.mockReset();
+
     notificationServiceMock.subscribe.mockReset();
     notificationServiceMock.sendCode.mockReset();
     notificationServiceMock.verifyCode.mockReset();
@@ -775,6 +820,67 @@ describe('form router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+  });
+
+  it('can create handler', () => {
+    const handler = updateFormSubmissionDisposition(apiId, eventServiceMock, repositoryMock, formSubmissionMock);
+    expect(handler).toBeTruthy();
+  });
+
+  describe('form submission disposition', () => {
+    it('can update form submission disposition', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        body: { dispositionStatus: 'rejected', dispositionReason: 'invalid data' },
+        params: { formId: 'test-form', submissionId: 'submissionId' },
+      };
+
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      formSubmissionMock.getByFormIdAndSubmissionId.mockResolvedValueOnce(formSubmissionEntity);
+      formSubmissionMock.save.mockResolvedValueOnce(formSubmissionEntity);
+      const handler = updateFormSubmissionDisposition(apiId, eventServiceMock, repositoryMock, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'formSubmission-id' }));
+    });
+
+    it('cannot update form submission disposition', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        body: { dispositionStatus: 'invalid status', dispositionReason: 'invalid data' },
+        params: { formId: 'test-form', submissionId: 'submissionId' },
+      };
+
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      formSubmissionMock.getByFormIdAndSubmissionId.mockResolvedValueOnce(formSubmissionEntity);
+      formSubmissionMock.save.mockResolvedValueOnce(formSubmissionEntity);
+      const handler = updateFormSubmissionDisposition(apiId, eventServiceMock, repositoryMock, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidValueError));
     });
   });
 });
