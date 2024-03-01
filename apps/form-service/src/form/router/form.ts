@@ -10,7 +10,7 @@ import {
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { formSubmitted, formUnlocked, formSetToDraft } from '..';
-import { formArchived, formCreated, formDeleted } from '../events';
+import { formArchived, formCreated, formDeleted, submissionDispositioned } from '../events';
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { NotificationService } from '../../notification';
 import { FormRepository, FormSubmissionRepository } from '../repository';
@@ -302,6 +302,8 @@ export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmi
 
 export function updateFormSubmissionDisposition(
   apiId: AdspId,
+  eventService: EventService,
+  repository: FormRepository,
   submissionRepository: FormSubmissionRepository
 ): RequestHandler {
   return async (req, res, next) => {
@@ -317,9 +319,11 @@ export function updateFormSubmissionDisposition(
       }
 
       const updated = await formSubmission.dispositionSubmission(user, dispositionStatus, dispositionReason);
+      const form = await repository.get(req.tenant.id, formId);
       end();
 
       res.send(mapFormSubmissionData(apiId, updated));
+      eventService.send(submissionDispositioned(user, form, updated));
     } catch (err) {
       next(err);
     }
@@ -398,8 +402,7 @@ export function formOperation(
         case SUBMIT_FORM_OPERATION: {
           const [submittedForm, _submission] = await form.submit(user, queueTaskService, submissionRepository);
           result = submittedForm;
-          event = formSubmitted(user, result);
-
+          event = formSubmitted(user, result, _submission);
           break;
         }
         case SET_TO_DRAFT_FORM_OPERATION: {
@@ -510,7 +513,7 @@ export function createFormRouter({
       body('dispositionStatus').isString().isLength({ min: 1 }),
       body('dispositionReason').isString().isLength({ min: 1 })
     ),
-    updateFormSubmissionDisposition(apiId, submissionRepository)
+    updateFormSubmissionDisposition(apiId, eventService, repository, submissionRepository)
   );
 
   router.get(
