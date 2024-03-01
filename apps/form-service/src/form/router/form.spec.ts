@@ -421,6 +421,26 @@ describe('form router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toBeCalledWith(expect.any(NotFoundError));
     });
+
+    it('can call next with unauthorized', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [],
+      };
+      const req = {
+        user,
+        tenant: { id: tenantId },
+        params: { formId: 'test-form' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.get.mockResolvedValueOnce(entity);
+      const handler = getForm(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
+    });
   });
 
   describe('accessForm', () => {
