@@ -48,7 +48,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity) {
 export function mapForm(
   apiId: AdspId,
   entity: FormEntity
-): Omit<Form, 'definition' | 'applicant'> & {
+): Omit<Form, 'definition' | 'applicant' | 'data' | 'files'> & {
   urn: string;
   definitionId: string;
   applicant: { addressAs: string };
@@ -59,8 +59,6 @@ export function mapForm(
     definitionId: entity.definition.id,
     formDraftUrl: entity.formDraftUrl,
     anonymousApplicant: entity.anonymousApplicant,
-    data: entity.data,
-    files: entity.files,
     status: entity.status,
     created: entity.created,
     createdBy: entity.createdBy,
@@ -152,7 +150,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
       const top = topValue ? parseInt(topValue as string) : 10;
       const criteria: FormCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
-      if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin)) {
+      if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin, true)) {
         // If user is not a form service admin, then limit search to only forms created by the user.
         criteria.createdByIdEquals = user.id;
       }
@@ -165,7 +163,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
 
       end();
       res.send({
-        results: results.map((r) => mapForm(apiId, r)),
+        results: results.filter((r) => r.canRead(user)).map((r) => mapForm(apiId, r)),
         page,
       });
     } catch (err) {
@@ -192,9 +190,9 @@ export function findFormSubmissions(
       const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
       const formEntity: FormEntity = await formRepository.get(tenantId, formId);
 
-      const definition = configuration[formEntity?.definition?.id || ''];
+      const definition = formEntity?.definition?.id ? configuration[formEntity.definition.id] : null;
 
-      if (definition && !isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...definition.assessorRoles])) {
+      if (!isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...(definition?.assessorRoles || [])])) {
         throw new UnauthorizedUserError('find form submissions', user);
       }
 
@@ -256,12 +254,18 @@ export function getForm(repository: FormRepository): RequestHandler {
   return async (req, _res, next) => {
     try {
       const end = startBenchmark(req, 'get-entity-time');
+      const user = req.user;
       const { formId } = req.params;
 
       const form = await repository.get(req.tenant.id, formId);
       if (!form) {
         throw new NotFoundError('form', formId);
       }
+
+      if (!form.canRead(user)) {
+        throw new UnauthorizedUserError('get form', user);
+      }
+
       req[FORM] = form;
 
       end();
@@ -272,28 +276,20 @@ export function getForm(repository: FormRepository): RequestHandler {
   };
 }
 
-export function getFormSubmission(
-  apiId: AdspId,
-  submissionRepository: FormSubmissionRepository,
-  formRepository: FormRepository
-): RequestHandler {
+export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmissionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'get-entity-time');
       const { formId, submissionId } = req.params;
       const user = req.user;
-      const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-      const formEntity: FormEntity = await formRepository.get(user.tenantId, formId);
-
-      const definition = configuration[formEntity?.definition?.id || ''];
-
-      if (definition && !isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ...definition.assessorRoles])) {
-        throw new UnauthorizedUserError('find form submission', user);
-      }
 
       const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
       if (!formSubmission) {
         throw new NotFoundError('Form Submission', submissionId);
+      }
+
+      if (!formSubmission.canRead(user)) {
+        throw new UnauthorizedUserError('get form submission', user);
       }
 
       end();
@@ -505,7 +501,7 @@ export function createFormRouter({
     createValidationHandler(
       param('formId').isUUID(),
       param('submissionId').isUUID(),
-      getFormSubmission(apiId, submissionRepository, repository)
+      getFormSubmission(apiId, submissionRepository)
     )
   );
   router.post(

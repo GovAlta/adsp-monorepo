@@ -137,38 +137,6 @@ describe('FormEntity', () => {
     });
   });
 
-  describe('canAssess', () => {
-    const formInfo = {
-      id: 'test-form',
-      formDraftUrl: 'https://my-form/test-form',
-      anonymousApplicant: false,
-      created: new Date(),
-      createdBy: { id: 'tester', name: 'tester' },
-      status: FormStatus.Draft,
-      locked: null,
-      submitted: null,
-      lastAccessed: new Date(),
-      data: {},
-      files: {},
-    };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
-
-    it('can return true for user with assessor role', () => {
-      const result = entity.canAssess({ tenantId, id: 'tester', roles: ['test-assessor'] } as User);
-      expect(result).toBe(true);
-    });
-
-    it('can return true for user with admin role', () => {
-      const result = entity.canAssess({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
-      expect(result).toBe(true);
-    });
-
-    it('can return false for user without assessor role', () => {
-      const result = entity.canAssess({ tenantId, id: 'tester', roles: [] } as User);
-      expect(result).toBe(false);
-    });
-  });
-
   describe('sendCode', () => {
     const formInfo = {
       id: 'test-form',
@@ -196,6 +164,58 @@ describe('FormEntity', () => {
       await expect(entity.sendCode({ tenantId, id: 'tester', roles: [] } as User, notificationMock)).rejects.toThrow(
         UnauthorizedUserError
       );
+    });
+  });
+
+  describe('canRead', () => {
+    const formInfo = {
+      id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
+      created: new Date(),
+      createdBy: { id: 'tester', name: 'tester' },
+      status: FormStatus.Draft,
+      locked: null,
+      submitted: null,
+      lastAccessed: new Date(),
+      data: {},
+      files: {},
+    };
+    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+
+    it('can return true for applicant', () => {
+      const result = entity.canRead({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return false for wrong applicant', () => {
+      const result = entity.canRead({ tenantId, id: 'tester2', roles: ['test-applicant'] } as User);
+      expect(result).toBe(false);
+    });
+
+    it('can return true for admin', () => {
+      const result = entity.canRead({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return true for intake app', () => {
+      const result = entity.canRead({ tenantId, id: 'tester', roles: [FormServiceRoles.IntakeApp] } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return true for clerk', () => {
+      const result = entity.canRead({ tenantId, id: 'tester', roles: ['test-clerk'] } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return true for assessor', () => {
+      const result = entity.canRead({ tenantId, id: 'tester', roles: ['test-assessor'] } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return false for user without role', () => {
+      const result = entity.canRead({ tenantId, id: 'tester', roles: [] } as User);
+      expect(result).toBe(false);
     });
   });
 
@@ -332,6 +352,15 @@ describe('FormEntity', () => {
     it('can throw for user without role on submitted form', async () => {
       const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       submitted.status = FormStatus.Submitted;
+
+      await expect(submitted.accessByUser({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(
+        UnauthorizedUserError
+      );
+    });
+
+    it('can throw for user without role on archived form', async () => {
+      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      submitted.status = FormStatus.Archived;
 
       await expect(submitted.accessByUser({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(
         UnauthorizedUserError

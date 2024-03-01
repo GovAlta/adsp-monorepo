@@ -70,6 +70,13 @@ export class FormSubmissionEntity implements FormSubmission {
     this.hash = formSubmission.hash;
   }
 
+  canRead(user: User): boolean {
+    return (
+      isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true) ||
+      isAllowedUser(user, this.tenantId, this.form?.definition?.assessorRoles || [])
+    );
+  }
+
   async delete(user: User): Promise<boolean> {
     if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true)) {
       throw new UnauthorizedUserError('delete form', user);
