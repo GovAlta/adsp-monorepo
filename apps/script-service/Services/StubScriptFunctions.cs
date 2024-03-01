@@ -23,6 +23,11 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return "Simulated success";
   }
 
+  public override string? DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason)
+  {
+    return "Simulated disposition success";
+  }
+
   public override object? HttpGet(string url)
   {
     return "simulated success";

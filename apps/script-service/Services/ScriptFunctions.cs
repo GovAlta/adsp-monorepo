@@ -113,6 +113,27 @@ internal class ScriptFunctions : IScriptFunctions
   }
 
 
+  public virtual string? DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason)
+  {
+    var formServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
+    var requestUrl = new Uri(formServiceUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
+    var token = _getToken().Result;
+    var body = new
+    {
+      dispositionStatus = dispositionState,
+      dispositionReason = reason,
+    };
+
+    var request = new RestRequest(requestUrl, Method.Post);
+    request.AddJsonBody(body);
+    request.AddHeader("Authorization", $"Bearer {token}");
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+
+    var result = _client.PostAsync(request).Result;
+    return result.Content;
+  }
+
+
   public virtual object? HttpGet(string url)
   {
     var token = _getToken().Result;
