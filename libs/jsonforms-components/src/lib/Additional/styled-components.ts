@@ -1,12 +1,22 @@
 import styled from 'styled-components';
 
 export const HelpContentDiv = styled.div`
-  margin-bottom: 1.5rem;
-  .label {
-    text-align: left;
+  .parent-label {
     font-size: 24px;
-    font-weight: bold;
     margin-bottom: 1rem;
+    font-weight: bold;
+  }
+
+  .child-label {
+    font-size: 18px;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+  }
+  .parent-margin {
+    margin-bottom: 1.5rem;
+  }
+  .child-margin {
+    margin-bottom: 0.25rem;
   }
   ul {
     margin: 0 0 0 0.5rem;
