@@ -124,6 +124,26 @@ export const FormStatusArchivedDefinition: DomainEventDefinition = {
   },
 };
 
+export const SubmissionDispositionedDefinition: DomainEventDefinition = {
+  name: SUBMISSION_DISPOSITIONED,
+  description: 'Signalled when a form submission is dispositioned',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      form: formSchema,
+      submmission: {
+        id: { type: 'string' },
+        createdBy: userInfoSchema,
+        disposition: {
+          status: { type: 'string' },
+          reason: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
 function mapForm(entity: FormEntity) {
   return {
     definition: {
@@ -282,21 +302,16 @@ export const submissionDispositioned = (
   },
   payload: {
     form: mapForm(form),
-    submmission: {
+    submission: {
       id: submission.id,
-      createdBy: {
-        id: submission.createdBy.id,
-        name: submission.createdBy.name,
-      },
       disposition: {
+        createdBy: {
+          id: user.id,
+          name: user.name,
+        },
         status: submission.disposition.status,
         reason: submission.disposition.reason,
       },
-    },
-
-    submittedBy: {
-      id: user.id,
-      name: user.name,
     },
   },
 });

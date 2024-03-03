@@ -823,18 +823,18 @@ describe('form router', () => {
     });
   });
 
-  it('can create handler', () => {
-    const handler = updateFormSubmissionDisposition(apiId, eventServiceMock, repositoryMock, formSubmissionMock);
-    expect(handler).toBeTruthy();
-  });
-
   describe('form submission disposition', () => {
+    const user = {
+      tenantId,
+      id: 'tester',
+      roles: [FormServiceRoles.Admin],
+    };
+    it('can create handler updateFormSubmissionDisposition', () => {
+      const handler = updateFormSubmissionDisposition(apiId, eventServiceMock, repositoryMock, formSubmissionMock);
+      expect(handler).toBeTruthy();
+    });
+
     it('can update form submission disposition', async () => {
-      const user = {
-        tenantId,
-        id: 'tester',
-        roles: [FormServiceRoles.Admin],
-      };
       const req = {
         user,
         tenant: {
@@ -852,15 +852,12 @@ describe('form router', () => {
       const handler = updateFormSubmissionDisposition(apiId, eventServiceMock, repositoryMock, formSubmissionMock);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(formSubmissionMock.getByFormIdAndSubmissionId).toBeCalled();
+      expect(formSubmissionMock.save).toBeCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'formSubmission-id' }));
     });
 
-    it('cannot update form submission disposition not found', async () => {
-      const user = {
-        tenantId,
-        id: 'tester',
-        roles: [FormServiceRoles.Admin],
-      };
+    it('form submission not found to update disposition', async () => {
       const req = {
         user,
         tenant: {
