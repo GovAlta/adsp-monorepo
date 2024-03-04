@@ -527,6 +527,9 @@ export const taskSlice = createSlice({
     setTaskToPrioritize: (state, { payload }: PayloadAction<string>) => {
       state.modal.taskToPrioritize = payload ? state.tasks[payload] : null;
     },
+    resetTask: (state) => {
+      state.results = [];
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -542,6 +545,7 @@ export const taskSlice = createSlice({
         state.queue = payload;
       })
       .addCase(initializeQueue.rejected, (state) => {
+        state.results = null;
         state.busy.initializing = false;
       })
       .addCase(loadQueuePeople.pending, (state) => {
@@ -684,8 +688,12 @@ export const tasksSelector = createSelector(
   (state: AppState) => state.task.results,
   (state: AppState) => state.task.tasks,
   filterSelector,
-  (userId, results, tasks, filter) =>
-    results
+  (userId, results, tasks, filter) => {
+    if (!results) {
+      return null;
+    }
+
+    return results
       .map((r) => deserializeTask(tasks[r]))
       .filter((r) => {
         switch (filter) {
@@ -706,6 +714,7 @@ export const tasksSelector = createSelector(
         }
         return result;
       })
+    }
 );
 
 export const busySelector = (state: AppState) => state.task.busy;
