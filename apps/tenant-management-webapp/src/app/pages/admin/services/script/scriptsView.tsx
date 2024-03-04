@@ -61,7 +61,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
-  }, [dispatch]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { scripts } = useSelector((state: RootState) => state.scriptService);
   const { errors, validators } = useValidators(
@@ -75,6 +75,13 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
     .build();
 
+    useEffect(() => {
+      if (activeEdit) {
+        reset();
+        setOpenAddScript(true);
+      }
+    }, [activeEdit]);
+
     const reset = () => {
       setTestInput(getDefaultTestInput());
       setSelectedScript(defaultScript);
@@ -82,13 +89,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
       setShowScriptEditForm(false);
       validators.clear();
     };
-  useEffect(() => {
-    if (activeEdit) {
-      reset();
-      setOpenAddScript(true);
-    }
-  }, [activeEdit, reset, dispatch]);
-
 
   const openEditorOnAdd = (script) => {
     script.testInputs = testInput;

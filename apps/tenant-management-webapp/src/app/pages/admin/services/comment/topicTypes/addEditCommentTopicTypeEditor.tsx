@@ -78,7 +78,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     dispatch(fetchKeycloakServiceRoles());
     dispatch(FetchRealmRoles());
     dispatch(getCommentTopicTypes());
-  }, [dispatch]);
+  }, []);
 
   const types = [
     { type: 'adminRoles', name: 'Admin roles' },
@@ -95,17 +95,11 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     }
   );
 
-
-  const navigate = useNavigate();
-
-  const close = () => {
-    navigate('/admin/services/comment?topicTypes=true');
-  };
   useEffect(() => {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal, close]);
+  }, [saveModal]);
 
   useEffect(() => {
     if (id && commentTopicTypes[id]) {
@@ -116,7 +110,13 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
       setTopicType(topicTypes);
       setInitialTopicType(topicTypes);
     }
-  }, [commentTopicTypes, id]);
+  }, [commentTopicTypes]);
+
+  const navigate = useNavigate();
+
+  const close = () => {
+    navigate('/admin/services/comment?topicTypes=true');
+  };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
@@ -196,23 +196,6 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     return state?.session?.indicator;
   });
 
-    const { validators, errors } = useValidators(
-      'name',
-      'name',
-      badCharsCheck,
-      wordMaxLengthCheck(32, 'Name'),
-      isNotEmptyCheck('name'),
-      isNotEmptyCheck('securityClassification')
-    )
-      .add('duplicate', 'name', duplicateNameCheck(topicTypeNames, 'topicType'))
-      .add(
-        'securityClassification',
-        'securityClassification',
-        isNotUndefinedCheck(topicType.securityClassification, 'Security classification')
-      )
-      .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
-      .build();
-
   useEffect(() => {
     if (spinner && Object.keys(topicTypes).length > 0) {
       if (validators['duplicate'].check(topicType.id)) {
@@ -222,10 +205,27 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
 
       setSpinner(false);
     }
-  }, [topicTypes, spinner, topicType.id, validators]);
+  }, [topicTypes]);
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
+
+  const { validators, errors } = useValidators(
+    'name',
+    'name',
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
+    isNotEmptyCheck('name'),
+    isNotEmptyCheck('securityClassification')
+  )
+    .add('duplicate', 'name', duplicateNameCheck(topicTypeNames, 'topicType'))
+    .add(
+      'securityClassification',
+      'securityClassification',
+      isNotUndefinedCheck(topicType.securityClassification, 'Security classification')
+    )
+    .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
+    .build();
 
   const heightCover = {
     height: calcHeight - 550,

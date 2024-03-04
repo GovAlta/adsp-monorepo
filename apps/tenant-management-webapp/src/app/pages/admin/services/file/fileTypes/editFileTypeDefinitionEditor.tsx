@@ -97,7 +97,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
         foundFileType.securityClassification !== '';
       setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
     }
-  });
+  },[]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const foundFileType = fileTypes?.find((f) => f.id === id);
@@ -117,13 +117,13 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
         setIsSecurityClassificationCalloutIsOpen(!isSecurityClassificationCalloutOpen);
       }
     }
-  }, [fileTypes]);
+  }, [fileTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal]);
+  }, [saveModal]);// eslint-disable-line react-hooks/exhaustive-deps
   const { validators } = useValidators(
     'name',
     'name',

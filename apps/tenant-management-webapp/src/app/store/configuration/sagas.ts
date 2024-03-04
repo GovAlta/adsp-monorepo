@@ -43,7 +43,7 @@ import { ErrorNotification } from '@store/notifications/actions';
 import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getAccessToken } from '@store/tenant/sagas';
 
-export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefinitionsAction): SagaIterator {
+export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
@@ -393,13 +393,13 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
   }
 }
 
-export function* getReplaceList(_action: SetConfigurationRevisionAction): SagaIterator {
+export function* getReplaceList(action: SetConfigurationRevisionAction): SagaIterator {
   if (replaceErrorConfiguration.length > 0) {
     yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));
   }
 }
 
-export function* resetReplaceList(_action: ResetReplaceConfigurationListAction): SagaIterator {
+export function* resetReplaceList(action: ResetReplaceConfigurationListAction): SagaIterator {
   yield put(resetReplaceConfigurationListSuccessAction());
   replaceErrorConfiguration = [];
 }

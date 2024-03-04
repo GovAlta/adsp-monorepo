@@ -23,7 +23,7 @@ import { Service } from './models';
 import { toKebabName } from '@lib/kebabName';
 import { getAccessToken } from '@store/tenant/sagas';
 
-export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
+export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
   const core = 'platform';
   const state: RootState = yield select();
   const token: string = yield call(getAccessToken);

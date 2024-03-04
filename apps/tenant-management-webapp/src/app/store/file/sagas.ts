@@ -273,7 +273,8 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
-  const { ...config } = payload;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { hasFile, ...config } = payload;
 
   if (configBaseUrl && token) {
     try {
@@ -304,7 +305,8 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
   const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
-    const { ...config } = payload;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { hasFile, ...config } = payload;
 
     try {
       yield call(

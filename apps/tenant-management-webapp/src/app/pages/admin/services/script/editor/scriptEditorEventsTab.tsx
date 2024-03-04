@@ -64,7 +64,7 @@ const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptTriggerEven
           </GoAContextMenu>
         </td>
       </tr>
-      showDetails ? (
+      {showDetails && (
         <tr>
           <td className="payload-details" headers="" colSpan={5}>
             <div className="spacingLarge">Trigger Criteria</div>
@@ -74,7 +74,7 @@ const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptTriggerEven
             <br />
           </td>
         </tr>
-      ):null;
+      )};
     </>
   );
 };

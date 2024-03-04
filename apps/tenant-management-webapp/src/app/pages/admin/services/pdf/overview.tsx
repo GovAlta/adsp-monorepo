@@ -15,7 +15,7 @@ export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ setOpenAddTem
   useEffect(() => {
     setOpenAddTemplate(false);
     dispatch(fetchPdfMetrics());
-  });
+  },[]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
   const description =

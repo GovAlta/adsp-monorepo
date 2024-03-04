@@ -184,7 +184,7 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
           keycloakIdMap[c.clientId] = c.id;
         });
 
-      const rolePromises = keycloakRoleIds.map((id) => {
+      const rolePromises = keycloakRoleIds.map((id, index) => {
         const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients/${id}/roles`;
         return call(axios.get, url, {
           headers: { Authorization: `Bearer ${token}` },

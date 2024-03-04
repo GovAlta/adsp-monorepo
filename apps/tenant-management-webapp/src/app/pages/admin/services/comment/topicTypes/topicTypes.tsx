@@ -58,7 +58,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
   useEffect(() => {
     dispatch(getCommentTopicTypes());
-  }, [dispatch]);
+  }, []);
 
   const reset = () => {
     setOpenAddCommentTopicType(false);
@@ -71,6 +71,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
   }, []);
 
   return (
+    <>
       <div>
         <br />
         <GoAButton
@@ -97,6 +98,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
         {!indicator.show && Object.keys(commentTopicTypes).length === 0 && renderNoItem('topic types')}
         {!indicator.show && Object.keys(commentTopicTypes).length > 0 && (
+          <>
             <CommentTopicTypesTable
               topicTypes={commentTopicTypes}
               onDelete={(currentTemplate) => {
@@ -104,6 +106,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
                 setCurrentDefinition(currentTemplate);
               }}
             />
+          </>
         )}
         {!indicator.show && Object.keys(commentCoreTopicTypes).length === 0 && renderNoItem('core topic types')}
         {!indicator.show && Object.keys(commentCoreTopicTypes).length > 0 && (
@@ -134,5 +137,6 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
           }}
         />
       </div>
+    </>
   );
 };

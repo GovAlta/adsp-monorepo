@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { Tenant } from './models';
+import { Tenant, Role } from './models';
 import { TenantApi as TenantApiConfig } from '@store/config/models';
 
 interface TenantsResponse {

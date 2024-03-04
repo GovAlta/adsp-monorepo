@@ -18,7 +18,7 @@ export const tenantRolesAndClients = createDeepEqualSelector(
   (state: RootState) => {
     const clients = state.serviceRoles?.keycloak;
     const keys = clients ? Object.keys(clients) : [];
-    keys.forEach((_key: string) => {
+    keys.forEach((key: string) => {
       for (const key of keys) {
         clients[key].roles = clients[key]?.roles?.sort((a, b) => a.role.localeCompare(b.role));
       }
