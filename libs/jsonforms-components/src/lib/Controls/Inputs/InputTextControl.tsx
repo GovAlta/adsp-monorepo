@@ -17,6 +17,9 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const errorsFormInput = getErrorsToDisplay(props as ControlProps);
 
+  const autoCapitalize =
+    uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
+
   return (
     <GoAInput
       error={errorsFormInput.length > 0}
@@ -34,11 +37,19 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          handleChange(path, value);
+          if (autoCapitalize === true) {
+            handleChange(path, value.toUpperCase());
+          } else {
+            handleChange(path, value);
+          }
         }
       }}
       onBlur={(name: string, value: string) => {
-        handleChange(path, value);
+        if (autoCapitalize === true) {
+          handleChange(path, value.toUpperCase());
+        } else {
+          handleChange(path, value);
+        }
       }}
       {...uischema?.options?.componentProps}
     />
