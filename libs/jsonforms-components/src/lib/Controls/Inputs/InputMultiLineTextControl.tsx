@@ -23,6 +23,8 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  const autoCapitalize =
+    uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
 
   return (
     <GoATextArea
@@ -37,7 +39,11 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
       // maxCount={schema.maxLength || 256}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          handleChange(path, value);
+          if (autoCapitalize === true) {
+            handleChange(path, value.toUpperCase());
+          } else {
+            handleChange(path, value);
+          }
         }
       }}
       // Dont use handleChange in the onChange event, use the keyPress or onBlur.
