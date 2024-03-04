@@ -11,7 +11,6 @@ export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ t
   const newTemplates = JSON.parse(JSON.stringify(templates));
 
   return (
-    <>
       <DataTable data-testid="pdf-templates-table">
         <thead data-testid="pdf-templates-table-header">
           <tr>
@@ -33,6 +32,5 @@ export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ t
           })}
         </tbody>
       </DataTable>
-    </>
   );
 };

@@ -17,7 +17,7 @@ const LoginLanding = (): JSX.Element => {
     if (realm) {
       dispatch(TenantLogin(realm));
     }
-  }, [keycloakConfig]);
+  }, [keycloakConfig, dispatch, realm]);
 
   if (tenant?.loginSucceeded === false) {
     dispatch(UpdateLoginSuccess(null));

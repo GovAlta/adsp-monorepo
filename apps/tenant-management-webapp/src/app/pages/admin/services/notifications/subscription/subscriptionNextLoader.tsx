@@ -46,6 +46,6 @@ export const SubscriptionNextLoader: FunctionComponent<SubscriptionSearchNextPro
       </LoadMoreWrapper>
     );
   } else {
-    return <></>;
+    return null;
   }
 };

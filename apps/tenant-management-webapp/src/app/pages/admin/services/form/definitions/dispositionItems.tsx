@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { Disposition } from '@store/form/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import { RowFlex } from './style-components';
+import { RowFlex, Anchor } from './style-components';
 import { EmptyBoxSpace, Flex, ActionSpace } from './style-components';
 
 interface ActionComponentProps {
@@ -20,7 +20,7 @@ interface ClickUpProps {
 
 const ClickUp: React.FC<ClickUpProps> = ({ dispositions, index, updateDispositions }) => {
   return (
-    <a
+    <Anchor
       onClick={() => {
         const tempDispositions = [
           ...dispositions.slice(0, Math.max(index - 1, 0)),
@@ -32,15 +32,14 @@ const ClickUp: React.FC<ClickUpProps> = ({ dispositions, index, updateDispositio
         });
         updateDispositions(tempDispositions);
       }}
-      style={{ height: '24px' }}
     >
       <GoAContextMenuIcon type="arrow-up" title="Arrow-up" />
-    </a>
+    </Anchor>
   );
 };
 const ClickDown: React.FC<ClickUpProps> = ({ dispositions, index, updateDispositions }) => {
   return (
-    <a
+    <Anchor
       onClick={() => {
         const tempDispositions = [
           ...dispositions.slice(0, Math.max(index, 0)),
@@ -52,10 +51,9 @@ const ClickDown: React.FC<ClickUpProps> = ({ dispositions, index, updateDisposit
         });
         updateDispositions(tempDispositions);
       }}
-      style={{ height: '24px' }}
     >
       <GoAContextMenuIcon type="arrow-down" title="Arrow-down" />
-    </a>
+    </Anchor>
   );
 };
 
@@ -130,6 +128,6 @@ export const DispositionItems: FunctionComponent<ActionComponentProps> = ({
             </tr>
           );
         })}
-    </>
+        </>
   );
 };

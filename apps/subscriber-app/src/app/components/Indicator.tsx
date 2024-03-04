@@ -21,9 +21,9 @@ export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
     return () => {
       clearTimeout(timer);
     };
-  }, []);
+  }, [delayInMS]);
 
-  return <>{showIndicator && <PageLoader message={message} />}</>;
+  return showIndicator ? <PageLoader message={message} />:<></>;
 };
 
 const Center = styled.div`

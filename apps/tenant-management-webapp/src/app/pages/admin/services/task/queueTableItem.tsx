@@ -12,7 +12,6 @@ interface QueueTableItemProps {
 export const QueueTableItem = ({ id, queue, onDelete }: QueueTableItemProps): JSX.Element => {
   const navigate = useNavigate();
   return (
-    <>
       <tr>
         <td data-testid="queue-list-namespace">{queue.namespace}</td>
         <td data-testid="queue-list-name">{queue.name}</td>
@@ -34,6 +33,5 @@ export const QueueTableItem = ({ id, queue, onDelete }: QueueTableItemProps): JS
           />
         </td>
       </tr>
-    </>
   );
 };

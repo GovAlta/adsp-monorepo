@@ -28,7 +28,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
     if (openEditor) {
       navigate(`edit/${openEditor}`);
     }
-  }, [openEditor]);
+  }, [openEditor, navigate]);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
@@ -65,7 +65,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
     if (isObjectEmpty(pdfTemplates)) {
       dispatch(getPdfTemplates());
     }
-  }, []);
+  }, [dispatch, getPdfTemplates]);
 
   // eslint-disable-next-line
   useEffect(() => {}, [pdfTemplates]);
@@ -75,7 +75,6 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   }, []);
 
   return (
-    <>
       <div>
         <br />
         <GoAButton
@@ -126,6 +125,5 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
           }}
         />
       </div>
-    </>
   );
 };

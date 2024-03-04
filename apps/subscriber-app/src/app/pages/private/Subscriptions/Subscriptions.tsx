@@ -57,25 +57,25 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   // call that gets user jwt token
   useEffect(() => {
     dispatch(KeycloakCheckSSOWithLogout(realm));
-  }, []);
+  }, [dispatch, realm]);
 
   // only make the following 2 effects once we have user info and token ready
   useEffect(() => {
     if (userInfo !== undefined) {
       dispatch(getMySubscriberDetails());
     }
-  }, [userInfo]);
+  }, [userInfo, dispatch]);
 
   useEffect(() => {
     if (userInfo !== undefined) {
       dispatch(FetchContactInfoService({ realm }));
     }
-  }, [userInfo]);
+  }, [userInfo, dispatch, userInfo]);
 
   useEffect(() => {
     code = searchParams.get('code');
     smsCode = searchParams.get('smscode');
-  }, []);
+  }, [smsCode]);
 
   useEffect(() => {
     if (

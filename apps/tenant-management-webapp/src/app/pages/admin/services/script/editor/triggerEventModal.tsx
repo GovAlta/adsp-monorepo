@@ -48,7 +48,7 @@ export const TriggerEventModal = ({
     if (isNew) {
       setTriggerEvent(defaultTriggerEvent);
     }
-  }, [open]);
+  }, [open, isNew]);
 
   useEffect(() => {
     if (isNew) {
@@ -64,7 +64,7 @@ export const TriggerEventModal = ({
         },
       });
     }
-  }, [initialValue]);
+  }, [initialValue, isNew, triggerEvent]);
 
   const isObjectEmpty = (obj) => {
     return JSON.stringify(obj) === '{}';

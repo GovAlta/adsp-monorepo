@@ -1,3 +1,4 @@
+
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import FormOverview from './formOverview';
@@ -21,9 +22,7 @@ const HelpLink = (): JSX.Element => {
     return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/form-service';
   }
   return (
-    <>
       <AsideLinks serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />
-    </>
   );
 };
 
@@ -39,7 +38,7 @@ export const Form: FunctionComponent = () => {
     dispatch(FetchRealmRoles());
 
     dispatch(fetchKeycloakServiceRoles());
-  }, []);
+  }, [dispatch]);
 
   const searchParams = new URLSearchParams(document.location.search);
 

@@ -61,7 +61,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
-  }, []);
+  }, [dispatch]);
 
   const { scripts } = useSelector((state: RootState) => state.scriptService);
   const { errors, validators } = useValidators(
@@ -75,20 +75,20 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
     .build();
 
+    const reset = () => {
+      setTestInput(getDefaultTestInput());
+      setSelectedScript(defaultScript);
+      setOpenAddScript(false);
+      setShowScriptEditForm(false);
+      validators.clear();
+    };
   useEffect(() => {
     if (activeEdit) {
       reset();
       setOpenAddScript(true);
     }
-  }, [activeEdit]);
+  }, [activeEdit, reset, dispatch]);
 
-  const reset = () => {
-    setTestInput(getDefaultTestInput());
-    setSelectedScript(defaultScript);
-    setOpenAddScript(false);
-    setShowScriptEditForm(false);
-    validators.clear();
-  };
 
   const openEditorOnAdd = (script) => {
     script.testInputs = testInput;

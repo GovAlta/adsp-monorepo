@@ -12,7 +12,6 @@ export const CommentCoreTopicTypesTable: FunctionComponent<CommentTemplatesTable
   const newTemplates = JSON.parse(JSON.stringify(topicTypes));
 
   return (
-    <>
       <DataTable data-testid="comment-topic-types-table">
         <thead data-testid="comment-topic-types-table-header">
           <tr>
@@ -40,6 +39,5 @@ export const CommentCoreTopicTypesTable: FunctionComponent<CommentTemplatesTable
           })}
         </tbody>
       </DataTable>
-    </>
   );
 };

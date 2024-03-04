@@ -41,7 +41,7 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
 
   useEffect(() => {
     dispatch(getTaskQueues());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (selectedQueue.name.length > 0) {
@@ -50,7 +50,7 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
     if (deleteAction) {
       setShowDeleteConfirmation(true);
     }
-  }, [selectedQueue]);
+  }, [selectedQueue, deleteAction, dispatch, next]);
 
   useEffect(() => {
     if (openAddDefinition) {

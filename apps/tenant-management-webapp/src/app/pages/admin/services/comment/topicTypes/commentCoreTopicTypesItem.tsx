@@ -8,7 +8,6 @@ interface PdfTemplateItemProps {
 
 export const CommentCoreTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplateItemProps): JSX.Element => {
   return (
-    <>
       <tr>
         <td data-testid="comment-topic-types-name">{commentTopicType.name}</td>
         <td data-testid="comment-topic-types-template-id">{commentTopicType.id}</td>
@@ -17,6 +16,5 @@ export const CommentCoreTopicTypesItem = ({ commentTopicType, onDelete }: PdfTem
           {commentTopicType.securityClassification}
         </td>
       </tr>
-    </>
   );
 };

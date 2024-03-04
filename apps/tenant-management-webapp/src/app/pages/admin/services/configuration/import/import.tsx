@@ -124,11 +124,11 @@ export const ConfigurationImport: FunctionComponent = () => {
 
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     dispatch(getReplaceConfigurationErrorAction());
-  }, [imports]);
+  }, [imports, dispatch]);
 
   return (
     <Import>

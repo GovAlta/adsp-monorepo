@@ -51,6 +51,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
   );
   const pdfGenerationError = jobList?.[0]?.payload?.error;
   const hasError = pdfGenerationError && pdfGenerationError.length > 0;
+  const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
@@ -60,7 +61,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     } else {
       dispatch(setPdfDisplayFileId(null));
     }
-  }, [fileList]);
+  }, [dispatch, fileList]);
 
   const generateTemplate = () => {
     const payload = {
@@ -73,7 +74,6 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
   };
   const [windowSize, setWindowSize] = useState(window.innerHeight);
 
-  const dispatch = useDispatch();
 
   const indicator = useSelector((state: RootState) => state?.session?.indicator, _.isEqual);
 
@@ -88,7 +88,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     if (!socketChannel) {
       dispatch(streamPdfSocket(false));
     }
-  }, [socketChannel]);
+  }, [socketChannel, dispatch]);
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -130,11 +130,9 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
           </div>
         )}
         {!indicator?.show && hasError && (
-          <>
             <GoACallout type="emergency" heading="Error in PDF generation">
               {pdfGenerationError}
             </GoACallout>
-          </>
         )}
       </>
     );

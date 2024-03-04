@@ -165,7 +165,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
     if (revisions?.length > 0) {
       dispatch(getConfigurationActive(service));
     }
-  }, [indicator, revisions]);
+  }, [indicator, revisions, dispatch]);
   if (
     !configurationRevisions[service]?.revisions.next &&
     !configurationRevisions[service]?.revisions?.latest &&

@@ -13,7 +13,6 @@ export const FormDefinitionEditor = (): JSX.Element => {
   };
 
   return (
-    <>
       <Modal data-testid="template-form">
         <ModalContent>
           <OuterFormTemplateEditorContainer>
@@ -27,6 +26,5 @@ export const FormDefinitionEditor = (): JSX.Element => {
           </OuterFormTemplateEditorContainer>
         </ModalContent>
       </Modal>
-    </>
   );
 };

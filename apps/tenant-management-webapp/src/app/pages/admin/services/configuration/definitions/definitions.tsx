@@ -40,7 +40,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (activeEdit) {
@@ -79,7 +79,6 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
       <div>
         {!indicator.show && !tenantConfigDefinitions && renderNoItem('tenant configuration')}
         {!indicator.show && tenantConfigDefinitions && (
-          <>
             <ConfigurationDefinitionsTableComponent
               onDelete={(selectedDefinitionName) => {
                 setSelectedDefinitionName(selectedDefinitionName);
@@ -94,19 +93,16 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
               tenantName={tenantName}
               definitions={tenantConfigDefinitions.configuration}
             />
-          </>
         )}
       </div>
       {/* platform config definitions */}
       <div>
         {!indicator.show && !coreConfigDefinitions && renderNoItem('core configuration')}
         {!indicator.show && coreConfigDefinitions && (
-          <>
             <ConfigurationDefinitionsTableComponent
               tenantName={coreTenant}
               definitions={coreConfigDefinitions.configuration}
             />
-          </>
         )}
       </div>
       {/* Delete confirmation */}

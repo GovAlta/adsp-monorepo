@@ -20,7 +20,6 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   };
 
   return (
-    <>
       <Modal data-testid="template-form">
         <ModalContent>
           <OuterPDFTemplateEditorContainer>
@@ -37,6 +36,5 @@ export const PdfTemplatesEditor = (): JSX.Element => {
           </OuterPDFTemplateEditorContainer>
         </ModalContent>
       </Modal>
-    </>
   );
 };

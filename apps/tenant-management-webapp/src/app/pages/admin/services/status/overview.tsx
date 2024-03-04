@@ -17,7 +17,7 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);
-  }, []);
+  }, [setActiveEdit, setActiveIndex]);
 
   return (
     <OverviewCss>
@@ -29,7 +29,6 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
               Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
-            <>
               <h2>Guidelines for choosing a health check endpoint</h2>
               <ol>
                 <li>A Health check endpoint needs to be publicly accessible over the internet</li>
@@ -45,7 +44,6 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
                   your app, and checks connectivity to any databases, for instance.
                 </li>
               </ol>
-            </>
           </section>
         }
         addButton={

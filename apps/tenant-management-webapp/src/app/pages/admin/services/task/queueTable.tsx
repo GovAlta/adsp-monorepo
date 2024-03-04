@@ -12,7 +12,6 @@ export const QueueListTable: FunctionComponent<QueueTableProps> = ({ taskQueues,
   const newQueues = JSON.parse(JSON.stringify(taskQueues)) as Record<string, TaskDefinition>;
 
   return (
-    <>
       <DataTable data-testid="task-queue-table">
         <thead data-testid="task-queue-table-header">
           <tr>
@@ -29,6 +28,5 @@ export const QueueListTable: FunctionComponent<QueueTableProps> = ({ taskQueues,
           })}
         </tbody>
       </DataTable>
-    </>
   );
 };

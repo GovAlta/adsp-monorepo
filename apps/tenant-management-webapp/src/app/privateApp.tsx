@@ -29,7 +29,7 @@ export function PrivateApp(): JSX.Element {
   }
   useEffect(() => {
     dispatch(KeycloakCheckSSOWithLogout(realm));
-  }, []);
+  }, [dispatch, realm]);
 
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const ready = !!userInfo;

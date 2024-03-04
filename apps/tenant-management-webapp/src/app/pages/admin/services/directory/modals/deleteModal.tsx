@@ -20,7 +20,6 @@ export const DirectoryDeleteModal = (): JSX.Element => {
   useEffect(() => {}, [modal?.isOpen]);
 
   return (
-    <>
       <DeleteModal
         title={title}
         isOpen={directory !== undefined && modal.isOpen === true}
@@ -33,6 +32,5 @@ export const DirectoryDeleteModal = (): JSX.Element => {
           dispatch(ResetModalState());
         }}
       />
-    </>
   );
 };

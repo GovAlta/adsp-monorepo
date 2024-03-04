@@ -21,7 +21,6 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
   onEdit,
 }: CalendarItemProps) => {
   return (
-    <>
       <tr key={calendar.name}>
         <td headers="calendar-name" data-testid="calendar-name">
           {calendar.displayName}
@@ -57,7 +56,6 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
           )}
         </td>
       </tr>
-    </>
   );
 };
 

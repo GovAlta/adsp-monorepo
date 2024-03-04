@@ -92,7 +92,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     if (!definitions || (definitions && definitions.length === 0)) {
       dispatch(getEventDefinitions());
     }
-  }, [eventDefinitions]);
+  }, [eventDefinitions, dispatch,definitions]);
 
   const roles = useSelector(selectRoleList);
   const latestNotification = useSelector(
@@ -215,7 +215,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onNameChange(selectedScript?.name || '');
     onDescriptionChange(selectedScript?.description || '');
     onScriptChange(selectedScript?.script || '');
-  }, [selectedScript]);
+  }, [selectedScript, onNameChange,    onDescriptionChange,    onScriptChange]);
 
   const orderedEventNames = definitions
     .map((def) => {

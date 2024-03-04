@@ -62,7 +62,6 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
 
   const RenderFileTable = () => {
     return (
-      <>
         <FileTableStyles>
           <DataTable id="pdf-files-information" data-testid="pdf-files-information">
             <thead>
@@ -86,8 +85,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                 const key = new Date().valueOf();
                 const status = file?.filename ? 'pdf-generated' : job.status;
                 return (
-                  <>
-                    {(file || indicator.show) && (
+                    (file || indicator.show) && (
                       <tr key={key}>
                         <td>{job.filename}</td>
                         {/* Use ceil here to make sure people will allocate enough resources */}
@@ -113,7 +111,6 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                         </td>
                         <td className="display-flex">
                           {file?.filename ? (
-                            <>
                               <GoAContextMenu>
                                 {currentFile?.filename !== job?.filename ? (
                                   <GoAContextMenuIcon
@@ -138,14 +135,12 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                                   onClick={() => onDeleteFile(file)}
                                 />
                               </GoAContextMenu>
-                            </>
                           ) : (
                             <div>{indicator.show && <TextGoASkeleton />}</div>
                           )}
                         </td>
                       </tr>
-                    )}
-                  </>
+                    )
                 );
               })}
             </tbody>
@@ -167,7 +162,6 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
             }}
           />
         </FileTableStyles>
-      </>
     );
   };
 

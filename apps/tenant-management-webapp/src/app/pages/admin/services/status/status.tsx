@@ -64,7 +64,7 @@ function Status(): JSX.Element {
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
     dispatch(fetchStatusMetrics());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (applications && applications.length > 0 && intervalId === null) {
@@ -82,7 +82,7 @@ function Status(): JSX.Element {
   useEffect(() => {
     dispatch(getNotices());
     dispatch(GetMySubscriber());
-  }, []);
+  }, [dispatch]);
 
   const subscribeToggle = () => {
     if (subscription) {
@@ -213,9 +213,7 @@ function Status(): JSX.Element {
       </Main>
 
       <Aside>
-        <>
           <AsideLinks serviceLink={getStatussupportcodeLink()} />
-        </>
         <h3>Public status page</h3>
 
         <p>Url of the current tenant's public status page:</p>

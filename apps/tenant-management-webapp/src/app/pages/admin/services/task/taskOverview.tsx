@@ -10,7 +10,7 @@ interface TaskOverviewProps {
 export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.Element => {
   useEffect(() => {
     setOpenAddDefinition(false);
-  }, []);
+  });
 
   const navigate = useNavigate();
 
@@ -25,7 +25,6 @@ export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.E
         </section>
       }
       addButton={
-        <>
           <GoAButton
             testId="add-queue"
             onClick={() => {
@@ -35,7 +34,6 @@ export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.E
           >
             Add queue
           </GoAButton>
-        </>
       }
     />
   );

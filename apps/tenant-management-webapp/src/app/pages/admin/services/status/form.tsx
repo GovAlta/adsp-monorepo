@@ -129,11 +129,11 @@ export const ApplicationFormModal: FC<Props> = ({
     if (directory.length === 0) {
       dispatch(fetchDirectory());
     }
-  }, []);
+  }, [dispatch, directory.length]);
 
   useEffect(() => {
     dispatch(fetchDirectoryDetailByURNs(tenantServiceUrns));
-  }, [tenantServiceUrns.length]);
+  }, [tenantServiceUrns.length, tenantServiceUrns, dispatch]);
 
   // eslint-disable-next-line
   // useEffect(() => {}, [healthEndpoints]);

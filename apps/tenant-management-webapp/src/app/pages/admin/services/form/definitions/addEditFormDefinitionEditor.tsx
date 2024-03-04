@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
@@ -204,7 +204,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getFormDefinitions());
     dispatch(getTaskQueues());
-  }, []);
+  }, [dispatch]);
 
   const types = [
     { type: 'applicantRoles', name: 'Applicant roles' },
@@ -281,10 +281,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const navigate = useNavigate();
 
-  const close = () => {
+  const close = useCallback(() => {
     dispatch(ClearNewFileList());
     navigate('/admin/services/form?definitions=true');
-  };
+  }, [dispatch, navigate]);
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
@@ -297,7 +297,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     const clerkRoles = types[1];
 
     return (
-      <>
         <ClientRoleTable
           roles={roleNames}
           clientId={clientId}
@@ -328,7 +327,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             { title: types[2].name, selectedRoles: definition[types[2].type] },
           ]}
         />
-      </>
     );
   };
 

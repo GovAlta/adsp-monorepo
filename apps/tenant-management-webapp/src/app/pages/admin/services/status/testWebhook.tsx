@@ -41,11 +41,11 @@ export const TestWebhookModal = (): JSX.Element => {
       dispatch(getEventLogEntries('', initCriteria));
       setShowEntries(true);
     }
-  }, [testSuccess]);
+  }, [dispatch, testSuccess, initCriteria]);
 
   useEffect(() => {
     setSelectedStatusName(events && events[0]);
-  }, [webhook, entries]);
+  }, [webhook, entries, events]);
 
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
 

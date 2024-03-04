@@ -65,13 +65,6 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     setDefinition(initialValue);
   }, [initialValue]);
 
-  useEffect(() => {
-    if (spinner && loadingIndicator.show) {
-      validationCheck();
-      setSpinner(false);
-    }
-  }, [configurations]);
-
   const validationCheck = () => {
     const validations = {
       payloadSchema: payloadSchema,
@@ -91,9 +84,15 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     setDefinition(initialValue);
     onClose();
   };
+  useEffect(() => {
+    if (spinner && loadingIndicator.show) {
+      validationCheck();
+      setSpinner(false);
+    }
+  }, [spinner, loadingIndicator.show, configurations, validationCheck]);
+
 
   return (
-    <>
       <ModalOverwrite>
         <GoAModal
           testId="definition-form"
@@ -202,7 +201,6 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           </GoAFormItem>
         </GoAModal>
       </ModalOverwrite>
-    </>
   );
 };
 

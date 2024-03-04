@@ -145,15 +145,11 @@ const SubscriptionsList = ({ subscriber, onUnsubscribe }: SubscriptionsListProps
 
 const UnsubscribeMessage = (): JSX.Element => {
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
-  return (
-    <>
-      {contact?.contactEmail ? (
+  return contact?.contactEmail ? (
         <a href={`${window.location.pathname}#contactSupport`}>Contact support to unsubscribe</a>
       ) : (
-        'Contact support to unsubscribe'
-      )}
-    </>
-  );
+        <>'Contact support to unsubscribe'</>
+      );
 };
 
 export default SubscriptionsList;

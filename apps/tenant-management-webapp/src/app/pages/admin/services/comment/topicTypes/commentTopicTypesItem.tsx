@@ -11,7 +11,6 @@ interface PdfTemplateItemProps {
 export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplateItemProps): JSX.Element => {
   const navigate = useNavigate();
   return (
-    <>
       <tr>
         <td data-testid="comment-topic-types-name">{commentTopicType.name}</td>
         <td data-testid="comment-topic-types-template-id">{commentTopicType.id}</td>
@@ -36,6 +35,5 @@ export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplat
           </GoAContextMenu>
         </td>
       </tr>
-    </>
   );
 };

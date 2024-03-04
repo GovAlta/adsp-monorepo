@@ -12,7 +12,6 @@ export const PdfTemplateItem = ({ pdfTemplate, onDelete }: PdfTemplateItemProps)
   const navigate = useNavigate();
 
   return (
-    <>
       <tr>
         <td data-testid="pdf-templates-name">{pdfTemplate.name}</td>
         <td data-testid="pdf-templates-template-id">{pdfTemplate.id}</td>
@@ -38,6 +37,5 @@ export const PdfTemplateItem = ({ pdfTemplate, onDelete }: PdfTemplateItemProps)
           </Edit>
         </td>
       </tr>
-    </>
   );
 };

@@ -12,7 +12,7 @@ export const ConfigurationRevisions = (): JSX.Element => {
   const [showTable, setShowTable] = useState(false);
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
-  }, []);
+  }, [dispatch]);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });

@@ -42,7 +42,7 @@ const CreateRealm = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(KeycloakCheckSSO('core'));
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -52,7 +52,7 @@ const CreateRealm = (): JSX.Element => {
     if (userInfo) {
       dispatch(IsTenantAdmin(userInfo.email));
     }
-  }, [userInfo]);
+  }, [dispatch,userInfo]);
 
   const ErrorMessage = (props) => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
@@ -122,8 +122,7 @@ const CreateRealm = (): JSX.Element => {
             {isTenantCreated ? (
               <TenantCreated />
             ) : (
-              <>
-                {isTenantAdmin === false ? (
+                isTenantAdmin === false ? (
                   <>
                     <h2>Create tenant</h2>
                     <p>
@@ -148,14 +147,13 @@ const CreateRealm = (): JSX.Element => {
                       {isLoaded ? <TenantCreateView /> : <ButtonLoader />}
                     </GoAButtonGroup>
                   </>
-                ) : null}
-              </>
+                ) : null
             )}
           </Main>
           <Aside>
             <SupportLinks />
           </Aside>
-        </>
+          </>
       ) : (
         <Main>
           <h1>Tenant creation failed</h1>

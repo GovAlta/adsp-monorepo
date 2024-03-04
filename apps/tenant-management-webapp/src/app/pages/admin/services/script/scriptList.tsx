@@ -14,7 +14,6 @@ interface ScriptItemProps {
 
 const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDelete, onEdit }: ScriptItemProps) => {
   return (
-    <>
       <tr key={script.name}>
         <td headers="script-name" data-testid="script-name">
           {script.name}
@@ -48,7 +47,6 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
           )}
         </td>
       </tr>
-    </>
   );
 };
 

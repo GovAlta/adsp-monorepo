@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   TemplateEditorContainerPdf,
   EditTemplateActions,
@@ -82,8 +82,14 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (!pdfTemplate) {
       dispatch(getPdfTemplates());
     }
-  }, []);
+  }, [dispatch,pdfTemplate]);
 
+  const navigate = useNavigate();
+
+  const cancel = useCallback(() => {
+    dispatch(setPdfDisplayFileId(null));
+    navigate('/admin/services/pdf?templates=true');
+  }, [dispatch, navigate]);
   //eslint-disable-next-line
   useEffect(() => {
     setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
@@ -93,7 +99,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (saveModal.closeEditor) {
       cancel();
     }
-  }, [saveModal]);
+  }, [saveModal, cancel]);
 
   const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
 
@@ -102,12 +108,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     dispatch(updatePdfTemplate(saveObject, options));
   };
 
-  const navigate = useNavigate();
-
-  const cancel = () => {
-    dispatch(setPdfDisplayFileId(null));
-    navigate('/admin/services/pdf?templates=true');
-  };
 
   useEffect(() => {
     // If there are any errors in the temp template, we shall prevent preview and PDF generation.
@@ -120,13 +120,13 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (isPDFUpdated(tempPdfTemplate, tmpTemplate)) {
       dispatch(updateTempTemplate(tmpTemplate));
     }
-  }, [debouncedTmpTemplate, EditorError.testData]);
+  }, [dispatch, debouncedTmpTemplate, EditorError.testData, tempPdfTemplate]);
 
   useEffect(() => {
     if (reloadFile && reloadFile[pdfTemplate.id]) {
       dispatch(FetchFileService(reloadFile[pdfTemplate.id]));
     }
-  }, [reloadFile]);
+  }, [reloadFile, dispatch, pdfTemplate.id]);
 
   useEffect(() => {
     if (monaco) {
@@ -195,7 +195,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             </GoAFormItem>
           </Tab>
           <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
-            <>
               <GoAFormItem error={errors?.body ?? null} label="">
                 <MonacoDivBody style={{ height: monacoHeight }}>
                   <MonacoEditor
@@ -209,7 +208,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   />
                 </MonacoDivBody>
               </GoAFormItem>
-            </>
           </Tab>
           <Tab testId={`pdf-edit-footer`} label={<PdfEditorLabelWrapper>Footer</PdfEditorLabelWrapper>}>
             <GoAFormItem error={errors?.footer ?? ''} label="">
@@ -227,7 +225,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             </GoAFormItem>
           </Tab>
           <Tab testId={`pdf-edit-css`} label={<PdfEditorLabelWrapper>CSS</PdfEditorLabelWrapper>}>
-            <>
               <GoAFormItem error={errors?.body ?? null} label="">
                 <MonacoDivBody style={{ height: monacoHeight }}>
                   <MonacoEditor
@@ -241,7 +238,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   />
                 </MonacoDivBody>
               </GoAFormItem>
-            </>
           </Tab>
           <Tab testId={`pdf-test-generator`} label={<PdfEditorLabelWrapper>Test data</PdfEditorLabelWrapper>}>
             <GoAFormItem error={errors?.body ?? EditorError?.testData ?? null} label="">
@@ -270,7 +266,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             </GoAFormItem>
           </Tab>
           <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
-            <>
               <GeneratorStyling style={{ height: monacoHeight }}>
                 <ButtonRight>
                   <GoAButton
@@ -289,7 +284,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   {pdfTemplate?.id && <GeneratedPdfList templateId={pdfTemplate.id} />}
                 </section>
               </GeneratorStyling>
-            </>
           </Tab>
         </Tabs>
         <hr className="hr-resize-bottom" />

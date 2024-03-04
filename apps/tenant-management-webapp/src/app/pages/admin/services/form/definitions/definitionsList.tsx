@@ -12,7 +12,6 @@ export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> =
   const newTemplates = JSON.parse(JSON.stringify(definitions));
 
   return (
-    <>
       <DataTable data-testid="form-definitions-table">
         <thead data-testid="form-definitions-table-header">
           <tr>
@@ -36,6 +35,5 @@ export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> =
           })}
         </tbody>
       </DataTable>
-    </>
   );
 };

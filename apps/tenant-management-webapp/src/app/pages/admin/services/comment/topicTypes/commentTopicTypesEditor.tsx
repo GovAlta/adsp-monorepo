@@ -19,7 +19,6 @@ export const CommentTopicTypesEditor = (): JSX.Element => {
   };
 
   return (
-    <>
       <Modal data-testid="template-form">
         <ModalContent>
           <OuterNotificationTemplateEditorContainer>
@@ -32,6 +31,5 @@ export const CommentTopicTypesEditor = (): JSX.Element => {
           </OuterNotificationTemplateEditorContainer>
         </ModalContent>
       </Modal>
-    </>
   );
 };

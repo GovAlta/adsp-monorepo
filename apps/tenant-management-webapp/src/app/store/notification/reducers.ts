@@ -57,7 +57,7 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
         if (notificationTypes[notificationTypeName].channels) {
           notificationTypes[notificationTypeName].sortedChannels = notificationTypes[
             notificationTypeName
-          ].channels.sort((a, b) => (a === 'email' ? -1 : 1));
+          ].channels.sort((a, _b) => (a === 'email' ? -1 : 1));
         } else {
           notificationTypes[notificationTypeName].sortedChannels = [];
         }
@@ -81,7 +81,7 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
         if (coreNotificationType[notificationTypeName].channels) {
           coreNotificationType[notificationTypeName].sortedChannels = coreNotificationType[
             notificationTypeName
-          ].channels.sort((a, b) => (a === 'email' ? -1 : 1));
+          ].channels.sort((a, _b) => (a === 'email' ? -1 : 1));
         } else {
           coreNotificationType[notificationTypeName].sortedChannels = [];
         }

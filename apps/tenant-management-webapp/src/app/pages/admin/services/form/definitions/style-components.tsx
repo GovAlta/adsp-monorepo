@@ -35,3 +35,13 @@ export const QueueTaskDropdown = styled.div`
   margin-top: 0.25rem;
   margin-bottom: 3rem;
 `;
+
+export const Anchor = styled.div`
+height: '24px',
+background: 'none',
+border: 'none',
+padding: '0',
+color: 'blue',
+textDecoration: 'underline',
+cursor: 'pointer'
+`;

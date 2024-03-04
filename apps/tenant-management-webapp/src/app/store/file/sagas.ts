@@ -273,7 +273,7 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
-  const { hasFile, ...config } = payload;
+  const { ...config } = payload;
 
   if (configBaseUrl && token) {
     try {
@@ -304,7 +304,7 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
   const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
-    const { hasFile, ...config } = payload;
+    const { ...config } = payload;
 
     try {
       yield call(

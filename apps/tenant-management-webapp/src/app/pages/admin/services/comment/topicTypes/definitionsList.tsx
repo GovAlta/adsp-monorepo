@@ -1,3 +1,4 @@
+
 import React, { FunctionComponent } from 'react';
 import DataTable from '@components/DataTable';
 import { CommentTopicTypesItem } from './commentTopicTypesItem';
@@ -12,7 +13,6 @@ export const CommentTopicTypesTable: FunctionComponent<CommentTemplatesTableProp
   const newTemplates = JSON.parse(JSON.stringify(topicTypes));
 
   return (
-    <>
       <DataTable data-testid="comment-topic-types-table">
         <thead data-testid="comment-topic-types-table-header">
           <tr>
@@ -43,6 +43,5 @@ export const CommentTopicTypesTable: FunctionComponent<CommentTemplatesTableProp
           })}
         </tbody>
       </DataTable>
-    </>
   );
 };

@@ -24,7 +24,6 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({
     );
   };
   return (
-    <>
       <GoAModal
         testId="import-configuration-modal"
         open={isOpen}
@@ -55,6 +54,5 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({
       >
         {getContent()}
       </GoAModal>
-    </>
   );
 };

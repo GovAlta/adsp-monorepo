@@ -46,7 +46,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
 
   useEffect(() => {
     dispatch(getFormDefinitions());
-  }, []);
+  }, [dispatch]);
 
   const reset = () => {
     setOpenAddFormDefinition(false);
@@ -60,7 +60,6 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   }, []);
 
   return (
-    <>
       <div>
         <br />
         <GoAButton
@@ -111,6 +110,5 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
           }}
         />
       </div>
-    </>
   );
 };

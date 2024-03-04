@@ -1,3 +1,4 @@
+
 import React, { FunctionComponent, useState } from 'react';
 import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { ScriptItem, ScriptItemTriggerEvent, defaultTriggerEvent } from '@store/script/models';
@@ -63,7 +64,7 @@ const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptTriggerEven
           </GoAContextMenu>
         </td>
       </tr>
-      {showDetails && (
+      showDetails ? (
         <tr>
           <td className="payload-details" headers="" colSpan={5}>
             <div className="spacingLarge">Trigger Criteria</div>
@@ -73,7 +74,7 @@ const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptTriggerEven
             <br />
           </td>
         </tr>
-      )}
+      ):null;
     </>
   );
 };
@@ -100,7 +101,6 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
   };
 
   return (
-    <>
       <TriggerEventScrollPane>
         <ScriptEventTriggerListDefinition>
           <div className={className}>
@@ -133,7 +133,6 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
           </div>
         </ScriptEventTriggerListDefinition>
       </TriggerEventScrollPane>
-    </>
   );
 };
 

@@ -17,9 +17,7 @@ export const NotificationContainer = styled.div`
 
 export const Notifications = (props: NotificationProps): JSX.Element => {
   const notifications = props.notifications;
-  return (
-    <>
-      {notifications.length > 0 ? (
+  return notifications.length > 0 ? (
         <NotificationContainer>
           {notifications.map((notification, i) => {
             const key = `${props.tag}-${i}`;
@@ -30,7 +28,5 @@ export const Notifications = (props: NotificationProps): JSX.Element => {
             );
           })}
         </NotificationContainer>
-      ) : null}
-    </>
-  );
+      ) :<> </>;
 };

@@ -13,7 +13,7 @@ export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverview
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);
-  }, []);
+  }, [setActiveEdit, setActiveIndex]);
 
   const description = `The script services provides the ability to execute configured Lua scripts. Applications can use this to capture simple logic in configuration. For example, benefits calculations can be configured in a script and executed via the script service API so that policy changes to the formula can implemented through configuration change.`;
   return (

@@ -10,7 +10,7 @@ interface CommentOverviewProps {
 export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOpenAddTopicTypes }) => {
   useEffect(() => {
     setOpenAddTopicTypes(false);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
   const description =
@@ -20,7 +20,6 @@ export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOp
       testId="comment-service-overview"
       description={description}
       addButton={
-        <>
           <GoAButton
             testId="add-definition"
             onClick={() => {
@@ -30,7 +29,6 @@ export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOp
           >
             Add topic type
           </GoAButton>
-        </>
       }
     />
   );

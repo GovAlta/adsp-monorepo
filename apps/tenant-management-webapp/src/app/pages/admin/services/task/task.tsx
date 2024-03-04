@@ -40,9 +40,7 @@ export const Task: FunctionComponent = () => {
       </Main>
 
       <Aside>
-        <>
           <AsideLinks serviceLink={getTaskSupportCodeLink()} docsLink={getTaskDocsLink()} />
-        </>
       </Aside>
     </Page>
   );

@@ -100,7 +100,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
 
   const SubscribeRole = ({ roleNames, clientId }) => {
     return (
-      <>
         <ClientRoleTable
           roles={roleNames}
           clientId={clientId}
@@ -114,7 +113,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           service="Notifications-type"
           checkedRoles={[{ title: 'subscribe', selectedRoles: type.subscriberRoles }]}
         />
-      </>
     );
   };
 

@@ -81,7 +81,6 @@ const EventLogEntryComponent = ({ entry }: EventLogEntryComponentProps): JSX.Ele
   };
 
   return (
-    <>
       <AlignedTr>
         <td headers="name" className="padding-left-8">
           <HoverOnShort displayString={name} />
@@ -101,7 +100,6 @@ const EventLogEntryComponent = ({ entry }: EventLogEntryComponentProps): JSX.Ele
           <span>{entry.timestamp.toLocaleTimeString()}</span>
         </td>
       </AlignedTr>
-    </>
   );
 };
 
@@ -120,7 +118,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, []);
+  }, [dispatch]);
 
   // eslint-disable-next-line
   useEffect(() => {}, [entries, next]);
@@ -141,9 +139,9 @@ export const WebhookHistoryModal = (): JSX.Element => {
     if (webhook !== undefined) {
       onSearch(initSearchCriteria);
     }
-  }, [webhook]);
+  }, [webhook, initSearchCriteria, onSearch]);
 
-  if (searchCriteria === undefined) return <></>;
+  if (searchCriteria === undefined) return null;
 
   return (
     <GoAModalStyle>
@@ -219,7 +217,6 @@ export const WebhookHistoryModal = (): JSX.Element => {
 
         {searched && (
           <div className="mt-1 mb-2px">
-            <>
               {entries ? (
                 entries?.length > 0 ? (
                   <DataTable>
@@ -267,7 +264,6 @@ export const WebhookHistoryModal = (): JSX.Element => {
                   </LoadMoreWrapper>
                 </div>
               )}
-            </>
           </div>
         )}
       </GoAModal>

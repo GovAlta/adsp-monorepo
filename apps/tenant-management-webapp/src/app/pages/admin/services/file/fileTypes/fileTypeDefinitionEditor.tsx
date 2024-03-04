@@ -18,7 +18,6 @@ export const FileTypeDefinitionEditor = (): JSX.Element => {
   };
 
   return (
-    <>
       <Modal data-testid="fileType-form">
         <FileTypeModalContent>
           <OuterFileTypeTemplateEditorContainer>
@@ -31,6 +30,5 @@ export const FileTypeDefinitionEditor = (): JSX.Element => {
           </OuterFileTypeTemplateEditorContainer>
         </FileTypeModalContent>
       </Modal>
-    </>
   );
 };

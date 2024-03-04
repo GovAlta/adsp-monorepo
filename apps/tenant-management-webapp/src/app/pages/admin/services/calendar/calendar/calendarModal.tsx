@@ -34,12 +34,12 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   useEffect(() => {}, [roles]);
   useEffect(() => {
     setCalendar(initialValue);
-  }, [calendarName]);
+  }, [calendarName, initialValue]);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
-  }, []);
+  }, [dispatch]);
 
   const calendars = useSelector((state: RootState) => {
     return state?.calendarService?.calendars;
@@ -77,7 +77,6 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   };
   const ClientRole = ({ roleNames, clientId }) => {
     return (
-      <>
         <ClientRoleTable
           roles={roleNames}
           clientId={clientId}
@@ -101,7 +100,6 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
             { title: 'modify', selectedRoles: calendar?.updateRoles },
           ]}
         />
-      </>
     );
   };
 

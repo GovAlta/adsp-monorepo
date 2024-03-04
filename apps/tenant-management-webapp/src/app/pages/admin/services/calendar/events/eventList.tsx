@@ -88,16 +88,10 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
   useEffect(() => {}, [indicator]);
 
   if (indicator?.show) {
-    return (
-      <>
-        <GoASkeleton type="text" key={1} />
-      </>
-    );
+    return <GoASkeleton type="text" key={1} />;
   }
 
-  return (
-    <>
-      {next && (
+  return next ? (
         <LoadMoreWrapper>
           <GoAButton
             testId="calendar-event-load-more-btn"
@@ -110,9 +104,7 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
             Load more
           </GoAButton>
         </LoadMoreWrapper>
-      )}
-    </>
-  );
+      ):null;
 };
 
 const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {

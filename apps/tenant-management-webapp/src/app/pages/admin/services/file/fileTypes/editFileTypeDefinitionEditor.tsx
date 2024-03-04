@@ -97,7 +97,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
         foundFileType.securityClassification !== '';
       setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
     }
-  }, []);
+  });
 
   useEffect(() => {
     const foundFileType = fileTypes?.find((f) => f.id === id);
@@ -154,7 +154,6 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
 
   const ClientRole = ({ roleNames, clientId }) => {
     return (
-      <>
         <ClientRoleTable
           roles={roleNames}
           clientId={clientId}
@@ -179,7 +178,6 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
             { title: 'modify', selectedRoles: fileType?.updateRoles },
           ]}
         />
-      </>
     );
   };
 

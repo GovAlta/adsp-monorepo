@@ -44,7 +44,7 @@ export const Overview = (): JSX.Element => {
         dispatch(accessReset());
       }
     };
-  }, []);
+  }, [dispatch,userCount]);
 
   /**
    * Paul Li Nov-16-2022: Please do not remove the following useEffect,

@@ -63,7 +63,7 @@ export const AddScriptModal = ({
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
-  }, []);
+  }, [dispatch]);
 
   const validationCheck = () => {
     const validations = {

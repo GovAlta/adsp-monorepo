@@ -156,17 +156,13 @@ export const WebhookListTable = () => {
   const webhooks = useSelector(selectStatusWebhooks);
   useEffect(() => {
     dispatch(fetchWebhooks());
-  }, []);
+  }, [dispatch]);
 
   // eslint-disable-next-line
   useEffect(() => {}, [webhooks]);
 
   if (webhooks && Object.keys(webhooks).length === 0) {
-    return (
-      <>
-        <b>There are no webhooks yet</b>
-      </>
-    );
+    return (<b>There are no webhooks yet</b>);
   }
 
   return (

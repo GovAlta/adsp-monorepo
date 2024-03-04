@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom-6';
 import {
@@ -59,13 +59,16 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     dispatch(getTaskQueues());
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
-  }, []);
-
+  }, [dispatch]);
+  const navigate = useNavigate();
+  const close = useCallback(() => {
+    navigate('/admin/services/task?definitions=true');
+  }, [navigate]);
   useEffect(() => {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal]);
+  }, [saveModal, close]);
 
   const queues = useSelector((state: RootState) => state?.task?.queues || []);
 
@@ -78,13 +81,10 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
 
     // const selectedQueue = location.state as TaskDefinition;
     // setQueue(selectedQueue);
-  }, [queues]);
+  }, [queues, id]);
 
-  const navigate = useNavigate();
 
-  const close = () => {
-    navigate('/admin/services/task?definitions=true');
-  };
+
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
@@ -101,7 +101,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   useEffect(() => {}, [fetchKeycloakRolesState]);
   const ClientRole = ({ roleNames, clientId }) => {
     return (
-      <>
         <ClientRoleTable
           roles={roleNames}
           clientId={clientId}
@@ -125,7 +124,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
             { title: workerRoles.name, selectedRoles: queue[workerRoles.type] },
           ]}
         />
-      </>
     );
   };
 
@@ -159,20 +157,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     return state?.session?.indicator;
   });
 
-  useEffect(() => {
-    if (spinner && Object.keys(queues).length > 0) {
-      if (validators['duplicate'].check(queue.id)) {
-        setSpinner(false);
-        return;
-      }
-
-      setSpinner(false);
-    }
-  }, [queues]);
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   const { validators } = useValidators(
     'name',
     'name',
@@ -183,6 +167,21 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
+
+  useEffect(() => {
+    if (spinner && Object.keys(queues).length > 0) {
+      if (validators['duplicate'].check(queue.id)) {
+        setSpinner(false);
+        return;
+      }
+
+      setSpinner(false);
+    }
+  }, [queues, queue.id, spinner, validators]);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
+
 
   return (
     <TaskEditor>
