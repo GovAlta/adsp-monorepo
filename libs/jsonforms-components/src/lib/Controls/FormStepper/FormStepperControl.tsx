@@ -2,10 +2,9 @@ import React, { useMemo } from 'react';
 import { useState, useEffect } from 'react';
 import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
 import {
-  ControlElement,
   Categorization,
   UISchemaElement,
-  Layout,
+  deriveLabelForUISchemaElement,
   Category,
   StatePropsOfLayout,
   isVisible,
@@ -18,54 +17,11 @@ import { Hidden } from '@mui/material';
 
 import { Grid, GridItem } from '../../common/Grid';
 import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
-import { parseSchema } from '../../util/schemaUtils';
-
-export interface FunObject {
-  elements: Array<string>;
-  label: string;
-  type: string;
-  rule?: Record<string, string>;
-}
-
-export interface VerticalLayout extends Layout {
-  type: 'VerticalLayout';
-  label: string;
-}
-export interface StepType {
-  rule?: {
-    effect: string;
-    condition: {
-      scope: string;
-      schema?: {
-        const?: boolean;
-      };
-    };
-  };
-}
-export interface GoAFormStepperSchemaProps extends Omit<Categorization, 'elements'> {
-  elements: (Category | Categorization | VerticalLayout)[];
-}
-
-export interface UiSchema {
-  elements: Array<ControlElement>;
-}
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
   data: any;
 }
-const usePersistentState = (initialState = 0) => {
-  const [state, setState] = useState(() => {
-    const storedState = localStorage.getItem('step');
-    return storedState ? parseSchema(storedState) : initialState;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('step', JSON.stringify(state));
-  }, [state]);
-
-  return [state, setState];
-};
 
 export const FormStepper = ({
   uischema,
@@ -79,18 +35,23 @@ export const FormStepper = ({
   config,
   visible,
   enabled,
+  t,
 }: CategorizationStepperLayoutRendererProps) => {
-  const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
-  const [step, setStep] = usePersistentState(0);
+  const categorization = uischema as Categorization;
+  const [step, setStep] = useState(0);
   const [isFormValid, setIsFormValid] = useState(false);
   const [showNextBtn, setShowNextBtn] = useState(true);
   const categories = useMemo(
-    () => uiSchema.elements.filter((category) => isVisible(category, data, '', ajv)),
-    [uiSchema, data, ajv]
+    () => categorization.elements.filter((category) => isVisible(category, data, '', ajv)),
+    [categorization, data, ajv]
   );
   const handleSubmit = () => {
     console.log('submitted', data);
   };
+
+  const CategoryLabels = useMemo(() => {
+    return categories.map((e: Category | Categorization) => deriveLabelForUISchemaElement(e, t));
+  }, [categories, t]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const vslidateFormData = (formData: Array<UISchemaElement>) => {
@@ -107,47 +68,15 @@ export const FormStepper = ({
     // eslint-disable-next-line
     return <></>;
   }
-  // Note: [Jan-02-2023] the Options here will be used in the feature
-  const appliedUiSchemaOptions = { ...config, ...uiSchema?.options };
-
-
-  const findHiddenCategories = () => {
-    const hiddenCategories = uiSchema.elements.filter((element) => {
-      if (element.rule) {
-        const effect = element.rule.effect;
-        const condition = JSON.parse(JSON.stringify(element.rule.condition));
-        const getRuleProperty = condition.scope.split('/');
-        const ruleProperty = getRuleProperty[getRuleProperty.length - 1];
-        const value = data ? data[ruleProperty] : false;
-        return effect === 'SHOW' ? condition.schema.const !== value : condition.schema.const === value;
-      }
-      return false;
-    }).map((category) => category.label);
-    return hiddenCategories;
-  }
-  function isHiddenStep (stepData: StepType) {
-    if (!stepData.rule) {
-      return false;
-    } else if (stepData.rule && !data) {
-      return false;
-    } else if (stepData.rule && data) {
-      const getRuleProperty = stepData.rule.condition.scope.split('/');
-      const ruleProperty = getRuleProperty[getRuleProperty.length - 1];
-      // return data[ruleProperty];
-      return stepData.rule.effect === 'SHOW' ? false : stepData.rule.effect === 'HIDE' && data[ruleProperty] ? false : data[ruleProperty];
-    }
-  }
-
 
   function setPage(page: number) {
     setStep(page);
-    if (page < 1 || page > uiSchema.elements?.length + 1) return;
-    const hiddenCategories = findHiddenCategories();
-    if (uiSchema.elements.length + 1 === page + hiddenCategories.length) {
+
+    if (page < 1 || page > categories.length + 1) return;
+    if (categories.length + 1 === page) {
       setShowNextBtn(false);
     } else {
-      const stepDetails = JSON.parse(JSON.stringify(uiSchema.elements[page - 1]))
-      isHiddenStep(stepDetails) ? setShowNextBtn(false) : setShowNextBtn(true);
+      setShowNextBtn(true);
     }
   }
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -155,17 +84,17 @@ export const FormStepper = ({
     setStep(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const renderStepElements = (step: Category | Categorization | VerticalLayout) => {
+  const renderStepElements = (category: Category | Categorization) => {
     // Ideally, we shall work with the ctx to determine the actual disable for not
-    const isDisabledOnCategoryLevel = step?.rule?.effect === 'DISABLE';
+    const isDisabledOnCategoryLevel = category?.rule?.effect === 'DISABLE';
     return (
       <>
-        {step.elements.map((fieldUiSchema, index) => {
+        {category.elements.map((elementUiSchema, index) => {
           return (
             <JsonFormsDispatch
               key={index}
               schema={schema}
-              uischema={fieldUiSchema}
+              uischema={elementUiSchema}
               renderers={renderers}
               cells={cells}
               path={path}
@@ -183,19 +112,15 @@ export const FormStepper = ({
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
         <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setPage(step)}>
           {categories?.map((category, index) => {
-            const flattedStep = flattenArray(category?.elements || []);
-            const count = flattedStep.filter((e) => {
-              return e?.toString().substring(0, 12) === '#/properties';
-            }).length;
-            return <GoAFormStep key={index} text={`${category.label}`} status="incomplete" />;
+            return <GoAFormStep key={index} text={`${CategoryLabels[index]}`} status="incomplete" />;
           })}
           <GoAFormStep text="Review" status="incomplete" />
         </GoAFormStepper>
         <GoAPages current={step} mb="xl">
-          {categories?.map((step, index) => {
+          {categories?.map((category, index) => {
             return (
               <div data-testid={`step_${index}`} key={index}>
-                {renderStepElements(step)}
+                {renderStepElements(category)}
               </div>
             );
           })}
@@ -245,23 +170,6 @@ export const FormStepper = ({
       </div>
     </Hidden>
   );
-};
-
-const flattenArray = function <T>(data: Array<T>): Array<T> {
-  return data?.reduce(function iter(r: Array<T>, a: T): Array<T> {
-    if (a === null) {
-      return r;
-    }
-    if (Array.isArray(a)) {
-      return a.reduce(iter, r);
-    }
-    if (typeof a === 'object') {
-      return Object.values(a)
-        .map((v) => v)
-        .reduce(iter, r);
-    }
-    return r.concat(a);
-  }, []);
 };
 
 interface PreventControlElement {
