@@ -12,8 +12,8 @@ import { Disposition, Form, FormStatus } from '../types';
 import { FormSubmissionEntity } from './formSubmission';
 
 // Any form created by user with the intake app role is treated as anonymous.
-function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
-  return user?.roles.find((role) => role === FormServiceRoles.IntakeApp) && applicant.userId !== user.id;
+function isAnonymousApplicant(user: User, applicant?: Subscriber): boolean {
+  return user?.roles.includes(FormServiceRoles.IntakeApp) && applicant && applicant.userId !== user.id;
 }
 
 export class FormEntity implements Form {
@@ -38,7 +38,7 @@ export class FormEntity implements Form {
     definition: FormDefinitionEntity,
     id: string,
     formDraftUrl: string,
-    applicant: Subscriber
+    applicant?: Subscriber
   ): Promise<FormEntity> {
     if (!definition.canApply(user)) {
       throw new UnauthorizedUserError('create form', user);
@@ -86,8 +86,27 @@ export class FormEntity implements Form {
     this.files = form.files || {};
   }
 
-  canAssess(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, [...this.definition.assessorRoles, FormServiceRoles.Admin], true);
+  /**
+   * Checks if user is allowed to read the form 'metadata' (not including data and files).
+   *
+   * Note that this is more permissive than accessing the form data. For example, assessors are allowed to read forms
+   * even while in draft, but not access the form data.
+   *
+   * @param {User} user
+   * @returns {boolean}
+   * @memberof FormEntity
+   */
+  canRead(user: User): boolean {
+    // Admins, intake apps, clerks and assessors are allowed read of the form.
+    // Applicants are allowed to read forms they created.
+    return (
+      isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, FormServiceRoles.IntakeApp], true) ||
+      isAllowedUser(user, this.tenantId, [
+        ...(this.definition?.clerkRoles || []),
+        ...(this.definition?.assessorRoles || []),
+      ]) ||
+      (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) && user.id === this.createdBy.id)
+    );
   }
 
   private async access(_user: User): Promise<FormEntity> {
@@ -100,7 +119,7 @@ export class FormEntity implements Form {
   }
 
   async sendCode(user: User, notificationService: NotificationService): Promise<FormEntity> {
-    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp)) {
+    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp, true)) {
       throw new UnauthorizedUserError('send code', user);
     }
 
@@ -117,7 +136,7 @@ export class FormEntity implements Form {
     }
 
     // When access by code, the user needs to be an intake application.
-    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp)) {
+    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp, true)) {
       throw new UnauthorizedUserError('access form', user);
     }
 
@@ -131,25 +150,21 @@ export class FormEntity implements Form {
   }
 
   async accessByUser(user: User): Promise<FormEntity> {
+    // Allowed if:
+    // 1. User is Form Admin
+    // 2. User is Applicant who created the form
+    // 3. Form is Draft and user is Clerk
+    // 4. Form is Submitted and user is Assessor
     if (
-      this.status === FormStatus.Draft &&
-      !(
-        isAllowedUser(user, this.tenantId, this.definition.clerkRoles) ||
-        (isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)
-      )
+      isAllowedUser(user, this.tenantId, FormServiceRoles.Admin) ||
+      (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) && user.id === this.createdBy.id) ||
+      (this.status === FormStatus.Draft && isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || [])) ||
+      (this.status === FormStatus.Submitted && isAllowedUser(user, this.tenantId, this.definition?.assessorRoles || []))
     ) {
-      throw new UnauthorizedUserError('access draft form', user);
-    }
-
-    if (
-      this.status === FormStatus.Submitted &&
-      !this.canAssess(user) &&
-      !(isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)
-    ) {
+      return await this.access(user);
+    } else {
       throw new UnauthorizedUserError('access submitted form', user);
     }
-
-    return await this.access(user);
   }
 
   async update(user: User, data?: Record<string, unknown>, files?: Record<string, AdspId>): Promise<FormEntity> {
@@ -198,7 +213,7 @@ export class FormEntity implements Form {
   }
 
   async unlock(user: User): Promise<FormEntity> {
-    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin)) {
+    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true)) {
       throw new UnauthorizedUserError('unlock form', user);
     }
 

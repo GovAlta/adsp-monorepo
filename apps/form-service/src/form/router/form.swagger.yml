@@ -43,12 +43,6 @@ components:
           properties:
             addressAs:
               type: string
-        data:
-          type: object
-          description: Will contain the form data when a form submission/resubmission is created. Otherwise it will be empty.
-        files:
-          type: object
-          description: Will contain the form files when a form submission/resubmission is created. Otherwise it will be empty.
         status:
           type: string
           enum: [draft, locked, submitted, archived]
@@ -104,8 +98,6 @@ components:
     FormDisposition:
       type: object
       properties:
-        id:
-          type: string
         status:
           type: string
         reason:
@@ -116,6 +108,8 @@ components:
     FormSubmission:
       type: object
       properties:
+        urn:
+          type: string
         id:
           type: string
         definitionId:
@@ -140,9 +134,11 @@ components:
               type: string
         updatedBy:
           type: string
-        updatedDateTime:
+        updated:
           type: string
           format: date-time
+        disposition:
+          $ref: "#/components/schemas/FormDisposition"
     SendCodeOperation:
       type: object
       properties:
@@ -302,7 +298,7 @@ components:
                         address:
                           type: string
                       required: [channel, address]
-            required: [definitionId, applicant]
+            required: [definitionId]
     responses:
       200:
         description: Successfully created a form.
