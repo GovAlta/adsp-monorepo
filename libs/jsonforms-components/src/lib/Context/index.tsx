@@ -39,6 +39,8 @@ export function addDataByUrl(key: string, url: string, processDataFunction: (url
     .catch((err: Error) => {
       if (err.message.includes('CORS')) {
         console.warn(err.message);
+      } else {
+        console.warn(`addDataByUrl: ${err.message}`);
       }
     });
   axiosWithConfig.interceptors.request.eject(requestId);
