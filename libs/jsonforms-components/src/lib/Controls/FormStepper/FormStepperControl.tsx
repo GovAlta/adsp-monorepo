@@ -8,13 +8,13 @@ import {
   Category,
   StatePropsOfLayout,
   isVisible,
+  isEnabled,
 } from '@jsonforms/core';
 
-import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
+import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
-
 import { Grid, GridItem } from '../../common/Grid';
 import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
 
@@ -45,6 +45,7 @@ export const FormStepper = ({
     () => categorization.elements.filter((category) => isVisible(category, data, '', ajv)),
     [categorization, data, ajv]
   );
+  const disabledCategoryMap: boolean[] = categories.map((c) => !isEnabled(c, data, '', ajv));
   const handleSubmit = () => {
     console.log('submitted', data);
   };
@@ -69,9 +70,24 @@ export const FormStepper = ({
     return <></>;
   }
 
+  function nextPage(page: number, disabled: boolean[]) {
+    page++;
+    while (page <= disabled.length && disabled[page - 1]) {
+      page++;
+    }
+    setPage(page);
+  }
+
+  function prevPage(page: number, disabled: boolean[]) {
+    page--;
+    while (page >= 0 && disabled[page - 1]) {
+      page--;
+    }
+    setPage(page);
+  }
+
   function setPage(page: number) {
     setStep(page);
-
     if (page < 1 || page > categories.length + 1) return;
     if (categories.length + 1 === page) {
       setShowNextBtn(false);
@@ -84,11 +100,12 @@ export const FormStepper = ({
     setStep(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const renderStepElements = (category: Category | Categorization) => {
-    // Ideally, we shall work with the ctx to determine the actual disable for not
-    const isDisabledOnCategoryLevel = category?.rule?.effect === 'DISABLE';
+  const renderStepElements = (category: Category | Categorization, indexOfCategory: number) => {
     return (
-      <>
+      /*
+        [Mar-04-2024][Paul Li] the GoAPages internal state cannot handle the hidden/display well. We need extra hide/display control to it appropriately.
+       */
+      <Hidden xsUp={indexOfCategory !== step - 1}>
         {category.elements.map((elementUiSchema, index) => {
           return (
             <JsonFormsDispatch
@@ -99,11 +116,11 @@ export const FormStepper = ({
               cells={cells}
               path={path}
               visible={visible}
-              enabled={enabled && !isDisabledOnCategoryLevel}
+              enabled={enabled && !disabledCategoryMap[indexOfCategory]}
             />
           );
         })}
-      </>
+      </Hidden>
     );
   };
 
@@ -112,15 +129,21 @@ export const FormStepper = ({
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
         <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setPage(step)}>
           {categories?.map((category, index) => {
-            return <GoAFormStep key={index} text={`${CategoryLabels[index]}`} status="incomplete" />;
+            return (
+              <GoAFormStep
+                key={`${CategoryLabels[index]}-tab`}
+                text={`${CategoryLabels[index]}${disabledCategoryMap[index] ? ' (disabled)' : ''}`}
+                status={'incomplete'}
+              />
+            );
           })}
           <GoAFormStep text="Review" status="incomplete" />
         </GoAFormStepper>
         <GoAPages current={step} mb="xl">
           {categories?.map((category, index) => {
             return (
-              <div data-testid={`step_${index}`} key={index}>
-                {renderStepElements(category)}
+              <div data-testid={`step_${index}-content`} key={`${CategoryLabels[index]}`}>
+                {renderStepElements(category, index)}
               </div>
             );
           })}
@@ -147,14 +170,14 @@ export const FormStepper = ({
         {step && step !== 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             {step !== 1 ? (
-              <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
+              <GoAButton type="secondary" onClick={() => prevPage(step, disabledCategoryMap)}>
                 Previous
               </GoAButton>
             ) : (
               <div></div>
             )}
             {step !== null && showNextBtn && (
-              <GoAButton type="primary" onClick={() => setPage(step + 1)}>
+              <GoAButton type="primary" onClick={() => nextPage(step, disabledCategoryMap)}>
                 Next
               </GoAButton>
             )}
