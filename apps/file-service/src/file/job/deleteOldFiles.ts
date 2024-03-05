@@ -56,12 +56,14 @@ export function createDeleteOldFilesJob({
               if (configuration[key].rules?.retention?.active) {
                 const fileType = configuration[key];
                 const retention = fileType.rules?.retention?.deleteInDays;
+
                 if (!retention) {
                   logger.info(
                     `There is no file retention for file type ${fileType.id} - skip the file retention check.`
                   );
                   return;
                 }
+
                 let after = null;
                 const beforeLastAccessed = getBeforeLastAccessed(retention);
 
@@ -70,6 +72,7 @@ export function createDeleteOldFilesJob({
                     lastAccessedBefore: beforeLastAccessed,
                     typeEquals: fileType.id,
                   });
+
                   logger.info(
                     `Found ${results?.length} files with last accessed before ${beforeLastAccessed} in file type ${fileType.id}.`
                   );
