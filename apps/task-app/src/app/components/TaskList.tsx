@@ -39,21 +39,26 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
       <div>
         <QueueMetrics metrics={metrics} isLoading={metricsLoading} />
         <GoAFormItem label="Filter" ml="xl">
-          <GoADropdown onChange={(_, filter) => onSetFilter(filter as TaskFilter)} value={filter}>
+          <GoADropdown
+            onChange={(_, filter) => onSetFilter(filter as TaskFilter)}
+            value={filter}
+            relative={true}
+            width={'100%'}
+          >
             <GoADropdownItem label="Active" value="active" />
             <GoADropdownItem label="My tasks" value="assigned" />
             <GoADropdownItem label="Pending" value="pending" />
           </GoADropdown>
         </GoAFormItem>
       </div>
-      <GoATable mt="l" width="100%">
+      <GoATable mt="l" width="76%">
         <colgroup>
-          <col style={{ width: 95 }} />
-          <col style={{ width: 90 }} />
-          <col />
-          <col style={{ width: 95 }} />
-          <col />
-          <col style={{ width: 330 }} />
+          <col style={{ width: 80 }} />
+          <col style={{ width: 80 }} />
+          <col style={{ width: 200 }} />
+          <col style={{ width: 80 }} />
+          <col style={{ width: 80 }} />
+          <col style={{ width: 170 }} />
         </colgroup>
         <thead>
           <tr>
@@ -62,7 +67,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
             <th>Task</th>
             <th>Status</th>
             <th>Assigned</th>
-            <th style={{ textAlign: 'right' }}>Actions</th>
+            <th style={{ textAlign: 'center' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -93,11 +98,9 @@ export const TaskList = styled(TaskListComponent)`
   > div:first-child {
     display: flex;
     flex-direction: row;
-    padding-left: 32px;
-    padding-right: 32px;
 
     > :first-child {
-      margin-right: auto;
+      margin-right: var(--goa-space-4xl);
     }
   }
 `;
