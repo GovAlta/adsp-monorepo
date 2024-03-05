@@ -62,13 +62,13 @@ export const CalendarEvents = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(fetchCalendars());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (exportEvents && willExport) {
       downloadICalFile(exportEvents, 'events.ics');
     }
-  }, [exportEvents]);
+  }, [exportEvents, willExport]);
 
   const calendars = useSelector(selectCalendars);
   const selectedEvents = useSelector((state: RootState) => selectSelectedCalendarEvents(state, selectedCalendar));

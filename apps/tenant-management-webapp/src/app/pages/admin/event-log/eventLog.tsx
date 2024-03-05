@@ -31,7 +31,7 @@ export const EventLog: FunctionComponent = () => {
     return function clean() {
       dispatch(clearEventLogEntries());
     };
-  }, []);
+  }, [dispatch]);
 
   const onSearch = (criteria: EventSearchCriteria) => {
     if (hasReaderRole) {

@@ -22,7 +22,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   useEffect(() => {
     dispatch(fetchCalendars());
     dispatch(fetchEventStreams());
-  }, []);
+  }, [dispatch]);
 
   const { calendars } = useSelector((state: RootState) => state.calendarService);
   const { fetchCalendarState } = useSelector((state: RootState) => ({
