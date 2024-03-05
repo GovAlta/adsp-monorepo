@@ -13,7 +13,7 @@ import { FormSubmissionEntity } from './formSubmission';
 
 // Any form created by user with the intake app role is treated as anonymous.
 function isAnonymousApplicant(user: User, applicant?: Subscriber): boolean {
-  return user?.roles.includes(FormServiceRoles.IntakeApp) && applicant && applicant.userId !== user.id;
+  return !!(user?.roles.includes(FormServiceRoles.IntakeApp) && applicant && applicant.userId !== user.id);
 }
 
 export class FormEntity implements Form {
