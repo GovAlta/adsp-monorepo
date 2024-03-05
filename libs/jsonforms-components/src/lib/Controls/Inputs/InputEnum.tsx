@@ -9,7 +9,7 @@ import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 
 import { addDataByOptions, getData } from '../../Context';
-import { getErrorsToDisplay } from '../../util/stringUtils';
+import { checkFieldValidity } from '../../util/stringUtils';
 
 type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
@@ -28,7 +28,7 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
   const type = uischema?.options?.enumContext?.type;
   const values = uischema?.options?.enumContext?.values;
 
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   useEffect(() => {
     if (dataKey && url) {

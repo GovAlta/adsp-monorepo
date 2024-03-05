@@ -4,7 +4,7 @@ import { GoAInput, GoAInputNumber } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay, isValidDate } from '../../util/stringUtils';
+import { checkFieldValidity, isValidDate } from '../../util/stringUtils';
 type GoAInputIntegerProps = CellProps & WithClassname & WithInputProps;
 
 export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
@@ -17,7 +17,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoAInput

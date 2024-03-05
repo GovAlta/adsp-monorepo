@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { Hidden } from '@mui/material';
-import { getErrorsToDisplay, getLabelText } from '../../util/stringUtils';
+import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 export type GoAInputType =
   | 'text'
   | 'password'
@@ -31,7 +31,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const InnerComponent = input;
   const labelToUpdate: string = getLabelText(uischema.scope, label || '');
 
-  let modifiedErrors = getErrorsToDisplay(props as ControlProps);
+  let modifiedErrors = checkFieldValidity(props as ControlProps);
 
   if (modifiedErrors === 'should be equal to one of the allowed values' && uischema?.options?.enumContext) {
     modifiedErrors = '';
