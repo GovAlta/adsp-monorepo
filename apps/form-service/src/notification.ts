@@ -1,6 +1,7 @@
 import { adspId, AdspId, Channel, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import axios from 'axios';
+import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { FormDefinition } from './form';
 
@@ -29,27 +30,42 @@ const LOG_CONTEXT = { context: 'NotificationService' };
 class NotificationServiceImpl implements NotificationService {
   private notificationApiId = adspId`urn:ads:platform:notification-service:v1`;
 
-  constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) {}
+  constructor(
+    private logger: Logger,
+    private directory: ServiceDirectory,
+    private tokenProvider: TokenProvider,
+    private subscriberCache: NodeCache
+  ) {}
+
+  private getCacheKey(tenantId: AdspId, urn: AdspId) {
+    return `${tenantId}${urn}`;
+  }
 
   async getSubscriber(tenantId: AdspId, urn: AdspId): Promise<Subscriber> {
     try {
-      const subscriberUrl = await this.directory.getResourceUrl(urn);
+      const key = this.getCacheKey(tenantId, urn);
+      let subscriber = this.subscriberCache.get<Subscriber>(key);
 
-      const token = await this.tokenProvider.getAccessToken();
-      const { data } = await axios.get<Omit<Subscriber, 'urn'> & { urn: string }>(
-        `${subscriberUrl.href}?tenantId=${tenantId}`,
-        {
+      if (!subscriber) {
+        const subscriberUrl = await this.directory.getResourceUrl(urn);
+
+        const token = await this.tokenProvider.getAccessToken();
+        const { data } = await axios.get<Omit<Subscriber, 'urn'> & { urn: string }>(subscriberUrl.href, {
           headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+          params: { tenantId: tenantId.toString() },
+        });
 
-      return {
-        id: data.id,
-        urn: AdspId.parse(data.urn),
-        userId: data.userId,
-        addressAs: data.addressAs,
-        channels: data.channels,
-      };
+        subscriber = {
+          id: data.id,
+          urn: AdspId.parse(data.urn),
+          userId: data.userId,
+          addressAs: data.addressAs,
+          channels: data.channels,
+        };
+        this.subscriberCache.set(`${tenantId}${urn}`, subscriber);
+      }
+
+      return subscriber;
     } catch (err) {
       this.logger.error(`Error encountered getting subscriber from notification service. ${err}`, {
         ...LOG_CONTEXT,
@@ -200,7 +216,8 @@ class NotificationServiceImpl implements NotificationService {
 export function createNotificationService(
   logger: Logger,
   directory: ServiceDirectory,
-  tokenProvider: TokenProvider
+  tokenProvider: TokenProvider,
+  subscriberCache = new NodeCache({ stdTTL: 3600, useClones: false })
 ): NotificationService {
-  return new NotificationServiceImpl(logger, directory, tokenProvider);
+  return new NotificationServiceImpl(logger, directory, tokenProvider, subscriberCache);
 }
