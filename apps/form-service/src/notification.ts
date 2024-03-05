@@ -62,7 +62,7 @@ class NotificationServiceImpl implements NotificationService {
           addressAs: data.addressAs,
           channels: data.channels,
         };
-        this.subscriberCache.set(`${tenantId}${urn}`, subscriber);
+        this.subscriberCache.set(this.getCacheKey(tenantId, urn), subscriber);
       }
 
       return subscriber;
