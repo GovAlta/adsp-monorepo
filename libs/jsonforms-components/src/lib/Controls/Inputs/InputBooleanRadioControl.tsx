@@ -4,7 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
 import { GoARadioGroup, GoARadioItem, GoAFormItem } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay, getLabelText } from '../../util/stringUtils';
+import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 
 export const BooleanRadioComponent = ({
   data,
@@ -26,7 +26,7 @@ export const BooleanRadioComponent = ({
   const TrueDescription = description || appliedUiSchemaOptions?.descriptionForTrue;
   const FalseDescription = description || appliedUiSchemaOptions?.descriptionForFalse;
   const BaseTestId = appliedUiSchemaOptions?.testId || `${path}-boolean-radio-jsonform`;
-  const errorsFormInput = getErrorsToDisplay({
+  const errorsFormInput = checkFieldValidity({
     data,
     uischema,
     label,
