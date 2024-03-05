@@ -68,7 +68,13 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
   return (
     <div className={className}>
       <LoadingIndicator isLoading={busy.initializing || busy.loading} />
-      <TaskHeader open={open} isLive={live} onClickTasks={() => navigate('')} />
+      <TaskHeader
+        open={open}
+        isLive={live}
+        onClickTasks={() => navigate('')}
+        namespace={params.namespace}
+        name={params.name}
+      />
       <Routes>
         <Route path={`/:taskId`} element={<TaskDetailsHost onClose={() => navigate('')} />} />
         <Route
@@ -126,8 +132,8 @@ const TaskQueue = styled(TaskQueueComponent)`
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: var(--goa-space-3xl);
+  right: var(--goa-space-3xl);
 `;
 
 export default TaskQueue;
