@@ -54,14 +54,14 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       onClose();
       setSpinner(false);
     }
-  }, [templates]);
+  }, [templates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     setTemplate(initialValue);
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { errors, validators } = useValidators(
     'name',

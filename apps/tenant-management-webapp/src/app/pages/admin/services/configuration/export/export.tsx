@@ -102,13 +102,13 @@ export const ConfigurationExport: FunctionComponent = () => {
 
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (Object.keys(exportState).length > 0 && Object.keys(exportServices).length > 0) {
       downloadSelectedConfigurations(exportState);
     }
-  }, [exportState]);
+  }, [exportState, exportServices]);
 
   const [scrollPosition, setScrollPosition] = useState(0);
   const [pageHeight, setPageHeight] = useState(500);

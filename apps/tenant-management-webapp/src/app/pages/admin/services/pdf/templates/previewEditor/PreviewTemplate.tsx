@@ -60,7 +60,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     } else {
       dispatch(setPdfDisplayFileId(null));
     }
-  }, [fileList]);
+  }, [fileList]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const generateTemplate = () => {
     const payload = {
@@ -88,7 +88,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     if (!socketChannel) {
       dispatch(streamPdfSocket(false));
     }
-  }, [socketChannel]);
+  }, [socketChannel, dispatch]);
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -130,11 +130,9 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
           </div>
         )}
         {!indicator?.show && hasError && (
-          <>
-            <GoACallout type="emergency" heading="Error in PDF generation">
-              {pdfGenerationError}
-            </GoACallout>
-          </>
+          <GoACallout type="emergency" heading="Error in PDF generation">
+            {pdfGenerationError}
+          </GoACallout>
         )}
       </>
     );

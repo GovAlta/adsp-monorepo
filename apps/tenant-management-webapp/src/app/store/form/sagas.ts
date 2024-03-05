@@ -51,7 +51,7 @@ export function* fetchFormDefinitions(): SagaIterator {
   }
 }
 
-export function* updateFormDefinition({ definition, options }: UpdateFormDefinitionsAction): SagaIterator {
+export function* updateFormDefinition({ definition }: UpdateFormDefinitionsAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
 

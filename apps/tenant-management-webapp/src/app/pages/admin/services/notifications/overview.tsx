@@ -18,7 +18,7 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchNotificationMetrics());
-  }, []);
+  }, [dispatch]);
 
   const description =
     'Notification service provides the ability to generate and send notifications based on domain events sent via the event service. This service also includes concepts of subscriptions and subscribers to support management of subscriptions.';
@@ -27,17 +27,15 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
     <OverviewLayout
       description={description}
       addButton={
-        <>
-          <GoAButton
-            testId="add-notification-overview"
-            disabled={disabled}
-            onClick={() => {
-              setActiveEdit(true);
-            }}
-          >
-            Add notification type
-          </GoAButton>
-        </>
+        <GoAButton
+          testId="add-notification-overview"
+          disabled={disabled}
+          onClick={() => {
+            setActiveEdit(true);
+          }}
+        >
+          Add notification type
+        </GoAButton>
       }
       extra={
         <>

@@ -18,21 +18,21 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(fetchEventMetrics());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // set index to 0(overview tab) when switching back to it
   useEffect(() => {
     setActiveIndex(0);
-  }, []);
+  }, [setActiveIndex]);
 
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, []);
+  }, [dispatch]);
 
   return (
     <div>

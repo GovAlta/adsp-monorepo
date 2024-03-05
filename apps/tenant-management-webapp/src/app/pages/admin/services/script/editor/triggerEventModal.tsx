@@ -48,7 +48,7 @@ export const TriggerEventModal = ({
     if (isNew) {
       setTriggerEvent(defaultTriggerEvent);
     }
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (isNew) {
@@ -64,7 +64,7 @@ export const TriggerEventModal = ({
         },
       });
     }
-  }, [initialValue]);
+  }, [initialValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isObjectEmpty = (obj) => {
     return JSON.stringify(obj) === '{}';

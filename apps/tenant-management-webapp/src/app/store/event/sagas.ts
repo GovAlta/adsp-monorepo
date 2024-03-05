@@ -22,7 +22,7 @@ import { UpdateIndicator } from '@store/session/actions';
 import moment from 'moment';
 import { getAccessToken } from '@store/tenant/sagas';
 
-export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): SagaIterator {
+export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,

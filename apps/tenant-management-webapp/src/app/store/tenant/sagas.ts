@@ -258,7 +258,7 @@ export function* fetchRealmRoles(): SagaIterator {
   }
 }
 
-export function* updateAccessToken(action: UpdateAccessTokenAction): SagaIterator {
+export function* updateAccessToken(_action: UpdateAccessTokenAction): SagaIterator {
   yield call(getAccessToken, true);
 }
 
