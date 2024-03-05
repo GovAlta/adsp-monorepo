@@ -1,6 +1,6 @@
 import { JsonSchema, UISchemaElement, hasType, isControl } from '@jsonforms/core';
 
-export const isNullSchema = (schema: UISchemaElement | JsonSchema): boolean => {
+export const isNullSchema = (schema: unknown): boolean => {
   return schema === undefined || schema === null;
 };
 
@@ -62,7 +62,7 @@ export const isCategorization = (uiSchema: UISchemaElement): boolean => {
 };
 
 export const hasElements = (schema: object): boolean => {
-  return 'elements' in schema;
+  return 'elements' in schema && Array.isArray(schema.elements);
 };
 
 export const isEmptyElements = (schema: object): boolean => {

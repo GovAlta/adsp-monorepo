@@ -1,31 +1,3 @@
-import React from 'react';
-import {
-  ControlProps,
-  JsonSchema,
-  RankedTester,
-  UISchemaElement,
-  hasType,
-  isCategorization,
-  isControl,
-  isLayout,
-  rankWith,
-} from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
-import {
-  hasElements,
-  hasVariant,
-  isControlWithNoScope,
-  isEmptyElements,
-  isEmptyObject,
-  isKnownType,
-  isLayoutType,
-  isListWithDetail,
-  isNullSchema,
-  isScopedPrefixed,
-  isValidJsonObject,
-  isValidScope,
-} from './errorChecks';
-
 /**
  * The error control is invoked whenever no other control can be found.  It is used to display
  * an error to the developers indicating that they have misconfigured one or more of their schemas and
@@ -33,94 +5,14 @@ import {
  * toward fixing the error.
  */
 
-const isValidUiSchema = (uiSchema: UISchemaElement, schema: JsonSchema): string | null => {
-  // Sometimes the UISchema is null.  Ignore those cases, as all checks are done on the UIschema.
-  if (isNullSchema(uiSchema)) {
-    return null;
-  }
+import React from 'react';
+import { ControlProps, JsonSchema, RankedTester, rankWith } from '@jsonforms/core';
+import { withJsonFormsControlProps } from '@jsonforms/react';
+import { isNullSchema, isValidJsonObject } from '../errors/errorCheck';
+import { getUISchemaErrors } from '../errors/schemaValidation';
 
-  // silently ignore empty objects
-  if (isEmptyObject(uiSchema)) {
-    return '';
-  }
-
-  // Check control elements
-  if (isControl(uiSchema) && hasType(uiSchema, 'Control')) {
-    if (!isScopedPrefixed(uiSchema.scope)) {
-      return `Scope ${uiSchema.scope} must be prefixed with '#/'.`;
-    }
-    if (!isValidScope(uiSchema, schema)) {
-      return `Failed to render: unknown scope ${uiSchema.scope}`;
-    }
-  }
-
-  // isControl will fail if scope is not present, so make the test explicit...
-  if (isControlWithNoScope(uiSchema)) {
-    return 'Failed to render: a Control must have a scope';
-  }
-
-  if (isListWithDetail(uiSchema)) {
-    if ('scope' in uiSchema) {
-      if (!isValidScope(uiSchema, schema)) {
-        return `Failed to render ListWithDetail: scope ${uiSchema.scope} is not valid`;
-      }
-    } else {
-      return 'Failed to render ListWithDetail: scope is required';
-    }
-  }
-
-  // Make an explicit check for Categorization, as this requires Category elements.
-  // Is layout will fail if some of these conditions are not met, so we do that
-  // check later.
-  if (isCategorization(uiSchema)) {
-    if (!hasElements(uiSchema)) {
-      return 'A Categorization must contain Categories.';
-    }
-
-    if (!hasVariant(uiSchema)) {
-      return 'A Categorization must contain Options with a variant.';
-    }
-
-    // ensure each element has type Category, and that each category
-    // has elements
-    if (isLayout(uiSchema)) {
-      const invalidCategorizations: string[] = [];
-      const invalidCategories: UISchemaElement[] = [];
-      (uiSchema.elements as UISchemaElement[]).forEach((e) => {
-        if (e.type !== 'Category') {
-          invalidCategorizations.push(e.type);
-        }
-        if (!hasElements(e)) {
-          invalidCategories.push(e);
-        }
-      });
-      if (invalidCategorizations.length > 0) {
-        return "Each element of 'Categorizations' must be of type 'Category'";
-      }
-      if (invalidCategories.length > 0) {
-        return 'Please ensure each Category has elements';
-      }
-    }
-  }
-
-  // Check layout
-  if (isLayoutType(uiSchema)) {
-    if (!hasElements(uiSchema)) {
-      return `A ${uiSchema.type} must contain elements.`;
-    }
-    if (isEmptyElements(uiSchema)) {
-      return '';
-    }
-  }
-
-  if (!isKnownType(uiSchema)) {
-    if (uiSchema.type === undefined || uiSchema.type.length < 1) {
-      return `UI schema element must have a type`;
-    }
-    return `Unknown schema type: ${uiSchema.type}. (Note: Names are case sensitive)`;
-  }
-
-  return null;
+export const errorComponent = (err: string): JSX.Element => {
+  return <p>{err}</p>;
 };
 
 const isValidJsonSchema = (schema: JsonSchema): string | null => {
@@ -144,9 +36,9 @@ const ErrorControl = (props: ControlProps): JSX.Element => {
   if (dataSchemaErrors && dataSchemaErrors !== '') {
     return <p>{dataSchemaErrors}</p>;
   }
-  const uiSchemaErrors = isValidUiSchema(uischema, schema);
+  const uiSchemaErrors = getUISchemaErrors(uischema, schema);
   if (uiSchemaErrors && uiSchemaErrors !== '') {
-    return <p>{uiSchemaErrors}</p>;
+    return errorComponent(uiSchemaErrors);
   }
   return <span />;
 };
@@ -157,7 +49,7 @@ const ErrorControl = (props: ControlProps): JSX.Element => {
  */
 export const GoAErrorControlTester: RankedTester = rankWith(1000, (uischema, schema, context) => {
   const validJsonSchema = isValidJsonSchema(schema);
-  const validUiSchema = isValidUiSchema(uischema, schema);
+  const validUiSchema = getUISchemaErrors(uischema, schema);
   return validUiSchema != null || validJsonSchema != null;
 });
 
