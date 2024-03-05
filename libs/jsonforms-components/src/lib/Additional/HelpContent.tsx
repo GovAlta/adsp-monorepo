@@ -21,7 +21,12 @@ interface CustomControlProps extends ControlProps {
   uischema: CustomControlElement;
 }
 
-export const HelpContentComponent = (props: CustomControlProps): JSX.Element => {
+export const HelpContentComponent = ({
+  isParent = true,
+  ...props
+}: CustomControlProps & { isParent?: boolean }): JSX.Element => {
+  const labelClass = isParent ? 'parent-label' : 'child-label';
+  const marginClass = isParent ? 'parent-margin' : 'child-margin';
   // eslint-disable-next-line
   const { uischema, visible, label } = props;
   const renderHelp = () =>
@@ -38,27 +43,29 @@ export const HelpContentComponent = (props: CustomControlProps): JSX.Element => 
   return (
     <Hidden xsUp={!visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
-        {label && !uischema.options?.variant && uischema.options?.variant !== 'details' && (
-          <div className="label">
-            {label}
-            <br />
-          </div>
-        )}
-        {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
-        {uischema.options?.variant && uischema.options?.variant === 'details' && (
-          <GoADetails heading={label ? label : ''} mt="3xs" mb="3xs">
-            {renderHelp()}
-            {uischema?.elements && uischema?.elements?.length > 0 && <HelpContents elements={uischema?.elements} />}
-          </GoADetails>
-        )}
-        {uischema?.elements && uischema?.elements.length > 0 && uischema.options?.variant !== 'details' && (
-          <HelpContents elements={uischema.elements} />
-        )}
+        <div className={marginClass}>
+          {label && !uischema.options?.variant && uischema.options?.variant !== 'details' && (
+            <div className={labelClass}>
+              {label}
+              <br />
+            </div>
+          )}
+          {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
+          {uischema.options?.variant && uischema.options?.variant === 'details' && (
+            <GoADetails heading={label ? label : ''} mt="3xs" mb="none">
+              {renderHelp()}
+              {uischema?.elements && uischema?.elements?.length > 0 && <HelpContents elements={uischema?.elements} />}
+            </GoADetails>
+          )}
+          {uischema?.elements && uischema?.elements.length > 0 && uischema.options?.variant !== 'details' && (
+            <HelpContents elements={uischema.elements} isParent={false} />
+          )}
+        </div>
       </HelpContentDiv>
     </Hidden>
   );
 };
-const HelpContents = ({ elements }: { elements: CustomControlElement[] }) => (
+const HelpContents = ({ elements, isParent = false }: { elements: CustomControlElement[]; isParent?: boolean }) => (
   <div>
     {elements?.map((element: any) => {
       return (
@@ -76,6 +83,7 @@ const HelpContents = ({ elements }: { elements: CustomControlElement[] }) => (
           rootSchema={{}}
           id={''}
           schema={{}}
+          isParent={isParent}
         />
       );
     })}

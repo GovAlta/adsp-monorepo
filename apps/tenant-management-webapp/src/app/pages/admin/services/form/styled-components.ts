@@ -136,12 +136,12 @@ export const FormEditor = styled.div`
   width: 100%;
 
   .hr-resize {
-    margin-top: var(--goa-spacing-s);
+    margin-top: var(--goa-space-s);
   }
 
   .hr-resize-bottom {
-    margin-bottom: var(--goa-spacing-2xs);
-    margin-top: var(--goa-spacing-xl);
+    margin-bottom: var(--goa-space-2xs);
+    margin-top: var(--goa-space-xl);
   }
 
   .info-circle {

@@ -8,9 +8,11 @@ components:
         configuration:
           type: object
         created:
-          type: date
+          type: string
+          format: date-time
         lastUpdated:
-          type: date
+          type: string
+          format: date-time
     UpdateOperation:
       type: object
       properties:
@@ -204,12 +206,7 @@ components:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                configuration:
-                  $ref: '#/components/schemas/ConfigurationRevision'
-                revision:
-                  type: number
+              $ref: '#/components/schemas/ConfigurationRevision'
       401:
         description: User not authorized to retrieve configuration.
       404:

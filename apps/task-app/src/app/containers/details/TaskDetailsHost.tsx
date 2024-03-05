@@ -103,8 +103,8 @@ export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
 
   & > :first-child {
     flex: 1;
-    padding: var(--goa-spacing-l);
-    padding-top: var(--goa-spacing-m);
+    padding: var(--goa-space-l);
+    padding-top: var(--goa-space-m);
   }
 
   & > .commentsPane {
@@ -124,8 +124,8 @@ export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
   & > :last-child {
     z-index: 2;
     position: absolute;
-    bottom: var(--goa-spacing-l);
-    left: var(--goa-spacing-l);
+    bottom: var(--goa-space-l);
+    left: var(--goa-space-l);
   }
 
   &[data-opened='true'] {

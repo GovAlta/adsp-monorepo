@@ -64,7 +64,7 @@ class NotificationServiceImpl implements NotificationService {
     tenantId: AdspId,
     definition: FormDefinition,
     formId: string,
-    subscriber: Omit<Subscriber, 'urn'>
+    subscriber?: Omit<Subscriber, 'urn'>
   ): Promise<Subscriber> {
     try {
       const apiUrl = await this.directory.getServiceUrl(this.notificationApiId);

@@ -108,13 +108,15 @@ components:
         description: Context associated with the values.
         in: query
         required: false
-        schema:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: string
-              - type: boolean
-              - type: number
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                oneOf:
+                  - type: string
+                  - type: boolean
+                  - type: number
       - name: timestampMin
         description: Inclusive min value of timestamp.
         in: query
@@ -209,13 +211,15 @@ components:
         description: Context associated with the values.
         in: query
         required: false
-        schema:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: string
-              - type: boolean
-              - type: number
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                oneOf:
+                  - type: string
+                  - type: boolean
+                  - type: number
       - name: timestampMin
         description: Inclusive min value of timestamp.
         in: query

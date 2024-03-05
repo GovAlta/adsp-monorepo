@@ -1,20 +1,19 @@
 import { AdspId, assertAdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import * as hasha from 'hasha';
+import { v4 as uuidv4 } from 'uuid';
+import { FileService } from '../../file';
+import { NotificationService, Subscriber } from '../../notification';
+import { QueueTaskService } from '../../task';
 import { FormDefinitionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { Disposition, Form, FormStatus } from '../types';
-import { NotificationService, Subscriber } from '../../notification';
-import { FileService } from '../../file';
-import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionEntity } from './formSubmission';
-import { QueueTaskService } from '../../queueTask';
-import { QueueTaskDefinition } from './queueTask';
 
 // Any form created by user with the intake app role is treated as anonymous.
-function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
-  return user?.roles.find((role) => role === FormServiceRoles.IntakeApp) && applicant.userId !== user.id;
+function isAnonymousApplicant(user: User, applicant?: Subscriber): boolean {
+  return user?.roles.includes(FormServiceRoles.IntakeApp) && applicant && applicant.userId !== user.id;
 }
 
 export class FormEntity implements Form {
@@ -39,7 +38,7 @@ export class FormEntity implements Form {
     definition: FormDefinitionEntity,
     id: string,
     formDraftUrl: string,
-    applicant: Subscriber
+    applicant?: Subscriber
   ): Promise<FormEntity> {
     if (!definition.canApply(user)) {
       throw new UnauthorizedUserError('create form', user);
@@ -87,8 +86,27 @@ export class FormEntity implements Form {
     this.files = form.files || {};
   }
 
-  canAssess(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, [...this.definition.assessorRoles, FormServiceRoles.Admin], true);
+  /**
+   * Checks if user is allowed to read the form 'metadata' (not including data and files).
+   *
+   * Note that this is more permissive than accessing the form data. For example, assessors are allowed to read forms
+   * even while in draft, but not access the form data.
+   *
+   * @param {User} user
+   * @returns {boolean}
+   * @memberof FormEntity
+   */
+  canRead(user: User): boolean {
+    // Admins, intake apps, clerks and assessors are allowed read of the form.
+    // Applicants are allowed to read forms they created.
+    return (
+      isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, FormServiceRoles.IntakeApp], true) ||
+      isAllowedUser(user, this.tenantId, [
+        ...(this.definition?.clerkRoles || []),
+        ...(this.definition?.assessorRoles || []),
+      ]) ||
+      (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) && user.id === this.createdBy.id)
+    );
   }
 
   private async access(_user: User): Promise<FormEntity> {
@@ -101,7 +119,7 @@ export class FormEntity implements Form {
   }
 
   async sendCode(user: User, notificationService: NotificationService): Promise<FormEntity> {
-    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp)) {
+    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp, true)) {
       throw new UnauthorizedUserError('send code', user);
     }
 
@@ -118,7 +136,7 @@ export class FormEntity implements Form {
     }
 
     // When access by code, the user needs to be an intake application.
-    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp)) {
+    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp, true)) {
       throw new UnauthorizedUserError('access form', user);
     }
 
@@ -132,25 +150,21 @@ export class FormEntity implements Form {
   }
 
   async accessByUser(user: User): Promise<FormEntity> {
+    // Allowed if:
+    // 1. User is Form Admin
+    // 2. User is Applicant who created the form
+    // 3. Form is Draft and user is Clerk
+    // 4. Form is Submitted and user is Assessor
     if (
-      this.status === FormStatus.Draft &&
-      !(
-        isAllowedUser(user, this.tenantId, this.definition.clerkRoles) ||
-        (isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)
-      )
+      isAllowedUser(user, this.tenantId, FormServiceRoles.Admin) ||
+      (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) && user.id === this.createdBy.id) ||
+      (this.status === FormStatus.Draft && isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || [])) ||
+      (this.status === FormStatus.Submitted && isAllowedUser(user, this.tenantId, this.definition?.assessorRoles || []))
     ) {
-      throw new UnauthorizedUserError('access draft form', user);
-    }
-
-    if (
-      this.status === FormStatus.Submitted &&
-      !this.canAssess(user) &&
-      !(isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)
-    ) {
+      return await this.access(user);
+    } else {
       throw new UnauthorizedUserError('access submitted form', user);
     }
-
-    return await this.access(user);
   }
 
   async update(user: User, data?: Record<string, unknown>, files?: Record<string, AdspId>): Promise<FormEntity> {
@@ -199,7 +213,7 @@ export class FormEntity implements Form {
   }
 
   async unlock(user: User): Promise<FormEntity> {
-    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin)) {
+    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true)) {
       throw new UnauthorizedUserError('unlock form', user);
     }
 
@@ -232,7 +246,7 @@ export class FormEntity implements Form {
     user: User,
     queueTaskService: QueueTaskService,
     submissionRepository: FormSubmissionRepository
-  ): Promise<Form> {
+  ): Promise<[FormEntity, FormSubmissionEntity]> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
     }
@@ -248,29 +262,21 @@ export class FormEntity implements Form {
     this.submitted = new Date();
     // Hash the form data on submit for duplicate detection.
     this.hash = await hasha.async(JSON.stringify(this.data), { algorithm: 'sha1' });
-    let id = null;
+
+    const saved = await this.repository.save(this);
+    let submission: FormSubmissionEntity = null;
 
     if (this.submissionRecords) {
-      // If disposition states exist, create a form submission record
+      // If configured to create submission records, create a form submission record
       // We need the submissionId so that it is available for updates/lookups of the submission.
-      id = uuidv4();
-      await FormSubmissionEntity.create(user, submissionRepository, this, id);
-    }
-    const savedFormEntity = await this.repository.save(this);
-    const formData: Form = { ...savedFormEntity, submissionId: id };
+      submission = await FormSubmissionEntity.create(user, submissionRepository, this, uuidv4());
 
-    if (this.submissionRecords) {
-      const { queueNameSpace, queueName } = formData.definition.queueTaskToProcess;
-
-      if (formData && queueNameSpace !== '' && queueName !== '') {
-        queueTaskService.createTaskForQueueTask(
-          createQueueTaskDefinition(formData),
-          savedFormEntity.tenantId,
-          formData
-        );
+      if (saved.definition.queueTaskToProcess?.queueNameSpace && saved.definition.queueTaskToProcess?.queueName) {
+        queueTaskService.createTask(saved, submission);
       }
     }
-    return formData;
+
+    return [saved, submission];
   }
 
   async archive(user: User): Promise<FormEntity> {
@@ -300,17 +306,3 @@ export class FormEntity implements Form {
     return deleted;
   }
 }
-const createQueueTaskDefinition = (form: Form) => {
-  const { queueNameSpace } = form.definition.queueTaskToProcess;
-  const { name: definitionName } = form.definition;
-
-  return {
-    id: '',
-    name: 'Process form submission',
-    namespace: queueNameSpace,
-    createdOn: '',
-    priority: 'Normal',
-    description: `Process form '${definitionName}' (ID: ${form.id}) submission: (${form.submissionId})`,
-    recordId: `urn:ads:platform:form-service:v1:/forms/${form.id}/submissions/${form.submissionId}`,
-  } as QueueTaskDefinition;
-};

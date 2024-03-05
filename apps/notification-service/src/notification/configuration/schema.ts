@@ -5,6 +5,12 @@ const templateSchema = {
   properties: {
     subject: { type: 'string' },
     body: { type: 'string' },
+    title: {
+      type: 'string',
+    },
+    subtitle: {
+      type: 'string',
+    },
   },
   required: ['subject', 'body'],
 };

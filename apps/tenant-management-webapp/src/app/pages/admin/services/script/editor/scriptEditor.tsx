@@ -266,23 +266,21 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     const runnerRoles = types[0];
 
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          roleSelectFunc={(roles, type) => {
-            if (type === runnerRoles.name) {
-              setScript({
-                ...script,
-                runnerRoles: roles,
-              });
-            }
-          }}
-          nameColumnWidth={80}
-          service="Script"
-          checkedRoles={[{ title: types[0].name, selectedRoles: script[types[0].type] }]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        roleSelectFunc={(roles, type) => {
+          if (type === runnerRoles.name) {
+            setScript({
+              ...script,
+              runnerRoles: roles,
+            });
+          }
+        }}
+        nameColumnWidth={80}
+        service="Script"
+        checkedRoles={[{ title: types[0].name, selectedRoles: script[types[0].type] }]}
+      />
     );
   };
 

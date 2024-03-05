@@ -20,9 +20,9 @@ import {
   isKnownType,
   isLayoutType,
   isListWithDetail,
-  isMissingProperties,
   isNullSchema,
   isScopedPrefixed,
+  isValidJsonObject,
   isValidScope,
 } from './errorChecks';
 
@@ -123,35 +123,13 @@ const isValidUiSchema = (uiSchema: UISchemaElement, schema: JsonSchema): string 
   return null;
 };
 
-const getMissingType = (schema: JsonSchema, parent?: string): string | null => {
-  if (typeof schema === 'object') {
-    const keys = Object.keys(schema);
-    // empty objects don't count; they are valid.
-    if (keys.length > 0 && !('type' in schema)) {
-      return `object '${parent || 'schema'}' must have a 'type' property`;
-    }
-
-    if (schema.type === 'object' && 'properties' in schema) {
-      const props = schema.properties || {};
-      for (const key of Object.keys(props)) {
-        const err = getMissingType(props[key], key);
-        if (err) {
-          return err;
-        }
-      }
-    }
-  }
-  return null;
-};
-
 const isValidJsonSchema = (schema: JsonSchema): string | null => {
-  // if (isMissingProperties(schema)) {
-  //   return 'Please define properties on your object.';
-  // }
-  // const err = getMissingType(schema);
-  // if (err) {
-  //   return err;
-  // }
+  if (isNullSchema(schema)) {
+    return '';
+  }
+  if (!isValidJsonObject(schema)) {
+    return 'Unable to render: json schema is not valid.';
+  }
   return null;
 };
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isIntegerControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInputNumber } from '@abgov/react-components-new';
+import { GoAInput, GoAInputNumber } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -12,15 +12,16 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const InputValue = data ? data : 0;
+  const InputValue = data && data !== undefined ? data : '';
   const clonedSchema = JSON.parse(JSON.stringify(schema));
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
-  const MinValue = clonedSchema.minimum ? clonedSchema.minimum : 0;
-  const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : 99;
+  const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
+  const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const errorsFormInput = getErrorsToDisplay(props as ControlProps);
 
   return (
-    <GoAInputNumber
+    <GoAInput
+      type="number"
       error={errorsFormInput.length > 0}
       width="100%"
       disabled={!enabled}
@@ -31,16 +32,26 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       placeholder={placeholder}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onBlur={(name: string, value: string) => {
-        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
-        handleChange(path, value);
-      }}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
-          handleChange(path, value);
+          let newValue: string | number = '';
+          if (value !== '') {
+            newValue = +value;
+          }
+
+          handleChange(path, newValue);
         }
       }}
+      onBlur={(name: string, value: string) => {
+        let newValue: string | number = '';
+        if (value !== '') {
+          newValue = +value;
+        }
+        handleChange(path, newValue);
+      }}
+      //Dont trigger the handleChange event on the onChange event as it will cause
+      //issue with the error message from displaying, use keyPress or the onBlur event instead
+      onChange={(name: string, value: string) => {}}
       {...uischema?.options?.componentProps}
     />
   );

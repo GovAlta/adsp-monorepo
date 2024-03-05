@@ -105,12 +105,12 @@ export const CommentEditor = styled.div`
   width: 100%;
 
   .hr-resize {
-    margin-top: var(--goa-spacing-s);
+    margin-top: var(--goa-space-s);
   }
 
   .hr-resize-bottom {
-    margin-bottom: var(--goa-spacing-2xs);
-    margin-top: var(--goa-spacing-xl);
+    margin-bottom: var(--goa-space-2xs);
+    margin-top: var(--goa-space-xl);
   }
 `;
 
@@ -129,8 +129,8 @@ export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 6px;
-  padding-left: var(--goa-spacing-xl);
-  padding-right: var(--goa-spacing-xl);
+  padding-left: var(--goa-space-xl);
+  padding-right: var(--goa-space-xl);
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -139,7 +139,7 @@ export const NotificationTemplateEditorContainer = styled.div`
 
 export const NameDescriptionDataSchema = styled.div`
   flex: 6;
-  padding-right: var(--goa-spacing-2xl);
+  padding-right: var(--goa-space-2xl);
 `;
 
 export const CommentPermissions = styled.div`
@@ -161,8 +161,8 @@ export const ProgressWrapper = styled.div`
 `;
 
 export const ButtonPadding = styled.div`
-  padding-bottom: var(--goa-spacing-l);
-  padding-top: var(--goa-spacing-l);
+  padding-bottom: var(--goa-space-l);
+  padding-top: var(--goa-space-l);
 `;
 
 export const Modal = styled.div`
@@ -214,7 +214,7 @@ export const HideTablet = styled.div`
 `;
 
 export const CommentCommentItem = styled.div`
-  margin-bottom: var(--goa-spacing-l);
+  margin-bottom: var(--goa-space-l);
   margin-left: 3px;
   margin-right: 3px;
 `;
@@ -243,13 +243,13 @@ export const HeadingDiv = styled.div`
 export const MoreDetails = styled.div`
    {
     background-color: var(--goa-color-greyscale-100);
-    padding: var(--goa-spacing-s) var(--goa-spacing-l) var(--goa-spacing-l) var(--goa-spacing-l);
+    padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
     width: 100%;
     text-align: left;
     p {
       font-weight: bold;
-      padding-top: var(--goa-spacing-s);
-      margin-bottom: var(--goa-spacing-xs);
+      padding-top: var(--goa-space-s);
+      margin-bottom: var(--goa-space-xs);
     }
     span {
       white-space: normal;
@@ -269,8 +269,8 @@ export const IconDiv = styled.div`
 
 export const HeaderFont = styled.div`
   font: var(--goa-typography-heading-m);
-  padding-bottom: var(--goa-spacing-l);
-  padding-top: var(--goa-spacing-l);
+  padding-bottom: var(--goa-space-l);
+  padding-top: var(--goa-space-l);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -405,7 +405,7 @@ export const TopicDelete = styled.div`
   }
 `;
 export const LoadMoreCommentsWrapper = styled.div`
-  padding-top: var(--goa-spacing-xs);
+  padding-top: var(--goa-space-xs);
 `;
 export const CommentWrapper = styled.div`
   white-space: normal;

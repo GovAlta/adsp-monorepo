@@ -6,9 +6,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.ReactiveAuthenticationManagerResolver;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerReactiveAuthenticationManagerResolver;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.server.ServerWebExchange;
 
 import ca.ab.gov.alberta.adsp.sdk.AdspConfiguration;
 import ca.ab.gov.alberta.adsp.sdk.AdspId;
@@ -16,7 +18,7 @@ import ca.ab.gov.alberta.adsp.sdk.metadata.ApiDocsMetadata;
 
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
-class AccessReactiveSecurityConfiguration {
+public class AccessReactiveSecurityConfiguration {
   private AdspId serviceId;
   private String[] apiAntPatterns;
   private AccessIssuerCache issuerCache;
@@ -36,6 +38,12 @@ class AccessReactiveSecurityConfiguration {
     var authenticationManagerResolver = new JwtIssuerReactiveAuthenticationManagerResolver(
         new TenantReactiveAuthManagerResolver(this.serviceId, this.issuerCache));
 
+    return configureServerHttpSecurity(http, authenticationManagerResolver).build();
+  }
+
+  protected ServerHttpSecurity configureServerHttpSecurity(ServerHttpSecurity http,
+      ReactiveAuthenticationManagerResolver<ServerWebExchange> authenticationManagerResolver) {
+
     return http
         .authorizeExchange(
             exchanges -> {
@@ -46,7 +54,6 @@ class AccessReactiveSecurityConfiguration {
                   .anyExchange().permitAll();
             })
         .oauth2ResourceServer(
-            oauth2 -> oauth2.authenticationManagerResolver(authenticationManagerResolver))
-        .build();
+            oauth2 -> oauth2.authenticationManagerResolver(authenticationManagerResolver));
   }
 }

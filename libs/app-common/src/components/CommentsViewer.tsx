@@ -115,28 +115,28 @@ export const CommentsViewer = styled(CommentsViewerComponent)`
   flex-direction: column;
   & > h3 {
     text-transform: capitalize;
-    padding-left: var(--goa-spacing-l);
-    padding-right: var(--goa-spacing-l);
-    padding-bottom: var(--goa-spacing-s);
+    padding-left: var(--goa-space-l);
+    padding-right: var(--goa-space-l);
+    padding-bottom: var(--goa-space-s);
   }
   & > form {
     background: var(--goa-color-greyscale-100);
     flex-shrink: 0;
     flex-grow: 0;
     max-height: 40vh;
-    padding: var(--goa-spacing-l);
-    padding-top: var(--goa-spacing-s);
+    padding: var(--goa-space-l);
+    padding-top: var(--goa-space-s);
   }
   & > .comments {
     flex: 1 1 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column-reverse;
-    padding-left: var(--goa-spacing-l);
-    padding-right: var(--goa-spacing-l);
+    padding-left: var(--goa-space-l);
+    padding-right: var(--goa-space-l);
     > .comment {
-      margin: var(--goa-spacing-s);
-      margin-bottom: var(--goa-spacing-l);
+      margin: var(--goa-space-s);
+      margin-bottom: var(--goa-space-l);
 
       span:first-child {
         font-weight: bold;

@@ -23,11 +23,12 @@ import {
   FormStatusSubmittedDefinition,
   FormStatusUnlockedDefinition,
   FormStatusSetToDraftDefinition,
+  SubmissionDispositionedDefinition,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
 import { createFileService } from './file';
-import { createQueueTaskService } from './queueTask';
+import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
 import { GeneratedSupportingDocFileType } from './form/types/fileTypes';
 
@@ -97,6 +98,7 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusSubmittedDefinition,
         FormStatusArchivedDefinition,
         FormStatusSetToDraftDefinition,
+        SubmissionDispositionedDefinition,
       ],
       notifications: [FormStatusNotificationType],
       values: [ServiceMetricsValueDefinition],
@@ -164,7 +166,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     supportTopicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID,
   });
-  const queueTaskService = createQueueTaskService(logger, directory, tokenProvider);
+  const queueTaskService = createQueueTaskService(serviceId, logger, directory, tokenProvider);
   const repositories = await createRepositories({
     ...environment,
     serviceId,

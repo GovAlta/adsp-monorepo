@@ -58,11 +58,21 @@ export const getErrorsToDisplay = (props: ControlProps) => {
   if (required) {
     if (data === undefined) return '';
 
-    if (data === '' || ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))) {
-      return `${labelToUpdate} is required`;
+    if (schema) {
+      if (schema.type !== undefined && schema.type === 'boolean' && (data === null || data === undefined)) {
+        return `${labelToUpdate} is required`;
+      }
+
+      if (
+        data === '' ||
+        data === undefined ||
+        ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))
+      ) {
+        return `${labelToUpdate} is required`;
+      }
     }
 
-    if (data.toString().length > 0 && ajvErrors.length > 0) return ajvErrors;
+    if (data && data.toString().length > 0 && ajvErrors.length > 0) return ajvErrors;
 
     return ajvErrors;
   }

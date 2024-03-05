@@ -35,14 +35,13 @@ export const BooleanComponent = ({
     errors,
   } as ControlProps);
 
-  let text = label;
+  let text = label + (required ? ' (required)' : '');
 
   if (label && description) {
     text = description;
-  }
-
-  if (required) {
-    text = `${description} ` + (required ? ' (required)' : '');
+    if (required) {
+      text = `${description} ` + (required ? ' (required)' : '');
+    }
   }
 
   return (
