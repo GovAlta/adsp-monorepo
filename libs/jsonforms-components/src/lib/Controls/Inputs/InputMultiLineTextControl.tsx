@@ -13,7 +13,7 @@ import { GoATextArea } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay } from '../../util/stringUtils';
+import { checkFieldValidity } from '../../util/stringUtils';
 type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
@@ -22,7 +22,9 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
+  const autoCapitalize =
+    uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
 
   return (
     <GoATextArea
@@ -37,7 +39,11 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
       // maxCount={schema.maxLength || 256}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          handleChange(path, value);
+          if (autoCapitalize === true) {
+            handleChange(path, value.toUpperCase());
+          } else {
+            handleChange(path, value);
+          }
         }
       }}
       // Dont use handleChange in the onChange event, use the keyPress or onBlur.

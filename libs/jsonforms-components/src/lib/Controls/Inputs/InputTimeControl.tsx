@@ -4,7 +4,7 @@ import { GoAInputTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay, isValidDate } from '../../util/stringUtils';
+import { checkFieldValidity, isValidDate } from '../../util/stringUtils';
 type GoAInputTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
@@ -12,7 +12,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoAInputTime

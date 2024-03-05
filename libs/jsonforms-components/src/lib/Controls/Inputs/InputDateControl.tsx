@@ -4,37 +4,48 @@ import { GoAInputDate } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay, getLabelText, isValidDate } from '../../util/stringUtils';
+import { checkFieldValidity, getLabelText, isValidDate } from '../../util/stringUtils';
 type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
+
+const standardizeDate = (date: Date | string): string | undefined => {
+  try {
+    return new Date(date).toISOString().substring(0, 10);
+  } catch (e) {
+    console.log(`Error in date format: ${date}`);
+    return undefined;
+  }
+};
 
 export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, config, id, enabled, uischema, errors, isValid, path, handleChange, schema, label } = props;
-
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
 
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  // Check for Schema Errors
+
+  // FIXME: this makes no sense
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoAInputDate
       error={errorsFormInput.length > 0}
       width="100%"
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-      value={data ? new Date(data).toISOString().substring(0, 10) : ''}
+      value={standardizeDate(data)}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
-      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
+      // Don't use handleChange in the onChange event, use the keyPress or onBlur.
       // If you use it onChange along with keyPress event it will cause a
-      // side effect that causes the validation to render when it shouldnt.
+      // side effect that causes the validation to render when it shouldn't.
       onChange={(name, value) => {}}
       onKeyPress={(name: string, value: Date | string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
+          value = standardizeDate(value) || '';
           handleChange(path, value);
         }
       }}
       onBlur={(name: string, value: Date | string) => {
-        value = isValidDate(value) ? new Date(value)?.toISOString().substring(0, 10) : '';
+        value = standardizeDate(value) || '';
         handleChange(path, value);
       }}
       {...uischema?.options?.componentProps}

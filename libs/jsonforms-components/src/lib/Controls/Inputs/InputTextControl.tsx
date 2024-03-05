@@ -4,7 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInput, GoAFormItem } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay, getLabelText } from '../../util/stringUtils';
+import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 
 type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -15,7 +15,10 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
 
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
+
+  const autoCapitalize =
+    uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
 
   return (
     <GoAInput
@@ -34,11 +37,19 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         if (!(key === 'Tab' || key === 'Shift')) {
-          handleChange(path, value);
+          if (autoCapitalize === true) {
+            handleChange(path, value.toUpperCase());
+          } else {
+            handleChange(path, value);
+          }
         }
       }}
       onBlur={(name: string, value: string) => {
-        handleChange(path, value);
+        if (autoCapitalize === true) {
+          handleChange(path, value.toUpperCase());
+        } else {
+          handleChange(path, value);
+        }
       }}
       {...uischema?.options?.componentProps}
     />

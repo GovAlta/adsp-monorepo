@@ -7,7 +7,7 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '@jsonforms/material-renderers';
 import { GoARadioGroup, GoARadioItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
-import { getErrorsToDisplay } from '../../util/stringUtils';
+import { checkFieldValidity } from '../../util/stringUtils';
 
 type RadioGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
@@ -15,7 +15,7 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const { data, className, id, enabled, schema, uischema, path, handleChange, options, config, label, t } = props;
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, uischema, options);
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoARadioGroup

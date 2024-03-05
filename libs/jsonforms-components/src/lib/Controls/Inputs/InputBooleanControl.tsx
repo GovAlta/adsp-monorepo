@@ -4,7 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
 import { GoACheckbox } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay } from '../../util/stringUtils';
+import { checkFieldValidity } from '../../util/stringUtils';
 
 export const BooleanComponent = ({
   data,
@@ -27,7 +27,7 @@ export const BooleanComponent = ({
     false,
     appliedUiSchemaOptions.showUnfocusedDescription
   );
-  const errorsFormInput = getErrorsToDisplay({
+  const errorsFormInput = checkFieldValidity({
     data,
     uischema,
     label,

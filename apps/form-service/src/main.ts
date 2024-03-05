@@ -23,6 +23,7 @@ import {
   FormStatusSubmittedDefinition,
   FormStatusUnlockedDefinition,
   FormStatusSetToDraftDefinition,
+  SubmissionDispositionedDefinition,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -97,6 +98,7 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusSubmittedDefinition,
         FormStatusArchivedDefinition,
         FormStatusSetToDraftDefinition,
+        SubmissionDispositionedDefinition,
       ],
       notifications: [FormStatusNotificationType],
       values: [ServiceMetricsValueDefinition],
