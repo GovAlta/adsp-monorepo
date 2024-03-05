@@ -20,7 +20,6 @@ import {
   metricsLoadingSelector,
   openTask,
   loadQueueMetrics,
-  feedbackSelector,
 } from '../state';
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
 import { TaskPriorityModal } from '../components/TaskPriorityModal';
@@ -56,14 +55,12 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
 
   const navigate = useNavigate();
 
-  const feedback = useSelector(feedbackSelector);
-
   const { tenant: tenantName } = useParams<{ tenant: string }>();
   useEffect(() => {
-    if (feedback?.message.includes('queue with ID') && feedback?.message.includes('could not be found')) {
+    if (tasks === null) {
       navigate(`/${tenantName}`);
     }
-  }, [feedback, navigate, tenantName]);
+  }, [navigate, tenantName, tasks]);
 
   return (
     <div className={className}>
@@ -74,22 +71,24 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
         <Route
           path="/"
           element={
-            <TaskList
-              metrics={metrics}
-              metricsLoading={metricsLoading[`${params.namespace}:${params.name}`]}
-              filter={filter}
-              tasks={tasks}
-              open={open}
-              selected={null}
-              user={user}
-              onSetFilter={(filter) => dispatch(taskActions.setFilter(filter))}
-              onSelect={() => {
-                // not used
-              }}
-              onAssign={(task) => dispatch(taskActions.setTaskToAssign(task.id))}
-              onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task.id))}
-              onOpen={(task) => navigate(`${task.id}`)}
-            />
+            tasks && (
+              <TaskList
+                metrics={metrics}
+                metricsLoading={metricsLoading[`${params.namespace}:${params.name}`]}
+                filter={filter}
+                tasks={tasks}
+                open={open}
+                selected={null}
+                user={user}
+                onSetFilter={(filter) => dispatch(taskActions.setFilter(filter))}
+                onSelect={() => {
+                  // not used
+                }}
+                onAssign={(task) => dispatch(taskActions.setTaskToAssign(task.id))}
+                onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task.id))}
+                onOpen={(task) => navigate(`${task.id}`)}
+              />
+            )
           }
         />
       </Routes>
