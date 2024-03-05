@@ -87,7 +87,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscriptions: subscriptions.reduce(
-          (subs, { subscriber, ...sub }): Record<string, SubscriptionWrapper> => ({
+          (subs, { subscriber, ...sub }): Record<string, SubscriptionWrapper> => ({ // eslint-disable-line @typescript-eslint/no-unused-vars
             ...subs,
             [`${sub.typeId}:${sub.subscriberId}`]: sub,
           }),

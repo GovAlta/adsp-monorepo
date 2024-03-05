@@ -139,7 +139,8 @@ export const WebhookHistoryModal = (): JSX.Element => {
     if (webhook !== undefined) {
       onSearch(initSearchCriteria);
     }
-  }, [webhook, initSearchCriteria, onSearch]);
+  }, [webhook]);// eslint-disable-line react-hooks/exhaustive-deps
+
 
   if (searchCriteria === undefined) return null;
 

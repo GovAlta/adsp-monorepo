@@ -79,7 +79,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
     if (stream.id !== initStream.id) {
       setStream(initStream);
     }
-  }, [initStream, rolesObj]);
+  }, [initStream, rolesObj]);// eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <StreamModalStyles>

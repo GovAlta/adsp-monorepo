@@ -64,7 +64,7 @@ function Status(): JSX.Element {
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
     dispatch(fetchStatusMetrics());
-  }, [dispatch]);
+  }, [dispatch]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (applications && applications.length > 0 && intervalId === null) {
@@ -75,14 +75,14 @@ function Status(): JSX.Element {
         }
       };
     }
-  }, [applications]);
+  }, [applications]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
 
   useEffect(() => {
     dispatch(getNotices());
     dispatch(GetMySubscriber());
-  }, [dispatch]);
+  }, [dispatch]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const subscribeToggle = () => {
     if (subscription) {

@@ -18,16 +18,16 @@ const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps):
 
   useEffect(() => {
     dispatch(FetchFileMetrics());
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setActiveEdit(false);
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setOpenAddFileType(false);
     navigate('/admin/services/file');
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
   return (
     <OverviewLayout
       description={

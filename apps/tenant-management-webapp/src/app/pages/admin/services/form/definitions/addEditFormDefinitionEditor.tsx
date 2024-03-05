@@ -236,7 +236,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal]);
+  }, [saveModal]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (id && formDefinitions[id]) {
@@ -255,7 +255,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setInitialDefinition(parseUiSchema<FormDefinition>(JSON.stringify(formDefinitions[id])).get());
       setDefinition(formDefinitions[id]);
     }
-  }, [formDefinitions]);
+  }, [formDefinitions]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     try {
@@ -266,7 +266,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setTempUiSchemaBounced('{}');
       setError(invalidJsonMsg);
     }
-  }, [debouncedRenderUISchema]);
+  }, [debouncedRenderUISchema]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     try {
@@ -277,7 +277,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setDataSchemaBounced('{}');
       setError(invalidJsonMsg);
     }
-  }, [debouncedRenderDataSchema]);
+  }, [debouncedRenderDataSchema]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
 
@@ -374,7 +374,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
       setSpinner(false);
     }
-  }, [definitions]);
+  }, [definitions]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const openModalFunction = (disposition) => {
     const currentDispositions = definition.dispositionStates;

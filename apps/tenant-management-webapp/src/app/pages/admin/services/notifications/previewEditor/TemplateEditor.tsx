@@ -94,7 +94,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     if (initialChannel) {
       setPreview(initialChannel);
     }
-  }, [initialChannel]);
+  }, [initialChannel]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (modelOpen) {

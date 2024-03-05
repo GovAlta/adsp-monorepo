@@ -81,7 +81,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
 
     // const selectedQueue = location.state as TaskDefinition;
     // setQueue(selectedQueue);
-  }, [queues, id]);
+  }, [queues]);// eslint-disable-line react-hooks/exhaustive-deps
 
 
 
@@ -177,7 +177,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
 
       setSpinner(false);
     }
-  }, [queues, queue.id, spinner, validators]);
+  }, [queues]);// eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);

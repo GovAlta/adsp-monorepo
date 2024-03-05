@@ -20,15 +20,15 @@ export const TombStone = ({ selectedScript, onSave }: props): JSX.Element => {
   useEffect(() => {
     const elem = tooltipNameElem.current;
     setIsNameElipsisActive(elem ? elem.offsetWidth < elem.scrollWidth || elem.offsetHeight < elem.scrollHeight : false);
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const elem = tooltipNameElem.current;
     setIsIdElipsisActive(elem ? elem.offsetWidth < elem.scrollWidth || elem.offsetHeight < elem.scrollHeight : false);
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const elem = tooltipNameElem.current;
     setIsDescElipsisActive(elem ? elem.offsetWidth < elem.scrollWidth || elem.offsetHeight < elem.scrollHeight : false);
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
   return (
     <TombStoneWrapper data-testid="task-config-form">
       <div className="nameColumn">

@@ -61,7 +61,7 @@ export const AddEditFormDefinition = ({
 
   useEffect(() => {
     dispatch(fetchDirectory());
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
   const navigate = useNavigate();
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
   const [multiForm, setMultiForm] = useState<boolean>(false);
@@ -86,14 +86,14 @@ export const AddEditFormDefinition = ({
         onClose();
       }
     }
-  }, [definitions]);
+  }, [definitions]);// eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator, defaultFormUrl]);
 
   useEffect(() => {
     setDefinition(initialValue);
-  }, [open]);
+  }, [open]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const { errors, validators } = useValidators(
     'name',

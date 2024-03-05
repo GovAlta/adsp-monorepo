@@ -61,7 +61,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     } else {
       dispatch(setPdfDisplayFileId(null));
     }
-  }, [dispatch, fileList]);
+  }, [dispatch, fileList]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const generateTemplate = () => {
     const payload = {

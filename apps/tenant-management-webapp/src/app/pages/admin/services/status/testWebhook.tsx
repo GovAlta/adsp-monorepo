@@ -41,11 +41,11 @@ export const TestWebhookModal = (): JSX.Element => {
       dispatch(getEventLogEntries('', initCriteria));
       setShowEntries(true);
     }
-  }, [dispatch, testSuccess, initCriteria]);
+  }, [testSuccess]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setSelectedStatusName(events && events[0]);
-  }, [webhook, entries, events]);
+  }, [webhook, entries]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
 

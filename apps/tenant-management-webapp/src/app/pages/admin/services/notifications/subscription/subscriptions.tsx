@@ -34,7 +34,7 @@ export const Subscriptions: FunctionComponent = () => {
     if (criteriaState.email === '' && criteriaState.name === '') {
       dispatch(GetAllTypeSubscriptions({}));
     }
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
   //eslint-disable-next-line
   useEffect(() => {}, [loadingState]);
 

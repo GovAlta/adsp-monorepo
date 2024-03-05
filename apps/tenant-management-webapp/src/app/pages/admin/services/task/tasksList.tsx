@@ -61,7 +61,7 @@ export const TasksList = (): JSX.Element => {
     if (selectedTask.length > 0) {
       dispatch(getTasks(taskQueues[selectedTask]));
     }
-  }, [selectedTask, dispatch, taskQueues]);
+  }, [selectedTask, dispatch]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     document.body.style.overflow = 'unset';

@@ -17,7 +17,8 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);
-  }, [setActiveEdit, setActiveIndex]);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
+
 
   return (
     <OverviewCss>

@@ -92,7 +92,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     if (!definitions || (definitions && definitions.length === 0)) {
       dispatch(getEventDefinitions());
     }
-  }, [eventDefinitions]);
+  }, [eventDefinitions]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const roles = useSelector(selectRoleList);
   const latestNotification = useSelector(
@@ -205,7 +205,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         }
       };
     }
-  }, [monaco, eventDefinitions]);
+  }, [monaco, eventDefinitions]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -215,7 +215,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onNameChange(selectedScript?.name || '');
     onDescriptionChange(selectedScript?.description || '');
     onScriptChange(selectedScript?.script || '');
-  }, [selectedScript]);
+  }, [selectedScript]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const orderedEventNames = definitions
     .map((def) => {

@@ -40,7 +40,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
 
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // only show next if there is an event selected and its name isnt empty

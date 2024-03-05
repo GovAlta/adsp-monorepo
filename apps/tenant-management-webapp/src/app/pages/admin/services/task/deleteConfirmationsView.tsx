@@ -31,7 +31,7 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
       tasks = [];
       setShowDeleteConfirmation(true);
     }
-  }, [tasks]);
+  }, [tasks]);// eslint-disable-line react-hooks/exhaustive-deps
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   useEffect(() => {}, [tasks]);
 

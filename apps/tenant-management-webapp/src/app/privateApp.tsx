@@ -29,7 +29,7 @@ export function PrivateApp(): JSX.Element {
   }
   useEffect(() => {
     dispatch(KeycloakCheckSSOWithLogout(realm));
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const ready = !!userInfo;

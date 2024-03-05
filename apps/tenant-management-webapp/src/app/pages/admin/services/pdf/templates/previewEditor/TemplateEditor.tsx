@@ -82,14 +82,14 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (!pdfTemplate) {
       dispatch(getPdfTemplates());
     }
-  }, [dispatch,pdfTemplate]);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
 
-  const cancel = useCallback(() => {
+  const cancel = () => {
     dispatch(setPdfDisplayFileId(null));
     navigate('/admin/services/pdf?templates=true');
-  }, [dispatch, navigate]);
+  };
   //eslint-disable-next-line
   useEffect(() => {
     setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
@@ -99,7 +99,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (saveModal.closeEditor) {
       cancel();
     }
-  }, [saveModal, cancel]);
+  }, [saveModal]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
 
@@ -120,13 +120,13 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (isPDFUpdated(tempPdfTemplate, tmpTemplate)) {
       dispatch(updateTempTemplate(tmpTemplate));
     }
-  }, [dispatch, debouncedTmpTemplate, EditorError.testData, tempPdfTemplate]);
+  }, [debouncedTmpTemplate, EditorError.testData]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (reloadFile && reloadFile[pdfTemplate.id]) {
       dispatch(FetchFileService(reloadFile[pdfTemplate.id]));
     }
-  }, [reloadFile, dispatch, pdfTemplate.id]);
+  }, [reloadFile]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (monaco) {

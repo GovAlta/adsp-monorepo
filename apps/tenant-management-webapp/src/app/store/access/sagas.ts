@@ -95,7 +95,7 @@ export function* fetchAccess() {
   }
 }
 
-export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterator {
+export function* fetchServiceRoles(_action: FetchServiceRolesAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
@@ -183,7 +183,7 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
           keycloakRoleIds.push(c.id);
           keycloakIdMap[c.clientId] = c.id;
         });
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
       const rolePromises = keycloakRoleIds.map((id, index) => {
         const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients/${id}/roles`;
         return call(axios.get, url, {

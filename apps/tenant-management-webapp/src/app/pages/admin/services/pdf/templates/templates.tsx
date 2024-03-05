@@ -28,7 +28,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
     if (openEditor) {
       navigate(`edit/${openEditor}`);
     }
-  }, [openEditor, navigate]);
+  }, [openEditor]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
@@ -65,7 +65,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
     if (isObjectEmpty(pdfTemplates)) {
       dispatch(getPdfTemplates());
     }
-  }, [dispatch, getPdfTemplates]);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [pdfTemplates]);

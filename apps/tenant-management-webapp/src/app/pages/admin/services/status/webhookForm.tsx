@@ -44,7 +44,7 @@ export const WebhookFormModal = (): JSX.Element => {
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, [dispatch]);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedWebhook?.id === '') {
@@ -59,7 +59,7 @@ export const WebhookFormModal = (): JSX.Element => {
       setWebhook(selectedWebhook);
     }
     setLoaded(true);
-  }, [selectedWebhook, webhook.id, dispatch]);
+  }, [selectedWebhook]);// eslint-disable-line react-hooks/exhaustive-deps
 
   function save() {
     if (!isFormValid()) {

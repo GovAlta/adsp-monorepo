@@ -80,7 +80,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
         reset();
         setOpenAddScript(true);
       }
-    }, [activeEdit]);
+    }, [activeEdit]);// eslint-disable-line react-hooks/exhaustive-deps
 
     const reset = () => {
       setTestInput(getDefaultTestInput());

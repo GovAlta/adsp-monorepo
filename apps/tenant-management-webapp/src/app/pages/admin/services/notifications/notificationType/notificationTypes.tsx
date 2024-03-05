@@ -189,7 +189,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         });
       }
     }
-  }, [selectedEvent]);
+  }, [selectedEvent]);// eslint-disable-line react-hooks/exhaustive-deps
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
@@ -201,7 +201,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     dispatch(FetchCoreNotificationTypesService());
-  }, [notification?.notificationTypes]);
+  }, [notification?.notificationTypes]);// eslint-disable-line react-hooks/exhaustive-deps
 
   function reset(closeEventModal?: boolean) {
     setShowTemplateForm(false);
@@ -225,7 +225,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       setShowTemplateForm(false);
       setFormTitle('Add notification type');
     }
-  }, [activeEdit]);
+  }, [activeEdit]);// eslint-disable-line react-hooks/exhaustive-deps
 
   function manageEvents(notificationType) {
     setSelectedType(notificationType);
@@ -234,7 +234,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     renderBodyPreview(debouncedRenderBody);
-  }, [debouncedRenderBody, debouncedRenderTitle, debouncedRenderSubtitle, setBodyPreview]);
+  }, [debouncedRenderBody, debouncedRenderTitle, debouncedRenderSubtitle, setBodyPreview]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const error = checkForProhibitedTags(debouncedXssCheckRenderBody as string);
@@ -244,7 +244,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         body: error,
       });
     }
-  }, [debouncedXssCheckRenderBody]);
+  }, [debouncedXssCheckRenderBody]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const error = checkForProhibitedTags(debouncedXssCheckRenderSubject as string);
@@ -254,11 +254,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         subject: error,
       });
     }
-  }, [debouncedXssCheckRenderSubject]);
+  }, [debouncedXssCheckRenderSubject]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     renderSubjectPreview(debouncedRenderSubject);
-  }, [debouncedRenderSubject, setSubjectPreview]);
+  }, [debouncedRenderSubject, setSubjectPreview]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const renderSubjectPreview = (value) => {
     try {

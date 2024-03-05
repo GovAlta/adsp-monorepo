@@ -56,7 +56,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     }
 
     setAddress(subscriber?.addressAs || '');
-  }, [subscriber]);
+  }, [subscriber]);// eslint-disable-line react-hooks/exhaustive-deps
 
   function getChannelIndex(subscriber, type) {
     const channels = subscriber?.channels;

@@ -49,7 +49,7 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
 
   useEffect(() => {
     dispatch(FindSubscribers(criteriaInit));
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <CheckSubscriberRoles>

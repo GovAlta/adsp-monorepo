@@ -58,7 +58,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
   useEffect(() => {
     dispatch(getCommentTopicTypes());
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => {
     setOpenAddCommentTopicType(false);
@@ -68,10 +68,9 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
   useEffect(() => {}, [commentTopicTypes]);
   useEffect(() => {
     document.body.style.overflow = 'unset';
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <>
       <div>
         <br />
         <GoAButton
@@ -137,6 +136,5 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
           }}
         />
       </div>
-    </>
   );
 };

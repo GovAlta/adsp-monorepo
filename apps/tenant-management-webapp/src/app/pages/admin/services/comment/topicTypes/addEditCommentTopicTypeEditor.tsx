@@ -78,7 +78,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     dispatch(fetchKeycloakServiceRoles());
     dispatch(FetchRealmRoles());
     dispatch(getCommentTopicTypes());
-  }, []);
+  }, []);// eslint-disable-line react-hooks/exhaustive-deps
 
   const types = [
     { type: 'adminRoles', name: 'Admin roles' },
@@ -99,7 +99,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal]);
+  }, [saveModal]);// eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (id && commentTopicTypes[id]) {
@@ -110,7 +110,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
       setTopicType(topicTypes);
       setInitialTopicType(topicTypes);
     }
-  }, [commentTopicTypes]);
+  }, [commentTopicTypes]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
 
@@ -205,7 +205,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
 
       setSpinner(false);
     }
-  }, [topicTypes]);
+  }, [topicTypes]);// eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
