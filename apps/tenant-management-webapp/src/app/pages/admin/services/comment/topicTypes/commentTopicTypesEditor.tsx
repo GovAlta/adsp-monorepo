@@ -19,19 +19,17 @@ export const CommentTopicTypesEditor = (): JSX.Element => {
   };
 
   return (
-    <>
-      <Modal data-testid="template-form">
-        <ModalContent>
-          <OuterNotificationTemplateEditorContainer>
-            <TabletMessage goBack={goBack} />
-            <HideTablet>
-              <NotificationTemplateEditorContainer>
-                <AddEditCommentTopicTypeEditor />
-              </NotificationTemplateEditorContainer>
-            </HideTablet>
-          </OuterNotificationTemplateEditorContainer>
-        </ModalContent>
-      </Modal>
-    </>
+    <Modal data-testid="template-form">
+      <ModalContent>
+        <OuterNotificationTemplateEditorContainer>
+          <TabletMessage goBack={goBack} />
+          <HideTablet>
+            <NotificationTemplateEditorContainer>
+              <AddEditCommentTopicTypeEditor />
+            </NotificationTemplateEditorContainer>
+          </HideTablet>
+        </OuterNotificationTemplateEditorContainer>
+      </ModalContent>
+    </Modal>
   );
 };

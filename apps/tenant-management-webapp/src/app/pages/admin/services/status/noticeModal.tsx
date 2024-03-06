@@ -79,7 +79,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         setIsAllApplications(notice.isAllApplications);
       }
     }
-  }, [props.noticeId]);
+  }, [props.noticeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function validDateRangeErrors() {
     if (dateTime(endDate, endTime) < dateTime(startDate, startTime)) {

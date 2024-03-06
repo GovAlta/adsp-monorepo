@@ -10,7 +10,7 @@ interface TaskOverviewProps {
 export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.Element => {
   useEffect(() => {
     setOpenAddDefinition(false);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
 
@@ -25,17 +25,15 @@ export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.E
         </section>
       }
       addButton={
-        <>
-          <GoAButton
-            testId="add-queue"
-            onClick={() => {
-              setOpenAddDefinition(true);
-              navigate('/admin/services/task?definitions=true');
-            }}
-          >
-            Add queue
-          </GoAButton>
-        </>
+        <GoAButton
+          testId="add-queue"
+          onClick={() => {
+            setOpenAddDefinition(true);
+            navigate('/admin/services/task?definitions=true');
+          }}
+        >
+          Add queue
+        </GoAButton>
       }
     />
   );

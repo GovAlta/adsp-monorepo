@@ -25,7 +25,7 @@ export const useTokenExpiryCount = () => {
     return () => {
       if (logoutCountdown) clearInterval(logoutCountdown);
     };
-  }, [refreshTokenExp]);
+  }, [dispatch, refreshTokenExp]);
 
   return null;
 };
@@ -55,10 +55,10 @@ export const useTokenWillExpiryCount = () => {
     return () => {
       if (willExpiredCountdown) clearInterval(willExpiredCountdown);
     };
-  }, [refreshTokenExp]);
+  }, [refreshTokenExp, dispatch]);
 
   useEffect(() => {
-    const tokenWillExpireHandler = (event) => {
+    const tokenWillExpireHandler = (_event) => {
       dispatch(UpdateAccessToken());
       dispatch(SetSessionWillExpired(false));
     };
@@ -71,7 +71,7 @@ export const useTokenWillExpiryCount = () => {
     return function cleanupListener() {
       window.removeEventListener('keypress', tokenWillExpireHandler);
     };
-  }, [isWillExpired]);
+  }, [dispatch, isWillExpired]);
 
   return null;
 };

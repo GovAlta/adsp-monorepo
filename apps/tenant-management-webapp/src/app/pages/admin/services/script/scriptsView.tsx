@@ -61,7 +61,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { scripts } = useSelector((state: RootState) => state.scriptService);
   const { errors, validators } = useValidators(
@@ -80,7 +80,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
       reset();
       setOpenAddScript(true);
     }
-  }, [activeEdit]);
+  }, [activeEdit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => {
     setTestInput(getDefaultTestInput());

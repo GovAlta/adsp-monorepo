@@ -13,20 +13,18 @@ export const FormDefinitionEditor = (): JSX.Element => {
   };
 
   return (
-    <>
-      <Modal data-testid="template-form">
-        <ModalContent>
-          <OuterFormTemplateEditorContainer>
-            <TabletMessage goBack={goBack} />
+    <Modal data-testid="template-form">
+      <ModalContent>
+        <OuterFormTemplateEditorContainer>
+          <TabletMessage goBack={goBack} />
 
-            <HideTablet>
-              <FormTemplateEditorContainer>
-                <AddEditFormDefinitionEditor />
-              </FormTemplateEditorContainer>
-            </HideTablet>
-          </OuterFormTemplateEditorContainer>
-        </ModalContent>
-      </Modal>
-    </>
+          <HideTablet>
+            <FormTemplateEditorContainer>
+              <AddEditFormDefinitionEditor />
+            </FormTemplateEditorContainer>
+          </HideTablet>
+        </OuterFormTemplateEditorContainer>
+      </ModalContent>
+    </Modal>
   );
 };

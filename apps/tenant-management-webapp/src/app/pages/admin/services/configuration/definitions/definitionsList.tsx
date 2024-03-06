@@ -22,7 +22,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
   // to ensure it dosent re-calculate this value if value dosent change
   const nameSpaces: Record<string, string[]> = useMemo(() => {
     return {};
-  }, [definitions]);
+  }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // to ensure it dosent re-calculate this value if value dosent change
   const memoizedReducedConfiguration = useMemo(() => {
@@ -37,12 +37,12 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
       }
       return obj;
     }, {});
-  }, [definitions]);
+  }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // sorting data by namespaces and sort definition names under each namespace
   const sortedNamespaces: Record<string, string[]> = useMemo(() => {
     return sortConfigDefinitions(nameSpaces);
-  }, [definitions]);
+  }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>

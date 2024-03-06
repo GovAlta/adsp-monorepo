@@ -165,7 +165,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
     if (revisions?.length > 0) {
       dispatch(getConfigurationActive(service));
     }
-  }, [indicator, revisions]);
+  }, [indicator, revisions]); // eslint-disable-line react-hooks/exhaustive-deps
   if (
     !configurationRevisions[service]?.revisions.next &&
     !configurationRevisions[service]?.revisions?.latest &&

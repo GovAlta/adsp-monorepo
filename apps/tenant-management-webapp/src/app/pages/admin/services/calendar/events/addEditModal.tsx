@@ -66,7 +66,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       setStartDate(initCalendarEvent?.start);
       setEndDate(initCalendarEvent?.end);
     }
-  }, [initCalendarEvent]);
+  }, [initCalendarEvent, calendarEvent]);
 
   const getTimeString = (calendarDateString: string) => {
     const timeString = calendarDateString.split('T')[1];

@@ -83,7 +83,7 @@ describe('checkInput', () => {
       const charChecker = characterCheck(validationPattern.lowerKebabCase);
       let failureActionCalled = false;
       const action = {
-        onFailure: (message: string) => {
+        onFailure: (_message: string) => {
           failureActionCalled = true;
         },
       };
@@ -97,7 +97,7 @@ describe('checkInput', () => {
 
       const action = {
         // eslint-disable-next-line @typescript-eslint/no-empty-function
-        onFailure: (message: string) => {},
+        onFailure: (_message: string) => {},
         onSuccess: () => {
           successActionCalled = true;
         },

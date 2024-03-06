@@ -100,40 +100,38 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
   };
 
   return (
-    <>
-      <TriggerEventScrollPane>
-        <ScriptEventTriggerListDefinition>
-          <div className={className}>
-            {!triggerEvents && renderNoItem('script event trigger')}
+    <TriggerEventScrollPane>
+      <ScriptEventTriggerListDefinition>
+        <div className={className}>
+          {!triggerEvents && renderNoItem('script event trigger')}
 
-            <div>
-              <DataTable style={{ height: '100%' }} data-testid="script-editor-trigger-events-table">
-                <thead data-testid="script-editor-trigger-events-table-header">
-                  <tr>
-                    <th id="name" data-testid="script-editor-trigger-events-table-header-name">
-                      Trigger Name
-                    </th>
-                    <th id="actions" data-testid="event-trigger-actions">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedTriggerEvents().map((triggerEvent) => (
-                    <ScriptEventTriggerDefinitionComponent
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      key={`${triggerEvent.eventName}:${Math.random()}`}
-                      triggerEvent={triggerEvent}
-                    />
-                  ))}
-                </tbody>
-              </DataTable>
-            </div>
+          <div>
+            <DataTable style={{ height: '100%' }} data-testid="script-editor-trigger-events-table">
+              <thead data-testid="script-editor-trigger-events-table-header">
+                <tr>
+                  <th id="name" data-testid="script-editor-trigger-events-table-header-name">
+                    Trigger Name
+                  </th>
+                  <th id="actions" data-testid="event-trigger-actions">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedTriggerEvents().map((triggerEvent) => (
+                  <ScriptEventTriggerDefinitionComponent
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    key={`${triggerEvent.eventName}:${Math.random()}`}
+                    triggerEvent={triggerEvent}
+                  />
+                ))}
+              </tbody>
+            </DataTable>
           </div>
-        </ScriptEventTriggerListDefinition>
-      </TriggerEventScrollPane>
-    </>
+        </div>
+      </ScriptEventTriggerListDefinition>
+    </TriggerEventScrollPane>
   );
 };
 
