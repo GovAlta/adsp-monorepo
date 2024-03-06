@@ -58,7 +58,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
   useEffect(() => {
     dispatch(getCommentTopicTypes());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => {
     setOpenAddCommentTopicType(false);
@@ -71,72 +71,68 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
   }, []);
 
   return (
-    <>
-      <div>
-        <br />
-        <GoAButton
-          testId="add-topic-type"
-          onClick={() => {
-            setOpenAddCommentTopicType(true);
-          }}
-        >
-          Add topic type
-        </GoAButton>
-        <br />
-        <br />
-        <PageIndicator />
+    <div>
+      <br />
+      <GoAButton
+        testId="add-topic-type"
+        onClick={() => {
+          setOpenAddCommentTopicType(true);
+        }}
+      >
+        Add topic type
+      </GoAButton>
+      <br />
+      <br />
+      <PageIndicator />
 
-        <AddEditCommentTopicType
-          open={openAddCommentTopicType}
-          isEdit={false}
-          onClose={reset}
-          initialValue={defaultCommentTopicType}
-          onSave={(definition) => {
-            dispatch(updateCommentTopicType(definition));
-          }}
-        />
+      <AddEditCommentTopicType
+        open={openAddCommentTopicType}
+        isEdit={false}
+        onClose={reset}
+        initialValue={defaultCommentTopicType}
+        onSave={(definition) => {
+          dispatch(updateCommentTopicType(definition));
+        }}
+      />
 
-        {!indicator.show && Object.keys(commentTopicTypes).length === 0 && renderNoItem('topic types')}
-        {!indicator.show && Object.keys(commentTopicTypes).length > 0 && (
-          <>
-            <CommentTopicTypesTable
-              topicTypes={commentTopicTypes}
-              onDelete={(currentTemplate) => {
-                setShowDeleteConfirmation(true);
-                setCurrentDefinition(currentTemplate);
-              }}
-            />
-          </>
-        )}
-        {!indicator.show && Object.keys(commentCoreTopicTypes).length === 0 && renderNoItem('core topic types')}
-        {!indicator.show && Object.keys(commentCoreTopicTypes).length > 0 && (
-          <>
-            <h3>Core types</h3>
-            <CommentCoreTopicTypesTable
-              topicTypes={commentCoreTopicTypes}
-              onDelete={(currentTemplate) => {
-                setShowDeleteConfirmation(true);
-                setCurrentDefinition(currentTemplate);
-              }}
-            />
-          </>
-        )}
-
-        <DeleteModal
-          isOpen={showDeleteConfirmation}
-          title="Delete topic type"
-          content={
-            <div>
-              Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
-            </div>
-          }
-          onCancel={() => setShowDeleteConfirmation(false)}
-          onDelete={() => {
-            setShowDeleteConfirmation(false);
-            dispatch(deleteCommentTopicType(currentDefinition?.id));
+      {!indicator.show && Object.keys(commentTopicTypes).length === 0 && renderNoItem('topic types')}
+      {!indicator.show && Object.keys(commentTopicTypes).length > 0 && (
+        <CommentTopicTypesTable
+          topicTypes={commentTopicTypes}
+          onDelete={(currentTemplate) => {
+            setShowDeleteConfirmation(true);
+            setCurrentDefinition(currentTemplate);
           }}
         />
-      </div>
-    </>
+      )}
+      {!indicator.show && Object.keys(commentCoreTopicTypes).length === 0 && renderNoItem('core topic types')}
+      {!indicator.show && Object.keys(commentCoreTopicTypes).length > 0 && (
+        <>
+          <h3>Core types</h3>
+          <CommentCoreTopicTypesTable
+            topicTypes={commentCoreTopicTypes}
+            onDelete={(currentTemplate) => {
+              setShowDeleteConfirmation(true);
+              setCurrentDefinition(currentTemplate);
+            }}
+          />
+        </>
+      )}
+
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete topic type"
+        content={
+          <div>
+            Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
+          </div>
+        }
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(deleteCommentTopicType(currentDefinition?.id));
+        }}
+      />
+    </div>
   );
 };

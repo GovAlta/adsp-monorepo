@@ -15,6 +15,7 @@ import {
   loadForm,
   selectTopic,
   selectedTopicSelector,
+  showSubmitSelector,
   submitForm,
   updateForm,
 } from '../state';
@@ -50,6 +51,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const busy = useSelector(busySelector);
   const topic = useSelector(selectedTopicSelector);
   const canSubmit = useSelector(canSubmitSelector);
+  const showSubmit = useSelector(showSubmitSelector);
 
   useEffect(() => {
     dispatch(loadForm(formId));
@@ -71,6 +73,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   form={form}
                   data={data}
                   canSubmit={canSubmit}
+                  showSubmit={showSubmit}
                   saving={busy.saving}
                   onChange={({ data, errors }) =>
                     dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }))

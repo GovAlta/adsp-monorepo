@@ -20,7 +20,7 @@ export const DeleteConfirmationsView = ({ topic, selectedType, onCancel, onDelet
   const dispatch = useDispatch();
   useEffect(() => {
     setShowDeleteConfirmation(true);
-  });
+  }, [setShowDeleteConfirmation]);
 
   return (
     <TableDiv key="topic">

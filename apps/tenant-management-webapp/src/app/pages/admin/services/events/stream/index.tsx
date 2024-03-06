@@ -34,7 +34,7 @@ export const EventStreams = (): JSX.Element => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [tenantStreams]);

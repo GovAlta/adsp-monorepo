@@ -464,6 +464,11 @@ export const isClerkSelector = createSelector(
 
 export const busySelector = (state: AppState) => state.form.busy;
 
+export const showSubmitSelector = createSelector(definitionSelector, (definition) => {
+  // Stepper variant of the categorization includes a Submit button on the review step, so don't show submit outside form.
+  return definition?.uiSchema?.type !== 'Categorization' || definition?.uiSchema?.options?.variant !== 'stepper';
+});
+
 export const canSubmitSelector = createSelector(
   (state: AppState) => state.form.errors,
   (state: AppState) => state.form.busy.saving,

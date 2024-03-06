@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
@@ -204,7 +204,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getFormDefinitions());
     dispatch(getTaskQueues());
-  }, []);
+  }, [dispatch]);
 
   const types = [
     { type: 'applicantRoles', name: 'Applicant roles' },
@@ -236,7 +236,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal]);
+  }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (id && formDefinitions[id]) {
@@ -255,7 +255,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setInitialDefinition(parseUiSchema<FormDefinition>(JSON.stringify(formDefinitions[id])).get());
       setDefinition(formDefinitions[id]);
     }
-  }, [formDefinitions]);
+  }, [formDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     try {
@@ -266,7 +266,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setTempUiSchemaBounced('{}');
       setError(invalidJsonMsg);
     }
-  }, [debouncedRenderUISchema]);
+  }, [debouncedRenderUISchema]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     try {
@@ -277,14 +277,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setDataSchemaBounced('{}');
       setError(invalidJsonMsg);
     }
-  }, [debouncedRenderDataSchema]);
+  }, [debouncedRenderDataSchema]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
 
-  const close = () => {
+  const close = useCallback(() => {
     dispatch(ClearNewFileList());
     navigate('/admin/services/form?definitions=true');
-  };
+  }, [dispatch, navigate]);
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
@@ -297,38 +297,36 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     const clerkRoles = types[1];
 
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          anonymousRead={definition.anonymousApply}
-          roleSelectFunc={(roles, type) => {
-            if (type === applicantRoles.name) {
-              setDefinition({
-                ...definition,
-                applicantRoles: roles,
-              });
-            } else if (type === clerkRoles.name) {
-              setDefinition({
-                ...definition,
-                clerkRoles: roles,
-              });
-            } else {
-              setDefinition({
-                ...definition,
-                assessorRoles: roles,
-              });
-            }
-          }}
-          nameColumnWidth={40}
-          service="FileType"
-          checkedRoles={[
-            { title: types[0].name, selectedRoles: definition[types[0].type] },
-            { title: types[1].name, selectedRoles: definition[types[1].type] },
-            { title: types[2].name, selectedRoles: definition[types[2].type] },
-          ]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        anonymousRead={definition.anonymousApply}
+        roleSelectFunc={(roles, type) => {
+          if (type === applicantRoles.name) {
+            setDefinition({
+              ...definition,
+              applicantRoles: roles,
+            });
+          } else if (type === clerkRoles.name) {
+            setDefinition({
+              ...definition,
+              clerkRoles: roles,
+            });
+          } else {
+            setDefinition({
+              ...definition,
+              assessorRoles: roles,
+            });
+          }
+        }}
+        nameColumnWidth={40}
+        service="FileType"
+        checkedRoles={[
+          { title: types[0].name, selectedRoles: definition[types[0].type] },
+          { title: types[1].name, selectedRoles: definition[types[1].type] },
+          { title: types[2].name, selectedRoles: definition[types[2].type] },
+        ]}
+      />
     );
   };
 
@@ -376,7 +374,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
       setSpinner(false);
     }
-  }, [definitions]);
+  }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openModalFunction = (disposition) => {
     const currentDispositions = definition.dispositionStates;

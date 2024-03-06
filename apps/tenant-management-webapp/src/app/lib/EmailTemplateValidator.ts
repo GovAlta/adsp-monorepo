@@ -15,7 +15,7 @@ import * as xss from 'xss';
 export const checkForProhibitedTags = (html: string): string => {
   let error = '';
   const xssFilter = new xss.FilterXSS({
-    onTag: (tag: string, html: string, options) => {
+    onTag: (tag: string, _html: string, _options) => {
       if (tag === 'script' || tag === 'link') {
         error = 'Please remove all script and link tags, to reduce the chance of introducing XSS vulnerabilities';
       }

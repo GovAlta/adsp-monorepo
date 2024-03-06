@@ -21,7 +21,7 @@ export const TopicListTable = ({ topics, selectedType, showActions, onDeleteTopi
   const [activeRow, setActiveRow] = useState(null);
   useEffect(() => {
     dispatch(clearComments());
-  }, [activeRow]);
+  }, [activeRow, dispatch]);
   return (
     <>
       <HeaderFont>
