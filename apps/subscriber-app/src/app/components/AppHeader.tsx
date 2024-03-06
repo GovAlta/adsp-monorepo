@@ -45,7 +45,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
             {(authenticated === true || props.admin) && (
               <UserIconBox>
                 <UserIcon />
-                <a onClick={handleLogout}>Sign out</a>
+                <Anchor onClick={handleLogout}>Sign out</Anchor>
               </UserIconBox>
             )}
             {!authenticated && tenant?.realm && <a href={`/subscriptions/${tenant?.realm}`}>Login</a>}
@@ -58,7 +58,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
           {(authenticated === true || props.admin) && (
             <UserIconBox>
               <UserIcon />
-              <a onClick={handleLogout}>Sign out</a>
+              <Anchor onClick={handleLogout}>Sign out</Anchor>
             </UserIconBox>
           )}
 
@@ -117,6 +117,12 @@ const SidebarWrapper = styled.div<MenuState>`
   }
 `;
 
+const Anchor = styled.div`
+  color: #0070c4;
+  text-decoration: underline;
+  outline: none;
+  cursor: pointer;
+`;
 const UserIconBox = styled.div`
   display: flex;
   white-space: nowrap;
