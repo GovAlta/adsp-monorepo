@@ -21,7 +21,7 @@ export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
     return () => {
       clearTimeout(timer);
     };
-  }, [delayInMS]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return showIndicator && <PageLoader message={message} />;
 };
