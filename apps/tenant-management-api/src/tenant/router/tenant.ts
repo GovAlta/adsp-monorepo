@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { IsDefined } from 'class-validator';
+import { IsDefined, IsOptional } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import {
   requireTenantServiceAdmin,
@@ -41,6 +41,23 @@ class TenantByNameDto {
 class TenantByRealmDto {
   @IsDefined()
   realm;
+}
+
+class FindUserIdByEmailDto {
+  @IsDefined()
+  email;
+  @IsOptional()
+  realm;
+}
+
+class DeleteUserIdpDto {
+  @IsDefined()
+  userId;
+  @IsDefined()
+  realm;
+
+  @IsOptional()
+  idpName;
 }
 
 interface TenantRouterProps {
@@ -161,6 +178,28 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
     }
   }
 
+  async function findUserIdByEmailInCore(req, res, next) {
+    try {
+      const { email, realm } = req.payload;
+      const id = await realmService.findUserId(realm || 'core', email);
+      res.json({
+        userIdInCore: id,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async function deleteUserIdp(req, res, next) {
+    try {
+      const { userId, realm, idpName } = req.payload;
+      const id = await realmService.deleteUserIdp(userId, realm, idpName);
+      res.sendStatus(200);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // Tenant admin only APIs. Used by the admin web app.
   tenantRouter.post(
     '/',
@@ -174,6 +213,8 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
   tenantRouter.post('/email', [validationMiddleware(TenantByEmailDto)], getTenantByEmail);
   tenantRouter.post('/name', [validationMiddleware(TenantByNameDto)], getTenantByName);
+  tenantRouter.get('/user/id', [validationMiddleware(FindUserIdByEmailDto)], findUserIdByEmailInCore);
+  tenantRouter.delete('/user/idp', [validationMiddleware(DeleteUserIdpDto)], deleteUserIdp);
 
   return tenantRouter;
 };

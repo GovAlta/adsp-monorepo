@@ -4,6 +4,7 @@ import AsideLinks from '@components/AsideLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { Overview } from './overview';
 import { ServiceRoles } from './serviceRoles';
+import { UserIdp } from './userIDP';
 
 export default function (): JSX.Element {
   // eslint-disable-next-line

@@ -28,7 +28,11 @@ import {
   TenantAdminLoginAction,
   TenantCreationLoginInitAction,
   UPDATE_ACCESS_TOKEN,
+  DELETE_USER_CORE_IDP,
   UpdateLoginSuccess,
+  DeleteUserIdpAction,
+  FETCH_USER_IDP_INFO,
+  FetchUserIdpInfoAction,
 } from './actions';
 
 import { KeycloakApi } from '@store/access/api';
@@ -262,6 +266,14 @@ export function* updateAccessToken(_action: UpdateAccessTokenAction): SagaIterat
   yield call(getAccessToken, true);
 }
 
+export function* deleteUserIdp(action: DeleteUserIdpAction): SagaIterator {
+  const { email, realm } = action;
+}
+
+export function* fetchUserIdp(action: FetchUserIdpInfoAction): SagaIterator {
+  const { email, realm } = action;
+}
+
 export function* watchTenantSagas(): SagaIterator {
   // tenant and keycloak
   yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);
@@ -270,6 +282,8 @@ export function* watchTenantSagas(): SagaIterator {
   yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);
   yield takeEvery(TENANT_LOGOUT, tenantLogout);
   yield takeEvery(UPDATE_ACCESS_TOKEN, updateAccessToken);
+  yield takeEvery(DELETE_USER_CORE_IDP, deleteUserIdp);
+  yield takeEvery(FETCH_USER_IDP_INFO, fetchUserIdp);
 
   //tenant config
   yield takeEvery(CREATE_TENANT, createTenant);

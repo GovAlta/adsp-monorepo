@@ -437,4 +437,45 @@ export class KeycloakRealmServiceImpl implements RealmService {
 
     return brokerDeleted && realmDeleted;
   }
+
+  async findUserId(realm: string, email: string): Promise<string> {
+    const client = await this.createAdminClient();
+    const url = `${this.keycloakRootUrl}/auth/admin/realms/${realm}/users`;
+    const headers = {
+      Authorization: `Bearer ${client.accessToken}`,
+    };
+
+    try {
+      const response = await axios.get(url, {
+        headers,
+        params: {
+          email,
+          exact: true,
+        },
+      });
+      const users = response.data;
+      if (users.length === 0) return null;
+
+      return response.data[0].id;
+    } catch (error) {
+      const errMessage = `Failed to find user id by email ${email} in ${realm} due to ${error.message}`;
+      this.logger.error(errMessage);
+    }
+  }
+
+  async deleteUserIdp(userId: string, realm, idpName = 'goa-ad') {
+    const client = await this.createAdminClient();
+    const deleteGoAIdPUrl = `${this.keycloakRootUrl}/auth/admin/realms/${realm}/users/${userId}/federated-identity/${idpName}`;
+    const headers = {
+      Authorization: `Bearer ${client.accessToken}`,
+    };
+
+    try {
+      await axios.delete(deleteGoAIdPUrl, { headers });
+    } catch (err) {
+      const errMessage = `Failed to delete the IdP ${idpName} from user ${userId} due to ${err.message}`;
+      this.logger.error(errMessage);
+      throw new InvalidOperationError(errMessage);
+    }
+  }
 }
