@@ -9,8 +9,9 @@ interface DraftFormProps {
   definition: FormDefinition;
   form: Form;
   data: Record<string, unknown>;
-  saving: boolean;
   canSubmit: boolean;
+  showSubmit: boolean;
+  saving: boolean;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
 }
@@ -20,6 +21,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   form,
   data,
   canSubmit,
+  showSubmit,
   saving,
   onChange,
   onSubmit,
@@ -41,9 +43,11 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
           onChange={onChange}
         />
         <GoAButtonGroup alignment="end">
-          <GoAButton mt="2xl" disabled={!canSubmit} type="primary" onClick={() => onSubmit(form)}>
-            Submit
-          </GoAButton>
+          {showSubmit && (
+            <GoAButton mt="2xl" disabled={!canSubmit} type="primary" onClick={() => onSubmit(form)}>
+              Submit
+            </GoAButton>
+          )}
         </GoAButtonGroup>
       </GridItem>
       <GridItem md={1} />
