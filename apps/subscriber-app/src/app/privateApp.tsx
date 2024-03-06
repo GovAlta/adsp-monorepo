@@ -22,7 +22,7 @@ export function PrivateApp(): JSX.Element {
     setInterval(async () => {
       dispatch(KeycloakRefreshToken(realm));
     }, 120 * 1000);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <HeaderCtx.Provider value={{ setTitle }}>

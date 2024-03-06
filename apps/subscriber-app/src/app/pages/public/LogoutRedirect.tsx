@@ -5,7 +5,7 @@ const LogoutRedirect = (): JSX.Element => {
   const navigate = useNavigate();
   useEffect(() => {
     navigate('/');
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div></div>;
 };

@@ -7,7 +7,7 @@ const SmsRedirect = (): JSX.Element => {
 
   useEffect(() => {
     navigate(`/${realm}/login?smscode=${code}`);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div></div>;
 };
