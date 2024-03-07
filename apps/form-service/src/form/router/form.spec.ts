@@ -12,6 +12,7 @@ import {
   getFormDefinitions,
   getFormSubmission,
   updateFormSubmissionDisposition,
+  validateCriteria,
 } from './form';
 
 describe('form router', () => {
@@ -349,6 +350,33 @@ describe('form router', () => {
 
       const handler = findForms(apiId, repositoryMock);
       await handler(req as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
+    it('can find forms has query params', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        query: {
+          top: '12',
+          after: 'abc-123',
+          criteria: JSON.stringify({ statusEquals: 'Draft' }),
+        },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 
@@ -1100,6 +1128,76 @@ describe('form router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 
+    it('can find form submissions no definition', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '10',
+          after: 'abc-123',
+          criteria: JSON.stringify({ createDateBefore: '2024-01-12' }),
+        },
+        getConfiguration: jest.fn(),
+        params: { formId: 'test-form' },
+      };
+
+      const page = {};
+
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const configuration = { test: definition };
+
+      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+
+      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      repositoryMock.get.mockResolvedValueOnce(null);
+
+      formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
+
+      const handler = findFormSubmissions(apiId, formSubmissionMock, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getConfiguration).toBeCalled();
+      expect(formSubmissionMock.find).toBeCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
+    it('can find form submissions has query params', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '10',
+          after: 'abc-123',
+          criteria: JSON.stringify({ createDateBefore: '2024-01-12' }),
+        },
+        getConfiguration: jest.fn(),
+        params: { formId: 'test-form' },
+      };
+
+      const page = {};
+
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const configuration = { test: definition };
+
+      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
+
+      const handler = findFormSubmissions(apiId, formSubmissionMock, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getConfiguration).toBeCalled();
+      expect(formSubmissionMock.find).toBeCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
     it('can find form submissions not authorized', async () => {
       const user = {
         tenantId,
@@ -1134,6 +1232,167 @@ describe('form router', () => {
       expect(formSubmissionMock.find).toBeCalled();
       expect(res.send).not.toBeCalled();
       expect(next).toHaveBeenCalledWith(expect.any(Error));
+    });
+  });
+  describe('validate criteria', () => {
+    const user = {
+      tenantId,
+      id: 'tester',
+      roles: ['test-applicant'],
+    };
+
+    it('validate criteria createDateBefore for findFormSubmissions', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '12',
+          after: 'abc-123',
+          criteria: JSON.stringify({ createDateBefore: '2024-01-12' }),
+        },
+        getConfiguration: jest.fn(),
+        params: { formId: 'test-form' },
+      };
+      const configuration = { test: definition };
+
+      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      validateCriteria(req.query.criteria);
+    });
+
+    it('validate criteria createDateAfter  for findFormSubmissions', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '12',
+          after: 'abc-123',
+          criteria: JSON.stringify({ createDateAfter: '2024-01-12' }),
+        },
+        getConfiguration: jest.fn(),
+        params: { formId: 'test-form' },
+      };
+      const configuration = { test: definition };
+
+      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      validateCriteria(req.query.criteria);
+    });
+
+    it('validate criteria dispositionDateBefore  for findFormSubmissions', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '12',
+          after: 'abc-123',
+          criteria: JSON.stringify({ dispositionDateBefore: '2024-01-12' }),
+        },
+        getConfiguration: jest.fn(),
+        params: { formId: 'test-form' },
+      };
+      const configuration = { test: definition };
+
+      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      validateCriteria(req.query.criteria);
+    });
+
+    it('validate criteria dispositionDateAfter for findFormSubmissions', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '12',
+          after: 'abc-123',
+          criteria: JSON.stringify({ dispositionDateAfter: '2024-01-12' }),
+        },
+        getConfiguration: jest.fn(),
+        params: { formId: 'test-form' },
+      };
+      const configuration = { test: definition };
+
+      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+    });
+
+    test('validate criteria createDateBefore invalid for findFormSubmissions', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '12',
+          after: 'abc-123',
+          criteria: JSON.stringify({ createDateBefore: '2024-01-2' }),
+        },
+        getConfiguration: jest.fn(),
+        params: { formId: 'test-form' },
+      };
+      expect(() => validateCriteria(req.query.criteria)).toThrow(InvalidOperationError);
+    });
+
+    test('validate criteria createDateAfter invalid for findFormSubmissions', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '12',
+          after: 'abc-123',
+          criteria: JSON.stringify({ createDateAfter: '2024-01-2' }),
+        },
+        params: { formId: 'test-form' },
+      };
+
+      expect(() => validateCriteria(req.query.criteria)).toThrow(InvalidOperationError);
+    });
+
+    test('validate criteria dispositionDateAfter  invalid for findFormSubmissions', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '12',
+          after: 'abc-123',
+          criteria: JSON.stringify({ dispositionDateAfter: '2024-01-2' }),
+        },
+        getConfiguration: jest.fn(),
+        params: { formId: 'test-form' },
+      };
+      expect(() => validateCriteria(req.query.criteria)).toThrow(InvalidOperationError);
+    });
+
+    test('validate criteria dispositionDateBefore invalid for findFormSubmissions', () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '12',
+          after: 'abc-123',
+          criteria: JSON.stringify({ dispositionDateBefore: '2024-01-2' }),
+        },
+        getConfiguration: jest.fn(),
+        params: { formId: 'test-form' },
+      };
+      expect(() => validateCriteria(req.query.criteria)).toThrow(InvalidOperationError);
     });
   });
 });

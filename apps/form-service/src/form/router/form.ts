@@ -453,7 +453,30 @@ export function deleteForm(
     }
   };
 }
-
+// eslint-disable-next-line
+export const validateCriteria = (value: string) => {
+  const criteria = JSON.parse(value);
+  if (criteria?.createDateBefore !== undefined) {
+    if (!validator.isISO8601(criteria?.createDateBefore)) {
+      throw new InvalidOperationError('createDateBefore requires ISO-8061 date string.');
+    }
+  }
+  if (criteria?.createDateAfter !== undefined) {
+    if (!validator.isISO8601(criteria?.createDateAfter)) {
+      throw new InvalidOperationError('createDateAfter requires ISO-8061 date string.');
+    }
+  }
+  if (criteria?.dispositionDateBefore !== undefined) {
+    if (!validator.isISO8601(criteria?.dispositionDateBefore)) {
+      throw new InvalidOperationError('dispositionDateBefore requires ISO-8061 date string.');
+    }
+  }
+  if (criteria?.dispositionDateAfter !== undefined) {
+    if (!validator.isISO8601(criteria?.dispositionDateAfter)) {
+      throw new InvalidOperationError('dispositionDateAfter requires ISO-8061 date string.');
+    }
+  }
+};
 interface FormRouterProps {
   serviceId: AdspId;
   repository: FormRepository;
@@ -521,28 +544,8 @@ export function createFormRouter({
     createValidationHandler(
       query('criteria')
         .optional()
-        .custom(async (value) => {
-          const criteria = JSON.parse(value);
-          if (criteria?.createDateBefore !== undefined) {
-            if (!validator.isISO8601(criteria?.createDateBefore)) {
-              throw new InvalidOperationError('createDateBefore requires ISO-8061 date string.');
-            }
-          }
-          if (criteria?.createDateAfter !== undefined) {
-            if (!validator.isISO8601(criteria?.createDateAfter)) {
-              throw new InvalidOperationError('createDateAfter requires ISO-8061 date string.');
-            }
-          }
-          if (criteria?.dispositionDateBefore !== undefined) {
-            if (!validator.isISO8601(criteria?.dispositionDateBefore)) {
-              throw new InvalidOperationError('dispositionDateBefore requires ISO-8061 date string.');
-            }
-          }
-          if (criteria?.dispositionDateAfter !== undefined) {
-            if (!validator.isISO8601(criteria?.dispositionDateAfter)) {
-              throw new InvalidOperationError('dispositionDateAfter requires ISO-8061 date string.');
-            }
-          }
+        .custom(async (value: string) => {
+          validateCriteria(value);
         })
     ),
     findFormSubmissions(apiId, submissionRepository, repository)

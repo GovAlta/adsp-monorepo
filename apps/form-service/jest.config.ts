@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default {
   displayName: 'form-service',
-  preset: '../../jest.preset.js',
+  preset: '../../jest-cover.preset.js',
   globals: {},
   testEnvironment: 'node',
   transform: {
