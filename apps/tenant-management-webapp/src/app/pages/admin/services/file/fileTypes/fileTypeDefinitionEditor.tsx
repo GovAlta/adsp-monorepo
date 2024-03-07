@@ -18,19 +18,17 @@ export const FileTypeDefinitionEditor = (): JSX.Element => {
   };
 
   return (
-    <>
-      <Modal data-testid="fileType-form">
-        <FileTypeModalContent>
-          <OuterFileTypeTemplateEditorContainer>
-            <TabletMessage goBack={goBack} />
-            <HideTablet>
-              <FileTypeTemplateEditorContainer>
-                <EditFileTypeDefinitionEditor />
-              </FileTypeTemplateEditorContainer>
-            </HideTablet>
-          </OuterFileTypeTemplateEditorContainer>
-        </FileTypeModalContent>
-      </Modal>
-    </>
+    <Modal data-testid="fileType-form">
+      <FileTypeModalContent>
+        <OuterFileTypeTemplateEditorContainer>
+          <TabletMessage goBack={goBack} />
+          <HideTablet>
+            <FileTypeTemplateEditorContainer>
+              <EditFileTypeDefinitionEditor />
+            </FileTypeTemplateEditorContainer>
+          </HideTablet>
+        </OuterFileTypeTemplateEditorContainer>
+      </FileTypeModalContent>
+    </Modal>
   );
 };

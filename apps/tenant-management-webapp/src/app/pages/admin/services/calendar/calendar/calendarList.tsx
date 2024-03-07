@@ -21,43 +21,41 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
   onEdit,
 }: CalendarItemProps) => {
   return (
-    <>
-      <tr key={calendar.name}>
-        <td headers="calendar-name" data-testid="calendar-name">
-          {calendar.displayName}
-        </td>
-        <td headers="calendar-id" data-testid="calendar-id">
-          {calendar.name}
-        </td>
+    <tr key={calendar.name}>
+      <td headers="calendar-name" data-testid="calendar-name">
+        {calendar.displayName}
+      </td>
+      <td headers="calendar-id" data-testid="calendar-id">
+        {calendar.name}
+      </td>
 
-        <td headers="calendar-description" data-testid="calendar-description">
-          <OverFlowWrapTableCell>{calendar.description}</OverFlowWrapTableCell>
-        </td>
-        <td headers="calendar-actions" data-testid="calendar-actions">
-          {onDelete && (
-            <div style={{ display: 'flex' }}>
-              <GoAContextMenuIcon
-                type="create"
-                title="Edit"
-                testId={`calendar-edit-${calendar.name}`}
-                onClick={() => {
-                  onEdit(calendar);
-                }}
-              />
+      <td headers="calendar-description" data-testid="calendar-description">
+        <OverFlowWrapTableCell>{calendar.description}</OverFlowWrapTableCell>
+      </td>
+      <td headers="calendar-actions" data-testid="calendar-actions">
+        {onDelete && (
+          <div style={{ display: 'flex' }}>
+            <GoAContextMenuIcon
+              type="create"
+              title="Edit"
+              testId={`calendar-edit-${calendar.name}`}
+              onClick={() => {
+                onEdit(calendar);
+              }}
+            />
 
-              <GoAContextMenuIcon
-                testId="delete-icon"
-                title="Delete"
-                type="trash"
-                onClick={() => {
-                  onDelete(calendar);
-                }}
-              />
-            </div>
-          )}
-        </td>
-      </tr>
-    </>
+            <GoAContextMenuIcon
+              testId="delete-icon"
+              title="Delete"
+              type="trash"
+              onClick={() => {
+                onDelete(calendar);
+              }}
+            />
+          </div>
+        )}
+      </td>
+    </tr>
   );
 };
 

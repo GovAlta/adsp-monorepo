@@ -20,7 +20,7 @@ export const DirectoryService = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(fetchDirectory());
-  }, []);
+  }, [dispatch]);
 
   const coreTenant = 'Platform';
   const tenantName = useSelector(selectTenantName);

@@ -18,7 +18,7 @@ const LoginLanding = (): JSX.Element => {
     if (realm && keycloakConfig) {
       dispatch(TenantLogin(realm));
     }
-  }, [keycloakConfig]);
+  }, [keycloakConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (tenant?.loginSucceeded === false) {
     dispatch(UpdateLoginSuccess(null));

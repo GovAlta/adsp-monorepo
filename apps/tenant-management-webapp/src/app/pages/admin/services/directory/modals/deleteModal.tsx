@@ -20,19 +20,17 @@ export const DirectoryDeleteModal = (): JSX.Element => {
   useEffect(() => {}, [modal?.isOpen]);
 
   return (
-    <>
-      <DeleteModal
-        title={title}
-        isOpen={directory !== undefined && modal.isOpen === true}
-        content={content}
-        onCancel={() => {
-          dispatch(ResetModalState());
-        }}
-        onDelete={() => {
-          dispatch(deleteEntry(directory));
-          dispatch(ResetModalState());
-        }}
-      />
-    </>
+    <DeleteModal
+      title={title}
+      isOpen={directory !== undefined && modal.isOpen === true}
+      content={content}
+      onCancel={() => {
+        dispatch(ResetModalState());
+      }}
+      onDelete={() => {
+        dispatch(deleteEntry(directory));
+        dispatch(ResetModalState());
+      }}
+    />
   );
 };

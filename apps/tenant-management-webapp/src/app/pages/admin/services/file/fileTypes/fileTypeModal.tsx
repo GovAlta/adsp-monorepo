@@ -60,7 +60,7 @@ export const FileTypeModal = ({
 
   useEffect(() => {
     setFileType(initialValue);
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCancelClick = () => {
     const defaultRetention: RetentionPolicy = {

@@ -28,7 +28,7 @@ export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
   useEffect(() => {
     dispatch(fetchKeycloakServiceRoles());
     dispatch(FetchRealmRoles());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
@@ -54,7 +54,7 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
     if (!fileTypes) {
       dispatch(FetchFileTypeService());
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);

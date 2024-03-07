@@ -172,7 +172,7 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
   }
 }
 
-export function* fetchWebhook(action: saveWebhookAction): SagaIterator {
+export function* fetchWebhook(_action: saveWebhookAction): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );

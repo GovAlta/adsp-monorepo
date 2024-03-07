@@ -8,15 +8,13 @@ interface PdfTemplateItemProps {
 
 export const CommentCoreTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplateItemProps): JSX.Element => {
   return (
-    <>
-      <tr>
-        <td data-testid="comment-topic-types-name">{commentTopicType.name}</td>
-        <td data-testid="comment-topic-types-template-id">{commentTopicType.id}</td>
+    <tr>
+      <td data-testid="comment-topic-types-name">{commentTopicType.name}</td>
+      <td data-testid="comment-topic-types-template-id">{commentTopicType.id}</td>
 
-        <td data-testid="comment-topic-types-security-classification" style={{ textTransform: 'capitalize' }}>
-          {commentTopicType.securityClassification}
-        </td>
-      </tr>
-    </>
+      <td data-testid="comment-topic-types-security-classification" style={{ textTransform: 'capitalize' }}>
+        {commentTopicType.securityClassification}
+      </td>
+    </tr>
   );
 };

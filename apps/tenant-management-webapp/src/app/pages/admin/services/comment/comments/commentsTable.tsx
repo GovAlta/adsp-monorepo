@@ -54,7 +54,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
 
   useEffect(() => {
     dispatch(fetchComments(topic.id));
-  }, []);
+  }, [dispatch, topic.id]);
   const addNewComment = () => {
     setModalType('new');
     setSelectedComment(defaultComment);

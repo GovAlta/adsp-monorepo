@@ -54,6 +54,8 @@ export const FormStepper = ({
     return categories.map((e: Category | Categorization) => deriveLabelForUISchemaElement(e, t));
   }, [categories, t]);
 
+  useEffect(() => {}, [categories.length]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const vslidateFormData = (formData: Array<UISchemaElement>) => {
     const validate = ajv.compile(schema);
@@ -127,7 +129,13 @@ export const FormStepper = ({
   return (
     <Hidden xsUp={!visible}>
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-        <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setPage(step)}>
+        <GoAFormStepper
+          testId="form-stepper-test"
+          step={step}
+          onChange={(step) => {
+            setPage(step);
+          }}
+        >
           {categories?.map((category, index) => {
             return (
               <GoAFormStep
@@ -170,20 +178,28 @@ export const FormStepper = ({
         {step && step !== 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             {step !== 1 ? (
-              <GoAButton type="secondary" onClick={() => prevPage(step, disabledCategoryMap)}>
+              <GoAButton
+                type="secondary"
+                disabled={disabledCategoryMap[step - 1] || !enabled}
+                onClick={() => prevPage(step, disabledCategoryMap)}
+              >
                 Previous
               </GoAButton>
             ) : (
               <div></div>
             )}
             {step !== null && showNextBtn && (
-              <GoAButton type="primary" onClick={() => nextPage(step, disabledCategoryMap)}>
+              <GoAButton
+                type="primary"
+                disabled={disabledCategoryMap[step - 1] || !enabled}
+                onClick={() => nextPage(step, disabledCategoryMap)}
+              >
                 Next
               </GoAButton>
             )}
             {!showNextBtn && (
               <div>
-                <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid}>
+                <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
                   Submit
                 </GoAButton>
               </div>
