@@ -28,7 +28,7 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
   // set index to 0(overview tab) when switching back to it
   useEffect(() => {
     setActiveIndex(0);
-  }, [setActiveIndex]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     dispatch(getEventDefinitions());
