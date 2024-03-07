@@ -50,7 +50,7 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
     if (deleteAction) {
       setShowDeleteConfirmation(true);
     }
-  }, [selectedQueue, deleteAction, dispatch, next]);
+  }, [selectedQueue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (openAddDefinition) {
