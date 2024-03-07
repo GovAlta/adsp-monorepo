@@ -67,12 +67,12 @@ export const ValidateModal: FC<Props> = ({ isOpen, title, onClose, testId, onVal
       setLoaded(true);
       setSelectedChannel(buttons[0]?.value);
     }
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isOpen) {
       setLoaded(false);
     }
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>

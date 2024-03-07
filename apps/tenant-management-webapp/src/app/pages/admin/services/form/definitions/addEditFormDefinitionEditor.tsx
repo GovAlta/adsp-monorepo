@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
@@ -281,10 +281,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const navigate = useNavigate();
 
-  const close = useCallback(() => {
+  const close = () => {
     dispatch(ClearNewFileList());
     navigate('/admin/services/form?definitions=true');
-  }, [dispatch, navigate]);
+  };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
