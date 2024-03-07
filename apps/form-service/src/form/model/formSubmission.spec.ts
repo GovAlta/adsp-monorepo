@@ -170,4 +170,23 @@ describe('FormSubmission', () => {
 
     await expect(entity.dispositionSubmission(user, 'rejeacted', 'bad data')).rejects.toThrow(UnauthorizedUserError);
   });
+
+  it('can read definition is empty', async () => {
+    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, {
+      id: 'fds435',
+      definition: null,
+    } as FormEntity);
+
+    const user = { tenantId, id: 'tester', roles: ['abvc'] } as User;
+
+    entity.canRead(user);
+  });
+
+  it('can read form is empty', async () => {
+    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, null);
+
+    const user = { tenantId, id: 'tester', roles: ['abvc'] } as User;
+
+    entity.canRead(user);
+  });
 });
