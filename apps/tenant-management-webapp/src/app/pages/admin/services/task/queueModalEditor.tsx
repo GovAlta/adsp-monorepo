@@ -61,14 +61,14 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     dispatch(fetchKeycloakServiceRoles());
   }, [dispatch]);
   const navigate = useNavigate();
-  const close = useCallback(() => {
+  const close = () => {
     navigate('/admin/services/task?definitions=true');
-  }, [navigate]);
+  };
   useEffect(() => {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal, close]);
+  }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const queues = useSelector((state: RootState) => state?.task?.queues || []);
 
