@@ -24,6 +24,10 @@ export const functionSuggestion = [
     label: 'adsp.HttpGet',
     insertText: 'adsp.HttpGet',
   },
+  {
+    label: 'adsp.DispositionFormSubmission',
+    insertText: 'adsp.DispositionFormSubmission',
+  },
 ];
 
 export const functionSignature = [
@@ -134,6 +138,27 @@ export const functionSignature = [
       {
         label: 'url',
         documentation: 'The url of the get request',
+      },
+    ],
+  },
+  {
+    label: 'adsp.DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason)',
+    parameters: [
+      {
+        label: 'formId',
+        documentation: 'Form Id. Unique identifier for the form to be dispositioned.',
+      },
+      {
+        label: 'submissionId',
+        documentation: 'Submission Id. Used to identify existing submission that disposition is to be set for.',
+      },
+      {
+        label: 'dispositionState',
+        documentation: 'The disposition state the form should be set to. For example: Accepted',
+      },
+      {
+        label: 'reason',
+        documentation: 'A string representing reason the form is to be set to this disposition state.',
       },
     ],
   },
