@@ -113,7 +113,7 @@ internal class ScriptFunctions : IScriptFunctions
   }
 
 
-  public virtual string? DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason)
+  public virtual DispositionResponse? DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason)
   {
     var formServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(formServiceUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
@@ -129,8 +129,8 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddHeader("Authorization", $"Bearer {token}");
     request.AddQueryParameter("tenantId", _tenantId.ToString());
 
-    var result = _client.PostAsync(request).Result;
-    return result.Content;
+    var result = _client.PostAsync<DispositionResponse>(request).Result;
+    return result;
   }
 
 
