@@ -8,12 +8,9 @@
 import React from 'react';
 import { ControlProps, JsonSchema, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { isNullSchema, isValidJsonObject } from '../errors/errorCheck';
-import { getUISchemaErrors } from '../errors/schemaValidation';
-
-export const errorComponent = (err: string): JSX.Element => {
-  return <p>{err}</p>;
-};
+import { isNullSchema, isValidJsonObject } from './errorCheck';
+import { getUISchemaErrors } from './schemaValidation';
+import { MessageControl } from './MessageControl';
 
 const isValidJsonSchema = (schema: JsonSchema): string | null => {
   if (isNullSchema(schema)) {
@@ -38,7 +35,7 @@ const ErrorControl = (props: ControlProps): JSX.Element => {
   }
   const uiSchemaErrors = getUISchemaErrors(uischema, schema);
   if (uiSchemaErrors && uiSchemaErrors !== '') {
-    return errorComponent(uiSchemaErrors);
+    return MessageControl(uiSchemaErrors);
   }
   return <span />;
 };
