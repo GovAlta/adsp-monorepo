@@ -74,7 +74,7 @@ describe('Test AddEditFormDefinitionEditor', () => {
     expect(index).toBeNull();
   });
 
-  it('cannot update disposition state when undefined', () => {
+  it('cannot update disposition state when not found', () => {
     const updateDispositionState1: Disposition = {
       id: 'invalid pending',
       name: 'invalid new pending',
