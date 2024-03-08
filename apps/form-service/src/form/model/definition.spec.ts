@@ -30,6 +30,24 @@ describe('FormDefinitionEntity', () => {
     expect(validationService.setSchema).toHaveBeenCalledWith(entity.id, expect.any(Object));
   });
 
+  it('can be created with null roles', () => {
+    const entity = new FormDefinitionEntity(validationService, tenantId, {
+      id: 'test',
+      name: 'test-form-definition',
+      description: null,
+      formDraftUrlTemplate: 'https://my-form/{{ id }}',
+      anonymousApply: false,
+      applicantRoles: null,
+      assessorRoles: null,
+      clerkRoles: null,
+      dataSchema: null,
+      submissionRecords: false,
+      supportTopic: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
+    });
+    expect(entity).toBeTruthy();
+  });
+
   describe('canAccessDefinition', () => {
     const entity = new FormDefinitionEntity(validationService, tenantId, {
       id: 'test',
