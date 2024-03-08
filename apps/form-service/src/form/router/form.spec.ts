@@ -1336,7 +1336,7 @@ describe('form router', () => {
         query: {
           top: '12',
           after: 'abc-123',
-          criteria: JSON.stringify({ createDateBefore: '2024-01-2' }),
+          criteria: JSON.stringify({ createDateBefore: '2024-01-32' }),
         },
         getConfiguration: jest.fn(),
         params: { formId: 'test-form' },
@@ -1353,7 +1353,7 @@ describe('form router', () => {
         query: {
           top: '12',
           after: 'abc-123',
-          criteria: JSON.stringify({ createDateAfter: '2024-01-2' }),
+          criteria: JSON.stringify({ createDateAfter: '2024-01-32' }),
         },
         params: { formId: 'test-form' },
       };
@@ -1370,7 +1370,7 @@ describe('form router', () => {
         query: {
           top: '12',
           after: 'abc-123',
-          criteria: JSON.stringify({ dispositionDateAfter: '2024-01-2' }),
+          criteria: JSON.stringify({ dispositionDateAfter: '2024-01-32' }),
         },
         getConfiguration: jest.fn(),
         params: { formId: 'test-form' },
@@ -1387,7 +1387,7 @@ describe('form router', () => {
         query: {
           top: '12',
           after: 'abc-123',
-          criteria: JSON.stringify({ dispositionDateBefore: '2024-01-2' }),
+          criteria: JSON.stringify({ dispositionDateBefore: '2024-01-32' }),
         },
         getConfiguration: jest.fn(),
         params: { formId: 'test-form' },

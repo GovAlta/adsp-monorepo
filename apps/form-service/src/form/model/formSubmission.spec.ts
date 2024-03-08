@@ -166,7 +166,7 @@ describe('FormSubmission', () => {
     } as FormEntity);
     repositoryMock.save.mockResolvedValueOnce(entity);
 
-    const user = { tenantId, id: 'tester', roles: ['abvc'] } as User;
+    const user = { tenantId, id: 'tester', roles: ['abc'] } as User;
 
     await expect(entity.dispositionSubmission(user, 'rejeacted', 'bad data')).rejects.toThrow(UnauthorizedUserError);
   });
@@ -177,7 +177,7 @@ describe('FormSubmission', () => {
       definition: null,
     } as FormEntity);
 
-    const user = { tenantId, id: 'tester', roles: ['abvc'] } as User;
+    const user = { tenantId, id: 'tester', roles: ['abc'] } as User;
 
     entity.canRead(user);
   });
