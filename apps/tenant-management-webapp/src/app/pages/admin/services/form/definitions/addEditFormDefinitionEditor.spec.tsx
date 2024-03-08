@@ -76,9 +76,9 @@ describe('Test AddEditFormDefinitionEditor', () => {
 
   it('cannot update disposition state when undefined', () => {
     const updateDispositionState1: Disposition = {
-      id: 'pending1d',
-      name: 'new pending34',
-      description: 'new pending data state',
+      id: 'invalid pending',
+      name: 'invalid new pending',
+      description: 'invalid new pending data state',
     };
 
     const currentIndex = definition.dispositionStates.findIndex((y) => y.name === 'pending-test');
