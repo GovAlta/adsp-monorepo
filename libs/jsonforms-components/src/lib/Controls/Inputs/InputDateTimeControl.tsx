@@ -12,12 +12,10 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, errors, handleChange, schema, label } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
-  const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoAInputDateTime
-      error={errorsFormInput.length > 0}
+      error={checkFieldValidity(props as ControlProps).length > 0}
       width="100%"
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data ? new Date(data).toISOString() : ''}
