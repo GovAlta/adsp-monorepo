@@ -97,6 +97,25 @@ export const formEditorJsonConfig = {
   },
 };
 
+export const onSaveDispositionForModal = (
+  isNewDisposition: boolean,
+  currentDisposition: Disposition,
+  definition: FormDefinition,
+  selectedEditModalIndex: number | null
+): [FormDefinition, number | null] => {
+  if (isNewDisposition) {
+    const currentDispositionStates = definition.dispositionStates || [];
+    if (currentDisposition) {
+      currentDispositionStates.push(currentDisposition);
+      definition.dispositionStates = currentDispositionStates;
+    }
+  } else {
+    definition.dispositionStates[selectedEditModalIndex] = currentDisposition;
+  }
+
+  return [definition, null];
+};
+
 const invalidJsonMsg = 'Invalid JSON syntax';
 const NO_TASK_CREATED_OPTION = `No task created`;
 
@@ -860,17 +879,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         existingDispositions={definition?.dispositionStates}
         initialValue={getDispositionForModal()}
         onSave={(currentDispositions) => {
-          if (newDisposition) {
-            const dispositionStates = definition.dispositionStates || [];
-            const tempDefinition = { ...definition };
-            dispositionStates.push(currentDispositions);
-            tempDefinition.dispositionStates = dispositionStates;
-            setDefinition(tempDefinition);
-          } else {
-            definition.dispositionStates[selectedEditModalIndex] = currentDispositions;
-            setDefinition(definition);
-            setSelectedEditModalIndex(null);
-          }
+          const [updatedDefinition, index] = onSaveDispositionForModal(
+            newDisposition,
+            currentDispositions,
+            definition,
+            selectedEditModalIndex
+          );
+          setDefinition(updatedDefinition);
+          setSelectedDeleteDispositionIndex(index);
         }}
         onClose={() => {
           setNewDisposition(false);
