@@ -15,7 +15,7 @@ export const CommentTopicTypesEditor = (): JSX.Element => {
   const navigate = useNavigate();
 
   const goBack = () => {
-    navigate('/admin/services/form?templates=true');
+    navigate('/admin/services/comment?templates=true');
   };
 
   return (

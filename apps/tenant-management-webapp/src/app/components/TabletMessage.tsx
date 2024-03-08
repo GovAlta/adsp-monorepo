@@ -2,11 +2,11 @@ import React from 'react';
 import { GoAButton } from '@abgov/react-components-new';
 import styled from 'styled-components';
 
-interface TabletMesssageProps {
+interface TabletMessageProps {
   goBack(): void;
 }
 
-export const TabletMessage = ({ goBack }: TabletMesssageProps) => {
+export const TabletMessage = ({ goBack }: TabletMessageProps) => {
   return (
     <TabletMessageContainer>
       <h1>This editor requires your device to be at least 1440 pixels wide and 630 pixels high</h1>

@@ -14,7 +14,7 @@ export const FileTypeDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
 
   const goBack = () => {
-    navigate('/admin/services/file');
+    navigate('/admin/services/file?fileTypes=true');
   };
 
   return (
