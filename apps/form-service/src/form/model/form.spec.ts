@@ -1,9 +1,10 @@
 import { adspId, Channel, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { FormServiceRoles } from '../roles';
-import { FormStatus, QueueTaskToProcess } from '../types';
+import { FormStatus, FormSubmission, QueueTaskToProcess } from '../types';
 import { FormDefinitionEntity } from './definition';
 import { FormEntity } from './form';
+import { FormSubmissionEntity } from './formSubmission';
 
 describe('FormEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -35,6 +36,10 @@ describe('FormEntity', () => {
     channels: [{ channel: Channel.email, address: 'test@test.co' }],
   };
 
+  const formSubmissionEntityMock = {
+    dispositionSubmission: jest.fn(),
+  };
+
   const repositoryMock = {
     find: jest.fn(),
     get: jest.fn(),
@@ -42,6 +47,36 @@ describe('FormEntity', () => {
     delete: jest.fn(),
     getByFormIdAndSubmissionId: jest.fn(),
   };
+
+  const formSubmissionMock = {
+    get: jest.fn(),
+    find: jest.fn(),
+    save: jest.fn(),
+    delete: jest.fn(),
+    getByFormIdAndSubmissionId: jest.fn(),
+    dispositionSubmission: jest.fn(),
+  };
+
+  const formSubmissionInfo: FormSubmission = {
+    id: 'formSubmission-id',
+    formDefinitionId: 'test-form-definition',
+    formId: 'test-form',
+    formData: {},
+    formFiles: {},
+    created: new Date(),
+    createdBy: { id: 'tester', name: 'tester' },
+    updatedBy: { id: 'tester', name: 'tester' },
+    updated: new Date(),
+    submissionStatus: '',
+    disposition: {
+      id: 'id',
+      status: 'rejected',
+      reason: 'invalid data',
+      date: new Date(),
+    },
+    hash: 'hashid',
+  };
+
   const queueTaskServiceMock = { createTask: jest.fn() };
 
   const notificationMock = {
@@ -562,6 +597,22 @@ describe('FormEntity', () => {
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
+    it('can submit form with task', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      entity.submissionRecords = true;
+
+      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo);
+      const [submitted, submission] = await entity.submit(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        queueTaskServiceMock,
+        repositoryMock
+      );
+      expect(submitted.status).toBe(FormStatus.Submitted);
+      expect(submitted.submitted).toBeTruthy();
+      expect(submitted.hash).toBeTruthy();
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
+
     it('can throw for different user', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       await expect(
@@ -604,6 +655,50 @@ describe('FormEntity', () => {
           queueTaskServiceMock,
           repositoryMock
         )
+      ).rejects.toThrow(InvalidOperationError);
+    });
+  });
+
+  describe('can set to draft', () => {
+    const formInfo = {
+      id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
+      created: new Date(),
+      createdBy: { id: 'tester', name: 'tester' },
+      status: FormStatus.Draft,
+      locked: null,
+      submitted: null,
+      lastAccessed: new Date(),
+      data: {},
+      files: {},
+    };
+    it('can set to draft', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Submitted,
+      });
+      await entity.setToDraft({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
+
+    it('can set to draft not authorized', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Submitted,
+      });
+      await expect(entity.setToDraft({ tenantId, id: 'tester', roles: ['abc'] } as User)).rejects.toThrow(
+        UnauthorizedUserError
+      );
+    });
+
+    it('can set to draft invalid', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Draft,
+      });
+      await expect(
+        entity.setToDraft({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User)
       ).rejects.toThrow(InvalidOperationError);
     });
   });

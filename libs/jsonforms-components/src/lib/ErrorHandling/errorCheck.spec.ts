@@ -9,101 +9,93 @@ import {
   isScopedPrefixed,
   isValidScope,
 } from './errorCheck';
-import { parseSchema } from '../util/schemaUtils';
 
-const data_schema: string = `
-{
-  "type": "object",
-  "properties": {
-    "firstName": {
-      "type": "string"
+const dataSchema = {
+  type: 'object',
+  properties: {
+    firstName: {
+      type: 'string',
     },
-    "birthDate": {
-      "type": "string",
-      "format": "date"
-    }
-  }
-}
-`;
+    birthDate: {
+      type: 'string',
+      format: 'date',
+    },
+  },
+};
 
 // Note: The number in the description is the element index, and it
 // is used to refer to the element in the unit tests.  Please keep them
 // up to date.
-const ui_schema: string = `
-{
-  "type": "VerticalLayout",
-  "elements": [
+const uiSchema = {
+  type: 'VerticalLayout',
+  elements: [
     {
-      "type": "Control",
-      "scope": "#/properties/firstName",
-      "description": "valid scope test (0)"
+      type: 'Control',
+      scope: '#/properties/firstName',
+      description: 'valid scope test (0)',
     },
     {
-      "type": "Control",
-      "scope": "#/properties/lastName",
-      "description": "missing property test (1)"
+      type: 'Control',
+      scope: '#/properties/lastName',
+      description: 'missing property test (1)',
     },
     {
-      "type": "Control",
-      "scope": "#/properties/birthDate",
-      "description": "Date test (2)",
-      "options": {
-        "componentProps": {
-          "name": "Calendar name",
-          "min": "2023-02-01",
-          "max": "2025-02-01"
-        }
-      }
+      type: 'Control',
+      scope: '#/properties/birthDate',
+      description: 'Date test (2)',
+      options: {
+        componentProps: {
+          name: 'Calendar name',
+          min: '2023-02-01',
+          max: '2025-02-01',
+        },
+      },
     },
     {
-      "type": "Bob",
-      "scope": "properties/bob",
-      "description": "malformed scope test (3)"
+      type: 'Bob',
+      scope: 'properties/bob',
+      description: 'malformed scope test (3)',
     },
     {
-      "type": "Control",
-      "description": "missing scope test (4)"
+      type: 'Control',
+      description: 'missing scope test (4)',
     },
     {
-      "type": "HorizontalLayout",
-      "description": "Layout with no elements (5)"
+      type: 'HorizontalLayout',
+      description: 'Layout with no elements (5)',
     },
     {
-      "type": "VerticalLayout",
-      "elements": [],
-      "description": "Layout with empty elements (6)"
+      type: 'VerticalLayout',
+      elements: [],
+      description: 'Layout with empty elements (6)',
     },
     {
-      "type": "Categorization",
-      "description": "Valid Categorization (7)",
-      "elements": [
+      type: 'Categorization',
+      description: 'Valid Categorization (7)',
+      elements: [
         {
-          "type": "Category",
-          "elements": [
+          type: 'Category',
+          elements: [
             {
-              "type": "Category",
-              "elements": [
+              type: 'Category',
+              elements: [
                 {
-                  "type": "Control",
-                  "scope": "#/properties/firstName"
-                }
-              ]
-            }
-          ]
-        }
+                  type: 'Control',
+                  scope: '#/properties/firstName',
+                },
+              ],
+            },
+          ],
+        },
       ],
-      "options": {
-        "variant": "stepper"
-      }
-    }
-  ]
-}
-`;
+      options: {
+        variant: 'stepper',
+      },
+    },
+  ],
+};
 
 describe('check error processing', () => {
-  const dataSchema = parseSchema(data_schema);
-  const uiSchema = parseSchema(ui_schema);
-
   describe('data schema', () => {
     it('parses correctly', () => {
       expect(dataSchema).toEqual(
@@ -143,7 +135,7 @@ describe('check error processing', () => {
     });
 
     it('can detect malformed scope', () => {
-      const isValid = isScopedPrefixed(uiSchema.elements[3].scope);
+      const isValid = isScopedPrefixed(uiSchema.elements[3].scope as string);
       expect(isValid).toBe(false);
     });
 
