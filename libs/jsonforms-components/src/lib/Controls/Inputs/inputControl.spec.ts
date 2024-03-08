@@ -76,7 +76,7 @@ describe('input control tests', () => {
     });
 
     it('will reformat non-standard max', () => {
-      const props = { ...staticProps, uischema: uiSchema('2023/02-01', '2025-02-01') };
+      const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025/02-01') };
       const component = render(GoADateInput(props));
       expect(component.getByTestId('My ID-input')).toBeInTheDocument();
     });
