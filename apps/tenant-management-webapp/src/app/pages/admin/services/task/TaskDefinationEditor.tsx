@@ -15,7 +15,7 @@ export const TaskDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
 
   const goBack = () => {
-    navigate('/admin/services/task?templates=true');
+    navigate('/admin/services/task?definitions=true');
   };
 
   return (
@@ -27,7 +27,6 @@ export const TaskDefinitionEditor = (): JSX.Element => {
           <TabletMessage goBack={goBack} />
           <HideTablet>
             <NotificationTemplateEditorContainer>
-              {' '}
               <QueueModalEditor />
             </NotificationTemplateEditorContainer>
           </HideTablet>

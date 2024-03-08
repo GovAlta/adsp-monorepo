@@ -9,7 +9,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
 
   const goBack = () => {
-    navigate('/admin/services/form?templates=true');
+    navigate('/admin/services/form?definitions=true');
   };
 
   return (
