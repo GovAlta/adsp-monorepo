@@ -1,3 +1,4 @@
+import { GoACallout } from '@abgov/react-components-new';
 import React from 'react';
 
 /**
@@ -14,5 +15,5 @@ import React from 'react';
 
 // TODO: Add styling
 export const MessageControl = (message: string): JSX.Element => {
-  return <p>{message}</p>;
+  return <GoACallout type="emergency">{message}</GoACallout>;
 };
