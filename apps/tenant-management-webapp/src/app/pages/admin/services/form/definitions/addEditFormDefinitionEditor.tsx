@@ -3,7 +3,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
 import { ContextProvider } from '@abgov/jsonforms-components';
-import { FormDefinition } from '@store/form/model';
+import { Disposition, FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -424,6 +424,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     return value;
   };
 
+  const getDispositionForModal = () => {
+    if (selectedEditModalIndex !== null) {
+      return definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex];
+    }
+    return { id: '', name: '', description: '' } as Disposition;
+  };
+
   return (
     <FormEditor>
       {spinner ? (
@@ -577,8 +584,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           disabled={!definition.submissionRecords}
                           value={[getQueueTaskToProcessValue()]}
                           relative={true}
-                          onChange={(name, queueTask) => {
-                            const separatedQueueTask = queueTask[0].split(':');
+                          onChange={(name, queueTask: string) => {
+                            const separatedQueueTask = queueTask.split(':');
                             if (separatedQueueTask.length > 1) {
                               setDefinition({
                                 ...definition,
@@ -630,6 +637,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             disabled={!definition.submissionRecords}
                             onClick={() => {
                               setNewDisposition(true);
+                              setSelectedEditModalIndex(null);
                             }}
                           >
                             Add state
@@ -847,33 +855,26 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         }}
       />
       <AddEditDispositionModal
-        open={selectedEditModalIndex !== null}
-        isEdit={true}
+        open={selectedEditModalIndex !== null || newDisposition}
+        isEdit={selectedEditModalIndex !== null}
         existingDispositions={definition?.dispositionStates}
-        initialValue={definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex]}
+        initialValue={getDispositionForModal()}
         onSave={(currentDispositions) => {
-          definition.dispositionStates[selectedEditModalIndex] = currentDispositions;
-
-          setDefinition(definition);
-        }}
-        onClose={() => {
-          setSelectedEditModalIndex(null);
-        }}
-      />
-      <AddEditDispositionModal
-        open={newDisposition}
-        isEdit={false}
-        existingDispositions={definition?.dispositionStates}
-        initialValue={definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex]}
-        onSave={(currentDispositions) => {
-          const dispositionStates = definition.dispositionStates || [];
-          const tempDefinition = { ...definition };
-          dispositionStates.push(currentDispositions);
-          tempDefinition.dispositionStates = dispositionStates;
-          setDefinition(tempDefinition);
+          if (newDisposition) {
+            const dispositionStates = definition.dispositionStates || [];
+            const tempDefinition = { ...definition };
+            dispositionStates.push(currentDispositions);
+            tempDefinition.dispositionStates = dispositionStates;
+            setDefinition(tempDefinition);
+          } else {
+            definition.dispositionStates[selectedEditModalIndex] = currentDispositions;
+            setDefinition(definition);
+            setSelectedEditModalIndex(null);
+          }
         }}
         onClose={() => {
           setNewDisposition(false);
+          setSelectedEditModalIndex(null);
         }}
       />
     </FormEditor>
