@@ -49,12 +49,6 @@ describe('Test AddEditFormDefinitionEditor', () => {
   });
 
   it('cannot save new disposition state with undefined disposition states', () => {
-    const addDispositionState: Disposition = {
-      id: 'missing-data',
-      name: 'missing data',
-      description: 'missing data state',
-    };
-
     const initialLength = definition.dispositionStates.length;
     const [updatedDefinition, index] = onSaveDispositionForModal(true, undefined, definition, null);
     const updatedLength = updatedDefinition.dispositionStates.length;
@@ -81,23 +75,22 @@ describe('Test AddEditFormDefinitionEditor', () => {
   });
 
   it('cannot update disposition state when undefined', () => {
-    const updateDispositionState: Disposition = {
-      id: 'pending',
-      name: 'new pending',
+    const updateDispositionState1: Disposition = {
+      id: 'pending1d',
+      name: 'new pending34',
       description: 'new pending data state',
     };
-    const initialLength = definition.dispositionStates.length;
 
-    const currentIndex = definition.dispositionStates.findIndex((y) => (y.id = updateDispositionState.id));
+    const currentIndex = definition.dispositionStates.findIndex((y) => y.name === 'pending-test');
     const [updatedDefinition, index] = onSaveDispositionForModal(
       false,
-      updateDispositionState,
+      updateDispositionState1,
       definition,
       currentIndex
     );
-    const updatedLength = updatedDefinition.dispositionStates.length;
+    const updatedIndex = updatedDefinition.dispositionStates.findIndex((y) => y.name === updateDispositionState1.name);
 
-    expect(updatedDefinition && initialLength === updatedLength).toBeTruthy();
+    expect(updatedDefinition && updatedIndex < 0).toBeTruthy();
     expect(index).toBeNull();
   });
 });
