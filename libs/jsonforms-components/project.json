@@ -44,6 +44,12 @@
       "options": {
         "jestConfig": "libs/jsonforms-components/jest.config.ts"
       }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx semantic-release -e ./libs/jsonforms-components/.releaserc.json"
+      }
     }
   }
 }
