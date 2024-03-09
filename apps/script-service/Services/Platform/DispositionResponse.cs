@@ -51,6 +51,9 @@ internal sealed class DispositionResponse
 
   [JsonPropertyName("updatedBy")]
   public UpdatedBy? UpdatedBy { get; set; }
+
+  [JsonPropertyName("hash")]
+  public string? Hash { get; set; }
 }
 
 internal sealed class CreatedBy
@@ -63,6 +66,9 @@ internal sealed class CreatedBy
 }
 internal sealed class UpdatedBy
 {
+  [JsonPropertyName("id")]
+  public string? Id { get; set; }
+
   [JsonPropertyName("name")]
   public string? Name { get; set; }
 }
