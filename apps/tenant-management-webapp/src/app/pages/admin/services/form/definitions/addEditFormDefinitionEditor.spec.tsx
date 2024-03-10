@@ -1,10 +1,7 @@
 import React from 'react';
-import { Provider } from 'react-redux';
-import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { AddEditFormDefinitionEditor, onSaveDispositionForModal } from './addEditFormDefinitionEditor';
+import { onSaveDispositionForModal } from './addEditFormDefinitionEditor';
 import { Disposition, FormDefinition } from '@store/form/model';
-import { add } from 'lodash';
 
 describe('Test AddEditFormDefinitionEditor', () => {
   const dispositionsToTest: Disposition[] = [
@@ -44,16 +41,19 @@ describe('Test AddEditFormDefinitionEditor', () => {
     };
 
     const [updatedDefinition, index] = onSaveDispositionForModal(true, addDispositionState, definition, null);
-    expect(updatedDefinition && updatedDefinition.dispositionStates).toBeDefined();
+    expect(updatedDefinition && updatedDefinition.dispositionStates.length > dispositionsToTest.length).toBe(true);
     expect(index).toBeNull();
   });
 
   it('cannot save new disposition state with undefined disposition states', () => {
-    const initialLength = definition.dispositionStates.length;
-    const [updatedDefinition, index] = onSaveDispositionForModal(true, undefined, definition, null);
+    const initialLength = dispositionsToTest.length;
+    const cloneDefinition = { ...definition };
+    cloneDefinition.dispositionStates = [...dispositionsToTest];
+
+    const [updatedDefinition, index] = onSaveDispositionForModal(true, undefined, cloneDefinition, null);
     const updatedLength = updatedDefinition.dispositionStates.length;
 
-    expect(updatedDefinition && initialLength === updatedLength).toBeTruthy();
+    expect(updatedDefinition && initialLength === updatedLength).toBe(true);
     expect(index).toBeNull();
   });
 
@@ -70,11 +70,12 @@ describe('Test AddEditFormDefinitionEditor', () => {
       definition,
       currentIndex
     );
-    expect(updatedDefinition).toBeDefined();
+    const foundIndex = updatedDefinition.dispositionStates.findIndex((y) => y.name === 'new pending');
+    expect(updatedDefinition && foundIndex >= 0).toBe(true);
     expect(index).toBeNull();
   });
 
-  it('cannot update disposition state when not found', () => {
+  it('cannot find and update disposition state', () => {
     const updateDispositionState1: Disposition = {
       id: 'invalid pending',
       name: 'invalid new pending',
@@ -90,7 +91,7 @@ describe('Test AddEditFormDefinitionEditor', () => {
     );
     const updatedIndex = updatedDefinition.dispositionStates.findIndex((y) => y.name === updateDispositionState1.name);
 
-    expect(updatedDefinition && updatedIndex < 0).toBeTruthy();
+    expect(updatedDefinition && updatedIndex < 0).toBe(true);
     expect(index).toBeNull();
   });
 });

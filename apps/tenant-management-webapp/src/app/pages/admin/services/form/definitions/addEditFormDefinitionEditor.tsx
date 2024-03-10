@@ -104,7 +104,7 @@ export const onSaveDispositionForModal = (
   selectedEditModalIndex: number | null
 ): [FormDefinition, number | null] => {
   if (isNewDisposition) {
-    const currentDispositionStates = definition.dispositionStates || [];
+    const currentDispositionStates = [...definition.dispositionStates] || [];
     if (currentDisposition) {
       currentDispositionStates.push(currentDisposition);
       definition.dispositionStates = currentDispositionStates;
@@ -240,14 +240,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   );
   const queueTasks = useSelector((state: RootState) => {
-    const values = Object.entries(state?.task?.queues)
-      .sort((template1, template2) => {
-        return template1[1].name.localeCompare(template2[1].name);
-      })
-      .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
-        tempObj[taskDefinitionId] = taskDefinitionData;
-        return tempObj;
-      }, {});
+    const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
+      tempObj[taskDefinitionId] = taskDefinitionData;
+      return tempObj;
+    }, {});
     return values;
   });
 
@@ -630,9 +626,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             value={NO_TASK_CREATED_OPTION}
                             label={NO_TASK_CREATED_OPTION}
                           />
-                          {Object.keys(queueTasks).map((item) => (
-                            <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
-                          ))}
+                          {Object.keys(queueTasks)
+                            .sort()
+                            .map((item) => (
+                              <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
+                            ))}
                         </GoADropdown>
                       )}
                     </QueueTaskDropdown>
