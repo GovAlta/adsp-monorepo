@@ -4,7 +4,8 @@ import { GoAInputTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity, isValidDate } from '../../util/stringUtils';
+import { checkFieldValidity } from '../../util/stringUtils';
+import { isNotKeyPressTabOrShift, isRequiredAndHasNoData } from '../../util/inputControlUtils';
 type GoAInputTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
@@ -24,14 +25,16 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       disabled={!enabled}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
-        handleChange(path, value);
+        if (isRequiredAndHasNoData(props as ControlProps)) {
+          handleChange(path, value);
+        }
       }}
       // Dont use handleChange in the onChange event, use the keyPress or onBlur.
       // If you use it onChange along with keyPress event it will cause a
       // side effect that causes the validation to render when it shouldnt.
       onChange={(name, value) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (!(key === 'Tab' || key === 'Shift')) {
+        if (isNotKeyPressTabOrShift(key)) {
           handleChange(path, value);
         }
       }}

@@ -5,6 +5,7 @@ import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity, isValidDate } from '../../util/stringUtils';
+import { isNotKeyPressTabOrShift, isRequiredAndHasNoData } from '../../util/inputControlUtils';
 type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
@@ -26,14 +27,16 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
       // side effect that causes the validation to render when it shouldnt.
       onChange={(name, value) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (!(key === 'Tab' || key === 'Shift')) {
+        if (isNotKeyPressTabOrShift(key)) {
           value = isValidDate(value) ? new Date(value)?.toISOString() : '';
           handleChange(path, value);
         }
       }}
       onBlur={(name: string, value: string) => {
-        value = isValidDate(value) ? new Date(value).toISOString() : '';
-        handleChange(path, value);
+        if (isRequiredAndHasNoData(props as ControlProps)) {
+          value = isValidDate(value) ? new Date(value).toISOString() : '';
+          handleChange(path, value);
+        }
       }}
       {...uischema?.options?.componentProps}
     />
