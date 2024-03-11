@@ -125,14 +125,14 @@ describe('input control tests', () => {
       expect(isValid).toBe(false);
     });
 
-    it('isNotKeyPressTabOrShift is truthy', () => {
-      expect(isNotKeyPressTabOrShift('Tab')).toBe(false);
-      expect(isNotKeyPressTabOrShift('Shift')).toBe(false);
+    it('isNotKeyPressTabOrShift is not a Shift or Tab key', () => {
+      expect(isNotKeyPressTabOrShift('T')).toBe(true);
+      expect(isNotKeyPressTabOrShift('1')).toBe(true);
     });
 
-    it('isNotKeyPressTabOrShift is falsy', () => {
-      expect(isNotKeyPressTabOrShift('T')).toBe(true);
-      expect(isNotKeyPressTabOrShift('!')).toBe(true);
+    it('isNotKeyPressTabOrShift is a Shift or Tab key', () => {
+      expect(isNotKeyPressTabOrShift('Tab')).toBe(false);
+      expect(isNotKeyPressTabOrShift('Shift')).toBe(false);
     });
   });
 });
