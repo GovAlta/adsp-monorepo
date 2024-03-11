@@ -63,7 +63,7 @@ export const AddScriptModal = ({
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validationCheck = () => {
     const validations = {

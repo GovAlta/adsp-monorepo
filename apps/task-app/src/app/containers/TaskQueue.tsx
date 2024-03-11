@@ -20,7 +20,6 @@ import {
   metricsLoadingSelector,
   openTask,
   loadQueueMetrics,
-  feedbackSelector,
 } from '../state';
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
 import { TaskPriorityModal } from '../components/TaskPriorityModal';
@@ -56,40 +55,46 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
 
   const navigate = useNavigate();
 
-  const feedback = useSelector(feedbackSelector);
-
   const { tenant: tenantName } = useParams<{ tenant: string }>();
   useEffect(() => {
-    if (feedback?.message.includes('queue with ID') && feedback?.message.includes('could not be found')) {
+    if (tasks === null) {
       navigate(`/${tenantName}`);
     }
-  }, [feedback, navigate, tenantName]);
+  }, [navigate, tenantName, tasks]);
 
   return (
     <div className={className}>
       <LoadingIndicator isLoading={busy.initializing || busy.loading} />
-      <TaskHeader open={open} isLive={live} onClickTasks={() => navigate('')} />
+      <TaskHeader
+        open={open}
+        isLive={live}
+        onClickTasks={() => navigate('')}
+        namespace={params.namespace}
+        name={params.name}
+      />
       <Routes>
         <Route path={`/:taskId`} element={<TaskDetailsHost onClose={() => navigate('')} />} />
         <Route
           path="/"
           element={
-            <TaskList
-              metrics={metrics}
-              metricsLoading={metricsLoading[`${params.namespace}:${params.name}`]}
-              filter={filter}
-              tasks={tasks}
-              open={open}
-              selected={null}
-              user={user}
-              onSetFilter={(filter) => dispatch(taskActions.setFilter(filter))}
-              onSelect={() => {
-                // not used
-              }}
-              onAssign={(task) => dispatch(taskActions.setTaskToAssign(task.id))}
-              onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task.id))}
-              onOpen={(task) => navigate(`${task.id}`)}
-            />
+            tasks && (
+              <TaskList
+                metrics={metrics}
+                metricsLoading={metricsLoading[`${params.namespace}:${params.name}`]}
+                filter={filter}
+                tasks={tasks}
+                open={open}
+                selected={null}
+                user={user}
+                onSetFilter={(filter) => dispatch(taskActions.setFilter(filter))}
+                onSelect={() => {
+                  // not used
+                }}
+                onAssign={(task) => dispatch(taskActions.setTaskToAssign(task.id))}
+                onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task.id))}
+                onOpen={(task) => navigate(`${task.id}`)}
+              />
+            )
           }
         />
       </Routes>
@@ -126,8 +131,8 @@ const TaskQueue = styled(TaskQueueComponent)`
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: var(--goa-space-3xl);
+  right: var(--goa-space-3xl);
 `;
 
 export default TaskQueue;

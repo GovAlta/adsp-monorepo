@@ -73,7 +73,7 @@ const Dashboard = (): JSX.Element => {
         .fill('1')
         .map((_, i) => elRefs[i] || createRef());
     }
-  }, [services]);
+  }, [services, elRefs, arrLength]);
 
   useEffect(() => {
     const tempHeights = [];
@@ -106,7 +106,7 @@ const Dashboard = (): JSX.Element => {
         setResetHeight(false);
       }
     }
-  }, [services, resetHeight]);
+  }, [services, resetHeight, fixedHeights.length, oldWindowSize, size]);
 
   useEffect(() => {
     if (realm && authenticated) {
@@ -118,7 +118,7 @@ const Dashboard = (): JSX.Element => {
     if (oldWindowSize?.width !== size?.width) {
       setResetHeight(true);
     }
-  }, [size]);
+  }, [size, oldWindowSize]);
 
   const adminDashboard = () => {
     return (

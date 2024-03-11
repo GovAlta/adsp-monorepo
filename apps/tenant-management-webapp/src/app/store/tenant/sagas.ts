@@ -29,10 +29,18 @@ import {
   TenantCreationLoginInitAction,
   UPDATE_ACCESS_TOKEN,
   UpdateLoginSuccess,
+  FETCH_USER_ID_BY_EMAIL,
+  FetchUserIdByEmailAction,
 } from './actions';
 
 import { KeycloakApi } from '@store/access/api';
-import { CredentialRefresh, SessionLoginSuccess, UpdateIndicator, SetSessionExpired } from '@store/session/actions';
+import {
+  CredentialRefresh,
+  SessionLoginSuccess,
+  UpdateIndicator,
+  SetSessionExpired,
+  UpdateLoadingState,
+} from '@store/session/actions';
 import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
 import { getOrCreateKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
@@ -258,8 +266,40 @@ export function* fetchRealmRoles(): SagaIterator {
   }
 }
 
-export function* updateAccessToken(action: UpdateAccessTokenAction): SagaIterator {
+export function* updateAccessToken(_action: UpdateAccessTokenAction): SagaIterator {
   yield call(getAccessToken, true);
+}
+
+export function* fetchUserIdByEmail(action: FetchUserIdByEmailAction): SagaIterator {
+  const { email } = action;
+
+  const state: RootState = yield select();
+  const token = yield call(getAccessToken);
+  const api = new TenantApi(state.config.tenantApi, token);
+  try {
+    yield put(
+      UpdateLoadingState({
+        name: FETCH_USER_ID_BY_EMAIL,
+        state: 'start',
+      })
+    );
+
+    const id = yield call([api, api.fetchTenantByEmail], email);
+    yield put(
+      UpdateLoadingState({
+        name: FETCH_USER_ID_BY_EMAIL,
+        state: 'completed',
+        id,
+      })
+    );
+  } catch (err) {
+    yield put(
+      UpdateLoadingState({
+        name: FETCH_USER_ID_BY_EMAIL,
+        state: 'error',
+      })
+    );
+  }
 }
 
 export function* watchTenantSagas(): SagaIterator {
@@ -270,6 +310,7 @@ export function* watchTenantSagas(): SagaIterator {
   yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);
   yield takeEvery(TENANT_LOGOUT, tenantLogout);
   yield takeEvery(UPDATE_ACCESS_TOKEN, updateAccessToken);
+  yield takeEvery(FETCH_USER_ID_BY_EMAIL, fetchUserIdByEmail);
 
   //tenant config
   yield takeEvery(CREATE_TENANT, createTenant);

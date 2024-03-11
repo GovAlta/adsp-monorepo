@@ -14,41 +14,39 @@ interface ScriptItemProps {
 
 const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDelete, onEdit }: ScriptItemProps) => {
   return (
-    <>
-      <tr key={script.name}>
-        <td headers="script-name" data-testid="script-name">
-          {script.name}
-        </td>
-        <td headers="script-id" data-testid="script-id">
-          {script.id}
-        </td>
-        <td headers="script-description" data-testid="script-description">
-          {script.description}
-        </td>
-        <td headers="script-actions" data-testid="script-actions">
-          {onDelete && (
-            <div style={{ display: 'flex' }}>
-              <GoAContextMenuIcon
-                type="create"
-                title="Edit"
-                testId={`script-edit-${script.name}`}
-                onClick={() => {
-                  onEdit(script);
-                }}
-              />
-              <GoAContextMenuIcon
-                testId="delete-icon"
-                title="Delete"
-                type="trash"
-                onClick={() => {
-                  onDelete(script);
-                }}
-              />
-            </div>
-          )}
-        </td>
-      </tr>
-    </>
+    <tr key={script.name}>
+      <td headers="script-name" data-testid="script-name">
+        {script.name}
+      </td>
+      <td headers="script-id" data-testid="script-id">
+        {script.id}
+      </td>
+      <td headers="script-description" data-testid="script-description">
+        {script.description}
+      </td>
+      <td headers="script-actions" data-testid="script-actions">
+        {onDelete && (
+          <div style={{ display: 'flex' }}>
+            <GoAContextMenuIcon
+              type="create"
+              title="Edit"
+              testId={`script-edit-${script.name}`}
+              onClick={() => {
+                onEdit(script);
+              }}
+            />
+            <GoAContextMenuIcon
+              testId="delete-icon"
+              title="Delete"
+              type="trash"
+              onClick={() => {
+                onDelete(script);
+              }}
+            />
+          </div>
+        )}
+      </td>
+    </tr>
   );
 };
 

@@ -26,7 +26,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   const isFetchLoading = useActionStateCheck(FETCH_NOTIFICATION_CONFIGURATION, 'start');
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [isFetchLoading]);

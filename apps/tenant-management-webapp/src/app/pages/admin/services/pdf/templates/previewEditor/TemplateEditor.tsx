@@ -82,7 +82,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (!pdfTemplate) {
       dispatch(getPdfTemplates());
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   //eslint-disable-next-line
   useEffect(() => {
@@ -93,7 +93,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (saveModal.closeEditor) {
       cancel();
     }
-  }, [saveModal]);
+  }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
 
@@ -120,13 +120,13 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (isPDFUpdated(tempPdfTemplate, tmpTemplate)) {
       dispatch(updateTempTemplate(tmpTemplate));
     }
-  }, [debouncedTmpTemplate, EditorError.testData]);
+  }, [debouncedTmpTemplate, EditorError.testData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (reloadFile && reloadFile[pdfTemplate.id]) {
       dispatch(FetchFileService(reloadFile[pdfTemplate.id]));
     }
-  }, [reloadFile]);
+  }, [reloadFile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (monaco) {
@@ -195,21 +195,19 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             </GoAFormItem>
           </Tab>
           <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
-            <>
-              <GoAFormItem error={errors?.body ?? null} label="">
-                <MonacoDivBody style={{ height: monacoHeight }}>
-                  <MonacoEditor
-                    language={'handlebars'}
-                    value={tmpTemplate?.template}
-                    data-testid="templateForm-body"
-                    onChange={(value) => {
-                      setTmpTemplate({ ...tmpTemplate, template: value });
-                    }}
-                    {...bodyEditorConfig}
-                  />
-                </MonacoDivBody>
-              </GoAFormItem>
-            </>
+            <GoAFormItem error={errors?.body ?? null} label="">
+              <MonacoDivBody style={{ height: monacoHeight }}>
+                <MonacoEditor
+                  language={'handlebars'}
+                  value={tmpTemplate?.template}
+                  data-testid="templateForm-body"
+                  onChange={(value) => {
+                    setTmpTemplate({ ...tmpTemplate, template: value });
+                  }}
+                  {...bodyEditorConfig}
+                />
+              </MonacoDivBody>
+            </GoAFormItem>
           </Tab>
           <Tab testId={`pdf-edit-footer`} label={<PdfEditorLabelWrapper>Footer</PdfEditorLabelWrapper>}>
             <GoAFormItem error={errors?.footer ?? ''} label="">
@@ -227,21 +225,19 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             </GoAFormItem>
           </Tab>
           <Tab testId={`pdf-edit-css`} label={<PdfEditorLabelWrapper>CSS</PdfEditorLabelWrapper>}>
-            <>
-              <GoAFormItem error={errors?.body ?? null} label="">
-                <MonacoDivBody style={{ height: monacoHeight }}>
-                  <MonacoEditor
-                    language={'handlebars'}
-                    value={tmpTemplate?.additionalStyles}
-                    data-testid="templateForm-css"
-                    onChange={(value) => {
-                      setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
-                    }}
-                    {...bodyEditorConfig}
-                  />
-                </MonacoDivBody>
-              </GoAFormItem>
-            </>
+            <GoAFormItem error={errors?.body ?? null} label="">
+              <MonacoDivBody style={{ height: monacoHeight }}>
+                <MonacoEditor
+                  language={'handlebars'}
+                  value={tmpTemplate?.additionalStyles}
+                  data-testid="templateForm-css"
+                  onChange={(value) => {
+                    setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
+                  }}
+                  {...bodyEditorConfig}
+                />
+              </MonacoDivBody>
+            </GoAFormItem>
           </Tab>
           <Tab testId={`pdf-test-generator`} label={<PdfEditorLabelWrapper>Test data</PdfEditorLabelWrapper>}>
             <GoAFormItem error={errors?.body ?? EditorError?.testData ?? null} label="">
@@ -270,26 +266,24 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             </GoAFormItem>
           </Tab>
           <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
-            <>
-              <GeneratorStyling style={{ height: monacoHeight }}>
-                <ButtonRight>
-                  <GoAButton
-                    type="secondary"
-                    testId="pdf-delete-all-files"
-                    size="normal"
-                    onClick={() => {
-                      setShowDeleteConfirmation(true);
-                    }}
-                    disabled={pdfList === null || pdfList?.length === 0}
-                  >
-                    Delete all files
-                  </GoAButton>
-                </ButtonRight>
-                <section className="scroll-bar">
-                  {pdfTemplate?.id && <GeneratedPdfList templateId={pdfTemplate.id} />}
-                </section>
-              </GeneratorStyling>
-            </>
+            <GeneratorStyling style={{ height: monacoHeight }}>
+              <ButtonRight>
+                <GoAButton
+                  type="secondary"
+                  testId="pdf-delete-all-files"
+                  size="normal"
+                  onClick={() => {
+                    setShowDeleteConfirmation(true);
+                  }}
+                  disabled={pdfList === null || pdfList?.length === 0}
+                >
+                  Delete all files
+                </GoAButton>
+              </ButtonRight>
+              <section className="scroll-bar">
+                {pdfTemplate?.id && <GeneratedPdfList templateId={pdfTemplate.id} />}
+              </section>
+            </GeneratorStyling>
           </Tab>
         </Tabs>
         <hr className="hr-resize-bottom" />

@@ -14,23 +14,21 @@ export const FileTypeDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
 
   const goBack = () => {
-    navigate('/admin/services/file');
+    navigate('/admin/services/file?fileTypes=true');
   };
 
   return (
-    <>
-      <Modal data-testid="fileType-form">
-        <FileTypeModalContent>
-          <OuterFileTypeTemplateEditorContainer>
-            <TabletMessage goBack={goBack} />
-            <HideTablet>
-              <FileTypeTemplateEditorContainer>
-                <EditFileTypeDefinitionEditor />
-              </FileTypeTemplateEditorContainer>
-            </HideTablet>
-          </OuterFileTypeTemplateEditorContainer>
-        </FileTypeModalContent>
-      </Modal>
-    </>
+    <Modal data-testid="fileType-form">
+      <FileTypeModalContent>
+        <OuterFileTypeTemplateEditorContainer>
+          <TabletMessage goBack={goBack} />
+          <HideTablet>
+            <FileTypeTemplateEditorContainer>
+              <EditFileTypeDefinitionEditor />
+            </FileTypeTemplateEditorContainer>
+          </HideTablet>
+        </OuterFileTypeTemplateEditorContainer>
+      </FileTypeModalContent>
+    </Modal>
   );
 };

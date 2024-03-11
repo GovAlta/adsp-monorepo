@@ -208,7 +208,7 @@ export class PostgresTaskRepository implements TaskRepository {
           definitionNamespace: entity.definition?.namespace,
           definitionName: entity.definition?.name,
           context: entity.context,
-          recordId: entity.recordId,
+          recordId: entity.recordId?.toString(),
           data: entity.data,
           name: entity.name,
           description: entity.description,

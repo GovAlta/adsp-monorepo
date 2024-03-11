@@ -53,7 +53,7 @@ export const TopicsList = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(getCommentTopicTypes());
-  }, []);
+  }, [dispatch]);
   useEffect(() => {
     if (selectedType && selectedType !== '') {
       if (coreTopicTypes[selectedType]) {
@@ -64,7 +64,7 @@ export const TopicsList = (): JSX.Element => {
         dispatch(fetchTopicsRequest(topicTypes[selectedType]));
       }
     }
-  }, [selectedType, topicList]);
+  }, [dispatch, topicTypes, selectedType, topicList, coreTopicTypes]);
 
   const onNext = () => {
     dispatch(fetchTopicsRequest(topicTypes[selectedType], next));

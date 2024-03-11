@@ -59,7 +59,7 @@ export const TestStream = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(fetchEventStreams());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // socket connection
   useEffect(() => {
@@ -109,7 +109,7 @@ export const TestStream = (): JSX.Element => {
     return () => {
       socket?.disconnect();
     };
-  }, [socket]);
+  }, [socket]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const disableConnectButton = () => {
     if (socketConnecting) {

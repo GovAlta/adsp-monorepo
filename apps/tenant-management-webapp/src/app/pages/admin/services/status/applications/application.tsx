@@ -46,7 +46,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
     if (status !== app.status) {
       setStatus(app.status);
     }
-  }, [app.status]);
+  }, [app.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function doDelete() {
     dispatch(deleteApplication({ tenantId: app.tenantId, appKey: app.appKey }));

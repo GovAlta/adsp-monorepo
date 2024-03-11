@@ -21,11 +21,11 @@ export const TopicListTable = ({ topics, selectedType, showActions, onDeleteTopi
   const [activeRow, setActiveRow] = useState(null);
   useEffect(() => {
     dispatch(clearComments());
-  }, [activeRow]);
+  }, [activeRow, dispatch]);
   return (
     <>
       <HeaderFont>
-        <label>Topic list</label>
+        <h2>Topic list</h2>
       </HeaderFont>
       <TableDiv>
         <DataTable data-testid="topic-table">

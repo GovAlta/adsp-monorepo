@@ -9,24 +9,22 @@ export const FormDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
 
   const goBack = () => {
-    navigate('/admin/services/form?templates=true');
+    navigate('/admin/services/form?definitions=true');
   };
 
   return (
-    <>
-      <Modal data-testid="template-form">
-        <ModalContent>
-          <OuterFormTemplateEditorContainer>
-            <TabletMessage goBack={goBack} />
+    <Modal data-testid="template-form">
+      <ModalContent>
+        <OuterFormTemplateEditorContainer>
+          <TabletMessage goBack={goBack} />
 
-            <HideTablet>
-              <FormTemplateEditorContainer>
-                <AddEditFormDefinitionEditor />
-              </FormTemplateEditorContainer>
-            </HideTablet>
-          </OuterFormTemplateEditorContainer>
-        </ModalContent>
-      </Modal>
-    </>
+          <HideTablet>
+            <FormTemplateEditorContainer>
+              <AddEditFormDefinitionEditor />
+            </FormTemplateEditorContainer>
+          </HideTablet>
+        </OuterFormTemplateEditorContainer>
+      </ModalContent>
+    </Modal>
   );
 };

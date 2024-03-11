@@ -50,9 +50,10 @@ export const TaskAssignmentModal: FunctionComponent<TaskAssignmentModalProps> = 
         {user.isAssigner ? (
           <GoAFormItem label="Assign task to" mt="m" mb="4xl">
             <GoADropdown
-              native={true}
               value={task?.assignment?.assignedTo?.id}
               onChange={(_, id) => setSelected(id as string)}
+              relative={true}
+              width={'50ch'}
             >
               <GoADropdownItem key="no one" value="" label="No one" />
               {workers.map((w) => (

@@ -4,7 +4,14 @@ import { useNavigate } from 'react-router-dom-6';
 import styled from 'styled-components';
 import { QueuesHeader } from '../components/QueuesHeader';
 import { QueueList } from '../components/QueueList';
-import { AppDispatch, loadQueues, metricsLoadingSelector, queueMetricsSelector, queuesSelector } from '../state';
+import {
+  AppDispatch,
+  loadQueues,
+  metricsLoadingSelector,
+  queueMetricsSelector,
+  queuesSelector,
+  taskActions,
+} from '../state';
 
 interface TaskQueuesProps {
   className?: string;
@@ -14,6 +21,7 @@ export const TaskQueues: FunctionComponent<TaskQueuesProps> = ({ className }) =>
   const dispatch = useDispatch<AppDispatch>();
   useEffect(() => {
     dispatch(loadQueues());
+    dispatch(taskActions.resetTask());
   }, [dispatch]);
 
   const queues = useSelector(queuesSelector);
@@ -29,7 +37,10 @@ export const TaskQueues: FunctionComponent<TaskQueuesProps> = ({ className }) =>
         queues={queues}
         metrics={metrics}
         metricsLoading={metricsLoading}
-        onOpenQueue={(queue) => navigate(`${queue.namespace}/${queue.name}`)}
+        onOpenQueue={(queue) => {
+          dispatch(taskActions.resetTask());
+          navigate(`${queue.namespace}/${queue.name}`);
+        }}
       />
     </div>
   );

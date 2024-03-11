@@ -34,12 +34,12 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   useEffect(() => {}, [roles]);
   useEffect(() => {
     setCalendar(initialValue);
-  }, [calendarName]);
+  }, [calendarName, initialValue]);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
-  }, []);
+  }, [dispatch]);
 
   const calendars = useSelector((state: RootState) => {
     return state?.calendarService?.calendars;
@@ -77,31 +77,29 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   };
   const ClientRole = ({ roleNames, clientId }) => {
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          roleSelectFunc={(roles, type) => {
-            if (type === 'read') {
-              setCalendar({
-                ...calendar,
-                readRoles: roles,
-              });
-            } else {
-              setCalendar({
-                ...calendar,
-                updateRoles: roles,
-              });
-            }
-          }}
-          nameColumnWidth={80}
-          service="Calendar"
-          checkedRoles={[
-            { title: 'read', selectedRoles: calendar?.readRoles },
-            { title: 'modify', selectedRoles: calendar?.updateRoles },
-          ]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        roleSelectFunc={(roles, type) => {
+          if (type === 'read') {
+            setCalendar({
+              ...calendar,
+              readRoles: roles,
+            });
+          } else {
+            setCalendar({
+              ...calendar,
+              updateRoles: roles,
+            });
+          }
+        }}
+        nameColumnWidth={80}
+        service="Calendar"
+        checkedRoles={[
+          { title: 'read', selectedRoles: calendar?.readRoles },
+          { title: 'modify', selectedRoles: calendar?.updateRoles },
+        ]}
+      />
     );
   };
 

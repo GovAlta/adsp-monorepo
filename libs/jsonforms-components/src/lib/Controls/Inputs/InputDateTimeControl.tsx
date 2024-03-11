@@ -4,7 +4,7 @@ import { GoAInputDateTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay, isValidDate } from '../../util/stringUtils';
+import { checkFieldValidity, isValidDate } from '../../util/stringUtils';
 type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
@@ -12,12 +12,10 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, errors, handleChange, schema, label } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
-  const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
 
   return (
     <GoAInputDateTime
-      error={errorsFormInput.length > 0}
+      error={checkFieldValidity(props as ControlProps).length > 0}
       width="100%"
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data ? new Date(data).toISOString() : ''}

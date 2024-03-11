@@ -2,11 +2,12 @@ import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { NotFoundError, InvalidOperationError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
-import { getTasks, taskOperation, updateTask } from '.';
-import { TaskServiceRoles } from '..';
+import { mapTask } from '../mapper';
 import { QueueEntity, TaskEntity } from '../model';
+import { TaskServiceRoles } from '../roles';
+import { getTasks, taskOperation, updateTask } from '../router';
 import { TaskPriority, TaskStatus } from '../types';
-import { createTaskRouter, getTask, mapTask } from './task';
+import { createTaskRouter, getTask } from './task';
 
 describe('task', () => {
   const apiId = adspId`urn:ads:platform:task-service:v1`;

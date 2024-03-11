@@ -62,112 +62,108 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
 
   const RenderFileTable = () => {
     return (
-      <>
-        <FileTableStyles>
-          <DataTable id="pdf-files-information" data-testid="pdf-files-information">
-            <thead>
-              <tr>
-                <th>File Name</th>
-                <th>Status</th>
-                <th>Size (KB)</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobList.length === 0 && (
-                <div className="some-margin" data-testid="no-pdf-file-generated">
-                  No PDF's have been generated yet
-                </div>
-              )}
-              {jobList.map((job) => {
-                const file = fileList.find(
-                  (file) => file.recordId === job.id && file.filename.indexOf(templateId) > -1
-                );
-                const key = new Date().valueOf();
-                const status = file?.filename ? 'pdf-generated' : job.status;
-                return (
-                  <>
-                    {(file || indicator.show) && (
-                      <tr key={key}>
-                        <td>{job.filename}</td>
-                        {/* Use ceil here to make sure people will allocate enough resources */}
-                        <td>
-                          <div className="flex-horizontal mt-2">
-                            <div className="mt-1">{iconGenerator[status]}</div>
-                            <div className="flex">{statusGenerator[status]}</div>
-                            <div className="flex-auto">
-                              {currentFile?.filename === job?.filename && (
-                                <BadgeWrapper>
-                                  <GoABadge content={'Viewing'} data-testid="viewing-badge" type="information" />
-                                </BadgeWrapper>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          {file?.size ? (
-                            Math.ceil(file.size / 1024)
-                          ) : (
-                            <div>{!indicator.show ? 'Deleted' : <TextGoASkeleton />}</div>
-                          )}
-                        </td>
-                        <td className="display-flex">
-                          {file?.filename ? (
-                            <>
-                              <GoAContextMenu>
-                                {currentFile?.filename !== job?.filename ? (
-                                  <GoAContextMenuIcon
-                                    title="Toggle details"
-                                    type={'eye'}
-                                    onClick={() => showCurrentPdf(file)}
-                                    testId="toggle-details-visibility"
-                                  />
-                                ) : (
-                                  <ButtonBox />
-                                )}
-                                <GoAContextMenuIcon
-                                  disabled={!file?.size}
-                                  testId="download-icon"
-                                  type="download"
-                                  onClick={() => onDownloadFile(file)}
-                                />
-                                <GoAContextMenuIcon
-                                  data-testid="delete-icon"
-                                  type="trash"
-                                  testId="delete-file-icon"
-                                  onClick={() => onDeleteFile(file)}
-                                />
-                              </GoAContextMenu>
-                            </>
-                          ) : (
-                            <div>{indicator.show && <TextGoASkeleton />}</div>
-                          )}
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                );
-              })}
-            </tbody>
-          </DataTable>
-          {/* Delete confirmation */}
-          <DeleteModal
-            isOpen={showDeleteConfirmation}
-            title="Delete PDF file"
-            content={
-              <div>
-                Are you sure you wish to delete <b>{showDeleteConfirmation?.filename}?</b>
+      <FileTableStyles>
+        <DataTable id="pdf-files-information" data-testid="pdf-files-information">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Status</th>
+              <th>Size (KB)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {jobList.length === 0 && (
+              <div className="some-margin" data-testid="no-pdf-file-generated">
+                No PDF's have been generated yet
               </div>
-            }
-            onCancel={() => setShowDeleteConfirmation(null)}
-            onDelete={() => {
-              const file = showDeleteConfirmation;
-              dispatch(deletePdfFileService(file));
-              setShowDeleteConfirmation(null);
-            }}
-          />
-        </FileTableStyles>
-      </>
+            )}
+            {jobList.map((job) => {
+              const file = fileList.find((file) => file.recordId === job.id && file.filename.indexOf(templateId) > -1);
+              const key = new Date().valueOf();
+              const status = file?.filename ? 'pdf-generated' : job.status;
+              return (
+                <>
+                  {(file || indicator.show) && (
+                    <tr key={key}>
+                      <td>{job.filename}</td>
+                      {/* Use ceil here to make sure people will allocate enough resources */}
+                      <td>
+                        <div className="flex-horizontal mt-2">
+                          <div className="mt-1">{iconGenerator[status]}</div>
+                          <div className="flex">{statusGenerator[status]}</div>
+                          <div className="flex-auto">
+                            {currentFile?.filename === job?.filename && (
+                              <BadgeWrapper>
+                                <GoABadge content={'Viewing'} data-testid="viewing-badge" type="information" />
+                              </BadgeWrapper>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        {file?.size ? (
+                          Math.ceil(file.size / 1024)
+                        ) : (
+                          <div>{!indicator.show ? 'Deleted' : <TextGoASkeleton />}</div>
+                        )}
+                      </td>
+                      <td className="display-flex">
+                        {file?.filename ? (
+                          <>
+                            <GoAContextMenu>
+                              {currentFile?.filename !== job?.filename ? (
+                                <GoAContextMenuIcon
+                                  title="Toggle details"
+                                  type={'eye'}
+                                  onClick={() => showCurrentPdf(file)}
+                                  testId="toggle-details-visibility"
+                                />
+                              ) : (
+                                <ButtonBox />
+                              )}
+                              <GoAContextMenuIcon
+                                disabled={!file?.size}
+                                testId="download-icon"
+                                type="download"
+                                onClick={() => onDownloadFile(file)}
+                              />
+                              <GoAContextMenuIcon
+                                data-testid="delete-icon"
+                                type="trash"
+                                testId="delete-file-icon"
+                                onClick={() => onDeleteFile(file)}
+                              />
+                            </GoAContextMenu>
+                          </>
+                        ) : (
+                          <div>{indicator.show && <TextGoASkeleton />}</div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </>
+              );
+            })}
+          </tbody>
+        </DataTable>
+        {/* Delete confirmation */}
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete PDF file"
+          content={
+            <div>
+              Are you sure you wish to delete <b>{showDeleteConfirmation?.filename}?</b>
+            </div>
+          }
+          onCancel={() => setShowDeleteConfirmation(null)}
+          onDelete={() => {
+            const file = showDeleteConfirmation;
+            dispatch(deletePdfFileService(file));
+            setShowDeleteConfirmation(null);
+          }}
+        />
+      </FileTableStyles>
     );
   };
 

@@ -37,14 +37,14 @@ export const GoAContextMenu = styled.div`
   display: flex;
   align-items: center;
   background-color: #fff;
-  gap: 0.25rem;
+  gap: var(--goa-space-2xs);
 
   > .goa-icon-button {
     cursor: pointer;
-    border-radius: 0.25rem;
-    padding: 0.25rem;
+    border-radius: var(--goa-border-radius-m);
+    padding: var(--goa-space-2xs);
   }
   > .goa-icon-button + .goa-icon-button {
-    margin-left: 0rem;
+    margin-left: var(--goa-space-none);
   }
 `;

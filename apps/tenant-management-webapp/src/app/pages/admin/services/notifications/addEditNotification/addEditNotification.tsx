@@ -100,21 +100,19 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
 
   const SubscribeRole = ({ roleNames, clientId }) => {
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          roleSelectFunc={(roles) => {
-            setType({
-              ...type,
-              subscriberRoles: roles,
-            });
-          }}
-          nameColumnWidth={80}
-          service="Notifications-type"
-          checkedRoles={[{ title: 'subscribe', selectedRoles: type.subscriberRoles }]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        roleSelectFunc={(roles) => {
+          setType({
+            ...type,
+            subscriberRoles: roles,
+          });
+        }}
+        nameColumnWidth={80}
+        service="Notifications-type"
+        checkedRoles={[{ title: 'subscribe', selectedRoles: type.subscriberRoles }]}
+      />
     );
   };
 

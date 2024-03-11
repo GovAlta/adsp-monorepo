@@ -76,7 +76,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { addData } from './lib/Context';
 
 import { HelpContent, HelpContentTester } from './lib/Additional';
-import GoAErrorControl, { GoAErrorControlTester } from './lib/Additional/GoAErrorControl';
+import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAErrorControl';
 
 export * from './lib/Context';
 const countries = ['Argentina', 'Brazil', 'Canada', 'Denmark', 'Egypt', 'France', 'Greece', 'India', 'Japan', 'Kenya'];

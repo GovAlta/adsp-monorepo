@@ -16,7 +16,7 @@ const Imports: FunctionComponent = () => {
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
-  }, [fileList]);
+  }, [fileList, dispatch]);
 
   const imports = useSelector((state: RootState) => state.configuration.imports);
 

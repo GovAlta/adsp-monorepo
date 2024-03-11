@@ -15,23 +15,21 @@ export const CommentTopicTypesEditor = (): JSX.Element => {
   const navigate = useNavigate();
 
   const goBack = () => {
-    navigate('/admin/services/form?templates=true');
+    navigate('/admin/services/comment?templates=true');
   };
 
   return (
-    <>
-      <Modal data-testid="template-form">
-        <ModalContent>
-          <OuterNotificationTemplateEditorContainer>
-            <TabletMessage goBack={goBack} />
-            <HideTablet>
-              <NotificationTemplateEditorContainer>
-                <AddEditCommentTopicTypeEditor />
-              </NotificationTemplateEditorContainer>
-            </HideTablet>
-          </OuterNotificationTemplateEditorContainer>
-        </ModalContent>
-      </Modal>
-    </>
+    <Modal data-testid="template-form">
+      <ModalContent>
+        <OuterNotificationTemplateEditorContainer>
+          <TabletMessage goBack={goBack} />
+          <HideTablet>
+            <NotificationTemplateEditorContainer>
+              <AddEditCommentTopicTypeEditor />
+            </NotificationTemplateEditorContainer>
+          </HideTablet>
+        </OuterNotificationTemplateEditorContainer>
+      </ModalContent>
+    </Modal>
   );
 };

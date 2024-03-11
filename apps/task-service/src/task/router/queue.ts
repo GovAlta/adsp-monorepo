@@ -19,9 +19,10 @@ import { QueueEntity } from '../model/queue';
 import { TaskEntity } from '../model/task';
 import { TaskRepository } from '../repository';
 import { Queue, TaskPriority, TaskServiceConfiguration, TaskStatus } from '../types';
-import { getTask, mapTask, taskOperation, TASK_KEY } from './task';
+import { getTask, taskOperation, TASK_KEY } from './task';
 import { UserInformation } from './types';
 import { CommentService } from '../comment';
+import { mapTask } from '../mapper';
 
 interface QueueRouterProps {
   apiId: AdspId;

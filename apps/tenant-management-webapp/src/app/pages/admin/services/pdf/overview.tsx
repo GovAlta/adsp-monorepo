@@ -15,7 +15,7 @@ export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ setOpenAddTem
   useEffect(() => {
     setOpenAddTemplate(false);
     dispatch(fetchPdfMetrics());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
   const description =
@@ -25,17 +25,15 @@ export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ setOpenAddTem
       testId="pdf-service-overview"
       description={description}
       addButton={
-        <>
-          <GoAButton
-            testId="add-templates"
-            onClick={() => {
-              navigate('/admin/services/pdf?templates=true');
-              setOpenAddTemplate(true);
-            }}
-          >
-            Add template
-          </GoAButton>
-        </>
+        <GoAButton
+          testId="add-templates"
+          onClick={() => {
+            navigate('/admin/services/pdf?templates=true');
+            setOpenAddTemplate(true);
+          }}
+        >
+          Add template
+        </GoAButton>
       }
       extra={<PdfMetrics />}
     />

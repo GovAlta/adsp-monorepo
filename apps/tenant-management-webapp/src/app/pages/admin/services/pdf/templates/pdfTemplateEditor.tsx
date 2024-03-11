@@ -20,23 +20,21 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   };
 
   return (
-    <>
-      <Modal data-testid="template-form">
-        <ModalContent>
-          <OuterPDFTemplateEditorContainer>
-            <TabletMessage goBack={goBack} />
-            <HideTablet>
-              <PDFTemplateEditorContainer>
-                <TemplateEditor />
+    <Modal data-testid="template-form">
+      <ModalContent>
+        <OuterPDFTemplateEditorContainer>
+          <TabletMessage goBack={goBack} />
+          <HideTablet>
+            <PDFTemplateEditorContainer>
+              <TemplateEditor />
 
-                <PreviewTemplateContainer>
-                  <PreviewTemplate channelTitle="PDF preview" />
-                </PreviewTemplateContainer>
-              </PDFTemplateEditorContainer>
-            </HideTablet>
-          </OuterPDFTemplateEditorContainer>
-        </ModalContent>
-      </Modal>
-    </>
+              <PreviewTemplateContainer>
+                <PreviewTemplate channelTitle="PDF preview" />
+              </PreviewTemplateContainer>
+            </PDFTemplateEditorContainer>
+          </HideTablet>
+        </OuterPDFTemplateEditorContainer>
+      </ModalContent>
+    </Modal>
   );
 };
