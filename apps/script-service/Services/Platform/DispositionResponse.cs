@@ -7,8 +7,11 @@ namespace Adsp.Platform.ScriptService.Services.Platform;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
 internal sealed class DispositionResponse
 {
+  [JsonPropertyName("urn")]
+  public string? Urn { get; set; }
+
   [JsonPropertyName("created")]
-  public string? Created { get; set; }
+  public DateTime? Created { get; set; }
 
   [JsonPropertyName("createdBy")]
   public CreatedBy? CreatedBy { get; set; }
@@ -28,6 +31,9 @@ internal sealed class DispositionResponse
   [JsonPropertyName("formId")]
   public string? FormId { get; set; }
 
+  [JsonPropertyName("formDefinitionId")]
+  public string? FormDefinitionId { get; set; }
+
   [JsonPropertyName("id")]
   public string? Id { get; set; }
 
@@ -40,11 +46,25 @@ internal sealed class DispositionResponse
   [JsonPropertyName("updateDateTime")]
   public string? UpdateDateTime { get; set; }
 
+  [JsonPropertyName("updated")]
+  public DateTime? Updated { get; set; }
+
   [JsonPropertyName("updatedBy")]
-  public string? UpdatedBy { get; set; }
+  public UpdatedBy? UpdatedBy { get; set; }
+
+  [JsonPropertyName("hash")]
+  public string? Hash { get; set; }
 }
 
 internal sealed class CreatedBy
+{
+  [JsonPropertyName("id")]
+  public string? Id { get; set; }
+
+  [JsonPropertyName("name")]
+  public string? Name { get; set; }
+}
+internal sealed class UpdatedBy
 {
   [JsonPropertyName("id")]
   public string? Id { get; set; }

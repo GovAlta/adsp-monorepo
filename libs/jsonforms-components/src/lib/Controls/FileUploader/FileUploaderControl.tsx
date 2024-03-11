@@ -105,11 +105,11 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 const AttachmentBorder = styled.div`
   display: flex;
   flex-direction: row;
-  border: 1px solid #dcdcdc;
-  border-radius: 0.25rem;
-  padding: 0.5rem;
+  border: var(--goa-border-width-s) solid #dcdcdc;
+  border-radius: var(--goa-border-radius-m);
+  padding: var(--goa-space-xs);
   width: fit-content;
-  margin-top: 5px;
+  margin-top: var(--goa-space-2xs);
 `;
 
 const FileUploaderStyle = styled.div`
@@ -118,7 +118,7 @@ const FileUploaderStyle = styled.div`
     font-weight: var(--goa-font-weight-bold);
     color: var(--goa-color-text-default);
     font-size: var(--goa-font-size-4);
-    padding: 0 0 0.5rem 0;
+    padding: 0 0 var(--goa-space-xs) 0;
   }
 
   .align-center {
@@ -126,6 +126,6 @@ const FileUploaderStyle = styled.div`
   }
 
   .file-upload {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--goa-space-xs);
   }
 `;
