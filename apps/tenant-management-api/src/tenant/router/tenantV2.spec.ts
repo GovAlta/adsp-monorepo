@@ -18,6 +18,8 @@ describe('createTenantV2Router', () => {
   const realmServiceMock = {
     createRealm: jest.fn(),
     deleteRealm: jest.fn(),
+    deleteUserIdp: jest.fn(),
+    findUserId: jest.fn(),
   };
 
   const loggerMock = {
@@ -46,6 +48,8 @@ describe('createTenantV2Router', () => {
 
     realmServiceMock.createRealm.mockReset();
     realmServiceMock.deleteRealm.mockReset();
+    realmServiceMock.deleteUserIdp.mockReset();
+    realmServiceMock.findUserId.mockReset();
 
     eventServiceMock.send.mockReset();
   });
