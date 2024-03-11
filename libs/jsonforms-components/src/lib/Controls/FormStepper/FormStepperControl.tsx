@@ -16,7 +16,15 @@ import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
 import { Grid, GridItem } from '../../common/Grid';
-import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
+import {
+  Anchor,
+  ReviewItem,
+  ReviewItemHeader,
+  ReviewItemSection,
+  ReviewItemTitle,
+  ReviewListItem,
+  ReviewListWrapper,
+} from './styled-components';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
@@ -126,6 +134,53 @@ export const FormStepper = ({
     );
   };
 
+  const resolveLabelFromScope = (scope: string) => {
+    const lastSegment = scope.split('/').pop()!;
+    return (
+      lastSegment.charAt(0).toUpperCase() +
+      lastSegment
+        .slice(1)
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+    );
+  };
+
+  const getFormFieldValue = (scope: string) => {
+    if (data) {
+      const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
+      let currentValue = data;
+      for (const key of pathArray) {
+        if (currentValue[key] === undefined) {
+          return '';
+        }
+        currentValue = currentValue[key];
+      }
+      return typeof currentValue === 'object' ? '' : currentValue;
+    } else {
+      return '';
+    }
+  };
+
+  const renderElements = (elements: UISchemaElement[] | (Category | Categorization)[]) =>
+    elements.map((element, index) => {
+      const clonedElement = JSON.parse(JSON.stringify(element));
+      if (clonedElement.type === 'Control' && clonedElement.scope) {
+        const label = resolveLabelFromScope(clonedElement.scope);
+        const value = getFormFieldValue(clonedElement.scope).toString();
+        return (
+          <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
+            <strong>{label}:</strong> {value}
+          </GridItem>
+        );
+      } else if (clonedElement?.elements) {
+        return <React.Fragment key={index}>{renderElements(clonedElement.elements)}</React.Fragment>;
+      }
+      return null;
+    });
+  const handleEdit = (index: number) => {
+    setPage(index + 1);
+  };
+
   return (
     <Hidden xsUp={!visible}>
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
@@ -159,18 +214,19 @@ export const FormStepper = ({
             <h3 style={{ flex: 1 }}>Summary</h3>
 
             <ReviewItem>
-              <div style={{ width: '100%' }}>
-                {data && Object.keys(data)?.length > 0 && (
-                  <Grid>
-                    {Object.keys(flattenObject(data)).map((key, ix) => {
-                      return (
-                        <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                          <b>{key}</b> : <PreventControlElement key={ix} value={flattenObject(data)[key]} />
-                        </GridItem>
-                      );
-                    })}
-                  </Grid>
-                )}
+              <div>
+                {categories.map((category, index) => {
+                  const categoryLabel = category.label || category.i18n || 'Unknown Category';
+                  return (
+                    <ReviewItemSection key={index}>
+                      <ReviewItemHeader>
+                        <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
+                        <Anchor onClick={() => handleEdit(index)}>Edit</Anchor>
+                      </ReviewItemHeader>
+                      <Grid>{renderElements(category.elements)}</Grid>
+                    </ReviewItemSection>
+                  );
+                })}
               </div>
             </ReviewItem>
           </div>
