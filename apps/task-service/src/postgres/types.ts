@@ -1,6 +1,6 @@
 import { Task, TaskPriority, TaskStatus } from '../task';
 
-export interface TaskRecord extends Omit<Task, 'tenantId' | 'definition' | 'queue' | 'assignment'> {
+export interface TaskRecord extends Omit<Task, 'tenantId' | 'definition' | 'queue' | 'assignment' | 'recordId'> {
   tenant: string;
   queueNamespace: string;
   queueName: string;
@@ -12,6 +12,7 @@ export interface TaskRecord extends Omit<Task, 'tenantId' | 'definition' | 'queu
   assignedToName: string;
   assignedToEmail: string;
   assignedOn: Date;
+  recordId?: string;
 }
 
 export interface TaskAggregationResult {
