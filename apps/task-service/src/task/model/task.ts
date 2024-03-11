@@ -26,7 +26,7 @@ export class TaskEntity implements Task {
   name: string;
   description: string;
   priority: TaskPriority;
-  recordId: string;
+  recordId: string | AdspId;
   data: Record<string, unknown>;
   status: TaskStatus;
   createdOn: Date;
@@ -51,7 +51,7 @@ export class TaskEntity implements Task {
     this.definition = task.definition;
     this.name = task.name;
     this.description = task.description;
-    this.recordId = task.recordId;
+    this.recordId = AdspId.isAdspId(task.recordId as string) ? AdspId.parse(task.recordId as string) : task.recordId;
     this.data = task.data || {};
 
     const record = task as Task;
