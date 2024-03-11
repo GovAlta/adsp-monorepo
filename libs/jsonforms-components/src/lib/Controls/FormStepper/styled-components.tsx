@@ -2,16 +2,16 @@ import styled from 'styled-components';
 
 export const ReviewItem = styled.div`
   display: flex;
-  border: 1px solid grey;
-  border-radius: 5px;
-  margin: 5px;
-  padding: 10px;
+  border: var(--goa-border-width-s) solid grey;
+  border-radius: var(--goa-border-radius-m);
+  margin: var(--goa-space-2xs);
+  padding: var(--goa-space-xs);
 `;
 
 export const ReviewListItem = styled.div`
-  margin-left: 1rem;
+  margin-left: var(--goa-space-m);
 `;
 
 export const ReviewListWrapper = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: var(--goa-space-m);
 `;
