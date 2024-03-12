@@ -6,7 +6,8 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { isNotKeyPressTabOrShift, isRequiredAndHasNoData } from '../../util/inputControlUtils';
-type GoAInputIntegerProps = CellProps & WithClassname & WithInputProps;
+
+export type GoAInputIntegerProps = CellProps & WithClassname & WithInputProps;
 
 export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   // eslint-disable-next-line

@@ -6,7 +6,8 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity, isValidDate } from '../../util/stringUtils';
 import { isNotKeyPressTabOrShift, isRequiredAndHasNoData } from '../../util/inputControlUtils';
-type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
+
+export type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   // eslint-disable-next-line

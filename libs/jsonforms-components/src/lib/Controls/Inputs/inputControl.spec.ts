@@ -84,7 +84,7 @@ describe('input control tests', () => {
   });
 
   describe('test input control util functions', () => {
-    it('isRequiredAndHasNoData has no data is truthy', () => {
+    it('isRequiredAndHasNoData has NO data and is required', () => {
       const controlUtilsHasNoDataProps: ControlProps = {
         required: true,
         data: undefined,
@@ -98,13 +98,13 @@ describe('input control tests', () => {
         path: '',
         errors: '',
         visible: true,
-        handleChange: (path, value) => {},
+        handleChange: jest.fn(),
       };
       const isValid = isRequiredAndHasNoData(controlUtilsHasNoDataProps);
       expect(isValid).toBe(true);
     });
 
-    it('isRequiredAndHasNoData has no data is falsy', () => {
+    it('isRequiredAndHasNoData has data and is required', () => {
       const controlUtilsHasDataProps: ControlProps = {
         required: true,
         data: 'abc',
@@ -118,7 +118,7 @@ describe('input control tests', () => {
         path: '',
         errors: '',
         visible: true,
-        handleChange: (path, value) => {},
+        handleChange: jest.fn(),
       };
       const isValid = isRequiredAndHasNoData(controlUtilsHasDataProps);
 
