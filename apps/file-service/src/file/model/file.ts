@@ -24,7 +24,6 @@ export class FileEntity implements File {
   deleted = false;
   infected = false;
   digest?: string;
-  retentionDays?: number;
   securityClassification?: string;
 
   static async create(

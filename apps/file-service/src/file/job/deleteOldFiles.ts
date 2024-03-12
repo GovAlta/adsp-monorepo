@@ -82,10 +82,8 @@ export function createDeleteOldFilesJob({
 
                     if (!file.deleted) {
                       try {
-                        jobUser.tenantId = file.tenantId;
                         const deleted = await file.markForDeletion(jobUser);
                         if (deleted) {
-                          deleted.retentionDays = retention;
                           numberDeleted++;
                           eventService.send(fileDeleted(apiId, jobUser, deleted));
                         }

@@ -127,7 +127,6 @@ export function fileDeleted(apiId: AdspId, user: User, file: FileEntity): Domain
       deletedBy: {
         id: user.id,
         name: user.name,
-        retention: file.retentionDays,
       },
     },
   };

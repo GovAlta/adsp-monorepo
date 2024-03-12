@@ -14,7 +14,6 @@ export interface File {
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;
-  retentionDays?: number;
   securityClassification?: string;
 }
 
