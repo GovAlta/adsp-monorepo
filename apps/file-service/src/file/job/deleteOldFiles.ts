@@ -82,10 +82,10 @@ export function createDeleteOldFilesJob({
 
                     if (!file.deleted) {
                       try {
-                        const deleted = await file.markForDeletion(jobUser);
-                        if (deleted) {
+                        const result = await file.markForDeletion(jobUser);
+                        if (result.deleted) {
                           numberDeleted++;
-                          eventService.send(fileDeleted(apiId, jobUser, deleted));
+                          eventService.send(fileDeleted(apiId, jobUser, result));
                         }
                       } catch (err) {
                         logger.error(`Error deleting file with ID: ${file.id}. ${err}`);
