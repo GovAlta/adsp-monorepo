@@ -104,9 +104,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   };
 
   const handleCancelClick = () => {
-    if (isNew) {
-      setCalendar(defaultCalendar);
-    }
+    setCalendar(initialValue);
     validators.clear();
     onCancel();
   };
@@ -144,7 +142,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
         <GoAInput
           type="text"
           name="name"
-          value={calendar.displayName}
+          value={calendar?.displayName}
           testId={`calendar-modal-name-input`}
           aria-label="name"
           disabled={!isNew}
@@ -164,12 +162,12 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
         />
       </GoAFormItem>
       <GoAFormItem label="Calendar ID">
-        <IdField>{calendar.name}</IdField>
+        <IdField>{calendar?.name}</IdField>
       </GoAFormItem>
       <GoAFormItem error={errors?.['description']} label="Description">
         <GoATextArea
           name="description"
-          value={calendar.description}
+          value={calendar?.description}
           testId={`calendar-modal-description-input`}
           aria-label="description"
           width="100%"
@@ -186,7 +184,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
         roles.map((r) => {
           return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
         })}
-      {Object.entries(roles).length === 0 && <TextGoASkeleton />}
+      {Object.entries(roles)?.length === 0 && <TextGoASkeleton />}
     </GoAModal>
   );
 };

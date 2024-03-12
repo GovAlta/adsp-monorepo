@@ -444,7 +444,7 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = deleteTopic(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -465,7 +465,7 @@ describe('topic', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteTopic(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
@@ -489,7 +489,7 @@ describe('topic', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(false);
 
-      const handler = deleteTopic(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
@@ -513,7 +513,7 @@ describe('topic', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteTopic(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -589,7 +589,7 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = createTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -613,7 +613,7 @@ describe('topic', () => {
 
       repositoryMock.saveComment.mockResolvedValueOnce(comment);
 
-      const handler = createTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(comment);
@@ -638,7 +638,7 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = createTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -741,7 +741,7 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = updateTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -766,7 +766,7 @@ describe('topic', () => {
       repositoryMock.getComment.mockResolvedValueOnce(comment);
       repositoryMock.saveComment.mockResolvedValueOnce(comment);
 
-      const handler = updateTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(comment);
@@ -793,7 +793,7 @@ describe('topic', () => {
 
       repositoryMock.getComment.mockResolvedValueOnce(comment);
 
-      const handler = updateTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -820,7 +820,7 @@ describe('topic', () => {
 
       repositoryMock.getComment.mockResolvedValueOnce(null);
 
-      const handler = updateTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -835,7 +835,7 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = deleteTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -860,7 +860,7 @@ describe('topic', () => {
       repositoryMock.getComment.mockResolvedValueOnce(comment);
       repositoryMock.deleteComment.mockResolvedValueOnce(true);
 
-      const handler = deleteTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
@@ -888,7 +888,7 @@ describe('topic', () => {
       repositoryMock.getComment.mockResolvedValueOnce(comment);
       repositoryMock.deleteComment.mockResolvedValueOnce(true);
 
-      const handler = deleteTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -915,7 +915,7 @@ describe('topic', () => {
 
       repositoryMock.getComment.mockResolvedValueOnce(null);
 
-      const handler = deleteTopicComment(loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();

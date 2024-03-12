@@ -43,7 +43,7 @@ export interface Task {
   description: string;
   priority: TaskPriority;
   status: TaskStatus;
-  recordId?: string;
+  recordId?: string | AdspId;
   data?: Record<string, unknown>;
   createdOn: Date;
   startedOn: Date;

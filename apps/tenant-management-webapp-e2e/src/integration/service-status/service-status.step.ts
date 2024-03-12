@@ -47,6 +47,7 @@ Then('the user views Add notice dialog', function () {
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notice dialog',
   function (desc, app, startDate, startTime, endDate, endTime) {
+    cy.viewport(1920, 1080);
     statusObj.noticeModalDescField().shadow().find('textarea').clear({ force: true }).type(desc, { force: true });
     // Select Application
     if (app == 'All') {
@@ -63,8 +64,13 @@ When(
             statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
           }
         });
-      statusObj.noticeModalApplicationDropdown().click();
-      statusObj.noticeModalApplicationDropdownItem(app).click({ force: true });
+      statusObj.noticeModalApplicationDropdown().shadow().find('goa-popover').find('input').click({ force: true });
+      statusObj
+        .noticeModalApplicationDropdown()
+        .shadow()
+        .find('goa-popover')
+        .find('li[id="' + app + '"]')
+        .click({ force: true });
     }
     // Get hour, minute and am/pm for start time and end time
     const startHr = startTime.substring(0, 2);
@@ -74,22 +80,35 @@ When(
     const endHr = endTime.substring(0, 2);
     const endMin = endTime.substring(3, 5);
     const endAmPm = endTime.substring(6, 8);
+    cy.log(endHr, endMin, endAmPm);
     // Enter start time
-    if (startHr.substring(0, 1) == '0') {
-      statusObj.noticeModalStartTimeHourField().type(startHr.substring(1, 2));
+    if (startAmPm.toLowerCase() == 'pm' && startHr != '12') {
+      statusObj
+        .noticeModalStartTimeField()
+        .shadow()
+        .find('input')
+        .type((Number(startHr) + 12).toString() + ':' + startMin);
     } else {
-      statusObj.noticeModalStartTimeHourField().type(startHr);
+      statusObj
+        .noticeModalStartTimeField()
+        .shadow()
+        .find('input')
+        .type(startHr + ':' + startMin);
     }
-    statusObj.noticeModalStartTimeMinuteField().type(startMin);
-    statusObj.noticeModalStartTimeAmPmDropdown().select(startAmPm);
     // Enter end time
-    if (endHr.substring(0, 1) == '0') {
-      statusObj.noticeModalEndTimeHourField().type(endHr.substring(1, 2));
+    if (endAmPm.toLowerCase() == 'pm' && endHr != '12') {
+      statusObj
+        .noticeModalEndTimeField()
+        .shadow()
+        .find('input')
+        .type((Number(endHr) + 12).toString() + ':' + endMin);
     } else {
-      statusObj.noticeModalEndTimeHourField().type(endHr);
+      statusObj
+        .noticeModalEndTimeField()
+        .shadow()
+        .find('input')
+        .type(endHr + ':' + endMin);
     }
-    statusObj.noticeModalEndTimeMinuteField().type(endMin);
-    statusObj.noticeModalEndTimeAmPmDropdown().select(endAmPm), cy.log(startDate, startTime, endDate, endTime);
   }
 );
 
