@@ -1,5 +1,6 @@
 import type { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
-import type { File } from './types';
+import { FileEntity } from './model';
+import { FileResponse, mapFile } from './mapper';
 
 export const FILE_UPLOADED_EVENT = 'file-uploaded';
 export const FILE_DELETED_EVENT = 'file-deleted';
@@ -93,14 +94,19 @@ export const FileScannedDefinition: DomainEventDefinition = {
   },
 };
 
-export function fileUploaded(tenantId: AdspId, user: User, file: File): DomainEvent {
+function getCorrelationId(file: FileResponse) {
+  return file.recordId || file.urn;
+}
+
+export function fileUploaded(apiId: AdspId, user: User, file: FileEntity): DomainEvent {
+  const fileResponse = mapFile(apiId, file);
   return {
     name: FILE_UPLOADED_EVENT,
-    tenantId,
+    tenantId: file.tenantId,
     timestamp: new Date(),
-    correlationId: file.recordId || file.id,
+    correlationId: getCorrelationId(fileResponse),
     payload: {
-      file,
+      file: fileResponse,
       uploadedBy: {
         id: user.id,
         name: user.name,
@@ -109,14 +115,15 @@ export function fileUploaded(tenantId: AdspId, user: User, file: File): DomainEv
   };
 }
 
-export function fileDeleted(user: User, file: File): DomainEvent {
+export function fileDeleted(apiId: AdspId, user: User, file: FileEntity): DomainEvent {
+  const fileResponse = mapFile(apiId, file);
   return {
     name: FILE_DELETED_EVENT,
-    tenantId: user.tenantId,
+    tenantId: file.tenantId,
     timestamp: new Date(),
-    correlationId: file.recordId || file.id,
+    correlationId: getCorrelationId(fileResponse),
     payload: {
-      file,
+      file: fileResponse,
       deletedBy: {
         id: user.id,
         name: user.name,
@@ -126,14 +133,15 @@ export function fileDeleted(user: User, file: File): DomainEvent {
   };
 }
 
-export function fileScanned(tenantId: AdspId, file: File, infected: boolean): DomainEvent {
+export function fileScanned(apiId: AdspId, file: FileEntity, infected: boolean): DomainEvent {
+  const fileResponse = mapFile(apiId, file);
   return {
     name: FILE_SCANNED_EVENT,
-    tenantId,
+    tenantId: file.tenantId,
     timestamp: new Date(),
-    correlationId: file.recordId || file.id,
+    correlationId: getCorrelationId(fileResponse),
     payload: {
-      file,
+      file: fileResponse,
       infected,
     },
   };

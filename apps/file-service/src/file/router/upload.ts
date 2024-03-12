@@ -14,7 +14,6 @@ declare global {
   namespace Express {
     interface Request {
       fileEntity?: FileEntity;
-      fileTypeEntity?: FileTypeEntity;
     }
   }
 }

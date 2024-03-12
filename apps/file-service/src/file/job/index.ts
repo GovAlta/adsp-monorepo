@@ -1,4 +1,10 @@
-import { AdspId, EventService, TenantService, TokenProvider, ConfigurationService } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  EventService,
+  TenantService,
+  TokenProvider,
+  ConfigurationService,
+} from '@abgov/adsp-service-sdk';
 import { WorkQueueService } from '@core-services/core-common';
 import * as schedule from 'node-schedule';
 import { Logger } from 'winston';
@@ -19,6 +25,7 @@ export interface FileServiceWorkItem {
 }
 
 interface FileJobProps {
+  apiId: AdspId;
   serviceId: AdspId;
   logger: Logger;
   fileRepository: FileRepository;
