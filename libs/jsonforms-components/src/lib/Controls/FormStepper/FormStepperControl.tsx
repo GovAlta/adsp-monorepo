@@ -32,15 +32,16 @@ export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLa
 }
 
 export const resolveLabelFromScope = (scope: string) => {
+  // eslint-disable-next-line no-useless-escape
+  const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
+  const isValid = validPatternRegex.test(scope);
+  if (!isValid) return null;
+
   const lastSegment = scope.split('/').pop();
+
   if (lastSegment) {
-    return (
-      lastSegment.charAt(0).toUpperCase() +
-      lastSegment
-        .slice(1)
-        .replace(/([A-Z])/g, ' $1')
-        .trim()
-    );
+    const lowercased = lastSegment.replace(/([A-Z])/g, ' $1').toLowerCase();
+    return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
   }
   return '';
 };
@@ -68,6 +69,8 @@ export const renderFormFields = (elements: UISchemaElement[] | (Category | Categ
     const clonedElement = JSON.parse(JSON.stringify(element));
     if (clonedElement.type === 'Control' && clonedElement.scope) {
       const label = resolveLabelFromScope(clonedElement.scope);
+      if (!label) return null;
+
       const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
       return (
         <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
@@ -220,20 +223,18 @@ export const FormStepper = ({
             <h3 style={{ flex: 1 }}>Summary</h3>
 
             <ReviewItem>
-              <div>
-                {categories.map((category, index) => {
-                  const categoryLabel = category.label || category.i18n || 'Unknown Category';
-                  return (
-                    <ReviewItemSection key={index}>
-                      <ReviewItemHeader>
-                        <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-                        <Anchor onClick={() => handleEdit(index)}>Edit</Anchor>
-                      </ReviewItemHeader>
-                      <Grid>{renderFormFields(category.elements, data)}</Grid>
-                    </ReviewItemSection>
-                  );
-                })}
-              </div>
+              {categories.map((category, index) => {
+                const categoryLabel = category.label || category.i18n || 'Unknown Category';
+                return (
+                  <ReviewItemSection key={index}>
+                    <ReviewItemHeader>
+                      <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
+                      <Anchor onClick={() => handleEdit(index)}>Edit</Anchor>
+                    </ReviewItemHeader>
+                    <Grid>{renderFormFields(category.elements, data)}</Grid>
+                  </ReviewItemSection>
+                );
+              })}
             </ReviewItem>
           </div>
         </GoAPages>

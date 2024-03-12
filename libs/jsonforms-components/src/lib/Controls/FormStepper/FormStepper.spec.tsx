@@ -38,7 +38,7 @@ describe('resolveLabelFromScope', () => {
   it('Should correctly resolve and format label from scope', () => {
     const scope1 = '#/properties/firstName';
     const scope2 = '#/properties/address/properties/street';
-    expect(resolveLabelFromScope(scope1)).toEqual('First Name');
+    expect(resolveLabelFromScope(scope1)).toEqual('First name');
     expect(resolveLabelFromScope(scope2)).toEqual('Street');
   });
 });
@@ -48,5 +48,54 @@ describe('getFormFieldValue', () => {
     const scope2 = '#/properties/address/properties/street';
     expect(getFormFieldValue(scope1, data)).toEqual('Alex');
     expect(getFormFieldValue(scope2, data)).toEqual('Springfield');
+  });
+});
+describe('Scope Value Validation', () => {
+  it('should start with "#/"', () => {
+    const scopes = [
+      '#/properties/firstName',
+      '#/properties/address/properties/city',
+      '#/properties/nested/properties/deep/properties/more',
+    ];
+
+    scopes.forEach((scope) => {
+      expect(scope.startsWith('#/')).toBeTruthy();
+    });
+  });
+
+  it('should contain the word "properties" spelled correctly', () => {
+    const scopes = [
+      '#/properties/firstName',
+      '#/properties/address/properties/city',
+      '#/properties/nested/properties/deep/properties/more',
+    ];
+
+    const propertiesRegex = /properties/;
+    scopes.forEach((scope) => {
+      expect(propertiesRegex.test(scope)).toBeTruthy();
+    });
+  });
+
+  it('should correctly structure nested properties', () => {
+    const scopes = [
+      '#/properties/firstName',
+      '#/properties/address/properties/city',
+      '#/properties/nested/properties/deep/properties/more',
+      'properties/firstName',
+      '/properties/firstName/',
+      '#/propertiez/firstName',
+    ];
+
+    // eslint-disable-next-line no-useless-escape
+    const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
+
+    scopes.forEach((scope) => {
+      const isValid = validPatternRegex.test(scope);
+      if (scope.includes('propertiez') || scope.endsWith('/') || !scope.startsWith('#/')) {
+        expect(isValid).toBeFalsy();
+      } else {
+        expect(isValid).toBeTruthy();
+      }
+    });
   });
 });

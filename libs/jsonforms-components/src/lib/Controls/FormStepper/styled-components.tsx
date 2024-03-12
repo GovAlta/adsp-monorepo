@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 export const ReviewItem = styled.div`
   display: flex;
+  flex-direction: column;
   border: var(--goa-border-width-s) solid grey;
   border-radius: var(--goa-border-radius-m);
   margin: var(--goa-space-2xs);
