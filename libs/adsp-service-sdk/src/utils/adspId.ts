@@ -20,7 +20,7 @@ export type ResourceType = 'namespace' | 'service' | 'api' | 'resource';
  * AdspId: Utility class for handling ADSP URNs.
  */
 export class AdspId {
-  static isAdspId(urn: string): boolean {
+  static isAdspId(urn: unknown): boolean {
     return typeof urn === 'string' && AdspIdPattern.test(urn);
   }
 
