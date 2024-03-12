@@ -9,6 +9,7 @@ import { jobUser } from './user';
 
 interface DeleteJobProps {
   tokenProvider: TokenProvider;
+  apiId: AdspId;
   serviceId: AdspId;
   logger: Logger;
   fileRepository: FileRepository;
@@ -26,6 +27,7 @@ export function getBeforeLastAccessed(retention: number) {
 }
 
 export function createDeleteOldFilesJob({
+  apiId,
   serviceId,
   logger,
   fileRepository,
@@ -85,18 +87,7 @@ export function createDeleteOldFilesJob({
                         if (deleted) {
                           deleted.retentionDays = retention;
                           numberDeleted++;
-                          eventService.send(
-                            fileDeleted(jobUser, {
-                              id: deleted.id,
-                              filename: deleted.filename,
-                              size: deleted.size,
-                              recordId: deleted.recordId,
-                              created: deleted.created,
-                              lastAccessed: deleted.lastAccessed,
-                              createdBy: deleted.createdBy,
-                              retentionDays: deleted.retentionDays,
-                            })
-                          );
+                          eventService.send(fileDeleted(apiId, jobUser, deleted));
                         }
                       } catch (err) {
                         logger.error(`Error deleting file with ID: ${file.id}. ${err}`);
