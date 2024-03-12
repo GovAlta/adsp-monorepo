@@ -69,15 +69,15 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   }, [initCalendarEvent, calendarEvent]);
 
   const getTimeString = (calendarDateString: string) => {
-    const timeString = calendarDateString.split('T')[1];
+    const timeString = calendarDateString?.split('T')[1];
     return timeString ? timeString.substring(0, 8) : '';
   };
   const setTimeString = (dateString, timeString) => {
     const dateDate = new Date(dateString);
     if (timeString) {
-      dateDate.setHours(timeString.split(':')[0]);
-      dateDate.setMinutes(timeString.split(':')[1]);
-      dateDate.setSeconds(timeString.split(':')[2]);
+      dateDate.setHours(timeString?.split(':')[0]);
+      dateDate.setMinutes(timeString?.split(':')[1]);
+      dateDate.setSeconds(timeString?.split(':')[2]);
     }
     return dateDate.toISOString();
   };
