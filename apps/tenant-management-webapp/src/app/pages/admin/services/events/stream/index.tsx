@@ -4,7 +4,6 @@ import { deleteEventStream, fetchEventStreams, updateEventStream } from '@store/
 import { useDispatch, useSelector } from 'react-redux';
 import { StreamTable } from './streamTable';
 import { CORE_TENANT } from '@store/tenant/models';
-import { NameDiv } from './styleComponents';
 import { PageIndicator } from '@components/Indicator';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { AddEditStream } from './addEditStream/addEditStream';
@@ -91,7 +90,7 @@ export const EventStreams = (): JSX.Element => {
             />
           </div>
           <div>
-            <NameDiv>Core streams</NameDiv>
+            <h2>Core streams</h2>
             <StreamTable
               isTenantSpecificStream={false}
               key={CORE_TENANT}

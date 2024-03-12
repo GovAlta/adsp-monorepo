@@ -26,4 +26,5 @@ export interface NotificationType {
   subscriberRoles: string[];
   events: NotificationTypeEvent[];
   channels: Channel[];
+  addressPath?: string;
 }

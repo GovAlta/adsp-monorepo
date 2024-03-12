@@ -22,6 +22,7 @@ import {
   OPERATION_SET_PRIORITY,
   OPERATION_ASSIGN,
 } from './types';
+import { mapTask } from '../mapper';
 
 interface TaskRouterProps {
   apiId: AdspId;
@@ -31,24 +32,6 @@ interface TaskRouterProps {
 }
 
 export const TASK_KEY = 'task';
-
-export const mapTask = (apiId: AdspId, entity: TaskEntity) => ({
-  urn: `${apiId}:/tasks/${entity.id}`,
-  id: entity.id,
-  name: entity.name,
-  description: entity.description,
-  context: entity.context,
-  definition: entity.definition ? { namespace: entity.definition.namespace, name: entity.definition.name } : null,
-  queue: entity.queue ? { namespace: entity.queue.namespace, name: entity.queue.name } : null,
-  recordId: entity.recordId,
-  data: entity.data,
-  status: entity.status,
-  priority: TaskPriority[entity.priority],
-  createdOn: entity.createdOn,
-  startedOn: entity.startedOn,
-  endedOn: entity.endedOn,
-  assignment: entity.assignment,
-});
 
 export const getTasks =
   (apiId: AdspId, repository: TaskRepository): RequestHandler =>

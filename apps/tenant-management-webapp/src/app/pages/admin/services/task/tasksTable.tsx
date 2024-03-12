@@ -15,7 +15,7 @@ export const TaskListTable: FunctionComponent<TaskTableProps> = ({ tasks, onEdit
   return (
     <>
       <HeaderFont>
-        <label>Task list</label>
+        <h2>Task list</h2>
       </HeaderFont>
       <TableDiv>
         <DataTable data-testid="task-task-table">
