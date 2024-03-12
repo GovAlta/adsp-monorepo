@@ -1,5 +1,6 @@
-import { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { Comment, Topic } from './types';
+import { TopicResponse, mapTopic } from './mapper';
 
 const userSchema = {
   type: 'object',
@@ -123,18 +124,6 @@ export const CommentDeletedEventDefinition: DomainEventDefinition = {
   },
 };
 
-function mapTopic(topic: Topic) {
-  return {
-    typeId: topic.type.id,
-    id: topic.id,
-    name: topic.name,
-    description: topic.description,
-    resourceId: topic.resourceId?.toString(),
-    commenters: topic.commenters,
-    securityClassification: topic.securityClassification,
-  };
-}
-
 function mapComment(comment: Comment) {
   return {
     id: comment.id,
@@ -145,17 +134,22 @@ function mapComment(comment: Comment) {
   };
 }
 
-export function topicCreated(topic: Topic, createdBy: User): DomainEvent {
+function getCorrelationId(topic: TopicResponse) {
+  return topic.resourceId?.toString() || topic.urn;
+}
+
+export function topicCreated(apiId: AdspId, topic: Topic, createdBy: User): DomainEvent {
+  const topicResponse = mapTopic(apiId, topic);
   return {
     tenantId: topic.tenantId,
     name: TopicCreatedEventDefinition.name,
     timestamp: new Date(),
-    correlationId: `topic-${topic.id}`,
+    correlationId: getCorrelationId(topicResponse),
     context: {
       topicId: topic.id,
     },
     payload: {
-      topic: mapTopic(topic),
+      topic: topicResponse,
       createdBy: {
         id: createdBy.id,
         name: createdBy.name,
@@ -164,17 +158,18 @@ export function topicCreated(topic: Topic, createdBy: User): DomainEvent {
   };
 }
 
-export function topicUpdated(topic: Topic, updatedBy: User): DomainEvent {
+export function topicUpdated(apiId: AdspId, topic: Topic, updatedBy: User): DomainEvent {
+  const topicResponse = mapTopic(apiId, topic);
   return {
     tenantId: topic.tenantId,
     name: TopicUpdatedEventDefinition.name,
     timestamp: new Date(),
-    correlationId: `topic-${topic.id}`,
+    correlationId: getCorrelationId(topicResponse),
     context: {
       topicId: topic.id,
     },
     payload: {
-      topic: mapTopic(topic),
+      topic: topicResponse,
       updatedBy: {
         id: updatedBy.id,
         name: updatedBy.name,
@@ -183,17 +178,18 @@ export function topicUpdated(topic: Topic, updatedBy: User): DomainEvent {
   };
 }
 
-export function topicDeleted(topic: Topic, deletedBy: User): DomainEvent {
+export function topicDeleted(apiId: AdspId, topic: Topic, deletedBy: User): DomainEvent {
+  const topicResponse = mapTopic(apiId, topic);
   return {
     tenantId: topic.tenantId,
     name: TopicDeletedEventDefinition.name,
     timestamp: new Date(),
-    correlationId: `topic-${topic.id}`,
+    correlationId: getCorrelationId(topicResponse),
     context: {
       topicId: topic.id,
     },
     payload: {
-      topic: mapTopic(topic),
+      topic: topicResponse,
       deletedBy: {
         id: deletedBy.id,
         name: deletedBy.name,
@@ -202,18 +198,19 @@ export function topicDeleted(topic: Topic, deletedBy: User): DomainEvent {
   };
 }
 
-export function commentCreated(topic: Topic, comment: Comment): DomainEvent {
+export function commentCreated(apiId: AdspId, topic: Topic, comment: Comment): DomainEvent {
+  const topicResponse = mapTopic(apiId, topic);
   return {
     tenantId: topic.tenantId,
     name: CommentCreatedEventDefinition.name,
     timestamp: comment.createdOn,
-    correlationId: `topic-${topic.id}:${comment.id}`,
+    correlationId: getCorrelationId(topicResponse),
     context: {
       topicId: topic.id,
       commentId: comment.id,
     },
     payload: {
-      topic: mapTopic(topic),
+      topic: topicResponse,
       comment: mapComment(comment),
       createdBy: {
         id: comment.createdBy.id,
@@ -223,18 +220,19 @@ export function commentCreated(topic: Topic, comment: Comment): DomainEvent {
   };
 }
 
-export function commentUpdated(topic: Topic, comment: Comment): DomainEvent {
+export function commentUpdated(apiId: AdspId, topic: Topic, comment: Comment): DomainEvent {
+  const topicResponse = mapTopic(apiId, topic);
   return {
     tenantId: topic.tenantId,
     name: CommentUpdatedEventDefinition.name,
     timestamp: comment.lastUpdatedOn,
-    correlationId: `topic-${topic.id}:${comment.id}`,
+    correlationId: getCorrelationId(topicResponse),
     context: {
       topicId: topic.id,
       commentId: comment.id,
     },
     payload: {
-      topic: mapTopic(topic),
+      topic: topicResponse,
       comment: mapComment(comment),
       updatedBy: {
         id: comment.lastUpdatedBy.id,
@@ -244,18 +242,19 @@ export function commentUpdated(topic: Topic, comment: Comment): DomainEvent {
   };
 }
 
-export function commentDeleted(topic: Topic, comment: Comment, deletedBy: User): DomainEvent {
+export function commentDeleted(apiId: AdspId, topic: Topic, comment: Comment, deletedBy: User): DomainEvent {
+  const topicResponse = mapTopic(apiId, topic);
   return {
     tenantId: topic.tenantId,
     name: CommentUpdatedEventDefinition.name,
     timestamp: new Date(),
-    correlationId: `topic-${topic.id}:${comment.id}`,
+    correlationId: getCorrelationId(topicResponse),
     context: {
       topicId: topic.id,
       commentId: comment.id,
     },
     payload: {
-      topic: mapTopic(topic),
+      topic: topicResponse,
       comment: mapComment(comment),
       updatedBy: {
         id: deletedBy.id,
