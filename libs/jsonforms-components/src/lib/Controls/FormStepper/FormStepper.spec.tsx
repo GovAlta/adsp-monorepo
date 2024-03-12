@@ -27,6 +27,12 @@ const data = {
     street: 'Springfield',
   },
 };
+const data1 = {
+  firstName: '',
+  address: {
+    street: '',
+  },
+};
 
 const translator = {
   id: '',
@@ -50,52 +56,55 @@ describe('getFormFieldValue', () => {
     expect(getFormFieldValue(scope2, data)).toEqual('Springfield');
   });
 });
-describe('Scope Value Validation', () => {
-  it('should start with "#/"', () => {
-    const scopes = [
-      '#/properties/firstName',
-      '#/properties/address/properties/city',
-      '#/properties/nested/properties/deep/properties/more',
-    ];
 
-    scopes.forEach((scope) => {
-      expect(scope.startsWith('#/')).toBeTruthy();
-    });
+describe('getFormFieldValue', () => {
+  it('Should return empty value for a given scope and empty data', () => {
+    const scope1 = '#/properties/secondName';
+    const scope2 = '#/properties/address/properties/street';
+    expect(getFormFieldValue(scope1, data1)).toEqual('');
+    expect(getFormFieldValue(scope2, data1)).toEqual('');
+  });
+});
+
+describe('resolveLabelFromScope function', () => {
+  it('returns correctly formatted string for valid scope patterns', () => {
+    const validScope1 = '#/properties/firstName';
+    const validScope2 = '#/properties/address/properties/city';
+    expect(resolveLabelFromScope(validScope1)).toEqual('First name');
+    expect(resolveLabelFromScope(validScope2)).toEqual('City');
   });
 
-  it('should contain the word "properties" spelled correctly', () => {
-    const scopes = [
-      '#/properties/firstName',
-      '#/properties/address/properties/city',
-      '#/properties/nested/properties/deep/properties/more',
-    ];
-
-    const propertiesRegex = /properties/;
-    scopes.forEach((scope) => {
-      expect(propertiesRegex.test(scope)).toBeTruthy();
-    });
+  it('returns null for scope not starting with "#"', () => {
+    const invalidScope = '/properties/firstName';
+    expect(resolveLabelFromScope(invalidScope)).toBeNull();
   });
 
-  it('should correctly structure nested properties', () => {
-    const scopes = [
-      '#/properties/firstName',
-      '#/properties/address/properties/city',
-      '#/properties/nested/properties/deep/properties/more',
-      'properties/firstName',
-      '/properties/firstName/',
-      '#/propertiez/firstName',
-    ];
+  it('returns null for scope missing "properties"', () => {
+    const invalidScope = '#/firstName';
+    expect(resolveLabelFromScope(invalidScope)).toBeNull();
+  });
 
-    // eslint-disable-next-line no-useless-escape
-    const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
+  it('returns null for scope with incorrect "properties" spelling', () => {
+    const invalidScope = '#/propertees/firstName';
+    expect(resolveLabelFromScope(invalidScope)).toBeNull();
+  });
 
-    scopes.forEach((scope) => {
-      const isValid = validPatternRegex.test(scope);
-      if (scope.includes('propertiez') || scope.endsWith('/') || !scope.startsWith('#/')) {
-        expect(isValid).toBeFalsy();
-      } else {
-        expect(isValid).toBeTruthy();
-      }
-    });
+  it('returns null for invalid scope patterns', () => {
+    const invalidScope1 = '#/properties/';
+    const invalidScope2 = '##/properties/firstName';
+    const invalidScope3 = '#/properties/first/Name';
+    expect(resolveLabelFromScope(invalidScope1)).toBeNull();
+    expect(resolveLabelFromScope(invalidScope2)).toBeNull();
+    expect(resolveLabelFromScope(invalidScope3)).toBeNull();
+  });
+
+  it('returns empty string for empty or null scope', () => {
+    const emptyScope = '';
+    expect(resolveLabelFromScope(emptyScope)).toBeNull();
+  });
+
+  it('returns an empty string if the scope does not end with a valid property name', () => {
+    const invalidScope = '#/properties/';
+    expect(resolveLabelFromScope(invalidScope)).toBeNull();
   });
 });
