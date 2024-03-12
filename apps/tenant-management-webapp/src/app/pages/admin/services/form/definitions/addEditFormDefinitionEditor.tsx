@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
-import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { Renderers } from '@abgov/jsonforms-components';
-import { JsonForms } from '@jsonforms/react';
-import { FormDefinition } from '@store/form/model';
+import { ContextProvider } from '@abgov/jsonforms-components';
+import { Disposition, FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -13,7 +11,7 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
-
+import { FileItem } from '@store/file/models';
 import {
   TextLoadingIndicator,
   FlexRow,
@@ -29,7 +27,7 @@ import {
   PRE,
   FakeButton,
   SubmissionRecordsBox,
-  NegativeMarginSmall,
+  FormPreviewScrollPane,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -41,15 +39,19 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useNavigate, useParams } from 'react-router-dom-6';
-import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
-
-import { GoAButtonGroup, GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
+import {
+  GoAButtonGroup,
+  GoAButton,
+  GoAFormItem,
+  GoACheckbox,
+  GoADropdownItem,
+  GoADropdown,
+} from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { PageIndicator } from '@components/Indicator';
-import { ErrorBoundary } from '@components/ErrorBoundary';
-import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
+import { isValidJSONSchemaCheck, ajv } from '@lib/validation/checkInput';
 import DataTable from '@components/DataTable';
 import { DispositionItems } from './dispositionItems';
 import { DeleteModal } from '@components/DeleteModal';
@@ -59,14 +61,20 @@ import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 
 import { RowFlex, QueueTaskDropdown } from './style-components';
 import { getTaskQueues } from '@store/task/action';
-
-import { UploadFileService, DownloadFileService } from '@store/file/actions';
-import { FetchFileTypeService } from '@store/file/actions';
+import {
+  UploadFileService,
+  DownloadFileService,
+  DeleteFileService,
+  FetchFileTypeService,
+  ClearNewFileList,
+} from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
+import { JSONFormPreviewer } from './JsonFormPreviewer';
+import { hasSchemaErrors, parseDataSchema, parseUiSchema } from './schemaUtils';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
-  const tempPrev = JSON.parse(JSON.stringify(prev));
-  const tempNext = JSON.parse(JSON.stringify(next));
+  const tempPrev = parseUiSchema<FormDefinition>(JSON.stringify(prev)).get();
+  const tempNext = parseUiSchema<FormDefinition>(JSON.stringify(next)).get();
   const isUpdated =
     JSON.stringify(tempPrev?.applicantRoles) !== JSON.stringify(tempNext?.applicantRoles) ||
     JSON.stringify(tempPrev?.assessorRoles) !== JSON.stringify(tempNext?.assessorRoles) ||
@@ -89,12 +97,31 @@ export const formEditorJsonConfig = {
   },
 };
 
+export const onSaveDispositionForModal = (
+  isNewDisposition: boolean,
+  currentDisposition: Disposition,
+  definition: FormDefinition,
+  selectedEditModalIndex: number | null
+): [FormDefinition, number | null] => {
+  if (isNewDisposition) {
+    const currentDispositionStates = [...definition.dispositionStates] || [];
+    if (currentDisposition) {
+      currentDispositionStates.push(currentDisposition);
+      definition.dispositionStates = currentDispositionStates;
+    }
+  } else {
+    definition.dispositionStates[selectedEditModalIndex] = currentDisposition;
+  }
+
+  return [definition, null];
+};
+
 const invalidJsonMsg = 'Invalid JSON syntax';
 const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
-  const latestFile = useSelector((state: RootState) => {
-    return state?.fileService.latestFile;
+  const fileList = useSelector((state: RootState) => {
+    return state?.fileService.newFileList;
   });
 
   const dispatch = useDispatch();
@@ -105,28 +132,27 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
-  const uploadFile = (file: File) => {
-    const fileInfo = { file: file, type: fileTypes[0]?.id };
+  const uploadFile = (file: File, propertyId: string) => {
+    const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
     dispatch(UploadFileService(fileInfo));
   };
   const downloadFile = (file) => {
     dispatch(DownloadFileService(file));
   };
 
-  const renderer = new Renderers(uploadFile, downloadFile, latestFile);
-
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const monaco = useMonaco();
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
-  const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(
-    JSON.parse(JSON.stringify(defaultFormDefinition))
-  );
+  const initialSchema = parseUiSchema<FormDefinition>(JSON.stringify(defaultFormDefinition)).get();
+  const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(initialSchema);
 
   const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(definition?.dataSchema || {}, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
+  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
+  const [selectedFile, setSelectFile] = useState<FileItem>(null);
   const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
@@ -154,13 +180,32 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dataSchemaJSONSchema: null,
   });
 
+  const deleteFile = (file) => {
+    setSelectFile(file);
+    setShowFileDeleteConfirmation(true);
+  };
+
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('json', {
-        triggerCharacters: ['"'],
+        triggerCharacters: ['/', '#', '"'],
         provideCompletionItems: (model, position) => {
-          const dataSchemaSuggestion = convertDataSchemaToSuggestion(JSON.parse(tempDataSchema), monaco);
-          const suggestions = formatEditorSuggestions(dataSchemaSuggestion);
+          const textUntilPosition = model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          });
+          let suggestions = [];
+
+          try {
+            const parsedSchema = parseDataSchema(tempDataSchema);
+            const dataSchemaSuggestion = convertDataSchemaToSuggestion(parsedSchema.get(), monaco);
+            suggestions = formatEditorSuggestions(dataSchemaSuggestion);
+          } catch (e) {
+            console.debug(`Error in JSON editor autocompletion: ${e.message}`);
+          }
+
           return {
             suggestions,
           } as languages.ProviderResult<languages.CompletionList>;
@@ -178,7 +223,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getFormDefinitions());
     dispatch(getTaskQueues());
-  }, []);
+  }, [dispatch]);
 
   const types = [
     { type: 'applicantRoles', name: 'Applicant roles' },
@@ -195,25 +240,25 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   );
   const queueTasks = useSelector((state: RootState) => {
-    return Object.entries(state?.task?.queues)
-      .sort((template1, template2) => {
-        return template1[1].name.localeCompare(template2[1].name);
-      })
-      .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
-        tempObj[taskDefinitionId] = taskDefinitionData;
-        return tempObj;
-      }, {});
+    const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
+      tempObj[taskDefinitionId] = taskDefinitionData;
+      return tempObj;
+    }, {});
+    return values;
   });
 
   useEffect(() => {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal]);
+  }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (id && formDefinitions[id]) {
       const tempFormDefinition = formDefinitions[id] as FormDefinition;
+      if (hasSchemaErrors(tempFormDefinition.dataSchema) || hasSchemaErrors(tempFormDefinition?.uiSchema)) {
+        return;
+      }
       if (Object.keys(tempFormDefinition.uiSchema || {}).length > 0) {
         setTempUiSchema(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
         setTempUiSchemaBounced(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
@@ -222,10 +267,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         setTempDataSchema(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
         setDataSchemaBounced(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
       }
-      setInitialDefinition(JSON.parse(JSON.stringify(formDefinitions[id])));
+      setInitialDefinition(parseUiSchema<FormDefinition>(JSON.stringify(formDefinitions[id])).get());
       setDefinition(formDefinitions[id]);
     }
-  }, [formDefinitions]);
+  }, [formDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     try {
@@ -236,7 +281,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setTempUiSchemaBounced('{}');
       setError(invalidJsonMsg);
     }
-  }, [debouncedRenderUISchema]);
+  }, [debouncedRenderUISchema]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     try {
@@ -247,11 +292,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setDataSchemaBounced('{}');
       setError(invalidJsonMsg);
     }
-  }, [debouncedRenderDataSchema]);
+  }, [debouncedRenderDataSchema]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
 
   const close = () => {
+    dispatch(ClearNewFileList());
     navigate('/admin/services/form?definitions=true');
   };
 
@@ -266,38 +312,36 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     const clerkRoles = types[1];
 
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          anonymousRead={definition.anonymousApply}
-          roleSelectFunc={(roles, type) => {
-            if (type === applicantRoles.name) {
-              setDefinition({
-                ...definition,
-                applicantRoles: roles,
-              });
-            } else if (type === clerkRoles.name) {
-              setDefinition({
-                ...definition,
-                clerkRoles: roles,
-              });
-            } else {
-              setDefinition({
-                ...definition,
-                assessorRoles: roles,
-              });
-            }
-          }}
-          nameColumnWidth={40}
-          service="FileType"
-          checkedRoles={[
-            { title: types[0].name, selectedRoles: definition[types[0].type] },
-            { title: types[1].name, selectedRoles: definition[types[1].type] },
-            { title: types[2].name, selectedRoles: definition[types[2].type] },
-          ]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        anonymousRead={definition.anonymousApply}
+        roleSelectFunc={(roles, type) => {
+          if (type === applicantRoles.name) {
+            setDefinition({
+              ...definition,
+              applicantRoles: roles,
+            });
+          } else if (type === clerkRoles.name) {
+            setDefinition({
+              ...definition,
+              clerkRoles: roles,
+            });
+          } else {
+            setDefinition({
+              ...definition,
+              assessorRoles: roles,
+            });
+          }
+        }}
+        nameColumnWidth={40}
+        service="FileType"
+        checkedRoles={[
+          { title: types[0].name, selectedRoles: definition[types[0].type] },
+          { title: types[1].name, selectedRoles: definition[types[1].type] },
+          { title: types[2].name, selectedRoles: definition[types[2].type] },
+        ]}
+      />
     );
   };
 
@@ -345,7 +389,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
       setSpinner(false);
     }
-  }, [definitions]);
+  }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openModalFunction = (disposition) => {
     const currentDispositions = definition.dispositionStates;
@@ -357,7 +401,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     const tempDefinition = { ...definition };
     tempDefinition.dispositionStates = dispositions;
 
-    setDefinition(JSON.parse(JSON.stringify(tempDefinition)));
+    setDefinition(parseUiSchema<FormDefinition>(JSON.stringify(tempDefinition)).get());
   };
 
   const openDeleteModalFunction = (disposition) => {
@@ -393,6 +437,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
 
     return value;
+  };
+
+  const getDispositionForModal = () => {
+    if (selectedEditModalIndex !== null) {
+      return definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex];
+    }
+    return { id: '', name: '', description: '' } as Disposition;
   };
 
   return (
@@ -517,9 +568,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           const records = definition.submissionRecords ? false : true;
                           setDefinition({ ...definition, submissionRecords: records });
                         }}
-                      >
-                        Create submission records on submit
-                      </GoACheckbox>
+                        text="  Create submission records on submit"
+                      />
                     </SubmissionRecordsBox>
                     <InfoCircleWithInlineHelp
                       text={
@@ -533,7 +583,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                     <InfoCircleWithInlineHelp
                       initialLabelValue={definition.submissionRecords}
-                      label="Task queue to process"
+                      label="Task queue to process &nbsp;"
                       text={
                         getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
                           ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
@@ -544,19 +594,19 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     <QueueTaskDropdown>
                       {Object.keys(queueTasks).length > 0 && (
                         <GoADropdown
-                          data-test-id="formsubmission-select-queue-task-dropdown"
+                          data-test-id="form-submission-select-queue-task-dropdown"
                           name="queueTasks"
                           disabled={!definition.submissionRecords}
-                          selectedValues={[getQueueTaskToProcessValue()]}
-                          multiSelect={false}
-                          onChange={(name, queueTask) => {
-                            const seperatedQueueTask = queueTask[0].split(':');
-                            if (seperatedQueueTask.length > 1) {
+                          value={[getQueueTaskToProcessValue()]}
+                          relative={true}
+                          onChange={(name, queueTask: string) => {
+                            const separatedQueueTask = queueTask.split(':');
+                            if (separatedQueueTask.length > 1) {
                               setDefinition({
                                 ...definition,
                                 queueTaskToProcess: {
-                                  queueNameSpace: seperatedQueueTask[0],
-                                  queueName: seperatedQueueTask[1],
+                                  queueNameSpace: separatedQueueTask[0],
+                                  queueName: separatedQueueTask[1],
                                 },
                               });
                             } else {
@@ -570,15 +620,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             }
                           }}
                         >
-                          <GoADropdownOption
+                          <GoADropdownItem
                             data-testId={`task-Queue-ToCreate-DropDown`}
                             key={`No-Task-Created`}
                             value={NO_TASK_CREATED_OPTION}
                             label={NO_TASK_CREATED_OPTION}
                           />
-                          {Object.keys(queueTasks).map((item) => (
-                            <GoADropdownOption data-testId={item} key={item} value={item} label={item} />
-                          ))}
+                          {Object.keys(queueTasks)
+                            .sort()
+                            .map((item) => (
+                              <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
+                            ))}
                         </GoADropdown>
                       )}
                     </QueueTaskDropdown>
@@ -586,12 +638,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       <h3>Disposition states</h3>
                       <div>
                         {definition.submissionRecords ? (
-                          <NegativeMarginSmall>
-                            <InfoCircleWithInlineHelp
-                              text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                              width={450}
-                            />
-                          </NegativeMarginSmall>
+                          <InfoCircleWithInlineHelp
+                            text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                            width={450}
+                          />
                         ) : (
                           <FakeButton />
                         )}
@@ -604,6 +654,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             disabled={!definition.submissionRecords}
                             onClick={() => {
                               setNewDisposition(true);
+                              setSelectedEditModalIndex(null);
                             }}
                           >
                             Add state
@@ -661,8 +712,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   disabled={
                     !isFormUpdated(initialDefinition, {
                       ...definition,
-                      uiSchema: JSON.parse(UiSchemaBounced),
-                      dataSchema: JSON.parse(dataSchemaBounced),
+                      uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
+                      dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
                     }) ||
                     !definition.name ||
                     validators.haveErrors() ||
@@ -686,8 +737,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       dispatch(
                         updateFormDefinition({
                           ...definition,
-                          uiSchema: JSON.parse(UiSchemaBounced),
-                          dataSchema: JSON.parse(dataSchemaBounced),
+                          uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
+                          dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
                         })
                       );
 
@@ -704,8 +755,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     if (
                       isFormUpdated(initialDefinition, {
                         ...definition,
-                        uiSchema: JSON.parse(UiSchemaBounced),
-                        dataSchema: JSON.parse(dataSchemaBounced),
+                        uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
+                        dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
                       })
                     ) {
                       setSaveModal({ visible: true, closeEditor: false });
@@ -725,30 +776,27 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <Tabs activeIndex={0} data-testid="preview-tabs">
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
-                  <GoAFormItem error={error} label="">
-                    <ErrorBoundary>
-                      {UiSchemaBounced !== '{}' ? (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          uischema={JSON.parse(UiSchemaBounced)}
+                  <FormPreviewScrollPane>
+                    <ContextProvider
+                      fileManagement={{
+                        fileList: fileList,
+                        uploadFile: uploadFile,
+                        downloadFile: downloadFile,
+                        deleteFile: deleteFile,
+                      }}
+                    >
+                      <GoAFormItem error={error} label="">
+                        <JSONFormPreviewer
+                          uischema={UiSchemaBounced}
+                          schema={dataSchemaBounced}
+                          onChange={({ data }) => {
+                            setData(data);
+                          }}
                           data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
                         />
-                      ) : (
-                        <JsonForms
-                          schema={JSON.parse(dataSchemaBounced)}
-                          data={data}
-                          validationMode={'ValidateAndShow'}
-                          renderers={renderer.GoARenderers}
-                          cells={vanillaCells}
-                          onChange={({ data }) => setData(data)}
-                        />
-                      )}
-                    </ErrorBoundary>
-                  </GoAFormItem>
+                      </GoAFormItem>
+                    </ContextProvider>
+                  </FormPreviewScrollPane>
                 </div>
               </Tab>
               <Tab label="Data" data-testid="data-view">
@@ -779,8 +827,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         saveDisable={
           !isFormUpdated(initialDefinition, {
             ...definition,
-            uiSchema: JSON.parse(UiSchemaBounced),
-            dataSchema: JSON.parse(dataSchemaBounced),
+            uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
+            dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
           })
         }
         onCancel={() => {
@@ -812,34 +860,35 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           setSelectedDeleteDispositionIndex(null);
         }}
       />
-      <AddEditDispositionModal
-        open={selectedEditModalIndex !== null}
-        isEdit={true}
-        existingDispositions={definition?.dispositionStates}
-        initialValue={definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex]}
-        onSave={(currentDispositions) => {
-          definition.dispositionStates[selectedEditModalIndex] = currentDispositions;
 
-          setDefinition(definition);
-        }}
-        onClose={() => {
-          setSelectedEditModalIndex(null);
+      <DeleteModal
+        isOpen={showFileDeleteConfirmation}
+        title="Delete file"
+        content={`Delete file ${selectedFile?.filename} ?`}
+        onCancel={() => setShowFileDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowFileDeleteConfirmation(false);
+          dispatch(DeleteFileService(selectedFile?.id));
         }}
       />
       <AddEditDispositionModal
-        open={newDisposition}
-        isEdit={false}
+        open={selectedEditModalIndex !== null || newDisposition}
+        isEdit={selectedEditModalIndex !== null}
         existingDispositions={definition?.dispositionStates}
-        initialValue={definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex]}
+        initialValue={getDispositionForModal()}
         onSave={(currentDispositions) => {
-          const dispositionStates = definition.dispositionStates || [];
-          const tempDefinition = { ...definition };
-          dispositionStates.push(currentDispositions);
-          tempDefinition.dispositionStates = dispositionStates;
-          setDefinition(tempDefinition);
+          const [updatedDefinition, index] = onSaveDispositionForModal(
+            newDisposition,
+            currentDispositions,
+            definition,
+            selectedEditModalIndex
+          );
+          setDefinition(updatedDefinition);
+          setSelectedDeleteDispositionIndex(index);
         }}
         onClose={() => {
           setNewDisposition(false);
+          setSelectedEditModalIndex(null);
         }}
       />
     </FormEditor>

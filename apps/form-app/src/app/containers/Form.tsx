@@ -1,14 +1,13 @@
-import { Renderers } from '@abgov/jsonforms-components';
-import { GoABadge, GoACallout, GoAIconButton } from '@abgov/react-components-new';
-import { Container, Grid, GridItem } from '@core-services/app-common';
-import { JsonForms } from '@jsonforms/react';
-import moment from 'moment';
+import { GoARenderers } from '@abgov/jsonforms-components';
+import { GoAIconButton } from '@abgov/react-components-new';
+import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom-6';
 import {
   AppDispatch,
   busySelector,
+  canSubmitSelector,
   dataSelector,
   definitionSelector,
   filesSelector,
@@ -16,13 +15,15 @@ import {
   loadForm,
   selectTopic,
   selectedTopicSelector,
+  showSubmitSelector,
+  submitForm,
   updateForm,
 } from '../state';
 import styled from 'styled-components';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import CommentsViewer from './CommentsViewer';
-
-const renderer = new Renderers();
+import { DraftForm } from '../components/DraftForm';
+import { SubmittedForm } from '../components/SubmittedForm';
 
 const SavingIndicator = styled.span`
   display: flex;
@@ -49,6 +50,8 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const files = useSelector(filesSelector);
   const busy = useSelector(busySelector);
   const topic = useSelector(selectedTopicSelector);
+  const canSubmit = useSelector(canSubmitSelector);
+  const showSubmit = useSelector(showSubmitSelector);
 
   useEffect(() => {
     dispatch(loadForm(formId));
@@ -61,34 +64,25 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
       <LoadingIndicator isLoading={busy.loading} />
       <div className={className} data-show={showComments}>
         <Container vs={3} hs={1} key={formId}>
-          <Grid>
-            <GridItem md={1} />
-            <GridItem md={10}>
-              <div className="savingIndicator" data-saving={busy.saving}>
-                <GoABadge type="information" content="Saving..." />
-              </div>
-              {definition && form && (
-                <>
-                  {form.status === 'submitted' && (
-                    <GoACallout type="success" heading="We're processing your application">
-                      Your application was received on {moment(form.submitted).format('MMMM D, YYYY')}, and we're
-                      working on it.
-                    </GoACallout>
-                  )}
-                  <JsonForms
-                    readonly={form.status !== 'draft'}
-                    schema={definition.dataSchema}
-                    uischema={definition.uiSchema}
-                    data={data}
-                    validationMode="ValidateAndShow"
-                    renderers={renderer.GoARenderers}
-                    onChange={({ data }) => dispatch(updateForm({ data, files }))}
-                  />
-                </>
+          {definition && form && (
+            <>
+              {form.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
+              {form.status === 'draft' && (
+                <DraftForm
+                  definition={definition}
+                  form={form}
+                  data={data}
+                  canSubmit={canSubmit}
+                  showSubmit={showSubmit}
+                  saving={busy.saving}
+                  onChange={({ data, errors }) =>
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }))
+                  }
+                  onSubmit={(form) => dispatch(submitForm(form.id))}
+                />
               )}
-            </GridItem>
-            <GridItem md={1} />
-          </Grid>
+            </>
+          )}
         </Container>
         <div className="commentsPane">
           <CommentsViewer />
@@ -174,8 +168,8 @@ export const Form = styled(FormComponent)`
   & > :last-child {
     z-index: 3;
     position: absolute;
-    bottom: var(--goa-spacing-l);
-    left: var(--goa-spacing-l);
+    bottom: var(--goa-space-l);
+    left: var(--goa-space-l);
     background: white;
   }
 

@@ -23,12 +23,14 @@ import {
   FormStatusSubmittedDefinition,
   FormStatusUnlockedDefinition,
   FormStatusSetToDraftDefinition,
+  SubmissionDispositionedDefinition,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
 import { createFileService } from './file';
-import { createQueueTaskService } from './queueTask';
+import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
+import { GeneratedSupportingDocFileType } from './form/types/fileTypes';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -78,7 +80,16 @@ const initializeApp = async (): Promise<express.Application> => {
           role: FormServiceRoles.Support,
           description: 'Support role for viewing and responding to form question topics.',
         },
+        {
+          role: FormServiceRoles.FileReader,
+          description: 'File reader role that allows assessors and clerks to review uploaded supporting documents.',
+        },
+        {
+          role: FormServiceRoles.FileUploader,
+          description: 'File uploader role that allows applicants to upload supporting documents for the form.',
+        },
       ],
+      fileTypes: [GeneratedSupportingDocFileType],
       events: [
         FormCreatedDefinition,
         FormDeletedDefinition,
@@ -87,6 +98,7 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusSubmittedDefinition,
         FormStatusArchivedDefinition,
         FormStatusSetToDraftDefinition,
+        SubmissionDispositionedDefinition,
       ],
       notifications: [FormStatusNotificationType],
       values: [ServiceMetricsValueDefinition],
@@ -154,7 +166,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     supportTopicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID,
   });
-  const queueTaskService = createQueueTaskService(logger, directory, tokenProvider);
+  const queueTaskService = createQueueTaskService(serviceId, logger, directory, tokenProvider);
   const repositories = await createRepositories({
     ...environment,
     serviceId,

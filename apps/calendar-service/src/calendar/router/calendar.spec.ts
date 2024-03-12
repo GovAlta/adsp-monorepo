@@ -34,7 +34,7 @@ jest.mock('ical-generator', () => {
 });
 
 describe('calendar router', () => {
-  const mockedICalCalendar = mocked(ICalCalendar, true);
+  const mockedICalCalendar = mocked(ICalCalendar, { shallow: true });
   const serviceId = adspId`urn:ads:platform:calendar-service`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 

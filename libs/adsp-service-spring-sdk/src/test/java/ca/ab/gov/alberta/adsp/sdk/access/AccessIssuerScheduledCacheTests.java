@@ -1,7 +1,6 @@
 package ca.ab.gov.alberta.adsp.sdk.access;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -27,7 +26,7 @@ import ca.ab.gov.alberta.adsp.sdk.tenant.TenantService;
 import reactor.core.publisher.Mono;
 
 @ExtendWith(MockitoExtension.class)
-class AccessIssuerCacheTests {
+class AccessIssuerScheduledCacheTests {
   @Test
   public void canGetCached(@Mock TenantService tenantService, @Mock CacheManager cacheManager,
       @Mock Cache cache) throws URISyntaxException {
@@ -45,7 +44,7 @@ class AccessIssuerCacheTests {
     when(cache.get(iss, AccessIssuer.class)).thenReturn(issuer);
     when(tenantService.getTenants()).thenReturn(Mono.just(tenants));
 
-    var issuerCache = new AccessIssuerCache(AdspConfiguration.builder(
+    var issuerCache = new AccessIssuerScheduledCache(AdspConfiguration.builder(
         new URI("https://access-service"),
         new URI("https://directory"),
         AdspId.parse("urn:ads:platform:test-service"),
@@ -74,7 +73,7 @@ class AccessIssuerCacheTests {
     when(cache.get(iss, AccessIssuer.class)).thenReturn(issuer);
     when(tenantService.getTenants()).thenReturn(Mono.just(tenants));
 
-    var issuerCache = new AccessIssuerCache(AdspConfiguration.builder(
+    var issuerCache = new AccessIssuerScheduledCache(AdspConfiguration.builder(
         new URI("https://access-service"),
         new URI("https://directory"),
         AdspId.parse("urn:ads:platform:test-service"),
@@ -102,7 +101,7 @@ class AccessIssuerCacheTests {
     when(cache.get(iss, AccessIssuer.class)).thenReturn(null);
     when(tenantService.getTenants()).thenReturn(Mono.just(tenants));
 
-    var issuerCache = new AccessIssuerCache(AdspConfiguration.builder(
+    var issuerCache = new AccessIssuerScheduledCache(AdspConfiguration.builder(
         new URI("https://access-service"),
         new URI("https://directory"),
         AdspId.parse("urn:ads:platform:test-service"),
@@ -131,7 +130,7 @@ class AccessIssuerCacheTests {
     when(cache.get(iss, AccessIssuer.class)).thenReturn(issuer);
     when(tenantService.getTenants()).thenReturn(Mono.just(tenants));
 
-    var issuerCache = new AccessIssuerCache(AdspConfiguration.builder(
+    var issuerCache = new AccessIssuerScheduledCache(AdspConfiguration.builder(
         new URI("https://access-service"),
         new URI("https://directory"),
         AdspId.parse("urn:ads:platform:test-service"),

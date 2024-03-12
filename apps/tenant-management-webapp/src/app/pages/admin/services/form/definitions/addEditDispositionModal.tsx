@@ -36,7 +36,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
 
   useEffect(() => {
     setTemplate(initialValue);
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { errors, validators } = useValidators(
     'name',
@@ -124,9 +124,11 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
               width="100%"
               testId="pdf-template-description"
               aria-label="pdf-template-description"
-              onChange={(name, value) => {
+              onKeyPress={(name, value) => {
                 setTemplate({ ...template, description: value });
               }}
+              // eslint-disable-next-line
+              onChange={() => {}}
             />
           </DescriptionItem>
         </GoAFormItem>

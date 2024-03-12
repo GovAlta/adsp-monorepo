@@ -302,4 +302,29 @@ describe('KeycloakRealmService', () => {
       );
     });
   });
+  describe('manage user Idp', () => {
+    const service = new KeycloakRealmServiceImpl(loggerMock, 'https://access-service', 'core', () =>
+      Promise.resolve(keycloakClientMock as unknown as KeycloakAdminClient)
+    );
+    it('can fetch the user Id successfully', async () => {
+      const userId = 'mock-user-id';
+      const email = 'mock-test@gov.ab.ca';
+      axiosMock.get.mockResolvedValueOnce({ data: [{ id: userId }] });
+      const id = await service.findUserId('mock-realm', email);
+      expect(id).toBe(userId);
+    });
+
+    it('can return null when no user id found', async () => {
+      const email = 'mock-test@gov.ab.ca';
+      axiosMock.get.mockResolvedValueOnce({ data: [] });
+      const id = await service.findUserId('mock-realm', email);
+      expect(id).toBe(null);
+    });
+
+    it('can delete IdP', async () => {
+      axiosMock.get.mockResolvedValueOnce({ data: null });
+      await service.deleteUserIdp('mock-user-id', 'core');
+      await service.deleteUserIdp('mock-user-id', 'core', 'core');
+    });
+  });
 });

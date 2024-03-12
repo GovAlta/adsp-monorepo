@@ -1,7 +1,6 @@
 import { EmailLinkColor, SpaceAdjust } from './styled-components';
 import React from 'react';
-
-import { GoAIcon } from '@abgov/react-components-new';
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 
 function SupportLinks(): JSX.Element {
   return (
@@ -11,9 +10,8 @@ function SupportLinks(): JSX.Element {
         <EmailLinkColor data-testid="support-link">
           <a rel="noopener noreferrer" target="_blank" href="mailto:adsp@gov.ab.ca">
             Get support
+            <GoAContextMenuIcon type="mail" title="Email" testId="mail-icon" />
           </a>
-
-          <GoAIcon data-testid="mail-icon" size="small" type="mail" />
         </EmailLinkColor>
       }
     </>

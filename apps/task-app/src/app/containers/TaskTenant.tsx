@@ -1,7 +1,8 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
 import React, { Suspense, lazy, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom-6';
+import { Navigate, Route, Routes, useLocation, useParams, useNavigate } from 'react-router-dom-6';
+
 import {
   AppDispatch,
   configInitializedSelector,
@@ -12,6 +13,7 @@ import {
   logoutUser,
   tenantSelector,
   userSelector,
+  feedbackSelector,
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
 import { AuthorizeUser } from './AuthorizeUser';
@@ -26,6 +28,7 @@ interface TaskTenantSectionProps {
 
 const TaskTenantSection = ({ tenantName }: TaskTenantSectionProps) => {
   const dispatch = useDispatch<AppDispatch>();
+
   const tenant = useSelector(tenantSelector);
   useEffect(() => {
     dispatch(loadExtensions(tenant.id));
@@ -65,6 +68,15 @@ export const TaskTenant = () => {
   const extensions = useSelector(extensionsSelector);
 
   useScripts(extensions, [extensions]);
+  const navigate = useNavigate();
+
+  const feedback = useSelector(feedbackSelector);
+
+  useEffect(() => {
+    if (feedback?.message.includes('not found')) {
+      navigate(`/overview`);
+    }
+  }, [feedback]);
 
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
@@ -83,11 +95,21 @@ export const TaskTenant = () => {
           <span>
             <span>{user?.name}</span>
             {user ? (
-              <GoAButton type="tertiary" onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}>
+              <GoAButton
+                mt="s"
+                mr="s"
+                type="tertiary"
+                onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
+              >
                 Sign out
               </GoAButton>
             ) : (
-              <GoAButton type="tertiary" onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}>
+              <GoAButton
+                mt="s"
+                mr="s"
+                type="tertiary"
+                onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
+              >
                 Sign in
               </GoAButton>
             )}

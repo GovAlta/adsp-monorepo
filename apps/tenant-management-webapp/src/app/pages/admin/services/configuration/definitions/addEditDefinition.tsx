@@ -65,13 +65,6 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     setDefinition(initialValue);
   }, [initialValue]);
 
-  useEffect(() => {
-    if (spinner && loadingIndicator.show) {
-      validationCheck();
-      setSpinner(false);
-    }
-  }, [configurations]);
-
   const validationCheck = () => {
     const validations = {
       payloadSchema: payloadSchema,
@@ -92,116 +85,121 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     onClose();
   };
 
+  useEffect(() => {
+    if (spinner && loadingIndicator.show) {
+      validationCheck();
+      setSpinner(false);
+    }
+  }, [spinner, loadingIndicator.show, configurations, validationCheck]);
   return (
-    <>
-      <ModalOverwrite>
-        <GoAModal
-          testId="definition-form"
-          open={open}
-          heading={isEdit ? 'Edit definition' : 'Add definition'}
-          actions={
-            <GoAButtonGroup alignment="end">
-              <GoAButton
-                testId="form-cancel"
-                type="secondary"
-                onClick={() => {
-                  setDefinition(initialValue);
-                  onClose();
-                  validators.clear();
-                }}
-              >
-                Cancel
-              </GoAButton>
-              <GoAButton
-                type="primary"
-                testId="form-save"
-                disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
-                onClick={() => {
-                  if (loadingIndicator.show) {
-                    setSpinner(true);
-                  } else {
-                    validationCheck();
-                  }
-                }}
-              >
-                Save
-                {spinner && (
-                  <SpinnerPadding>
-                    <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-                  </SpinnerPadding>
-                )}
-              </GoAButton>
-            </GoAButtonGroup>
-          }
-        >
-          <GoAFormItem error={errors?.['namespace']} label="Namespace">
-            <GoAInput
-              type="text"
-              name="namespace"
-              value={definition.namespace}
-              disabled={isEdit}
-              testId="form-namespace"
-              aria-label="nameSpace"
-              width="100%"
-              onChange={(key, value) => {
-                validators.remove('namespace');
-                validators['namespace'].check(value);
-                setDefinition({ ...definition, namespace: value });
+    <ModalOverwrite>
+      <GoAModal
+        testId="definition-form"
+        open={open}
+        heading={isEdit ? 'Edit definition' : 'Add definition'}
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              testId="form-cancel"
+              type="secondary"
+              onClick={() => {
+                setDefinition(initialValue);
+                onClose();
+                validators.clear();
               }}
-            />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['name']} label="Name">
-            <GoAInput
-              type="text"
-              name="name"
-              value={definition.name}
-              disabled={isEdit}
-              testId="form-name"
-              aria-label="name"
-              width="100%"
-              onChange={(key, value) => {
-                validators.remove('name');
-                validators['name'].check(value);
-                setDefinition({ ...definition, name: value });
+            >
+              Cancel
+            </GoAButton>
+            <GoAButton
+              type="primary"
+              testId="form-save"
+              disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
+              onClick={() => {
+                if (loadingIndicator.show) {
+                  setSpinner(true);
+                } else {
+                  validationCheck();
+                }
               }}
-            />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['description']} label="Description">
-            <GoATextArea
-              name="description"
-              value={definition.description}
-              testId="form-description"
-              aria-label="description"
-              width="100%"
-              onChange={(name, value) => {
-                const description = value;
-                validators.remove('description');
-                validators['description'].check(description);
-                setDefinition({ ...definition, description });
-              }}
-            />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['payloadSchema']} label="Payload schema">
-            <Editor
-              data-testid="form-schema"
-              height={200}
-              value={payloadSchema}
-              onChange={(value) => {
-                validators.remove('payloadSchema');
-                setPayloadSchema(value);
-              }}
-              language="json"
-              options={{
-                automaticLayout: true,
-                scrollBeyondLastLine: false,
-                tabSize: 2,
-                minimap: { enabled: false },
-              }}
-            />
-          </GoAFormItem>
-        </GoAModal>
-      </ModalOverwrite>
-    </>
+            >
+              Save
+              {spinner && (
+                <SpinnerPadding>
+                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                </SpinnerPadding>
+              )}
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      >
+        <GoAFormItem error={errors?.['namespace']} label="Namespace">
+          <GoAInput
+            type="text"
+            name="namespace"
+            value={definition.namespace}
+            disabled={isEdit}
+            testId="form-namespace"
+            aria-label="nameSpace"
+            width="100%"
+            onChange={(key, value) => {
+              validators.remove('namespace');
+              validators['namespace'].check(value);
+              setDefinition({ ...definition, namespace: value });
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['name']} label="Name">
+          <GoAInput
+            type="text"
+            name="name"
+            value={definition.name}
+            disabled={isEdit}
+            testId="form-name"
+            aria-label="name"
+            width="100%"
+            onChange={(key, value) => {
+              validators.remove('name');
+              validators['name'].check(value);
+              setDefinition({ ...definition, name: value });
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['description']} label="Description">
+          <GoATextArea
+            name="description"
+            value={definition.description}
+            testId="form-description"
+            aria-label="description"
+            width="100%"
+            // eslint-disable-next-line
+            onChange={() => {}}
+            onKeyPress={(name, value) => {
+              validators.remove('description');
+              validators['description'].check(value);
+              setDefinition({ ...definition, description: value });
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['payloadSchema']} label="Payload schema">
+          <Editor
+            data-testid="form-schema"
+            height={200}
+            value={payloadSchema}
+            onChange={(value) => {
+              validators.remove('payloadSchema');
+              setPayloadSchema(value);
+            }}
+            language="json"
+            options={{
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+              tabSize: 2,
+              minimap: { enabled: false },
+            }}
+          />
+        </GoAFormItem>
+      </GoAModal>
+    </ModalOverwrite>
   );
 };
 

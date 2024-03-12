@@ -19,16 +19,14 @@ export function CheckSubscriberRoles({ children }: privateAppProps): JSX.Element
 
   const ErrorView = () => {
     return (
-      <>
-        <GoACallout type="important" testId="check-role-callout">
-          <h3>Access to subscriptions requires admin roles</h3>
-          <p>
-            You require the subscription-admin role to access notifications and will need to contact the administrator
-            of the tenant at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
-          </p>
-        </GoACallout>
-      </>
+      <GoACallout type="important" testId="check-role-callout">
+        <h3>Access to subscriptions requires admin roles</h3>
+        <p>
+          You require the subscription-admin role to access notifications and will need to contact the administrator of
+          the tenant at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
+        </p>
+      </GoACallout>
     );
   };
-  return <>{hasNotificationAdminRole ? <DefaultView /> : <ErrorView />}</>;
+  return hasNotificationAdminRole ? <DefaultView /> : <ErrorView />;
 }

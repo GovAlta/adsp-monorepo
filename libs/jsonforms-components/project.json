@@ -6,24 +6,49 @@
   "tags": [],
   "targets": {
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "outputs": ["{options.outputPath}"],
       "options": {
-        "lintFilePatterns": ["libs/jsonforms-components/**/*.{ts,tsx,js,jsx}"]
+        "outputPath": "dist/libs/jsonforms-components",
+        "tsConfig": "libs/jsonforms-components/tsconfig.lib.json",
+        "project": "libs/jsonforms-components/package.json",
+        "entryFile": "libs/jsonforms-components/src/index.ts",
+        "external": [
+          "@abgov/react-components-new",
+          "@jsonforms/core",
+          "@jsonforms/material-renderers",
+          "@jsonforms/react",
+          "@mui/material",
+          "react",
+          "react-dom",
+          "react/jsx-runtime"
+        ],
+        "rollupConfig": "libs/jsonforms-components/rollup.config.js",
+        "compiler": "babel",
+        "assets": [
+          {
+            "glob": "libs/jsonforms-components/README.md",
+            "input": ".",
+            "output": "."
+          }
+        ]
       }
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/jsonforms-components/jest.config.ts",
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
+        "jestConfig": "libs/jsonforms-components/jest.config.ts"
+      }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx semantic-release -e ./libs/jsonforms-components/.releaserc.json"
       }
     }
   }

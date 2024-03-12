@@ -1,13 +1,5 @@
 import styled from 'styled-components';
 
-export const NameDiv = styled.div`
-  margin-top: 1.5rem;
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  padding-left: 0.4rem;
-  padding-bottom: 0.5rem;
-`;
-
 export const ChipsWrapper = styled.div`
   width: 100%;
   display: flex;
@@ -158,9 +150,4 @@ export const DataTableWrapper = styled.div`
   thead {
     padding-top: 1.25rem;
   }
-`;
-
-export const AnonymousWrapper = styled.div`
-  line-height: 2.5em;
-  display: flex;
 `;

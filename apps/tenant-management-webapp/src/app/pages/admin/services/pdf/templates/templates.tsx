@@ -28,7 +28,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
     if (openEditor) {
       navigate(`edit/${openEditor}`);
     }
-  }, [openEditor]);
+  }, [openEditor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
@@ -65,7 +65,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
     if (isObjectEmpty(pdfTemplates)) {
       dispatch(getPdfTemplates());
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [pdfTemplates]);
@@ -75,57 +75,55 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   }, []);
 
   return (
-    <>
-      <div>
-        <br />
-        <GoAButton
-          testId="add-template"
-          onClick={() => {
-            setOpenAddPdfTemplate(true);
-          }}
-        >
-          Add template
-        </GoAButton>
-        <br />
-        <br />
-        {indicator.show && <PageIndicator />}
+    <div>
+      <br />
+      <GoAButton
+        testId="add-template"
+        onClick={() => {
+          setOpenAddPdfTemplate(true);
+        }}
+      >
+        Add template
+      </GoAButton>
+      <br />
+      <br />
+      {indicator.show && <PageIndicator />}
 
-        <AddEditPdfTemplate
-          open={openAddPdfTemplate}
-          isEdit={false}
-          onClose={reset}
-          initialValue={defaultPdfTemplate}
-          onSave={(template) => {
-            dispatch(updatePdfTemplate(template));
+      <AddEditPdfTemplate
+        open={openAddPdfTemplate}
+        isEdit={false}
+        onClose={reset}
+        initialValue={defaultPdfTemplate}
+        onSave={(template) => {
+          dispatch(updatePdfTemplate(template));
+        }}
+      />
+
+      {!indicator.show && !pdfTemplates && renderNoItem('pdf templates')}
+      {!indicator.show && pdfTemplates && (
+        <PdfTemplatesTable
+          templates={pdfTemplates}
+          onDelete={(currentTemplate) => {
+            setShowDeleteConfirmation(true);
+            setCurrentTemplate(currentTemplate);
           }}
         />
-
-        {!indicator.show && !pdfTemplates && renderNoItem('pdf templates')}
-        {!indicator.show && pdfTemplates && (
-          <PdfTemplatesTable
-            templates={pdfTemplates}
-            onDelete={(currentTemplate) => {
-              setShowDeleteConfirmation(true);
-              setCurrentTemplate(currentTemplate);
-            }}
-          />
-        )}
-        {/* Delete confirmation */}
-        <DeleteModal
-          isOpen={showDeleteConfirmation}
-          title="Delete PDF template"
-          content={
-            <div>
-              Delete <b>{`${currentTemplate?.name} (ID: ${currentTemplate?.id})?`}</b>
-            </div>
-          }
-          onCancel={() => setShowDeleteConfirmation(false)}
-          onDelete={() => {
-            setShowDeleteConfirmation(false);
-            dispatch(deletePdfTemplate(currentTemplate));
-          }}
-        />
-      </div>
-    </>
+      )}
+      {/* Delete confirmation */}
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete PDF template"
+        content={
+          <div>
+            Delete <b>{`${currentTemplate?.name} (ID: ${currentTemplate?.id})?`}</b>
+          </div>
+        }
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(deletePdfTemplate(currentTemplate));
+        }}
+      />
+    </div>
   );
 };

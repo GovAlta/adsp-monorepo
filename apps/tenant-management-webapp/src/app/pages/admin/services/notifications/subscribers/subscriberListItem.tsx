@@ -79,6 +79,7 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
               <div data-account-link={subscriber.accountLink}>
                 <GoAContextMenuIcon
                   type={'person'}
+                  title="Person"
                   onClick={() => {
                     window.open(subscriber.accountLink, '_blank');
                   }}
@@ -87,6 +88,7 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
               </div>
               <GoAContextMenuIcon
                 type={showHide ? 'eye-off' : 'eye'}
+                title="Toggle details"
                 onClick={async () => {
                   if (subSubs == null) {
                     const subscriptions = await getSubcriberSubscriptions(subscriber.id);
@@ -108,6 +110,7 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
               <GoAContextMenuIcon
                 testId="delete-icon"
                 type="trash"
+                title="Delete"
                 onClick={() => {
                   openDeleteModalFunction(subscriber);
                 }}
@@ -146,6 +149,6 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
 };
 
 const GoABadgeWrapper = styled.div`
-  margin-right: var(--goa-spacing-s);
+  margin-right: var(--goa-space-s);
   text-wrap: nowrap;
 `;

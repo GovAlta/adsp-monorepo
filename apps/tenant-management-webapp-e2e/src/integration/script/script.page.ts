@@ -51,7 +51,7 @@ class ScriptPage {
 
   addScriptModalRolesTable() {
     return cy.xpath(
-      `//*[@data-testid="add-script-modal" and @open="true"]//h4/div[text()="autotest"]/parent::h4/following-sibling::goa-table`
+      `//*[@data-testid="add-script-modal" and @open="true"]//h4/div[text()="autotest"]/parent::h4/following-sibling::goa-table[1]`
     );
   }
 
@@ -86,7 +86,7 @@ class ScriptPage {
   }
 
   editScriptModalSaveButton() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save"]');
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[@data-testid="script-modal-save" and text()="Save"]');
   }
 
   editScriptModalNameField() {

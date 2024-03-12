@@ -23,7 +23,7 @@ export class FileEntity implements File {
   scanned = false;
   deleted = false;
   infected = false;
-  retentionDays?: number;
+  digest?: string;
   securityClassification?: string;
 
   static async create(
@@ -91,6 +91,7 @@ export class FileEntity implements File {
       this.infected = record.infected;
       this.size = record.size;
       this.securityClassification = record.securityClassification;
+      this.digest = record.digest;
     } else {
       this.tenantId = type.tenantId;
       this.id = uuidv4();
@@ -139,6 +140,11 @@ export class FileEntity implements File {
     }
 
     return this.repository.save(this, { scanned: this.scanned, infected: this.infected });
+  }
+
+  updateDigest(digest: string): Promise<FileEntity> {
+    this.digest = digest;
+    return this.repository.save(this, { digest: this.digest });
   }
 
   async delete(immediate?: boolean): Promise<boolean> {

@@ -3,6 +3,7 @@ import { InvalidOperationError, UnauthorizedError } from '@core-services/core-co
 import axios, { AxiosResponse } from 'axios';
 import { Request, Response } from 'express';
 import 'express-session';
+import jwtDecode from 'jwt-decode';
 import { PassportStatic } from 'passport';
 import { Strategy } from 'passport-openidconnect';
 import { Logger } from 'winston';
@@ -11,6 +12,9 @@ import { AuthenticationClient } from './client';
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 const { AxiosError } = jest.requireActual('axios');
+
+jest.mock('jwt-decode');
+const jwtDecodeMock = jwtDecode as jest.MockedFunction<typeof jwtDecode>;
 
 describe('AuthenticationClient', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -46,6 +50,7 @@ describe('AuthenticationClient', () => {
     axiosMock.post.mockClear();
     axiosMock.delete.mockClear();
     passportMock.authenticate.mockClear();
+    jwtDecodeMock.mockClear();
   });
 
   it('can be created', () => {
@@ -247,6 +252,36 @@ describe('AuthenticationClient', () => {
       expect(passportMock.authenticate).toHaveBeenCalledWith(expect.any(Strategy), expect.any(Object));
     });
 
+    it('can create authenticate handler with idp hint', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          targets: {},
+          idpHint: 'core',
+        }
+      );
+
+      const credentials = {
+        realm: tenant.realm,
+        clientId: 'client-123',
+        clientSecret: 'secret secret',
+        registrationUrl: 'http://access-service/registration/clients/client-123',
+        registrationToken: 'reg token 123',
+      };
+      repositoryMock.get.mockReturnValueOnce(credentials);
+
+      const handler = await client.authenticate(passportMock as unknown as PassportStatic);
+      expect(handler).toBeTruthy();
+      expect(passportMock.authenticate).toHaveBeenCalledWith(expect.any(Strategy), expect.any(Object));
+    });
+
     it('can throw invalid operation for no credentials', async () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
@@ -379,6 +414,48 @@ describe('AuthenticationClient', () => {
         user: { id: 'test', name: 'tester', refreshExp: 1800 },
         session: { cookie: {} },
         logout: jest.fn((cb) => cb()),
+      };
+      const res = {};
+      const next = jest.fn();
+
+      handler(req as unknown as Request, res as unknown as Response, next);
+      expect(innerHandler).toHaveBeenCalledWith(req, res, expect.any(Function));
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+    });
+
+    it('can handle complete request generate csrf error and logout error', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          targets: {},
+        }
+      );
+
+      const credentials = {
+        realm: tenant.realm,
+        clientId: 'client-123',
+        clientSecret: 'secret secret',
+        registrationUrl: 'http://access-service/registration/clients/client-123',
+        registrationToken: 'reg token 123',
+      };
+      repositoryMock.get.mockReturnValueOnce(credentials);
+
+      const innerHandler = jest.fn((req, res, next) => next());
+      passportMock.authenticate.mockReturnValueOnce(innerHandler);
+      const handler = await client.authenticate(passportMock as unknown as PassportStatic, true);
+
+      const req = {
+        hostname: 'frontend',
+        user: { id: 'test', name: 'tester', refreshExp: 1800 },
+        session: { cookie: {} },
+        logout: jest.fn((cb) => cb(new Error('oh noes!'))),
       };
       const res = {};
       const next = jest.fn();
@@ -533,6 +610,135 @@ describe('AuthenticationClient', () => {
 
       await expect(client.refreshTokens(req as unknown as Request)).rejects.toThrow(UnauthorizedError);
       expect(req.logout).toHaveBeenCalled();
+    });
+
+    it('can throw unauthorized for missing credentials and handle logout error', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          targets: {},
+        }
+      );
+
+      const sessionData = { refreshToken: 'refresh-123' };
+      const req = {
+        user: sessionData,
+        session: { passport: { user: sessionData } },
+        logout: jest.fn((cb) => cb(new Error('oh noes!'))),
+      };
+
+      await expect(client.refreshTokens(req as unknown as Request)).rejects.toThrow(UnauthorizedError);
+      expect(req.logout).toHaveBeenCalled();
+    });
+  });
+
+  describe('verify', () => {
+    it('can verify user', () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          targets: {},
+        }
+      );
+
+      const access = {
+        sub: 'tester',
+        exp: 321,
+        realm_access: { roles: ['tester'] },
+        resource_access: { test: { roles: ['tester'] } },
+      };
+      const refresh = { exp: 123 };
+      const profile = { displayName: 'Tester', emails: [{ value: 'tester@test.co' }] };
+      jwtDecodeMock.mockReturnValueOnce(access).mockReturnValueOnce(refresh);
+
+      const verified = jest.fn();
+      client.verify('test-iss', profile, {}, 'id-token', 'access-token', 'refresh-token', verified);
+      expect(verified).toHaveBeenCalledWith(
+        null,
+        expect.objectContaining({
+          id: access.sub,
+          exp: access.exp,
+          refreshExp: refresh.exp,
+          name: profile.displayName,
+          roles: expect.arrayContaining(['tester', 'test:tester']),
+        })
+      );
+    });
+
+    it('can handle token without roles', () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          targets: {},
+        }
+      );
+
+      const access = {
+        sub: 'tester',
+        exp: 321,
+      };
+      const refresh = { exp: 123 };
+      const profile = { displayName: 'Tester', emails: [{ value: 'tester@test.co' }] };
+      jwtDecodeMock.mockReturnValueOnce(access).mockReturnValueOnce(refresh);
+
+      const verified = jest.fn();
+      client.verify('test-iss', profile, {}, 'id-token', 'access-token', 'refresh-token', verified);
+      expect(verified).toHaveBeenCalledWith(
+        null,
+        expect.objectContaining({
+          id: access.sub,
+          exp: access.exp,
+          refreshExp: refresh.exp,
+          name: profile.displayName,
+          roles: expect.arrayContaining([]),
+        })
+      );
+    });
+
+    it('can handle error', () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          targets: {},
+        }
+      );
+
+      const profile = { displayName: 'Tester', emails: [{ value: 'tester@test.co' }] };
+      jwtDecodeMock.mockImplementationOnce(() => {
+        throw new Error('oh noes!');
+      });
+
+      const verified = jest.fn();
+      client.verify('test-iss', profile, {}, 'id-token', 'access-token', 'refresh-token', verified);
+      expect(verified).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 });

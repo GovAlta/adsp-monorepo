@@ -46,7 +46,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
 
   useEffect(() => {
     dispatch(getFormDefinitions());
-  }, []);
+  }, [dispatch]);
 
   const reset = () => {
     setOpenAddFormDefinition(false);
@@ -60,57 +60,55 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   }, []);
 
   return (
-    <>
-      <div>
-        <br />
-        <GoAButton
-          testId="add-definition"
-          onClick={() => {
-            setOpenAddFormDefinition(true);
-          }}
-        >
-          Add definition
-        </GoAButton>
-        <br />
-        <br />
-        <PageIndicator />
+    <div>
+      <br />
+      <GoAButton
+        testId="add-definition"
+        onClick={() => {
+          setOpenAddFormDefinition(true);
+        }}
+      >
+        Add definition
+      </GoAButton>
+      <br />
+      <br />
+      <PageIndicator />
 
-        <AddEditFormDefinition
-          open={openAddFormDefinition}
-          isEdit={false}
-          onClose={reset}
-          initialValue={defaultFormDefinition}
-          onSave={(definition) => {
-            dispatch(updateFormDefinition(definition));
-          }}
-        />
+      <AddEditFormDefinition
+        open={openAddFormDefinition}
+        isEdit={false}
+        onClose={reset}
+        initialValue={defaultFormDefinition}
+        onSave={(definition) => {
+          dispatch(updateFormDefinition(definition));
+        }}
+      />
 
-        {!indicator.show && !formDefinitions && renderNoItem('form templates')}
-        {!indicator.show && formDefinitions && (
-          <FormDefinitionsTable
-            definitions={formDefinitions}
-            onDelete={(currentTemplate) => {
-              setShowDeleteConfirmation(true);
-              setCurrentDefinition(currentTemplate);
-            }}
-          />
-        )}
-
-        <DeleteModal
-          isOpen={showDeleteConfirmation}
-          title="Delete form definition"
-          content={
-            <div>
-              Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
-            </div>
-          }
-          onCancel={() => setShowDeleteConfirmation(false)}
-          onDelete={() => {
-            setShowDeleteConfirmation(false);
-            dispatch(deleteFormDefinition(currentDefinition));
+      {!indicator.show && !formDefinitions && renderNoItem('form templates')}
+      {!indicator.show && formDefinitions && (
+        <FormDefinitionsTable
+          definitions={formDefinitions}
+          onDelete={(currentTemplate) => {
+            setShowDeleteConfirmation(true);
+            setCurrentDefinition(currentTemplate);
           }}
         />
-      </div>
-    </>
+      )}
+
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete form definition"
+        content={
+          <div>
+            Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
+          </div>
+        }
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(deleteFormDefinition(currentDefinition));
+        }}
+      />
+    </div>
   );
 };

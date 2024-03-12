@@ -53,8 +53,7 @@ export const TopicsList = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(getCommentTopicTypes());
-  }, []);
-
+  }, [dispatch]);
   useEffect(() => {
     if (selectedType && selectedType !== '') {
       if (coreTopicTypes[selectedType]) {
@@ -65,7 +64,7 @@ export const TopicsList = (): JSX.Element => {
         dispatch(fetchTopicsRequest(topicTypes[selectedType]));
       }
     }
-  }, [selectedType, topicList]);
+  }, [dispatch, topicTypes, selectedType, topicList, coreTopicTypes]);
 
   const onNext = () => {
     dispatch(fetchTopicsRequest(topicTypes[selectedType], next));
@@ -97,42 +96,43 @@ export const TopicsList = (): JSX.Element => {
 
   return (
     <Topics>
-      {!indicator.show && Object.keys(topicTypes).length === 0 && renderNoItem('Topic types')}
-      {Object.keys(topicTypes).length > 0 && (
+      {!indicator.show &&
+        Object.keys(topicTypes).length === 0 &&
+        Object.keys(coreTopicTypes).length === 0 &&
+        renderNoItem('Topic types')}
+      {(Object.keys(topicTypes).length > 0 || Object.keys(coreTopicTypes).length > 0) && (
         <GoAFormItem label="Select a topic type">
           {indicator.show && Object.keys(topicTypes).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
-          {Object.keys(topicTypes).length > 0 && (
-            <GoADropdown
-              name="TopicTypes"
-              value={selectedType}
-              onChange={(name: string, selectedType: string) => {
-                dispatch(clearComments());
-                setSelectedType(selectedType);
-              }}
-              aria-label="select-comment-topictype-dropdown"
-              width="100%"
-              testId="comment-select-topictype-dropdown"
-            >
-              {Object.keys(topicTypes).map((item) => (
-                <GoADropdownItem
-                  name="TopicTypes"
-                  key={item}
-                  label={item}
-                  value={item}
-                  testId={`${item}-get-comment-options`}
-                />
-              ))}
-              {Object.keys(coreTopicTypes).map((item) => (
-                <GoADropdownItem
-                  name="CoreTopicTypes"
-                  key={item}
-                  label={item}
-                  value={item}
-                  testId={`${item}-get-comment-options`}
-                />
-              ))}
-            </GoADropdown>
-          )}
+          <GoADropdown
+            name="TopicTypes"
+            value={selectedType}
+            onChange={(name: string, selectedType: string) => {
+              dispatch(clearComments());
+              setSelectedType(selectedType);
+            }}
+            aria-label="select-comment-topic-type-dropdown"
+            width="100%"
+            testId="comment-select-topic-type-dropdown"
+          >
+            {Object.keys(topicTypes).map((item) => (
+              <GoADropdownItem
+                name="TopicTypes"
+                key={item}
+                label={item}
+                value={item}
+                testId={`${item}-get-comment-options`}
+              />
+            ))}
+            {Object.keys(coreTopicTypes).map((item) => (
+              <GoADropdownItem
+                name="CoreTopicTypes"
+                key={item}
+                label={item}
+                value={item}
+                testId={`${item}-get-comment-options`}
+              />
+            ))}
+          </GoADropdown>
         </GoAFormItem>
       )}
       {selectedType && (

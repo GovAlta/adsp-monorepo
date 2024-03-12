@@ -22,10 +22,6 @@ export const FakeButton = styled.div`
   height: 42px;
 `;
 
-export const NegativeMarginSmall = styled.div`
-  margin-top: -5px;
-`;
-
 export const RightAlign = styled.div`
   margin-top: 8px;
   margin-bottom: 8px;
@@ -140,12 +136,12 @@ export const FormEditor = styled.div`
   width: 100%;
 
   .hr-resize {
-    margin-top: var(--goa-spacing-s);
+    margin-top: var(--goa-space-s);
   }
 
   .hr-resize-bottom {
-    margin-bottom: var(--goa-spacing-2xs);
-    margin-top: var(--goa-spacing-xl);
+    margin-bottom: var(--goa-space-2xs);
+    margin-top: var(--goa-space-xl);
   }
 
   .info-circle {
@@ -492,4 +488,20 @@ export const PRE = styled.div`
   font-size: var(--goa-font-size-1);
   line-height: var(--goa-line-height-05);
   padding: var(--goa-space-m);
+`;
+
+export const FormPreviewScrollPane = styled.div`
+  overflow-y: auto;
+  height: 70vh;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+`;
+export const Anchor = styled.div`
+height: '24px',
+background: 'none',
+border: 'none',
+padding: '0',
+color: 'blue',
+textDecoration: 'underline',
+cursor: 'pointer'
 `;

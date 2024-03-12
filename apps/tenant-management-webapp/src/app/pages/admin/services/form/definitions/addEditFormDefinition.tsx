@@ -2,14 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { FormDefinition } from '@store/form/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
+import {
+  isNotEmptyCheck,
+  wordMaxLengthCheck,
+  badCharsCheck,
+  duplicateNameCheck,
+  Validator,
+} from '@lib/validation/checkInput';
 import { FormFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { useNavigate } from 'react-router-dom-6';
 import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { uischema } from './categorization-stepper-nav-buttons';
 import { schema } from './categorization';
+import { selectDefaultFormUrl } from '@store/form/selectors';
+import { fetchDirectory } from '@store/directory/actions';
 
 import {
   GoATextArea,
@@ -29,6 +37,19 @@ interface AddEditFormDefinitionProps {
   onSave: (definition: FormDefinition) => void;
 }
 
+export const checkFormDefaultUrl = (): Validator => {
+  return (_url: string) => {
+    const url = _url.replace(/\s/g, '');
+    const isHttps = url.toLowerCase().startsWith('https://');
+    const numberOfVariables = url.split('{{').length;
+    const containsIdVariable = url.includes('{{id}}');
+    if (!isHttps) return 'Only secure HTTP protocol is allowed.';
+    if (numberOfVariables > 2 || (numberOfVariables === 2 && !containsIdVariable)) {
+      return 'Can only contain one handlebar variable {{id}} in the url';
+    }
+  };
+};
+
 export const AddEditFormDefinition = ({
   initialValue,
   isEdit,
@@ -36,6 +57,11 @@ export const AddEditFormDefinition = ({
   open,
   onSave,
 }: AddEditFormDefinitionProps): JSX.Element => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchDirectory());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const navigate = useNavigate();
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
   const [multiForm, setMultiForm] = useState<boolean>(false);
@@ -51,6 +77,8 @@ export const AddEditFormDefinition = ({
   });
   const descErrMessage = 'Description can not be over 180 characters';
 
+  const defaultFormUrl = useSelector((state: RootState) => selectDefaultFormUrl(state, definition?.id || null));
+
   useEffect(() => {
     if (spinner && Object.keys(definitions).length > 0 && !isEdit) {
       if (validators['duplicate'].check(definition.id)) {
@@ -58,14 +86,14 @@ export const AddEditFormDefinition = ({
         onClose();
       }
     }
-  }, [definitions]);
+  }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
+  useEffect(() => {}, [indicator, defaultFormUrl]);
 
   useEffect(() => {
     setDefinition(initialValue);
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { errors, validators } = useValidators(
     'name',
@@ -76,6 +104,7 @@ export const AddEditFormDefinition = ({
   )
     .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
+    .add('formDraftUrlTemplate', 'formDraftUrlTemplate', checkFormDefaultUrl())
     .build();
   return (
     <GoAModal
@@ -116,6 +145,9 @@ export const AddEditFormDefinition = ({
                   }
                 }
                 setSpinner(true);
+                if (definition?.formDraftUrlTemplate === '') {
+                  definition.formDraftUrlTemplate = defaultFormUrl;
+                }
                 onSave(definition);
                 if (isEdit) {
                   onClose();
@@ -148,9 +180,12 @@ export const AddEditFormDefinition = ({
                     name: value,
                     duplicate: value,
                   };
-                  validators.remove('name');
 
-                  validators.checkAll(validations);
+                  if (definition.id.length > 0) {
+                    validators.remove('name');
+
+                    validators.checkAll(validations);
+                  }
 
                   setDefinition(
                     isEdit ? { ...definition, name: value } : { ...definition, name: value, id: toKebabName(value) }
@@ -181,13 +216,14 @@ export const AddEditFormDefinition = ({
                 width="100%"
                 testId="form-definition-description"
                 aria-label="form-definition-description"
-                onChange={(name, value) => {
+                // eslint-disable-next-line
+                onChange={() => {}}
+                onKeyPress={(name, value) => {
                   validators.remove('description');
                   validators['description'].check(value);
                   setDefinition({ ...definition, description: value });
                 }}
               />
-
               <HelpText>
                 {definition.description.length <= 180 ? (
                   <div> {descErrMessage} </div>
@@ -200,6 +236,28 @@ export const AddEditFormDefinition = ({
                 <div>{`${definition.description.length}/180`}</div>
               </HelpText>
             </DescriptionItem>
+          </GoAFormItem>
+
+          <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
+            <FormFormItem>
+              <GoAInput
+                name="form-url-id"
+                value={definition?.formDraftUrlTemplate || defaultFormUrl}
+                testId="form-url-id"
+                disabled={!definition?.id?.length}
+                width="100%"
+                // eslint-disable-next-line
+                onChange={(name, value) => {
+                  validators.remove('formDraftUrlTemplate');
+                  const validations = {
+                    formDraftUrlTemplate: value,
+                  };
+                  validators.checkAll(validations);
+
+                  setDefinition({ ...definition, formDraftUrlTemplate: value });
+                }}
+              />
+            </FormFormItem>
           </GoAFormItem>
 
           {!isEdit && (

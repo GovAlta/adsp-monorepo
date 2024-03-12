@@ -14,7 +14,6 @@ export interface File {
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;
-  retentionDays?: number;
   securityClassification?: string;
 }
 
@@ -23,6 +22,7 @@ export interface FileRecord extends File {
   deleted: boolean;
   scanned: boolean;
   infected: boolean;
+  digest?: string;
 }
 
 export interface FileCriteria {

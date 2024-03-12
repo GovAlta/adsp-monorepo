@@ -7,7 +7,7 @@ const LogoutRedirect = (): JSX.Element => {
     localStorage.removeItem('realm');
     localStorage.removeItem('idpFromUrl');
     navigate('/');
-  }, []);
+  }, [navigate]);
 
   return <div></div>;
 };

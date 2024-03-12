@@ -1,0 +1,25 @@
+{
+  "extends": "../../.releaserc.json",
+  "tagFormat": "jsonforms-components-v${version}",
+  "plugins": [
+    [
+      "@abgov/nx-release",
+      {
+        "project": "jsonforms-components"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "pkgRoot": "dist/libs/jsonforms-components"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "releasedLabels": false,
+        "successComment": false
+      }
+    ]
+  ]
+}

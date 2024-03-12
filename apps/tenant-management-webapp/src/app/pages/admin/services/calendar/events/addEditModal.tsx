@@ -16,7 +16,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { ResetModalState } from '@store/session/actions';
-import { CheckBoxWrapper } from '../styled-components';
 import { CalendarEvent } from '@store/calendar/models';
 import { CreateEventsByCalendar, UpdateEventsByCalendar } from '@store/calendar/actions';
 import { areObjectsEqual } from '@lib/objectUtil';
@@ -67,18 +66,18 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       setStartDate(initCalendarEvent?.start);
       setEndDate(initCalendarEvent?.end);
     }
-  }, [initCalendarEvent]);
+  }, [initCalendarEvent, calendarEvent]);
 
   const getTimeString = (calendarDateString: string) => {
-    const timeString = calendarDateString.split('T')[1];
+    const timeString = calendarDateString?.split('T')[1];
     return timeString ? timeString.substring(0, 8) : '';
   };
   const setTimeString = (dateString, timeString) => {
     const dateDate = new Date(dateString);
     if (timeString) {
-      dateDate.setHours(timeString.split(':')[0]);
-      dateDate.setMinutes(timeString.split(':')[1]);
-      dateDate.setSeconds(timeString.split(':')[2]);
+      dateDate.setHours(timeString?.split(':')[0]);
+      dateDate.setMinutes(timeString?.split(':')[1]);
+      dateDate.setSeconds(timeString?.split(':')[2]);
     }
     return dateDate.toISOString();
   };
@@ -167,33 +166,34 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           testId={`calendar-event-modal-description-input`}
           aria-label="description"
           width="100%"
-          onChange={(name, value) => {
+          // eslint-disable-next-line
+          onChange={() => {}}
+          onKeyPress={(name, value) => {
             validators.remove('description');
             validators['description'].check(value);
             setCalendarEvent({ ...calendarEvent, description: value });
           }}
         />
       </GoAFormItem>
-      <CheckBoxWrapper>
-        <GoACheckbox
-          name="isPublicCheckbox"
-          checked={calendarEvent?.isPublic}
-          text={'Is public '}
-          onChange={(name, value) => {
-            setCalendarEvent({ ...calendarEvent, isPublic: value });
-          }}
-        />
-      </CheckBoxWrapper>
-      <CheckBoxWrapper>
-        <GoACheckbox
-          name="isAllDayCheckbox"
-          checked={calendarEvent?.isAllDay}
-          text={'Is all day'}
-          onChange={(name, value) => {
-            setCalendarEvent({ ...calendarEvent, isAllDay: value });
-          }}
-        />
-      </CheckBoxWrapper>
+      <br />
+      <GoACheckbox
+        name="isPublicCheckbox"
+        checked={calendarEvent?.isPublic}
+        text={'Is public '}
+        onChange={(name, value) => {
+          setCalendarEvent({ ...calendarEvent, isPublic: value });
+        }}
+      />
+
+      <GoACheckbox
+        name="isAllDayCheckbox"
+        checked={calendarEvent?.isAllDay}
+        text={'Is all day'}
+        onChange={(name, value) => {
+          setCalendarEvent({ ...calendarEvent, isAllDay: value });
+        }}
+      />
+
       <GoAGrid minChildWidth="25ch" gap="s">
         <GoAFormItem label="Start Date" error={errors?.['start']}>
           <GoAInputDate

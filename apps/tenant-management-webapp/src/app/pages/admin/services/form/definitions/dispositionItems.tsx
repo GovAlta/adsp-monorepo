@@ -1,9 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { Disposition } from '@store/form/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-
 import { RowFlex } from './style-components';
-import { GoAIcon } from '@abgov/react-components-new';
 import { EmptyBoxSpace, Flex, ActionSpace } from './style-components';
 
 interface ActionComponentProps {
@@ -36,7 +34,7 @@ const ClickUp: React.FC<ClickUpProps> = ({ dispositions, index, updateDispositio
       }}
       style={{ height: '24px' }}
     >
-      <GoAIcon type="arrow-up" />
+      <GoAContextMenuIcon type="arrow-up" title="Arrow-up" />
     </a>
   );
 };
@@ -56,7 +54,7 @@ const ClickDown: React.FC<ClickUpProps> = ({ dispositions, index, updateDisposit
       }}
       style={{ height: '24px' }}
     >
-      <GoAIcon type="arrow-down" />
+      <GoAContextMenuIcon type="arrow-down" title="Arrow-down" />
     </a>
   );
 };
@@ -86,7 +84,7 @@ export const DispositionItems: FunctionComponent<ActionComponentProps> = ({
                         updateDispositions={updateDispositions}
                       />
                     ) : (
-                      <GoAIcon type="arrow-up" />
+                      <GoAContextMenuIcon type="arrow-up" title="Arrow-up" />
                     )
                   ) : (
                     <EmptyBoxSpace />
@@ -99,7 +97,7 @@ export const DispositionItems: FunctionComponent<ActionComponentProps> = ({
                         updateDispositions={updateDispositions}
                       />
                     ) : (
-                      <GoAIcon type="arrow-down" />
+                      <GoAContextMenuIcon type="arrow-down" title="Arrow-down" />
                     ))}
                 </Flex>
               </td>
@@ -117,6 +115,7 @@ export const DispositionItems: FunctionComponent<ActionComponentProps> = ({
                       <GoAContextMenuIcon
                         testId="delete-icon"
                         type="trash"
+                        title="Delete"
                         disabled={!submissionRecords}
                         onClick={() => {
                           openDeleteModalFunction(disposition);

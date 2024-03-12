@@ -34,7 +34,7 @@ export const defaultFormDefinition: FormDefinition = {
   applicantRoles: [],
   clerkRoles: [],
   assessorRoles: [],
-  formDraftUrlTemplate: 'http://test.com',
+  formDraftUrlTemplate: '',
   anonymousApply: false,
   dispositionStates: [],
   submissionRecords: false,

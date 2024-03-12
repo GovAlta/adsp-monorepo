@@ -1,10 +1,10 @@
 import { adspId, Channel, ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
 import {
   InvalidOperationError,
+  InvalidValueError,
   NotFoundError,
   UnauthorizedError,
   createValidationHandler,
-  InvalidValueError,
 } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
@@ -178,17 +178,18 @@ export function unsubscribe(tokenProvider: TokenProvider, directory: ServiceDire
   return async (req, res, next) => {
     try {
       const { type, id } = req.params;
-      const tenantId = req.query.tenantId as string;
+      const { criteria, tenantId } = req.query;
 
       const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
       const token = await tokenProvider.getAccessToken();
       const subscribersUrl = new URL(
-        `/subscription/v1/types/${type}/subscriptions/${id}?tenantId=${tenantId}`,
+        `/subscription/v1/types/${type}/subscriptions/${id}${criteria ? '/criteria' : ''}`,
         notificationServiceUrl
       );
 
       const result = await axios.delete(subscribersUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
+        params: { criteria, tenantId: tenantId.toString() },
       });
       res.send(result.data);
     } catch (err) {
@@ -260,19 +261,15 @@ export const createSubscriberRouter = ({
 
   router.get(
     '/get-subscriber/:subscriberId',
-    createValidationHandler(
-      param('subscriberId')
-        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
-        .isMongoId()
-    ),
+    createValidationHandler(param('subscriberId').isMongoId()),
     getSubscriber(tokenProvider, directory)
   );
 
   router.post(
     '/subscribers/:subscriber',
     verifyCaptcha(logger, SUBSCRIPTION_RECAPTCHA_SECRET),
-
     createValidationHandler(
+      param('subscriberId').isMongoId(),
       ...checkSchema(
         {
           operation: { isString: true },
@@ -292,12 +289,8 @@ export const createSubscriberRouter = ({
     '/types/:type/subscriptions/:id',
     verifyCaptcha(logger, SUBSCRIPTION_RECAPTCHA_SECRET),
     createValidationHandler(
-      param('type')
-        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
-        .matches(/^[a-zA-Z0-9-_ ]{1,50}$/), // get this regex from the configuration of the notification service
-      param('id')
-        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
-        .isMongoId(),
+      param('type').matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
+      param('id').isMongoId(),
       // example of the tenant id here: urn:ads:platform:tenant-service:v2:/tenants/61e9adcc9423490012a9ae46
       query('tenantId')
         .customSanitizer((value) => value.replace(/[^a-zA-Z0-9-:/ ]/g, ''))
@@ -308,17 +301,15 @@ export const createSubscriberRouter = ({
           }
           return tenantIOParts[0] + '/tenants/' + tenantIOParts[tenantIOParts.length - 1];
         })
-        .isString()
+        .isString(),
+      query('criteria').optional({ nullable: true }).isObject()
     ),
     unsubscribe(tokenProvider, directory)
   );
 
   router.get(
     '/subscribers/:subscriber/types/:type/channels',
-    createValidationHandler(
-      param('type').customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, '')),
-      param('subscriber').customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
-    ),
+    createValidationHandler(param('type').matches(/^[a-zA-Z0-9-_ ]{1,50}$/), param('subscriber').isMongoId()),
     getSubscriptionChannels(tokenProvider, directory)
   );
 

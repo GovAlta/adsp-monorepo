@@ -8,8 +8,6 @@ import { FormServiceRoles } from '../roles';
 import { FormDefinition, Disposition, QueueTaskToProcess } from '../types';
 import { FormEntity } from './form';
 
-const defaultQueueTaskToProcess: QueueTaskToProcess = { queueName: '', queueNameSpace: '' };
-
 export class FormDefinitionEntity implements FormDefinition {
   id: string;
   name: string;
@@ -24,7 +22,7 @@ export class FormDefinitionEntity implements FormDefinition {
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
   uiSchema: Record<string, unknown>;
-  queueTaskToProcess: QueueTaskToProcess;
+  queueTaskToProcess?: QueueTaskToProcess;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
@@ -39,7 +37,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.dispositionStates = definition.dispositionStates || [];
     this.submissionRecords = definition.submissionRecords || false;
     this.supportTopic = definition.supportTopic || false;
-    this.queueTaskToProcess = definition.queueTaskToProcess || defaultQueueTaskToProcess;
+    this.queueTaskToProcess = definition.queueTaskToProcess;
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
     this.dataSchema = definition.dataSchema || {};
@@ -97,7 +95,13 @@ export class FormDefinitionEntity implements FormDefinition {
     }
 
     const id = uuidv4();
-    const applicant = await notificationService.subscribe(this.tenantId, id, applicantInfo);
+    // If applicant information is provided, then create a subscriber to keep that applicant updated;
+    // Otherwise, the form is anonymous and it will be up to the consuming app to support connecting the
+    // original person to the application.
+    const applicant = applicantInfo
+      ? await notificationService.subscribe(this.tenantId, this, id, applicantInfo)
+      : null;
+
     const formDraftUrl = this.urlTemplate({ id });
     const form = await FormEntity.create(user, repository, this, id, formDraftUrl, applicant);
 

@@ -1,5 +1,5 @@
 import { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
-import { FormEntity } from './model';
+import { FormEntity, FormSubmissionEntity } from './model';
 
 export const FORM_CREATED = 'form-created';
 export const FORM_DELETED = 'form-deleted';
@@ -9,6 +9,7 @@ export const FORM_UNLOCKED = 'form-unlocked';
 export const FORM_SET_TO_DRAFT = 'form-to-draft';
 export const FORM_SUBMITTED = 'form-submitted';
 export const FORM_ARCHIVED = 'form-archived';
+export const SUBMISSION_DISPOSITIONED = 'submission-dispositioned';
 
 const userInfoSchema = {
   type: 'object',
@@ -123,6 +124,26 @@ export const FormStatusArchivedDefinition: DomainEventDefinition = {
   },
 };
 
+export const SubmissionDispositionedDefinition: DomainEventDefinition = {
+  name: SUBMISSION_DISPOSITIONED,
+  description: 'Signalled when a form submission is dispositioned',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      form: formSchema,
+      submmission: {
+        id: { type: 'string' },
+        createdBy: userInfoSchema,
+        disposition: {
+          status: { type: 'string' },
+          reason: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
 function mapForm(entity: FormEntity) {
   return {
     definition: {
@@ -224,7 +245,7 @@ export const formSetToDraft = (user: User, form: FormEntity): DomainEvent => ({
   },
 });
 
-export const formSubmitted = (user: User, form: FormEntity): DomainEvent => ({
+export const formSubmitted = (user: User, form: FormEntity, submission: FormSubmissionEntity): DomainEvent => ({
   name: FORM_SUBMITTED,
   timestamp: form.submitted,
   tenantId: form.tenantId,
@@ -234,6 +255,15 @@ export const formSubmitted = (user: User, form: FormEntity): DomainEvent => ({
   },
   payload: {
     form: mapForm(form),
+    submmission: form.submissionRecords
+      ? {
+          id: submission.id,
+          createdBy: {
+            id: submission.createdBy.id,
+            name: submission.createdBy.name,
+          },
+        }
+      : null,
     submittedBy: {
       id: user.id,
       name: user.name,
@@ -254,6 +284,34 @@ export const formArchived = (user: User, form: FormEntity): DomainEvent => ({
     archivedBy: {
       id: user.id,
       name: user.name,
+    },
+  },
+});
+
+export const submissionDispositioned = (
+  user: User,
+  form: FormEntity,
+  submission: FormSubmissionEntity
+): DomainEvent => ({
+  name: SUBMISSION_DISPOSITIONED,
+  timestamp: new Date(),
+  tenantId: form.tenantId,
+  correlationId: form.id,
+  context: {
+    definitionId: form.definition.id,
+  },
+  payload: {
+    form: mapForm(form),
+    submission: {
+      id: submission.id,
+      disposition: {
+        createdBy: {
+          id: user.id,
+          name: user.name,
+        },
+        status: submission.disposition.status,
+        reason: submission.disposition.reason,
+      },
     },
   },
 });

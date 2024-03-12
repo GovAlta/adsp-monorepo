@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { GoAElementLoader } from '@abgov/react-components';
+import { GoACircularProgress } from '@abgov/react-components-new';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
@@ -75,6 +75,7 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
               {!service.api && (
                 <GoAContextMenuIcon
                   type={showDetails ? 'eye-off' : 'eye'}
+                  title="Toggle details"
                   onClick={() => setDetails(service)}
                   testId="directory-toggle-details-visibility"
                 />
@@ -122,7 +123,7 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
             <EntryDetail data-testid="details">
               {!service.loaded && elementIndicator.show && elementIndicator?.id === service.urn && (
                 <ElementLoader>
-                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                  <GoACircularProgress visible={true} size="small" />
                 </ElementLoader>
               )}
               {service.metadata === null ? renderNoItem() : JSON.stringify(service.metadata, null, 2)}

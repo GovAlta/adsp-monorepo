@@ -102,13 +102,13 @@ export const ConfigurationExport: FunctionComponent = () => {
 
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (Object.keys(exportState).length > 0 && Object.keys(exportServices).length > 0) {
       downloadSelectedConfigurations(exportState);
     }
-  }, [exportState]);
+  }, [exportState, exportServices]);
 
   const [scrollPosition, setScrollPosition] = useState(0);
   const [pageHeight, setPageHeight] = useState(500);
@@ -153,7 +153,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                   testId={'select-all-id'}
                   ariaLabel="select-all-checkbox"
                 ></GoACheckbox>
-                <div className="middle-align">Select all</div>
+                <div>Select all</div>
               </div>
               {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
                 return (
@@ -175,10 +175,9 @@ export const ConfigurationExport: FunctionComponent = () => {
                                 testId={`${toServiceKey(namespace, name)}_id`}
                                 ariaLabel={`${toServiceKey(namespace, name)}_id_checkbox`}
                               ></GoACheckbox>
-                              <div className="middle-align">{name}</div>
+                              <div>{name}</div>
                             </div>
                             <div
-                              className="info-circle"
                               onClick={() => {
                                 toggleInfo(toServiceKey(namespace, name));
                               }}

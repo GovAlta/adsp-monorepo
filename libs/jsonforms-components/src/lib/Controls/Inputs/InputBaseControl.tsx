@@ -1,8 +1,8 @@
-import React from 'react';
-import { GoAFormItem, GoADetails } from '@abgov/react-components-new';
+import React, { useContext } from 'react';
+import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
-import { capitalizeFirstLetter, controlScopeMatchesLabel } from '../../util/stringUtils';
-
+import { Hidden } from '@mui/material';
+import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 export type GoAInputType =
   | 'text'
   | 'password'
@@ -26,24 +26,27 @@ export interface WithInput {
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
   // eslint-disable-next-line
-  const { id, description, errors, label, uischema, visible, required, config, input } = props;
+  const { id, description, errors, uischema, visible, config, label, input, required } = props;
   const isValid = errors.length === 0;
   const InnerComponent = input;
-  let labelToUpdate = '';
+  const labelToUpdate: string = getLabelText(uischema.scope, label || '');
 
-  if (controlScopeMatchesLabel(uischema.scope, label)) {
-    labelToUpdate = capitalizeFirstLetter(label);
-  } else {
-    labelToUpdate = label;
+  let modifiedErrors = checkFieldValidity(props as ControlProps);
+
+  if (modifiedErrors === 'should be equal to one of the allowed values' && uischema?.options?.enumContext) {
+    modifiedErrors = '';
   }
 
   return (
-    <GoAFormItem
-      error={errors}
-      label={props?.noLabel === true ? '' : labelToUpdate}
-      helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
-    >
-      <InnerComponent {...props} />
-    </GoAFormItem>
+    <Hidden xsUp={!visible}>
+      <GoAFormItem
+        requirement={required ? 'required' : undefined}
+        error={modifiedErrors}
+        label={props?.noLabel === true ? '' : labelToUpdate}
+        helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
+      >
+        <InnerComponent {...props} />
+      </GoAFormItem>
+    </Hidden>
   );
 };

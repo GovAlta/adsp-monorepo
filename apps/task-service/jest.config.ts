@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default {
   displayName: 'task-service',
-  preset: '../../jest.preset.js',
+  preset: '../../jest-cover.preset.js',
   globals: {},
   transform: {
     '^.+\\.[tj]s$': [

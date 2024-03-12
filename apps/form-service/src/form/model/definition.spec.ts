@@ -30,6 +30,24 @@ describe('FormDefinitionEntity', () => {
     expect(validationService.setSchema).toHaveBeenCalledWith(entity.id, expect.any(Object));
   });
 
+  it('can be created with null roles', () => {
+    const entity = new FormDefinitionEntity(validationService, tenantId, {
+      id: 'test',
+      name: 'test-form-definition',
+      description: null,
+      formDraftUrlTemplate: 'https://my-form/{{ id }}',
+      anonymousApply: false,
+      applicantRoles: null,
+      assessorRoles: null,
+      clerkRoles: null,
+      dataSchema: null,
+      submissionRecords: false,
+      supportTopic: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
+    });
+    expect(entity).toBeTruthy();
+  });
+
   describe('canAccessDefinition', () => {
     const entity = new FormDefinitionEntity(validationService, tenantId, {
       id: 'test',
@@ -236,7 +254,7 @@ describe('FormDefinitionEntity', () => {
         subscriber
       );
       expect(form).toBeTruthy();
-      expect(notificationMock.subscribe).toHaveBeenCalledWith(entity.tenantId, expect.any(String), subscriber);
+      expect(notificationMock.subscribe).toHaveBeenCalledWith(entity.tenantId, entity, expect.any(String), subscriber);
     });
 
     it('can set applicant userId for user applicant', async () => {
@@ -245,6 +263,7 @@ describe('FormDefinitionEntity', () => {
       expect(form).toBeTruthy();
       expect(notificationMock.subscribe).toHaveBeenCalledWith(
         entity.tenantId,
+        entity,
         expect.any(String),
         expect.objectContaining({ userId: user.id })
       );

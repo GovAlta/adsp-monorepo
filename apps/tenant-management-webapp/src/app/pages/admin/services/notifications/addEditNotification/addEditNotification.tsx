@@ -16,7 +16,7 @@ import {
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
 import { ServiceRoleConfig } from '@store/access/models';
-import { AnonymousWrapper, EditStyles, IdField } from './styledComponents';
+import { EditStyles, IdField } from './styledComponents';
 import { useValidators } from '@lib/validation/useValidators';
 import {
   isNotEmptyCheck,
@@ -100,21 +100,19 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
 
   const SubscribeRole = ({ roleNames, clientId }) => {
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          roleSelectFunc={(roles) => {
-            setType({
-              ...type,
-              subscriberRoles: roles,
-            });
-          }}
-          nameColumnWidth={80}
-          service="Notifications-type"
-          checkedRoles={[{ title: 'subscribe', selectedRoles: type.subscriberRoles }]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        roleSelectFunc={(roles) => {
+          setType({
+            ...type,
+            subscriberRoles: roles,
+          });
+        }}
+        nameColumnWidth={80}
+        service="Notifications-type"
+        checkedRoles={[{ title: 'subscribe', selectedRoles: type.subscriberRoles }]}
+      />
     );
   };
 
@@ -215,12 +213,14 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             value={type.description}
             aria-label="description"
             width="100%"
-            onChange={(name, value) => {
+            onKeyPress={(name, value) => {
               const description = value;
               validators.remove('description');
               validators['description'].check(description);
               setType({ ...type, description: description });
             }}
+            // eslint-disable-next-line
+            onChange={() => {}}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['channels']} label="Select Notification Channels">
@@ -282,21 +282,20 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             )}
           </GoAFormItem>
         </div>
-        <AnonymousWrapper>
-          <GoACheckbox
-            checked={type.publicSubscribe}
-            name="anonymousRead-checkbox"
-            testId="anonymousRead-checkbox"
-            onChange={() => {
-              setType({
-                ...type,
-                publicSubscribe: !type.publicSubscribe,
-              });
-            }}
-            ariaLabel={`anonymousRead-checkbox`}
-          />
-          Make notification public
-        </AnonymousWrapper>
+        <GoACheckbox
+          checked={type.publicSubscribe}
+          name="anonymousRead-checkbox"
+          testId="anonymousRead-checkbox"
+          onChange={() => {
+            setType({
+              ...type,
+              publicSubscribe: !type.publicSubscribe,
+            });
+          }}
+          ariaLabel={`anonymousRead-checkbox`}
+          text="Make notification public"
+        />
+
         <GoAFormItem label="Select Notify subscribers or Notify address" error={errors?.['priority']}>
           <GoARadioGroup
             name="notify"

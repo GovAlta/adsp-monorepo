@@ -85,7 +85,7 @@ export function* fetchCommentTopicTypes(): SagaIterator {
   }
 }
 
-export function* updateCommentTopicTypes({ topicType, options }: UpdateCommentTopicTypesAction): SagaIterator {
+export function* updateCommentTopicTypes({ topicType }: UpdateCommentTopicTypesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
 

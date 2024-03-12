@@ -59,7 +59,7 @@ When(
   function (name, desc, readRole, modifyRole) {
     cy.viewport(1920, 1080);
     calendarObj.addCalendarModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
-    calendarObj.addCalendarModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
+    calendarObj.addCalendarModalDescriptionField().shadow().find('textarea').clear().type(desc, { force: true });
     // Select read roles or client roles
     const readRoles = readRole.split(',');
     for (let i = 0; i < readRoles.length; i++) {
@@ -76,7 +76,6 @@ When(
         const roleName = clientReadRoleStringArray[clientReadRoleStringArray.length - 1];
         calendarObj
           .addCalendarModalClientRolesTable(clientName)
-          .shadow()
           .find('.role-name')
           .contains(roleName)
           .next()
@@ -88,7 +87,6 @@ When(
       } else {
         calendarObj
           .addCalendarModalRolesTable()
-          .shadow()
           .find('.role-name')
           .contains(readRoles[i].trim())
           .next()
@@ -116,7 +114,6 @@ When(
         const roleName = clientModifyRoleStringArray[clientModifyRoleStringArray.length - 1];
         calendarObj
           .addCalendarModalClientRolesTable(clientName)
-          .shadow()
           .find('.role-name')
           .contains(roleName)
           .next()
@@ -129,7 +126,6 @@ When(
       } else {
         calendarObj
           .addCalendarModalRolesTable()
-          .shadow()
           .find('.role-name')
           .contains(modifyRoles[i].trim())
           .next()
@@ -158,6 +154,7 @@ Then('the user {string} the calendar of {string}, {string}', function (viewOrNot
     }
   });
 });
+
 //Find a calendar with name, description
 //Input: calendar name, calendar descriptionin a string separated with comma
 //Return: row number if the calendar is found; zero if the script isn't found
@@ -165,7 +162,7 @@ function findCalendar(name, desc) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
-      const targetedNumber = 2; // Name and description need to match to find the calendar
+      const targetedNumber = 2; // Name and description need to match to find the record
       calendarObj
         .calendarTableBody()
         .find('tr')
@@ -227,7 +224,7 @@ When(
     calendarObj
       .editCalendarModalDescriptionField()
       .shadow()
-      .find('.goa-textarea')
+      .find('textarea')
       .clear()
       .type(description, { force: true });
 
@@ -238,7 +235,6 @@ When(
       cy.wait(500);
       calendarObj
         .editCalendarModalTable()
-        .shadow()
         .find('goa-checkbox')
         .shadow()
         .find('.goa-checkbox-container')
@@ -267,7 +263,6 @@ When(
         const roleName = clientReadRoleStringArray[clientReadRoleStringArray.length - 1];
         calendarObj
           .addCalendarModalClientRolesTable(clientName)
-          .shadow()
           .find('.role-name')
           .contains(roleName)
           .next()
@@ -279,7 +274,6 @@ When(
       } else {
         calendarObj
           .addCalendarModalRolesTable()
-          .shadow()
           .find('.role-name')
           .contains(readRoles[i].trim())
           .next()
@@ -307,7 +301,7 @@ When(
         const roleName = clientModifyRoleStringArray[clientModifyRoleStringArray.length - 1];
         calendarObj
           .addCalendarModalClientRolesTable(clientName)
-          .shadow()
+
           .find('.role-name')
           .contains(roleName)
           .next()
@@ -320,7 +314,6 @@ When(
       } else {
         calendarObj
           .addCalendarModalRolesTable()
-          .shadow()
           .find('.role-name')
           .contains(modifyRoles[i].trim())
           .next()

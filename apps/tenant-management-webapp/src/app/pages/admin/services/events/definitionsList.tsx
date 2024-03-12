@@ -30,6 +30,7 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
           <GoAContextMenu>
             <GoAContextMenuIcon
               type={showDetails ? 'eye-off' : 'eye'}
+              title="Toggle details"
               onClick={() => setShowDetails(!showDetails)}
               testId="toggle-details-visibility"
             />

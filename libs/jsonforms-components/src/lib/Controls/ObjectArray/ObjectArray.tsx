@@ -16,8 +16,8 @@ import { DeleteDialog } from './DeleteDialog';
 
 export const ArrayControl = (props: ArrayLayoutProps) => {
   const [open, setOpen] = useState(false);
-  const [path, setPath] = useState(undefined);
-  const [rowData, setRowData] = useState(undefined);
+  const [path, setPath] = useState<string>();
+  const [rowData, setRowData] = useState<number>(0);
   const { removeItems, visible } = props;
 
   const openDeleteDialog = useCallback(
@@ -32,8 +32,10 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
 
   // eslint-disable-next-line
   const deleteConfirm = useCallback(() => {
-    const p = path.substring(0, path.lastIndexOf('.'));
-    removeItems(p, [rowData])();
+    const p = path?.substring(0, path.lastIndexOf('.'));
+    if (removeItems && p) {
+      removeItems(p, [rowData])();
+    }
     setOpen(false);
     // eslint-disable-next-line
   }, [setOpen, path, rowData]);
@@ -45,8 +47,8 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
         open={open}
         onCancel={deleteCancel}
         onConfirm={deleteConfirm}
-        title={props.translations.deleteDialogTitle}
-        message={props.translations.deleteDialogMessage}
+        title={props.translations.deleteDialogTitle || ''}
+        message={props.translations.deleteDialogMessage || ''}
       />
     </Hidden>
   );
@@ -54,4 +56,4 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
 
 export const GoAArrayControlTester: RankedTester = rankWith(3, or(isObjectArrayControl, isPrimitiveArrayControl));
 export const GoAArrayControlRenderer = withJsonFormsArrayLayoutProps(ArrayControl);
-export const GoAListWithDetailsTester: RankedTester = rankWith(3, and(uiTypeIs('ListWithDetails')));
+export const GoAListWithDetailsTester: RankedTester = rankWith(3, and(uiTypeIs('ListWithDetail')));

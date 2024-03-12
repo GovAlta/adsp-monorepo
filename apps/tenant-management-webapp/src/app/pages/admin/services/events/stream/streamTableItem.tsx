@@ -48,6 +48,7 @@ export const StreamTableItem = ({
             <GoAContextMenu>
               <GoAContextMenuIcon
                 type={showStream ? 'eye-off' : 'eye'}
+                title="Toggle details"
                 onClick={() => setShowStream(!showStream)}
                 testId={`toggle-stream-visibility`}
               />

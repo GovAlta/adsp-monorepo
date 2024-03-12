@@ -163,9 +163,10 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
                 validators['typeId'].check(selectedTopicType);
                 setTopic({ ...topic, typeId: selectedTopicType });
               }}
-              aria-label="select-topictype-dropdown"
-              width="100%"
-              testId="comment-select-topictype-dropdown"
+              aria-label="add-select-topicType-dropdown"
+              relative={true}
+              width="55ch"
+              testId="add-comment-select-topicType-dropdown"
             >
               {Object.keys(topicTypes).map((item) => (
                 <GoADropdownItem
@@ -188,11 +189,13 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
               width="100%"
               testId="description"
               aria-label="description"
-              onChange={(name, value) => {
+              onKeyPress={(name, value) => {
                 validators.remove('description');
                 validators['description'].check(value);
                 setTopic({ ...topic, description: value });
               }}
+              // eslint-disable-next-line
+              onChange={() => {}}
             />
 
             <HelpText>

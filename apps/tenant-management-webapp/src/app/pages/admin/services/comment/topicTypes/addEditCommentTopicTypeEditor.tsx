@@ -78,7 +78,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     dispatch(fetchKeycloakServiceRoles());
     dispatch(FetchRealmRoles());
     dispatch(getCommentTopicTypes());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const types = [
     { type: 'adminRoles', name: 'Admin roles' },
@@ -99,7 +99,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal]);
+  }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (id && commentTopicTypes[id]) {
@@ -110,7 +110,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
       setTopicType(topicTypes);
       setInitialTopicType(topicTypes);
     }
-  }, [commentTopicTypes]);
+  }, [commentTopicTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
 
@@ -129,37 +129,35 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     const clerkRoles = types[1];
 
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          roleSelectFunc={(roles, type) => {
-            if (type === applicantRoles.name) {
-              setTopicType({
-                ...topicType,
-                adminRoles: roles,
-              });
-            } else if (type === clerkRoles.name) {
-              setTopicType({
-                ...topicType,
-                commenterRoles: roles,
-              });
-            } else {
-              setTopicType({
-                ...topicType,
-                readerRoles: roles,
-              });
-            }
-          }}
-          nameColumnWidth={40}
-          service="Comment"
-          checkedRoles={[
-            { title: types[0].name, selectedRoles: topicType[types[0].type] },
-            { title: types[1].name, selectedRoles: topicType[types[1].type] },
-            { title: types[2].name, selectedRoles: topicType[types[2].type] },
-          ]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        roleSelectFunc={(roles, type) => {
+          if (type === applicantRoles.name) {
+            setTopicType({
+              ...topicType,
+              adminRoles: roles,
+            });
+          } else if (type === clerkRoles.name) {
+            setTopicType({
+              ...topicType,
+              commenterRoles: roles,
+            });
+          } else {
+            setTopicType({
+              ...topicType,
+              readerRoles: roles,
+            });
+          }
+        }}
+        nameColumnWidth={40}
+        service="Comment"
+        checkedRoles={[
+          { title: types[0].name, selectedRoles: topicType[types[0].type] },
+          { title: types[1].name, selectedRoles: topicType[types[1].type] },
+          { title: types[2].name, selectedRoles: topicType[types[2].type] },
+        ]}
+      />
     );
   };
 
@@ -207,7 +205,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
 
       setSpinner(false);
     }
-  }, [topicTypes]);
+  }, [topicTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
@@ -257,6 +255,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                         securityClassification: value,
                       });
                     }}
+                    relative={true}
                     width="25rem"
                   >
                     <GoADropdownItem value={SecurityClassification.public} label="Public" />

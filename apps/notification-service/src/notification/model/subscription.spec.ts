@@ -4,10 +4,12 @@ import { Channel, NotificationTypeEvent, ServiceUserRoles } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
 import { NotificationTypeEntity } from './type';
+import { InvalidOperationError } from '@core-services/core-common';
 
 describe('SubscriptionEntity', () => {
-  const repositoryMock: unknown = {
+  const repositoryMock = {
     saveSubscription: jest.fn((entity: SubscriptionEntity) => Promise.resolve(entity)),
+    deleteSubscriptions: jest.fn(() => Promise.resolve(true)),
   };
 
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -24,9 +26,14 @@ describe('SubscriptionEntity', () => {
     tenantId
   );
 
+  beforeEach(() => {
+    repositoryMock.saveSubscription.mockClear();
+    repositoryMock.deleteSubscriptions.mockClear();
+  });
+
   it('can be created', () => {
     const entity = new SubscriptionEntity(
-      repositoryMock as SubscriptionRepository,
+      repositoryMock as unknown as SubscriptionRepository,
       {
         tenantId,
         typeId: 'test',
@@ -40,17 +47,22 @@ describe('SubscriptionEntity', () => {
 
   describe('create', () => {
     it('can create entity', async () => {
-      const subscriber = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'test',
         channels: [],
       });
-      const entity = await SubscriptionEntity.create(repositoryMock as SubscriptionRepository, type, subscriber, {
-        tenantId,
-        typeId: 'test',
-        subscriberId: 'test-subscriber',
-        criteria: {},
-      });
+      const entity = await SubscriptionEntity.create(
+        repositoryMock as unknown as SubscriptionRepository,
+        type,
+        subscriber,
+        {
+          tenantId,
+          typeId: 'test',
+          subscriberId: 'test-subscriber',
+          criteria: {},
+        }
+      );
       expect(entity).toBeTruthy();
     });
   });
@@ -58,7 +70,7 @@ describe('SubscriptionEntity', () => {
   describe('shouldSend', () => {
     it('can return true for empty criteria', () => {
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
@@ -81,7 +93,7 @@ describe('SubscriptionEntity', () => {
 
     it('can return false for correlation criteria not matched', () => {
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
@@ -106,7 +118,7 @@ describe('SubscriptionEntity', () => {
 
     it('can return true for correlation criteria matched', () => {
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
@@ -131,13 +143,18 @@ describe('SubscriptionEntity', () => {
 
     it('can return true for array correlation criteria matched', () => {
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
-          criteria: {
-            correlationId: ['test2', 'test'],
-          },
+          criteria: [
+            {
+              correlationId: 'test2',
+            },
+            {
+              correlationId: 'test',
+            },
+          ],
           subscriberId: 'test',
         },
         type
@@ -156,7 +173,7 @@ describe('SubscriptionEntity', () => {
 
     it('can return true for context criteria matched', () => {
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
@@ -188,7 +205,7 @@ describe('SubscriptionEntity', () => {
         address: 'test@test.co',
         verified: false,
       };
-      const subscriber = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'test',
         channels: [
@@ -201,7 +218,7 @@ describe('SubscriptionEntity', () => {
         ],
       });
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
@@ -222,7 +239,7 @@ describe('SubscriptionEntity', () => {
     });
 
     it('can return falsy for no channel match', () => {
-      const subscriber = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'test',
         channels: [
@@ -234,7 +251,7 @@ describe('SubscriptionEntity', () => {
         ],
       });
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
@@ -260,7 +277,7 @@ describe('SubscriptionEntity', () => {
         address: 'test@test.co',
         verified: false,
       };
-      const subscriber = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'test',
         channels: [
@@ -273,7 +290,7 @@ describe('SubscriptionEntity', () => {
         ],
       });
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
@@ -302,7 +319,7 @@ describe('SubscriptionEntity', () => {
       roles: [ServiceUserRoles.SubscriptionAdmin],
     } as User;
 
-    const subscriber = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+    const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
       tenantId,
       addressAs: 'test',
       channels: [],
@@ -310,11 +327,11 @@ describe('SubscriptionEntity', () => {
 
     it('can updated criteria', async () => {
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
-          criteria: {},
+          criteria: { correlationId: 'test2' },
           subscriberId: 'test',
         },
         type,
@@ -322,18 +339,56 @@ describe('SubscriptionEntity', () => {
       );
 
       const criteria = {
-        correlationId: ['test'],
+        correlationId: 'test',
         context: {
           value: 'test',
         },
       };
       const updated = await entity.updateCriteria(user, criteria);
-      expect(updated.criteria).toMatchObject(criteria);
+      expect(updated.criteria).toMatchObject(expect.arrayContaining([expect.any(Object), criteria]));
+    });
+
+    it('can throw for additive update to empty criteria', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: null,
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const criteria = {
+        correlationId: 'test',
+        context: {
+          value: 'test',
+        },
+      };
+      await expect(entity.updateCriteria(user, criteria)).rejects.toThrow(InvalidOperationError);
+    });
+
+    it('can throw for update to empty criteria', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: null,
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      await expect(entity.updateCriteria(user, [])).rejects.toThrow(InvalidOperationError);
     });
 
     it('can throw for user not allowed to subscribe', async () => {
       const entity = new SubscriptionEntity(
-        repositoryMock as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         {
           tenantId,
           typeId: 'test',
@@ -345,12 +400,139 @@ describe('SubscriptionEntity', () => {
       );
 
       const criteria = {
-        correlationId: ['test'],
+        correlationId: 'test',
         context: {
           value: 'test',
         },
       };
-      expect(() => entity.updateCriteria({ ...user, roles: [] }, criteria)).toThrow(UnauthorizedUserError);
+      await expect(entity.updateCriteria({ ...user, roles: [] }, criteria)).rejects.toThrow(UnauthorizedUserError);
+    });
+  });
+
+  describe('deleteCriteria', () => {
+    const user = {
+      id: 'test',
+      tenantId,
+      roles: [ServiceUserRoles.SubscriptionAdmin],
+    } as User;
+
+    const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+      tenantId,
+      addressAs: 'test',
+      channels: [],
+    });
+
+    it('can delete criteria', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: [
+            { correlationId: 'test2' },
+            { correlationId: 'test2', context: { test: 'test' } },
+            { context: { test1: 1 } },
+          ],
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const criteria = {
+        correlationId: 'test2',
+      };
+      const result = await entity.deleteCriteria(user, criteria);
+      expect(result).toBe(true);
+      expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(entity);
+      expect(entity.criteria).toMatchObject(
+        expect.arrayContaining([expect.objectContaining({ context: expect.objectContaining({ test1: 1 }) })])
+      );
+    });
+
+    it('can delete last criteria', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: [{ correlationId: 'test2' }],
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const criteria = {
+        correlationId: 'test2',
+      };
+      const result = await entity.deleteCriteria(user, criteria);
+      expect(result).toBe(true);
+      expect(repositoryMock.saveSubscription).not.toHaveBeenCalled();
+      expect(repositoryMock.deleteSubscriptions).toHaveBeenCalledWith(tenantId, 'test', 'test');
+    });
+
+    it('can return false for no match', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: [{ correlationId: 'test2' }],
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const criteria = {
+        correlationId: 'test',
+      };
+      const result = await entity.deleteCriteria(user, criteria);
+      expect(result).toBe(false);
+      expect(repositoryMock.saveSubscription).not.toHaveBeenCalled();
+      expect(repositoryMock.deleteSubscriptions).not.toHaveBeenCalled();
+    });
+
+    it('can throw for empty criteria', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: [{ correlationId: 'test2' }],
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const criteria = {
+        context: {},
+      };
+      await expect(entity.deleteCriteria(user, criteria)).rejects.toThrow(InvalidOperationError);
+    });
+
+    it('can throw for user not allowed to subscribe', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: {},
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const criteria = {
+        correlationId: 'test',
+        context: {
+          value: 'test',
+        },
+      };
+      await expect(entity.deleteCriteria({ ...user, roles: [] }, criteria)).rejects.toThrow(UnauthorizedUserError);
     });
   });
 });

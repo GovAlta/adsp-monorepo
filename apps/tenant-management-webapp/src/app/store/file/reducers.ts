@@ -12,6 +12,7 @@ import {
   FETCH_FILE_LIST,
   FETCH_FILE_SUCCESS,
   CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
+  CLEAR_NEW_FILE_LIST,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
@@ -42,17 +43,33 @@ function deleteFile(fileList, id) {
 }
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
-    case UPLOAD_FILE_SUCCESSES: // add file to fileList
+    case UPLOAD_FILE_SUCCESSES: {
+      // add file to fileList
+      const newFileList = JSON.parse(JSON.stringify(state.newFileList)) || {};
+      newFileList[action.payload.result.propertyId] = action.payload.result;
       return {
         ...state,
         fileList: uploadFile(state.fileList, action.payload.result),
-        latestFile: action.payload.result,
+        newFileList: newFileList,
       };
-    case DELETE_FILE_SUCCESSES:
+    }
+    case DELETE_FILE_SUCCESSES: {
+      const newFileList = state.newFileList;
+
+      const keyList = Object.keys(newFileList);
+
+      keyList.forEach((file) => {
+        if (newFileList[file].id === action.payload.data) {
+          delete newFileList[file];
+        }
+      });
+
       return {
         ...state, // remove delete file from reducer
         fileList: deleteFile(state.fileList, action.payload.data),
+        newFileList: newFileList,
       };
+    }
     case FETCH_FILE_LIST:
       return {
         ...state,
@@ -120,6 +137,11 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
           ...state.hasFile,
           [action.payload.fileTypeId]: action.payload.hasFile,
         },
+      };
+    case CLEAR_NEW_FILE_LIST:
+      return {
+        ...state,
+        newFileList: null,
       };
     default:
       return state;

@@ -1,8 +1,10 @@
 import { adspId, Channel } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError } from '@core-services/core-common';
+import { InvalidOperationError, ValidationService } from '@core-services/core-common';
 import axios from 'axios';
+import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { createNotificationService } from './notification';
+import { FormDefinitionEntity } from './form';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -25,21 +27,42 @@ describe('notification', () => {
     getResourceUrl: jest.fn(),
   };
 
+  const validationService: ValidationService = {
+    validate: jest.fn(),
+    setSchema: jest.fn(),
+  };
+
+  const cacheMock = {
+    set: jest.fn(),
+    get: jest.fn(),
+  };
+
   beforeEach(() => {
     directoryMock.getServiceUrl.mockReset();
     directoryMock.getResourceUrl.mockReset();
     axiosMock.get.mockReset();
     axiosMock.post.mockReset();
     axiosMock.delete.mockReset();
+    cacheMock.get.mockReset();
   });
 
   it('can create service', () => {
-    const service = createNotificationService(loggerMock, directoryMock, tokenProviderMock);
+    const service = createNotificationService(
+      loggerMock,
+      directoryMock,
+      tokenProviderMock,
+      cacheMock as unknown as NodeCache
+    );
     expect(service).toBeTruthy();
   });
 
   describe('NotificationService', () => {
-    const service = createNotificationService(loggerMock, directoryMock, tokenProviderMock);
+    const service = createNotificationService(
+      loggerMock,
+      directoryMock,
+      tokenProviderMock,
+      cacheMock as unknown as NodeCache
+    );
     const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
     const subscriberUrl = new URL('https://notification-service/notification/v1/subscribers/test');
     const subscriber = {
@@ -64,7 +87,12 @@ describe('notification', () => {
         const result = await service.getSubscriber(tenantId, subscriberId);
         const { urn: _urn, ...subscriberData } = subscriber;
         expect(result).toMatchObject(subscriberData);
-        expect(axiosMock.get).toHaveBeenCalledWith(`${subscriberUrl.href}?tenantId=${tenantId}`, expect.any(Object));
+        expect(axiosMock.get).toHaveBeenCalledWith(
+          subscriberUrl.href,
+          expect.objectContaining({
+            params: expect.objectContaining({ tenantId: tenantId.toString() }),
+          })
+        );
       });
 
       it('can return null for error', async () => {
@@ -74,15 +102,38 @@ describe('notification', () => {
         const result = await service.getSubscriber(tenantId, subscriberId);
         expect(result).toBeNull();
       });
+
+      it('can get subscriber from cache', async () => {
+        cacheMock.get.mockReturnValueOnce(subscriber);
+        const result = await service.getSubscriber(tenantId, subscriberId);
+        expect(result).toBe(subscriber);
+        expect(directoryMock.getResourceUrl).not.toHaveBeenCalled();
+        expect(axios.get).not.toHaveBeenCalled();
+      });
     });
 
     describe('subscribe', () => {
+      const definition = new FormDefinitionEntity(validationService, tenantId, {
+        id: 'test',
+        name: 'test-form-definition',
+        description: null,
+        formDraftUrlTemplate: 'https://my-form/{{ id }}',
+        anonymousApply: false,
+        applicantRoles: ['test-applicant'],
+        assessorRoles: ['test-assessor'],
+        clerkRoles: [],
+        dataSchema: null,
+        submissionRecords: false,
+        supportTopic: false,
+        queueTaskToProcess: null,
+      });
+
       it('can subscribe', async () => {
         const notificationApiUrl = new URL('https://notification-service/notification/v1');
         directoryMock.getServiceUrl.mockResolvedValueOnce(notificationApiUrl);
 
         axiosMock.post.mockResolvedValueOnce({ data: { subscriber } });
-        const result = await service.subscribe(tenantId, 'form-1', subscriber);
+        const result = await service.subscribe(tenantId, definition, 'form-1', subscriber);
 
         expect(result).toBe(subscriber);
       });
@@ -93,7 +144,7 @@ describe('notification', () => {
 
         const error = new Error('oh noes!');
         axiosMock.post.mockRejectedValueOnce(error);
-        await expect(service.subscribe(tenantId, 'form-1', subscriber)).rejects.toThrow(error);
+        await expect(service.subscribe(tenantId, definition, 'form-1', subscriber)).rejects.toThrow(error);
       });
     });
 
@@ -106,7 +157,7 @@ describe('notification', () => {
         axiosMock.get.mockResolvedValueOnce({ data: subscriber });
         axiosMock.delete.mockResolvedValueOnce({ data: { deleted: true } });
 
-        const deleted = await service.unsubscribe(tenantId, subscriberId);
+        const deleted = await service.unsubscribe(tenantId, subscriberId, 'test');
         expect(deleted).toBeTruthy();
       });
 
@@ -118,7 +169,7 @@ describe('notification', () => {
         axiosMock.get.mockResolvedValueOnce({ data: subscriber });
         axiosMock.delete.mockRejectedValueOnce(new Error('oh noes!'));
 
-        const deleted = await service.unsubscribe(tenantId, subscriberId);
+        const deleted = await service.unsubscribe(tenantId, subscriberId, 'test');
         expect(deleted).toBeFalsy();
       });
     });

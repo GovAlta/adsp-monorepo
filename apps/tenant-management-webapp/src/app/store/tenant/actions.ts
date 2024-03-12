@@ -1,11 +1,11 @@
 import { Tenant, Role } from './models';
 
 export const FETCH_TENANT = 'FETCH_TENANT';
-const SELECT_TENANT = 'SELECT_TENANT';
-const FETCH_TENANT_SUCCESS = 'FETCH_TENANT_SUCCESS';
-const UPDATE_TENANT_ADMIN_INFO = 'UPDATE_TENANT_ADMIN_INFO';
+export const SELECT_TENANT = 'SELECT_TENANT';
+export const FETCH_TENANT_SUCCESS = 'FETCH_TENANT_SUCCESS';
+export const UPDATE_TENANT_ADMIN_INFO = 'UPDATE_TENANT_ADMIN_INFO';
 export const CREATE_TENANT = 'CREATE_TENANT';
-const CREATE_TENANT_SUCCESS = 'CREATE_TENANT_SUCCESS';
+export const CREATE_TENANT_SUCCESS = 'CREATE_TENANT_SUCCESS';
 export const CHECK_IS_TENANT_ADMIN = 'CHECK_IS_ADMIN';
 export const TENANT_ADMIN_LOGIN = 'TENANT_ADMIN_LOGIN';
 export const TENANT_CREATION_LOGIN_INIT = 'TENANT_CREATION_LOGIN_INIT';
@@ -17,6 +17,9 @@ export const UPDATE_TENANT_CREATED = 'UPDATE_TENANT_CREATED';
 export const FETCH_REALM_ROLES = 'FETCH_REALM_ROLES';
 export const FETCH_REALM_ROLES_SUCCESS = 'FETCH_REALM_ROLES_SUCCESS';
 export const UPDATE_ACCESS_TOKEN = 'UPDATE_ACCESS_TOKEN';
+export const DELETE_USER_CORE_IDP = 'DELETE_USER_CORE_IDP';
+export const FETCH_USER_IDP_INFO = 'FETCH_USER_IDP_INFO';
+export const FETCH_USER_ID_BY_EMAIL = 'FETCH_USER_INFO_BY_EMAIL';
 
 /*
  * The tenant object has a boolean field to indicate whether or not a
@@ -67,6 +70,12 @@ interface UpdateTenantAdminInfoAction {
   };
 }
 
+export interface DeleteUserIdpAction {
+  type: typeof DELETE_USER_CORE_IDP;
+  email: string;
+  realm: string;
+}
+
 interface CreateTenantSuccessAction {
   type: typeof CREATE_TENANT_SUCCESS;
   payload: string;
@@ -114,6 +123,17 @@ interface FetchRealmRolesSuccessAction {
   payload: Role[];
 }
 
+export interface FetchUserIdpInfoAction {
+  type: typeof FETCH_USER_IDP_INFO;
+  email: string;
+  realm: string;
+}
+
+export interface FetchUserIdByEmailAction {
+  type: typeof FETCH_USER_ID_BY_EMAIL;
+  email: string;
+}
+
 export type ActionType =
   | FetchTenantAction
   | FetchTenantSuccessAction
@@ -131,6 +151,9 @@ export type ActionType =
   | FetchRealmRolesSuccessAction
   | UpdateAccessTokenAction
   | UpdateTenantCreatedAction
+  | DeleteUserIdpAction
+  | FetchUserIdpInfoAction
+  | FetchUserIdByEmailAction
   | UpdateLoginSuccessAction;
 
 export const SelectTenant = (realm: string): SelectTenantAction => ({
@@ -225,4 +248,21 @@ export const FetchRealmRolesSuccess = (roles: Role[]): FetchRealmRolesSuccessAct
 
 export const UpdateAccessToken = (): UpdateAccessTokenAction => ({
   type: 'UPDATE_ACCESS_TOKEN',
+});
+
+export const DeleteUserIdp = (email: string, realm: string): DeleteUserIdpAction => ({
+  type: 'DELETE_USER_CORE_IDP',
+  email,
+  realm,
+});
+
+export const FetchUserIdPInfo = (email: string, realm: string): FetchUserIdpInfoAction => ({
+  type: 'FETCH_USER_IDP_INFO',
+  email,
+  realm,
+});
+
+export const FetchUserIdByEmail = (email: string): FetchUserIdByEmailAction => ({
+  type: 'FETCH_USER_INFO_BY_EMAIL',
+  email,
 });

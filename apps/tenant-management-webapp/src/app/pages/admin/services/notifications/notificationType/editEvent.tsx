@@ -40,7 +40,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
 
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // only show next if there is an event selected and its name isnt empty
@@ -132,20 +132,20 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
       }
     >
       <GoAFormItem label="">
-        <div style={{ margin: '0 0 200px 0' }}>
-          <GoADropdown
-            name="event"
-            onChange={onChange}
-            value={selectedValues ? selectedValues : ''}
-            aria-label="event-form-dropdown"
-            width="100%"
-            testId="event-dropdown"
-          >
-            {dropDownOptions.map((item, key) => (
-              <GoADropdownItem label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
-            ))}
-          </GoADropdown>
-        </div>
+        <GoADropdown
+          name="event"
+          onChange={onChange}
+          value={selectedValues ? selectedValues : ''}
+          aria-label="event-form-dropdown"
+          width="55ch"
+          testId="event-dropdown"
+          mt="s"
+          mb="4xl"
+        >
+          {dropDownOptions.map((item, key) => (
+            <GoADropdownItem label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
+          ))}
+        </GoADropdown>
       </GoAFormItem>
     </GoAModal>
   );

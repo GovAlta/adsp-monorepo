@@ -52,6 +52,7 @@
     "hasha",
     "healthcheck",
     "instanceof",
+    "jsonforms",
     "jwks",
     "keycloak",
     "mailtrap",

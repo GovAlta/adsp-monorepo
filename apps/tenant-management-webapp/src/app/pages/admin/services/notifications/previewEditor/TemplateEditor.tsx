@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody } from './styled-components';
+import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody, InputDiv } from './styled-components';
 
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
@@ -8,7 +8,7 @@ import { Template } from '@store/notification/models';
 import { SaveFormModal } from '@components/saveModal';
 import { subjectEditorConfig, bodyEditorConfig } from './config';
 import { Tab, Tabs } from '@components/Tabs';
-import { GoAButton, GoAButtonGroup, GoABadge, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoABadge, GoAFormItem, GoAInput } from '@abgov/react-components-new';
 import { areObjectsEqual } from '@lib/objectUtil';
 
 interface TemplateEditorProps {
@@ -16,6 +16,8 @@ interface TemplateEditorProps {
   mainTitle: string;
   onSubjectChange: (value: string, channel: string) => void;
   onBodyChange: (value: string, channel: string) => void;
+  onTitleChange: (value: string, channel: string) => void;
+  onSubtitleChange: (value: string, channel: string) => void;
   setPreview: (channel: string) => void;
   templates: Template;
   validChannels: string[];
@@ -40,6 +42,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   mainTitle,
   onSubjectChange,
   onBodyChange,
+  onTitleChange,
+  onSubtitleChange,
   setPreview,
   templates,
   validChannels,
@@ -90,7 +94,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     if (initialChannel) {
       setPreview(initialChannel);
     }
-  }, [initialChannel]);
+  }, [initialChannel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (modelOpen) {
@@ -173,8 +177,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               <h3 data-testid="modal-title">{`${mainTitle}${titleNames[item.name] || ''} template--${serviceName}`}</h3>
 
               <>
-                <h4>{'Subject'}</h4>
-                <GoAFormItem error={errors['subject'] ?? ''} label="">
+                <GoAFormItem error={errors['subject'] ?? ''} label="Subject">
                   <MonacoDiv data-testid="templated-editor-subject">
                     <MonacoEditor
                       language={item.name === 'slack' ? 'markdown' : 'handlebars'}
@@ -187,8 +190,44 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     />
                   </MonacoDiv>
                 </GoAFormItem>
-                <h4>{'Body'}</h4>
-                <GoAFormItem error={errors['body'] ?? ''} helpText={errors['body'] ? '' : bodyEditorHintText} label="">
+
+                <GoAFormItem label="Title">
+                  <InputDiv>
+                    <GoAInput
+                      type="text"
+                      name="title"
+                      value={templates[item.name]?.title}
+                      testId="event-email-title"
+                      onChange={(name, value) => {
+                        onTitleChange(value, item.name);
+                      }}
+                      aria-label="event-email-title"
+                      width="100%"
+                    />
+                  </InputDiv>
+                </GoAFormItem>
+
+                <GoAFormItem label="Subtitle">
+                  <InputDiv>
+                    <GoAInput
+                      type="text"
+                      name="subtitle"
+                      value={templates[item.name]?.title ? templates[item.name]?.subtitle : ''}
+                      testId="event-email-subtitle"
+                      onChange={(name, value) => {
+                        onSubtitleChange(value, item.name);
+                      }}
+                      disabled={templates[item.name]?.title === undefined || templates[item.name]?.title === ''}
+                      aria-label="event-email-subtitle"
+                      width="100%"
+                    />
+                  </InputDiv>
+                </GoAFormItem>
+                <GoAFormItem
+                  error={errors['body'] ?? ''}
+                  helpText={errors['body'] ? '' : bodyEditorHintText}
+                  label="Body"
+                >
                   <MonacoDivBody data-testid="templated-editor-body">
                     <MonacoEditor
                       language={item.name === 'slack' ? 'markdown' : 'handlebars'}

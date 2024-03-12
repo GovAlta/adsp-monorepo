@@ -133,7 +133,7 @@ class KeycloakAuth {
     const skipSSO = location.indexOf('kc_idp_hint') > -1;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
+    const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
     const code = encodeURIComponent(urlParams.get('code'));
     const smscode = encodeURIComponent(urlParams.get('smscode'));
 
@@ -142,7 +142,6 @@ class KeycloakAuth {
 
     if (skipSSO && !idpFromUrl) {
       // kc_idp_hint with empty value, skip checkSSO
-      redirectUri += `?kc_idp_hint=`;
       Promise.all([
         this.keycloak.init({ checkLoginIframe: false }),
         this.keycloak.login({ idpHint: ' ', redirectUri }),
@@ -154,18 +153,27 @@ class KeycloakAuth {
 
       if (idpFromUrl) {
         idp = idpFromUrl;
-        redirectUri += `?kc_idp_hint=${idp}`;
-        if (code) {
-          redirectUri += `&code=${code}`;
+
+        let paramCount = 0;
+        if (idp && idp !== 'null') {
+          redirectUri += `?kc_idp_hint=${idp}`;
+          paramCount += 1;
         }
-        if (smscode) {
-          redirectUri += `&smscode=${smscode}`;
+
+        if (code && code !== 'null') {
+          redirectUri = redirectUri + (paramCount > 0 ? '&' : '?');
+          redirectUri += `&code=${code}`;
+          paramCount += 1;
+        }
+        if (smscode && smscode !== 'null') {
+          redirectUri = redirectUri + (paramCount > 0 ? '&' : '?');
+          redirectUri += `smscode=${smscode}`;
         }
       } else {
-        if (code) {
+        if (code && code !== 'null') {
           redirectUri += `?code=${code}`;
         }
-        if (smscode) {
+        if (smscode && smscode !== 'null') {
           redirectUri += `&smscode=${smscode}`;
         }
       }

@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { Tenant, Role } from './models';
+import { Tenant } from './models';
 import { TenantApi as TenantApiConfig } from '@store/config/models';
 
 interface TenantsResponse {
@@ -43,11 +43,5 @@ export class TenantApi {
     const url = '/api/tenant/v2/tenants';
     const { data } = await this.http.get<TenantsResponse>(url, { params: { adminEmail } });
     return data.results[0];
-  }
-
-  async fetchRealmRoles(): Promise<Role[]> {
-    const url = '/api/tenant/v1/realm/roles';
-    const res = await this.http.get(url);
-    return res.data.roles;
   }
 }

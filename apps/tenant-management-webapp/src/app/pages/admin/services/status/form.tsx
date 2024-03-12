@@ -129,11 +129,11 @@ export const ApplicationFormModal: FC<Props> = ({
     if (directory.length === 0) {
       dispatch(fetchDirectory());
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     dispatch(fetchDirectoryDetailByURNs(tenantServiceUrns));
-  }, [tenantServiceUrns.length]);
+  }, [tenantServiceUrns.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   // useEffect(() => {}, [healthEndpoints]);
@@ -205,7 +205,7 @@ export const ApplicationFormModal: FC<Props> = ({
           width="100%"
           value={application?.description}
           testId="application-description"
-          onChange={(name, value) => {
+          onKeyPress={(name, value) => {
             validators.remove('description');
             validators['description'].check(value);
             setApplication({
@@ -213,6 +213,8 @@ export const ApplicationFormModal: FC<Props> = ({
               description: value,
             });
           }}
+          // eslint-disable-next-line
+          onChange={() => {}}
           aria-label="description"
         />
       </GoAFormItem>

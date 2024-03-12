@@ -300,7 +300,11 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       tenantId: entity.tenantId.toString(),
       typeId: entity.typeId,
       subscriberId: entity.subscriberId,
-      criteria: entity.criteria,
+      criteria: entity.criteria?.map((criteria) => ({
+        description: criteria?.description,
+        correlationId: criteria?.correlationId,
+        context: criteria?.context,
+      })),
     };
   }
 }

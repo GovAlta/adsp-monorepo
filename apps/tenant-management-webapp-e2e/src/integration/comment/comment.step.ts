@@ -55,7 +55,7 @@ When('the user clicks Save button in Add topic type modal', function () {
 Then('the user views topic type editor for {string}', function (name) {
   cy.viewport(1920, 1080);
   cy.wait(4000);
-  commentObj.editorTopicTypeNameValue().should('have.text', name);
+  commentObj.editorTopicTypeNameValue().should('contain.text', name);
 });
 
 Then('the user views {string} as default selection for security classification', function (defaultClassification) {
@@ -82,7 +82,7 @@ When(
         .invoke('attr', 'value')
         .then((classificationValue) => {
           if (classificationValue !== classification.toLowerCase()) {
-            commentObj.editorClassificationDropdown().shadow().find('goa-input').click({ force: true });
+            commentObj.editorClassificationDropdown().shadow().find('input').click({ force: true });
             commentObj
               .editorClassificationDropdown()
               .shadow()
@@ -100,7 +100,6 @@ When(
       cy.wait(500);
       commentObj
         .editorCheckboxesTables()
-        .shadow()
         .find('goa-checkbox')
         .shadow()
         .find('.goa-checkbox-container')
@@ -130,7 +129,6 @@ When(
           const adminRoleName = adminClientRoleStringArray[adminClientRoleStringArray.length - 1];
           commentObj
             .editorClientRolesTable(clientName)
-            .shadow()
             .find('.role-name')
             .contains(adminRoleName)
             .next()
@@ -143,7 +141,6 @@ When(
         } else {
           commentObj
             .editorRolesTable()
-            .shadow()
             .find('.role-name')
             .contains(adminRoles[i].trim())
             .next()
@@ -174,7 +171,6 @@ When(
           const commenterRoleName = commenterClientRoleStringArray[commenterClientRoleStringArray.length - 1];
           commentObj
             .editorClientRolesTable(clientName)
-            .shadow()
             .find('.role-name')
             .contains(commenterRoleName)
             .next()
@@ -188,7 +184,6 @@ When(
         } else {
           commentObj
             .editorRolesTable()
-            .shadow()
             .find('.role-name')
             .contains(commenterRoles[i].trim())
             .next()
@@ -220,7 +215,6 @@ When(
           const readerRoleName = readerClientRoleStringArray[readerClientRoleStringArray.length - 1];
           commentObj
             .editorClientRolesTable(clientName)
-            .shadow()
             .find('.role-name')
             .contains(readerRoleName)
             .next()
@@ -235,7 +229,6 @@ When(
         } else {
           commentObj
             .editorRolesTable()
-            .shadow()
             .find('.role-name')
             .contains(readerRoles[i].trim())
             .next()
@@ -388,7 +381,6 @@ Then(
       const adminRoles = adminRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Admin roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -411,7 +403,6 @@ Then(
     } else {
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Admin roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -429,7 +420,6 @@ Then(
       const commenterRoles = commenterRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Commenter roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -452,7 +442,6 @@ Then(
     } else {
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Commenter roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -470,7 +459,6 @@ Then(
       const readerRoles = readerRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Reader roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -493,7 +481,6 @@ Then(
     } else {
       commentObj
         .topicTypeEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Reader roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -508,7 +495,7 @@ Then(
 );
 
 When('the user selects {string} in Select a topic type dropdown', function (dropdownItemName) {
-  commentObj.selectTopicTypeDropdown().shadow().find('goa-input').click({ force: true });
+  commentObj.selectTopicTypeDropdown().shadow().find('input').click({ force: true });
   commentObj.selectTopicTypeDropdown().shadow().find('li').contains(dropdownItemName).click({ force: true });
   cy.wait(2000);
 });
@@ -530,7 +517,7 @@ When(
   'the user enters {string}, {string}, {string} in Add topic modal',
   function (topicName, topicDesc, topicResourceId) {
     commentObj.addTopicModalName().shadow().find('input').clear().type(topicName, { force: true, delay: 200 });
-    commentObj.addTopicModalDesc().shadow().find('.goa-textarea').clear().type(topicDesc, { force: true, delay: 100 });
+    commentObj.addTopicModalDesc().shadow().find('textarea').clear().type(topicDesc, { force: true, delay: 100 });
     commentObj
       .addTopicModalResourceId()
       .shadow()
@@ -676,7 +663,7 @@ When('the user enters {string} as comment', function (comment) {
   commentObj
     .addCommentModalComment()
     .shadow()
-    .find('.goa-textarea')
+    .find('textarea')
     .clear({ force: true })
     .type(comment, { force: true, delay: 200 });
 });
@@ -780,7 +767,7 @@ When('the user enters {string} in Edit comment modal', function (content) {
   commentObj
     .editCommentModalComment()
     .shadow()
-    .find('.goa-textarea')
+    .find('textarea')
     .clear({ force: true })
     .type(content, { force: true, delay: 200 });
 });

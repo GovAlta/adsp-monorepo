@@ -20,6 +20,7 @@ import {
   getSubscriberDetails,
   getSubscriberByUserId,
   getSubscriptionChannels,
+  deleteTypeSubscriptionCriteria,
 } from './subscription';
 import { NotificationType, ServiceUserRoles, Subscription } from '../types';
 import { assertHasTenant, createSubscriber, deleteSubscriber, updateSubscriber } from '.';
@@ -73,6 +74,7 @@ describe('subscription router', () => {
   beforeEach(() => {
     repositoryMock.findSubscribers.mockReset();
     repositoryMock.getSubscriber.mockReset();
+    repositoryMock.getSubscription.mockReset();
     repositoryMock.getSubscriptions.mockReset();
     repositoryMock.saveSubscriber.mockClear();
     repositoryMock.saveSubscription.mockReset();
@@ -315,6 +317,7 @@ describe('subscription router', () => {
         req.notificationType,
         subscriber
       );
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
@@ -356,6 +359,7 @@ describe('subscription router', () => {
         req.notificationType,
         subscriber
       );
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
@@ -403,6 +407,7 @@ describe('subscription router', () => {
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
       const handler = createTypeSubscription(apiId, repositoryMock);
@@ -444,6 +449,7 @@ describe('subscription router', () => {
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
       const handler = createTypeSubscription(apiId, repositoryMock);
@@ -472,7 +478,7 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
-        body: {},
+        body: { criteria: { correlationId: 'test' } },
         query: {},
         params: { subscriber: 'subscriber' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
@@ -544,10 +550,12 @@ describe('subscription router', () => {
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
         expect.objectContaining({
-          criteria: expect.objectContaining({
-            correlationId: req.body.criteria.correlationId,
-            context: req.body.criteria.context,
-          }),
+          criteria: expect.arrayContaining([
+            expect.objectContaining({
+              correlationId: req.body.criteria.correlationId,
+              context: req.body.criteria.context,
+            }),
+          ]),
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
@@ -565,7 +573,7 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
-        body: { criteria: { correlationId: '123', context: {} } },
+        body: { criteria: [{ correlationId: '123', context: {} }] },
         query: {},
         params: { subscriber: 'subscriber' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
@@ -594,10 +602,11 @@ describe('subscription router', () => {
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
         expect.objectContaining({
-          criteria: expect.objectContaining({
-            correlationId: req.body.criteria.correlationId,
-            context: req.body.criteria.context,
-          }),
+          criteria: expect.arrayContaining([
+            expect.objectContaining({
+              correlationId: req.body.criteria[0].correlationId,
+            }),
+          ]),
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
@@ -616,7 +625,7 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
-        body: {},
+        body: { criteria: { correlationId: 'test' } },
         query: {},
         params: { subscriber: 'subscriber' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
@@ -755,6 +764,106 @@ describe('subscription router', () => {
       expect(repositoryMock.deleteSubscriptions).toHaveBeenCalledWith(tenantId, notificationType.id, 'subscriber');
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+    });
+  });
+
+  describe('deleteTypeSubscriptionCriteria', () => {
+    it('can create handler', () => {
+      const handler = deleteTypeSubscriptionCriteria(repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can delete subscription criteria', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: {
+          criteria: JSON.stringify({ correlationId: 'test' }),
+        },
+        params: { subscriber: 'subscriber' },
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+      const subscription = new SubscriptionEntity(
+        repositoryMock,
+        {
+          tenantId,
+          typeId: 'test',
+          subscriberId: 'subscriber',
+          criteria: [{ correlationId: 'test' }, { correlationId: 'test2' }],
+        },
+        req.notificationType,
+        subscriber
+      );
+
+      repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
+      repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
+
+      const handler = deleteTypeSubscriptionCriteria(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(subscription);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+    });
+
+    it('can call next with error', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: {},
+        params: { subscriber: 'subscriber' },
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+      const subscription = new SubscriptionEntity(
+        repositoryMock,
+        {
+          tenantId,
+          typeId: 'test',
+          subscriberId: 'subscriber',
+          criteria: [{ correlationId: 'test' }, { correlationId: 'test2' }],
+        },
+        req.notificationType,
+        subscriber
+      );
+
+      repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
+
+      const handler = deleteTypeSubscriptionCriteria(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
   });
 

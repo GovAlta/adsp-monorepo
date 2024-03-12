@@ -45,7 +45,7 @@ When('the user enters {string} as name, {string} as description in pdf template 
   pdfServiceObj
     .pdfAddTemplateModalDescription()
     .shadow()
-    .find('.goa-textarea')
+    .find('textarea')
     .invoke('removeAttr', 'disabled')
     .clear()
     .type(description, { delay: 200, force: true });
@@ -151,12 +151,7 @@ When('the user clicks "Edit" icon in editor screen', function () {
 Then('the user views {string}, {string} and {string} in PDF template modal', function (name, templateId, description) {
   pdfServiceObj.pdfAddTemplateModalName().invoke('attr', 'value').should('eq', name);
   pdfServiceObj.pdfTemplateModalTemplateIdField().invoke('attr', 'value').should('eq', templateId);
-  pdfServiceObj
-    .pdfTemplateModalDescriptionField()
-    .shadow()
-    .find('.goa-textarea')
-    .invoke('val')
-    .should('eq', description);
+  pdfServiceObj.pdfTemplateModalDescriptionField().shadow().find('textarea').invoke('val').should('eq', description);
 });
 
 When('the user clicks Save button in PDF template modal', function () {
@@ -257,7 +252,7 @@ When(
     pdfServiceObj
       .pdfTemplateModalDescriptionField()
       .shadow()
-      .find('.goa-textarea')
+      .find('textarea')
       .invoke('removeAttr', 'disabled')
       .clear()
       .type(description, { delay: 100, force: true });

@@ -52,6 +52,7 @@ export interface FileItem {
   recordId?: string;
   created?: string;
   lastAccessed?: string;
+  propertyId?: string;
 }
 
 export interface RequestBodyProperties {
@@ -81,7 +82,7 @@ export interface FileMetrics {
 
 export interface FileService {
   fileList: Array<FileItem>;
-  latestFile: FileItem;
+  newFileList: Record<string, FileItem>;
   nextEntries: string;
   isLoading: boolean;
   fileTypes: Array<FileTypeItem>;
@@ -92,7 +93,7 @@ export interface FileService {
 
 export const FILE_INIT: FileService = {
   fileList: [],
-  latestFile: null,
+  newFileList: null,
   nextEntries: '',
   isLoading: false,
   fileTypes: null,

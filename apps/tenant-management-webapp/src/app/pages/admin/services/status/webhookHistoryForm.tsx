@@ -11,7 +11,7 @@ import { GoABadge, GoAButton, GoAInput, GoAButtonGroup, GoAFormItem, GoAModal } 
 import styled from 'styled-components';
 
 import { PageIndicator } from '@components/Indicator';
-import { RootState } from '../../../../store/index';
+import { RootState } from '@store/index';
 import { HoverWrapper, ToolTip } from './styled-components';
 import { ResetModalState } from '@store/session/actions';
 
@@ -81,27 +81,25 @@ const EventLogEntryComponent = ({ entry }: EventLogEntryComponentProps): JSX.Ele
   };
 
   return (
-    <>
-      <AlignedTr>
-        <td headers="name" className="padding-left-8">
-          <HoverOnShort displayString={name} />
-        </td>
-        <td headers="url">
-          <HoverOnShort displayString={url} />
-        </td>
-        <td headers="status">
-          <StatusView>
-            {statusBadge((entry.details?.response as Record<string, unknown>).status as string)}
-            {(entry.details?.response as Record<string, unknown>).status as string}
-          </StatusView>
-        </td>
-        <td headers="timestamp">
-          <span>{date}</span>
-          <span> </span>
-          <span>{entry.timestamp.toLocaleTimeString()}</span>
-        </td>
-      </AlignedTr>
-    </>
+    <AlignedTr>
+      <td headers="name" className="padding-left-8">
+        <HoverOnShort displayString={name} />
+      </td>
+      <td headers="url">
+        <HoverOnShort displayString={url} />
+      </td>
+      <td headers="status">
+        <StatusView>
+          {statusBadge((entry.details?.response as Record<string, unknown>).status as string)}
+          {(entry.details?.response as Record<string, unknown>).status as string}
+        </StatusView>
+      </td>
+      <td headers="timestamp">
+        <span>{date}</span>
+        <span> </span>
+        <span>{entry.timestamp.toLocaleTimeString()}</span>
+      </td>
+    </AlignedTr>
   );
 };
 
@@ -120,7 +118,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, []);
+  }, [dispatch]);
 
   // eslint-disable-next-line
   useEffect(() => {}, [entries, next]);
@@ -141,9 +139,9 @@ export const WebhookHistoryModal = (): JSX.Element => {
     if (webhook !== undefined) {
       onSearch(initSearchCriteria);
     }
-  }, [webhook]);
+  }, [webhook]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (searchCriteria === undefined) return <></>;
+  if (searchCriteria === undefined) return null;
 
   return (
     <GoAModalStyle>
@@ -219,55 +217,53 @@ export const WebhookHistoryModal = (): JSX.Element => {
 
         {searched && (
           <div className="mt-1 mb-2px">
-            <>
-              {entries ? (
-                entries?.length > 0 ? (
-                  <DataTable>
-                    <colgroup>
-                      <col className="data-col" />
-                      <col className="data-col" />
-                      <col className="data-col" />
-                      <col className="data-col" />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th id="name">Name</th>
-                        <th id="url">URL</th>
-                        <th id="status">Status</th>
-                        <th id="timestamp">Occurred</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {entries !== null &&
-                        entries.map((entry) => (
-                          <EventLogEntryComponent
-                            key={`${entry.timestamp}${entry.namespace}${entry.name}`}
-                            entry={entry}
-                          />
-                        ))}
-                    </tbody>
-                  </DataTable>
-                ) : (
-                  'No webhook history found'
-                )
+            {entries ? (
+              entries?.length > 0 ? (
+                <DataTable>
+                  <colgroup>
+                    <col className="data-col" />
+                    <col className="data-col" />
+                    <col className="data-col" />
+                    <col className="data-col" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th id="name">Name</th>
+                      <th id="url">URL</th>
+                      <th id="status">Status</th>
+                      <th id="timestamp">Occurred</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entries !== null &&
+                      entries.map((entry) => (
+                        <EventLogEntryComponent
+                          key={`${entry.timestamp}${entry.namespace}${entry.name}`}
+                          entry={entry}
+                        />
+                      ))}
+                  </tbody>
+                </DataTable>
               ) : (
-                <PageIndicator />
-              )}
-              {next && (
-                <div className="mt-1">
-                  <LoadMoreWrapper>
-                    <GoAButton
-                      type="tertiary"
-                      testId="webhook-history-form-load-more"
-                      disabled={isLoading}
-                      onClick={onNext}
-                    >
-                      Load more
-                    </GoAButton>
-                  </LoadMoreWrapper>
-                </div>
-              )}
-            </>
+                'No webhook history found'
+              )
+            ) : (
+              <PageIndicator />
+            )}
+            {next && (
+              <div className="mt-1">
+                <LoadMoreWrapper>
+                  <GoAButton
+                    type="tertiary"
+                    testId="webhook-history-form-load-more"
+                    disabled={isLoading}
+                    onClick={onNext}
+                  >
+                    Load more
+                  </GoAButton>
+                </LoadMoreWrapper>
+              </div>
+            )}
           </div>
         )}
       </GoAModal>

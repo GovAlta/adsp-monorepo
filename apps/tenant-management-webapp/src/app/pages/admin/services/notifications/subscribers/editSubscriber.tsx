@@ -56,7 +56,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     }
 
     setAddress(subscriber?.addressAs || '');
-  }, [subscriber]);
+  }, [subscriber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function getChannelIndex(subscriber, type) {
     const channels = subscriber?.channels;
@@ -213,9 +213,11 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                 value={bot}
                 aria-label="slack"
                 width="100%"
-                onChange={(name, value) => {
+                onKeyPress={(name, value) => {
                   setBot(value);
                 }}
+                // eslint-disable-next-line
+                onChange={() => {}}
               />
             </GoAFormItem>
           )}

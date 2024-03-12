@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
 
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoAButtonGroup,
+  GoAFormItem,
+  GoAModal,
+  GoADropdown,
+  GoADropdownItem,
+} from '@abgov/react-components-new';
 
 import {
   ScriptItem,
@@ -42,7 +48,7 @@ export const TriggerEventModal = ({
     if (isNew) {
       setTriggerEvent(defaultTriggerEvent);
     }
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (isNew) {
@@ -58,13 +64,7 @@ export const TriggerEventModal = ({
         },
       });
     }
-  }, [initialValue]);
-
-  const headingText = () => {
-    if (isNew) return `Add trigger event`;
-
-    return `Edit trigger event`;
-  };
+  }, [initialValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isObjectEmpty = (obj) => {
     return JSON.stringify(obj) === '{}';
@@ -128,7 +128,7 @@ export const TriggerEventModal = ({
     <GoAModal
       testId="add-trigger-event-modal"
       open={open}
-      heading={headingText()}
+      heading={isNew ? 'Add trigger event' : 'Edit trigger event'}
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
@@ -164,13 +164,13 @@ export const TriggerEventModal = ({
         <GoADropdown
           data-test-id="script-trigger-event-name-dropDown"
           name="script-trigger-event-name-dropDown"
-          selectedValues={[`${triggerEvent.namespace}:${triggerEvent.name}`]}
-          multiSelect={false}
+          value={`${triggerEvent.namespace}:${triggerEvent.name}`}
+          width="55ch"
           onChange={(name, values) => {
             setTriggerEvent({
               ...triggerEvent,
-              namespace: values[0].split(':')[0],
-              name: values[0].split(':')[1],
+              namespace: values.toString().split(':')[0],
+              name: values.toString().split(':')[1],
             });
           }}
         >
@@ -178,7 +178,7 @@ export const TriggerEventModal = ({
             filteredEventNames
               .sort((a, b) => a.localeCompare(b))
               .map((eventName) => (
-                <GoADropdownOption data-testId={eventName} key={eventName} value={eventName} label={eventName} />
+                <GoADropdownItem data-testId={eventName} key={eventName} value={eventName} label={eventName} />
               ))}
         </GoADropdown>
       </GoAFormItem>

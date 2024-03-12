@@ -1,3 +1,3 @@
-import { rankWith, RankedTester, uiTypeIs, and } from '@jsonforms/core';
+import { rankWith, RankedTester, schemaTypeIs, and, formatIs } from '@jsonforms/core';
 
-export const FileUploaderTester: RankedTester = rankWith(2, and(uiTypeIs('FileUploader')));
+export const FileUploaderTester: RankedTester = rankWith(3, and(schemaTypeIs('string'), formatIs('file-urn')));

@@ -15,7 +15,6 @@ import { toKebabName } from '@lib/kebabName';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from './styled-components';
 import { RootState } from '@store/index';
-import { UseServiceAccountWrapper } from './styled-components';
 import { ClientRoleTable } from '@components/RoleTable';
 import { selectRoleList } from '@store/sharedSelectors/roles';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
@@ -26,11 +25,19 @@ interface AddScriptModalProps {
   initialValue?: ScriptItem;
   onCancel?: () => void;
   onSave: (script: ScriptItem) => void;
+  openEditorOnAdd?: (script: ScriptItem) => void;
   open: boolean;
   isNew: boolean;
 }
 
-export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: AddScriptModalProps): JSX.Element => {
+export const AddScriptModal = ({
+  initialValue,
+  onCancel,
+  onSave,
+  open,
+  openEditorOnAdd,
+  isNew,
+}: AddScriptModalProps): JSX.Element => {
   const [script, setScript] = useState<ScriptItem>(initialValue);
   const dispatch = useDispatch();
 
@@ -56,7 +63,7 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validationCheck = () => {
     const validations = {
@@ -70,27 +77,29 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
     }
 
     onSave(script);
-    onCancel();
+    if (isNew) {
+      openEditorOnAdd(script);
+    } else {
+      onCancel();
+    }
     validators.clear();
   };
 
   const RunnerRole = ({ roleNames, clientId }) => {
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          roleSelectFunc={(roles) => {
-            setScript({
-              ...script,
-              runnerRoles: roles,
-            });
-          }}
-          nameColumnWidth={80}
-          service="Script"
-          checkedRoles={[{ title: 'runner', selectedRoles: script?.runnerRoles }]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        roleSelectFunc={(roles) => {
+          setScript({
+            ...script,
+            runnerRoles: roles,
+          });
+        }}
+        nameColumnWidth={80}
+        service="Script"
+        checkedRoles={[{ title: 'runner', selectedRoles: script?.runnerRoles }]}
+      />
     );
   };
 
@@ -159,30 +168,31 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
           testId={`script-modal-description-input`}
           aria-label="description"
           width="100%"
-          onChange={(name, value) => {
+          onKeyPress={(name, value) => {
             const description = value;
             validators.remove('description');
             validators['description'].check(description);
             setScript({ ...script, description });
           }}
+          // eslint-disable-next-line
+          onChange={() => {}}
         />
       </GoAFormItem>
+      <br />
       {isNew && (
-        <UseServiceAccountWrapper>
-          <GoACheckbox
-            checked={script.useServiceAccount}
-            name="script-use-service-account-checkbox"
-            testId="script-use-service-account-checkbox"
-            onChange={() => {
-              setScript({
-                ...script,
-                useServiceAccount: !script.useServiceAccount,
-              });
-            }}
-            ariaLabel={`script-use-service-account-checkbox`}
-          />
-          Use service account
-        </UseServiceAccountWrapper>
+        <GoACheckbox
+          checked={script.useServiceAccount}
+          name="script-use-service-account-checkbox"
+          testId="script-use-service-account-checkbox"
+          onChange={() => {
+            setScript({
+              ...script,
+              useServiceAccount: !script.useServiceAccount,
+            });
+          }}
+          text="Use service account"
+          ariaLabel={`script-use-service-account-checkbox`}
+        />
       )}
       {roles &&
         isNew &&

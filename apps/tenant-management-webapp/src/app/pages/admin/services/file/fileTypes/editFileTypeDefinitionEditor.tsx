@@ -87,7 +87,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
       const selectedFileType = foundFileType;
       setFileType(selectedFileType);
       setInitialFileType(selectedFileType);
-      //For backwards comptability
+      //For backwards compatibility
       if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
         fileType.securityClassification = '';
       }
@@ -97,7 +97,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
         foundFileType.securityClassification !== '';
       setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const foundFileType = fileTypes?.find((f) => f.id === id);
@@ -105,7 +105,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
       const selectedFileType = foundFileType;
       setFileType(selectedFileType);
       setInitialFileType(selectedFileType);
-      //For backwards comptability
+      //For backwards compatibility
       if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
         fileType.securityClassification = '';
       }
@@ -117,13 +117,13 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
         setIsSecurityClassificationCalloutIsOpen(!isSecurityClassificationCalloutOpen);
       }
     }
-  }, [fileTypes]);
+  }, [fileTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (saveModal.closeEditor) {
       close();
     }
-  }, [saveModal]);
+  }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
   const { validators } = useValidators(
     'name',
     'name',
@@ -154,32 +154,30 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
 
   const ClientRole = ({ roleNames, clientId }) => {
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          anonymousRead={fileType?.anonymousRead}
-          roleSelectFunc={(roles, type) => {
-            if (type === 'read') {
-              setFileType({
-                ...fileType,
-                readRoles: roles,
-              });
-            } else {
-              setFileType({
-                ...fileType,
-                updateRoles: roles,
-              });
-            }
-          }}
-          service="FileType"
-          nameColumnWidth={40}
-          checkedRoles={[
-            { title: 'read', selectedRoles: fileType?.readRoles },
-            { title: 'modify', selectedRoles: fileType?.updateRoles },
-          ]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        anonymousRead={fileType?.anonymousRead}
+        roleSelectFunc={(roles, type) => {
+          if (type === 'read') {
+            setFileType({
+              ...fileType,
+              readRoles: roles,
+            });
+          } else {
+            setFileType({
+              ...fileType,
+              updateRoles: roles,
+            });
+          }
+        }}
+        service="FileType"
+        nameColumnWidth={40}
+        checkedRoles={[
+          { title: 'read', selectedRoles: fileType?.readRoles },
+          { title: 'modify', selectedRoles: fileType?.updateRoles },
+        ]}
+      />
     );
   };
 
@@ -201,6 +199,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                       name="securityClassifications"
                       width="25rem"
                       value={fileType?.securityClassification}
+                      relative={true}
                       onChange={(name: string, value: SecurityClassification) => {
                         setFileType({
                           ...fileType,
@@ -224,30 +223,32 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                       <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
                     </GoADropdown>
                   </GoAFormItem>
-                  <GoACheckbox
-                    checked={fileType?.anonymousRead}
-                    name="file-type-anonymousRead-checkbox"
-                    testId="file-type-anonymousRead-checkbox"
-                    ariaLabel={`file-type-anonymousRead-checkbox`}
-                    onChange={() => {
-                      //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
-                      if (
-                        fileType?.securityClassification !== undefined &&
-                        fileType?.securityClassification !== '' &&
-                        fileType?.securityClassification !== SecurityClassification.Public &&
-                        !fileType?.anonymousRead
-                      ) {
-                        setIsSecurityClassificationCalloutIsOpen(true);
-                      } else {
-                        setIsSecurityClassificationCalloutIsOpen(false);
-                      }
-                      setFileType({
-                        ...fileType,
-                        anonymousRead: !fileType.anonymousRead,
-                      });
-                    }}
-                    text={'Make public (read only)'}
-                  />
+                  <div style={{ paddingTop: '0.625rem' }}>
+                    <GoACheckbox
+                      checked={fileType?.anonymousRead}
+                      name="file-type-anonymousRead-checkbox"
+                      testId="file-type-anonymousRead-checkbox"
+                      ariaLabel={`file-type-anonymousRead-checkbox`}
+                      onChange={() => {
+                        //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
+                        if (
+                          fileType?.securityClassification !== undefined &&
+                          fileType?.securityClassification !== '' &&
+                          fileType?.securityClassification !== SecurityClassification.Public &&
+                          !fileType?.anonymousRead
+                        ) {
+                          setIsSecurityClassificationCalloutIsOpen(true);
+                        } else {
+                          setIsSecurityClassificationCalloutIsOpen(false);
+                        }
+                        setFileType({
+                          ...fileType,
+                          anonymousRead: !fileType.anonymousRead,
+                        });
+                      }}
+                      text={'Make public (read only)'}
+                    />
+                  </div>
                 </DropDownZIndex>
                 {isSecurityClassificationCalloutOpen && (
                   <FileTypeEditorWarningCalloutWrapper>
@@ -319,8 +320,9 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
               />
             </EditorPadding>
 
-            <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
+              <hr className="hr-resize-bottom" />
+              <br />
               <GoAButtonGroup alignment="start">
                 <GoAButton
                   type="primary"

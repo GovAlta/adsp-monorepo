@@ -1,4 +1,4 @@
-import { JsonSchema, UISchemaElement } from '@jsonforms/core';
+import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { debounce } from 'lodash';
@@ -34,6 +34,7 @@ interface FormDataResponse {
 }
 
 type SerializedForm = Omit<Form, 'created' | 'submitted'> & { created: string; submitted?: string };
+export type ValidationError = JsonFormsCore['errors'][number];
 
 interface FormState {
   definitions: Record<string, FormDefinition>;
@@ -42,6 +43,7 @@ interface FormState {
   form: SerializedForm;
   data: Record<string, unknown>;
   files: Record<string, string>;
+  errors: ValidationError[];
   saved: string;
   busy: {
     loading: boolean;
@@ -215,17 +217,22 @@ export const createForm = createAsyncThunk(
 export const updateForm = createAsyncThunk(
   'form/update-form',
   async (
-    { data, files }: { data?: Record<string, unknown>; files?: Record<string, string> },
+    {
+      data,
+      files,
+      errors,
+    }: { data?: Record<string, unknown>; files?: Record<string, string>; errors?: ValidationError[] },
     { getState, dispatch }
   ) => {
     const { form } = getState() as AppState;
 
-    if (form.form) {
+    // Skip saving if there are errors; the request will fail due to validation anyways.
+    if (form.form && !errors?.length) {
       dispatch(formActions.setSaving(true));
       dispatch(saveForm(form.form.id));
     }
 
-    return { data, files };
+    return { data, files, errors };
   }
 );
 
@@ -311,6 +318,7 @@ const initialFormState: FormState = {
   form: null,
   data: {},
   files: {},
+  errors: [],
   saved: null,
   busy: {
     loading: false,
@@ -396,6 +404,7 @@ const formSlice = createSlice({
       .addCase(updateForm.pending, (state, { meta }) => {
         state.data = meta.arg.data;
         state.files = meta.arg.files;
+        state.errors = meta.arg.errors || [];
       })
       .addCase(saveForm.fulfilled, (state, { payload }) => {
         state.saved = payload;
@@ -454,3 +463,15 @@ export const isClerkSelector = createSelector(
 );
 
 export const busySelector = (state: AppState) => state.form.busy;
+
+export const showSubmitSelector = createSelector(definitionSelector, (definition) => {
+  // Stepper variant of the categorization includes a Submit button on the review step, so don't show submit outside form.
+  return definition?.uiSchema?.type !== 'Categorization' || definition?.uiSchema?.options?.variant !== 'stepper';
+});
+
+export const canSubmitSelector = createSelector(
+  (state: AppState) => state.form.errors,
+  (state: AppState) => state.form.busy.saving,
+  (state: AppState) => state.form.busy.submitting,
+  (errors, saving, submitting) => !errors?.length && !saving && !submitting
+);

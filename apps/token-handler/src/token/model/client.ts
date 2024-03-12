@@ -62,7 +62,7 @@ export class AuthenticationClient {
     this.successRedirectUrl = client.successRedirectUrl || '/';
     this.failureRedirectUrl = client.failureRedirectUrl || '/';
     this.targets = Object.entries(client.targets).reduce(
-      (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(this, directory, target) }),
+      (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(logger, this, directory, target) }),
       {}
     );
     this.callbackUrl = new URL(this.authCallbackUrl);
@@ -140,7 +140,7 @@ export class AuthenticationClient {
     return this.credentials;
   }
 
-  private verify = async (
+  verify = (
     _iss,
     profile: Record<string, unknown>,
     _context,
@@ -149,32 +149,38 @@ export class AuthenticationClient {
     refreshToken: string,
     verified
   ) => {
-    const { sub, exp, realm_access, resource_access } = jwtDecode<{
-      sub: string;
-      exp: number;
-      realm_access?: { roles: string[] };
-      resource_access?: Record<string, { roles: string[] }>;
-    }>(accessToken);
-    const { exp: refreshExp } = jwtDecode<{ exp: number }>(refreshToken);
+    try {
+      const { sub, exp, realm_access, resource_access } = jwtDecode<{
+        sub: string;
+        exp: number;
+        realm_access?: { roles: string[] };
+        resource_access?: Record<string, { roles: string[] }>;
+      }>(accessToken);
+      const { exp: refreshExp } = jwtDecode<{ exp: number }>(refreshToken);
 
-    verified(null, {
-      id: sub,
-      tenantId: this.tenantId,
-      name: profile.displayName || profile.username,
-      email: profile['emails']?.[0].value,
-      accessToken,
-      refreshToken,
-      exp,
-      refreshExp,
-      authenticatedBy: this.id,
-      roles: [
-        ...(realm_access?.roles || []),
-        ...Object.entries(resource_access || {}).reduce(
-          (resourceRoles, [resource, { roles }]) => [...resourceRoles, ...roles.map((role) => `${resource}:${role}`)],
-          []
-        ),
-      ],
-    });
+      verified(null, {
+        id: sub,
+        tenantId: this.tenantId,
+        isCore: false,
+        token: null,
+        name: profile.displayName || profile.username,
+        email: profile['emails']?.[0].value,
+        accessToken,
+        refreshToken,
+        exp,
+        refreshExp,
+        authenticatedBy: this.id,
+        roles: [
+          ...(realm_access?.roles || []),
+          ...Object.entries(resource_access || {}).reduce(
+            (resourceRoles, [resource, { roles }]) => [...resourceRoles, ...roles.map((role) => `${resource}:${role}`)],
+            []
+          ),
+        ],
+      } as UserSessionData);
+    } catch (err) {
+      verified(err);
+    }
   };
 
   private async getStrategy(): Promise<Strategy> {

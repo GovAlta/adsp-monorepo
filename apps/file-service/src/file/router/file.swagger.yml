@@ -92,6 +92,10 @@ components:
             - protected a
             - protected b
             - protected c
+        digest:
+          description: Digest of the file prefixed with the hash algorithm.  This can be used to verify integrity of downloaded file.
+          example: sha256-vVEAaGCkdyXB56ABe6NxEU+Fsym7bieZg/97hN7+HyQ=
+          type: string
 
 /file/v1/types:
   get:

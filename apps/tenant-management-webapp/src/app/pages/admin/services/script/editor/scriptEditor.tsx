@@ -7,7 +7,6 @@ import {
   ScriptPane,
   ResponseTableStyles,
   TestInputDivBody,
-  UseServiceAccountWrapper,
   ScrollPane,
   TextLoadingIndicator,
   MonacoDivTabBody,
@@ -93,7 +92,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     if (!definitions || (definitions && definitions.length === 0)) {
       dispatch(getEventDefinitions());
     }
-  }, [eventDefinitions]);
+  }, [eventDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const roles = useSelector(selectRoleList);
   const latestNotification = useSelector(
@@ -216,7 +215,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onNameChange(selectedScript?.name || '');
     onDescriptionChange(selectedScript?.description || '');
     onScriptChange(selectedScript?.script || '');
-  }, [selectedScript]);
+  }, [selectedScript]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const orderedEventNames = definitions
     .map((def) => {
@@ -267,23 +266,21 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     const runnerRoles = types[0];
 
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          roleSelectFunc={(roles, type) => {
-            if (type === runnerRoles.name) {
-              setScript({
-                ...script,
-                runnerRoles: roles,
-              });
-            }
-          }}
-          nameColumnWidth={80}
-          service="Script"
-          checkedRoles={[{ title: types[0].name, selectedRoles: script[types[0].type] }]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        roleSelectFunc={(roles, type) => {
+          if (type === runnerRoles.name) {
+            setScript({
+              ...script,
+              runnerRoles: roles,
+            });
+          }
+        }}
+        nameColumnWidth={80}
+        service="Script"
+        checkedRoles={[{ title: types[0].name, selectedRoles: script[types[0].type] }]}
+      />
     );
   };
 
@@ -315,13 +312,13 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         <ScriptEditorTitle>Script editor</ScriptEditorTitle>
         <hr className="hr-resize" />
         <TombStone selectedScript={selectedScript} onSave={onSave} />
-
-        <UseServiceAccountWrapper>
+        <div style={{ paddingLeft: '4px' }}>
           <GoACheckbox
             checked={isServiceAccountChecked()}
             name="script-use-service-account-checkbox"
             testId="script-use-service-account-checkbox"
             disabled={isServiceAccountDisabled()}
+            text="Use service account"
             onChange={() => {
               setScript({
                 ...script,
@@ -330,9 +327,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             }}
             ariaLabel={`script-use-service-account-checkbox`}
           />
-          Use service account
-        </UseServiceAccountWrapper>
-
+        </div>
         <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
           <Tab label="Lua script" data-testid="script-editor-tab">
             <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>
@@ -359,14 +354,16 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             </MonacoDivTabBody>
           </Tab>
           <Tab label="Trigger events" data-testid="script-trigger-events-tab">
-            <ScriptEditorEventsTab
-              script={selectedScript}
-              eventNames={orderedEventNames}
-              onEditorSave={(script) => {
-                setScript(script);
-                saveAndReset(script);
-              }}
-            />
+            <MonacoDivTabBody data-testid="trigger-events-body">
+              <ScriptEditorEventsTab
+                script={selectedScript}
+                eventNames={orderedEventNames}
+                onEditorSave={(script) => {
+                  setScript(script);
+                  saveAndReset(script);
+                }}
+              />
+            </MonacoDivTabBody>
           </Tab>
         </Tabs>
 

@@ -59,6 +59,32 @@ export const schema = {
         },
       },
     },
+    FileUploader: {
+      description: 'file uploader !!!',
+      format: 'file-urn',
+      type: 'string',
+    },
+    FileUploader2: {
+      description: 'file uploader !!!',
+      format: 'file-urn',
+      type: 'string',
+    },
+    carBrands: {
+      type: 'string',
+      enum: [''],
+    },
+    countries: {
+      type: 'string',
+      enum: [''],
+    },
+    dogBreeds: {
+      type: 'string',
+      enum: [''],
+    },
+    basketballPlayers: {
+      type: 'string',
+      enum: [''],
+    },
   },
 };
 
@@ -80,6 +106,20 @@ export const uischema = {
               type: 'Control',
               scope: '#/properties/secondName',
             },
+            {
+              type: 'Control',
+              scope: '#/properties/FileUploader',
+              options: {
+                variant: 'button',
+              },
+            },
+            {
+              type: 'Control',
+              scope: '#/properties/FileUploader2',
+              options: {
+                variant: 'dragdrop',
+              },
+            },
           ],
         },
         {
@@ -92,6 +132,57 @@ export const uischema = {
             {
               type: 'Control',
               scope: '#/properties/nationality',
+            },
+            {
+              type: 'Control',
+              scope: '#/properties/carBrands',
+              options: {
+                enumContext: {
+                  key: 'car-brands',
+                  url: 'https://parallelum.com.br/fipe/api/v1/carros/marcas',
+                  values: 'nome',
+                },
+              },
+            },
+            {
+              type: 'Control',
+              scope: '#/properties/dogBreeds',
+              options: {
+                enumContext: {
+                  key: 'dog-list',
+                  url: 'https://dog.ceo/api/breeds/list/all',
+                  location: 'message',
+                  type: 'keys',
+                },
+              },
+            },
+          ],
+        },
+        {
+          type: 'HorizontalLayout',
+          elements: [
+            {
+              type: 'Control',
+              scope: '#/properties/basketballPlayers',
+              options: {
+                autocomplete: true,
+                enumContext: {
+                  key: 'basketball-players',
+                  location: 'data',
+                  url: 'https://www.balldontlie.io/api/v1/players',
+                  values: ['first_name', 'last_name'],
+                },
+              },
+            },
+            {
+              type: 'Control',
+              scope: '#/properties/countries',
+              options: {
+                autocomplete: true,
+                enumContext: {
+                  key: 'countries',
+                },
+              },
             },
           ],
         },

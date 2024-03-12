@@ -1,9 +1,10 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { FormEntity } from '.';
+import { InvalidValueError } from '@core-services/core-common';
+import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDisposition, FormSubmission, FormSubmissionCreatedBy } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+import { FormDisposition, FormSubmission } from '../types';
+import { FormEntity } from './form';
 
 export class FormSubmissionEntity implements FormSubmission {
   id: string;
@@ -13,11 +14,12 @@ export class FormSubmissionEntity implements FormSubmission {
   formData: Record<string, unknown>;
   formFiles: Record<string, AdspId>;
   created: Date;
-  createdBy: FormSubmissionCreatedBy;
-  updatedBy: string;
-  updatedDateTime: Date;
+  createdBy: { id: string; name: string };
+  updatedBy: { id: string; name: string };
+  updated: Date;
   submissionStatus: string;
   disposition: FormDisposition;
+  hash: string;
 
   static async create(
     user: User,
@@ -25,37 +27,54 @@ export class FormSubmissionEntity implements FormSubmission {
     form: FormEntity,
     id: string
   ): Promise<FormSubmissionEntity> {
-    const formSubmission = new FormSubmissionEntity(repository, form, {
-      id,
-      created: new Date(),
-      createdBy: { id: uuidv4(), name: user.name },
-      updatedBy: user.name,
-      updatedDateTime: new Date(),
-      formData: form.data,
-      formFiles: form.files,
-      formDefinitionId: form.definition?.id,
-      formId: form.id,
-      tenantId: form.tenantId,
-      submissionStatus: '',
-      disposition: null,
-    });
+    const formSubmission = new FormSubmissionEntity(
+      repository,
+      form.tenantId,
+      {
+        id,
+        created: new Date(),
+        createdBy: { id: user.id, name: user.name },
+        updatedBy: { id: user.id, name: user.name },
+        updated: new Date(),
+        formData: form.data,
+        formFiles: form.files,
+        formDefinitionId: form.definition?.id,
+        formId: form.id,
+        disposition: null,
+        hash: form.hash,
+      },
+      form
+    );
 
     return await repository.save(formSubmission);
   }
 
-  constructor(private repository: FormSubmissionRepository, public form: FormEntity, formSubmission: FormSubmission) {
+  constructor(
+    private repository: FormSubmissionRepository,
+    tenantId: AdspId,
+    formSubmission: FormSubmission,
+    public form?: FormEntity
+  ) {
     this.id = formSubmission.id;
     this.created = formSubmission.created;
     this.createdBy = formSubmission.createdBy;
     this.updatedBy = formSubmission.updatedBy;
-    this.updatedDateTime = formSubmission.updatedDateTime;
+    this.updated = formSubmission.updated;
     this.formData = formSubmission.formData || {};
     this.formFiles = formSubmission.formFiles || {};
-    this.formDefinitionId = formSubmission.formDefinitionId || '';
-    this.formId = formSubmission.formId || '';
-    this.tenantId = form.definition?.tenantId;
-    this.submissionStatus = formSubmission.submissionStatus || '';
+    this.formDefinitionId = formSubmission.formDefinitionId;
+    this.formId = formSubmission.formId;
+    this.tenantId = tenantId;
+    this.submissionStatus = formSubmission.submissionStatus;
     this.disposition = formSubmission.disposition || null;
+    this.hash = formSubmission.hash;
+  }
+
+  canRead(user: User): boolean {
+    return (
+      isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true) ||
+      isAllowedUser(user, this.tenantId, this.form?.definition?.assessorRoles || [])
+    );
   }
 
   async delete(user: User): Promise<boolean> {
@@ -65,5 +84,27 @@ export class FormSubmissionEntity implements FormSubmission {
 
     const deleted = this.repository.delete(this);
     return deleted;
+  }
+
+  async dispositionSubmission(user: User, status: string, reason?: string): Promise<FormSubmissionEntity> {
+    if (
+      !isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, ...(this.form?.definition?.assessorRoles || [])])
+    ) {
+      throw new UnauthorizedUserError('updated form disposition', user);
+    }
+
+    const hasStateToUpdate = this.form?.definition?.dispositionStates?.find((states) => states.name === status);
+    if (!hasStateToUpdate) {
+      throw new InvalidValueError('Status', `Invalid Form Disposition Status for Form Submission ID: ${this.id}`);
+    }
+
+    this.disposition = {
+      id: uuidv4(),
+      reason,
+      status,
+      date: new Date(),
+    };
+
+    return await this.repository.save(this);
   }
 }

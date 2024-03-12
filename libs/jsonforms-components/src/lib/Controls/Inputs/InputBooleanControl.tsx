@@ -4,6 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
 import { GoACheckbox } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { checkFieldValidity } from '../../util/stringUtils';
 
 export const BooleanComponent = ({
   data,
@@ -14,6 +15,8 @@ export const BooleanComponent = ({
   path,
   config,
   label,
+  required,
+  errors,
   description,
 }: ControlProps) => {
   const appliedUiSchemaOptions = { ...config, ...uischema.options };
@@ -24,25 +27,36 @@ export const BooleanComponent = ({
     false,
     appliedUiSchemaOptions.showUnfocusedDescription
   );
-  let text = label;
+  const errorsFormInput = checkFieldValidity({
+    data,
+    uischema,
+    label,
+    required,
+    errors,
+  } as ControlProps);
+
+  let text = label + (required ? ' (required)' : '');
 
   if (label && description) {
     text = description;
+    if (required) {
+      text = `${description} ` + (required ? ' (required)' : '');
+    }
   }
 
   return (
-    <Hidden xsUp={!visible}>
-      <GoACheckbox
-        testId={`${path}-checkbox-test-id`}
-        disabled={!enabled}
-        text={text}
-        name={`${path}`}
-        checked={data}
-        onChange={(name: string, checked: boolean, value: string) => {
-          handleChange(path, checked);
-        }}
-      ></GoACheckbox>
-    </Hidden>
+    <GoACheckbox
+      error={errorsFormInput.length > 0}
+      testId={`${path}-checkbox-test-id`}
+      disabled={!enabled}
+      text={text}
+      name={`${path}`}
+      checked={data}
+      onChange={(name: string, checked: boolean, value: string) => {
+        handleChange(path, checked);
+      }}
+      {...uischema?.options?.componentProps}
+    ></GoACheckbox>
   );
 };
 export const BooleanControl = (props: ControlProps) => (

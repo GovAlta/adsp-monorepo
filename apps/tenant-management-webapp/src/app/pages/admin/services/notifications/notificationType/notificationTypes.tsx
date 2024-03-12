@@ -1,13 +1,13 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoAContainer } from '@abgov/react-components-new';
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Grid, GridItem } from '@core-services/app-common';
 import { NotificationTypeModalForm } from '../addEditNotification/addEditNotification';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import * as handlebars from 'handlebars';
 import { DeleteModal } from '@components/DeleteModal';
-import { GoAIcon } from '@abgov/react-components/experimental';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { checkForProhibitedTags } from '@lib/EmailTemplateValidator';
@@ -22,8 +22,6 @@ import {
 } from '@store/notification/actions';
 import { NotificationItem, baseTemplate, Template, EventItem } from '@store/notification/models';
 import { RootState } from '@store/index';
-
-import { EditIcon } from '@components/icons/EditIcon';
 
 import { TemplateEditor } from '../previewEditor/TemplateEditor';
 import { PreviewTemplate } from '../previewEditor/PreviewTemplate';
@@ -87,6 +85,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const templateDefaultError = {
     subject: '',
+    title: '',
+    subtitle: '',
     body: '',
   };
   const [templateEditErrors, setTemplateEditErrors] = useState(templateDefaultError);
@@ -99,10 +99,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
   const [templates, setTemplates] = useState<Template>(baseTemplate);
   const [savedTemplates, setSavedTemplates] = useState<Template>(baseTemplate);
   const debouncedRenderSubject = useDebounce(subject, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderBody = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderTitle = useDebounce(title, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderSubtitle = useDebounce(subtitle, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedXssCheckRenderSubject = useDebounce(subject, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
   const debouncedXssCheckRenderBody = useDebounce(body, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
 
@@ -155,11 +159,16 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         const combinedPreview = template?.body
           ? ('<style>' + template?.additionalStyles + '</style>').concat(template?.body)
           : template?.body;
-        const bodyPreview = generateMessage(getTemplateBody(combinedPreview, currentChannel, htmlPayload), htmlPayload);
+        const bodyPreview = generateMessage(
+          getTemplateBody(combinedPreview, currentChannel, htmlPayload, template?.title, template?.subtitle),
+          htmlPayload
+        );
         setBodyPreview(bodyPreview);
         setTemplateEditErrors({
           ...templateEditErrors,
           body: '',
+          title: '',
+          subtitle: '',
         });
       } catch (e) {
         setTemplateEditErrors({
@@ -180,7 +189,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         });
       }
     }
-  }, [selectedEvent]);
+  }, [selectedEvent]); // eslint-disable-line react-hooks/exhaustive-deps
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
@@ -192,7 +201,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     dispatch(FetchCoreNotificationTypesService());
-  }, [notification?.notificationTypes]);
+  }, [notification?.notificationTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function reset(closeEventModal?: boolean) {
     setShowTemplateForm(false);
@@ -216,7 +225,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       setShowTemplateForm(false);
       setFormTitle('Add notification type');
     }
-  }, [activeEdit]);
+  }, [activeEdit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function manageEvents(notificationType) {
     setSelectedType(notificationType);
@@ -225,7 +234,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     renderBodyPreview(debouncedRenderBody);
-  }, [debouncedRenderBody, setBodyPreview]);
+  }, [debouncedRenderBody, debouncedRenderTitle, debouncedRenderSubtitle, setBodyPreview]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const error = checkForProhibitedTags(debouncedXssCheckRenderBody as string);
@@ -235,7 +244,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         body: error,
       });
     }
-  }, [debouncedXssCheckRenderBody]);
+  }, [debouncedXssCheckRenderBody]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const error = checkForProhibitedTags(debouncedXssCheckRenderSubject as string);
@@ -245,11 +254,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         subject: error,
       });
     }
-  }, [debouncedXssCheckRenderSubject]);
+  }, [debouncedXssCheckRenderSubject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     renderSubjectPreview(debouncedRenderSubject);
-  }, [debouncedRenderSubject, setSubjectPreview]);
+  }, [debouncedRenderSubject, setSubjectPreview]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderSubjectPreview = (value) => {
     try {
@@ -270,11 +279,22 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const renderBodyPreview = (value) => {
     try {
-      const msg = generateMessage(getTemplateBody(value, currentChannel, htmlPayload), htmlPayload);
+      const msg = generateMessage(
+        getTemplateBody(
+          value ? value : templates[currentChannel]?.body,
+          currentChannel,
+          htmlPayload,
+          templates[currentChannel]?.title,
+          templates[currentChannel]?.subtitle
+        ),
+        htmlPayload
+      );
       setBodyPreview(msg);
       setTemplateEditErrors({
         ...templateEditErrors,
         body: '',
+        title: '',
+        subtitle: '',
       });
     } catch (e) {
       console.error('handlebar error', e);
@@ -385,31 +405,30 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   <div className="rowFlex">
                     <h2 className="flex1">{notificationType.name}</h2>
                     <MaxHeight height={30} className="rowFlex">
-                      <a
-                        className="flex1"
-                        data-testid="edit-notification-type"
-                        onClick={() => {
-                          setSelectedType(notificationType);
-                          setEditType(true);
-                          setFormTitle('Edit notification type');
-                        }}
-                      >
-                        <NotificationBorder className="smallPadding flex">
-                          <EditIcon size="small" />
-                        </NotificationBorder>
-                      </a>
-                      <a
-                        className="flex1"
-                        onClick={() => {
-                          setSelectedType(notificationType);
-                          setShowDeleteConfirmation(true);
-                        }}
-                        data-testid="delete-notification-type"
-                      >
-                        <NotificationBorder className="smallPadding">
-                          <GoAIcon type="trash" />
-                        </NotificationBorder>
-                      </a>
+                      <NotificationBorder className=" flex">
+                        <GoAContextMenuIcon
+                          type="create"
+                          title="Edit"
+                          onClick={() => {
+                            setSelectedType(notificationType);
+                            setEditType(true);
+                            setFormTitle('Edit notification type');
+                          }}
+                          testId="edit-notification-type"
+                        />
+                      </NotificationBorder>
+
+                      <NotificationBorder className=" flex">
+                        <GoAContextMenuIcon
+                          type="trash"
+                          title="Delete"
+                          onClick={() => {
+                            setSelectedType(notificationType);
+                            setShowDeleteConfirmation(true);
+                          }}
+                          testId="delete-notification-type"
+                        />
+                      </NotificationBorder>
                     </MaxHeight>
                   </div>
                   <div className="rowFlex smallFont">
@@ -459,18 +478,17 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               <div className="rowFlex">
                                 <MaxHeight height={34}>
                                   <NotificationBorder className="smallPadding">
-                                    <a
-                                      className="flex1 flex"
+                                    <GoAContextMenuIcon
+                                      type="trash"
+                                      title="Delete"
                                       onClick={() => {
                                         setSelectedEvent(event);
                                         setSelectedType(notificationType);
                                         setShowEventDeleteConfirmation(true);
                                         setCoreEvent(false);
                                       }}
-                                      data-testid="delete-event"
-                                    >
-                                      <GoAIcon type="trash" />
-                                    </a>
+                                      testId="delete-event"
+                                    />
                                   </NotificationBorder>
                                 </MaxHeight>
                               </div>
@@ -737,7 +755,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
         onCancel={(closeEventModal: boolean) => {
           reset(closeEventModal);
-          // reset(true);
         }}
         onClickedOutside={() => {
           reset(true);
@@ -779,16 +796,44 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
                 setBody(value);
               }}
+              onTitleChange={(value, channel) => {
+                let newTemplates = templates;
+                if (templates[channel]) {
+                  newTemplates[channel].title = value;
+                } else {
+                  newTemplates = { ...templates, [channel]: { title: value } };
+                }
+                setTemplates(newTemplates);
+                setTitle(value);
+              }}
+              onSubtitleChange={(value, channel) => {
+                let newTemplates = templates;
+                if (templates[channel]) {
+                  newTemplates[channel].subtitle = value;
+                } else {
+                  newTemplates = { ...templates, [channel]: { subtitle: value } };
+                }
+                setTemplates(newTemplates);
+                setSubtitle(value);
+              }}
               setPreview={(channel) => {
                 if (templates && templates[channel] && templates[channel]?.additionalStyles) {
                   const combinedPreview = ('<style>' + templates[channel]?.additionalStyles + '</style>').concat(
                     templates[channel]?.body
                   );
-                  setBodyPreview(generateMessage(getTemplateBody(combinedPreview, channel, htmlPayload), htmlPayload));
+                  setBodyPreview(
+                    generateMessage(
+                      getTemplateBody(combinedPreview, channel, htmlPayload, title, subtitle),
+                      htmlPayload
+                    )
+                  );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                 } else {
                   setBodyPreview(
-                    generateMessage(getTemplateBody(templates[channel]?.body, channel, htmlPayload), htmlPayload)
+                    generateMessage(
+                      getTemplateBody(templates[channel]?.body, channel, htmlPayload, title, subtitle),
+                      htmlPayload
+                    )
                   );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                 }

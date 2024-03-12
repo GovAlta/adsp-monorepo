@@ -54,4 +54,4 @@ Feature: Calendar
     When the user clicks "Delete" button for the calendar of "autotest-addcalendar", "autotest calendar desc edit"
     Then the user views delete "calendar" confirmation modal for "autotest-addcalendar"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the calendar of "autotest-addcalendar", "autotest script desc edit"
+    Then the user "should not view" the calendar of "autotest-addcalendar", "autotest calendar desc edit"

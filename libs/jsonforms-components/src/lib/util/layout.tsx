@@ -10,12 +10,13 @@ import {
 } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid } from '@abgov/react-components-new';
-import { VerticalLayout } from './style-component';
+import { Hidden } from '@mui/material';
+
 export const renderLayoutElements = (
   elements: UISchemaElement[],
-  schema: JsonSchema,
-  path: string,
-  enabled: boolean,
+  schema?: JsonSchema,
+  path?: string,
+  enabled?: boolean,
   renderers?: JsonFormsRendererRegistryEntry[],
   cells?: JsonFormsCellRendererRegistryEntry[]
 ) => {
@@ -38,7 +39,8 @@ export interface LayoutRendererProps extends OwnPropsOfRenderer {
   elements: UISchemaElement[];
   direction: 'row' | 'column';
 }
-const LayoutRendererComponent = ({
+
+export const LayoutRenderer = ({
   elements,
   schema,
   path,
@@ -46,19 +48,21 @@ const LayoutRendererComponent = ({
   direction,
   renderers,
   cells,
+  visible,
 }: LayoutRendererProps) => {
   if (isEmpty(elements)) {
     return null;
   } else {
     if (direction === 'row') {
       return (
-        <GoAGrid minChildWidth="10ch">
-          {renderLayoutElements(elements, schema, path, enabled, renderers, cells)}
-        </GoAGrid>
+        <Hidden xsUp={!visible}>
+          <GoAGrid minChildWidth="10ch">
+            {renderLayoutElements(elements, schema, path, enabled, renderers, cells)}
+          </GoAGrid>
+        </Hidden>
       );
     } else {
-      return <VerticalLayout>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</VerticalLayout>;
+      return <Hidden xsUp={!visible}>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</Hidden>;
     }
   }
 };
-export const LayoutRenderer = React.memo(LayoutRendererComponent);

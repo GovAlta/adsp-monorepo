@@ -104,6 +104,7 @@ export class MongoFileRepository implements FileRepository {
           scanned: values.scanned,
           infected: values.infected,
           deleted: values.deleted,
+          digest: values.digest,
           securityClassification: values?.securityClassification,
         })
       : null;
@@ -124,6 +125,7 @@ export class MongoFileRepository implements FileRepository {
       scanned: update.scanned,
       infected: update.infected,
       deleted: update.deleted,
+      digest: update.digest,
     };
   }
 

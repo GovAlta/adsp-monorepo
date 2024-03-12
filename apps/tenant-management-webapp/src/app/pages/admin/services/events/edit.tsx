@@ -154,7 +154,9 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             value={definition.description}
             aria-label="description"
             width="100%"
-            onChange={(name, value) => {
+            // eslint-disable-next-line
+            onChange={() => {}}
+            onKeyPress={(name, value) => {
               validators.remove('description');
               validators['description'].check(value);
               setDefinition({ ...definition, description: value });

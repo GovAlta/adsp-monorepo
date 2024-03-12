@@ -10,8 +10,7 @@ interface FormOverviewProps {
 const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
   useEffect(() => {
     setOpenAddDefinition(false);
-    navigate('/admin/services/form');
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
 
@@ -31,17 +30,15 @@ const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element 
         </section>
       }
       addButton={
-        <>
-          <GoAButton
-            testId="add-definition"
-            onClick={() => {
-              setOpenAddDefinition(true);
-              navigate('/admin/services/form?definitions=true');
-            }}
-          >
-            Add definition
-          </GoAButton>
-        </>
+        <GoAButton
+          testId="add-definition"
+          onClick={() => {
+            setOpenAddDefinition(true);
+            navigate('/admin/services/form?definitions=true');
+          }}
+        >
+          Add definition
+        </GoAButton>
       }
     />
   );

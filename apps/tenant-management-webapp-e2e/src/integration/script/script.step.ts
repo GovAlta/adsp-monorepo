@@ -41,7 +41,7 @@ When(
   function (name, desc, useServiceAcct, role) {
     cy.viewport(1920, 1080);
     scriptObj.addScriptModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
-    scriptObj.addScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
+    scriptObj.addScriptModalDescriptionField().shadow().find('textarea').type(desc, { force: true });
     switch (useServiceAcct) {
       case 'yes':
         scriptObj.addScriptModalUseServiceAccountCheckbox().shadow().find('.goa-checkbox-container').click();
@@ -67,7 +67,6 @@ When(
         const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
         scriptObj
           .addScriptModalClientRolesTable(clientName)
-          .shadow()
           .find('.role-name')
           .contains(roleName)
           .next()
@@ -79,7 +78,6 @@ When(
       } else {
         scriptObj
           .addScriptModalRolesTable()
-          .shadow()
           .find('.role-name')
           .contains(roles[i].trim())
           .next()
@@ -184,7 +182,7 @@ Then('the user views Edit script modal', function () {
 
 When('the user enters {string} as name {string} as description in Edit script modal', function (name, description) {
   scriptObj.editScriptModalNameField().shadow().find('input').clear().type(name, { delay: 200, force: true });
-  scriptObj.editScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
+  scriptObj.editScriptModalDescriptionField().shadow().find('textarea').clear().type(description, { force: true });
 });
 
 When('the user enters {string} as lua script', function (script) {
@@ -222,7 +220,6 @@ When('the user enters {string} for roles in script editor', function (role) {
   for (let j = 0; j < 3; j++) {
     scriptObj
       .editorRolesTabRoleTables()
-      .shadow()
       .find('goa-checkbox')
       .shadow()
       .find('.goa-checkbox-container')
@@ -252,7 +249,6 @@ When('the user enters {string} for roles in script editor', function (role) {
       const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
       scriptObj
         .editorClientRolesTable(clientName)
-        .shadow()
         .find('.role-name')
         .contains(roleName)
         .next()
@@ -264,7 +260,6 @@ When('the user enters {string} for roles in script editor', function (role) {
     } else {
       scriptObj
         .editorRolesTable()
-        .shadow()
         .find('.role-name')
         .contains(roles[i].trim())
         .next()

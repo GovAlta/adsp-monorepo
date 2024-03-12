@@ -277,33 +277,48 @@ export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco): EditorSuggestion[] => {
+export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco, path?: string): EditorSuggestion[] => {
   const suggestions = [];
   if (schema.properties) {
     for (const property in schema.properties) {
+      const currentPath = path ? `${path}/properties/${property}` : `/properties/${property}`;
       if (
         typeof schema.properties[property]?.properties === 'object' &&
         schema.properties[property]?.properties !== null &&
         !Array.isArray(schema.properties[property].properties)
       ) {
         suggestions.push({
-          label: property,
+          label: currentPath,
           kind: monaco.languages.CompletionItemKind.Property,
-          insertText: `/properties/${property}`,
+          insertText: currentPath,
           detail: 'Property',
-          children: convertDataSchemaToSuggestion(schema.properties[property], monaco),
+          children: convertDataSchemaToSuggestion(schema.properties[property], monaco, `/properties/${property}`),
         });
       } else {
         suggestions.push({
-          label: property,
+          label: currentPath,
           kind: monaco.languages.CompletionItemKind.Property,
-          insertText: `/properties/${property}`,
+          insertText: currentPath,
           detail: 'Property',
         });
       }
     }
   }
   return suggestions;
+};
+
+export const determineCurrentPath = (textUntilPosition) => {
+  const lines = textUntilPosition.split('\n');
+  const lastLine = lines[lines.length - 1];
+  return lastLine.split(':')[1].slice(0, -1);
+};
+
+export const formatEditorSuggestions = (suggestions: EditorSuggestion[]): EditorSuggestion[] => {
+  const flattenedSuggestions: EditorSuggestion[] = flattenEditorSuggestions(suggestions);
+  for (const suggestion of flattenedSuggestions) {
+    suggestion.insertText = `#${suggestion.insertText}`;
+  }
+  return flattenedSuggestions;
 };
 
 const flattenEditorSuggestions = (suggestions: EditorSuggestion[], parentInsertText = ''): EditorSuggestion[] => {
@@ -331,12 +346,4 @@ const flattenEditorSuggestions = (suggestions: EditorSuggestion[], parentInsertT
   }
 
   return flattened;
-};
-
-export const formatEditorSuggestions = (suggestions: EditorSuggestion[]): EditorSuggestion[] => {
-  const flattenedSuggestions: EditorSuggestion[] = flattenEditorSuggestions(suggestions);
-  for (const suggestion of flattenedSuggestions) {
-    suggestion.insertText = `#${suggestion.insertText}`;
-  }
-  return flattenedSuggestions;
 };

@@ -95,9 +95,9 @@ const AvailableChannels = ({ channels, effectiveChannel }: AvailableChannelsProp
   return <div />;
 };
 
-const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
-  const subscriptions = props.subscriber.subscriptions;
-  const effectiveChannel = props.subscriber?.channels[0];
+const SubscriptionsList = ({ subscriber, onUnsubscribe }: SubscriptionsListProps): JSX.Element => {
+  const subscriptions = subscriber.subscriptions;
+  const effectiveChannel = subscriber?.channels[0];
 
   return (
     <>
@@ -106,7 +106,18 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
         return (
           <tr key={`${subscription.typeId}`}>
             <td data-testid="subscription-name">{subscription.type.name}</td>
-            <td>{subscription.type.description}</td>
+            <td>
+              <p>{subscription.type.description}</p>
+              {subscription.criteria?.filter((c) => c.description).length > 0 && (
+                <ul>
+                  {subscription.criteria
+                    .filter((c) => c.description)
+                    .map(({ correlationId, description }, idx) => (
+                      <li key={correlationId || idx}>{description}</li>
+                    ))}
+                </ul>
+              )}
+            </td>
             <td>
               <AvailableChannels channels={typeChannels} effectiveChannel={effectiveChannel?.channel as Channel} />
             </td>
@@ -116,9 +127,7 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
                   size="compact"
                   type="tertiary"
                   key={`${subscription.typeId}`}
-                  onClick={() => {
-                    props.onUnsubscribe(subscription.typeId);
-                  }}
+                  onClick={() => onUnsubscribe(subscription.typeId)}
                   testId="unsubscribe-button"
                 >
                   Unsubscribe
@@ -136,14 +145,10 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
 
 const UnsubscribeMessage = (): JSX.Element => {
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
-  return (
-    <>
-      {contact?.contactEmail ? (
-        <a href={`${window.location.pathname}#contactSupport`}>Contact support to unsubscribe</a>
-      ) : (
-        'Contact support to unsubscribe'
-      )}
-    </>
+  return contact?.contactEmail ? (
+    <a href={`${window.location.pathname}#contactSupport`}>Contact support to unsubscribe</a>
+  ) : (
+    <>'Contact support to unsubscribe'</>
   );
 };
 

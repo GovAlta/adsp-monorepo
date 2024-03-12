@@ -13,7 +13,7 @@ export interface Form {
   definition: FormDefinition;
   id: string;
   formDraftUrl: string;
-  applicant: Subscriber;
+  applicant?: Subscriber;
   anonymousApplicant: boolean;
   created: Date;
   createdBy: { id: string; name: string };
@@ -25,7 +25,6 @@ export interface Form {
   status: FormStatus;
   data: Record<string, unknown>;
   files: Record<string, AdspId>;
-  submissionId?: string;
 }
 
 export interface FormCriteria {

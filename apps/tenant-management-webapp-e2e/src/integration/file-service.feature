@@ -65,20 +65,7 @@ Feature: File service
       | Request Endpoint                                           | Status Code |
       | /configuration/v2/configuration/platform/file-service?core | 200         |
 
-  @REQ_CS-2037 @regression @api
-  Scenario Outline: As a developer, I can query files by last accessed time criteria, so I can file stale files
-    When a developer of a GoA digital service can query files by last accessed time criteria with "<Request Endpoint>" for before yesterday
-    Then "<Status Code>" is returned after file retention be set.
-    Then check the file data before yesterday.
-    When a developer of a GoA digital service can query files by last accessed time criteria with "<Request Endpoint>" for after month ago
-    Then "<Status Code>" is returned after file retention be set.
-    Then check the file data with in recent 30 days.
-
-    Examples:
-      | Request Endpoint | Status Code |
-      | /file/v1/files/  | 200         |
-
-  @TEST_CS-2305 @REQ_CS-2037 @regression  @api
+  @TEST_CS-2305 @REQ_CS-2037 @regression @api
   Scenario Outline: As a developer, I can query files by last accessed time criteria, so I can file stale files
     Given a service owner user is on Files overview page
     When the user selects "Uploaded files" tab for "File"
@@ -137,16 +124,14 @@ Feature: File service
     When the user clicks Delete button on file type modal
     Then the user "should not view" the file type of "autotest-addEditDelete", "Protected C", "10"
 
-  # TODO: This is broken after removal of the file service specific 'feedback zone'; re-enable after feedback zone implementation.
-  @FileTypes @regression @ignore
+  @FileTypes @regression
   Scenario: As a tenant admin, I cannot add a file type with the same name as names of the existing file types
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
     Then the user views file types page
     When the user clicks Add file type button on file types page
     When the user enters "autotest-type6" on Add file type modal
-    And the user clicks Save button on Add file type modal
-    Then the user views an error message for duplicated file name
+    Then the user views an error message for duplicated file name for "autotest-type6" in Add file modal
 
   @accessibility @regression
   Scenario: As a tenant admin, I can use file pages without any critical or serious accessibility issues

@@ -118,15 +118,6 @@ export const Exports = styled.div`
     margin-top: 10px;
     margin-bottom: -10px;
   }
-
-  .middle-align {
-    margin-top: 10px;
-  }
-
-  .info-circle {
-    margin: 5px 0 0 5px;
-  }
-
   .button-style {
     text-align-last: end;
     font-size: 18px;
@@ -148,7 +139,7 @@ export const Exports = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 10px;
+    margin-top: 5px;
   }
 
   .small-close-button {

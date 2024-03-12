@@ -121,7 +121,7 @@ When(
     configurationObj
       .addConfigurationDefinitionModalDescField()
       .shadow()
-      .find('.goa-textarea')
+      .find('textarea')
       .clear({ force: true })
       .type(desc, { force: true });
   }
@@ -209,7 +209,7 @@ When('the user enters {string} in description in configuration definition modal'
   configurationObj
     .addConfigurationDefinitionModalDescField()
     .shadow()
-    .find('.goa-textarea')
+    .find('textarea')
     .clear({ force: true })
     .type(desc, { force: true });
 });
@@ -288,7 +288,7 @@ Given('a tenant admin user is on configuration revisions page', function () {
 });
 
 When('the user selects {string} from select definition dropdown', function (definition) {
-  configurationObj.selectDefinitionDropdown().shadow().find('goa-input').click({ force: true });
+  configurationObj.selectDefinitionDropdown().shadow().find('input').click({ force: true });
   configurationObj.selectDefinitionDropdown().shadow().find('li').contains(definition).click({ force: true });
   cy.wait(1000);
 });

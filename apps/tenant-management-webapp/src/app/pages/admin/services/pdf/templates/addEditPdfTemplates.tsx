@@ -54,14 +54,14 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       onClose();
       setSpinner(false);
     }
-  }, [templates]);
+  }, [templates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     setTemplate(initialValue);
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { errors, validators } = useValidators(
     'name',
@@ -171,11 +171,13 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 width="100%"
                 testId="pdf-template-description"
                 aria-label="pdf-template-description"
-                onChange={(name, value) => {
+                onKeyPress={(name, value) => {
                   validators.remove('description');
                   validators['description'].check(value);
                   setTemplate({ ...template, description: value });
                 }}
+                // eslint-disable-next-line
+                onChange={() => {}}
               />
 
               <HelpText>

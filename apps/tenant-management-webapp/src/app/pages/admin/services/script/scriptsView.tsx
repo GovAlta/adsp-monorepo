@@ -61,7 +61,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { scripts } = useSelector((state: RootState) => state.scriptService);
   const { errors, validators } = useValidators(
@@ -80,13 +80,21 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
       reset();
       setOpenAddScript(true);
     }
-  }, [activeEdit]);
+  }, [activeEdit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => {
     setTestInput(getDefaultTestInput());
     setSelectedScript(defaultScript);
     setOpenAddScript(false);
     setShowScriptEditForm(false);
+    validators.clear();
+  };
+
+  const openEditorOnAdd = (script) => {
+    script.testInputs = testInput;
+    setOpenAddScript(false);
+    setSelectedScript(script);
+    setShowScriptEditForm(true);
     validators.clear();
   };
 
@@ -111,6 +119,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setSelectedScript(script);
     setShowScriptEditForm(true);
   };
+
   const onNameChange = (value) => {
     validators.remove('name');
     const validations = {
@@ -160,6 +169,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
         onCancel={() => {
           reset();
         }}
+        openEditorOnAdd={openEditorOnAdd}
         onSave={saveScript}
       />
 
@@ -168,14 +178,12 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           {/* Hides body overflow when the modal is up */}
           <BodyGlobalStyles hideOverflow={showScriptEditForm} />
           <ModalContent>
-
             <OuterNotificationTemplateEditorContainer>
               <TabletMessage goBack={goBack} />
 
               <HideTablet>
                 <ScriptPanelContainer>
                   <ScriptEditor
-                  
                     name={name}
                     description={description}
                     scriptStr={script}

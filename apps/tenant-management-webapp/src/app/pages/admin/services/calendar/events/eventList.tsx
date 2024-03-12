@@ -88,31 +88,23 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
   useEffect(() => {}, [indicator]);
 
   if (indicator?.show) {
-    return (
-      <>
-        <GoASkeleton type="text" key={1} />
-      </>
-    );
+    return <GoASkeleton type="text" key={1} />;
   }
 
-  return (
-    <>
-      {next && (
-        <LoadMoreWrapper>
-          <GoAButton
-            testId="calendar-event-load-more-btn"
-            key="calendar-event-load-more-btn"
-            type="tertiary"
-            onClick={() => {
-              dispatch(FetchEventsByCalendar(calendarName, next));
-            }}
-          >
-            Load more
-          </GoAButton>
-        </LoadMoreWrapper>
-      )}
-    </>
-  );
+  return next ? (
+    <LoadMoreWrapper>
+      <GoAButton
+        testId="calendar-event-load-more-btn"
+        key="calendar-event-load-more-btn"
+        type="tertiary"
+        onClick={() => {
+          dispatch(FetchEventsByCalendar(calendarName, next));
+        }}
+      >
+        Load more
+      </GoAButton>
+    </LoadMoreWrapper>
+  ) : null;
 };
 
 const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
@@ -160,6 +152,7 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
             <EventDetailsActionsWrapper>
               <GoAContextMenuIcon
                 type={showDetails ? 'eye-off' : 'eye'}
+                title="Toggle details"
                 onClick={() => setShowDetails(!showDetails)}
                 testId="directory-toggle-details-visibility"
               />

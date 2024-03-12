@@ -39,8 +39,9 @@ When('the user clicks Add definition button on form definitions page', function 
 });
 
 When('the user enters {string}, {string} in Add form definition modal', function (name, description) {
+  cy.viewport(1920, 1080);
   formObj.addDefinitionNameTextField().shadow().find('input').clear().type(name, { force: true, delay: 200 });
-  formObj.addDefinitionDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
+  formObj.addDefinitionDescriptionField().shadow().find('textarea').clear().type(description, { force: true });
 });
 
 Then('the user views the error message of {string} for Name field in Add form definition modal', function (errorMsg) {
@@ -55,7 +56,7 @@ When('the user clicks Save button in Add form definition modal', function () {
 Then('the user views form definition editor for {string}, {string}', function (name, description) {
   cy.viewport(1920, 1080);
   cy.wait(1000);
-  formObj.editorDefinitionNameValue().should('have.text', name);
+  formObj.editorDefinitionNameValue().should('contain.text', name);
   formObj.editorDefinitionDescriptionValue().should('contain.text', description);
 });
 
@@ -69,7 +70,6 @@ When(
       cy.wait(500);
       formObj
         .editorCheckboxesTables()
-        .shadow()
         .find('goa-checkbox')
         .shadow()
         .find('.goa-checkbox-container')
@@ -99,7 +99,6 @@ When(
           const applicantRoleName = applicantClientRoleStringArray[applicantClientRoleStringArray.length - 1];
           formObj
             .editorClientRolesTable(clientName)
-            .shadow()
             .find('.role-name')
             .contains(applicantRoleName)
             .next()
@@ -112,7 +111,6 @@ When(
         } else {
           formObj
             .editorRolesTable()
-            .shadow()
             .find('.role-name')
             .contains(applicantRoles[i].trim())
             .next()
@@ -143,7 +141,6 @@ When(
           const clerkRoleName = clerkClientRoleStringArray[clerkClientRoleStringArray.length - 1];
           formObj
             .editorClientRolesTable(clientName)
-            .shadow()
             .find('.role-name')
             .contains(clerkRoleName)
             .next()
@@ -157,7 +154,6 @@ When(
         } else {
           formObj
             .editorRolesTable()
-            .shadow()
             .find('.role-name')
             .contains(clerkRoles[i].trim())
             .next()
@@ -189,7 +185,6 @@ When(
           const assessorRoleName = assessorClientRoleStringArray[assessorClientRoleStringArray.length - 1];
           formObj
             .editorClientRolesTable(clientName)
-            .shadow()
             .find('.role-name')
             .contains(assessorRoleName)
             .next()
@@ -204,7 +199,6 @@ When(
         } else {
           formObj
             .editorRolesTable()
-            .shadow()
             .find('.role-name')
             .contains(assessorRoles[i].trim())
             .next()
@@ -344,7 +338,7 @@ When('the user enters {string}, {string} in Edit definition modal', function (na
   formObj
     .definitionEditorEditDefinitionModalDescriptionField()
     .shadow()
-    .find('.goa-textarea')
+    .find('textarea')
     .clear()
     .type(description, { force: true });
 });
@@ -369,7 +363,6 @@ Then(
       const applicantRoles = applicantRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Applicant roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -392,7 +385,6 @@ Then(
     } else {
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Applicant roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
@@ -410,7 +402,6 @@ Then(
       const clerkRoles = clerkRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Clerk roles"]')
         .then((cRoles) => {
           for (let i = 0; i < cRoles.length; i++) {
@@ -433,7 +424,6 @@ Then(
     } else {
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Clerk roles"]')
         .then((cRoles) => {
           for (let i = 0; i < cRoles.length; i++) {
@@ -451,7 +441,6 @@ Then(
       const assessorRoles = assessorRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Assessor roles"]')
         .then((assRoles) => {
           for (let i = 0; i < assRoles.length; i++) {
@@ -474,7 +463,6 @@ Then(
     } else {
       formObj
         .definitionEditorRolesTables()
-        .shadow()
         .find('goa-checkbox[data-testid*="Assessor roles"]')
         .then((assRoles) => {
           for (let i = 0; i < assRoles.length; i++) {
