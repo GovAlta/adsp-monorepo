@@ -1,8 +1,8 @@
 import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { Update } from '@core-services/core-common';
-import { Task, TaskAssignment, TaskPriority } from './types';
+import { TaskResponse, mapTask } from './mapper';
 import { TaskEntity } from './model';
-import { mapTask } from './router';
+import { Task, TaskAssignment, TaskPriority } from './types';
 
 const taskSchema = {
   type: 'object',
@@ -185,7 +185,7 @@ function mapContext(task: Task): Record<string, string | number | boolean> {
     queueName: task.queue.name,
     definitionNamespace: task.definition?.namespace,
     definitionName: task.definition?.name,
-    recordId: task.recordId,
+    recordId: task.recordId?.toString(),
     assignedTo: task.assignment?.assignedTo?.id,
   };
 }
@@ -197,92 +197,117 @@ function mapUser({ id, name }: User): Record<string, unknown> {
   };
 }
 
-export const taskCreated = (apiId: AdspId, user: User, task: TaskEntity): DomainEvent => ({
-  tenantId: task.tenantId,
-  name: TASK_CREATED,
-  timestamp: task.createdOn,
-  correlationId: task.id,
-  context: mapContext(task),
-  payload: {
-    task: mapTask(apiId, task),
-    createdBy: mapUser(user),
-  },
-});
+function getCorrelationId(task: TaskResponse) {
+  return task.recordId?.toString() || task.urn;
+}
 
-export const taskUpdated = (apiId: AdspId, user: User, task: TaskEntity, update: Update<Task>): DomainEvent => ({
-  tenantId: task.tenantId,
-  name: TASK_UPDATED,
-  timestamp: new Date(),
-  correlationId: task.id,
-  context: mapContext(task),
-  payload: {
-    task: mapTask(apiId, task),
-    update,
-    updatedBy: mapUser(user),
-  },
-});
+export const taskCreated = (apiId: AdspId, user: User, task: TaskEntity): DomainEvent => {
+  const taskResponse = mapTask(apiId, task);
+  return {
+    tenantId: task.tenantId,
+    name: TASK_CREATED,
+    timestamp: task.createdOn,
+    correlationId: getCorrelationId(taskResponse),
+    context: mapContext(task),
+    payload: {
+      task: taskResponse,
+      createdBy: mapUser(user),
+    },
+  };
+};
 
-export const taskPrioritySet = (apiId: AdspId, user: User, task: TaskEntity, from: TaskPriority): DomainEvent => ({
-  tenantId: task.tenantId,
-  name: TASK_PRIORITY_SET,
-  timestamp: new Date(),
-  correlationId: task.id,
-  context: mapContext(task),
-  payload: {
-    task: mapTask(apiId, task),
-    from: TaskPriority[from],
-    to: TaskPriority[task.priority],
-    updatedBy: mapUser(user),
-  },
-});
+export const taskUpdated = (apiId: AdspId, user: User, task: TaskEntity, update: Update<Task>): DomainEvent => {
+  const taskResponse = mapTask(apiId, task);
+  return {
+    tenantId: task.tenantId,
+    name: TASK_UPDATED,
+    timestamp: new Date(),
+    correlationId: getCorrelationId(taskResponse),
+    context: mapContext(task),
+    payload: {
+      task: taskResponse,
+      update,
+      updatedBy: mapUser(user),
+    },
+  };
+};
 
-export const taskAssigned = (apiId: AdspId, user: User, task: TaskEntity, from: TaskAssignment): DomainEvent => ({
-  tenantId: task.tenantId,
-  name: TASK_ASSIGNED,
-  timestamp: task.assignment?.assignedOn || new Date(),
-  correlationId: task.id,
-  context: mapContext(task),
-  payload: {
-    task: mapTask(apiId, task),
-    from,
-    to: task.assignment,
-    assignedBy: mapUser(user),
-  },
-});
+export const taskPrioritySet = (apiId: AdspId, user: User, task: TaskEntity, from: TaskPriority): DomainEvent => {
+  const taskResponse = mapTask(apiId, task);
+  return {
+    tenantId: task.tenantId,
+    name: TASK_PRIORITY_SET,
+    timestamp: new Date(),
+    correlationId: getCorrelationId(taskResponse),
+    context: mapContext(task),
+    payload: {
+      task: taskResponse,
+      from: TaskPriority[from],
+      to: TaskPriority[task.priority],
+      updatedBy: mapUser(user),
+    },
+  };
+};
 
-export const taskStarted = (apiId: AdspId, user: User, task: TaskEntity): DomainEvent => ({
-  tenantId: task.tenantId,
-  name: TASK_STARTED,
-  timestamp: task.startedOn,
-  correlationId: task.id,
-  context: mapContext(task),
-  payload: {
-    task: mapTask(apiId, task),
-    startedBy: mapUser(user),
-  },
-});
+export const taskAssigned = (apiId: AdspId, user: User, task: TaskEntity, from: TaskAssignment): DomainEvent => {
+  const taskResponse = mapTask(apiId, task);
+  return {
+    tenantId: task.tenantId,
+    name: TASK_ASSIGNED,
+    timestamp: task.assignment?.assignedOn || new Date(),
+    correlationId: getCorrelationId(taskResponse),
+    context: mapContext(task),
+    payload: {
+      task: taskResponse,
+      from,
+      to: task.assignment,
+      assignedBy: mapUser(user),
+    },
+  };
+};
 
-export const taskCompleted = (apiId: AdspId, user: User, task: TaskEntity): DomainEvent => ({
-  tenantId: task.tenantId,
-  name: TASK_COMPLETED,
-  timestamp: task.endedOn,
-  correlationId: task.id,
-  context: mapContext(task),
-  payload: {
-    task: mapTask(apiId, task),
-    completedBy: mapUser(user),
-  },
-});
+export const taskStarted = (apiId: AdspId, user: User, task: TaskEntity): DomainEvent => {
+  const taskResponse = mapTask(apiId, task);
+  return {
+    tenantId: task.tenantId,
+    name: TASK_STARTED,
+    timestamp: task.startedOn,
+    correlationId: getCorrelationId(taskResponse),
+    context: mapContext(task),
+    payload: {
+      task: taskResponse,
+      startedBy: mapUser(user),
+    },
+  };
+};
 
-export const taskCancelled = (apiId: AdspId, user: User, task: TaskEntity, reason?: string): DomainEvent => ({
-  tenantId: task.tenantId,
-  name: TASK_CANCELLED,
-  timestamp: task.endedOn,
-  correlationId: task.id,
-  context: mapContext(task),
-  payload: {
-    task: mapTask(apiId, task),
-    cancelledBy: mapUser(user),
-    reason,
-  },
-});
+export const taskCompleted = (apiId: AdspId, user: User, task: TaskEntity): DomainEvent => {
+  const taskResponse = mapTask(apiId, task);
+  return {
+    tenantId: task.tenantId,
+    name: TASK_COMPLETED,
+    timestamp: task.endedOn,
+    correlationId: getCorrelationId(taskResponse),
+    context: mapContext(task),
+    payload: {
+      task: taskResponse,
+      completedBy: mapUser(user),
+    },
+  };
+};
+
+export const taskCancelled = (apiId: AdspId, user: User, task: TaskEntity, reason?: string): DomainEvent => {
+  const taskResponse = mapTask(apiId, task);
+  return {
+    tenantId: task.tenantId,
+    name: TASK_CANCELLED,
+    timestamp: task.endedOn,
+    correlationId: getCorrelationId(taskResponse),
+    context: mapContext(task),
+    payload: {
+      task: taskResponse,
+      cancelledBy: mapUser(user),
+      reason,
+    },
+  };
+};

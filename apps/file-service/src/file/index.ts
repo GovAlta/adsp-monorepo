@@ -1,6 +1,13 @@
 import { Application } from 'express';
 import { Logger } from 'winston';
-import { AdspId, ConfigurationService, EventService, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  ConfigurationService,
+  EventService,
+  TenantService,
+  TokenProvider,
+  adspId,
+} from '@abgov/adsp-service-sdk';
 import { Repositories } from './repository';
 import { createFileRouter } from './router';
 import { createFileJobs, FileServiceWorkItem } from './job';
@@ -29,12 +36,13 @@ interface FileMiddlewareProps extends Repositories {
   scanService: ScanService;
 }
 
-export const applyFileMiddleware = (app: Application, { ...props }: FileMiddlewareProps): Application => {
-  const fileRouter = createFileRouter(props);
+export const applyFileMiddleware = (app: Application, props: FileMiddlewareProps): Application => {
+  const apiId = adspId`${props.serviceId}:v1`;
 
-  createFileJobs(props);
-
+  const fileRouter = createFileRouter({ ...props, apiId });
   app.use('/file/v1', fileRouter);
+
+  createFileJobs({ ...props, apiId });
 
   return app;
 };
