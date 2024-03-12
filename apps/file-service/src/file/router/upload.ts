@@ -5,7 +5,7 @@ import * as multer from 'multer';
 import * as validFilename from 'valid-filename';
 import { Logger } from 'winston';
 import { ServiceConfiguration } from '../configuration';
-import { FileEntity, FileTypeEntity } from '../model';
+import { FileEntity } from '../model';
 import { FileRepository } from '../repository';
 import { FileStorageProvider } from '../storage';
 
@@ -14,7 +14,6 @@ declare global {
   namespace Express {
     interface Request {
       fileEntity?: FileEntity;
-      fileTypeEntity?: FileTypeEntity;
     }
   }
 }

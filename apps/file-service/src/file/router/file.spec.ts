@@ -70,7 +70,7 @@ describe('file router', () => {
 
   it('can create router', () => {
     const router = createFileRouter({
-      serviceId,
+      apiId,
       logger: loggerMock,
       storageProvider: storageProviderMock,
       fileRepository: fileRepositoryMock,
@@ -448,7 +448,7 @@ describe('file router', () => {
 
   describe('deleteFile', () => {
     it('can create handler', () => {
-      const handler = deleteFile(loggerMock, eventServiceMock);
+      const handler = deleteFile(apiId, loggerMock, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -470,7 +470,7 @@ describe('file router', () => {
 
       fileRepositoryMock.save.mockResolvedValueOnce(file);
 
-      const handler = deleteFile(loggerMock, eventServiceMock);
+      const handler = deleteFile(apiId, loggerMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
     });
