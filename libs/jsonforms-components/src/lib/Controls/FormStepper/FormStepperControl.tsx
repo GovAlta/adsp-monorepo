@@ -31,6 +31,55 @@ export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLa
   data: any;
 }
 
+export const resolveLabelFromScope = (scope: string) => {
+  const lastSegment = scope.split('/').pop();
+  if (lastSegment) {
+    return (
+      lastSegment.charAt(0).toUpperCase() +
+      lastSegment
+        .slice(1)
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+    );
+  }
+  return '';
+};
+
+export const getFormFieldValue = (scope: string, data: object) => {
+  if (data !== undefined) {
+    const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let currentValue: any = data;
+    for (const key of pathArray) {
+      if (currentValue[key] === undefined) {
+        return '';
+      }
+      currentValue = currentValue[key];
+    }
+    return typeof currentValue === 'object' ? '' : currentValue;
+  } else {
+    return '';
+  }
+};
+
+export const renderFormFields = (elements: UISchemaElement[] | (Category | Categorization)[], data: object) =>
+  elements.map((element, index) => {
+    // const clonedElement = element;
+    const clonedElement = JSON.parse(JSON.stringify(element));
+    if (clonedElement.type === 'Control' && clonedElement.scope) {
+      const label = resolveLabelFromScope(clonedElement.scope);
+      const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
+      return (
+        <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
+          <strong>{label}:</strong> {value}
+        </GridItem>
+      );
+    } else if (clonedElement?.elements) {
+      return <React.Fragment key={index}>{renderFormFields(clonedElement.elements, data)}</React.Fragment>;
+    }
+    return null;
+  });
+
 export const FormStepper = ({
   uischema,
   data,
@@ -134,49 +183,6 @@ export const FormStepper = ({
     );
   };
 
-  const resolveLabelFromScope = (scope: string) => {
-    const lastSegment = scope.split('/').pop()!;
-    return (
-      lastSegment.charAt(0).toUpperCase() +
-      lastSegment
-        .slice(1)
-        .replace(/([A-Z])/g, ' $1')
-        .trim()
-    );
-  };
-
-  const getFormFieldValue = (scope: string) => {
-    if (data) {
-      const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
-      let currentValue = data;
-      for (const key of pathArray) {
-        if (currentValue[key] === undefined) {
-          return '';
-        }
-        currentValue = currentValue[key];
-      }
-      return typeof currentValue === 'object' ? '' : currentValue;
-    } else {
-      return '';
-    }
-  };
-
-  const renderElements = (elements: UISchemaElement[] | (Category | Categorization)[]) =>
-    elements.map((element, index) => {
-      const clonedElement = JSON.parse(JSON.stringify(element));
-      if (clonedElement.type === 'Control' && clonedElement.scope) {
-        const label = resolveLabelFromScope(clonedElement.scope);
-        const value = getFormFieldValue(clonedElement.scope).toString();
-        return (
-          <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
-            <strong>{label}:</strong> {value}
-          </GridItem>
-        );
-      } else if (clonedElement?.elements) {
-        return <React.Fragment key={index}>{renderElements(clonedElement.elements)}</React.Fragment>;
-      }
-      return null;
-    });
   const handleEdit = (index: number) => {
     setPage(index + 1);
   };
@@ -223,7 +229,7 @@ export const FormStepper = ({
                         <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
                         <Anchor onClick={() => handleEdit(index)}>Edit</Anchor>
                       </ReviewItemHeader>
-                      <Grid>{renderElements(category.elements)}</Grid>
+                      <Grid>{renderFormFields(category.elements, data)}</Grid>
                     </ReviewItemSection>
                   );
                 })}
@@ -323,3 +329,5 @@ export const flattenObject = (obj: Record<string, string>): Record<string, strin
 };
 
 export const FormStepperControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormStepper)));
+
+export default FormStepper;
