@@ -214,7 +214,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
             width="100%"
             testId="notice-form-start-date-picker"
             onChange={(name, value) => {
-              setStartDate(new Date(value.toLocaleString()));
+              setStartDate(new Date(value));
             }}
           />
         </GoAFormItem>
@@ -226,7 +226,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
             width="100%"
             testId="notice-form-end-date-picker"
             onChange={(name, value) => {
-              setEndDate(new Date(value.toLocaleString()));
+              setEndDate(new Date(value));
             }}
           />
         </GoAFormItem>
