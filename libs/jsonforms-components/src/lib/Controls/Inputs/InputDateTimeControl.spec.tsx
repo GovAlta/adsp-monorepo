@@ -1,4 +1,3 @@
-import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GoAInputDateProps, GoADateInput } from './InputDateControl';
@@ -19,22 +18,14 @@ describe('input date time controls', () => {
     },
   };
 
-  const uiSchema = (min: string, max: string): ControlElement => {
-    return {
-      type: 'Control',
-      scope: '#/properties/theDate',
-      label: 'Date control test',
-      options: {
-        componentProps: {
-          min: min,
-          max: max,
-        },
-      },
-    };
+  const uiSchema: ControlElement = {
+    type: 'Control',
+    scope: '#/properties/theDate',
+    label: 'Date control test',
   };
 
   const staticProps: GoAInputDateProps = {
-    uischema: uiSchema('2023-02-01', '2025-02-01'),
+    uischema: uiSchema,
     schema: dateSchema,
     rootSchema: dateSchema,
     handleChange: (path, value) => {},
@@ -51,15 +42,15 @@ describe('input date time controls', () => {
 
   const handleChangeMock = jest.fn(() => Promise.resolve());
 
-  describe('date input control tests', () => {
+  describe('date time input control tests', () => {
     it('can render date input control', () => {
-      const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025-02-01') };
+      const props = { ...staticProps, uischema: uiSchema };
       const component = render(GoADateInput(props));
       expect(component.getByTestId('myDateId-input')).toBeInTheDocument();
     });
 
     it('can trigger keyPress event', async () => {
-      const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025-02-01') };
+      const props = { ...staticProps, uischema: uiSchema };
       const component = render(GoADateInput(props));
 
       const input = component.getByTestId('myDateId-input');
@@ -85,6 +76,7 @@ describe('input date time controls', () => {
       const input = component.getByTestId('myDateId-input');
       const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
 
+      expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
       expect(handleChangeMock.mock.calls.length).toBe(1);
     });

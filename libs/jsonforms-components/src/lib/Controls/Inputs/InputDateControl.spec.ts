@@ -1,4 +1,3 @@
-import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GoAInputDateProps, GoADateInput } from './InputDateControl';
@@ -85,6 +84,7 @@ describe('input date controls', () => {
       const input = component.getByTestId('myDateId-input');
       const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
 
+      expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
       expect(handleChangeMock.mock.calls.length).toBe(1);
     });

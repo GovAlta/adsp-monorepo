@@ -7,7 +7,7 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { isNotKeyPressTabOrShift, isRequiredAndHasNoData } from '../../util/inputControlUtils';
 
-type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
+export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, errors, path, handleChange, schema, label } = props;

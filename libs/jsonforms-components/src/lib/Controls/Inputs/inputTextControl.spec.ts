@@ -1,20 +1,18 @@
-import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GoAInputTextProps, GoAInputText } from './InputTextControl';
 import { ControlElement } from '@jsonforms/core';
+import exp from 'constants';
 
 describe('Input Text Control tests', () => {
-  const textBoxUiSchema = (): ControlElement => {
-    return {
-      type: 'Control',
-      scope: '#/properties/firstName',
-      label: 'My First name',
-    };
+  const textBoxUiSchema: ControlElement = {
+    type: 'Control',
+    scope: '#/properties/firstName',
+    label: 'My First name',
   };
 
   const staticProps: GoAInputTextProps = {
-    uischema: textBoxUiSchema(),
+    uischema: textBoxUiSchema,
     schema: {},
     rootSchema: {},
     handleChange: (path, value) => {},
@@ -68,6 +66,7 @@ describe('Input Text Control tests', () => {
       const input = component.getByTestId('firstName-input');
       const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
 
+      expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
       expect(handleChangeMock.mock.calls.length).toBe(1);
     });

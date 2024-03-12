@@ -1,21 +1,18 @@
-import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GoAInputNumberProps, GoANumberInput } from './InputNumberControl';
 import { ControlElement } from '@jsonforms/core';
 
 describe('input number controls', () => {
-  const textBoxUiSchema = (): ControlElement => {
-    return {
-      type: 'Control',
-      scope: '#/properties/age',
-      label: 'Age',
-    };
+  const textBoxUiSchema: ControlElement = {
+    type: 'Control',
+    scope: '#/properties/age',
+    label: 'Age',
   };
 
   const regExNumbers = new RegExp('^\\d+$');
   const staticProps: GoAInputNumberProps = {
-    uischema: textBoxUiSchema(),
+    uischema: textBoxUiSchema,
     schema: {},
     rootSchema: {},
     handleChange: (path, value) => {},
@@ -91,6 +88,7 @@ describe('input number controls', () => {
       const input = component.getByTestId('age-input');
       const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 904 });
 
+      expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
       expect(handleChangeMock.mock.calls.length).toBe(1);
     });
