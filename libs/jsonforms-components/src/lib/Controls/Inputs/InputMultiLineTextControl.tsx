@@ -14,7 +14,8 @@ import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
+import { isNotKeyPressTabOrShift } from '../../util/inputControlUtils';
+export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
   // eslint-disable-next-line
@@ -38,7 +39,7 @@ export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (!(key === 'Tab' || key === 'Shift')) {
+        if (isNotKeyPressTabOrShift(key)) {
           if (autoCapitalize === true) {
             handleChange(path, value.toUpperCase());
           } else {
