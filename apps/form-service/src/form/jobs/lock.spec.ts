@@ -6,6 +6,8 @@ import { FormStatus } from '../types';
 import { createLockJob } from './lock';
 
 describe('lock', () => {
+  const serviceId = adspId`urn:ads:platform:form-service`;
+  const apiId = adspId`${serviceId}:v1`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const loggerMock = {
     debug: jest.fn(),
@@ -94,6 +96,7 @@ describe('lock', () => {
 
   it('can create job', async () => {
     const job = createLockJob({
+      apiId,
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
@@ -104,6 +107,7 @@ describe('lock', () => {
 
   it('can lock form', async () => {
     const job = createLockJob({
+      apiId,
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
@@ -128,6 +132,7 @@ describe('lock', () => {
 
   it('can handle repository error', async () => {
     const job = createLockJob({
+      apiId,
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,

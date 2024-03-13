@@ -34,8 +34,13 @@ components:
           type: string
         id:
           type: string
-        definitionId:
-          type: string
+        definition:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
         anonymousApplicant:
           type: boolean
         applicant:
