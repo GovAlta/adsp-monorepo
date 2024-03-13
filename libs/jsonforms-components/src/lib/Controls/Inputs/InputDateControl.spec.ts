@@ -94,5 +94,25 @@ describe('input date controls', () => {
       expect(pressed).toBe(true);
       expect(handleChangeMock.mock.calls.length).toBe(1);
     });
+
+    it('can disable the input by setting readOnly to true', async () => {
+      const props = {
+        ...staticProps,
+        handleChange: handleChangeMock,
+        options: {
+          componentProps: {
+            readOnly: true,
+          },
+        },
+      };
+      const component = render(GoADateInput(props));
+
+      const input = component.getByTestId('myDateId-input');
+      const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
+      handleChangeMock();
+      expect(props.handleChange).toBeCalled();
+      expect(pressed).toBe(true);
+      expect(handleChangeMock.mock.calls.length).toBe(0);
+    });
   });
 });

@@ -14,6 +14,25 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, errors, handleChange, schema, label } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
+  const readOnly = uischema?.options?.componentProps?.readOnly === true;
+
+  const onKeyPressHandler = (name: string, value: string, key: string, readOnly: boolean) => {
+    if (readOnly) return;
+
+    if (isNotKeyPressTabOrShift(key)) {
+      value = isValidDate(value) ? new Date(value)?.toISOString() : '';
+      handleChange(path, value);
+    }
+  };
+
+  const onBlurHandler = (name: string, value: string, readOnly: boolean) => {
+    if (readOnly) return;
+
+    if (isRequiredAndHasNoData(props as ControlProps)) {
+      value = isValidDate(value) ? new Date(value).toISOString() : '';
+      handleChange(path, value);
+    }
+  };
 
   return (
     <GoAInputDateTime
@@ -28,16 +47,10 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
       // side effect that causes the validation to render when it shouldnt.
       onChange={(name, value) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (isNotKeyPressTabOrShift(key)) {
-          value = isValidDate(value) ? new Date(value)?.toISOString() : '';
-          handleChange(path, value);
-        }
+        onKeyPressHandler(name, value, key, readOnly);
       }}
       onBlur={(name: string, value: string) => {
-        if (isRequiredAndHasNoData(props as ControlProps)) {
-          value = isValidDate(value) ? new Date(value).toISOString() : '';
-          handleChange(path, value);
-        }
+        onBlurHandler(name, value, readOnly);
       }}
       {...uischema?.options?.componentProps}
     />

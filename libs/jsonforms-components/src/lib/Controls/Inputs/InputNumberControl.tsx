@@ -20,6 +20,30 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const errorsFormInput = checkFieldValidity(props as ControlProps);
+  const readOnly = uischema?.options?.componentProps?.readOnly === true;
+  const onKeyPressHandler = (name: string, value: string, key: string, readOnly: boolean) => {
+    if (isNotKeyPressTabOrShift(key)) {
+      if (readOnly) return;
+
+      let newValue: string | number = '';
+      if (value !== '') {
+        newValue = +value;
+      }
+      handleChange(path, newValue);
+    }
+  };
+
+  const onBlurHandler = (name: string, value: string, readOnly: boolean) => {
+    if (isRequiredAndHasNoData(props as ControlProps)) {
+      if (readOnly) return;
+
+      let newValue: string | number = '';
+      if (value !== '') {
+        newValue = +value;
+      }
+      handleChange(path, newValue);
+    }
+  };
 
   return (
     <GoAInput
@@ -35,22 +59,10 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (isNotKeyPressTabOrShift(key)) {
-          let newValue: string | number = '';
-          if (value !== '') {
-            newValue = +value;
-          }
-          handleChange(path, newValue);
-        }
+        onKeyPressHandler(name, value, key, readOnly);
       }}
       onBlur={(name: string, value: string) => {
-        if (isRequiredAndHasNoData(props as ControlProps)) {
-          let newValue: string | number = '';
-          if (value !== '') {
-            newValue = +value;
-          }
-          handleChange(path, newValue);
-        }
+        onBlurHandler(name, value, readOnly);
       }}
       //Dont trigger the handleChange event on the onChange event as it will cause
       //issue with the error message from displaying, use keyPress or the onBlur event instead

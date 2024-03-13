@@ -26,6 +26,19 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
   const errorsFormInput = checkFieldValidity(props as ControlProps);
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
+  const readOnly = uischema?.options?.componentProps?.readOnly === true;
+
+  const onKeyPressHandler = (name: string, value: string, key: string, readOnly: boolean) => {
+    if (readOnly) return;
+
+    if (isNotKeyPressTabOrShift(key)) {
+      if (autoCapitalize === true) {
+        handleChange(path, value.toUpperCase());
+      } else {
+        handleChange(path, value);
+      }
+    }
+  };
 
   return (
     <GoATextArea
@@ -39,13 +52,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (isNotKeyPressTabOrShift(key)) {
-          if (autoCapitalize === true) {
-            handleChange(path, value.toUpperCase());
-          } else {
-            handleChange(path, value);
-          }
-        }
+        onKeyPressHandler(name, value, key, readOnly);
       }}
       // Dont use handleChange in the onChange event, use the keyPress or onBlur.
       // If you use it onChange along with keyPress event it will cause a

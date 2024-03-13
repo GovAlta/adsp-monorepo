@@ -16,6 +16,7 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, uischema, options);
   const errorsFormInput = checkFieldValidity(props as ControlProps);
+  const readOnly = uischema?.options?.componentProps?.readOnly === true;
 
   return (
     <GoARadioGroup
@@ -25,7 +26,10 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
       value={data}
       disabled={!enabled}
       {...appliedUiSchemaOptions}
-      onChange={(name: string, value: string) => handleChange(path, value)}
+      onChange={(name: string, value: string) => {
+        if (readOnly) return;
+        handleChange(path, value);
+      }}
       {...uischema?.options?.componentProps}
     >
       {enumData.map((value) => {

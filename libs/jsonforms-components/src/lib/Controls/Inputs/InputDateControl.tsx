@@ -57,6 +57,24 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   if (maxDate && !isValidDateFormat(maxDate)) {
     return invalidDateFormat(uischema.scope, 'Max');
   }
+  const readOnly = uischema?.options?.componentProps?.readOnly === true;
+
+  const onKeyPressHandler = (name: string, value: Date | string, key: string, readyOnly: boolean) => {
+    if (readOnly) return;
+    if (isNotKeyPressTabOrShift(key)) {
+      value = standardizeDate(value) || '';
+      handleChange(path, value);
+    }
+  };
+
+  const onBlurHandler = (name: string, value: Date | string, readOnly: boolean) => {
+    if (readOnly) return;
+
+    if (isRequiredAndHasNoData(props as ControlProps)) {
+      value = standardizeDate(value) || '';
+      handleChange(path, value);
+    }
+  };
 
   return (
     <GoAInputDate
@@ -71,16 +89,10 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
       // side effect that causes the validation to render when it shouldn't.
       onChange={(name, value) => {}}
       onKeyPress={(name: string, value: Date | string, key: string) => {
-        if (isNotKeyPressTabOrShift(key)) {
-          value = standardizeDate(value) || '';
-          handleChange(path, value);
-        }
+        onKeyPressHandler(name, value, key, readOnly);
       }}
       onBlur={(name: string, value: Date | string) => {
-        if (isRequiredAndHasNoData(props as ControlProps)) {
-          value = standardizeDate(value) || '';
-          handleChange(path, value);
-        }
+        onBlurHandler(name, value, readOnly);
       }}
       {...reformatDateProps(uischema?.options?.componentProps)}
     />

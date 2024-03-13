@@ -14,6 +14,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const errorsFormInput = checkFieldValidity(props as ControlProps);
+  const readOnly = uischema?.options?.componentProps?.readOnly === true;
 
   return (
     <GoAInputTime
@@ -35,6 +36,8 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       onChange={(name, value) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         if (isNotKeyPressTabOrShift(key)) {
+          if (readOnly) return;
+
           handleChange(path, value);
         }
       }}

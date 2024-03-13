@@ -19,6 +19,30 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
+  const readOnly = uischema?.options?.componentProps?.readOnly === true;
+
+  const onKeyPressHandler = (name: string, value: string, key: string, readOnly: boolean) => {
+    if (isNotKeyPressTabOrShift(key)) {
+      if (readOnly) return;
+      if (autoCapitalize === true) {
+        handleChange(path, value.toUpperCase());
+      } else {
+        handleChange(path, value);
+      }
+    }
+  };
+
+  const onBlurHandler = (name: string, value: string, readOnly: boolean) => {
+    if (isRequiredAndHasNoData(props as ControlProps)) {
+      if (readOnly) return;
+
+      if (autoCapitalize) {
+        handleChange(path, value.toUpperCase());
+      } else {
+        handleChange(path, value);
+      }
+    }
+  };
 
   return (
     <GoAInput
@@ -36,22 +60,10 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       // side effect that causes the validation to render when it shouldnt.
       onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (isNotKeyPressTabOrShift(key)) {
-          if (autoCapitalize === true) {
-            handleChange(path, value.toUpperCase());
-          } else {
-            handleChange(path, value);
-          }
-        }
+        onKeyPressHandler(name, value, key, readOnly);
       }}
       onBlur={(name: string, value: string) => {
-        if (isRequiredAndHasNoData(props as ControlProps)) {
-          if (autoCapitalize) {
-            handleChange(path, value.toUpperCase());
-          } else {
-            handleChange(path, value);
-          }
-        }
+        onBlurHandler(name, value, readOnly);
       }}
       {...uischema?.options?.componentProps}
     />

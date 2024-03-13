@@ -1,7 +1,6 @@
 import React from 'react';
 import { isBooleanControl, RankedTester, rankWith, ControlProps, isDescriptionHidden } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { Hidden } from '@mui/material';
 import { GoACheckbox } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
@@ -43,6 +42,11 @@ export const BooleanComponent = ({
       text = `${description} ` + (required ? ' (required)' : '');
     }
   }
+  const readOnly = uischema?.options?.componentProps?.readOnly === true;
+  const onChangeHandler = (name: string, checked: boolean, value: string, readOnly: boolean) => {
+    if (readOnly) return;
+    handleChange(path, checked);
+  };
 
   return (
     <GoACheckbox
@@ -53,7 +57,7 @@ export const BooleanComponent = ({
       name={`${path}`}
       checked={data}
       onChange={(name: string, checked: boolean, value: string) => {
-        handleChange(path, checked);
+        onChangeHandler(name, checked, value, readOnly);
       }}
       {...uischema?.options?.componentProps}
     ></GoACheckbox>
