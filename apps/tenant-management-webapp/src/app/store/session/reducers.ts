@@ -72,7 +72,7 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
         state.loadingStates[index] = action.payload;
       }
       state.loadingStates = [...state.loadingStates];
-      return state;
+      return { ...state };
     }
 
     case 'session/resourceAccess/update': {

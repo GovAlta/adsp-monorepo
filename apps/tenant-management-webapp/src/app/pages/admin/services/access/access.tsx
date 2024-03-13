@@ -26,7 +26,7 @@ export default function (): JSX.Element {
             <ServiceRoles />
           </Tab>
 
-          <Tab label="Manage tenant Idp" data-testid="service-roles-tab">
+          <Tab label="Manage ADSP IdP" data-testid="service-ADSP-idp">
             <TenantIdp />
           </Tab>
         </Tabs>

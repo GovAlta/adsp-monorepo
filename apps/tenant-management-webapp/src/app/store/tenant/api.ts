@@ -6,6 +6,10 @@ interface TenantsResponse {
   results: Tenant[];
 }
 
+interface UserIdResponse {
+  userIdInCore: string;
+}
+
 export class TenantApi {
   private http: AxiosInstance;
   constructor(config: TenantApiConfig, token: string) {
@@ -43,5 +47,16 @@ export class TenantApi {
     const url = '/api/tenant/v2/tenants';
     const { data } = await this.http.get<TenantsResponse>(url, { params: { adminEmail } });
     return data.results[0];
+  }
+
+  async fetchUserIdByEmail(email: string): Promise<string> {
+    const url = '/api/tenant/v1/user/id';
+    const { data } = await this.http.get<UserIdResponse>(url, { params: { email } });
+    return data?.userIdInCore;
+  }
+
+  async deleteUserIdpFromCore(userId: string, realm: string): Promise<void> {
+    const url = 'api/tenant/v1/user/idp';
+    await this.http.delete<UserIdResponse>(url, { params: { userId, realm } });
   }
 }
