@@ -15,9 +15,9 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { isNotKeyPressTabOrShift } from '../../util/inputControlUtils';
-export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
+export type GoAInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
-export const MultiLineText = (props: GoAInputTextProps): JSX.Element => {
+export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, config, id, enabled, uischema, path, handleChange, schema, label } = props;
 
