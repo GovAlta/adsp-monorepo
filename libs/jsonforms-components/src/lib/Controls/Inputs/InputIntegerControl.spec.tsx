@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoAInputIntegerProps, GoAInputInteger } from './InputIntegerControl';
-import { ControlElement } from '@jsonforms/core';
+import { GoAInputIntegerProps, GoAInputInteger, GoAIntegerControl } from './InputIntegerControl';
+import { ControlElement, ControlProps } from '@jsonforms/core';
 
 describe('input number controls', () => {
   const textBoxUiSchema: ControlElement = {
@@ -11,7 +11,7 @@ describe('input number controls', () => {
   };
 
   const regExNumbers = new RegExp('^\\d+$');
-  const staticProps: GoAInputIntegerProps = {
+  const staticProps: GoAInputIntegerProps & ControlProps = {
     uischema: textBoxUiSchema,
     schema: {},
     rootSchema: {},
@@ -34,6 +34,11 @@ describe('input number controls', () => {
       const props = { ...staticProps };
       const component = render(GoAInputInteger(props));
       expect(component.getByTestId('age-input')).toBeInTheDocument();
+    });
+    it('can create base control', () => {
+      const props = { ...staticProps };
+      const baseControl = render(GoAIntegerControl(props));
+      expect(baseControl).toBeDefined();
     });
   });
 
@@ -81,12 +86,11 @@ describe('input number controls', () => {
 
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-
       const component = render(GoAInputInteger(props));
-      handleChangeMock();
-
       const input = component.getByTestId('age-input');
-      const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 904 });
+      const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
+
+      handleChangeMock();
 
       expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);

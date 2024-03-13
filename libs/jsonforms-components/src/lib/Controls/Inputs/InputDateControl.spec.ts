@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoAInputDateProps, GoADateInput } from './InputDateControl';
-import { ControlElement } from '@jsonforms/core';
+import { GoAInputDateProps, GoADateInput, GoADateControl } from './InputDateControl';
+import { ControlElement, ControlProps } from '@jsonforms/core';
 
 describe('input date controls', () => {
   const theDate = {
@@ -57,6 +57,12 @@ describe('input date controls', () => {
       expect(component.getByTestId('myDateId-input')).toBeInTheDocument();
     });
 
+    it('can create base control', () => {
+      const props = { ...staticProps };
+      const baseControl = render(GoADateControl(props as ControlProps));
+      expect(baseControl).toBeDefined();
+    });
+
     it('can trigger keyPress event', async () => {
       const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025-02-01') };
       const component = render(GoADateInput(props));
@@ -79,10 +85,10 @@ describe('input date controls', () => {
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
       const component = render(GoADateInput(props));
-      handleChangeMock();
 
       const input = component.getByTestId('myDateId-input');
       const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
+      handleChangeMock();
 
       expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);

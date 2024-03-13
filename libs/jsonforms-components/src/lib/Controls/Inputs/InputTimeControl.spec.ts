@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoAInputTimeProps, GoATimeInput } from './InputTimeControl';
-import { ControlElement } from '@jsonforms/core';
+import { GoAInputTimeProps, GoATimeControl, GoATimeInput } from './InputTimeControl';
+import { ControlElement, ControlProps } from '@jsonforms/core';
 
 describe('input number controls', () => {
   const theDate = {
@@ -48,6 +48,12 @@ describe('input number controls', () => {
       const props = { ...staticProps };
       const component = render(GoATimeInput(props));
       expect(component.getByTestId('myDateId-input')).toBeInTheDocument();
+    });
+
+    it('can create base control', () => {
+      const props = { ...staticProps };
+      const baseControl = render(GoATimeControl(props as ControlProps));
+      expect(baseControl).toBeDefined();
     });
 
     it('can trigger time onKeyPress event', async () => {

@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoAInputDateProps, GoADateInput } from './InputDateControl';
-import { ControlElement } from '@jsonforms/core';
+import { GoADateTimeControl, GoAInputDateTimeProps, GoADateTimeInput } from './InputDateTimeControl';
+import { ControlElement, ControlProps } from '@jsonforms/core';
 
 describe('input date time controls', () => {
   const theDate = {
@@ -24,7 +24,7 @@ describe('input date time controls', () => {
     label: 'Date control test',
   };
 
-  const staticProps: GoAInputDateProps = {
+  const staticProps: GoAInputDateTimeProps = {
     uischema: uiSchema,
     schema: dateSchema,
     rootSchema: dateSchema,
@@ -45,13 +45,19 @@ describe('input date time controls', () => {
   describe('date time input control tests', () => {
     it('can render date input control', () => {
       const props = { ...staticProps, uischema: uiSchema };
-      const component = render(GoADateInput(props));
+      const component = render(GoADateTimeInput(props));
       expect(component.getByTestId('myDateId-input')).toBeInTheDocument();
+    });
+
+    it('can create base control', () => {
+      const props = { ...staticProps };
+      const baseControl = render(GoADateTimeControl(props as ControlProps));
+      expect(baseControl).toBeDefined();
     });
 
     it('can trigger keyPress event', async () => {
       const props = { ...staticProps, uischema: uiSchema };
-      const component = render(GoADateInput(props));
+      const component = render(GoADateTimeInput(props));
 
       const input = component.getByTestId('myDateId-input');
       const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
@@ -61,7 +67,7 @@ describe('input date time controls', () => {
 
     it('can trigger on Blur event', async () => {
       const props = { ...staticProps };
-      const component = render(GoADateInput(props));
+      const component = render(GoADateTimeInput(props));
       const input = component.getByTestId('myDateId-input');
       const blurred = fireEvent.blur(input);
 
@@ -70,11 +76,11 @@ describe('input date time controls', () => {
 
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(GoADateInput(props));
-      handleChangeMock();
+      const component = render(GoADateTimeInput(props));
 
       const input = component.getByTestId('myDateId-input');
       const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
+      handleChangeMock();
 
       expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
