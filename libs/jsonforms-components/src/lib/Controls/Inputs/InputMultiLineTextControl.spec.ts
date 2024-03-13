@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { GoAInputTextProps, GoAInputText, GoATextControl } from './InputTextControl';
+import { GoAInputMultiLineTextProps, MultiLineText, MultiLineTextControlInput } from './InputMultiLineTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 
 describe('Input Text Control tests', () => {
@@ -11,7 +11,7 @@ describe('Input Text Control tests', () => {
     label: 'My First name',
   };
 
-  const staticProps: GoAInputTextProps & ControlProps = {
+  const staticProps: GoAInputMultiLineTextProps & ControlProps = {
     uischema: textBoxUiSchema,
     schema: {},
     rootSchema: {},
@@ -30,41 +30,24 @@ describe('Input Text Control tests', () => {
 
   const handleChangeMock = jest.fn(() => Promise.resolve());
 
-  describe('can create control', () => {
+  describe('can create control for InputMultiLineTextControl', () => {
     it('can create control', () => {
       const props = { ...staticProps };
-      const component = render(GoAInputText(props));
+      const component = render(MultiLineText(props));
       expect(component.getByTestId('firstName-input')).toBeInTheDocument();
     });
 
-    it('can create base control', () => {
+    it('can create base control for InputMultiLineTextControl', () => {
       const props = { ...staticProps };
-      const baseControl = render(GoATextControl(props));
+      const baseControl = render(MultiLineTextControlInput(props));
       expect(baseControl).toBeDefined();
     });
   });
 
-  describe('text control events', () => {
-    it('can trigger keyPress event', async () => {
-      const props = { ...staticProps };
-      const component = render(GoAInputText(props));
-      const input = component.getByTestId('firstName-input');
-      const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
-      expect(pressed).toBe(true);
-      expect(component.getByTestId('firstName-input')).toBeInTheDocument();
-    });
-
-    it('can trigger on Blur event', async () => {
-      const props = { ...staticProps };
-      const component = render(GoAInputText(props));
-      const input = component.getByTestId('firstName-input');
-      const blurred = fireEvent.blur(input);
-      expect(blurred).toBe(true);
-    });
-
+  describe('InputMultiLineTextControl control events', () => {
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(GoAInputText(props));
+      const component = render(MultiLineText(props));
       const input = component.getByTestId('firstName-input');
       const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
 
