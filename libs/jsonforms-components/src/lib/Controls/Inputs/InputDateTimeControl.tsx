@@ -4,11 +4,9 @@ import { GoAInputDateTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity, isValidDate } from '../../util/stringUtils';
+import { checkFieldValidity } from '../../util/stringUtils';
 import {
-  isRequiredAndHasNoData,
   onBlurForDateControl,
-  onChangeForDateControl,
   onChangeForDateTimeControl,
   onKeyPressForDateControl,
 } from '../../util/inputControlUtils';
@@ -20,6 +18,7 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, errors, handleChange, schema, label } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
   return (
     <GoAInputDateTime
@@ -29,6 +28,7 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
       value={data ? new Date(data).toISOString() : ''}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
+      readonly={readOnly}
       onChange={(name, value: Date | string) => {
         onChangeForDateTimeControl({
           name,

@@ -52,9 +52,9 @@ export const onBlurForTextControl = (props: EventBlurControlProps) => {
  * @param props - EventKeyPressControlProps
  */
 export const onKeyPressNumericControl = (props: EventKeyPressControlProps) => {
-  const { value, controlProps } = props;
+  const { value, key, controlProps } = props;
   const { handleChange, path } = controlProps;
-  if (isRequiredAndHasNoData(controlProps)) {
+  if (isNotKeyPressTabOrShift(key)) {
     let newValue: string | number = '';
     if (value !== '') {
       newValue = +value;
@@ -145,11 +145,13 @@ export const onBlurForTimeControl = (props: EventBlurControlProps) => {
 export const onChangeForDateControl = (props: EventChangeControlProps) => {
   let { value } = props;
   const { controlProps } = props;
-  const { handleChange, path } = controlProps;
+  const { handleChange, path, data } = controlProps;
 
   if (value && value !== null) {
     value = standardizeDate(value) || '';
-    handleChange(path, value);
+    if (value !== data) {
+      handleChange(path, value);
+    }
   }
 };
 
@@ -160,11 +162,13 @@ export const onChangeForDateControl = (props: EventChangeControlProps) => {
 export const onChangeForDateTimeControl = (props: EventChangeControlProps) => {
   let { value } = props;
   const { controlProps } = props;
-  const { handleChange, path } = controlProps;
+  const { handleChange, path, data } = controlProps;
 
   if (value && value !== null) {
     value = isValidDate(value) ? new Date(value)?.toISOString() : '';
-    handleChange(path, value);
+    if (data !== value) {
+      handleChange(path, value);
+    }
   }
 };
 
@@ -175,13 +179,17 @@ export const onChangeForDateTimeControl = (props: EventChangeControlProps) => {
 export const onChangeForNumericControl = (props: EventChangeControlProps) => {
   const { value } = props;
   const { controlProps } = props;
-  const { handleChange, path } = controlProps;
+  const { handleChange, path, data } = controlProps;
 
   if (value && value !== null) {
-    let newValue: string | number = '';
-    if (value !== '') {
-      newValue = +value;
+    //Prevents handleChange from executing if the data has not changed
+    //so it component will not re render.
+    if (data !== +value) {
+      let newValue: string | number = '';
+      if (value !== '') {
+        newValue = +value;
+      }
+      handleChange(path, newValue);
     }
-    handleChange(path, newValue);
   }
 };

@@ -22,6 +22,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0.01;
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
@@ -29,6 +30,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       type="number"
       error={errorsFormInput.length > 0}
       disabled={!enabled}
+      readonly={readOnly}
       value={InputValue}
       placeholder={placeholder}
       step={StepValue}

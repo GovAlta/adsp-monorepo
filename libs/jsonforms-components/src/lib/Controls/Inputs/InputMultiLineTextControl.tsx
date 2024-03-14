@@ -25,12 +25,14 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
   const errorsFormInput = checkFieldValidity(props as ControlProps);
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
   return (
     <GoATextArea
       error={errorsFormInput.length > 0}
       value={data}
       disabled={!enabled}
+      readOnly={readOnly}
       placeholder={placeholder}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       name={`${label || path}-text-area`}
@@ -48,7 +50,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       // Dont use handleChange in the onChange event, use the keyPress or onBlur.
       // If you use it onChange along with keyPress event it will cause a
       // side effect that causes the validation to render when it shouldnt.
-      onChange={() => {}}
+      onChange={(name, value: string) => {}}
       {...uischema?.options?.componentProps}
     />
   );

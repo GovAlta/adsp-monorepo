@@ -14,6 +14,9 @@ import {
   onKeyPressForDateControl,
   onKeyPressForTextControl,
   onKeyPressNumericControl,
+  onChangeForDateControl,
+  onChangeForDateTimeControl,
+  onChangeForNumericControl,
 } from '../../util/inputControlUtils';
 
 const theDate = {
@@ -144,162 +147,266 @@ describe('input control tests', () => {
       expect(isNotKeyPressTabOrShift('Tab')).toBe(false);
       expect(isNotKeyPressTabOrShift('Shift')).toBe(false);
     });
+  });
 
-    describe('change events', () => {
-      const handleChangeMock = jest.fn(() => Promise.resolve());
-      const props: ControlProps = {
-        data: '',
-        required: true,
-        errors: '',
-        rootSchema: {},
-        visible: true,
-        enabled: true,
-        id: 'testId',
-        path: 'testPath',
-        label: 'test',
-        uischema: {
-          type: 'Control',
-          scope: '#/properties/firstName',
-          label: 'My First name',
-        },
-        schema: {},
-        handleChange: (path, value) => {},
+  describe('Event Handlers for input control tests ', () => {
+    const handleChangeMock = jest.fn(() => Promise.resolve());
+    const regExNumbers = new RegExp('^\\d+$');
+    const props: ControlProps = {
+      data: '',
+      required: true,
+      errors: '',
+      rootSchema: {},
+      visible: true,
+      enabled: true,
+      id: 'testId',
+      path: 'testPath',
+      label: 'test',
+      uischema: {
+        type: 'Control',
+        scope: '#/properties/firstName',
+        label: 'My First name',
+      },
+      schema: {},
+      handleChange: (path, value) => {},
+    };
+
+    beforeEach(() => {
+      handleChangeMock.mockReset();
+    });
+
+    it('onKeyPressForTextControl data not capitalize', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onKeyPressForTextControl({
+        name: 'test',
+        value: 'value',
+        key: ' myKey',
+        controlProps: newProps as ControlProps,
+      });
+      expect(newProps.handleChange).toBeCalled();
+    });
+
+    it('onKeyPressForTextControl data capitalize', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onKeyPressForTextControl({
+        name: 'test',
+        value: 'VALUE',
+        key: ' myKey',
+        controlProps: newProps as ControlProps,
+      });
+      expect(newProps.handleChange).toBeCalled();
+    });
+
+    it('onKeyPressForDateControl is valid date', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onKeyPressForDateControl({
+        name: 'dateOfEntry',
+        value: '04/04/2024',
+        key: '4',
+        controlProps: newProps as ControlProps,
+      });
+      expect(handleChangeMock.mock.calls.length).toBe(1);
+      expect(newProps.handleChange).toBeCalled();
+    });
+
+    it('onKeyPressDateControl doesnt triggered handleChange', () => {
+      const newProps = { ...props };
+      const eventProps = {
+        name: 'dateOfEntry',
+        value: '',
+        key: 'Tab',
+        controlProps: newProps as ControlProps,
+      };
+      onKeyPressForDateControl(eventProps);
+      expect(eventProps.key).toBe('Tab');
+      expect(handleChangeMock.mock.calls.length).toBe(0);
+    });
+
+    it('onKeyPressNumericControl is valid data', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onKeyPressNumericControl({
+        name: 'age',
+        value: '18',
+        key: 'age',
+        controlProps: newProps as ControlProps,
+      });
+      expect(newProps.handleChange).toBeCalled();
+    });
+
+    it('onKeyPressNumericControl doesnt trigger handleChange', () => {
+      const newProps = { ...props };
+      const eventProps = { name: 'age', value: '', key: 'Tab', controlProps: newProps as ControlProps };
+      onKeyPressNumericControl(eventProps);
+      expect(eventProps.key).toBe('Tab');
+      expect(handleChangeMock.mock.calls.length).toBe(0);
+    });
+
+    it('onKeyPressTimeControl is valid date', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onKeyPressForTimeControl({
+        name: 'dateOfEntry',
+        value: '01:01:00 AM',
+        key: 'dateOfEntry',
+        controlProps: newProps as ControlProps,
+      });
+      expect(newProps.handleChange).toBeCalled();
+    });
+
+    it('onKeyPressTimeControl doesnt trigger handleChange', () => {
+      const newProps = { ...props };
+      const eventProps = {
+        name: 'dateOfEntry',
+        value: '',
+        key: 'Tab',
+        controlProps: newProps as ControlProps,
+      };
+      onKeyPressForTimeControl(eventProps);
+
+      expect(eventProps.key).toBe('Tab');
+      expect(handleChangeMock.mock.calls.length).toBe(0);
+    });
+
+    it('onBlurForTextControl data not capitalize ', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onBlurForTextControl({
+        name: 'test',
+        value: 'value',
+        controlProps: newProps,
+      });
+      expect(newProps.handleChange).toBeCalled();
+    });
+    it('onBlurForTextControl data capitalize ', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onBlurForTextControl({
+        name: 'test',
+        value: 'VALUE',
+        controlProps: newProps,
+      });
+      expect(newProps.handleChange).toBeCalled();
+    });
+
+    it('onBlurForNumericControl is valid data', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      const eventProps = {
+        name: 'age',
+        value: '18',
+        controlProps: newProps as ControlProps,
       };
 
-      it('onKeyPressForTextControl data not capitalize', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
+      onBlurForNumericControl(eventProps);
+      expect(eventProps.value).toMatch(regExNumbers);
+      expect(newProps.handleChange).toBeCalled();
+    });
 
-        onKeyPressForTextControl({
-          name: 'test',
-          value: 'value',
-          key: ' myKey',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
+    it('onBlurForNumericControl is invalid data', () => {
+      const newProps = { ...props };
+
+      const eventProps = {
+        name: 'age',
+        value: 'abc',
+        controlProps: newProps as ControlProps,
+      };
+
+      onBlurForNumericControl(eventProps);
+      expect(eventProps.value).not.toMatch(regExNumbers);
+      expect(handleChangeMock.mock.calls.length).toBe(0);
+    });
+
+    it('onBlurForDateControl is valid data', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+      onBlurForDateControl({
+        name: 'age',
+        value: '04/04/2024',
+        controlProps: newProps as ControlProps,
       });
+      expect(newProps.handleChange).toBeCalled();
+    });
 
-      it('onKeyPressForTextControl data capitalize', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
+    it('onBlurForDateControl is invalid data', () => {
+      const newProps = { ...props };
+      const eventProps = { name: 'age', value: '', controlProps: newProps as ControlProps };
+      onBlurForDateControl(eventProps);
 
-        onKeyPressForTextControl({
-          name: 'test',
-          value: 'VALUE',
-          key: ' myKey',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
+      expect(eventProps.value).toBe('');
+      expect(handleChangeMock.mock.calls.length).toBe(0);
+    });
+
+    it('onBlurTimeControl is valid data', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onBlurForTimeControl({
+        name: 'dateOfEntry',
+        value: '01:01:00 AM',
+        controlProps: newProps as ControlProps,
       });
+      expect(newProps.handleChange).toBeCalled();
+    });
 
-      it('onBlurForTextControl data not capitalize ', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
+    it('onChangeForDateControl with data', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
 
-        onBlurForTextControl({
-          name: 'test',
-          value: 'value',
-          controlProps: newProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
+      onChangeForDateControl({
+        name: 'dateOfEntry',
+        value: '04/04/2024',
+        controlProps: newProps as ControlProps,
       });
-      it('onBlurForTextControl data capitalize ', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
+      expect(newProps.handleChange).toBeCalled();
+    });
 
-        onBlurForTextControl({
-          name: 'test',
-          value: 'VALUE',
-          controlProps: newProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
+    it('onChangeForDateTimeControl with data', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onChangeForDateTimeControl({
+        name: 'dateOfEntry',
+        value: '04/04/2024 01:01:00 AM',
+        controlProps: newProps as ControlProps,
       });
+      expect(newProps.handleChange).toBeCalled();
+    });
 
-      it('onKeyPressNumericControl is valid data', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
+    it('onChangeForNumericControl with data', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
 
-        onKeyPressNumericControl({
-          name: 'age',
-          value: '18',
-          key: 'age',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
+      onChangeForNumericControl({
+        name: 'age',
+        value: '50',
+        controlProps: newProps as ControlProps,
       });
+      expect(newProps.handleChange).toBeCalled();
+    });
+    it('onChangeForDateTimeControl with invalid data', () => {
+      const newProps = { ...props };
 
-      it('onBlurForNumericControl is valid data', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
+      const eventProps = {
+        name: 'dateOfEntry',
+        value: '',
+        controlProps: newProps as ControlProps,
+      };
 
-        onBlurForNumericControl({
-          name: 'age',
-          value: '18',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
-      });
+      onChangeForDateTimeControl(eventProps);
+      expect(eventProps.value).toBe('');
+      expect(handleChangeMock.mock.calls.length).toBe(0);
+    });
 
-      it('onKeyPressForDateControl is valid date', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
+    it('onChangeForNumericControl with invalid data', () => {
+      const newProps = { ...props };
 
-        onKeyPressForDateControl({
-          name: 'dateOfEntry',
-          value: '04/04/2024',
-          key: 'dateOfEntry',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
-      });
-
-      it('onKeyPressDateControl is invalid date', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
-
-        onKeyPressForDateControl({
-          name: 'dateOfEntry',
-          value: '042/04/20245',
-          key: 'dateOfEntry',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
-      });
-
-      it('onBlurForDateControl is valid data', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
-        onBlurForDateControl({
-          name: 'age',
-          value: '04/04/2024',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
-      });
-
-      it('onBlurForDateControl is invalid data', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
-        onBlurForDateControl({
-          name: 'age',
-          value: '044/04/2024',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
-      });
-
-      it('onKeyPressTimeControl is invalid date', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
-
-        onKeyPressForTimeControl({
-          name: 'dateOfEntry',
-          value: '01:01:00 AM',
-          key: 'dateOfEntry',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
-      });
-
-      it('onBlurTimeControl is invalid date', () => {
-        const newProps = { ...props, handleChange: handleChangeMock };
-
-        onBlurForTimeControl({
-          name: 'dateOfEntry',
-          value: '01:01:00 AM',
-          controlProps: newProps as ControlProps,
-        });
-        expect(newProps.handleChange).toBeCalled();
-      });
+      const eventProps = {
+        name: 'age',
+        value: 'ab',
+        controlProps: newProps as ControlProps,
+      };
+      onChangeForNumericControl(eventProps);
+      expect(eventProps.value).not.toMatch(regExNumbers);
+      expect(handleChangeMock.mock.calls.length).toBe(0);
     });
   });
 });

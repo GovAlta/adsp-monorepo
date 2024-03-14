@@ -24,6 +24,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0;
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
@@ -32,6 +33,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       error={errorsFormInput.length > 0}
       width="100%"
       disabled={!enabled}
+      readonly={readOnly}
       value={InputValue}
       step={StepValue}
       min={MinValue}
@@ -55,11 +57,11 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
         });
       }}
       onChange={(name: string, value: string) => {
-        onChangeForNumericControl({
-          name,
-          value,
-          controlProps: props as ControlProps,
-        });
+        // onChangeForNumericControl({
+        //   name,
+        //   value,
+        //   controlProps: props as ControlProps,
+        // });
       }}
       {...uischema?.options?.componentProps}
     />

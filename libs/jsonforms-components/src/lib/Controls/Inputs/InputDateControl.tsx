@@ -46,6 +46,7 @@ const reformatDateProps = (props: object): object => {
 export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   const { data, config, id, enabled, uischema, path, handleChange, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
   const minDate = uischema?.options?.componentProps?.min;
   if (minDate && !isValidDateFormat(minDate)) {
@@ -65,6 +66,7 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
       value={standardizeDate(data) || ''}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
+      readonly={readOnly}
       onChange={(name: string, value: Date | string) => {
         onChangeForDateControl({
           name,

@@ -18,7 +18,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
-
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   return (
     <GoAInput
       error={errorsFormInput.length > 0}
@@ -26,6 +26,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       disabled={!enabled}
       value={data}
       width={'100%'}
+      readonly={readOnly}
       placeholder={placeholder}
       // maxLength={appliedUiSchemaOptions?.maxLength}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}

@@ -4,7 +4,7 @@ import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-import { isRequiredAndHasNoData, onBlurForTimeControl, onKeyPressForTimeControl } from '../../util/inputControlUtils';
+import { onBlurForTimeControl, onKeyPressForTimeControl } from '../../util/inputControlUtils';
 export type GoAInputTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
@@ -12,6 +12,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
@@ -22,6 +23,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       step={1}
       width="100%"
       disabled={!enabled}
+      readonly={readOnly}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
         onBlurForTimeControl({
@@ -29,15 +31,11 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
           value,
           controlProps: props as ControlProps,
         });
-        if (isRequiredAndHasNoData(props as ControlProps)) {
-          handleChange(path, value);
-        }
       }}
-      onChange={(name, value: Date | string) => {
-        if (value && value !== null) {
-          handleChange(path, value);
-        }
-      }}
+      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
+      // If you use it onChange along with keyPress event it will cause a
+      // side effect that causes the validation to render when it shouldnt.
+      onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         onKeyPressForTimeControl({
           name,
