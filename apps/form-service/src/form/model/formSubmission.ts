@@ -98,12 +98,15 @@ export class FormSubmissionEntity implements FormSubmission {
       throw new InvalidValueError('Status', `Invalid Form Disposition Status for Form Submission ID: ${this.id}`);
     }
 
+    const dispositionedOn = new Date();
     this.disposition = {
       id: uuidv4(),
       reason,
       status,
-      date: new Date(),
+      date: dispositionedOn,
     };
+    this.updated = dispositionedOn;
+    this.updatedBy = { id: user.id, name: user.name };
 
     return await this.repository.save(this);
   }

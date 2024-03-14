@@ -129,24 +129,27 @@ describe('FormSubmission', () => {
     expect(repositoryMock.delete).toBeCalled();
   });
 
-  3;
   it('form submission cannot delete - unauthorized', async () => {
     const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo);
     await expect(entity.delete({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(UnauthorizedUserError);
   });
 
   it('form submission can update disposition', async () => {
+    const before = new Date();
     const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, {
       id: '242',
       definition: aDefinition,
     } as FormEntity);
     repositoryMock.save.mockResolvedValueOnce(entity);
 
-    const user = { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User;
-    await entity.dispositionSubmission(user, 'rejected', 'bad data');
+    const user = { tenantId, id: 'tester', name: 'Tester', roles: [FormServiceRoles.Admin] } as User;
+    const result = await entity.dispositionSubmission(user, 'rejected', 'bad data');
 
     expect(repositoryMock.save).toHaveBeenCalled();
+    expect(result.updated.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(result.updatedBy).toMatchObject({ id: user.id, name: user.name });
   });
+
   it('form submission cannot update disposition - invalid status', async () => {
     const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, {
       id: '242',
