@@ -57,11 +57,11 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
         });
       }}
       onChange={(name: string, value: string) => {
-        // onChangeForNumericControl({
-        //   name,
-        //   value,
-        //   controlProps: props as ControlProps,
-        // });
+        onChangeForNumericControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
       }}
       {...uischema?.options?.componentProps}
     />

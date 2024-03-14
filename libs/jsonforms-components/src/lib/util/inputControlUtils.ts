@@ -48,7 +48,7 @@ export const onBlurForTextControl = (props: EventBlurControlProps) => {
 };
 
 /**
- * Helper functions to process onKeyPress events for numeric controls.
+ * Helper functions to process onKeyPress events for Numeric controls.
  * @param props - EventKeyPressControlProps
  */
 export const onKeyPressNumericControl = (props: EventKeyPressControlProps) => {
@@ -64,7 +64,7 @@ export const onKeyPressNumericControl = (props: EventKeyPressControlProps) => {
 };
 
 /**
- * Helper function to process onBlur events for numeric controls.
+ * Helper function to process onBlur events for Numeric controls.
  * @param props - EventBlurControlProps
  */
 export const onBlurForNumericControl = (props: EventBlurControlProps) => {
@@ -81,7 +81,7 @@ export const onBlurForNumericControl = (props: EventBlurControlProps) => {
 };
 
 /**
- * Helper function to process onKeyPress events for date/date time controls
+ * Helper function to process onKeyPress events for Date/Date Time controls
  * @param props - EventKeyPressControlProps
  */
 export const onKeyPressForDateControl = (props: EventKeyPressControlProps) => {
@@ -96,7 +96,7 @@ export const onKeyPressForDateControl = (props: EventKeyPressControlProps) => {
 };
 
 /**
- * Helper function to process for onBlur event for date/date time controls
+ * Helper function to process for onBlur event for Date/Date Time controls
  * @param props - EventBlurControlProps
  */
 export const onBlurForDateControl = (props: EventBlurControlProps) => {
@@ -111,7 +111,7 @@ export const onBlurForDateControl = (props: EventBlurControlProps) => {
 };
 
 /**
- * Helper function to process onKeyPress events for time controls
+ * Helper function to process onKeyPress events for Time controls
  * @param props - EventKeyPressControlProps
  */
 export const onKeyPressForTimeControl = (props: EventKeyPressControlProps) => {
@@ -139,7 +139,7 @@ export const onBlurForTimeControl = (props: EventBlurControlProps) => {
 };
 
 /**
- * Helper function to process onChange event for date controls.
+ * Helper function to process onChange event for Date controls.
  * @param props - EventChangeControlProps
  */
 export const onChangeForDateControl = (props: EventChangeControlProps) => {
@@ -156,7 +156,7 @@ export const onChangeForDateControl = (props: EventChangeControlProps) => {
 };
 
 /**
- * Helper function to process onChange event for date controls.
+ * Helper function to process onChange event for Date controls.
  * @param props - EventChangeControlProps
  */
 export const onChangeForDateTimeControl = (props: EventChangeControlProps) => {
@@ -173,7 +173,7 @@ export const onChangeForDateTimeControl = (props: EventChangeControlProps) => {
 };
 
 /**
- * Helper function to process onChange event for number/integer controls.
+ * Helper function to process onChange event for Number/Integer controls.
  * @param props - EventChangeControlProps
  */
 export const onChangeForNumericControl = (props: EventChangeControlProps) => {
@@ -183,7 +183,7 @@ export const onChangeForNumericControl = (props: EventChangeControlProps) => {
 
   if (value && value !== null) {
     //Prevents handleChange from executing if the data has not changed
-    //so it component will not re render.
+    //so the component will not re render.
     if (data !== +value) {
       let newValue: string | number = '';
       if (value !== '') {

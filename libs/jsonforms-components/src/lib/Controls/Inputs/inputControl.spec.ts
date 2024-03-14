@@ -181,7 +181,7 @@ describe('input control tests', () => {
       onKeyPressForTextControl({
         name: 'test',
         value: 'value',
-        key: ' myKey',
+        key: ' z',
         controlProps: newProps as ControlProps,
       });
       expect(newProps.handleChange).toBeCalled();
@@ -193,7 +193,7 @@ describe('input control tests', () => {
       onKeyPressForTextControl({
         name: 'test',
         value: 'VALUE',
-        key: ' myKey',
+        key: ' z',
         controlProps: newProps as ControlProps,
       });
       expect(newProps.handleChange).toBeCalled();
@@ -231,7 +231,7 @@ describe('input control tests', () => {
       onKeyPressNumericControl({
         name: 'age',
         value: '18',
-        key: 'age',
+        key: '1',
         controlProps: newProps as ControlProps,
       });
       expect(newProps.handleChange).toBeCalled();
@@ -251,7 +251,7 @@ describe('input control tests', () => {
       onKeyPressForTimeControl({
         name: 'dateOfEntry',
         value: '01:01:00 AM',
-        key: 'dateOfEntry',
+        key: '0',
         controlProps: newProps as ControlProps,
       });
       expect(newProps.handleChange).toBeCalled();
