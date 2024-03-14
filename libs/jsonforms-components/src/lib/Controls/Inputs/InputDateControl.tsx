@@ -71,10 +71,6 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
           value,
           controlProps: props as ControlProps,
         });
-        // if (value && value !== null) {
-        //   value = standardizeDate(value) || '';
-        //   handleChange(path, value);
-        // }
       }}
       onKeyPress={(name: string, value: Date | string, key: string) => {
         onKeyPressForDateControl({
@@ -83,10 +79,6 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
           key,
           controlProps: props as ControlProps,
         });
-        // if (isNotKeyPressTabOrShift(key)) {
-        //   value = standardizeDate(value) || '';
-        //   handleChange(path, value);
-        // }
       }}
       onBlur={(name: string, value: Date | string) => {
         onBlurForDateControl({
@@ -94,10 +86,6 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
           value,
           controlProps: props as ControlProps,
         });
-        // if (isRequiredAndHasNoData(props as ControlProps)) {
-        //   value = standardizeDate(value) || '';
-        //   handleChange(path, value);
-        // }
       }}
       {...reformatDateProps(uischema?.options?.componentProps)}
     />

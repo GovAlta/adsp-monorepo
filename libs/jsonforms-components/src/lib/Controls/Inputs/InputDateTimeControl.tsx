@@ -35,10 +35,6 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
           value,
           controlProps: props as ControlProps,
         });
-        // if (value && value !== null) {
-        //   value = isValidDate(value) ? new Date(value)?.toISOString() : '';
-        //   handleChange(path, value);
-        // }
       }}
       onKeyPress={(name: string, value: string, key: string) => {
         onKeyPressForDateControl({
@@ -54,10 +50,6 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
           value,
           controlProps: props as ControlProps,
         });
-        // if (isRequiredAndHasNoData(props as ControlProps)) {
-        //   value = isValidDate(value) ? new Date(value).toISOString() : '';
-        //   handleChange(path, value);
-        // }
       }}
       {...uischema?.options?.componentProps}
     />
