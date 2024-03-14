@@ -33,7 +33,7 @@ export const TopicsList = (): JSX.Element => {
   const [openAddTopic, setOpenAddTopic] = useState(false);
   const [modalType, setModalType] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  const [showActions, setShowActions] = useState(true);
+  const [isSelectedCoreType, setIsSelectedCoreType] = useState<boolean>(false);
   const [selectedTopic, setSelectedTopic] = useState<TopicItem>(defaultTopic);
 
   const indicator = useSelector((state: RootState) => {
@@ -51,23 +51,30 @@ export const TopicsList = (): JSX.Element => {
   const [topicList, setTopicList] = useState({});
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
+  const fetchTopics = () => {
+    if (isSelectedCoreType) {
+      dispatch(fetchTopicsRequest(topicTypes[selectedType]));
+    } else {
+      dispatch(fetchTopicsRequest(coreTopicTypes[selectedType]));
+    }
+  };
+
   useEffect(() => {
     dispatch(getCommentTopicTypes());
   }, [dispatch]);
   useEffect(() => {
     if (selectedType && selectedType !== '') {
-      if (coreTopicTypes[selectedType]) {
-        setShowActions(false);
-        dispatch(fetchTopicsRequest(coreTopicTypes[selectedType]));
-      } else {
-        setShowActions(true);
-        dispatch(fetchTopicsRequest(topicTypes[selectedType]));
-      }
+      fetchTopics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, topicTypes, selectedType, topicList, coreTopicTypes]);
 
   const onNext = () => {
-    dispatch(fetchTopicsRequest(topicTypes[selectedType], next));
+    if (isSelectedCoreType) {
+      dispatch(fetchTopicsRequest(topicTypes[selectedType], next));
+    } else {
+      dispatch(fetchTopicsRequest(coreTopicTypes[selectedType], next));
+    }
   };
 
   useEffect(() => {
@@ -82,16 +89,19 @@ export const TopicsList = (): JSX.Element => {
     indicator.show = true;
     setShowDeleteConfirmation(false);
     setTimeout(() => {
-      dispatch(fetchTopicsRequest(topicTypes[selectedType]));
+      fetchTopics();
       indicator.show = false;
     }, 800);
   };
 
   const handleSave = (topic) => {
+    const selectedTopicType = topicTypes[topic.typeId] ? true : false;
+    setIsSelectedCoreType(selectedTopicType);
     setTopicList(topic);
     dispatch(addTopicRequest(topic));
-    dispatch(fetchTopicsRequest(topicTypes[selectedType]));
+    fetchTopics();
     setOpenAddTopic(false);
+    setSelectedType(topic.typeId);
   };
 
   return (
@@ -107,6 +117,8 @@ export const TopicsList = (): JSX.Element => {
             name="TopicTypes"
             value={selectedType}
             onChange={(name: string, selectedType: string) => {
+              const selectedTopicType = topicTypes[selectedType] ? true : false;
+              setIsSelectedCoreType(selectedTopicType);
               dispatch(clearComments());
               setSelectedType(selectedType);
             }}
@@ -162,7 +174,6 @@ export const TopicsList = (): JSX.Element => {
             <TopicListTable
               topics={topics}
               selectedType={selectedType}
-              showActions={showActions}
               onDeleteTopic={(topicSelected) => {
                 setSelectedTopic(topicSelected);
                 setShowDeleteConfirmation(true);
