@@ -144,6 +144,10 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     setEndTime('14:00');
     setSelectedApplications([]);
   }
+  const isValidDateString = (dateString) => {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  };
 
   return (
     <GoAModal
@@ -214,7 +218,12 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
             width="100%"
             testId="notice-form-start-date-picker"
             onChange={(name, value) => {
-              setStartDate(new Date(value));
+              if (isValidDateString(value)) {
+                setErrors({});
+                setStartDate(new Date(value));
+              } else {
+                setErrors({ date: 'Please input right start date format!' });
+              }
             }}
           />
         </GoAFormItem>
@@ -226,7 +235,12 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
             width="100%"
             testId="notice-form-end-date-picker"
             onChange={(name, value) => {
-              setEndDate(new Date(value));
+              if (isValidDateString(value)) {
+                setErrors({});
+                setEndDate(new Date(value));
+              } else {
+                setErrors({ date: 'Please input right end date format!' });
+              }
             }}
           />
         </GoAFormItem>
