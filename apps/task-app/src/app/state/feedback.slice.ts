@@ -52,7 +52,7 @@ const feedbackSlice = createSlice({
         };
       }
 
-      state.items.push(item);
+      if (state.items.length === 0 || !state.items.some((obj) => obj?.message === item.message)) state.items.push(item);
     });
   },
 });
