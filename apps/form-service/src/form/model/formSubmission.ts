@@ -88,7 +88,12 @@ export class FormSubmissionEntity implements FormSubmission {
 
   async dispositionSubmission(user: User, status: string, reason?: string): Promise<FormSubmissionEntity> {
     if (
-      !isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, ...(this.form?.definition?.assessorRoles || [])])
+      !isAllowedUser(
+        user,
+        this.tenantId,
+        [FormServiceRoles.Admin, ...(this.form?.definition?.assessorRoles || [])],
+        true
+      )
     ) {
       throw new UnauthorizedUserError('updated form disposition', user);
     }
