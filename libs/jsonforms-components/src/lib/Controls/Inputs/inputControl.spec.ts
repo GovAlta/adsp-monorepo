@@ -3,7 +3,8 @@ import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GoADateInput, errMalformedDate } from './InputDateControl';
 import { GoAInputDateProps } from './InputDateControl';
-import { ControlElement } from '@jsonforms/core';
+import { ControlElement, ControlProps } from '@jsonforms/core';
+import { isNotKeyPressTabOrShift, isRequiredAndHasNoData } from '../../util/inputControlUtils';
 
 const theDate = {
   theDate: '',
@@ -79,6 +80,59 @@ describe('input control tests', () => {
       const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025/02-01') };
       const component = render(GoADateInput(props));
       expect(component.getByTestId('My ID-input')).toBeInTheDocument();
+    });
+  });
+
+  describe('test input control util functions', () => {
+    it('isRequiredAndHasNoData has NO data and is required', () => {
+      const controlUtilsHasNoDataProps: ControlProps = {
+        required: true,
+        data: undefined,
+        enabled: true,
+        label: 'Control input',
+        schema: dateSchema,
+        uischema: uiSchema('2023-02-01', '2025-02-01'),
+        rootSchema: dateSchema,
+        id: 'control id',
+        config: {},
+        path: '',
+        errors: '',
+        visible: true,
+        handleChange: jest.fn(),
+      };
+      const isValid = isRequiredAndHasNoData(controlUtilsHasNoDataProps);
+      expect(isValid).toBe(true);
+    });
+
+    it('isRequiredAndHasNoData has data and is required', () => {
+      const controlUtilsHasDataProps: ControlProps = {
+        required: true,
+        data: 'abc',
+        enabled: true,
+        label: 'Control input',
+        schema: dateSchema,
+        uischema: uiSchema('2023-02-01', '2025-02-01'),
+        rootSchema: dateSchema,
+        id: 'control id',
+        config: {},
+        path: '',
+        errors: '',
+        visible: true,
+        handleChange: jest.fn(),
+      };
+      const isValid = isRequiredAndHasNoData(controlUtilsHasDataProps);
+
+      expect(isValid).toBe(false);
+    });
+
+    it('isNotKeyPressTabOrShift is not a Shift or Tab key', () => {
+      expect(isNotKeyPressTabOrShift('T')).toBe(true);
+      expect(isNotKeyPressTabOrShift('1')).toBe(true);
+    });
+
+    it('isNotKeyPressTabOrShift is a Shift or Tab key', () => {
+      expect(isNotKeyPressTabOrShift('Tab')).toBe(false);
+      expect(isNotKeyPressTabOrShift('Shift')).toBe(false);
     });
   });
 });

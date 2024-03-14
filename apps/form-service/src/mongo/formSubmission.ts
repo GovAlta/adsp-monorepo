@@ -142,7 +142,10 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       submissionStatus: entity.submissionStatus,
       updatedDateTime: entity.updated,
       formData: entity.formData,
-      formFiles: Object.entries(entity.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
+      formFiles: Object.entries(entity.formFiles).reduce(
+        (fs, [key, f]) => ({ ...fs, [key]: f?.toString() }),
+        {} as Record<string, string>
+      ),
       disposition: entity.disposition,
       hash: entity.hash,
     };
@@ -164,7 +167,10 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         submissionStatus: doc.submissionStatus,
         updated: doc.updatedDateTime,
         formData: doc.formData,
-        formFiles: Object.entries(doc.formFiles).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
+        formFiles: Object.entries(doc.formFiles).reduce(
+          (fs, [key, f]) => ({ ...fs, [key]: f ? AdspId.parse(f) : null }),
+          {} as Record<string, AdspId>
+        ),
         disposition: doc.disposition,
         hash: doc.hash,
       },

@@ -43,8 +43,6 @@ export const getLabelText = (scope: string, label: string): string => {
 
   return labelToUpdate;
 };
-// This message is thrown when the isNotEmpty  is triggered by Ajv checkInput.ts configuration
-export const FIELD_REQUIRED = 'data should pass "isNotEmpty" keyword validation';
 
 const isEmptyBoolean = (schema: JsonSchema, data: unknown): boolean => {
   return schema.type !== undefined && schema.type === 'boolean' && (data === null || data === undefined);
