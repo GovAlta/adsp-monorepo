@@ -156,7 +156,7 @@ export class FormEntity implements Form {
     // 3. Form is Draft and user is Clerk
     // 4. Form is Submitted and user is Assessor
     if (
-      isAllowedUser(user, this.tenantId, FormServiceRoles.Admin) ||
+      isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true) ||
       (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) && user.id === this.createdBy.id) ||
       (this.status === FormStatus.Draft && isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || [])) ||
       (this.status === FormStatus.Submitted && isAllowedUser(user, this.tenantId, this.definition?.assessorRoles || []))
