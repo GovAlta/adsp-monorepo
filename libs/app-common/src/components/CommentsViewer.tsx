@@ -84,7 +84,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
         <GoAFormItem label={`New ${typeLabel}`}>
           <GoATextArea
             name="comment"
-            value={draft.content}
+            value={draft.content || ''}
             disabled={!canComment}
             // eslint-disable-next-line
             onChange={() => {}}

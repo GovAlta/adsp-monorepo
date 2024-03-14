@@ -19,7 +19,7 @@ export interface FormDefinition {
 }
 
 export interface Form {
-  definitionId: string;
+  definition: { id: string };
   id: string;
   urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
@@ -115,7 +115,7 @@ export const findUserForm = createAsyncThunk(
         },
       });
 
-      const form = results[0];
+      const [form] = results;
       let data = null,
         files = null,
         digest = null;
@@ -341,7 +341,7 @@ const formSlice = createSlice({
       .addCase(selectedDefinition.fulfilled, (state, { meta }) => {
         state.selected = meta.arg;
         // Clear the form if the form definition is changing.
-        if (state.form && state.form.definitionId !== meta.arg) {
+        if (state.form && state.form.definition.id !== meta.arg) {
           state.userForm = null;
           state.form = null;
           state.data = null;
@@ -436,7 +436,7 @@ export const formSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.form.form,
   (definition, form) =>
-    definition && definition?.id === form?.definitionId
+    definition && definition?.id === form?.definition.id
       ? { ...form, created: new Date(form.created), submitted: form.submitted ? new Date(form.submitted) : null }
       : null
 );

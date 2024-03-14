@@ -1,10 +1,9 @@
 import { adspId, Channel, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { FormServiceRoles } from '../roles';
-import { FormStatus, FormSubmission, QueueTaskToProcess } from '../types';
+import { FormStatus, QueueTaskToProcess } from '../types';
 import { FormDefinitionEntity } from './definition';
 import { FormEntity } from './form';
-import { FormSubmissionEntity } from './formSubmission';
 
 describe('FormEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -36,45 +35,12 @@ describe('FormEntity', () => {
     channels: [{ channel: Channel.email, address: 'test@test.co' }],
   };
 
-  const formSubmissionEntityMock = {
-    dispositionSubmission: jest.fn(),
-  };
-
   const repositoryMock = {
     find: jest.fn(),
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
     getByFormIdAndSubmissionId: jest.fn(),
-  };
-
-  const formSubmissionMock = {
-    get: jest.fn(),
-    find: jest.fn(),
-    save: jest.fn(),
-    delete: jest.fn(),
-    getByFormIdAndSubmissionId: jest.fn(),
-    dispositionSubmission: jest.fn(),
-  };
-
-  const formSubmissionInfo: FormSubmission = {
-    id: 'formSubmission-id',
-    formDefinitionId: 'test-form-definition',
-    formId: 'test-form',
-    formData: {},
-    formFiles: {},
-    created: new Date(),
-    createdBy: { id: 'tester', name: 'tester' },
-    updatedBy: { id: 'tester', name: 'tester' },
-    updated: new Date(),
-    submissionStatus: '',
-    disposition: {
-      id: 'id',
-      status: 'rejected',
-      reason: 'invalid data',
-      date: new Date(),
-    },
-    hash: 'hashid',
   };
 
   const queueTaskServiceMock = { createTask: jest.fn() };
@@ -601,8 +567,7 @@ describe('FormEntity', () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       entity.submissionRecords = true;
 
-      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo);
-      const [submitted, submission] = await entity.submit(
+      const [submitted] = await entity.submit(
         { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
         queueTaskServiceMock,
         repositoryMock
