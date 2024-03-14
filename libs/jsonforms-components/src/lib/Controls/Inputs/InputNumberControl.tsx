@@ -1,11 +1,14 @@
-import React from 'react';
 import { CellProps, WithClassname, ControlProps, isNumberControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-import { isNotKeyPressTabOrShift, isRequiredAndHasNoData } from '../../util/inputControlUtils';
+import {
+  onBlurForNumericControl,
+  onChangeForNumericControl,
+  onKeyPressNumericControl,
+} from '../../util/inputControlUtils';
 
 export type GoAInputNumberProps = CellProps & WithClassname & WithInputProps;
 
@@ -35,26 +38,27 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (isNotKeyPressTabOrShift(key)) {
-          let newValue: string | number = '';
-          if (value !== '') {
-            newValue = +value;
-          }
-          handleChange(path, newValue);
-        }
+        onKeyPressNumericControl({
+          name,
+          value,
+          key,
+          controlProps: props as ControlProps,
+        });
       }}
       onBlur={(name: string, value: string) => {
-        if (isRequiredAndHasNoData(props as ControlProps)) {
-          let newValue: string | number = '';
-          if (value !== '') {
-            newValue = +value;
-          }
-          handleChange(path, newValue);
-        }
+        onBlurForNumericControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
       }}
-      //Dont trigger the handleChange event on the onChange event as it will cause
-      //issue with the error message from displaying, use keyPress or the onBlur event instead
-      onChange={(name: string, value: string) => {}}
+      onChange={(name: string, value: string) => {
+        onChangeForNumericControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
+      }}
       {...uischema?.options?.componentProps}
     />
   );

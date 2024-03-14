@@ -1,4 +1,7 @@
 import { ControlProps } from '@jsonforms/core';
+import { EventBlurControlProps, EventChangeControlProps, EventKeyPressControlProps } from '../Controls/Inputs/type';
+import { standardizeDate } from '../Controls/Inputs/InputDateControl';
+import { isValidDate } from './stringUtils';
 
 /**
  * Checks input controls data value to determine is required and has any data.
@@ -17,4 +20,168 @@ export const isRequiredAndHasNoData = (props: ControlProps) => {
  */
 export const isNotKeyPressTabOrShift = (key: string) => {
   return !(key === 'Tab' || key === 'Shift') && key !== undefined;
+};
+
+/**
+ * Helper function to process onKeyPress events for text controls.
+ * @param props - EventKeyPressControlProps
+ */
+export const onKeyPressForTextControl = (props: EventKeyPressControlProps) => {
+  const { key, value, controlProps } = props;
+  const { handleChange, path } = controlProps;
+
+  if (isNotKeyPressTabOrShift(key)) {
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper function to process onBlur events for text controls.
+ * @param props - EventBlurControlProps
+ */
+export const onBlurForTextControl = (props: EventBlurControlProps) => {
+  const { value, controlProps } = props;
+  const { handleChange, path } = controlProps;
+  if (isRequiredAndHasNoData(controlProps)) {
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper functions to process onKeyPress events for numeric controls.
+ * @param props - EventKeyPressControlProps
+ */
+export const onKeyPressNumericControl = (props: EventKeyPressControlProps) => {
+  const { value, controlProps } = props;
+  const { handleChange, path } = controlProps;
+  if (isRequiredAndHasNoData(controlProps)) {
+    let newValue: string | number = '';
+    if (value !== '') {
+      newValue = +value;
+    }
+    handleChange(path, newValue);
+  }
+};
+
+/**
+ * Helper function to process onBlur events for numeric controls.
+ * @param props - EventBlurControlProps
+ */
+export const onBlurForNumericControl = (props: EventBlurControlProps) => {
+  const { value, controlProps } = props;
+  const { handleChange, path } = controlProps;
+
+  if (isRequiredAndHasNoData(controlProps)) {
+    let newValue: string | number = '';
+    if (value !== '') {
+      newValue = +value;
+    }
+    handleChange(path, newValue);
+  }
+};
+
+/**
+ * Helper function to process onKeyPress events for date/date time controls
+ * @param props - EventKeyPressControlProps
+ */
+export const onKeyPressForDateControl = (props: EventKeyPressControlProps) => {
+  const { controlProps, key } = props;
+  let { value } = props;
+  const { handleChange, path } = controlProps;
+
+  if (isNotKeyPressTabOrShift(key)) {
+    value = standardizeDate(value) || '';
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper function to process for onBlur event for date/date time controls
+ * @param props - EventBlurControlProps
+ */
+export const onBlurForDateControl = (props: EventBlurControlProps) => {
+  const { controlProps } = props;
+  let { value } = props;
+  const { handleChange, path } = controlProps;
+
+  if (isRequiredAndHasNoData(controlProps)) {
+    value = standardizeDate(value) || '';
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper function to process onKeyPress events for time controls
+ * @param props - EventKeyPressControlProps
+ */
+export const onKeyPressForTimeControl = (props: EventKeyPressControlProps) => {
+  const { controlProps, key } = props;
+  const { value } = props;
+  const { handleChange, path } = controlProps;
+
+  if (isNotKeyPressTabOrShift(key)) {
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper function to process for onBlur event for time controls
+ * @param props - EventBlurControlProps
+ */
+export const onBlurForTimeControl = (props: EventBlurControlProps) => {
+  const { controlProps } = props;
+  const { value } = props;
+  const { handleChange, path } = controlProps;
+
+  if (isRequiredAndHasNoData(controlProps)) {
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper function to process onChange event for date controls.
+ * @param props - EventChangeControlProps
+ */
+export const onChangeForDateControl = (props: EventChangeControlProps) => {
+  let { value } = props;
+  const { controlProps } = props;
+  const { handleChange, path } = controlProps;
+
+  if (value && value !== null) {
+    value = standardizeDate(value) || '';
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper function to process onChange event for date controls.
+ * @param props - EventChangeControlProps
+ */
+export const onChangeForDateTimeControl = (props: EventChangeControlProps) => {
+  let { value } = props;
+  const { controlProps } = props;
+  const { handleChange, path } = controlProps;
+
+  if (value && value !== null) {
+    value = isValidDate(value) ? new Date(value)?.toISOString() : '';
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper function to process onChange event for number/integer controls.
+ * @param props - EventChangeControlProps
+ */
+export const onChangeForNumericControl = (props: EventChangeControlProps) => {
+  const { value } = props;
+  const { controlProps } = props;
+  const { handleChange, path } = controlProps;
+
+  if (value && value !== null) {
+    let newValue: string | number = '';
+    if (value !== '') {
+      newValue = +value;
+    }
+    handleChange(path, newValue);
+  }
 };

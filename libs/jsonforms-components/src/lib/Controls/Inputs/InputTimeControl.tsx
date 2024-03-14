@@ -1,11 +1,10 @@
-import React from 'react';
 import { CellProps, WithClassname, ControlProps, isTimeControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInputTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-import { isNotKeyPressTabOrShift, isRequiredAndHasNoData } from '../../util/inputControlUtils';
+import { isRequiredAndHasNoData, onBlurForTimeControl, onKeyPressForTimeControl } from '../../util/inputControlUtils';
 export type GoAInputTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
@@ -25,18 +24,27 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       disabled={!enabled}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
+        onBlurForTimeControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
         if (isRequiredAndHasNoData(props as ControlProps)) {
           handleChange(path, value);
         }
       }}
-      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
-      // If you use it onChange along with keyPress event it will cause a
-      // side effect that causes the validation to render when it shouldnt.
-      onChange={(name, value) => {}}
-      onKeyPress={(name: string, value: string, key: string) => {
-        if (isNotKeyPressTabOrShift(key)) {
+      onChange={(name, value: Date | string) => {
+        if (value && value !== null) {
           handleChange(path, value);
         }
+      }}
+      onKeyPress={(name: string, value: string, key: string) => {
+        onKeyPressForTimeControl({
+          name,
+          value,
+          key,
+          controlProps: props as ControlProps,
+        });
       }}
       {...uischema?.options?.componentProps}
     />

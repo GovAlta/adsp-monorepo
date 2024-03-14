@@ -1,11 +1,10 @@
-import React from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-import { isNotKeyPressTabOrShift, isRequiredAndHasNoData } from '../../util/inputControlUtils';
+import { onBlurForTextControl, onKeyPressForTextControl } from '../../util/inputControlUtils';
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -36,22 +35,19 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       // side effect that causes the validation to render when it shouldnt.
       onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (isNotKeyPressTabOrShift(key)) {
-          if (autoCapitalize === true) {
-            handleChange(path, value.toUpperCase());
-          } else {
-            handleChange(path, value);
-          }
-        }
+        onKeyPressForTextControl({
+          name,
+          value: autoCapitalize ? value.toUpperCase() : value,
+          key,
+          controlProps: props as ControlProps,
+        });
       }}
       onBlur={(name: string, value: string) => {
-        if (isRequiredAndHasNoData(props as ControlProps)) {
-          if (autoCapitalize) {
-            handleChange(path, value.toUpperCase());
-          } else {
-            handleChange(path, value);
-          }
-        }
+        onBlurForTextControl({
+          name,
+          controlProps: props as ControlProps,
+          value: autoCapitalize ? value.toUpperCase() : value,
+        });
       }}
       {...uischema?.options?.componentProps}
     />
