@@ -5,7 +5,7 @@ import { Logger } from 'winston';
 import { downloadFile, getFiles, uploadFile } from '.';
 import { FileEntity, FileTypeEntity } from '..';
 import { FileType, ServiceUserRoles } from '../types';
-import { createFileRouter, deleteFile, getFile, getType, getTypes } from './file';
+import { createFileRouter, deleteFile, fileOperation, getFile, getType, getTypes } from './file';
 
 describe('file router', () => {
   const serviceId = adspId`urn:ads:platform:file-service`;
@@ -20,6 +20,7 @@ describe('file router', () => {
   const storageProviderMock = {
     readFile: jest.fn(),
     saveFile: jest.fn(),
+    copyFile: jest.fn(),
     deleteFile: jest.fn(),
   };
 
@@ -65,7 +66,10 @@ describe('file router', () => {
     fileRepositoryMock.find.mockReset();
     fileRepositoryMock.get.mockReset();
     fileRepositoryMock.save.mockReset();
+    storageProviderMock.copyFile.mockReset();
     fileRepositoryMock.delete.mockReset();
+
+    eventServiceMock.send.mockReset();
   });
 
   it('can create router', () => {
@@ -473,6 +477,145 @@ describe('file router', () => {
       const handler = deleteFile(apiId, loggerMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+    });
+  });
+
+  describe('fileOperation', () => {
+    it('can create handler', () => {
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can copy file', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: ['test-updater'],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+        fileEntity: file,
+        body: {
+          operation: 'copy',
+        },
+      };
+
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      fileRepositoryMock.save.mockImplementation((e) => Promise.resolve(e));
+      storageProviderMock.copyFile.mockResolvedValueOnce(true);
+
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ id: expect.any(String), filename: file.filename })
+      );
+      expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(storageProviderMock.copyFile).toHaveBeenCalledTimes(1);
+    });
+
+    it('can copy file with filename and type', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: ['test-updater'],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+        fileEntity: file,
+        body: {
+          operation: 'copy',
+          filename: 'my copy',
+          type: 'new-type',
+        },
+      };
+
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({
+        'new-type': new FileTypeEntity({
+          tenantId,
+          id: 'new-type',
+          name: 'New Type',
+          anonymousRead: true,
+          readRoles: [],
+          updateRoles: ['test-updater'],
+        }),
+      });
+
+      fileRepositoryMock.save.mockImplementation((e) => Promise.resolve(e));
+      storageProviderMock.copyFile.mockResolvedValueOnce(true);
+
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ id: expect.any(String), filename: req.body.filename })
+      );
+      expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(storageProviderMock.copyFile).toHaveBeenCalledTimes(1);
+    });
+
+    it('can call next with not found for unrecognized type', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: ['test-updater'],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+        fileEntity: file,
+        body: {
+          operation: 'copy',
+          filename: 'my copy',
+          type: 'new-type',
+        },
+      };
+
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({});
+
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can call next with invalid operation for unknown operation', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: ['test-updater'],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+        fileEntity: file,
+        body: {
+          operation: 'noop',
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toBeCalledWith(expect.any(InvalidOperationError));
     });
   });
 });

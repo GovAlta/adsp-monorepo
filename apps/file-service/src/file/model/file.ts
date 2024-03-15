@@ -57,11 +57,11 @@ export class FileEntity implements File {
     }
 
     entity = await repository.save(entity);
-    const saved = await storageProvider.saveFile(entity, type, result.fileStream);
+    const saved = await storageProvider.saveFile(entity, result.fileStream);
     if (!saved) {
       // Deleted the record if the storage failed to save the file so we don't end up with orphans.
       await entity.delete(true);
-      throw new Error(`Storage provide failed to save uploaded file: ${entity.filename}`);
+      throw new Error(`Storage provider failed to save uploaded file: ${entity.filename}`);
     }
 
     return entity;
@@ -179,5 +179,34 @@ export class FileEntity implements File {
     await this.repository.save(this, { lastAccessed: this.lastAccessed });
 
     return stream;
+  }
+
+  async copy(user: User, filename?: string, type?: FileTypeEntity, recordId?: string): Promise<FileEntity> {
+    type = type || this.type;
+    if (!type.canUpdateFile(user)) {
+      throw new UnauthorizedError('User not authorized to create file.');
+    }
+
+    // Create an save a destination entity first.
+    let destination = new FileEntity(this.storageProvider, this.repository, type, {
+      filename: filename || this.filename,
+      recordId: recordId || this.recordId,
+      mimeType: this.mimeType,
+      created: new Date(),
+      createdBy: {
+        id: user.id,
+        name: user.name,
+      },
+    });
+    destination = await this.repository.save(destination);
+
+    // Copy the contents via the storage provider; file bytes don't need to be read in this process.
+    const saved = await this.storageProvider.copyFile(this, destination);
+    if (!saved) {
+      await destination.delete(true);
+      throw new Error(`Storage provider failed to copy file: ${this.filename} (ID: ${this.id})`);
+    }
+
+    return destination;
   }
 }
