@@ -67,7 +67,7 @@ export const TopicsList = (): JSX.Element => {
       fetchTopics();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, topicTypes, selectedType, topicList, coreTopicTypes]);
+  }, [dispatch, selectedType, topicList]);
 
   const onNext = () => {
     if (isSelectedCoreType) {
@@ -99,9 +99,9 @@ export const TopicsList = (): JSX.Element => {
     setIsSelectedCoreType(selectedTopicType);
     setTopicList(topic);
     dispatch(addTopicRequest(topic));
-    fetchTopics();
-    setOpenAddTopic(false);
     setSelectedType(topic.typeId);
+
+    setOpenAddTopic(false);
   };
 
   return (
