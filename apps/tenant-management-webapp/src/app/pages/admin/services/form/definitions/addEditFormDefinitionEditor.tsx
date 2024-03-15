@@ -787,8 +787,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     >
                       <GoAFormItem error={error} label="">
                         <JSONFormPreviewer
-                          uischema={UiSchemaBounced}
-                          schema={dataSchemaBounced}
+                          uischema={tempUiSchema}
+                          schema={tempDataSchema}
                           onChange={({ data }) => {
                             setData(data);
                           }}

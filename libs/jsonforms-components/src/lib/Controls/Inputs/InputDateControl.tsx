@@ -4,8 +4,8 @@ import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-import { MessageControl } from '../../ErrorHandling/MessageControl';
 import { onBlurForDateControl, onChangeForDateControl, onKeyPressForDateControl } from '../../util/inputControlUtils';
+import { callout } from '../../Additional/GoACalloutControl';
 
 export type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 export const errMalformedDate = (scope: string, type: string): string => {
@@ -17,7 +17,6 @@ export const standardizeDate = (date: Date | string): string | undefined => {
     const stdDate = new Date(date).toISOString().substring(0, 10);
     return stdDate;
   } catch (e) {
-    const err = e as Error;
     return undefined;
   }
 };
@@ -28,7 +27,7 @@ const isValidDateFormat = (date: string): boolean => {
 };
 
 const invalidDateFormat = (scope: string, type: string): JSX.Element => {
-  return MessageControl(errMalformedDate(scope, type));
+  return callout({ message: errMalformedDate(scope, type) });
 };
 
 const reformatDateProps = (props: object): object => {
