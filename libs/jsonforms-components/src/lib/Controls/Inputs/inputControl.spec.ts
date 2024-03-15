@@ -97,7 +97,7 @@ describe('input control tests', () => {
   });
 
   describe('test input control util functions', () => {
-    it('isRequiredAndHasNoData has NO data and is required', () => {
+    it('can check if there is NO data and is required', () => {
       const controlUtilsHasNoDataProps: ControlProps = {
         required: true,
         data: undefined,
@@ -117,7 +117,7 @@ describe('input control tests', () => {
       expect(isValid).toBe(true);
     });
 
-    it('isRequiredAndHasNoData has data and is required', () => {
+    it('can check if there is data and is required', () => {
       const controlUtilsHasDataProps: ControlProps = {
         required: true,
         data: 'abc',
@@ -138,12 +138,12 @@ describe('input control tests', () => {
       expect(isValid).toBe(false);
     });
 
-    it('isNotKeyPressTabOrShift is not a Shift or Tab key', () => {
+    it('can check if key pressed is not a Shift or Tab key', () => {
       expect(isNotKeyPressTabOrShift('T')).toBe(true);
       expect(isNotKeyPressTabOrShift('1')).toBe(true);
     });
 
-    it('isNotKeyPressTabOrShift is a Shift or Tab key', () => {
+    it('can check if key pressed is a Shift or Tab key', () => {
       expect(isNotKeyPressTabOrShift('Tab')).toBe(false);
       expect(isNotKeyPressTabOrShift('Shift')).toBe(false);
     });
@@ -175,7 +175,7 @@ describe('input control tests', () => {
       handleChangeMock.mockReset();
     });
 
-    it('onKeyPressForTextControl data not capitalize', () => {
+    it('can handle key pressed data is NOT capitalize', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onKeyPressForTextControl({
@@ -187,7 +187,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onKeyPressForTextControl data capitalize', () => {
+    it('can handle key pressed data is capitalize for text control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onKeyPressForTextControl({
@@ -199,7 +199,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onKeyPressForDateControl is valid date', () => {
+    it('can handle key pressed is a valid date for date control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onKeyPressForDateControl({
@@ -212,7 +212,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onKeyPressDateControl doesnt triggered handleChange', () => {
+    it('can handle Tab key pressed doesnt triggered handleChange for date control', () => {
       const newProps = { ...props };
       const eventProps = {
         name: 'dateOfEntry',
@@ -225,7 +225,7 @@ describe('input control tests', () => {
       expect(handleChangeMock.mock.calls.length).toBe(0);
     });
 
-    it('onKeyPressNumericControl is valid data', () => {
+    it('can handle key pressed is valid data for numeric control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onKeyPressNumericControl({
@@ -237,7 +237,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onKeyPressNumericControl doesnt trigger handleChange', () => {
+    it('can handle key pressed doesnt trigger handleChange for numeric control', () => {
       const newProps = { ...props };
       const eventProps = { name: 'age', value: '', key: 'Tab', controlProps: newProps as ControlProps };
       onKeyPressNumericControl(eventProps);
@@ -245,7 +245,7 @@ describe('input control tests', () => {
       expect(handleChangeMock.mock.calls.length).toBe(0);
     });
 
-    it('onKeyPressTimeControl is valid date', () => {
+    it('can handle key pressed is valid date for date control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onKeyPressForTimeControl({
@@ -257,7 +257,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onKeyPressTimeControl doesnt trigger handleChange', () => {
+    it('can handle key pressed doesnt trigger handleChange for time control', () => {
       const newProps = { ...props };
       const eventProps = {
         name: 'dateOfEntry',
@@ -271,7 +271,7 @@ describe('input control tests', () => {
       expect(handleChangeMock.mock.calls.length).toBe(0);
     });
 
-    it('onBlurForTextControl data not capitalize ', () => {
+    it('can handle on blur data does NOT capitalize for text control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onBlurForTextControl({
@@ -281,7 +281,8 @@ describe('input control tests', () => {
       });
       expect(newProps.handleChange).toBeCalled();
     });
-    it('onBlurForTextControl data capitalize ', () => {
+
+    it('can handle on blur data is capitalize for text control ', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onBlurForTextControl({
@@ -292,7 +293,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onBlurForNumericControl is valid data', () => {
+    it('can handle on blur is valid data for numeric control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       const eventProps = {
@@ -306,7 +307,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onBlurForNumericControl is invalid data', () => {
+    it('can handle on blur is invalid data for numeric control', () => {
       const newProps = { ...props };
 
       const eventProps = {
@@ -320,7 +321,7 @@ describe('input control tests', () => {
       expect(handleChangeMock.mock.calls.length).toBe(0);
     });
 
-    it('onBlurForDateControl is valid data', () => {
+    it('can handle on blur is valid data for date control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
       onBlurForDateControl({
         name: 'age',
@@ -330,7 +331,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onBlurForDateControl is invalid data', () => {
+    it('can handle on blur is invalid data for date control', () => {
       const newProps = { ...props };
       const eventProps = { name: 'age', value: '', controlProps: newProps as ControlProps };
       onBlurForDateControl(eventProps);
@@ -339,7 +340,7 @@ describe('input control tests', () => {
       expect(handleChangeMock.mock.calls.length).toBe(0);
     });
 
-    it('onBlurTimeControl is valid data', () => {
+    it('can handle on blur is valid data for time control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onBlurForTimeControl({
@@ -350,7 +351,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onChangeForDateControl with data', () => {
+    it('can handle on change with data for date control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onChangeForDateControl({
@@ -361,7 +362,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onChangeForDateTimeControl with data', () => {
+    it('can handle on change with data for date time control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onChangeForDateTimeControl({
@@ -372,7 +373,7 @@ describe('input control tests', () => {
       expect(newProps.handleChange).toBeCalled();
     });
 
-    it('onChangeForNumericControl with data', () => {
+    it('can handle on change with data for numeric control', () => {
       const newProps = { ...props, handleChange: handleChangeMock };
 
       onChangeForNumericControl({
@@ -382,7 +383,8 @@ describe('input control tests', () => {
       });
       expect(newProps.handleChange).toBeCalled();
     });
-    it('onChangeForDateTimeControl with invalid data', () => {
+
+    it('can handle on change with invalid data for date time control', () => {
       const newProps = { ...props };
 
       const eventProps = {
@@ -396,7 +398,7 @@ describe('input control tests', () => {
       expect(handleChangeMock.mock.calls.length).toBe(0);
     });
 
-    it('onChangeForNumericControl with invalid data', () => {
+    it('can handle on change with invalid data for numeric control', () => {
       const newProps = { ...props };
 
       const eventProps = {

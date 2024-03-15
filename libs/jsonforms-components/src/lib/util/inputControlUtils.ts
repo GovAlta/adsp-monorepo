@@ -36,18 +36,6 @@ export const onKeyPressForTextControl = (props: EventKeyPressControlProps) => {
 };
 
 /**
- * Helper function to process onBlur events for text controls.
- * @param props - EventBlurControlProps
- */
-export const onBlurForTextControl = (props: EventBlurControlProps) => {
-  const { value, controlProps } = props;
-  const { handleChange, path } = controlProps;
-  if (isRequiredAndHasNoData(controlProps)) {
-    handleChange(path, value);
-  }
-};
-
-/**
  * Helper functions to process onKeyPress events for Numeric controls.
  * @param props - EventKeyPressControlProps
  */
@@ -60,6 +48,47 @@ export const onKeyPressNumericControl = (props: EventKeyPressControlProps) => {
       newValue = +value;
     }
     handleChange(path, newValue);
+  }
+};
+
+/**
+ * Helper function to process onKeyPress events for Time controls
+ * @param props - EventKeyPressControlProps
+ */
+export const onKeyPressForTimeControl = (props: EventKeyPressControlProps) => {
+  const { controlProps, key } = props;
+  const { value } = props;
+  const { handleChange, path } = controlProps;
+
+  if (isNotKeyPressTabOrShift(key)) {
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper function to process onKeyPress events for Date/Date Time controls
+ * @param props - EventKeyPressControlProps
+ */
+export const onKeyPressForDateControl = (props: EventKeyPressControlProps) => {
+  const { controlProps, key } = props;
+  let { value } = props;
+  const { handleChange, path } = controlProps;
+
+  if (isNotKeyPressTabOrShift(key)) {
+    value = standardizeDate(value) || '';
+    handleChange(path, value);
+  }
+};
+
+/**
+ * Helper function to process onBlur events for text controls.
+ * @param props - EventBlurControlProps
+ */
+export const onBlurForTextControl = (props: EventBlurControlProps) => {
+  const { value, controlProps } = props;
+  const { handleChange, path } = controlProps;
+  if (isRequiredAndHasNoData(controlProps)) {
+    handleChange(path, value);
   }
 };
 
@@ -81,21 +110,6 @@ export const onBlurForNumericControl = (props: EventBlurControlProps) => {
 };
 
 /**
- * Helper function to process onKeyPress events for Date/Date Time controls
- * @param props - EventKeyPressControlProps
- */
-export const onKeyPressForDateControl = (props: EventKeyPressControlProps) => {
-  const { controlProps, key } = props;
-  let { value } = props;
-  const { handleChange, path } = controlProps;
-
-  if (isNotKeyPressTabOrShift(key)) {
-    value = standardizeDate(value) || '';
-    handleChange(path, value);
-  }
-};
-
-/**
  * Helper function to process for onBlur event for Date/Date Time controls
  * @param props - EventBlurControlProps
  */
@@ -106,20 +120,6 @@ export const onBlurForDateControl = (props: EventBlurControlProps) => {
 
   if (isRequiredAndHasNoData(controlProps)) {
     value = standardizeDate(value) || '';
-    handleChange(path, value);
-  }
-};
-
-/**
- * Helper function to process onKeyPress events for Time controls
- * @param props - EventKeyPressControlProps
- */
-export const onKeyPressForTimeControl = (props: EventKeyPressControlProps) => {
-  const { controlProps, key } = props;
-  const { value } = props;
-  const { handleChange, path } = controlProps;
-
-  if (isNotKeyPressTabOrShift(key)) {
     handleChange(path, value);
   }
 };
