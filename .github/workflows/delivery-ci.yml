@@ -19,7 +19,7 @@ jobs:
       affected_apps: ${{ steps.set_outputs.outputs.affected_apps }}
       affected_apps_array: ${{ steps.set_outputs.outputs.affected_apps_array }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v3
@@ -55,7 +55,7 @@ jobs:
       - if: steps.production-build.outputs.affected-apps
         run: tar czf adsp-build-dist.tar.gz node_modules/ dist/
       - if: steps.production-build.outputs.affected-apps
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-dist
           path: adsp-build-dist.tar.gz
@@ -74,8 +74,8 @@ jobs:
       matrix:
         app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
           name: build-dist
           path: ./
@@ -98,7 +98,7 @@ jobs:
     environment:
       name: Dev
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Oc login
         uses: redhat-actions/oc-login@v1
         with:
@@ -138,7 +138,7 @@ jobs:
       matrix:
         app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -164,7 +164,7 @@ jobs:
     environment:
       name: Staging
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Oc login
         uses: redhat-actions/oc-login@v1
         with:
@@ -203,7 +203,7 @@ jobs:
       matrix:
         app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           node-version: 20

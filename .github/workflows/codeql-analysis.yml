@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       # Setup node and install npm dependencies if scanning csharp
       # This is counter intuitive; we use nx-dotnet/core and the project has msbuild task that requires the plugin.
       - if: ${{ matrix.language != 'javascript' }}
