@@ -47,6 +47,10 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
     return state?.comment?.topicTypes;
   });
 
+  const coreTopicTypes = useSelector((state: RootState) => {
+    return state?.comment?.core;
+  });
+
   const descErrMessage = 'Description can not be over 180 characters';
 
   const title = 'Add topic';
@@ -171,6 +175,15 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
               {Object.keys(topicTypes).map((item) => (
                 <GoADropdownItem
                   name="TopicTypes"
+                  key={item}
+                  label={item}
+                  value={item}
+                  testId={`${item}-get-comment-options`}
+                />
+              ))}
+              {Object.keys(coreTopicTypes).map((item) => (
+                <GoADropdownItem
+                  name="CoreTopicTypes"
                   key={item}
                   label={item}
                   value={item}
