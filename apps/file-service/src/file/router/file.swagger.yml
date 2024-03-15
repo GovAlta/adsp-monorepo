@@ -96,6 +96,18 @@ components:
           description: Digest of the file prefixed with the hash algorithm.  This can be used to verify integrity of downloaded file.
           example: sha256-vVEAaGCkdyXB56ABe6NxEU+Fsym7bieZg/97hN7+HyQ=
           type: string
+    CopyFileOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [copy]
+        type:
+          type: string
+        filename:
+          type: string
+        recordId:
+          type: string
 
 /file/v1/types:
   get:
@@ -110,7 +122,7 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/FileType'
+                $ref: "#/components/schemas/FileType"
       401:
         description: User not authorized.
 
@@ -133,7 +145,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FileType'
+              $ref: "#/components/schemas/FileType"
       401:
         description: User not authorized.
 
@@ -175,7 +187,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/File'
+              $ref: "#/components/schemas/File"
       400:
         description: Invalid parameters.
       401:
@@ -244,7 +256,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/File'
+                    $ref: "#/components/schemas/File"
                 page:
                   type: object
                   properties:
@@ -302,11 +314,39 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/File'
+              $ref: "#/components/schemas/File"
       404:
         description: File not found
       401:
         description: User not authorized
+  post:
+    tags:
+      - File
+    description: Executes a form operation.
+    requestBody:
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/CopyFileOperation"
+            discriminator:
+              propertyName: operation
+              mapping:
+                copy: "#/components/schemas/CopyFileOperation"
+    responses:
+      200:
+        description: Result of the operation
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/File"
+      404:
+        description: File not found
+      401:
+        description: User not authorized
+      400:
+        description: Operation not recognized
 
 /file/v1/files/{fileId}/download:
   get:

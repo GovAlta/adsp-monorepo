@@ -106,9 +106,7 @@ describe('File Entity', () => {
 
   it('can create new', async () => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
-    storageProviderMock
-      .setup((m) => m.saveFile(It.IsAny(), It.IsAny(), contentMock.object()))
-      .returns(Promise.resolve(true));
+    storageProviderMock.setup((m) => m.saveFile(It.IsAny(), contentMock.object())).returns(Promise.resolve(true));
     repositoryMock.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
 
     const file = {
@@ -138,9 +136,7 @@ describe('File Entity', () => {
 
   it('can create new and delete on storage failure', async () => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
-    storageProviderMock
-      .setup((m) => m.saveFile(It.IsAny(), It.IsAny(), contentMock.object()))
-      .returns(Promise.resolve(false));
+    storageProviderMock.setup((m) => m.saveFile(It.IsAny(), contentMock.object())).returns(Promise.resolve(false));
     storageProviderMock.setup((m) => m.deleteFile(It.IsAny())).returns(Promise.resolve(true));
     repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
     repositoryMock.setup((m) => m.delete(It.IsAny())).returns(Promise.resolve(true));
@@ -223,9 +219,7 @@ describe('File Entity', () => {
       entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), typeMock.object(), file);
 
       typeMock.setup((m) => m.canUpdateFile(user)).returns(true);
-      storageProviderMock
-        .setup((m) => m.saveFile(entity, It.IsAny(), contentMock.object()))
-        .returns(Promise.resolve(true));
+      storageProviderMock.setup((m) => m.saveFile(entity, contentMock.object())).returns(Promise.resolve(true));
       repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).returns(Promise.resolve(entity));
     });
 
@@ -420,6 +414,69 @@ describe('File Entity', () => {
         expect(result.infected).toBeTruthy();
         done();
       });
+    });
+
+    it('can copy', async () => {
+      repositoryMock.setup((m) => m.save(It.IsAny())).callback(({ args: [entity] }) => entity);
+      storageProviderMock.setup((m) => m.copyFile(It.IsAny(), It.IsAny())).returns(Promise.resolve(true));
+
+      const typeMock = new Mock<FileTypeEntity>();
+      typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
+      typeMock.setup((m) => m.id).returns('new-type');
+      typeMock.setup((m) => m.securityClassification).returns('protected b');
+
+      const copy = await entity.copy(user);
+      expect(copy.id).not.toBe(entity.id);
+      expect(copy.filename).toBe(entity.filename);
+      expect(copy.type).toBe(entity.type);
+    });
+
+    it('can copy with filename, type, and recordId', async () => {
+      repositoryMock.setup((m) => m.save(It.IsAny())).callback(({ args: [entity] }) => entity);
+      storageProviderMock.setup((m) => m.copyFile(It.IsAny(), It.IsAny())).returns(Promise.resolve(true));
+
+      const typeMock = new Mock<FileTypeEntity>();
+      typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
+      typeMock.setup((m) => m.id).returns('new-type');
+      typeMock.setup((m) => m.securityClassification).returns('protected b');
+
+      const filename = 'copy';
+      const type = typeMock.object();
+      const recordId = 'copy parent';
+      const copy = await entity.copy(user, filename, type, recordId);
+      expect(copy.id).not.toBe(entity.id);
+      expect(copy.filename).toBe(filename);
+      expect(copy.type).toBe(type);
+      expect(copy.recordId).toBe(recordId);
+      expect(copy.securityClassification).toBe('protected b');
+    });
+
+    it('can copy and delete on storage provider failure', async () => {
+      repositoryMock.setup((m) => m.save(It.IsAny())).returns(Promise.resolve(entity));
+      repositoryMock.setup((m) => m.delete(It.IsAny())).returns(Promise.resolve(true));
+
+      storageProviderMock.setup((m) => m.copyFile(It.IsAny(), It.IsAny())).returns(Promise.resolve(false));
+      // Storage provider returns true for delete even if the file doesn't exist.
+      storageProviderMock.setup((m) => m.deleteFile(It.IsAny())).returns(Promise.resolve(true));
+
+      const typeMock = new Mock<FileTypeEntity>();
+      typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
+      typeMock.setup((m) => m.id).returns('new-type');
+      typeMock.setup((m) => m.securityClassification).returns('protected b');
+
+      const filename = 'copy';
+      const type = typeMock.object();
+      await expect(entity.copy(user, filename, type)).rejects.toThrowError();
+      repositoryMock.verify((m) => m.delete(It.IsAny()));
+    });
+
+    it('can copy and fail for unauthorized user', async () => {
+      const typeMock = new Mock<FileTypeEntity>();
+      typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(false);
+
+      const filename = 'copy';
+      const type = typeMock.object();
+      await expect(entity.copy(user, filename, type)).rejects.toThrowError(UnauthorizedError);
     });
   });
 });
