@@ -552,6 +552,16 @@ Then('the user views more than 10 topics', function () {
 });
 
 Then('the user {string} a topic of {string}, {string}', function (viewOrNot, name, resourceId) {
+  // Click Load More button 3 times if it's there
+  for (let i = 0; i < 3; i++) {
+    commentObj.commentsTab().then((parentElement) => {
+      if (parentElement.find('goa-button:contains("Load more")').length > 0) {
+        commentObj.topicLoadMoreButton().shadow().find('button').click({ force: true });
+        cy.wait(2000);
+      }
+    });
+  }
+
   findTopic(name, resourceId).then((rowNumber) => {
     switch (viewOrNot) {
       case 'views':
@@ -612,6 +622,15 @@ function findTopic(name, id) {
 }
 
 When('the user clicks {string} icon for the topic of {string}, {string}', function (iconName, name, resourceId) {
+  // Click Load More button 3 times if it's there
+  for (let i = 0; i < 3; i++) {
+    commentObj.commentsTab().then((parentElement) => {
+      if (parentElement.find('goa-button:contains("Load more")').length > 0) {
+        commentObj.topicLoadMoreButton().shadow().find('button').click({ force: true });
+        cy.wait(2000);
+      }
+    });
+  }
   findTopic(name, resourceId).then((rowNumber) => {
     switch (iconName) {
       case 'eye':
@@ -836,4 +855,28 @@ When('the user clicks View older comments button', function () {
 
 Then('the user views more than {string} comments', function (number) {
   commentObj.commentsList().should('have.length.above', Number(number));
+});
+
+Then('the user views Core types below the tenant topic types list', function () {
+  commentObj.topicTypesCoreTypesTitleAfterTopicTypeTable().should('exist');
+});
+
+Then(
+  'the user views core types with {string}, {string}, {string}',
+  function (titleName, titleToicTypeId, titleSecurityClassification) {
+    commentObj.topicTypesCoreTypesTableTitles().then((elements) => {
+      cy.wrap(elements[0]).invoke('text').should('eq', titleName);
+      cy.wrap(elements[1]).invoke('text').should('eq', titleToicTypeId);
+      cy.wrap(elements[2]).invoke('text').should('eq', titleSecurityClassification);
+    });
+  }
+);
+
+Then('the user should not view actions for core topic Types', function () {
+  commentObj.topicTypesCoreTypesTableRows().then((elements) => {
+    for (let i = 0; i < elements.length; i++) {
+      cy.wrap(elements[i]).find('td').should('have.length', 3); // Only 3 cells for the row
+      cy.wrap(elements[i]).find('td').children().should('have.length', 0); // No cell element has child element (action icons have child elements)
+    }
+  });
 });

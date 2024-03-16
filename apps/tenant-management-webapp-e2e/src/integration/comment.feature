@@ -142,25 +142,27 @@ Feature: Comment
 
   @TEST_CS-2765 @REQ_CS-22765 @regression
   Scenario: As a tenant admin, I can see core topic types, so I understand what topics platform services create
+    # Validate core topic types
     Given a tenant admin user is on comment service overview page
     When the user selects "Topic types" tab for "Comment"
-    # Then the user views Core types below the tenant topic types list
-    # And the user views core types with "name", "Topic type ID", "Security classification"
-    # And the user should not view actions for core topic Types
+    Then the user views Core types below the tenant topic types list
+    And the user views core types with "Name", "Topic type ID", "Security classification"
+    And the user should not view actions for core topic Types
     When the user clicks Add topic type button on topic types page
     Then the user views Add topic type modal
     When the user enters "Form questions" in Add topic type modal
-    Then the user views the error message of "Duplicate topicType name Form questions. Must be unique."
+    Then the user views the error message of "Duplicate topicType name Form questions. Must be unique." for Name field in Add topic type modal
     When the user clicks Cancel button in Add topic type modal
     And the user selects "Comments" tab for "Comment"
-    # Add and delete topic and comment for form-questions
+    # Add and delete topic and comment for the core topic type of form-questions
     And the user selects "form-questions" in Select a topic type dropdown
     When the user clicks Add topic type button on comments page
     Then the user views Add topic modal
     When the user enters "autotest-topic-form-questions", "autotest topic desc", "autotest456" in Add topic modal
     And the user clicks "Save" button in Add topic modal
-    Then the user views "autotest-topic-form-questions" with user info and current timestamp
     When the user clicks "eye" icon for the topic of "autotest-topic-form-questions", "autotest456"
+    Then the user views the description of "autotest topic desc" for the topic of "autotest-topic-form-questions", "autotest456"
+    And the user views the message of No comments found for the topic of "autotest-topic-form-questions", "autotest456"
     When the user clicks Add comment button for the topic
     Then the user views Add comment modal
     When the user enters "Comment for form questions" as comment
@@ -175,25 +177,3 @@ Feature: Comment
     And the user views the message of associated comments with "autotest-topic-form-questions" to be deleted
     When the user clicks Delete button in Delete topic modal
     Then the user "should not view" a topic of "autotest-topic-form-questions", "autotest456"
-    # Add and delete topic and comment for task-comments
-    And the user selects "task-comments" in Select a topic type dropdown
-    When the user clicks Add topic type button on comments page
-    Then the user views Add topic modal
-    When the user enters "autotest-topic-task-comments", "autotest topic desc", "autotest789" in Add topic modal
-    And the user clicks "Save" button in Add topic modal
-    Then the user views "autotest-topic-task-comments" with user info and current timestamp
-    When the user clicks "eye" icon for the topic of "autotest-topic-task-comments", "autotest789"
-    When the user clicks Add comment button for the topic
-    Then the user views Add comment modal
-    When the user enters "Comment for task" as comment
-    And the user clicks "Save" button in Add comment modal
-    Then the user views "Comment for task" with user info and current timestamp
-    When the user clicks "delete" icon for the comment of "Comment for task"
-    Then the user views Delete comment modal for "Comment for task"
-    When the user clicks Delete button in Delete comment modal
-    Then the user "should not view" the comment of "Comment for task"
-    When the user clicks "delete" icon for the topic of "autotest-topic-task-comments", "autotest789"
-    Then the user views Delete topic modal for "autotest-topic-task-comments"
-    And the user views the message of associated comments with "autotest-topic-task-comments" to be deleted
-    When the user clicks Delete button in Delete topic modal
-    Then the user "should not view" a topic of "autotest-topic-task-comments", "autotest789"

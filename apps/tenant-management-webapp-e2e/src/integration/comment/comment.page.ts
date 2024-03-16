@@ -279,5 +279,23 @@ class CommentPage {
   commentsListViewOlderCommentsBtn() {
     return cy.xpath('//tbody//goa-button[@data-testid="comment-load-more-btn"]');
   }
+
+  topicTypesCoreTypesTitleAfterTopicTypeTable() {
+    return cy.xpath(
+      '//*[@data-testid="comment-topic-types-table"]/parent::div/following-sibling::h2[text()="Core types"]'
+    );
+  }
+
+  topicTypesCoreTypesTableTitles() {
+    return cy.xpath('//*[@data-testid="comment-core-topic-types-table"]/thead/tr/th');
+  }
+
+  topicTypesCoreTypesTableRows() {
+    return cy.xpath('//*[@data-testid="comment-core-topic-types-table"]/tbody/tr');
+  }
+
+  commentsTab() {
+    return cy.xpath('//*[@data-testid="comments-tab"]');
+  }
 }
 export default CommentPage;
