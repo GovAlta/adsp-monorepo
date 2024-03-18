@@ -36,6 +36,22 @@ describe('Group Layout tests', () => {
     },
   };
 
+  const groupUiSchemaInvalidComponentProps: GroupLayout = {
+    type: 'Group',
+    elements: [
+      {
+        type: 'Control',
+      },
+    ],
+    options: {
+      componentProps: {
+        invalidType: 'invalidType-success',
+        invalidAccent: 'invalidAccent',
+        invalidPadding: 'invalidPadding',
+      },
+    },
+  };
+
   const staticProps: LayoutProps = {
     uischema: groupUiSchema,
     schema: {},
@@ -50,6 +66,18 @@ describe('Group Layout tests', () => {
 
   const staticPropsUndefined: LayoutProps = {
     uischema: groupUiSchemaUndefined,
+    schema: {},
+    enabled: true,
+    label: 'Group Name',
+    config: {},
+    path: '',
+    data: '',
+    visible: true,
+    direction: 'row',
+  };
+
+  const staticPropsInvalidComponentProps: LayoutProps = {
+    uischema: groupUiSchemaInvalidComponentProps,
     schema: {},
     enabled: true,
     label: 'Group Name',
@@ -116,24 +144,36 @@ describe('Group Layout tests', () => {
 
     it('can check attributes is not a proper attribute name', () => {
       const props = {
-        ...staticProps,
-        groupUiSchema: {
-          options: {
-            componentProps: {
-              invalidType: 'invalidType-success',
-              invalidAccent: 'invalidAccent',
-              invalidPadding: 'invalidPadding',
-            },
-          },
-        },
+        ...staticPropsInvalidComponentProps,
       };
 
       const { container } = render(GoAGroupControlComponent(props));
       const el = container.querySelector('goa-container');
 
-      expect(el?.getAttributeNames().includes('invalidType')).toBe(false);
-      expect(el?.getAttributeNames().includes('invalidAccent')).toBe(false);
-      expect(el?.getAttributeNames().includes('invalidPadding')).toBe(false);
+      expect(!el?.getAttributeNames().includes('invalidType')).toBe(true);
+      expect(!el?.getAttributeNames().includes('invalidAccent')).toBe(true);
+      expect(!el?.getAttributeNames().includes('invalidPadding')).toBe(true);
+    });
+
+    it('can check attribute value are invalid for attribute name', () => {
+      const props = {
+        ...staticPropsInvalidComponentProps,
+      };
+
+      const validTypeNames = ['success', 'info', 'non-interactive', 'error', 'interactive'];
+      const validAccentNames = ['filled', 'thick', 'thin'];
+      const validPaddingNames = ['relaxed', 'compact'];
+
+      const { container } = render(GoAGroupControlComponent(props));
+      const el = container.querySelector('goa-container');
+
+      const typeAttribute = el?.getAttribute('type') as string;
+      const accentAttribute = el?.getAttribute('accent') as string;
+      const relaxedAttribute = el?.getAttribute('padding') as string;
+
+      expect(!validTypeNames.includes(typeAttribute)).toBe(true);
+      expect(!validAccentNames.includes(accentAttribute)).toBe(true);
+      expect(!validPaddingNames.includes(relaxedAttribute)).toBe(true);
     });
   });
 });
