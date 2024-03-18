@@ -12,14 +12,17 @@ export const CommentCoreTopicTypesTable: FunctionComponent<CommentTemplatesTable
   const newTemplates = JSON.parse(JSON.stringify(topicTypes));
 
   return (
-    <DataTable data-testid="comment-topic-types-table">
-      <thead data-testid="comment-topic-types-table-header">
+    <DataTable data-testid="comment-core-topic-types-table">
+      <thead data-testid="comment-core-topic-types-table-header">
         <tr>
-          <th data-testid="comment-topic-types-table-header-name">Name</th>
-          <th id="comment-topic-types-template-id" data-testid="comment-topic-types-table-header-template-id">
+          <th data-testid="comment-core-topic-types-table-header-name">Name</th>
+          <th id="comment-core-topic-types-template-id" data-testid="comment-core-topic-types-table-header-template-id">
             Topic type ID
           </th>
-          <th id="comment-topic-types-assessor" data-testid="comment-topic-types-table-header-security-classification">
+          <th
+            id="comment-core-topic-types-assessor"
+            data-testid="comment-core-topic-types-table-header-security-classification"
+          >
             Security classification
           </th>
         </tr>

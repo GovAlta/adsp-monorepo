@@ -23,6 +23,9 @@ function isFeedbackPayload(payload: unknown): payload is FeedbackMessage {
   );
 }
 
+const hasMessage = (items, message) => {
+  return items.length !== 0 && items.some((obj) => obj?.message === message);
+};
 const feedbackSlice = createSlice({
   name: FEEDBACK_FEATURE_KEY,
   initialState: initialFeedbackState,
@@ -52,7 +55,9 @@ const feedbackSlice = createSlice({
         };
       }
 
-      state.items.push(item);
+      if (!hasMessage(state.items, item.message)) {
+        state.items.push(item);
+      }
     });
   },
 });

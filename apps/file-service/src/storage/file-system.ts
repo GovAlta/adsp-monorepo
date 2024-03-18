@@ -1,15 +1,17 @@
 import * as appRoot from 'app-root-path';
-import { createReadStream, createWriteStream, ReadStream, stat, unlink } from 'fs';
+import { createReadStream, createWriteStream, ReadStream, stat, unlink, copyFile } from 'fs';
 import * as mkdirp from 'mkdirp';
 import * as path from 'path';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
-import { FileEntity, FileStorageProvider, FileTypeEntity } from '../file';
+import { FileEntity, FileStorageProvider } from '../file';
+
+const TENANT_RESOURCE_PARENT = '/tenants/';
 
 export class FileSystemStorageProvider implements FileStorageProvider {
   constructor(private logger: Logger, private storageRoot: string) {}
 
-  async saveFile(entity: FileEntity, entityFileType: FileTypeEntity, content: Readable): Promise<boolean> {
+  async saveFile(entity: FileEntity, content: Readable): Promise<boolean> {
     const filePath = this.getFilePath(entity);
     await mkdirp(path.dirname(filePath));
     return await new Promise<boolean>((resolve) => {
@@ -28,6 +30,30 @@ export class FileSystemStorageProvider implements FileStorageProvider {
           entity.setSize(stats.size);
           resolve(true);
         });
+      });
+    });
+  }
+
+  async copyFile(entity: FileEntity, destination: FileEntity): Promise<boolean> {
+    const sourcePath = this.getFilePath(entity);
+    const destinationPath = this.getFilePath(destination);
+
+    return await new Promise<boolean>((resolve) => {
+      copyFile(sourcePath, destinationPath, (err) => {
+        if (err) {
+          this.logger.error(
+            `Error on copying file ${entity.filename} (ID: ${entity.id}) to ${destination.filename} (ID: ${destination.id}) in file system at ${destinationPath}.`,
+            {
+              tenant: entity.tenantId?.toString(),
+              context: 'FileSystemStorageProvider',
+            }
+          );
+        } else {
+          stat(destinationPath, (_err, stats) => {
+            destination.setSize(stats.size);
+            resolve(true);
+          });
+        }
       });
     });
   }
@@ -75,7 +101,7 @@ export class FileSystemStorageProvider implements FileStorageProvider {
   }
 
   private getFilePath(entity: FileEntity): string {
-    const filePath = path.join(entity.tenantId.resource.substring(9), entity.id);
+    const filePath = path.join(entity.tenantId.resource.substring(TENANT_RESOURCE_PARENT.length), entity.id);
     return this.getPath(filePath);
   }
 }

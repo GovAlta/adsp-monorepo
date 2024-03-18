@@ -1,4 +1,4 @@
-import { EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import { DateTime, Duration } from 'luxon';
 import { Logger } from 'winston';
 import { formLocked } from '../events';
@@ -8,13 +8,14 @@ import { MAX_LOCKED_AGE } from './delete';
 import { jobUser } from './user';
 
 interface LockJobProps {
+  apiId: AdspId;
   logger: Logger;
   repository: FormRepository;
   eventService: EventService;
 }
 
 const MAX_STALE_AGE = Duration.fromISO('P15D');
-export function createLockJob({ logger, repository, eventService }: LockJobProps) {
+export function createLockJob({ apiId, logger, repository, eventService }: LockJobProps) {
   return async (): Promise<void> => {
     try {
       logger.debug('Starting form lock job...');
@@ -31,7 +32,9 @@ export function createLockJob({ logger, repository, eventService }: LockJobProps
         for (const result of results) {
           const { locked } = await result.lock(jobUser);
           numberLocked++;
-          eventService.send(formLocked(jobUser, result, DateTime.fromJSDate(locked).plus(MAX_LOCKED_AGE).toJSDate()));
+          eventService.send(
+            formLocked(apiId, jobUser, result, DateTime.fromJSDate(locked).plus(MAX_LOCKED_AGE).toJSDate())
+          );
         }
 
         after = page.next;

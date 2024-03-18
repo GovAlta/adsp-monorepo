@@ -6,6 +6,10 @@ interface TenantsResponse {
   results: Tenant[];
 }
 
+interface UserIdResponse {
+  userIdInCore: string;
+}
+
 export class TenantApi {
   private http: AxiosInstance;
   constructor(config: TenantApiConfig, token: string) {
@@ -45,3 +49,33 @@ export class TenantApi {
     return data.results[0];
   }
 }
+
+export const callFetchUserIdByEmail = async (url: string, token: string, email: string): Promise<string> => {
+  const { data } = await axios.get<UserIdResponse>(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { email },
+  });
+  return data?.userIdInCore;
+};
+
+export const callDeleteUserIdPFromCore = async (
+  url: string,
+  token: string,
+  userId: string,
+  realm: string
+): Promise<void> => {
+  try {
+    await axios.delete(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { userId, realm },
+    });
+  } catch (err) {
+    if (err?.response?.status === 400) {
+      if (err?.response?.data?.errorMessage?.includes('due to Request failed with status code 404')) {
+        throw new Error(`Cannot find the goa-ad IdP in the ${realm} for the user.`);
+      }
+    }
+
+    throw new Error(`Error deleting user IdP: ${err?.response?.data?.errorMessage || err?.message}`);
+  }
+};

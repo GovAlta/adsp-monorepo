@@ -1,6 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
-import { GoAElementLoader } from '@abgov/react-components';
 import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem, GoATextArea } from '@abgov/react-components-new';
 import { ConfigDefinition } from '@store/configuration/model';
 import { RootState } from '@store/index';
@@ -85,12 +84,6 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     onClose();
   };
 
-  useEffect(() => {
-    if (spinner && loadingIndicator.show) {
-      validationCheck();
-      setSpinner(false);
-    }
-  }, [spinner, loadingIndicator.show, configurations, validationCheck]);
   return (
     <ModalOverwrite>
       <GoAModal
@@ -123,11 +116,6 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               }}
             >
               Save
-              {spinner && (
-                <SpinnerPadding>
-                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-                </SpinnerPadding>
-              )}
             </GoAButton>
           </GoAButtonGroup>
         }
@@ -207,8 +195,4 @@ const ModalOverwrite = styled.div`
   .modal {
     max-height: 100% !important;
   }
-`;
-const SpinnerPadding = styled.div`
-  margin: 0 0 0 5px;
-  float: right;
 `;

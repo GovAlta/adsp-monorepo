@@ -1,5 +1,5 @@
-name: 'NX cypress e2e run'
-description: 'Executes nx e2e for target project.'
+name: "NX cypress e2e run"
+description: "Executes nx e2e for target project."
 inputs:
   app:
     description: APP to run against.
@@ -29,7 +29,7 @@ inputs:
     description: Test user 3 password.
     required: true
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - shell: bash
       run: |
@@ -53,7 +53,7 @@ runs:
         node apps/${{ inputs.app }}-e2e/src/support/multiple-cucumber-html-reporter.js
     - if: ${{ always() }}
       name: Upload Cypress Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.app }}-test-cypress-reports
         path: dist/cypress/apps/${{ inputs.app }}-e2e/

@@ -3,11 +3,12 @@ import * as schedule from 'node-schedule';
 import { FormRepository } from '../repository';
 import { createDeleteJob } from './delete';
 import { createLockJob } from './lock';
-import { EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import { FileService } from '../../file';
 import { NotificationService } from '../../notification';
 
 interface FormJobProps {
+  apiId: AdspId;
   logger: Logger;
   repository: FormRepository;
   eventService: EventService;

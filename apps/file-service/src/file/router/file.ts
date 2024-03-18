@@ -1,6 +1,7 @@
 import {
   AdspId,
   benchmark,
+  DomainEvent,
   EventService,
   startBenchmark,
   UnauthorizedUserError,
@@ -14,7 +15,7 @@ import {
   decodeAfter,
 } from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
-import { param, query } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { createUpload } from './upload';
@@ -24,6 +25,7 @@ import { FileStorageProvider } from '../storage';
 import { FileCriteria } from '../types';
 import validator from 'validator';
 import { mapFile, mapFileType } from '../mapper';
+import { FileTypeEntity } from '../model';
 
 interface FileRouterProps {
   apiId: AdspId;
@@ -260,7 +262,59 @@ export function deleteFile(apiId: AdspId, logger: Logger, eventService: EventSer
       next(err);
     }
   };
-  ``;
+}
+
+export function fileOperation(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
+      const user = req.user;
+      const { operation } = req.body;
+      const fileEntity = req.fileEntity;
+
+      let result: unknown, event: DomainEvent;
+      switch (operation) {
+        case 'copy': {
+          const { filename, type, recordId } = req.body;
+          let fileType: FileTypeEntity = null;
+          if (type) {
+            const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
+            fileType = configuration?.[type];
+            if (!fileType) {
+              throw new NotFoundError('File Type', type);
+            }
+          }
+
+          const copy = await fileEntity.copy(user, filename, fileType, recordId);
+          result = mapFile(apiId, copy);
+          event = fileUploaded(apiId, user, copy);
+
+          logger.info(
+            `File '${fileEntity.filename}' (ID: ${fileEntity.id}) copied to '${copy.filename}' (ID: ${copy.id}) by ` +
+              `user '${user.name}' (ID: ${user.id}).`,
+            {
+              context: 'file-router',
+              tenant: fileEntity.tenantId?.toString(),
+              user: `${user.name} (ID: ${user.id})`,
+            }
+          );
+          break;
+        }
+        default:
+          throw new InvalidOperationError(`File operation '${operation}' not recognized.`);
+      }
+
+      end();
+      res.send(result);
+
+      if (event) {
+        eventService.send(event);
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
 export const createFileRouter = ({
@@ -270,7 +324,6 @@ export const createFileRouter = ({
   fileRepository,
   eventService,
 }: FileRouterProps): Router => {
-
   const upload = createUpload({ logger, storageProvider, fileRepository });
   const fileRouter = Router();
 
@@ -306,13 +359,14 @@ export const createFileRouter = ({
     ),
     getFiles(apiId, fileRepository)
   );
-  fileRouter.post(
-    '/files',
-    assertAuthenticatedHandler,
-    upload.single('file'),
-    uploadFile(apiId, logger, eventService)
-  );
+  fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));
 
+  fileRouter.get(
+    '/files/:fileId',
+    createValidationHandler(param('fileId').isUUID()),
+    getFile(fileRepository),
+    (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity))
+  );
   fileRouter.delete(
     '/files/:fileId',
     assertAuthenticatedHandler,
@@ -320,12 +374,20 @@ export const createFileRouter = ({
     getFile(fileRepository),
     deleteFile(apiId, logger, eventService)
   );
-  fileRouter.get(
+  fileRouter.post(
     '/files/:fileId',
-    createValidationHandler(param('fileId').isUUID()),
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('fileId').isUUID(),
+      body('operation').isIn(['copy']),
+      body('type').optional({ nullable: true }).isString().isLength({ min: 1, max: 50 }),
+      body('filename').optional({ nullable: true }).isString(),
+      body('recordId').optional({ nullable: true }).isString()
+    ),
     getFile(fileRepository),
-    (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity))
+    fileOperation(apiId, logger, eventService)
   );
+
   fileRouter.get(
     '/files/:fileId/download',
     createValidationHandler(

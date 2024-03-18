@@ -1,5 +1,6 @@
-import { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { FormEntity, FormSubmissionEntity } from './model';
+import { FormResponse, mapForm } from './mapper';
 
 export const FORM_CREATED = 'form-created';
 export const FORM_DELETED = 'form-deleted';
@@ -96,6 +97,12 @@ export const FormStatusSubmittedDefinition: DomainEventDefinition = {
     properties: {
       form: formSchema,
       submittedBy: userInfoSchema,
+      submission: {
+        type: ['object', 'null'],
+        properties: {
+          id: { type: 'string' },
+        },
+      },
     },
   },
 };
@@ -132,186 +139,213 @@ export const SubmissionDispositionedDefinition: DomainEventDefinition = {
     properties: {
       id: { type: 'string' },
       form: formSchema,
-      submmission: {
-        id: { type: 'string' },
-        createdBy: userInfoSchema,
-        disposition: {
-          status: { type: 'string' },
-          reason: { type: 'string' },
+      submission: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          createdBy: userInfoSchema,
+          disposition: {
+            type: 'object',
+            properties: {
+              status: { type: 'string' },
+              reason: { type: 'string' },
+            },
+          },
         },
       },
     },
   },
 };
 
-function mapForm(entity: FormEntity) {
+function getCorrelationId(form: FormResponse) {
+  return form.urn;
+}
+
+export function formCreated(apiId: AdspId, user: User, form: FormEntity): DomainEvent {
+  const formResponse = mapForm(apiId, form);
   return {
-    definition: {
-      id: entity.definition.id,
-      name: entity.definition.name,
+    name: FORM_CREATED,
+    timestamp: form.created,
+    tenantId: form.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: form.definition.id,
     },
-    id: entity.id,
-    formDraftUrl: entity.formDraftUrl,
-    status: entity.status,
-    created: entity.created,
-    locked: entity.locked,
-    submitted: entity.submitted,
-    lastAccessed: entity.lastAccessed,
+    payload: {
+      form: formResponse,
+      createdBy: {
+        id: user.id,
+        name: user.name,
+      },
+    },
   };
 }
 
-export const formCreated = (user: User, form: FormEntity): DomainEvent => ({
-  name: FORM_CREATED,
-  timestamp: form.created,
-  tenantId: form.tenantId,
-  correlationId: form.id,
-  context: {
-    definitionId: form.definition.id,
-  },
-  payload: {
-    form: mapForm(form),
-    createdBy: {
-      id: user.id,
-      name: user.name,
+export function formDeleted(apiId: AdspId, user: User, form: FormEntity): DomainEvent {
+  const formResponse = mapForm(apiId, form);
+  return {
+    name: FORM_DELETED,
+    timestamp: new Date(),
+    tenantId: form.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: form.definition.id,
     },
-  },
-});
+    payload: {
+      id: form.id,
+      deletedBy: {
+        id: user.id,
+        name: user.name,
+      },
+    },
+  };
+}
 
-export const formDeleted = (user: User, form: FormEntity): DomainEvent => ({
-  name: FORM_DELETED,
-  timestamp: new Date(),
-  tenantId: form.tenantId,
-  correlationId: form.id,
-  context: {
-    definitionId: form.definition.id,
-  },
-  payload: {
-    id: form.id,
-    deletedBy: {
-      id: user.id,
-      name: user.name,
+export function formLocked(apiId: AdspId, user: User, form: FormEntity, deleteOn: Date): DomainEvent {
+  const formResponse = mapForm(apiId, form);
+  return {
+    name: FORM_LOCKED,
+    timestamp: form.locked,
+    tenantId: form.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: form.definition.id,
     },
-  },
-});
+    payload: {
+      form: formResponse,
+      lockedBy: {
+        id: user.id,
+        name: user.name,
+      },
+      deleteOn,
+    },
+  };
+}
 
-export const formLocked = (user: User, form: FormEntity, deleteOn: Date): DomainEvent => ({
-  name: FORM_LOCKED,
-  timestamp: form.locked,
-  tenantId: form.tenantId,
-  correlationId: form.id,
-  context: {
-    definitionId: form.definition.id,
-  },
-  payload: {
-    form: mapForm(form),
-    lockedBy: {
-      id: user.id,
-      name: user.name,
+export function formUnlocked(apiId: AdspId, user: User, form: FormEntity): DomainEvent {
+  const formResponse = mapForm(apiId, form);
+  return {
+    name: FORM_UNLOCKED,
+    timestamp: new Date(),
+    tenantId: form.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: form.definition.id,
     },
-    deleteOn,
-  },
-});
+    payload: {
+      form: formResponse,
+      unlockedBy: {
+        id: user.id,
+        name: user.name,
+      },
+    },
+  };
+}
 
-export const formUnlocked = (user: User, form: FormEntity): DomainEvent => ({
-  name: FORM_UNLOCKED,
-  timestamp: new Date(),
-  tenantId: form.tenantId,
-  correlationId: form.id,
-  context: {
-    definitionId: form.definition.id,
-  },
-  payload: {
-    form: mapForm(form),
-    unlockedBy: {
-      id: user.id,
-      name: user.name,
+export function formSetToDraft(apiId: AdspId, user: User, form: FormEntity): DomainEvent {
+  const formResponse = mapForm(apiId, form);
+  return {
+    name: FORM_SET_TO_DRAFT,
+    timestamp: new Date(),
+    tenantId: form.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: form.definition.id,
     },
-  },
-});
-export const formSetToDraft = (user: User, form: FormEntity): DomainEvent => ({
-  name: FORM_SET_TO_DRAFT,
-  timestamp: new Date(),
-  tenantId: form.tenantId,
-  correlationId: form.id,
-  context: {
-    definitionId: form.definition.id,
-  },
-  payload: {
-    form: mapForm(form),
-    toDraftBy: {
-      id: user.id,
-      name: user.name,
+    payload: {
+      form: formResponse,
+      toDraftBy: {
+        id: user.id,
+        name: user.name,
+      },
     },
-  },
-});
+  };
+}
 
-export const formSubmitted = (user: User, form: FormEntity, submission: FormSubmissionEntity): DomainEvent => ({
-  name: FORM_SUBMITTED,
-  timestamp: form.submitted,
-  tenantId: form.tenantId,
-  correlationId: form.id,
-  context: {
-    definitionId: form.definition.id,
-  },
-  payload: {
-    form: mapForm(form),
-    submmission: form.submissionRecords
-      ? {
-          id: submission.id,
-          createdBy: {
-            id: submission.createdBy.id,
-            name: submission.createdBy.name,
-          },
-        }
-      : null,
-    submittedBy: {
-      id: user.id,
-      name: user.name,
+export function formSubmitted(
+  apiId: AdspId,
+  user: User,
+  form: FormEntity,
+  submission?: FormSubmissionEntity
+): DomainEvent {
+  const formResponse = mapForm(apiId, form);
+  return {
+    name: FORM_SUBMITTED,
+    timestamp: form.submitted,
+    tenantId: form.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: form.definition.id,
     },
-  },
-});
-
-export const formArchived = (user: User, form: FormEntity): DomainEvent => ({
-  name: FORM_ARCHIVED,
-  timestamp: new Date(),
-  tenantId: form.tenantId,
-  correlationId: form.id,
-  context: {
-    definitionId: form.definition.id,
-  },
-  payload: {
-    id: form.id,
-    archivedBy: {
-      id: user.id,
-      name: user.name,
+    payload: {
+      form: formResponse,
+      submission: submission
+        ? {
+            urn: `${formResponse.urn}/submissions/${submission.id}`,
+            id: submission.id,
+            createdBy: {
+              id: submission.createdBy.id,
+              name: submission.createdBy.name,
+            },
+          }
+        : null,
+      submittedBy: {
+        id: user.id,
+        name: user.name,
+      },
     },
-  },
-});
+  };
+}
 
-export const submissionDispositioned = (
+export function formArchived(apiId: AdspId, user: User, form: FormEntity): DomainEvent {
+  const formResponse = mapForm(apiId, form);
+  return {
+    name: FORM_ARCHIVED,
+    timestamp: new Date(),
+    tenantId: form.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: form.definition.id,
+    },
+    payload: {
+      id: form.id,
+      archivedBy: {
+        id: user.id,
+        name: user.name,
+      },
+    },
+  };
+}
+
+export function submissionDispositioned(
+  apiId: AdspId,
   user: User,
   form: FormEntity,
   submission: FormSubmissionEntity
-): DomainEvent => ({
-  name: SUBMISSION_DISPOSITIONED,
-  timestamp: new Date(),
-  tenantId: form.tenantId,
-  correlationId: form.id,
-  context: {
-    definitionId: form.definition.id,
-  },
-  payload: {
-    form: mapForm(form),
-    submission: {
-      id: submission.id,
-      disposition: {
-        createdBy: {
-          id: user.id,
-          name: user.name,
+): DomainEvent {
+  const formResponse = mapForm(apiId, form);
+  return {
+    name: SUBMISSION_DISPOSITIONED,
+    timestamp: new Date(),
+    tenantId: form.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: form.definition.id,
+    },
+    payload: {
+      form: formResponse,
+      submission: {
+        urn: `${formResponse.urn}/submissions/${submission.id}`,
+        id: submission.id,
+        disposition: {
+          createdBy: {
+            id: user.id,
+            name: user.name,
+          },
+          status: submission.disposition.status,
+          reason: submission.disposition.reason,
         },
-        status: submission.disposition.status,
-        reason: submission.disposition.reason,
       },
     },
-  },
-});
+  };
+}
