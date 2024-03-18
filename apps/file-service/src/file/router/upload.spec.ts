@@ -26,6 +26,7 @@ describe('upload', () => {
   const storageProviderMock = {
     readFile: jest.fn(),
     saveFile: jest.fn(),
+    copyFile: jest.fn(),
     deleteFile: jest.fn(),
   };
 

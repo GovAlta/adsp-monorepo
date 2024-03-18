@@ -278,7 +278,7 @@ export const saveForm = createAsyncThunk(
         }
       }
     },
-    2000,
+    800,
     { leading: false, trailing: true }
   )
 );

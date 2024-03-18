@@ -17,7 +17,7 @@ export const UPDATE_TENANT_CREATED = 'UPDATE_TENANT_CREATED';
 export const FETCH_REALM_ROLES = 'FETCH_REALM_ROLES';
 export const FETCH_REALM_ROLES_SUCCESS = 'FETCH_REALM_ROLES_SUCCESS';
 export const UPDATE_ACCESS_TOKEN = 'UPDATE_ACCESS_TOKEN';
-export const DELETE_USER_CORE_IDP = 'DELETE_USER_CORE_IDP';
+export const DELETE_USER_IDP = 'DELETE_USER_IDP';
 export const FETCH_USER_IDP_INFO = 'FETCH_USER_IDP_INFO';
 export const FETCH_USER_ID_BY_EMAIL = 'FETCH_USER_INFO_BY_EMAIL';
 
@@ -71,8 +71,8 @@ interface UpdateTenantAdminInfoAction {
 }
 
 export interface DeleteUserIdpAction {
-  type: typeof DELETE_USER_CORE_IDP;
-  email: string;
+  type: typeof DELETE_USER_IDP;
+  userId: string;
   realm: string;
 }
 
@@ -250,9 +250,9 @@ export const UpdateAccessToken = (): UpdateAccessTokenAction => ({
   type: 'UPDATE_ACCESS_TOKEN',
 });
 
-export const DeleteUserIdp = (email: string, realm: string): DeleteUserIdpAction => ({
-  type: 'DELETE_USER_CORE_IDP',
-  email,
+export const DeleteUserIdp = (userId: string, realm: string): DeleteUserIdpAction => ({
+  type: 'DELETE_USER_IDP',
+  userId,
   realm,
 });
 

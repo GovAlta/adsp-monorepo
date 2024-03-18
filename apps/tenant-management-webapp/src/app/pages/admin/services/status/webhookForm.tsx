@@ -216,7 +216,7 @@ export const WebhookFormModal = (): JSX.Element => {
                   });
                 }}
                 aria-label="description"
-                suffix="min"
+                trailingContent="min"
               />
             </div>
           </GoAFormItem>
