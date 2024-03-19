@@ -1,5 +1,6 @@
 import { UISchemaElement } from '@jsonforms/core';
 
+export const wrapperErrorMsg = 'You will see the last good preview until the schema errors are fixed';
 export const uiSchemaWrapper = (schema: UISchemaElement): UISchemaElement => {
   return {
     type: 'VerticalLayout',
@@ -8,7 +9,7 @@ export const uiSchemaWrapper = (schema: UISchemaElement): UISchemaElement => {
         type: 'Callout',
         options: {
           componentProps: {
-            message: 'You will see the last good preview until the schema errors are fixed',
+            message: wrapperErrorMsg,
             type: 'important',
             size: 'medium',
           },
