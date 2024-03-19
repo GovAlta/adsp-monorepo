@@ -148,6 +148,7 @@ Feature: Comment
     Then the user views Core types below the tenant topic types list
     And the user views core types with "Name", "Topic type ID", "Security classification"
     And the user should not view actions for core topic Types
+    # Validate user cannot create a topic type with the same name of a core type
     When the user clicks Add topic type button on topic types page
     Then the user views Add topic type modal
     When the user enters "Form questions" in Add topic type modal
