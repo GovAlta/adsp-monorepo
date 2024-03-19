@@ -168,6 +168,8 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
       };
     }),
   };
+
+  console.log();
   return (
     <>
       {
@@ -186,14 +188,16 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
           );
         })
       }
-      <JsonFormsDispatch
-        schema={schema}
-        uischema={uiSchemaElementsForNotDefined}
-        path={rowPath}
-        enabled={enabled}
-        renderers={renderers}
-        cells={cells}
-      />
+      {uiSchemaElementsForNotDefined?.elements?.length > 0 && (
+        <JsonFormsDispatch
+          schema={schema}
+          uischema={uiSchemaElementsForNotDefined}
+          path={rowPath}
+          enabled={enabled}
+          renderers={renderers}
+          cells={cells}
+        />
+      )}
       <FormHelperText error={!isValid}>{!isValid && errors}</FormHelperText>
     </>
   );
