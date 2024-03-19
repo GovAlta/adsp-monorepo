@@ -16,14 +16,10 @@ interface JSONFormPreviewerProps {
   onChange: (data) => void;
 }
 
-// Give something valid, at startup, that shows a blank preview.
-const defaultSchema = {};
-const defaultUiSchema = { type: 'VerticalLayout', elements: [] };
-
 export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element => {
   const { schema, uischema, data, onChange } = props;
-  const [lastGoodUiSchema, setLastGoodUiSchema] = React.useState<UISchemaElement>(defaultUiSchema);
-  const [lastGoodSchema, setLastGoodSchema] = React.useState<JsonSchema>(defaultSchema);
+  const [lastGoodUiSchema, setLastGoodUiSchema] = React.useState<UISchemaElement>();
+  const [lastGoodSchema, setLastGoodSchema] = React.useState<JsonSchema>();
   const [hasDataSchemaError, setHasDataSchemaError] = React.useState(false);
   const [hasUiSchemaError, setHasUiSchemaError] = React.useState(false);
   const [isWrapped, setIsWrapped] = React.useState(false);

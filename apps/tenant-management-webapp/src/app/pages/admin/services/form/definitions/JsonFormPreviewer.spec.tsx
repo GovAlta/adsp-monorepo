@@ -2,6 +2,24 @@ import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { wrapperErrorMsg } from './schemaWrappers';
+import { parseUiSchema } from './schemaUtils';
+
+/**
+ * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
+ * is included.
+ */
+window.matchMedia = jest.fn().mockImplementation((query) => {
+  return {
+    matches: true,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  };
+});
 
 const data = {
   firstName: 'string',
@@ -13,7 +31,7 @@ const data = {
   },
 };
 
-const validSchema = `{
+const validDataSchema = `{
   "type": "object",
   "properties": {
     "firstName": {
@@ -39,7 +57,19 @@ const validSchema = `{
   }
 }`;
 
-const validPlaceholderText = 'Valid UI Schema';
+const brokenDataSchema = `{
+  "type": "object",
+  "properties": {
+    "firstName": woof!
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    }
+  }
+}`;
+
+const validNamePlaceholder = 'Valid UI Schema';
 const validUiSchema = `{
   "type": "VerticalLayout",
   "elements": [
@@ -47,14 +77,14 @@ const validUiSchema = `{
       "type": "Control",
       "scope": "#/properties/firstName",
       "options": {
-        "placeholder": "${validPlaceholderText}"
+        "placeholder": "${validNamePlaceholder}"
       }
     },
     { "type": "Control", "scope": "#/properties/lastName" }
   ]
 }`;
 
-const brokenPlaceholderText = 'Broken UI Schema';
+const brokenNamePlaceholder = 'Broken UI Schema';
 const brokenUiSchema = `{
   "type": "VerticalLayout",
   "elements": toot
@@ -62,14 +92,14 @@ const brokenUiSchema = `{
     "type": "Control",
     "scope": "#/properties/firstName",
     "options": {
-      "placeholder": "${brokenPlaceholderText}"
+      "placeholder": "${brokenNamePlaceholder}"
     }
   },
   { "type": "Control", "scope": "#/properties/lastName" }
   ]
 }`;
 
-const fixedPlaceholderText = 'New UI Schema';
+const fixedNamePlaceholder = 'New UI Schema';
 const fixedUiSchema = `{
   "type": "VerticalLayout",
   "elements": [
@@ -77,30 +107,13 @@ const fixedUiSchema = `{
       "type": "Control",
       "scope": "#/properties/firstName",
       "options": {
-        "placeholder": "${fixedPlaceholderText}"
+        "placeholder": "${fixedNamePlaceholder}"
       }
     },
     { "type": "Control", "scope": "#/properties/lastName" },
     { "type": "Control", "scope": "#/properties/address/properties/city" }
   ]
 }`;
-
-/**
- * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
- * is included.
- */
-window.matchMedia = jest.fn().mockImplementation((query) => {
-  return {
-    matches: true,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  };
-});
 
 const getPreviewer = (schema: string, uiSchema: string, data: object): JSX.Element => {
   return (
@@ -113,44 +126,115 @@ const getPreviewer = (schema: string, uiSchema: string, data: object): JSX.Eleme
   );
 };
 
-describe(' JsonFormsPreviewer test', () => {
-  it('can render a preview', () => {
-    // initialize with good ui schema
-    const preview = getPreviewer(validSchema, validUiSchema, data);
-    const renderer = render(preview);
-    const firstName = renderer.getByPlaceholderText(validPlaceholderText);
-    expect(firstName).toBeDefined();
+describe('JsonForms Previewer', () => {
+  describe('Schema Parser', () => {
+    it('can handle an undefined schema', () => {
+      const schema = parseUiSchema(undefined);
+      expect(schema.hasError()).toBe(true);
+    });
   });
 
-  it('renders old preview when new one is broken', () => {
-    // initialize with good ui schema
-    const preview = getPreviewer(validSchema, validUiSchema, data);
-    const renderer = render(preview);
+  describe('UI Schema Manager', () => {
+    it('can render with a valid ui schema', () => {
+      const preview = getPreviewer(validDataSchema, validUiSchema, data);
+      const renderer = render(preview);
+      const firstName = renderer.getByPlaceholderText(validNamePlaceholder);
+      expect(firstName).toBeDefined();
+    });
 
-    // Rerender with broken ui schema
-    const brokenPreview = getPreviewer(validSchema, brokenUiSchema, data);
-    renderer.rerender(brokenPreview);
-    const staleFirstName = renderer.getByPlaceholderText(validPlaceholderText);
-    expect(staleFirstName).toBeDefined();
-    const callout = renderer.getByText(wrapperErrorMsg);
-    expect(callout).toBeDefined();
-    const brokenFirstName = renderer.queryByPlaceholderText(brokenPlaceholderText);
-    expect(brokenFirstName).toBeNull();
+    it('can re-render with a broken ui schema', () => {
+      // initialize with good ui schema
+      const preview = getPreviewer(validDataSchema, validUiSchema, data);
+      const renderer = render(preview);
+
+      // Rerender with broken ui schema
+      const brokenPreview = getPreviewer(validDataSchema, brokenUiSchema, data);
+      renderer.rerender(brokenPreview);
+      const staleFirstName = renderer.getByPlaceholderText(validNamePlaceholder);
+      expect(staleFirstName).toBeDefined();
+      const callout = renderer.getByText(wrapperErrorMsg);
+      expect(callout).toBeDefined();
+      const brokenFirstName = renderer.queryByPlaceholderText(brokenNamePlaceholder);
+      expect(brokenFirstName).toBeNull();
+    });
+
+    it('can re-render when ui-schema is fixed', () => {
+      // initialize with good ui schema
+      const preview = getPreviewer(validDataSchema, validUiSchema, data);
+      const renderer = render(preview);
+
+      // then break it
+      const brokenPreview = getPreviewer(validDataSchema, brokenUiSchema, data);
+      renderer.rerender(brokenPreview);
+      const staleFirstName = renderer.getByPlaceholderText(validNamePlaceholder);
+      expect(staleFirstName).toBeDefined();
+      const callout = renderer.getByText(wrapperErrorMsg);
+      expect(callout).toBeDefined();
+
+      // then fix it again
+      const fixedPreview = getPreviewer(validDataSchema, fixedUiSchema, data);
+      renderer.rerender(fixedPreview);
+      const fixedName = renderer.getByPlaceholderText(fixedNamePlaceholder);
+      expect(fixedName).toBeDefined();
+      const removedCallout = renderer.queryByText(wrapperErrorMsg);
+      expect(removedCallout).toBeNull();
+      const wrongName = renderer.queryByPlaceholderText(validNamePlaceholder);
+      expect(wrongName).toBeNull();
+    });
+
+    it('can be initialized with a bad ui-schema', () => {
+      const brokenPreview = getPreviewer(validDataSchema, brokenUiSchema, data);
+      const renderer = render(brokenPreview);
+      const callout = renderer.getByText(wrapperErrorMsg);
+      expect(callout).toBeDefined();
+
+      // Re-render with valid ui schema
+      const validPreview = getPreviewer(validDataSchema, validUiSchema, data);
+      renderer.rerender(validPreview);
+      const firstName = renderer.getByPlaceholderText(validNamePlaceholder);
+      expect(firstName).toBeDefined();
+      const removedCallout = renderer.queryByText(wrapperErrorMsg);
+      expect(removedCallout).toBeNull();
+    });
+
+    it('can re-render when data schema is fixed', () => {
+      // initialize with good ui schema
+      const preview = getPreviewer(validDataSchema, validUiSchema, data);
+      const renderer = render(preview);
+
+      // then break it
+      const brokenPreview = getPreviewer(brokenDataSchema, validUiSchema, data);
+      renderer.rerender(brokenPreview);
+      const staleFirstName = renderer.getByPlaceholderText(validNamePlaceholder);
+      expect(staleFirstName).toBeDefined();
+      const callout = renderer.getByText(wrapperErrorMsg);
+      expect(callout).toBeDefined();
+
+      // then fix it again
+      const fixedPreview = getPreviewer(validDataSchema, validUiSchema, data);
+      renderer.rerender(fixedPreview);
+      const validName = renderer.getByPlaceholderText(validNamePlaceholder);
+      expect(validName).toBeDefined();
+      const removedCallout = renderer.queryByText(wrapperErrorMsg);
+      expect(removedCallout).toBeNull();
+    });
   });
 
-  it('renders fixed preview', () => {
-    // initialize with good ui schema
-    const preview = getPreviewer(validSchema, validUiSchema, data);
-    const renderer = render(preview);
+  describe('Data Schema Manager', () => {
+    it('can re-render with broken data schema', () => {
+      // initialize with good data schema
+      const preview = getPreviewer(validDataSchema, validUiSchema, data);
+      const renderer = render(preview);
 
-    // Re-render with fixed ui schema
-    const fixedPreview = getPreviewer(validSchema, fixedUiSchema, data);
-    renderer.rerender(fixedPreview);
-    const city = renderer.getByPlaceholderText(fixedPlaceholderText);
-    expect(city).toBeDefined();
-    const removedCallout = renderer.queryByText(wrapperErrorMsg);
-    expect(removedCallout).toBeNull();
-    const validFirstName = renderer.queryByPlaceholderText(validPlaceholderText);
-    expect(validFirstName).toBeNull();
+      // Rerender with broken ui schema
+      const brokenPreview = getPreviewer(brokenDataSchema, validUiSchema, data);
+      renderer.rerender(brokenPreview);
+      const staleFirstName = renderer.getByPlaceholderText(validNamePlaceholder);
+      expect(staleFirstName).toBeDefined();
+      const callout = renderer.getByText(wrapperErrorMsg);
+      expect(callout).toBeDefined();
+      const brokenFirstName = renderer.queryByPlaceholderText(brokenNamePlaceholder);
+      expect(brokenFirstName).toBeNull();
+    });
   });
 });
