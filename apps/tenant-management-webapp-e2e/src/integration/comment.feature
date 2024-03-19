@@ -140,7 +140,7 @@ Feature: Comment
     When the user clicks View older comments button
     Then the user views more than "10" comments
 
-  @TEST_CS-2765 @REQ_CS-22765 @regression
+  @TEST_CS-2765 @REQ_CS-2725 @regression
   Scenario: As a tenant admin, I can see core topic types, so I understand what topics platform services create
     # Validate core topic types
     Given a tenant admin user is on comment service overview page
