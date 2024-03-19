@@ -727,6 +727,64 @@ describe('event router', () => {
         expect.arrayContaining([expect.objectContaining({ correlationId: '123', timestamp: expect.any(Date) })])
       );
     });
+
+    it('can handle failed scalar write', async () => {
+      const req = {
+        tenantId,
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+        body: { value: {}, correlationId: '123', timestamp: new Date().toISOString() },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce([{}]);
+
+      repositoryMock.writeValue.mockRejectedValueOnce(new Error('oh noes!'));
+
+      const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalledWith(null);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can handle failed array write', async () => {
+      const req = {
+        tenantId,
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+        body: [{ value: {}, correlationId: '123', timestamp: new Date().toISOString() }],
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce([{}]);
+
+      repositoryMock.writeValue.mockRejectedValueOnce(new Error('oh noes!'));
+
+      const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([]));
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 
   describe('readMetrics', () => {
