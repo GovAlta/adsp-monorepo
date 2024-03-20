@@ -4,7 +4,7 @@ import { JsonForms } from '@jsonforms/react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { GoARenderers } from '@abgov/jsonforms-components';
 import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { hasValidSemantics, parseDataSchema, parseUiSchema } from './schemaUtils';
+import { parseDataSchema, parseUiSchema } from './schemaUtils';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { uiSchemaWrapper } from './schemaWrappers';
 import FallbackRender from './FallbackRenderer';
@@ -39,15 +39,13 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
   }, [uischema]);
 
   useEffect(() => {
-    if (!parsedDataSchema.hasError() && hasValidSemantics(parsedDataSchema.get())) {
+    if (!parsedDataSchema.hasError()) {
       setLastGoodSchema(parsedDataSchema.get());
       if (dataSchemaError) {
         setDataSchemaError(undefined);
       }
-    } else if (parsedDataSchema.hasError()) {
-      setDataSchemaError(parsedDataSchema.error());
     } else {
-      setDataSchemaError('invalid data semantics');
+      setDataSchemaError(parsedDataSchema.error());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schema]);

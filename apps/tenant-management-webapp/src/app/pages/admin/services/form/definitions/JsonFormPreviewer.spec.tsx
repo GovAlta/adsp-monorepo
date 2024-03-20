@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { wrapperErrorMsg } from './schemaWrappers';
-import { parseUiSchema } from './schemaUtils';
+import { parseUiSchema, propertiesErr } from './schemaUtils';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -247,11 +247,11 @@ describe('JsonForms Previewer', () => {
     expect(noName).toBeNull();
   });
 
-  it('will ignore improper data semantics', () => {
+  it('will report improper data semantics', () => {
     const brokenPreview = getPreviewer(improperDataSchema, validUiSchema, data);
     const renderer = render(brokenPreview);
     const callout = renderer.getByText(wrapperErrorMsg);
-    expect(callout).toBeDefined();
+    expect(callout.getAttribute('heading')).toBe(propertiesErr);
     const noName = renderer.queryByPlaceholderText(validNamePlaceholder);
     expect(noName).toBeNull();
   });

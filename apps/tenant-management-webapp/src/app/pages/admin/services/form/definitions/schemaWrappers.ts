@@ -1,6 +1,6 @@
 import { UISchemaElement } from '@jsonforms/core';
 
-export const wrapperErrorMsg = 'You will see the last good preview until the schema errors are fixed';
+export const wrapperErrorMsg = 'You will see the last valid preview until the schema errors are fixed';
 export const uiSchemaWrapper = (schema: UISchemaElement, heading: string): UISchemaElement => {
   const elements: Array<UISchemaElement> = [
     {
