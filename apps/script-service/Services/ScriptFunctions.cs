@@ -11,16 +11,14 @@ internal class ScriptFunctions : IScriptFunctions
   private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;
   private readonly Func<Task<string>> _getToken;
-  private readonly IEventService _eventService;
   private readonly RestClient _client;
 
 
-  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, IEventService eventService, RestClient? client = null)
+  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, RestClient? client = null)
   {
     _tenantId = tenantId;
     _directory = directory;
     _getToken = getToken;
-    _eventService = eventService;
     _client = client ?? new RestClient(new RestClientOptions { ThrowOnAnyError = true });
   }
 
