@@ -1,3 +1,4 @@
+import { JsonSchema } from '@jsonforms/core';
 import { ajv } from '@lib/validation/checkInput';
 
 export interface ParserResult<T> {
@@ -70,4 +71,15 @@ export const getValidSchemaString = (schema: Record<string, unknown>): string =>
   // ignore any errors and return an empty object.  Often the error is just because
   // the developer is in the middle of typing out something in the form editor.
   return '{}';
+};
+
+const hasProperties = (schema: JsonSchema): boolean => {
+  return (
+    (typeof schema === 'object' && Object.keys(schema).length === 0) ||
+    ('properties' in schema && (('type' in schema && schema.type === 'object') || !('type' in schema)))
+  );
+};
+
+export const hasValidSemantics = (schema: JsonSchema): boolean => {
+  return hasProperties(schema);
 };

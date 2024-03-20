@@ -1,8 +1,8 @@
 import { UISchemaElement } from '@jsonforms/core';
 
 export const wrapperErrorMsg = 'You will see the last good preview until the schema errors are fixed';
-export const uiSchemaWrapper = (schema: UISchemaElement): UISchemaElement => {
-  const elements: Array<object> = [
+export const uiSchemaWrapper = (schema: UISchemaElement, heading: string): UISchemaElement => {
+  const elements: Array<UISchemaElement> = [
     {
       type: 'Callout',
       options: {
@@ -16,6 +16,9 @@ export const uiSchemaWrapper = (schema: UISchemaElement): UISchemaElement => {
   ];
   if (schema) {
     elements.push(schema);
+  }
+  if (heading) {
+    elements[0].options.componentProps['heading'] = heading;
   }
   const wrapper = {
     type: 'VerticalLayout',

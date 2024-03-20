@@ -116,7 +116,6 @@ export const onSaveDispositionForModal = (
   return [definition, null];
 };
 
-const invalidJsonMsg = 'Invalid JSON syntax';
 const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
@@ -279,7 +278,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setError('');
     } catch {
       setTempUiSchemaBounced('{}');
-      setError(invalidJsonMsg);
     }
   }, [debouncedRenderUISchema]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -290,7 +288,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setError('');
     } catch (e) {
       setDataSchemaBounced('{}');
-      setError(invalidJsonMsg);
     }
   }, [debouncedRenderDataSchema]); // eslint-disable-line react-hooks/exhaustive-deps
 
