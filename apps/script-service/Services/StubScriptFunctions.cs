@@ -18,9 +18,9 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
-  public override string? SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
+  public override bool SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
   {
-    return "Simulated success";
+    return true;
   }
 
   public override DispositionResponse? DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason)

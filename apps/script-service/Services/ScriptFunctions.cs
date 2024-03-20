@@ -2,6 +2,7 @@ using Adsp.Platform.ScriptService.Services.Platform;
 
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
+using Adsp.Sdk.Events;
 using NLua;
 using RestSharp;
 
@@ -86,20 +87,20 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
-  public virtual string? SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
+  public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
   {
     var eventServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.EventServiceId).Result;
     var requestUrl = new Uri(eventServiceUrl, $"/event/v1/events");
     var token = _getToken().Result;
-    var sentPayload = payload != null ? payload : new Dictionary<string, object>();
-    var body = new
+    var body = new FullDomainEvent<IDictionary<string, object>>()
     {
-      @namespace = namespaceValue,
-      name = name,
-      correlationId = correlationId,
-      context = context,
-      timestamp = DateTime.Now,
-      payload = sentPayload
+      TenantId = _tenantId,
+      Namespace = @namespace,
+      Name = name,
+      CorrelationId = correlationId,
+      Context = context,
+      Timestamp = DateTime.Now,
+      Payload = payload ?? new Dictionary<string, object>()
     };
 
     var request = new RestRequest(requestUrl, Method.Post);
@@ -107,7 +108,7 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddHeader("Authorization", $"Bearer {token}");
 
     var result = _client.PostAsync(request).Result;
-    return result.Content;
+    return result.IsSuccessful;
   }
 
 
