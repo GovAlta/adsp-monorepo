@@ -52,8 +52,7 @@ export class FileEntity implements File {
     const result = await fileTypeDetector.detect();
 
     if (result.fileType?.mime) {
-      // Detected value takes precedence
-      entity.mimeType = result.fileType?.mime;
+      entity.mimeType = result.fileType.mime;
     }
 
     entity = await repository.save(entity);

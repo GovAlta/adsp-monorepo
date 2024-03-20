@@ -133,6 +133,40 @@ describe('File Entity', () => {
 
     expect(fileEntity).toBeTruthy();
   });
+  it('can not create because save failed', async () => {
+    typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
+    storageProviderMock.setup((m) => m.saveFile(It.IsAny(), contentMock.object())).returns(Promise.resolve(false));
+    repositoryMock
+      .setup((m) => m.save(It.IsAny()))
+      .callback(async (i) => {
+        const savedEntity = i.args[0];
+        savedEntity.delete = jest.fn().mockResolvedValue(true);
+        return savedEntity;
+      });
+
+    const file = {
+      filename: 'test.txt',
+      recordId: 'my-record-1',
+      size: 100,
+      securityClassification: 'Public',
+      created: new Date(),
+      createdBy: {
+        id: 'user-1',
+        name: 'testy',
+      },
+    };
+    expect(async () => {
+      await FileEntity.create(
+        loggerMock as Logger,
+        storageProviderMock.object(),
+        repositoryMock.object(),
+        user,
+        typeMock.object(),
+        file,
+        contentMock.object()
+      );
+    }).rejects.toThrowError('Storage provider failed to save uploaded file: test.txt');
+  });
 
   it('can create new and delete on storage failure', async () => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);

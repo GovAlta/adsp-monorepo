@@ -84,11 +84,11 @@ export function getFiles(apiId: AdspId, repository: FileRepository): RequestHand
       const { top: topValue, after, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 50;
       let criteria: FileCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
-
       criteria = {
         ...criteria,
         deleted: false,
       };
+
       const files = await repository.find(tenantId, top, after as string, criteria);
 
       end();
@@ -115,6 +115,7 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
       // Start of the handling happens in the upload (multer storage engine).
       benchmark(req, 'operation-handler-time');
       const mappedFile = mapFile(apiId, fileEntity);
+
       res.send(mappedFile);
 
       eventService.send(fileUploaded(apiId, user, fileEntity));
@@ -193,7 +194,7 @@ export function downloadFile(logger: Logger): RequestHandler {
       res.setHeader('Content-Length', fileEntity.size);
 
       if (embed === 'true') {
-        res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
+        res.setHeader('Cache-Control', fileEntity.type.anonymousRead ? 'public' : 'no-store');
         res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
       } else {
         res.setHeader('Cache-Control', 'no-store');
@@ -223,10 +224,9 @@ function validateMimeType(mimeType: string) {
   if (!mimeType) return 'application/octet-stream';
 
   // Need to add base64 to the end of the mime so that the pdf can embed the svg correctly.
-  if (mimeType.indexOf('image/svg+xml') > 0) {
+  if (mimeType.indexOf('image/svg+xml') >= 0) {
     mimeType = `${mimeType};base64`;
   }
-
   return mimeType;
 }
 
@@ -345,6 +345,7 @@ export const createFileRouter = ({
         .optional()
         .custom(async (value) => {
           const criteria = JSON.parse(value);
+
           if (criteria?.lastAccessedBefore !== undefined) {
             if (!validator.isISO8601(criteria?.lastAccessedBefore)) {
               throw new InvalidOperationError('lastAccessedBefore requires ISO-8061 date string.');

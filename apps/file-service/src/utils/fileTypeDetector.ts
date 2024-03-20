@@ -18,14 +18,11 @@ export class FileTypeDetector {
 
   async detect() {
     const start = Date.now();
+
     const response = (await this.createCustomConcatStream(this.content)) as CustomConcatStream;
-
-    const fullStream = response.fileStream;
     const fileType = response.fileType;
-
     const end = Date.now();
 
-    this.logger.debug('Size of file to be uploaded: ' + fullStream?.readableLength / 1000 + 'kb');
     this.logger.debug('File type as determined: ' + fileType?.mime);
     this.logger.debug('Time to determine file type: ' + (end - start) / 1000 + 's');
 
@@ -34,10 +31,7 @@ export class FileTypeDetector {
 
   private createCustomConcatStream(readableStream) {
     return new Promise((resolve, reject) => {
-      const customStream = new Readable({
-        //eslint-disable-next-line
-        read() {},
-      });
+      const customStream = new Readable();
 
       let fileType;
 
