@@ -8,8 +8,8 @@ namespace Adsp.Platform.ScriptService.Services;
 internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
 {
 
-  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, IEventService eventService)
-  : base(tenantId, directory, getToken, eventService)
+  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken)
+  : base(tenantId, directory, getToken)
   {
   }
 

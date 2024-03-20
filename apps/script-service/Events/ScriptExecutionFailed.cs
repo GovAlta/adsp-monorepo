@@ -39,4 +39,7 @@ public class ScriptExecutionFailed
 
   [JsonPropertyName("error")]
   public string? Error { get; set; }
+
+  [JsonPropertyName("source")]
+  public string? Source { get; set; }
 }
