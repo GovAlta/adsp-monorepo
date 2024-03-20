@@ -7,13 +7,13 @@ import { Hidden } from '@mui/material';
 
 export const groupTester: RankedTester = rankWith(1, uiTypeIs('Group'));
 
-const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
+export const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
   const { uischema, schema, path, enabled, renderers, cells, visible } = props;
   const group = uischema as GroupLayout;
 
   return (
     <Hidden xsUp={!visible}>
-      <GoAContainer {...group.options} {...uischema?.options?.componentProps}>
+      <GoAContainer {...group.options?.componentProps}>
         {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
       </GoAContainer>
     </Hidden>

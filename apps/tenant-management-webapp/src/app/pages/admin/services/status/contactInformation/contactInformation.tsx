@@ -25,7 +25,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchStatusConfigurationService());
-  }, []);
+  }, [dispatch]);
 
   // eslint-disable-next-line
   useEffect(() => {}, [isFetchConfigCompleted]);

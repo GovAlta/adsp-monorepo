@@ -62,7 +62,7 @@ const Subscriptions = (): JSX.Element => {
   };
   useEffect(() => {
     dispatch(getSubscriberDetails(subscriberId));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const tenantId = subscriber?.tenantId?.split('/').pop();
@@ -70,19 +70,19 @@ const Subscriptions = (): JSX.Element => {
       dispatch(FetchContactInfoService({ tenantId: tenantId }));
       dispatch(FetchTenantService({ tenantId: tenantId }));
     }
-  }, [subscriber]);
+  }, [subscriber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (previouslyVerified.email && code !== 'null' && code) {
       navigate(`${window.location.pathname}`);
     }
-  }, [previouslyVerified]);
+  }, [previouslyVerified]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (code !== 'null' && subscriber && code) {
       dispatch(CheckCode('email', code, subscriber, true));
     }
-  }, [searchParams, subscriber]);
+  }, [searchParams, subscriber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
@@ -140,130 +140,128 @@ const Subscriptions = (): JSX.Element => {
   };
 
   return (
-    <>
-      <SubscriptionManagement>
-        <Main>
-          <Container hs={2} vs={4.5} xlHSpacing={12}>
-            <h1 data-testid="service-name">Subscription management</h1>
-            <DescriptionWrapper>
-              <p data-testid="service-description">
-                Use this page to manage your subscriptions. Please note that you need to contact support to modify some
-                subscriptions. If you have an account, sign in to manage your contact information.
-              </p>
-            </DescriptionWrapper>
-            {showUnSubscribeModal ? unSubscribeModal() : ''}
-            <ContactInformationWrapper>
-              <GoAContainer
-                accent="thick"
-                type="interactive"
-                title="Contact information"
-                data-testid="contact-information-card"
-              >
-                <div data-testid="email-label">
-                  <Label>Email</Label>
-                </div>
-                <ContactInformationContainer>
-                  <p>
-                    <VerificationWrapper>
-                      {isEmailVerified !== undefined && isEmailVerified === true && (
-                        <GoABadge type="success" content="Verified" />
-                      )}
-                      {isEmailVerified !== undefined && isEmailVerified === false && (
-                        <div>
-                          {validCodeExists ? (
-                            <div>
-                              <GoABadge type="midtone" content="Pending" />
-                            </div>
-                          ) : (
-                            <GoABadge type="important" content="Not verified" />
-                          )}
-                        </div>
-                      )}
-                    </VerificationWrapper>
-
-                    {subscriberEmail}
-                  </p>
-                </ContactInformationContainer>
-                {!subscriberEmail &&
-                  (indicator?.show ? <TextGoASkeleton lineCount={1}></TextGoASkeleton> : <>No Email</>)}
-
-                <ButtonMargin>
-                  <GoAButton
-                    size="compact"
-                    disabled={validCodeExists}
-                    testId="verify-email"
-                    onClick={() => {
-                      dispatch(VerifyEmail(subscriber, true));
-                    }}
-                  >
-                    Verify email
-                  </GoAButton>
-                </ButtonMargin>
-              </GoAContainer>
-            </ContactInformationWrapper>
-
-            <>
-              <GoAModal></GoAModal>
-              <SubscriptionListContainer>
-                <DataTable data-testid="subscriptions-table">
-                  {!subscriber || subscriber?.subscriptions?.length > 0 ? (
-                    <tr>
-                      <th id="subscriptions">Subscription</th>
-                      <th id="descriptions">Description</th>
-                      <th id="available-channels">Available channels</th>
-                      <th id="action">Action</th>
-                    </tr>
-                  ) : (
-                    ''
-                  )}
-                  <tbody>
-                    {subscriber ? (
-                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriber={subscriber} />
-                    ) : indicator?.show ? (
-                      <tr>
-                        <td colSpan={4}>
-                          <TextGoASkeleton lineCount={5}></TextGoASkeleton>
-                        </td>
-                      </tr>
-                    ) : (
-                      <tr>
-                        <td colSpan={4}>No Subscriptions</td>
-                      </tr>
+    <SubscriptionManagement>
+      <Main>
+        <Container hs={2} vs={4.5} xlHSpacing={12}>
+          <h1 data-testid="service-name">Subscription management</h1>
+          <DescriptionWrapper>
+            <p data-testid="service-description">
+              Use this page to manage your subscriptions. Please note that you need to contact support to modify some
+              subscriptions. If you have an account, sign in to manage your contact information.
+            </p>
+          </DescriptionWrapper>
+          {showUnSubscribeModal ? unSubscribeModal() : ''}
+          <ContactInformationWrapper>
+            <GoAContainer
+              accent="thick"
+              type="interactive"
+              title="Contact information"
+              data-testid="contact-information-card"
+            >
+              <div data-testid="email-label">
+                <Label>Email</Label>
+              </div>
+              <ContactInformationContainer>
+                <p>
+                  <VerificationWrapper>
+                    {isEmailVerified !== undefined && isEmailVerified === true && (
+                      <GoABadge type="success" content="Verified" />
                     )}
-                  </tbody>
-                </DataTable>
-                {subscriber?.subscriptions?.length <= 0 ? (
-                  <GoACallout heading="You have no subscriptions" type="important"></GoACallout>
+                    {isEmailVerified !== undefined && isEmailVerified === false && (
+                      <div>
+                        {validCodeExists ? (
+                          <div>
+                            <GoABadge type="midtone" content="Pending" />
+                          </div>
+                        ) : (
+                          <GoABadge type="important" content="Not verified" />
+                        )}
+                      </div>
+                    )}
+                  </VerificationWrapper>
+
+                  {subscriberEmail}
+                </p>
+              </ContactInformationContainer>
+              {!subscriberEmail &&
+                (indicator?.show ? <TextGoASkeleton lineCount={1}></TextGoASkeleton> : <>No Email</>)}
+
+              <ButtonMargin>
+                <GoAButton
+                  size="compact"
+                  disabled={validCodeExists}
+                  testId="verify-email"
+                  onClick={() => {
+                    dispatch(VerifyEmail(subscriber, true));
+                  }}
+                >
+                  Verify email
+                </GoAButton>
+              </ButtonMargin>
+            </GoAContainer>
+          </ContactInformationWrapper>
+
+          <>
+            <GoAModal></GoAModal>
+            <SubscriptionListContainer>
+              <DataTable data-testid="subscriptions-table">
+                {!subscriber || subscriber?.subscriptions?.length > 0 ? (
+                  <tr>
+                    <th id="subscriptions">Subscription</th>
+                    <th id="descriptions">Description</th>
+                    <th id="available-channels">Available channels</th>
+                    <th id="action">Action</th>
+                  </tr>
                 ) : (
                   ''
                 )}
-              </SubscriptionListContainer>
-              {indicator?.show ? (
-                <TextGoASkeleton lineCount={5}></TextGoASkeleton>
+                <tbody>
+                  {subscriber ? (
+                    <SubscriptionsList onUnsubscribe={unSubscribe} subscriber={subscriber} />
+                  ) : indicator?.show ? (
+                    <tr>
+                      <td colSpan={4}>
+                        <TextGoASkeleton lineCount={5}></TextGoASkeleton>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr>
+                      <td colSpan={4}>No Subscriptions</td>
+                    </tr>
+                  )}
+                </tbody>
+              </DataTable>
+              {subscriber?.subscriptions?.length <= 0 ? (
+                <GoACallout heading="You have no subscriptions" type="important"></GoACallout>
               ) : (
-                <CalloutWrapper id="contactSupport">
-                  <GoACallout heading="Need help? Contact your service admin" type="information">
-                    <div>{contact?.supportInstructions}</div>
-                    <div>
-                      {contact?.contactEmail && (
-                        <>
-                          Email:{' '}
-                          <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                            {contact?.contactEmail}
-                          </a>
-                        </>
-                      )}
-                    </div>
-                    {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
-                    <div data-testid="service-notice-date-range"></div>
-                  </GoACallout>
-                </CalloutWrapper>
+                ''
               )}
-            </>
-          </Container>
-        </Main>
-      </SubscriptionManagement>
-    </>
+            </SubscriptionListContainer>
+            {indicator?.show ? (
+              <TextGoASkeleton lineCount={5}></TextGoASkeleton>
+            ) : (
+              <CalloutWrapper id="contactSupport">
+                <GoACallout heading="Need help? Contact your service admin" type="information">
+                  <div>{contact?.supportInstructions}</div>
+                  <div>
+                    {contact?.contactEmail && (
+                      <>
+                        Email:{' '}
+                        <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                          {contact?.contactEmail}
+                        </a>
+                      </>
+                    )}
+                  </div>
+                  {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
+                  <div data-testid="service-notice-date-range"></div>
+                </GoACallout>
+              </CalloutWrapper>
+            )}
+          </>
+        </Container>
+      </Main>
+    </SubscriptionManagement>
   );
 };
 export default Subscriptions;

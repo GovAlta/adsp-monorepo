@@ -15,14 +15,13 @@ interface AddEditCalendarProps {
 }
 export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element => {
   const dispatch = useDispatch();
-  const [editCalendar, setEditCalendar] = useState(false);
-  const [openAddCalendar, setOpenAddCalendar] = useState(false);
+  const [openEditCalendar, setOpenEditCalendar] = useState(false);
   const [selectedCalendarName, setSelectedCalendarName] = useState<string | undefined>();
 
   useEffect(() => {
     dispatch(fetchCalendars());
     dispatch(fetchEventStreams());
-  }, []);
+  }, [dispatch]);
 
   const { calendars } = useSelector((state: RootState) => state.calendarService);
   const { fetchCalendarState } = useSelector((state: RootState) => ({
@@ -32,20 +31,19 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   useEffect(() => {
     if (activeEdit) {
       reset();
-      setOpenAddCalendar(true);
+      setOpenEditCalendar(true);
     }
   }, [activeEdit]);
 
   // eslint-disable-next-line
 
   const reset = () => {
-    setEditCalendar(false);
-    setOpenAddCalendar(false);
+    setOpenEditCalendar(false);
   };
 
   const onEdit = (calendar) => {
     setSelectedCalendarName(calendar.name);
-    setEditCalendar(true);
+    setOpenEditCalendar(true);
   };
 
   return (
@@ -55,7 +53,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
           testId="add-calendar-btn"
           onClick={() => {
             setSelectedCalendarName(undefined);
-            setEditCalendar(true);
+            setOpenEditCalendar(true);
           }}
         >
           Add calendar
@@ -70,7 +68,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
       )}
 
       <CalendarModal
-        open={editCalendar || openAddCalendar}
+        open={openEditCalendar}
         calendarName={selectedCalendarName}
         onCancel={() => {
           reset();

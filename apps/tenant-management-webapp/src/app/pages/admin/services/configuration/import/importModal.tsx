@@ -24,37 +24,35 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({
     );
   };
   return (
-    <>
-      <GoAModal
-        testId="import-configuration-modal"
-        open={isOpen}
-        heading="The following configuration will be impacted!"
-        actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
-              type="secondary"
-              testId="import-configuration-modal-cancel"
-              onClick={() => {
-                onCancel();
-              }}
-            >
-              Cancel
-            </GoAButton>
-            <GoAButton
-              type="primary"
-              testId="import-configuration-modal-confirm"
-              onClick={() => {
-                onConfirm();
-                onCancel();
-              }}
-            >
-              Confirm
-            </GoAButton>
-          </GoAButtonGroup>
-        }
-      >
-        {getContent()}
-      </GoAModal>
-    </>
+    <GoAModal
+      testId="import-configuration-modal"
+      open={isOpen}
+      heading="The following configuration will be impacted!"
+      actions={
+        <GoAButtonGroup alignment="end">
+          <GoAButton
+            type="secondary"
+            testId="import-configuration-modal-cancel"
+            onClick={() => {
+              onCancel();
+            }}
+          >
+            Cancel
+          </GoAButton>
+          <GoAButton
+            type="primary"
+            testId="import-configuration-modal-confirm"
+            onClick={() => {
+              onConfirm();
+              onCancel();
+            }}
+          >
+            Confirm
+          </GoAButton>
+        </GoAButtonGroup>
+      }
+    >
+      {getContent()}
+    </GoAModal>
   );
 };

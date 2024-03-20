@@ -13,7 +13,7 @@ export const ConfigurationOverview: FunctionComponent<ConfigurationOverviewProps
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const description = `The configuration service provides a generic json document store for storage and revisioning of infrequently changing configuration. Store configuration against namespace and name keys, and optionally define configuration schemas for write validation.`;
 
   return (

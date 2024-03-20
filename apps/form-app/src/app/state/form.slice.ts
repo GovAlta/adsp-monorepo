@@ -19,7 +19,7 @@ export interface FormDefinition {
 }
 
 export interface Form {
-  definitionId: string;
+  definition: { id: string };
   id: string;
   urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
@@ -115,7 +115,7 @@ export const findUserForm = createAsyncThunk(
         },
       });
 
-      const form = results[0];
+      const [form] = results;
       let data = null,
         files = null,
         digest = null;
@@ -278,7 +278,7 @@ export const saveForm = createAsyncThunk(
         }
       }
     },
-    2000,
+    800,
     { leading: false, trailing: true }
   )
 );
@@ -341,7 +341,7 @@ const formSlice = createSlice({
       .addCase(selectedDefinition.fulfilled, (state, { meta }) => {
         state.selected = meta.arg;
         // Clear the form if the form definition is changing.
-        if (state.form && state.form.definitionId !== meta.arg) {
+        if (state.form && state.form.definition.id !== meta.arg) {
           state.userForm = null;
           state.form = null;
           state.data = null;
@@ -436,7 +436,7 @@ export const formSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.form.form,
   (definition, form) =>
-    definition && definition?.id === form?.definitionId
+    definition && definition?.id === form?.definition.id
       ? { ...form, created: new Date(form.created), submitted: form.submitted ? new Date(form.submitted) : null }
       : null
 );
@@ -463,6 +463,11 @@ export const isClerkSelector = createSelector(
 );
 
 export const busySelector = (state: AppState) => state.form.busy;
+
+export const showSubmitSelector = createSelector(definitionSelector, (definition) => {
+  // Stepper variant of the categorization includes a Submit button on the review step, so don't show submit outside form.
+  return definition?.uiSchema?.type !== 'Categorization' || definition?.uiSchema?.options?.variant !== 'stepper';
+});
 
 export const canSubmitSelector = createSelector(
   (state: AppState) => state.form.errors,

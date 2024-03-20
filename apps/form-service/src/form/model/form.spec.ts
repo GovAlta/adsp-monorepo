@@ -42,6 +42,7 @@ describe('FormEntity', () => {
     delete: jest.fn(),
     getByFormIdAndSubmissionId: jest.fn(),
   };
+
   const queueTaskServiceMock = { createTask: jest.fn() };
 
   const notificationMock = {
@@ -562,6 +563,21 @@ describe('FormEntity', () => {
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
+    it('can submit form with task', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      entity.submissionRecords = true;
+
+      const [submitted] = await entity.submit(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        queueTaskServiceMock,
+        repositoryMock
+      );
+      expect(submitted.status).toBe(FormStatus.Submitted);
+      expect(submitted.submitted).toBeTruthy();
+      expect(submitted.hash).toBeTruthy();
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
+
     it('can throw for different user', async () => {
       const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       await expect(
@@ -604,6 +620,50 @@ describe('FormEntity', () => {
           queueTaskServiceMock,
           repositoryMock
         )
+      ).rejects.toThrow(InvalidOperationError);
+    });
+  });
+
+  describe('can set to draft', () => {
+    const formInfo = {
+      id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
+      created: new Date(),
+      createdBy: { id: 'tester', name: 'tester' },
+      status: FormStatus.Draft,
+      locked: null,
+      submitted: null,
+      lastAccessed: new Date(),
+      data: {},
+      files: {},
+    };
+    it('can set to draft', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Submitted,
+      });
+      await entity.setToDraft({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
+
+    it('can set to draft not authorized', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Submitted,
+      });
+      await expect(entity.setToDraft({ tenantId, id: 'tester', roles: ['abc'] } as User)).rejects.toThrow(
+        UnauthorizedUserError
+      );
+    });
+
+    it('can set to draft invalid', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Draft,
+      });
+      await expect(
+        entity.setToDraft({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User)
       ).rejects.toThrow(InvalidOperationError);
     });
   });

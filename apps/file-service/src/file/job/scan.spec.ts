@@ -7,6 +7,8 @@ import { ScanService } from '../scan';
 import { createScanJob } from './scan';
 
 describe('Scan Job', () => {
+  const serviceId = adspId`urn:ads:platform:file-service`;
+  const apiId = adspId`${serviceId}:v1`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const logger = {
     debug: jest.fn(),
@@ -25,6 +27,7 @@ describe('Scan Job', () => {
 
   it('can be created', () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
@@ -36,6 +39,7 @@ describe('Scan Job', () => {
 
   it('can be executed', async () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
@@ -64,6 +68,7 @@ describe('Scan Job', () => {
 
   it('can be executed and is infected', async () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
@@ -93,6 +98,7 @@ describe('Scan Job', () => {
 
   it('can be executed and is infected and null tenant', async () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
@@ -121,6 +127,7 @@ describe('Scan Job', () => {
   });
   it('can be executed and is not infected and null tenant', async () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
@@ -150,6 +157,7 @@ describe('Scan Job', () => {
 
   it('can skip deleted', async () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
@@ -169,6 +177,7 @@ describe('Scan Job', () => {
 
   it('can skip not found', async () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
@@ -188,6 +197,7 @@ describe('Scan Job', () => {
 
   it('can skip record result for not scanned', async () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
@@ -210,6 +220,7 @@ describe('Scan Job', () => {
 
   it('can call done with error', async () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
@@ -231,6 +242,7 @@ describe('Scan Job', () => {
   });
   it('can call done with error and no tenant', async () => {
     const scanJob = createScanJob({
+      apiId,
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),

@@ -94,7 +94,7 @@ export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator
   }
 }
 
-function* createSubscriber(action: CreateSubscribeAction): SagaIterator {
+function* createSubscriber(_action: CreateSubscribeAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
   const email: string = yield select((state: RootState) => state.session.userInfo.email);
@@ -404,7 +404,7 @@ export function* checkCode(action: CheckCodeAction): SagaIterator {
         })
       );
     } else {
-      yield put(ErrorNotification({ message: 'The code you have entered is incorrect'}));
+      yield put(ErrorNotification({ message: 'The code you have entered is incorrect' }));
       yield put(CheckCodeFailure({ channelIndex }));
     }
   } catch (err) {

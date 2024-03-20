@@ -496,3 +496,12 @@ export const FormPreviewScrollPane = styled.div`
   padding-left: 0.25rem;
   padding-right: 0.25rem;
 `;
+export const Anchor = styled.div`
+height: '24px',
+background: 'none',
+border: 'none',
+padding: '0',
+color: 'blue',
+textDecoration: 'underline',
+cursor: 'pointer'
+`;

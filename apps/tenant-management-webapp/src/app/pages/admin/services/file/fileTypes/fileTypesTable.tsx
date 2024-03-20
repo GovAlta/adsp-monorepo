@@ -141,7 +141,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
       )}
       {coreFileTypes && coreFileTypes.length > 0 && (
         <div>
-          <h4>Core file types</h4>
+          <h2>Core file types</h2>
           <TableLayout>
             <DataTable data-testid="file-types-table">
               <thead data-testid="file-types-table-header" id="file-types-table-core-header">

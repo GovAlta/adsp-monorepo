@@ -52,14 +52,14 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
       navigate(`edit/${topicType.id}`, { relative: 'path' });
       setSpinner(false);
     }
-  }, [topicTypes]);
+  }, [topicTypes, topicType.id, spinner, navigate, isEdit, onClose]);
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     setTopicType(initialValue);
-  }, [open]);
+  }, [open, initialValue]);
 
   const { errors, validators } = useValidators(
     'name',

@@ -1,18 +1,19 @@
-import React from 'react';
 import { CellProps, WithClassname, ControlProps, isTimeControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInputTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay, isValidDate } from '../../util/stringUtils';
-type GoAInputTimeProps = CellProps & WithClassname & WithInputProps;
+import { checkFieldValidity } from '../../util/stringUtils';
+import { onBlurForTimeControl, onKeyPressForTimeControl } from '../../util/inputControlUtils';
+export type GoAInputTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoAInputTime
@@ -22,18 +23,26 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       step={1}
       width="100%"
       disabled={!enabled}
+      readonly={readOnly}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
-        handleChange(path, value);
+        onBlurForTimeControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
       }}
       // Dont use handleChange in the onChange event, use the keyPress or onBlur.
       // If you use it onChange along with keyPress event it will cause a
       // side effect that causes the validation to render when it shouldnt.
-      onChange={(name, value) => {}}
+      onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (!(key === 'Tab' || key === 'Shift')) {
-          handleChange(path, value);
-        }
+        onKeyPressForTimeControl({
+          name,
+          value,
+          key,
+          controlProps: props as ControlProps,
+        });
       }}
       {...uischema?.options?.componentProps}
     />

@@ -11,21 +11,20 @@ import { clearComments } from '@store/comment/action';
 export interface TopicTableProps {
   topics: TopicItem[];
   selectedType: string;
-  showActions: boolean;
   onDeleteTopic?: (Topic) => void;
 }
 
-export const TopicListTable = ({ topics, selectedType, showActions, onDeleteTopic }: TopicTableProps): JSX.Element => {
+export const TopicListTable = ({ topics, selectedType, onDeleteTopic }: TopicTableProps): JSX.Element => {
   const dispatch = useDispatch();
   const newTopics = topics ? (JSON.parse(JSON.stringify(topics)) as Record<string, TopicItem[]>) : [];
   const [activeRow, setActiveRow] = useState(null);
   useEffect(() => {
     dispatch(clearComments());
-  }, [activeRow]);
+  }, [activeRow, dispatch]);
   return (
     <>
       <HeaderFont>
-        <label>Topic list</label>
+        <h2>Topic list</h2>
       </HeaderFont>
       <TableDiv>
         <DataTable data-testid="topic-table">
@@ -42,7 +41,6 @@ export const TopicListTable = ({ topics, selectedType, showActions, onDeleteTopi
                 <TopicTableItem
                   key={topic}
                   selectedType={selectedType}
-                  showActions={showActions}
                   id={newTopics[topic]['id']}
                   topic={newTopics[topic]}
                   onDeleteTopic={onDeleteTopic}

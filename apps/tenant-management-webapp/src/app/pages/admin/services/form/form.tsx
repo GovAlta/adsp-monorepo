@@ -20,11 +20,7 @@ const HelpLink = (): JSX.Element => {
   function getCalendersupportcodeLink() {
     return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/form-service';
   }
-  return (
-    <>
-      <AsideLinks serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />
-    </>
-  );
+  return <AsideLinks serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />;
 };
 
 export const Form: FunctionComponent = () => {
@@ -39,7 +35,7 @@ export const Form: FunctionComponent = () => {
     dispatch(FetchRealmRoles());
 
     dispatch(fetchKeycloakServiceRoles());
-  }, []);
+  }, [dispatch]);
 
   const searchParams = new URLSearchParams(document.location.search);
 

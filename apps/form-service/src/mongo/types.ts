@@ -7,10 +7,11 @@ export type FormDoc = Omit<Form, 'definition' | 'applicant' | 'files'> & {
   hash: string;
   files: Record<string, string>;
 };
-export type FormSubmissionDoc = Omit<FormSubmission, 'updatedBy' | 'updated'> & {
+export type FormSubmissionDoc = Omit<FormSubmission, 'updatedBy' | 'updated' | 'formFiles'> & {
   tenantId: string;
   hash: string;
   updatedBy: string;
   updatedById: string;
   updatedDateTime: Date;
+  formFiles: Record<string, string>;
 };

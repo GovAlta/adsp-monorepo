@@ -1,16 +1,20 @@
-import React from 'react';
 import { CellProps, WithClassname, ControlProps, isNumberControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { getErrorsToDisplay } from '../../util/stringUtils';
-type GoAInputNumberProps = CellProps & WithClassname & WithInputProps;
+import { checkFieldValidity } from '../../util/stringUtils';
+import {
+  onBlurForNumericControl,
+  onChangeForNumericControl,
+  onKeyPressNumericControl,
+} from '../../util/inputControlUtils';
+
+export type GoAInputNumberProps = CellProps & WithClassname & WithInputProps;
 
 export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
-
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const InputValue = data && data !== undefined ? data : '';
@@ -18,13 +22,15 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const StepValue = clonedSchema.multipleOf ? clonedSchema.multipleOf : 0.01;
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
-  const errorsFormInput = getErrorsToDisplay(props as ControlProps);
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoAInput
       type="number"
       error={errorsFormInput.length > 0}
       disabled={!enabled}
+      readonly={readOnly}
       value={InputValue}
       placeholder={placeholder}
       step={StepValue}
@@ -34,24 +40,27 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (!(key === 'Tab' || key === 'Shift')) {
-          let newValue: string | number = '';
-          if (value !== '') {
-            newValue = +value;
-          }
-          handleChange(path, newValue);
-        }
+        onKeyPressNumericControl({
+          name,
+          value,
+          key,
+          controlProps: props as ControlProps,
+        });
       }}
       onBlur={(name: string, value: string) => {
-        let newValue: string | number = '';
-        if (value !== '') {
-          newValue = +value;
-        }
-        handleChange(path, newValue);
+        onBlurForNumericControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
       }}
-      //Dont trigger the handleChange event on the onChange event as it will cause
-      //issue with the error message from displaying, use keyPress or the onBlur event instead
-      onChange={(name: string, value: string) => {}}
+      onChange={(name: string, value: string) => {
+        onChangeForNumericControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
+      }}
       {...uischema?.options?.componentProps}
     />
   );

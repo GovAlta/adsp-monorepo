@@ -9,10 +9,18 @@ import {
 } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
-import { formSubmitted, formUnlocked, formSetToDraft } from '..';
-import { formArchived, formCreated, formDeleted, submissionDispositioned } from '../events';
-import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
+import { body, checkSchema, param, query } from 'express-validator';
 import { NotificationService } from '../../notification';
+import {
+  formArchived,
+  formCreated,
+  formDeleted,
+  formSetToDraft,
+  formSubmitted,
+  formUnlocked,
+  submissionDispositioned,
+} from '../events';
+import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { Form, FormCriteria, FormSubmission, FormSubmissionCriteria } from '../types';
@@ -25,53 +33,10 @@ import {
   SET_TO_DRAFT_FORM_OPERATION,
 } from './types';
 import { FileService } from '../../file';
-import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
 import { QueueTaskService } from '../../task';
 import { CommentService } from '../comment';
-
-export function mapFormDefinition(entity: FormDefinitionEntity) {
-  return {
-    id: entity.id,
-    name: entity.name,
-    description: entity.description,
-    anonymousApply: entity.anonymousApply,
-    applicantRoles: entity.applicantRoles,
-    assessorRoles: entity.assessorRoles,
-    clerkRoles: entity.clerkRoles,
-    formDraftUrlTemplate: entity.formDraftUrlTemplate,
-    dataSchema: entity.dataSchema,
-    uiSchema: entity.uiSchema,
-  };
-}
-
-export function mapForm(
-  apiId: AdspId,
-  entity: FormEntity
-): Omit<Form, 'definition' | 'applicant' | 'data' | 'files'> & {
-  urn: string;
-  definitionId: string;
-  applicant: { addressAs: string };
-} {
-  return {
-    urn: adspId`${apiId}:/forms/${entity.id}`.toString(),
-    id: entity.id,
-    definitionId: entity.definition.id,
-    formDraftUrl: entity.formDraftUrl,
-    anonymousApplicant: entity.anonymousApplicant,
-    status: entity.status,
-    created: entity.created,
-    createdBy: entity.createdBy,
-    locked: entity.locked,
-    submitted: entity.submitted,
-    lastAccessed: entity.lastAccessed,
-    applicant: entity.applicant
-      ? {
-          addressAs: entity.applicant.addressAs,
-        }
-      : null,
-  };
-}
+import { mapForm, mapFormDefinition } from '../mapper';
 
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
@@ -83,12 +48,12 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
 
 export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntity): FormSubmission & { urn: string } {
   return {
-    urn: adspId`${apiId}:/forms/${entity.formId}/submissions/${entity.id}`.toString(),
+    urn: `${apiId}:/forms/${entity.formId}/submissions/${entity.id}`,
     id: entity.id,
     formId: entity.formId,
     formDefinitionId: entity.formDefinitionId,
     formData: entity.formData,
-    formFiles: entity.formFiles,
+    formFiles: Object.entries(entity.formFiles || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
     created: entity.created,
     createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
     disposition: entity.disposition
@@ -239,7 +204,7 @@ export function createForm(
       const result = mapForm(apiId, form);
       res.send(result);
 
-      eventService.send(formCreated(user, form));
+      eventService.send(formCreated(apiId, user, form));
       if (definition.supportTopic) {
         commentService.createSupportTopic(form, result.urn);
       }
@@ -323,7 +288,7 @@ export function updateFormSubmissionDisposition(
       end();
 
       res.send(mapFormSubmissionData(apiId, updated));
-      eventService.send(submissionDispositioned(user, form, updated));
+      eventService.send(submissionDispositioned(apiId, user, form, updated));
     } catch (err) {
       next(err);
     }
@@ -396,23 +361,23 @@ export function formOperation(
         }
         case UNLOCK_FORM_OPERATION: {
           result = await form.unlock(user);
-          event = formUnlocked(user, result);
+          event = formUnlocked(apiId, user, result);
           break;
         }
         case SUBMIT_FORM_OPERATION: {
           const [submittedForm, _submission] = await form.submit(user, queueTaskService, submissionRepository);
           result = submittedForm;
-          event = formSubmitted(user, result, _submission);
+          event = formSubmitted(apiId, user, result, _submission);
           break;
         }
         case SET_TO_DRAFT_FORM_OPERATION: {
           result = await form.setToDraft(user);
-          event = formSetToDraft(user, result);
+          event = formSetToDraft(apiId, user, result);
           break;
         }
         case ARCHIVE_FORM_OPERATION: {
           result = await form.archive(user);
-          event = formArchived(user, result);
+          event = formArchived(apiId, user, result);
           break;
         }
         default:
@@ -432,6 +397,7 @@ export function formOperation(
 }
 
 export function deleteForm(
+  apiId: AdspId,
   eventService: EventService,
   fileService: FileService,
   notificationService: NotificationService
@@ -447,15 +413,38 @@ export function deleteForm(
 
       end();
       res.send({ deleted });
-      eventService.send(formDeleted(user, form));
+      eventService.send(formDeleted(apiId, user, form));
     } catch (err) {
       next(err);
     }
   };
 }
-
+// eslint-disable-next-line
+export const validateCriteria = (value: string) => {
+  const criteria = JSON.parse(value);
+  if (criteria?.createDateBefore !== undefined) {
+    if (!validator.isISO8601(criteria?.createDateBefore)) {
+      throw new InvalidOperationError('createDateBefore requires ISO-8061 date string.');
+    }
+  }
+  if (criteria?.createDateAfter !== undefined) {
+    if (!validator.isISO8601(criteria?.createDateAfter)) {
+      throw new InvalidOperationError('createDateAfter requires ISO-8061 date string.');
+    }
+  }
+  if (criteria?.dispositionDateBefore !== undefined) {
+    if (!validator.isISO8601(criteria?.dispositionDateBefore)) {
+      throw new InvalidOperationError('dispositionDateBefore requires ISO-8061 date string.');
+    }
+  }
+  if (criteria?.dispositionDateAfter !== undefined) {
+    if (!validator.isISO8601(criteria?.dispositionDateAfter)) {
+      throw new InvalidOperationError('dispositionDateAfter requires ISO-8061 date string.');
+    }
+  }
+};
 interface FormRouterProps {
-  serviceId: AdspId;
+  apiId: AdspId;
   repository: FormRepository;
   eventService: EventService;
   notificationService: NotificationService;
@@ -466,7 +455,7 @@ interface FormRouterProps {
 }
 
 export function createFormRouter({
-  serviceId,
+  apiId,
   repository,
   eventService,
   notificationService,
@@ -475,7 +464,6 @@ export function createFormRouter({
   commentService,
   submissionRepository,
 }: FormRouterProps): Router {
-  const apiId = adspId`${serviceId}:v1`;
   const router = Router();
 
   router.get('/definitions', getFormDefinitions);
@@ -521,28 +509,8 @@ export function createFormRouter({
     createValidationHandler(
       query('criteria')
         .optional()
-        .custom(async (value) => {
-          const criteria = JSON.parse(value);
-          if (criteria?.createDateBefore !== undefined) {
-            if (!validator.isISO8601(criteria?.createDateBefore)) {
-              throw new InvalidOperationError('createDateBefore requires ISO-8061 date string.');
-            }
-          }
-          if (criteria?.createDateAfter !== undefined) {
-            if (!validator.isISO8601(criteria?.createDateAfter)) {
-              throw new InvalidOperationError('createDateAfter requires ISO-8061 date string.');
-            }
-          }
-          if (criteria?.dispositionDateBefore !== undefined) {
-            if (!validator.isISO8601(criteria?.dispositionDateBefore)) {
-              throw new InvalidOperationError('dispositionDateBefore requires ISO-8061 date string.');
-            }
-          }
-          if (criteria?.dispositionDateAfter !== undefined) {
-            if (!validator.isISO8601(criteria?.dispositionDateAfter)) {
-              throw new InvalidOperationError('dispositionDateAfter requires ISO-8061 date string.');
-            }
-          }
+        .custom(async (value: string) => {
+          validateCriteria(value);
         })
     ),
     findFormSubmissions(apiId, submissionRepository, repository)
@@ -580,7 +548,7 @@ export function createFormRouter({
     '/forms/:formId',
     createValidationHandler(param('formId').isUUID()),
     getForm(repository),
-    deleteForm(eventService, fileService, notificationService)
+    deleteForm(apiId, eventService, fileService, notificationService)
   );
 
   router.get(

@@ -31,13 +31,13 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
 
       if (!error?.response) {
         additionalMessage = `${error?.message || error || ''}`;
-      } else if (error.response.status >= 400 && error.response.status < 500) {
+      } else if (error.response.status >= 400) {
         additionalMessage = `${
           error?.response?.data?.errorMessage || error?.response?.data?.error || error?.response?.data || ''
         }`;
       }
       const spacer = additionalMessage.length > 0 ? ': ' : '';
-      errorMessage = `${errorMessage}${spacer}${additionalMessage}`;
+      errorMessage = `${errorMessage || ''}${spacer}${additionalMessage}`;
       return {
         notifications: [
           ...state.notifications,

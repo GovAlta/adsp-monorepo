@@ -14,9 +14,15 @@ interface ValueRouterProps {
   eventService: EventService;
 }
 
-const mapValue = ({ tenantId: _tenantId, ...value }: Value) => ({
-  ...value,
-});
+const mapValue = (value: Value) => {
+  if (value) {
+    const { tenantId: _tenantId, ...result } = value;
+
+    return result;
+  } else {
+    return null;
+  }
+};
 
 export const readValues: RequestHandler = async (req, res, next) => {
   try {

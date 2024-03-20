@@ -129,11 +129,11 @@ export const ApplicationFormModal: FC<Props> = ({
     if (directory.length === 0) {
       dispatch(fetchDirectory());
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     dispatch(fetchDirectoryDetailByURNs(tenantServiceUrns));
-  }, [tenantServiceUrns.length]);
+  }, [tenantServiceUrns.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
   // useEffect(() => {}, [healthEndpoints]);

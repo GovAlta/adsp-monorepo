@@ -2,11 +2,6 @@ import { RootState } from '@store/index';
 import { saveNotice } from '@store/notice/actions';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import TimePicker from 'react-time-picker';
-import DatePicker from 'react-date-picker';
-import styled from 'styled-components';
-import Multiselect from 'multiselect-react-dropdown';
-import CloseIcon from '@icons/close-outline.svg';
 import {
   GoATextArea,
   GoAButton,
@@ -14,7 +9,13 @@ import {
   GoAButtonGroup,
   GoAFormItem,
   GoAModal,
+  GoAInputDate,
+  GoAInputTime,
+  GoADropdown,
+  GoADropdownItem,
+  GoAGrid,
 } from '@abgov/react-components-new';
+import { getTimeFromGMT } from '@lib/timeUtil';
 
 const dateTime = (date, time) => {
   const newDate = new Date(date);
@@ -52,21 +53,14 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
 
   useEffect(() => {
     if (props.noticeId) {
-      const notice = notices.find((nt) => props.noticeId === nt.id);
+      const notice = notices.find((nt) => props?.noticeId === nt.id);
       const currentStartDate = new Date(notice.startDate);
       const currentEndDate = new Date(notice.endDate);
-
       setStartDate(currentStartDate);
       setEndDate(currentEndDate);
 
-      setStartTime(
-        `${currentStartDate.getHours()}:${
-          currentStartDate.getMinutes() < 10 ? '0' : ''
-        }${currentStartDate.getMinutes()}`
-      );
-      setEndTime(
-        `${currentEndDate.getHours()}:${currentEndDate.getMinutes() < 10 ? '0' : ''}${currentEndDate.getMinutes()}`
-      );
+      setStartTime(getTimeFromGMT(currentStartDate));
+      setEndTime(getTimeFromGMT(currentEndDate));
       setMessage(notice.message);
 
       let parsedApplications = [];
@@ -79,10 +73,11 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         setIsAllApplications(notice.isAllApplications);
       }
     }
-  }, [props.noticeId]);
+  }, [props.noticeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function validDateRangeErrors() {
     if (dateTime(endDate, endTime) < dateTime(startDate, startTime)) {
+      setErrors({ date: 'End date must be later than start date' });
       return { date: 'End date must be later than start date' };
     }
   }
@@ -125,8 +120,6 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       );
 
       if (props.onSave) props.onSave();
-    } else {
-      setErrors(formErrorList);
     }
   }
 
@@ -136,10 +129,9 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   }
 
   function onSelect(selected) {
-    const parsedApplications = selected.map((s) => {
-      return { id: s.appKey, name: s.name };
-    });
-    setSelectedApplications(parsedApplications);
+    const application = noMonitorOnlyApplications.find((s) => s.name === selected);
+    const parsedApplications = { id: application.appKey, name: application.name };
+    setSelectedApplications([parsedApplications]);
   }
 
   function setNoticeDefaults() {
@@ -152,6 +144,10 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     setEndTime('14:00');
     setSelectedApplications([]);
   }
+  const isValidDateString = (dateString) => {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  };
 
   return (
     <GoAModal
@@ -169,245 +165,114 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         </GoAButtonGroup>
       }
     >
-      <NoticeFormStyle>
-        <GoAFormItem error={errors?.['message']} label="Description">
-          <GoATextArea
-            testId="notice-form-description"
-            name="message"
-            value={message}
+      <GoAFormItem error={errors?.['message']} label="Description">
+        <GoATextArea
+          testId="notice-form-description"
+          name="message"
+          value={message}
+          width="100%"
+          onKeyPress={(name, value) => {
+            setMessage(value);
+          }}
+          // eslint-disable-next-line
+          onChange={() => {}}
+        />
+      </GoAFormItem>
+      <br />
+      <GoAFormItem label="Application">
+        <GoACheckbox
+          name="isAllApplications"
+          checked={isAllApplications}
+          testId="notice-form-all-applications-checkbox"
+          ariaLabel="notice-form-all-applications-checkbox"
+          onChange={() => {
+            setIsAllApplications(!isAllApplications);
+          }}
+          text="All applications"
+        />
+      </GoAFormItem>
+
+      {isAllApplications === false && (
+        <GoAFormItem label="Select an application" error={errors?.['applications']}>
+          <GoADropdown
+            name="application"
+            value={selectedApplications[0]?.name}
+            onChange={(_, name) => onSelect(name)}
+            width={'54ch'}
+            testId="application-dropdown-list"
+            aria-label="application-dropdown"
+          >
+            {noMonitorOnlyApplications.map((w) => (
+              <GoADropdownItem key={w.name} value={w.name} label={w.name} />
+            ))}
+          </GoADropdown>
+        </GoAFormItem>
+      )}
+      <br />
+
+      <GoAGrid gap="xl" minChildWidth="220px">
+        <GoAFormItem label="Start Date" error={errors?.['date']}>
+          <GoAInputDate
+            name="StartDate"
+            value={startDate}
             width="100%"
-            onKeyPress={(name, value) => {
-              setMessage(value);
+            testId="notice-form-start-date-picker"
+            onChange={(name, value) => {
+              if (isValidDateString(value)) {
+                setErrors({});
+                setStartDate(new Date(value));
+              } else {
+                setErrors({ date: 'Please input right start date format!' });
+              }
             }}
-            // eslint-disable-next-line
-            onChange={() => {}}
           />
         </GoAFormItem>
 
-        <div>
-          <ErrorWrapper className={errors?.['applications'] && 'error'}>
-            <label className="notice-title">Application</label>
-            <div style={{ marginTop: '5px' }}>
-              <GoACheckbox
-                name="isAllApplications"
-                checked={isAllApplications}
-                testId="notice-form-all-applications-checkbox"
-                ariaLabel="notice-form-all-applications-checkbox"
-                onChange={() => {
-                  setIsAllApplications(!isAllApplications);
-                }}
-                text="All applications"
-              />
-            </div>
-            {isAllApplications === false && (
-              <MultiDropdownStyle>
-                <Multiselect
-                  options={noMonitorOnlyApplications}
-                  onSelect={onSelect}
-                  onRemove={onSelect}
-                  displayValue="name"
-                  selectedValues={selectedApplications}
-                  placeholder=""
-                  showCheckbox
-                  singleSelect
-                  avoidHighlightFirstOption
-                  customCloseIcon={<img src={CloseIcon} alt="Close" width="16" />}
-                />
-              </MultiDropdownStyle>
-            )}
-            <div className="error-msg">{errors?.['applications']}</div>
-          </ErrorWrapper>
-        </div>
+        <GoAFormItem label="End Date">
+          <GoAInputDate
+            name="EndDate"
+            value={endDate}
+            width="100%"
+            testId="notice-form-end-date-picker"
+            onChange={(name, value) => {
+              if (isValidDateString(value)) {
+                setErrors({});
+                setEndDate(new Date(value));
+              } else {
+                setErrors({ date: 'Please input right end date format!' });
+              }
+            }}
+          />
+        </GoAFormItem>
 
-        <ErrorWrapper className={errors?.['date'] && 'error'}>
-          <div className="row-flex">
-            <div className="flex1 mr-1">
-              <DatePickerStyle>
-                <label>Start date</label>
-                <DatePicker
-                  data-testid="notice-form-start-date-picker"
-                  name="startDate"
-                  onChange={setStartDate}
-                  value={startDate}
-                />
-              </DatePickerStyle>
-            </div>
-            <div className="flex1 ml-1">
-              <DatePickerStyle>
-                <label>End date</label>
-                <DatePicker
-                  name="endDate"
-                  data-testid="notice-form-end-date-picker"
-                  onChange={setEndDate}
-                  value={endDate}
-                />
-              </DatePickerStyle>
-            </div>
-          </div>
+        <GoAFormItem label="Start time">
+          <GoAInputTime
+            name="startTime"
+            value={startTime}
+            step={1}
+            width="100%"
+            testId="notice-form-start-time"
+            onChange={(name, value) => {
+              setStartTime(value);
+            }}
+          />
+        </GoAFormItem>
 
-          <div className="row-flex">
-            <div className="flex1 mr-1">
-              <DatePickerStyle>
-                <label>Start time</label>
-                <TimePicker
-                  name="startTime"
-                  onChange={setStartTime}
-                  data-testid="notice-form-start-time-picker"
-                  value={startTime}
-                />
-              </DatePickerStyle>
-            </div>
-            <div className="flex1 ml-1">
-              <DatePickerStyle>
-                <label>End time</label>
-                <TimePicker
-                  name="endTime"
-                  onChange={setEndTime}
-                  data-testid="notice-form-end-time-picker"
-                  value={endTime}
-                />
-              </DatePickerStyle>
-            </div>
-          </div>
-
-          <div className="error-msg">{errors?.['date']}</div>
-        </ErrorWrapper>
-      </NoticeFormStyle>
+        <GoAFormItem label="End time">
+          <GoAInputTime
+            name="endTime"
+            value={endTime}
+            step={1}
+            width="100%"
+            testId="notice-form-start-time"
+            onChange={(name, value) => {
+              setEndTime(value);
+            }}
+          />
+        </GoAFormItem>
+      </GoAGrid>
     </GoAModal>
   );
 }
-
-export const NoticeFormStyle = styled.div`
-  .flex1 {
-    flex: 1;
-  }
-
-  .row-flex {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .mr-1 {
-    margin-right: 1em;
-  }
-
-  .ml-1 {
-    margin-left: 1em;
-  }
-
-  label.notice-title {
-    font-weight: var(--fw-bold);
-    color: var(--color-gray-900);
-  }
-`;
-
-export const ErrorWrapper = styled.div`
-  .error-msg {
-    display: none;
-  }
-
-  &.error {
-    input,
-    textarea {
-      border-color: var(--color-red);
-    }
-    .error-msg {
-      display: block;
-      color: var(--color-red);
-    }
-
-    .searchWrapper,
-    .react-date-picker__wrapper,
-    .react-time-picker__wrapper {
-      border-color: var(--color-red);
-    }
-  }
-`;
-
-export const MultiDropdownStyle = styled.div`
-  ul {
-    list-style-type: none;
-  }
-
-  .multiSelectContainer input {
-    text-align: right;
-    width: 30px;
-    padding-right: 0.6em;
-  }
-
-  .searchBox {
-    float: right;
-    margin-top: 1px;
-  }
-
-  ul ul {
-    list-style-type: none;
-  }
-
-  .chip {
-    background: var(--color-white);
-    color: var(--color-black);
-  }
-
-  .searchWrapper {
-    border: 1px solid var(--color-gray-600);
-    padding: 3px;
-    min-height: 42px;
-  }
-
-  .chip {
-    font-size: 17px;
-    background: var(--color-white);
-    padding: 7px 10px 4px 5px;
-  }
-
-  .searchBox::placeholder {
-    color: var(--color-primary-link);
-    font-size: 0.9em;
-  }
-
-  ul li {
-    margin-left: 0.4em;
-    margin-top: 0;
-    padding: 0;
-
-    input {
-      width: auto;
-    }
-    input[type='checkbox'] {
-      -webkit-appearance: checkbox;
-      width: 1.25rem;
-      height: 1.25rem;
-      background: white;
-      border-radius: 5px;
-      border: 2px solid #555;
-    }
-    input[type='checkbox']:checked {
-      background: var(--color-primary-link);
-    }
-  }
-`;
-
-export const DatePickerStyle = styled.div`
-  padding: 1rem 0 1rem 0;
-  margin: 0.1rem;
-
-  .react-date-picker__wrapper,
-  .react-time-picker__wrapper {
-    border-radius: 5px;
-    padding: 5px;
-  }
-
-  .react-date-picker,
-  .react-time-picker {
-    width: 100%;
-  }
-
-  label {
-    display: block;
-    font-weight: var(--fw-bold);
-    color: var(--color-gray-900);
-  }
-`;
 
 export default NoticeModal;

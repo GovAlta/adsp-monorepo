@@ -1,7 +1,6 @@
-import { adspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError } from '@core-services/core-common';
+import { adspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { WorkQueueService } from '@core-services/core-common';
-import { Mock, It } from 'moq.ts';
+import { Mock } from 'moq.ts';
 import { Logger } from 'winston';
 import { FileEntity } from '../model';
 import { FileRepository } from '../repository';
@@ -12,7 +11,6 @@ import * as scanModule from './scan';
 import * as deleteModule from './delete';
 
 describe('Create File Job', () => {
-  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const logger = {
     debug: jest.fn(),
     info: jest.fn(),
@@ -22,10 +20,6 @@ describe('Create File Job', () => {
   let repositoryMock: Mock<FileRepository> = null;
 
   let queueServiceMock = null;
-
-  const subscribeMock = {
-    subscribe: jest.fn(),
-  };
 
   jest.mock('./scan');
 
@@ -79,7 +73,8 @@ describe('Create File Job', () => {
         },
       }),
     };
-    const createFileJob = createFileJobs({
+    createFileJobs({
+      apiId: adspId`urn:ads:platform:file-service`,
       serviceId: adspId`urn:ads:platform:file-service`,
       logger,
       fileRepository: repositoryMock.object(),
@@ -91,18 +86,12 @@ describe('Create File Job', () => {
       tokenProvider: tokenProviderMock,
     });
 
-    // queueServiceMock
-    //   .setup((instance) => instance.subscribe())
-    //   .returns(Promise.resolve({ scanned: true, infected: true }));
     scanServiceMock
       .setup((instance) => instance.scan(fileEntityMock.object()))
       .returns(Promise.resolve({ scanned: true, infected: true }));
 
-    //createFileJob;
-
     expect(scanModule.createScanJob).toHaveBeenCalled();
     expect(mockScanJob).toHaveBeenCalled();
-    // expect(createFileJob).toBeTruthy();
   });
   it('can run delete job', () => {
     queueServiceMock = {
@@ -116,7 +105,8 @@ describe('Create File Job', () => {
         },
       }),
     };
-    const createFileJob = createFileJobs({
+    createFileJobs({
+      apiId: adspId`urn:ads:platform:file-service`,
       serviceId: adspId`urn:ads:platform:file-service`,
       logger,
       fileRepository: repositoryMock.object(),
@@ -128,19 +118,12 @@ describe('Create File Job', () => {
       tokenProvider: tokenProviderMock,
     });
 
-    // queueServiceMock
-    //   .setup((instance) => instance.subscribe())
-    //   .returns(Promise.resolve({ scanned: true, infected: true }));
     scanServiceMock
       .setup((instance) => instance.scan(fileEntityMock.object()))
       .returns(Promise.resolve({ scanned: true, infected: true }));
 
-    //createFileJob;
-
     expect(deleteModule.createDeleteJob).toHaveBeenCalled();
     expect(mockDeleteJob).toHaveBeenCalled();
-
-    // expect(createFileJob).toBeTruthy();
   });
 
   it('runs nothing because we do not have valid case', () => {
@@ -155,7 +138,8 @@ describe('Create File Job', () => {
         },
       }),
     };
-    const createFileJob = createFileJobs({
+    createFileJobs({
+      apiId: adspId`urn:ads:platform:file-service`,
       serviceId: adspId`urn:ads:platform:file-service`,
       logger,
       fileRepository: repositoryMock.object(),

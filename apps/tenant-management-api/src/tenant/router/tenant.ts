@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { IsDefined } from 'class-validator';
+import { IsDefined, IsOptional } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import {
   requireTenantServiceAdmin,
@@ -15,6 +15,7 @@ import { RealmService } from '../services/realm';
 import { createkcAdminClient } from '../../keycloak';
 import { createTenant } from './tenantV2';
 import { tenantDeleted } from '../events';
+import { rateLimit } from 'express-rate-limit';
 
 class CreateTenantDto {
   @IsDefined()
@@ -43,11 +44,35 @@ class TenantByRealmDto {
   realm;
 }
 
+class FindUserIdByEmailDto {
+  @IsDefined()
+  email;
+  @IsOptional()
+  realm;
+}
+
+class DeleteUserIdpDto {
+  @IsDefined()
+  userId;
+  @IsDefined()
+  realm;
+
+  @IsOptional()
+  idpName;
+}
+
 interface TenantRouterProps {
   eventService: EventService;
   tenantRepository: TenantRepository;
   realmService: RealmService;
 }
+
+const rateLimitHandler = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 200,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
 
 export const createTenantRouter = ({ tenantRepository, eventService, realmService }: TenantRouterProps): Router => {
   const tenantRouter = Router();
@@ -161,6 +186,28 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
     }
   }
 
+  async function findUserIdByEmailInCore(req, res, next) {
+    try {
+      const { email, realm } = req.payload;
+      const id = await realmService.findUserId(realm || 'core', email);
+      res.json({
+        userIdInCore: id,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async function deleteUserIdp(req, res, next) {
+    try {
+      const { userId, realm, idpName } = req.payload;
+      await realmService.deleteUserIdp(userId, realm, idpName);
+      res.sendStatus(200);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // Tenant admin only APIs. Used by the admin web app.
   tenantRouter.post(
     '/',
@@ -174,6 +221,14 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
   tenantRouter.post('/email', [validationMiddleware(TenantByEmailDto)], getTenantByEmail);
   tenantRouter.post('/name', [validationMiddleware(TenantByNameDto)], getTenantByName);
+  tenantRouter.get(
+    '/user/id',
+    rateLimitHandler,
+    requireTenantAdmin,
+    [validationMiddleware(FindUserIdByEmailDto)],
+    findUserIdByEmailInCore
+  );
+  tenantRouter.delete('/user/idp', rateLimitHandler, [validationMiddleware(DeleteUserIdpDto)], deleteUserIdp);
 
   return tenantRouter;
 };

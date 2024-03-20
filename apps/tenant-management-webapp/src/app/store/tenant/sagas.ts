@@ -29,11 +29,21 @@ import {
   TenantCreationLoginInitAction,
   UPDATE_ACCESS_TOKEN,
   UpdateLoginSuccess,
+  FETCH_USER_ID_BY_EMAIL,
+  FetchUserIdByEmailAction,
+  DELETE_USER_IDP,
+  DeleteUserIdpAction,
 } from './actions';
 
 import { KeycloakApi } from '@store/access/api';
-import { CredentialRefresh, SessionLoginSuccess, UpdateIndicator, SetSessionExpired } from '@store/session/actions';
-import { TenantApi } from './api';
+import {
+  CredentialRefresh,
+  SessionLoginSuccess,
+  UpdateIndicator,
+  SetSessionExpired,
+  UpdateLoadingState,
+} from '@store/session/actions';
+import { TenantApi, callFetchUserIdByEmail, callDeleteUserIdPFromCore } from './api';
 import { TENANT_INIT } from './models';
 import { getOrCreateKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
 import { SagaIterator } from '@redux-saga/core';
@@ -258,8 +268,72 @@ export function* fetchRealmRoles(): SagaIterator {
   }
 }
 
-export function* updateAccessToken(action: UpdateAccessTokenAction): SagaIterator {
+export function* updateAccessToken(_action: UpdateAccessTokenAction): SagaIterator {
   yield call(getAccessToken, true);
+}
+
+export function* fetchUserIdByEmail(action: FetchUserIdByEmailAction): SagaIterator {
+  const { email } = action;
+
+  const state: RootState = yield select();
+  const token = yield call(getAccessToken);
+  const url = `${state.config?.tenantApi?.host}/api/tenant/v1/user/id`;
+  try {
+    yield put(
+      UpdateLoadingState({
+        name: FETCH_USER_ID_BY_EMAIL,
+        state: 'start',
+      })
+    );
+
+    const id = yield call(callFetchUserIdByEmail, url, token, email);
+    yield put(
+      UpdateLoadingState({
+        name: FETCH_USER_ID_BY_EMAIL,
+        state: 'completed',
+        id,
+      })
+    );
+  } catch (err) {
+    yield put(
+      UpdateLoadingState({
+        name: FETCH_USER_ID_BY_EMAIL,
+        state: 'error',
+      })
+    );
+  }
+}
+
+export function* deleteUserIdpFromCore(action: DeleteUserIdpAction): SagaIterator {
+  const { userId, realm } = action;
+
+  const state: RootState = yield select();
+  const token = yield call(getAccessToken);
+  const url = `${state.config?.tenantApi?.host}/api/tenant/v1/user/idp`;
+  try {
+    yield put(
+      UpdateLoadingState({
+        name: DELETE_USER_IDP,
+        state: 'start',
+      })
+    );
+
+    yield call(callDeleteUserIdPFromCore, url, token, userId, realm);
+    yield put(
+      UpdateLoadingState({
+        name: DELETE_USER_IDP,
+        state: 'completed',
+      })
+    );
+  } catch (err) {
+    yield put(
+      UpdateLoadingState({
+        name: DELETE_USER_IDP,
+        state: 'error',
+        data: err.message,
+      })
+    );
+  }
 }
 
 export function* watchTenantSagas(): SagaIterator {
@@ -270,6 +344,8 @@ export function* watchTenantSagas(): SagaIterator {
   yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);
   yield takeEvery(TENANT_LOGOUT, tenantLogout);
   yield takeEvery(UPDATE_ACCESS_TOKEN, updateAccessToken);
+  yield takeEvery(FETCH_USER_ID_BY_EMAIL, fetchUserIdByEmail);
+  yield takeEvery(DELETE_USER_IDP, deleteUserIdpFromCore);
 
   //tenant config
   yield takeEvery(CREATE_TENANT, createTenant);

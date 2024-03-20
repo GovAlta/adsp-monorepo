@@ -44,7 +44,7 @@ export const Overview = (): JSX.Element => {
         dispatch(accessReset());
       }
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Paul Li Nov-16-2022: Please do not remove the following useEffect,

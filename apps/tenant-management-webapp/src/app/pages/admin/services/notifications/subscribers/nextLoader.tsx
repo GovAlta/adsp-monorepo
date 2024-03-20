@@ -42,6 +42,6 @@ export const NextLoader: FunctionComponent<EventSearchNextProps> = ({ onSearch, 
       </LoadMoreWrapper>
     );
   } else {
-    return <></>;
+    return null;
   }
 };

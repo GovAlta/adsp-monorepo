@@ -57,25 +57,27 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   // call that gets user jwt token
   useEffect(() => {
     dispatch(KeycloakCheckSSOWithLogout(realm));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // only make the following 2 effects once we have user info and token ready
   useEffect(() => {
     if (userInfo !== undefined) {
       dispatch(getMySubscriberDetails());
     }
-  }, [userInfo]);
+  }, [userInfo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (userInfo !== undefined) {
       dispatch(FetchContactInfoService({ realm }));
     }
-  }, [userInfo]);
+  }, [userInfo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     code = searchParams.get('code');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     smsCode = searchParams.get('smscode');
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (
@@ -85,19 +87,19 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
       console.log(`pushing: ${window.location.pathname}`);
       navigate(`/subscriptions/${realm}`);
     }
-  }, [previouslyVerified]);
+  }, [previouslyVerified]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (code !== 'null' && userInfo !== undefined && subscriber && code) {
       dispatch(CheckCode('email', code, subscriber, false));
     }
-  }, [searchParams, userInfo, subscriber]);
+  }, [searchParams, userInfo, subscriber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (smsCode !== 'null' && userInfo !== undefined && subscriber && smsCode) {
       dispatch(CheckCode('sms', smsCode, subscriber, false));
     }
-  }, [searchParams, userInfo, subscriber]);
+  }, [searchParams, userInfo, subscriber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);

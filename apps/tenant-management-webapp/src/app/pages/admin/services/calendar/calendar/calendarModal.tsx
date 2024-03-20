@@ -34,12 +34,12 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   useEffect(() => {}, [roles]);
   useEffect(() => {
     setCalendar(initialValue);
-  }, [calendarName]);
+  }, [calendarName, initialValue]);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
-  }, []);
+  }, [dispatch]);
 
   const calendars = useSelector((state: RootState) => {
     return state?.calendarService?.calendars;
@@ -77,38 +77,34 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   };
   const ClientRole = ({ roleNames, clientId }) => {
     return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          roleSelectFunc={(roles, type) => {
-            if (type === 'read') {
-              setCalendar({
-                ...calendar,
-                readRoles: roles,
-              });
-            } else {
-              setCalendar({
-                ...calendar,
-                updateRoles: roles,
-              });
-            }
-          }}
-          nameColumnWidth={80}
-          service="Calendar"
-          checkedRoles={[
-            { title: 'read', selectedRoles: calendar?.readRoles },
-            { title: 'modify', selectedRoles: calendar?.updateRoles },
-          ]}
-        />
-      </>
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        roleSelectFunc={(roles, type) => {
+          if (type === 'read') {
+            setCalendar({
+              ...calendar,
+              readRoles: roles,
+            });
+          } else {
+            setCalendar({
+              ...calendar,
+              updateRoles: roles,
+            });
+          }
+        }}
+        nameColumnWidth={80}
+        service="Calendar"
+        checkedRoles={[
+          { title: 'read', selectedRoles: calendar?.readRoles },
+          { title: 'modify', selectedRoles: calendar?.updateRoles },
+        ]}
+      />
     );
   };
 
   const handleCancelClick = () => {
-    if (isNew) {
-      setCalendar(defaultCalendar);
-    }
+    setCalendar(initialValue);
     validators.clear();
     onCancel();
   };
@@ -146,7 +142,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
         <GoAInput
           type="text"
           name="name"
-          value={calendar.displayName}
+          value={calendar?.displayName}
           testId={`calendar-modal-name-input`}
           aria-label="name"
           disabled={!isNew}
@@ -166,12 +162,12 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
         />
       </GoAFormItem>
       <GoAFormItem label="Calendar ID">
-        <IdField>{calendar.name}</IdField>
+        <IdField>{calendar?.name}</IdField>
       </GoAFormItem>
       <GoAFormItem error={errors?.['description']} label="Description">
         <GoATextArea
           name="description"
-          value={calendar.description}
+          value={calendar?.description}
           testId={`calendar-modal-description-input`}
           aria-label="description"
           width="100%"
@@ -188,7 +184,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
         roles.map((r) => {
           return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
         })}
-      {Object.entries(roles).length === 0 && <TextGoASkeleton />}
+      {Object.entries(roles)?.length === 0 && <TextGoASkeleton />}
     </GoAModal>
   );
 };

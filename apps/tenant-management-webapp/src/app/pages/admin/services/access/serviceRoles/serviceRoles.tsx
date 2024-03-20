@@ -62,7 +62,7 @@ export const ServiceRoles = (): JSX.Element => {
   useEffect(() => {
     dispatch(fetchServiceRoles());
     dispatch(fetchKeycloakServiceRoles(true));
-  }, []);
+  }, [dispatch]);
 
   return (
     <div>

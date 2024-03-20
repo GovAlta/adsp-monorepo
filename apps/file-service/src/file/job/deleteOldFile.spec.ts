@@ -28,9 +28,6 @@ describe('Delete old files', () => {
     timekeeper.reset();
   });
 
-  // const configurationServiceMock = {
-  //   getConfiguration: jest.fn(() => Promise.resolve({})),
-  // };
   const configurationServiceMockZero = {
     getConfiguration: jest.fn(),
   };
@@ -57,11 +54,6 @@ describe('Delete old files', () => {
   };
 
   let repositoryMock: Mock<FileRepository> = null;
-  // let storageProviderMock = new Mock<FileStorageProvider>();
-
-  // storageProviderMock
-  //   .setup((m) => m.saveFile(It.IsAny(), It.IsAny(), contentMock.object()))
-  //   .returns(Promise.resolve(true));
 
   const entity = new FileEntity(null, null, null, {
     tenantId,
@@ -108,6 +100,7 @@ describe('Delete old files', () => {
 
   it('can create a delete old files job', () => {
     const deleteJob = createDeleteOldFilesJob({
+      apiId: adspId`urn:ads:platform:file-service`,
       serviceId: adspId`urn:ads:platform:file-service`,
       logger,
       fileRepository: repositoryMock.object(),
@@ -146,11 +139,11 @@ describe('Delete old files', () => {
         scanned: false,
         deleted: false,
         infected: false,
-        retentionDays: 7,
       })
     );
 
     const deleteJob = createDeleteOldFilesJob({
+      apiId: adspId`urn:ads:platform:file-service`,
       serviceId: adspId`urn:ads:platform:file-service`,
       logger,
       fileRepository: fileServiceMock,
@@ -195,11 +188,11 @@ describe('Delete old files', () => {
         scanned: false,
         deleted: false,
         infected: false,
-        retentionDays: 7,
       })
     );
 
     const deleteJob = createDeleteOldFilesJob({
+      apiId: adspId`urn:ads:platform:file-service`,
       serviceId: adspId`urn:ads:platform:file-service`,
       logger,
       fileRepository: fileServiceMock,
@@ -232,6 +225,7 @@ describe('Delete old files', () => {
     jest.spyOn(entity, 'markForDeletion').mockRejectedValue(new Error('Mocked error'));
 
     const deleteJob = createDeleteOldFilesJob({
+      apiId: adspId`urn:ads:platform:file-service`,
       serviceId: adspId`urn:ads:platform:file-service`,
       logger,
       fileRepository: fileServiceMock,
@@ -247,9 +241,6 @@ describe('Delete old files', () => {
 
     await deleteJob();
 
-    // Mock the behavior of the markForDeletion method to throw an error
-
-    // Call the method and expect it to throw an error
     expect(entity.markForDeletion).toHaveBeenCalled();
   });
 });

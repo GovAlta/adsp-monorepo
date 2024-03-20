@@ -44,7 +44,7 @@ export const WebhookFormModal = (): JSX.Element => {
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedWebhook?.id === '') {
@@ -59,7 +59,7 @@ export const WebhookFormModal = (): JSX.Element => {
       setWebhook(selectedWebhook);
     }
     setLoaded(true);
-  }, [selectedWebhook]);
+  }, [selectedWebhook]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function save() {
     if (!isFormValid()) {
@@ -216,7 +216,7 @@ export const WebhookFormModal = (): JSX.Element => {
                   });
                 }}
                 aria-label="description"
-                suffix="min"
+                trailingContent="min"
               />
             </div>
           </GoAFormItem>

@@ -31,7 +31,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
 
   useEffect(() => {
     revision && validateSchema(debouncedRenderConfiguration);
-  }, [debouncedRenderConfiguration]);
+  }, [debouncedRenderConfiguration]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validateSchema = (configuration) => {
     if (!isInputJson(configuration)) {

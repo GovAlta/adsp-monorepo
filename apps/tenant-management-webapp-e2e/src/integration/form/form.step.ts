@@ -39,6 +39,7 @@ When('the user clicks Add definition button on form definitions page', function 
 });
 
 When('the user enters {string}, {string} in Add form definition modal', function (name, description) {
+  cy.viewport(1920, 1080);
   formObj.addDefinitionNameTextField().shadow().find('input').clear().type(name, { force: true, delay: 200 });
   formObj.addDefinitionDescriptionField().shadow().find('textarea').clear().type(description, { force: true });
 });

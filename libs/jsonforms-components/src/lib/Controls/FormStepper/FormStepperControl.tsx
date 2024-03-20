@@ -8,20 +8,80 @@ import {
   Category,
   StatePropsOfLayout,
   isVisible,
+  isEnabled,
 } from '@jsonforms/core';
 
-import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
+import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
-
 import { Grid, GridItem } from '../../common/Grid';
-import { ReviewItem, ReviewListItem, ReviewListWrapper } from './styled-components';
+import {
+  Anchor,
+  ReviewItem,
+  ReviewItemHeader,
+  ReviewItemSection,
+  ReviewItemTitle,
+  ReviewListItem,
+  ReviewListWrapper,
+} from './styled-components';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
   data: any;
 }
+
+export const resolveLabelFromScope = (scope: string) => {
+  // eslint-disable-next-line no-useless-escape
+  const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
+  const isValid = validPatternRegex.test(scope);
+  if (!isValid) return null;
+
+  const lastSegment = scope.split('/').pop();
+
+  if (lastSegment) {
+    const lowercased = lastSegment.replace(/([A-Z])/g, ' $1').toLowerCase();
+    return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
+  }
+  return '';
+};
+
+export const getFormFieldValue = (scope: string, data: object) => {
+  if (data !== undefined) {
+    const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let currentValue: any = data;
+    for (const key of pathArray) {
+      if (currentValue[key] === undefined) {
+        return '';
+      }
+      currentValue = currentValue[key];
+    }
+    return typeof currentValue === 'object' ? '' : currentValue;
+  } else {
+    return '';
+  }
+};
+
+export const renderFormFields = (elements: UISchemaElement[] | (Category | Categorization)[], data: object) =>
+  elements.map((element, index) => {
+    // const clonedElement = element;
+    const clonedElement = JSON.parse(JSON.stringify(element));
+    if (clonedElement.type === 'Control' && clonedElement.scope) {
+      const label = resolveLabelFromScope(clonedElement.scope);
+      if (!label) return null;
+
+      const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
+      return (
+        <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
+          <strong>{label}:</strong> {value}
+        </GridItem>
+      );
+    } else if (clonedElement?.elements) {
+      return <React.Fragment key={index}>{renderFormFields(clonedElement.elements, data)}</React.Fragment>;
+    }
+    return null;
+  });
 
 export const FormStepper = ({
   uischema,
@@ -45,6 +105,7 @@ export const FormStepper = ({
     () => categorization.elements.filter((category) => isVisible(category, data, '', ajv)),
     [categorization, data, ajv]
   );
+  const disabledCategoryMap: boolean[] = categories.map((c) => !isEnabled(c, data, '', ajv));
   const handleSubmit = () => {
     console.log('submitted', data);
   };
@@ -52,6 +113,8 @@ export const FormStepper = ({
   const CategoryLabels = useMemo(() => {
     return categories.map((e: Category | Categorization) => deriveLabelForUISchemaElement(e, t));
   }, [categories, t]);
+
+  useEffect(() => {}, [categories.length]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const vslidateFormData = (formData: Array<UISchemaElement>) => {
@@ -69,9 +132,24 @@ export const FormStepper = ({
     return <></>;
   }
 
+  function nextPage(page: number, disabled: boolean[]) {
+    page++;
+    while (page <= disabled.length && disabled[page - 1]) {
+      page++;
+    }
+    setPage(page);
+  }
+
+  function prevPage(page: number, disabled: boolean[]) {
+    page--;
+    while (page >= 0 && disabled[page - 1]) {
+      page--;
+    }
+    setPage(page);
+  }
+
   function setPage(page: number) {
     setStep(page);
-
     if (page < 1 || page > categories.length + 1) return;
     if (categories.length + 1 === page) {
       setShowNextBtn(false);
@@ -84,11 +162,12 @@ export const FormStepper = ({
     setStep(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const renderStepElements = (category: Category | Categorization) => {
-    // Ideally, we shall work with the ctx to determine the actual disable for not
-    const isDisabledOnCategoryLevel = category?.rule?.effect === 'DISABLE';
+  const renderStepElements = (category: Category | Categorization, indexOfCategory: number) => {
     return (
-      <>
+      /*
+        [Mar-04-2024][Paul Li] the GoAPages internal state cannot handle the hidden/display well. We need extra hide/display control to it appropriately.
+       */
+      <Hidden xsUp={indexOfCategory !== step - 1}>
         {category.elements.map((elementUiSchema, index) => {
           return (
             <JsonFormsDispatch
@@ -99,28 +178,44 @@ export const FormStepper = ({
               cells={cells}
               path={path}
               visible={visible}
-              enabled={enabled && !isDisabledOnCategoryLevel}
+              enabled={enabled && !disabledCategoryMap[indexOfCategory]}
             />
           );
         })}
-      </>
+      </Hidden>
     );
+  };
+
+  const handleEdit = (index: number) => {
+    setPage(index + 1);
   };
 
   return (
     <Hidden xsUp={!visible}>
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-        <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setPage(step)}>
+        <GoAFormStepper
+          testId="form-stepper-test"
+          step={step}
+          onChange={(step) => {
+            setPage(step);
+          }}
+        >
           {categories?.map((category, index) => {
-            return <GoAFormStep key={index} text={`${CategoryLabels[index]}`} status="incomplete" />;
+            return (
+              <GoAFormStep
+                key={`${CategoryLabels[index]}-tab`}
+                text={`${CategoryLabels[index]}${disabledCategoryMap[index] ? ' (disabled)' : ''}`}
+                status={'incomplete'}
+              />
+            );
           })}
           <GoAFormStep text="Review" status="incomplete" />
         </GoAFormStepper>
         <GoAPages current={step} mb="xl">
           {categories?.map((category, index) => {
             return (
-              <div data-testid={`step_${index}`} key={index}>
-                {renderStepElements(category)}
+              <div data-testid={`step_${index}-content`} key={`${CategoryLabels[index]}`}>
+                {renderStepElements(category, index)}
               </div>
             );
           })}
@@ -128,39 +223,46 @@ export const FormStepper = ({
             <h3 style={{ flex: 1 }}>Summary</h3>
 
             <ReviewItem>
-              <div style={{ width: '100%' }}>
-                {data && Object.keys(data)?.length > 0 && (
-                  <Grid>
-                    {Object.keys(flattenObject(data)).map((key, ix) => {
-                      return (
-                        <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                          <b>{key}</b> : <PreventControlElement key={ix} value={flattenObject(data)[key]} />
-                        </GridItem>
-                      );
-                    })}
-                  </Grid>
-                )}
-              </div>
+              {categories.map((category, index) => {
+                const categoryLabel = category.label || category.i18n || 'Unknown Category';
+                return (
+                  <ReviewItemSection key={index}>
+                    <ReviewItemHeader>
+                      <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
+                      <Anchor onClick={() => handleEdit(index)}>Edit</Anchor>
+                    </ReviewItemHeader>
+                    <Grid>{renderFormFields(category.elements, data)}</Grid>
+                  </ReviewItemSection>
+                );
+              })}
             </ReviewItem>
           </div>
         </GoAPages>
         {step && step !== 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             {step !== 1 ? (
-              <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
+              <GoAButton
+                type="secondary"
+                disabled={disabledCategoryMap[step - 1] || !enabled}
+                onClick={() => prevPage(step, disabledCategoryMap)}
+              >
                 Previous
               </GoAButton>
             ) : (
               <div></div>
             )}
             {step !== null && showNextBtn && (
-              <GoAButton type="primary" onClick={() => setPage(step + 1)}>
+              <GoAButton
+                type="primary"
+                disabled={disabledCategoryMap[step - 1] || !enabled}
+                onClick={() => nextPage(step, disabledCategoryMap)}
+              >
                 Next
               </GoAButton>
             )}
             {!showNextBtn && (
               <div>
-                <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid}>
+                <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
                   Submit
                 </GoAButton>
               </div>
@@ -228,3 +330,5 @@ export const flattenObject = (obj: Record<string, string>): Record<string, strin
 };
 
 export const FormStepperControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormStepper)));
+
+export default FormStepper;

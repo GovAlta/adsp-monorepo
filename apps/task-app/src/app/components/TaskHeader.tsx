@@ -8,9 +8,18 @@ interface TaskHeaderProps {
   open: Task;
   isLive: boolean;
   onClickTasks: () => void;
+  namespace?: string;
+  name?: string;
 }
 
-const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({ className, open, isLive, onClickTasks }) => {
+const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({
+  className,
+  open,
+  isLive,
+  namespace,
+  name,
+  onClickTasks,
+}) => {
   return (
     <React.Fragment>
       <div className={className}>
@@ -20,12 +29,10 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({ className, op
               Tasks
             </GoAButton>
             <span>/</span>
-            <span>
-              {open?.name}
-            </span>
+            <span>{open?.name}</span>
           </>
         ) : (
-          <span>Tasks</span>
+          <span>{`Tasks ${namespace ? `(${namespace}:${name})` : ''}`}</span>
         )}
         <span>
           {isLive ? (
@@ -44,12 +51,8 @@ export const TaskHeader = styled(TaskHeaderComponent)`
   height: 55px;
   background: white;
   z-index: 1;
-  flex-grow: 0;
-  flex-shrink: 0;
-  display: flex;
-  align-items: baseline;
   > span {
-    margin: auto 14px auto 0;
+    margin: auto 0 auto 0;
   }
   > :first-child {
     margin: auto 0 auto 5px;
@@ -60,6 +63,6 @@ export const TaskHeader = styled(TaskHeaderComponent)`
   }
 
   > :last-child {
-    margin-left: auto;
+    margin-left: var(--goa-space-xl);
   }
 `;

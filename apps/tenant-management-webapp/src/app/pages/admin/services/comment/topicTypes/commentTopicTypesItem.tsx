@@ -11,31 +11,29 @@ interface PdfTemplateItemProps {
 export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplateItemProps): JSX.Element => {
   const navigate = useNavigate();
   return (
-    <>
-      <tr>
-        <td data-testid="comment-topic-types-name">{commentTopicType.name}</td>
-        <td data-testid="comment-topic-types-template-id">{commentTopicType.id}</td>
+    <tr>
+      <td data-testid="comment-topic-types-name">{commentTopicType.name}</td>
+      <td data-testid="comment-topic-types-template-id">{commentTopicType.id}</td>
 
-        <td data-testid="comment-topic-types-security-classification" style={{ textTransform: 'capitalize' }}>
-          {commentTopicType.securityClassification}
-        </td>
-        <td data-testid="comment-topic-types-action">
-          <GoAContextMenu>
-            <GoAContextMenuIcon
-              testId="comment-topic-types-edit"
-              title="Edit"
-              type="create"
-              onClick={() => navigate(`edit/${commentTopicType.id}`)}
-            />
-            <GoAContextMenuIcon
-              testId={`comment-topic-types-delete`}
-              title="Delete"
-              type="trash"
-              onClick={() => onDelete(commentTopicType)}
-            />
-          </GoAContextMenu>
-        </td>
-      </tr>
-    </>
+      <td data-testid="comment-topic-types-security-classification" style={{ textTransform: 'capitalize' }}>
+        {commentTopicType.securityClassification}
+      </td>
+      <td data-testid="comment-topic-types-action">
+        <GoAContextMenu>
+          <GoAContextMenuIcon
+            testId="comment-topic-types-edit"
+            title="Edit"
+            type="create"
+            onClick={() => navigate(`edit/${commentTopicType.id}`)}
+          />
+          <GoAContextMenuIcon
+            testId={`comment-topic-types-delete`}
+            title="Delete"
+            type="trash"
+            onClick={() => onDelete(commentTopicType)}
+          />
+        </GoAContextMenu>
+      </td>
+    </tr>
   );
 };

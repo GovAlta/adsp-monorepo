@@ -27,7 +27,6 @@ jest.mock('node-cache', () => {
   };
 });
 
-// Mock dependencies
 jest.mock('./router', () => ({
   createFileRouter: jest.fn(() => jest.fn()),
 }));
@@ -44,8 +43,6 @@ const configurationServiceMock = {
   getConfiguration: jest.fn(),
 };
 
-// let queueServiceMock = null;
-
 const logger = {
   debug: jest.fn(),
   info: jest.fn(),
@@ -57,10 +54,6 @@ const scanServiceMock = new Mock<ScanService>();
 const storageProviderMock = new Mock<FileStorageProvider>();
 const mockScanJob = jest.fn();
 const mockDeleteJob = jest.fn();
-
-// queueServiceMock = {
-//   enqueue: jest.fn(),
-// };
 
 const eventServiceMock = {
   send: jest.fn(),
@@ -88,7 +81,6 @@ describe('applyFileMiddleware', () => {
   });
 
   it('should apply middleware and return the app', () => {
-    // Mock props
     const props = {
       serviceId: adspId`urn:ads:platform:file-service`,
       logger,
@@ -105,8 +97,8 @@ describe('applyFileMiddleware', () => {
 
     const result = applyFileMiddleware(mockApp, props);
 
-    expect(createFileRouter).toHaveBeenCalledWith(props);
-    expect(createFileJobs).toHaveBeenCalledWith(props);
+    expect(createFileRouter).toHaveBeenCalledWith(expect.objectContaining(props));
+    expect(createFileJobs).toHaveBeenCalledWith(expect.objectContaining(props));
     expect(result).toBe(mockApp);
   });
 });

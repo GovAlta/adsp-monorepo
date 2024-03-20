@@ -1,4 +1,4 @@
-import { ControlProps } from '@jsonforms/core';
+import { ControlProps, JsonSchema } from '@jsonforms/core';
 
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
@@ -43,15 +43,25 @@ export const getLabelText = (scope: string, label: string): string => {
 
   return labelToUpdate;
 };
-// This message is thrown when the isNotEmpty  is triggered by Ajv checkInput.ts configuration
-export const FIELD_REQUIRED = 'data should pass "isNotEmpty" keyword validation';
 
+const isEmptyBoolean = (schema: JsonSchema, data: unknown): boolean => {
+  return schema.type !== undefined && schema.type === 'boolean' && (data === null || data === undefined);
+};
+const isEmptyNumber = (schema: JsonSchema, data: unknown): boolean => {
+  return (
+    data === '' ||
+    data === undefined ||
+    data === null ||
+    ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))
+  );
+};
 /**
- * Gets the error to display when there are validation messages.
+ * Check if a required, defined input value is valid. Returns an appropriate
+ * error message if not.
  * @param props
  * @returns error message
  */
-export const getErrorsToDisplay = (props: ControlProps) => {
+export const checkFieldValidity = (props: ControlProps): string => {
   const { data, errors: ajvErrors, required, label, uischema, schema } = props;
   const labelToUpdate = getLabelText(uischema.scope, label);
 
@@ -59,25 +69,17 @@ export const getErrorsToDisplay = (props: ControlProps) => {
     if (data === undefined) return '';
 
     if (schema) {
-      if (schema.type !== undefined && schema.type === 'boolean' && (data === null || data === undefined)) {
+      if (isEmptyBoolean(schema, data)) {
         return `${labelToUpdate} is required`;
       }
 
-      if (
-        data === '' ||
-        data === undefined ||
-        ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))
-      ) {
+      if (isEmptyNumber(schema, data)) {
         return `${labelToUpdate} is required`;
       }
     }
-
-    if (data && data.toString().length > 0 && ajvErrors.length > 0) return ajvErrors;
-
-    return ajvErrors;
   }
 
-  return ajvErrors.length > 0 ? ajvErrors : '';
+  return ajvErrors;
 };
 
 /**

@@ -1,5 +1,5 @@
 import React, { createContext } from 'react';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosRequestConfig, AxiosStatic } from 'axios';
 
 interface enumerators {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,17 +12,38 @@ export interface AllData {
   [x: string]: any;
 }
 
+const getAxiosInterceptorConfig = (axios: AxiosStatic): [number, AxiosStatic] => {
+  const requestId = axios.interceptors.request.use((req) => {
+    if (req.data === undefined) {
+      throw new Error(`The URL: ${req.url} encountered a CORS error.`);
+    }
+    return req;
+  });
+
+  return [requestId, axios];
+};
+
 export function addDataByUrl(key: string, url: string, processDataFunction: (url: string) => string[], token?: string) {
   let header = {} as AxiosRequestConfig<unknown>;
-
+  const [requestId, axiosWithConfig] = getAxiosInterceptorConfig(axios);
   if (token) {
     header = { ...header, ...{ Authorization: `Bearer ${token}` } };
   }
 
-  axios.get(url, header).then((response) => {
-    const processedData = processDataFunction(response.data);
-    enumValues.set(key, () => processedData);
-  });
+  axiosWithConfig
+    .get(url, header)
+    .then((response) => {
+      const processedData = processDataFunction(response.data);
+      enumValues.set(key, () => processedData);
+    })
+    .catch((err: Error) => {
+      if (err.message.includes('CORS')) {
+        console.warn(err.message);
+      } else {
+        console.warn(`addDataByUrl: ${err.message}`);
+      }
+    });
+  axiosWithConfig.interceptors.request.eject(requestId);
 }
 
 export function addDataByOptions(key: string, url: string, location: string[], type: string, values: string[]) {
