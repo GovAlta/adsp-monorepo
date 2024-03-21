@@ -9,6 +9,7 @@ import {
   StatePropsOfLayout,
   isVisible,
   isEnabled,
+  JsonSchema,
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
@@ -24,6 +25,8 @@ import {
   ReviewItemTitle,
   ReviewListItem,
   ReviewListWrapper,
+  ListWithDetail,
+  ListWithDetailHeading,
 } from './styled-components';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
@@ -57,28 +60,70 @@ export const getFormFieldValue = (scope: string, data: object) => {
       }
       currentValue = currentValue[key];
     }
-    return typeof currentValue === 'object' ? '' : currentValue;
+    return Array.isArray(currentValue)
+      ? currentValue[currentValue.length - 1]
+      : typeof currentValue === 'object'
+      ? ''
+      : currentValue;
   } else {
     return '';
   }
 };
 
-export const renderFormFields = (elements: UISchemaElement[] | (Category | Categorization)[], data: object) =>
+export const renderFormFields = (
+  elements: UISchemaElement[] | (Category | Categorization)[],
+  data: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  ajv: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  requiredFields: any // eslint-disable-line @typescript-eslint/no-explicit-any
+) =>
   elements.map((element, index) => {
-    // const clonedElement = element;
     const clonedElement = JSON.parse(JSON.stringify(element));
+    if (!isVisible(clonedElement, data, '', ajv)) {
+      return null;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lastSegment: any = clonedElement.scope?.split('/').pop();
     if (clonedElement.type === 'Control' && clonedElement.scope) {
       const label = resolveLabelFromScope(clonedElement.scope);
       if (!label) return null;
-
       const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
       return (
         <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
-          <strong>{label}:</strong> {value}
+          <strong>
+            {label}
+            {requiredFields.indexOf(lastSegment) !== -1 ? '*' : null}:
+          </strong>{' '}
+          {value}
         </GridItem>
       );
-    } else if (clonedElement?.elements) {
-      return <React.Fragment key={index}>{renderFormFields(clonedElement.elements, data)}</React.Fragment>;
+    } else if (clonedElement.type !== 'ListWithDetail' && clonedElement?.elements) {
+      return (
+        <React.Fragment key={index}>
+          {renderFormFields(clonedElement.elements, data, ajv, requiredFields)}
+        </React.Fragment>
+      );
+    } else if (clonedElement.type === 'ListWithDetail' && data && data[lastSegment] && data[lastSegment].length > 0) {
+      const listData = data[lastSegment];
+      return (
+        <ListWithDetail>
+          <ListWithDetailHeading>
+            {lastSegment}
+            {listData.length > 1 && 's'}
+          </ListWithDetailHeading>
+          <Grid>
+            {listData.map(
+              (
+                childData: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                childIndex: any // eslint-disable-line @typescript-eslint/no-explicit-any
+              ) => (
+                <React.Fragment key={`${index}-${childIndex}`}>
+                  {renderFormFields(clonedElement.elements, childData, ajv, requiredFields)}
+                </React.Fragment>
+              )
+            )}
+          </Grid>
+        </ListWithDetail>
+      );
     }
     return null;
   });
@@ -98,13 +143,16 @@ export const FormStepper = ({
   t,
 }: CategorizationStepperLayoutRendererProps) => {
   const categorization = uischema as Categorization;
-  const [step, setStep] = useState(0);
+  const rawCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
+  const [step, setStep] = useState(1);
   const [isFormValid, setIsFormValid] = useState(false);
   const [showNextBtn, setShowNextBtn] = useState(true);
-  const categories = useMemo(
-    () => categorization.elements.filter((category) => isVisible(category, data, '', ajv)),
-    [categorization, data, ajv]
-  );
+  const [categories, setCategories] = useState(categorization.elements);
+
+  useEffect(() => {
+    const cates = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
+    setCategories(cates);
+  }, [categorization, data, ajv]);
   const disabledCategoryMap: boolean[] = categories.map((c) => !isEnabled(c, data, '', ajv));
   const handleSubmit = () => {
     console.log('submitted', data);
@@ -148,6 +196,27 @@ export const FormStepper = ({
     setPage(page);
   }
 
+  function setTab(page: number) {
+    const rawCategoryLabels = rawCategories.elements.map((category) => category.label);
+    if (page > 1 && page <= rawCategoryLabels.length && rawCategoryLabels.length !== CategoryLabels.length) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const selectedTabLabel: any = rawCategoryLabels[page - 1];
+      const selectedTab = CategoryLabels.indexOf(selectedTabLabel);
+      const newStep = selectedTab !== -1 ? selectedTab : page;
+      page = newStep;
+    }
+    if (page > rawCategoryLabels.length && rawCategoryLabels.length !== CategoryLabels.length) {
+      page = page - 1;
+    }
+    setStep(page);
+    if (page < 1 || page > categories.length + 1) return;
+    if (categories.length + 1 === page) {
+      setShowNextBtn(false);
+    } else {
+      setShowNextBtn(true);
+    }
+  }
+
   function setPage(page: number) {
     setStep(page);
     if (page < 1 || page > categories.length + 1) return;
@@ -157,6 +226,31 @@ export const FormStepper = ({
       setShowNextBtn(true);
     }
   }
+  function getAllRequiredFields() {
+    const requiredFields: string[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function findRequired(fields: any) {
+      if (fields.required && Array.isArray(fields.required)) {
+        fields.required.forEach((field: string) => {
+          requiredFields.push(field);
+        });
+      }
+
+      if (fields && fields.properties) {
+        Object.keys(fields.properties).forEach((key) => {
+          findRequired(fields.properties[key]);
+        });
+      } else if (fields.type === 'array' && fields.items && typeof fields.items === 'object') {
+        findRequired(fields.items);
+      }
+    }
+
+    findRequired(schema);
+
+    return requiredFields;
+  }
+
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     setStep(0);
@@ -197,14 +291,14 @@ export const FormStepper = ({
           testId="form-stepper-test"
           step={step}
           onChange={(step) => {
-            setPage(step);
+            setTab(step);
           }}
         >
           {categories?.map((category, index) => {
             return (
               <GoAFormStep
                 key={`${CategoryLabels[index]}-tab`}
-                text={`${CategoryLabels[index]}${disabledCategoryMap[index] ? ' (disabled)' : ''}`}
+                text={`${CategoryLabels[index]}`}
                 status={'incomplete'}
               />
             );
@@ -223,15 +317,16 @@ export const FormStepper = ({
             <h3 style={{ flex: 1 }}>Summary</h3>
 
             <ReviewItem>
-              {categories.map((category, index) => {
+              {categories?.map((category, index) => {
                 const categoryLabel = category.label || category.i18n || 'Unknown Category';
+                const requiredFields = getAllRequiredFields();
                 return (
                   <ReviewItemSection key={index}>
                     <ReviewItemHeader>
                       <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
                       <Anchor onClick={() => handleEdit(index)}>Edit</Anchor>
                     </ReviewItemHeader>
-                    <Grid>{renderFormFields(category.elements, data)}</Grid>
+                    <Grid>{renderFormFields(category.elements, data, ajv, requiredFields)}</Grid>
                   </ReviewItemSection>
                 );
               })}
