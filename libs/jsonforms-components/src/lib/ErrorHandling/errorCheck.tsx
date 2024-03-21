@@ -36,7 +36,11 @@ export const isLayoutType = (schema: UISchemaElement): boolean => {
 
 export const isKnownType = (schema: UISchemaElement): boolean => {
   return (
-    hasType(schema, 'Control') || isLayoutType(schema) || hasType(schema, 'HelpContent') || isListWithDetail(schema)
+    hasType(schema, 'Control') ||
+    isLayoutType(schema) ||
+    hasType(schema, 'HelpContent') ||
+    isListWithDetail(schema) ||
+    hasType(schema, 'Callout')
   );
 };
 
@@ -76,11 +80,4 @@ export const isEmptyElements = (schema: object): boolean => {
 
 export const hasVariant = (schema: UISchemaElement): boolean => {
   return 'options' in schema && schema.options !== undefined && schema.options !== null && 'variant' in schema.options;
-};
-
-export const isValidJsonObject = (schema: JsonSchema): boolean => {
-  return (
-    (typeof schema === 'object' && Object.keys(schema).length === 0) ||
-    ('properties' in schema && (('type' in schema && schema.type === 'object') || !('type' in schema)))
-  );
 };

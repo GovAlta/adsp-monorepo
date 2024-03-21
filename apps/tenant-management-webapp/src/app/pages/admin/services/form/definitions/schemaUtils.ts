@@ -1,4 +1,13 @@
+import { JsonSchema } from '@jsonforms/core';
 import { ajv } from '@lib/validation/checkInput';
+
+export const propertiesErr = 'Data schema must have "properties"';
+const hasProperties = (schema: JsonSchema): boolean => {
+  return (
+    (typeof schema === 'object' && Object.keys(schema).length === 0) ||
+    ('properties' in schema && (('type' in schema && schema.type === 'object') || !('type' in schema)))
+  );
+};
 
 export interface ParserResult<T> {
   get: () => T;
@@ -32,10 +41,11 @@ export const parseDataSchema = <T>(schema: string): ParserResult<T> => {
   let err = null;
   try {
     parsedSchema = JSON.parse(schema);
-    // JSON.parse just checks syntax.  We also need to check semantics,
-    // so use AJV as well.
     if (Object.keys(parsedSchema).length > 0) {
       ajv.compile(parsedSchema as object);
+      if (!hasProperties(parsedSchema)) {
+        err = propertiesErr;
+      }
     }
   } catch (e) {
     err = e.message;
