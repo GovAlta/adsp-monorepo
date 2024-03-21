@@ -28,15 +28,18 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   function uploadFile(file: File) {
     if (uploadTrigger) {
-      handleChange(propertyId, ['Loading', Array.isArray(data) ? data[1] : data, file?.name]);
+      const value = ['Loading', Array.isArray(data) ? data[1] : data, file?.name];
+      handleChange(propertyId, value);
       uploadTrigger(file, propertyId);
     }
   }
+
   function downloadFile(file: File) {
     if (downloadTrigger) {
       downloadTrigger(file, propertyId);
     }
   }
+
   function deleteFile(file: File) {
     if (deleteTrigger) {
       deleteTrigger(file, propertyId);

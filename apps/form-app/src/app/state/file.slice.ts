@@ -6,7 +6,7 @@ import { getAccessToken } from './user.slice';
 
 export const FILE_FEATURE_KEY = 'file';
 
-interface FileMetadata {
+export interface FileMetadata {
   urn: string;
   filename: string;
   mimeType?: string;
@@ -67,7 +67,7 @@ export const downloadFile = createAsyncThunk(
 
       const token = await getAccessToken();
       const { data, headers } = await axios.get(
-        new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}/download`, fileServiceUrl).href,
+        new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}/download?unsafe=true`, fileServiceUrl).href,
         {
           responseType: 'blob',
           headers: { Authorization: `Bearer ${token}` },
@@ -82,7 +82,7 @@ export const downloadFile = createAsyncThunk(
         reader.onerror = () => reject(reader.error);
       });
 
-      return { file, metadata: { ...metadata, mimeType } };
+      return { file, data, metadata: { ...metadata, mimeType } };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
