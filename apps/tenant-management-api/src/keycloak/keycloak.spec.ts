@@ -4,7 +4,7 @@ import KeycloakAdminClient from '@keycloak/keycloak-admin-client';
 import axios from 'axios';
 import { Logger } from 'winston';
 import { Tenant, TenantServiceRoles } from '../tenant';
-import { KeycloakRealmServiceImpl } from './keycloak';
+import { KeycloakRealmServiceImpl, DEFAULT_IDP_NAME } from './keycloak';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -325,6 +325,19 @@ describe('KeycloakRealmService', () => {
       axiosMock.get.mockResolvedValueOnce({ data: null });
       await service.deleteUserIdp('mock-user-id', 'core');
       await service.deleteUserIdp('mock-user-id', 'core', 'core');
+    });
+
+    it('can check user Idp in core', async () => {
+      axiosMock.get.mockResolvedValueOnce({
+        data: [
+          {
+            identityProvider: DEFAULT_IDP_NAME,
+            userId: 'mock-user-id',
+            userName: 'mock-user-name',
+          },
+        ],
+      });
+      expect(await service.checkUserDefaultIdpInCore('mock-user-id')).toBe(true);
     });
   });
 });
