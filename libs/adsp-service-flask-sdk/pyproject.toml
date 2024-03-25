@@ -23,7 +23,7 @@ readme = "README.md"
   include = "adsp_service_flask_sdk"
 
   [tool.poetry.dependencies]
-  python = ">=3.9,<3.11"
+  python = ">=3.9,<3.12"
   flask = "^2.2.3"
 
     [tool.poetry.dependencies.adsp-py-common]
