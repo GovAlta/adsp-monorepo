@@ -42,7 +42,6 @@ export const getFormFieldValue = (scope: string, data: object) => {
 export const renderFormFields = (
   elements: UISchemaElement[] | (Category | Categorization)[],
   data: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  ajv: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   requiredFields: string[]
 ) =>
   elements.map((element, index) => {
@@ -63,9 +62,7 @@ export const renderFormFields = (
       );
     } else if (clonedElement.type !== 'ListWithDetail' && clonedElement?.elements) {
       return (
-        <React.Fragment key={index}>
-          {renderFormFields(clonedElement.elements, data, ajv, requiredFields)}
-        </React.Fragment>
+        <React.Fragment key={index}>{renderFormFields(clonedElement.elements, data, requiredFields)}</React.Fragment>
       );
     } else if (clonedElement.type === 'ListWithDetail' && data && data[lastSegment] && data[lastSegment].length > 0) {
       const listData = data[lastSegment];
@@ -82,7 +79,7 @@ export const renderFormFields = (
                 childIndex: any // eslint-disable-line @typescript-eslint/no-explicit-any
               ) => (
                 <React.Fragment key={`${index}-${childIndex}`}>
-                  {renderFormFields(clonedElement.elements, childData, ajv, requiredFields)}
+                  {renderFormFields(clonedElement.elements, childData, requiredFields)}
                 </React.Fragment>
               )
             )}

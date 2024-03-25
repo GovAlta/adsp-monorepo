@@ -212,7 +212,7 @@ export const FormStepper = ({
                       <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
                       <Anchor onClick={() => handleEdit(index)}>Edit</Anchor>
                     </ReviewItemHeader>
-                    <Grid>{renderFormFields(category.elements, data, ajv, requiredFields)}</Grid>
+                    <Grid>{renderFormFields(category.elements, data, requiredFields)}</Grid>
                   </ReviewItemSection>
                 );
               })}
