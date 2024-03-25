@@ -1,9 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { getFormFieldValue, renderFormFields, resolveLabelFromScope } from './GenerateFormFields';
-import Ajv from 'ajv';
-
-const ajv = new Ajv();
 const MockElement = [
   {
     type: 'Control',
@@ -139,18 +136,14 @@ describe('resolveLabelFromScope function', () => {
 
 describe('Generate Form Fields', () => {
   it('should render correctly', () => {
-    const LoadComponent = () => (
-      <div>{renderFormFields(MockUISchema[0].elements, MockData, ajv, MockRequiredFields)}</div>
-    );
+    const LoadComponent = () => <div>{renderFormFields(MockUISchema[0].elements, MockData, MockRequiredFields)}</div>;
     render(<LoadComponent />);
     expect(screen.getByText(/First name/)).toBeInTheDocument();
     expect(screen.getByText(/John/)).toBeInTheDocument();
     expect(screen.getByText(/\*:/)).toBeInTheDocument();
   });
   it('should not have asterisk', () => {
-    const LoadComponent = () => (
-      <div>{renderFormFields(MockUISchema[1].elements, MockData, ajv, MockRequiredFields)}</div>
-    );
+    const LoadComponent = () => <div>{renderFormFields(MockUISchema[1].elements, MockData, MockRequiredFields)}</div>;
     render(<LoadComponent />);
     expect(screen.getByText(/Street/)).toBeInTheDocument();
     expect(screen.getByText(/City/)).toBeInTheDocument();
