@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/jest-globals';
 import '@testing-library/jest-dom';
-import FormStepper, { getFormFieldValue, renderFormFields, resolveLabelFromScope } from './FormStepperControl';
+import { getFormFieldValue, renderFormFields, resolveLabelFromScope } from './util/GenerateFormFields';
+import FormStepper from './FormStepperControl';
 import {
   Categorization,
   UISchemaElement,

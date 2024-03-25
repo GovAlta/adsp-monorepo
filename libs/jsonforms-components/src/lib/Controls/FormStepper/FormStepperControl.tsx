@@ -10,6 +10,8 @@ import {
   isVisible,
   isEnabled,
   JsonSchema,
+  JsonSchema4,
+  JsonSchema7,
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
@@ -28,105 +30,13 @@ import {
   ListWithDetail,
   ListWithDetailHeading,
 } from './styled-components';
+import { getAllRequiredFields } from './util/getRequiredFields';
+import { renderFormFields } from './util/GenerateFormFields';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
   data: any;
 }
-
-export const resolveLabelFromScope = (scope: string) => {
-  // eslint-disable-next-line no-useless-escape
-  const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
-  const isValid = validPatternRegex.test(scope);
-  if (!isValid) return null;
-
-  const lastSegment = scope.split('/').pop();
-
-  if (lastSegment) {
-    const lowercased = lastSegment.replace(/([A-Z])/g, ' $1').toLowerCase();
-    return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
-  }
-  return '';
-};
-
-export const getFormFieldValue = (scope: string, data: object) => {
-  if (data !== undefined) {
-    const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let currentValue: any = data;
-    for (const key of pathArray) {
-      if (currentValue[key] === undefined) {
-        return '';
-      }
-      currentValue = currentValue[key];
-    }
-    return Array.isArray(currentValue)
-      ? currentValue[currentValue.length - 1]
-      : typeof currentValue === 'object'
-      ? ''
-      : currentValue;
-  } else {
-    return '';
-  }
-};
-
-export const renderFormFields = (
-  elements: UISchemaElement[] | (Category | Categorization)[],
-  data: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  ajv: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  requiredFields: any // eslint-disable-line @typescript-eslint/no-explicit-any
-) =>
-  elements.map((element, index) => {
-    const clonedElement = JSON.parse(JSON.stringify(element));
-    if (!isVisible(clonedElement, data, '', ajv)) {
-      return null;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const lastSegment: any = clonedElement.scope?.split('/').pop();
-    if (clonedElement.type === 'Control' && clonedElement.scope) {
-      const label = resolveLabelFromScope(clonedElement.scope);
-      if (!label) return null;
-      const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
-      return (
-        <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
-          <strong>
-            {label}
-            {requiredFields.indexOf(lastSegment) !== -1 ? '*' : null}:
-          </strong>{' '}
-          {value}
-        </GridItem>
-      );
-    } else if (clonedElement.type !== 'ListWithDetail' && clonedElement?.elements) {
-      return (
-        <React.Fragment key={index}>
-          {renderFormFields(clonedElement.elements, data, ajv, requiredFields)}
-        </React.Fragment>
-      );
-    } else if (clonedElement.type === 'ListWithDetail' && data && data[lastSegment] && data[lastSegment].length > 0) {
-      const listData = data[lastSegment];
-      return (
-        <ListWithDetail>
-          <ListWithDetailHeading>
-            {lastSegment}
-            {listData.length > 1 && 's'}
-          </ListWithDetailHeading>
-          <Grid>
-            {listData.map(
-              (
-                childData: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                childIndex: any // eslint-disable-line @typescript-eslint/no-explicit-any
-              ) => (
-                <React.Fragment key={`${index}-${childIndex}`}>
-                  {renderFormFields(clonedElement.elements, childData, ajv, requiredFields)}
-                </React.Fragment>
-              )
-            )}
-          </Grid>
-        </ListWithDetail>
-      );
-    }
-    return null;
-  });
 
 export const FormStepper = ({
   uischema,
@@ -226,30 +136,6 @@ export const FormStepper = ({
       setShowNextBtn(true);
     }
   }
-  function getAllRequiredFields() {
-    const requiredFields: string[] = [];
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function findRequired(fields: any) {
-      if (fields.required && Array.isArray(fields.required)) {
-        fields.required.forEach((field: string) => {
-          requiredFields.push(field);
-        });
-      }
-
-      if (fields && fields.properties) {
-        Object.keys(fields.properties).forEach((key) => {
-          findRequired(fields.properties[key]);
-        });
-      } else if (fields.type === 'array' && fields.items && typeof fields.items === 'object') {
-        findRequired(fields.items);
-      }
-    }
-
-    findRequired(schema);
-
-    return requiredFields;
-  }
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -319,7 +205,7 @@ export const FormStepper = ({
             <ReviewItem>
               {categories?.map((category, index) => {
                 const categoryLabel = category.label || category.i18n || 'Unknown Category';
-                const requiredFields = getAllRequiredFields();
+                const requiredFields = getAllRequiredFields(schema);
                 return (
                   <ReviewItemSection key={index}>
                     <ReviewItemHeader>
