@@ -47,11 +47,7 @@ export const renderFormFields = (
 ) =>
   elements.map((element, index) => {
     const clonedElement = JSON.parse(JSON.stringify(element));
-    if (!isVisible(clonedElement, data, '', ajv)) {
-      return null;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const lastSegment: any = clonedElement.scope?.split('/').pop();
+    const lastSegment: string = clonedElement.scope?.split('/').pop();
     if (clonedElement.type === 'Control' && clonedElement.scope) {
       const label = resolveLabelFromScope(clonedElement.scope);
       if (!label) return null;
