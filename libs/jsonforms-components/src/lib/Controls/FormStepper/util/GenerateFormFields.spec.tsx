@@ -1,24 +1,49 @@
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom/jest-globals';
 import '@testing-library/jest-dom';
-import FormStepper, { getFormFieldValue, renderFormFields, resolveLabelFromScope } from './FormStepperControl';
-import {
-  Categorization,
-  UISchemaElement,
-  deriveLabelForUISchemaElement,
-  Category,
-  StatePropsOfLayout,
-  isVisible,
-  isEnabled,
-} from '@jsonforms/core';
-import Ajv from 'ajv';
-import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
-import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
-import { mock } from 'node:test';
-export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
-  // eslint-disable-next-line
-  data: any;
-}
+import { getFormFieldValue, renderFormFields, resolveLabelFromScope } from './GenerateFormFields';
+const MockElement = [
+  {
+    type: 'Control',
+    scope: '#/properties/firstName',
+  },
+];
+const MockData = {
+  firstName: 'John',
+  testCategoryAddress: true,
+};
+
+const MockUISchema = [
+  {
+    type: 'Category',
+    label: 'Personal Information',
+    elements: [
+      {
+        type: 'Control',
+        scope: '#/properties/testCategoryAddress',
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/firstName',
+      },
+    ],
+  },
+  {
+    type: 'Category',
+    i18n: 'address',
+    label: 'Address Information',
+    elements: [
+      {
+        type: 'Control',
+        scope: '#/properties/address/properties/street',
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/address/properties/city',
+      },
+    ],
+  },
+];
+const MockRequiredFields = ['firstName'];
 
 //mock data
 const data = {
@@ -106,5 +131,21 @@ describe('resolveLabelFromScope function', () => {
   it('returns an empty string if the scope does not end with a valid property name', () => {
     const invalidScope = '#/properties/';
     expect(resolveLabelFromScope(invalidScope)).toBeNull();
+  });
+});
+
+describe('Generate Form Fields', () => {
+  it('should render correctly', () => {
+    const LoadComponent = () => <div>{renderFormFields(MockUISchema[0].elements, MockData, MockRequiredFields)}</div>;
+    render(<LoadComponent />);
+    expect(screen.getByText(/First name/)).toBeInTheDocument();
+    expect(screen.getByText(/John/)).toBeInTheDocument();
+    expect(screen.getByText(/\*:/)).toBeInTheDocument();
+  });
+  it('should not have asterisk', () => {
+    const LoadComponent = () => <div>{renderFormFields(MockUISchema[1].elements, MockData, MockRequiredFields)}</div>;
+    render(<LoadComponent />);
+    expect(screen.getByText(/Street/)).toBeInTheDocument();
+    expect(screen.getByText(/City/)).toBeInTheDocument();
   });
 });
