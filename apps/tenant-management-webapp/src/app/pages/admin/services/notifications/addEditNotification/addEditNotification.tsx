@@ -210,14 +210,15 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           <GoATextArea
             name="description"
             testId="form-description"
-            value={type.description}
+            value={type?.description}
             aria-label="description"
             width="100%"
             onKeyPress={(name, value) => {
-              const description = value;
-              validators.remove('description');
-              validators['description'].check(description);
-              setType({ ...type, description: description });
+              if (value) {
+                validators.remove('description');
+                validators['description'].check(value);
+                setType({ ...type, description: value });
+              }
             }}
             // eslint-disable-next-line
             onChange={() => {}}
@@ -349,11 +350,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           !isNotifyAddress &&
           !type.publicSubscribe &&
           elements.map((e, key) => {
-            return (
-              <div>
-                <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />
-              </div>
-            );
+            return <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
           })}
       </GoAModal>
     </EditStyles>

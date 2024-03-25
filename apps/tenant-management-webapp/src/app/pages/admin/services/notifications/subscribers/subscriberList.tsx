@@ -59,9 +59,9 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
     <div>
       {indicator.show === false && subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
       {(subscribers === null || subscribers.length > 0) && (
-        <DataTable>
-          <DataTableStyle>
-            <thead style={{ width: '100%' }}>
+        <DataTableStyle>
+          <DataTable>
+            <thead>
               <tr>
                 <th className="spread">Address as</th>
                 <th className="spread">Email</th>
@@ -82,8 +82,8 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
                   />
                 ))}
             </tbody>
-          </DataTableStyle>
-        </DataTable>
+          </DataTable>
+        </DataTableStyle>
       )}
 
       <SubscriberModalForm

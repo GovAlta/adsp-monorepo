@@ -24,9 +24,9 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
   return (
     <>
       <tr>
-        <td data-testid="topic-list-name">{topic.name}</td>
-        <td data-testid="topic-list-resource-id">{topic.resourceId}</td>
-        <td data-testid="topic-list-action">
+        <td>{topic.name}</td>
+        <td>{topic.resourceId}</td>
+        <td>
           <IconDiv>
             <GoAContextMenuIcon
               title="Toggle details"
@@ -50,7 +50,6 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
             style={{
               padding: '0px',
             }}
-            data-testId="show-more-details"
           >
             <MoreDetails>
               <p>Topic description</p>
