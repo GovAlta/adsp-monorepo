@@ -2,7 +2,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { CalendarItem } from '@store/calendar/models';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
-import { TableDiv, OverFlowWrapTableCell } from '../styled-components';
+import { TableDiv } from '../styled-components';
 
 import { FetchEventsByCalendar } from '@store/calendar/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
@@ -22,17 +22,11 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
 }: CalendarItemProps) => {
   return (
     <tr key={calendar.name}>
-      <td headers="calendar-name" data-testid="calendar-name">
-        {calendar.displayName}
-      </td>
-      <td headers="calendar-id" data-testid="calendar-id">
-        {calendar.name}
-      </td>
+      <td headers="calendar-name">{calendar.displayName}</td>
+      <td headers="calendar-id">{calendar.name}</td>
 
-      <td headers="calendar-description" data-testid="calendar-description">
-        <OverFlowWrapTableCell>{calendar.description}</OverFlowWrapTableCell>
-      </td>
-      <td headers="calendar-actions" data-testid="calendar-actions">
+      <td headers="calendar-description">{calendar.description}</td>
+      <td headers="calendar-actions">
         {onDelete && (
           <div style={{ display: 'flex' }}>
             <GoAContextMenuIcon
@@ -101,7 +95,12 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
 
         <tbody key="calendar-detail">
           {Object.keys(calendars).map((calendarName) => (
-            <CalendarItemComponent calendar={calendars[calendarName]} onEdit={onEdit} onDelete={onDelete} />
+            <CalendarItemComponent
+              key={calendarName}
+              calendar={calendars[calendarName]}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
           ))}
         </tbody>
       </DataTable>

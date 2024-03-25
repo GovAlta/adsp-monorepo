@@ -181,7 +181,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
             testId="status-radio-group"
           >
             {PublicServiceStatusTypes.map((statusType) => (
-              <GoARadioItem name="status" value={statusType}></GoARadioItem>
+              <GoARadioItem key={statusType} name="status" value={statusType}></GoARadioItem>
             ))}
           </GoARadioGroup>
         </GoAFormItem>

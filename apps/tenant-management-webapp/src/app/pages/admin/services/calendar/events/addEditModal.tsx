@@ -25,6 +25,7 @@ interface EventAddEditModalProps {
 }
 export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX.Element => {
   const initCalendarEvent = useSelector((state) => selectAddModalEvent(state, calendarName));
+
   const [calendarEvent, setCalendarEvent] = useState<CalendarEvent>(initCalendarEvent);
   const calendarEvents = useSelector((state) => selectSelectedCalendarEventNames(state, calendarName));
   const [startTime, setStartTime] = useState<string>('');
@@ -33,16 +34,15 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   const [endDate, setEndDate] = useState<string>('');
   //eslint-disable-next-line
   const [isEndBeforeStart, setIsEndBeforeStart] = useState(false);
+  const isEdit = !!initCalendarEvent?.id;
 
-  const isEdit = !!calendarEvent?.id;
   if (isEdit) {
-    const indexToRemove: number = calendarEvents.indexOf(calendarEvent.name);
+    const indexToRemove: number = calendarEvents?.indexOf(calendarEvent?.name);
 
     if (indexToRemove !== -1) {
-      calendarEvents.splice(indexToRemove, 1);
+      calendarEvents?.splice(indexToRemove, 1);
     }
   }
-
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -55,19 +55,6 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     .add('start', 'start', isNotEmptyCheck('start'))
     .add('end', 'end', isNotEmptyCheck('end'))
     .build();
-
-  useEffect(() => {
-    if (calendarEvent === null || calendarEvent?.name !== initCalendarEvent?.name) {
-      setCalendarEvent(initCalendarEvent);
-    }
-    if (initCalendarEvent?.start) {
-      setStartTime(getTimeString(initCalendarEvent?.start));
-      setEndTime(getTimeString(initCalendarEvent?.end));
-      setStartDate(initCalendarEvent?.start);
-      setEndDate(initCalendarEvent?.end);
-    }
-  }, [initCalendarEvent, calendarEvent]);
-
   const getTimeString = (calendarDateString: string) => {
     const timeString = calendarDateString?.split('T')[1];
     return timeString ? timeString.substring(0, 8) : '';
@@ -83,6 +70,17 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   };
 
   const modalTitle = `${isEdit ? 'Edit' : 'Add'} calendar event`;
+  useEffect(() => {
+    setCalendarEvent(initCalendarEvent);
+
+    if (initCalendarEvent?.start) {
+      setStartTime(getTimeString(initCalendarEvent?.start));
+      setEndTime(getTimeString(initCalendarEvent?.end));
+      setStartDate(initCalendarEvent?.start);
+      setEndDate(initCalendarEvent?.end);
+    }
+  }, [initCalendarEvent]);
+
   const dispatch = useDispatch();
   return (
     <GoAModal
@@ -94,6 +92,9 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             type="secondary"
             testId="calendar-modal-cancel"
             onClick={() => {
+              if (!isEdit) {
+                setCalendarEvent(initCalendarEvent);
+              }
               dispatch(ResetModalState());
               validators.clear();
             }}
@@ -115,7 +116,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
                 end: calendarEvent.end,
               };
               validations['duplicated'] = calendarEvent.name;
-              if (!validators.checkAll(validations)) {
+              if (!validators?.checkAll(validations)) {
                 return;
               }
 
@@ -127,7 +128,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
               }
 
               if (isEdit) {
-                dispatch(UpdateEventsByCalendar(calendarName, calendarEvent.id.toString(), calendarEvent));
+                dispatch(UpdateEventsByCalendar(calendarName, calendarEvent?.id.toString(), calendarEvent));
               } else {
                 dispatch(CreateEventsByCalendar(calendarName, calendarEvent));
               }
@@ -144,17 +145,14 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       <GoAFormItem error={errors?.['name']} label="Name">
         <GoAInput
           type="text"
-          name="name"
+          name="eventName"
           value={calendarEvent?.name}
           testId={`calendar-event-modal-name-input`}
-          aria-label="name"
+          aria-label="eventName"
           width="100%"
-          onChange={(name, value) => {
-            const validations = {
-              name: value,
-            };
+          onChange={(_, value) => {
             validators.remove('name');
-            validators.checkAll(validations);
+            validators['name'].check(value);
             setCalendarEvent({ ...calendarEvent, name: value });
           }}
         />

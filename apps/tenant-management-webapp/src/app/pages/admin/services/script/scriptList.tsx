@@ -85,9 +85,9 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
           </tr>
         </thead>
 
-        <tbody key="script-detail">
+        <tbody>
           {Object.keys(scripts).map((scriptName) => (
-            <ScriptItemComponent script={scripts[scriptName]} onDelete={onDelete} onEdit={onEdit} />
+            <ScriptItemComponent key={scriptName} script={scripts[scriptName]} onDelete={onDelete} onEdit={onEdit} />
           ))}
         </tbody>
       </DataTable>
