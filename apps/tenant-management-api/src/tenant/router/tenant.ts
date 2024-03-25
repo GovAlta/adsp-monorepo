@@ -61,6 +61,11 @@ class DeleteUserIdpDto {
   idpName;
 }
 
+class checkDefaultIdpDto {
+  @IsDefined()
+  userId;
+}
+
 interface TenantRouterProps {
   eventService: EventService;
   tenantRepository: TenantRepository;
@@ -208,6 +213,18 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
     }
   }
 
+  async function checkDefaultInCore(req, res, next) {
+    try {
+      const { userId } = req.payload;
+      const hasDefaultIdpInCore = await realmService.checkUserDefaultIdpInCore(userId);
+      res.json({
+        hasDefaultIdpInCore,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // Tenant admin only APIs. Used by the admin web app.
   tenantRouter.post(
     '/',
@@ -228,7 +245,21 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
     [validationMiddleware(FindUserIdByEmailDto)],
     findUserIdByEmailInCore
   );
-  tenantRouter.delete('/user/idp', rateLimitHandler, [validationMiddleware(DeleteUserIdpDto)], deleteUserIdp);
+  tenantRouter.get(
+    '/user/default-idp',
+    rateLimitHandler,
+
+    requireTenantAdmin,
+    [validationMiddleware(checkDefaultIdpDto)],
+    checkDefaultInCore
+  );
+  tenantRouter.delete(
+    '/user/idp',
+    rateLimitHandler,
+    requireTenantAdmin,
+    [validationMiddleware(DeleteUserIdpDto)],
+    deleteUserIdp
+  );
 
   return tenantRouter;
 };
