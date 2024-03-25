@@ -1,6 +1,13 @@
 import React, { useMemo } from 'react';
 import { useState, useEffect } from 'react';
-import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
+import {
+  GoAFormStepper,
+  GoAFormStep,
+  GoAPages,
+  GoAButton,
+  GoAModal,
+  GoAButtonGroup,
+} from '@abgov/react-components-new';
 import {
   Categorization,
   UISchemaElement,
@@ -57,6 +64,7 @@ export const FormStepper = ({
   const [step, setStep] = useState(1);
   const [isFormValid, setIsFormValid] = useState(false);
   const [showNextBtn, setShowNextBtn] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [categories, setCategories] = useState(categorization.elements);
 
   useEffect(() => {
@@ -65,6 +73,12 @@ export const FormStepper = ({
   }, [categorization, data, ajv]);
   const disabledCategoryMap: boolean[] = categories.map((c) => !isEnabled(c, data, '', ajv));
   const handleSubmit = () => {
+    setIsOpen(true);
+    console.log('submitted', data);
+  };
+
+  const onSubmit = () => {
+    setIsOpen(false);
     console.log('submitted', data);
   };
 
@@ -250,6 +264,21 @@ export const FormStepper = ({
             )}
           </div>
         )}
+        <GoAModal
+          testId="submit-confirmation"
+          open={isOpen}
+          heading={'Form Submitted'}
+          width="640px"
+          actions={
+            <GoAButtonGroup alignment="end">
+              <GoAButton type="secondary" testId="submit-form" onClick={onSubmit}>
+                Ok
+              </GoAButton>
+            </GoAButtonGroup>
+          }
+        >
+          <b>Submit is a test for preview purposes</b>(i.e. no actual form is being submitted)
+        </GoAModal>
       </div>
     </Hidden>
   );
