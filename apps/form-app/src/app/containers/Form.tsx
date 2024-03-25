@@ -10,8 +10,10 @@ import {
   canSubmitSelector,
   dataSelector,
   definitionSelector,
+  fileBusySelector,
   filesSelector,
   formSelector,
+  loadFileMetadata,
   loadForm,
   selectTopic,
   selectedTopicSelector,
@@ -49,6 +51,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const data = useSelector(dataSelector);
   const files = useSelector(filesSelector);
   const busy = useSelector(busySelector);
+  const fileBusy = useSelector(fileBusySelector);
   const topic = useSelector(selectedTopicSelector);
   const canSubmit = useSelector(canSubmitSelector);
   const showSubmit = useSelector(showSubmitSelector);
@@ -57,6 +60,16 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
     dispatch(loadForm(formId));
   }, [dispatch, formId]);
 
+  useEffect(() => {
+    const loadFileMetaDataForForm = async () => {
+      const values = Object.values(files);
+      for (const val of values) {
+        dispatch(loadFileMetadata(val));
+      }
+    };
+    loadFileMetaDataForForm();
+  }, [dispatch, files]);
+
   const [showComments, setShowComments] = useState(false);
 
   return (
@@ -64,7 +77,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
       <LoadingIndicator isLoading={busy.loading} />
       <div className={className} data-show={showComments}>
         <Container vs={3} hs={1} key={formId}>
-          {definition && form && (
+          {definition && form && !fileBusy.loading && (
             <>
               {form.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
               {form.status === 'draft' && (

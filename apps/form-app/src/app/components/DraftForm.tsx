@@ -1,23 +1,21 @@
 import { ContextProvider, GoARenderers, ajv } from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
-import { JsonForms } from '@jsonforms/react';
-import { FunctionComponent, useState } from 'react';
+import { JsonForms, useJsonForms } from '@jsonforms/react';
+import { FunctionComponent, useEffect, useState } from 'react';
 import {
   AppDispatch,
-  FileMetadata,
   Form,
   FormDefinition,
   ValidationError,
   deleteFile,
   downloadFile,
   filesSelector,
-  loadFileMetadata,
+  propertyIdsWithFileMetaData,
   updateForm,
   uploadFile,
 } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
-import { DeleteModal } from './DeleteModal';
 
 interface DraftFormProps {
   definition: FormDefinition;
@@ -40,15 +38,18 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   onChange,
   onSubmit,
 }) => {
-  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
-  const [selectedFile, setSelectFile] = useState<FileMetadata>(null);
-
   const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
-
   const dispatch = useDispatch<AppDispatch>();
   const files = useSelector(filesSelector);
+  const formPropertyIdsWithMethData = useSelector(propertyIdsWithFileMetaData);
 
-  const uploadFormFiles = async (file: File, propertyId: string) => {
+  useEffect(() => {}, [dispatch, files]);
+
+  const getKeyByValue = (object, value) => {
+    return Object.keys(object).find((key) => object[key] === value);
+  };
+
+  const uploadFormFile = async (file: File, propertyId: string) => {
     const fileMetaData = (
       await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file: file })).unwrap()
     ).metadata;
@@ -58,7 +59,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   const downloadFormFile = async (file) => {
-    const fileData = await dispatch(downloadFile(file)).unwrap();
+    const fileData = await dispatch(downloadFile(file.urn)).unwrap();
     const element = document.createElement('a');
     element.href = URL.createObjectURL(new Blob([fileData.data]));
     element.download = fileData.metadata.filename;
@@ -67,9 +68,15 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   const deleteFormFile = async (file) => {
-    const loadedFile = await dispatch(loadFileMetadata(file)).unwrap();
-    setSelectFile(loadedFile);
-    setShowFileDeleteConfirmation(true);
+    await dispatch(deleteFile(file.urn));
+
+    const clonedFiles = { ...files };
+    const deleteKey = getKeyByValue(clonedFiles, file.urn);
+
+    delete clonedFiles[deleteKey];
+
+    //Explicitly trigger the updateForm as the Modal controls whether the the update form should occur.
+    dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles, errors: [] }));
   };
 
   return (
@@ -81,10 +88,11 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         </div>
         <ContextProvider
           fileManagement={{
-            fileList: files,
-            uploadFile: uploadFormFiles,
+            fileList: formPropertyIdsWithMethData,
+            uploadFile: uploadFormFile,
             downloadFile: downloadFormFile,
             deleteFile: deleteFormFile,
+            deleteFileConfirmation: true,
           }}
         >
           <JsonForms
@@ -107,19 +115,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         </GoAButtonGroup>
       </GridItem>
       <GridItem md={1} />
-      <DeleteModal
-        isOpen={showFileDeleteConfirmation}
-        title="Delete file"
-        content={`Delete file ${selectedFile?.filename} ?`}
-        onCancel={() => setShowFileDeleteConfirmation(false)}
-        onDelete={() => {
-          setShowFileDeleteConfirmation(false);
-          dispatch(deleteFile(selectedFile.urn));
-
-          //explicitly trigger the updateForm as the Modal controls whether the the update form should occur.
-          dispatch(updateForm({ data: data as Record<string, unknown>, files: {}, errors: [] }));
-        }}
-      />
     </Grid>
   );
 };

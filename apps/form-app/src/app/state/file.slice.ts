@@ -179,6 +179,7 @@ interface FileState {
     download: Record<string, boolean>;
     metadata: Record<string, boolean>;
     uploading: boolean;
+    loading: boolean;
   };
 }
 
@@ -190,6 +191,7 @@ const initialFileState: FileState = {
     download: {},
     metadata: {},
     uploading: false,
+    loading: false,
   },
 };
 
@@ -205,13 +207,16 @@ const fileSlice = createSlice({
     builder
       .addCase(loadFileMetadata.pending, (state, { meta }) => {
         state.busy.metadata[meta.arg] = true;
+        state.busy.loading = true;
       })
       .addCase(loadFileMetadata.fulfilled, (state, { meta, payload }) => {
         state.metadata[meta.arg] = payload;
+        state.busy.loading = false;
         state.busy.metadata[meta.arg] = false;
       })
       .addCase(loadFileMetadata.rejected, (state, { meta }) => {
         state.busy.metadata[meta.arg] = false;
+        state.busy.loading = false;
       })
       .addCase(downloadFile.pending, (state, { meta }) => {
         state.busy.download[meta.arg] = true;
@@ -238,7 +243,8 @@ const fileSlice = createSlice({
       })
       .addCase(deleteFile.fulfilled, (state, { meta }) => {
         state.files[meta.arg] = null;
-        state.metadata[meta.arg] = null;
+        delete state.metadata[meta.arg];
+        state.busy.loading = false;
       });
   },
 });
@@ -259,8 +265,27 @@ export const fileDataUrlSelector = createSelector(
   (files, urn) => files[urn]
 );
 
+export const fileMetaDataSelector = (state: AppState) => state.file.metadata;
+export const fileBusySelector = (state: AppState) => state.file.busy;
+
 export const fileLoadingSelector = createSelector(
   (state: AppState) => state.file.busy,
   (_state: AppState, urn: string) => urn,
   (busy, urn) => busy.metadata[urn] || busy.download[urn]
+);
+
+export const propertyIdsWithFileMetaData = createSelector(
+  (state: AppState) => state.form.files,
+  (state: AppState) => state.file.metadata,
+  (files, metadata) => {
+    const fileMetaDataWithId: Record<string, FileMetadata> = {};
+    const propertyIds = Object.keys(files);
+
+    for (const id of propertyIds) {
+      const urn = files[id];
+      fileMetaDataWithId[id] = metadata[urn];
+    }
+
+    return fileMetaDataWithId;
+  }
 );
