@@ -6,7 +6,6 @@ import styled from 'styled-components';
 import { JsonFormContext } from '../../Context';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
-import { DeleteFileModal } from './DeleteFileModal';
 
 type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
 
@@ -20,19 +19,14 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
 
   const fileListValue = enumerators.data.get('file-list');
-  const deleteFileConfirmationValue = enumerators.data.get('delete-file-confirmation');
 
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
-  const deleteFileConfirmation: boolean =
-    (deleteFileConfirmationValue && (deleteFileConfirmationValue() as boolean[])[0]) ?? false;
   const { required, label, i18nKeyPrefix } = props;
 
   const propertyId = i18nKeyPrefix as string;
 
   const variant = uischema?.options?.variant || 'button';
-
-  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
 
   function uploadFile(file: File) {
     if (uploadTrigger) {
@@ -111,25 +105,10 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                     title="Delete"
                     type="trash"
                     onClick={() => {
-                      if (deleteFileConfirmation) {
-                        setShowFileDeleteConfirmation(true);
-                      } else {
-                        deleteFile(getFile());
-                      }
+                      deleteFile(getFile());
                     }}
                   />
                 </GoAContextMenu>
-                <DeleteFileModal
-                  isOpen={showFileDeleteConfirmation}
-                  title="Delete file"
-                  content={`Delete file ${getFileName()} ?`}
-                  onCancel={() => setShowFileDeleteConfirmation(false)}
-                  onDelete={() => {
-                    setShowFileDeleteConfirmation(false);
-                    handleChange(propertyId, null);
-                    deleteFile(getFile());
-                  }}
-                />
               </AttachmentBorder>
             )}
           </div>

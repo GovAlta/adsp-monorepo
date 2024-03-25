@@ -5,6 +5,7 @@ import { JsonForms, useJsonForms } from '@jsonforms/react';
 import { FunctionComponent, useEffect, useState } from 'react';
 import {
   AppDispatch,
+  FileMetadata,
   Form,
   FormDefinition,
   ValidationError,
@@ -16,6 +17,7 @@ import {
   uploadFile,
 } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
+import { DeleteModal } from './DeleteModal';
 
 interface DraftFormProps {
   definition: FormDefinition;
@@ -39,11 +41,15 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   onSubmit,
 }) => {
   const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
+
   const dispatch = useDispatch<AppDispatch>();
   const files = useSelector(filesSelector);
   const formPropertyIdsWithMethData = useSelector(propertyIdsWithFileMetaData);
 
   useEffect(() => {}, [dispatch, files]);
+
+  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
+  const [selectedFile, setSelectFile] = useState<FileMetadata>(null);
 
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
@@ -54,8 +60,11 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
       await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file: file })).unwrap()
     ).metadata;
 
-    const uploadedFile = { [propertyId]: fileMetaData.urn } as Record<string, string>;
-    dispatch(updateForm({ data: data as Record<string, unknown>, files: uploadedFile, errors: [] }));
+    const clonedFiles = { ...files };
+    clonedFiles[propertyId] = fileMetaData.urn;
+
+    //Explicitly trigger the updateForm as the Modal controls whether the the update form should occur.
+    dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
   };
 
   const downloadFormFile = async (file) => {
@@ -68,15 +77,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   const deleteFormFile = async (file) => {
-    await dispatch(deleteFile(file.urn));
-
-    const clonedFiles = { ...files };
-    const deleteKey = getKeyByValue(clonedFiles, file.urn);
-
-    delete clonedFiles[deleteKey];
-
-    //Explicitly trigger the updateForm as the Modal controls whether the the update form should occur.
-    dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles, errors: [] }));
+    setSelectFile(file);
+    setShowFileDeleteConfirmation(true);
   };
 
   return (
@@ -92,7 +94,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             uploadFile: uploadFormFile,
             downloadFile: downloadFormFile,
             deleteFile: deleteFormFile,
-            deleteFileConfirmation: true,
           }}
         >
           <JsonForms
@@ -113,6 +114,24 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             </GoAButton>
           )}
         </GoAButtonGroup>
+        <DeleteModal
+          isOpen={showFileDeleteConfirmation}
+          title="Delete file"
+          content={`Delete file ${selectedFile?.filename} ?`}
+          onCancel={() => setShowFileDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowFileDeleteConfirmation(false);
+
+            const clonedFiles = { ...files };
+            const deleteKey = getKeyByValue(clonedFiles, selectedFile.urn);
+            delete clonedFiles[deleteKey];
+
+            dispatch(deleteFile(selectedFile.urn));
+
+            //Explicitly trigger the updateForm as the Modal controls whether the the update form should occur.
+            dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
+          }}
+        />
       </GridItem>
       <GridItem md={1} />
     </Grid>
