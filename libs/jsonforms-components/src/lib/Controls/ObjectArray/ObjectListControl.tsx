@@ -2,7 +2,7 @@ import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
 import React from 'react';
-import { FormHelperText, Hidden, Typography } from '@mui/material';
+import { FormHelperText, Typography } from '@mui/material';
 import {
   ArrayLayoutProps,
   ControlElement,
@@ -20,7 +20,9 @@ import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid, GoAIconButton, GoAContainer } from '@abgov/react-components-new';
-import { ToolBarHeader, ObjectArrayTitle } from './styled-components';
+import { ToolBarHeader, ObjectArrayTitle, DisplayWrapper } from './styled-components';
+
+export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport;
 
 // eslint-disable-next-line
 const extractScopesFromUISchema = (uischema: any): string[] => {
@@ -134,16 +136,9 @@ interface NonEmptyRowComponentProps {
   isValid: boolean;
   uischema?: ControlElement | Layout;
 }
-const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
-  schema,
-  errors,
-  enabled,
-  renderers,
-  cells,
-  rowPath,
-  isValid,
-  uischema,
-}: NonEmptyRowComponentProps) {
+
+export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(props: NonEmptyRowComponentProps) {
+  const { schema, errors, enabled, renderers, cells, rowPath, isValid, uischema } = props;
   const propNames = getValidColumnProps(schema);
   const propScopes = (uischema as ControlElement)?.scope
     ? propNames.map((name) => {
@@ -152,6 +147,7 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
     : [];
 
   const scopesInElements = extractScopesFromUISchema(uischema);
+
   const scopesNotInElements = propScopes.filter((scope) => {
     return !scopesInElements.includes(scope);
   });
@@ -168,6 +164,7 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
       };
     }),
   };
+
   return (
     <>
       {
@@ -175,6 +172,7 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
         (uischema as Layout)?.elements?.map((element: UISchemaElement) => {
           return (
             <JsonFormsDispatch
+              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
               key={rowPath}
               schema={schema}
               uischema={element}
@@ -186,14 +184,16 @@ const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent({
           );
         })
       }
-      <JsonFormsDispatch
-        schema={schema}
-        uischema={uiSchemaElementsForNotDefined}
-        path={rowPath}
-        enabled={enabled}
-        renderers={renderers}
-        cells={cells}
-      />
+      {uiSchemaElementsForNotDefined?.elements?.length > 0 && (
+        <JsonFormsDispatch
+          schema={schema}
+          uischema={uiSchemaElementsForNotDefined}
+          path={rowPath}
+          enabled={enabled}
+          renderers={renderers}
+          cells={cells}
+        />
+      )}
       <FormHelperText error={!isValid}>{!isValid && errors}</FormHelperText>
     </>
   );
@@ -304,7 +304,7 @@ const ObjectArrayList = ({
 };
 
 // eslint-disable-next-line
-export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithDeleteDialogSupport, any> {
+export class ObjectArrayControl extends React.Component<ObjectArrayControlProps, any> {
   // eslint-disable-next-line
   addItem = (path: string, value: any) => this.props.addItem(path, value);
   render() {
@@ -330,39 +330,37 @@ export class ObjectArrayControl extends React.Component<ArrayLayoutProps & WithD
     const listTitle = label || uischema.options?.title;
 
     return (
-      <Hidden xsUp={!visible}>
+      <DisplayWrapper visible={visible} data-testid="jsonforms-object-list-wrapper">
+        <ToolBarHeader>
+          {listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
+          <ObjectArrayToolBar
+            errors={errors}
+            label={label}
+            addItem={this.addItem}
+            numColumns={0}
+            path={path}
+            uischema={controlElement}
+            schema={schema}
+            rootSchema={rootSchema}
+            enabled={enabled}
+            translations={translations}
+          />
+        </ToolBarHeader>
         <div>
-          <ToolBarHeader>
-            {listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
-            <ObjectArrayToolBar
-              errors={errors}
-              label={label}
-              addItem={this.addItem}
-              numColumns={0}
-              path={path}
-              uischema={controlElement}
-              schema={schema}
-              rootSchema={rootSchema}
-              enabled={enabled}
-              translations={translations}
-            />
-          </ToolBarHeader>
-          <div>
-            <ObjectArrayList
-              path={path}
-              schema={schema}
-              uischema={uischema}
-              enabled={enabled}
-              openDeleteDialog={openDeleteDialog}
-              translations={translations}
-              data={data}
-              cells={cells}
-              config={config}
-              {...additionalProps}
-            />
-          </div>
+          <ObjectArrayList
+            path={path}
+            schema={schema}
+            uischema={uischema}
+            enabled={enabled}
+            openDeleteDialog={openDeleteDialog}
+            translations={translations}
+            data={data}
+            cells={cells}
+            config={config}
+            {...additionalProps}
+          />
         </div>
-      </Hidden>
+      </DisplayWrapper>
     );
   }
 }

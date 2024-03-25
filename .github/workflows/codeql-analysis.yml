@@ -36,15 +36,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       # Setup node and install npm dependencies if scanning csharp
       # This is counter intuitive; we use nx-dotnet/core and the project has msbuild task that requires the plugin.
       - if: ${{ matrix.language != 'javascript' }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
       - if: ${{ matrix.language != 'javascript' }}
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}

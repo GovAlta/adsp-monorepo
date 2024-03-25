@@ -77,6 +77,7 @@ import { addData } from './lib/Context';
 
 import { HelpContent, HelpContentTester } from './lib/Additional';
 import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAErrorControl';
+import GoACalloutControl, { GoACalloutControlTester } from './lib/Additional/GoACalloutControl';
 
 export * from './lib/Context';
 const countries = ['Argentina', 'Brazil', 'Canada', 'Denmark', 'Egypt', 'France', 'Greece', 'India', 'Japan', 'Kenya'];
@@ -91,6 +92,7 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoADateControlTester, renderer: GoAInputDateControl },
   { tester: GoADateTimeControlTester, renderer: GoAInputDateTimeControl },
   { tester: GoATimeControlTester, renderer: GoAInputTimeControl },
+  { tester: GoACalloutControlTester, renderer: GoACalloutControl },
   { tester: materialSliderControlTester, renderer: MaterialSliderControl },
   { tester: materialObjectControlTester, renderer: MaterialObjectRenderer },
   { tester: materialAllOfControlTester, renderer: MaterialAllOfRenderer },

@@ -99,7 +99,7 @@ describe('event router', () => {
       assertUserCanSend(req, {} as Response, next);
     });
 
-    it('can fail for tenant user specifying tenantId.', (done) => {
+    it('can fail for tenant user specifying other tenantId.', (done) => {
       const next = (error) => {
         try {
           expect(error).toBeTruthy();
@@ -122,6 +122,25 @@ describe('event router', () => {
       );
     });
 
+    it('can pass for tenant user specifying same tenantId.', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const next = jest.fn();
+      await assertUserCanSend(
+        {
+          user: {
+            roles: [EventServiceRoles.sender],
+            isCore: false,
+            tenantId,
+          },
+          body: { tenantId: tenantId.toString() },
+        } as Request,
+        {} as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith();
+    });
+
     it('can fail for no tenant context', (done) => {
       const req = {
         user: { roles: [EventServiceRoles.sender], isCore: true },
@@ -133,6 +152,21 @@ describe('event router', () => {
         done();
       };
       assertUserCanSend(req, {} as Response, next);
+    });
+
+    it('can skip if tenant already set', async () => {
+      const tenantId = 'urn:ads:platform:tenant-service:v2:/tenants/test';
+      const tenant2Id = 'urn:ads:platform:tenant-service:v2:/tenants/test2';
+      const next = jest.fn();
+
+      const req = {
+        user: { roles: [EventServiceRoles.sender], isCore: false, tenantId },
+        tenant: { id: tenantId },
+        body: { tenant: tenant2Id },
+      };
+      await assertUserCanSend(req as unknown as Request, {} as Response, next);
+
+      expect(req.tenant.id).toBe(tenantId);
     });
   });
 

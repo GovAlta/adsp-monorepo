@@ -18,7 +18,7 @@ jobs:
     container: artilleryio/artillery:latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Make reports directory
         run: mkdir reports
@@ -33,7 +33,7 @@ jobs:
         run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
 
       - name: Archive tests reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artillery-test-report-event
           path: reports/*
@@ -56,7 +56,7 @@ jobs:
     container: artilleryio/artillery:latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Make reports directory
         run: mkdir reports
@@ -71,7 +71,7 @@ jobs:
         run: /home/node/artillery/bin/run report --output reports/status-report.html reports/status-report.json
 
       - name: Archive tests reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artillery-test-report-status
           path: reports/*

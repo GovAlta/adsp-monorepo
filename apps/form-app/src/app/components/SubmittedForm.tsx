@@ -4,6 +4,7 @@ import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
 import moment from 'moment';
 import { FunctionComponent } from 'react';
+import styled from 'styled-components';
 import { Form, FormDefinition } from '../state';
 
 interface ApplicationStatusProps {
@@ -11,6 +12,11 @@ interface ApplicationStatusProps {
   form: Form;
   data: Record<string, unknown>;
 }
+
+const Heading = styled.h2`
+  margin-top: var(--goa-space-3xl);
+  margin-bottom: var(--goa-space-xl);
+`;
 
 export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ definition, form, data }) => {
   return (
@@ -20,7 +26,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
         <GoACallout type="success" heading="We're processing your application">
           Your application was received on {moment(form.submitted).format('MMMM D, YYYY')} and we're working on it.
         </GoACallout>
-        <h3>The submitted form for your reference</h3>
+        <Heading>The submitted form for your reference</Heading>
         <JsonForms
           readonly={true}
           schema={definition.dataSchema}

@@ -66,6 +66,95 @@ describe('Scan Job', () => {
     fileEntityMock.verify((instance) => instance.updateScanResult(true));
   });
 
+  it('can be executed and is infected', async () => {
+    const scanJob = createScanJob({
+      apiId,
+      logger,
+      scanService: scanServiceMock.object(),
+      fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
+    });
+
+    const fileEntityMock = new Mock<FileEntity>();
+    fileEntityMock.setup((instance) => instance.deleted).returns(false);
+    fileEntityMock.setup((instance) => instance.infected).returns(true);
+    fileEntityMock
+      .setup((instance) => instance.updateScanResult(true))
+      .returns(Promise.resolve(fileEntityMock.object()));
+
+    scanServiceMock
+      .setup((instance) => instance.scan(fileEntityMock.object()))
+      .returns(Promise.resolve({ scanned: true, infected: true }));
+
+    repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
+
+    eventServiceMock.setup((instance) => instance.send(It.Is((event) => !!event))).returns();
+
+    const done = jest.fn();
+    await scanJob(tenantId, fileEntityMock.object(), done);
+    expect(done).toHaveBeenCalledWith();
+    fileEntityMock.verify((instance) => instance.updateScanResult(true));
+  });
+
+  it('can be executed and is infected and null tenant', async () => {
+    const scanJob = createScanJob({
+      apiId,
+      logger,
+      scanService: scanServiceMock.object(),
+      fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
+    });
+
+    const fileEntityMock = new Mock<FileEntity>();
+    fileEntityMock.setup((instance) => instance.deleted).returns(false);
+    fileEntityMock.setup((instance) => instance.infected).returns(true);
+    fileEntityMock
+      .setup((instance) => instance.updateScanResult(true))
+      .returns(Promise.resolve(fileEntityMock.object()));
+
+    scanServiceMock
+      .setup((instance) => instance.scan(fileEntityMock.object()))
+      .returns(Promise.resolve({ scanned: true, infected: true }));
+
+    repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
+
+    eventServiceMock.setup((instance) => instance.send(It.Is((event) => !!event))).returns();
+
+    const done = jest.fn();
+    await scanJob(null, fileEntityMock.object(), done);
+    expect(done).toHaveBeenCalledWith();
+    fileEntityMock.verify((instance) => instance.updateScanResult(true));
+  });
+  it('can be executed and is not infected and null tenant', async () => {
+    const scanJob = createScanJob({
+      apiId,
+      logger,
+      scanService: scanServiceMock.object(),
+      fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
+    });
+
+    const fileEntityMock = new Mock<FileEntity>();
+    fileEntityMock.setup((instance) => instance.deleted).returns(false);
+    fileEntityMock.setup((instance) => instance.infected).returns(false);
+    fileEntityMock
+      .setup((instance) => instance.updateScanResult(true))
+      .returns(Promise.resolve(fileEntityMock.object()));
+
+    scanServiceMock
+      .setup((instance) => instance.scan(fileEntityMock.object()))
+      .returns(Promise.resolve({ scanned: true, infected: true }));
+
+    repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
+
+    eventServiceMock.setup((instance) => instance.send(It.Is((event) => !!event))).returns();
+
+    const done = jest.fn();
+    await scanJob(null, fileEntityMock.object(), done);
+    expect(done).toHaveBeenCalledWith();
+    fileEntityMock.verify((instance) => instance.updateScanResult(true));
+  });
+
   it('can skip deleted', async () => {
     const scanJob = createScanJob({
       apiId,
@@ -148,6 +237,28 @@ describe('Scan Job', () => {
 
     const done = jest.fn();
     await scanJob(tenantId, fileEntityMock.object(), done);
+    expect(done).toHaveBeenCalledWith(expect.any(Error));
+    fileEntityMock.verify((instance) => instance.updateScanResult(It.IsAny()), Times.Never());
+  });
+  it('can call done with error and no tenant', async () => {
+    const scanJob = createScanJob({
+      apiId,
+      logger,
+      scanService: scanServiceMock.object(),
+      fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
+    });
+
+    const fileEntityMock = new Mock<FileEntity>();
+
+    scanServiceMock
+      .setup((instance) => instance.scan(fileEntityMock.object()))
+      .returns(Promise.reject(new Error('something failed.')));
+
+    repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
+
+    const done = jest.fn();
+    await scanJob(null, fileEntityMock.object(), done);
     expect(done).toHaveBeenCalledWith(expect.any(Error));
     fileEntityMock.verify((instance) => instance.updateScanResult(It.IsAny()), Times.Never());
   });
