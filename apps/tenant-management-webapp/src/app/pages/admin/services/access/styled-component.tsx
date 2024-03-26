@@ -79,3 +79,9 @@ export const TableDiv = styled.div`
     width: 10%;
   }
 `;
+
+export const LoadingIndicatorContainer = styled.div`
+  position: relative;
+  top: -2.5rem;
+  left: -3.5rem;
+`;

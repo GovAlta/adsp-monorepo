@@ -1,6 +1,6 @@
 import { put, select, call, takeEvery } from 'redux-saga/effects';
 import { RootState, store } from '@store/index';
-import { ErrorNotification } from '@store/notifications/actions';
+import { ErrorNotification, SuccessNotification } from '@store/notifications/actions';
 import {
   KeycloakCheckSSOAction,
   TenantLoginAction,
@@ -8,7 +8,7 @@ import {
   FetchTenantAction,
   FetchTenantSucceededService,
   FETCH_TENANT,
-  UpdateLoginSuccess
+  UpdateLoginSuccess,
 } from './actions';
 
 import { SessionLoginSuccess } from '@store/session/actions';
@@ -27,7 +27,7 @@ export function* fetchTenant(action: FetchTenantAction): SagaIterator {
 
     yield put(FetchTenantSucceededService(tenant));
   } catch (err) {
-    yield put(ErrorNotification({ error: err}));
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -86,7 +86,7 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
     const keycloakConfig = state.config.keycloakApi;
     createKeycloakAuth({ ...keycloakConfig }, loginRedirectUrl);
 
-   const tenantApi = yield select((state: RootState) => state.config.tenantApi);
+    const tenantApi = yield select((state: RootState) => state.config.tenantApi);
     const realm = isUUID(action.payload) ? action.payload : yield call(getRealm, action.payload, tenantApi?.host);
 
     if (!realm) {

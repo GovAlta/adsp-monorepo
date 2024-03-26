@@ -1,6 +1,6 @@
 import { put, select, call, takeEvery, takeLatest } from 'redux-saga/effects';
 import { RootState } from '@store/index';
-import { ErrorNotification } from '@store/notifications/actions';
+import { ErrorNotification, SuccessNotification } from '@store/notifications/actions';
 import {
   CheckIsTenantAdminAction,
   CreateTenantAction,
@@ -42,8 +42,15 @@ import {
   UpdateIndicator,
   SetSessionExpired,
   UpdateLoadingState,
+  ResetLoadingState,
 } from '@store/session/actions';
-import { TenantApi, callFetchUserIdByEmail, callDeleteUserIdPFromCore } from './api';
+import {
+  TenantApi,
+  callFetchUserIdInCoreByEmail,
+  callFetchUserIdInTenantByEmail,
+  callDeleteUserIdPFromCore,
+  callCheckUserIdpInCore,
+} from './api';
 import { TENANT_INIT } from './models';
 import { getOrCreateKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
 import { SagaIterator } from '@redux-saga/core';
@@ -273,11 +280,15 @@ export function* updateAccessToken(_action: UpdateAccessTokenAction): SagaIterat
 }
 
 export function* fetchUserIdByEmail(action: FetchUserIdByEmailAction): SagaIterator {
-  const { email } = action;
+  const { session, config }: RootState = yield select();
 
+  const { email } = action;
   const state: RootState = yield select();
   const token = yield call(getAccessToken);
-  const url = `${state.config?.tenantApi?.host}/api/tenant/v1/user/id`;
+  const coreUserIdUrl = `${state.config?.tenantApi?.host}/api/tenant/v1/user/id`;
+  const tenantUserIdUrl = `${config.keycloakApi.url}/admin/realms/${session.realm}/users`;
+  const checkUserIdPInCoreUrl = `${state.config?.tenantApi?.host}/api/tenant/v1/user/default-idp`;
+
   try {
     yield put(
       UpdateLoadingState({
@@ -286,19 +297,35 @@ export function* fetchUserIdByEmail(action: FetchUserIdByEmailAction): SagaItera
       })
     );
 
-    const id = yield call(callFetchUserIdByEmail, url, token, email);
-    yield put(
-      UpdateLoadingState({
-        name: FETCH_USER_ID_BY_EMAIL,
-        state: 'completed',
-        id,
-      })
-    );
+    const coreRealmUserId = yield call(callFetchUserIdInCoreByEmail, coreUserIdUrl, token, email);
+    const tenantRealmUserId = yield call(callFetchUserIdInTenantByEmail, tenantUserIdUrl, token, email);
+    if (coreRealmUserId && tenantRealmUserId) {
+      const hasDefaultIdpInCore = yield call(callCheckUserIdpInCore, checkUserIdPInCoreUrl, token, coreRealmUserId);
+      yield put(
+        UpdateLoadingState({
+          name: FETCH_USER_ID_BY_EMAIL,
+          state: 'completed',
+          id: coreRealmUserId,
+          data: {
+            hasDefaultIdpInCore,
+          },
+        })
+      );
+    } else {
+      yield put(
+        UpdateLoadingState({
+          name: FETCH_USER_ID_BY_EMAIL,
+          state: 'completed',
+          data: {},
+        })
+      );
+    }
   } catch (err) {
     yield put(
       UpdateLoadingState({
         name: FETCH_USER_ID_BY_EMAIL,
         state: 'error',
+        data: {},
       })
     );
   }
@@ -325,7 +352,20 @@ export function* deleteUserIdpFromCore(action: DeleteUserIdpAction): SagaIterato
         state: 'completed',
       })
     );
+    yield put(
+      SuccessNotification({
+        message: 'ADSP default user IdP in the core has been deleted successfully.',
+      })
+    );
+
+    yield put(ResetLoadingState());
   } catch (err) {
+    yield put(
+      ErrorNotification({
+        message: 'Failed to delete user IdP in core',
+        error: err,
+      })
+    );
     yield put(
       UpdateLoadingState({
         name: DELETE_USER_IDP,
