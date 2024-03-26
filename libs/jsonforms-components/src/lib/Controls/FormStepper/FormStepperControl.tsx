@@ -122,16 +122,19 @@ export const FormStepper = ({
 
   function setTab(page: number) {
     const rawCategoryLabels = rawCategories.elements.map((category) => category.label);
-    if (page > 1 && page <= rawCategoryLabels.length && rawCategoryLabels.length !== CategoryLabels.length) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const selectedTabLabel: any = rawCategoryLabels[page - 1];
-      const selectedTab = CategoryLabels.indexOf(selectedTabLabel);
-      const newStep = selectedTab !== -1 ? selectedTab : page;
-      page = newStep;
+    if (rawCategoryLabels.length !== CategoryLabels.length) {
+      if (page > 1 && page <= rawCategoryLabels.length) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const selectedTabLabel: any = rawCategoryLabels[page - 1];
+        const selectedTab = CategoryLabels.indexOf(selectedTabLabel);
+        const newStep = selectedTab !== -1 ? selectedTab + 1 : page;
+        page = newStep;
+      }
+      if (page > rawCategoryLabels.length) {
+        page = page - 1;
+      }
     }
-    if (page > rawCategoryLabels.length && rawCategoryLabels.length !== CategoryLabels.length) {
-      page = page - 1;
-    }
+
     setStep(page);
     if (page < 1 || page > categories.length + 1) return;
     if (categories.length + 1 === page) {
