@@ -34,9 +34,13 @@ def convert_config(tenant_config, _) -> Dict[str, Any]:
 
 adsp_extension = AdspExtension()
 app = Flask(__name__)
-app.wsgi_app = ProxyFix(
-    app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_prefix=2
-)
+
+if __name__ != "__main__":
+    gunicorn_logger = logging.getLogger("gunicorn.error")
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_prefix=2)
 
 adsp = adsp_extension.init_app(
     app,
