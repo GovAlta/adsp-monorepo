@@ -729,3 +729,57 @@ Then('the user clicks Cancel button on contact information modal', function () {
 Then('the user views {string} as the email of contact information', function (email) {
   statusObj.contactInformationEmailDisplay().invoke('text').should('contain', email);
 });
+
+When('the user {string} Monitor only checkbox for {string}', function (checkboxOperation, applicationName) {
+  statusObj
+    .applicationCardMonitorOnlyCheckbox(applicationName)
+    .shadow()
+    .find('.goa-checkbox-container')
+    .then((checkbox) => {
+      switch (checkboxOperation) {
+        case 'selects':
+          if (!checkbox.attr('class')?.includes('--selected')) {
+            statusObj
+              .applicationCardMonitorOnlyCheckbox(applicationName)
+              .shadow()
+              .find('.goa-checkbox-container')
+              .scrollIntoView()
+              .click({ force: true });
+          }
+          break;
+        case 'unselects':
+          if (checkbox.attr('class')?.includes('--selected')) {
+            statusObj
+              .applicationCardMonitorOnlyCheckbox(applicationName)
+              .shadow()
+              .find('.goa-checkbox-container')
+              .scrollIntoView()
+              .click({ force: true });
+          }
+          break;
+        default:
+          expect(checkboxOperation).to.be.oneOf(['selects', 'unselects']);
+      }
+    });
+});
+
+Then('the user {string} {string} in applications dropdown in Add notice model', function (viewOrNot, applicationName) {
+  let isFound = false;
+  statusObj.noticeModalApplicationDropdownItems().then((dropdownItemElements) => {
+    for (let i = 0; i < dropdownItemElements.length; i++) {
+      if (dropdownItemElements[i].getAttribute('value') == applicationName) {
+        isFound = true;
+      }
+    }
+    switch (viewOrNot) {
+      case 'views':
+        expect(isFound).to.eq(true);
+        break;
+      case 'should not view':
+        expect(isFound).to.eq(false);
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  });
+});
