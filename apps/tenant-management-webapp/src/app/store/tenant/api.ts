@@ -10,6 +10,10 @@ interface UserIdResponse {
   userIdInCore: string;
 }
 
+interface CheckIdPInCoreResponse {
+  hasDefaultIdpInCore: string;
+}
+
 export class TenantApi {
   private http: AxiosInstance;
   constructor(config: TenantApiConfig, token: string) {
@@ -50,12 +54,31 @@ export class TenantApi {
   }
 }
 
-export const callFetchUserIdByEmail = async (url: string, token: string, email: string): Promise<string> => {
+export const callFetchUserIdInCoreByEmail = async (url: string, token: string, email: string): Promise<string> => {
   const { data } = await axios.get<UserIdResponse>(url, {
     headers: { Authorization: `Bearer ${token}` },
     params: { email },
   });
   return data?.userIdInCore;
+};
+
+export const callCheckUserIdpInCore = async (url: string, token: string, userId: string): Promise<string> => {
+  const { data } = await axios.get<CheckIdPInCoreResponse>(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { userId },
+  });
+  return data?.hasDefaultIdpInCore;
+};
+
+export const callFetchUserIdInTenantByEmail = async (url: string, token: string, email: string): Promise<string> => {
+  const { data } = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { email },
+  });
+
+  console.log(data?.[0]?.id);
+
+  return data?.[0]?.id;
 };
 
 export const callDeleteUserIdPFromCore = async (

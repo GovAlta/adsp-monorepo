@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { GoAInput, GoAFormItem, GoAButton, GoANotification, GoASpacer } from '@abgov/react-components-new';
+import {
+  GoAInput,
+  GoAFormItem,
+  GoAButton,
+  GoANotification,
+  GoASpacer,
+  GoABadge,
+  GoACircularProgress,
+} from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import { FetchUserIdByEmail, FETCH_USER_ID_BY_EMAIL, DeleteUserIdp, DELETE_USER_IDP } from '@store/tenant/actions';
 import { useSelector } from 'react-redux';
@@ -8,6 +16,9 @@ import { findActionState } from '@store/session/selectors';
 import { LoadingState } from '@store/session/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { characterCheck, validationPattern } from '@lib/validation/checkInput';
+import { DeleteModal } from '@components/DeleteModal';
+import { LoadingIndicatorContainer } from './styled-component';
+
 export const TenantIdp = (): JSX.Element => {
   const [email, setEmail] = useState('');
   const dispatch = useDispatch();
@@ -22,6 +33,7 @@ export const TenantIdp = (): JSX.Element => {
   const deleteUserIdpState: LoadingState = useSelector((state: RootState) => findActionState(state, DELETE_USER_IDP));
   const emailValidator = characterCheck(validationPattern.validEmail);
   const { errors, validators } = useValidators('email', 'email', emailValidator).build();
+  const [openModal, setOpenModal] = useState<boolean>(false);
 
   useEffect(() => {}, [fetchUserIdState, deleteUserIdpState]);
 
@@ -47,16 +59,18 @@ export const TenantIdp = (): JSX.Element => {
 
   const deleteUserIdPHandler = () => {
     setDeletedUserIdp(true);
+    setEmail('');
+    setOpenModal(false);
     dispatch(DeleteUserIdp(fetchUserIdState?.id, 'core'));
   };
 
   return (
     <>
+      <h2>Unexpected error when authenticating with identity provider</h2>
       <p>
-        The IdP of ADSP GoA SSO in the tenant realm is linked to the GoA Azure AD through the corresponding IdP in the
-        ADSP Keycloak core realm. The IdP in the core realm needs to be re-synced with the Azure AD when the user
-        identity in the Azure AD is updated. Currently, we need to delete the old IdP in the core realm manually for the
-        synchronization. The tool below enables the tenant admins to delete the IdP in core realm by themselves.
+        Known Issue - Government of Alberta AD user accounts are deleted and recreated in some cases. In such cases,
+        users signing in with SSO account will encounter an identity provider error because their Keycloak account is
+        linked to the previous AD account.
       </p>
       <GoAFormItem label="Email" error={`${errors['email'] || ''}`}>
         <GoAInput
@@ -67,7 +81,7 @@ export const TenantIdp = (): JSX.Element => {
           onChange={InputUserEmailHandler}
         ></GoAInput>
       </GoAFormItem>
-      <div>
+      <>
         <GoASpacer vSpacing="s"></GoASpacer>
 
         <GoAButton
@@ -77,7 +91,10 @@ export const TenantIdp = (): JSX.Element => {
         >
           Search
         </GoAButton>
-      </div>
+        <LoadingIndicatorContainer>
+          <GoACircularProgress size="small" visible={(fetchUserIdState?.state as unknown) === 'start'} />
+        </LoadingIndicatorContainer>
+      </>
 
       {fetchedUserInfo && fetchUserIdState?.state === 'completed' && fetchUserIdState?.id === null && (
         <div>
@@ -89,31 +106,60 @@ export const TenantIdp = (): JSX.Element => {
       {fetchedUserInfo && fetchUserIdState?.state === 'completed' && fetchUserIdState?.id?.length > 0 && (
         <GoAFormItem>
           <GoASpacer vSpacing="m"></GoASpacer>
+          <p>Found {`${email} in core and tenant realms.`}</p>
           <p>
-            We found the user in the core realm. Are you going to delete the goa-ad IdP from the user in the core realm?
+            {`The user id in core realm is: `}
+            <GoABadge type="information" testId="user-idp-in-core-badge" content={`${fetchUserIdState?.id}`} />
           </p>
-          <GoAButton
-            disabled={(fetchUserIdState?.state as unknown) === 'start' || deletedUserIdp}
-            variant="destructive"
-            onClick={deleteUserIdPHandler}
-          >
-            Delete
-          </GoAButton>
 
-          {deletedUserIdp && deleteUserIdpState?.state === 'completed' && (
-            <div>
-              <GoASpacer vSpacing="m"></GoASpacer>
-              The user goa-ad IdP was deleted from the core realm successfully.
-            </div>
-          )}
+          {
+            // eslint-disable-next-line
+            (fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore === true && (
+              <>
+                <p>The related ADSP default IdP link in the core realm is found.</p>
+                <GoAButton
+                  testId="delete-core-idp-btn"
+                  disabled={(fetchUserIdState?.state as unknown) === 'start' || deletedUserIdp}
+                  variant="destructive"
+                  onClick={() => {
+                    setOpenModal(true);
+                  }}
+                >
+                  Delete
+                </GoAButton>
+              </>
+            )
+          }
 
-          {deletedUserIdp && deleteUserIdpState?.state === 'error' && (
-            <div>
-              <GoASpacer vSpacing="m"></GoASpacer>
-              <span>{`${deleteUserIdpState?.data}`}</span>
-            </div>
-          )}
+          {
+            // eslint-disable-next-line
+            (fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore !== true && (
+              <p>
+                We have <b>NOT</b> found the ADSP default IdP link of the user in the core realm.
+              </p>
+            )
+          }
         </GoAFormItem>
+      )}
+
+      {openModal && (
+        <DeleteModal
+          title="Delete IdP link"
+          data-testid="delete-idp-in-core-modal"
+          content={
+            <>
+              <p>Delete the IdP link in core realm cannot be undone.</p>
+              <p>
+                <b>Are you sure you want to continue?</b>
+              </p>
+            </>
+          }
+          onCancel={() => {
+            setOpenModal(false);
+          }}
+          isOpen={openModal}
+          onDelete={deleteUserIdPHandler}
+        />
       )}
     </>
   );
