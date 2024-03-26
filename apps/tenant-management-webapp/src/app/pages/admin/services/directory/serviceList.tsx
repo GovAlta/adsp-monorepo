@@ -159,7 +159,14 @@ export const ServiceTableComponent = ({ directory, headerId }: serviceTableProps
 
         <tbody>
           {directory.map((dir: Service) => {
-            return <ServiceItemComponent id={`directory-list-item-${dir.urn}`} service={dir} headerId={headerId} />;
+            return (
+              <ServiceItemComponent
+                key={dir.urn}
+                id={`directory-list-item-${dir.urn}`}
+                service={dir}
+                headerId={headerId}
+              />
+            );
           })}
         </tbody>
       </DataTable>

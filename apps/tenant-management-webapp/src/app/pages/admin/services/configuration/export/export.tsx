@@ -139,22 +139,20 @@ export const ConfigurationExport: FunctionComponent = () => {
       <h2 className="header-background">Export configuration list</h2>
       {indicator.show && <PageIndicator />}
       {!indicator.show && Object.keys(sortedConfiguration.namespaces).length > 0 && (
-        <div className="flex-row">
+        <div className="flex-row ">
           <div className="flex-one">
             <div style={{ width: `calc(100% - ${Object.keys(exportServices).length > 0 ? '10px' : '260px'})` }}>
-              <div className="flex-row">
-                <GoACheckbox
-                  name="Select all"
-                  key="Select all"
-                  checked={selectAll}
-                  onChange={() => {
-                    toggleSelection('select-all');
-                  }}
-                  testId={'select-all-id'}
-                  ariaLabel="select-all-checkbox"
-                ></GoACheckbox>
-                <div>Select all</div>
-              </div>
+              <GoACheckbox
+                name="Select all"
+                key="Select all"
+                checked={selectAll}
+                onChange={() => {
+                  toggleSelection('select-all');
+                }}
+                testId={'select-all-id'}
+                ariaLabel="select-all-checkbox"
+                text="Select all"
+              />
               {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
                 return (
                   <React.Fragment key={namespace}>
@@ -162,7 +160,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                     {sortedConfiguration.namespaces[namespace].map((name) => {
                       const desc = getDescription(namespace, name);
                       return (
-                        <div>
+                        <div key={`${name}-${namespace}`}>
                           <div key={toServiceKey(namespace, name)} className="flex-row">
                             <div className="flex-row">
                               <GoACheckbox
@@ -174,8 +172,8 @@ export const ConfigurationExport: FunctionComponent = () => {
                                 }}
                                 testId={`${toServiceKey(namespace, name)}_id`}
                                 ariaLabel={`${toServiceKey(namespace, name)}_id_checkbox`}
-                              ></GoACheckbox>
-                              <div>{name}</div>
+                                text={name}
+                              />
                             </div>
                             <div
                               onClick={() => {
@@ -248,7 +246,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                       </h3>
                       {selectedNamespaces.map((namespace) => {
                         return (
-                          <div>
+                          <div key={namespace}>
                             <h3 className="header-margin ellipsis-wrapper">{namespace}</h3>
                             {
                               //eslint-disable-next-line

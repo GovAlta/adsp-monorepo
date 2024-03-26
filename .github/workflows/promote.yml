@@ -15,7 +15,7 @@ on:
 
 jobs:
   affected:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       affected_apps: ${{ github.event.inputs.APPS || steps.get-affected.outputs.affected_apps }}
     steps:
@@ -41,7 +41,7 @@ jobs:
         run: echo "affected_apps=$(npx nx show projects --affected --type=app --base=${{ steps.last_successful_commit.outputs.base }} | tr "\n" " ")" >> $GITHUB_OUTPUT
 
   stagingRegression:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: affected
     if: needs.affected.outputs.affected_apps
     environment:
@@ -73,7 +73,7 @@ jobs:
           cy-password-3: ${{ secrets.CY_PASSWORD3 }}
 
   deployProduction:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [affected, stagingRegression]
     env:
       AFFECTED_APPS: ${{ needs.affected.outputs.affected_apps }}
@@ -111,7 +111,7 @@ jobs:
           done
 
   smokeTestProd:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: deployProduction
     environment:
       name: Prod-e2e

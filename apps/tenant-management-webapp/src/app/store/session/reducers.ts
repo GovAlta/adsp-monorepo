@@ -4,6 +4,7 @@ import {
   SET_SESSION_WILL_EXPIRED,
   UPDATE_MODAL_STATE,
   RESET_MODAL_STATE,
+  RESET_LOADING_STATE,
 } from './actions';
 import { Session, SESSION_INIT } from './models';
 
@@ -116,6 +117,13 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
       return {
         ...state,
         isWillExpired: action.payload,
+      };
+
+    case RESET_LOADING_STATE:
+      state.loadingStates = [];
+
+      return {
+        ...state,
       };
 
     default:

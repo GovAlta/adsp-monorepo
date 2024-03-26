@@ -1,6 +1,9 @@
 import styled from 'styled-components';
 
 export const DataTableStyle = styled.div`
+  & thead {
+    width: '100%';
+  }
   .action {
     width: 0;
     text-align-last: right;
