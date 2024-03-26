@@ -23,7 +23,7 @@ readme = 'README.md'
   include = "adsp_py_common"
 
   [tool.poetry.dependencies]
-  python = ">=3.9,<3.11"
+  python = ">=3.9,<3.12"
   cachetools = "^5.3.2"
   types-cachetools = "^5.3.0.7"
   httpx = "^0.25.0"

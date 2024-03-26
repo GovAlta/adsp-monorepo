@@ -15,6 +15,7 @@ export const TableDiv = styled.div`
     min-width: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
+    overflow-wrap: anywhere;
   }
 
   & .meta {
@@ -29,8 +30,4 @@ export const HeadingDiv = styled.div`
   img {
     margin-bottom: 4px;
   }
-`;
-
-export const OverFlowWrapTableCell = styled.td`
-  overflow-wrap: anywhere;
 `;
