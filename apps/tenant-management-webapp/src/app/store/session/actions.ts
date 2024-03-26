@@ -11,6 +11,7 @@ export const UPDATE_RESOURCE_ACCESS = 'session/resourceAccess/update';
 export const SET_SESSION_WILL_EXPIRED = 'session/will/expired';
 export const UPDATE_MODAL_STATE = 'session/modal/update';
 export const RESET_MODAL_STATE = 'session/modal/reset';
+export const RESET_LOADING_STATE = 'session/loading-state/reset';
 
 export type ActionType =
   | SessionLoginSuccessAction
@@ -23,6 +24,7 @@ export type ActionType =
   | SetSessionWillExpiredAction
   | UpdateModalStateAction
   | ResetModalStateAction
+  | ResetLoadingStateAction
   | UpdateResourceAccessAction;
 
 export interface CredentialRefreshAction {
@@ -70,6 +72,10 @@ export interface UpdateResourceAccessAction {
     clientId: string;
     role: string;
   };
+}
+
+export interface ResetLoadingStateAction {
+  type: typeof RESET_LOADING_STATE;
 }
 
 export interface ResetModalStateAction {
@@ -135,4 +141,8 @@ export const UpdateModalState = (modalState: ModalState) => ({
 
 export const ResetModalState = () => ({
   type: RESET_MODAL_STATE,
+});
+
+export const ResetLoadingState = () => ({
+  type: RESET_LOADING_STATE,
 });
