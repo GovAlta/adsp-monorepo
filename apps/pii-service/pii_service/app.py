@@ -1,5 +1,6 @@
 import json
 import logging
+from os import environ
 from typing import Any, Dict
 from adsp_service_flask_sdk import (
     AdspExtension,
@@ -8,7 +9,7 @@ from adsp_service_flask_sdk import (
     ServiceRole,
     require_user,
 )
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, request
 from pii_service.recognizers.ca_bank_recognizer import CaBankRecognizer
 from pii_service.recognizers.ca_passport_recognizer import CaPassportRecognizer
@@ -22,9 +23,9 @@ from pii_service import service_roles
 from pii_service.recognizers import CaPostalCodeRecognizer
 
 
-env = dotenv_values()
+load_dotenv()
 
-logging.getLogger().setLevel(env.get("LOG_LEVEL", "DEBUG"))
+logging.getLogger().setLevel(environ.get("LOG_LEVEL", "DEBUG"))
 
 
 def convert_config(tenant_config, _) -> Dict[str, Any]:
@@ -58,14 +59,14 @@ adsp = adsp_extension.init_app(
         events=[],
     ),
     {
-        "ADSP_ACCESS_SERVICE_URL": env.get(
-            "ADSP_ACCESS_SERVICE_URL", "https://access.adsp-dev.gov.ab.ca"
+        "ADSP_ACCESS_SERVICE_URL": environ.get(
+            "KEYCLOAK_ROOT_URL", "https://access.adsp-dev.gov.ab.ca"
         ),
-        "ADSP_DIRECTORY_URL": env.get(
-            "ADSP_DIRECTORY_URL", "https://directory-service.adsp-dev.gov.ab.ca"
+        "ADSP_DIRECTORY_URL": environ.get(
+            "DIRECTORY_URL", "https://directory-service.adsp-dev.gov.ab.ca"
         ),
-        "ADSP_SERVICE_ID": env.get("ADSP_SERVICE_ID", "urn:ads:platform:pii-service"),
-        "ADSP_CLIENT_SECRET": env.get("ADSP_CLIENT_SECRET"),
+        "ADSP_SERVICE_ID": environ.get("SERVICE_ID", "urn:ads:platform:pii-service"),
+        "ADSP_CLIENT_SECRET": environ.get("CLIENT_SECRET"),
     },
 )
 
