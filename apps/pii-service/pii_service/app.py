@@ -25,6 +25,7 @@ from pii_service.recognizers import CaPostalCodeRecognizer
 
 load_dotenv()
 
+logging.basicConfig()
 logging.getLogger().setLevel(environ.get("LOG_LEVEL", "DEBUG"))
 
 
