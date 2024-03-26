@@ -48,7 +48,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
     <>
       {Object.keys(sortedNamespaces).map((nameSpace) => {
         return (
-          <>
+          <div key={nameSpace}>
             <NameDiv>{nameSpace}</NameDiv>
             <TableDiv key={nameSpace}>
               <DataTable data-testid="configuration-table">
@@ -68,6 +68,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                     const sortedConfig = memoizedReducedConfiguration[`${nameSpace}:${configName}`];
                     return (
                       <ConfigurationDefinitionItemComponent
+                        key={`${configName}-${nameSpace}`}
                         tenantName={tenantName}
                         isTenantSpecificConfig={isTenantSpecificConfig}
                         configName={configName}
@@ -86,7 +87,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                 </tbody>
               </DataTable>
             </TableDiv>
-          </>
+          </div>
         );
       })}
     </>

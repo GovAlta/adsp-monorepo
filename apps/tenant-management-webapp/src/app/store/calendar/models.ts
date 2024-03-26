@@ -62,7 +62,7 @@ export interface Attendee {
 export interface CalendarEvent {
   id?: number;
   name: string;
-  description: string;
+  description?: string | null;
   start: string;
   end: string;
   isPublic: boolean;

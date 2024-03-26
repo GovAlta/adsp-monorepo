@@ -16,8 +16,10 @@ import {
   createSubscriberAppPublicClientConfig,
   createWebappClientConfig,
 } from './configuration';
+import { IdentityProviderResponse } from './type';
 
 const LOG_CONTEXT = { context: 'RealmService' };
+export const DEFAULT_IDP_NAME = 'goa-ad';
 export class KeycloakRealmServiceImpl implements RealmService {
   constructor(
     private logger: Logger,
@@ -460,6 +462,25 @@ export class KeycloakRealmServiceImpl implements RealmService {
     } catch (error) {
       const errMessage = `Failed to find user id by email ${email} in ${realm} due to ${error.message}`;
       this.logger.error(errMessage);
+    }
+  }
+
+  async checkUserDefaultIdpInCore(userId: string): Promise<boolean> {
+    const client = await this.createAdminClient();
+
+    const fetchIdPUrl = `${this.keycloakRootUrl}/auth/admin/realms/core/users/${userId}/federated-identity`;
+    const headers = {
+      Authorization: `Bearer ${client.accessToken}`,
+    };
+
+    try {
+      const { data } = await axios.get<IdentityProviderResponse>(fetchIdPUrl, { headers });
+      const defaultIdp = data.find((idp) => (idp.identityProvider = DEFAULT_IDP_NAME));
+      return defaultIdp !== undefined;
+    } catch (err) {
+      const errMessage = `Failed to check the ${DEFAULT_IDP_NAME} IdP in core for user ${userId} due to ${err.message}`;
+      this.logger.error(errMessage);
+      throw new InvalidOperationError(errMessage);
     }
   }
 

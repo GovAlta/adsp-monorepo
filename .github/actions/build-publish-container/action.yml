@@ -49,6 +49,8 @@ runs:
           SERVICE=${{ inputs.app }}
         containerfiles: |
           ${{ inputs.container-file }}
+        extra-args: |
+          --storage-opt=overlay.mount_program=
     - name: Push to GitHub container registry
       uses: redhat-actions/push-to-registry@v2
       with:

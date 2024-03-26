@@ -32,7 +32,7 @@ const Visible = styled.div<VisibleProps>`
 interface EventLogEntryComponentProps {
   entry: EventLogEntry;
   correlationColors: Record<string, string>;
-  addCorrelationColor: (id: string) => string;
+  addCorrelationColor?: (id: string) => string;
   onSearchRelated: (correlationId: string) => void;
 }
 
@@ -43,7 +43,6 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
   onSearchRelated,
 }: EventLogEntryComponentProps) => {
   const [showDetails, setShowDetails] = useState(false);
-
   return (
     <>
       <tr>
@@ -103,7 +102,20 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
     return state?.session?.indicator;
   });
   // eslint-disable-next-line
-  useEffect(() => {}, [indicator, entries]);
+  useEffect(() => {
+    entries?.filter((item) => {
+      if (!Object.prototype.hasOwnProperty.call(colors, item.correlationId)) {
+        const randomColor = `#${Math.floor(Math.random() * 16777215)
+          .toString(16)
+          .padStart(6, '0')}`;
+        setColors({
+          ...colors,
+          [item.correlationId]: randomColor,
+        });
+      }
+      return true;
+    });
+  }, [indicator, entries, colors]);
 
   return (
     <>
@@ -130,17 +142,13 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
               {entries !== null &&
                 entries.map((entry) => (
                   <EventLogEntryComponent
-                    key={`${entry.timestamp}${entry.namespace}${entry.name}`}
+                    key={`${entry.timestamp}${entry.namespace}${entry.name}${Math.random()}`}
                     entry={entry}
                     correlationColors={colors}
                     addCorrelationColor={(id) => {
                       const randomColor = `#${Math.floor(Math.random() * 16777215)
                         .toString(16)
                         .padStart(6, '0')}`;
-                      setColors({
-                        ...colors,
-                        [id]: randomColor,
-                      });
                       return randomColor;
                     }}
                     onSearchRelated={(correlationId) => onSearch({ correlationId })}
