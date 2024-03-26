@@ -280,7 +280,7 @@ export const FormStepper = ({
             </GoAButtonGroup>
           }
         >
-          <b>Submit is a test for preview purposes</b>(i.e. no actual form is being submitted)
+          <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
         </GoAModal>
       </div>
     </Hidden>
