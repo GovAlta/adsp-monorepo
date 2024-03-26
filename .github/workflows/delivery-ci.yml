@@ -14,7 +14,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       affected_apps: ${{ steps.set_outputs.outputs.affected_apps }}
       affected_apps_array: ${{ steps.set_outputs.outputs.affected_apps_array }}
@@ -66,7 +66,7 @@ jobs:
           echo "affected_apps_array=$(echo ${{ steps.production-build.outputs.affected-apps }} | sed -e "s/ /\",\"/g" -e "s/^/[\"/" -e "s/$/\"]/")" >> $GITHUB_OUTPUT
 
   buildContainers:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: build
     if: needs.build.outputs.affected_apps
     strategy:
@@ -91,7 +91,7 @@ jobs:
           ghcr-token: ${{ secrets.GITHUB_TOKEN }}
 
   deployDev:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [build, buildContainers]
     env:
       AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
@@ -130,7 +130,7 @@ jobs:
           done
 
   devSmokeTest:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [build, deployDev]
     environment:
       name: Dev-e2e
@@ -157,7 +157,7 @@ jobs:
           cy-password-3: ${{ secrets.CY_PASSWORD3 }}
 
   deployStaging:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [build, devSmokeTest]
     env:
       AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
@@ -195,7 +195,7 @@ jobs:
           done
 
   stagingSmokeTest:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [build, deployStaging]
     environment:
       name: Staging-e2e
