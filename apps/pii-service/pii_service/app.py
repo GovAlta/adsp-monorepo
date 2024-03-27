@@ -74,6 +74,7 @@ adsp = adsp_extension.init_app(
         api_endpoint_path="/swagger/docs/v1",
     ),
     {
+        "ADSP_ALLOW_CORE": True,
         "ADSP_ACCESS_SERVICE_URL": os.environ.get(
             "KEYCLOAK_ROOT_URL", "https://access.adsp-dev.gov.ab.ca"
         ),
@@ -97,7 +98,7 @@ anonymizer_engine = AnonymizerEngine()
 
 
 @app.route("/pii/v1/entities", methods=["GET"])
-@require_user(service_roles.ANALYZER, True)
+@require_user(service_roles.ANALYZER, allow_core=True)
 def supported_entities():
     language = request.args.get("language")
     entities_list = analyzer_engine.get_supported_entities(language)
@@ -105,7 +106,7 @@ def supported_entities():
 
 
 @app.route("/pii/v1/analyze", methods=["POST"])
-@require_user(service_roles.ANALYZER, True)
+@require_user(service_roles.ANALYZER, allow_core=True)
 def analyze():
     analyzer_request = AnalyzerRequest(request.get_json())
 
@@ -137,7 +138,7 @@ def analyze():
 
 
 @app.route("/pii/v1/anonymize", methods=["POST"])
-@require_user(service_roles.ANALYZER)
+@require_user(service_roles.ANALYZER, allow_core=True)
 def anonymize():
     analyzer_request = AnalyzerRequest(request.get_json())
 
