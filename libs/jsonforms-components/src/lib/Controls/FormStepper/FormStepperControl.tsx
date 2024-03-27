@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   GoAFormStepper,
   GoAFormStep,
@@ -8,98 +8,89 @@ import {
   GoAModal,
   GoAButtonGroup,
   GoAGrid,
+  GoAFormStepStatusType,
 } from '@abgov/react-components-new';
 import {
   Categorization,
-  UISchemaElement,
   deriveLabelForUISchemaElement,
   Category,
   StatePropsOfLayout,
   isVisible,
   isEnabled,
-  JsonSchema,
-  JsonSchema4,
-  JsonSchema7,
 } from '@jsonforms/core';
 
-import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
+import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
-import { JsonFormsDispatch } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
-import { Grid, GridItem } from '../../common/Grid';
+import { Grid } from '../../common/Grid';
 import {
   Anchor,
   ReviewItem,
   ReviewItemHeader,
   ReviewItemSection,
   ReviewItemTitle,
-  ReviewListItem,
-  ReviewListWrapper,
-  ListWithDetail,
-  ListWithDetailHeading,
   RightAlignmentDiv,
 } from './styled-components';
 import { getAllRequiredFields } from './util/getRequiredFields';
 import { renderFormFields } from './util/GenerateFormFields';
+import { RenderStepElements, StepProps } from './RenderStepElements';
+import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus, logRequiredFields } from './StepperContext';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
-  // eslint-disable-next-line
-  data: any;
+  data: object;
 }
 
-export const FormStepper = ({
-  uischema,
-  data,
-  schema,
-  // eslint-disable-next-line
-  ajv,
-  path,
-  cells,
-  renderers,
-  config,
-  visible,
-  enabled,
-  t,
-}: CategorizationStepperLayoutRendererProps) => {
+export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {
+  const { uischema, data, schema, ajv, path, cells, renderers, visible, enabled, t } = props;
   const categorization = uischema as Categorization;
   const rawCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
-  const [step, setStep] = useState(1);
-  const [isFormValid, setIsFormValid] = useState(false);
-  const [showNextBtn, setShowNextBtn] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-  const [categories, setCategories] = useState(categorization.elements);
+  const [step, setStep] = React.useState(0);
+  const [isFormValid, setIsFormValid] = React.useState(false);
+  const [showNextBtn, setShowNextBtn] = React.useState(true);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [categories, setCategories] = React.useState(categorization.elements);
+  const [inputStatuses, setInputStatuses] = React.useState<StatusTable>({});
+  const [stepStatuses, setStepStatuses] = React.useState<Array<GoAFormStepStatusType | undefined>>([]);
 
   useEffect(() => {
-    const cates = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
-    setCategories(cates);
+    const cats = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
+    setCategories(cats);
   }, [categorization, data, ajv]);
   const disabledCategoryMap: boolean[] = categories.map((c) => !isEnabled(c, data, '', ajv));
   const handleSubmit = () => {
     setIsOpen(true);
-    console.log('submitted', data);
   };
 
   const onSubmit = () => {
     setIsOpen(false);
-    console.log('submitted', data);
   };
 
   const CategoryLabels = useMemo(() => {
-    return categories.map((e: Category | Categorization) => deriveLabelForUISchemaElement(e, t));
+    return categories.map((c: Category | Categorization) => deriveLabelForUISchemaElement(c, t));
   }, [categories, t]);
 
   useEffect(() => {}, [categories.length]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const vslidateFormData = (formData: Array<UISchemaElement>) => {
-    const validate = ajv.compile(schema);
-    return validate(formData);
-  };
+  useEffect(() => {
+    const statuses = Array<GoAFormStepStatusType | undefined>(categories.length);
+    categories.forEach((_, i) => {
+      statuses[i] = getCompletionStatus(inputStatuses, i + 1);
+    });
+    setStepStatuses(statuses);
+  }, [inputStatuses, categories]);
 
   useEffect(() => {
-    const valid = vslidateFormData(data);
-    setIsFormValid(valid);
-  }, [data, vslidateFormData]);
+    try {
+      const validate = ajv.compile(schema);
+      setIsFormValid(validate(data));
+    } catch (e) {
+      return setIsFormValid(false);
+    }
+  }, [schema, data, ajv]);
+
+  useEffect(() => {
+    setStep(uischema?.options?.componentProps?.controlledNav ? 1 : 0);
+  }, []);
 
   if (categories?.length < 1) {
     // eslint-disable-next-line
@@ -126,8 +117,7 @@ export const FormStepper = ({
     const rawCategoryLabels = rawCategories.elements.map((category) => category.label);
     if (rawCategoryLabels.length !== CategoryLabels.length) {
       if (page > 1 && page <= rawCategoryLabels.length) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const selectedTabLabel: any = rawCategoryLabels[page - 1];
+        const selectedTabLabel: string = rawCategoryLabels[page - 1];
         const selectedTab = CategoryLabels.indexOf(selectedTabLabel);
         const newStep = selectedTab !== -1 ? selectedTab + 1 : page;
         page = newStep;
@@ -156,69 +146,65 @@ export const FormStepper = ({
     }
   }
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    setStep(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const renderStepElements = (category: Category | Categorization, indexOfCategory: number) => {
-    return (
-      /*
-        [Mar-04-2024][Paul Li] the GoAPages internal state cannot handle the hidden/display well. We need extra hide/display control to it appropriately.
-       */
-      <Hidden xsUp={indexOfCategory !== step - 1}>
-        {category.elements.map((elementUiSchema, index) => {
-          return (
-            <JsonFormsDispatch
-              key={index}
-              schema={schema}
-              uischema={elementUiSchema}
-              renderers={renderers}
-              cells={cells}
-              path={path}
-              visible={visible}
-              enabled={enabled && !disabledCategoryMap[indexOfCategory]}
-            />
-          );
-        })}
-      </Hidden>
-    );
-  };
-
   const handleEdit = (index: number) => {
     setPage(index + 1);
+  };
+
+  const updateInputStatus = (inputStatus: StepInputStatus): void => {
+    inputStatuses[inputStatus.id] = inputStatus;
+    setInputStatuses({ ...inputStatuses });
+  };
+  const isInputInitialized = (inputId: string): boolean => {
+    return inputId in inputStatuses;
   };
 
   return (
     <Hidden xsUp={!visible}>
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
         <GoAFormStepper
-          testId="form-stepper-test"
+          testId={uischema?.options?.testId || 'form-stepper-test'}
           step={step}
           onChange={(step) => {
             setTab(step);
           }}
         >
-          {categories?.map((category, index) => {
+          {categories?.map((_, index) => {
+            logRequiredFields(inputStatuses, index + 1);
             return (
               <GoAFormStep
                 key={`${CategoryLabels[index]}-tab`}
                 text={`${CategoryLabels[index]}`}
-                status={'incomplete'}
+                status={stepStatuses[index]}
               />
             );
           })}
-          <GoAFormStep text="Review" status="incomplete" />
+          <GoAFormStep text="Review" />
         </GoAFormStepper>
         <GoAPages current={step} mb="xl">
           {categories?.map((category, index) => {
+            const props: StepProps = {
+              category,
+              categoryIndex: index,
+              step: index + 1,
+              schema,
+              enabled,
+              visible,
+              path,
+              disabledCategoryMap,
+              renderers,
+              cells,
+            };
             return (
               <div data-testid={`step_${index}-content`} key={`${CategoryLabels[index]}`}>
-                {renderStepElements(category, index)}
+                <StepperContext.Provider
+                  value={{ stepId: index + 1, updateStatus: updateInputStatus, isInitialized: isInputInitialized }}
+                >
+                  {RenderStepElements(props)}
+                </StepperContext.Provider>
               </div>
             );
           })}
-          <div>
+          <div data-testid="summary_step-content">
             <h3 style={{ flex: 1 }}>Summary</h3>
 
             <ReviewItem>
@@ -287,45 +273,6 @@ export const FormStepper = ({
       </div>
     </Hidden>
   );
-};
-
-interface PreventControlElement {
-  value: unknown;
-}
-
-const PreventControlElement = (props: PreventControlElement): JSX.Element => {
-  if (typeof props?.value === 'string') return <span>{props.value}</span>;
-
-  if (Array.isArray(props?.value)) {
-    return (
-      <div>
-        {props.value.map((item, index) => {
-          return (
-            <ReviewListWrapper key={index}>
-              {item &&
-                Object.keys(item).map((key, innerIndex) => {
-                  if (typeof item[key] === 'string') {
-                    return (
-                      <ReviewListItem key={innerIndex}>
-                        {key}: {item[key]}
-                      </ReviewListItem>
-                    );
-                  }
-                  return (
-                    <ReviewListItem key={innerIndex}>
-                      {key}: {String(item[key])}
-                    </ReviewListItem>
-                  );
-                })}
-            </ReviewListWrapper>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // eslint-disable-next-line
-  return <></>;
 };
 
 export const flattenObject = (obj: Record<string, string>): Record<string, string> => {
