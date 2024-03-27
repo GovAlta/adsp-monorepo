@@ -11,6 +11,7 @@ from adsp_service_flask_sdk import (
 )
 from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, request
+from flask_cors import CORS
 from pii_service.recognizers.ca_bank_recognizer import CaBankRecognizer
 from pii_service.recognizers.ca_passport_recognizer import CaPassportRecognizer
 from pii_service.recognizers.ca_sin_recognizer import CaSinRecognizer
@@ -37,6 +38,7 @@ def convert_config(tenant_config, _) -> Dict[str, Any]:
 
 adsp_extension = AdspExtension()
 app = Flask(__name__)
+CORS(app)
 
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
