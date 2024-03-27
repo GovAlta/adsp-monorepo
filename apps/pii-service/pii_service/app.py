@@ -97,7 +97,7 @@ anonymizer_engine = AnonymizerEngine()
 
 
 @app.route("/pii/v1/entities", methods=["GET"])
-@require_user(service_roles.ANALYZER)
+@require_user(service_roles.ANALYZER, True)
 def supported_entities():
     language = request.args.get("language")
     entities_list = analyzer_engine.get_supported_entities(language)
@@ -105,7 +105,7 @@ def supported_entities():
 
 
 @app.route("/pii/v1/analyze", methods=["POST"])
-@require_user(service_roles.ANALYZER)
+@require_user(service_roles.ANALYZER, True)
 def analyze():
     analyzer_request = AnalyzerRequest(request.get_json())
 
