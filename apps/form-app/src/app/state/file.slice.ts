@@ -274,7 +274,7 @@ export const fileLoadingSelector = createSelector(
   (busy, urn) => busy.metadata[urn] || busy.download[urn]
 );
 
-export const propertyIdsWithFileMetaData = createSelector(
+export const propertyIdsWithFileMetaDataSelector = createSelector(
   (state: AppState) => state.form.files,
   (state: AppState) => state.file.metadata,
   (files, metadata) => {

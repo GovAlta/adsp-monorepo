@@ -11,7 +11,7 @@ import {
   deleteFile,
   downloadFile,
   filesSelector,
-  propertyIdsWithFileMetaData,
+  propertyIdsWithFileMetaDataSelector,
   updateForm,
   uploadFile,
 } from '../state';
@@ -44,7 +44,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const files = useSelector(filesSelector);
 
   //Contains the property/control id with the file meta data
-  const formPropertyIdsWithMethData = useSelector(propertyIdsWithFileMetaData);
+  const formPropertyIdsWithMetaData = useSelector(propertyIdsWithFileMetaDataSelector);
 
   useEffect(() => {}, [dispatch, files]);
 
@@ -94,7 +94,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         </div>
         <ContextProvider
           fileManagement={{
-            fileList: formPropertyIdsWithMethData,
+            fileList: formPropertyIdsWithMetaData,
             uploadFile: uploadFormFile,
             downloadFile: downloadFormFile,
             deleteFile: deleteFormFile,

@@ -10,6 +10,7 @@ import {
   loadDefinition,
   loadForm,
   selectedDefinition,
+  submitForm,
   updateForm,
 } from './form.slice';
 
@@ -467,5 +468,77 @@ describe('form slice unit tests', () => {
       expect(form.files).not.toBeNull();
       expect(form.errors.length === 0).toBe(true);
     });
+
+    it('can return fulfilled for submit form', () => {
+      const clonedDefinitionToTest: FormState = {
+        ...definitionsToTest,
+        saved: 'saved',
+        form: {
+          ...definitionsToTest.form,
+          definition: {
+            ...definitionsToTest.form.definition,
+            id: 'TEST',
+          },
+        },
+        busy: {
+          ...definitionsToTest.busy,
+          submitting: false,
+        },
+      };
+
+      const action = { type: submitForm.fulfilled, payload };
+      const form = formReducer(clonedDefinitionToTest, action);
+
+      expect(form.form).not.toBeNull();
+      expect(form.busy.submitting).toBe(false);
+    });
+
+    it('can return pending for submit form', () => {
+      const clonedDefinitionToTest: FormState = {
+        ...definitionsToTest,
+        saved: 'saved',
+        form: {
+          ...definitionsToTest.form,
+          definition: {
+            ...definitionsToTest.form.definition,
+            id: 'TEST',
+          },
+        },
+        busy: {
+          ...definitionsToTest.busy,
+          submitting: true,
+        },
+      };
+
+      const action = { type: submitForm.pending, payload };
+      const form = formReducer(clonedDefinitionToTest, action);
+
+      expect(form.form).not.toBeNull();
+      expect(form.busy.submitting).toBe(true);
+    });
+  });
+
+  it('can return rejected for submit form', () => {
+    const clonedDefinitionToTest: FormState = {
+      ...definitionsToTest,
+      saved: 'saved',
+      form: {
+        ...definitionsToTest.form,
+        definition: {
+          ...definitionsToTest.form.definition,
+          id: 'TEST',
+        },
+      },
+      busy: {
+        ...definitionsToTest.busy,
+        submitting: false,
+      },
+    };
+
+    const action = { type: submitForm.rejected, payload };
+    const form = formReducer(clonedDefinitionToTest, action);
+
+    expect(form.form).not.toBeNull();
+    expect(form.busy.submitting).toBe(false);
   });
 });
