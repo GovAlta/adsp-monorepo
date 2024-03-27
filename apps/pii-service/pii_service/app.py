@@ -71,7 +71,8 @@ adsp = adsp_extension.init_app(
             )
         ],
         events=[],
-        api_endpoint_path="/swagger/docs/v1",
+        api_endpoint_path="/pii/v1",
+        docs_endpoint_path="/swagger/docs/v1",
     ),
     {
         "ADSP_ALLOW_CORE": True,
