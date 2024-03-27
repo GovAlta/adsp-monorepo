@@ -289,8 +289,29 @@ Feature: Service status
     Then no critical or serious accessibility issues on "status applications page"
     When the user selects "Notices" tab for "Status"
     Then no critical or serious accessibility issues on "status notices page"
-## CS-1863 is pending for fix
-# When the user clicks Add notice button
-# Then the user views Add notice dialog
-# And no critical or serious accessibility issues for "add notice modal" on "status notices page"
-# When the user clicks Cancel button in notice modal
+  ## CS-1863 is pending for fix
+  # When the user clicks Add notice button
+  # Then the user views Add notice dialog
+  # And no critical or serious accessibility issues for "add notice modal" on "status notices page"
+  # When the user clicks Cancel button in notice modal
+
+  @TEST_CS-2249 @REQ_CS-2058 @regression
+  Scenario: As a tenant admin, I can set a status application to be monitoring only, so it does not appear on the public status page
+    Given a tenant admin user is on status applications page
+    # Set monitor only for an application
+    When the user "selects" Monitor only checkbox for "autotest-testMonitoring"
+    And the user selects "Notices" tab for "Status"
+    And the user clicks Add notice button
+    Then the user "should not view" "autotest-testMonitoring" in applications dropdown in Add notice model
+    # Visiting public status page to verify monitor only application doesn't show up
+    Given a user is on the public service status page for "autotest"
+    Then the user "should not view" "autotest-testMonitoring" application in the status app for "Autotest" tenant
+    # Restore the application
+    Given a tenant admin user is on status applications page
+    When the user "unselects" Monitor only checkbox for "autotest-testMonitoring"
+    And the user selects "Notices" tab for "Status"
+    And the user clicks Add notice button
+    Then the user "views" "autotest-testMonitoring" in applications dropdown in Add notice model
+    # Visiting public status page to verify application shows up again
+    Given a user is on the public service status page for "autotest"
+    Then the user "views" "autotest-testMonitoring" application in the status app for "Autotest" tenant
