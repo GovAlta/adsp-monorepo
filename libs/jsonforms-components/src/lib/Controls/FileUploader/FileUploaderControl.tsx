@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { JsonFormContext } from '../../Context';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
+import { DeleteFileModal } from './DeleteFileModal';
 
 type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
 
@@ -22,11 +23,14 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
+
   const { required, label, i18nKeyPrefix } = props;
 
   const propertyId = i18nKeyPrefix as string;
 
   const variant = uischema?.options?.variant || 'button';
+
+  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
 
   function uploadFile(file: File) {
     if (uploadTrigger) {
@@ -45,7 +49,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   function deleteFile(file: File) {
     if (deleteTrigger) {
       deleteTrigger(file, propertyId);
-      handleChange(propertyId, null);
     }
   }
 
@@ -77,7 +80,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
       ) : (
         <div className="label">{props.label}</div>
       )}
-
       <div className="file-upload">
         <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} />
       </div>
@@ -105,10 +107,21 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                     title="Delete"
                     type="trash"
                     onClick={() => {
-                      deleteFile(getFile());
+                      setShowFileDeleteConfirmation(true);
                     }}
                   />
                 </GoAContextMenu>
+                <DeleteFileModal
+                  isOpen={showFileDeleteConfirmation}
+                  title="Delete file"
+                  content={`Delete file ${getFile().filename} ?`}
+                  onCancel={() => setShowFileDeleteConfirmation(false)}
+                  onDelete={() => {
+                    setShowFileDeleteConfirmation(false);
+                    deleteFile(getFile());
+                    handleChange(propertyId, '');
+                  }}
+                />
               </AttachmentBorder>
             )}
           </div>
@@ -143,5 +156,6 @@ const FileUploaderStyle = styled.div`
 
   .file-upload {
     margin-bottom: var(--goa-space-xs);
+    color: var(--goa-color-text-disabled);
   }
 `;

@@ -1,11 +1,12 @@
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
+import { createAction, createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
 import { hashData } from './util';
 import { loadTopic, selectTopic } from './comment.slice';
+import { loadFileMetadata } from './file.slice';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -36,7 +37,7 @@ interface FormDataResponse {
 type SerializedForm = Omit<Form, 'created' | 'submitted'> & { created: string; submitted?: string };
 export type ValidationError = JsonFormsCore['errors'][number];
 
-interface FormState {
+export interface FormState {
   definitions: Record<string, FormDefinition>;
   selected: string;
   userForm: string;
@@ -167,6 +168,13 @@ export const loadForm = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      if (data.files && Object.values(data.files).length > 0) {
+        const formFiles = Object.values(data.files);
+        for (const file of formFiles) {
+          dispatch(loadFileMetadata(file));
+        }
+      }
 
       dispatch(loadTopic({ resourceId: form.urn, typeId: SUPPORT_TOPIC_TYPE_ID })).then(() =>
         dispatch(selectTopic({ resourceId: form.urn }))
@@ -328,7 +336,7 @@ const initialFormState: FormState = {
   },
 };
 
-const formSlice = createSlice({
+export const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
   reducers: {
@@ -423,8 +431,7 @@ const formSlice = createSlice({
 });
 
 export const formReducer = formSlice.reducer;
-
-const formActions = formSlice.actions;
+export const formActions = formSlice.actions;
 
 export const definitionSelector = createSelector(
   (state: AppState) => state.form.definitions,
