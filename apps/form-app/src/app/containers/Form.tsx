@@ -75,9 +75,16 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   canSubmit={canSubmit}
                   showSubmit={showSubmit}
                   saving={busy.saving}
-                  onChange={({ data, errors }) =>
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }))
-                  }
+                  onChange={({ data, errors }) => {
+                    if (
+                      errors[0]?.message === 'should be equal to one of the allowed values' &&
+                      errors[0]?.schemaPath.includes('enum')
+                    ) {
+                      errors = null;
+                    }
+
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
+                  }}
                   onSubmit={(form) => dispatch(submitForm(form.id))}
                 />
               )}

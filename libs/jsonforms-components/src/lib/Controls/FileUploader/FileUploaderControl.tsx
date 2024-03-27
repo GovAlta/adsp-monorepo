@@ -56,6 +56,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     return () => clearTimeout(timeoutId);
   }, [data, handleChange, fileList, propertyId]);
 
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">
       {required ? (
@@ -63,10 +65,11 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
       ) : (
         <div className="label">{props.label}</div>
       )}
-
-      <div className="file-upload">
-        <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} />
-      </div>
+      {!readOnly && (
+        <div className="file-upload">
+          <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} />
+        </div>
+      )}
       <div>
         {Array.isArray(data) && data[0] === 'Loading' ? (
           <GoAModal open={Array.isArray(data) && data[0] === 'Loading'}>

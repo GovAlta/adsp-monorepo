@@ -80,6 +80,7 @@ import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAE
 import GoACalloutControl, { GoACalloutControlTester } from './lib/Additional/GoACalloutControl';
 
 export * from './lib/Context';
+export * from './lib/common/Ajv';
 const countries = ['Argentina', 'Brazil', 'Canada', 'Denmark', 'Egypt', 'France', 'Greece', 'India', 'Japan', 'Kenya'];
 addData('countries', countries);
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [

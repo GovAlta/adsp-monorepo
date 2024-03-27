@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { useState, useEffect } from 'react';
 import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
 import {
@@ -9,6 +9,7 @@ import {
   StatePropsOfLayout,
   isVisible,
   isEnabled,
+  JsonSchema,
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
@@ -16,6 +17,8 @@ import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
 import { Grid, GridItem } from '../../common/Grid';
+import { getData } from '../../Context';
+
 import {
   Anchor,
   ReviewItem,
@@ -25,6 +28,7 @@ import {
   ReviewListItem,
   ReviewListWrapper,
 } from './styled-components';
+import { JsonFormContext } from '../../Context';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
@@ -96,7 +100,11 @@ export const FormStepper = ({
   visible,
   enabled,
   t,
+  ...props
 }: CategorizationStepperLayoutRendererProps) => {
+  const enumerators = useContext(JsonFormContext);
+  const submitFormFunction = enumerators.submitFunction.get('submit-form');
+  const submitForm = submitFormFunction && submitFormFunction();
   const categorization = uischema as Categorization;
   const [step, setStep] = useState(0);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -107,7 +115,9 @@ export const FormStepper = ({
   );
   const disabledCategoryMap: boolean[] = categories.map((c) => !isEnabled(c, data, '', ajv));
   const handleSubmit = () => {
-    console.log('submitted', data);
+    if (submitForm) {
+      submitForm(data);
+    }
   };
 
   const CategoryLabels = useMemo(() => {
@@ -117,15 +127,21 @@ export const FormStepper = ({
   useEffect(() => {}, [categories.length]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const vslidateFormData = (formData: Array<UISchemaElement>) => {
-    const validate = ajv.compile(schema);
+  const validateFormData = (formData: Array<UISchemaElement>) => {
+    const newSchema = JSON.parse(JSON.stringify(schema));
+
+    Object.keys(newSchema.properties || {}).forEach((p) => {
+      const x = newSchema.properties || {};
+      x[p].enum = getData(p) as string[];
+    });
+    const validate = ajv.compile(newSchema as JsonSchema);
     return validate(formData);
   };
 
   useEffect(() => {
-    const valid = vslidateFormData(data);
+    const valid = validateFormData(data);
     setIsFormValid(valid);
-  }, [data, vslidateFormData]);
+  }, [data, validateFormData]);
 
   if (categories?.length < 1) {
     // eslint-disable-next-line
@@ -186,91 +202,99 @@ export const FormStepper = ({
     );
   };
 
-  const handleEdit = (index: number) => {
+  const changePage = (index: number) => {
     setPage(index + 1);
   };
 
-  return (
-    <Hidden xsUp={!visible}>
-      <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-        <GoAFormStepper
-          testId="form-stepper-test"
-          step={step}
-          onChange={(step) => {
-            setPage(step);
-          }}
-        >
-          {categories?.map((category, index) => {
-            return (
-              <GoAFormStep
-                key={`${CategoryLabels[index]}-tab`}
-                text={`${CategoryLabels[index]}${disabledCategoryMap[index] ? ' (disabled)' : ''}`}
-                status={'incomplete'}
-              />
-            );
-          })}
-          <GoAFormStep text="Review" status="incomplete" />
-        </GoAFormStepper>
-        <GoAPages current={step} mb="xl">
-          {categories?.map((category, index) => {
-            return (
-              <div data-testid={`step_${index}-content`} key={`${CategoryLabels[index]}`}>
-                {renderStepElements(category, index)}
-              </div>
-            );
-          })}
-          <div>
-            <h3 style={{ flex: 1 }}>Summary</h3>
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
-            <ReviewItem>
-              {categories.map((category, index) => {
-                const categoryLabel = category.label || category.i18n || 'Unknown Category';
-                return (
-                  <ReviewItemSection key={index}>
-                    <ReviewItemHeader>
-                      <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-                      <Anchor onClick={() => handleEdit(index)}>Edit</Anchor>
-                    </ReviewItemHeader>
-                    <Grid>{renderFormFields(category.elements, data)}</Grid>
-                  </ReviewItemSection>
-                );
-              })}
-            </ReviewItem>
-          </div>
-        </GoAPages>
-        {step && step !== 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            {step !== 1 ? (
-              <GoAButton
-                type="secondary"
-                disabled={disabledCategoryMap[step - 1] || !enabled}
-                onClick={() => prevPage(step, disabledCategoryMap)}
-              >
-                Previous
-              </GoAButton>
-            ) : (
-              <div></div>
-            )}
-            {step !== null && showNextBtn && (
-              <GoAButton
-                type="primary"
-                disabled={disabledCategoryMap[step - 1] || !enabled}
-                onClick={() => nextPage(step, disabledCategoryMap)}
-              >
-                Next
-              </GoAButton>
-            )}
-            {!showNextBtn && (
-              <div>
-                <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
-                  Submit
+  return (
+    <div data-testid="form-stepper-test-wrapper">
+      <Hidden xsUp={!visible}>
+        <div id={`${path || `goa`}-form-stepper`} className="formStepper">
+          <GoAFormStepper
+            testId="form-stepper-test"
+            step={step}
+            onChange={(step) => {
+              setPage(step);
+            }}
+          >
+            {categories?.map((category, index) => {
+              return (
+                <GoAFormStep
+                  key={`${CategoryLabels[index]}-tab`}
+                  text={`${CategoryLabels[index]}${disabledCategoryMap[index] ? ' (disabled)' : ''}`}
+                  status={'incomplete'}
+                />
+              );
+            })}
+            <GoAFormStep text="Review" status="incomplete" />
+          </GoAFormStepper>
+          <GoAPages current={step} mb="xl">
+            {categories?.map((category, index) => {
+              return (
+                <div
+                  style={{ marginTop: '1.5rem' }}
+                  data-testid={`step_${index}-content`}
+                  key={`${CategoryLabels[index]}`}
+                >
+                  {renderStepElements(category, index)}
+                </div>
+              );
+            })}
+            <div>
+              <h3 style={{ flex: 1, marginBottom: '1rem' }}>Summary</h3>
+
+              <ReviewItem>
+                {categories.map((category, index) => {
+                  const categoryLabel = category.label || category.i18n || 'Unknown Category';
+                  return (
+                    <ReviewItemSection key={index}>
+                      <ReviewItemHeader>
+                        <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
+                        <Anchor onClick={() => changePage(index)}>{readOnly ? 'View' : 'Edit'}</Anchor>
+                      </ReviewItemHeader>
+                      <Grid>{renderFormFields(category.elements, data)}</Grid>
+                    </ReviewItemSection>
+                  );
+                })}
+              </ReviewItem>
+            </div>
+          </GoAPages>
+          {step && step !== 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              {step !== 1 ? (
+                <GoAButton
+                  type="secondary"
+                  disabled={disabledCategoryMap[step - 1] || !enabled}
+                  onClick={() => prevPage(step, disabledCategoryMap)}
+                >
+                  Previous
                 </GoAButton>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </Hidden>
+              ) : (
+                <div></div>
+              )}
+              {step !== null && showNextBtn && (
+                <GoAButton
+                  type="primary"
+                  disabled={disabledCategoryMap[step - 1] || !enabled}
+                  onClick={() => nextPage(step, disabledCategoryMap)}
+                >
+                  Next
+                </GoAButton>
+              )}
+              {!showNextBtn && (
+                <div>
+                  <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
+                    Submit
+                  </GoAButton>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </Hidden>
+    </div>
   );
 };
 

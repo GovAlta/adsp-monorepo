@@ -7,7 +7,9 @@ import * as schemaMigration from 'json-schema-migrate';
 export class AjvValidationService implements ValidationService {
   protected ajv: Ajv.Ajv = new Ajv();
 
-  constructor(private logger: Logger) {}
+  constructor(private logger: Logger) {
+    this.ajv.addFormat('file-urn', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
+  }
 
   setSchema(schemaKey: string, schema: Record<string, unknown>): void {
     if (schema?.$async) {
@@ -19,7 +21,15 @@ export class AjvValidationService implements ValidationService {
         schemaMigration.draft7(schema);
       }
 
-      this.ajv.removeSchema(schemaKey).addSchema(schema || {}, schemaKey);
+      const newSchema = JSON.parse(JSON.stringify(schema));
+
+      Object.keys(newSchema?.properties || {}).forEach((propertyName) => {
+        const property = newSchema.properties || {};
+        if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '')
+          delete property[propertyName].enum;
+      });
+
+      this.ajv.removeSchema(schemaKey).addSchema(newSchema || {}, schemaKey);
     } catch (err) {
       this.logger.error(`Schema for key '${schemaKey}' is invalid.`);
       throw err;

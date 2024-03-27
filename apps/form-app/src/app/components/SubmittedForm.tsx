@@ -1,4 +1,5 @@
 import { GoARenderers } from '@abgov/jsonforms-components';
+import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { GoACallout } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
@@ -18,6 +19,29 @@ const Heading = styled.h2`
   margin-bottom: var(--goa-space-xl);
 `;
 
+export const readOnlyUiSchema = (schema) => {
+  const newSchema = JSON.parse(JSON.stringify(schema));
+  setReadOnly(newSchema);
+  addReadOnly(newSchema.elements);
+
+  return newSchema as UISchemaElement;
+};
+
+const addReadOnly = (elements) => {
+  Array.isArray(elements) &&
+    elements.forEach((element) => {
+      setReadOnly(element);
+      addReadOnly(element.elements);
+    });
+};
+
+const setReadOnly = (element) => {
+  !element.options && (element.options = {});
+  !element.options?.componentProps && (element.options.componentProps = {});
+  element.options.componentProps.readOnly = true;
+  return element;
+};
+
 export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ definition, form, data }) => {
   return (
     <Grid>
@@ -30,7 +54,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
         <JsonForms
           readonly={true}
           schema={definition.dataSchema}
-          uischema={definition.uiSchema}
+          uischema={readOnlyUiSchema(definition.uiSchema)}
           data={data}
           validationMode="NoValidation"
           renderers={GoARenderers}

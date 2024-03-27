@@ -1,5 +1,14 @@
 import React, { useEffect } from 'react';
-import { ControlProps, isEnumControl, and, optionIs, OwnPropsOfEnum, RankedTester, rankWith } from '@jsonforms/core';
+import {
+  ControlProps,
+  isEnumControl,
+  and,
+  optionIs,
+  OwnPropsOfEnum,
+  RankedTester,
+  rankWith,
+  JsonSchema,
+} from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -7,12 +16,16 @@ import { WithOptionLabel } from '@jsonforms/material-renderers';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
+import { GoADropdown } from '@abgov/react-components-new';
 
 import { addDataByOptions, getData } from '../../Context';
 
 type EnumSelectAutoCompleteProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.Element => {
+  type JsonSchemaWithReadOnly = JsonSchema & { readonly?: boolean };
+  //const { data, schema, path, handleChange, uischema, rootSchema: JsonSchemaWithReadOnly } = props;
+  const { rootSchema }: { rootSchema: JsonSchemaWithReadOnly } = props;
   const { data, schema, path, handleChange, uischema } = props;
   let enumData = schema?.enum || [];
 
@@ -43,21 +56,31 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
     defaultProps.options = enumData;
   }
 
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+
   return (
-    <Autocomplete
-      {...defaultProps}
-      id="autocomplete"
-      getOptionLabel={(option) => option}
-      isOptionEqualToValue={(option, value) => option.id === value.id}
-      value={data || null}
-      onChange={(name, value) => {
-        handleChange(path, value);
-        setInputValue(value);
-      }}
-      renderInput={(params) => {
-        return <TextField {...params} variant="outlined" size="small" placeholder={schema?.description} />;
-      }}
-    />
+    <div>
+      {readOnly ? (
+        <div>
+          <GoADropdown disabled={true} placeholder={data} onChange={() => {}}></GoADropdown>
+        </div>
+      ) : (
+        <Autocomplete
+          {...defaultProps}
+          id="autocomplete"
+          getOptionLabel={(option) => option}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          value={data || null}
+          onChange={(name, value) => {
+            handleChange(path, value);
+            setInputValue(value);
+          }}
+          renderInput={(params) => {
+            return <TextField {...params} variant="outlined" size="small" placeholder={schema?.description} />;
+          }}
+        />
+      )}
+    </div>
   );
 };
 
