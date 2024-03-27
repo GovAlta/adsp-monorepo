@@ -1,13 +1,13 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: pii-service
+  name: feedback-service
   annotations:
-    tags: core-services, pii-service
+    tags: core-services, feedback-service
     template.openshift.io/provider-display-name: platform team
-    description: PII Service
+    description: Feedback service
 labels:
-  application: pii-service
+  application: feedback-service
 parameters:
   - name: INFRA_NAMESPACE
     description: Name of the infrastructure project.
@@ -44,39 +44,39 @@ objects:
     kind: ImageStream
     metadata:
       labels:
-        app: pii-service
+        app: feedback-service
         component: api
         apply-infra: 'true'
-      name: pii-service
+      name: feedback-service
       namespace: ${INFRA_NAMESPACE}
     spec:
       tags:
         - name: ${BUILD_TAG}
           from:
             kind: DockerImage
-            name: ghcr.io/govalta/pii-service:${BUILD_TAG}
+            name: ghcr.io/govalta/feedback-service:${BUILD_TAG}
           referencePolicy:
             type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
-  # primary pipeline as well as branch deployment.
+  # primary pipline as well as branch deployment.
   - apiVersion: v1
     kind: DeploymentConfig
     metadata:
       labels:
-        app: pii-service${NAME_SUFFIX}
+        app: feedback-service${NAME_SUFFIX}
         component: api
         apply-branch: 'true'
         apply-dev: 'true'
         apply-test: 'true'
         apply-staging: 'true'
         apply-prod: 'true'
-      name: pii-service${NAME_SUFFIX}
+      name: feedback-service${NAME_SUFFIX}
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: pii-service${NAME_SUFFIX}
+        app: feedback-service${NAME_SUFFIX}
         component: api
       strategy:
         type: Rolling
@@ -95,53 +95,33 @@ objects:
       template:
         metadata:
           labels:
-            app: pii-service${NAME_SUFFIX}
+            app: feedback-service${NAME_SUFFIX}
             component: api
         spec:
           containers:
             - envFrom:
                 - configMapRef:
-                    name: pii-service
+                    name: feedback-service
                 - secretRef:
-                    name: pii-service
+                    name: feedback-service
               env:
                 - name: PORT
-                  value: "3333"
+                  value: '3333'
               imagePullPolicy: IfNotPresent
-              name: pii-service
+              name: feedback-service
               ports:
                 - containerPort: 3333
                   name: http
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 300m
-                  memory: 1Gi
-                requests:
                   cpu: 100m
-                  memory: 100Mi
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
-              # readinessProbe:
-              #   httpGet:
-              #     path: /
-              #     port: 3333
-              #     scheme: HTTP
-              #   initialDelaySeconds: 2
-              #   timeoutSeconds: 1
-              #   periodSeconds: 5
-              #   successThreshold: 1
-              #   failureThreshold: 20
-              # livenessProbe:
-              #   httpGet:
-              #     path: /
-              #     port: 3333
-              #     scheme: HTTP
-              #   initialDelaySeconds: 60
-              #   timeoutSeconds: 2
-              #   periodSeconds: 60
-              #   successThreshold: 1
-              #   failureThreshold: 5
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
@@ -151,24 +131,24 @@ objects:
       triggers:
         - imageChangeParams:
             containerNames:
-              - pii-service
+              - feedback-service
             from:
               kind: ImageStreamTag
-              name: pii-service:${DEPLOY_TAG}
+              name: feedback-service:${DEPLOY_TAG}
               namespace: ${INFRA_NAMESPACE}
           type: ImageChange
   - apiVersion: v1
     kind: Service
     metadata:
       labels:
-        app: pii-service${NAME_SUFFIX}
+        app: feedback-service${NAME_SUFFIX}
         component: api
         apply-branch: 'true'
         apply-dev: 'true'
         apply-test: 'true'
         apply-staging: 'true'
         apply-prod: 'true'
-      name: pii-service${NAME_SUFFIX}
+      name: feedback-service${NAME_SUFFIX}
     spec:
       ports:
         - name: http
@@ -176,7 +156,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: pii-service${NAME_SUFFIX}
+        app: feedback-service${NAME_SUFFIX}
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -184,14 +164,14 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: pii-service${NAME_SUFFIX}
+        app: feedback-service${NAME_SUFFIX}
         component: api
         apply-branch: 'true'
         apply-dev: 'true'
         apply-test: 'true'
         apply-staging: 'true'
         apply-prod: 'true'
-      name: pii-service${NAME_SUFFIX}
+      name: feedback-service${NAME_SUFFIX}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -200,6 +180,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: pii-service${NAME_SUFFIX}
+        name: feedback-service${NAME_SUFFIX}
         weight: 100
       wildcardPolicy: None

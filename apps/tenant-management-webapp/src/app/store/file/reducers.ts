@@ -56,13 +56,15 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
     case DELETE_FILE_SUCCESSES: {
       const newFileList = state.newFileList;
 
-      const keyList = Object.keys(newFileList);
+      if (newFileList) {
+        const keyList = Object.keys(newFileList);
 
-      keyList.forEach((file) => {
-        if (newFileList[file].id === action.payload.data) {
-          delete newFileList[file];
-        }
-      });
+        keyList.forEach((file) => {
+          if (newFileList[file].id === action.payload.data) {
+            delete newFileList[file];
+          }
+        });
+      }
 
       return {
         ...state, // remove delete file from reducer
