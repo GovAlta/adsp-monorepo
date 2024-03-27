@@ -89,12 +89,18 @@ interface FileManagement {
   downloadFile?: (file: File) => void;
   deleteFile?: (file: File) => void;
 }
+interface SubmitManagement {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  submitForm?: (any: any) => void;
+}
 
 type Props = {
   children?: React.ReactNode;
   fileManagement?: FileManagement;
+  submit?: SubmitManagement;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,10 +109,13 @@ const enumFunctions: Map<string, () => (file: File, propertyId: string) => void>
   string,
   () => (file: File, propertyId: string) => void
 >();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const enumSubmitFunctions: Map<string, () => (data: any) => void> = new Map<string, () => (data: any) => void>();
 
 const baseEnumerator = {
   data: enumValues,
   functions: enumFunctions,
+  submitFunction: enumSubmitFunctions,
 };
 
 export const JsonFormContext = createContext(baseEnumerator);
@@ -128,12 +137,29 @@ export function ContextProvider(props: Props): JSX.Element | null {
     enumFunctions.set('delete-file', () => deleteFileFunction);
   }
 
+  console.log(JSON.stringify('running context provider'));
+
+  if (props.submit) {
+    const { submitForm } = props.submit;
+    const submitFunction = submitForm ? submitForm : () => {};
+
+    enumSubmitFunctions.set('submit-form', () => submitFunction);
+  }
+
   if (props.data) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     props.data?.forEach((item: any) => {
       enumValues.set(Object.keys(item)[0], () => item);
     });
   }
+
+  // if (props.functions) {
+  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //   props.functions?.forEach((item: any) => {
+  //     enumFunctions.set(item.name, () => item.genericFunction);
+  //     enumValues.set(Object.keys(item)[0], () => item);
+  //   });
+  // }
 
   if (!props.children) {
     return null;

@@ -1,4 +1,4 @@
-import { GoARenderers } from '@abgov/jsonforms-components';
+import { GoARenderers, ContextProvider, ajv } from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
@@ -26,6 +26,16 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   onChange,
   onSubmit,
 }) => {
+  console.log(JSON.stringify(showSubmit) + '<showSubmit');
+
+  const onSubmitFunction = (data) => {
+    console.log(JSON.stringify(data) + '<data');
+    console.log(JSON.stringify(form) + '<form');
+    onSubmit(form);
+  };
+
+  console.log(JSON.stringify(form) + '<---form');
+
   return (
     <Grid>
       <GridItem md={1} />
@@ -33,19 +43,26 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         <div className="savingIndicator" data-saving={saving}>
           <GoABadge type="information" content="Saving..." />
         </div>
-        <JsonForms
-          readonly={false}
-          schema={definition.dataSchema}
-          uischema={definition.uiSchema}
-          data={data}
-          validationMode="ValidateAndShow"
-          renderers={GoARenderers}
-          onChange={onChange}
-        />
+        <ContextProvider
+          submit={{
+            submitForm: onSubmitFunction,
+          }}
+        >
+          <JsonForms
+            ajv={ajv}
+            readonly={false}
+            schema={definition.dataSchema}
+            uischema={definition.uiSchema}
+            data={data}
+            validationMode="ValidateAndShow"
+            renderers={GoARenderers}
+            onChange={onChange}
+          />
+        </ContextProvider>
         <GoAButtonGroup alignment="end">
           {showSubmit && (
             <GoAButton mt="2xl" disabled={!canSubmit} type="primary" onClick={() => onSubmit(form)}>
-              Submit
+              Submitx
             </GoAButton>
           )}
         </GoAButtonGroup>

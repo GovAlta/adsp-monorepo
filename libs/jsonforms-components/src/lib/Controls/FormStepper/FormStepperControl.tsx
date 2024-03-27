@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { useState, useEffect } from 'react';
 import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
 import {
@@ -9,6 +9,7 @@ import {
   StatePropsOfLayout,
   isVisible,
   isEnabled,
+  JsonSchema,
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
@@ -16,6 +17,8 @@ import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
 import { Grid, GridItem } from '../../common/Grid';
+import { getData } from '../../Context';
+
 import {
   Anchor,
   ReviewItem,
@@ -25,6 +28,7 @@ import {
   ReviewListItem,
   ReviewListWrapper,
 } from './styled-components';
+import { JsonFormContext } from '../../Context';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
@@ -96,7 +100,13 @@ export const FormStepper = ({
   visible,
   enabled,
   t,
+  ...props
 }: CategorizationStepperLayoutRendererProps) => {
+  type JsonSchemaWithReadOnly = JsonSchema & { readonly?: boolean };
+  //const { rootSchema }: { rootSchema: JsonSchemaWithReadOnly } = props;
+  const enumerators = useContext(JsonFormContext);
+  const submitFormFunction = enumerators.submitFunction.get('submit-form');
+  const submitForm = submitFormFunction && submitFormFunction();
   const categorization = uischema as Categorization;
   const [step, setStep] = useState(0);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -108,6 +118,9 @@ export const FormStepper = ({
   const disabledCategoryMap: boolean[] = categories.map((c) => !isEnabled(c, data, '', ajv));
   const handleSubmit = () => {
     console.log('submitted', data);
+    if (submitForm) {
+      submitForm(data);
+    }
   };
 
   const CategoryLabels = useMemo(() => {
@@ -117,15 +130,25 @@ export const FormStepper = ({
   useEffect(() => {}, [categories.length]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const vslidateFormData = (formData: Array<UISchemaElement>) => {
-    const validate = ajv.compile(schema);
+  const validateFormData = (formData: Array<UISchemaElement>) => {
+    console.log(JSON.stringify(schema) + '<schema');
+
+    const newSchema = JSON.parse(JSON.stringify(schema));
+
+    Object.keys(newSchema.properties || {}).forEach((p) => {
+      const x = newSchema.properties || {};
+      x[p].enum = getData(p) as string[];
+    });
+    console.log(JSON.stringify(newSchema) + '<schmma------fffff');
+    const validate = ajv.compile(newSchema as JsonSchema);
     return validate(formData);
   };
 
   useEffect(() => {
-    const valid = vslidateFormData(data);
+    console.log(JSON.stringify(data) + '<data---');
+    const valid = validateFormData(data);
     setIsFormValid(valid);
-  }, [data, vslidateFormData]);
+  }, [data, validateFormData]);
 
   if (categories?.length < 1) {
     // eslint-disable-next-line
@@ -186,9 +209,18 @@ export const FormStepper = ({
     );
   };
 
-  const handleEdit = (index: number) => {
+  const changePage = (index: number) => {
     setPage(index + 1);
   };
+
+  console.log(JSON.stringify(isFormValid) + '<isFormValid');
+  console.log(JSON.stringify(isFormValid) + '<isFormValid');
+  console.log(JSON.stringify(props) + '<propsprops');
+
+  //const readOnly = JSON.parse(JSON.stringify(props.rootSchema)).properties?.readonly?.readOnly;
+
+  //const readOnly = true;
+  const readOnly = rootSchema?.readonly;
 
   return (
     <Hidden xsUp={!visible}>
@@ -214,13 +246,17 @@ export const FormStepper = ({
         <GoAPages current={step} mb="xl">
           {categories?.map((category, index) => {
             return (
-              <div data-testid={`step_${index}-content`} key={`${CategoryLabels[index]}`}>
+              <div
+                style={{ marginTop: '1.5rem' }}
+                data-testid={`step_${index}-content`}
+                key={`${CategoryLabels[index]}`}
+              >
                 {renderStepElements(category, index)}
               </div>
             );
           })}
           <div>
-            <h3 style={{ flex: 1 }}>Summary</h3>
+            <h3 style={{ flex: 1, marginBottom: '1rem' }}>Summary</h3>
 
             <ReviewItem>
               {categories.map((category, index) => {
@@ -229,7 +265,7 @@ export const FormStepper = ({
                   <ReviewItemSection key={index}>
                     <ReviewItemHeader>
                       <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-                      <Anchor onClick={() => handleEdit(index)}>Edit</Anchor>
+                      <Anchor onClick={() => changePage(index)}>{readOnly ? 'View' : 'Edit'}</Anchor>
                     </ReviewItemHeader>
                     <Grid>{renderFormFields(category.elements, data)}</Grid>
                   </ReviewItemSection>
