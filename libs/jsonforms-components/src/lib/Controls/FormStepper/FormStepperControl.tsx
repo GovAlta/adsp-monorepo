@@ -274,13 +274,13 @@ export const FormStepper = ({
           width="640px"
           actions={
             <GoAButtonGroup alignment="end">
-              <GoAButton type="secondary" testId="submit-form" onClick={onSubmit}>
-                Ok
+              <GoAButton type="primary" testId="submit-form" onClick={onSubmit}>
+                Close
               </GoAButton>
             </GoAButtonGroup>
           }
         >
-          <b>Submit is a test for preview purposes</b>(i.e. no actual form is being submitted)
+          <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
         </GoAModal>
       </div>
     </Hidden>

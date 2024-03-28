@@ -16,4 +16,4 @@ RUN pip install --upgrade pip && \
 RUN python -m spacy download en_core_web_lg
 
 # Run the application
-CMD gunicorn -w 2 -b :3333 --timeout 600 --access-logfile - --error-logfile - 'pii_service:app'
+CMD gunicorn -w 1 -b :3333 --timeout 600 --access-logfile - --error-logfile - 'pii_service:app'

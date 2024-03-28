@@ -1,0 +1,57 @@
+{
+  "name": "feedback-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/feedback-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/feedback-service",
+        "main": "apps/feedback-service/src/main.ts",
+        "tsConfig": "apps/feedback-service/tsconfig.app.json",
+        "assets": [],
+        "webpackConfig": "apps/feedback-service/webpack.config.js",
+        "sourceMap": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": []
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "feedback-service:build",
+        "port": 7788
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "feedback-service:build:development"
+        },
+        "production": {
+          "buildTarget": "feedback-service:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/feedback-service/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+}

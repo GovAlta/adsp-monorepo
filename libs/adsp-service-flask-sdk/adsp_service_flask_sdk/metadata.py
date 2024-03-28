@@ -11,22 +11,22 @@ def create_metadata_blueprint(service_id: AdspId, registration: AdspRegistration
     @metadata_blueprint.route("/")
     def get_metadata():
         request_url = urlparse(request.url)
-        links = {"self": request.url}
+        links = {"self": {"href": request.url}}
 
         if registration.health_endpoint_path:
-            links[
-                "health"
-            ] = f"{request_url.scheme}://{request_url.netloc}{registration.health_endpoint_path}"
+            links["health"] = {
+                "href": f"{request_url.scheme}://{request_url.netloc}{registration.health_endpoint_path}"
+            }
 
         if registration.docs_endpoint_path:
-            links[
-                "docs"
-            ] = f"{request_url.scheme}://{request_url.netloc}{registration.docs_endpoint_path}"
+            links["docs"] = {
+                "href": f"{request_url.scheme}://{request_url.netloc}{registration.docs_endpoint_path}"
+            }
 
         if registration.api_endpoint_path:
-            links[
-                "api"
-            ] = f"{request_url.scheme}://{request_url.netloc}{registration.api_endpoint_path}"
+            links["api"] = {
+                "href": f"{request_url.scheme}://{request_url.netloc}{registration.api_endpoint_path}"
+            }
 
         return jsonify(
             {

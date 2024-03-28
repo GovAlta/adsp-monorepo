@@ -37,6 +37,12 @@ class StatusServicePage {
     );
   }
 
+  noticeModalApplicationDropdownItems() {
+    return cy.xpath(
+      '//goa-modal[@open="true"]//goa-dropdown[@data-testid="application-dropdown-list"]//goa-dropdown-item'
+    );
+  }
+
   noticeModalStartTimeField() {
     return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//goa-form-item[@label="Start time"]//goa-input');
   }
@@ -164,6 +170,12 @@ class StatusServicePage {
   applicationCardChangeStatusBtn(appName) {
     return cy.xpath(
       `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//goa-button[text()='Change status']`
+    );
+  }
+
+  applicationCardMonitorOnlyCheckbox(appName) {
+    return cy.xpath(
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]//ancestor::*[@data-testid="application"]//*[@data-testid="monitor-only-checkbox"]`
     );
   }
 

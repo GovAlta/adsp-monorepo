@@ -51,3 +51,34 @@ Then('the user views the status of {string} being the first unused status', func
       });
     });
 });
+
+Then(
+  'the user {string} {string} application in the status app for {string} tenant',
+  function (viewOrNot, appName, tenantName) {
+    const urlToTenantLogin = Cypress.env().statusAppUrl + '/' + tenantName;
+    cy.visit(urlToTenantLogin);
+    cy.wait(3000);
+    let isFound = false;
+    statusAppObj
+      .applicationNames()
+      .then((name) => {
+        for (let i = 0; i < name.length; i++) {
+          if (name[i].outerHTML.includes(appName)) {
+            isFound = true;
+          }
+        }
+      })
+      .then(() => {
+        switch (viewOrNot) {
+          case 'views':
+            expect(isFound).to.eq(true);
+            break;
+          case 'should not view':
+            expect(isFound).to.eq(false);
+            break;
+          default:
+            expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+        }
+      });
+  }
+);
