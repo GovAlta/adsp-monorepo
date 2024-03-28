@@ -8,7 +8,7 @@ import { JsonFormContext } from '../../Context';
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 import { DeleteFileModal } from './DeleteFileModal';
 
-type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
+export type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
 
 export const FileUploader = ({ data, path, handleChange, uischema, ...props }: FileUploaderLayoutRendererProps) => {
   const enumerators = useContext(JsonFormContext);
