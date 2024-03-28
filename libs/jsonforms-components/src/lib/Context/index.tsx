@@ -123,6 +123,7 @@ export function ContextProvider(props: Props): JSX.Element | null {
     const deleteFileFunction = deleteFile ? deleteFile : () => {};
 
     enumValues.set('file-list', () => fileList);
+
     enumFunctions.set('upload-file', () => uploadFileFunction);
     enumFunctions.set('download-file', () => downloadFileFunction);
     enumFunctions.set('delete-file', () => deleteFileFunction);
