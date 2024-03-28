@@ -36,6 +36,9 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     return state?.session?.indicator;
   });
 
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
+
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -45,15 +48,14 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   }, [openAddDefinition]);
 
   useEffect(() => {
-    dispatch(getFormDefinitions());
+    if (Object.keys(formDefinitions).length === 0) {
+      dispatch(getFormDefinitions());
+    }
   }, [dispatch]);
 
   const reset = () => {
     setOpenAddFormDefinition(false);
   };
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [formDefinitions]);
 
   useEffect(() => {
     document.body.style.overflow = 'unset';
@@ -61,18 +63,16 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
 
   return (
     <div>
-      <br />
       <GoAButton
         testId="add-definition"
         onClick={() => {
           setOpenAddFormDefinition(true);
         }}
+        mt={'xl'}
+        mb={'xl'}
       >
         Add definition
       </GoAButton>
-      <br />
-      <br />
-      <PageIndicator />
 
       <AddEditFormDefinition
         open={openAddFormDefinition}
@@ -85,7 +85,8 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
       />
 
       {!indicator.show && !formDefinitions && renderNoItem('form templates')}
-      {!indicator.show && formDefinitions && (
+      {indicator.show && <PageIndicator />}
+      {!indicator.show && Object.keys(formDefinitions).length > 0 && (
         <FormDefinitionsTable
           definitions={formDefinitions}
           onDelete={(currentTemplate) => {
