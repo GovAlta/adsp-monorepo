@@ -19,6 +19,7 @@ const staticProps: FileUploaderLayoutRendererProps & ControlProps = {
   label: 'Supporting Document',
   id: 'supportingDoc',
   config: {},
+  i18nKeyPrefix: 'FileUploader',
   path: '',
   errors: '',
   data: 'My file',
@@ -26,11 +27,11 @@ const staticProps: FileUploaderLayoutRendererProps & ControlProps = {
   required: false,
 };
 
-const contextComponent = (props: FileUploaderLayoutRendererProps) => {
+const ContextComponent = (props: FileUploaderLayoutRendererProps) => {
   return (
     <ContextProvider
       fileManagement={{
-        fileList: {},
+        fileList: { FileUploader: 'urn:1q3e131' },
         uploadFile: jest.fn(),
         downloadFile: jest.fn(),
         deleteFile: jest.fn(),
@@ -44,8 +45,15 @@ const contextComponent = (props: FileUploaderLayoutRendererProps) => {
 describe('FileUploaderControl tests', () => {
   it('can render fileupload control', () => {
     const props = { ...staticProps };
-    const { container } = render(contextComponent(props));
+    const { container } = render(<ContextComponent {...props} />);
     const element = container.querySelector('goa-file-upload-input');
+    expect(element).toBeInTheDocument();
+  });
+
+  it('can render delete modal in fileupload control with a file', () => {
+    const props = { ...staticProps };
+    const { container } = render(<ContextComponent {...props} />);
+    const element = container.querySelector('goa-modal');
     expect(element).toBeInTheDocument();
   });
 });
