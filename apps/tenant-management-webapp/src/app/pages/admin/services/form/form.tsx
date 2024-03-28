@@ -14,18 +14,17 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  function getCalenderDocsLink() {
+  function getFormDocsLink() {
     return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Form service`;
   }
-  function getCalendersupportcodeLink() {
+  function getFormSupportCodeLink() {
     return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/form-service';
   }
-  return <AsideLinks serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />;
+  return <AsideLinks serviceLink={getFormSupportCodeLink()} docsLink={getFormDocsLink()} />;
 };
 
 export const Form: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  //const [activeIndex, setActiveIndex] = useState<number>(0);
 
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
 
@@ -33,7 +32,6 @@ export const Form: FunctionComponent = () => {
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
-
     dispatch(fetchKeycloakServiceRoles());
   }, [dispatch]);
 
