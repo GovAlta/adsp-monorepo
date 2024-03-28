@@ -18,7 +18,9 @@ components:
           type: string
           enum: [en]
         entities:
-          type: string
+          type: array
+          items:
+            type: string
         correlation_id:
           type: string
         score_threshold:
@@ -28,7 +30,9 @@ components:
         return_decision_process:
           type: boolean
         context:
-          type: string
+          type: array
+          items:
+            type: string
       required: [text, language]
     RecognizerResult:
       type: object

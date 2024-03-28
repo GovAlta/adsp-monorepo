@@ -11,6 +11,7 @@ from adsp_service_flask_sdk import (
 )
 from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, request
+from flask_cors import CORS
 from pii_service.recognizers.ca_bank_recognizer import CaBankRecognizer
 from pii_service.recognizers.ca_passport_recognizer import CaPassportRecognizer
 from pii_service.recognizers.ca_sin_recognizer import CaSinRecognizer
@@ -37,6 +38,7 @@ def convert_config(tenant_config, _) -> Dict[str, Any]:
 
 adsp_extension = AdspExtension()
 app = Flask(__name__)
+CORS(app)
 
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
@@ -71,7 +73,8 @@ adsp = adsp_extension.init_app(
             )
         ],
         events=[],
-        api_endpoint_path="/swagger/docs/v1",
+        api_endpoint_path="/pii/v1",
+        docs_endpoint_path="/swagger/docs/v1",
     ),
     {
         "ADSP_ALLOW_CORE": True,
@@ -110,6 +113,9 @@ def supported_entities():
 def analyze():
     analyzer_request = AnalyzerRequest(request.get_json())
 
+    if analyzer_request.language != "en":
+        raise BadRequest("Only en is supported at this time")
+
     if not analyzer_request.text:
         raise BadRequest("No text provided")
 
@@ -141,6 +147,9 @@ def analyze():
 @require_user(service_roles.ANALYZER, allow_core=True)
 def anonymize():
     analyzer_request = AnalyzerRequest(request.get_json())
+
+    if analyzer_request.language != "en":
+        raise BadRequest("Only en is supported at this time")
 
     if not analyzer_request.text:
         raise BadRequest("No text provided")

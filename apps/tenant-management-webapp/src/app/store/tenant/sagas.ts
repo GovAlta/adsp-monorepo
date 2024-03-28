@@ -357,8 +357,6 @@ export function* deleteUserIdpFromCore(action: DeleteUserIdpAction): SagaIterato
         message: 'ADSP default user IdP in the core has been deleted successfully.',
       })
     );
-
-    yield put(ResetLoadingState());
   } catch (err) {
     yield put(
       ErrorNotification({

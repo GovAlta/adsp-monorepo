@@ -22,5 +22,9 @@ class StatusAppPage {
       `//b[contains(text(),"${appName}")]/ancestor::div[@class="flex-column"]//*[@data-testid="service-created-date"]`
     );
   }
+
+  applicationNames() {
+    return cy.xpath('//div[@class="title-line"]/following-sibling::div/div//b');
+  }
 }
 export default StatusAppPage;
