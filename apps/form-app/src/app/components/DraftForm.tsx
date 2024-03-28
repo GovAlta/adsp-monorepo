@@ -2,7 +2,7 @@ import { ContextProvider, GoARenderers, ajv } from '@abgov/jsonforms-components'
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
-import { FunctionComponent, useEffect, useState } from 'react';
+import { FunctionComponent } from 'react';
 import {
   AppDispatch,
   Form,
@@ -10,6 +10,7 @@ import {
   ValidationError,
   deleteFile,
   downloadFile,
+  fileMetaDataSelector,
   filesSelector,
   propertyIdsWithFileMetaDataSelector,
   updateForm,
@@ -42,22 +43,27 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
 
   const dispatch = useDispatch<AppDispatch>();
   const files = useSelector(filesSelector);
-
-  //Contains the property/control id with the file meta data
   const formPropertyIdsWithMetaData = useSelector(propertyIdsWithFileMetaDataSelector);
-
-  useEffect(() => {}, [dispatch, files]);
 
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
   };
 
   const uploadFormFile = async (file: File, propertyId: string) => {
+    let clonedFiles = { ...files };
+
+    // Handle deleting an existing file if a new file is selected to be uploaded again.
+    if (clonedFiles[propertyId]) {
+      const urn = files[propertyId];
+      delete clonedFiles[propertyId];
+      dispatch(deleteFile(urn));
+    }
+
     const fileMetaData = (
       await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file })).unwrap()
     ).metadata;
 
-    const clonedFiles = { ...files };
+    clonedFiles = { ...clonedFiles };
     clonedFiles[propertyId] = fileMetaData.urn;
 
     //Explicitly trigger the updateForm.

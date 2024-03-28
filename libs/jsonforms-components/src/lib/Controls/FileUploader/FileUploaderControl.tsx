@@ -156,6 +156,5 @@ const FileUploaderStyle = styled.div`
 
   .file-upload {
     margin-bottom: var(--goa-space-xs);
-    color: var(--goa-color-text-disabled);
   }
 `;
