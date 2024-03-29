@@ -56,6 +56,7 @@ export const AddEditFormDefinition = ({
   open,
   onSave,
 }: AddEditFormDefinitionProps): JSX.Element => {
+
   const navigate = useNavigate();
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
   const [multiForm, setMultiForm] = useState<boolean>(false);
@@ -72,6 +73,12 @@ export const AddEditFormDefinition = ({
   const descErrMessage = 'Description can not be over 180 characters';
 
   const defaultFormUrl = useSelector((state: RootState) => selectDefaultFormUrl(state, definition?.id || null));
+
+  useEffect(() => {
+    if (open) {
+      dispatch(fetchDirectory());
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (spinner && Object.keys(definitions).length > 0 && !isEdit) {

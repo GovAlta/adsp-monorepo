@@ -48,3 +48,8 @@ export const ListWithDetail = styled.div`
 export const ListWithDetailHeading = styled.h3`
   text-transform: capitalize;
 `;
+
+export const RightAlignmentDiv = styled.div`
+  margin-left: auto;
+  margin-right: 0;
+`;
