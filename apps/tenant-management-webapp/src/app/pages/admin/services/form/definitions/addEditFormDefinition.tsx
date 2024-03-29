@@ -13,11 +13,10 @@ import { FormFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-com
 import { PageIndicator } from '@components/Indicator';
 import { useNavigate } from 'react-router-dom-6';
 import { RootState } from '@store/index';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { uischema } from './categorization-stepper-nav-buttons';
 import { schema } from './categorization';
 import { selectDefaultFormUrl } from '@store/form/selectors';
-import { fetchDirectory } from '@store/directory/actions';
 
 import {
   GoATextArea,
@@ -57,8 +56,6 @@ export const AddEditFormDefinition = ({
   open,
   onSave,
 }: AddEditFormDefinitionProps): JSX.Element => {
-  const dispatch = useDispatch();
-
   const navigate = useNavigate();
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
   const [multiForm, setMultiForm] = useState<boolean>(false);
@@ -75,12 +72,6 @@ export const AddEditFormDefinition = ({
   const descErrMessage = 'Description can not be over 180 characters';
 
   const defaultFormUrl = useSelector((state: RootState) => selectDefaultFormUrl(state, definition?.id || null));
-
-  useEffect(() => {
-    if (open) {
-      dispatch(fetchDirectory());
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (spinner && Object.keys(definitions).length > 0 && !isEdit) {
