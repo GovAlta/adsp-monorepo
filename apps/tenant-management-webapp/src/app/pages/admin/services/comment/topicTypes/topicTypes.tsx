@@ -57,7 +57,9 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
   }, [openAddTopicTypes]);
 
   useEffect(() => {
-    dispatch(getCommentTopicTypes());
+    if (Object.keys(commentTopicTypes).length === 0) {
+      dispatch(getCommentTopicTypes());
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => {
