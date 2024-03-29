@@ -11,7 +11,7 @@ import { PageIndicator } from '@components/Indicator';
 import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
-
+import { fetchDirectory } from '@store/directory/actions';
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
 }
@@ -50,6 +50,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   useEffect(() => {
     if (Object.keys(formDefinitions).length === 0) {
       dispatch(getFormDefinitions());
+      dispatch(fetchDirectory());
     }
   }, [dispatch]);
 
