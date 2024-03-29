@@ -54,7 +54,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       };
     }
     case DELETE_FILE_SUCCESSES: {
-      const newFileList = state.newFileList;
+      const newFileList = { ...state.newFileList };
 
       if (newFileList) {
         const keyList = Object.keys(newFileList);
