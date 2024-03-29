@@ -113,6 +113,9 @@ def supported_entities():
 def analyze():
     analyzer_request = AnalyzerRequest(request.get_json())
 
+    if analyzer_request.language != "en":
+        raise BadRequest("Only en is supported at this time")
+
     if not analyzer_request.text:
         raise BadRequest("No text provided")
 
@@ -144,6 +147,9 @@ def analyze():
 @require_user(service_roles.ANALYZER, allow_core=True)
 def anonymize():
     analyzer_request = AnalyzerRequest(request.get_json())
+
+    if analyzer_request.language != "en":
+        raise BadRequest("Only en is supported at this time")
 
     if not analyzer_request.text:
         raise BadRequest("No text provided")

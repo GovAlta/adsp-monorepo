@@ -7,6 +7,7 @@ import {
   GoAButton,
   GoAModal,
   GoAButtonGroup,
+  GoAGrid,
 } from '@abgov/react-components-new';
 import {
   Categorization,
@@ -36,6 +37,7 @@ import {
   ReviewListWrapper,
   ListWithDetail,
   ListWithDetailHeading,
+  RightAlignmentDiv,
 } from './styled-components';
 import { getAllRequiredFields } from './util/getRequiredFields';
 import { renderFormFields } from './util/GenerateFormFields';
@@ -237,35 +239,35 @@ export const FormStepper = ({
           </div>
         </GoAPages>
         {step && step !== 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            {step !== 1 ? (
-              <GoAButton
-                type="secondary"
-                disabled={disabledCategoryMap[step - 1] || !enabled}
-                onClick={() => prevPage(step, disabledCategoryMap)}
-              >
-                Previous
-              </GoAButton>
-            ) : (
-              <div></div>
-            )}
-            {step !== null && showNextBtn && (
-              <GoAButton
-                type="primary"
-                disabled={disabledCategoryMap[step - 1] || !enabled}
-                onClick={() => nextPage(step, disabledCategoryMap)}
-              >
-                Next
-              </GoAButton>
-            )}
-            {!showNextBtn && (
-              <div>
+          <GoAGrid minChildWidth="100px">
+            <div>
+              {step !== 1 && (
+                <GoAButton
+                  type="secondary"
+                  disabled={disabledCategoryMap[step - 1] || !enabled}
+                  onClick={() => prevPage(step, disabledCategoryMap)}
+                >
+                  Previous
+                </GoAButton>
+              )}
+            </div>
+            <RightAlignmentDiv>
+              {step !== null && showNextBtn && (
+                <GoAButton
+                  type="primary"
+                  disabled={disabledCategoryMap[step - 1] || !enabled}
+                  onClick={() => nextPage(step, disabledCategoryMap)}
+                >
+                  Next
+                </GoAButton>
+              )}
+              {!showNextBtn && (
                 <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
                   Submit
                 </GoAButton>
-              </div>
-            )}
-          </div>
+              )}
+            </RightAlignmentDiv>
+          </GoAGrid>
         )}
         <GoAModal
           testId="submit-confirmation"
@@ -274,8 +276,8 @@ export const FormStepper = ({
           width="640px"
           actions={
             <GoAButtonGroup alignment="end">
-              <GoAButton type="secondary" testId="submit-form" onClick={onSubmit}>
-                Ok
+              <GoAButton type="primary" testId="submit-form" onClick={onSubmit}>
+                Close
               </GoAButton>
             </GoAButtonGroup>
           }

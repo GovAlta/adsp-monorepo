@@ -1,4 +1,3 @@
-import { GoARenderers } from '@abgov/jsonforms-components';
 import { GoAIconButton } from '@abgov/react-components-new';
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -10,6 +9,7 @@ import {
   canSubmitSelector,
   dataSelector,
   definitionSelector,
+  fileBusySelector,
   filesSelector,
   formSelector,
   loadForm,
@@ -49,6 +49,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const data = useSelector(dataSelector);
   const files = useSelector(filesSelector);
   const busy = useSelector(busySelector);
+  const fileBusy = useSelector(fileBusySelector);
   const topic = useSelector(selectedTopicSelector);
   const canSubmit = useSelector(canSubmitSelector);
   const showSubmit = useSelector(showSubmitSelector);
@@ -64,7 +65,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
       <LoadingIndicator isLoading={busy.loading} />
       <div className={className} data-show={showComments}>
         <Container vs={3} hs={1} key={formId}>
-          {definition && form && (
+          {definition && form && !fileBusy.loading && (
             <>
               {form.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
               {form.status === 'draft' && (
@@ -75,9 +76,9 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   canSubmit={canSubmit}
                   showSubmit={showSubmit}
                   saving={busy.saving}
-                  onChange={({ data, errors }) =>
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }))
-                  }
+                  onChange={({ data, errors }) => {
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
+                  }}
                   onSubmit={(form) => dispatch(submitForm(form.id))}
                 />
               )}

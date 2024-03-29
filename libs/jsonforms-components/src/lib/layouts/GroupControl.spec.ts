@@ -1,11 +1,12 @@
 import '@testing-library/jest-dom';
 import { GoAGroupControlComponent } from './GroupControl';
 import { GroupLayout, LayoutProps } from '@jsonforms/core';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 describe('Group Layout tests', () => {
   const groupUiSchema: GroupLayout = {
     type: 'Group',
+    label: 'Test label',
     elements: [
       {
         type: 'Control',
@@ -15,6 +16,22 @@ describe('Group Layout tests', () => {
       componentProps: {
         type: 'success',
         accent: 'thick',
+        padding: 'relaxed',
+      },
+    },
+  };
+  const groupUiSchemaThinAccent: GroupLayout = {
+    type: 'Group',
+    label: 'Test label',
+    elements: [
+      {
+        type: 'Control',
+      },
+    ],
+    options: {
+      componentProps: {
+        type: 'success',
+        accent: 'thin',
         padding: 'relaxed',
       },
     },
@@ -54,6 +71,30 @@ describe('Group Layout tests', () => {
 
   const staticProps: LayoutProps = {
     uischema: groupUiSchema,
+    schema: {},
+    enabled: true,
+    label: 'Group Name',
+    config: {},
+    path: '',
+    data: '',
+    visible: true,
+    direction: 'row',
+  };
+
+  const staticPropsThickAccent: LayoutProps = {
+    uischema: groupUiSchema,
+    schema: {},
+    enabled: true,
+    label: 'Group Name',
+    config: {},
+    path: '',
+    data: '',
+    visible: true,
+    direction: 'row',
+  };
+
+  const staticPropsThinAccent: LayoutProps = {
+    uischema: groupUiSchemaThinAccent,
     schema: {},
     enabled: true,
     label: 'Group Name',
@@ -109,12 +150,35 @@ describe('Group Layout tests', () => {
       const component = render(GoAGroupControlComponent(props));
       expect(component).toBeDefined();
     });
+    it('should render with thick accent and heading', () => {
+      const props = { ...staticPropsThickAccent };
+      const { container } = render(GoAGroupControlComponent(props));
+      expect(container).toBeDefined();
+      const goaContainerEl = container.querySelector('goa-container');
+      expect(goaContainerEl).toHaveAttribute('accent', 'thick');
+      expect(goaContainerEl).toHaveAttribute('type', 'success');
+      expect(goaContainerEl).toHaveAttribute('padding', 'relaxed');
+      expect(screen.getByText('Test label')).toBeInTheDocument();
+    });
+    it('should render with thin accent ', () => {
+      const props = { ...staticPropsThinAccent };
+      const { container } = render(GoAGroupControlComponent(props));
+      expect(container).toBeDefined();
+      const goaContainerEl = container.querySelector('goa-container');
+      expect(goaContainerEl).toHaveAttribute('accent', 'thin');
+      expect(goaContainerEl).toHaveAttribute('type', 'success');
+      expect(goaContainerEl).toHaveAttribute('padding', 'relaxed');
+      const headingElement = container.querySelector('h3');
 
-    it('can check container attributes is valid', () => {
+      expect(headingElement).toBeInTheDocument();
+      expect(headingElement).toHaveTextContent('Test label');
+    });
+
+    it('can check container attributes is valid', async () => {
       const props = { ...staticProps };
       const { container } = render(GoAGroupControlComponent(props));
 
-      const el = container.querySelector('goa-container');
+      const el = await container.querySelector('goa-container');
       const typeAttribute = el?.getAttribute('type');
       const accentAttribute = el?.getAttribute('accent');
       const relaxedAttribute = el?.getAttribute('padding');

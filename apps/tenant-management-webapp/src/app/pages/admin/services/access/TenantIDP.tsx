@@ -7,17 +7,21 @@ import {
   GoASpacer,
   GoABadge,
   GoACircularProgress,
+  GoAIconButton,
 } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import { FetchUserIdByEmail, FETCH_USER_ID_BY_EMAIL, DeleteUserIdp, DELETE_USER_IDP } from '@store/tenant/actions';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { findActionState } from '@store/session/selectors';
+import { ResetLoadingState } from '@store/session/actions';
+
 import { LoadingState } from '@store/session/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { characterCheck, validationPattern } from '@lib/validation/checkInput';
 import { DeleteModal } from '@components/DeleteModal';
 import { LoadingIndicatorContainer } from './styled-component';
+import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 
 export const TenantIdp = (): JSX.Element => {
   const [email, setEmail] = useState('');
@@ -33,6 +37,7 @@ export const TenantIdp = (): JSX.Element => {
   const deleteUserIdpState: LoadingState = useSelector((state: RootState) => findActionState(state, DELETE_USER_IDP));
   const emailValidator = characterCheck(validationPattern.validEmail);
   const { errors, validators } = useValidators('email', 'email', emailValidator).build();
+  const [copied, setCopied] = useState<string>('');
   const [openModal, setOpenModal] = useState<boolean>(false);
   // eslint-disable-next-line
   useEffect(() => {}, [fetchUserIdState, deleteUserIdpState]);
@@ -54,14 +59,30 @@ export const TenantIdp = (): JSX.Element => {
     if (errors['email']) {
       validators.clear();
     }
+
+    if ((fetchUserIdState?.state as unknown) === 'completed') {
+      dispatch(ResetLoadingState());
+      setCopied('');
+    }
+
     setEmail(value);
   };
 
   const deleteUserIdPHandler = () => {
     setDeletedUserIdp(true);
-    setEmail('');
     setOpenModal(false);
     dispatch(DeleteUserIdp(fetchUserIdState?.id, 'core'));
+  };
+
+  const resetFormHandler = () => {
+    setEmail('');
+    setCopied('');
+    dispatch(ResetLoadingState());
+  };
+
+  const copyUserIdHandler = () => {
+    navigator.clipboard.writeText(fetchUserIdState?.id);
+    setCopied(fetchUserIdState?.id);
   };
 
   return (
@@ -96,10 +117,10 @@ export const TenantIdp = (): JSX.Element => {
         </LoadingIndicatorContainer>
       </>
 
-      {fetchedUserInfo && fetchUserIdState?.state === 'completed' && fetchUserIdState?.id === null && (
+      {fetchedUserInfo && fetchUserIdState?.state === 'completed' && !fetchUserIdState?.id && (
         <div>
           <GoASpacer vSpacing="m"></GoASpacer>
-          <GoANotification type="information">{`Cannot find the ${email} in the core realm.`}</GoANotification>
+          <p>{`Cannot find user ${email}`}</p>
         </div>
       )}
 
@@ -110,6 +131,16 @@ export const TenantIdp = (): JSX.Element => {
           <p>
             {`The user id in core realm is: `}
             <GoABadge type="information" testId="user-idp-in-core-badge" content={`${fetchUserIdState?.id}`} />
+            {copied !== fetchUserIdState?.id && (
+              <GoAIconButton
+                testId="copy-user-id-btn"
+                variant="color"
+                size="small"
+                icon="copy"
+                onClick={copyUserIdHandler}
+              />
+            )}
+            {copied === fetchUserIdState?.id && <CheckmarkCircle size={'medium'} />}
           </p>
 
           {
@@ -134,11 +165,13 @@ export const TenantIdp = (): JSX.Element => {
           {
             // eslint-disable-next-line
             (fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore !== true && (
-              <p>
-                We have <b>NOT</b> found the ADSP default IdP link of the user in the core realm.
-              </p>
+              <p>The user is NOT linked to the GoA SSO.</p>
             )
           }
+          <GoASpacer vSpacing="m"></GoASpacer>
+          <GoAButton testId="reset-core-idp-btn" type="secondary" onClick={resetFormHandler}>
+            Reset
+          </GoAButton>
         </GoAFormItem>
       )}
 
