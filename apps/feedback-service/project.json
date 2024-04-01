@@ -13,7 +13,13 @@
         "outputPath": "dist/apps/feedback-service",
         "main": "apps/feedback-service/src/main.ts",
         "tsConfig": "apps/feedback-service/tsconfig.app.json",
-        "assets": [],
+        "assets": [
+          {
+            "glob": "main.js",
+            "input": "dist/libs/adsp-feedback",
+            "output": "./widget/adspFeedback.js"
+          }
+        ],
         "webpackConfig": "apps/feedback-service/webpack.config.js",
         "sourceMap": true
       },
@@ -53,5 +59,6 @@
       }
     }
   },
-  "tags": []
+  "tags": [],
+  "implicitDependencies": ["adsp-feedback"]
 }

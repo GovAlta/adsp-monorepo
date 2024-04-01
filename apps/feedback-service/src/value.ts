@@ -21,6 +21,7 @@ class ValueServiceImpl implements ValueService {
           context: {
             ...context,
             digest,
+            includesComment: !!feedback.comment,
           },
           value: feedback,
           metrics: {

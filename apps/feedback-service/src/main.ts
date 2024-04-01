@@ -2,15 +2,21 @@ import { AdspId, ServiceMetricsValueDefinition, initializePlatform } from '@abgo
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import * as express from 'express';
-import { readFile } from 'fs';
-import { promisify } from 'util';
+import { readFile } from 'fs/promises';
 import * as passport from 'passport';
+import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { environment } from './environments/environment';
 import { createFeedbackQueueService } from './amqp';
-import { ServiceRoles, FeedbackValueDefinition, applyFeedbackMiddleware } from './feedback';
+import {
+  ServiceRoles,
+  FeedbackValueDefinition,
+  applyFeedbackMiddleware,
+  configurationSchema,
+  combineConfiguration,
+} from './feedback';
 import { createPiiService } from './pii';
 import { createValueService } from './value';
 
@@ -30,27 +36,41 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { directory, tenantHandler, tenantStrategy, tokenProvider, healthCheck, metricsHandler, traceHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Feedback service',
-        description: 'Feedback service allows users to submit feedback regarding a service interaction.',
-        roles: [
-          {
-            role: ServiceRoles.FeedbackProvider,
-            description: 'Provider role that allows user to send feedback.',
-          },
-        ],
-        values: [FeedbackValueDefinition, ServiceMetricsValueDefinition],
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
+  const {
+    directory,
+    tenantHandler,
+    tenantService,
+    tenantStrategy,
+    tokenProvider,
+    healthCheck,
+    metricsHandler,
+    traceHandler,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Feedback service',
+      description: 'Feedback service allows users to submit feedback regarding a service interaction.',
+      configuration: {
+        schema: configurationSchema,
+        description: 'Sites and associated configuration of the supported context for feedback.',
       },
-      { logger }
-    );
+      combineConfiguration,
+      roles: [
+        {
+          role: ServiceRoles.FeedbackProvider,
+          description: 'Provider role that allows user to send feedback.',
+        },
+      ],
+      values: [FeedbackValueDefinition, ServiceMetricsValueDefinition],
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger }
+  );
 
   passport.use('tenant', tenantStrategy);
+  passport.use('anonymous', new AnonymousStrategy());
 
   passport.serializeUser(function (user, done) {
     done(null, user);
@@ -65,14 +85,14 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(metricsHandler);
   app.use(traceHandler);
 
-  app.use('/feedback', passport.authenticate(['tenant'], { session: false }), tenantHandler);
+  app.use('/feedback', passport.authenticate(['tenant', 'anonymous'], { session: false }), tenantHandler);
 
   const queueService = await createFeedbackQueueService({ ...environment, logger });
   const piiService = createPiiService({ logger, directory, tokenProvider });
   const valueService = createValueService({ logger, directory, tokenProvider });
-  applyFeedbackMiddleware(app, { logger, queueService, piiService, valueService });
+  await applyFeedbackMiddleware(app, { logger, queueService, piiService, tenantService, valueService });
 
-  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  const swagger = JSON.parse(await readFile(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
     res.json(swagger);
   });

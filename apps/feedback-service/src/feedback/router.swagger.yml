@@ -10,6 +10,8 @@
           schema:
             type: object
             properties:
+              tenant:
+                type: string
               context:
                 type: object
                 properties:
@@ -29,5 +31,9 @@
     responses:
       200:
         description: Feedback successfully sent.
+      400:
+        description: Request is not valid.
       401:
         description: User not authorized to send feedback.
+      429:
+        description: Too many requests received from client.
