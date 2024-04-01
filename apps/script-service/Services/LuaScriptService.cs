@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
@@ -34,7 +35,7 @@ internal sealed class LuaScriptService : ILuaScriptService
     try
     {
       using var lua = new Lua();
-      lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken, _eventService));
+      lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken));
       lua["script"] = script;
       lua["inputs"] = inputs;
 
@@ -77,7 +78,7 @@ internal sealed class LuaScriptService : ILuaScriptService
 
       using var lua = new Lua();
       lua.State.Encoding = Encoding.UTF8;
-      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, getToken, _eventService));
+      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, getToken));
 
       lua["script"] = definition.Script;
       lua["inputs"] = inputs;
@@ -120,11 +121,15 @@ internal sealed class LuaScriptService : ILuaScriptService
     {
       _logger.LogError(e, "Lua error encountered running script {Id}.", definition.Id);
 
+      var message = e.IsNetException && e.InnerException != null ?
+        String.Format(CultureInfo.CurrentCulture, "{0}: {1}", e.InnerException.GetType().FullName, e.InnerException.Message) : e.Message;
+
       var eventPayload = new ScriptExecutionFailed
       {
         JobId = jobId,
         Definition = definition,
-        Error = e.Message,
+        Error = message,
+        Source = e.Source,
         ExecutedBy = user,
         TriggeredBy = trigger
       };
@@ -143,7 +148,7 @@ internal sealed class LuaScriptService : ILuaScriptService
         tenantId
       );
 
-      throw new ScriptRunException(e.Message, e);
+      throw new ScriptRunException(message, e);
     }
     catch (Exception e)
     {

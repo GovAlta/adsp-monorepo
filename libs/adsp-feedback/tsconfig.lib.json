@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "types": [
+      "dom",
+      "es6"
+    ]
+  },
+  "files": [],
+  "exclude": [
+    "jest.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.js",
+    "src/**/*.test.js",
+  ],
+  "include": [
+    "src/**/*.js",
+    "src/**/*.ts",
+  ]
+}

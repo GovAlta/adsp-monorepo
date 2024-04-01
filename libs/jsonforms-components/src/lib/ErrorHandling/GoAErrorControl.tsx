@@ -6,36 +6,19 @@
  */
 
 import React from 'react';
-import { ControlProps, JsonSchema, RankedTester, rankWith } from '@jsonforms/core';
+import { ControlProps, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { isNullSchema, isValidJsonObject } from './errorCheck';
 import { getUISchemaErrors } from './schemaValidation';
-import { MessageControl } from './MessageControl';
-
-const isValidJsonSchema = (schema: JsonSchema): string | null => {
-  if (isNullSchema(schema)) {
-    return '';
-  }
-  if (!isValidJsonObject(schema)) {
-    return 'Unable to render: json schema is not valid.';
-  }
-  return null;
-};
+import { callout } from '../Additional/GoACalloutControl';
 
 // Some 'errors' need not be reported, but we want to handle them
 // here.  e.g.  A layout with empty elements should be quietly ignored.
 // this is handled by the errors !== '' check.
 const ErrorControl = (props: ControlProps): JSX.Element => {
   const { schema, uischema } = props;
-  // Report data schema errors over ui schema ones, as errors in the former
-  // can cause cascading errors in the latter.
-  const dataSchemaErrors = isValidJsonSchema(schema);
-  if (dataSchemaErrors && dataSchemaErrors !== '') {
-    return <p>{dataSchemaErrors}</p>;
-  }
   const uiSchemaErrors = getUISchemaErrors(uischema, schema);
   if (uiSchemaErrors && uiSchemaErrors !== '') {
-    return MessageControl(uiSchemaErrors);
+    return callout({ message: uiSchemaErrors });
   }
   return <span />;
 };
@@ -45,9 +28,8 @@ const ErrorControl = (props: ControlProps): JSX.Element => {
  * one that must get used if there are any errors whatsoever.
  */
 export const GoAErrorControlTester: RankedTester = rankWith(1000, (uischema, schema, context) => {
-  const validJsonSchema = isValidJsonSchema(schema);
   const validUiSchema = getUISchemaErrors(uischema, schema);
-  return validUiSchema != null || validJsonSchema != null;
+  return validUiSchema != null;
 });
 
 export default withJsonFormsControlProps(ErrorControl);

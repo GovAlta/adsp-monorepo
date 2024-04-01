@@ -1,0 +1,124 @@
+openapi: "3.0.0"
+info:
+  title: PII Service
+  version: "1.0.0"
+  description: Service for analyzing and anonymizing text for personally identifiable information (PII).
+tags:
+  - name: PII
+security: []
+components:
+  securitySchemes: {}
+  schemas:
+    AnalyzerRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        language:
+          type: string
+          enum: [en]
+        entities:
+          type: array
+          items:
+            type: string
+        correlation_id:
+          type: string
+        score_threshold:
+          type: number
+          maximum: 1
+          minimum: 0
+        return_decision_process:
+          type: boolean
+        context:
+          type: array
+          items:
+            type: string
+      required: [text, language]
+    RecognizerResult:
+      type: object
+      properties:
+        start:
+          type: integer
+        end:
+          type: integer
+        score:
+          type: number
+        entity_type:
+          type: string
+        analysis_explanation:
+          type: object
+          properties:
+            recognizer:
+              type: string
+            original_score:
+              type: number
+            pattern_name:
+              type: string
+            pattern:
+              type: string
+            validation_result:
+              type: number
+            textual_explanation:
+              type: string
+    AnonymizerResult:
+      type: object
+      properties:
+        text:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+paths:
+  /pii/v1/entities:
+    get:
+      tags:
+        - PII
+      description: Retrieves supported entities.
+      responses:
+        200:
+          description: Successfully retrieved supported entities.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /pii/v1/analyze:
+    post:
+      tags:
+        - PII
+      description: Analyze text for recognized entities.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzerRequest"
+      responses:
+        200:
+          description: Successfully completed analysis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecognizerResult"
+  /pii/v1/anonymize:
+    post:
+      tags:
+        - PII
+      description: Anonymize text to remove entities.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzerRequest"
+      responses:
+        200:
+          description: Successfully anonymized text.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnonymizerResult"

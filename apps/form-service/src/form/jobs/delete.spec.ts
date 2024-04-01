@@ -6,6 +6,8 @@ import { FormStatus } from '../types';
 import { createDeleteJob } from './delete';
 
 describe('delete', () => {
+  const serviceId = adspId`urn:ads:platform:form-service`;
+  const apiId = adspId`${serviceId}:v1`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const loggerMock = {
     debug: jest.fn(),
@@ -99,6 +101,7 @@ describe('delete', () => {
 
   it('can create job', async () => {
     const job = createDeleteJob({
+      apiId,
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
@@ -111,6 +114,7 @@ describe('delete', () => {
 
   it('can delete forms', async () => {
     const job = createDeleteJob({
+      apiId,
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
@@ -132,6 +136,7 @@ describe('delete', () => {
 
   it('can handle repository error', async () => {
     const job = createDeleteJob({
+      apiId,
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
@@ -147,6 +152,7 @@ describe('delete', () => {
 
   it('can handle form delete error', async () => {
     const job = createDeleteJob({
+      apiId,
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,

@@ -1,15 +1,14 @@
-import React from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoAInput, GoAFormItem } from '@abgov/react-components-new';
+import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
+import { checkFieldValidity } from '../../util/stringUtils';
+import { onBlurForTextControl, onKeyPressForTextControl } from '../../util/inputControlUtils';
 
-type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
+export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
-  // eslint-disable-next-line
   const { data, config, id, enabled, uischema, isValid, errors, path, handleChange, schema, label } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
@@ -19,7 +18,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
-
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   return (
     <GoAInput
       error={errorsFormInput.length > 0}
@@ -27,6 +26,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       disabled={!enabled}
       value={data}
       width={'100%'}
+      readonly={readOnly}
       placeholder={placeholder}
       // maxLength={appliedUiSchemaOptions?.maxLength}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
@@ -36,20 +36,19 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       // side effect that causes the validation to render when it shouldnt.
       onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
-        if (!(key === 'Tab' || key === 'Shift')) {
-          if (autoCapitalize === true) {
-            handleChange(path, value.toUpperCase());
-          } else {
-            handleChange(path, value);
-          }
-        }
+        onKeyPressForTextControl({
+          name,
+          value: autoCapitalize ? value.toUpperCase() : value,
+          key,
+          controlProps: props as ControlProps,
+        });
       }}
       onBlur={(name: string, value: string) => {
-        if (autoCapitalize === true) {
-          handleChange(path, value.toUpperCase());
-        } else {
-          handleChange(path, value);
-        }
+        onBlurForTextControl({
+          name,
+          controlProps: props as ControlProps,
+          value: autoCapitalize ? value.toUpperCase() : value,
+        });
       }}
       {...uischema?.options?.componentProps}
     />

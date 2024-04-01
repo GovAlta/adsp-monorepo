@@ -1,5 +1,5 @@
-name: 'NX cypress e2e run'
-description: 'Executes nx e2e for target project.'
+name: "NX cypress e2e run"
+description: "Executes nx e2e for target project."
 inputs:
   app:
     description: APP to run against.
@@ -29,7 +29,7 @@ inputs:
     description: Test user 3 password.
     required: true
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - shell: bash
       run: |
@@ -43,7 +43,7 @@ runs:
           -e "s/\"password3\":.+\"\"/\"password3\": \"${{ inputs.cy-password-3 }}\"/" \
           apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json
     - name: E2E Test
-      uses: cypress-io/github-action@v5
+      uses: cypress-io/github-action@v6
       with:
         install-command: npm ci
         command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headed --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json"
@@ -53,9 +53,9 @@ runs:
         node apps/${{ inputs.app }}-e2e/src/support/multiple-cucumber-html-reporter.js
     - if: ${{ always() }}
       name: Upload Cypress Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.app }}-test-cypress-reports
+        name: ${{ inputs.app }}-${{ inputs.environment }}-cypress-reports
         path: dist/cypress/apps/${{ inputs.app }}-e2e/
     # Comment out the following 2 junit test reporting actions as they both have the issue to report results to wrong workflow.
     # - if: ${{ always() }}

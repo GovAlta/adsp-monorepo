@@ -20,6 +20,7 @@ describe('createTenantV2Router', () => {
     deleteRealm: jest.fn(),
     deleteUserIdp: jest.fn(),
     findUserId: jest.fn(),
+    checkUserDefaultIdpInCore: jest.fn(),
   };
 
   const loggerMock = {
@@ -50,7 +51,7 @@ describe('createTenantV2Router', () => {
     realmServiceMock.deleteRealm.mockReset();
     realmServiceMock.deleteUserIdp.mockReset();
     realmServiceMock.findUserId.mockReset();
-
+    realmServiceMock.checkUserDefaultIdpInCore.mockReset();
     eventServiceMock.send.mockReset();
   });
 

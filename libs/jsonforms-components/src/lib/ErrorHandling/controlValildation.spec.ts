@@ -20,7 +20,7 @@ const validControl = {
 
 const malformedScope = {
   type: 'Control',
-  scope: '#properties/firstName',
+  scope: '//properties/firstName',
 };
 
 const unknownScope = {

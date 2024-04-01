@@ -15,6 +15,7 @@ import {
   GoADropdownItem,
   GoAGrid,
 } from '@abgov/react-components-new';
+import { getTimeFromGMT } from '@lib/timeUtil';
 
 const dateTime = (date, time) => {
   const newDate = new Date(date);
@@ -52,21 +53,14 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
 
   useEffect(() => {
     if (props.noticeId) {
-      const notice = notices.find((nt) => props.noticeId === nt.id);
+      const notice = notices.find((nt) => props?.noticeId === nt.id);
       const currentStartDate = new Date(notice.startDate);
       const currentEndDate = new Date(notice.endDate);
-
       setStartDate(currentStartDate);
       setEndDate(currentEndDate);
 
-      setStartTime(
-        `${currentStartDate.getHours()}:${
-          currentStartDate.getMinutes() < 10 ? '0' : ''
-        }${currentStartDate.getMinutes()}`
-      );
-      setEndTime(
-        `${currentEndDate.getHours()}:${currentEndDate.getMinutes() < 10 ? '0' : ''}${currentEndDate.getMinutes()}`
-      );
+      setStartTime(getTimeFromGMT(currentStartDate));
+      setEndTime(getTimeFromGMT(currentEndDate));
       setMessage(notice.message);
 
       let parsedApplications = [];
@@ -83,6 +77,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
 
   function validDateRangeErrors() {
     if (dateTime(endDate, endTime) < dateTime(startDate, startTime)) {
+      setErrors({ date: 'End date must be later than start date' });
       return { date: 'End date must be later than start date' };
     }
   }
@@ -125,8 +120,6 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       );
 
       if (props.onSave) props.onSave();
-    } else {
-      setErrors(formErrorList);
     }
   }
 
@@ -151,6 +144,10 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     setEndTime('14:00');
     setSelectedApplications([]);
   }
+  const isValidDateString = (dateString) => {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  };
 
   return (
     <GoAModal
@@ -214,26 +211,36 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       <br />
 
       <GoAGrid gap="xl" minChildWidth="220px">
-        <GoAFormItem label="Start Date" error={errors?.['date'] && 'error'}>
+        <GoAFormItem label="Start Date" error={errors?.['date']}>
           <GoAInputDate
             name="StartDate"
             value={startDate}
             width="100%"
             testId="notice-form-start-date-picker"
             onChange={(name, value) => {
-              setStartDate(new Date(value.toLocaleString()));
+              if (isValidDateString(value)) {
+                setErrors({});
+                setStartDate(new Date(value));
+              } else {
+                setErrors({ date: 'Please input right start date format!' });
+              }
             }}
           />
         </GoAFormItem>
 
-        <GoAFormItem label="End Date" error={errors?.['date'] && 'error'}>
+        <GoAFormItem label="End Date">
           <GoAInputDate
             name="EndDate"
             value={endDate}
             width="100%"
             testId="notice-form-end-date-picker"
             onChange={(name, value) => {
-              setEndDate(new Date(value.toLocaleString()));
+              if (isValidDateString(value)) {
+                setErrors({});
+                setEndDate(new Date(value));
+              } else {
+                setErrors({ date: 'Please input right end date format!' });
+              }
             }}
           />
         </GoAFormItem>

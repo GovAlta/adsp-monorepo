@@ -35,7 +35,7 @@ export const selectIsAuthenticated = (state: RootState) => {
   return state?.session?.authenticated === true;
 };
 
-const findActionState = (state: RootState, action) => {
+export const findActionState = (state: RootState, action) => {
   const loadingStates = state.session?.loadingStates;
   const loadingState = loadingStates.find((state) => state.name === action);
   return loadingState;

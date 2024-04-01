@@ -23,8 +23,8 @@ readme = "README.md"
   include = "adsp_service_django_sdk"
 
   [tool.poetry.dependencies]
-  python = ">=3.9,<3.11"
-  django = "^4.2.10"
+  python = ">=3.9,<3.12"
+  django = "^4.2.11"
 
     [tool.poetry.dependencies.adsp-py-common]
     path = "../adsp-py-common"
@@ -35,7 +35,7 @@ flake8 = "^6.0.0"
 pytest = "^7.2.2"
 pytest-coverage = "^0.0"
 pytest-html = "^3.2.0"
-black = "^23.1.0"
+black = "^24.3.0"
 tox = "^4.4.7"
 
 [build-system]

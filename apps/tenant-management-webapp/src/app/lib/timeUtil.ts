@@ -26,3 +26,15 @@ export const FormatTimeWithAt = (date: Date): string => {
   const localTime = `${timeParts[0]}, ${timeParts[1]} at ${timeParts[2].toLowerCase()}`;
   return localTime;
 };
+
+export const getTimeFromGMT = (date: Date): string => {
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  // Pad single digits with leading zeros
+  const formattedHours = hours.toString().padStart(2, '0');
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+
+  // Combine hours and minutes in HH:MM format
+  return `${formattedHours}:${formattedMinutes}`;
+};

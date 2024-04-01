@@ -4,6 +4,7 @@ import AsideLinks from '@components/AsideLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { Overview } from './overview';
 import { ServiceRoles } from './serviceRoles';
+import { TenantIdp } from './TenantIDP';
 
 export default function (): JSX.Element {
   // eslint-disable-next-line
@@ -23,6 +24,10 @@ export default function (): JSX.Element {
 
           <Tab label="Service roles" data-testid="service-roles-tab">
             <ServiceRoles />
+          </Tab>
+
+          <Tab label="Troubleshooting" data-testid="service-ADSP-idp">
+            <TenantIdp />
           </Tab>
         </Tabs>
       </Main>

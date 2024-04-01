@@ -201,24 +201,22 @@ export const WebhookFormModal = (): JSX.Element => {
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['waitInterval']} label="Wait Interval">
-            <div>
-              <GoAInput
-                name="interval"
-                type="number"
-                width="50%"
-                testId="webhook-wait-interval-input"
-                value={(webhook?.intervalMinutes || '').toString()}
-                onChange={(name, value) => {
-                  validators['waitInterval'].check(parseInt(value));
-                  setWebhook({
-                    ...webhook,
-                    intervalMinutes: parseInt(value),
-                  });
-                }}
-                aria-label="description"
-                suffix="min"
-              />
-            </div>
+            <GoAInput
+              name="interval"
+              type="number"
+              width="50%"
+              testId="webhook-wait-interval-input"
+              value={(webhook?.intervalMinutes || '').toString()}
+              onChange={(name, value) => {
+                validators['waitInterval'].check(parseInt(value));
+                setWebhook({
+                  ...webhook,
+                  intervalMinutes: parseInt(value),
+                });
+              }}
+              aria-label="description"
+              trailingContent="min"
+            />
           </GoAFormItem>
 
           <GoAFormItem label="Application">
@@ -277,39 +275,34 @@ export const WebhookFormModal = (): JSX.Element => {
           </GoAFormItem>
           <GoAFormItem error={errors?.['events']} label="Events">
             {!orderedGroupNames && renderNoItem('event definition')}
+            {['monitored-service-down', 'monitored-service-up'].map((name) => {
+              return (
+                <GoACheckbox
+                  name={name}
+                  key={`${name}:${Math.random()}`}
+                  testId="webhook-name"
+                  checked={webhook?.eventTypes?.map((e) => e.id).includes(`status-service:${name}`)}
+                  onChange={(value: string) => {
+                    const eventTypes = webhook?.eventTypes?.map((e) => e.id);
+                    const elementLocation = eventTypes?.indexOf(`status-service:${name}`);
+                    if (elementLocation === -1) {
+                      eventTypes.push(`status-service:${value}`);
+                    } else {
+                      eventTypes.splice(elementLocation, 1);
+                    }
 
-            <DataTable data-testid="events-definitions-table">
-              {['monitored-service-down', 'monitored-service-up'].map((name) => {
-                return (
-                  <Events>
-                    <GoACheckbox
-                      name={name}
-                      key={`${name}:${Math.random()}`}
-                      testId="webhook-name"
-                      checked={webhook?.eventTypes?.map((e) => e.id).includes(`status-service:${name}`)}
-                      onChange={(value: string) => {
-                        const eventTypes = webhook?.eventTypes?.map((e) => e.id);
-                        const elementLocation = eventTypes?.indexOf(`status-service:${name}`);
-                        if (elementLocation === -1) {
-                          eventTypes.push(`status-service:${value}`);
-                        } else {
-                          eventTypes.splice(elementLocation, 1);
-                        }
+                    validators['events'].check(eventTypes);
 
-                        validators['events'].check(eventTypes);
-
-                        setWebhook({
-                          ...webhook,
-                          eventTypes: eventTypes.map((e) => ({ id: e })),
-                        });
-                      }}
-                    >
-                      {name}
-                    </GoACheckbox>
-                  </Events>
-                );
-              })}
-            </DataTable>
+                    setWebhook({
+                      ...webhook,
+                      eventTypes: eventTypes.map((e) => ({ id: e })),
+                    });
+                  }}
+                >
+                  {name}
+                </GoACheckbox>
+              );
+            })}
           </GoAFormItem>
         </>
       ) : (

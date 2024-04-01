@@ -1,0 +1,82 @@
+{
+  "name": "adsp-feedback",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/adsp-feedback/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/libs/adsp-feedback",
+        "baseHref": "/",
+        "main": "libs/adsp-feedback/src/main.ts",
+        "index": "libs/adsp-feedback/src/index.html",
+        "tsConfig": "libs/adsp-feedback/tsconfig.lib.json",
+        "assets": [],
+        "styles": [],
+        "scripts": [
+          "libs/adsp-feedback/src/development.js"
+        ],
+        "webpackConfig": "libs/adsp-feedback/webpack.config.js"
+      },
+      "configurations": {
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true
+        },
+        "production": {
+          "fileReplacements": [],
+          "optimization": true,
+          "sourceMap": false,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false,
+          "commonChunk": false,
+          "runtimeChunk": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "adsp-feedback:build",
+        "static": {
+          "directory": "dist/apps/adsp-feedback",
+          "publicPath": "/"
+        },
+        "hmr": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "adsp-feedback:build:development"
+        },
+        "production": {
+          "buildTarget": "adsp-feedback:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "jestConfig": "libs/adsp-feedback/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+}

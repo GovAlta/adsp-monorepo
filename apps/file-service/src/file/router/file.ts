@@ -1,7 +1,7 @@
 import {
-  adspId,
   AdspId,
   benchmark,
+  DomainEvent,
   EventService,
   startBenchmark,
   UnauthorizedUserError,
@@ -15,80 +15,24 @@ import {
   decodeAfter,
 } from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
-import { param, query } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
-import { FileEntity, FileTypeEntity } from '../model';
 import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
 import { FileCriteria } from '../types';
 import validator from 'validator';
+import { mapFile, mapFileType } from '../mapper';
+import { FileTypeEntity } from '../model';
 
 interface FileRouterProps {
-  serviceId: AdspId;
+  apiId: AdspId;
   logger: Logger;
   storageProvider: FileStorageProvider;
   fileRepository: FileRepository;
   eventService: EventService;
-}
-
-function mapFileType(entity: FileTypeEntity) {
-  return {
-    id: entity.id,
-    name: entity.name,
-    anonymousRead: entity.anonymousRead,
-    updateRoles: entity.updateRoles,
-    readRoles: entity.readRoles,
-    rules: entity?.rules,
-  };
-}
-
-function mapFile(apiId: AdspId, entity: FileEntity) {
-  const mappedFile = {
-    urn: adspId`${apiId}:/files/${entity.id}`.toString(),
-    id: entity.id,
-    filename: entity.filename,
-    size: entity.size,
-    typeName: entity.type?.name,
-    recordId: entity.recordId,
-    created: entity.created,
-    createdBy: entity.createdBy,
-    lastAccessed: entity.lastAccessed,
-    scanned: entity.scanned,
-    infected: entity.infected,
-    mimeType: entity.mimeType,
-    digest: entity.digest,
-    // For old files Security Classification doesn't exist.
-    // So, if they have updated the File Types with a security classification
-    // then the security classification should be added to the object.
-    securityClassification: entity.securityClassification || entity.type?.securityClassification,
-  };
-
-  return mappedFile;
-}
-
-function getTypeOnRequest(_logger: Logger): RequestHandler {
-  return async (req, _res, next) => {
-    try {
-      const user = req.user;
-      const fileEntity = req.fileEntity;
-      const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
-      const entity = configuration?.[fileEntity.typeId];
-
-      if (!entity) {
-        throw new NotFoundError('File Type', fileEntity.typeId);
-      } else if (!entity.canAccess(user)) {
-        throw new UnauthorizedUserError('Access file type', user);
-      }
-
-      req.fileTypeEntity = entity;
-      next();
-    } catch (err) {
-      next(err);
-    }
-  };
 }
 
 export const getTypes: RequestHandler = async (req, res, next) => {
@@ -119,7 +63,6 @@ export function getType(_logger: Logger): RequestHandler {
       } else if (!entity.canAccess(user)) {
         throw new UnauthorizedUserError('Access file type', user);
       }
-      req.fileTypeEntity = entity;
       res.send(mapFileType(entity));
     } catch (err) {
       next(err);
@@ -141,11 +84,11 @@ export function getFiles(apiId: AdspId, repository: FileRepository): RequestHand
       const { top: topValue, after, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 50;
       let criteria: FileCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
-
       criteria = {
         ...criteria,
         deleted: false,
       };
+
       const files = await repository.find(tenantId, top, after as string, criteria);
 
       end();
@@ -164,7 +107,6 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
     try {
       const user = req.user;
       const fileEntity = req.fileEntity;
-      const fileTypeEntity = req.fileTypeEntity;
 
       if (!fileEntity) {
         throw new InvalidOperationError('No file uploaded.');
@@ -173,20 +115,10 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
       // Start of the handling happens in the upload (multer storage engine).
       benchmark(req, 'operation-handler-time');
       const mappedFile = mapFile(apiId, fileEntity);
+
       res.send(mappedFile);
 
-      eventService.send(
-        fileUploaded(fileEntity.tenantId, user, {
-          id: fileEntity.id,
-          filename: fileEntity.filename,
-          size: fileEntity.size,
-          recordId: fileEntity.recordId,
-          created: fileEntity.created,
-          lastAccessed: fileEntity.lastAccessed,
-          createdBy: fileEntity.createdBy,
-          securityClassification: fileTypeEntity.securityClassification,
-        })
-      );
+      eventService.send(fileUploaded(apiId, user, fileEntity));
 
       logger.info(
         `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by user '${user.name}' (ID: ${user.id}).`,
@@ -262,7 +194,7 @@ export function downloadFile(logger: Logger): RequestHandler {
       res.setHeader('Content-Length', fileEntity.size);
 
       if (embed === 'true') {
-        res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
+        res.setHeader('Cache-Control', fileEntity.type.anonymousRead ? 'public' : 'no-store');
         res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
       } else {
         res.setHeader('Cache-Control', 'no-store');
@@ -292,10 +224,9 @@ function validateMimeType(mimeType: string) {
   if (!mimeType) return 'application/octet-stream';
 
   // Need to add base64 to the end of the mime so that the pdf can embed the svg correctly.
-  if (mimeType.indexOf('image/svg+xml') > 0) {
+  if (mimeType.indexOf('image/svg+xml') >= 0) {
     mimeType = `${mimeType};base64`;
   }
-
   return mimeType;
 }
 
@@ -304,7 +235,7 @@ function isSupportedVideoType(mimeType: string): boolean {
   return mimeType === 'video/mp4' || mimeType === 'video/x-msvideo' || mimeType === 'video/quicktime';
 }
 
-export function deleteFile(logger: Logger, eventService: EventService): RequestHandler {
+export function deleteFile(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -326,35 +257,73 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
       end();
       res.send({ deleted: fileEntity.deleted });
 
-      eventService.send(
-        fileDeleted(user, {
-          id: fileEntity.id,
-          filename: fileEntity.filename,
-          size: fileEntity.size,
-          recordId: fileEntity.recordId,
-          created: fileEntity.created,
-          lastAccessed: fileEntity.lastAccessed,
-          createdBy: fileEntity.createdBy,
-          mimeType: fileEntity.mimeType,
-          securityClassification: fileEntity.securityClassification,
-        })
-      );
+      eventService.send(fileDeleted(apiId, user, fileEntity));
     } catch (err) {
       next(err);
     }
   };
-  ``;
+}
+
+export function fileOperation(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
+      const user = req.user;
+      const { operation } = req.body;
+      const fileEntity = req.fileEntity;
+
+      let result: unknown, event: DomainEvent;
+      switch (operation) {
+        case 'copy': {
+          const { filename, type, recordId } = req.body;
+          let fileType: FileTypeEntity = null;
+          if (type) {
+            const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
+            fileType = configuration?.[type];
+            if (!fileType) {
+              throw new NotFoundError('File Type', type);
+            }
+          }
+
+          const copy = await fileEntity.copy(user, filename, fileType, recordId);
+          result = mapFile(apiId, copy);
+          event = fileUploaded(apiId, user, copy);
+
+          logger.info(
+            `File '${fileEntity.filename}' (ID: ${fileEntity.id}) copied to '${copy.filename}' (ID: ${copy.id}) by ` +
+              `user '${user.name}' (ID: ${user.id}).`,
+            {
+              context: 'file-router',
+              tenant: fileEntity.tenantId?.toString(),
+              user: `${user.name} (ID: ${user.id})`,
+            }
+          );
+          break;
+        }
+        default:
+          throw new InvalidOperationError(`File operation '${operation}' not recognized.`);
+      }
+
+      end();
+      res.send(result);
+
+      if (event) {
+        eventService.send(event);
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
 export const createFileRouter = ({
-  serviceId,
+  apiId,
   logger,
   storageProvider,
   fileRepository,
   eventService,
 }: FileRouterProps): Router => {
-  const apiId = adspId`${serviceId}:v1`;
-
   const upload = createUpload({ logger, storageProvider, fileRepository });
   const fileRouter = Router();
 
@@ -376,6 +345,7 @@ export const createFileRouter = ({
         .optional()
         .custom(async (value) => {
           const criteria = JSON.parse(value);
+
           if (criteria?.lastAccessedBefore !== undefined) {
             if (!validator.isISO8601(criteria?.lastAccessedBefore)) {
               throw new InvalidOperationError('lastAccessedBefore requires ISO-8061 date string.');
@@ -390,27 +360,35 @@ export const createFileRouter = ({
     ),
     getFiles(apiId, fileRepository)
   );
-  fileRouter.post(
-    '/files',
-    assertAuthenticatedHandler,
-    upload.single('file'),
-    getTypeOnRequest(logger),
-    uploadFile(apiId, logger, eventService)
-  );
+  fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));
 
-  fileRouter.delete(
-    '/files/:fileId',
-    assertAuthenticatedHandler,
-    createValidationHandler(param('fileId').isUUID()),
-    getFile(fileRepository),
-    deleteFile(logger, eventService)
-  );
   fileRouter.get(
     '/files/:fileId',
     createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository),
     (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity))
   );
+  fileRouter.delete(
+    '/files/:fileId',
+    assertAuthenticatedHandler,
+    createValidationHandler(param('fileId').isUUID()),
+    getFile(fileRepository),
+    deleteFile(apiId, logger, eventService)
+  );
+  fileRouter.post(
+    '/files/:fileId',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('fileId').isUUID(),
+      body('operation').isIn(['copy']),
+      body('type').optional({ nullable: true }).isString().isLength({ min: 1, max: 50 }),
+      body('filename').optional({ nullable: true }).isString(),
+      body('recordId').optional({ nullable: true }).isString()
+    ),
+    getFile(fileRepository),
+    fileOperation(apiId, logger, eventService)
+  );
+
   fileRouter.get(
     '/files/:fileId/download',
     createValidationHandler(

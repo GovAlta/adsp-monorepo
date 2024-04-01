@@ -8,7 +8,6 @@ interface TopicTableItemProps {
   id: string;
   topic: TopicItem;
   selectedType: string;
-  showActions: boolean;
   showDetails: boolean;
   onDeleteTopic?: (Topic) => void;
   onToggleDetails: () => void;
@@ -18,7 +17,6 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
   id,
   topic,
   selectedType,
-  showActions,
   showDetails,
   onDeleteTopic,
   onToggleDetails,
@@ -26,9 +24,9 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
   return (
     <>
       <tr>
-        <td data-testid="topic-list-name">{topic.name}</td>
-        <td data-testid="topic-list-resource-id">{topic.resourceId}</td>
-        <td data-testid="topic-list-action">
+        <td>{topic.name}</td>
+        <td>{topic.resourceId}</td>
+        <td>
           <IconDiv>
             <GoAContextMenuIcon
               title="Toggle details"
@@ -36,14 +34,12 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
               onClick={onToggleDetails}
               testId="toggle-details-visibility"
             />
-            {showActions && (
-              <GoAContextMenuIcon
-                testId="topic-definition-delete"
-                title="Delete"
-                type="trash"
-                onClick={() => onDeleteTopic(topic)}
-              />
-            )}
+            <GoAContextMenuIcon
+              testId="topic-definition-delete"
+              title="Delete"
+              type="trash"
+              onClick={() => onDeleteTopic(topic)}
+            />
           </IconDiv>
         </td>
       </tr>
@@ -54,7 +50,6 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
             style={{
               padding: '0px',
             }}
-            data-testId="show-more-details"
           >
             <MoreDetails>
               <p>Topic description</p>

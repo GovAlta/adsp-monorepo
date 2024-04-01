@@ -12,7 +12,7 @@ interface IScriptFunctions
     string queueNamespace, string queueName, string name,
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
   );
-  string? SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null);
+  bool SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null);
   object? HttpGet(string url);
 
   DispositionResponse? DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason);

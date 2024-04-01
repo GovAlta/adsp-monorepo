@@ -7,15 +7,40 @@ import { Hidden } from '@mui/material';
 
 export const groupTester: RankedTester = rankWith(1, uiTypeIs('Group'));
 
-const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
+export const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
   const { uischema, schema, path, enabled, renderers, cells, visible } = props;
   const group = uischema as GroupLayout;
 
   return (
     <Hidden xsUp={!visible}>
-      <GoAContainer {...group.options} {...uischema?.options?.componentProps}>
-        {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
-      </GoAContainer>
+      {group.options?.componentProps?.accent === 'thick' && (
+        <GoAContainer heading={group.label} {...group.options?.componentProps}>
+          {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
+        </GoAContainer>
+      )}
+
+      {(group.options?.componentProps?.accent === 'thin' || group.options?.componentProps?.accent === 'filled') && (
+        <div>
+          {group.label && <h3>{group.label}</h3>}
+          <GoAContainer {...group.options?.componentProps}>
+            {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
+          </GoAContainer>
+        </div>
+      )}
+      {group.options?.componentProps && !group.options?.componentProps?.accent && (
+        <div>
+          {group.label && <h3>{group.label}</h3>}
+          <GoAContainer {...group.options?.componentProps}>
+            {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
+          </GoAContainer>
+        </div>
+      )}
+      {!group.options?.componentProps && (
+        <div>
+          {group.label && <h3>{group.label}</h3>}
+          <GoAContainer>{renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}</GoAContainer>
+        </div>
+      )}
     </Hidden>
   );
 };

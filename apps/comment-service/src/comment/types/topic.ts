@@ -24,7 +24,7 @@ export interface Topic {
 export interface TopicCriteria {
   tenantIdEquals?: AdspId;
   typeIdEquals?: string;
-  resourceIdEquals?: AdspId;
+  resourceIdEquals?: AdspId | string;
   // nameLike?: string;
   // descriptionLike?: string;
 }

@@ -73,7 +73,6 @@ components:
         description: Return tenant realm roles
       401:
         description: Unauthorized
-
 /api/tenant/v1/email:
   post:
     deprecated: true
@@ -91,6 +90,28 @@ components:
     responses:
       200:
         description: Return tenant information by email
+      401:
+        description: Unauthorized
+/api/tenant/v1/user/default-idp:
+  get:
+    tags:
+      - Tenant service
+    description: Check the ADSP IdP for the given user in the core realm.
+    parameters:
+      - in: query
+        name: userId
+        schema:
+          type: string
+    responses:
+      200:
+        description: Return whether the default IdP exists in core realm or not.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hasDefaultIdpInCore:
+                  type: boolean
       401:
         description: Unauthorized
 
@@ -126,7 +147,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Tenant"
+                    $ref: '#/components/schemas/Tenant'
                 page:
                   type: object
                   properties:
@@ -160,7 +181,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Tenant"
+              $ref: '#/components/schemas/Tenant'
       401:
         description: Unauthorized
 
@@ -182,7 +203,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Tenant"
+              $ref: '#/components/schemas/Tenant'
       401:
         description: Unauthorized
   delete:

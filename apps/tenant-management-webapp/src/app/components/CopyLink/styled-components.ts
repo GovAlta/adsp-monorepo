@@ -20,11 +20,8 @@ export const LinkCopyComponentWrapper = styled.div`
 
 export const CopyLinkToolTipWrapper = styled.div`
   .message {
-    font-size: 0.875rem;
     display: inline;
     position: absolute;
-    top: 0.3rem;
-    left: 2rem;
     width: max-content;
     max-width: 35rem;
     background: var(--color-gray-100);
@@ -34,8 +31,9 @@ export const CopyLinkToolTipWrapper = styled.div`
     padding: 5px 18px;
   }
   .url-tooltip {
-    left: -3rem;
-    font-size: 10px;
+    left: -1rem;
+    top: -3rem;
+    font-size: 0.875rem;
   }
   p {
     position: absolute;

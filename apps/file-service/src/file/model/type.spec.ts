@@ -12,6 +12,14 @@ describe('File Type Entity', () => {
     updateRoles: ['test-admin'],
     readRoles: ['test-admin'],
   };
+  const typeRoleFree: FileType = {
+    tenantId,
+    id: 'type-1',
+    name: 'Type 1',
+    anonymousRead: false,
+    updateRoles: null,
+    readRoles: null,
+  };
 
   const user: User = {
     id: 'user-2',
@@ -32,6 +40,16 @@ describe('File Type Entity', () => {
     expect(entity.anonymousRead).toEqual(type.anonymousRead);
     expect(entity.readRoles).toEqual(type.readRoles);
     expect(entity.updateRoles).toEqual(type.updateRoles);
+  });
+  it('can be initialized without read / update roles', () => {
+    const entity = new FileTypeEntity(typeRoleFree);
+
+    expect(entity).toBeTruthy();
+    expect(entity.id).toEqual(type.id);
+    expect(entity.name).toEqual(type.name);
+    expect(entity.anonymousRead).toEqual(type.anonymousRead);
+    expect(entity.readRoles).toEqual([]);
+    expect(entity.updateRoles).toEqual([]);
   });
 
   it('can create new', () => {

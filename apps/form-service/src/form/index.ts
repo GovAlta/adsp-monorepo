@@ -1,4 +1,4 @@
-import { AdspId, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, adspId } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { FileService } from '../file';
@@ -43,10 +43,11 @@ export const applyFormMiddleware = (
     formSubmissionRepository: submissionRepository,
   }: FormMiddlewareProps
 ): Application => {
-  scheduleFormJobs({ logger, repository, eventService, fileService, notificationService });
+  const apiId = adspId`${serviceId}:v1`;
+  scheduleFormJobs({ apiId, logger, repository, eventService, fileService, notificationService });
 
   const router = createFormRouter({
-    serviceId,
+    apiId,
     repository,
     eventService,
     queueTaskService,
