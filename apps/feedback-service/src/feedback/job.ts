@@ -20,27 +20,33 @@ export function createAnonymizeJob(logger: Logger, piiService: PiiService, value
   ) {
     try {
       const tenantId = AdspId.parse(tenantIdValue);
-      const result = await piiService.anonymize(tenantId, feedback.comment);
 
+      const comment = feedback.comment ? await piiService.anonymize(tenantId, feedback.comment) : '';
       await valueService.writeValue(tenantId, {
         ...feedback,
-        comment: result,
+        comment,
         timestamp: new Date(timestampValue),
         digest,
       });
 
-      logger.info(`Wrote feedback to value service. Digest sha256-${digest}`, {
-        context: 'AnonymizeJob',
-        tenant: tenantIdValue,
-      });
+      logger.info(
+        `Wrote feedback on '${feedback.context.site}${feedback.context.view}' to value service. Digest sha256-${digest}`,
+        {
+          context: 'AnonymizeJob',
+          tenant: tenantIdValue,
+        }
+      );
 
       done();
     } catch (err) {
       if (!retryOnError) {
-        logger.error(`Anonymize of feedback failed with error. ${err}`, {
-          context: 'AnonymizeJob',
-          tenant: tenantIdValue,
-        });
+        logger.error(
+          `Anonymize of feedback on '${feedback.context.site}${feedback.context.view}' failed with error. ${err}`,
+          {
+            context: 'AnonymizeJob',
+            tenant: tenantIdValue,
+          }
+        );
       }
 
       done(err);

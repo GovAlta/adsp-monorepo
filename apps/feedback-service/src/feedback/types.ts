@@ -14,6 +14,6 @@ interface FeedbackContext {
 
 export interface Feedback {
   context: FeedbackContext;
-  rating: Rating;
-  comment: string;
+  rating: Rating | string;
+  comment?: string;
 }
