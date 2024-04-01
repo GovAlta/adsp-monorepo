@@ -34,9 +34,13 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   function uploadFile(file: File) {
     if (uploadTrigger) {
-      const value = ['Loading', Array.isArray(data) ? data[1] : data, file?.name];
-      handleChange(propertyId, value);
       uploadTrigger(file, propertyId);
+      const handleFunction = () => {
+        const value = ['Loading', Array.isArray(data) ? data[1] : file?.name];
+        handleChange(propertyId, value);
+      };
+
+      setTimeout(handleFunction, 1);
     }
   }
 
@@ -64,14 +68,14 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     // UseEffect is required because not having it causes a react update error, but
     // it doesn't function correctly within jsonforms unless there is a minor delay here
     const delayedFunction = () => {
-      if (fileList && Array.isArray(data) && data[1] !== fileList[propertyId]?.urn) {
+      if (fileList) {
         handleChange(propertyId, fileList && fileList[propertyId]?.urn);
       }
     };
 
     const timeoutId = setTimeout(delayedFunction, 1);
     return () => clearTimeout(timeoutId);
-  }, [data, handleChange, fileList, propertyId]);
+  }, [handleChange, fileList, propertyId]);
 
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">
@@ -87,7 +91,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
         {Array.isArray(data) && data[0] === 'Loading' ? (
           <GoAModal open={Array.isArray(data) && data[0] === 'Loading'}>
             <div className="align-center">
-              <GoACircularProgress visible={true} message={`Uploading ${data[2]}`} size="large" />
+              <GoACircularProgress visible={true} message={`Uploading ${data[1]}`} size="large" />
             </div>
           </GoAModal>
         ) : (
