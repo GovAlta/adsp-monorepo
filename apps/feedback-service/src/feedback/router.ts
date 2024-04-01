@@ -39,9 +39,8 @@ export function resolveFeedbackContext(tenantService: TenantService): RequestHan
 
       // If authenticated, verify that the user is permitted to send feedback.
       // This is to support service accounts that might send feedback on behalf of users.
-      if (req.isAuthenticated) {
-        const user = req.user;
-
+      const user = req.user;
+      if (user) {
         if (!isAllowedUser(user, req.tenant.id, ServiceRoles.FeedbackProvider)) {
           throw new UnauthorizedUserError('provide feedback', user);
         }

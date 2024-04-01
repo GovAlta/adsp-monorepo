@@ -37,6 +37,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
+    configurationHandler,
     directory,
     tenantHandler,
     tenantService,
@@ -85,7 +86,12 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(metricsHandler);
   app.use(traceHandler);
 
-  app.use('/feedback', passport.authenticate(['tenant', 'anonymous'], { session: false }), tenantHandler);
+  app.use(
+    '/feedback',
+    passport.authenticate(['tenant', 'anonymous'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
 
   const queueService = await createFeedbackQueueService({ ...environment, logger });
   const piiService = createPiiService({ logger, directory, tokenProvider });

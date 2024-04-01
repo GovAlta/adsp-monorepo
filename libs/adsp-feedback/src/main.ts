@@ -65,14 +65,14 @@ class AdspFeedback {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     };
-    const token = this.getAccessToken();
+    const token = await this.getAccessToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
     const context = await this.getContext();
-    const comment = this.commentRef.value?.value;
-    const rating = this.ratingRef.value?.querySelector<HTMLInputElement>('input[selected]')?.value;
+    const comment = this.commentRef.value?.value || undefined;
+    const rating = this.ratingRef.value?.querySelector<HTMLInputElement>('input[name="rating"]:checked')?.value;
 
     const request: Record<string, unknown> = { context, rating, comment };
     if (this.tenant) {
@@ -88,7 +88,7 @@ class AdspFeedback {
         });
 
         if (!response.ok) {
-          console.log(`None 200 response encountered sending feedback to API: ${response.status}`);
+          console.log(`Response received for sending feedback to API not 200: ${response.status}`);
         }
       } catch (err) {
         console.log(`Error encountered sending feedback to API: ${err}`);
@@ -98,16 +98,20 @@ class AdspFeedback {
     this.feedbackFormRef.value?.setAttribute('data-completed', 'true');
   }
 
-  public initialize({ apiUrl, getAccessToken, getContext }: FeedbackOptions) {
-    if (apiUrl) {
+  public initialize({ apiUrl, tenant, getAccessToken, getContext }: FeedbackOptions) {
+    if (apiUrl && typeof apiUrl === 'string') {
       this.apiUrl = new URL(apiUrl);
     }
 
-    if (getAccessToken && typeof getAccessToken === 'function') {
+    if (tenant && typeof tenant === 'string') {
+      this.tenant = tenant;
+    }
+
+    if (typeof getAccessToken === 'function') {
       this.getAccessToken = getAccessToken;
     }
 
-    if (getContext && typeof getContext === 'function') {
+    if (typeof getContext === 'function') {
       this.getContext = getContext;
     }
 
