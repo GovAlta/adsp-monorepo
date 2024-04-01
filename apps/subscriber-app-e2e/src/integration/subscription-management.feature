@@ -65,3 +65,12 @@ Feature: Subscription management
     And the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "email" as preferred channel
     And the user clicks Save button in contact information
     Then the user views the checked "email" icon for "Application health check change"
+
+  @TEST_CS-2890 @REQ_CS-2863 @regression
+  Scenario: As a subscriber, I can login to the subscription app using the tenant name, so I can access my subscriptions
+    When the user access subscriber app login with the tenant name of "autotest"
+    Then the user can access the log in page with the corresponding tenant id showing in the URL
+    When the user access subscriber app login with the tenant name of "justice-digital"
+    Then the user can access the log in page with the corresponding tenant id showing in the URL
+    When the user access subscriber app login with the tenant name of "nonExistedTenant"
+    Then the user is redirected to the subscription management overview page

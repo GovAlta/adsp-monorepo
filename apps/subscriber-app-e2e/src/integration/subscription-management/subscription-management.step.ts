@@ -177,3 +177,20 @@ Then('the user views a notification message of {string}', function (message) {
   cy.wait(4000); // Wait for the message to show up
   subscriptionManagementObj.notificationMessage().invoke('text').should('contain', message);
 });
+
+When('the user access subscriber app login with the tenant name of {string}', function (tenantName) {
+  const urlToTenantLogin = Cypress.config().baseUrl + tenantName + '/login?kc_idp_hint=';
+  cy.visit(urlToTenantLogin);
+  cy.wait(2000); // Wait all the redirects to settle down
+});
+
+Then('the user can access the log in page with the corresponding tenant id showing in the URL', function () {
+  subscriptionManagementObj.usernameEmailField().should('exist');
+  subscriptionManagementObj.passwordField().should('exist');
+  subscriptionManagementObj.loginButton().should('exist');
+  cy.url().should('match', /realms\/[a-zA-Z0-9-]+\//g); // URL contains realms/<tenant id>/
+});
+
+Then('the user is redirected to the subscription management overview page', function () {
+  subscriptionManagementObj.subscriptionManagementOverviewHeader().should('exist');
+});
