@@ -2,7 +2,7 @@
   "name": "adsp-feedback",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/adsp-feedback/src",
-  "projectType": "application",
+  "projectType": "library",
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
