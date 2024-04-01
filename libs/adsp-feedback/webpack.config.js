@@ -29,7 +29,7 @@ module.exports = composePlugins(withNx(), withWeb(), (config) => {
   config.output.library = {
     name: 'adspFeedback',
     type: 'var',
-    export: ['default', 'adspFeedback'],
+    export: ['default'],
   };
 
   return config;
