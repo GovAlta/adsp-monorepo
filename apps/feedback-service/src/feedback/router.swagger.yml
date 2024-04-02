@@ -37,3 +37,30 @@
         description: User not authorized to send feedback.
       429:
         description: Too many requests received from client.
+
+/feedback/v1/script/adspFeedback.js:
+  get:
+    tags:
+      - Feedback
+    description: Retrieves feedback widget script which can inject a feedback widget to use with this API.
+    responses:
+      200:
+        description: Script successfully retrieved.
+        content:
+          text/javascript: {}
+
+/feedback/v1/script/integrity:
+  get:
+    tags:
+      - Feedback
+    description: Retrieves feedback widget script digest for Subresource integrity (SRI).
+    responses:
+      200:
+        description: Script digest successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                integrity:
+                  type: string
