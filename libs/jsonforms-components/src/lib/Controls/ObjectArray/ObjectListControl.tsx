@@ -20,7 +20,8 @@ import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid, GoAIconButton, GoAContainer } from '@abgov/react-components-new';
-import { ToolBarHeader, ObjectArrayTitle, DisplayWrapper } from './styled-components';
+import { ToolBarHeader, ObjectArrayTitle } from './styled-components';
+import { Visible } from '../../util';
 
 export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport;
 
@@ -330,7 +331,7 @@ export class ObjectArrayControl extends React.Component<ObjectArrayControlProps,
     const listTitle = label || uischema.options?.title;
 
     return (
-      <DisplayWrapper visible={visible} data-testid="jsonforms-object-list-wrapper">
+      <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>
           {listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
           <ObjectArrayToolBar
@@ -360,7 +361,7 @@ export class ObjectArrayControl extends React.Component<ObjectArrayControlProps,
             {...additionalProps}
           />
         </div>
-      </DisplayWrapper>
+      </Visible>
     );
   }
 }

@@ -17,16 +17,12 @@ import {
   StatePropsOfLayout,
   isVisible,
   isEnabled,
-  JsonSchema,
-  JsonSchema4,
-  JsonSchema7,
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { Hidden } from '@mui/material';
-import { Grid, GridItem } from '../../common/Grid';
+import { Grid } from '../../common/Grid';
 import {
   Anchor,
   ReviewItem,
@@ -35,12 +31,11 @@ import {
   ReviewItemTitle,
   ReviewListItem,
   ReviewListWrapper,
-  ListWithDetail,
-  ListWithDetailHeading,
   RightAlignmentDiv,
 } from './styled-components';
 import { getAllRequiredFields } from './util/getRequiredFields';
 import { renderFormFields } from './util/GenerateFormFields';
+import { Visible } from '../../util';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
@@ -166,7 +161,7 @@ export const FormStepper = ({
       /*
         [Mar-04-2024][Paul Li] the GoAPages internal state cannot handle the hidden/display well. We need extra hide/display control to it appropriately.
        */
-      <Hidden xsUp={indexOfCategory !== step - 1}>
+      <Visible visible={indexOfCategory === step - 1}>
         {category.elements.map((elementUiSchema, index) => {
           return (
             <JsonFormsDispatch
@@ -181,7 +176,7 @@ export const FormStepper = ({
             />
           );
         })}
-      </Hidden>
+      </Visible>
     );
   };
 
@@ -190,7 +185,7 @@ export const FormStepper = ({
   };
 
   return (
-    <Hidden xsUp={!visible}>
+    <Visible visible={visible}>
       <div id={`${path || `goa`}-form-stepper`} className="formStepper">
         <GoAFormStepper
           testId="form-stepper-test"
@@ -285,7 +280,7 @@ export const FormStepper = ({
           <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
         </GoAModal>
       </div>
-    </Hidden>
+    </Visible>
   );
 };
 
