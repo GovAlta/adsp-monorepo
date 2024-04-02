@@ -6,27 +6,24 @@ import {
   createValidationHandler,
 } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
-import { rateLimit } from 'express-rate-limit';
+import { RateLimitRequestHandler, rateLimit } from 'express-rate-limit';
 import { checkSchema } from 'express-validator';
 import { readFile } from 'fs/promises';
 import * as hasha from 'hasha';
 import { Logger } from 'winston';
+import { FeedbackConfiguration } from './configuration';
 import { FeedbackWorkItem } from './job';
 import { ServiceRoles } from './roles';
-import { FeedbackConfiguration } from './configuration';
 import { Feedback } from './types';
 
-const rateLimitHandler = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-});
-export function resolveFeedbackContext(tenantService: TenantService): RequestHandler {
+export function resolveFeedbackContext(
+  tenantService: TenantService,
+  rateLimitHandler: RateLimitRequestHandler
+): RequestHandler {
   return async function (req, res, next) {
     try {
       // If no tenant context is set by the SDK handler (which uses user tenant context), then resolve from request body.
-      const { tenant: tenantValue } = req.body;
+      const { tenant: tenantValue } = req.body || {};
       if (!req.tenant && tenantValue) {
         req.tenant = AdspId.isAdspId(tenantValue)
           ? await tenantService.getTenant(AdspId.parse(tenantValue))
@@ -114,7 +111,7 @@ interface WidgetInformation {
 }
 
 let widget: WidgetInformation = null;
-async function getWidgetInformation(): Promise<WidgetInformation> {
+async function loadWidgetInformation(): Promise<WidgetInformation> {
   if (!widget) {
     const script = await readFile(`${__dirname}/widget/adspFeedback.js`, 'utf8');
     const length = Buffer.byteLength(script, 'utf-8');
@@ -124,18 +121,30 @@ async function getWidgetInformation(): Promise<WidgetInformation> {
   return widget;
 }
 
-export async function downloadWidgetScript(_req, res) {
-  const { length, script } = await getWidgetInformation();
-  res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
-  res.setHeader('Cache-Control', 'max-age=864000');
-  res.setHeader('Content-Disposition', `inline`);
-  res.setHeader('Content-Length', length);
-  res.send(script);
+export function downloadWidgetScript(getWidgetInformation: () => Promise<WidgetInformation>): RequestHandler {
+  return async function (_req, res, next) {
+    try {
+      const { length, script } = await getWidgetInformation();
+      res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+      res.setHeader('Cache-Control', 'max-age=864000');
+      res.setHeader('Content-Disposition', `inline`);
+      res.setHeader('Content-Length', length);
+      res.send(script);
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
-export async function getWidgetScriptIntegrity(_req, res) {
-  const { integrity } = await getWidgetInformation();
-  res.json({ integrity });
+export function getWidgetScriptIntegrity(getWidgetInformation: () => Promise<WidgetInformation>): RequestHandler {
+  return async function (req, res, next) {
+    try {
+      const { integrity } = await getWidgetInformation();
+      res.json({ integrity });
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
 interface RouterProps {
@@ -145,6 +154,13 @@ interface RouterProps {
 }
 
 export async function createFeedbackRouter({ logger, tenantService, queueService }: RouterProps) {
+  const rateLimitHandler = rateLimit({
+    windowMs: 5 * 60 * 1000,
+    limit: 5,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+  });
+
   const router = Router();
 
   router.post(
@@ -178,13 +194,13 @@ export async function createFeedbackRouter({ logger, tenantService, queueService
         ['body']
       )
     ),
-    resolveFeedbackContext(tenantService),
+    resolveFeedbackContext(tenantService, rateLimitHandler),
     sendFeedback(logger, queueService)
   );
 
-  router.get('/script/adspFeedback.js', downloadWidgetScript);
+  router.get('/script/adspFeedback.js', downloadWidgetScript(loadWidgetInformation));
 
-  router.get('/script/integrity', getWidgetScriptIntegrity);
+  router.get('/script/integrity', getWidgetScriptIntegrity(loadWidgetInformation));
 
   return router;
 }
