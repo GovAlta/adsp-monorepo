@@ -50,6 +50,6 @@ export const ListWithDetailHeading = styled.h3`
 `;
 
 export const RightAlignmentDiv = styled.div`
-  margin-left: auto;
-  margin-right: 0;
+  display: flex;
+  justify-content: flex-end;
 `;
