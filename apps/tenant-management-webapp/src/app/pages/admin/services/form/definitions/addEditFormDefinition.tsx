@@ -77,9 +77,7 @@ export const AddEditFormDefinition = ({
   const defaultFormUrl = useSelector((state: RootState) => selectDefaultFormUrl(state, definition?.id || null));
 
   useEffect(() => {
-    if (open) {
-      dispatch(fetchDirectory());
-    }
+    dispatch(fetchDirectory());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
