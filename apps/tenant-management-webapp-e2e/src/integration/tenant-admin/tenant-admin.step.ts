@@ -1,9 +1,13 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
+import commonPage from '../common/common.page';
 import commonlib from '../common/common-library';
+import WelcomPage from '../welcome-page/welcome.page';
 import dayjs = require('dayjs');
 
 const tenantAdminObj = new tenantAdminPage();
+const commonObj = new commonPage();
+const welcomPageObj = new WelcomPage();
 let responseObj: Cypress.Response<any>;
 let numOfRows: number;
 
@@ -1210,4 +1214,21 @@ Then('the user views a message of Portrait mode is currently not supported', fun
   tenantAdminObj.portraitModeMessage().should('be.visible');
   // Set the resolution to a supported one
   cy.viewport(1920, 1080);
+});
+
+When('the user access tenant management login with the tenant name of {string}', function (tenantName) {
+  const urlToTenantLogin = Cypress.config().baseUrl + '/' + tenantName + '/login?kc_idp_hint=';
+  cy.visit(urlToTenantLogin);
+  cy.wait(2000); // Wait all the redirects to settle down
+});
+
+Then('the user can access the log in page with the corresponding tenant id showing in the URL', function () {
+  commonObj.usernameEmailField().should('exist');
+  commonObj.passwordField().should('exist');
+  commonObj.loginButton().should('exist');
+  cy.url().should('match', /realms\/[a-zA-Z0-9-]+\//g); // URL contains realms/<tenant id>/
+});
+
+Then('the user is redirected to the tenant management landing page', function () {
+  welcomPageObj.welcomePageTitle().should('contain.text', 'The Alberta Digital Service Platform (ADSP)');
 });
