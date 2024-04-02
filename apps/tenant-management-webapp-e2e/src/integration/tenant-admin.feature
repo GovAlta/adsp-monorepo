@@ -179,3 +179,12 @@ Feature: Tenant admin
     Given a tenant admin user is on tenant admin page
     When the user changes the resolution to a low resolution not supported by tenant management app
     Then the user views a message of Portrait mode is currently not supported
+
+  @TEST_CS-2810 @REQ_CS-2740 @regression
+  Scenario: As a tenant admin, I can access my tenant login by tenant name, so I can easily access the admin web app
+    When the user access tenant management login with the tenant name of "autotest"
+    Then the user can access the log in page with the corresponding tenant id showing in the URL
+    When the user access tenant management login with the tenant name of "justice-digital"
+    Then the user can access the log in page with the corresponding tenant id showing in the URL
+    When the user access tenant management login with the tenant name of "nonExistedTenant"
+    Then the user is redirected to the tenant management landing page
