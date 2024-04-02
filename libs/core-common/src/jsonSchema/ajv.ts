@@ -27,6 +27,9 @@ export class AjvValidationService implements ValidationService {
         const property = newSchema.properties || {};
         if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '')
           delete property[propertyName].enum;
+        if (property[propertyName]?.format === 'file-urn') {
+          delete property[propertyName].format;
+        }
       });
 
       this.ajv.removeSchema(schemaKey).addSchema(newSchema || {}, schemaKey);
