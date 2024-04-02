@@ -1,4 +1,4 @@
-import { callFetchUserIdByEmail, callDeleteUserIdPFromCore } from './api';
+import { callFetchUserIdInCoreByEmail, callDeleteUserIdPFromCore } from './api';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { v4 as uuidv4 } from 'uuid';
@@ -40,7 +40,7 @@ describe('Test tenant api', () => {
     const mock = new MockAdapter(axios);
     const getIdUrl = `${mockHost}/api/tenant/v1/user/id`;
     mock.onGet(getIdUrl, { params: { email: 'mock-email@mock.com' } }).reply(200, { userIdInCore: mockUserId });
-    const userId = await callFetchUserIdByEmail(getIdUrl, token, 'mock-email@mock.com');
+    const userId = await callFetchUserIdInCoreByEmail(getIdUrl, token, 'mock-email@mock.com');
     expect(userId).toBe(mockUserId);
   });
 });

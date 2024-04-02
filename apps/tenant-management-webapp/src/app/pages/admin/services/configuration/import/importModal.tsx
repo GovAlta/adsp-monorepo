@@ -18,7 +18,7 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({
     return (
       <ul>
         {importArray.map((key, index) => (
-          <li>{key}</li>
+          <li key={key}>{key}</li>
         ))}
       </ul>
     );

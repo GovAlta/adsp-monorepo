@@ -1,6 +1,14 @@
 import React, { useContext, useMemo } from 'react';
 import { useState, useEffect } from 'react';
-import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
+import {
+  GoAFormStepper,
+  GoAFormStep,
+  GoAPages,
+  GoAButton,
+  GoAModal,
+  GoAButtonGroup,
+  GoAGrid,
+} from '@abgov/react-components-new';
 import {
   Categorization,
   UISchemaElement,
@@ -10,6 +18,8 @@ import {
   isVisible,
   isEnabled,
   JsonSchema,
+  JsonSchema4,
+  JsonSchema7,
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
@@ -27,65 +37,18 @@ import {
   ReviewItemTitle,
   ReviewListItem,
   ReviewListWrapper,
+  ListWithDetail,
+  ListWithDetailHeading,
+  RightAlignmentDiv,
 } from './styled-components';
 import { JsonFormContext } from '../../Context';
+import { getAllRequiredFields } from './util/getRequiredFields';
+import { renderFormFields } from './util/GenerateFormFields';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
   data: any;
 }
-
-export const resolveLabelFromScope = (scope: string) => {
-  // eslint-disable-next-line no-useless-escape
-  const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
-  const isValid = validPatternRegex.test(scope);
-  if (!isValid) return null;
-
-  const lastSegment = scope.split('/').pop();
-
-  if (lastSegment) {
-    const lowercased = lastSegment.replace(/([A-Z])/g, ' $1').toLowerCase();
-    return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
-  }
-  return '';
-};
-
-export const getFormFieldValue = (scope: string, data: object) => {
-  if (data !== undefined) {
-    const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let currentValue: any = data;
-    for (const key of pathArray) {
-      if (currentValue[key] === undefined) {
-        return '';
-      }
-      currentValue = currentValue[key];
-    }
-    return typeof currentValue === 'object' ? '' : currentValue;
-  } else {
-    return '';
-  }
-};
-
-export const renderFormFields = (elements: UISchemaElement[] | (Category | Categorization)[], data: object) =>
-  elements.map((element, index) => {
-    // const clonedElement = element;
-    const clonedElement = JSON.parse(JSON.stringify(element));
-    if (clonedElement.type === 'Control' && clonedElement.scope) {
-      const label = resolveLabelFromScope(clonedElement.scope);
-      if (!label) return null;
-
-      const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
-      return (
-        <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
-          <strong>{label}:</strong> {value}
-        </GridItem>
-      );
-    } else if (clonedElement?.elements) {
-      return <React.Fragment key={index}>{renderFormFields(clonedElement.elements, data)}</React.Fragment>;
-    }
-    return null;
-  });
 
 export const FormStepper = ({
   uischema,
@@ -106,18 +69,29 @@ export const FormStepper = ({
   const submitFormFunction = enumerators.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
   const categorization = uischema as Categorization;
-  const [step, setStep] = useState(0);
+  const rawCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
+  const [step, setStep] = useState(1);
   const [isFormValid, setIsFormValid] = useState(false);
   const [showNextBtn, setShowNextBtn] = useState(true);
-  const categories = useMemo(
-    () => categorization.elements.filter((category) => isVisible(category, data, '', ajv)),
-    [categorization, data, ajv]
-  );
+  const [isOpen, setIsOpen] = useState(false);
+  const [categories, setCategories] = useState(categorization.elements);
+
+  useEffect(() => {
+    const cates = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
+    setCategories(cates);
+  }, [categorization, data, ajv]);
   const disabledCategoryMap: boolean[] = categories.map((c) => !isEnabled(c, data, '', ajv));
   const handleSubmit = () => {
     if (submitForm) {
       submitForm(data);
     }
+    setIsOpen(true);
+    console.log('submitted', data);
+  };
+
+  const onSubmit = () => {
+    setIsOpen(false);
+    console.log('submitted', data);
   };
 
   const CategoryLabels = useMemo(() => {
@@ -164,6 +138,30 @@ export const FormStepper = ({
     setPage(page);
   }
 
+  function setTab(page: number) {
+    const rawCategoryLabels = rawCategories.elements.map((category) => category.label);
+    if (rawCategoryLabels.length !== CategoryLabels.length) {
+      if (page > 1 && page <= rawCategoryLabels.length) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const selectedTabLabel: any = rawCategoryLabels[page - 1];
+        const selectedTab = CategoryLabels.indexOf(selectedTabLabel);
+        const newStep = selectedTab !== -1 ? selectedTab + 1 : page;
+        page = newStep;
+      }
+      if (page > rawCategoryLabels.length) {
+        page = page - 1;
+      }
+    }
+
+    setStep(page);
+    if (page < 1 || page > categories.length + 1) return;
+    if (categories.length + 1 === page) {
+      setShowNextBtn(false);
+    } else {
+      setShowNextBtn(true);
+    }
+  }
+
   function setPage(page: number) {
     setStep(page);
     if (page < 1 || page > categories.length + 1) return;
@@ -173,6 +171,7 @@ export const FormStepper = ({
       setShowNextBtn(true);
     }
   }
+
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     setStep(0);
@@ -216,14 +215,14 @@ export const FormStepper = ({
             testId="form-stepper-test"
             step={step}
             onChange={(step) => {
-              setPage(step);
+              setTab(step);
             }}
           >
             {categories?.map((category, index) => {
               return (
                 <GoAFormStep
                   key={`${CategoryLabels[index]}-tab`}
-                  text={`${CategoryLabels[index]}${disabledCategoryMap[index] ? ' (disabled)' : ''}`}
+                  text={`${CategoryLabels[index]}`}
                   status={'incomplete'}
                 />
               );
@@ -233,11 +232,7 @@ export const FormStepper = ({
           <GoAPages current={step} mb="xl">
             {categories?.map((category, index) => {
               return (
-                <div
-                  style={{ marginTop: '1.5rem' }}
-                  data-testid={`step_${index}-content`}
-                  key={`${CategoryLabels[index]}`}
-                >
+                <div data-testid={`step_${index}-content`} key={`${CategoryLabels[index]}`}>
                   {renderStepElements(category, index)}
                 </div>
               );
@@ -248,13 +243,14 @@ export const FormStepper = ({
               <ReviewItem>
                 {categories.map((category, index) => {
                   const categoryLabel = category.label || category.i18n || 'Unknown Category';
+                  const requiredFields = getAllRequiredFields(schema);
                   return (
                     <ReviewItemSection key={index}>
                       <ReviewItemHeader>
                         <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
                         <Anchor onClick={() => changePage(index)}>{readOnly ? 'View' : 'Edit'}</Anchor>
                       </ReviewItemHeader>
-                      <Grid>{renderFormFields(category.elements, data)}</Grid>
+                      <Grid>{renderFormFields(category.elements, data, requiredFields)}</Grid>
                     </ReviewItemSection>
                   );
                 })}
@@ -262,36 +258,55 @@ export const FormStepper = ({
             </div>
           </GoAPages>
           {step && step !== 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              {step !== 1 ? (
-                <GoAButton
-                  type="secondary"
-                  disabled={disabledCategoryMap[step - 1] || !enabled}
-                  onClick={() => prevPage(step, disabledCategoryMap)}
-                >
-                  Previous
-                </GoAButton>
-              ) : (
-                <div></div>
-              )}
-              {step !== null && showNextBtn && (
-                <GoAButton
-                  type="primary"
-                  disabled={disabledCategoryMap[step - 1] || !enabled}
-                  onClick={() => nextPage(step, disabledCategoryMap)}
-                >
-                  Next
-                </GoAButton>
-              )}
-              {!showNextBtn && (
-                <div>
-                  <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
-                    Submit
+            <GoAGrid minChildWidth="100px">
+              <div>
+                {step !== 1 ? (
+                  <GoAButton
+                    type="secondary"
+                    disabled={disabledCategoryMap[step - 1] || !enabled}
+                    onClick={() => prevPage(step, disabledCategoryMap)}
+                  >
+                    Previous
                   </GoAButton>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div></div>
+                )}
+              </div>
+              <RightAlignmentDiv>
+                {step !== null && showNextBtn && (
+                  <GoAButton
+                    type="primary"
+                    disabled={disabledCategoryMap[step - 1] || !enabled}
+                    onClick={() => nextPage(step, disabledCategoryMap)}
+                  >
+                    Next
+                  </GoAButton>
+                )}
+                {!showNextBtn && (
+                  <div>
+                    <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
+                      Submit
+                    </GoAButton>
+                  </div>
+                )}
+              </RightAlignmentDiv>
+            </GoAGrid>
           )}
+          <GoAModal
+            testId="submit-confirmation"
+            open={isOpen}
+            heading={'Form Submitted'}
+            width="640px"
+            actions={
+              <GoAButtonGroup alignment="end">
+                <GoAButton type="primary" testId="submit-form" onClick={onSubmit}>
+                  Close
+                </GoAButton>
+              </GoAButtonGroup>
+            }
+          >
+            <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
+          </GoAModal>
         </div>
       </Hidden>
     </div>

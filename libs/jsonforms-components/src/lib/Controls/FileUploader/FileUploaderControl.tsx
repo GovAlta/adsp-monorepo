@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { GoAFileUploadInput, GoAFormItem, GoACircularProgress, GoAModal } from '@abgov/react-components-new';
 import { WithClassname, ControlProps } from '@jsonforms/core';
 
@@ -6,8 +6,9 @@ import styled from 'styled-components';
 import { JsonFormContext } from '../../Context';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
+import { DeleteFileModal } from './DeleteFileModal';
 
-type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
+export type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
 
 export const FileUploader = ({ data, path, handleChange, uischema, ...props }: FileUploaderLayoutRendererProps) => {
   const enumerators = useContext(JsonFormContext);
@@ -17,44 +18,64 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const downloadTrigger = downloadTriggerFunction && downloadTriggerFunction();
   const deleteTriggerFunction = enumerators.functions.get('delete-file');
   const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
+
   const fileListValue = enumerators.data.get('file-list');
+
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
+
   const { required, label, i18nKeyPrefix } = props;
 
   const propertyId = i18nKeyPrefix as string;
 
   const variant = uischema?.options?.variant || 'button';
 
+  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
+
   function uploadFile(file: File) {
     if (uploadTrigger) {
-      handleChange(propertyId, ['Loading', Array.isArray(data) ? data[1] : data, file?.name]);
       uploadTrigger(file, propertyId);
+      const handleFunction = () => {
+        const value = ['Loading', Array.isArray(data) ? data[1] : file?.name];
+        handleChange(propertyId, value);
+      };
+
+      setTimeout(handleFunction, 1);
     }
   }
+
   function downloadFile(file: File) {
     if (downloadTrigger) {
       downloadTrigger(file, propertyId);
     }
   }
+
   function deleteFile(file: File) {
     if (deleteTrigger) {
       deleteTrigger(file, propertyId);
     }
   }
 
+  function getFileName() {
+    return fileList && fileList[props.i18nKeyPrefix as string].filename;
+  }
+
+  function getFile() {
+    return fileList && fileList[props.i18nKeyPrefix as string];
+  }
+
   useEffect(() => {
     // UseEffect is required because not having it causes a react update error, but
     // it doesn't function correctly within jsonforms unless there is a minor delay here
     const delayedFunction = () => {
-      if (fileList && Array.isArray(data) && data[1] !== fileList[propertyId]?.urn) {
+      if (fileList) {
         handleChange(propertyId, fileList && fileList[propertyId]?.urn);
       }
     };
 
     const timeoutId = setTimeout(delayedFunction, 1);
     return () => clearTimeout(timeoutId);
-  }, [data, handleChange, fileList, propertyId]);
+  }, [handleChange, fileList, propertyId]);
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
@@ -74,28 +95,41 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
         {Array.isArray(data) && data[0] === 'Loading' ? (
           <GoAModal open={Array.isArray(data) && data[0] === 'Loading'}>
             <div className="align-center">
-              <GoACircularProgress visible={true} message={`Uploading ${data[2]}`} size="large" />
+              <GoACircularProgress visible={true} message={`Uploading ${data[1]}`} size="large" />
             </div>
           </GoAModal>
         ) : (
           <div>
-            {fileList && fileList[props.i18nKeyPrefix as string] && (
+            {fileList && getFile() && (
               <AttachmentBorder>
-                <div>{fileList && fileList[props.i18nKeyPrefix as string].filename}</div>
+                <div>{getFileName()}</div>
                 <GoAContextMenu>
                   <GoAContextMenuIcon
                     testId="download-icon"
                     title="Download"
                     type="download"
-                    onClick={() => downloadFile(fileList && fileList[props.i18nKeyPrefix as string])}
+                    onClick={() => downloadFile(getFile())}
                   />
                   <GoAContextMenuIcon
                     data-testid="delete-icon"
                     title="Delete"
                     type="trash"
-                    onClick={() => deleteFile(fileList && fileList[props.i18nKeyPrefix as string])}
+                    onClick={() => {
+                      setShowFileDeleteConfirmation(true);
+                    }}
                   />
                 </GoAContextMenu>
+                <DeleteFileModal
+                  isOpen={showFileDeleteConfirmation}
+                  title="Delete file"
+                  content={`Delete file ${getFile().filename} ?`}
+                  onCancel={() => setShowFileDeleteConfirmation(false)}
+                  onDelete={() => {
+                    setShowFileDeleteConfirmation(false);
+                    deleteFile(getFile());
+                    handleChange(propertyId, '');
+                  }}
+                />
               </AttachmentBorder>
             )}
           </div>

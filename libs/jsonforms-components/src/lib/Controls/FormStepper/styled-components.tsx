@@ -41,3 +41,15 @@ export const ReviewListItem = styled.div`
 export const ReviewListWrapper = styled.div`
   margin-bottom: var(--goa-space-m);
 `;
+export const ListWithDetail = styled.div`
+  margin: var(--goa-space-s);
+  width: 100%;
+`;
+export const ListWithDetailHeading = styled.h3`
+  text-transform: capitalize;
+`;
+
+export const RightAlignmentDiv = styled.div`
+  margin-left: auto;
+  margin-right: 0;
+`;

@@ -1,0 +1,39 @@
+/feedback/v1/feedback:
+  post:
+    tags:
+      - Feedback
+    description: Send feedback
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              tenant:
+                type: string
+              context:
+                type: object
+                properties:
+                  site:
+                    type: string
+                  view:
+                    type: string
+                  correlationId:
+                    type: string
+                required: [site, view]
+              rating:
+                type: string
+                enum: [terrible, bad, neutral, good, delightful]
+              comment:
+                type: string
+            required: [context, rating, comment]
+    responses:
+      200:
+        description: Feedback successfully sent.
+      400:
+        description: Request is not valid.
+      401:
+        description: User not authorized to send feedback.
+      429:
+        description: Too many requests received from client.

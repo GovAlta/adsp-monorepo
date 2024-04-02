@@ -37,20 +37,18 @@ const LinkCopyComponent = ({ link, text }: LinkCopyComponentProps): JSX.Element 
     >
       {isCopied && (
         <CopyLinkToolTipClipboardWrapper>
-          <p>
-            <div className="checkmark-icon">
-              <GreenCircleCheckMark />
-            </div>
-            <div className="message-clipboard">Link copied to clipboard</div>
-          </p>
+          <div className="checkmark-icon">
+            <GreenCircleCheckMark />
+          </div>
+          <div className="message-clipboard">
+            <p>Link copied to clipboard </p>
+          </div>
         </CopyLinkToolTipClipboardWrapper>
       )}
 
       {!isCopied && isShowURL && (
         <CopyLinkToolTipWrapper>
-          <p className="url-tooltip">
-            <div className="message">{link}</div>
-          </p>
+          <p className="url-tooltip message">{link}</p>
         </CopyLinkToolTipWrapper>
       )}
       <GoAButton

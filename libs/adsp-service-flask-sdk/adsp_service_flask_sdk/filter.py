@@ -144,6 +144,8 @@ def require_user(
 
             return func(*args, **kwargs)
 
+        # Flask route decorator will complain for duplicate names on wrapped handler functions.
+        wrapper.__name__ = func.__name__
         return wrapper
 
     return decorator
