@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom-6';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { HeaderCtx } from '@lib/headerContext';

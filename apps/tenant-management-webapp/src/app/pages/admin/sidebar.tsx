@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { NavLink } from 'react-router-dom-6';
+import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import LogoutIcon from '@icons/log-out-outline.svg';
 

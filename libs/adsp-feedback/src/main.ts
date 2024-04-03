@@ -1,22 +1,8 @@
 import { html, render } from 'lit-html';
 import { ref, createRef, Ref } from 'lit-html/directives/ref.js';
+import { AdspFeedback as AdspFeedbackApi, FeedbackContext, FeedbackOptions } from './types';
 
-export interface FeedbackContext {
-  tenant?: string;
-  site: string;
-  view: string;
-  interaction?: string;
-}
-
-export interface FeedbackOptions {
-  tenant?: string;
-  site?: string;
-  apiUrl?: string;
-  getAccessToken?: () => Promise<string>;
-  getContext?: () => Promise<FeedbackContext>;
-}
-
-class AdspFeedback {
+class AdspFeedback implements AdspFeedbackApi {
   private tenant: string = '';
   private apiUrl: URL | null = null;
   private getAccessToken = function () {
@@ -42,12 +28,12 @@ class AdspFeedback {
     };
   }
 
-  public openFeedbackForm() {
+  private openFeedbackForm() {
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'true');
   }
 
-  public closeFeedbackForm() {
+  private closeFeedbackForm() {
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'true');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
   }
@@ -155,13 +141,20 @@ class AdspFeedback {
             padding: 24px 48px;
             transition: transform 100ms;
           }
+          .adsp-fb .adsp-fb-form-rating {
+            border: 0;
+            margin: 12px 0 0 0;
+            padding: 0;
+          }
+          .adsp-fb .adsp-fb-form-rating legend {
+            margin-bottom: 12px;
+          }
           .adsp-fb .adsp-fb-form-comment {
             flex: 1;
             display: flex;
             flex-direction: column;
             margin-top: 24px;
           }
-
           .adsp-fb .adsp-fb-form-comment textarea {
             margin-top: 12px;
             resize: none;
@@ -203,6 +196,7 @@ class AdspFeedback {
           }
           .adsp-fb .adsp-fb-sent {
             position: absolute;
+            visibility: hidden;
             top: 0;
             right: 0;
             height: 100%;
@@ -234,6 +228,7 @@ class AdspFeedback {
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             transform: none;
+            visibility: visible;
           }
         </style>`,
         head
@@ -310,7 +305,7 @@ class AdspFeedback {
 
 const adspFeedback = new AdspFeedback();
 
-//@ts-expect-error - This is to support the development scaffold.
+// This is to support the development scaffold.
 // Consuming apps should include non-module script element which will import and set global variable.
 window.adspFeedback = adspFeedback;
 

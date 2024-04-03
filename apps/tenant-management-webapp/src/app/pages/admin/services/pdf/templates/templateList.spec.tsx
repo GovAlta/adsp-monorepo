@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { render, fireEvent, screen } from '@testing-library/react';
 import { PdfTemplateItem } from './templateListItem';
-import { MemoryRouter } from 'react-router-dom-6';
+import { MemoryRouter } from 'react-router-dom';
 import { PdfTemplatesTable } from './templatesList';
 
 describe('Test Pdf list page', () => {

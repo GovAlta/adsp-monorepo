@@ -15,7 +15,7 @@ export const noticeReducer = (state: Notices = NoticeInit, action: ActionTypes):
     case 'status/notices/fetch/success': {
       const notices = action.payload;
       const allApplicationsNotices = notices.filter((notice) => {
-        return notice.isAllApplications === true;
+        return notice.isAllApplications === true && new Date(notice.endDate) > new Date();
       });
       return {
         ...state,

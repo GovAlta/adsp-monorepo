@@ -7,7 +7,7 @@ import {
   ModalContent,
   HideTablet,
 } from './styled-components';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { QueueModalEditor } from './queueModalEditor';
 import { TabletMessage } from '@components/TabletMessage';
 

@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
 import { OverviewLayout } from '@components/Overview';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 
 interface CommentOverviewProps {
   setOpenAddTopicTypes: (val: boolean) => void;
