@@ -8,7 +8,7 @@ export class AjvValidationService implements ValidationService {
   protected ajv: Ajv.Ajv = new Ajv();
 
   constructor(private logger: Logger) {
-    this.ajv.addFormat('file-urn', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
+    this.ajv.addFormat('file-urn', /^urn:ads:platform:file-service:v[0-9]:\/files\/[a-zA-Z0-9.-]*$/);
   }
 
   setSchema(schemaKey: string, schema: Record<string, unknown>): void {

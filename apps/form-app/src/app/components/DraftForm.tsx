@@ -11,8 +11,8 @@ import {
   deleteFile,
   downloadFile,
   filesSelector,
+  formActions,
   metaDataSelector,
-  updateForm,
   uploadFile,
 } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
@@ -64,9 +64,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
 
     clonedFiles = { ...clonedFiles };
     clonedFiles[propertyId] = fileMetaData.urn;
-
-    //Explicitly trigger the updateForm
-    dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
+    dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
   const downloadFormFile = async (file) => {
@@ -83,12 +81,9 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     const propertyId = getKeyByValue(clonedFiles, file.urn);
 
     await dispatch(deleteFile({ urn: file.urn, propertyId }));
-
     delete clonedFiles[propertyId];
 
-    //Explicitly trigger the updateForm as the file upload control may not have updated
-    //file list to remove the icon buttons when handleChange is called.
-    dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
+    dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
   return (
