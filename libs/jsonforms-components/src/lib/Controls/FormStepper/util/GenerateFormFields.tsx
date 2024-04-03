@@ -48,7 +48,7 @@ export const renderFormFields = (
     const clonedElement = JSON.parse(JSON.stringify(element));
     const lastSegment: string = clonedElement.scope?.split('/').pop();
     if (clonedElement.type === 'Control' && clonedElement.scope) {
-      const label = resolveLabelFromScope(clonedElement.scope);
+      const label = clonedElement.label ? clonedElement.label : resolveLabelFromScope(clonedElement.scope);
       if (!label) return null;
       const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
       const asterisk = requiredFields.indexOf(lastSegment) !== -1 ? ' *' : '';

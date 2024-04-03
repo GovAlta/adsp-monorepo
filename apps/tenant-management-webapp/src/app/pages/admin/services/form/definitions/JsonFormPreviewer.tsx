@@ -71,8 +71,9 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
         onChange={onChange}
         data={data}
         validationMode={'ValidateAndShow'}
-        schema={lastGoodSchema}
-        uischema={lastGoodUiSchema}
+        //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
+        schema={{ ...lastGoodSchema }}
+        uischema={{ ...lastGoodUiSchema }}
       />
     </ErrorBoundary>
   );

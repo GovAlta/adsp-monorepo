@@ -22,7 +22,7 @@ class PiiServiceImpl implements PiiService {
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId },
+          params: { tenantId: tenantId.toString() },
         }
       );
 
