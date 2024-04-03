@@ -348,6 +348,9 @@ export const formSlice = createSlice({
     setSaving: (state, { payload }: { payload: boolean }) => {
       state.busy.saving = payload;
     },
+    updateFormFiles: (state, action: { payload: Record<string, string> }) => {
+      state.files = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
