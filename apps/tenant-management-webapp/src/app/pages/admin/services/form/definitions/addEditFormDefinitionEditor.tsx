@@ -11,7 +11,7 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
-import { FileItem } from '@store/file/models';
+
 import {
   TextLoadingIndicator,
   FlexRow,
@@ -150,8 +150,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
-  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
-  const [selectedFile, setSelectFile] = useState<FileItem>(null);
   const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
@@ -180,8 +178,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   });
 
   const deleteFile = (file) => {
-    setSelectFile(file);
-    setShowFileDeleteConfirmation(true);
+    dispatch(DeleteFileService(file?.id));
   };
 
   useEffect(() => {
@@ -858,16 +855,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         }}
       />
 
-      <DeleteModal
-        isOpen={showFileDeleteConfirmation}
-        title="Delete file"
-        content={`Delete file ${selectedFile?.filename} ?`}
-        onCancel={() => setShowFileDeleteConfirmation(false)}
-        onDelete={() => {
-          setShowFileDeleteConfirmation(false);
-          dispatch(DeleteFileService(selectedFile?.id));
-        }}
-      />
       <AddEditDispositionModal
         open={selectedEditModalIndex !== null || newDisposition}
         isEdit={selectedEditModalIndex !== null}
