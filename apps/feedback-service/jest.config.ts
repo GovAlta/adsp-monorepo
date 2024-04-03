@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default {
   displayName: 'feedback-service',
-  preset: '../../jest.preset.js',
+  preset: '../../jest-cover.preset.js',
   testEnvironment: 'node',
   transform: {
     '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],

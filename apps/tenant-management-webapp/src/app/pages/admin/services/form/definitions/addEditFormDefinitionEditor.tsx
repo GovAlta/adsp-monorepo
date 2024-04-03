@@ -38,7 +38,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
-import { useNavigate, useParams } from 'react-router-dom-6';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   GoAButtonGroup,
   GoAButton,

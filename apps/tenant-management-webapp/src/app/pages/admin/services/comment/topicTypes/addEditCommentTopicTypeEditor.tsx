@@ -40,7 +40,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultCommentTopicType, defaultEditCommentTopicType, SecurityClassification } from '@store/comment/model';
 import { TopicConfigTopicType } from './topicConfigTopicType';
 
-import { useNavigate, useParams } from 'react-router-dom-6';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { GoAButtonGroup, GoAButton, GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { useWindowDimensions } from '@lib/useWindowDimensions';

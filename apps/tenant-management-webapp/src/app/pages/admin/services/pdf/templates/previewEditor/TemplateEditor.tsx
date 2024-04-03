@@ -32,7 +32,7 @@ import {
 
 import { RootState } from '@store/index';
 import { FetchFileService } from '@store/file/actions';
-import { useNavigate, useParams } from 'react-router-dom-6';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById } from '@store/pdf/selectors';
 
