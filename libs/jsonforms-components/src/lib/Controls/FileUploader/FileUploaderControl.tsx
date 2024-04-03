@@ -10,6 +10,9 @@ import { DeleteFileModal } from './DeleteFileModal';
 
 export type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
 
+const DELAY_UPLOAD_TIMEOUT_MS = 200;
+const DELAY_DELETE_TIMEOUT_MS = 80;
+
 export const FileUploader = ({ data, path, handleChange, uischema, ...props }: FileUploaderLayoutRendererProps) => {
   const enumerators = useContext(JsonFormContext);
   const uploadTriggerFunction = enumerators.functions.get('upload-file');
@@ -40,7 +43,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
         handleChange(propertyId, value);
       };
 
-      setTimeout(handleFunction, 1);
+      setTimeout(handleFunction, DELAY_UPLOAD_TIMEOUT_MS);
     }
   }
 
@@ -123,7 +126,10 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                   onDelete={() => {
                     setShowFileDeleteConfirmation(false);
                     deleteFile(getFile());
-                    handleChange(propertyId, '');
+                    const handleFunction = () => {
+                      handleChange(propertyId, '');
+                    };
+                    setTimeout(handleFunction, DELAY_DELETE_TIMEOUT_MS);
                   }}
                 />
               </AttachmentBorder>
