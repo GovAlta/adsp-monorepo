@@ -11,3 +11,7 @@ export const ToolBarHeader = styled.div`
 export const ObjectArrayTitle = styled.h2`
   margin-bottom: var(--goa-space-l);
 `;
+
+export const TextCenter = styled.div`
+  text-align: center;
+`;
