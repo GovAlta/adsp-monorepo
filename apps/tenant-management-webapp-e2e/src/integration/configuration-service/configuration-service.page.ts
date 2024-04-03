@@ -99,13 +99,13 @@ class ConfigurationServicePage {
 
   exportServiceInfoIcon(namespace, name) {
     return cy.xpath(
-      `//h3[text()="${namespace}"]/following-sibling::div//div[text()="${name}"]/parent::*/following-sibling::div/div[@class="info-circle-padding"]`
+      `//h3[text()="${namespace}"]/following-sibling::div//goa-checkbox[@text="${name}"]/parent::div/following-sibling::div/div[@class="info-circle-padding"]`
     );
   }
 
   exportServiceInfoBubble(namespace, name) {
     return cy.xpath(
-      `//h3[text()="${namespace}"]/following-sibling::div//div[text()="${name}"]/parent::div/parent::div/following-sibling::div//div[@class="overflow-wrap bubble-border"]`
+      `//h3[text()="${namespace}"]/following-sibling::div//goa-checkbox[@text="${name}"]/parent::div/parent::div/following-sibling::div//div[@class="overflow-wrap bubble-border"]`
     );
   }
 

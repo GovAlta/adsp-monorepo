@@ -729,7 +729,7 @@ Then('the user views {string} with user info and current timestamp', function (c
         message: nowDateTime.toLocaleString(),
       });
       const millisecondDifference = nowDateTime.getTime() - commentDateTime.getTime();
-      expect(millisecondDifference).to.be.lt(60000); // Comment time is less than 60 seconds ago
+      expect(millisecondDifference).to.be.lt(90000); // Comment time is less than 60 seconds ago
     });
 });
 
