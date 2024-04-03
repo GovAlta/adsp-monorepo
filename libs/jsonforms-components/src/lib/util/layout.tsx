@@ -1,6 +1,5 @@
-import isEmpty from 'lodash/isEmpty';
 import React from 'react';
-
+import isEmpty from 'lodash/isEmpty';
 import type { UISchemaElement } from '@jsonforms/core';
 import {
   JsonFormsCellRendererRegistryEntry,
@@ -10,7 +9,7 @@ import {
 } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid } from '@abgov/react-components-new';
-import { Hidden } from '@mui/material';
+import { Visible } from './style-component';
 
 export const renderLayoutElements = (
   elements: UISchemaElement[],
@@ -55,14 +54,16 @@ export const LayoutRenderer = ({
   } else {
     if (direction === 'row') {
       return (
-        <Hidden xsUp={!visible}>
+        <Visible visible={visible}>
           <GoAGrid minChildWidth="10ch">
             {renderLayoutElements(elements, schema, path, enabled, renderers, cells)}
           </GoAGrid>
-        </Hidden>
+        </Visible>
       );
     } else {
-      return <Hidden xsUp={!visible}>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</Hidden>;
+      return (
+        <Visible visible={visible}>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</Visible>
+      );
     }
   }
 };

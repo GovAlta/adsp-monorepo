@@ -11,8 +11,8 @@ import {
 } from '@jsonforms/core';
 import { withJsonFormsArrayLayoutProps } from '@jsonforms/react';
 import { ObjectArrayControl } from './ObjectListControl';
-import { Hidden } from '@mui/material';
 import { DeleteDialog } from './DeleteDialog';
+import { Visible } from '../../util';
 
 export const ArrayControl = (props: ArrayLayoutProps) => {
   const [open, setOpen] = useState(false);
@@ -41,7 +41,7 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
   }, [setOpen, path, rowData]);
 
   return (
-    <Hidden xsUp={!visible}>
+    <Visible visible={visible}>
       <ObjectArrayControl {...props} openDeleteDialog={openDeleteDialog} />
       <DeleteDialog
         open={open}
@@ -50,7 +50,7 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
         title={props.translations.deleteDialogTitle || ''}
         message={props.translations.deleteDialogMessage || ''}
       />
-    </Hidden>
+    </Visible>
   );
 };
 

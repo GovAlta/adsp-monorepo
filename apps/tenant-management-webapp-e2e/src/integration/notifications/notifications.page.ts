@@ -293,11 +293,11 @@ class NotificationsPage {
   }
 
   subscriberTableHeader() {
-    return cy.xpath('//*[@data-testid="subscribers-list-title"]//table/div/thead');
+    return cy.xpath('//*[@data-testid="subscribers-list-title"]//table//thead');
   }
 
   subscriberTableBody() {
-    return cy.xpath('//*[@data-testid="subscribers-list-title"]//table/div/tbody');
+    return cy.xpath('//*[@data-testid="subscribers-list-title"]//table//tbody');
   }
 
   subscriberIconEye(addressAs, email) {
@@ -320,13 +320,13 @@ class NotificationsPage {
 
   subscriber(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr`
+      `//*[@data-testid="subscribers-list-title"]//table//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr`
     );
   }
 
   subscriberWithPhoneNumber(addressAs, email, phoneNumber) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::td/following-sibling::td//*[contains(text(), "${phoneNumber}")]/parent::*`
+      `//*[@data-testid="subscribers-list-title"]//table//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::td/following-sibling::td//*[contains(text(), "${phoneNumber}")]/parent::*`
     );
   }
 
