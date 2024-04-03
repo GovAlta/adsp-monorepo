@@ -1,6 +1,6 @@
 import React from 'react';
 import { CommentTopicTypes } from '@store/comment/model';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface PdfTemplateItemProps {

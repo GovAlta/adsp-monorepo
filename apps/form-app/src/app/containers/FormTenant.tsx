@@ -1,7 +1,7 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom-6';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   AppDispatch,
@@ -48,11 +48,21 @@ export const FormTenant = () => {
           <AccountActionsSpan>
             <span className="username">{user?.name}</span>
             {user ? (
-              <GoAButton mt="s" mr="s" type="tertiary" onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}>
+              <GoAButton
+                mt="s"
+                mr="s"
+                type="tertiary"
+                onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}
+              >
                 Sign out
               </GoAButton>
             ) : (
-              <GoAButton mt="s" mr="s" type="tertiary" onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}>
+              <GoAButton
+                mt="s"
+                mr="s"
+                type="tertiary"
+                onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
+              >
                 Sign in
               </GoAButton>
             )}

@@ -4,7 +4,7 @@ import { PdfMetrics } from './metrics';
 import { useDispatch } from 'react-redux';
 import { fetchPdfMetrics } from '@store/pdf/action';
 import { OverviewLayout } from '@components/Overview';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 
 interface PdfOverviewProps {
   setOpenAddTemplate: (val: boolean) => void;

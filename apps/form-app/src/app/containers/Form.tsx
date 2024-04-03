@@ -2,7 +2,7 @@ import { GoAIconButton } from '@abgov/react-components-new';
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom-6';
+import { useParams } from 'react-router-dom';
 import {
   AppDispatch,
   busySelector,
