@@ -12,8 +12,6 @@ export const ObjectArrayTitle = styled.h2`
   margin-bottom: var(--goa-space-l);
 `;
 
-export const DisplayWrapper = styled.div<{
-  visible: boolean;
-}>`
-  display: ${(p) => (p.visible ? 'initial' : 'none')};
+export const TextCenter = styled.div`
+  text-align: center;
 `;

@@ -2,7 +2,6 @@ import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
 import React from 'react';
-import { FormHelperText, Typography } from '@mui/material';
 import {
   ArrayLayoutProps,
   ControlElement,
@@ -20,7 +19,8 @@ import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid, GoAIconButton, GoAContainer } from '@abgov/react-components-new';
-import { ToolBarHeader, ObjectArrayTitle, DisplayWrapper } from './styled-components';
+import { ToolBarHeader, ObjectArrayTitle, TextCenter } from './styled-components';
+import { Visible } from '../../util';
 
 export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport;
 
@@ -89,9 +89,9 @@ export interface EmptyListProps {
 
 const EmptyList = ({ numColumns, translations }: EmptyListProps) => (
   <GoAGrid minChildWidth="30ch">
-    <Typography align="center">
+    <TextCenter>
       <b>{translations.noDataMessage}</b>
-    </Typography>
+    </TextCenter>
   </GoAGrid>
 );
 
@@ -194,7 +194,6 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
           cells={cells}
         />
       )}
-      <FormHelperText error={!isValid}>{!isValid && errors}</FormHelperText>
     </>
   );
 });
@@ -330,7 +329,7 @@ export class ObjectArrayControl extends React.Component<ObjectArrayControlProps,
     const listTitle = label || uischema.options?.title;
 
     return (
-      <DisplayWrapper visible={visible} data-testid="jsonforms-object-list-wrapper">
+      <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>
           {listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
           <ObjectArrayToolBar
@@ -360,7 +359,7 @@ export class ObjectArrayControl extends React.Component<ObjectArrayControlProps,
             {...additionalProps}
           />
         </div>
-      </DisplayWrapper>
+      </Visible>
     );
   }
 }

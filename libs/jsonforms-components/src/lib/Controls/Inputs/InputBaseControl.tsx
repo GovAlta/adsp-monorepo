@@ -1,9 +1,11 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { Hidden } from '@mui/material';
 import { FormFieldWrapper } from './style-component';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
+import { Visible } from '../../util';
+
 export type GoAInputType =
   | 'text'
   | 'password'
@@ -39,7 +41,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   }
 
   return (
-    <Hidden xsUp={!visible}>
+    <Visible visible={visible}>
       <FormFieldWrapper>
         <GoAFormItem
           requirement={required ? 'required' : undefined}
@@ -50,6 +52,6 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
           <InnerComponent {...props} />
         </GoAFormItem>
       </FormFieldWrapper>
-    </Hidden>
+    </Visible>
   );
 };
