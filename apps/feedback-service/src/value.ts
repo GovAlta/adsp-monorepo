@@ -13,7 +13,7 @@ class ValueServiceImpl implements ValueService {
       const valueApiUrl = await this.directory.getServiceUrl(VALUE_API_ID);
 
       const token = await this.tokenProvider.getAccessToken();
-      axios.post(
+      await axios.post(
         new URL('v1/feedback-service/values/feedback', valueApiUrl).href,
         {
           timestamp,

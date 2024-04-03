@@ -9,7 +9,7 @@ export enum Rating {
 interface FeedbackContext {
   site: string;
   view: string;
-  correlationId: string;
+  correlationId?: string;
 }
 
 export interface Feedback {
