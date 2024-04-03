@@ -10,9 +10,8 @@ import {
   ValidationError,
   deleteFile,
   downloadFile,
-  fileMetaDataSelector,
   filesSelector,
-  propertyIdsWithFileMetaDataSelector,
+  metaDataSelector,
   updateForm,
   uploadFile,
 } from '../state';
@@ -43,7 +42,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
 
   const dispatch = useDispatch<AppDispatch>();
   const files = useSelector(filesSelector);
-  const formPropertyIdsWithMetaData = useSelector(propertyIdsWithFileMetaDataSelector);
+  const metadata = useSelector(metaDataSelector);
 
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
@@ -56,17 +55,17 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     if (clonedFiles[propertyId]) {
       const urn = files[propertyId];
       delete clonedFiles[propertyId];
-      dispatch(deleteFile(urn));
+      dispatch(deleteFile({ urn, propertyId }));
     }
 
     const fileMetaData = (
-      await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file })).unwrap()
+      await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId })).unwrap()
     ).metadata;
 
     clonedFiles = { ...clonedFiles };
     clonedFiles[propertyId] = fileMetaData.urn;
 
-    //Explicitly trigger the updateForm.
+    //Explicitly trigger the updateForm
     dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
   };
 
@@ -80,11 +79,12 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   const deleteFormFile = async (file) => {
-    await dispatch(deleteFile(file.urn));
-
     const clonedFiles = { ...files };
-    const deleteKey = getKeyByValue(clonedFiles, file.urn);
-    delete clonedFiles[deleteKey];
+    const propertyId = getKeyByValue(clonedFiles, file.urn);
+
+    await dispatch(deleteFile({ urn: file.urn, propertyId }));
+
+    delete clonedFiles[propertyId];
 
     //Explicitly trigger the updateForm as the file upload control may not have updated
     //file list to remove the icon buttons when handleChange is called.
@@ -100,7 +100,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         </div>
         <ContextProvider
           fileManagement={{
-            fileList: formPropertyIdsWithMetaData,
+            fileList: metadata,
             uploadFile: uploadFormFile,
             downloadFile: downloadFormFile,
             deleteFile: deleteFormFile,
