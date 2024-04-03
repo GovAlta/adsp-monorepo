@@ -1,6 +1,6 @@
 import React from 'react';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { TaskDefinition } from '@store/task/model';
 
 interface QueueTableItemProps {

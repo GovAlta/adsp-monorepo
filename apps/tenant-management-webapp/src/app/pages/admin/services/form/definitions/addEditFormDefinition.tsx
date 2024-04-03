@@ -11,7 +11,7 @@ import {
 } from '@lib/validation/checkInput';
 import { FormFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { uischema } from './categorization-stepper-nav-buttons';

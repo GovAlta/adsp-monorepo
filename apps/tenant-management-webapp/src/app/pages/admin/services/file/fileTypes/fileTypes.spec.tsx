@@ -7,7 +7,7 @@ import { FILE_INIT } from '@store/file/models';
 import { SESSION_INIT } from '@store/session/models';
 import { FileTypeItem } from '@store/file/models';
 import { FileTypes } from './fileTypes';
-import { MemoryRouter } from 'react-router-dom-6';
+import { MemoryRouter } from 'react-router-dom';
 
 describe('File types tab', () => {
   const mockStore = configureStore([]);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, HideTablet, FormTemplateEditorContainer, OuterFormTemplateEditorContainer } from '../styled-components';
 import { ModalContent } from '../../styled-components';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { AddEditFormDefinitionEditor } from './addEditFormDefinitionEditor';
 import { TabletMessage } from '@components/TabletMessage';
 

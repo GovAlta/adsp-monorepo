@@ -1,7 +1,7 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
 import React, { Suspense, lazy, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation, useParams, useNavigate } from 'react-router-dom-6';
+import { Navigate, Route, Routes, useLocation, useParams, useNavigate } from 'react-router-dom';
 
 import {
   AppDispatch,

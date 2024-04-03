@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 
 import { Page } from '@components/Html';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom-6';
+import { useParams } from 'react-router-dom';
 import { TenantLogin, UpdateLoginSuccess } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 

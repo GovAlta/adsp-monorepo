@@ -3,7 +3,7 @@ import React from 'react';
 import Container from '@components/Container';
 import styled from 'styled-components';
 import Header from '@components/AppHeader';
-import { Outlet } from 'react-router-dom-6';
+import { Outlet } from 'react-router-dom';
 
 export function PublicApp(): JSX.Element {
   return (
