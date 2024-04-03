@@ -16,10 +16,10 @@ export function App(): JSX.Element {
   const { config } = useSelector((state: RootState) => ({
     config: state.config,
   }));
+
   useEffect(() => {
-    // Fetch config
     dispatch(fetchConfig());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
