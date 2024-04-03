@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import { Container, TextGoASkeleton } from '@core-services/app-common';
 import DataTable from '@components/DataTable';
-import { useSearchParams } from 'react-router-dom';
 import { GoAContainer, GoAButton, GoACallout, GoAButtonGroup, GoAModal, GoABadge } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { FetchTenantService } from '@store/tenant/actions';
@@ -21,7 +20,7 @@ import {
   ButtonMargin,
 } from '../private/Subscriptions/styled-components';
 
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSubscriberDetails, signedOutUnsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
