@@ -22,7 +22,7 @@ import {
   JsonSchema7,
 } from '@jsonforms/core';
 
-import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
+import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Hidden } from '@mui/material';
@@ -84,9 +84,9 @@ export const FormStepper = ({
   const handleSubmit = () => {
     if (submitForm) {
       submitForm(data);
+    } else {
+      setIsOpen(true);
     }
-    setIsOpen(true);
-    console.log('submitted', data);
   };
 
   const onSubmit = () => {
@@ -104,9 +104,12 @@ export const FormStepper = ({
   const validateFormData = (formData: Array<UISchemaElement>) => {
     const newSchema = JSON.parse(JSON.stringify(schema));
 
-    Object.keys(newSchema.properties || {}).forEach((p) => {
-      const x = newSchema.properties || {};
-      x[p].enum = getData(p) as string[];
+    Object.keys(newSchema.properties || {}).forEach((propertyName) => {
+      const property = newSchema.properties || {};
+      property[propertyName].enum = getData(propertyName) as string[];
+      if (property[propertyName]?.format === 'file-urn') {
+        delete property[propertyName].format;
+      }
     });
     const validate = ajv.compile(newSchema as JsonSchema);
     return validate(formData);
@@ -232,7 +235,11 @@ export const FormStepper = ({
           <GoAPages current={step} mb="xl">
             {categories?.map((category, index) => {
               return (
-                <div data-testid={`step_${index}-content`} key={`${CategoryLabels[index]}`}>
+                <div
+                  data-testid={`step_${index}-content`}
+                  key={`${CategoryLabels[index]}`}
+                  style={{ marginTop: '1.5rem' }}
+                >
                   {renderStepElements(category, index)}
                 </div>
               );
