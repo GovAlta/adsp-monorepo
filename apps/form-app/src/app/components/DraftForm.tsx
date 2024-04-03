@@ -49,7 +49,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   const uploadFormFile = async (file: File, propertyId: string) => {
-    let clonedFiles = { ...files };
+    const clonedFiles = { ...files };
 
     // Handle deleting an existing file if a new file is selected to be uploaded again.
     if (clonedFiles[propertyId]) {
@@ -62,7 +62,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
       await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId })).unwrap()
     ).metadata;
 
-    clonedFiles = { ...clonedFiles };
     clonedFiles[propertyId] = fileMetaData.urn;
     dispatch(formActions.updateFormFiles(clonedFiles));
   };
