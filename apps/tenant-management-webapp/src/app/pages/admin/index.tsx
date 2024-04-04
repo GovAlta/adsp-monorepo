@@ -30,11 +30,15 @@ import { Script } from './services/script';
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
 
+  const config = useSelector((state: RootState) => state.config);
+
   useEffect(() => {
     setTitle('Alberta Digital Service Platform - Tenant management');
-  }, [setTitle]);
-
-  const config = useSelector((state: RootState) => state.config);
+    const feedback = globalThis['adspFeedback'];
+    if (config.feedback && feedback) {
+      feedback.initialize({ tenant: config.feedback.tenant });
+    }
+  }, [setTitle, config]);
 
   const renderServices = (serviceName) => {
     switch (serviceName) {

@@ -56,12 +56,21 @@ export interface FeatureFlags {
   Task: boolean;
 }
 
+export interface FeedbackConfiguration {
+  tenant: string;
+  script: {
+    src: URL;
+    integrity: string;
+  };
+}
+
 export interface ConfigState {
   keycloakApi?: KeycloakApi;
   tenantApi?: TenantApi;
   serviceUrls?: ServiceUrls;
   fileApi?: FileApi;
   featureFlags?: FeatureFlags;
+  feedback?: FeedbackConfiguration;
 }
 
 export const CONFIG_INIT: ConfigState = {};
