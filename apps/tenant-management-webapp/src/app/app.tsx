@@ -23,6 +23,8 @@ import PublicApp from './publicApp';
 import styled from 'styled-components';
 import { GoAHeader } from '@abgov/react-components';
 import '@abgov/web-components/index.css';
+import { useScripts } from '@core-services/app-common';
+
 const AppRouters = () => {
   return (
     <>
@@ -68,7 +70,7 @@ export const App = (): JSX.Element => {
 };
 
 function AppWithAuthContext() {
-  const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
+  const { keycloakApi: keycloakConfig, feedback } = useSelector((state: RootState) => state.config);
   const dispatch = useDispatch();
   useEffect(() => {
     // Fetch config
@@ -76,6 +78,8 @@ function AppWithAuthContext() {
       dispatch(fetchConfig());
     }
   }, [dispatch, keycloakConfig]);
+
+  useScripts(feedback?.script);
 
   return <AuthContext.Provider value={{}}>{keycloakConfig?.realm && <AppRouters />}</AuthContext.Provider>;
 }

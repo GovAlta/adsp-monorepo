@@ -7,4 +7,4 @@ export * from './components/PageProgress';
 export * from './components/TextSkeleton';
 
 export * from './utils';
-
+export * from './useScripts';
