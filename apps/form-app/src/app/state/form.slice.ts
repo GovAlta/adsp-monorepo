@@ -236,8 +236,16 @@ export const updateForm = createAsyncThunk(
 
     // Skip saving if there are errors; the request will fail due to validation anyways.
     if (form.form && !errors?.length) {
+      dispatch(formActions.updateFormFiles(files));
       dispatch(formActions.setSaving(true));
       dispatch(saveForm(form.form.id));
+
+      if (data.files && Object.values(data.files).length > 0) {
+        const formFiles = Object.values(data.files);
+        for (const file of formFiles) {
+          dispatch(loadFileMetadata(file));
+        }
+      }
     }
 
     return { data, files, errors };
@@ -343,6 +351,9 @@ export const formSlice = createSlice({
     setSaving: (state, { payload }: { payload: boolean }) => {
       state.busy.saving = payload;
     },
+    updateFormFiles: (state, action: { payload: Record<string, string> }) => {
+      state.files = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -416,6 +427,7 @@ export const formSlice = createSlice({
       })
       .addCase(saveForm.fulfilled, (state, { payload }) => {
         state.saved = payload;
+        state.busy.saving = false;
       })
       .addCase(submitForm.pending, (state) => {
         state.busy.submitting = true;
