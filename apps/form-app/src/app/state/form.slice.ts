@@ -1,5 +1,5 @@
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
+import { createAction, createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import { AppState } from './store';
@@ -171,13 +171,8 @@ export const loadForm = createAsyncThunk(
 
       if (data.files && Object.values(data.files).length > 0) {
         const formFiles = Object.values(data.files);
-        for (const fileUrn of formFiles) {
-          const propertyId = Object.keys(data.files).find((key) => data.files[key] === fileUrn);
-          //Need to map the propertyId/controlId to the actual file meta data
-          //otherwise the file upload control wont display properly.
-          if (propertyId) {
-            dispatch(loadFileMetadata({ propertyId, urn: fileUrn }));
-          }
+        for (const file of formFiles) {
+          dispatch(loadFileMetadata(file));
         }
       }
 
@@ -347,9 +342,6 @@ export const formSlice = createSlice({
   reducers: {
     setSaving: (state, { payload }: { payload: boolean }) => {
       state.busy.saving = payload;
-    },
-    updateFormFiles: (state, action: { payload: Record<string, string> }) => {
-      state.files = action.payload;
     },
   },
   extraReducers: (builder) => {
