@@ -1,9 +1,10 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Category } from '@jsonforms/core';
+import { Category, JsonSchema } from '@jsonforms/core';
 import { GoARenderers } from '../../../index';
-import { JsonForms } from '@jsonforms/react';
 import Ajv from 'ajv';
+import FormStepperControl from './FormStepperControl';
+import { JsonForms } from '@jsonforms/react';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -33,8 +34,8 @@ jest.mock('@jsonforms/core', () => ({
 // Remove irritating "undefined" is an invalid form step status message,
 // since it actually is valid.
 const originalConsoleError = console.error;
-console.error = (message: string) => {
-  if (!message.match('is an invalid form step status')) {
+console.error = (message: unknown) => {
+  if (typeof message === 'string' && !message.match('is an invalid form step status')) {
     originalConsoleError(message);
   }
 };
@@ -45,6 +46,7 @@ const nameSchema = {
     firstName: { type: 'string' },
     lastName: { type: 'string' },
   },
+  required: ['firstName'],
 };
 
 const addressSchema = {
@@ -61,7 +63,6 @@ const dataSchema = {
     name: nameSchema,
     address: addressSchema,
   },
-  required: ['firstName', 'city'],
 };
 
 const nameCategory = {
@@ -72,13 +73,13 @@ const nameCategory = {
       type: 'Control',
       label: 'first',
       scope: '#/properties/name/properties/firstName',
-      options: { placeholder: 'First name' },
+      options: { placeholder: 'First name', componentProps: { testId: 'first-name-input' } },
     },
     {
       type: 'Control',
       label: 'last',
       scope: '#/properties/name/properties/lastName',
-      options: { placeholder: 'Last name' },
+      options: { placeholder: 'Last name', componentProps: { testId: 'last-name-input' } },
     },
   ],
 } as unknown as Category;
@@ -114,21 +115,21 @@ const formData = {
   address: { street: '', city: '' },
 };
 
-const form = (
-  <JsonForms
-    ajv={new Ajv({ allErrors: true, verbose: true })}
-    renderers={GoARenderers}
-    onChange={() => {}}
-    data={formData}
-    validationMode={'ValidateAndShow'}
-    schema={dataSchema}
-    uischema={categorization}
-  />
-);
+const getForm = (data: object) => {
+  return (
+    <JsonForms
+      uischema={categorization}
+      data={data}
+      schema={dataSchema}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoARenderers}
+    />
+  );
+};
 
 describe('Form Stepper Control', () => {
   it('can render an initial Categorization', () => {
-    const renderer = render(form);
+    const renderer = render(getForm(formData));
     const step1 = renderer.getByTestId('step_0-content');
     expect(step1).toBeInTheDocument();
     expect(step1).toBeVisible();
@@ -146,25 +147,81 @@ describe('Form Stepper Control', () => {
   });
 
   it('initializes to the 1st step', () => {
-    const renderer = render(form);
+    const renderer = render(getForm(formData));
     const currentStep = renderer.getByTestId('stepper-test');
     expect(currentStep).toBeInTheDocument();
     expect(currentStep.getAttribute('step')).toBe('1');
   });
 
-  it('indicates when a step is partially complete', () => {
-    // Gotta change last name by hand ... fireEvent doesn't update the data object
-    formData.name.lastName = 'Bing';
-    const renderer = render(form);
-    const lastName = renderer.getByTestId('#/properties/name/properties/lastName-input') as HTMLInputElement;
+  it('can navigate between steps with the nav buttons', async () => {
+    const renderer = render(getForm(formData));
+
+    const stepperHeader = renderer.getByTestId('stepper-test');
+    expect(stepperHeader).toBeInTheDocument();
+    expect(stepperHeader.getAttribute('step')).toBe('1');
+
+    // Navigate to the 2nd page
+    const nextButton = renderer.getByTestId('next-button');
+    expect(nextButton).toBeInTheDocument();
+
+    const shadowNext = nextButton.shadowRoot?.querySelector('button');
+    expect(shadowNext).not.toBeNull();
+    fireEvent.click(shadowNext!);
+
+    const newStep = renderer.getByTestId('stepper-test');
+    expect(newStep.getAttribute('step')).toBe('2');
+
+    // Navigate back to the previous page
+    const prevButton = renderer.getByTestId('prev-button');
+    expect(prevButton).toBeInTheDocument();
+
+    const shadowPrev = prevButton.shadowRoot?.querySelector('button');
+    expect(shadowPrev).not.toBeNull();
+    fireEvent.click(shadowPrev!);
+
+    const theStep = renderer.getByTestId('stepper-test');
+    expect(theStep.getAttribute('step')).toBe('1');
+  });
+
+  it('can input a text value', () => {
+    const renderer = render(getForm(formData));
+    const lastName = renderer.getByTestId('last-name-input');
     expect(lastName).toBeInTheDocument();
-    expect(lastName.value).toBe('Bing');
 
-    const step1 = renderer.container.querySelector('goa-form-stepper goa-form-step');
-    if (step1) {
-      fireEvent.click(step1);
-    }
+    // input some characters
+    fireEvent.change(lastName!, { target: { value: 'abc' } });
 
-    //console.log(renderer.baseElement.innerHTML);
+    // Check the value
+    const newLastName = renderer.getByTestId('last-name-input');
+    expect(newLastName).toHaveValue('abc');
+  });
+
+  it('will initialize form data', () => {
+    const form = getForm({ ...formData, name: { firstName: 'Bob', lastName: 'Bing' } });
+    const renderer = render(form);
+    const lastName = renderer.getByTestId('last-name-input');
+    expect(lastName).toHaveValue('Bing');
+    const firstName = renderer.getByTestId('first-name-input');
+    expect(firstName).toHaveValue('Bob');
+  });
+
+  it('will recognize an incomplete status', () => {
+    const form = getForm({ ...formData, name: { firstName: '', lastName: 'abc' } });
+    const renderer = render(form);
+
+    const stepperHeader = renderer.getByTestId('stepper-test');
+    const step1 = stepperHeader.querySelector('goa-form-step[text="Name"]');
+    expect(step1).toBeInTheDocument();
+    expect(step1!.getAttribute('status')).toBe('incomplete');
+  });
+
+  it('will recognize a complete status', () => {
+    const form = getForm({ ...formData, name: { firstName: 'Bob', lastName: 'Bing' } });
+    const renderer = render(form);
+
+    const stepperHeader = renderer.getByTestId('stepper-test');
+    const step1 = stepperHeader.querySelector('goa-form-step[text="Name"]');
+    expect(step1).toBeInTheDocument();
+    expect(step1!.getAttribute('status')).toBe('complete');
   });
 });

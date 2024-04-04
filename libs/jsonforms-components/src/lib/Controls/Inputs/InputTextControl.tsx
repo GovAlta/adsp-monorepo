@@ -19,6 +19,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+
   return (
     <GoAInput
       error={errorsFormInput.length > 0}
@@ -31,9 +32,9 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       // maxLength={appliedUiSchemaOptions?.maxLength}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
+      // Don't use handleChange in the onChange event, use the keyPress or onBlur.
       // If you use it onChange along with keyPress event it will cause a
-      // side effect that causes the validation to render when it shouldnt.
+      // side effect that causes the validation to render when it shouldn't.
       onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         onKeyPressForTextControl({

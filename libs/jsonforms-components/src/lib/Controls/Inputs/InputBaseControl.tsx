@@ -27,9 +27,7 @@ export interface WithInput {
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
-  // eslint-disable-next-line
-  const { id, description, errors, uischema, visible, config, label, input, required } = props;
-  const isValid = errors.length === 0;
+  const { uischema, visible, label, input, required } = props;
   const InnerComponent = input;
   const labelToUpdate: string = getLabelText(uischema.scope, label || '');
 
@@ -58,7 +56,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
 
   useEffect(() => {
     if (!stepperContext.isInitialized(props.id)) {
-      const status = getStatus(props, undefined);
+      const status = getStatus(props, props.data);
       stepperContext.updateStatus(status);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

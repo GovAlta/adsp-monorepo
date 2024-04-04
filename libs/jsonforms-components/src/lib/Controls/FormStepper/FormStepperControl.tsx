@@ -169,7 +169,6 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
           }}
         >
           {categories?.map((_, index) => {
-            logRequiredFields(inputStatuses, index + 1);
             return (
               <GoAFormStep
                 key={`${CategoryLabels[index]}-tab`}
@@ -232,6 +231,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                   type="secondary"
                   disabled={disabledCategoryMap[step - 1] || !enabled}
                   onClick={() => prevPage(step, disabledCategoryMap)}
+                  testId="prev-button"
                 >
                   Previous
                 </GoAButton>
@@ -243,6 +243,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                   type="primary"
                   disabled={disabledCategoryMap[step - 1] || !enabled}
                   onClick={() => nextPage(step, disabledCategoryMap)}
+                  testId="next-button"
                 >
                   Next
                 </GoAButton>
