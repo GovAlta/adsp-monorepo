@@ -101,36 +101,50 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
         ) : (
           <div>
             {fileList && getFile() && (
-              <AttachmentBorder>
-                <div>{getFileName()}</div>
-                <GoAContextMenu>
-                  <GoAContextMenuIcon
-                    testId="download-icon"
-                    title="Download"
-                    type="download"
-                    onClick={() => downloadFile(getFile())}
-                  />
-                  <GoAContextMenuIcon
-                    data-testid="delete-icon"
-                    title="Delete"
-                    type="trash"
-                    onClick={() => {
-                      setShowFileDeleteConfirmation(true);
-                    }}
-                  />
-                </GoAContextMenu>
-                <DeleteFileModal
-                  isOpen={showFileDeleteConfirmation}
-                  title="Delete file"
-                  content={`Delete file ${getFile().filename} ?`}
-                  onCancel={() => setShowFileDeleteConfirmation(false)}
-                  onDelete={() => {
-                    setShowFileDeleteConfirmation(false);
-                    deleteFile(getFile());
-                    handleChange(propertyId, '');
-                  }}
-                />
-              </AttachmentBorder>
+              <div>
+                {readOnly ? (
+                  <AttachmentBorderDisabled>
+                    {getFileName()}{' '}
+                    <GoAContextMenuIcon
+                      testId="download-icon"
+                      title="Download"
+                      type="download"
+                      onClick={() => downloadFile(getFile())}
+                    />
+                  </AttachmentBorderDisabled>
+                ) : (
+                  <AttachmentBorder>
+                    <div>{getFileName()}</div>
+                    <GoAContextMenu>
+                      <GoAContextMenuIcon
+                        testId="download-icon"
+                        title="Download"
+                        type="download"
+                        onClick={() => downloadFile(getFile())}
+                      />
+                      <GoAContextMenuIcon
+                        data-testid="delete-icon"
+                        title="Delete"
+                        type="trash"
+                        onClick={() => {
+                          setShowFileDeleteConfirmation(true);
+                        }}
+                      />
+                    </GoAContextMenu>
+                    <DeleteFileModal
+                      isOpen={showFileDeleteConfirmation}
+                      title="Delete file"
+                      content={`Delete file ${getFile().filename} ?`}
+                      onCancel={() => setShowFileDeleteConfirmation(false)}
+                      onDelete={() => {
+                        setShowFileDeleteConfirmation(false);
+                        deleteFile(getFile());
+                        handleChange(propertyId, '');
+                      }}
+                    />
+                  </AttachmentBorder>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -139,6 +153,15 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   );
 };
 
+const AttachmentBorderDisabled = styled.div`
+  display: flex;
+  flex-direction: row;
+  border: var(--goa-border-width-s) solid #dcdcdc;
+  border-radius: var(--goa-border-radius-m);
+  padding: var(--goa-space-xs);
+  width: fit-content;
+  background-color: #f1f1f1;
+`;
 const AttachmentBorder = styled.div`
   display: flex;
   flex-direction: row;

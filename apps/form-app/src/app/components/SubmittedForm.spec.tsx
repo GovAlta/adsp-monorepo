@@ -110,7 +110,16 @@ const uiSchema = {
 describe('add readonly', () => {
   it('it adds readonly to everything so that every input is readonly', () => {
     const response = readOnlyUiSchema(uiSchema) as Layout;
-
-    expect(response.elements[0].options.componentProps.readOnly).toBe(true);
+    const testReadOnly = (elements) => {
+      Array.isArray(elements) &&
+        elements.forEach((element) => {
+          expect(element.options.componentProps.readOnly).toBe(true);
+          testReadOnly(element.elements);
+        });
+    };
+    response.elements.forEach((element: Layout) => {
+      expect(element.options.componentProps.readOnly).toBe(true);
+      testReadOnly(element.elements);
+    });
   });
 });

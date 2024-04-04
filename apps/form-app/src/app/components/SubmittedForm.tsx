@@ -6,7 +6,9 @@ import { JsonForms } from '@jsonforms/react';
 import moment from 'moment';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { Form, FormDefinition } from '../state';
+import { Form, FormDefinition, propertyIdsWithFileMetaDataSelector, AppDispatch, downloadFile } from '../state';
+import { ContextProvider } from '@abgov/jsonforms-components';
+import { useDispatch, useSelector } from 'react-redux';
 
 interface ApplicationStatusProps {
   definition: FormDefinition;
@@ -43,6 +45,19 @@ const setReadOnly = (element) => {
 };
 
 export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ definition, form, data }) => {
+  const downloadFormFile = async (file) => {
+    const fileData = await dispatch(downloadFile(file.urn)).unwrap();
+    const element = document.createElement('a');
+    element.href = URL.createObjectURL(new Blob([fileData.data]));
+    element.download = fileData.metadata.filename;
+    document.body.appendChild(element);
+    element.click();
+  };
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  const formPropertyIdsWithMetaData = useSelector(propertyIdsWithFileMetaDataSelector);
+
   return (
     <Grid>
       <GridItem md={1} />
@@ -51,14 +66,21 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
           Your application was received on {moment(form.submitted).format('MMMM D, YYYY')} and we're working on it.
         </GoACallout>
         <Heading>The submitted form for your reference</Heading>
-        <JsonForms
-          readonly={true}
-          schema={definition.dataSchema}
-          uischema={readOnlyUiSchema(definition.uiSchema)}
-          data={data}
-          validationMode="NoValidation"
-          renderers={GoARenderers}
-        />
+        <ContextProvider
+          fileManagement={{
+            fileList: formPropertyIdsWithMetaData,
+            downloadFile: downloadFormFile,
+          }}
+        >
+          <JsonForms
+            readonly={true}
+            schema={definition.dataSchema}
+            uischema={readOnlyUiSchema(definition.uiSchema)}
+            data={data}
+            validationMode="NoValidation"
+            renderers={GoARenderers}
+          />
+        </ContextProvider>
       </GridItem>
       <GridItem md={1} />
     </Grid>

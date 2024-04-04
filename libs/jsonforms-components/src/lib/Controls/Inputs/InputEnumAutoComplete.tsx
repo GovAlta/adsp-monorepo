@@ -23,9 +23,6 @@ import { addDataByOptions, getData } from '../../Context';
 type EnumSelectAutoCompleteProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.Element => {
-  type JsonSchemaWithReadOnly = JsonSchema & { readonly?: boolean };
-  //const { data, schema, path, handleChange, uischema, rootSchema: JsonSchemaWithReadOnly } = props;
-  const { rootSchema }: { rootSchema: JsonSchemaWithReadOnly } = props;
   const { data, schema, path, handleChange, uischema } = props;
   let enumData = schema?.enum || [];
 
@@ -40,8 +37,6 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
     options: enumData,
     getOptionLabel: (option: Array<string>) => option,
   };
-
-  const [inputValue, setInputValue] = React.useState('');
 
   useEffect(() => {
     if (dataKey && url) {
@@ -73,7 +68,6 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
           value={data || null}
           onChange={(name, value) => {
             handleChange(path, value);
-            setInputValue(value);
           }}
           renderInput={(params) => {
             return <TextField {...params} variant="outlined" size="small" placeholder={schema?.description} />;

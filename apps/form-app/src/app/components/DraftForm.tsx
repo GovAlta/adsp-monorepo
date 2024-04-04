@@ -1,6 +1,7 @@
-import { GoARenderers, ContextProvider, ajv } from '@abgov/jsonforms-components';
+import { GoARenderers, ContextProvider, ajv, getData } from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
+import { UISchemaElement, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent } from 'react';
 import {
@@ -18,6 +19,7 @@ import {
 } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 
+export type JsonSchema = JsonSchema4 | JsonSchema7;
 interface DraftFormProps {
   definition: FormDefinition;
   form: Form;
@@ -29,6 +31,19 @@ interface DraftFormProps {
   onSubmit: (form: Form) => void;
 }
 
+export const populateDropdown = (schema) => {
+  const newSchema = JSON.parse(JSON.stringify(schema));
+
+  Object.keys(newSchema.properties || {}).forEach((propertyName) => {
+    const property = newSchema.properties || {};
+    if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '') {
+      property[propertyName].enum = getData(propertyName) as string[];
+    }
+  });
+
+  return newSchema as JsonSchema;
+};
+
 export const DraftForm: FunctionComponent<DraftFormProps> = ({
   definition,
   form,
@@ -39,7 +54,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   onChange,
   onSubmit,
 }) => {
-  const onSubmitFunction = (data) => {
+  const onSubmitFunction = () => {
     onSubmit(form);
   };
   const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
@@ -115,7 +130,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
           <JsonForms
             ajv={ajv}
             readonly={false}
-            schema={definition.dataSchema}
+            schema={populateDropdown(definition.dataSchema)}
             uischema={definition.uiSchema}
             data={data}
             validationMode="ValidateAndShow"
