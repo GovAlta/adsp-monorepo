@@ -3,18 +3,18 @@ import { useEffect } from 'react';
 interface Script {
   src: URL;
   integrity: string;
+  module?: boolean;
 }
 /**
  * Hook for dynamically adding script module elements to the document. The scripts must be trusted and digest value for SRI is required.
  *
  * @export
  * @param {Script[]} scripts
- * @param {React.DependencyList} [deps]
  */
-export function useScripts(scripts: Script[], deps?: React.DependencyList) {
+export function useScripts(...scripts: Script[]) {
   useEffect(() => {
-    const added = [];
-    for (const script of scripts) {
+    const added: HTMLScriptElement[] = [];
+    for (const script of scripts.filter((script) => !!script)) {
       if (!script?.src?.href || typeof script.integrity !== 'string') {
         throw new Error('Provided script must include valid src and integrity values.');
       }
@@ -23,7 +23,9 @@ export function useScripts(scripts: Script[], deps?: React.DependencyList) {
       scriptElement.src = script.src.href;
       scriptElement.integrity = script.integrity;
       scriptElement.crossOrigin = 'anonymous';
-      scriptElement.type = 'module';
+      if (script.module) {
+        scriptElement.type = 'module';
+      }
 
       added.push(document.body.appendChild(scriptElement));
     }
@@ -33,5 +35,5 @@ export function useScripts(scripts: Script[], deps?: React.DependencyList) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...scripts]);
 }
