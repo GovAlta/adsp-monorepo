@@ -238,14 +238,15 @@ export const updateForm = createAsyncThunk(
     if (form.form && !errors?.length) {
       dispatch(formActions.updateFormFiles(files));
       dispatch(formActions.setSaving(true));
-      dispatch(saveForm(form.form.id));
 
-      if (data.files && Object.values(data.files).length > 0) {
-        const formFiles = Object.values(data.files);
-        for (const file of formFiles) {
-          dispatch(loadFileMetadata(file));
+      dispatch(saveForm(form.form.id)).then(() => {
+        if (files && Object.values(files).length > 0) {
+          const formFiles = Object.values(files);
+          for (const file of formFiles) {
+            dispatch(loadFileMetadata(file));
+          }
         }
-      }
+      });
     }
 
     return { data, files, errors };
@@ -427,7 +428,7 @@ export const formSlice = createSlice({
       })
       .addCase(saveForm.fulfilled, (state, { payload }) => {
         state.saved = payload;
-        state.busy.saving = false;
+        //  state.busy.saving = false;
       })
       .addCase(submitForm.pending, (state) => {
         state.busy.submitting = true;
