@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes } from 'react-router-dom-6';
+import { Route, Routes } from 'react-router-dom';
 import { File } from './file';
 import { FileTypeDefinitionEditor } from './fileTypes/fileTypeDefinitionEditor';
 

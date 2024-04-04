@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 interface FileTypeModalProps {
   isOpen: boolean;
   initialValue?: FileTypeItem;

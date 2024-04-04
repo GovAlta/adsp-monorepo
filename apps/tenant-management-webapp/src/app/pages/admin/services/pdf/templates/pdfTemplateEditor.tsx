@@ -9,7 +9,7 @@ import {
 import { ModalContent } from '../../styled-components';
 import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { TabletMessage } from '@components/TabletMessage';
 
 export const PdfTemplatesEditor = (): JSX.Element => {

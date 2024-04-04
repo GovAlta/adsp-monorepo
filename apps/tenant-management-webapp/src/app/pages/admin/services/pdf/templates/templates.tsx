@@ -8,7 +8,7 @@ import { renderNoItem } from '@components/NoItem';
 import { PdfTemplatesTable } from './templatesList';
 import { PageIndicator } from '@components/Indicator';
 import { defaultPdfTemplate } from '@store/pdf/model';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
 
 interface PdfTemplatesProps {

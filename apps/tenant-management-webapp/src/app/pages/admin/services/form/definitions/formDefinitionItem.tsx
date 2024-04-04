@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FormDefinition } from '@store/form/model';
 import { OverflowWrap, EntryDetail } from '../styled-components';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface PdfTemplateItemProps {

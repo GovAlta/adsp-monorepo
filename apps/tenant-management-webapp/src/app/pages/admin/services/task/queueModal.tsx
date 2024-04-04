@@ -3,7 +3,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components-new';
 
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { TaskDefinition } from '@store/task/model';
 import {
   badCharsCheck,

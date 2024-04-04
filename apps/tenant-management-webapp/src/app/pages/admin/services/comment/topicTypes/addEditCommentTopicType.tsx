@@ -4,7 +4,7 @@ import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { CommentCommentItem } from '../styled-components';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';

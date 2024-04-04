@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom-6';
+import { Navigate, useLocation } from 'react-router-dom';
 import queryString from 'query-string';
 
 export const AuthCallback = () => {

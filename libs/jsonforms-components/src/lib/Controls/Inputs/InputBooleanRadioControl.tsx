@@ -1,10 +1,10 @@
 import React from 'react';
 import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { Hidden } from '@mui/material';
-import { GoARadioGroup, GoARadioItem, GoAFormItem } from '@abgov/react-components-new';
+import { GoARadioGroup, GoARadioItem } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
+import { checkFieldValidity } from '../../util/stringUtils';
+import { Visible } from '../../util';
 
 export const BooleanRadioComponent = ({
   data,
@@ -35,7 +35,7 @@ export const BooleanRadioComponent = ({
   } as ControlProps);
 
   return (
-    <Hidden xsUp={!visible}>
+    <Visible visible={visible}>
       <GoARadioGroup
         error={errorsFormInput.length > 0}
         name={`${label}`}
@@ -63,7 +63,7 @@ export const BooleanRadioComponent = ({
           description={EnableDescription ? FalseDescription : null}
         />
       </GoARadioGroup>
-    </Hidden>
+    </Visible>
   );
 };
 export const BooleanRadioControl = (props: ControlProps) => (

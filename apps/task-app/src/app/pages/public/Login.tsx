@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom-6';
-
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom-6';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import {
   AppDispatch,

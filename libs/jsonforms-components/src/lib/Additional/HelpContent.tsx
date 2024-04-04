@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-import { Hidden } from '@mui/material';
 import { GoADetails } from '@abgov/react-components-new';
 import { HelpContentDiv } from './styled-components';
 import { ControlProps, ControlElement } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
+import { Visible } from '../util';
 interface OptionProps {
   ariaLabel?: string;
   help?: string | string[];
@@ -41,7 +41,7 @@ export const HelpContentComponent = ({
     );
 
   return (
-    <Hidden xsUp={!visible}>
+    <Visible visible={visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
         <div className={marginClass}>
           {label && !uischema.options?.variant && uischema.options?.variant !== 'details' && (
@@ -62,7 +62,7 @@ export const HelpContentComponent = ({
           )}
         </div>
       </HelpContentDiv>
-    </Hidden>
+    </Visible>
   );
 };
 const HelpContents = ({ elements, isParent = false }: { elements: CustomControlElement[]; isParent?: boolean }) => (

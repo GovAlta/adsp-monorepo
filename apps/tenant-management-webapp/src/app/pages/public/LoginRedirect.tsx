@@ -3,7 +3,7 @@ import { Page } from '@components/Html';
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { KeycloakCheckSSO } from '@store/tenant/actions';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { LOGIN_TYPES } from '@lib/keycloak';
 
 interface LoginProps {

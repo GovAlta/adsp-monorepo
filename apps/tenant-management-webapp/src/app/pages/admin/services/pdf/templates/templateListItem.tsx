@@ -2,7 +2,7 @@ import React from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Edit, OverflowWrap } from '../styled-components';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 
 interface PdfTemplateItemProps {
   pdfTemplate: PdfTemplate;

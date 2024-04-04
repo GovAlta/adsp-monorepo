@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 
 interface FormOverviewProps {
   setOpenAddDefinition: (val: boolean) => void;

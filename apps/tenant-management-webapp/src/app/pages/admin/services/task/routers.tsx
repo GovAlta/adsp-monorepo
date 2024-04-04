@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes } from 'react-router-dom-6';
+import { Route, Routes } from 'react-router-dom';
 import { Task } from './task';
 import { TaskDefinitionEditor } from './TaskDefinationEditor';
 

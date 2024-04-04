@@ -90,15 +90,13 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
           <div>{description}</div>
           {sortedNotice.map((notice) => {
             return (
-              <div data-testid="service-notice">
-                <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
-                  <div data-testid="service-notice-message">{notice.message}</div>
-                  <br />
-                  <div data-testid="service-notice-date-range">
-                    From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
-                  </div>
-                </GoACallout>
-              </div>
+              <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
+                <div data-testid="service-notice-message">{notice.message}</div>
+                <br />
+                <div data-testid="service-notice-date-range">
+                  From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
+                </div>
+              </GoACallout>
             );
           })}
         </div>
