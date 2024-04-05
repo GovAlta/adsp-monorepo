@@ -47,16 +47,14 @@ export interface Template {
 }
 
 export const baseTemplate = {
-  email: { subject: '', title: '', subtitle: '', body: '' },
-  bot: { subject: '', title: '', subtitle: '', body: '' },
-  sms: { subject: '', title: '', subtitle: '', body: '' },
-  mail: { subject: '', title: '', subtitle: '', body: '' },
+  email: { subject: '', body: '' },
+  bot: { subject: '', body: '' },
+  sms: { subject: '', body: '' },
+  mail: { subject: '', body: '' },
 };
 
 export interface notifyText {
   subject: string;
-  title: string;
-  subtitle: string;
   body: string;
 }
 
