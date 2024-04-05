@@ -10,8 +10,8 @@ import {
   ValidationError,
   deleteFile,
   downloadFile,
-  fileMetaDataSelector,
   filesSelector,
+  loadFileMetadata,
   propertyIdsWithFileMetaDataSelector,
   updateForm,
   uploadFile,
@@ -49,8 +49,16 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     return Object.keys(object).find((key) => object[key] === value);
   };
 
+  const updateFormAndRefreshMetadata = async (clonedFiles: Record<string, string>) => {
+    await dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
+
+    Object.values(clonedFiles).forEach((urn) => {
+      dispatch(loadFileMetadata(urn));
+    });
+  };
+
   const uploadFormFile = async (file: File, propertyId: string) => {
-    let clonedFiles = { ...files };
+    let clonedFiles: Record<string, string> = { ...files };
 
     // Handle deleting an existing file if a new file is selected to be uploaded again.
     if (clonedFiles[propertyId]) {
@@ -67,7 +75,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     clonedFiles[propertyId] = fileMetaData.urn;
 
     //Explicitly trigger the updateForm.
-    dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
+    await updateFormAndRefreshMetadata(clonedFiles);
   };
 
   const downloadFormFile = async (file) => {
@@ -82,13 +90,13 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const deleteFormFile = async (file) => {
     await dispatch(deleteFile(file.urn));
 
-    const clonedFiles = { ...files };
+    const clonedFiles: Record<string, string> = { ...files };
     const deleteKey = getKeyByValue(clonedFiles, file.urn);
     delete clonedFiles[deleteKey];
 
     //Explicitly trigger the updateForm as the file upload control may not have updated
     //file list to remove the icon buttons when handleChange is called.
-    dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
+    await updateFormAndRefreshMetadata(clonedFiles);
   };
 
   return (

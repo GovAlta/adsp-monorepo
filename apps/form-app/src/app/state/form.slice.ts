@@ -1,5 +1,5 @@
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { createAction, createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import { AppState } from './store';
@@ -234,19 +234,19 @@ export const updateForm = createAsyncThunk(
   ) => {
     const { form } = getState() as AppState;
 
+    const excludeFileUrnErrors = errors?.filter((fi) => fi.parentSchema.format !== 'file-urn');
+
     // Skip saving if there are errors; the request will fail due to validation anyways.
-    if (form.form && !errors?.length) {
+    if (form.form && !excludeFileUrnErrors?.length && Object.keys(files)?.length === 0) {
+      dispatch(formActions.setSaving(true));
+      dispatch(saveForm(form.form.id));
+    }
+
+    if (Object.keys(files)?.length > 0) {
       dispatch(formActions.updateFormFiles(files));
       dispatch(formActions.setSaving(true));
 
-      dispatch(saveForm(form.form.id)).then(() => {
-        if (files && Object.values(files).length > 0) {
-          const formFiles = Object.values(files);
-          for (const file of formFiles) {
-            dispatch(loadFileMetadata(file));
-          }
-        }
-      });
+      dispatch(saveForm(form.form.id));
     }
 
     return { data, files, errors };

@@ -123,7 +123,10 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                   onDelete={() => {
                     setShowFileDeleteConfirmation(false);
                     deleteFile(getFile());
-                    handleChange(propertyId, '');
+                    const handleFunction = () => {
+                      handleChange(propertyId, '');
+                    };
+                    setTimeout(handleFunction, 1);
                   }}
                 />
               </AttachmentBorder>
