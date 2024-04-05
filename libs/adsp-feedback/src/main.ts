@@ -114,7 +114,7 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .adsp-fb .adsp-fb-badge {
             z-index: 1;
-            background: #0070c4;
+            background: #0081a2;
             color: #ffffff;
             position: fixed;
             right: 0;
@@ -122,6 +122,7 @@ class AdspFeedback implements AdspFeedbackApi {
             padding: 16px 8px;
             writing-mode: vertical-rl;
             cursor: pointer;
+            border-radius: 0.25rem 0 0 0.25rem;
           }
           .adsp-fb .adsp-fb-form-container {
             z-index: 2;
@@ -138,6 +139,7 @@ class AdspFeedback implements AdspFeedbackApi {
             box-sizing: border-box;
             flex-direction: column;
             height: 100%;
+            max-width: 600px;
             padding: 24px 48px;
             transition: transform 100ms;
           }
@@ -208,8 +210,8 @@ class AdspFeedback implements AdspFeedbackApi {
             box-sizing: border-box;
             padding: 24px 48px;
           }
-          .adsp-fb .adsp-fb-sent p {
-            margin-bottom: auto;
+          .adsp-fb .adsp-fb-sent .adsp-fb-actions {
+            margin-top: auto;
           }
           @media screen and (max-width: 623px) {
             .adsp-fb .adsp-fb-form-container {
@@ -245,9 +247,13 @@ class AdspFeedback implements AdspFeedbackApi {
             </div>
             <div ${ref(this.feedbackFormRef)} class="adsp-fb-form-container" data-show="false">
               <form class="adsp-fb-form">
-                <h2>Your feedback</h2>
+                <h2>Give your feedback</h2>
+                <p>
+                  Please help us improve our service by sharing feedback about your experience. This will only take a
+                  minute.
+                </p>
                 <fieldset class="adsp-fb-form-rating" ${ref(this.ratingRef)} @change=${this.onRatingChange}>
-                  <legend>How is your experience?</legend>
+                  <legend>How easy was it for you to use this service?</legend>
                   <label for="delightful">
                     <input name="rating" type="radio" id="delightful" value="delightful" />
                     Delightful
@@ -270,11 +276,11 @@ class AdspFeedback implements AdspFeedbackApi {
                   </label>
                 </fieldset>
                 <div class="adsp-fb-form-comment">
-                  <label for="comment">Please share your comments </label>
+                  <label for="comment">Do you have any additional comments? <span>(optional)</span></label>
                   <textarea id="comment" ${ref(this.commentRef)}></textarea>
                 </div>
                 <div class="adsp-fb-actions">
-                  <button @click=${this.closeFeedbackForm} type="button">Close</button>
+                  <button @click=${this.closeFeedbackForm} type="button">Cancel</button>
                   <button
                     ${ref(this.sendButtonRef)}
                     class="adsp-fb-form-primary"
@@ -282,13 +288,18 @@ class AdspFeedback implements AdspFeedbackApi {
                     type="button"
                     disabled
                   >
-                    Send feedback
+                    Give feedback
                   </button>
                 </div>
               </form>
               <div class="adsp-fb-sent">
-                <h2>Your feedback</h2>
-                <p>Thank you for sharing your feedback. We will use your input to improve the service.</p>
+                <h2>Give your feedback</h2>
+                <p>Success!</p>
+                <p>
+                  Thank you for providing your feedback. We will use your input to improve the service. You will not
+                  receive a response from this submission. If you do require a response, you can contact government
+                  through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
+                </p>
                 <div class="adsp-fb-actions">
                   <button @click=${this.closeFeedbackForm} class="adsp-fb-form-primary" type="button">Close</button>
                 </div>
