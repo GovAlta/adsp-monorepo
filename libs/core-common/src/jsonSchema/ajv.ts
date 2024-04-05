@@ -21,7 +21,7 @@ export class AjvValidationService implements ValidationService {
         schemaMigration.draft7(schema);
       }
 
-      this.ajv.removeSchema(schemaKey).addSchema(schema || {}, schemaKey);
+      this.ajv.removeSchema(schemaKey).addSchema(this.removeEmptyEnum(schema) || {}, schemaKey);
     } catch (err) {
       this.logger.error(`Schema for key '${schemaKey}' is invalid.`);
       throw err;
@@ -34,5 +34,17 @@ export class AjvValidationService implements ValidationService {
       const errors = this.ajv.errorsText(this.ajv.errors);
       throw new InvalidValueError(context, errors);
     }
+  }
+
+  removeEmptyEnum(schema: Record<string, unknown>): Record<string, unknown> {
+    const newSchema = JSON.parse(JSON.stringify(schema));
+
+    Object.keys(newSchema?.properties || {}).forEach((propertyName) => {
+      const property = newSchema.properties || {};
+      if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '')
+        delete property[propertyName].enum;
+    });
+
+    return newSchema;
   }
 }

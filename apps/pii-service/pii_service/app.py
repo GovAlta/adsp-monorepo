@@ -70,6 +70,7 @@ adsp = adsp_extension.init_app(
             ServiceRole(
                 service_roles.ANALYZER,
                 "Analyzer role that allows user to make analyze requests.",
+                in_tenant_admin=True
             )
         ],
         events=[],

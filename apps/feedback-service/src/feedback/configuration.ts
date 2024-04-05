@@ -6,7 +6,7 @@ export const configurationSchema = {
       items: {
         type: 'object',
         properties: {
-          url: { type: 'string', pattern: '^https?:\\/\\/[a-zA-Z0-9.:]{5,150}$' },
+          url: { type: 'string', pattern: '^https?:\\/\\/[a-zA-Z0-9.:_-]{5,150}$' },
           views: {
             type: 'array',
             items: {
