@@ -91,8 +91,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
 
     clonedFiles = { ...clonedFiles };
     clonedFiles[propertyId] = fileMetaData.urn;
-
-    //Explicitly trigger the updateForm.
     await updateFormAndRefreshMetadata(clonedFiles);
   };
 
@@ -112,8 +110,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     const deleteKey = getKeyByValue(clonedFiles, file.urn);
     delete clonedFiles[deleteKey];
 
-    //Explicitly trigger the updateForm as the file upload control may not have updated
-    //file list to remove the icon buttons when handleChange is called.
     await updateFormAndRefreshMetadata(clonedFiles);
   };
 
