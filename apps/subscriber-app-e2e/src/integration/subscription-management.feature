@@ -18,14 +18,13 @@ Feature: Subscription management
     Then the user views subscription management page
     And no critical or serious accessibility issues on "authenticated subscription management" page
 
-  # Application health check change is changed to be self-serve subscription. Created a task to deal with this change: https://goa-dio.atlassian.net/browse/CS-2859
-  @TEST_CS-995 @REQ_CS-915 @TEST_CS-1248 @REQ_CS-1040 @REQ_CS-1502 @regression @ignore
+  @TEST_CS-995 @REQ_CS-915 @TEST_CS-1248 @REQ_CS-1040 @REQ_CS-1502 @regression
   Scenario: As an authenticated stakeholder, I can login to see non-self-serve subscriptions
     When an authenticated user with "auto.contact" and "autotest" is in the subscriber app
     Then the user views subscription management page
     And the user views the user contact information
-    And the user views the subscription of "Application health check change" and its description
-    And the user views the support link for the subscription of "Application health check change"
+    And the user views the subscription of "autotest-subscriptions" and its description
+    And the user views the support link for the subscription of "autotest-subscriptions"
 
   @TEST_CS-1371 @REQ_CS-1238 @REQ_CS-1239 @regression
   Scenario: As a tenant admin, I can configure what channels are supported by a notification type, so that I can support multiple channels of notifications.

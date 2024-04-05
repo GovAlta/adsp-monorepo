@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom-6';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   TextLoadingIndicator,
   FlexRow,

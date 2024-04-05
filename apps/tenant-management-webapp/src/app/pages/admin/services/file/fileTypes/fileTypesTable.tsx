@@ -5,7 +5,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
 import { GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components-new';
 import { FileTypeItem } from '@store/file/models';
-import { useNavigate } from 'react-router-dom-6';
+import { useNavigate } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { DeleteFileTypeService, checkFileTypeHasFile } from '@store/file/actions';

@@ -6,7 +6,7 @@ import { JsonForms } from '@jsonforms/react';
 import moment from 'moment';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { Form, FormDefinition, propertyIdsWithFileMetaDataSelector, AppDispatch, downloadFile } from '../state';
+import { Form, FormDefinition, metaDataSelector, AppDispatch, downloadFile } from '../state';
 import { ContextProvider } from '@abgov/jsonforms-components';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -56,7 +56,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
 
   const dispatch = useDispatch<AppDispatch>();
 
-  const formPropertyIdsWithMetaData = useSelector(propertyIdsWithFileMetaDataSelector);
+  const metadata = useSelector(metaDataSelector);
 
   return (
     <Grid>
@@ -68,7 +68,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
         <Heading>The submitted form for your reference</Heading>
         <ContextProvider
           fileManagement={{
-            fileList: formPropertyIdsWithMetaData,
+            fileList: metadata,
             downloadFile: downloadFormFile,
           }}
         >

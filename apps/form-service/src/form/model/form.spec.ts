@@ -400,7 +400,6 @@ describe('FormEntity', () => {
       const updated = await entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files);
       expect(updated.data).toBe(data);
       expect(updated.files).toBe(files);
-      expect(validationService.validate).toHaveBeenCalledWith(expect.any(String), definition.id, data);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 

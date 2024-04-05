@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Outlet } from 'react-router-dom-6';
+import { Outlet } from 'react-router-dom';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';

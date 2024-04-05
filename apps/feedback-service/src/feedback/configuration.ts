@@ -6,7 +6,7 @@ export const configurationSchema = {
       items: {
         type: 'object',
         properties: {
-          url: { type: 'string' },
+          url: { type: 'string', pattern: '^https?:\\/\\/[a-zA-Z0-9.:_-]{5,150}$' },
           views: {
             type: 'array',
             items: {
@@ -28,7 +28,7 @@ export const configurationSchema = {
 
 export interface SiteConfiguration {
   url: URL;
-  allowAnonymous?: boolean;
+  allowAnonymous: boolean;
   views?: {
     path: string;
   }[];
@@ -39,7 +39,7 @@ export interface FeedbackConfiguration {
 }
 
 interface FeedbackConfigurationObject {
-  sites?: (Omit<SiteConfiguration, 'url'> & { url: string })[];
+  sites?: { url: string; allowAnonymous?: boolean; views?: { path: string }[] }[];
 }
 
 export function combineConfiguration(tenant: FeedbackConfigurationObject) {
@@ -48,7 +48,7 @@ export function combineConfiguration(tenant: FeedbackConfigurationObject) {
       tenant?.sites?.reduce(
         (sites, site) => ({
           ...sites,
-          [site.url]: { url: new URL(site.url), views: site.views, allowAnonymous: site.allowAnonymous },
+          [site.url]: { url: new URL(site.url), views: site.views, allowAnonymous: !!site.allowAnonymous },
         }),
         {} as Record<string, SiteConfiguration>
       ) || {},

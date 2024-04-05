@@ -61,22 +61,21 @@ const ServiceStatusPage = (): JSX.Element => {
   const { allApplicationsNotices } = useSelector((state: RootState) => ({
     allApplicationsNotices: state.notice?.allApplicationsNotices,
   }));
-
   const noMonitorOnlyApplications = applications?.filter((application) => !application.monitorOnly);
 
   useEffect(() => {
     dispatch(fetchApplications(realm));
-  }, [realm]);
+  }, [realm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     dispatch(FetchContactInfoService(realm));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (error && error.length > 0) {
       dispatch(subscribeToTenantSuccess(null));
     }
-  }, [error[error?.length - 1]]);
+  }, [error[error?.length - 1]]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const timeZone = new Date().toString().split('(')[1].split(')')[0];
 
@@ -227,15 +226,13 @@ const ServiceStatusPage = (): JSX.Element => {
             if (!applications) return <GoASkeleton type="card" lineCount={60} maxWidth="800px" />;
             else {
               return (
-                <div data-testid="all-application-notice" className="mb-1">
-                  <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
-                    <div data-testid="all-application-notice-message">{notice.message}</div>
-                    <br />
-                    <div data-testid="service-notice-date-range">
-                      From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
-                    </div>
-                  </GoACallout>
-                </div>
+                <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
+                  <div data-testid="all-application-notice-message">{notice.message}</div>
+                  <br />
+                  <div data-testid="service-notice-date-range">
+                    From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
+                  </div>
+                </GoACallout>
               );
             }
           })}
@@ -280,7 +277,6 @@ const ServiceStatusPage = (): JSX.Element => {
                   <GoASkeleton type="paragraph" />
                 ) : (
                   <>
-                    {' '}
                     <Grid>
                       <GridItem md={4.6}>
                         <GoAFormItem
@@ -305,7 +301,6 @@ const ServiceStatusPage = (): JSX.Element => {
                         Submit
                       </GoAButton>
                     </GoAFormActionOverwrite>
-                    <br />
                   </>
                 )}
               </div>

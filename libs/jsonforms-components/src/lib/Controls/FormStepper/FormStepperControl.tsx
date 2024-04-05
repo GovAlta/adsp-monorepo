@@ -18,8 +18,6 @@ import {
   isVisible,
   isEnabled,
   JsonSchema,
-  JsonSchema4,
-  JsonSchema7,
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
@@ -37,13 +35,12 @@ import {
   ReviewItemTitle,
   ReviewListItem,
   ReviewListWrapper,
-  ListWithDetail,
-  ListWithDetailHeading,
   RightAlignmentDiv,
 } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { getAllRequiredFields } from './util/getRequiredFields';
 import { renderFormFields } from './util/GenerateFormFields';
+import { Visible } from '../../util';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line
@@ -185,7 +182,7 @@ export const FormStepper = ({
       /*
         [Mar-04-2024][Paul Li] the GoAPages internal state cannot handle the hidden/display well. We need extra hide/display control to it appropriately.
        */
-      <Hidden xsUp={indexOfCategory !== step - 1}>
+      <Visible visible={indexOfCategory === step - 1}>
         {category.elements.map((elementUiSchema, index) => {
           return (
             <JsonFormsDispatch
@@ -200,7 +197,7 @@ export const FormStepper = ({
             />
           );
         })}
-      </Hidden>
+      </Visible>
     );
   };
 
@@ -212,7 +209,7 @@ export const FormStepper = ({
 
   return (
     <div data-testid="form-stepper-test-wrapper">
-      <Hidden xsUp={!visible}>
+      <Visible visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
           <GoAFormStepper
             testId="form-stepper-test"
@@ -309,13 +306,17 @@ export const FormStepper = ({
                 <GoAButton type="primary" testId="submit-form" onClick={onSubmit}>
                   Close
                 </GoAButton>
+
+                {!showNextBtn && (
+                  <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
+                    Submit
+                  </GoAButton>
+                )}
               </GoAButtonGroup>
             }
-          >
-            <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
-          </GoAModal>
+          />
         </div>
-      </Hidden>
+      </Visible>
     </div>
   );
 };

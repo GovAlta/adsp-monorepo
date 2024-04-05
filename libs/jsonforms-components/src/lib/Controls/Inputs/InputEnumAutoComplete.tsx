@@ -14,16 +14,15 @@ import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '@jsonforms/material-renderers';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
-import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
-import { GoADropdown } from '@abgov/react-components-new';
+
+import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 
 import { addDataByOptions, getData } from '../../Context';
 
 type EnumSelectAutoCompleteProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.Element => {
-  const { data, schema, path, handleChange, uischema } = props;
+  const { data, schema, path, handleChange, uischema, label } = props;
   let enumData = schema?.enum || [];
 
   const dataKey = uischema?.options?.enumContext?.key;
@@ -60,19 +59,22 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
           <GoADropdown disabled={true} placeholder={data} onChange={() => {}}></GoADropdown>
         </div>
       ) : (
-        <Autocomplete
-          {...defaultProps}
-          id="autocomplete"
-          getOptionLabel={(option) => option}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          value={data || null}
+        <GoADropdown
+          value={data}
           onChange={(name, value) => {
             handleChange(path, value);
           }}
-          renderInput={(params) => {
-            return <TextField {...params} variant="outlined" size="small" placeholder={schema?.description} />;
-          }}
-        />
+          testId={`autocomplete-dropdown-${label}`}
+          id={`autocomplete-dropdown-${label}`}
+          width="100%"
+          filterable={true}
+          relative={true}
+          ariaLabel={label}
+        >
+          {enumData?.map((item) => {
+            return <GoADropdownItem value={item} label={item} key={`autocomplete-${item}`}></GoADropdownItem>;
+          })}
+        </GoADropdown>
       )}
     </div>
   );

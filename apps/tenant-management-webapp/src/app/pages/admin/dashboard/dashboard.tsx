@@ -1,6 +1,6 @@
 import React, { createRef, useEffect, useState, useRef } from 'react';
 import { GoAContainer, GoACallout } from '@abgov/react-components-new';
-import { Link } from 'react-router-dom-6';
+import { Link } from 'react-router-dom';
 import { Grid, GridItem } from '@core-services/app-common';
 import { Main, Page } from '@components/Html';
 import { useDispatch, useSelector } from 'react-redux';

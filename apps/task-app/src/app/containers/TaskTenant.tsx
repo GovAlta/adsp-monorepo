@@ -1,7 +1,8 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
+import { useScripts } from '@core-services/app-common';
 import React, { Suspense, lazy, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation, useParams, useNavigate } from 'react-router-dom-6';
+import { Navigate, Route, Routes, useLocation, useParams, useNavigate } from 'react-router-dom';
 
 import {
   AppDispatch,
@@ -17,7 +18,6 @@ import {
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
 import { AuthorizeUser } from './AuthorizeUser';
-import { useScripts } from '../useScripts';
 
 const TaskQueue = lazy(() => import('./TaskQueue'));
 const TaskQueues = lazy(() => import('./TaskQueues'));
@@ -67,7 +67,7 @@ export const TaskTenant = () => {
   const tenant = useSelector(tenantSelector);
   const extensions = useSelector(extensionsSelector);
 
-  useScripts(extensions, [extensions]);
+  useScripts(...extensions);
   const navigate = useNavigate();
 
   const feedback = useSelector(feedbackSelector);
@@ -76,7 +76,7 @@ export const TaskTenant = () => {
     if (feedback?.message.includes('not found')) {
       navigate(`/overview`);
     }
-  }, [feedback]);
+  }, [feedback, navigate]);
 
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);

@@ -4,7 +4,7 @@ import configureStore from 'redux-mock-store';
 import { fireEvent, render, waitFor, screen } from '@testing-library/react';
 
 import ServiceStatusPage from './status';
-import { BrowserRouter as Router } from 'react-router-dom-6';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { SetApplicationStatusAction, SET_APPLICATION_STATUS_ACTION } from '@store/status/actions';
 
