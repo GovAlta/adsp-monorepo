@@ -234,15 +234,11 @@ export const updateForm = createAsyncThunk(
   ) => {
     const { form } = getState() as AppState;
 
-    const excludeFileUrnErrors = errors?.filter((fi) => fi.parentSchema.format !== 'file-urn');
-
-    // Skip saving if there are errors; the request will fail due to validation anyways.
-    if (form.form && !excludeFileUrnErrors?.length && Object.keys(files)?.length === 0) {
+    // Allow saving even if there are errors.
+    if (form.form && Object.keys(files)?.length === 0) {
       dispatch(formActions.setSaving(true));
       dispatch(saveForm(form.form.id));
-    }
-
-    if (Object.keys(files)?.length > 0) {
+    } else if (Object.keys(files)?.length > 0) {
       dispatch(formActions.updateFormFiles(files));
       dispatch(formActions.setSaving(true));
 

@@ -10,8 +10,8 @@ import { DeleteFileModal } from './DeleteFileModal';
 
 export type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
 
-const DELAY_UPLOAD_TIMEOUT_MS = 200;
-const DELAY_DELETE_TIMEOUT_MS = 80;
+const DELAY_UPLOAD_TIMEOUT_MS = 1;
+const DELAY_DELETE_TIMEOUT_MS = 1;
 
 export const FileUploader = ({ data, path, handleChange, uischema, ...props }: FileUploaderLayoutRendererProps) => {
   const enumerators = useContext(JsonFormContext);
