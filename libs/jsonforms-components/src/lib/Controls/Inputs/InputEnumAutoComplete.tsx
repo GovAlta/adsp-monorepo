@@ -1,11 +1,22 @@
 import React, { useEffect } from 'react';
-import { ControlProps, isEnumControl, and, optionIs, OwnPropsOfEnum, RankedTester, rankWith } from '@jsonforms/core';
+import {
+  ControlProps,
+  isEnumControl,
+  and,
+  optionIs,
+  OwnPropsOfEnum,
+  RankedTester,
+  rankWith,
+  JsonSchema,
+} from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '@jsonforms/material-renderers';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
+
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
+
 import { addDataByOptions, getData } from '../../Context';
 
 type EnumSelectAutoCompleteProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
@@ -39,23 +50,33 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
     defaultProps.options = enumData;
   }
 
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+
   return (
-    <GoADropdown
-      value={data}
-      onChange={(name, value) => {
-        handleChange(path, value);
-      }}
-      testId={`autocomplete-dropdown-${label}`}
-      id={`autocomplete-dropdown-${label}`}
-      width="100%"
-      filterable={true}
-      relative={true}
-      ariaLabel={label}
-    >
-      {enumData?.map((item) => {
-        return <GoADropdownItem value={item} label={item} key={`autocomplete-${item}`}></GoADropdownItem>;
-      })}
-    </GoADropdown>
+    <div>
+      {readOnly ? (
+        <div>
+          <GoADropdown disabled={true} placeholder={data} onChange={() => {}}></GoADropdown>
+        </div>
+      ) : (
+        <GoADropdown
+          value={data}
+          onChange={(name, value) => {
+            handleChange(path, value);
+          }}
+          testId={`autocomplete-dropdown-${label}`}
+          id={`autocomplete-dropdown-${label}`}
+          width="100%"
+          filterable={true}
+          relative={true}
+          ariaLabel={label}
+        >
+          {enumData?.map((item) => {
+            return <GoADropdownItem value={item} label={item} key={`autocomplete-${item}`}></GoADropdownItem>;
+          })}
+        </GoADropdown>
+      )}
+    </div>
   );
 };
 
