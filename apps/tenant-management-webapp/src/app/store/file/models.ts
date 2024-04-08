@@ -42,11 +42,16 @@ export const FileTypeDefaultOnEdit: FileTypeItem = {
   securityClassification: '',
 };
 
+export interface Result {
+  error: string;
+  propertyId: string;
+}
+
 export interface FileItem {
-  id: string;
-  filename: string;
-  size: number;
-  fileURN: string;
+  id?: string;
+  filename?: string;
+  size?: number;
+  fileURN?: string;
   urn: string;
   typeName?: string;
   recordId?: string;

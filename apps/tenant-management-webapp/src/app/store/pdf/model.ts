@@ -61,10 +61,10 @@ interface SocketChannel {
 export type SchemaType = unknown;
 
 export interface FileItem {
-  id: string;
-  filename: string;
-  size: number;
-  fileURN: string;
+  id?: string;
+  filename?: string;
+  size?: number;
+  fileURN?: string;
   typeName?: string;
   recordId?: string;
   created?: string;
