@@ -11,18 +11,13 @@ import AsideLinks from '@components/AsideLinks';
 
 export const Pdf: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+
   const [openAddTemplate, setOpenAddTemplate] = useState(false);
 
   const searchParams = new URLSearchParams(document.location.search);
 
   const templates = tenantName && searchParams.get('templates');
-  function getPdfDocsLink() {
-    return `${docBaseUrl}/${tenantName?.replace(/ /g, '-')}?urls.primaryName=PDF service`;
-  }
-  function getPdfsupportcodeLink() {
-    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/pdf-service';
-  }
+
   return (
     <Page>
       <Main>
@@ -37,7 +32,7 @@ export const Pdf: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideLinks serviceLink={getPdfsupportcodeLink()} docsLink={getPdfDocsLink()} />
+        <AsideLinks serviceName="pdf" />
       </Aside>
     </Page>
   );

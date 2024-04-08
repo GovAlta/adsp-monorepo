@@ -14,8 +14,6 @@ import { defaultEventDefinition, EventDefinition } from '@store/event/models';
 import AsideLinks from '@components/AsideLinks';
 
 export const Events: FunctionComponent = () => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const definitions = useSelector((state: RootState) => state.event.definitions);
   const coreNamespaces = useSelector((state: RootState) => {
@@ -29,12 +27,7 @@ export const Events: FunctionComponent = () => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
-  function getEventDocsLink() {
-    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Event service`;
-  }
-  function getEventsupportcodeLink() {
-    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/event-service';
-  }
+
   return (
     <Page>
       <Main>
@@ -72,7 +65,7 @@ export const Events: FunctionComponent = () => {
         />
       </Main>
       <Aside>
-        <AsideLinks serviceLink={getEventsupportcodeLink()} docsLink={getEventDocsLink()} />
+        <AsideLinks serviceName="event" />
       </Aside>
     </Page>
   );
