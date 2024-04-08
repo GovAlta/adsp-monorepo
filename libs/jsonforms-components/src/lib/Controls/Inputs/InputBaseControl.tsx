@@ -1,7 +1,6 @@
 import React from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
-import { Hidden } from '@mui/material';
 import { FormFieldWrapper } from './style-component';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 import { Visible } from '../../util';

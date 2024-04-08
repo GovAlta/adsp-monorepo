@@ -23,7 +23,6 @@ import {
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { Hidden } from '@mui/material';
 import { Grid, GridItem } from '../../common/Grid';
 import { getData } from '../../Context';
 

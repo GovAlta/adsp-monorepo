@@ -22,7 +22,6 @@
           "@jsonforms/core",
           "@jsonforms/material-renderers",
           "@jsonforms/react",
-          "@mui/material",
           "react",
           "react-dom",
           "react/jsx-runtime"
