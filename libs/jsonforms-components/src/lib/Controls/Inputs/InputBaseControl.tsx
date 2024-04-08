@@ -5,6 +5,8 @@ import { Hidden } from '@mui/material';
 import { FormFieldWrapper } from './style-component';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 import { StepInputStatus, StepperContext } from '../FormStepper/StepperContext';
+import { Visible } from '../../util';
+
 export type GoAInputType =
   | 'text'
   | 'password'
@@ -63,7 +65,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   }, []);
 
   return (
-    <Hidden xsUp={!visible}>
+    <Visible visible={visible}>
       <FormFieldWrapper>
         <GoAFormItem
           requirement={required ? 'required' : undefined}
@@ -74,6 +76,6 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
           <InnerComponent {...modifiedProps} />
         </GoAFormItem>
       </FormFieldWrapper>
-    </Hidden>
+    </Visible>
   );
 };

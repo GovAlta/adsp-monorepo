@@ -1,5 +1,5 @@
 import '@abgov/web-components/index.css';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom-6';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthCallback } from './components/AuthCallback';
 import { FormTenant } from './containers/FormTenant';
 import { Landing } from './components/Landing';

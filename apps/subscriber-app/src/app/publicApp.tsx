@@ -7,7 +7,7 @@ import Header from '@components/AppHeader';
 import Recaptcha from './components/Recaptcha';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { Route, Routes, Navigate } from 'react-router-dom-6';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import PublicSubscriptions from '@pages/public/Subscriptions';
 import Login from '@pages/public/Login';
 import LogoutRedirect from '@pages/public/LogoutRedirect';

@@ -32,7 +32,7 @@ async function getFileMetadata(fileServiceUrl: string, urn: string): Promise<Fil
 
 export const loadFileMetadata = createAsyncThunk(
   'file/get-file-metadata',
-  async (urn: string, { getState, rejectWithValue }) => {
+  async ({ urn }: { urn: string; propertyId: string }, { getState, rejectWithValue }) => {
     try {
       const { config } = getState() as AppState;
       const fileServiceUrl = config.directory[FILE_SERVICE_ID];
@@ -99,7 +99,7 @@ export const downloadFile = createAsyncThunk(
 export const uploadFile = createAsyncThunk(
   'file/upload-file',
   async (
-    { typeId, file, recordId }: { typeId: string; file: File; recordId: string },
+    { typeId, file, recordId, propertyId }: { typeId: string; file: File; recordId: string; propertyId: string },
     { dispatch, getState, rejectWithValue }
   ) => {
     try {
@@ -146,30 +146,33 @@ export const uploadFile = createAsyncThunk(
   }
 );
 
-export const deleteFile = createAsyncThunk('file/delete-file', async (urn: string, { getState, rejectWithValue }) => {
-  try {
-    const { config } = getState() as AppState;
-    const fileServiceUrl = config.directory[FILE_SERVICE_ID];
+export const deleteFile = createAsyncThunk(
+  'file/delete-file',
+  async ({ urn }: { urn: string; propertyId: string }, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const fileServiceUrl = config.directory[FILE_SERVICE_ID];
 
-    const token = await getAccessToken();
+      const token = await getAccessToken();
 
-    const filePath = urn.split(':').pop();
-    const { data } = await axios.delete<{ deleted: boolean }>(new URL(`/file/v1${filePath}`, fileServiceUrl).href, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return data;
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      return rejectWithValue({
-        status: err.response?.status,
-        message: err.response?.data?.errorMessage || err.message,
+      const filePath = urn.split(':').pop();
+      const { data } = await axios.delete<{ deleted: boolean }>(new URL(`/file/v1${filePath}`, fileServiceUrl).href, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-    } else {
-      throw err;
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
     }
   }
-});
+);
 
 interface FileState {
   files: Record<string, string>;
@@ -206,16 +209,17 @@ const fileSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(loadFileMetadata.pending, (state, { meta }) => {
-        state.busy.metadata[meta.arg] = true;
+        state.busy.metadata[meta.arg.propertyId] = true;
         state.busy.loading = true;
       })
       .addCase(loadFileMetadata.fulfilled, (state, { meta, payload }) => {
-        state.metadata[meta.arg] = payload;
+        state.metadata[meta.arg.propertyId] = payload;
+
         state.busy.loading = false;
-        state.busy.metadata[meta.arg] = false;
+        state.busy.metadata[meta.arg.propertyId] = false;
       })
       .addCase(loadFileMetadata.rejected, (state, { meta }) => {
-        state.busy.metadata[meta.arg] = false;
+        state.busy.metadata[meta.arg.propertyId] = false;
         state.busy.loading = false;
       })
       .addCase(downloadFile.pending, (state, { meta }) => {
@@ -233,17 +237,17 @@ const fileSlice = createSlice({
         state.busy.uploading = true;
         state.upload = { name: meta.arg.file.name, progress: 0 };
       })
-      .addCase(uploadFile.fulfilled, (state, { payload }) => {
+      .addCase(uploadFile.fulfilled, (state, { meta, payload }) => {
         state.busy.uploading = false;
         state.files[payload.metadata.urn] = payload.file;
-        state.metadata[payload.metadata.urn] = payload.metadata;
+        state.metadata[meta.arg.propertyId] = payload.metadata;
       })
       .addCase(uploadFile.rejected, (state) => {
         state.busy.uploading = false;
       })
       .addCase(deleteFile.fulfilled, (state, { meta }) => {
-        state.files[meta.arg] = null;
-        delete state.metadata[meta.arg];
+        state.files[meta.arg.urn] = null;
+        delete state.metadata[meta.arg.propertyId];
         state.busy.loading = false;
       });
   },
@@ -252,6 +256,7 @@ const fileSlice = createSlice({
 const fileActions = fileSlice.actions;
 
 export const fileReducer = fileSlice.reducer;
+export const metaDataSelector = (state: AppState) => state.file.metadata;
 
 export const fileMetadataSelector = createSelector(
   (state: AppState) => state.file.metadata,
@@ -272,20 +277,4 @@ export const fileLoadingSelector = createSelector(
   (state: AppState) => state.file.busy,
   (_state: AppState, urn: string) => urn,
   (busy, urn) => busy.metadata[urn] || busy.download[urn]
-);
-
-export const propertyIdsWithFileMetaDataSelector = createSelector(
-  (state: AppState) => state.form.files,
-  (state: AppState) => state.file.metadata,
-  (files, metadata) => {
-    const fileMetaDataWithId: Record<string, FileMetadata> = {};
-    const propertyIds = Object.keys(files);
-
-    for (const id of propertyIds) {
-      const urn = files[id];
-      fileMetaDataWithId[id] = metadata[urn];
-    }
-
-    return fileMetaDataWithId;
-  }
 );

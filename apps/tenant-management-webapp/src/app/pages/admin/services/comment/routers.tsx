@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes } from 'react-router-dom-6';
+import { Route, Routes } from 'react-router-dom';
 import { Comment } from './comment';
 import { CommentTopicTypesEditor } from './topicTypes/commentTopicTypesEditor';
 

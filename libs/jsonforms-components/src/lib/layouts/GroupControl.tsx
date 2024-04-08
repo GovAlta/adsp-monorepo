@@ -3,7 +3,7 @@ import { GoAContainer } from '@abgov/react-components-new';
 import { GroupLayout, LayoutProps, RankedTester, rankWith, uiTypeIs, withIncreasedRank } from '@jsonforms/core';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { renderLayoutElements } from '../util/layout';
-import { Hidden } from '@mui/material';
+import { Visible } from '../util';
 
 export const groupTester: RankedTester = rankWith(1, uiTypeIs('Group'));
 
@@ -12,7 +12,7 @@ export const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
   const group = uischema as GroupLayout;
 
   return (
-    <Hidden xsUp={!visible}>
+    <Visible visible={visible}>
       {group.options?.componentProps?.accent === 'thick' && (
         <GoAContainer heading={group.label} {...group.options?.componentProps}>
           {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
@@ -41,7 +41,7 @@ export const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
           <GoAContainer>{renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}</GoAContainer>
         </div>
       )}
-    </Hidden>
+    </Visible>
   );
 };
 

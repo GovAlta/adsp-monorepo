@@ -1,22 +1,8 @@
 import { html, render } from 'lit-html';
 import { ref, createRef, Ref } from 'lit-html/directives/ref.js';
+import { AdspFeedback as AdspFeedbackApi, FeedbackContext, FeedbackOptions } from './types';
 
-export interface FeedbackContext {
-  tenant?: string;
-  site: string;
-  view: string;
-  interaction?: string;
-}
-
-export interface FeedbackOptions {
-  tenant?: string;
-  site?: string;
-  apiUrl?: string;
-  getAccessToken?: () => Promise<string>;
-  getContext?: () => Promise<FeedbackContext>;
-}
-
-class AdspFeedback {
+class AdspFeedback implements AdspFeedbackApi {
   private tenant: string = '';
   private apiUrl: URL | null = null;
   private getAccessToken = function () {
@@ -42,12 +28,12 @@ class AdspFeedback {
     };
   }
 
-  public openFeedbackForm() {
+  private openFeedbackForm() {
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'true');
   }
 
-  public closeFeedbackForm() {
+  private closeFeedbackForm() {
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'true');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
   }
@@ -128,7 +114,7 @@ class AdspFeedback {
           }
           .adsp-fb .adsp-fb-badge {
             z-index: 1;
-            background: #0070c4;
+            background: #0081a2;
             color: #ffffff;
             position: fixed;
             right: 0;
@@ -136,6 +122,7 @@ class AdspFeedback {
             padding: 16px 8px;
             writing-mode: vertical-rl;
             cursor: pointer;
+            border-radius: 0.25rem 0 0 0.25rem;
           }
           .adsp-fb .adsp-fb-form-container {
             z-index: 2;
@@ -143,7 +130,7 @@ class AdspFeedback {
             position: fixed;
             right: 16px;
             top: 30vh;
-            bottom: 48px;
+            bottom: 16px;
             border: 1px solid;
             overflow: hidden;
           }
@@ -152,8 +139,17 @@ class AdspFeedback {
             box-sizing: border-box;
             flex-direction: column;
             height: 100%;
+            max-width: 600px;
             padding: 24px 48px;
             transition: transform 100ms;
+          }
+          .adsp-fb .adsp-fb-form-rating {
+            border: 0;
+            margin: 12px 0 0 0;
+            padding: 0;
+          }
+          .adsp-fb .adsp-fb-form-rating legend {
+            margin-bottom: 12px;
           }
           .adsp-fb .adsp-fb-form-comment {
             flex: 1;
@@ -161,7 +157,6 @@ class AdspFeedback {
             flex-direction: column;
             margin-top: 24px;
           }
-
           .adsp-fb .adsp-fb-form-comment textarea {
             margin-top: 12px;
             resize: none;
@@ -203,6 +198,7 @@ class AdspFeedback {
           }
           .adsp-fb .adsp-fb-sent {
             position: absolute;
+            visibility: hidden;
             top: 0;
             right: 0;
             height: 100%;
@@ -214,19 +210,21 @@ class AdspFeedback {
             box-sizing: border-box;
             padding: 24px 48px;
           }
-          .adsp-fb .adsp-fb-sent p {
-            margin-bottom: auto;
+          .adsp-fb .adsp-fb-sent .adsp-fb-actions {
+            margin-top: auto;
           }
           @media screen and (max-width: 623px) {
-            .adsp-fb .adsp-fb-form-container {
+            .adsp-fb div.adsp-fb-form-container {
               right: 0;
               top: 0;
               bottom: 0;
               left: 0;
-              padding: 24px;
               border: 0;
-              display: flex;
-              flex-direction: column;
+            }
+          }
+          @media screen and (max-height: 800px) {
+            .adsp-fb .adsp-fb-form-container {
+              top: 16px;
             }
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
@@ -234,6 +232,7 @@ class AdspFeedback {
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             transform: none;
+            visibility: visible;
           }
         </style>`,
         head
@@ -250,9 +249,13 @@ class AdspFeedback {
             </div>
             <div ${ref(this.feedbackFormRef)} class="adsp-fb-form-container" data-show="false">
               <form class="adsp-fb-form">
-                <h2>Your feedback</h2>
+                <h2>Give your feedback</h2>
+                <p>
+                  Please help us improve our service by sharing feedback about your experience. This will only take a
+                  minute.
+                </p>
                 <fieldset class="adsp-fb-form-rating" ${ref(this.ratingRef)} @change=${this.onRatingChange}>
-                  <legend>How is your experience?</legend>
+                  <legend>How easy was it for you to use this service?</legend>
                   <label for="delightful">
                     <input name="rating" type="radio" id="delightful" value="delightful" />
                     Delightful
@@ -275,11 +278,11 @@ class AdspFeedback {
                   </label>
                 </fieldset>
                 <div class="adsp-fb-form-comment">
-                  <label for="comment">Please share your comments </label>
+                  <label for="comment">Do you have any additional comments? <span>(optional)</span></label>
                   <textarea id="comment" ${ref(this.commentRef)}></textarea>
                 </div>
                 <div class="adsp-fb-actions">
-                  <button @click=${this.closeFeedbackForm} type="button">Close</button>
+                  <button @click=${this.closeFeedbackForm} type="button">Cancel</button>
                   <button
                     ${ref(this.sendButtonRef)}
                     class="adsp-fb-form-primary"
@@ -287,13 +290,18 @@ class AdspFeedback {
                     type="button"
                     disabled
                   >
-                    Send feedback
+                    Give feedback
                   </button>
                 </div>
               </form>
               <div class="adsp-fb-sent">
-                <h2>Your feedback</h2>
-                <p>Thank you for sharing your feedback. We will use your input to improve the service.</p>
+                <h2>Give your feedback</h2>
+                <p>Success!</p>
+                <p>
+                  Thank you for providing your feedback. We will use your input to improve the service. You will not
+                  receive a response from this submission. If you do require a response, you can contact government
+                  through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
+                </p>
                 <div class="adsp-fb-actions">
                   <button @click=${this.closeFeedbackForm} class="adsp-fb-form-primary" type="button">Close</button>
                 </div>
@@ -310,7 +318,7 @@ class AdspFeedback {
 
 const adspFeedback = new AdspFeedback();
 
-//@ts-expect-error - This is to support the development scaffold.
+// This is to support the development scaffold.
 // Consuming apps should include non-module script element which will import and set global variable.
 window.adspFeedback = adspFeedback;
 

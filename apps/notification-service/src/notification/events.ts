@@ -59,8 +59,6 @@ export const NotificationSentDefinition: DomainEventDefinition = {
         properties: {
           subject: { type: ['string', 'null'] },
           body: { type: ['string', 'null'] },
-          title: { type: ['string', 'null'] },
-          subtitle: { type: ['string', 'null'] },
         },
       },
       subscriber: {
@@ -108,8 +106,6 @@ export const NotificationSendFailedDefinition: DomainEventDefinition = {
         properties: {
           subject: { type: ['string', 'null'] },
           body: { type: ['string', 'null'] },
-          title: { type: ['string', 'null'] },
-          subtitle: { type: ['string', 'null'] },
         },
       },
       subscriber: {

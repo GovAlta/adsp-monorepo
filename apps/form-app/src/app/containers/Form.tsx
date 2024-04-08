@@ -2,7 +2,7 @@ import { GoAIconButton } from '@abgov/react-components-new';
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom-6';
+import { useParams } from 'react-router-dom';
 import {
   AppDispatch,
   busySelector,
@@ -77,6 +77,13 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   showSubmit={showSubmit}
                   saving={busy.saving}
                   onChange={({ data, errors }) => {
+                    if (
+                      errors[0]?.message === 'should be equal to one of the allowed values' &&
+                      errors[0]?.schemaPath.includes('enum')
+                    ) {
+                      errors = null;
+                    }
+
                     dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
                   }}
                   onSubmit={(form) => dispatch(submitForm(form.id))}

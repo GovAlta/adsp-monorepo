@@ -1,6 +1,7 @@
-import { ContextProvider, GoARenderers, ajv } from '@abgov/jsonforms-components';
+import { GoARenderers, ContextProvider, ajv, getData } from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
+import { UISchemaElement, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent } from 'react';
 import {
@@ -10,14 +11,14 @@ import {
   ValidationError,
   deleteFile,
   downloadFile,
-  fileMetaDataSelector,
   filesSelector,
-  propertyIdsWithFileMetaDataSelector,
-  updateForm,
+  formActions,
+  metaDataSelector,
   uploadFile,
 } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 
+export type JsonSchema = JsonSchema4 | JsonSchema7;
 interface DraftFormProps {
   definition: FormDefinition;
   form: Form;
@@ -29,6 +30,19 @@ interface DraftFormProps {
   onSubmit: (form: Form) => void;
 }
 
+export const populateDropdown = (schema) => {
+  const newSchema = JSON.parse(JSON.stringify(schema));
+
+  Object.keys(newSchema.properties || {}).forEach((propertyName) => {
+    const property = newSchema.properties || {};
+    if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '') {
+      property[propertyName].enum = getData(propertyName) as string[];
+    }
+  });
+
+  return newSchema as JsonSchema;
+};
+
 export const DraftForm: FunctionComponent<DraftFormProps> = ({
   definition,
   form,
@@ -39,35 +53,35 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   onChange,
   onSubmit,
 }) => {
+  const onSubmitFunction = () => {
+    onSubmit(form);
+  };
   const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
 
   const dispatch = useDispatch<AppDispatch>();
   const files = useSelector(filesSelector);
-  const formPropertyIdsWithMetaData = useSelector(propertyIdsWithFileMetaDataSelector);
+  const metadata = useSelector(metaDataSelector);
 
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
   };
 
   const uploadFormFile = async (file: File, propertyId: string) => {
-    let clonedFiles = { ...files };
+    const clonedFiles = { ...files };
 
     // Handle deleting an existing file if a new file is selected to be uploaded again.
     if (clonedFiles[propertyId]) {
       const urn = files[propertyId];
       delete clonedFiles[propertyId];
-      dispatch(deleteFile(urn));
+      dispatch(deleteFile({ urn, propertyId }));
     }
 
     const fileMetaData = (
-      await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file })).unwrap()
+      await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId })).unwrap()
     ).metadata;
 
-    clonedFiles = { ...clonedFiles };
     clonedFiles[propertyId] = fileMetaData.urn;
-
-    //Explicitly trigger the updateForm.
-    dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
+    dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
   const downloadFormFile = async (file) => {
@@ -80,15 +94,13 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   const deleteFormFile = async (file) => {
-    await dispatch(deleteFile(file.urn));
-
     const clonedFiles = { ...files };
-    const deleteKey = getKeyByValue(clonedFiles, file.urn);
-    delete clonedFiles[deleteKey];
+    const propertyId = getKeyByValue(clonedFiles, file.urn);
 
-    //Explicitly trigger the updateForm as the file upload control may not have updated
-    //file list to remove the icon buttons when handleChange is called.
-    dispatch(updateForm({ data: data as Record<string, unknown>, files: clonedFiles }));
+    await dispatch(deleteFile({ urn: file.urn, propertyId }));
+    delete clonedFiles[propertyId];
+
+    dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
   return (
@@ -99,8 +111,11 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
           <GoABadge type="information" content="Saving..." />
         </div>
         <ContextProvider
+          submit={{
+            submitForm: onSubmitFunction,
+          }}
           fileManagement={{
-            fileList: formPropertyIdsWithMetaData,
+            fileList: metadata,
             uploadFile: uploadFormFile,
             downloadFile: downloadFormFile,
             deleteFile: deleteFormFile,
@@ -109,7 +124,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
           <JsonForms
             ajv={ajv}
             readonly={false}
-            schema={definition.dataSchema}
+            schema={populateDropdown(definition.dataSchema)}
             uischema={definition.uiSchema}
             data={data}
             validationMode="ValidateAndShow"

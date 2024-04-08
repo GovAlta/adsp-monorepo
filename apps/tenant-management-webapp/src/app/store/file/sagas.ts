@@ -34,6 +34,7 @@ import {
   CHECK_FILE_TYPE_HAS_FILE,
   CheckFileTypeHasFileAction,
   CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
+  UploadFileFailureService,
 } from './actions';
 
 import { FileApi } from './api';
@@ -100,6 +101,8 @@ export function* uploadFile(file) {
         state: 'error',
       })
     );
+
+    yield put(UploadFileFailureService({ error: err.message, propertyId: file.payload.data.propertyId }));
 
     yield put(ErrorNotification({ error: err }));
   }

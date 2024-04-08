@@ -4,7 +4,7 @@ import '@style/colors.scss';
 import '@style/goa-core.scss';
 import { fetchConfig } from './store/config/actions';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes, BrowserRouter as Router } from 'react-router-dom-6';
+import { Route, Routes, BrowserRouter as Router } from 'react-router-dom';
 import ServiceStatusPage from './pages/status';
 import Recaptcha from './components/Recaptcha';
 import { RootState } from '@store/index';
@@ -16,10 +16,10 @@ export function App(): JSX.Element {
   const { config } = useSelector((state: RootState) => ({
     config: state.config,
   }));
+
   useEffect(() => {
-    // Fetch config
     dispatch(fetchConfig());
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>

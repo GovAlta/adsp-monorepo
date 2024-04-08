@@ -207,6 +207,7 @@ When('the user clicks {string} button for the calendar of {string}, {string}', f
         break;
       case 'delete':
         calendarObj.calendarDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+        cy.wait(4000);
         break;
       default:
         expect(button).to.be.oneOf(['edit', 'delete']);

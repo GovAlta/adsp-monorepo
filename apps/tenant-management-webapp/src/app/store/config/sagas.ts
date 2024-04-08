@@ -18,7 +18,8 @@ export function* fetchConfig(): SagaIterator {
       entries.forEach((entry) => {
         entryMapping[entry.service] = entry.url;
       });
-      const tenantWebConfig = {
+
+      const tenantWebConfig: Record<string, unknown> = {
         keycloakApi: {
           ...data.keycloakApi,
           url: getKeycloakUrl(data),
@@ -69,6 +70,24 @@ export function* fetchConfig(): SagaIterator {
         },
         featureFlags: data.featureFlags,
       };
+
+      const feedbackServiceUrl = entryMapping['feedback-service'];
+      if (feedbackServiceUrl) {
+        const { integrity }: { integrity: string } = (yield call(
+          axios.get,
+          new URL('/feedback/v1/script/integrity', feedbackServiceUrl).href
+        )).data;
+
+        // Set the feedback script information.
+        // Include a portion of the integrity value for cache busting; the integrity endpoint doesn't apply cache-control header.
+        tenantWebConfig.feedback = {
+          script: {
+            src: new URL(`/feedback/v1/script/adspFeedback.js?${integrity.substring(40)}`, feedbackServiceUrl),
+            integrity,
+          },
+          tenant: data.feedback?.tenant || 'autotest',
+        };
+      }
 
       const action: FetchConfigSuccessAction = {
         type: 'config/fetch-config-success',

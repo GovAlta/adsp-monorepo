@@ -133,4 +133,43 @@ describe('ValidationService', () => {
     };
     service.setSchema('test', schema);
   });
+
+  it('removes empty enum to prevent comparison against third party content', () => {
+    const service = new AjvValidationService(logger);
+    const schema = {
+      type: 'object',
+      properties: {
+        FileUploader2: {
+          description: 'file uploader !!!',
+          format: 'file-urn',
+          type: 'string',
+        },
+        carBrands: {
+          type: 'string',
+          enum: [''],
+        },
+        countries: {
+          type: 'string',
+          enum: [''],
+        },
+        dogBreeds: {
+          type: 'string',
+          enum: [''],
+        },
+        basketballPlayers: {
+          type: 'string',
+          enum: [''],
+        },
+      },
+    };
+
+    const cleanedSchema: Record<string, any> = service.removeEmptyEnum(schema); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    expect(cleanedSchema.properties.carBrands.enum).toBe(undefined);
+    expect(cleanedSchema.properties.countries.enum).toBe(undefined);
+    expect(cleanedSchema.properties.dogBreeds.enum).toBe(undefined);
+    expect(cleanedSchema.properties.basketballPlayers.enum).toBe(undefined);
+
+    service.setSchema('test', schema);
+  });
 });

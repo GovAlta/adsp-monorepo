@@ -31,7 +31,10 @@ export class FileTypeDetector {
 
   private createCustomConcatStream(readableStream) {
     return new Promise((resolve, reject) => {
-      const customStream = new Readable();
+      const customStream = new Readable({
+        //eslint-disable-next-line
+        read() {},
+      });
 
       let fileType;
 
