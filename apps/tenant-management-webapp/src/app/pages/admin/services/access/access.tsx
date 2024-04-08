@@ -10,9 +10,6 @@ export default function (): JSX.Element {
   // eslint-disable-next-line
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
-  function getAccessServiceLink() {
-    return 'https://github.com/GovAlta/access-service';
-  }
   return (
     <Page>
       <Main>
@@ -33,7 +30,7 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <AsideLinks serviceLink={getAccessServiceLink()} />
+        <AsideLinks serviceName="Access" noDocsLink={true} />
       </Aside>
     </Page>
   );

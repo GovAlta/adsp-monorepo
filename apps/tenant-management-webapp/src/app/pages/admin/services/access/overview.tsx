@@ -8,7 +8,7 @@ import { TitleLinkHeader, TableStyle, Title } from './styled-component';
 import { fetchAccess, accessReset } from '@store/access/actions';
 import { OverviewLayout } from '@components/Overview';
 import { ExternalLink } from '@components/icons/ExternalLink';
-import { HyperLinkColor } from '@pages/admin/dashboard/styled-components';
+import { HyperLinkColor } from '@components/styled-components';
 
 export const Overview = (): JSX.Element => {
   const dispatch = useDispatch();

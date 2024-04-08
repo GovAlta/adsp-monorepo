@@ -1,4 +1,4 @@
-import { FileCriteria, FileItem, FileMetrics, FileTypeItem } from './models';
+import { FileCriteria, FileItem, FileMetrics, FileTypeItem, Result } from './models';
 
 export const UPLOAD_FILE = 'tenant/file-service/upload';
 export const UPLOAD_FILE_SUCCESSES = 'tenant/file-service/upload/success';
@@ -113,7 +113,7 @@ interface UploadFileSuccessAction {
 }
 interface UploadFileFailAction {
   type: typeof UPLOAD_FILE_FAILED;
-  payload: { data: string };
+  payload: { result: { propertyId: string } };
 }
 
 export interface FetchFilesAction {
@@ -257,6 +257,12 @@ export const UploadFileSuccessService = (result: FileItem): UploadFileSuccessAct
   type: UPLOAD_FILE_SUCCESSES,
   payload: {
     result,
+  },
+});
+export const UploadFileFailureService = (result: Result): UploadFileFailAction => ({
+  type: UPLOAD_FILE_FAILED,
+  payload: {
+    result: { propertyId: result.propertyId },
   },
 });
 

@@ -130,7 +130,7 @@ class AdspFeedback implements AdspFeedbackApi {
             position: fixed;
             right: 16px;
             top: 30vh;
-            bottom: 48px;
+            bottom: 16px;
             border: 1px solid;
             overflow: hidden;
           }
@@ -214,15 +214,17 @@ class AdspFeedback implements AdspFeedbackApi {
             margin-top: auto;
           }
           @media screen and (max-width: 623px) {
-            .adsp-fb .adsp-fb-form-container {
+            .adsp-fb div.adsp-fb-form-container {
               right: 0;
               top: 0;
               bottom: 0;
               left: 0;
-              padding: 24px;
               border: 0;
-              display: flex;
-              flex-direction: column;
+            }
+          }
+          @media screen and (max-height: 800px) {
+            .adsp-fb .adsp-fb-form-container {
+              top: 16px;
             }
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
