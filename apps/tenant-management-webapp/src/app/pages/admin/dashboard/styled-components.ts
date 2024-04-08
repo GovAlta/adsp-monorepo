@@ -61,15 +61,3 @@ export const ListWrapper = styled.ul`
     margin-bottom: 0.5rem;
   }
 `;
-export const HyperLinkColor = styled.div`
-  a {
-    &:visited {
-      color: var(--color-primary);
-    }
-  }
-`;
-
-export const GapAdjustment = styled.h3`
-  padding-top: 2rem;
-  padding-botton: 1rem;
-`;

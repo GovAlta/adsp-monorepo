@@ -97,9 +97,6 @@ function Status(): JSX.Element {
     setShowAddApplicationModal(edit);
   };
 
-  function getStatussupportcodeLink() {
-    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/status-service';
-  }
   return (
     <Page>
       <Main>
@@ -213,7 +210,7 @@ function Status(): JSX.Element {
       </Main>
 
       <Aside>
-        <AsideLinks serviceLink={getStatussupportcodeLink()} />
+        <AsideLinks serviceName="status" />
 
         <h3>Public status page</h3>
 
