@@ -1,9 +1,8 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Category, JsonSchema } from '@jsonforms/core';
+import { Category, UISchemaElement } from '@jsonforms/core';
 import { GoARenderers } from '../../../index';
 import Ajv from 'ajv';
-import FormStepperControl from './FormStepperControl';
 import { JsonForms } from '@jsonforms/react';
 
 /**
@@ -110,15 +109,27 @@ const categorization = {
   },
 };
 
+const subCategorization = {
+  type: 'Categorization',
+  label: 'Test Categorization',
+  elements: [categorization],
+  options: {
+    variant: 'stepper',
+    testId: 'stepper-test',
+    showNavButtons: true,
+    componentProps: { controlledNav: true },
+  },
+};
+
 const formData = {
   name: { firstName: '', lastName: '' },
   address: { street: '', city: '' },
 };
 
-const getForm = (data: object) => {
+const getForm = (data: object, uiSchema: UISchemaElement = categorization) => {
   return (
     <JsonForms
-      uischema={categorization}
+      uischema={uiSchema}
       data={data}
       schema={dataSchema}
       ajv={new Ajv({ allErrors: true, verbose: true })}
@@ -144,6 +155,17 @@ describe('Form Stepper Control', () => {
     const summaryStep = renderer.getByTestId('summary_step-content');
     expect(summaryStep).toBeInTheDocument();
     expect(summaryStep).not.toBeVisible();
+  });
+
+  it('can render a nested Categorization', () => {
+    const renderer = render(getForm(subCategorization));
+
+    const step0 = renderer.getByTestId('step_0-content');
+    expect(step0).toBeVisible();
+
+    const step1 = renderer.getByTestId('step_1-content');
+    expect(step1).toBeInTheDocument();
+    expect(step1).not.toBeVisible();
   });
 
   it('initializes to the 1st step', () => {

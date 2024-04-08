@@ -6,7 +6,7 @@ import {
   JsonSchema,
 } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { Hidden } from '@mui/material';
+import { Visible } from '../../util';
 
 export type CategorizationElement = Category | Categorization;
 
@@ -22,13 +22,12 @@ export interface StepProps {
   renderers: JsonFormsRendererRegistryEntry[] | undefined;
   cells: JsonFormsCellRendererRegistryEntry[] | undefined;
 }
-
 export const RenderStepElements = (props: StepProps): JSX.Element => {
   return (
     /*
       [Mar-04-2024][Paul Li] the GoAPages internal state cannot handle the hidden/display well. We need extra hide/display control to it appropriately.
      */
-    <Hidden xsUp={props.categoryIndex !== props.step - 1}>
+    <Visible visible={props.categoryIndex === props.step - 1}>
       {props.category.elements.map((uiSchema, index) => {
         return (
           <JsonFormsDispatch
@@ -43,6 +42,6 @@ export const RenderStepElements = (props: StepProps): JSX.Element => {
           />
         );
       })}
-    </Hidden>
+    </Visible>
   );
 };

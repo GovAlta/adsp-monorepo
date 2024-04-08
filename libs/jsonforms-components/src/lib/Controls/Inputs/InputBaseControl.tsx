@@ -1,7 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
-import { Hidden } from '@mui/material';
 import { FormFieldWrapper } from './style-component';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 import { StepInputStatus, StepperContext } from '../FormStepper/StepperContext';
@@ -39,7 +38,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     modifiedErrors = '';
   }
 
-  const getStatus = (props: ControlProps & WithInput, value: unknown): StepInputStatus => {
+  const getStepStatus = (props: ControlProps & WithInput, value: unknown): StepInputStatus => {
     return {
       id: props.id,
       value: value,
@@ -51,14 +50,14 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
 
   const stepperContext = useContext(StepperContext);
   const handlerWithStepperUpdate = (path: string, value: unknown) => {
-    stepperContext.updateStatus(getStatus(props, value));
+    stepperContext.updateStatus(getStepStatus(props, value));
     props.handleChange(path, value);
   };
   const modifiedProps = { ...props, handleChange: handlerWithStepperUpdate };
 
   useEffect(() => {
     if (!stepperContext.isInitialized(props.id)) {
-      const status = getStatus(props, props.data);
+      const status = getStepStatus(props, props.data);
       stepperContext.updateStatus(status);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

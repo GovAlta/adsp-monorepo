@@ -9,7 +9,7 @@ import { onBlurForTextControl, onKeyPressForTextControl } from '../../util/input
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
-  const { data, config, id, enabled, uischema, isValid, errors, path, handleChange, schema, label } = props;
+  const { data, config, id, enabled, uischema, schema, label } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';

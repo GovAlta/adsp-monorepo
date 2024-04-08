@@ -21,8 +21,12 @@ window.matchMedia = jest.fn().mockImplementation((query) => {
   };
 });
 
+const ajv = {
+  compile: jest.fn(),
+};
+
 // Remove irritating "undefined" is an invalid form step status message,
-// since it actually is valid.
+// since it actually is valid and common.
 const originalConsoleError = console.error;
 console.error = (message: string) => {
   if (!message.match('is an invalid form step status')) {
@@ -125,24 +129,12 @@ describe('Render Step Elements', () => {
     expect(lastName).toBeVisible();
   });
 
-  it("won't render if not current step", () => {
+  it("won't be visible if not current step", () => {
     const props = getStepProps(nameCategory, 0, 2, dataSchema);
     const renderer = render(<RenderStepElements {...props} />);
     const firstName = renderer.queryByPlaceholderText('First name');
-    expect(firstName).toBeNull();
+    expect(firstName).not.toBeVisible();
     const lastName = renderer.queryByPlaceholderText('Last name');
-    expect(lastName).toBeNull();
-  });
-
-  it('can render a nested Categorization', () => {
-    const props = getStepProps(subCategorization, 0, 1, dataSchema);
-    const renderer = render(<RenderStepElements {...props} />);
-
-    const step0 = renderer.getByTestId('step_0-content');
-    expect(step0).toBeVisible();
-
-    const step1 = renderer.getByTestId('step_1-content');
-    expect(step1).toBeInTheDocument();
-    expect(step1).not.toBeVisible();
+    expect(lastName).not.toBeVisible();
   });
 });
