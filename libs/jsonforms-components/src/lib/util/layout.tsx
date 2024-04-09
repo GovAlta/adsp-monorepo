@@ -10,7 +10,8 @@ import {
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid } from '@abgov/react-components-new';
 import { Visible } from './style-component';
-
+import Ajv from 'ajv8';
+export type Ajv8 = Ajv;
 export const renderLayoutElements = (
   elements: UISchemaElement[],
   schema?: JsonSchema,
@@ -37,6 +38,9 @@ export const renderLayoutElements = (
 export interface LayoutRendererProps extends OwnPropsOfRenderer {
   elements: UISchemaElement[];
   direction: 'row' | 'column';
+}
+export interface AjvProps {
+  ajv: Ajv;
 }
 
 export const LayoutRenderer = ({
