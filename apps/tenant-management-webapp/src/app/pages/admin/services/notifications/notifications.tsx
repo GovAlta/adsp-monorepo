@@ -1,7 +1,7 @@
 import { Aside, Main, Page } from '@components/Html';
 
 import { Tab, Tabs } from '@components/Tabs';
-import { RootState } from '@store/index';
+
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
@@ -14,9 +14,6 @@ import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import AsideLinks from '@components/AsideLinks';
 
 export const Notifications: FunctionComponent = () => {
-  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  const tenantName = useSelector((state: RootState) => state.tenant.name);
-
   const loginUrl = useSelector(subscriberAppUrlSelector);
 
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
@@ -32,12 +29,7 @@ export const Notifications: FunctionComponent = () => {
       setActiveIndex(null);
     }
   }, [activeIndex]);
-  function getNotificationDocsLink() {
-    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Notification service`;
-  }
-  function getNotificationsupportcodeLink() {
-    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/notification-service';
-  }
+
   return (
     <Page>
       <Main>
@@ -58,7 +50,7 @@ export const Notifications: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideLinks serviceLink={getNotificationsupportcodeLink()} docsLink={getNotificationDocsLink()} />
+        <AsideLinks serviceName="notification" />
 
         <h3>Manage subscriptions</h3>
         <span>Subscribers can manage their subscriptions here:</span>

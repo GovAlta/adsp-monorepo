@@ -117,7 +117,7 @@ export const CalendarEvents = (): JSX.Element => {
 
           <GoAButton
             type="secondary"
-            testId="show-calendar-event-table"
+            testId="export-calendar-event-table"
             disabled={!selectedEvents || selectedEvents?.length === 0}
             onClick={() => {
               handleExport();

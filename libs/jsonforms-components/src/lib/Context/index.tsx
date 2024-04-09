@@ -161,6 +161,8 @@ export function ContextProvider(props: Props): JSX.Element | null {
  * Grabs data stored under a given key
  *
  */
+// FIXME give some clue as to what data is being fetched.
+// e.g.is it getFormContextData?
 export function getData(key: string) {
   const dataFunction = baseEnumerator.data.get(key);
   return dataFunction && dataFunction();
