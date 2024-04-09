@@ -6,10 +6,10 @@ import FormStepper from './FormStepperControl';
 import { StatePropsOfLayout } from '@jsonforms/core';
 import ajv from 'ajv8';
 import { Translator } from '@jsonforms/core';
-import { AjvProps, Ajv8 } from '../../util/layout';
+import { AjvProps } from '../../util/layout';
 import { TranslateProps } from '@jsonforms/react';
 import { ContextProvider } from '../../../lib/Context';
-const ajvInstance = new ajv({ allErrors: true, verbose: true });
+const ajvInstance = new ajv({ allErrors: true, verbose: true, validateFormats: false });
 
 jest.mock('@jsonforms/core', () => ({
   ...jest.requireActual('@jsonforms/core'),
