@@ -311,10 +311,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                         }
                       }
                       setCustomIndicator(true);
-                      // setSpinner(true);
-                      dispatch(updateCommentTopicType(topicType));
 
-                      // close();
+                      dispatch(updateCommentTopicType(topicType));
                     }
                   }}
                 >

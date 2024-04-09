@@ -748,8 +748,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
                         })
                       );
-                      // setCustomIndicator(false);
-                      //close();
                     }
                   }}
                 >

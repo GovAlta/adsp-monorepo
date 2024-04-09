@@ -366,7 +366,6 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                       fileType.updateRoles = cleanUpdateRoles;
 
                       dispatch(UpdateFileTypeService(fileType));
-                      //close();
                     }
                   }}
                 >

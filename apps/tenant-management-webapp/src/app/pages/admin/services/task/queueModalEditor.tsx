@@ -224,7 +224,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                       }
                       setCustomIndicator(true);
                       dispatch(UpdateTaskQueue(queue));
-                      //close();
                     }
                   }}
                 >

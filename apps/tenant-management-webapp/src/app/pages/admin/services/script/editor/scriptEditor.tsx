@@ -86,7 +86,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const monaco = useMonaco();
   let activeParam = 0;
   let activeSignature = 0;
-  // const [customIndicator, setCustomIndicator] = useState<boolean>(false);
 
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
@@ -392,7 +391,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 updateScript();
                 saveAndReset(selectedScript);
                 setSaveModal(false);
-                //onEditorCancel();
               }}
               testId="template-form-save"
               type="primary"
