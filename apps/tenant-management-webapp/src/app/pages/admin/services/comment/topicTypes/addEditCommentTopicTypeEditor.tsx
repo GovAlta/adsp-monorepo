@@ -23,6 +23,7 @@ import {
   CommentEditor,
   ScrollPane,
   EditorPadding,
+  CustomLoader,
 } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
 
@@ -42,7 +43,14 @@ import { TopicConfigTopicType } from './topicConfigTopicType';
 
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { GoAButtonGroup, GoAButton, GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
+import {
+  GoAButtonGroup,
+  GoAButton,
+  GoAFormItem,
+  GoADropdown,
+  GoADropdownItem,
+  GoACircularProgress,
+} from '@abgov/react-components-new';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 
 const isCommentUpdated = (prev: CommentTopicTypes, next: CommentTopicTypes): boolean => {
@@ -61,6 +69,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   );
   const [initialTopicType, setInitialTopicType] = useState<CommentTopicTypes>(defaultCommentTopicType);
   const [spinner, setSpinner] = useState<boolean>(false);
+  const [customIndicator, setCustomIndicator] = useState<boolean>(false);
 
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const latestNotification = useSelector(
@@ -109,6 +118,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
       }
       setTopicType(topicTypes);
       setInitialTopicType(topicTypes);
+      setCustomIndicator(false);
     }
   }, [commentTopicTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -237,6 +247,11 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
         <PageIndicator />
       ) : (
         <FlexRow>
+          {customIndicator && (
+            <CustomLoader>
+              <GoACircularProgress size="small" visible={true} />
+            </CustomLoader>
+          )}
           <NameDescriptionDataSchema>
             <CommentEditorTitle>Comment / Topic type editor</CommentEditorTitle>
             <hr className="hr-resize" />
@@ -295,10 +310,11 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                           return;
                         }
                       }
-                      setSpinner(true);
+                      setCustomIndicator(true);
+                      // setSpinner(true);
                       dispatch(updateCommentTopicType(topicType));
 
-                      close();
+                      // close();
                     }
                   }}
                 >

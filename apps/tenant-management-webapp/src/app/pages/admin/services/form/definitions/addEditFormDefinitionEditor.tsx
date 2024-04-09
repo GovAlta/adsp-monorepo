@@ -28,6 +28,7 @@ import {
   FakeButton,
   SubmissionRecordsBox,
   FormPreviewScrollPane,
+  CommentLoader,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -46,6 +47,7 @@ import {
   GoACheckbox,
   GoADropdownItem,
   GoADropdown,
+  GoACircularProgress,
 } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
@@ -154,6 +156,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
+  const [customIndicator, setCustomIndicator] = useState<boolean>(false);
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
@@ -236,11 +239,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   );
   const queueTasks = useSelector((state: RootState) => {
-    const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
-      tempObj[taskDefinitionId] = taskDefinitionData;
-      return tempObj;
-    }, {});
-    return values;
+    if (state.task && state.task.queues) {
+      const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
+        tempObj[taskDefinitionId] = taskDefinitionData;
+        return tempObj;
+      }, {});
+      return values;
+    }
   });
 
   useEffect(() => {
@@ -265,6 +270,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       }
       setInitialDefinition(parseUiSchema<FormDefinition>(JSON.stringify(formDefinitions[id])).get());
       setDefinition(formDefinitions[id]);
+      setCustomIndicator(false);
     }
   }, [formDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -273,6 +279,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       JSON.parse(tempUiSchema);
       setTempUiSchemaBounced(tempUiSchema);
       setError('');
+      setCustomIndicator(false);
     } catch {
       setTempUiSchemaBounced('{}');
     }
@@ -366,7 +373,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const definitions = useSelector((state: RootState) => {
     return state?.form?.definitions;
   });
-  const definitionIds = Object.keys(definitions);
+  const definitionIds = definitions ? Object.keys(definitions) : [];
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -446,6 +453,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         <PageIndicator />
       ) : (
         <FlexRow>
+          {customIndicator && (
+            <CommentLoader>
+              <GoACircularProgress size="small" visible={true} />
+            </CommentLoader>
+          )}
           <NameDescriptionDataSchema>
             <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
             <hr className="hr-resize" />
@@ -586,7 +598,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     />
 
                     <QueueTaskDropdown>
-                      {Object.keys(queueTasks).length > 0 && (
+                      {queueTasks && Object.keys(queueTasks).length > 0 && (
                         <GoADropdown
                           data-test-id="form-submission-select-queue-task-dropdown"
                           name="queueTasks"
@@ -620,11 +632,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             value={NO_TASK_CREATED_OPTION}
                             label={NO_TASK_CREATED_OPTION}
                           />
-                          {Object.keys(queueTasks)
-                            .sort()
-                            .map((item) => (
-                              <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
-                            ))}
+                          {queueTasks &&
+                            Object.keys(queueTasks)
+                              .sort()
+                              .map((item) => (
+                                <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
+                              ))}
                         </GoADropdown>
                       )}
                     </QueueTaskDropdown>
@@ -702,7 +715,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <GoAButtonGroup alignment="start">
                 <GoAButton
                   type="primary"
-                  testId="form-save"
+                  testId="definition-form-save"
                   disabled={
                     !isFormUpdated(initialDefinition, {
                       ...definition,
@@ -715,7 +728,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     editorErrors.dataSchemaJSONSchema !== null ||
                     editorErrors.uiSchema !== null
                   }
-                  onClick={() => {
+                  onClick={async () => {
                     if (indicator.show === true) {
                       setSpinner(true);
                     } else {
@@ -727,16 +740,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           return;
                         }
                       }
-                      setSpinner(true);
-                      dispatch(
+                      setCustomIndicator(true);
+                      await dispatch(
                         updateFormDefinition({
                           ...definition,
                           uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
                           dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
                         })
                       );
-
-                      close();
+                      // setCustomIndicator(false);
+                      //close();
                     }
                   }}
                 >

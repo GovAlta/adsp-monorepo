@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  CustomLoader,
   DropDownZIndex,
   EditorPadding,
   FileTypeEditor,
@@ -23,7 +24,7 @@ import {
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoACallout, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
+import { GoAButton, GoACallout, GoACircularProgress, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
@@ -49,6 +50,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
 
   const fileTypeNames = useSelector(selectFileTyeNames);
   const [spinner, setSpinner] = useState<boolean>(false);
+  const [customIndicator, setCustomIndicator] = useState<boolean>(false);
   const [isSecurityClassificationCalloutOpen, setIsSecurityClassificationCalloutIsOpen] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [initialFileType, setInitialFileType] = useState<FileTypeItem>(FileTypeDefault);
@@ -116,6 +118,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
       if (isCalloutOpen) {
         setIsSecurityClassificationCalloutIsOpen(!isSecurityClassificationCalloutOpen);
       }
+      setCustomIndicator(false);
     }
   }, [fileTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -187,6 +190,11 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
         <PageLoader />
       ) : (
         <FlexRow>
+          {customIndicator && (
+            <CustomLoader>
+              <GoACircularProgress size="small" visible={true} />
+            </CustomLoader>
+          )}
           <NameDescriptionDataSchema>
             <FileTypeEditorTitle>File type</FileTypeEditorTitle>
             <hr className="hr-resize" />
@@ -332,7 +340,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                     if (indicator.show === true) {
                       setSpinner(true);
                     } else {
-                      setSpinner(true);
+                      setCustomIndicator(true);
                       let elementNames = [];
                       elements.forEach((e) => {
                         if (e) {
@@ -358,8 +366,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                       fileType.updateRoles = cleanUpdateRoles;
 
                       dispatch(UpdateFileTypeService(fileType));
-
-                      close();
+                      //close();
                     }
                   }}
                 >

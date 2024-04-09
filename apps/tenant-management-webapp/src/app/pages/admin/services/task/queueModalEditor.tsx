@@ -11,11 +11,12 @@ import {
   TaskEditorTitle,
   TaskEditor,
   ScrollPane,
+  CustomLoader,
 } from './styled-components';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { UpdateTaskQueue, getTaskQueues } from '@store/task/action';
 import { ClientRoleTable } from '@components/RoleTable';
-import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAFormItem, GoAButton, GoACircularProgress } from '@abgov/react-components-new';
 import { PageIndicator } from '@components/Indicator';
 import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
 import { ServiceRoleConfig } from '@store/access/models';
@@ -40,6 +41,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const [queue, setQueue] = useState<TaskDefinition>(defaultTaskQueue);
   const [initialDefinition, setInitialQueue] = useState<TaskDefinition>(defaultTaskQueue);
   const [spinner, setSpinner] = useState<boolean>(false);
+  const [customIndicator, setCustomIndicator] = useState<boolean>(false);
   const tenant = useSelector(tenantRolesAndClients);
   const tenantClients: ServiceRoleConfig = tenant.tenantClients ? tenant.tenantClients : {};
   const { id } = useParams<{ id: string }>();
@@ -78,6 +80,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
       setQueue(selectedQueue);
       setInitialQueue(selectedQueue);
     }
+    setCustomIndicator(false);
 
     // const selectedQueue = location.state as TaskDefinition;
     // setQueue(selectedQueue);
@@ -185,6 +188,11 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
         <PageIndicator />
       ) : (
         <FlexRow>
+          {customIndicator && (
+            <CustomLoader>
+              <GoACircularProgress size="small" visible={true} />
+            </CustomLoader>
+          )}
           <NameDescriptionDataSchema>
             <TaskEditorTitle>Queue</TaskEditorTitle>
             <hr className="hr-resize" />
@@ -214,9 +222,9 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                           return;
                         }
                       }
-                      setSpinner(true);
+                      setCustomIndicator(true);
                       dispatch(UpdateTaskQueue(queue));
-                      close();
+                      //close();
                     }
                   }}
                 >

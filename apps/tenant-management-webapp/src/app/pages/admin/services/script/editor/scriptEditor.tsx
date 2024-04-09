@@ -11,6 +11,7 @@ import {
   TextLoadingIndicator,
   MonacoDivTabBody,
   ScriptEditorTitle,
+  CustomLoader,
 } from '../styled-components';
 import { TombStone } from './tombstone';
 
@@ -30,7 +31,7 @@ import {
   retrieveScriptSuggestions,
 } from '@lib/luaCodeCompletion';
 import { buildSuggestions, luaTriggerInScope } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton, GoACircularProgress } from '@abgov/react-components-new';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -39,7 +40,7 @@ import { selectRoleList } from '@store/sharedSelectors/roles';
 import { ScriptEditorEventsTab } from './scriptEditorEventsTab';
 import { getEventDefinitions } from '@store/event/actions';
 import { scriptEditorConfig, scriptEditorJsonConfig } from './config';
-interface ScriptEditorProps {
+export interface ScriptEditorProps {
   name: string;
   description: string;
   scriptStr: string;
@@ -75,6 +76,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const [saveModal, setSaveModal] = useState(false);
   const [script, setScript] = useState<ScriptItem>(selectedScript);
   const [activeIndex] = useState<number>(0);
+  const [customIndicator, setCustomIndicator] = useState<boolean>(false);
 
   const resetSavedAction = () => {
     onNameChange(selectedScript?.name || '');
@@ -84,6 +86,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const monaco = useMonaco();
   let activeParam = 0;
   let activeSignature = 0;
+  // const [customIndicator, setCustomIndicator] = useState<boolean>(false);
 
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
@@ -216,12 +219,15 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onDescriptionChange(selectedScript?.description || '');
     onScriptChange(selectedScript?.script || '');
   }, [selectedScript]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const orderedEventNames = definitions
-    .map((def) => {
-      return `${def.namespace}:${def.name}`;
-    })
-    .sort();
+  console.log(definitions);
+  const orderedEventNames =
+    Array.isArray(definitions) && definitions.length > 0
+      ? definitions
+          .map((def) => {
+            return `${def?.namespace}:${def?.name}`;
+          })
+          .sort()
+      : [];
 
   const scriptResponse = useSelector((state: RootState) => state.scriptService.scriptResponse);
 
@@ -240,15 +246,19 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.testInputs = getInput(testInput);
     selectedScript.runnerRoles = script.runnerRoles;
     selectedScript.useServiceAccount = script.useServiceAccount;
+    setTimeout(() => {
+      setCustomIndicator(false);
+    }, 1000);
     return selectedScript;
   };
 
   const hasChanged = () => {
+    const isTestInputs = selectedScript.testInputs ? selectedScript.testInputs !== testInput : false;
     return (
       selectedScript.name !== name ||
       selectedScript.description !== description ||
       selectedScript.script !== scriptStr ||
-      selectedScript.testInputs !== testInput ||
+      isTestInputs ||
       selectedScript.runnerRoles?.toString() !== script.runnerRoles?.toString() ||
       selectedScript.useServiceAccount !== script.useServiceAccount
     );
@@ -308,6 +318,11 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
   return (
     <EditModalStyle>
+      {customIndicator && (
+        <CustomLoader>
+          <GoACircularProgress size="small" visible={true} />
+        </CustomLoader>
+      )}
       <ScriptEditorContainer>
         <ScriptEditorTitle>Script editor</ScriptEditorTitle>
         <hr className="hr-resize" />
@@ -344,9 +359,11 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           <Tab label="Roles" data-testid="script-roles-tab">
             <MonacoDivTabBody data-testid="roles-editor-body">
               <ScrollPane>
-                {roles.map((r) => {
-                  return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
-                })}
+                {Array.isArray(roles)
+                  ? roles.map((r) => {
+                      return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
+                    })
+                  : null}
                 {fetchKeycloakRolesState === ActionState.inProcess && (
                   <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
                 )}
@@ -371,10 +388,11 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           <div>
             <GoAButton
               onClick={() => {
+                setCustomIndicator(true);
                 updateScript();
                 saveAndReset(selectedScript);
                 setSaveModal(false);
-                onEditorCancel();
+                //onEditorCancel();
               }}
               testId="template-form-save"
               type="primary"
@@ -476,23 +494,24 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                     </tr>
                   )}
 
-                  {scriptResponse &&
-                    scriptResponse.map((response) => (
-                      <tr>
-                        <td data-testid="response-result">
-                          <div className="flex-horizontal">
-                            <div className="mt-1">
-                              {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
+                  {Array.isArray(scriptResponse)
+                    ? scriptResponse.map((response) => (
+                        <tr>
+                          <td data-testid="response-result">
+                            <div className="flex-horizontal">
+                              <div className="mt-1">
+                                {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
+                              </div>
+                              <div className="mt-3">{response.hasError ? response.result : 'Success'}</div>
                             </div>
-                            <div className="mt-3">{response.hasError ? response.result : 'Success'}</div>
-                          </div>
-                        </td>
-                        <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
-                        <td data-testid="response-output">
-                          {!response.hasError ? parseTestResult(response.result) : ''}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
+                          <td data-testid="response-output">
+                            {!response.hasError ? parseTestResult(response.result) : ''}
+                          </td>
+                        </tr>
+                      ))
+                    : null}
                 </tbody>
               </table>
             </ResponseTableStyles>
