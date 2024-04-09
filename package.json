@@ -43,6 +43,7 @@
     "@keycloak/keycloak-admin-client": "^17.0.1",
     "@socket.io/redis-adapter": "7.2.0",
     "ajv": "^6.12.6",
+    "ajv8": "npm:ajv@^8.6.1",
     "amqp-connection-manager": "^3.7.0",
     "amqplib": "^0.8.0",
     "app-root-path": "^3.0.0",
