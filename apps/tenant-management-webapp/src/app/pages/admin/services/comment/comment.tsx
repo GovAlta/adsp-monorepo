@@ -13,19 +13,12 @@ import AsideLinks from '@components/AsideLinks';
 
 export const Comment: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
 
   const [openAddTopicTypes, setOpenAddTopicTypes] = useState(false);
 
   const searchParams = new URLSearchParams(document.location.search);
 
   const topicTypes = tenantName && searchParams.get('topicTypes');
-  function getCommentDocsLink() {
-    return `${docBaseUrl}/${tenantName?.replace(/ /g, '-')}?urls.primaryName=Comment service`;
-  }
-  function getCommentSupportCodeLink() {
-    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/comment-service';
-  }
 
   return (
     <Page>
@@ -47,7 +40,7 @@ export const Comment: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideLinks serviceLink={getCommentSupportCodeLink()} docsLink={getCommentDocsLink()} />
+        <AsideLinks serviceName="comment" />
       </Aside>
     </Page>
   );

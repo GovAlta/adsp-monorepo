@@ -6,13 +6,9 @@ import { ConfigurationImport } from './import/import';
 import { ConfigurationExport } from './export/export';
 import { ConfigurationDefinitions } from './definitions/definitions';
 import { ConfigurationRevisions } from './revisions/revisions';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
 import AsideLinks from '@components/AsideLinks';
 
 export const Configuration: FunctionComponent = () => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
 
@@ -26,12 +22,7 @@ export const Configuration: FunctionComponent = () => {
       setActiveIndex(null);
     }
   }, [activeIndex]);
-  function getDocsLink() {
-    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Configuration service`;
-  }
-  function getsupportcodeLink() {
-    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/configuration-service';
-  }
+
   return (
     <Page>
       <Main>
@@ -55,7 +46,7 @@ export const Configuration: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideLinks serviceLink={getsupportcodeLink()} docsLink={getDocsLink()} />
+        <AsideLinks serviceName="configuration" />
       </Aside>
     </Page>
   );
