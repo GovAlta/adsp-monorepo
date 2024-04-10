@@ -20,7 +20,7 @@ import {
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
-import { AjvProps, withAjvProps } from '@jsonforms/material-renderers';
+import { AjvProps, withAjvProps } from '../../util/layout';
 import { Grid } from '../../common/Grid';
 import { getData } from '../../Context';
 

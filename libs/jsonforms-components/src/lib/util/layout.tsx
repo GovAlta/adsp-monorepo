@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { ComponentType } from 'react';
+import { useJsonForms } from '@jsonforms/react';
 import isEmpty from 'lodash/isEmpty';
 import type { UISchemaElement } from '@jsonforms/core';
 import {
@@ -6,6 +7,7 @@ import {
   JsonFormsRendererRegistryEntry,
   JsonSchema,
   OwnPropsOfRenderer,
+  getAjv,
 } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid } from '@abgov/react-components-new';
@@ -42,6 +44,14 @@ export interface LayoutRendererProps extends OwnPropsOfRenderer {
 export interface AjvProps {
   ajv: Ajv;
 }
+
+export const withAjvProps = <P extends object>(Component: ComponentType<AjvProps & P>) =>
+  function WithAjvProps(props: P) {
+    const ctx = useJsonForms();
+    const ajv = getAjv({ jsonforms: { ...ctx } });
+
+    return <Component {...props} ajv={ajv} />;
+  };
 
 export const LayoutRenderer = ({
   elements,
