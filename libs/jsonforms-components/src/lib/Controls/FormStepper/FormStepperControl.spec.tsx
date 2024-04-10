@@ -175,36 +175,6 @@ describe('Form Stepper Control', () => {
     expect(currentStep.getAttribute('step')).toBe('1');
   });
 
-  it('can navigate between steps with the nav buttons', async () => {
-    const renderer = render(getForm(formData));
-
-    const stepperHeader = renderer.getByTestId('stepper-test');
-    expect(stepperHeader).toBeInTheDocument();
-    expect(stepperHeader.getAttribute('step')).toBe('1');
-
-    // Navigate to the 2nd page
-    const nextButton = renderer.getByTestId('next-button');
-    expect(nextButton).toBeInTheDocument();
-
-    const shadowNext = nextButton.shadowRoot?.querySelector('button');
-    expect(shadowNext).not.toBeNull();
-    fireEvent.click(shadowNext!);
-
-    const newStep = renderer.getByTestId('stepper-test');
-    expect(newStep.getAttribute('step')).toBe('2');
-
-    // Navigate back to the previous page
-    const prevButton = renderer.getByTestId('prev-button');
-    expect(prevButton).toBeInTheDocument();
-
-    const shadowPrev = prevButton.shadowRoot?.querySelector('button');
-    expect(shadowPrev).not.toBeNull();
-    fireEvent.click(shadowPrev!);
-
-    const theStep = renderer.getByTestId('stepper-test');
-    expect(theStep.getAttribute('step')).toBe('1');
-  });
-
   it('can input a text value', () => {
     const renderer = render(getForm(formData));
     const lastName = renderer.getByTestId('last-name-input');
@@ -245,5 +215,148 @@ describe('Form Stepper Control', () => {
     const step1 = stepperHeader.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
     expect(step1!.getAttribute('status')).toBe('complete');
+  });
+
+  describe('step navigation', () => {
+    it('can navigate between steps with the nav buttons', async () => {
+      const renderer = render(getForm(formData));
+
+      const stepperHeader = renderer.getByTestId('stepper-test');
+      expect(stepperHeader).toBeInTheDocument();
+      expect(stepperHeader.getAttribute('step')).toBe('1');
+
+      // Navigate to the 2nd page
+      const nextButton = renderer.getByTestId('next-button');
+      expect(nextButton).toBeInTheDocument();
+
+      const shadowNext = nextButton.shadowRoot?.querySelector('button');
+      expect(shadowNext).not.toBeNull();
+      fireEvent.click(shadowNext!);
+
+      const newStep = renderer.getByTestId('stepper-test');
+      expect(newStep.getAttribute('step')).toBe('2');
+
+      // Navigate back to the previous page
+      const prevButton = renderer.getByTestId('prev-button');
+      expect(prevButton).toBeInTheDocument();
+
+      const shadowPrev = prevButton.shadowRoot?.querySelector('button');
+      expect(shadowPrev).not.toBeNull();
+      fireEvent.click(shadowPrev!);
+
+      const theStep = renderer.getByTestId('stepper-test');
+      expect(theStep.getAttribute('step')).toBe('1');
+    });
+
+    it('will hide Prev Nav button on 1st step', () => {
+      const renderer = render(getForm(formData));
+      const nextButton = renderer.getByTestId('next-button');
+      expect(nextButton).toBeInTheDocument();
+      expect(nextButton).toBeVisible();
+      const prevButton = renderer.queryByTestId('prev-button');
+      expect(prevButton).toBeNull();
+    });
+
+    it('will show  Prev & Next Nav button on inner steps', () => {
+      const renderer = render(getForm(formData));
+
+      // Move to page 2
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+
+      // ensure next is still visible
+      expect(next).toBeInTheDocument();
+      expect(next).toBeVisible();
+
+      // ensure previous is visible.
+      const prev1 = renderer.getByTestId('prev-button');
+      expect(prev1).toBeInTheDocument();
+      expect(prev1).toBeVisible();
+    });
+
+    it('will hide Next Nav button on last step', () => {
+      const renderer = render(getForm(formData));
+
+      // Move to page 3
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+
+      // ensure next is gone
+      expect(next).not.toBeInTheDocument();
+
+      // ensure previous is visible.
+      const prev = renderer.getByTestId('prev-button');
+      expect(prev).toBeInTheDocument();
+      expect(prev).toBeVisible();
+    });
+
+    it('will bring Next button back', () => {
+      const renderer = render(getForm(formData));
+
+      // Move to page 3
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+
+      // ensure previous is visible.
+      const prev = renderer.getByTestId('prev-button');
+      const prevShadow = prev.shadowRoot?.querySelector('button');
+      fireEvent.click(prevShadow!);
+
+      // ensure next is back
+      const newNext = renderer.getByTestId('next-button');
+      expect(newNext).toBeInTheDocument();
+      expect(newNext).toBeVisible();
+    });
+
+    it('will remove Prev button on 1st step', () => {
+      const renderer = render(getForm(formData));
+
+      // Move to page 3
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+
+      // and back again
+      const prev = renderer.getByTestId('prev-button');
+      const prevShadow = prev.shadowRoot?.querySelector('button');
+      fireEvent.click(prevShadow!);
+      fireEvent.click(prevShadow!);
+
+      // ensure prev is gone
+      expect(prev).not.toBeInTheDocument();
+    });
+
+    // it('can navigate between steps with step icons', async () => {
+    //   const renderer = render(getForm(formData));
+    //   const stepperHeader = renderer.getByTestId('stepper-test');
+    //   expect(stepperHeader).toBeInTheDocument();
+    //   expect(stepperHeader.getAttribute('step')).toBe('1');
+
+    //   // Navigate to the 2nd page
+    //   const step2 = stepperHeader.querySelector('goa-form-step[text="Address"]');
+    //   expect(step2).toBeInTheDocument();
+    //   //    expect(step2?.getAttribute('step')).toBe(2);
+    //   const shadowLabel = step2?.shadowRoot?.querySelector('label');
+    //   console.log(step2!.shadowRoot?.innerHTML);
+    //   expect(shadowLabel).not.toBeNull();
+    //   fireEvent.click(step2!);
+    //   fireEvent.click(shadowLabel!);
+    //   fireEvent.click(step2!.shadowRoot!);
+    //   const activePage = renderer.container.querySelector('goa-pages')?.getAttribute('current');
+    //   console.log('active page: ', activePage);
+    //   expect(activePage).toBe(2);
+    //   const activeStep = renderer.getByTestId('stepper-test');
+    //   expect(activeStep.getAttribute('step')).toBe('2');
+    // });
   });
 });

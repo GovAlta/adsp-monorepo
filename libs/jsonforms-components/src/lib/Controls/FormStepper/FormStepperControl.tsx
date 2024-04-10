@@ -312,22 +312,6 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   );
 };
 
-export const flattenObject = (obj: Record<string, string>): Record<string, string> => {
-  const flattened = {} as Record<string, string>;
-
-  Object.keys(obj || {}).forEach((key) => {
-    const value = obj[key];
-
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      Object.assign(flattened, flattenObject(value));
-    } else {
-      flattened[key] = value;
-    }
-  });
-
-  return flattened;
-};
-
 export const FormStepperControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormStepper)));
 
 export default FormStepper;
