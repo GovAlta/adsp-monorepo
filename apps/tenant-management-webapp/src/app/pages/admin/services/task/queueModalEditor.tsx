@@ -11,7 +11,6 @@ import {
   TaskEditorTitle,
   TaskEditor,
   ScrollPane,
-  CustomLoader,
 } from './styled-components';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { UpdateTaskQueue, getTaskQueues } from '@store/task/action';
@@ -31,6 +30,7 @@ import { TaskConfigQueue } from './TaskConfigQueue';
 import { SaveFormModal } from '@components/saveModal';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
+import { CustomLoader } from '@components/CustomLoader';
 
 const isTaskUpdated = (prev: TaskDefinition, next: TaskDefinition): boolean =>
   compareStringArrayAreEqual(prev?.assignerRoles, next?.assignerRoles) &&
@@ -188,11 +188,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
         <PageIndicator />
       ) : (
         <FlexRow>
-          {customIndicator && (
-            <CustomLoader>
-              <GoACircularProgress size="small" visible={true} />
-            </CustomLoader>
-          )}
+          {customIndicator && <CustomLoader />}
           <NameDescriptionDataSchema>
             <TaskEditorTitle>Queue</TaskEditorTitle>
             <hr className="hr-resize" />

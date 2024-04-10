@@ -28,7 +28,6 @@ import {
   FakeButton,
   SubmissionRecordsBox,
   FormPreviewScrollPane,
-  CommentLoader,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -73,6 +72,7 @@ import {
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { hasSchemaErrors, parseDataSchema, parseUiSchema } from './schemaUtils';
+import { CustomLoader } from '@components/CustomLoader';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = parseUiSchema<FormDefinition>(JSON.stringify(prev)).get();
@@ -453,11 +453,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         <PageIndicator />
       ) : (
         <FlexRow>
-          {customIndicator && (
-            <CommentLoader>
-              <GoACircularProgress size="small" visible={true} />
-            </CommentLoader>
-          )}
+          {customIndicator && <CustomLoader />}
           <NameDescriptionDataSchema>
             <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
             <hr className="hr-resize" />

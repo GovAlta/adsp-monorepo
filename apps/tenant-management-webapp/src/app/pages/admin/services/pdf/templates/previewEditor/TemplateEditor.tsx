@@ -8,7 +8,6 @@ import {
   GeneratorStyling,
   PDFTitle,
   ButtonRight,
-  CustomLoader,
 } from '../../styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
@@ -36,6 +35,7 @@ import { FetchFileService } from '@store/file/actions';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById } from '@store/pdf/selectors';
+import { CustomLoader } from '@components/CustomLoader';
 
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
@@ -175,11 +175,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   return (
     <TemplateEditorContainerPdf>
       <LogoutModal />
-      {customIndicator && (
-        <CustomLoader>
-          <GoACircularProgress size="small" visible={true} />
-        </CustomLoader>
-      )}
+
+      {customIndicator && <CustomLoader />}
       <PDFTitle>PDF / Template Editor</PDFTitle>
       <hr />
 

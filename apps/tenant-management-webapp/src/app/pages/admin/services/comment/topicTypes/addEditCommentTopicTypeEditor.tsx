@@ -23,7 +23,6 @@ import {
   CommentEditor,
   ScrollPane,
   EditorPadding,
-  CustomLoader,
 } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
 
@@ -52,6 +51,7 @@ import {
   GoACircularProgress,
 } from '@abgov/react-components-new';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
+import { CustomLoader } from '@components/CustomLoader';
 
 const isCommentUpdated = (prev: CommentTopicTypes, next: CommentTopicTypes): boolean => {
   return (
@@ -247,11 +247,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
         <PageIndicator />
       ) : (
         <FlexRow>
-          {customIndicator && (
-            <CustomLoader>
-              <GoACircularProgress size="small" visible={true} />
-            </CustomLoader>
-          )}
+          {customIndicator && <CustomLoader />}
           <NameDescriptionDataSchema>
             <CommentEditorTitle>Comment / Topic type editor</CommentEditorTitle>
             <hr className="hr-resize" />

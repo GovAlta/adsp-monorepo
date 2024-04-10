@@ -11,7 +11,6 @@ import {
   TextLoadingIndicator,
   MonacoDivTabBody,
   ScriptEditorTitle,
-  CustomLoader,
 } from '../styled-components';
 import { TombStone } from './tombstone';
 
@@ -40,6 +39,7 @@ import { selectRoleList } from '@store/sharedSelectors/roles';
 import { ScriptEditorEventsTab } from './scriptEditorEventsTab';
 import { getEventDefinitions } from '@store/event/actions';
 import { scriptEditorConfig, scriptEditorJsonConfig } from './config';
+import { CustomLoader } from '@components/CustomLoader';
 export interface ScriptEditorProps {
   name: string;
   description: string;
@@ -218,7 +218,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onDescriptionChange(selectedScript?.description || '');
     onScriptChange(selectedScript?.script || '');
   }, [selectedScript]); // eslint-disable-line react-hooks/exhaustive-deps
-  console.log(definitions);
+
   const orderedEventNames =
     Array.isArray(definitions) && definitions.length > 0
       ? definitions
@@ -317,11 +317,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
   return (
     <EditModalStyle>
-      {customIndicator && (
-        <CustomLoader>
-          <GoACircularProgress size="small" visible={true} />
-        </CustomLoader>
-      )}
+      {customIndicator && <CustomLoader />}
       <ScriptEditorContainer>
         <ScriptEditorTitle>Script editor</ScriptEditorTitle>
         <hr className="hr-resize" />

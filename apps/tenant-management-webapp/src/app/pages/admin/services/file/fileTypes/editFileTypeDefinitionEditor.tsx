@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  CustomLoader,
   DropDownZIndex,
   EditorPadding,
   FileTypeEditor,
@@ -42,6 +41,7 @@ import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
 import { PageLoader } from '@core-services/app-common';
 import { areObjectsEqual } from '@lib/objectUtil';
+import { CustomLoader } from '@components/CustomLoader';
 
 export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -190,11 +190,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
         <PageLoader />
       ) : (
         <FlexRow>
-          {customIndicator && (
-            <CustomLoader>
-              <GoACircularProgress size="small" visible={true} />
-            </CustomLoader>
-          )}
+          {customIndicator && <CustomLoader />}
           <NameDescriptionDataSchema>
             <FileTypeEditorTitle>File type</FileTypeEditorTitle>
             <hr className="hr-resize" />
