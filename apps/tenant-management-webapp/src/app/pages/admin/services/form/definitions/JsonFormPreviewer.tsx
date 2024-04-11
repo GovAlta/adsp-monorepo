@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import { ajv } from '@lib/validation/checkInput';
 import { JsonForms } from '@jsonforms/react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { GoARenderers } from '@abgov/jsonforms-components';
-import { vanillaCells } from '@jsonforms/vanilla-renderers';
+import { GoARenderers, GoACells } from '@abgov/jsonforms-components';
 import { parseDataSchema, parseUiSchema } from './schemaUtils';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { uiSchemaWrapper } from './schemaWrappers';
@@ -67,7 +66,7 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
       <JsonForms
         ajv={ajv}
         renderers={GoARenderers}
-        cells={vanillaCells}
+        cells={GoACells}
         onChange={onChange}
         data={data}
         validationMode={'ValidateAndShow'}

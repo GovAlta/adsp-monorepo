@@ -4,12 +4,11 @@ import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jso
 import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { WithOptionLabel } from '@jsonforms/material-renderers';
+import { WithOptionLabel, checkFieldValidity } from '../../util';
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 
 import { addDataByOptions, getData } from '../../Context';
-import { checkFieldValidity } from '../../util/stringUtils';
 
 type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
