@@ -4,7 +4,7 @@ import axios, { AxiosRequestConfig, AxiosStatic } from 'axios';
 interface enumerators {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Map<string, () => any>;
-  functions: Map<string, () => (file: File, propertyId: string) => void>;
+  functions: Map<string, () => (file: File, propertyId: string) => void | undefined>;
 }
 
 export interface AllData {
@@ -12,7 +12,7 @@ export interface AllData {
   [x: string]: any;
 }
 
-const getAxiosInterceptorConfig = (axios: AxiosStatic): [number, AxiosStatic] => {
+export const getAxiosInterceptorConfig = (axios: AxiosStatic): [number, AxiosStatic] => {
   const requestId = axios.interceptors.request.use((req) => {
     if (req.data === undefined) {
       throw new Error(`The URL: ${req.url} encountered a CORS error.`);
@@ -23,14 +23,20 @@ const getAxiosInterceptorConfig = (axios: AxiosStatic): [number, AxiosStatic] =>
   return [requestId, axios];
 };
 
-export function addDataByUrl(key: string, url: string, processDataFunction: (url: string) => string[], token?: string) {
+export const addDataByUrl = async (
+  key: string,
+  url: string,
+  processDataFunction: (data: object) => string[],
+  token?: string
+) => {
   let header = {} as AxiosRequestConfig<unknown>;
   const [requestId, axiosWithConfig] = getAxiosInterceptorConfig(axios);
+
   if (token) {
     header = { ...header, ...{ Authorization: `Bearer ${token}` } };
   }
 
-  axiosWithConfig
+  await axiosWithConfig
     .get(url, header)
     .then((response) => {
       const processedData = processDataFunction(response.data);
@@ -44,15 +50,21 @@ export function addDataByUrl(key: string, url: string, processDataFunction: (url
       }
     });
   axiosWithConfig.interceptors.request.eject(requestId);
-}
+};
 
-export function addDataByOptions(key: string, url: string, location: string[], type: string, values: string[]) {
+export function addDataByOptions(
+  key: string,
+  url: string,
+  location: string[] | string,
+  type: string,
+  values: string[] | string = ['']
+) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dataFunction = (data: any) => {
     let dataLink = data;
     let returnData = [''];
 
-    const locationArray = location && !Array.isArray(location) ? [location] : location;
+    const locationArray = location && Array.isArray(location) ? location : [location];
     locationArray?.forEach((attribute) => {
       dataLink = dataLink[attribute];
     });
@@ -104,13 +116,17 @@ type Props = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const enumValues: Map<string, () => Record<string, any> | string[]> = new Map<string, () => Record<string, any>>();
-const enumFunctions: Map<string, () => (file: File, propertyId: string) => void> = new Map<
+const enumValues: Map<string, () => Record<string, any>> = new Map<string, () => Record<string, any>>();
+const enumFunctions: Map<string, () => ((file: File, propertyId: string) => void) | undefined> = new Map<
   string,
   () => (file: File, propertyId: string) => void
 >();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const enumSubmitFunctions: Map<string, () => (data: any) => void> = new Map<string, () => (data: any) => void>();
+const enumSubmitFunctions: Map<string, () => ((data: any) => void) | undefined> = new Map<
+  string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  () => (data: any) => void
+>();
 
 const baseEnumerator = {
   data: enumValues,
@@ -124,21 +140,16 @@ export function ContextProvider(props: Props): JSX.Element | null {
   if (props.fileManagement) {
     const { fileList, uploadFile, downloadFile, deleteFile } = props.fileManagement;
 
-    /* eslint-disable @typescript-eslint/no-empty-function */
-    const uploadFileFunction = uploadFile ? uploadFile : () => {};
-    const downloadFileFunction = downloadFile ? downloadFile : () => {};
-    const deleteFileFunction = deleteFile ? deleteFile : () => {};
-
     enumValues.set('file-list', () => fileList);
 
-    enumFunctions.set('upload-file', () => uploadFileFunction);
-    enumFunctions.set('download-file', () => downloadFileFunction);
-    enumFunctions.set('delete-file', () => deleteFileFunction);
+    enumFunctions.set('upload-file', () => uploadFile);
+    enumFunctions.set('download-file', () => downloadFile);
+    enumFunctions.set('delete-file', () => deleteFile);
   }
 
   if (props.submit) {
     const { submitForm } = props.submit;
-    const submitFunction = submitForm ? submitForm : () => {};
+    const submitFunction = submitForm;
 
     enumSubmitFunctions.set('submit-form', () => submitFunction);
   }
