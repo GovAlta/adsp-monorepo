@@ -76,7 +76,6 @@ describe('check error processing', () => {
 
     it('can detect non-category element', () => {
       const err = getUISchemaErrors(categorizationWithNoCategories, dataSchema);
-      console.log(err);
       expect(err).toMatch(errCategorizationHasNonCategories);
     });
 

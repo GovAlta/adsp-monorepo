@@ -12,7 +12,7 @@ import {
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { WithOptionLabel } from '@jsonforms/material-renderers';
+import { WithOptionLabel } from '../../util';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';

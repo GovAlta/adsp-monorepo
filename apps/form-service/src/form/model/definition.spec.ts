@@ -194,7 +194,7 @@ describe('FormDefinitionEntity', () => {
 
     it('can validate data', () => {
       const data = {};
-      entity.validateData(data);
+      entity.validateData('form submission test', data);
       expect(validationService.validate).toHaveBeenCalledWith(expect.any(String), entity.id, data);
     });
   });

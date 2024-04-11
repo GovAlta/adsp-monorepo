@@ -1,7 +1,81 @@
 import React from 'react';
-import '@testing-library/jest-dom';
-import { onSaveDispositionForModal } from './addEditFormDefinitionEditor';
+import { render, fireEvent, waitFor, queryByTestId } from '@testing-library/react';
+import { AddEditFormDefinitionEditor, onSaveDispositionForModal } from './addEditFormDefinitionEditor';
 import { Disposition, FormDefinition } from '@store/form/model';
+import { Provider } from 'react-redux';
+import { SESSION_INIT } from '@store/session/models';
+import configureStore from 'redux-mock-store';
+jest.mock('react-router-dom', () => ({
+  useParams: () => ({
+    id: '122',
+  }),
+  useNavigate: () => jest.fn(),
+  useHistory: () => ({
+    push: jest.fn(),
+  }),
+  useRouteMatch: () => ({ url: '/form/edit/A-really-really-long-formservice' }),
+}));
+describe('ScriptEditor Component', () => {
+  const mockStore = configureStore([]);
+  const store = mockStore({
+    fileService: {
+      fileType: [
+        {
+          id: '12345edfg',
+          name: '12345edfg',
+          updateRoles: [],
+          readRoles: [],
+          anonymousRead: false,
+          securityClassification: 'protected a',
+        },
+      ],
+      newFileList: null,
+      metrics: {
+        filesUploaded: 9,
+        fileLifetime: 0.47368055555555555,
+      },
+    },
+    task: {
+      queus: [
+        {
+          namespace: '2',
+          name: '2',
+          context: {},
+          assignerRoles: [],
+          workerRoles: [],
+        },
+      ],
+    },
+    notifications: { notifications: [] },
+    tenant: {
+      realmRoles: [
+        {
+          name: 'testRoleA',
+          id: 'test-role-a-id',
+        },
+        {
+          name: 'testRoleB',
+          id: 'test-role-b-id',
+        },
+      ],
+    },
+    session: SESSION_INIT,
+  });
+  test('Save button does not route', async () => {
+    const { queryByTestId } = render(
+      <Provider store={store}>
+        {' '}
+        <AddEditFormDefinitionEditor />{' '}
+      </Provider>
+    );
+    const saveButton = queryByTestId('definition-form-save');
+    fireEvent.click(saveButton);
+    await waitFor(() => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      expect(require('react-router-dom').useHistory().push).not.toHaveBeenCalled();
+    });
+  });
+});
 
 describe('Test AddEditFormDefinitionEditor', () => {
   const dispositionsToTest: Disposition[] = [

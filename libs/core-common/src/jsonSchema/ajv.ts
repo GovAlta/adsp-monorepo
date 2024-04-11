@@ -5,7 +5,8 @@ import { ValidationService } from './service';
 import * as schemaMigration from 'json-schema-migrate';
 
 export class AjvValidationService implements ValidationService {
-  protected ajv: Ajv.Ajv = new Ajv();
+  protected ajv: Ajv.Ajv = new Ajv({ allErrors: true, verbose: true });
+  protected ajvErrors: string[] = [];
 
   constructor(private logger: Logger) {
     this.ajv.addFormat('file-urn', /^urn:ads:platform:file-service:v[0-9]:\/files\/[a-zA-Z0-9.-]*$/);

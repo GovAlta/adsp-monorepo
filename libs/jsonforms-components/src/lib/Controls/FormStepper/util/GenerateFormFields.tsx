@@ -3,6 +3,14 @@ import React, { useContext } from 'react';
 import { Grid, GridItem } from '../../../common/Grid';
 import { ListWithDetail, ListWithDetailHeading } from '../styled-components';
 import { JsonFormContext } from '../../../Context';
+
+interface RenderFormFieldsProps {
+  elements: UISchemaElement[] | (Category | Categorization)[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any;
+  requiredFields: string[];
+}
+
 export const resolveLabelFromScope = (scope: string) => {
   // eslint-disable-next-line no-useless-escape
   const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
@@ -39,11 +47,7 @@ export const getFormFieldValue = (scope: string, data: object) => {
   }
 };
 
-export const renderFormFields = (
-  elements: UISchemaElement[] | (Category | Categorization)[],
-  data: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  requiredFields: string[]
-) => {
+export const RenderFormFields: React.FC<RenderFormFieldsProps> = ({ elements, data, requiredFields }) => {
   const enumerators = useContext(JsonFormContext);
   const downloadTriggerFunction = enumerators?.functions?.get('download-file');
   const downloadTrigger = downloadTriggerFunction && downloadTriggerFunction();
@@ -66,13 +70,16 @@ export const renderFormFields = (
   return elements.map((element, index) => {
     const clonedElement = JSON.parse(JSON.stringify(element));
     const lastSegment: string = clonedElement.scope?.split('/').pop();
+
     if (clonedElement.type === 'Control' && clonedElement.scope) {
       const label = clonedElement.label ? clonedElement.label : resolveLabelFromScope(clonedElement.scope);
       if (!label) return null;
-      const fileUploaderElement =
-        label.toLowerCase().indexOf('file uploader') !== -1 ? fileList && fileList[toCamelCase(label)] : null;
+      const isFileUploader = label.toLowerCase().includes('file uploader');
+
+      const fileUploaderElement = isFileUploader ? fileList && fileList[toCamelCase(label)] : null;
       const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
-      const asterisk = requiredFields.indexOf(lastSegment) !== -1 ? ' *' : '';
+      const isRequired = requiredFields.includes(lastSegment);
+      const asterisk = isRequired ? ' *' : '';
 
       return (
         <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
@@ -91,7 +98,9 @@ export const renderFormFields = (
       );
     } else if (clonedElement.type !== 'ListWithDetail' && clonedElement?.elements) {
       return (
-        <React.Fragment key={index}>{renderFormFields(clonedElement.elements, data, requiredFields)}</React.Fragment>
+        <React.Fragment key={index}>
+          <RenderFormFields elements={clonedElement.elements} data={data} requiredFields={requiredFields} />
+        </React.Fragment>
       );
     } else if (clonedElement.type === 'ListWithDetail' && data && data[lastSegment] && data[lastSegment].length > 0) {
       const listData = data[lastSegment];
@@ -108,7 +117,11 @@ export const renderFormFields = (
                 childIndex: any // eslint-disable-line @typescript-eslint/no-explicit-any
               ) => (
                 <React.Fragment key={`${index}-${childIndex}`}>
-                  {renderFormFields(clonedElement.elements, childData, requiredFields)}
+                  <RenderFormFields
+                    elements={clonedElement.elements}
+                    data={childData}
+                    requiredFields={requiredFields}
+                  />
                 </React.Fragment>
               )
             )}

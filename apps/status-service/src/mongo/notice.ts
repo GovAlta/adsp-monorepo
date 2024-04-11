@@ -27,7 +27,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
     let criteria = {};
 
     if (filter?.mode != null) {
-      criteria = { mode: filter.mode };
+      criteria = { mode: filter.mode === 'active' ? { $ne: 'archived' } : filter.mode };
     }
 
     if (filter?.tenantId) {

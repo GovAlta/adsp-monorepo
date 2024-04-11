@@ -239,11 +239,8 @@ export const updateForm = createAsyncThunk(
   ) => {
     const { form } = getState() as AppState;
 
-    // Skip saving if there are errors; the request will fail due to validation anyways.
-    if (form.form && !errors?.length) {
-      dispatch(formActions.setSaving(true));
-      dispatch(saveForm(form.form.id));
-    }
+    dispatch(formActions.setSaving(true));
+    dispatch(saveForm(form.form.id));
 
     return { data, files, errors };
   }
