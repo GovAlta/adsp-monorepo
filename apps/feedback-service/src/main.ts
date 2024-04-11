@@ -56,6 +56,8 @@ const initializeApp = async (): Promise<express.Application> => {
         description: 'Sites and associated configuration of the supported context for feedback.',
       },
       combineConfiguration,
+      enableConfigurationInvalidation: true,
+      useLongConfigurationCacheTTL: true,
       roles: [
         {
           role: ServiceRoles.FeedbackProvider,
