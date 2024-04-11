@@ -1,6 +1,6 @@
 import { JsonSchema } from '@jsonforms/core';
 import { getData } from '../../../Context';
-import { Ajv } from 'ajv';
+import Ajv from 'ajv8';
 
 export const validateData = (jsonSchema: JsonSchema, data: unknown, ajv: Ajv): boolean => {
   const newSchema = JSON.parse(JSON.stringify(jsonSchema));

@@ -1,4 +1,4 @@
-import Ajv from 'ajv';
+import Ajv from 'ajv8';
 import { validateData } from './validateData';
 
 const ajv = new Ajv({ allErrors: true, verbose: true });
