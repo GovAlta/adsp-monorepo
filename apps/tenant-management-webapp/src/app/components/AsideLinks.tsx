@@ -18,9 +18,9 @@ const AsideLinks = ({ serviceName, noDocsLink = false }: AsideLinksProps): JSX.E
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
   const getDocsLink = () => {
-    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=${capitalizeFirstLetter(
-      serviceName
-    )} service`;
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=${
+      serviceName === 'pdf' ? serviceName.toUpperCase() : capitalizeFirstLetter(serviceName)
+    } service`;
   };
   const getSupportCodeLink = () => {
     if (serviceName.toLowerCase() === 'access') {
