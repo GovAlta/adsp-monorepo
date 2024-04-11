@@ -39,6 +39,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useSecureParams } from '@lib/useSecureParams';
 import {
   GoAButtonGroup,
   GoAButton,
@@ -159,7 +160,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [customIndicator, setCustomIndicator] = useState<boolean>(false);
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
-  const { id } = useParams<{ id: string }>();
+  const id = useSecureParams('id');
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
   const debouncedRenderUISchema = useDebounce(tempUiSchema, 1000);
