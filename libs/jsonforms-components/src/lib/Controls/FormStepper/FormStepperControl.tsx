@@ -33,7 +33,7 @@ import {
 } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { getAllRequiredFields } from './util/getRequiredFields';
-import { renderFormFields } from './util/GenerateFormFields';
+import { RenderFormFields } from './util/GenerateFormFields';
 import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
 import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } from './StepperContext';
@@ -51,6 +51,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   const submitForm = submitFormFunction && submitFormFunction();
   const categorization = uischema as Categorization;
   const rawCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
+
   const [step, setStep] = React.useState(0);
   const [isFormValid, setIsFormValid] = React.useState(false);
   const [showNextBtn, setShowNextBtn] = React.useState(true);
@@ -232,7 +233,9 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                           <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
                           <Anchor onClick={() => changePage(index)}>{readOnly ? 'View' : 'Edit'}</Anchor>
                         </ReviewItemHeader>
-                        <Grid>{renderFormFields(category.elements, data, requiredFields)}</Grid>
+                        <Grid>
+                          <RenderFormFields elements={category.elements} data={data} requiredFields={requiredFields} />
+                        </Grid>
                       </ReviewItemSection>
                     );
                   })}
