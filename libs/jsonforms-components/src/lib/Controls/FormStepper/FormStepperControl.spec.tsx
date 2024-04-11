@@ -61,6 +61,7 @@ const dataSchema = {
   properties: {
     name: nameSchema,
     address: addressSchema,
+    preQualification: { type: 'boolean' },
   },
 };
 
@@ -122,8 +123,8 @@ const subCategorization = {
 };
 
 const formData = {
-  name: { firstName: '', lastName: '' },
-  address: { street: '', city: '' },
+  name: { firstName: undefined, lastName: undefined },
+  address: { street: undefined, city: undefined },
 };
 
 const getForm = (data: object, uiSchema: UISchemaElement = categorization) => {
@@ -335,28 +336,44 @@ describe('Form Stepper Control', () => {
       // ensure prev is gone
       expect(prev).not.toBeInTheDocument();
     });
+  });
 
-    // it('can navigate between steps with step icons', async () => {
-    //   const renderer = render(getForm(formData));
-    //   const stepperHeader = renderer.getByTestId('stepper-test');
-    //   expect(stepperHeader).toBeInTheDocument();
-    //   expect(stepperHeader.getAttribute('step')).toBe('1');
+  describe('submit button', () => {
+    it('is disabled if form is not complete', () => {
+      const renderer = render(getForm(formData));
+      // Move to review Page
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
 
-    //   // Navigate to the 2nd page
-    //   const step2 = stepperHeader.querySelector('goa-form-step[text="Address"]');
-    //   expect(step2).toBeInTheDocument();
-    //   //    expect(step2?.getAttribute('step')).toBe(2);
-    //   const shadowLabel = step2?.shadowRoot?.querySelector('label');
-    //   console.log(step2!.shadowRoot?.innerHTML);
-    //   expect(shadowLabel).not.toBeNull();
-    //   fireEvent.click(step2!);
-    //   fireEvent.click(shadowLabel!);
-    //   fireEvent.click(step2!.shadowRoot!);
-    //   const activePage = renderer.container.querySelector('goa-pages')?.getAttribute('current');
-    //   console.log('active page: ', activePage);
-    //   expect(activePage).toBe(2);
-    //   const activeStep = renderer.getByTestId('stepper-test');
-    //   expect(activeStep.getAttribute('step')).toBe('2');
-    // });
+      // Ensure submit is disabled.
+      const submit = renderer.getByTestId('stepper-submit-btn');
+      expect(submit).toBeInTheDocument();
+      expect(submit).toBeVisible();
+      expect(submit.getAttribute('disabled')).toBe('true');
+    });
+
+    it('is enabled if form is complete', () => {
+      const form = getForm({
+        name: { firstName: 'Bob', lastName: 'Bing' },
+        address: { street: 'Sesame', city: 'Seattle' },
+      });
+      const renderer = render(form);
+
+      // Move to review Page
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+
+      // Ensure submit is enabled.
+      const submit = renderer.getByTestId('stepper-submit-btn');
+      expect(submit).toBeInTheDocument();
+      expect(submit).toBeVisible();
+      expect(submit.getAttribute('disabled')).toBe('false');
+    });
   });
 });
