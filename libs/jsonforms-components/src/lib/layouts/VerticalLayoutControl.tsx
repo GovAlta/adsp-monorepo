@@ -1,7 +1,7 @@
 import React from 'react';
-import { LayoutProps, VerticalLayout } from '@jsonforms/core';
 import { LayoutRenderer, LayoutRendererProps } from '../util/layout';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
+import { LayoutProps, RankedTester, rankWith, uiTypeIs, VerticalLayout } from '@jsonforms/core';
 
 export const GoAVerticalLayoutComponent = ({
   uischema,
@@ -24,5 +24,7 @@ export const GoAVerticalLayoutComponent = ({
 
   return <LayoutRenderer {...childProps} renderers={renderers} cells={cells} />;
 };
+
+export const GoAlVerticalLayoutTester: RankedTester = rankWith(1, uiTypeIs('VerticalLayout'));
 
 export const GoAVerticalLayout = withJsonFormsLayoutProps(GoAVerticalLayoutComponent, true);

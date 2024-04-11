@@ -71,8 +71,8 @@ export class FormDefinitionEntity implements FormDefinition {
     return user && !user.roles.find((role) => assistRoles.includes(role));
   }
 
-  public validateData(data: Record<string, unknown>) {
-    return this.validationService.validate('form data update', this.id, data);
+  public validateData(context: string, data: Record<string, unknown>) {
+    return this.validationService.validate(context, this.id, data);
   }
 
   public async createForm(

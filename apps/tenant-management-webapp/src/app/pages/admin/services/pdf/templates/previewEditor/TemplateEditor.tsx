@@ -14,7 +14,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope, convertToEditorSuggestion } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem, GoAButtonGroup, GoACircularProgress } from '@abgov/react-components-new';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
@@ -35,6 +35,7 @@ import { FetchFileService } from '@store/file/actions';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById } from '@store/pdf/selectors';
+import { CustomLoader } from '@components/CustomLoader';
 
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
@@ -58,6 +59,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
+  const [customIndicator, setCustomIndicator] = useState<boolean>(false);
 
   const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id));
 
@@ -120,6 +122,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (isPDFUpdated(tempPdfTemplate, tmpTemplate)) {
       dispatch(updateTempTemplate(tmpTemplate));
     }
+
+    setCustomIndicator(false);
   }, [debouncedTmpTemplate, EditorError.testData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -171,6 +175,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   return (
     <TemplateEditorContainerPdf>
       <LogoutModal />
+
+      {customIndicator && <CustomLoader />}
       <PDFTitle>PDF / Template Editor</PDFTitle>
       <hr />
 
@@ -293,6 +299,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
               <GoAButton
                 disabled={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
                 onClick={() => {
+                  setCustomIndicator(true);
                   savePdfTemplate(tmpTemplate);
                 }}
                 type="primary"
