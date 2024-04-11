@@ -31,6 +31,7 @@ import { createFileService } from './file';
 import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
 import { GeneratedSupportingDocFileType } from './form/types/fileTypes';
+import { instrumentAxios } from './instrument';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -47,6 +48,8 @@ const initializeApp = async (): Promise<express.Application> => {
   }
 
   const SUPPORT_COMMENT_TOPIC_TYPE_ID = 'form-questions';
+
+  instrumentAxios(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -129,6 +132,7 @@ const initializeApp = async (): Promise<express.Application> => {
         );
       },
       enableConfigurationInvalidation: true,
+      useLongConfigurationCacheTTL: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
