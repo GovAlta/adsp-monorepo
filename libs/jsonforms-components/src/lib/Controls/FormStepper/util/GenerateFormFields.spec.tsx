@@ -10,6 +10,7 @@ const MockElement = [
 const MockData = {
   firstName: 'John',
   testCategoryAddress: true,
+  fileUploader: 'urn:ads:platform:file-service:v1:/files/791a90e4-6382-46c1-b0cf-a2c370e424f0',
 };
 
 const MockUISchema = [
@@ -24,6 +25,13 @@ const MockUISchema = [
       {
         type: 'Control',
         scope: '#/properties/firstName',
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/fileUploader',
+        options: {
+          variant: 'button',
+        },
       },
     ],
   },
@@ -147,5 +155,10 @@ describe('Generate Form Fields', () => {
     render(<LoadComponent />);
     expect(screen.getByText(/Street/)).toBeInTheDocument();
     expect(screen.getByText(/City/)).toBeInTheDocument();
+  });
+  it('should include file information', () => {
+    const LoadComponent = () => <div>{renderFormFields(MockUISchema[0].elements, MockData, MockRequiredFields)}</div>;
+    render(<LoadComponent />);
+    expect(screen.getByText(/File uploader/)).toBeInTheDocument();
   });
 });

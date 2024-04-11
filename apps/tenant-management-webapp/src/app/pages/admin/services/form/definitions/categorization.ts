@@ -59,12 +59,12 @@ export const schema = {
         },
       },
     },
-    FileUploader: {
+    fileUploader: {
       description: 'file uploader !!!',
       format: 'file-urn',
       type: 'string',
     },
-    FileUploader2: {
+    fileUploader2: {
       description: 'file uploader !!!',
       format: 'file-urn',
       type: 'string',
@@ -108,14 +108,14 @@ export const uischema = {
             },
             {
               type: 'Control',
-              scope: '#/properties/FileUploader',
+              scope: '#/properties/fileUploader',
               options: {
                 variant: 'button',
               },
             },
             {
               type: 'Control',
-              scope: '#/properties/FileUploader2',
+              scope: '#/properties/fileUploader2',
               options: {
                 variant: 'dragdrop',
               },

@@ -72,7 +72,6 @@ export const FormStepper = ({
   const [showNextBtn, setShowNextBtn] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [categories, setCategories] = useState(categorization.elements);
-
   useEffect(() => {
     const cates = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
     setCategories(cates);
@@ -88,7 +87,6 @@ export const FormStepper = ({
 
   const onSubmit = () => {
     setIsOpen(false);
-    console.log('submitted', data);
   };
 
   const CategoryLabels = useMemo(() => {
