@@ -13,6 +13,7 @@ import {
   FETCH_FILE_SUCCESS,
   CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
   CLEAR_NEW_FILE_LIST,
+  UPLOAD_FILE_FAILED,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
@@ -51,6 +52,12 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         ...state,
         fileList: uploadFile(state.fileList, action.payload.result),
         newFileList: newFileList,
+      };
+    }
+    case UPLOAD_FILE_FAILED: {
+      return {
+        ...state,
+        newFileList: { ...state.newFileList },
       };
     }
     case DELETE_FILE_SUCCESSES: {

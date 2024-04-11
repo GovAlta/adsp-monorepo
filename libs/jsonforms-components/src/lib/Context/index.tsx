@@ -89,12 +89,18 @@ interface FileManagement {
   downloadFile?: (file: File) => void;
   deleteFile?: (file: File) => void;
 }
+interface SubmitManagement {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  submitForm?: (any: any) => void;
+}
 
 type Props = {
   children?: React.ReactNode;
   fileManagement?: FileManagement;
+  submit?: SubmitManagement;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,17 +109,18 @@ const enumFunctions: Map<string, () => (file: File, propertyId: string) => void>
   string,
   () => (file: File, propertyId: string) => void
 >();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const enumSubmitFunctions: Map<string, () => (data: any) => void> = new Map<string, () => (data: any) => void>();
 
 const baseEnumerator = {
   data: enumValues,
   functions: enumFunctions,
+  submitFunction: enumSubmitFunctions,
 };
 
 export const JsonFormContext = createContext(baseEnumerator);
 
 export function ContextProvider(props: Props): JSX.Element | null {
-  const outerTheme = React.useContext(JsonFormContext);
-
   if (props.fileManagement) {
     const { fileList, uploadFile, downloadFile, deleteFile } = props.fileManagement;
 
@@ -127,6 +134,13 @@ export function ContextProvider(props: Props): JSX.Element | null {
     enumFunctions.set('upload-file', () => uploadFileFunction);
     enumFunctions.set('download-file', () => downloadFileFunction);
     enumFunctions.set('delete-file', () => deleteFileFunction);
+  }
+
+  if (props.submit) {
+    const { submitForm } = props.submit;
+    const submitFunction = submitForm ? submitForm : () => {};
+
+    enumSubmitFunctions.set('submit-form', () => submitFunction);
   }
 
   if (props.data) {
@@ -147,6 +161,8 @@ export function ContextProvider(props: Props): JSX.Element | null {
  * Grabs data stored under a given key
  *
  */
+// FIXME give some clue as to what data is being fetched.
+// e.g.is it getFormContextData?
 export function getData(key: string) {
   const dataFunction = baseEnumerator.data.get(key);
   return dataFunction && dataFunction();

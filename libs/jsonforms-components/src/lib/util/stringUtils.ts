@@ -20,10 +20,7 @@ export const controlScopeMatchesLabel = (scope: string, label: string) => {
   // Get the property name in the string from the scope
   const splitIdName = scope.replace(' ', '').split('/')?.at(-1)?.toLowerCase() ?? '';
   const labelWithNoSpaces = label.replace(' ', '').toLowerCase();
-  if (splitIdName === labelWithNoSpaces) {
-    return true;
-  }
-  return false;
+  return splitIdName === labelWithNoSpaces;
 };
 
 /**

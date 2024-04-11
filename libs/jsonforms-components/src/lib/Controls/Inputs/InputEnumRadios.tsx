@@ -4,7 +4,7 @@ import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jso
 import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { WithOptionLabel } from '@jsonforms/material-renderers';
+import { WithOptionLabel } from '../../util';
 import { GoARadioGroup, GoARadioItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { checkFieldValidity } from '../../util/stringUtils';

@@ -3,7 +3,7 @@ import { LayoutProps, RankedTester, rankWith, uiTypeIs, HorizontalLayout } from 
 import { LayoutRenderer, LayoutRendererProps } from '../util/layout';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 
-export const materialHorizontalLayoutTester: RankedTester = rankWith(2, uiTypeIs('HorizontalLayout'));
+export const GoAHorizontalLayoutTester: RankedTester = rankWith(2, uiTypeIs('HorizontalLayout'));
 
 export const GoAHorizontalLayoutComponent = ({
   uischema,

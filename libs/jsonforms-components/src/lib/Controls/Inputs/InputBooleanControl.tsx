@@ -1,7 +1,6 @@
 import React from 'react';
 import { isBooleanControl, RankedTester, rankWith, ControlProps, isDescriptionHidden } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { Hidden } from '@mui/material';
 import { GoACheckbox } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';

@@ -78,7 +78,7 @@ export const getUISchemaErrors = (uiSchema: UISchemaElement, schema: JsonSchema)
       const invalidCategorizations: string[] = [];
       const invalidCategories: UISchemaElement[] = [];
       (uiSchema.elements as UISchemaElement[]).forEach((e) => {
-        if (e.type !== 'Category') {
+        if (e.type !== 'Category' && e.type !== 'Categorization') {
           invalidCategorizations.push(e.type);
         }
         if (!hasElements(e) || isEmptyElements(e)) {

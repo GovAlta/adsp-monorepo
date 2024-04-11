@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
-import { Hidden } from '@mui/material';
 import { FormFieldWrapper } from './style-component';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
+import { StepInputStatus, StepperContext } from '../FormStepper/StepperContext';
 import { Visible } from '../../util';
 
 export type GoAInputType =
@@ -28,9 +28,7 @@ export interface WithInput {
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
-  // eslint-disable-next-line
-  const { id, description, errors, uischema, visible, config, label, input, required } = props;
-  const isValid = errors.length === 0;
+  const { uischema, visible, label, input, required } = props;
   const InnerComponent = input;
   const labelToUpdate: string = getLabelText(uischema.scope, label || '');
 
@@ -39,6 +37,31 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   if (modifiedErrors === 'should be equal to one of the allowed values' && uischema?.options?.enumContext) {
     modifiedErrors = '';
   }
+
+  const getStepStatus = (props: ControlProps & WithInput, value: unknown): StepInputStatus => {
+    return {
+      id: props.id,
+      value: value,
+      required: props.required || false,
+      type: props.schema.type,
+      step: stepperContext.stepId,
+    };
+  };
+
+  const stepperContext = useContext(StepperContext);
+  const handlerWithStepperUpdate = (path: string, value: unknown) => {
+    stepperContext.updateStatus(getStepStatus(props, value));
+    props.handleChange(path, value);
+  };
+  const modifiedProps = { ...props, handleChange: handlerWithStepperUpdate };
+
+  useEffect(() => {
+    if (!stepperContext.isInitialized(props.id)) {
+      const status = getStepStatus(props, props.data);
+      stepperContext.updateStatus(status);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Visible visible={visible}>
@@ -49,7 +72,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
           label={props?.noLabel === true ? '' : labelToUpdate}
           helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
         >
-          <InnerComponent {...props} />
+          <InnerComponent {...modifiedProps} />
         </GoAFormItem>
       </FormFieldWrapper>
     </Visible>
