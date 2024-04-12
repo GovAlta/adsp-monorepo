@@ -221,7 +221,7 @@
     "clipboardy": "^2.3.0",
     "core-js": "3.36.1",
     "css-loader": "^6.4.0",
-    "cypress": "^9.7.0",
+    "cypress": "^13.7.3",
     "cypress-axe": "^0.14.0",
     "cypress-cucumber-preprocessor": "^4.2.0",
     "cypress-xpath": "^1.6.2",
