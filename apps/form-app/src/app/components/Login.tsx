@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -34,13 +34,13 @@ export const Login = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
 
-    const redirectUri = `${loginRedirect}`;
+    //const redirectUri = `${loginRedirect}`;
 
     let idp = 'core';
     if (skipSSO && !idpFromUrl) {
       idp = ' ';
     }
-    dispatch(loginUserWithIDP({ idpFromUrl: idp, realm, from: redirectUri }));
+    dispatch(loginUserWithIDP({ idpFromUrl: idp, realm, from: loginRedirect }));
   };
 
   const tenantLogin = async (realm: string, definitionId?: string) => {
