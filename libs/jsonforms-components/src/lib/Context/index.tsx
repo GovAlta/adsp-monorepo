@@ -65,7 +65,8 @@ export function addDataByOptions(
     let returnData = [''];
 
     const locationArray = location && Array.isArray(location) ? location : [location];
-    locationArray?.forEach((attribute) => {
+    const locationArrayTyped = locationArray as string[];
+    locationArrayTyped?.forEach((attribute) => {
       dataLink = dataLink[attribute];
     });
 
