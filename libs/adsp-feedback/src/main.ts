@@ -3,11 +3,9 @@ import { ref, createRef, Ref } from 'lit-html/directives/ref.js';
 import { AdspFeedback as AdspFeedbackApi, FeedbackContext, FeedbackOptions } from './types';
 
 class AdspFeedback implements AdspFeedbackApi {
-  private tenant: string = '';
-  private apiUrl: URL | null = null;
-  private getAccessToken = function () {
-    return Promise.resolve('');
-  };
+  private tenant?: string;
+  private apiUrl?: URL;
+  private getAccessToken?: () => Promise<string>;
   private getContext: () => Promise<FeedbackContext>;
 
   private feedbackBadgeRef: Ref<HTMLDivElement> = createRef();
@@ -17,15 +15,26 @@ class AdspFeedback implements AdspFeedbackApi {
   private sendButtonRef: Ref<HTMLButtonElement> = createRef();
 
   constructor() {
-    const scriptElement = document.currentScript as HTMLScriptElement;
-    if (scriptElement) {
-      this.apiUrl = new URL('/feedback/v1/feedback', scriptElement.src);
-    }
-
     const site = `${document.location.protocol}//${document.location.host}`;
     this.getContext = function () {
       return Promise.resolve({ site, view: document.location.pathname });
     };
+
+    const scriptElement = document.currentScript as HTMLScriptElement;
+    if (scriptElement) {
+      const scriptUrl = new URL(scriptElement.src);
+      this.apiUrl = new URL('/feedback/v1/feedback', scriptUrl);
+
+      // If the script element is in body, try to default initialize the widget.
+      // Note: This doesn't work if the script element is in head, since we might be trying
+      // to mount the widget div before body is in the DOM tree.
+      if (scriptElement.parentElement instanceof HTMLBodyElement) {
+        const tenant = scriptUrl.searchParams.get('tenant');
+        if (tenant) {
+          this.initialize({ tenant });
+        }
+      }
+    }
   }
 
   private openFeedbackForm() {
@@ -51,7 +60,7 @@ class AdspFeedback implements AdspFeedbackApi {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     };
-    const token = await this.getAccessToken();
+    const token = this.getAccessToken ? await this.getAccessToken() : undefined;
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -89,12 +98,20 @@ class AdspFeedback implements AdspFeedbackApi {
       this.apiUrl = new URL(apiUrl);
     }
 
+    if (!this.apiUrl) {
+      throw new Error('API URL is not specified and cannot be determined implicitly.');
+    }
+
     if (tenant && typeof tenant === 'string') {
       this.tenant = tenant;
     }
 
     if (typeof getAccessToken === 'function') {
       this.getAccessToken = getAccessToken;
+    }
+
+    if (!this.getAccessToken && !this.tenant) {
+      throw new Error('Either tenant or getAccessToken must be specified to determine tenant context of feedback.');
     }
 
     if (typeof getContext === 'function') {
@@ -122,7 +139,8 @@ class AdspFeedback implements AdspFeedbackApi {
             padding: 16px 8px;
             writing-mode: vertical-rl;
             cursor: pointer;
-            border-radius: 0.25rem 0 0 0.25rem;
+            border-radius: 0 0.25rem 0.25rem 0;
+            transform: rotate(-180deg);
           }
           .adsp-fb .adsp-fb-form-container {
             z-index: 2;
