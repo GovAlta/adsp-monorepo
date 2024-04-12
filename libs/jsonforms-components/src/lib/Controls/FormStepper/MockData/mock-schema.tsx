@@ -100,12 +100,12 @@ export const Schema: JsonSchema4 | JsonSchema7 = {
         },
       },
     },
-    FileUploader: {
+    fileUploader: {
       description: 'file uploader !!!',
       format: 'uri',
       type: 'string',
     },
-    FileUploader2: {
+    fileUploader2: {
       description: 'file uploader !!!',
       format: 'uri',
       type: 'string',

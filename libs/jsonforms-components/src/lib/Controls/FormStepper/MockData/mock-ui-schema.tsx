@@ -109,11 +109,11 @@ export const MockUiSchema = {
                 },
                 {
                   type: 'Control',
-                  scope: '#/properties/FileUploader',
+                  scope: '#/properties/fileUploader',
                 },
                 {
                   type: 'Control',
-                  scope: '#/properties/FileUploader2',
+                  scope: '#/properties/fileUploader2',
                 },
               ],
             },

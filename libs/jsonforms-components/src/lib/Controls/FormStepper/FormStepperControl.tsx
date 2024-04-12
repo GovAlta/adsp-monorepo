@@ -22,7 +22,6 @@ import {
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '../../util/layout';
 import { Grid } from '../../common/Grid';
-import { getData } from '../../Context';
 
 import {
   Anchor,
@@ -34,10 +33,11 @@ import {
 } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { getAllRequiredFields } from './util/getRequiredFields';
-import { renderFormFields } from './util/GenerateFormFields';
+import { RenderFormFields } from './util/GenerateFormFields';
 import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
 import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } from './StepperContext';
+import { validateData } from './util/validateData';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   data: unknown;
@@ -51,6 +51,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   const submitForm = submitFormFunction && submitFormFunction();
   const categorization = uischema as Categorization;
   const rawCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
+
   const [step, setStep] = React.useState(0);
   const [isFormValid, setIsFormValid] = React.useState(false);
   const [showNextBtn, setShowNextBtn] = React.useState(true);
@@ -93,18 +94,8 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   }, [inputStatuses, categories]);
 
   useEffect(() => {
-    const newSchema = JSON.parse(JSON.stringify(schema));
-
-    Object.keys(newSchema.properties || {}).forEach((propertyName) => {
-      const property = newSchema.properties || {};
-      property[propertyName].enum = getData(propertyName) as string[];
-      if (property[propertyName]?.format === 'file-urn') {
-        delete property[propertyName].format;
-      }
-    });
-
-    const validate = ajv.compile(newSchema as JsonSchema);
-    setIsFormValid(validate(data));
+    const isValid = validateData(schema, data, ajv);
+    setIsFormValid(isValid);
   }, [ajv, data, schema]);
 
   useEffect(() => {
@@ -242,7 +233,9 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                           <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
                           <Anchor onClick={() => changePage(index)}>{readOnly ? 'View' : 'Edit'}</Anchor>
                         </ReviewItemHeader>
-                        <Grid>{renderFormFields(category.elements, data, requiredFields)}</Grid>
+                        <Grid>
+                          <RenderFormFields elements={category.elements} data={data} requiredFields={requiredFields} />
+                        </Grid>
                       </ReviewItemSection>
                     );
                   })}
@@ -279,7 +272,12 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 )}
                 {!showNextBtn && (
                   <div>
-                    <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
+                    <GoAButton
+                      type="primary"
+                      onClick={handleSubmit}
+                      disabled={!isFormValid || !enabled}
+                      testId="stepper-submit-btn"
+                    >
                       Submit
                     </GoAButton>
                   </div>
@@ -310,22 +308,6 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
       </Visible>
     </div>
   );
-};
-
-export const flattenObject = (obj: Record<string, string>): Record<string, string> => {
-  const flattened = {} as Record<string, string>;
-
-  Object.keys(obj || {}).forEach((key) => {
-    const value = obj[key];
-
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      Object.assign(flattened, flattenObject(value));
-    } else {
-      flattened[key] = value;
-    }
-  });
-
-  return flattened;
 };
 
 export const FormStepperControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormStepper)));
