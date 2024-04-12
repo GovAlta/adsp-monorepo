@@ -12,12 +12,8 @@ import {
 
 import { getRealm } from '../lib/keycloak';
 
-interface LoginProps {
-  tenantName?: string;
-}
-
-export const Login: FunctionComponent<LoginProps> = ({ tenantName }) => {
-  const realm = useParams<{ realm: string }>().realm || tenantName;
+export const Login = () => {
+  const realm = useParams<{ realm: string }>().realm;
   const definitionId = useParams<{ definitionId: string }>().definitionId;
 
   const dispatch = useDispatch<AppDispatch>();
@@ -48,10 +44,10 @@ export const Login: FunctionComponent<LoginProps> = ({ tenantName }) => {
   };
 
   const tenantLogin = async (realm: string, definitionId?: string) => {
-    let loginRedirectUrl = `${window.location.origin}`;
+    let loginRedirectUrl = '/';
 
     if (realm && definitionId) {
-      loginRedirectUrl = `${loginRedirectUrl}/${realm}/${definitionId}`;
+      loginRedirectUrl = `${window.location.origin}/${loginRedirectUrl}/${realm}/${definitionId}`;
     }
 
     const tenantApi = directory['urn:ads:platform:tenant-service'];
