@@ -16,13 +16,11 @@ import {
   StatePropsOfLayout,
   isVisible,
   isEnabled,
-  JsonSchema,
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '../../util/layout';
 import { Grid } from '../../common/Grid';
-import { getData } from '../../Context';
 
 import {
   Anchor,
@@ -34,10 +32,12 @@ import {
 } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { getAllRequiredFields } from './util/getRequiredFields';
-import { renderFormFields } from './util/GenerateFormFields';
+import { RenderFormFields } from './util/GenerateFormFields';
 import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
 import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } from './StepperContext';
+import { validateData } from './util/validateData';
+import { mapToVisibleStep } from './util/stepNavigation';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   data: unknown;
@@ -51,6 +51,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   const submitForm = submitFormFunction && submitFormFunction();
   const categorization = uischema as Categorization;
   const rawCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
+
   const [step, setStep] = React.useState(0);
   const [isFormValid, setIsFormValid] = React.useState(false);
   const [showNextBtn, setShowNextBtn] = React.useState(true);
@@ -93,18 +94,8 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   }, [inputStatuses, categories]);
 
   useEffect(() => {
-    const newSchema = JSON.parse(JSON.stringify(schema));
-
-    Object.keys(newSchema.properties || {}).forEach((propertyName) => {
-      const property = newSchema.properties || {};
-      property[propertyName].enum = getData(propertyName) as string[];
-      if (property[propertyName]?.format === 'file-urn') {
-        delete property[propertyName].format;
-      }
-    });
-
-    const validate = ajv.compile(newSchema as JsonSchema);
-    setIsFormValid(validate(data));
+    const isValid = validateData(schema, data, ajv);
+    setIsFormValid(isValid);
   }, [ajv, data, schema]);
 
   useEffect(() => {
@@ -135,27 +126,10 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     setPage(page);
   }
 
-  const getNextStep = (step: number): number => {
-    const rawCategoryLabels = rawCategories.elements.map((category) => category.label);
-    if (rawCategoryLabels.length !== CategoryLabels.length) {
-      if (step > 1 && step <= rawCategoryLabels.length) {
-        const selectedTabLabel: string = rawCategoryLabels[step - 1];
-        const selectedTab = CategoryLabels.indexOf(selectedTabLabel);
-        const newStep = selectedTab !== -1 ? selectedTab + 1 : step;
-        return newStep;
-      }
-      if (step > rawCategoryLabels.length) {
-        return step - 1;
-      }
-    }
-    return step;
-  };
-
   function setTab(page: number) {
-    page = getNextStep(page);
-    setStep(page);
-    if (page < 1 || page > categories.length + 1) return;
-    setShowNextBtn(categories.length + 1 !== page);
+    const rawCategoryLabels = rawCategories.elements.map((category) => category.label);
+    page = mapToVisibleStep(page, rawCategoryLabels, CategoryLabels);
+    setPage(page);
   }
 
   function setPage(page: number) {
@@ -163,10 +137,6 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     if (page < 1 || page > categories.length + 1) return;
     setShowNextBtn(categories.length + 1 !== page);
   }
-
-  const changePage = (index: number) => {
-    setPage(index + 1);
-  };
 
   const updateInputStatus = (inputStatus: StepInputStatus): void => {
     inputStatuses[inputStatus.id] = inputStatus;
@@ -236,13 +206,18 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                   {categories.map((category, index) => {
                     const categoryLabel = category.label || category.i18n || 'Unknown Category';
                     const requiredFields = getAllRequiredFields(schema);
+                    const testId = `${categoryLabel}-review-link`;
                     return (
                       <ReviewItemSection key={index}>
                         <ReviewItemHeader>
                           <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-                          <Anchor onClick={() => changePage(index)}>{readOnly ? 'View' : 'Edit'}</Anchor>
+                          <Anchor onClick={() => setPage(index + 1)} data-testid={testId}>
+                            {readOnly ? 'View' : 'Edit'}
+                          </Anchor>
                         </ReviewItemHeader>
-                        <Grid>{renderFormFields(category.elements, data, requiredFields)}</Grid>
+                        <Grid>
+                          <RenderFormFields elements={category.elements} data={data} requiredFields={requiredFields} />
+                        </Grid>
                       </ReviewItemSection>
                     );
                   })}
@@ -279,7 +254,12 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 )}
                 {!showNextBtn && (
                   <div>
-                    <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
+                    <GoAButton
+                      type="primary"
+                      onClick={handleSubmit}
+                      disabled={!isFormValid || !enabled}
+                      testId="stepper-submit-btn"
+                    >
                       Submit
                     </GoAButton>
                   </div>
@@ -310,22 +290,6 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
       </Visible>
     </div>
   );
-};
-
-export const flattenObject = (obj: Record<string, string>): Record<string, string> => {
-  const flattened = {} as Record<string, string>;
-
-  Object.keys(obj || {}).forEach((key) => {
-    const value = obj[key];
-
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      Object.assign(flattened, flattenObject(value));
-    } else {
-      flattened[key] = value;
-    }
-  });
-
-  return flattened;
 };
 
 export const FormStepperControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormStepper)));

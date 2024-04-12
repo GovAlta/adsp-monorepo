@@ -6,19 +6,11 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForDateControl, onChangeForDateControl, onKeyPressForDateControl } from '../../util/inputControlUtils';
 import { callout } from '../../Additional/GoACalloutControl';
+import { standardizeDate } from '../../util/dateUtils';
 
 export type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 export const errMalformedDate = (scope: string, type: string): string => {
   return `${type}-date for variable '${scope}' has an incorrect format.`;
-};
-
-export const standardizeDate = (date: Date | string): string | undefined => {
-  try {
-    const stdDate = new Date(date).toISOString().substring(0, 10);
-    return stdDate;
-  } catch (e) {
-    return undefined;
-  }
 };
 
 const isValidDateFormat = (date: string): boolean => {
