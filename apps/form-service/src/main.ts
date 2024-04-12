@@ -5,7 +5,13 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, ServiceMetricsValueDefinition, adspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  ServiceMetricsValueDefinition,
+  adspId,
+  initializePlatform,
+  instrumentAxios,
+} from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -24,14 +30,13 @@ import {
   FormStatusUnlockedDefinition,
   FormStatusSetToDraftDefinition,
   SubmissionDispositionedDefinition,
+  GeneratedSupportingDocFileType,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
 import { createFileService } from './file';
 import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
-import { GeneratedSupportingDocFileType } from './form/types/fileTypes';
-import { instrumentAxios } from './instrument';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
