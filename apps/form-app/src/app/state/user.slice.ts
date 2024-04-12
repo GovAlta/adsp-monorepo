@@ -121,7 +121,7 @@ export const initializeUser = createAsyncThunk(
 
 export const loginUserWithIDP = createAsyncThunk(
   'user/login-idp',
-  async ({ realm, idpFromUrl }: { realm: string; idpFromUrl: string; from: string }, { getState, dispatch }) => {
+  async ({ realm, idpFromUrl, from }: { realm: string; idpFromUrl: string; from: string }, { getState, dispatch }) => {
     const { config } = getState() as AppState;
 
     const client = await initializeKeycloakClient(dispatch, realm, config);
@@ -129,7 +129,7 @@ export const loginUserWithIDP = createAsyncThunk(
       client.init({ checkLoginIframe: false }),
       client.login({
         idpHint: idpFromUrl,
-        redirectUri: new URL(`/auth/callback?from=${'/'}`, window.location.href).href,
+        redirectUri: from === '/' ? new URL(`/auth/callback?from=${'/'}`, window.location.href).href : from,
       }),
     ]);
 

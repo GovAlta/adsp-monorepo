@@ -14,6 +14,7 @@ export function App() {
         <Routes>
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/:tenant/*" element={<FormTenant />} />
+          <Route path={`/:realm/:definitionId/login`} element={<Login />} />
           <Route path=":realm/login" element={<Login />} />
           <Route path="*" element={<Landing />} />
         </Routes>
