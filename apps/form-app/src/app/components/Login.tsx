@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -12,8 +12,14 @@ import {
 
 import { getRealm } from '../lib/keycloak';
 
-export const Login = () => {
-  const realm = useParams<{ realm: string }>().realm;
+interface LoginProps {
+  tenantName?: string;
+}
+
+export const Login: FunctionComponent<LoginProps> = ({ tenantName }) => {
+  const realm = useParams<{ realm: string }>().realm || tenantName;
+  const definitionId = useParams<{ definitionId: string }>().definitionId;
+
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const environment = useSelector(environmentSelector);
@@ -32,7 +38,7 @@ export const Login = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
 
-    const redirectUri = `${loginRedirect}/`;
+    const redirectUri = `${loginRedirect}`;
 
     let idp = 'core';
     if (skipSSO && !idpFromUrl) {
@@ -41,8 +47,12 @@ export const Login = () => {
     dispatch(loginUserWithIDP({ idpFromUrl: idp, realm, from: redirectUri }));
   };
 
-  const tenantLogin = async (realm: string) => {
-    const loginRedirectUrl = `${window.location.origin}`;
+  const tenantLogin = async (realm: string, definitionId?: string) => {
+    let loginRedirectUrl = `${window.location.origin}`;
+
+    if (realm && definitionId) {
+      loginRedirectUrl = `${loginRedirectUrl}/${realm}/${definitionId}`;
+    }
 
     const tenantApi = directory['urn:ads:platform:tenant-service'];
     const updatedRealm = isUUID(realm) ? realm : await getRealm(realm, tenantApi);
@@ -60,7 +70,7 @@ export const Login = () => {
     }
 
     if (realm && Object.keys(environment).length > 0) {
-      tenantLogin(realm);
+      tenantLogin(realm, definitionId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, configInitialized]);
