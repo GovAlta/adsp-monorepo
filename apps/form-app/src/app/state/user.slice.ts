@@ -119,6 +119,25 @@ export const initializeUser = createAsyncThunk(
   }
 );
 
+export const loginUserWithIDP = createAsyncThunk(
+  'user/login-idp',
+  async ({ realm, idpFromUrl }: { realm: string; idpFromUrl: string; from: string }, { getState, dispatch }) => {
+    const { config } = getState() as AppState;
+
+    const client = await initializeKeycloakClient(dispatch, realm, config);
+    Promise.all([
+      client.init({ checkLoginIframe: false }),
+      client.login({
+        idpHint: idpFromUrl,
+        redirectUri: new URL(`/auth/callback?from=${'/'}`, window.location.href).href,
+      }),
+    ]);
+
+    // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
+    return await client.loadUserProfile();
+  }
+);
+
 export const loginUser = createAsyncThunk(
   'user/login',
   async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
@@ -175,6 +194,9 @@ const userSlice = createSlice({
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
+      })
+      .addCase(loginUserWithIDP.fulfilled, (state, { payload }) => {
+        state.user = payload as typeof state.user;
       })
       .addMatcher(isRejectedWithValue(), (state, { payload }) => {
         if (isAxiosErrorPayload(payload) && payload.status === 401) {

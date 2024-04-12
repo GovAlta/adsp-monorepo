@@ -62,12 +62,11 @@ const configSlice = createSlice({
   initialState: initialConfigState,
   reducers: {},
   extraReducers: (builder) => {
-    builder
-      .addCase(initializeConfig.fulfilled, (state, { payload }) => {
-        state.environment = payload.environment;
-        state.directory = payload.directory;
-        state.initialized = true;
-      });
+    builder.addCase(initializeConfig.fulfilled, (state, { payload }) => {
+      state.environment = structuredClone(payload.environment);
+      state.directory = payload.directory;
+      state.initialized = true;
+    });
   },
 });
 
@@ -77,3 +76,6 @@ export const configInitializedSelector = createSelector(
   (state: AppState) => state.config,
   (config) => config.initialized
 );
+
+export const environmentSelector = (state: AppState) => state.config.environment;
+export const directorySelector = (state: AppState) => state.config.directory;
