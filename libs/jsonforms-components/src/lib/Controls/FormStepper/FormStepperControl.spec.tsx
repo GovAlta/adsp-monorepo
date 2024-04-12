@@ -127,7 +127,43 @@ const formData = {
   address: { street: undefined, city: undefined },
 };
 
-const getForm = (data: object, uiSchema: UISchemaElement = categorization) => {
+const combineOptions = (uiSchema: UISchemaElement = categorization, componentProps: object | undefined) => {
+  let schema = {
+    ...uiSchema,
+  };
+  if (componentProps && schema.options && schema.options.componentProps) {
+    schema.options.componentProps = {
+      ...schema.options.componentProps,
+      ...componentProps,
+    };
+  } else if (componentProps && schema.options) {
+    schema.options.componentProps = componentProps;
+  } else if (componentProps) {
+    schema = {
+      ...schema,
+      options: { componentProps: componentProps },
+    };
+  }
+  return schema;
+};
+const getForm = (
+  data: object,
+  uiSchema: UISchemaElement = categorization,
+  componentProps: object | undefined = undefined
+) => {
+  if (componentProps && uiSchema.options && uiSchema.options.componentProps) {
+    uiSchema.options.componentProps = {
+      ...uiSchema.options?.componentProps,
+      ...componentProps,
+    };
+  } else if (componentProps && uiSchema.options) {
+    uiSchema.options.componentProps = componentProps;
+  } else if (componentProps) {
+    uiSchema = {
+      ...uiSchema,
+      options: { componentProps: componentProps },
+    };
+  }
   return (
     <JsonForms
       uischema={uiSchema}
@@ -374,6 +410,63 @@ describe('Form Stepper Control', () => {
       expect(submit).toBeInTheDocument();
       expect(submit).toBeVisible();
       expect(submit.getAttribute('disabled')).toBe('false');
+    });
+  });
+
+  describe('summary page navigation', () => {
+    it('will navigate to the correct page with edit button', () => {
+      const form = getForm({
+        name: { firstName: 'Bob', lastName: 'Bing' },
+        address: { street: 'Sesame', city: 'Seattle' },
+      });
+      const renderer = render(form);
+      const nameAnchor = renderer.getByTestId('Name-review-link');
+      expect(nameAnchor).toBeInTheDocument();
+      expect(nameAnchor).not.toBeVisible();
+      expect(nameAnchor.innerHTML).toBe('Edit');
+
+      // Move to review Page
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+      expect(nameAnchor).toBeVisible();
+
+      // click on the edit button
+      fireEvent.click(nameAnchor);
+      const newStep = renderer.getByTestId('stepper-test');
+      expect(newStep.getAttribute('step')).toBe('1');
+    });
+
+    it('will render a "view" anchor in read-only-mode', () => {
+      const form = getForm(
+        {
+          name: { firstName: 'Bob', lastName: 'Bing' },
+          address: { street: 'Sesame', city: 'Seattle' },
+        },
+        categorization,
+        { readOnly: true }
+      );
+      console.dir(form.props.uischema);
+      const renderer = render(form);
+      const nameAnchor = renderer.getByTestId('Name-review-link');
+      expect(nameAnchor).toBeInTheDocument();
+      expect(nameAnchor).not.toBeVisible();
+      expect(nameAnchor.innerHTML).toBe('View');
+
+      // Move to review Page
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+      expect(nameAnchor).toBeVisible();
+
+      // click on the edit button
+      fireEvent.click(nameAnchor);
+      const newStep = renderer.getByTestId('stepper-test');
+      expect(newStep.getAttribute('step')).toBe('1');
     });
   });
 });
