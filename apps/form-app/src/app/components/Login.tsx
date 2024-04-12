@@ -1,0 +1,69 @@
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  AppDispatch,
+  configInitializedSelector,
+  directorySelector,
+  environmentSelector,
+  initializeConfig,
+  loginUserWithIDP,
+} from '../state';
+
+import { getRealm } from '../lib/keycloak';
+
+export const Login = () => {
+  const realm = useParams<{ realm: string }>().realm;
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const environment = useSelector(environmentSelector);
+  const directory = useSelector(directorySelector);
+  const configInitialized = useSelector(configInitializedSelector);
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const isUUID = (id: string) => {
+    return uuidRegex.test(id);
+  };
+
+  const loginByIDP = (realm: string, loginRedirect: string) => {
+    const location: string = window.location.href;
+    const skipSSO = location.indexOf('kc_idp_hint') > -1;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
+
+    const redirectUri = `${loginRedirect}/`;
+
+    let idp = 'core';
+    if (skipSSO && !idpFromUrl) {
+      idp = ' ';
+    }
+    dispatch(loginUserWithIDP({ idpFromUrl: idp, realm, from: redirectUri }));
+  };
+
+  const tenantLogin = async (realm: string) => {
+    const loginRedirectUrl = `${window.location.origin}`;
+
+    const tenantApi = directory['urn:ads:platform:tenant-service'];
+    const updatedRealm = isUUID(realm) ? realm : await getRealm(realm, tenantApi);
+
+    if (updatedRealm) {
+      loginByIDP(updatedRealm, loginRedirectUrl);
+    } else {
+      navigate(`/${realm}`);
+    }
+  };
+
+  useEffect(() => {
+    if (!configInitialized) {
+      dispatch(initializeConfig());
+    }
+
+    if (realm && Object.keys(environment).length > 0) {
+      tenantLogin(realm);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, configInitialized]);
+
+  return null;
+};
