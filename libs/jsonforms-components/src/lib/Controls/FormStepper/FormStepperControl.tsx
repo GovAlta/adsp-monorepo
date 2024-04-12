@@ -38,6 +38,7 @@ import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
 import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } from './StepperContext';
 import { validateData } from './util/validateData';
+import { mapToVisibleStep } from './util/stepNavigation';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   data: unknown;
@@ -126,27 +127,10 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     setPage(page);
   }
 
-  const getNextStep = (step: number): number => {
-    const rawCategoryLabels = rawCategories.elements.map((category) => category.label);
-    if (rawCategoryLabels.length !== CategoryLabels.length) {
-      if (step > 1 && step <= rawCategoryLabels.length) {
-        const selectedTabLabel: string = rawCategoryLabels[step - 1];
-        const selectedTab = CategoryLabels.indexOf(selectedTabLabel);
-        const newStep = selectedTab !== -1 ? selectedTab + 1 : step;
-        return newStep;
-      }
-      if (step > rawCategoryLabels.length) {
-        return step - 1;
-      }
-    }
-    return step;
-  };
-
   function setTab(page: number) {
-    page = getNextStep(page);
-    setStep(page);
-    if (page < 1 || page > categories.length + 1) return;
-    setShowNextBtn(categories.length + 1 !== page);
+    const rawCategoryLabels = rawCategories.elements.map((category) => category.label);
+    page = mapToVisibleStep(page, rawCategoryLabels, CategoryLabels);
+    setPage(page);
   }
 
   function setPage(page: number) {
