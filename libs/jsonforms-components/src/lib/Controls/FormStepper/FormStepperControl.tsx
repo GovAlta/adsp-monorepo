@@ -16,7 +16,6 @@ import {
   StatePropsOfLayout,
   isVisible,
   isEnabled,
-  JsonSchema,
 } from '@jsonforms/core';
 
 import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
@@ -139,10 +138,6 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     setShowNextBtn(categories.length + 1 !== page);
   }
 
-  const changePage = (index: number) => {
-    setPage(index + 1);
-  };
-
   const updateInputStatus = (inputStatus: StepInputStatus): void => {
     inputStatuses[inputStatus.id] = inputStatus;
     setInputStatuses({ ...inputStatuses });
@@ -211,11 +206,14 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                   {categories.map((category, index) => {
                     const categoryLabel = category.label || category.i18n || 'Unknown Category';
                     const requiredFields = getAllRequiredFields(schema);
+                    const testId = `${categoryLabel}-review-link`;
                     return (
                       <ReviewItemSection key={index}>
                         <ReviewItemHeader>
                           <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-                          <Anchor onClick={() => changePage(index)}>{readOnly ? 'View' : 'Edit'}</Anchor>
+                          <Anchor onClick={() => setPage(index + 1)} data-testid={testId}>
+                            {readOnly ? 'View' : 'Edit'}
+                          </Anchor>
                         </ReviewItemHeader>
                         <Grid>
                           <RenderFormFields elements={category.elements} data={data} requiredFields={requiredFields} />
