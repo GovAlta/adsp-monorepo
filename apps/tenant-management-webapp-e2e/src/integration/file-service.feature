@@ -113,11 +113,13 @@ Feature: File service
     And the user views "Public, Protected A, Protected B, Protected C" in security classification dropdown
     When the user enters "Protected B", "public", "auto-test-role1", "30" on file type page
     And the user clicks Save button on file type page
+    And the user clicks Back button on file type page
     Then the user "views" the file type of "autotest-addEditDelete", "Protected B", "30"
     When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "Protected B", "30"
     Then the user views file type page of "autotest-addEditDelete"
     When the user enters "Protected C", "auto-test-role1", "auto-test-role2", "10" on file type page
     And the user clicks Save button on file type page
+    And the user clicks Back button on file type page
     Then the user "views" the file type of "autotest-addEditDelete", "Protected C", "10"
     When the user clicks "Delete" button for the file type of "autotest-addEditDelete", "Protected C", "10"
     Then the user views Delete file type modal for "autotest-addEditDelete"

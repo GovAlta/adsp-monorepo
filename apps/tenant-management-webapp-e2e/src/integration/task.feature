@@ -18,6 +18,7 @@ Feature: Task
     Then the user views Queue page for "autotest", "addEditDeleteQueue"
     When the user enters "auto-test-role1" as Assigner roles and "empty" as Worker roles
     And the user clicks Save button on Queue page
+    And the user clicks Back button on Queue page
     Then the user "views" the queue of "autotest", "addEditDeleteQueue"
     # Edit and back
     When the user clicks "Edit" button for the queue of "autotest", "addEditDeleteQueue"
@@ -31,6 +32,7 @@ Feature: Task
     Then the user views Queue page for "autotest", "addEditDeleteQueue"
     When the user enters "auto-test-role2" as Assigner roles and "auto-test-role2, urn:ads:autotest:chat-service:chat-admin" as Worker roles
     And the user clicks Save button on Queue page
+    And the user clicks Back button on Queue page
     Then the user "views" the queue of "autotest", "addEditDeleteQueue"
     # Delete
     When the user clicks "Delete" button for the queue of "autotest", "addEditDeleteQueue"

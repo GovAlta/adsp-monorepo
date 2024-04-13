@@ -201,7 +201,7 @@ When('the user clicks Delete button in delete confirmation modal', function () {
     .scrollIntoView()
     .should('be.visible')
     .click({ force: true });
-  cy.wait(2000); // Wait for the record to be removed from the page
+  cy.wait(4000); // Wait for the record to be removed from the page
 });
 
 When('the user waits {string} seconds', function (seconds) {

@@ -612,6 +612,11 @@ When('the user clicks Save button on file type page', function () {
   cy.wait(4000);
 });
 
+When('the user clicks Back button on file type page', function () {
+  fileServiceObj.fileTypePageBackButton().shadow().find('button').click({ force: true });
+  cy.wait(4000);
+});
+
 When('the user clicks Save button on Add file type modal', function () {
   cy.wait(1000); // Wait for the button to be enabled
   fileServiceObj.addFileTypeModalSaveButton().shadow().find('button').click({ force: true });
