@@ -26,7 +26,6 @@ export const applyConfigurationMiddleware = async (
             type: ['string', 'null'],
           },
           configurationSchema: {
-            type: 'object',
             $ref: 'http://json-schema.org/draft-07/schema#',
           },
         },

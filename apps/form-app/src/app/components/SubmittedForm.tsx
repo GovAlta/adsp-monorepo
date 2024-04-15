@@ -71,6 +71,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
             fileList: metadata,
             downloadFile: downloadFormFile,
           }}
+          isFormSubmitted={true}
         >
           <JsonForms
             readonly={true}

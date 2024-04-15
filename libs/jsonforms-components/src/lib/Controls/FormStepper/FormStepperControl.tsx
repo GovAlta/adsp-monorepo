@@ -39,9 +39,9 @@ import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } fro
 import { validateData } from './util/validateData';
 import { mapToVisibleStep } from './util/stepNavigation';
 
-export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
-  data: unknown;
-}
+export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {}
+
+const summaryLabel = 'Summary';
 
 export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, path, cells, renderers, visible, enabled, t } = props;
@@ -50,7 +50,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   const submitFormFunction = enumerators.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
   const categorization = uischema as Categorization;
-  const rawCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
+  const allCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
 
   const [step, setStep] = React.useState(0);
   const [isFormValid, setIsFormValid] = React.useState(false);
@@ -75,11 +75,11 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     }
   };
 
-  const onSubmit = () => {
+  const onCloseModal = () => {
     setIsOpen(false);
   };
 
-  const CategoryLabels = useMemo(() => {
+  const visibleCategoryLabels = useMemo(() => {
     return categories.map((c: Category | Categorization) => deriveLabelForUISchemaElement(c, t));
   }, [categories, t]);
 
@@ -127,9 +127,10 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   }
 
   function setTab(page: number) {
-    const rawCategoryLabels = rawCategories.elements.map((category) => category.label);
-    page = mapToVisibleStep(page, rawCategoryLabels, CategoryLabels);
-    setPage(page);
+    const categoryLabels = [...allCategories.elements.map((category) => category.label), summaryLabel];
+    const visibleLabels = [...visibleCategoryLabels, summaryLabel];
+    const newPage = mapToVisibleStep(page, categoryLabels, visibleLabels);
+    setPage(newPage);
   }
 
   function setPage(page: number) {
@@ -147,6 +148,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   };
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const isFormSubmitted = enumerators?.isFormSubmitted ?? false;
 
   return (
     <div data-testid="form-stepper-test-wrapper">
@@ -162,8 +164,8 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
             {categories?.map((_, index) => {
               return (
                 <GoAFormStep
-                  key={`${CategoryLabels[index]}-tab`}
-                  text={`${CategoryLabels[index]}`}
+                  key={`${visibleCategoryLabels[index]}-tab`}
+                  text={`${visibleCategoryLabels[index]}`}
                   status={stepStatuses[index]}
                 />
               );
@@ -187,7 +189,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               return (
                 <div
                   data-testid={`step_${index}-content`}
-                  key={`${CategoryLabels[index]}`}
+                  key={`${visibleCategoryLabels[index]}`}
                   style={{ marginTop: '1.5rem' }}
                 >
                   <StepperContext.Provider
@@ -199,7 +201,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               );
             })}
             <div data-testid="summary_step-content">
-              <h3 style={{ flex: 1, marginBottom: '1rem' }}>Summary</h3>
+              <h3 style={{ flex: 1, marginBottom: '1rem' }}>{summaryLabel}</h3>
 
               {
                 <ReviewItem>
@@ -231,7 +233,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 {step !== 1 ? (
                   <GoAButton
                     type="secondary"
-                    disabled={disabledCategoryMap[step - 1] || !enabled}
+                    disabled={disabledCategoryMap[step - 1]}
                     onClick={() => prevPage(step, disabledCategoryMap)}
                     testId="prev-button"
                   >
@@ -245,19 +247,19 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 {step !== null && showNextBtn && (
                   <GoAButton
                     type="primary"
-                    disabled={disabledCategoryMap[step - 1] || !enabled}
+                    disabled={disabledCategoryMap[step - 1]}
                     onClick={() => nextPage(step, disabledCategoryMap)}
                     testId="next-button"
                   >
                     Next
                   </GoAButton>
                 )}
-                {!showNextBtn && (
+                {!showNextBtn && !isFormSubmitted && (
                   <div>
                     <GoAButton
                       type="primary"
                       onClick={handleSubmit}
-                      disabled={!isFormValid || !enabled}
+                      disabled={!isFormValid}
                       testId="stepper-submit-btn"
                     >
                       Submit
@@ -274,12 +276,17 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
             width="640px"
             actions={
               <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" testId="submit-form" onClick={onSubmit}>
+                <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
                   Close
                 </GoAButton>
 
                 {!showNextBtn && (
-                  <GoAButton type="primary" onClick={handleSubmit} disabled={!isFormValid || !enabled}>
+                  <GoAButton
+                    type="primary"
+                    onClick={handleSubmit}
+                    disabled={!isFormValid || !enabled}
+                    testId="submit-form"
+                  >
                     Submit
                   </GoAButton>
                 )}
