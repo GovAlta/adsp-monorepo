@@ -9,6 +9,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "webpackConfig": "apps/configuration-service/webpack.config.js",
+        "sourceMap": true,
         "outputPath": "dist/apps/configuration-service",
         "main": "apps/configuration-service/src/main.ts",
         "tsConfig": "apps/configuration-service/tsconfig.app.json",
