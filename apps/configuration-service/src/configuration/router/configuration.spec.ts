@@ -72,7 +72,7 @@ describe('router', () => {
     });
 
     it('can get entity', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => true);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => true);
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
@@ -133,8 +133,41 @@ describe('router', () => {
       });
     });
 
+    it('can get entity and not load definition', (done) => {
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, false, () => true);
+
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      const req = {
+        tenant: { id: tenantId },
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+      } as unknown as Request;
+
+      handler(req, null, () => {
+        try {
+          expect(req['entity']).toBe(entity);
+          expect(repositoryMock.get).toBeCalledTimes(1);
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+
     it('can get tenant entity', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
@@ -197,7 +230,7 @@ describe('router', () => {
     });
 
     it('can return error for unauthorized', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
@@ -260,7 +293,7 @@ describe('router', () => {
     });
 
     it('can get entity with core definition', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
 
       // Configuration definition retrieval.
       const configurationSchema = {};
@@ -319,7 +352,7 @@ describe('router', () => {
     });
 
     it('can get entity with tenant definition', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
@@ -390,7 +423,7 @@ describe('router', () => {
     });
 
     it('can get entity with tenant namespace definition', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
