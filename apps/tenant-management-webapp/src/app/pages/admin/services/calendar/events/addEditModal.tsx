@@ -92,11 +92,9 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             type="secondary"
             testId="calendar-event-modal-cancel"
             onClick={() => {
-              if (!isEdit) {
-                setCalendarEvent(initCalendarEvent);
-              }
-              dispatch(ResetModalState());
               validators.clear();
+              setCalendarEvent(initCalendarEvent);
+              dispatch(ResetModalState());
             }}
           >
             Cancel
@@ -135,6 +133,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
               dispatch(ResetModalState());
               validators.clear();
               setIsEndBeforeStart(false);
+              setCalendarEvent(initCalendarEvent);
             }}
           >
             Save
