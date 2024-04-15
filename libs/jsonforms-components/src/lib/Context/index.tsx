@@ -5,6 +5,7 @@ interface enumerators {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Map<string, () => any>;
   functions: Map<string, () => (file: File, propertyId: string) => void | undefined>;
+  isFormSubmitted?: boolean;
 }
 
 export interface AllData {
@@ -111,6 +112,7 @@ type Props = {
   children?: React.ReactNode;
   fileManagement?: FileManagement;
   submit?: SubmitManagement;
+  isFormSubmitted?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,11 +135,13 @@ const baseEnumerator = {
   data: enumValues,
   functions: enumFunctions,
   submitFunction: enumSubmitFunctions,
+  isFormSubmitted: false,
 };
 
 export const JsonFormContext = createContext(baseEnumerator);
 
 export function ContextProvider(props: Props): JSX.Element | null {
+  baseEnumerator.isFormSubmitted = props.isFormSubmitted ?? false;
   if (props.fileManagement) {
     const { fileList, uploadFile, downloadFile, deleteFile } = props.fileManagement;
 
