@@ -1,7 +1,7 @@
-import { fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Category, UISchemaElement } from '@jsonforms/core';
-import { GoARenderers } from '../../../index';
+import { ContextProvider, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
 
@@ -146,24 +146,13 @@ const combineOptions = (uiSchema: UISchemaElement = categorization, componentPro
   }
   return schema;
 };
+
 const getForm = (
   data: object,
   uiSchema: UISchemaElement = categorization,
   componentProps: object | undefined = undefined
 ) => {
-  if (componentProps && uiSchema.options && uiSchema.options.componentProps) {
-    uiSchema.options.componentProps = {
-      ...uiSchema.options?.componentProps,
-      ...componentProps,
-    };
-  } else if (componentProps && uiSchema.options) {
-    uiSchema.options.componentProps = componentProps;
-  } else if (componentProps) {
-    uiSchema = {
-      ...uiSchema,
-      options: { componentProps: componentProps },
-    };
-  }
+  combineOptions(uiSchema, componentProps);
   return (
     <JsonForms
       uischema={uiSchema}
@@ -174,6 +163,10 @@ const getForm = (
     />
   );
 };
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('Form Stepper Control', () => {
   it('can render an initial Categorization', () => {
@@ -448,7 +441,6 @@ describe('Form Stepper Control', () => {
         categorization,
         { readOnly: true }
       );
-      console.dir(form.props.uischema);
       const renderer = render(form);
       const nameAnchor = renderer.getByTestId('Name-review-link');
       expect(nameAnchor).toBeInTheDocument();
@@ -467,6 +459,68 @@ describe('Form Stepper Control', () => {
       fireEvent.click(nameAnchor);
       const newStep = renderer.getByTestId('stepper-test');
       expect(newStep.getAttribute('step')).toBe('1');
+    });
+  });
+
+  describe('submit tests', () => {
+    it('will open a modal if no submit function is present', () => {
+      const form = getForm({
+        name: { firstName: 'Bob', lastName: 'Bing' },
+        address: { street: 'Sesame', city: 'Seattle' },
+      });
+
+      const renderer = render(form);
+
+      // Move to review Page
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+
+      // submit
+      const submitBtn = renderer.getByTestId('stepper-submit-btn');
+      const submitShadow = submitBtn.shadowRoot?.querySelector('button');
+      expect(submitShadow).not.toBeNull();
+      const modal = renderer.getByTestId('submit-confirmation');
+      expect(modal).toBeInTheDocument();
+      expect(modal.getAttribute('open')).toBe('false');
+      fireEvent.click(submitShadow!);
+      expect(modal.getAttribute('open')).toBe('true');
+
+      // close modal
+      const closeBtn = renderer.getByTestId('close-submit-modal');
+      const closeShadow = closeBtn.shadowRoot?.querySelector('button');
+      expect(closeShadow).not.toBeNull();
+      fireEvent.click(closeShadow!);
+      expect(modal.getAttribute('open')).toBe('false');
+    });
+
+    /*
+     * FIXME: Something is off here.  This test must be last, as it seems to not
+     * clean up properly and affects subsequent tests.
+     */
+    it('will call a context function when submitted', () => {
+      const onSubmit = jest.fn();
+      const form = getForm({
+        name: { firstName: 'Bob', lastName: 'Bing' },
+        address: { street: 'Sesame', city: 'Seattle' },
+      });
+      const renderer = render(<ContextProvider submit={{ submitForm: onSubmit }}>{form}</ContextProvider>);
+
+      // Move to review Page
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+
+      // submit
+      const submitBtn = renderer.getByTestId('stepper-submit-btn');
+      const submitShadow = submitBtn.shadowRoot?.querySelector('button');
+      expect(submitShadow).not.toBeNull();
+      fireEvent.click(submitShadow!);
+      expect(onSubmit).toBeCalledTimes(1);
     });
   });
 });
