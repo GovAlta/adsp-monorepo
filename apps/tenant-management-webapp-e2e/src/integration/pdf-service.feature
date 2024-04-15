@@ -28,17 +28,16 @@ Feature: PDF service
     Then the user views "No PDF's have been generated yet" in File history
     Then the user views the PDF template editor screen
     Then the user views "autotest-pdftemplate", "autotest-pdftemplate" and "autotest PDF template desc" in PDF template editor
-    ## Edit PDF template modal is disabled in test run build only, and could not be reproduced manually. Comment out edit template until a walk-around is found
-    # When the user clicks "Edit" icon in editor screen
-    # When the user enters "autotest-pdftemplate-new" as name and "autotest PDF template desc new" as description in PDF template modal
-    # And the user clicks Save button in Add or Edit template modal
+    When the user clicks "Edit" icon in editor screen
+    When the user enters "autotest-pdftemplate-new" as name and "autotest PDF template desc new" as description in PDF template modal
+    And the user clicks Save button in Add or Edit template modal
     And the user clicks Back button in editor screen
-    Then the user "views" the PDF template of "autotest-pdftemplate", "autotest-pdftemplate" and "autotest PDF template desc"
+    Then the user "views" the PDF template of "autotest-pdftemplate-new", "autotest-pdftemplate" and "autotest PDF template desc new"
     # Delete a PDF template
-    When the user clicks "Delete" icon of "autotest-pdftemplate", "autotest-pdftemplate" and "autotest PDF template desc" on PDF templates page
-    Then the user views Delete PDF template modal for "autotest-pdftemplate"
+    When the user clicks "Delete" icon of "autotest-pdftemplate-new", "autotest-pdftemplate" and "autotest PDF template desc new" on PDF templates page
+    Then the user views Delete PDF template modal for "autotest-pdftemplate-new"
     When the user clicks Confirm button in Delete PDF Template modal
-    Then the user "should not view" the PDF template of "autotest-pdftemplate", "autotest-pdftemplate" and "autotest PDF template new desc"
+    Then the user "should not view" the PDF template of "autotest-pdftemplate-new", "autotest-pdftemplate" and "autotest PDF template desc new"
 
   @accessibility @regression
   Scenario: As a tenant admin, I can use PDF pages without any critical or serious accessibility issues
