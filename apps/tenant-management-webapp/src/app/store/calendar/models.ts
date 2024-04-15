@@ -1,5 +1,5 @@
 import { ActionState } from '@store/session/models';
-
+import { getLocalISOString } from '@lib/timeUtil';
 export const EventDeleteModalType = 'calendar-event-delete-model';
 export const EventAddEditModalType = 'calendar-event-add-edit-modal';
 export interface CalendarItem {
@@ -74,8 +74,8 @@ export const CalendarEventDefault = {
   id: null,
   name: '',
   description: '',
-  start: new Date().toISOString(),
-  end: new Date().toISOString(),
+  start: getLocalISOString(new Date()),
+  end: getLocalISOString(new Date()),
   isPublic: false,
   isAllDay: false,
 };

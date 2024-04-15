@@ -222,7 +222,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
                 }}
                 clientId={clientId}
                 key={`client-role-group-${clientId}`}
-                service={`client-role-group-${clientId}`}
+                service={'event-stream'}
                 nameColumnWidth={80}
                 checkedRoles={[
                   {
