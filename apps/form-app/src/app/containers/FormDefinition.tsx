@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AppDispatch,
   busySelector,
@@ -24,10 +24,44 @@ interface FormDefinitionStartProps {
 const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ definitionId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const AUTO_CREATE_PARAM = 'autoCreate';
 
   useEffect(() => {
     dispatch(findUserForm(definitionId));
   }, [dispatch, definitionId]);
+
+  useEffect(() => {
+    async function autoCreateForm() {
+      const urlParams = new URLSearchParams(location.search);
+      const formToEdit = await dispatch(findUserForm(definitionId)).unwrap();
+
+      console.log('formToEdit', formToEdit);
+      if (urlParams.has(AUTO_CREATE_PARAM)) {
+        if (formToEdit.form && formToEdit?.form.id) {
+          navigate(`/${formToEdit?.form.id}`);
+
+          // if (!formToFind) {
+          //   // const form = await dispatch(createForm(definitionId)).unwrap();
+          //   // if (form?.id) {
+          //   //   navigate(`${form.id}`);
+          //   // }
+          // } else {
+          //   navigate(`${formToFind?.id}`);
+          // }
+        } else {
+          console.log('in here ');
+          // const { payload } = await dispatch(createForm(definitionId));
+          // const formToFind = payload as FormObject;
+          // navigate(`${formToFind?.id}`);
+        }
+      }
+    }
+
+    autoCreateForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, dispatch, definitionId, navigate]);
 
   const definition = useSelector(definitionSelector);
   const busy = useSelector(busySelector);
