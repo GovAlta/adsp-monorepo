@@ -795,8 +795,8 @@ describe('ConfigurationEntity', () => {
     });
   });
 
-  describe('setActiveRevision', () => {
-    it('can be created', () => {
+  describe('getActiveRevision', () => {
+    it('get active revision', async () => {
       const entity = new ConfigurationEntity(
         namespace,
         name,
@@ -805,13 +805,19 @@ describe('ConfigurationEntity', () => {
         activeRevisionMock,
         validationMock,
         {
-          revision: 2,
+          revision: 1,
           configuration: {} as unknown,
         }
       );
-      expect(entity).toBeTruthy();
-    });
+      const active = 2;
 
+      activeRevisionMock.get.mockResolvedValueOnce({ active });
+      const result = await entity.getActiveRevision();
+      expect(result).toBe(2);
+    });
+  });
+
+  describe('setActiveRevision', () => {
     it('sets active revision', async () => {
       const entity = new ConfigurationEntity(
         namespace,
@@ -831,14 +837,15 @@ describe('ConfigurationEntity', () => {
         return { active: rev };
       });
 
-      const activeRevisionResponse = await entity.setActiveRevision(
+      await entity.setActiveRevision(
         {
           isCore: true,
           roles: [ConfigurationServiceRoles.ConfigurationAdmin],
         } as User,
         active
       );
-      expect(activeRevisionResponse.active).toBe(2);
+      const result = await entity.getActiveRevision();
+      expect(result).toBe(2);
     });
 
     it('can throw for unauthorized user', async () => {

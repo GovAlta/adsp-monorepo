@@ -6,7 +6,7 @@ import { ConfigurationEntity } from '../model';
 import { ConfigurationServiceRoles } from '../roles';
 import {
   createConfigurationRouter,
-  createConfigurationRevision,
+  configurationOperations,
   getConfiguration,
   getConfigurationEntity,
   patchConfigurationRevision,
@@ -955,14 +955,14 @@ describe('router', () => {
     });
   });
 
-  describe('createServiceConfigurationRevision', () => {
+  describe('configurationOperations', () => {
     it('can create handler', () => {
-      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
+      const handler = configurationOperations(loggerMock as Logger, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
     it('can create revision', async () => {
-      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
+      const handler = configurationOperations(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -997,7 +997,7 @@ describe('router', () => {
     });
 
     it('can create first revision', async () => {
-      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
+      const handler = configurationOperations(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -1029,7 +1029,7 @@ describe('router', () => {
     });
 
     it('fails when trying to set nonexistent revision', async () => {
-      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
+      const handler = configurationOperations(loggerMock as Logger, eventServiceMock);
 
       const revisionValue = 5;
 
@@ -1071,7 +1071,7 @@ describe('router', () => {
     });
 
     it('fails because parameters are not set', async () => {
-      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
+      const handler = configurationOperations(loggerMock as Logger, eventServiceMock);
 
       const revisionValue = 5;
 
@@ -1099,7 +1099,7 @@ describe('router', () => {
       };
 
       entity.getRevisions.mockResolvedValueOnce({ results: [{ revision: 1 }, { revision: 2 }, { revision: 3 }] });
-      entity.setActiveRevision.mockResolvedValueOnce({ ...entity, active });
+      entity.setActiveRevision.mockResolvedValueOnce(active);
 
       const res = {
         send: jest.fn(),
@@ -1114,7 +1114,7 @@ describe('router', () => {
     });
 
     it('can set the active revision', async () => {
-      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
+      const handler = configurationOperations(loggerMock as Logger, eventServiceMock);
 
       const revisionValue = 2;
 
@@ -1124,6 +1124,7 @@ describe('router', () => {
         name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
         getRevisions: jest.fn(),
+        getActiveRevision: jest.fn(),
         setActiveRevision: jest.fn(),
         latest: null,
       };
@@ -1145,7 +1146,8 @@ describe('router', () => {
         results: [{ revision: revisionValue }],
       });
 
-      entity.setActiveRevision.mockResolvedValueOnce({ namespace, name, tenantId, active });
+      entity.getActiveRevision.mockResolvedValueOnce(1);
+      entity.setActiveRevision.mockResolvedValueOnce(active);
 
       const res = {
         send: jest.fn(),
@@ -1178,23 +1180,14 @@ describe('router', () => {
         name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
         getRevisions: jest.fn(),
+        getActiveRevision: jest.fn(),
         latest: null,
-      };
-
-      const activeRevisionEntity = {
-        tenantId,
-        namespace,
-        name,
-        active: null,
-        get: jest.fn(),
-        setActiveRevision: jest.fn(),
       };
 
       const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
-        activeRevisionEntity,
         query: {},
       } as unknown as Request;
 
@@ -1203,6 +1196,8 @@ describe('router', () => {
       };
 
       const next = jest.fn();
+
+      entity.getActiveRevision.mockResolvedValueOnce(undefined);
 
       await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(new NotFoundError('active revision'));
@@ -1219,26 +1214,18 @@ describe('router', () => {
         name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
         getRevisions: jest.fn(),
+        getActiveRevision: jest.fn(),
         latest: null,
-        active: 2,
-      };
-
-      const activeRevisionEntity = {
-        tenantId,
-        namespace,
-        name,
-        active: activeRevision,
-        get: jest.fn(),
-        setActiveRevision: jest.fn(),
       };
 
       const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
-        activeRevisionEntity,
         query: {},
       } as unknown as Request;
+
+      entity.getActiveRevision.mockResolvedValueOnce(activeRevision);
 
       entity.getRevisions.mockResolvedValueOnce({
         results: [{ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } }],
@@ -1269,27 +1256,18 @@ describe('router', () => {
         name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
         getRevisions: jest.fn(),
+        getActiveRevision: jest.fn(),
         latest: null,
-        active: 0,
-      };
-
-      const activeRevisionEntity = {
-        tenantId,
-        namespace,
-        name,
-        active: activeRevision,
-        get: jest.fn(),
-        setActiveRevision: jest.fn(),
       };
 
       const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
-        activeRevisionEntity,
         query: {},
       } as unknown as Request;
 
+      entity.getActiveRevision.mockResolvedValueOnce(0);
       entity.getRevisions.mockResolvedValueOnce({
         results: [{ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } }],
       });
@@ -1317,23 +1295,14 @@ describe('router', () => {
         name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
         getRevisions: jest.fn(),
+        getActiveRevision: jest.fn(),
         latest: { namespace: namespace, name: name, revision: 12, data: { a: 42 } },
-      };
-
-      const activeRevisionEntity = {
-        tenantId,
-        namespace,
-        name,
-        active: null,
-        get: jest.fn(),
-        setActiveRevision: jest.fn(),
       };
 
       const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
-        activeRevisionEntity,
         query: { orLatest: 'true' },
       } as unknown as Request;
 
@@ -1342,6 +1311,8 @@ describe('router', () => {
       };
 
       const next = jest.fn();
+
+      entity.getActiveRevision.mockResolvedValueOnce(undefined);
 
       await handler(req, res as unknown as Response, next);
 
@@ -1361,26 +1332,18 @@ describe('router', () => {
         name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
         getRevisions: jest.fn(),
+        getActiveRevision: jest.fn(),
         latest: { namespace: namespace, name: name, revision: 12, data: { a: 42 } },
-      };
-
-      const activeRevisionEntity = {
-        tenantId,
-        namespace,
-        name,
-        active: 3,
-        get: jest.fn(),
-        setActiveRevision: jest.fn(),
       };
 
       const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
-        activeRevisionEntity,
         query: { orLatest: 'true' },
       } as unknown as Request;
 
+      entity.getActiveRevision.mockResolvedValueOnce(1);
       entity.getRevisions.mockResolvedValueOnce({
         results: [],
       });

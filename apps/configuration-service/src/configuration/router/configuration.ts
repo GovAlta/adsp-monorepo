@@ -112,11 +112,11 @@ const mapConfiguration = (configuration: ConfigurationEntity): ConfigurationMap 
   };
 };
 
-const mapActiveRevision = (activeRevision: ConfigurationEntity): unknown => ({
-  namespace: activeRevision.namespace,
-  name: activeRevision.name,
-  tenantId: activeRevision.tenantId,
-  active: activeRevision.active,
+const mapActiveRevision = (configuration: ConfigurationEntity, active: number): unknown => ({
+  namespace: configuration.namespace,
+  name: configuration.name,
+  tenantId: configuration.tenantId,
+  active,
 });
 
 export const getConfiguration =
@@ -130,9 +130,11 @@ export const getConfiguration =
 export const getConfigurationWithActive = (): RequestHandler => async (req, res) => {
   const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
-  let active = null;
-  if (configuration.active) {
-    active = await (await configuration.getRevisions(1, null, { revision: configuration.active })).results[0];
+  const revision = await configuration.getActiveRevision();
+  let active: ConfigurationRevision = undefined;
+  // 0 is falsy and a valid revision.
+  if (typeof revision === 'number') {
+    active = (await configuration.getRevisions(1, null, { revision })).results[0];
   }
 
   res.send({ ...mapConfiguration(configuration), active });
@@ -233,10 +235,9 @@ export const getActiveRevision =
       const orLatest = orLatestValue === 'true';
       const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
-      const revisions =
-        configuration.active >= 0
-          ? await configuration.getRevisions(1, null, { revision: configuration.active })
-          : { results: [] };
+      const revision = await configuration.getActiveRevision();
+
+      const revisions = revision >= 0 ? await configuration.getRevisions(1, null, { revision }) : { results: [] };
 
       let {
         results: [result],
@@ -253,7 +254,7 @@ export const getActiveRevision =
       end();
       res.send(result);
 
-      logger.info(`Active revision ${configuration.active} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
+      logger.info(`Active revision ${revision} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
         tenant: configuration.tenantId?.toString(),
         context: 'configuration-router',
         user: `${user.name} (ID: ${user.id})`,
@@ -263,7 +264,7 @@ export const getActiveRevision =
     }
   };
 
-export const createConfigurationRevision =
+export const configurationOperations =
   (logger: Logger, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
     try {
@@ -303,7 +304,7 @@ export const createConfigurationRevision =
       }
 
       if (request.operation === OPERATION_SET_ACTIVE_REVISION) {
-        if (request?.setActiveRevision === undefined) {
+        if (typeof request?.setActiveRevision !== 'number') {
           throw new InvalidOperationError(`Set active revision request must include setActiveRevision property.`);
         }
         const revisions = await configuration.getRevisions(1, null, { revision: request.setActiveRevision });
@@ -313,21 +314,27 @@ export const createConfigurationRevision =
           throw new InvalidOperationError(`The selected revision does not exist`);
         }
 
-        const oldRevision = configuration.active;
-
-        const updated = await configuration.setActiveRevision(user, currentRevision.revision);
+        const oldRevision = await configuration.getActiveRevision();
+        const active = await configuration.setActiveRevision(user, currentRevision.revision);
 
         end();
-        res.send(mapActiveRevision(updated));
+        res.send(mapActiveRevision(configuration, active));
         eventService.send(
-          activeRevisionSet(user, updated.tenantId, updated.namespace, updated.name, updated.active, oldRevision)
+          activeRevisionSet(
+            user,
+            configuration.tenantId,
+            configuration.namespace,
+            configuration.name,
+            active,
+            oldRevision
+          )
         );
 
         logger.info(
-          `Active revision ${updated.namespace}:${updated.name}:${updated.active} changed to revision ${currentRevision.revision}` +
+          `Active revision ${configuration.namespace}:${configuration.name}:${active} changed to revision ${currentRevision.revision}` +
             ` by ${user.name} (ID: ${user.id}).`,
           {
-            tenant: updated.tenantId?.toString(),
+            tenant: configuration.tenantId?.toString(),
             context: 'configuration-router',
             user: `${user.name} (ID: ${user.id})`,
           }
@@ -412,7 +419,7 @@ export function createConfigurationRouter({
       body('operation').isString().isIn([OPERATION_SET_ACTIVE_REVISION, OPERATION_CREATE_REVISION])
     ),
     getConfigurationEntity(serviceId, configurationRepository),
-    createConfigurationRevision(logger, eventService)
+    configurationOperations(logger, eventService)
   );
 
   router.get(

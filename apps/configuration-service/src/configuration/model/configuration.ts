@@ -14,6 +14,9 @@ import type { Logger } from 'winston';
  * @template C
  */
 export class ConfigurationEntity<C = Record<string, unknown>> implements Configuration<C> {
+  // This is lazy loaded via getter function.
+  private active?: number = undefined;
+
   constructor(
     public namespace: string,
     public name: string,
@@ -23,8 +26,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public validationService: ValidationService,
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
-    schema?: Record<string, unknown>,
-    public active?: number
+    schema?: Record<string, unknown>
   ) {
     if (!namespace || !name) {
       throw new InvalidOperationError('Configuration must have a namespace and name.');
@@ -140,13 +142,21 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     return `${this.namespace}:${this.name}`;
   }
 
-  public async setActiveRevision(user: User, active: number): Promise<ConfigurationEntity<C>> {
+  public async getActiveRevision(): Promise<number> {
+    if (typeof this.active !== 'number') {
+      const doc = await this.activeRevisionRepository.get(this.namespace, this.name, this.tenantId);
+      this.active = doc?.active;
+    }
+    return this.active;
+  }
+
+  public async setActiveRevision(user: User, active: number): Promise<number> {
     if (!this.canModify(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
 
     this.active = (await this.activeRevisionRepository.setActiveRevision(this, active)).active;
 
-    return this;
+    return this.active;
   }
 }
