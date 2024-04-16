@@ -142,7 +142,8 @@ export const functionSignature = [
     ],
   },
   {
-    label: 'adsp.DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason)',
+    label:
+      'adsp.DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)',
     parameters: [
       {
         label: 'formId',

@@ -23,7 +23,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return true;
   }
 
-  public override DispositionResponse? DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason)
+  public override DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
   {
     return null;
   }
