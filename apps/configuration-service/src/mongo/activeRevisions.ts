@@ -26,7 +26,7 @@ export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
     return activeDoc;
   }
 
-  async setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ConfigurationEntity<C>> {
+  async setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ActiveRevisionDoc> {
     if (!(active >= 0)) {
       throw new InvalidOperationError('Active revision value must be greater than or equal to 0.');
     }
@@ -55,8 +55,6 @@ export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
       .findOneAndUpdate(query, update, { upsert: true, new: true, lean: true })
       .exec();
 
-    entity.active = doc.active;
-
-    return entity;
+    return doc;
   }
 }

@@ -16,24 +16,22 @@ import { ConfigurationRevisionDoc } from './types';
 
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
-  private activeRevisionRepository: ActiveRevisionRepository;
 
   private readonly META_PREFIX = 'META_';
 
   constructor(
     private logger: Logger,
     private validationService: ValidationService,
-    activeRevisionRepository: ActiveRevisionRepository
+    private activeRevisionRepository: ActiveRevisionRepository
   ) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
-    this.activeRevisionRepository = activeRevisionRepository;
   }
 
   async get<C>(
     namespace: string,
     name: string,
     tenantId?: AdspId,
-    definition?: ConfigurationDefinition,
+    definition?: ConfigurationDefinition
   ): Promise<ConfigurationEntity<C>> {
     const tenant = tenantId?.toString() || { $exists: false };
     const query = { namespace, name, tenant };
@@ -45,7 +43,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
     const latest = this.fromDoc<C>(latestDoc);
-    const activeRevisionDoc = await this.activeRevisionRepository.get(namespace, name, tenantId);
 
     return new ConfigurationEntity<C>(
       namespace,
@@ -56,8 +53,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       this.validationService,
       latest,
       tenantId,
-      definition?.configurationSchema,
-      activeRevisionDoc?.active
+      definition?.configurationSchema
     );
   }
 
