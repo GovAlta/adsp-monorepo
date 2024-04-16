@@ -10,7 +10,7 @@ Feature: Calendar
   #   And the user views the link of See the code for "calendar-service"
   #   And the user views the link of "Get support" under Support
 
-  # #TEST DATA: precreated calendar of "autotest-calendarAccessibility", "DO NOT DELETE", "auto-test-role1"
+  # #TEST DATA: precreated calendar of "autotest-accessibility", "DO NOT DELETE", "auto-test-role1"
   # @accessibility @regression
   # Scenario: As a tenant admin, I can use calendar pages without any critical or serious accessibility issues
   #   Given a tenant admin user is on tenant admin page
@@ -22,7 +22,7 @@ Feature: Calendar
   #   When the user clicks Cancel button in Add calendar modal
   #   Then the user views Calendar tab table header on calendars page
   #   And no critical or serious accessibility issues on "calendar calendars page"
-  #   When the user clicks "Edit" button for the calendar of "autotest-calendarAccessibility", "DO NOT DELETE"
+  #   When the user clicks "Edit" button for the calendar of "autotest-accessibility", "DO NOT DELETE"
   #   Then the user views Edit calendar modal
   #   And no critical or serious accessibility issues on "calendar edit calendar modal"
 
@@ -56,6 +56,7 @@ Feature: Calendar
   #   When the user clicks Delete button in delete confirmation modal
   #   Then the user "should not view" the calendar of "autotest-addcalendar", "autotest calendar desc edit"
 
+  #TEST DATA: precreated calendar of "autotest-calendar", "DO NOT DELETE", "auto-test-role1, auto-test-role2"
   @TEST_CS-2460 @TEST_CS-2477 @TEST_CS-2478 @REQ_CS-1675 @REQ_CS-1677 @REQ_CS-1676 @regression
   Scenario: As a tenant admin, I can add, edit and delete calendar-events
     Given a tenant admin user is on calendar service overview page
