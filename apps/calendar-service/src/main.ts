@@ -80,6 +80,7 @@ const initializeApp = async (): Promise<express.Application> => {
           {}
         ),
       enableConfigurationInvalidation: true,
+      useLongConfigurationCacheTTL: true,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
       values: [ServiceMetricsValueDefinition],

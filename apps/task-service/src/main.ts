@@ -5,7 +5,13 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { adspId, AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+} from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -41,6 +47,8 @@ const initializeApp = async (): Promise<express.Application> => {
   }
 
   const COMMENT_TOPIC_TYPE_ID = 'task-comments';
+
+  instrumentAxios(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -146,6 +154,7 @@ const initializeApp = async (): Promise<express.Application> => {
         queues: Object.entries(queues || {}).reduce((qs, [k, q]) => ({ ...qs, [k]: new QueueEntity(q) }), {}),
       }),
       enableConfigurationInvalidation: true,
+      useLongConfigurationCacheTTL: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

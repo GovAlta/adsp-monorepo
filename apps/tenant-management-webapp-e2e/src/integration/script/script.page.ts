@@ -85,6 +85,12 @@ class ScriptPage {
     );
   }
 
+  editorBackBtn() {
+    return cy.xpath(
+      '//*[@data-testid="script-edit-form" and @open]//goa-button[@data-testid="template-form-close" and @type="secondary"]'
+    );
+  }
+
   editScriptModalSaveButton() {
     return cy.xpath('//goa-modal[@open="true"]//goa-button[@data-testid="script-modal-save" and text()="Save"]');
   }

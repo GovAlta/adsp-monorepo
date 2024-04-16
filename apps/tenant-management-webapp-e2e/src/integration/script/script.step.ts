@@ -285,3 +285,8 @@ When('the user clicks Save button in script editor', function () {
   scriptObj.editorSaveBtn().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(2000); // Wait for the save operation
 });
+
+When('the user clicks Back button in script editor', function () {
+  scriptObj.editorBackBtn().shadow().find('button').scrollIntoView().click({ force: true });
+  cy.wait(2000); // Wait for the save operation
+});

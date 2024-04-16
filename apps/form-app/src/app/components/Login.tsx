@@ -14,6 +14,8 @@ import { getRealm } from '../lib/keycloak';
 
 export const Login = () => {
   const realm = useParams<{ realm: string }>().realm;
+  const definitionId = useParams<{ definitionId: string }>().definitionId;
+
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const environment = useSelector(environmentSelector);
@@ -32,17 +34,21 @@ export const Login = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
 
-    const redirectUri = `${loginRedirect}/`;
+    //const redirectUri = `${loginRedirect}`;
 
     let idp = 'core';
     if (skipSSO && !idpFromUrl) {
       idp = ' ';
     }
-    dispatch(loginUserWithIDP({ idpFromUrl: idp, realm, from: redirectUri }));
+    dispatch(loginUserWithIDP({ idpFromUrl: idp, realm, from: loginRedirect }));
   };
 
-  const tenantLogin = async (realm: string) => {
-    const loginRedirectUrl = `${window.location.origin}`;
+  const tenantLogin = async (realm: string, definitionId?: string) => {
+    let loginRedirectUrl = '/';
+
+    if (realm && definitionId) {
+      loginRedirectUrl = `${window.location.origin}/${loginRedirectUrl}/${realm}/${definitionId}`;
+    }
 
     const tenantApi = directory['urn:ads:platform:tenant-service'];
     const updatedRealm = isUUID(realm) ? realm : await getRealm(realm, tenantApi);
@@ -60,7 +66,7 @@ export const Login = () => {
     }
 
     if (realm && Object.keys(environment).length > 0) {
-      tenantLogin(realm);
+      tenantLogin(realm, definitionId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, configInitialized]);

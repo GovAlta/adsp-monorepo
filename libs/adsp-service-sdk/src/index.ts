@@ -29,5 +29,5 @@ export type { Template, NotificationType, NotificationTypeEvent } from './notifi
 export type { ValueDefinition } from './value';
 export type { ServiceRegistration, ServiceRole } from './registration';
 export { benchmark, startBenchmark, ServiceMetricsValueDefinition } from './metrics';
-export { getContextTrace } from './trace';
+export { getContextTrace, instrumentAxios } from './trace';
 export { initializePlatform, initializeService } from './initialize';

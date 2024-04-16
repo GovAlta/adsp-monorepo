@@ -38,3 +38,27 @@ export const getTimeFromGMT = (date: Date): string => {
   // Combine hours and minutes in HH:MM format
   return `${formattedHours}:${formattedMinutes}`;
 };
+
+export const getDateTime = (date, time) => {
+  const newDate = new Date(date);
+  const combinedDateTime = new Date(
+    newDate.getMonth() + 1 + '/' + newDate.getDate() + '/' + newDate.getFullYear() + ' ' + time
+  );
+  return combinedDateTime;
+};
+
+export const getLocalISOString = (date: Date): string => {
+  const offset = date.getTimezoneOffset() * 60000; // offset in milliseconds
+  const localISOTime = new Date(date.getTime() - offset).toISOString();
+  return localISOTime.slice(0, -1) + getTimezoneOffsetString(date);
+};
+
+const getTimezoneOffsetString = (date: Date): string => {
+  const offset = date.getTimezoneOffset();
+  const offsetHours = Math.abs(Math.floor(offset / 60));
+  const offsetMinutes = Math.abs(offset % 60);
+  const sign = offset > 0 ? '-' : '+';
+  return `${sign}${padZero(offsetHours)}:${padZero(offsetMinutes)}`;
+};
+
+const padZero = (num: number): string => (num < 10 ? `0${num}` : `${num}`);

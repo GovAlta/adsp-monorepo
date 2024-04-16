@@ -24,6 +24,7 @@ Feature: Script
     And the user selects "Roles" tab in script editor
     And the user enters "auto-test-role2, urn:ads:autotest:chat-service:chatter" for roles in script editor
     And the user clicks Save button in script editor
+    And the user clicks Back button in script editor
     Then the user "views" the script of "autotest-modifiedscript", "autotest script desc 2"
     # Delete
     When the user clicks "Delete" button for the script of "autotest-modifiedscript", "autotest script desc 2"

@@ -28,6 +28,7 @@ Feature: Form
     When the user clicks roles tab in form definition editor
     And the user enters "auto-test-role1" as applicant roles, "auto-test-role2" as clerk roles, "empty" as assessor roles
     And the user clicks Save button on form definition editor
+    And the user clicks Back button on form definition editor
     Then the user "views" the form definition of "autotest-formDef", "autotest desc"
     # Edit and back
     When the user clicks "Edit" button for the form definition of "autotest-formDef", "autotest desc"
@@ -51,6 +52,7 @@ Feature: Form
     And the user clicks roles tab in form definition editor
     And the user enters "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles
     And the user clicks Save button on form definition editor
+    And the user clicks Back button on form definition editor
     Then the user "views" the form definition of "autotest-formDef-edited", "autotest desc edited"
     When the user clicks "Edit" button for the form definition of "autotest-formDef-edited", "autotest desc edited"
     And the user clicks roles tab in form definition editor
