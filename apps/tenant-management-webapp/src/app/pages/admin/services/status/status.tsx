@@ -8,11 +8,11 @@ import ApplicationFormModal from './form';
 import { Application } from './applications/application';
 import { WebhookListTable } from './webhooks/webhooks';
 
-import NoticeModal from './noticeModal';
+import NoticeModal from './notices/noticeModal';
 import { GetMySubscriber, Subscribe, Unsubscribe } from '@store/subscription/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
-import { NoticeList } from './noticeList';
+import { NoticeList } from './notices/noticeList';
 
 import { renderNoItem } from '@components/NoItem';
 import { createSelector } from 'reselect';

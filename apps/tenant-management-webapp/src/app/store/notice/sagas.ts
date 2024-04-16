@@ -41,7 +41,9 @@ export function* getNotices(): SagaIterator {
   try {
     const api = new NoticeApi(baseUrl, token);
     const notices: NoticesResult = yield call([api, api.getNotices]);
-    yield put(getNoticesSuccess(notices.results));
+    const publishedNotices: NoticesResult = yield call([api, api.getPublishedNotices]);
+    const filteredNotices = notices.results.filter((item) => item.mode !== 'published');
+    yield put(getNoticesSuccess([...publishedNotices.results, ...filteredNotices]));
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
   }

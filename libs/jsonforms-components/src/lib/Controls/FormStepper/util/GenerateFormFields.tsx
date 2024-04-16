@@ -74,7 +74,7 @@ export const RenderFormFields: React.FC<RenderFormFieldsProps> = ({ elements, da
     if (clonedElement.type === 'Control' && clonedElement.scope) {
       const label = clonedElement.label ? clonedElement.label : resolveLabelFromScope(clonedElement.scope);
       if (!label) return null;
-      const isFileUploader = label.toLowerCase().includes('file uploader');
+      const isFileUploader = clonedElement.scope.includes('fileUploader');
 
       const fileUploaderElement = isFileUploader ? fileList && fileList[toCamelCase(label)] : null;
       const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
