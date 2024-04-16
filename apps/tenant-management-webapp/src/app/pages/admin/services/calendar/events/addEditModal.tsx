@@ -82,6 +82,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   }, [initCalendarEvent]);
 
   const dispatch = useDispatch();
+  if (initCalendarEvent === null) return <></>;
   return (
     <GoAModal
       open={initCalendarEvent !== null}
@@ -156,7 +157,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           }}
         />
       </GoAFormItem>
-      <GoAFormItem error={errors?.['description']} label="Description">
+      <GoAFormItem error={errors?.['description']} label="Description" mb={'xl'}>
         <GoATextArea
           name="description"
           value={calendarEvent?.description}
@@ -172,7 +173,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           }}
         />
       </GoAFormItem>
-      <br />
+
       <GoACheckbox
         name="isPublicCheckbox"
         checked={calendarEvent?.isPublic}

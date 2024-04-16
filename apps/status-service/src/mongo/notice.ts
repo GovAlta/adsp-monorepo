@@ -81,6 +81,13 @@ export default class MongoNoticeRepository implements NoticeRepository {
     }
   }
 
+  private prioritizePublished(docs) {
+    // This function will reorder so that 'published' comes first
+    const published = docs.filter((doc) => doc.mode === 'published');
+    const others = docs.filter((doc) => doc.mode !== 'published');
+    return [...published, ...others];
+  }
+
   private toDoc(application: NoticeApplicationEntity): Doc<NoticeApplication> {
     return {
       _id: application.id,
