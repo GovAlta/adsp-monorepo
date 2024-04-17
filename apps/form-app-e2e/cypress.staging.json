@@ -6,7 +6,7 @@
     "realm": "2ef492af-0a16-470b-9ea5-c8bfa7b08a7c",
     "TAGS": ""
   },
-  "baseUrl": "https://subscription.adsp-uat.alberta.ca/",
+  "baseUrl": "https://form.adsp-uat.alberta.ca/",
   "tenantWebAppUrl": "https://adsp-uat.alberta.ca/",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
@@ -15,14 +15,14 @@
   "pluginsFile": "./src/plugins/index",
   "supportFile": "./src/support/index.ts",
   "video": false,
-  "videosFolder": "../../dist/cypress/apps/subscriber-app-e2e/videos",
-  "screenshotsFolder": "../../dist/cypress/apps/subscriber-app-e2e/screenshots",
+  "videosFolder": "../../dist/cypress/apps/form-app-e2e/videos",
+  "screenshotsFolder": "../../dist/cypress/apps/form-app-e2e/screenshots",
   "chromeWebSecurity": false,
   "testFiles": "**/*.feature",
   "ignoreTestFiles": "*.js",
   "videoUploadOnPasses": false,
   "reporter": "junit",
   "reporterOptions": {
-    "mochaFile": "../../dist/cypress/apps/subscriber-app-e2e/results/results-[hash].xml"
+    "mochaFile": "../../dist/cypress/apps/form-app-e2e/results/results-[hash].xml"
   }
 }

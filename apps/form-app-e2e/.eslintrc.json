@@ -1,10 +1,28 @@
 {
-  "extends": ["plugin:cypress/recommended", "../../.eslintrc.json"],
-  "ignorePatterns": ["!**/*"],
+  "rules": {
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "cypress/no-unnecessary-waiting": "off",
+    "@typescript-eslint/no-non-null-assertion": "off"
+  },
+  "extends": [
+    "plugin:cypress/recommended",
+    "../../.eslintrc"
+  ],
   "overrides": [
     {
-      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-      "rules": {}
+      "files": [
+        "src/plugins/index.js",
+        "src/support/multiple-cucumber-html-reporter.js",
+        "src/support/index.ts"
+      ],
+      "rules": {
+        "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/camelcase": "off",
+        "no-undef": "off"
+      }
     }
+  ],
+  "ignorePatterns": [
+    "!**/*"
   ]
 }

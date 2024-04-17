@@ -1,13 +1,13 @@
 {
   "env": {
-    "env-name": "UAT",
+    "env-name": "DEV",
     "email": "auto.test@gov.ab.ca",
     "password": "",
-    "realm": "2ef492af-0a16-470b-9ea5-c8bfa7b08a7c",
+    "realm": "b6aff762-20f8-4c5d-88d3-c38ae16d1937",
     "TAGS": ""
   },
-  "baseUrl": "https://subscription.adsp-uat.alberta.ca/",
-  "tenantWebAppUrl": "https://adsp-uat.alberta.ca/",
+  "baseUrl": "https://form.adsp-dev.gov.ab.ca/",
+  "tenantWebAppUrl": "https://adsp-dev.gov.ab.ca/",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",
@@ -15,14 +15,14 @@
   "pluginsFile": "./src/plugins/index",
   "supportFile": "./src/support/index.ts",
   "video": false,
-  "videosFolder": "../../dist/cypress/apps/subscriber-app-e2e/videos",
-  "screenshotsFolder": "../../dist/cypress/apps/subscriber-app-e2e/screenshots",
+  "videosFolder": "../../dist/cypress/apps/form-app-e2e/videos",
+  "screenshotsFolder": "../../dist/cypress/apps/form-app-e2e/screenshots",
   "chromeWebSecurity": false,
   "testFiles": "**/*.feature",
   "ignoreTestFiles": "*.js",
   "videoUploadOnPasses": false,
   "reporter": "junit",
   "reporterOptions": {
-    "mochaFile": "../../dist/cypress/apps/subscriber-app-e2e/results/results-[hash].xml"
+    "mochaFile": "../../dist/cypress/apps/form-app-e2e/results/results-[hash].xml"
   }
 }
