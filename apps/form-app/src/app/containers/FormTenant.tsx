@@ -1,11 +1,12 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   AppDispatch,
   configInitializedSelector,
+  formSelector,
   initializeTenant,
   loginUser,
   logoutUser,
@@ -28,8 +29,8 @@ export const FormTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
-
   const tenant = useSelector(tenantSelector);
+  const userForm = useSelector(formSelector);
 
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
@@ -52,7 +53,13 @@ export const FormTenant = () => {
                 mt="s"
                 mr="s"
                 type="tertiary"
-                onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}
+                onClick={() => {
+                  if (userForm?.definition) {
+                    dispatch(logoutUser({ tenant, from: `/${tenant.name}/${userForm.definition.id}` }));
+                  } else {
+                    dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+                  }
+                }}
               >
                 Sign out
               </GoAButton>
@@ -61,7 +68,9 @@ export const FormTenant = () => {
                 mt="s"
                 mr="s"
                 type="tertiary"
-                onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
+                onClick={() => {
+                  dispatch(loginUser({ tenant, from: `${location.pathname}?autoCreate=true` }));
+                }}
               >
                 Sign in
               </GoAButton>

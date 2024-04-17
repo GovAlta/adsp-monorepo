@@ -15,15 +15,7 @@ import {
   GoADropdownItem,
   GoAGrid,
 } from '@abgov/react-components-new';
-import { getTimeFromGMT } from '@lib/timeUtil';
-
-const dateTime = (date, time) => {
-  const newDate = new Date(date);
-  const combinedDateTime = new Date(
-    newDate.getMonth() + 1 + '/' + newDate.getDate() + '/' + newDate.getFullYear() + ' ' + time
-  );
-  return combinedDateTime;
-};
+import { getTimeFromGMT, getDateTime } from '@lib/timeUtil';
 
 interface NoticeModalProps {
   title: string;
@@ -76,7 +68,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   }, [props.noticeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function validDateRangeErrors() {
-    if (dateTime(endDate, endTime) < dateTime(startDate, startTime)) {
+    if (getDateTime(endDate, endTime) < getDateTime(startDate, startTime)) {
       setErrors({ date: 'End date must be later than start date' });
       return { date: 'End date must be later than start date' };
     }
@@ -113,8 +105,8 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           id: props?.noticeId,
           message,
           tennantServRef: selectedApplications,
-          startDate: dateTime(startDate, startTime),
-          endDate: dateTime(endDate, endTime),
+          startDate: getDateTime(startDate, startTime),
+          endDate: getDateTime(endDate, endTime),
           isAllApplications: isAllApplications,
         })
       );

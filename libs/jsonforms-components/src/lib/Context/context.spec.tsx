@@ -1,9 +1,9 @@
 import React, { ReactNode, useContext } from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { addDataByOptions, getData, getAllData, ContextProvider, addData, addDataByUrl } from '.';
+import { ContextProvider, enumerators } from '.';
 import axios from 'axios';
-import { JsonFormContext } from '.';
+import { JsonFormContext, ContextProviderC } from '.';
 
 jest.mock('axios');
 
@@ -32,11 +32,12 @@ describe('addDataByOptions', () => {
     jest.spyOn(axios, 'get').mockResolvedValue({ data: responseData });
 
     // Calling the function
-    await addDataByOptions(key, url, location, type, values);
+
+    await ContextProviderC.addDataByOptions(key, url, location, type, values);
 
     // Expecting processDataFunction to be called with the response data
-    expect(getData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
-    expect(getAllData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
+    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
   });
   it('should add data by options single location single name', async () => {
     const key = 'testKey';
@@ -56,11 +57,11 @@ describe('addDataByOptions', () => {
     jest.spyOn(axios, 'get').mockResolvedValue({ data: responseData });
 
     // Calling the function
-    await addDataByOptions(key, url, location, type, values);
+    await ContextProviderC.addDataByOptions(key, url, location, type, values);
 
     // Expecting processDataFunction to be called with the response data
-    expect(getData('testKey')).toEqual(['Bob', 'Jim']);
-    expect(getAllData()).toEqual([{ testKey: ['Bob', 'Jim'] }]);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob', 'Jim']);
+    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob', 'Jim'] }]);
   });
 
   it('should add data by options with keys', async () => {
@@ -79,18 +80,17 @@ describe('addDataByOptions', () => {
     jest.spyOn(axios, 'get').mockResolvedValue({ data: responseData });
 
     // Calling the function
-    await addDataByOptions(key, url, location, type);
+    await ContextProviderC.addDataByOptions(key, url, location, type);
 
     // Expecting processDataFunction to be called with the response data
-    expect(getData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
-    expect(getAllData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
+    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
   });
 
-  it('should add data with addData', async () => {
-    // Expecting processDataFunction to be called with the response data
+  it('should add data with addFormContextData', async () => {
     const data = { FirstName: 'Bob Smith', ' LastName': 'Jim Jones' };
-    addData('testKey', data);
-    expect(getData('testKey')).toEqual(data);
+    ContextProviderC.addFormContextData('testKey', data);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(data);
   });
 
   it('throws cors error when there is no data', async () => {
@@ -103,7 +103,7 @@ describe('addDataByOptions', () => {
 
     const key = 'testKey';
     const url = 'http://example.com/data';
-    await addDataByUrl(key, url, processData);
+    await ContextProviderC.addDataByUrl(key, url, processData);
 
     expect(mockWarn).toHaveBeenCalledWith('addDataByUrl: Axios request failed');
     mockWarn.mockRestore(); // Restore original console.warn
@@ -119,7 +119,7 @@ describe('addDataByOptions', () => {
 
     const key = 'testKey';
     const url = 'http://example.com/data';
-    await addDataByUrl(key, url, processData);
+    await ContextProviderC.addDataByUrl(key, url, processData);
 
     expect(logSpy).toHaveBeenCalledWith('addDataByUrl: Axios request failed');
   });
@@ -134,7 +134,7 @@ describe('addDataByOptions', () => {
 
     const key = 'testKey';
     const url = 'http://example.com/data';
-    await addDataByUrl(key, url, processData);
+    await ContextProviderC.addDataByUrl(key, url, processData);
 
     expect(logSpy).toHaveBeenCalledWith('CORS ERROR');
   });
@@ -159,8 +159,8 @@ describe('addDataByOptions', () => {
     const key = 'testKey';
     const token = 'testToken';
     const url = 'http://example.com/data';
-    await addDataByUrl(key, url, processData, token);
-    expect(getData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
+    await ContextProviderC.addDataByUrl(key, url, processData, token);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
   });
 });
 
@@ -198,11 +198,11 @@ describe('contextProvider', () => {
   it('works with submit props', async () => {
     const onSubmitFunction = (text: string) => {
       console.log(text);
-      addData('submittedData', { text: text });
+      ContextProviderC.addFormContextData('submittedData', { text: text });
     };
     const SubmitComponent = () => {
-      const enumerators = useContext(JsonFormContext);
-      const submitFormFunction = enumerators.submitFunction.get('submit-form');
+      const Enumerators = useContext(JsonFormContext) as enumerators;
+      const submitFormFunction = Enumerators.submitFunction.get('submit-form');
       const submitForm = submitFormFunction && submitFormFunction();
       submitForm && submitForm('abc');
 
@@ -220,7 +220,7 @@ describe('contextProvider', () => {
       </ContextProvider>
     );
 
-    expect(getData('submittedData')).toEqual({ text: 'abc' });
+    expect(ContextProviderC.getFormContextData('submittedData')).toEqual({ text: 'abc' });
   });
 
   it('works with data props', async () => {

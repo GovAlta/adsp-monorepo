@@ -1,9 +1,9 @@
-import { GoARenderers, ContextProvider, ajv, getData } from '@abgov/jsonforms-components';
+import { GoARenderers, ContextProvider, ajv, JsonFormContext, enumerators } from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { UISchemaElement, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
-import { FunctionComponent } from 'react';
+import { FunctionComponent, useContext } from 'react';
 import {
   AppDispatch,
   Form,
@@ -30,13 +30,13 @@ interface DraftFormProps {
   onSubmit: (form: Form) => void;
 }
 
-export const populateDropdown = (schema) => {
+export const populateDropdown = (schema, enumerators) => {
   const newSchema = JSON.parse(JSON.stringify(schema));
 
   Object.keys(newSchema.properties || {}).forEach((propertyName) => {
     const property = newSchema.properties || {};
     if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '') {
-      property[propertyName].enum = getData(propertyName) as string[];
+      property[propertyName].enum = enumerators.getFormContextData(propertyName) as string[];
     }
   });
 
@@ -103,6 +103,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
+  const enumerators = useContext(JsonFormContext) as enumerators;
+
   return (
     <Grid>
       <GridItem md={1} />
@@ -124,7 +126,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
           <JsonForms
             ajv={ajv}
             readonly={false}
-            schema={populateDropdown(definition.dataSchema)}
+            schema={populateDropdown(definition.dataSchema, enumerators)}
             uischema={definition.uiSchema}
             data={data}
             validationMode="ValidateAndShow"

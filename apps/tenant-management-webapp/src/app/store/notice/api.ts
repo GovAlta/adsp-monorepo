@@ -13,6 +13,10 @@ export class NoticeApi {
     const res = await this.http.get(`/`);
     return res.data;
   }
+  async getPublishedNotices(): Promise<Notices[]> {
+    const res = await this.http.get(`?mode=published`);
+    return res.data;
+  }
 
   async deleteNotice(noticeId: string): Promise<Notices[]> {
     const res = await this.http.delete(`/${noticeId}`);

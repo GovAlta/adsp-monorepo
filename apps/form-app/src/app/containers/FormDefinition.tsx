@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AppDispatch,
   busySelector,
@@ -16,6 +16,7 @@ import { LoadingIndicator } from '../components/LoadingIndicator';
 import { AuthorizeUser } from './AuthorizeUser';
 import { StartApplication } from '../components/StartApplication';
 import { ContinueApplication } from '../components/ContinueApplication';
+import { AutoCreateApplication } from '../components/AutoCreateApplication';
 
 interface FormDefinitionStartProps {
   definitionId: string;
@@ -24,21 +25,23 @@ interface FormDefinitionStartProps {
 const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ definitionId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const definition = useSelector(definitionSelector);
+  const busy = useSelector(busySelector);
+  const { form, initialized } = useSelector(userFormSelector);
+  const urlParams = new URLSearchParams(location.search);
+  const AUTO_CREATE_PARAM = 'autoCreate';
 
   useEffect(() => {
     dispatch(findUserForm(definitionId));
   }, [dispatch, definitionId]);
-
-  const definition = useSelector(definitionSelector);
-  const busy = useSelector(busySelector);
-  const { form, initialized } = useSelector(userFormSelector);
 
   return (
     <>
       <LoadingIndicator isLoading={!initialized} />
       {initialized && definition && (
         <AuthorizeUser roles={[...definition.applicantRoles, ...definition.clerkRoles]}>
-          {!form ? (
+          {!form && !urlParams.has(AUTO_CREATE_PARAM) ? (
             <StartApplication
               definition={definition}
               canStart={!busy.creating}
@@ -50,6 +53,8 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
                 }
               }}
             />
+          ) : urlParams.has(AUTO_CREATE_PARAM) && !form?.id ? (
+            <AutoCreateApplication form={form} />
           ) : (
             <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
           )}
