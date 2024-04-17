@@ -34,15 +34,6 @@ export const FormTenant = () => {
 
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
-  const AUTO_CREATE_PARAM = 'autoCreate';
-  const [autoCreate, setAutoCreate] = useState<boolean>(false);
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    if (urlParams.has(AUTO_CREATE_PARAM)) {
-      setAutoCreate(true);
-    }
-  }, [location]);
 
   useEffect(() => {
     if (configInitialized) {
@@ -78,7 +69,7 @@ export const FormTenant = () => {
                 mr="s"
                 type="tertiary"
                 onClick={() => {
-                  dispatch(loginUser({ tenant, from: `${location.pathname}${!userForm ? '?autoCreate=true' : ''}` }));
+                  dispatch(loginUser({ tenant, from: `${location.pathname}?autoCreate=true` }));
                 }}
               >
                 Sign in
