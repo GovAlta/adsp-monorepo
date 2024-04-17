@@ -1,6 +1,6 @@
 import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
-import { FunctionComponent, useEffect } from 'react';
+import { FunctionComponent } from 'react';
 import { FormDefinition } from '../state';
 
 interface StartApplicationProps {

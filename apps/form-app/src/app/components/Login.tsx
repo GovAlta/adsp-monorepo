@@ -45,7 +45,7 @@ export const Login = () => {
     let loginRedirectUrl = '/';
 
     if (realm && definitionId) {
-      loginRedirectUrl = `${window.location.origin}/${loginRedirectUrl}/${realm}/${definitionId}`;
+      loginRedirectUrl = `${window.location.origin}/${loginRedirectUrl}/${realm}/${definitionId}?autoCreate=true`;
     }
 
     const tenantApi = directory['urn:ads:platform:tenant-service'];

@@ -78,7 +78,7 @@ export const FormTenant = () => {
                 mr="s"
                 type="tertiary"
                 onClick={() => {
-                  dispatch(loginUser({ tenant, from: `${location.pathname}?autoCreate=true` }));
+                  dispatch(loginUser({ tenant, from: `${location.pathname}${!userForm ? '?autoCreate=true' : ''}` }));
                 }}
               >
                 Sign in

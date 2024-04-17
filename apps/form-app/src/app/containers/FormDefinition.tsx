@@ -16,7 +16,7 @@ import { LoadingIndicator } from '../components/LoadingIndicator';
 import { AuthorizeUser } from './AuthorizeUser';
 import { StartApplication } from '../components/StartApplication';
 import { ContinueApplication } from '../components/ContinueApplication';
-import { AutoCreateForm } from '../components/AutoCreateForm';
+import { AutoCreateApplication } from '../components/AutoCreateApplication';
 
 interface FormDefinitionStartProps {
   definitionId: string;
@@ -54,7 +54,7 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
               }}
             />
           ) : urlParams.has(AUTO_CREATE_PARAM) && !form?.id ? (
-            <AutoCreateForm form={form} />
+            <AutoCreateApplication form={form} />
           ) : (
             <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
           )}
