@@ -24,6 +24,20 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   const fileListValue = enumerators.data.get('file-list');
 
+  const countries = [
+    'Argentina',
+    'Brazil',
+    'Canada',
+    'Denmark',
+    'Egypt',
+    'France',
+    'Greece',
+    'India',
+    'Japan',
+    'Kenya',
+  ];
+
+  enumerators.addData('countries', countries);
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
 

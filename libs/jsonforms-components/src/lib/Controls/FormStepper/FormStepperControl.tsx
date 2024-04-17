@@ -49,7 +49,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   const { uischema, data, schema, ajv, path, cells, renderers, visible, enabled, t } = props;
 
   const enumerators = useContext(JsonFormContext);
-  const submitFormFunction = enumerators.submitFunction.get('submit-form');
+  const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
   const categorization = uischema as Categorization;
   const allCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;

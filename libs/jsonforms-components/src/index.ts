@@ -43,7 +43,6 @@ import {
   GoAlVerticalLayoutTester,
 } from './lib/layouts';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { addData } from './lib/Context';
 
 import { HelpContent, HelpContentTester } from './lib/Additional';
 import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAErrorControl';
@@ -52,8 +51,6 @@ import GoACalloutControl, { GoACalloutControlTester } from './lib/Additional/GoA
 export * from './lib/Context';
 export * from './lib/common';
 
-const countries = ['Argentina', 'Brazil', 'Canada', 'Denmark', 'Egypt', 'France', 'Greece', 'India', 'Japan', 'Kenya'];
-addData('countries', countries);
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
   { tester: GoAEnumControlTester, renderer: GoAEnumControl },

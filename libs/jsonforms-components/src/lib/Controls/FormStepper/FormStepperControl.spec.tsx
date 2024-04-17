@@ -463,6 +463,29 @@ describe('Form Stepper Control', () => {
   });
 
   describe('submit tests', () => {
+    it('will call a context function when submitted', () => {
+      const onSubmit = jest.fn();
+      const form = getForm({
+        name: { firstName: 'Bob', lastName: 'Bing' },
+        address: { street: 'Sesame', city: 'Seattle' },
+      });
+      const renderer = render(<ContextProvider submit={{ submitForm: onSubmit }}>{form}</ContextProvider>);
+
+      // Move to review Page
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+
+      // submit
+      const submitBtn = renderer.getByTestId('stepper-submit-btn');
+      const submitShadow = submitBtn.shadowRoot?.querySelector('button');
+      expect(submitShadow).not.toBeNull();
+      fireEvent.click(submitShadow!);
+      expect(onSubmit).toBeCalledTimes(1);
+    });
+
     it('will open a modal if no submit function is present', () => {
       const form = getForm({
         name: { firstName: 'Bob', lastName: 'Bing' },
@@ -494,33 +517,6 @@ describe('Form Stepper Control', () => {
       expect(closeShadow).not.toBeNull();
       fireEvent.click(closeShadow!);
       expect(modal.getAttribute('open')).toBe('false');
-    });
-
-    /*
-     * FIXME: Something is off here.  This test must be last, as it seems to not
-     * clean up properly and affects subsequent tests.
-     */
-    it('will call a context function when submitted', () => {
-      const onSubmit = jest.fn();
-      const form = getForm({
-        name: { firstName: 'Bob', lastName: 'Bing' },
-        address: { street: 'Sesame', city: 'Seattle' },
-      });
-      const renderer = render(<ContextProvider submit={{ submitForm: onSubmit }}>{form}</ContextProvider>);
-
-      // Move to review Page
-      const next = renderer.getByTestId('next-button');
-      const nextShadow = next.shadowRoot?.querySelector('button');
-      expect(nextShadow).not.toBeNull();
-      fireEvent.click(nextShadow!);
-      fireEvent.click(nextShadow!);
-
-      // submit
-      const submitBtn = renderer.getByTestId('stepper-submit-btn');
-      const submitShadow = submitBtn.shadowRoot?.querySelector('button');
-      expect(submitShadow).not.toBeNull();
-      fireEvent.click(submitShadow!);
-      expect(onSubmit).toBeCalledTimes(1);
     });
   });
 });

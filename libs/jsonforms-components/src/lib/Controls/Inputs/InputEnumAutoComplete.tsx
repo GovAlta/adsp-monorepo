@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
   ControlProps,
   isEnumControl,
@@ -17,13 +17,15 @@ import { EnumCellProps, WithClassname } from '@jsonforms/core';
 
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 
-import { addDataByOptions, getData } from '../../Context';
+import { JsonFormContext, enumerators } from '../../Context';
 
 type EnumSelectAutoCompleteProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.Element => {
   const { data, schema, path, handleChange, uischema, label } = props;
   let enumData = schema?.enum || [];
+
+  const enumerators = useContext(JsonFormContext) as enumerators;
 
   const dataKey = uischema?.options?.enumContext?.key;
 
@@ -39,12 +41,12 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
 
   useEffect(() => {
     if (dataKey && url) {
-      addDataByOptions(dataKey, url, location, type, values);
+      enumerators.addDataByOptions(dataKey, url, location, type, values);
     }
-  }, [url, location, type, values, dataKey]);
+  }, [url, location, type, values, dataKey, enumerators]);
 
-  if (dataKey && getData(dataKey)) {
-    const newData = getData(dataKey);
+  if (dataKey && enumerators.getData(dataKey)) {
+    const newData = enumerators.getData(dataKey);
     // eslint-disable-next-line
     enumData = newData as any[];
     defaultProps.options = enumData;
