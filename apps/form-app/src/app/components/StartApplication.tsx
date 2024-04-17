@@ -1,8 +1,7 @@
 import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent, useEffect } from 'react';
-import { AppDispatch, FormDefinition, findUserForm, userSelector } from '../state';
-import { useDispatch, useSelector } from 'react-redux';
+import { FormDefinition } from '../state';
 
 interface StartApplicationProps {
   definition: FormDefinition;

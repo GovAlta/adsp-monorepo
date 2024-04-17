@@ -29,17 +29,8 @@ export const SignInStartApplication: FunctionComponent = () => {
   const tenant = useSelector(tenantSelector);
   const definitionId = getDefinitionId(location.pathname);
 
-  const [autoCreate, setAutoCreate] = useState<boolean>(false);
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    if (urlParams.has('autoCreate')) {
-      setAutoCreate(true);
-    }
-  }, [location]);
-
   const onSignInStartApplication = () => {
-    dispatch(loginUser({ tenant, from: `${location.pathname}${autoCreate ? 'autoCreate=true' : ''}` }));
+    dispatch(loginUser({ tenant, from: `${location.pathname}?autoCreate=true` }));
   };
 
   return (

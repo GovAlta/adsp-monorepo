@@ -16,6 +16,7 @@ import { LoadingIndicator } from '../components/LoadingIndicator';
 import { AuthorizeUser } from './AuthorizeUser';
 import { StartApplication } from '../components/StartApplication';
 import { ContinueApplication } from '../components/ContinueApplication';
+import { AutoCreateForm } from '../components/AutoCreateForm';
 
 interface FormDefinitionStartProps {
   definitionId: string;
@@ -25,54 +26,22 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const location = useLocation();
-
+  const definition = useSelector(definitionSelector);
+  const busy = useSelector(busySelector);
+  const { form, initialized } = useSelector(userFormSelector);
+  const urlParams = new URLSearchParams(location.search);
   const AUTO_CREATE_PARAM = 'autoCreate';
 
   useEffect(() => {
     dispatch(findUserForm(definitionId));
   }, [dispatch, definitionId]);
 
-  useEffect(() => {
-    async function autoCreateForm() {
-      const urlParams = new URLSearchParams(location.search);
-      const formToEdit = await dispatch(findUserForm(definitionId)).unwrap();
-
-      console.log('formToEdit', formToEdit);
-      if (urlParams.has(AUTO_CREATE_PARAM)) {
-        if (formToEdit.form && formToEdit?.form.id) {
-          navigate(`/${formToEdit?.form.id}`);
-
-          // if (!formToFind) {
-          //   // const form = await dispatch(createForm(definitionId)).unwrap();
-          //   // if (form?.id) {
-          //   //   navigate(`${form.id}`);
-          //   // }
-          // } else {
-          //   navigate(`${formToFind?.id}`);
-          // }
-        } else {
-          console.log('in here ');
-          // const { payload } = await dispatch(createForm(definitionId));
-          // const formToFind = payload as FormObject;
-          // navigate(`${formToFind?.id}`);
-        }
-      }
-    }
-
-    autoCreateForm();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location, dispatch, definitionId, navigate]);
-
-  const definition = useSelector(definitionSelector);
-  const busy = useSelector(busySelector);
-  const { form, initialized } = useSelector(userFormSelector);
-
   return (
     <>
       <LoadingIndicator isLoading={!initialized} />
       {initialized && definition && (
         <AuthorizeUser roles={[...definition.applicantRoles, ...definition.clerkRoles]}>
-          {!form ? (
+          {!form && !urlParams.has(AUTO_CREATE_PARAM) ? (
             <StartApplication
               definition={definition}
               canStart={!busy.creating}
@@ -84,6 +53,8 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
                 }
               }}
             />
+          ) : urlParams.has(AUTO_CREATE_PARAM) && !form?.id ? (
+            <AutoCreateForm form={form} />
           ) : (
             <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
           )}

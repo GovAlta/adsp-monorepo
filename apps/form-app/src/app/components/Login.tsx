@@ -34,8 +34,6 @@ export const Login = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
 
-    //const redirectUri = `${loginRedirect}`;
-
     let idp = 'core';
     if (skipSSO && !idpFromUrl) {
       idp = ' ';
