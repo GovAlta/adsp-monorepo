@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
@@ -8,13 +8,15 @@ import { WithOptionLabel, checkFieldValidity } from '../../util';
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 
-import { addDataByOptions, getData } from '../../Context';
+import { JsonFormContext } from '../../Context';
 
 type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
   const { data, id, enabled, errors, schema, path, handleChange, options, config, label, uischema } = props;
   const { required } = props as ControlProps;
+
+  const enumerators = useContext(JsonFormContext);
 
   let enumData: unknown[] = schema?.enum || [];
 
@@ -31,12 +33,12 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
 
   useEffect(() => {
     if (dataKey && url) {
-      addDataByOptions(dataKey, url, location, type, values);
+      enumerators.addDataByOptions(dataKey, url, location, type, values);
     }
-  }, [url, location, type, values, dataKey]);
+  }, [url, location, type, values, dataKey, enumerators]);
 
-  if (dataKey && getData(dataKey)) {
-    const newData = getData(dataKey) as unknown[];
+  if (dataKey && enumerators.getFormContextData(dataKey)) {
+    const newData = enumerators.getFormContextData(dataKey) as unknown[];
 
     enumData = newData;
   }
