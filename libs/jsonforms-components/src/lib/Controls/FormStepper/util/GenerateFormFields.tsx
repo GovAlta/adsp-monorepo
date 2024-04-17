@@ -56,12 +56,6 @@ export const RenderFormFields: React.FC<RenderFormFieldsProps> = ({ elements, da
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
 
-  const toCamelCase = (input: string): string => {
-    const words = input.split(' ');
-    const firstWord = words[0].toLowerCase();
-    const capitalizedWords = words.slice(1).map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
-    return [firstWord, ...capitalizedWords].join('');
-  };
   const downloadFile = (file: File, propertyId: string) => {
     if (downloadTrigger) {
       downloadTrigger(file, propertyId);
@@ -74,9 +68,8 @@ export const RenderFormFields: React.FC<RenderFormFieldsProps> = ({ elements, da
     if (clonedElement.type === 'Control' && clonedElement.scope) {
       const label = clonedElement.label ? clonedElement.label : resolveLabelFromScope(clonedElement.scope);
       if (!label) return null;
-      const isFileUploader = label.toLowerCase().includes('file uploader');
-
-      const fileUploaderElement = isFileUploader ? fileList && fileList[toCamelCase(label)] : null;
+      const isFileUploader = clonedElement.scope.includes('fileUploader');
+      const fileUploaderElement = isFileUploader ? fileList && fileList[lastSegment] : null;
       const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
       const isRequired = requiredFields.includes(lastSegment);
       const asterisk = isRequired ? ' *' : '';

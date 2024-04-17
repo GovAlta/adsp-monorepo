@@ -39,9 +39,7 @@ import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } fro
 import { validateData } from './util/validateData';
 import { mapToVisibleStep } from './util/stepNavigation';
 
-export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
-  data: unknown;
-}
+export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {}
 
 const summaryLabel = 'Summary';
 
@@ -150,6 +148,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   };
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const isFormSubmitted = enumerators?.isFormSubmitted ?? false;
 
   return (
     <div data-testid="form-stepper-test-wrapper">
@@ -234,7 +233,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 {step !== 1 ? (
                   <GoAButton
                     type="secondary"
-                    disabled={disabledCategoryMap[step - 1] || !enabled}
+                    disabled={disabledCategoryMap[step - 1]}
                     onClick={() => prevPage(step, disabledCategoryMap)}
                     testId="prev-button"
                   >
@@ -248,19 +247,19 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 {step !== null && showNextBtn && (
                   <GoAButton
                     type="primary"
-                    disabled={disabledCategoryMap[step - 1] || !enabled}
+                    disabled={disabledCategoryMap[step - 1]}
                     onClick={() => nextPage(step, disabledCategoryMap)}
                     testId="next-button"
                   >
                     Next
                   </GoAButton>
                 )}
-                {!showNextBtn && (
+                {!showNextBtn && !isFormSubmitted && (
                   <div>
                     <GoAButton
                       type="primary"
                       onClick={handleSubmit}
-                      disabled={!isFormValid || !enabled}
+                      disabled={!isFormValid}
                       testId="stepper-submit-btn"
                     >
                       Submit

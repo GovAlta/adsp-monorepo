@@ -36,8 +36,8 @@ describe('addDataByOptions', () => {
     await ContextProviderC.addDataByOptions(key, url, location, type, values);
 
     // Expecting processDataFunction to be called with the response data
-    expect(ContextProviderC.getData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
-    expect(ContextProviderC.getAllData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
+    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
   });
   it('should add data by options single location single name', async () => {
     const key = 'testKey';
@@ -60,8 +60,8 @@ describe('addDataByOptions', () => {
     await ContextProviderC.addDataByOptions(key, url, location, type, values);
 
     // Expecting processDataFunction to be called with the response data
-    expect(ContextProviderC.getData('testKey')).toEqual(['Bob', 'Jim']);
-    expect(ContextProviderC.getAllData()).toEqual([{ testKey: ['Bob', 'Jim'] }]);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob', 'Jim']);
+    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob', 'Jim'] }]);
   });
 
   it('should add data by options with keys', async () => {
@@ -83,14 +83,14 @@ describe('addDataByOptions', () => {
     await ContextProviderC.addDataByOptions(key, url, location, type);
 
     // Expecting processDataFunction to be called with the response data
-    expect(ContextProviderC.getData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
-    expect(ContextProviderC.getAllData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
+    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
   });
 
-  it('should add data with addData', async () => {
+  it('should add data with addFormContextData', async () => {
     const data = { FirstName: 'Bob Smith', ' LastName': 'Jim Jones' };
-    ContextProviderC.addData('testKey', data);
-    expect(ContextProviderC.getData('testKey')).toEqual(data);
+    ContextProviderC.addFormContextData('testKey', data);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(data);
   });
 
   it('throws cors error when there is no data', async () => {
@@ -160,7 +160,7 @@ describe('addDataByOptions', () => {
     const token = 'testToken';
     const url = 'http://example.com/data';
     await ContextProviderC.addDataByUrl(key, url, processData, token);
-    expect(ContextProviderC.getData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
   });
 });
 
@@ -198,7 +198,7 @@ describe('contextProvider', () => {
   it('works with submit props', async () => {
     const onSubmitFunction = (text: string) => {
       console.log(text);
-      ContextProviderC.addData('submittedData', { text: text });
+      ContextProviderC.addFormContextData('submittedData', { text: text });
     };
     const SubmitComponent = () => {
       const Enumerators = useContext(JsonFormContext) as enumerators;
@@ -220,7 +220,7 @@ describe('contextProvider', () => {
       </ContextProvider>
     );
 
-    expect(ContextProviderC.getData('submittedData')).toEqual({ text: 'abc' });
+    expect(ContextProviderC.getFormContextData('submittedData')).toEqual({ text: 'abc' });
   });
 
   it('works with data props', async () => {

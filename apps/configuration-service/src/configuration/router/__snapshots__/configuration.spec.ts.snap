@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`router createServiceConfigurationRevision can create revision 1`] = `
+exports[`router configurationOperations can create revision 1`] = `
 {
   "latest": {
     "configuration": {},
@@ -12,7 +12,7 @@ exports[`router createServiceConfigurationRevision can create revision 1`] = `
 }
 `;
 
-exports[`router createServiceConfigurationRevision can set the active revision 1`] = `
+exports[`router configurationOperations can set the active revision 1`] = `
 {
   "active": 2,
   "name": "test-service",

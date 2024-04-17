@@ -112,14 +112,14 @@ internal class ScriptFunctions : IScriptFunctions
   }
 
 
-  public virtual DispositionResponse? DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason)
+  public virtual DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
   {
     var formServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(formServiceUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
     var token = _getToken().Result;
     var body = new
     {
-      dispositionStatus = dispositionState,
+      dispositionStatus,
       dispositionReason = reason,
     };
 

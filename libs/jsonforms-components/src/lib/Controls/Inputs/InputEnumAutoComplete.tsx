@@ -45,8 +45,8 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
     }
   }, [url, location, type, values, dataKey, enumerators]);
 
-  if (dataKey && enumerators.getData(dataKey)) {
-    const newData = enumerators.getData(dataKey);
+  if (dataKey && enumerators.getFormContextData(dataKey)) {
+    const newData = enumerators.getFormContextData(dataKey);
     // eslint-disable-next-line
     enumData = newData as any[];
     defaultProps.options = enumData;

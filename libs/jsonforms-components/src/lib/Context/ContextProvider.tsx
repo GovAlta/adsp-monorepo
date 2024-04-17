@@ -11,7 +11,7 @@ export interface enumerators {
   data: Map<string, () => any>;
   functions: Map<string, () => (file: File, propertyId: string) => void | undefined>;
   submitFunction: Map<string, () => (id: string) => void | undefined>;
-  addData: (key: string, data: Record<string, unknown> | unknown[]) => void;
+  addFormContextData: (key: string, data: Record<string, unknown> | unknown[]) => void;
   addDataByOptions: (
     key: string,
     url: string,
@@ -21,8 +21,8 @@ export interface enumerators {
   ) => string[];
   addDataByUrl: (key: string, url: string, processDataFunction: (data: object) => string[], token?: string) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getData: (key: string) => Record<string, any>;
-  getAllData: () => AllData;
+  getFormContextData: (key: string) => Record<string, any>;
+  getAllFormContextData: () => AllData;
 }
 
 interface FileManagement {
@@ -41,6 +41,7 @@ type Props = {
   children?: React.ReactNode;
   fileManagement?: FileManagement;
   submit?: SubmitManagement;
+  isFormSubmitted?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,7 +68,7 @@ class ContextProviderClass {
     functions: Map<string, () => ((file: File, propertyId: string) => void) | undefined>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submitFunction: Map<string, () => ((data: any) => void) | undefined>;
-    addData: (key: string, data: Record<string, unknown> | unknown[]) => void;
+    addFormContextData: (key: string, data: Record<string, unknown> | unknown[]) => void;
     addDataByOptions: (
       key: string,
       url: string,
@@ -77,11 +78,12 @@ class ContextProviderClass {
     ) => void;
     addDataByUrl: (key: string, url: string, processDataFunction: (data: object) => string[], token?: string) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getData: (key: string) => Record<string, any> | undefined;
-    getAllData: () => AllData;
+    getFormContextData: (key: string) => Record<string, any> | undefined;
+    getAllFormContextData: () => AllData;
+    isFormSubmitted?: boolean;
   };
 
-  addData = (key: string, data: Record<string, unknown> | unknown[]) => {
+  addFormContextData = (key: string, data: Record<string, unknown> | unknown[]) => {
     this.enumValues.set(key, () => data);
   };
 
@@ -114,11 +116,11 @@ class ContextProviderClass {
       data: this.enumValues,
       functions: this.enumFunctions,
       submitFunction: this.enumSubmitFunctions,
-      addData: this.addData,
+      addFormContextData: this.addFormContextData,
       addDataByOptions: this.addDataByOptions,
       addDataByUrl: this.addDataByUrl,
-      getData: this.getData,
-      getAllData: this.getAllData,
+      getFormContextData: this.getFormContextData,
+      getAllFormContextData: this.getAllFormContextData,
     };
 
     this.selfProps = {};
@@ -220,7 +222,7 @@ class ContextProviderClass {
    */
   // FIXME give some clue as to what data is being fetched.
   // e.g.is it getFormContextData?
-  getData = (key: string) => {
+  getFormContextData = (key: string) => {
     const dataFunction = this.baseEnumerator.data.get(key);
     return dataFunction && dataFunction();
   };
@@ -229,7 +231,7 @@ class ContextProviderClass {
    * Grabs all data
    *
    */
-  getAllData = () => {
+  getAllFormContextData = () => {
     const allData: AllData = [];
     this.baseEnumerator.data.forEach((d, key) => {
       allData.push({ [key]: d() });

@@ -37,8 +37,8 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
     }
   }, [url, location, type, values, dataKey, enumerators]);
 
-  if (dataKey && enumerators.getData(dataKey)) {
-    const newData = enumerators.getData(dataKey) as unknown[];
+  if (dataKey && enumerators.getFormContextData(dataKey)) {
+    const newData = enumerators.getFormContextData(dataKey) as unknown[];
 
     enumData = newData;
   }

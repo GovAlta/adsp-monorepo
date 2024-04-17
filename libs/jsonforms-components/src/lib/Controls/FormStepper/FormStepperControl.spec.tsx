@@ -164,10 +164,6 @@ const getForm = (
   );
 };
 
-afterEach(() => {
-  cleanup();
-});
-
 describe('Form Stepper Control', () => {
   it('can render an initial Categorization', () => {
     const renderer = render(getForm(formData));
@@ -518,5 +514,28 @@ describe('Form Stepper Control', () => {
       fireEvent.click(closeShadow!);
       expect(modal.getAttribute('open')).toBe('false');
     });
+  });
+
+  it('will call a context function when submitted', () => {
+    const onSubmit = jest.fn();
+    const form = getForm({
+      name: { firstName: 'Bob', lastName: 'Bing' },
+      address: { street: 'Sesame', city: 'Seattle' },
+    });
+    const renderer = render(<ContextProvider submit={{ submitForm: onSubmit }}>{form}</ContextProvider>);
+
+    // Move to review Page
+    const next = renderer.getByTestId('next-button');
+    const nextShadow = next.shadowRoot?.querySelector('button');
+    expect(nextShadow).not.toBeNull();
+    fireEvent.click(nextShadow!);
+    fireEvent.click(nextShadow!);
+
+    // submit
+    const submitBtn = renderer.getByTestId('stepper-submit-btn');
+    const submitShadow = submitBtn.shadowRoot?.querySelector('button');
+    expect(submitShadow).not.toBeNull();
+    fireEvent.click(submitShadow!);
+    expect(onSubmit).toBeCalledTimes(1);
   });
 });

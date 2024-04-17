@@ -37,7 +37,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     'Kenya',
   ];
 
-  enumerators.addData('countries', countries);
+  enumerators.addFormContextData('countries', countries);
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
 
