@@ -11,7 +11,7 @@ export const configurationSchema = {
           properties: {
             name: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
             description: { type: ['string', 'null'] },
-            payloadSchema: { type: 'object', $ref: 'http://json-schema.org/draft-07/schema#' },
+            payloadSchema: { $ref: 'http://json-schema.org/draft-07/schema#' },
             interval: {
               type: 'object',
               properties: {
