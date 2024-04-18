@@ -16,12 +16,11 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, uischema, options);
   const errorsFormInput = checkFieldValidity(props as ControlProps);
-
   return (
     <GoARadioGroup
       error={errorsFormInput.length > 0}
       name={`${options || appliedUiSchemaOptions.label}`}
-      testId={`${id || label}-jsonform-dropdown`}
+      testId={`${label || id}-jsonforms-radio`}
       value={data}
       disabled={!enabled}
       {...appliedUiSchemaOptions}
