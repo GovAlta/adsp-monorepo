@@ -219,6 +219,18 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
             }}
           />
         </GoAFormItem>
+        <GoAFormItem label="Start time">
+          <GoAInputTime
+            name="startTime"
+            value={startTime}
+            step={1}
+            width="100%"
+            testId="notice-form-start-time"
+            onChange={(name, value) => {
+              setStartTime(value);
+            }}
+          />
+        </GoAFormItem>
 
         <GoAFormItem label="End Date">
           <GoAInputDate
@@ -233,19 +245,6 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
               } else {
                 setErrors({ date: 'Please input right end date format!' });
               }
-            }}
-          />
-        </GoAFormItem>
-
-        <GoAFormItem label="Start time">
-          <GoAInputTime
-            name="startTime"
-            value={startTime}
-            step={1}
-            width="100%"
-            testId="notice-form-start-time"
-            onChange={(name, value) => {
-              setStartTime(value);
             }}
           />
         </GoAFormItem>
