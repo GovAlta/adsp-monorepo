@@ -36,11 +36,28 @@ export const populateDropdown = (schema, enumerators) => {
   Object.keys(newSchema.properties || {}).forEach((propertyName) => {
     const property = newSchema.properties || {};
     if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '') {
-      property[propertyName].enum = enumerators.getFormContextData(propertyName) as string[];
+      property[propertyName].enum = enumerators?.getFormContextData(propertyName) as string[];
     }
   });
 
   return newSchema as JsonSchema;
+};
+
+const JsonFormsWrapper = ({ definition, data, onChange }) => {
+  const enumerators = useContext(JsonFormContext) as enumerators;
+
+  return (
+    <JsonForms
+      ajv={ajv}
+      readonly={false}
+      schema={populateDropdown(definition.dataSchema, enumerators)}
+      uischema={definition.uiSchema}
+      data={data}
+      validationMode="ValidateAndShow"
+      renderers={GoARenderers}
+      onChange={onChange}
+    />
+  );
 };
 
 export const DraftForm: FunctionComponent<DraftFormProps> = ({
@@ -103,8 +120,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
-  const enumerators = useContext(JsonFormContext) as enumerators;
-
   return (
     <Grid>
       <GridItem md={1} />
@@ -123,16 +138,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             deleteFile: deleteFormFile,
           }}
         >
-          <JsonForms
-            ajv={ajv}
-            readonly={false}
-            schema={populateDropdown(definition.dataSchema, enumerators)}
-            uischema={definition.uiSchema}
-            data={data}
-            validationMode="ValidateAndShow"
-            renderers={GoARenderers}
-            onChange={onChange}
-          />
+          <JsonFormsWrapper definition={definition} data={data} onChange={onChange} />
         </ContextProvider>
         <GoAButtonGroup alignment="end">
           {showSubmit && (
