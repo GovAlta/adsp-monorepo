@@ -19,8 +19,10 @@ async function getTenantEventMetrics(
   const tenants = await getTenants(tenantApiUrl, accessToken);
 
   const valueApiUrl = await directoryLookup(directoryUrl, 'urn:ads:platform:value-service:v1');
+
+  console.log(chalk`Metrics since ${since}`);
   for (const tenant of tenants) {
-    console.log(chalk`{green ${tenant.name}} (ID: ${tenant.id}) since {green ${since}}`);
+    console.log(chalk`\n{green ${tenant.name}} (ID: ${tenant.id})`);
     accessToken = await getAccessToken(accessServiceUrl, clientId, clientSecret);
     const metrics = await getEventMetrics(valueApiUrl, accessToken, tenant.id, since, eventLike);
     for (const { name, values } of metrics) {
