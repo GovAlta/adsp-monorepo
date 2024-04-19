@@ -66,11 +66,13 @@ describe('EnumSelect component', () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
       const component = render(<EnumSelect {...props} />);
       const dropdown = component.getByTestId('enum-jsonform');
-      debug(dropdown);
-      const onChange = fireEvent.change(dropdown, { target: { value: 'Option2' } });
-      handleChangeMock();
-      expect(props.handleChange).toBeCalled();
-      expect(onChange).toBe(true);
+      //fireEvent.change(dropdown, { target: { value: 'Option2' } });
+      fireEvent(
+        dropdown,
+        new CustomEvent('_change', {
+          detail: { name: 'Enum', value: 'Option2' },
+        })
+      );
       expect(handleChangeMock.mock.calls.length).toBe(1);
     });
   });
