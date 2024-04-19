@@ -23,6 +23,7 @@ export interface enumerators {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getFormContextData: (key: string) => Record<string, any>;
   getAllFormContextData: () => AllData;
+  isFormSubmitted: boolean;
 }
 
 interface FileManagement {
@@ -155,6 +156,7 @@ class ContextProviderClass {
     if (!props.children) {
       return null;
     }
+    this.baseEnumerator.isFormSubmitted = props.isFormSubmitted ?? false;
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
   };
 
