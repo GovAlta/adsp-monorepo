@@ -29,6 +29,7 @@ import {
   GoAFormActionOverwrite,
   AllApplications,
   SkeletonLoading,
+  HeaderContainer,
 } from './styled-components';
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -245,11 +246,13 @@ const ServiceStatusPage = (): JSX.Element => {
 
   return (
     <div>
-      <GoAHeader
-        serviceLevel="live"
-        serviceName="Alberta Digital Service Platform - Status & Outages "
-        serviceHome="/"
-      />
+      <HeaderContainer>
+        <GoAHeader
+          serviceLevel="live"
+          serviceName="Alberta Digital Service Platform - Status & Outages "
+          serviceHome="/"
+        />
+      </HeaderContainer>
       {/* TODO: re-visit this part when design and card or breadcrumb is ready.
       <div className="goa-banner">
         <div className="small-font">Alberta Digital Service Platform &rarr; Status & Outages</div>
