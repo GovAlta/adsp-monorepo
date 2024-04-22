@@ -77,9 +77,7 @@ const HelpContents = ({ elements, isParent = false }: { elements: CustomControlE
           enabled={false}
           visible={true}
           path={''}
-          handleChange={function (path: string, value: any): void {
-            throw new Error('Function not implemented.');
-          }}
+          handleChange={(): void => {}}
           rootSchema={{}}
           id={''}
           schema={{}}
