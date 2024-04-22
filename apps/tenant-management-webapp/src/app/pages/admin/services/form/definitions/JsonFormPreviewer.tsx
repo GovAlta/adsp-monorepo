@@ -63,17 +63,19 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
 
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
-      <JsonForms
-        ajv={ajv}
-        renderers={GoARenderers}
-        cells={GoACells}
-        onChange={onChange}
-        data={data}
-        validationMode={'ValidateAndShow'}
-        //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
-        schema={{ ...lastGoodSchema }}
-        uischema={{ ...lastGoodUiSchema }}
-      />
+      {JSON.stringify(lastGoodUiSchema, null, 2) === uischema && (
+        <JsonForms
+          ajv={ajv}
+          renderers={GoARenderers}
+          cells={GoACells}
+          onChange={onChange}
+          data={data}
+          validationMode={'ValidateAndShow'}
+          //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
+          schema={{ ...lastGoodSchema }}
+          uischema={{ ...lastGoodUiSchema }}
+        />
+      )}
     </ErrorBoundary>
   );
 };
