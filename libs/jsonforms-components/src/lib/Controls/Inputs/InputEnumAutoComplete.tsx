@@ -1,14 +1,5 @@
-import React, { useContext, useEffect } from 'react';
-import {
-  ControlProps,
-  isEnumControl,
-  and,
-  optionIs,
-  OwnPropsOfEnum,
-  RankedTester,
-  rankWith,
-  JsonSchema,
-} from '@jsonforms/core';
+import { useContext, useEffect } from 'react';
+import { ControlProps, isEnumControl, and, optionIs, OwnPropsOfEnum, RankedTester, rankWith } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -34,11 +25,6 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
   const type = uischema?.options?.enumContext?.type;
   const values = uischema?.options?.enumContext?.values;
 
-  const defaultProps = {
-    options: enumData,
-    getOptionLabel: (option: Array<string>) => option,
-  };
-
   useEffect(() => {
     if (dataKey && url) {
       enumerators.addDataByOptions(dataKey, url, location, type, values);
@@ -47,9 +33,7 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
 
   if (dataKey && enumerators.getFormContextData(dataKey)) {
     const newData = enumerators.getFormContextData(dataKey);
-    // eslint-disable-next-line
-    enumData = newData as any[];
-    defaultProps.options = enumData;
+    enumData = newData as unknown[];
   }
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;

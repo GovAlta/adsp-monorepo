@@ -2,8 +2,9 @@ import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonForms } from '@jsonforms/react';
 import Ajv from 'ajv8';
-import { GoACells, GoARenderers } from '../../../index';
+import { ContextProviderC, GoACells, GoARenderers } from '../../../index';
 import { UISchemaElement } from '@jsonforms/core';
+import axios from 'axios';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -85,5 +86,33 @@ describe('Input enum autocomplete Control', () => {
       })
     );
     expect(dropdown.getAttribute('value')).toBe('b');
+  });
+
+  it('can use options provided by API call', async () => {
+    const key = 'testKey';
+    const url = 'http://example.com/data';
+    const location = ['nested', 'data'];
+    const type = 'values';
+    const values = ['firstName', 'lastName'];
+
+    const responseData = {
+      nested: {
+        data: [
+          { firstName: 'Bob', lastName: 'Smith' },
+          { firstName: 'Jim', lastName: 'Jones' },
+        ],
+      },
+    };
+
+    // Mocking axios.get to return the response data
+    jest.spyOn(axios, 'get').mockResolvedValue({ data: responseData });
+
+    // Calling the function
+
+    await ContextProviderC.addDataByOptions(key, url, location, type, values);
+
+    // Expecting processDataFunction to be called with the response data
+    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
+    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
   });
 });
