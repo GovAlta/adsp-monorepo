@@ -23,6 +23,7 @@ export interface enumerators {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getFormContextData: (key: string) => Record<string, any>;
   getAllFormContextData: () => AllData;
+  isFormSubmitted: boolean;
 }
 
 interface FileManagement {
@@ -47,7 +48,7 @@ type Props = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 };
 
-class ContextProviderClass {
+export class ContextProviderClass {
   selfProps: Props | undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   enumValues: Map<string, () => Record<string, any>> = new Map<string, () => Record<string, any>>();
@@ -155,6 +156,7 @@ class ContextProviderClass {
     if (!props.children) {
       return null;
     }
+    this.baseEnumerator.isFormSubmitted = props.isFormSubmitted ?? false;
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
   };
 
@@ -246,6 +248,6 @@ class ContextProviderClass {
 }
 
 export const ContextProviderC = new ContextProviderClass();
-export const ContextProvider = ContextProviderC.setup;
+export const ContextProviderFactory = () => new ContextProviderClass().setup;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const JsonFormContext = createContext<any>(null);

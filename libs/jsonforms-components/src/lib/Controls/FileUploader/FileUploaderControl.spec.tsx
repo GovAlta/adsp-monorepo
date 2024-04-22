@@ -1,6 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ContextProvider, JsonFormContext as Context } from '../../Context/index';
+import { ContextProviderFactory } from '../../Context/index';
 import { ControlElement, UISchemaElement } from '@jsonforms/core';
 import { GoACells, GoARenderers } from '../../../index';
 import { JsonForms } from '@jsonforms/react';
@@ -44,6 +44,8 @@ const mockUpload = jest.fn();
 const mockDownload = jest.fn();
 const mockDelete = jest.fn();
 const fileList = { supportingDoc: { urn: 'urn:1q3e131', filename: 'bob.pdf' } };
+const ContextProvider = ContextProviderFactory();
+
 const getForm = (schema: object, uiSchema: UISchemaElement, data: object = {}) => {
   return (
     <ContextProvider
