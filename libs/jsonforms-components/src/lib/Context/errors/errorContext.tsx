@@ -1,6 +1,12 @@
 import react, { createContext, useReducer, ReactNode, useMemo } from 'react';
-import { CustomerErrorDispatch, Errors, customErrorReducer, CUSTOM_ERROR_ADD_ACTION } from './reducer';
-import { ErrorObject } from 'ajv';
+import {
+  CustomError,
+  CustomErrorIdentifier,
+  customErrorReducer,
+  CUSTOM_ERROR_ADD_ACTION,
+  CUSTOM_ERROR_DELETE_ACTION,
+  CUSTOM_ERROR_RESET_ACTION,
+} from './reducer';
 
 export const CustomErrorContext = createContext<any>(null);
 
@@ -12,13 +18,21 @@ export const CustomErrorProvider = ({ children }: CustomErrorProviderProps): JSX
 
   const context = useMemo(() => {
     return {
-      errors: errors,
       customErrorDispatch: dispatch,
-      addCustomError: (error: ErrorObject) => {
+      selectCustomerErrorsByPath: (path: string) => {
+        return errors.filter((e) => e.path === path).map((e) => e.error);
+      },
+      addCustomError: (error: CustomError) => {
         dispatch({ type: CUSTOM_ERROR_ADD_ACTION, error });
       },
+      removeCustomError: (errorIdentifier: CustomErrorIdentifier) => {
+        dispatch({ type: CUSTOM_ERROR_DELETE_ACTION, errorIdentifier });
+      },
+      resetCustomerError: (errorIdentifier: CustomErrorIdentifier) => {
+        dispatch({ type: CUSTOM_ERROR_RESET_ACTION, errorIdentifier });
+      },
     };
-  }, []);
+  }, [errors]);
 
   return <CustomErrorContext.Provider value={context}>{children}</CustomErrorContext.Provider>;
 };
