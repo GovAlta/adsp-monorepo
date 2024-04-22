@@ -8,7 +8,9 @@ import ajv from 'ajv8';
 import { Translator } from '@jsonforms/core';
 import { AjvProps } from '../../util/layout';
 import { TranslateProps } from '@jsonforms/react';
-import { ContextProvider } from '../../../lib/Context';
+import { ContextProviderFactory } from '../../../lib/Context';
+
+export const ContextProvider = ContextProviderFactory();
 const ajvInstance = new ajv({ allErrors: true, verbose: true, validateFormats: false });
 
 jest.mock('@jsonforms/core', () => ({
