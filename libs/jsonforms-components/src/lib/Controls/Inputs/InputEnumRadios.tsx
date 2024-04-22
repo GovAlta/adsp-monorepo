@@ -28,7 +28,7 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
       {...uischema?.options?.componentProps}
     >
       {enumData.map((value) => {
-        return <GoARadioItem name={value} value={`${value}`} label={value} {...appliedUiSchemaOptions} />;
+        return <GoARadioItem name={value} value={`${value}`} {...appliedUiSchemaOptions} label={value} />;
       })}
     </GoARadioGroup>
   );
