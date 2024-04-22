@@ -61,20 +61,31 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataSchemaError, uiSchemaError]);
 
+  const JsonFormsWrapper = () => {
+    return (
+      <JsonForms
+        ajv={ajv}
+        renderers={GoARenderers}
+        cells={GoACells}
+        onChange={onChange}
+        data={data}
+        validationMode={'ValidateAndShow'}
+        //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
+        schema={{ ...lastGoodSchema }}
+        uischema={{ ...lastGoodUiSchema }}
+      />
+    );
+  };
+
+  //must appear to be different to force re-render
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
-      {JSON.stringify(lastGoodUiSchema, null, 2) === uischema && (
-        <JsonForms
-          ajv={ajv}
-          renderers={GoARenderers}
-          cells={GoACells}
-          onChange={onChange}
-          data={data}
-          validationMode={'ValidateAndShow'}
-          //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
-          schema={{ ...lastGoodSchema }}
-          uischema={{ ...lastGoodUiSchema }}
-        />
+      {JSON.stringify(lastGoodUiSchema, null, 2) === uischema ? (
+        <JsonFormsWrapper />
+      ) : (
+        <div>
+          <JsonFormsWrapper />
+        </div>
       )}
     </ErrorBoundary>
   );

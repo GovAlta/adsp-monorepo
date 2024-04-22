@@ -8,51 +8,77 @@
     "build-encodeSecrets": {
       "executor": "@nx/webpack:webpack",
       "options": {
-        "outputPath": "dist/tools/scripts/encodeSecrets",
+        "outputPath": "dist/tools/scripts",
+        "outputFileName": "encodeSecrets",
         "main": "tools/scripts/encodeSecrets/index.ts",
-        "tsConfig": "tools/tsconfig.scripts.json",
+        "tsConfig": "tools/scripts/tsconfig.scripts.json",
         "assets": [],
         "buildLibsFromSource": true,
         "compiler": "tsc",
         "target": "node",
-        "webpackConfig": "tools/scripts/webpack.config.js"
+        "webpackConfig": "tools/scripts/webpack.config.js",
+        "sourceMap": true
       },
-      "outputs": ["{options.outputPath}"]
+      "outputs": [
+        "{options.outputPath}"
+      ]
     },
-    "build-loadDirectoryData": {
+    "build-tenantEventMetrics": {
       "executor": "@nx/webpack:webpack",
       "options": {
-        "outputPath": "dist/tools/scripts/loadDirectoryData",
-        "main": "tools/scripts/loadDirectoryData/index.ts",
-        "tsConfig": "tools/tsconfig.scripts.json",
+        "outputPath": "dist/tools/scripts",
+        "outputFileName": "tenantEventMetrics",
+        "main": "tools/scripts/tenantEventMetrics/index.ts",
+        "tsConfig": "tools/scripts/tsconfig.scripts.json",
         "assets": [],
         "buildLibsFromSource": true,
         "compiler": "tsc",
         "target": "node",
-        "webpackConfig": "tools/scripts/webpack.config.js"
+        "webpackConfig": "tools/scripts/webpack.config.js",
+        "sourceMap": true
       },
-      "outputs": ["{options.outputPath}"]
+      "outputs": [
+        "{options.outputPath}"
+      ]
     },
-    "execute": {
+    "run-encodeSecrets": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [
           {
-            "command": "nx run tools-scripts:build-{args.script}"
-          },
-          {
-            "command": "node dist/tools/scripts/{args.script}/main.js"
+            "command": "node dist/tools/scripts/encodeSecrets.js",
+            "forwardAllArgs": true
           }
         ],
         "parallel": false
-      }
+      },
+      "dependsOn": [
+        "build-encodeSecrets"
+      ]
+    },
+    "run-tenantEventMetrics": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "node dist/tools/scripts/tenantEventMetrics.js",
+            "forwardAllArgs": true
+          }
+        ],
+        "parallel": false
+      },
+      "dependsOn": [
+        "build-tenantEventMetrics"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
       "options": {
         "jestConfig": "tools/scripts/jest.config.ts"
       },
-      "outputs": ["{workspaceRoot}/coverage/tools/scripts"]
+      "outputs": [
+        "{workspaceRoot}/coverage/tools/scripts"
+      ]
     }
   },
   "tags": []

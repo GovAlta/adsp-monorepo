@@ -86,6 +86,8 @@ const initializeApp = async () => {
             ...coreConfig,
           },
         ],
+        useLongConfigurationCacheTTL: true,
+        enableConfigurationInvalidation: true,
       },
       { logger }
     );

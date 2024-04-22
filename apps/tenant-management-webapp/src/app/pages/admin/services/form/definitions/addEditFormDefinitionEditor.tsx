@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
-import { ContextProvider } from '@abgov/jsonforms-components';
+import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import { Disposition, FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
@@ -11,6 +11,7 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
+import { JsonFormContext } from '@abgov/jsonforms-components';
 
 import {
   TextLoadingIndicator,
@@ -74,6 +75,7 @@ import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/aut
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { hasSchemaErrors, parseDataSchema, parseUiSchema } from './schemaUtils';
 import { CustomLoader } from '@components/CustomLoader';
+export const ContextProvider = ContextProviderFactory();
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = parseUiSchema<FormDefinition>(JSON.stringify(prev)).get();
