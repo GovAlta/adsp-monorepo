@@ -16,12 +16,11 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, uischema, options);
   const errorsFormInput = checkFieldValidity(props as ControlProps);
-
   return (
     <GoARadioGroup
       error={errorsFormInput.length > 0}
       name={`${options || appliedUiSchemaOptions.label}`}
-      testId={`${id || label}-jsonform-dropdown`}
+      testId={`${label || id}-jsonforms-radio`}
       value={data}
       disabled={!enabled}
       {...appliedUiSchemaOptions}
@@ -29,7 +28,7 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
       {...uischema?.options?.componentProps}
     >
       {enumData.map((value) => {
-        return <GoARadioItem name={value} value={`${value}`} label={value} {...appliedUiSchemaOptions} />;
+        return <GoARadioItem name={value} value={`${value}`} {...appliedUiSchemaOptions} label={value} />;
       })}
     </GoARadioGroup>
   );

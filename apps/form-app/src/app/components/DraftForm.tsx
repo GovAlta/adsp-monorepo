@@ -1,4 +1,4 @@
-import { GoARenderers, ContextProvider, ajv, JsonFormContext, enumerators } from '@abgov/jsonforms-components';
+import { GoARenderers, ajv, JsonFormContext, enumerators, ContextProviderFactory } from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { UISchemaElement, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
@@ -18,6 +18,8 @@ import {
 } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 
+export const ContextProvider = ContextProviderFactory();
+
 export type JsonSchema = JsonSchema4 | JsonSchema7;
 interface DraftFormProps {
   definition: FormDefinition;
@@ -36,11 +38,28 @@ export const populateDropdown = (schema, enumerators) => {
   Object.keys(newSchema.properties || {}).forEach((propertyName) => {
     const property = newSchema.properties || {};
     if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '') {
-      property[propertyName].enum = enumerators.getFormContextData(propertyName) as string[];
+      property[propertyName].enum = enumerators?.getFormContextData(propertyName) as string[];
     }
   });
 
   return newSchema as JsonSchema;
+};
+
+const JsonFormsWrapper = ({ definition, data, onChange }) => {
+  const enumerators = useContext(JsonFormContext) as enumerators;
+
+  return (
+    <JsonForms
+      ajv={ajv}
+      readonly={false}
+      schema={populateDropdown(definition.dataSchema, enumerators)}
+      uischema={definition.uiSchema}
+      data={data}
+      validationMode="ValidateAndShow"
+      renderers={GoARenderers}
+      onChange={onChange}
+    />
+  );
 };
 
 export const DraftForm: FunctionComponent<DraftFormProps> = ({
@@ -103,8 +122,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
-  const enumerators = useContext(JsonFormContext) as enumerators;
-
   return (
     <Grid>
       <GridItem md={1} />
@@ -123,16 +140,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             deleteFile: deleteFormFile,
           }}
         >
-          <JsonForms
-            ajv={ajv}
-            readonly={false}
-            schema={populateDropdown(definition.dataSchema, enumerators)}
-            uischema={definition.uiSchema}
-            data={data}
-            validationMode="ValidateAndShow"
-            renderers={GoARenderers}
-            onChange={onChange}
-          />
+          <JsonFormsWrapper definition={definition} data={data} onChange={onChange} />
         </ContextProvider>
         <GoAButtonGroup alignment="end">
           {showSubmit && (

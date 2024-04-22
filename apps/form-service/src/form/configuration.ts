@@ -12,7 +12,7 @@ export const configurationSchema = {
         applicantRoles: { type: 'array', items: { type: 'string' } },
         assessorRoles: { type: 'array', items: { type: 'string' } },
         clerkRoles: { type: 'array', items: { type: 'string' } },
-        dataSchema: { type: 'object', $ref: 'http://json-schema.org/draft-07/schema#' },
+        dataSchema: { $ref: 'http://json-schema.org/draft-07/schema#' },
         uiSchema: { type: 'object' },
         dispositionStates: {
           type: 'array',

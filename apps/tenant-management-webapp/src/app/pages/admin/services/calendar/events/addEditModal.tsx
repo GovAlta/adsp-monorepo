@@ -207,6 +207,19 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             }}
           />
         </GoAFormItem>
+        <GoAFormItem label="Start Time">
+          <GoAInputTime
+            name="StartTime"
+            value={startTime}
+            step={1}
+            width="100%"
+            testId="calendar-event-modal-start-time-input"
+            disabled={calendarEvent?.isAllDay}
+            onChange={(name, value) => {
+              setCalendarEvent({ ...calendarEvent, start: setTimeString(startDate, value) });
+            }}
+          />
+        </GoAFormItem>
         <GoAFormItem label="End Date" error={errors?.['end']}>
           <GoAInputDate
             name="endDate"
@@ -218,20 +231,6 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
               validators['end'].check(value.toString());
               setEndDate(value.toLocaleString());
               setCalendarEvent({ ...calendarEvent, end: setTimeString(value.toLocaleString(), endTime) });
-            }}
-          />
-        </GoAFormItem>
-
-        <GoAFormItem label="Start Time">
-          <GoAInputTime
-            name="StartTime"
-            value={startTime}
-            step={1}
-            width="100%"
-            testId="calendar-event-modal-start-time-input"
-            disabled={calendarEvent?.isAllDay}
-            onChange={(name, value) => {
-              setCalendarEvent({ ...calendarEvent, start: setTimeString(startDate, value) });
             }}
           />
         </GoAFormItem>

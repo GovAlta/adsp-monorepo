@@ -87,3 +87,8 @@ export const AllApplications = styled.div`
     margin-bottom: 1rem;
   }
 `;
+export const HeaderContainer = styled.div`
+  position: relative;
+  border-bottom: 1px solid #dcdcdc;
+  margin-bottom: 10px;
+`;

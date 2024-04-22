@@ -36,7 +36,10 @@ export function* fetchApplications(action: FetchApplicationsAction): SagaIterato
 
     const applications = yield call([api, api.getApplications], unKebabName);
     const noticesRaw = yield call([api, api.getNotices], unKebabName);
-    const notices = parseNotices(noticesRaw);
+    const validNotices = noticesRaw.filter((notice) => {
+      return new Date(notice.endDate) > new Date();
+    });
+    const notices = parseNotices(validNotices);
     yield put(fetchNoticesSuccess(notices));
     // Bind notices to application while keep one copy notices independently.
     const sortedApplications = bindApplicationsWithNotices(applications, notices);
