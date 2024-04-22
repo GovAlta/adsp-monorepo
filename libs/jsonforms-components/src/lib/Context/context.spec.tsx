@@ -1,9 +1,11 @@
 import React, { ReactNode, useContext } from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ContextProvider, enumerators } from '.';
+import { enumerators, ContextProviderC, ContextProviderFactory } from '.';
 import axios from 'axios';
-import { JsonFormContext, ContextProviderC } from '.';
+import { JsonFormContext } from '.';
+
+export const ContextProvider = ContextProviderFactory();
 
 jest.mock('axios');
 

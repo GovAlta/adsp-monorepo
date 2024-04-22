@@ -47,7 +47,7 @@ type Props = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 };
 
-class ContextProviderClass {
+export class ContextProviderClass {
   selfProps: Props | undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   enumValues: Map<string, () => Record<string, any>> = new Map<string, () => Record<string, any>>();
@@ -246,6 +246,6 @@ class ContextProviderClass {
 }
 
 export const ContextProviderC = new ContextProviderClass();
-export const ContextProvider = ContextProviderC.setup;
+export const ContextProviderFactory = () => new ContextProviderClass().setup;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const JsonFormContext = createContext<any>(null);

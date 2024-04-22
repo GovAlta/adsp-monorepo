@@ -1,8 +1,10 @@
-import { fireEvent, render } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ContextProvider, JsonFormContext as Context } from '../../Context/index';
+import { ContextProviderFactory } from '../../Context/index';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { FileUploader, FileUploaderLayoutRendererProps } from './FileUploaderControl';
+
+export const ContextProvider = ContextProviderFactory();
 
 const fileUploaderUiSchema: ControlElement = {
   type: 'Control',

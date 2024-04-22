@@ -1,4 +1,4 @@
-import { GoARenderers, ContextProvider, ajv, JsonFormContext, enumerators } from '@abgov/jsonforms-components';
+import { GoARenderers, ajv, JsonFormContext, enumerators, ContextProviderFactory } from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { UISchemaElement, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
@@ -17,6 +17,8 @@ import {
   uploadFile,
 } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
+
+export const ContextProvider = ContextProviderFactory();
 
 export type JsonSchema = JsonSchema4 | JsonSchema7;
 interface DraftFormProps {

@@ -1,9 +1,10 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Category, UISchemaElement } from '@jsonforms/core';
-import { ContextProvider, GoARenderers } from '../../../index';
+import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
+export const ContextProvider = ContextProviderFactory();
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
