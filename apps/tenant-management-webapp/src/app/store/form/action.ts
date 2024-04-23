@@ -8,6 +8,7 @@ export const UPDATE_FORM_DEFINITION_SUCCESS_ACTION = 'form/UPDATE_FORM_DEFINITIO
 
 export const DELETE_FORM_DEFINITION_ACTION = 'form/DELETE_FORM_DEFINITION_ACTION';
 export const DELETE_FORM_DEFINITION_SUCCESS_ACTION = 'form/DELETE_FORM_DEFINITION_SUCCESS_ACTION';
+export const DELETE_FORM_BY_ID_ACTION = 'form/DELETE_FORM_BY_ID_ACTION';
 
 export interface FetchFormDefinitionsAction {
   type: typeof FETCH_FORM_DEFINITIONS_ACTION;
@@ -39,12 +40,18 @@ export interface DeleteFormDefinitionSuccessAction {
   payload: Record<string, FormDefinition>;
 }
 
+export interface DeleteFormByIDAction {
+  type: typeof DELETE_FORM_BY_ID_ACTION;
+  id: string;
+}
+
 export type FormActionTypes =
   | FetchFormDefinitionsSuccessAction
   | FetchFormDefinitionsAction
   | DeleteFormDefinitionAction
   | DeleteFormDefinitionSuccessAction
   | UpdateFormDefinitionsAction
+  | DeleteFormByIDAction
   | UpdateFormDefinitionsSuccessAction;
 
 export const updateFormDefinition = (definition: FormDefinition, options?: string): UpdateFormDefinitionsAction => ({
@@ -81,4 +88,9 @@ export const getFormDefinitionsSuccess = (
 ): FetchFormDefinitionsSuccessAction => ({
   type: FETCH_FORM_DEFINITIONS_SUCCESS_ACTION,
   payload: results,
+});
+
+export const deleteFormById = (id: string): DeleteFormByIDAction => ({
+  type: DELETE_FORM_BY_ID_ACTION,
+  id,
 });
