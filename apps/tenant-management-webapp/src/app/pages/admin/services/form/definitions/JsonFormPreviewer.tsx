@@ -61,8 +61,8 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataSchemaError, uiSchemaError]);
 
-  return (
-    <ErrorBoundary fallbackRender={FallbackRender}>
+  const JsonFormsWrapper = () => {
+    return (
       <JsonForms
         ajv={ajv}
         renderers={GoARenderers}
@@ -74,6 +74,19 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
         schema={{ ...lastGoodSchema }}
         uischema={{ ...lastGoodUiSchema }}
       />
+    );
+  };
+
+  //must appear to be different to force re-render
+  return (
+    <ErrorBoundary fallbackRender={FallbackRender}>
+      {JSON.stringify(lastGoodUiSchema, null, 2) === uischema ? (
+        <JsonFormsWrapper />
+      ) : (
+        <div>
+          <JsonFormsWrapper />
+        </div>
+      )}
     </ErrorBoundary>
   );
 };
