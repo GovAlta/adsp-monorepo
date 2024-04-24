@@ -32,7 +32,7 @@ import {
 } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { getAllRequiredFields } from './util/getRequiredFields';
-import { RenderFormFields } from './util/GenerateFormFields';
+import { RenderFormReviewFields } from './util/RenderFormReviewFields';
 import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
 import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } from './StepperContext';
@@ -218,7 +218,11 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                           </Anchor>
                         </ReviewItemHeader>
                         <Grid>
-                          <RenderFormFields elements={category.elements} data={data} requiredFields={requiredFields} />
+                          <RenderFormReviewFields
+                            elements={category.elements}
+                            data={data}
+                            requiredFields={requiredFields}
+                          />
                         </Grid>
                       </ReviewItemSection>
                     );

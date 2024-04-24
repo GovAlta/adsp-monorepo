@@ -3,6 +3,7 @@ import {
   UPDATE_FORM_DEFINITION_SUCCESS_ACTION,
   DELETE_FORM_DEFINITION_SUCCESS_ACTION,
   FormActionTypes,
+  DELETE_FORM_BY_ID_ACTION,
 } from './action';
 
 import { FormState } from './model';
@@ -26,6 +27,18 @@ export default function (state: FormState = defaultState, action: FormActionType
           ...action.payload,
         },
       };
+
+    case DELETE_FORM_BY_ID_ACTION: {
+      const id = action?.id;
+
+      if (id in state.definitions) {
+        delete state.definitions[id];
+      }
+
+      return {
+        ...state,
+      };
+    }
 
     case DELETE_FORM_DEFINITION_SUCCESS_ACTION:
       return {

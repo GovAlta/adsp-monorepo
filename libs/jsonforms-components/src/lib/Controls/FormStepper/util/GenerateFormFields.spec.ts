@@ -1,59 +1,6 @@
-import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { getFormFieldValue, RenderFormFields, resolveLabelFromScope } from './GenerateFormFields';
-const MockElement = [
-  {
-    type: 'Control',
-    scope: '#/properties/firstName',
-  },
-];
-const MockData = {
-  firstName: 'John',
-  testCategoryAddress: true,
-  fileUploader: 'urn:ads:platform:file-service:v1:/files/791a90e4-6382-46c1-b0cf-a2c370e424f0',
-};
+import { getFormFieldValue, resolveLabelFromScope } from './GenerateFormFields';
 
-const MockUISchema = [
-  {
-    type: 'Category',
-    label: 'Personal Information',
-    elements: [
-      {
-        type: 'Control',
-        scope: '#/properties/testCategoryAddress',
-      },
-      {
-        type: 'Control',
-        scope: '#/properties/firstName',
-      },
-      {
-        type: 'Control',
-        scope: '#/properties/fileUploader',
-        options: {
-          variant: 'button',
-        },
-      },
-    ],
-  },
-  {
-    type: 'Category',
-    i18n: 'address',
-    label: 'Address Information',
-    elements: [
-      {
-        type: 'Control',
-        scope: '#/properties/address/properties/street',
-      },
-      {
-        type: 'Control',
-        scope: '#/properties/address/properties/city',
-      },
-    ],
-  },
-];
-const MockRequiredFields = ['firstName'];
-
-//mock data
 const data = {
   firstName: 'Alex',
   address: {
@@ -65,12 +12,6 @@ const data1 = {
   address: {
     street: '',
   },
-};
-
-const translator = {
-  id: '',
-  defaultMessage: '',
-  values: '',
 };
 
 describe('resolveLabelFromScope', () => {
@@ -139,32 +80,5 @@ describe('ResolveLabelFromScope function', () => {
   it('returns an empty string if the scope does not end with a valid property name', () => {
     const invalidScope = '#/properties/';
     expect(resolveLabelFromScope(invalidScope)).toBeNull();
-  });
-});
-
-describe('Generate Form Fields', () => {
-  it('should render correctly', () => {
-    const LoadComponent = () => (
-      <RenderFormFields elements={MockUISchema[0].elements} data={MockData} requiredFields={MockRequiredFields} />
-    );
-    render(<LoadComponent />);
-    expect(screen.getByText(/First name/)).toBeInTheDocument();
-    expect(screen.getByText(/John/)).toBeInTheDocument();
-    expect(screen.getByText(/\*:/)).toBeInTheDocument();
-  });
-  it('should not have asterisk', () => {
-    const LoadComponent = () => (
-      <RenderFormFields elements={MockUISchema[1].elements} data={MockData} requiredFields={MockRequiredFields} />
-    );
-    render(<LoadComponent />);
-    expect(screen.getByText(/Street/)).toBeInTheDocument();
-    expect(screen.getByText(/City/)).toBeInTheDocument();
-  });
-  it('should include file information', () => {
-    const LoadComponent = () => (
-      <RenderFormFields elements={MockUISchema[0].elements} data={MockData} requiredFields={MockRequiredFields} />
-    );
-    render(<LoadComponent />);
-    expect(screen.getByText(/File uploader /)).toBeInTheDocument();
   });
 });
