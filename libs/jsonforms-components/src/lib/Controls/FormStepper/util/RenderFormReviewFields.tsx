@@ -1,59 +1,25 @@
-import { UISchemaElement, Category, Categorization, isVisible } from '@jsonforms/core';
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import { Grid, GridItem } from '../../../common/Grid';
+import React from 'react';
 import { ListWithDetail, ListWithDetailHeading } from '../styled-components';
 import { JsonFormContext } from '../../../Context';
+import { getFormFieldValue, resolveLabelFromScope } from './GenerateFormFields';
+import { Categorization, Category, UISchemaElement } from '@jsonforms/core';
 
-interface RenderFormFieldsProps {
+interface RenderFormReviewFieldsProps {
   elements: UISchemaElement[] | (Category | Categorization)[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   requiredFields: string[];
 }
 
-export const resolveLabelFromScope = (scope: string) => {
-  // eslint-disable-next-line no-useless-escape
-  const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
-  const isValid = validPatternRegex.test(scope);
-  if (!isValid) return null;
-
-  const lastSegment = scope.split('/').pop();
-
-  if (lastSegment) {
-    const lowercased = lastSegment.replace(/([A-Z])/g, ' $1').toLowerCase();
-    return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
-  }
-  return '';
-};
-
-export const getFormFieldValue = (scope: string, data: object) => {
-  if (data !== undefined) {
-    const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let currentValue: any = data;
-    for (const key of pathArray) {
-      if (currentValue[key] === undefined) {
-        return '';
-      }
-      currentValue = currentValue[key];
-    }
-    return Array.isArray(currentValue)
-      ? currentValue[currentValue.length - 1]
-      : typeof currentValue === 'object'
-      ? ''
-      : currentValue;
-  } else {
-    return '';
-  }
-};
-
-export const RenderFormFields: React.FC<RenderFormFieldsProps> = ({ elements, data, requiredFields }) => {
+export const RenderFormReviewFields: React.FC<RenderFormReviewFieldsProps> = ({ elements, data, requiredFields }) => {
   const enumerators = useContext(JsonFormContext);
   const downloadTriggerFunction = enumerators?.functions?.get('download-file');
   const downloadTrigger = downloadTriggerFunction && downloadTriggerFunction();
   const fileListValue = enumerators?.data?.get('file-list');
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
 
   const downloadFile = (file: File, propertyId: string) => {
@@ -92,32 +58,27 @@ export const RenderFormFields: React.FC<RenderFormFieldsProps> = ({ elements, da
     } else if (clonedElement.type !== 'ListWithDetail' && clonedElement?.elements) {
       return (
         <React.Fragment key={index}>
-          <RenderFormFields elements={clonedElement.elements} data={data} requiredFields={requiredFields} />
+          <RenderFormReviewFields elements={clonedElement.elements} data={data} requiredFields={requiredFields} />
         </React.Fragment>
       );
     } else if (clonedElement.type === 'ListWithDetail' && data && data[lastSegment] && data[lastSegment].length > 0) {
       const listData = data[lastSegment];
       return (
-        <ListWithDetail>
+        <ListWithDetail key={`${index}-${lastSegment}`}>
           <ListWithDetailHeading>
             {lastSegment}
             {listData.length > 1 && 's'}
           </ListWithDetailHeading>
           <Grid>
-            {listData.map(
-              (
-                childData: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                childIndex: any // eslint-disable-line @typescript-eslint/no-explicit-any
-              ) => (
-                <React.Fragment key={`${index}-${childIndex}`}>
-                  <RenderFormFields
-                    elements={clonedElement.elements}
-                    data={childData}
-                    requiredFields={requiredFields}
-                  />
-                </React.Fragment>
-              )
-            )}
+            {listData.map((childData: unknown, childIndex: number) => (
+              <React.Fragment key={`${index}-${childIndex}`}>
+                <RenderFormReviewFields
+                  elements={clonedElement?.options?.detail?.elements || []}
+                  data={childData}
+                  requiredFields={requiredFields}
+                />
+              </React.Fragment>
+            ))}
           </Grid>
         </ListWithDetail>
       );

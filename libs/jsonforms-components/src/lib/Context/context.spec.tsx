@@ -144,7 +144,6 @@ describe('addDataByOptions', () => {
   it('adds data by url with token and processing function', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function processData(rawData: any): string[] {
-      console.log(JSON.stringify(rawData.nested.data) + '<rawData.nested.data');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return rawData.nested.data.map((person: any) => `${person.firstName} ${person.lastName}`);
     }
@@ -199,7 +198,6 @@ describe('contextProvider', () => {
   });
   it('works with submit props', async () => {
     const onSubmitFunction = (text: string) => {
-      console.log(text);
       ContextProviderC.addFormContextData('submittedData', { text: text });
     };
     const SubmitComponent = () => {
