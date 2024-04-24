@@ -65,7 +65,7 @@ const FileTypeTableRow = ({
   );
 };
 
-const CoreFileTypeTableRow = ({
+export const CoreFileTypeTableRow = ({
   id,
   name,
   readRoles,
