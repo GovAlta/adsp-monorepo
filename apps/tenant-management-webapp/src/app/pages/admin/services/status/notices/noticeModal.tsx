@@ -202,7 +202,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       )}
       <br />
 
-      <GoAGrid gap="xl" minChildWidth="220px">
+      <GoAGrid gap="s" minChildWidth="25ch">
         <GoAFormItem label="Start Date" error={errors?.['date']}>
           <GoAInputDate
             name="StartDate"
