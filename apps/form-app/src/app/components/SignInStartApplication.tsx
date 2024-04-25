@@ -37,7 +37,7 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
   const location = useLocation();
   const tenant = useSelector(tenantSelector);
   const definitionId = getDefinitionId(location.pathname);
-  const { user } = useSelector(userSelector);
+  const { user, initialized } = useSelector(userSelector);
 
   const onSignInStartApplication = () => {
     dispatch(loginUser({ tenant, from: `${location.pathname}?autoCreate=true` }));
@@ -51,7 +51,7 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
           <GridItem md={1} />
           <GridItem md={10}>
             <div>
-              {!roles?.length || roles.find((r) => user.roles?.includes(r)) ? (
+              {(!initialized && !roles?.length) || roles?.find((r) => user.roles?.includes(r)) ? (
                 <Placeholder>
                   <GoACallout heading="Not authorized" type="information">
                     Sign in {roles?.length ? 'as a user with a permitted role' : ''} for access.
