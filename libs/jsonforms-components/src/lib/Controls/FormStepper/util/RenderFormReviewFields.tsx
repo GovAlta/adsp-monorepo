@@ -36,24 +36,35 @@ export const RenderFormReviewFields: React.FC<RenderFormReviewFieldsProps> = ({ 
       if (!label) return null;
       const isFileUploader = clonedElement.scope.includes('fileUploader');
       const fileUploaderElement = isFileUploader ? fileList && fileList[lastSegment] : null;
-      const value = getFormFieldValue(clonedElement.scope, data ? data : {}).toString();
+      const fieldValues = getFormFieldValue(clonedElement.scope, data ? data : {});
       const isRequired = requiredFields.includes(lastSegment);
       const asterisk = isRequired ? ' *' : '';
 
-      return (
-        <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
-          <strong>
-            {label} {asterisk + ': '}
-          </strong>
+      const values = fieldValues.value;
+      if (!values) return null;
 
-          {fileUploaderElement ? (
-            <a onClick={() => downloadFile(fileUploaderElement, fileUploaderElement?.propertyId)}>
-              {fileUploaderElement?.filename}
-            </a>
-          ) : (
-            value
-          )}
-        </GridItem>
+      return (
+        <React.Fragment key={index}>
+          {values.map((v, i) => {
+            if (typeof v !== 'object') {
+              return (
+                <GridItem key={`${index}:${i}`} md={6} vSpacing={1} hSpacing={0.5}>
+                  <strong>
+                    {label} {asterisk + ': '}
+                  </strong>
+
+                  {fileUploaderElement ? (
+                    <a onClick={() => downloadFile(fileUploaderElement, fileUploaderElement?.propertyId)}>
+                      {fileUploaderElement?.filename}
+                    </a>
+                  ) : (
+                    v
+                  )}
+                </GridItem>
+              );
+            }
+          })}
+        </React.Fragment>
       );
     } else if (clonedElement.type !== 'ListWithDetail' && clonedElement?.elements) {
       return (

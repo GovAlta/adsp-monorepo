@@ -13,23 +13,85 @@ export const resolveLabelFromScope = (scope: string) => {
   return '';
 };
 
-export const getFormFieldValue = (scope: string, data: object) => {
-  if (data !== undefined) {
-    const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let currentValue: any = data;
-    for (const key of pathArray) {
-      if (currentValue[key] === undefined) {
-        return '';
-      }
-      currentValue = currentValue[key];
+export interface InputValue {
+  type: 'primitive' | 'object' | 'array' | 'undefined';
+  value?: string[][];
+}
+
+const emptyInputValue: InputValue = { type: 'undefined' };
+
+/*
+ * Convert object to an array like [[ke1, value1], [key2, value2]]
+ * Note: this handles nested objects.
+ */
+const objToArray = (obj: object): NestedStringArray => {
+  return Object.entries(obj).map(([key, value]) => {
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      return [key, objToArray(value)];
     }
-    return Array.isArray(currentValue)
-      ? currentValue[currentValue.length - 1]
-      : typeof currentValue === 'object'
-      ? ''
-      : currentValue;
-  } else {
-    return '';
+    return [key, value];
+  });
+};
+
+type NestedStringArray = string[] | NestedStringArray[];
+
+// test for ['name', 'fred']
+const isNameValuePair = (value: NestedStringArray): boolean => {
+  return Array.isArray(value) && value.length === 2 && typeof value[0] === 'string' && typeof value[1] === 'string';
+};
+
+// test for: ['name', [['first', 'fred'], ['middle', 'jolly'], ['last', 'mcguire']]];
+const isNestedValue = (value: NestedStringArray): boolean => {
+  return Array.isArray(value) && value.length === 2 && typeof value[0] === 'string' && Array.isArray(value[1]);
+};
+
+/*
+ * Convert ['name', [['first', 'fred'], ['middle', 'jolly'], ['last', 'mcguire']]]
+ * into [['first', 'fred'], ['middle', 'jolly'], ['last', 'mcguire']]
+ */
+const flatten = (arr: NestedStringArray): string[][] => {
+  return arr.reduce<string[][]>((acc, val) => {
+    if (typeof val === 'string') {
+      return acc;
+    }
+    if (isNestedValue(val)) {
+      const flatter = flatten(val[1] as NestedStringArray);
+      return acc.concat(flatter);
+    }
+    // If the current value is a string, add it to the accumulator
+    if (isNameValuePair(val)) {
+      return acc.concat([val as string[]]);
+    }
+    return acc;
+  }, []);
+};
+
+/*
+ * Flatten(objToArray(currentValue))
+ * Might have to be revisited.  It currently looses information that may be
+ * deemed to be important later on - i.e. if an object contains nested objects,
+ * such as { person: { name: 'fred', 'address':'calgary' }, isRich: false }
+ * then the 'person' identifier is lost, resulting in
+ * [['name', 'fred'], ['address', 'calgary'], ['isRich', 'false']]
+ *
+ * However, we need to decide how to handle these sorts of nested data in the summary
+ * page before messing with it.
+ */
+export const getFormFieldValue = (scope: string, data: unknown): InputValue => {
+  if (data === undefined || data === null) return emptyInputValue;
+
+  const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let currentValue: any = data;
+  for (const key of pathArray) {
+    if (currentValue[key] === undefined) {
+      return emptyInputValue;
+    }
+    currentValue = currentValue[key];
   }
+  return Array.isArray(currentValue)
+    ? { type: 'array', value: currentValue }
+    : typeof currentValue === 'object'
+    ? { type: 'object', value: flatten(objToArray(currentValue)) }
+    : { type: 'primitive', value: currentValue };
 };

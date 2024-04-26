@@ -1,19 +1,6 @@
 import '@testing-library/jest-dom';
 import { getFormFieldValue, resolveLabelFromScope } from './GenerateFormFields';
 
-const data = {
-  firstName: 'Alex',
-  address: {
-    street: 'Springfield',
-  },
-};
-const data1 = {
-  firstName: '',
-  address: {
-    street: '',
-  },
-};
-
 describe('resolveLabelFromScope', () => {
   it('Should correctly resolve and format label from scope', () => {
     const scope1 = '#/properties/firstName';
@@ -21,26 +8,7 @@ describe('resolveLabelFromScope', () => {
     expect(resolveLabelFromScope(scope1)).toEqual('First name');
     expect(resolveLabelFromScope(scope2)).toEqual('Street');
   });
-});
-describe('getFormFieldValue', () => {
-  it('Should return the correct value for a given scope', () => {
-    const scope1 = '#/properties/firstName';
-    const scope2 = '#/properties/address/properties/street';
-    expect(getFormFieldValue(scope1, data)).toEqual('Alex');
-    expect(getFormFieldValue(scope2, data)).toEqual('Springfield');
-  });
-});
 
-describe('getFormFieldValue', () => {
-  it('Should return empty value for a given scope and empty data', () => {
-    const scope1 = '#/properties/secondName';
-    const scope2 = '#/properties/address/properties/street';
-    expect(getFormFieldValue(scope1, data1)).toEqual('');
-    expect(getFormFieldValue(scope2, data1)).toEqual('');
-  });
-});
-
-describe('ResolveLabelFromScope function', () => {
   it('returns correctly formatted string for valid scope patterns', () => {
     const validScope1 = '#/properties/firstName';
     const validScope2 = '#/properties/address/properties/city';
@@ -80,5 +48,70 @@ describe('ResolveLabelFromScope function', () => {
   it('returns an empty string if the scope does not end with a valid property name', () => {
     const invalidScope = '#/properties/';
     expect(resolveLabelFromScope(invalidScope)).toBeNull();
+  });
+});
+
+describe('getFormFieldValue', () => {
+  it('will return the correct value for the specified scope', () => {
+    const scope = '#/properties/firstName';
+    const data = { firstName: 'Alex', address: { street: 'Springfield' } };
+    const alex = getFormFieldValue(scope, data);
+    expect(alex.type).toBe('primitive');
+    expect(alex.value).toEqual('Alex');
+  });
+
+  it('will return the correct value for the specified scope', () => {
+    const scope = '#/properties/address/properties/street';
+    const data = { firstName: 'Alex', address: { street: 'Springfield' } };
+    const springfield = getFormFieldValue(scope, data);
+    expect(springfield.type).toBe('primitive');
+    expect(springfield.value).toEqual('Springfield');
+  });
+
+  it('can handle an empty data object', () => {
+    const scope = '#/properties/firstName';
+    const empty = getFormFieldValue(scope, {});
+    expect(empty.type).toBe('undefined');
+    expect(empty.value).toBe(undefined);
+  });
+
+  it('will return empty value for the specified scope and undefined data', () => {
+    const scope1 = '#/properties/secondName';
+    const scope2 = '#/properties/address/properties/street';
+    const data = { firstName: 'bob', address: { street: undefined } };
+    const value1 = getFormFieldValue(scope1, data);
+    expect(value1.value).toBe(undefined);
+    expect(value1.type).toBe('undefined');
+    const value2 = getFormFieldValue(scope2, data);
+    expect(value2.type).toBe('undefined');
+    expect(value2.value).toBe(undefined);
+  });
+
+  it('will return a value for simple objects', () => {
+    const data = { name: { firstName: 'bob', lastName: 'bing' }, address: { street: 'no-name', city: 'nowhere' } };
+    const name = getFormFieldValue('#/properties/name', data);
+    expect(name.type).toBe('object');
+    expect(name.value).toEqual([
+      ['firstName', 'bob'],
+      ['lastName', 'bing'],
+    ]);
+    const address = getFormFieldValue('#/properties/address', data);
+    expect(address.type).toBe('object');
+    expect(address.value).toEqual([
+      ['street', 'no-name'],
+      ['city', 'nowhere'],
+    ]);
+  });
+
+  it('will return a value for nested objects', () => {
+    const data = { person: { firstName: 'bob', lastName: 'bing', address: { street: 'no-name', city: 'nowhere' } } };
+    const person = getFormFieldValue('#/properties/person', data);
+    expect(person.type).toBe('object');
+    expect(person.value).toEqual([
+      ['firstName', 'bob'],
+      ['lastName', 'bing'],
+      ['street', 'no-name'],
+      ['city', 'nowhere'],
+    ]);
   });
 });
