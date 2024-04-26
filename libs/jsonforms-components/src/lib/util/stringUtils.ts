@@ -32,7 +32,7 @@ export const controlScopeMatchesLabel = (scope: string, label: string) => {
 export const getLabelText = (scope: string, label: string): string => {
   let labelToUpdate: string = '';
 
-  if (controlScopeMatchesLabel(scope, label || '')) {
+  if (controlScopeMatchesLabel(scope, label || '') && !areAllUppercase(label)) {
     labelToUpdate = capitalizeFirstLetter(label || '');
   } else {
     labelToUpdate = label || '';
@@ -41,6 +41,9 @@ export const getLabelText = (scope: string, label: string): string => {
   return labelToUpdate;
 };
 
+const areAllUppercase = (label: string): boolean => {
+  return /^[^a-z]*$/.test(label);
+};
 const isEmptyBoolean = (schema: JsonSchema, data: unknown): boolean => {
   return schema.type !== undefined && schema.type === 'boolean' && (data === null || data === undefined);
 };
