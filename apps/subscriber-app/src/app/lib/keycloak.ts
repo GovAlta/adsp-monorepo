@@ -151,31 +151,24 @@ class KeycloakAuth {
        * Paul Li - Tried to use keycloak.init().then(()=>{keycloak.login}). But, it does not work.
        */
 
+      let paramCount = 0;
+
       if (idpFromUrl) {
         idp = idpFromUrl;
-
-        let paramCount = 0;
-        if (idp && idp !== 'null') {
+        if (idp !== 'null') {
           redirectUri += `?kc_idp_hint=${idp}`;
           paramCount += 1;
         }
+      } 
 
-        if (code && code !== 'null') {
-          redirectUri = redirectUri + (paramCount > 0 ? '&' : '?');
-          redirectUri += `&code=${code}`;
-          paramCount += 1;
-        }
-        if (smscode && smscode !== 'null') {
-          redirectUri = redirectUri + (paramCount > 0 ? '&' : '?');
-          redirectUri += `smscode=${smscode}`;
-        }
-      } else {
-        if (code && code !== 'null') {
-          redirectUri += `?code=${code}`;
-        }
-        if (smscode && smscode !== 'null') {
-          redirectUri += `&smscode=${smscode}`;
-        }
+      if (code && code !== 'null') {
+        redirectUri = redirectUri + (paramCount > 0 ? '&' : '?');
+        redirectUri += `code=${code}`;
+        paramCount += 1;
+      }
+      if (smscode && smscode !== 'null') {
+        redirectUri = redirectUri + (paramCount > 0 ? '&' : '?');
+        redirectUri += `smscode=${smscode}`;
       }
 
       Promise.all([
