@@ -54,7 +54,7 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
               {user || roles?.find((r) => user.roles?.includes(r)) ? (
                 <Placeholder>
                   <GoACallout heading="Not authorized" type="information">
-                    You do not have a proper roles to access.
+                    You do not have a permitted role to access the form.
                   </GoACallout>
                 </Placeholder>
               ) : null}
