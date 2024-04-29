@@ -26,6 +26,7 @@ import { FileRouter } from './services/file';
 import { serviceVariables } from '../../../featureFlag';
 
 import { Script } from './services/script';
+import { Feedback } from './services/feedback';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
@@ -68,6 +69,8 @@ const TenantManagement = (): JSX.Element => {
         return <Status />;
       case 'Task':
         return <TaskRouter />;
+      case 'Feedback':
+        return <Feedback />;
       default:
         return <Navigate to="/404" />;
     }
