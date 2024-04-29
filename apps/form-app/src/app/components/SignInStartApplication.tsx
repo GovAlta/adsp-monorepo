@@ -51,7 +51,7 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
           <GridItem md={1} />
           <GridItem md={10}>
             <div>
-              {(!initialized && !roles?.length) || roles?.find((r) => user.roles?.includes(r)) ? (
+              {user || roles?.find((r) => user.roles?.includes(r)) ? (
                 <Placeholder>
                   <GoACallout heading="Not authorized" type="information">
                     Sign in {roles?.length ? 'as a user with a permitted role' : ''} for access.
