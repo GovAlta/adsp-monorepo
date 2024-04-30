@@ -29,6 +29,7 @@ import {
   FakeButton,
   SubmissionRecordsBox,
   FormPreviewScrollPane,
+  SubmissionConfigurationPadding,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -586,124 +587,126 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </FlexRow>
 
                   <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
-                    <InfoCircleWithInlineHelp
-                      initialLabelValue={definition.submissionRecords}
-                      label="Task queue to process &nbsp;"
-                      text={
-                        getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
-                          ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
-                          : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
-                      }
-                    />
+                    <SubmissionConfigurationPadding>
+                      <InfoCircleWithInlineHelp
+                        initialLabelValue={definition.submissionRecords}
+                        label="Task queue to process &nbsp;"
+                        text={
+                          getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                            ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                            : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                        }
+                      />
 
-                    <QueueTaskDropdown>
-                      {queueTasks && Object.keys(queueTasks).length > 0 && (
-                        <GoADropdown
-                          data-test-id="form-submission-select-queue-task-dropdown"
-                          name="queueTasks"
-                          disabled={!definition.submissionRecords}
-                          value={[getQueueTaskToProcessValue()]}
-                          relative={true}
-                          onChange={(name, queueTask: string) => {
-                            const separatedQueueTask = queueTask.split(':');
-                            if (separatedQueueTask.length > 1) {
-                              setDefinition({
-                                ...definition,
-                                queueTaskToProcess: {
-                                  queueNameSpace: separatedQueueTask[0],
-                                  queueName: separatedQueueTask[1],
-                                },
-                              });
-                            } else {
-                              setDefinition({
-                                ...definition,
-                                queueTaskToProcess: {
-                                  queueNameSpace: '',
-                                  queueName: '',
-                                },
-                              });
-                            }
-                          }}
-                        >
-                          <GoADropdownItem
-                            data-testId={`task-Queue-ToCreate-DropDown`}
-                            key={`No-Task-Created`}
-                            value={NO_TASK_CREATED_OPTION}
-                            label={NO_TASK_CREATED_OPTION}
-                          />
-                          {queueTasks &&
-                            Object.keys(queueTasks)
-                              .sort()
-                              .map((item) => (
-                                <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
-                              ))}
-                        </GoADropdown>
-                      )}
-                    </QueueTaskDropdown>
-                    <RowFlex>
-                      <h3>Disposition states</h3>
-                      <div>
-                        {definition.submissionRecords ? (
-                          <InfoCircleWithInlineHelp
-                            text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                            width={450}
-                          />
-                        ) : (
-                          <FakeButton />
-                        )}
-                      </div>
-                      <RightAlign>
-                        {definition.submissionRecords ? (
-                          <GoAButton
-                            type="secondary"
-                            testId="Add state"
+                      <QueueTaskDropdown>
+                        {queueTasks && Object.keys(queueTasks).length > 0 && (
+                          <GoADropdown
+                            data-test-id="form-submission-select-queue-task-dropdown"
+                            name="queueTasks"
                             disabled={!definition.submissionRecords}
-                            onClick={() => {
-                              setNewDisposition(true);
-                              setSelectedEditModalIndex(null);
+                            value={[getQueueTaskToProcessValue()]}
+                            relative={true}
+                            onChange={(name, queueTask: string) => {
+                              const separatedQueueTask = queueTask.split(':');
+                              if (separatedQueueTask.length > 1) {
+                                setDefinition({
+                                  ...definition,
+                                  queueTaskToProcess: {
+                                    queueNameSpace: separatedQueueTask[0],
+                                    queueName: separatedQueueTask[1],
+                                  },
+                                });
+                              } else {
+                                setDefinition({
+                                  ...definition,
+                                  queueTaskToProcess: {
+                                    queueNameSpace: '',
+                                    queueName: '',
+                                  },
+                                });
+                              }
                             }}
                           >
-                            Add state
-                          </GoAButton>
-                        ) : (
-                          <FakeButton />
+                            <GoADropdownItem
+                              data-testId={`task-Queue-ToCreate-DropDown`}
+                              key={`No-Task-Created`}
+                              value={NO_TASK_CREATED_OPTION}
+                              label={NO_TASK_CREATED_OPTION}
+                            />
+                            {queueTasks &&
+                              Object.keys(queueTasks)
+                                .sort()
+                                .map((item) => (
+                                  <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
+                                ))}
+                          </GoADropdown>
                         )}
-                      </RightAlign>
-                    </RowFlex>
+                      </QueueTaskDropdown>
+                      <RowFlex>
+                        <h3>Disposition states</h3>
+                        <div>
+                          {definition.submissionRecords ? (
+                            <InfoCircleWithInlineHelp
+                              text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                              width={450}
+                            />
+                          ) : (
+                            <FakeButton />
+                          )}
+                        </div>
+                        <RightAlign>
+                          {definition.submissionRecords ? (
+                            <GoAButton
+                              type="secondary"
+                              testId="Add state"
+                              disabled={!definition.submissionRecords}
+                              onClick={() => {
+                                setNewDisposition(true);
+                                setSelectedEditModalIndex(null);
+                              }}
+                            >
+                              Add state
+                            </GoAButton>
+                          ) : (
+                            <FakeButton />
+                          )}
+                        </RightAlign>
+                      </RowFlex>
 
-                    <div
-                      style={{
-                        overflowY: 'auto',
-                        height: EditorHeight - 228,
-                        zIndex: 0,
-                      }}
-                    >
-                      {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
-                        'No disposition states'
-                      ) : (
-                        <DataTable>
-                          <thead>
-                            <tr>
-                              <th>Name</th>
-                              <th>Description</th>
-                              <th>Order</th>
-                              <th>Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {definition && (
-                              <DispositionItems
-                                openModalFunction={openModalFunction}
-                                updateDispositions={updateDispositionFunction}
-                                openDeleteModalFunction={openDeleteModalFunction}
-                                dispositions={definition.dispositionStates}
-                                submissionRecords={definition.submissionRecords}
-                              />
-                            )}
-                          </tbody>
-                        </DataTable>
-                      )}
-                    </div>
+                      <div
+                        style={{
+                          overflowY: 'auto',
+                          height: EditorHeight - 228,
+                          zIndex: 0,
+                        }}
+                      >
+                        {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
+                          'No disposition states'
+                        ) : (
+                          <DataTable>
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Order</th>
+                                <th>Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {definition && (
+                                <DispositionItems
+                                  openModalFunction={openModalFunction}
+                                  updateDispositions={updateDispositionFunction}
+                                  openDeleteModalFunction={openDeleteModalFunction}
+                                  dispositions={definition.dispositionStates}
+                                  submissionRecords={definition.submissionRecords}
+                                />
+                              )}
+                            </tbody>
+                          </DataTable>
+                        )}
+                      </div>
+                    </SubmissionConfigurationPadding>
                   </div>
                 </div>
               </Tab>

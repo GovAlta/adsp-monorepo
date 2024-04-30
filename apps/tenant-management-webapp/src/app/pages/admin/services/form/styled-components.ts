@@ -176,11 +176,17 @@ export const FlexRow = styled.div`
   display: flex;
   flex-direction: row;
 `;
+
 export const FlexColumn = styled.div`
   display: flex;
   flex-direction: column;
   padding-top: 1rem;
 `;
+
+export const SubmissionConfigurationPadding = styled.div`
+  padding: var(--goa-space-s);
+`;
+
 export const FormTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
