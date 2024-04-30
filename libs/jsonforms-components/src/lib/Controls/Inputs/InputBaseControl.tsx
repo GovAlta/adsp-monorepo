@@ -5,6 +5,7 @@ import { FormFieldWrapper } from './style-component';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 import { StepInputStatus, StepperContext } from '../FormStepper/StepperContext';
 import { Visible } from '../../util';
+import { JsonFormRegisterProvider } from '../../Context/register';
 
 export type GoAInputType =
   | 'text'
@@ -28,13 +29,13 @@ export interface WithInput {
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
-  const { uischema, visible, label, input, required } = props;
+  const { uischema, visible, label, input, required, errors } = props;
   const InnerComponent = input;
   const labelToUpdate: string = getLabelText(uischema.scope, label || '');
 
   let modifiedErrors = checkFieldValidity(props as ControlProps);
 
-  if (modifiedErrors === 'should be equal to one of the allowed values' && uischema?.options?.enumContext) {
+  if (modifiedErrors === 'should be equal to one of the allowed values') {
     modifiedErrors = '';
   }
 
@@ -64,17 +65,19 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   }, []);
 
   return (
-    <Visible visible={visible}>
-      <FormFieldWrapper>
-        <GoAFormItem
-          requirement={required ? 'required' : undefined}
-          error={modifiedErrors}
-          label={props?.noLabel === true ? '' : labelToUpdate}
-          helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
-        >
-          <InnerComponent {...modifiedProps} />
-        </GoAFormItem>
-      </FormFieldWrapper>
-    </Visible>
+    <JsonFormRegisterProvider defaultRegisters={undefined}>
+      <Visible visible={visible}>
+        <FormFieldWrapper>
+          <GoAFormItem
+            requirement={required ? 'required' : undefined}
+            error={''}
+            label={props?.noLabel === true ? '' : labelToUpdate}
+            helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
+          >
+            <InnerComponent {...modifiedProps} />
+          </GoAFormItem>
+        </FormFieldWrapper>
+      </Visible>
+    </JsonFormRegisterProvider>
   );
 };
