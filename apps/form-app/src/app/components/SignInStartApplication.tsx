@@ -59,7 +59,11 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
                 </Placeholder>
               ) : null}
               <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" onClick={onSignInStartApplication}>
+                <GoAButton
+                  type="primary"
+                  data-testid="form-start-application-sign-in"
+                  onClick={onSignInStartApplication}
+                >
                   Sign in
                 </GoAButton>
               </GoAButtonGroup>
