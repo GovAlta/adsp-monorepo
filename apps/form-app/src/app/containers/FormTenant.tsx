@@ -61,6 +61,7 @@ export const FormTenant = () => {
                   mt="s"
                   mr="s"
                   type="tertiary"
+                  data-testid="form-sign-out"
                   onClick={() => {
                     if (userForm?.definition) {
                       dispatch(logoutUser({ tenant, from: `/${tenant.name}/${userForm.definition.id}` }));
@@ -77,6 +78,7 @@ export const FormTenant = () => {
                 mt="s"
                 mr="s"
                 type="tertiary"
+                data-testid="form-sign-in"
                 onClick={() => {
                   dispatch(loginUser({ tenant, from: `${location.pathname}?autoCreate=true` }));
                 }}

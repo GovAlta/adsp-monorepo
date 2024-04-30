@@ -148,6 +148,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
               mt="2xl"
               disabled={!canSubmit}
               type="primary"
+              data-testid="form-submit"
               onClick={() => {
                 onSubmit(form);
               }}
