@@ -39,8 +39,8 @@ class FormsPage {
     return cy.xpath('//goa-button[@data-testid="stepper-submit-btn"]');
   }
 
-  formObjectArrayButton() {
-    return cy.xpath('//goa-button[contains(@data-testid, "object-array-toolbar")]');
+  formObjectArrayButton(label) {
+    return cy.xpath(`//goa-button[contains(@data-testid, "object-array-toolbar") and text()="${label}"]`);
   }
 
   formObjectArrayDependantTextField(label) {
@@ -65,6 +65,12 @@ class FormsPage {
   formSummaryPageOjectArrayItems(pageName, arrayName) {
     return cy.xpath(
       `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/parent::div/following-sibling::div//h3[text()="${arrayName}"]/following-sibling::div/div`
+    );
+  }
+
+  formRadioGroup(question) {
+    return cy.xpath(
+      `//*[@class="parent-label" and text()="${question}"]/parent::div/parent::div/parent::div/following-sibling::div[1]//goa-radio-group`
     );
   }
 }

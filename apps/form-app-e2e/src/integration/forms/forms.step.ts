@@ -91,7 +91,7 @@ When('the user enters {string} in a dropdown labelled {string}', function (value
   formsObj.formDropdown(label).shadow().find('li').contains(value).click({ force: true });
 });
 
-When('the user clicks Next button on the form', function () {
+When('the user clicks Next button in the form', function () {
   formsObj.formNextButton().shadow().find('button').click({ force: true });
 });
 
@@ -127,14 +127,14 @@ When('the user {string} a checkbox labelled {string}', function (checkboxOperati
     });
 });
 
-When('the user clicks submit button on the form', function () {
+When('the user clicks submit button in the form', function () {
   cy.wait(2000);
   formsObj.formSubmitButton().shadow().find('button').click({ force: true });
   cy.wait(10000);
 });
 
-When('the user clicks object array button on the form', function () {
-  formsObj.formObjectArrayButton().shadow().find('button').click({ force: true });
+When('the user clicks object array button labelled as {string} in the form', function (label) {
+  formsObj.formObjectArrayButton(label).shadow().find('button').click({ force: true });
 });
 
 When('the user enters {string} in object array element text field labelled {string}', function (text, label) {
@@ -218,3 +218,7 @@ Then(
     }
   }
 );
+
+When('the user selects {string} radio button for the question of {string}', function (radioLabel, question) {
+  formsObj.formRadioGroup(question).shadow().find(`[value="${radioLabel}"]`).click({ force: true });
+});

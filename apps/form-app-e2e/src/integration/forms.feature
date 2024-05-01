@@ -18,21 +18,23 @@ Feature: Form app
     And the user enters "Smith" in a text field labelled "Last name"
     And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
-    And the user clicks Next button on the form
+    And the user clicks Next button in the form
+    And the user selects "Not Married" radio button for the question of "Are you married?"
     And the user "selects" a checkbox labelled "Citizen"
-    And the user clicks object array button on the form
+    And the user clicks object array button labelled as "Add child" in the form
     And the user enters "John" in object array element text field labelled "First name"
     And the user enters "Smith" in object array element text field labelled "Last name"
     And the user enters "2010-01-15" in object array element date input labelled "Dob"
-    And the user clicks Next button on the form
+    And the user clicks Next button in the form
     Then the user views the summary of "Personal Information" with "Joe" as "required" "First name"
     And the user views the summary of "Personal Information" with "Smith" as "required" "Last name"
     And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
+    And the user views the summary of "Additional Information" with "false" as "required" "Is married"
     And the user views the summary of "Additional Information" with "true" as "not required" "Citizen"
     # And the user views the summary of "Additional Information" with "John" as "required" "First name:Dependant"
     # And the user views the summary of "Additional Information" with "Smith" as "required" "Last name:Dependant"
     # And the user views the summary of "Additional Information" with "2010-01-15" as "not required" "Dob:Dependant"
-    When the user clicks submit button on the form
+    When the user clicks submit button in the form
     Then the user views a callout with a message of "We're processing your application"
     When the user sends a delete form request
     Then the new form is deleted
