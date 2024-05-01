@@ -1,53 +1,73 @@
 import '@testing-library/jest-dom';
-import { getFormFieldValue, resolveLabelFromScope } from './GenerateFormFields';
+import { getFormFieldValue, labelToString } from './GenerateFormFields';
 
-describe('resolveLabelFromScope', () => {
+describe('Label to string', () => {
   it('Should correctly resolve and format label from scope', () => {
     const scope1 = '#/properties/firstName';
     const scope2 = '#/properties/address/properties/street';
-    expect(resolveLabelFromScope(scope1)).toEqual('First name');
-    expect(resolveLabelFromScope(scope2)).toEqual('Street');
+    expect(labelToString(undefined, scope1)).toEqual('First name');
+    expect(labelToString(undefined, scope2)).toEqual('Street');
   });
 
   it('returns correctly formatted string for valid scope patterns', () => {
     const validScope1 = '#/properties/firstName';
     const validScope2 = '#/properties/address/properties/city';
-    expect(resolveLabelFromScope(validScope1)).toEqual('First name');
-    expect(resolveLabelFromScope(validScope2)).toEqual('City');
+    expect(labelToString(undefined, validScope1)).toEqual('First name');
+    expect(labelToString(undefined, validScope2)).toEqual('City');
   });
 
   it('returns null for scope not starting with "#"', () => {
     const invalidScope = '/properties/firstName';
-    expect(resolveLabelFromScope(invalidScope)).toBeNull();
+    expect(labelToString(undefined, invalidScope)).toBe('');
   });
 
   it('returns null for scope missing "properties"', () => {
     const invalidScope = '#/firstName';
-    expect(resolveLabelFromScope(invalidScope)).toBeNull();
+    expect(labelToString(undefined, invalidScope)).toBe('');
   });
 
   it('returns null for scope with incorrect "properties" spelling', () => {
     const invalidScope = '#/propertees/firstName';
-    expect(resolveLabelFromScope(invalidScope)).toBeNull();
+    expect(labelToString(undefined, invalidScope)).toBe('');
   });
 
   it('returns null for invalid scope patterns', () => {
     const invalidScope1 = '#/properties/';
     const invalidScope2 = '##/properties/firstName';
     const invalidScope3 = '#/properties/first/Name';
-    expect(resolveLabelFromScope(invalidScope1)).toBeNull();
-    expect(resolveLabelFromScope(invalidScope2)).toBeNull();
-    expect(resolveLabelFromScope(invalidScope3)).toBeNull();
+    expect(labelToString(undefined, invalidScope1)).toBe('');
+    expect(labelToString(undefined, invalidScope2)).toBe('');
+    expect(labelToString(undefined, invalidScope3)).toBe('');
   });
 
   it('returns empty string for empty or null scope', () => {
     const emptyScope = '';
-    expect(resolveLabelFromScope(emptyScope)).toBeNull();
+    expect(labelToString(undefined, emptyScope)).toBe('');
   });
 
   it('returns an empty string if the scope does not end with a valid property name', () => {
     const invalidScope = '#/properties/';
-    expect(resolveLabelFromScope(invalidScope)).toBeNull();
+    expect(labelToString(undefined, invalidScope)).toBe('');
+  });
+
+  it('will not return a hidden label', () => {
+    const label = labelToString({ show: false, text: 'tada!' }, '#/properties/firstName');
+    expect(label).toBe('');
+  });
+
+  it('will return a visible label', () => {
+    const label = labelToString({ show: true, text: 'tada!' }, '#/properties/firstName');
+    expect(label).toBe('tada!');
+  });
+
+  it('will use scope if description text is undefined', () => {
+    const label = labelToString({ show: true, text: undefined }, '#/properties/firstName');
+    expect(label).toBe('First name');
+  });
+
+  it('will return a valid label', () => {
+    const label = labelToString('tada!', '#/properties/firstName');
+    expect(label).toBe('tada!');
   });
 });
 
@@ -71,7 +91,7 @@ describe('getFormFieldValue', () => {
   it('can handle an empty data object', () => {
     const scope = '#/properties/firstName';
     const empty = getFormFieldValue(scope, {});
-    expect(empty.type).toBe('undefined');
+    expect(empty.type).toBe('primitive');
     expect(empty.value).toBe(undefined);
   });
 
@@ -81,9 +101,9 @@ describe('getFormFieldValue', () => {
     const data = { firstName: 'bob', address: { street: undefined } };
     const value1 = getFormFieldValue(scope1, data);
     expect(value1.value).toBe(undefined);
-    expect(value1.type).toBe('undefined');
+    expect(value1.type).toBe('primitive');
     const value2 = getFormFieldValue(scope2, data);
-    expect(value2.type).toBe('undefined');
+    expect(value2.type).toBe('primitive');
     expect(value2.value).toBe(undefined);
   });
 

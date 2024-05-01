@@ -1,24 +1,38 @@
-export const resolveLabelFromScope = (scope: string) => {
+import { LabelDescription } from '@jsonforms/core';
+
+type jsonformsLabel = string | boolean | LabelDescription | undefined;
+export const labelToString = (label: jsonformsLabel, scope: string): string => {
+  if (!label) {
+    return resolveLabelFromScope(scope);
+  }
+  if (typeof label === 'object' && label !== null && 'show' in label && label.show) {
+    return label.text ? label.text : resolveLabelFromScope(scope);
+  }
+  if (typeof label === 'string') {
+    return label;
+  }
+  return '';
+};
+
+const resolveLabelFromScope = (scope: string): string => {
   // eslint-disable-next-line no-useless-escape
   const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
   const isValid = validPatternRegex.test(scope);
-  if (!isValid) return null;
+  if (!isValid) return '';
 
-  const lastSegment = scope.split('/').pop();
+  const fieldName = scope.split('/').pop();
 
-  if (lastSegment) {
-    const lowercased = lastSegment.replace(/([A-Z])/g, ' $1').toLowerCase();
+  if (fieldName) {
+    const lowercased = fieldName.replace(/([A-Z])/g, ' $1').toLowerCase();
     return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
   }
   return '';
 };
 
 export interface InputValue {
-  type: 'primitive' | 'object' | 'array' | 'undefined';
+  type: 'primitive' | 'object';
   value?: string[][];
 }
-
-const emptyInputValue: InputValue = { type: 'undefined' };
 
 /*
  * Convert object to an array like [[ke1, value1], [key2, value2]]
@@ -78,20 +92,14 @@ const flatten = (arr: NestedStringArray): string[][] => {
  * page before messing with it.
  */
 export const getFormFieldValue = (scope: string, data: unknown): InputValue => {
-  if (data === undefined || data === null) return emptyInputValue;
-
   const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let currentValue: any = data;
   for (const key of pathArray) {
-    if (currentValue[key] === undefined) {
-      return emptyInputValue;
-    }
+    if (!currentValue) break;
     currentValue = currentValue[key];
   }
-  return Array.isArray(currentValue)
-    ? { type: 'array', value: currentValue }
-    : typeof currentValue === 'object'
+  return typeof currentValue === 'object'
     ? { type: 'object', value: flatten(objToArray(currentValue)) }
     : { type: 'primitive', value: currentValue };
 };
