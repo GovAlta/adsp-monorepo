@@ -29,7 +29,7 @@ Feature: Form app
     Then the user views the summary of "Personal Information" with "Joe" as "required" "First name"
     And the user views the summary of "Personal Information" with "Smith" as "required" "Last name"
     And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
-    And the user views the summary of "Additional Information" with "false" as "required" "Is married"
+    And the user views the summary of "Additional Information" with "false" as "required" "Are you married?"
     And the user views the summary of "Additional Information" with "true" as "not required" "Citizen"
     # And the user views the summary of "Additional Information" with "John" as "required" "First name:Dependant"
     # And the user views the summary of "Additional Information" with "Smith" as "required" "Last name:Dependant"
