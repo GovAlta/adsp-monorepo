@@ -1,5 +1,6 @@
 export const TASK_SERVICE_ID = 'urn:ads:platform:task-service';
 export const PUSH_SERVICE_ID = 'urn:ads:platform:push-service';
+export const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
 
 export interface QueueDefinition {
   namespace: string;
@@ -30,6 +31,27 @@ export interface Task {
       name: string;
     };
   };
+}
+
+export interface FormSubmission {
+  urn: string,
+  id: string,
+  formId: string,
+  formDefinitionId: string,
+  formData: Record<string, string>;
+  formFiles: Record<string, string>,
+  created:Date,
+  createdBy:{
+      id:string,
+      name:string
+  },
+  disposition: Record<string, string>,
+  updated:Date,
+  updatedBy:{
+      id:string,
+      name:string
+  },
+  hash: string
 }
 
 export interface Person {
