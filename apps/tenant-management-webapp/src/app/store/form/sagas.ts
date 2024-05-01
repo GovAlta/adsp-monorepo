@@ -12,6 +12,7 @@ import {
   DELETE_FORM_DEFINITION_ACTION,
   deleteFormDefinitionSuccess,
   DeleteFormDefinitionAction,
+  deleteFormById,
 } from './action';
 
 import { getAccessToken } from '@store/tenant/sagas';
@@ -86,13 +87,8 @@ export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction
     try {
       const payload: DeleteFormConfig = { operation: 'DELETE', property: definition.id };
       const url = `${baseUrl}/configuration/v2/configuration/platform/form-service`;
-      const { latest } = yield call(deleteFormDefinitionApi, token, url, payload);
-
-      yield put(
-        deleteFormDefinitionSuccess({
-          ...latest.configuration,
-        })
-      );
+      yield put(deleteFormById(definition.id));
+      yield call(deleteFormDefinitionApi, token, url, payload);
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }

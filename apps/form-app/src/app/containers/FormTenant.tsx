@@ -1,11 +1,13 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   AppDispatch,
   configInitializedSelector,
+  definitionSelector,
+  formSelector,
   initializeTenant,
   loginUser,
   logoutUser,
@@ -28,8 +30,9 @@ export const FormTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
-
   const tenant = useSelector(tenantSelector);
+  const userForm = useSelector(formSelector);
+  const definition = useSelector(definitionSelector);
 
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
@@ -40,28 +43,45 @@ export const FormTenant = () => {
     }
   }, [configInitialized, tenantName, dispatch]);
 
+  const hasRoles = () => {
+    const mergedFormRoles = [...(definition?.applicantRoles || []), ...(definition?.applicantRoles || [])];
+    return !mergedFormRoles?.length || mergedFormRoles.find((r) => user.roles?.includes(r));
+  };
+
   return (
     <React.Fragment>
       <GoAMicrositeHeader type="alpha" />
       <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
         {userInitialized && (
           <AccountActionsSpan>
-            <span className="username">{user?.name}</span>
-            {user ? (
-              <GoAButton
-                mt="s"
-                mr="s"
-                type="tertiary"
-                onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}
-              >
-                Sign out
-              </GoAButton>
+            {user && hasRoles() ? (
+              <>
+                <span className="username">{user?.name}</span>
+                <GoAButton
+                  mt="s"
+                  mr="s"
+                  type="tertiary"
+                  data-testid="form-sign-out"
+                  onClick={() => {
+                    if (userForm?.definition) {
+                      dispatch(logoutUser({ tenant, from: `/${tenant.name}/${userForm.definition.id}` }));
+                    } else {
+                      dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+                    }
+                  }}
+                >
+                  Sign out
+                </GoAButton>
+              </>
             ) : (
               <GoAButton
                 mt="s"
                 mr="s"
                 type="tertiary"
-                onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
+                data-testid="form-sign-in"
+                onClick={() => {
+                  dispatch(loginUser({ tenant, from: `${location.pathname}?autoCreate=true` }));
+                }}
               >
                 Sign in
               </GoAButton>

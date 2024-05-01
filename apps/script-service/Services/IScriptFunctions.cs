@@ -15,5 +15,5 @@ interface IScriptFunctions
   bool SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null);
   object? HttpGet(string url);
 
-  DispositionResponse? DispositionFormSubmission(string formId, string submissionId, object dispositionState, string reason);
+  DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason);
 }

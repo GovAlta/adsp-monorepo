@@ -119,14 +119,29 @@ export const initializeUser = createAsyncThunk(
   }
 );
 
+const getIdpHint = (): string => {
+  const location: string = window.location.href;
+  const skipSSO = location.indexOf('kc_idp_hint') > -1;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
+  let idp = 'core';
+  if (skipSSO && !idpFromUrl) {
+    idp = ' ';
+  }
+
+  return idp;
+};
+
 export const loginUser = createAsyncThunk(
   'user/login',
   async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
     const { config } = getState() as AppState;
+    const idpHint = getIdpHint();
 
     const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
     await client.login({
-      idpHint: 'core',
+      idpHint,
       redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
     });
 

@@ -54,6 +54,7 @@ export interface FeatureFlags {
   Script: boolean;
   Status: boolean;
   Task: boolean;
+  Feedback: boolean;
 }
 
 export interface FeedbackConfiguration {

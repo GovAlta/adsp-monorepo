@@ -42,6 +42,13 @@ const completeServiceVariables = [
     beta: false,
   },
   {
+    name: 'Feedback',
+    link: 'services/feedback',
+    description:
+      'The feedback service provides a model for sites, task queues, and task assignment. Applications can use the task service for work management as an aspect to augment domain specific concepts and processes..',
+    beta: true,
+  },
+  {
     name: 'File',
     link: 'services/file',
     description:
@@ -96,6 +103,7 @@ export const defaultFeaturesVisible = {
   Calendar: true,
   Comment: false,
   Configuration: true,
+  Feedback: false,
   Form: false,
   Directory: true,
   Event: true,

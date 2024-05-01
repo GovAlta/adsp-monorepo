@@ -1,14 +1,5 @@
-import React, { useEffect } from 'react';
-import {
-  ControlProps,
-  isEnumControl,
-  and,
-  optionIs,
-  OwnPropsOfEnum,
-  RankedTester,
-  rankWith,
-  JsonSchema,
-} from '@jsonforms/core';
+import { useContext, useEffect } from 'react';
+import { ControlProps, isEnumControl, and, optionIs, OwnPropsOfEnum, RankedTester, rankWith } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -17,13 +8,15 @@ import { EnumCellProps, WithClassname } from '@jsonforms/core';
 
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 
-import { addDataByOptions, getData } from '../../Context';
+import { JsonFormContext, enumerators } from '../../Context';
 
 type EnumSelectAutoCompleteProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.Element => {
   const { data, schema, path, handleChange, uischema, label } = props;
   let enumData = schema?.enum || [];
+
+  const enumerators = useContext(JsonFormContext) as enumerators;
 
   const dataKey = uischema?.options?.enumContext?.key;
 
@@ -32,22 +25,15 @@ export const EnumSelectAutoComplete = (props: EnumSelectAutoCompleteProp): JSX.E
   const type = uischema?.options?.enumContext?.type;
   const values = uischema?.options?.enumContext?.values;
 
-  const defaultProps = {
-    options: enumData,
-    getOptionLabel: (option: Array<string>) => option,
-  };
-
   useEffect(() => {
     if (dataKey && url) {
-      addDataByOptions(dataKey, url, location, type, values);
+      enumerators.addDataByOptions(dataKey, url, location, type, values);
     }
-  }, [url, location, type, values, dataKey]);
+  }, [url, location, type, values, dataKey, enumerators]);
 
-  if (dataKey && getData(dataKey)) {
-    const newData = getData(dataKey);
-    // eslint-disable-next-line
-    enumData = newData as any[];
-    defaultProps.options = enumData;
+  if (dataKey && enumerators.getFormContextData(dataKey)) {
+    const newData = enumerators.getFormContextData(dataKey);
+    enumData = newData as unknown[];
   }
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;

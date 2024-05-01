@@ -1,9 +1,10 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Category, UISchemaElement } from '@jsonforms/core';
-import { ContextProvider, GoARenderers } from '../../../index';
+import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
+export const ContextProvider = ContextProviderFactory();
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -459,6 +460,29 @@ describe('Form Stepper Control', () => {
   });
 
   describe('submit tests', () => {
+    it('will call a context function when submitted', () => {
+      const onSubmit = jest.fn();
+      const form = getForm({
+        name: { firstName: 'Bob', lastName: 'Bing' },
+        address: { street: 'Sesame', city: 'Seattle' },
+      });
+      const renderer = render(<ContextProvider submit={{ submitForm: onSubmit }}>{form}</ContextProvider>);
+
+      // Move to review Page
+      const next = renderer.getByTestId('next-button');
+      const nextShadow = next.shadowRoot?.querySelector('button');
+      expect(nextShadow).not.toBeNull();
+      fireEvent.click(nextShadow!);
+      fireEvent.click(nextShadow!);
+
+      // submit
+      const submitBtn = renderer.getByTestId('stepper-submit-btn');
+      const submitShadow = submitBtn.shadowRoot?.querySelector('button');
+      expect(submitShadow).not.toBeNull();
+      fireEvent.click(submitShadow!);
+      expect(onSubmit).toBeCalledTimes(1);
+    });
+
     it('will open a modal if no submit function is present', () => {
       const form = getForm({
         name: { firstName: 'Bob', lastName: 'Bing' },
