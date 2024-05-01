@@ -20,9 +20,7 @@ import {
   MultiLineTextControl,
   MultiLineTextControlTester,
   GoAEnumControl,
-  GoAEnumAutoCompleteControl,
   GoAEnumControlTester,
-  GoAEnumControlAutoCompleteTester,
   GoAEnumRadioGroupControl,
   GoARadioGroupControlTester,
   GoAArrayControlTester,
@@ -50,11 +48,11 @@ import GoACalloutControl, { GoACalloutControlTester } from './lib/Additional/GoA
 
 export * from './lib/Context';
 export * from './lib/common';
+export * from './lib/Context/register';
 
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
   { tester: GoAEnumControlTester, renderer: GoAEnumControl },
-  { tester: GoAEnumControlAutoCompleteTester, renderer: GoAEnumAutoCompleteControl },
   { tester: GoAIntegerControlTester, renderer: GoAInputIntegerControl },
   { tester: GoANumberControlTester, renderer: GoAInputNumberControl },
   { tester: GoATextControlTester, renderer: GoAInputTextControl },
