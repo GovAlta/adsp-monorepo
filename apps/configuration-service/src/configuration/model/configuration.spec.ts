@@ -523,7 +523,29 @@ describe('ConfigurationEntity', () => {
       );
 
       const result = entity.mergeUpdate({ a: '123' });
+
       expect(result).toMatchObject({ a: '123' });
+    });
+
+    it('can merge update with latest revision with array', () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {
+            items: ['items1', 'items1'],
+          },
+        }
+      );
+
+      const result = entity.mergeUpdate({ items: ['item3'] });
+
+      expect(result).toMatchObject({ items: ['items1', 'items1', 'item3'] });
     });
 
     it('can merge update with latest revision with schema', () => {
