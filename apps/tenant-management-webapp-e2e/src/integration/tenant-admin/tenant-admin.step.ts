@@ -390,7 +390,7 @@ Then('the login link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
+  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
   function (
     access,
     calendar,
@@ -398,6 +398,7 @@ Then(
     configuration,
     directory,
     events,
+    feedback,
     file,
     form,
     notification,
@@ -413,6 +414,7 @@ Then(
       'The configuration service provides',
       'The directory service is',
       'The event service provides',
+      'The feedback service provides',
       'The file service provides',
       'The form service provides',
       'The notifications service provides',
@@ -428,6 +430,7 @@ Then(
       configuration,
       directory,
       events,
+      feedback,
       file,
       form,
       notification,
