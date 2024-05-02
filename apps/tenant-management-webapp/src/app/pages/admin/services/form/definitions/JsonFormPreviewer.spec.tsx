@@ -3,6 +3,9 @@ import '@testing-library/jest-dom';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { wrapperErrorMsg } from './schemaWrappers';
 import { parseUiSchema, propertiesErr } from './schemaUtils';
+import configureStore from 'redux-mock-store';
+
+import { Provider } from 'react-redux';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -116,13 +119,16 @@ const fixedUiSchema = `{
 }`;
 
 const getPreviewer = (schema: string, uiSchema: string, data: object): JSX.Element => {
+  const mockStore = configureStore([]);
   return (
-    <JSONFormPreviewer
-      schema={schema}
-      uischema={uiSchema}
-      data={data}
-      onChange={() => console.log('on change called')}
-    />
+    <Provider store={mockStore({})}>
+      <JSONFormPreviewer
+        schema={schema}
+        uischema={uiSchema}
+        data={data}
+        onChange={() => console.log('on change called')}
+      />
+    </Provider>
   );
 };
 

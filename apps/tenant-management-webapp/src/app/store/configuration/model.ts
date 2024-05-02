@@ -1,3 +1,5 @@
+import { RegisterData } from '@abgov/jsonforms-components';
+
 export interface ConfigurationDefinition {
   configurationSchema: Record<string, SchemaType>;
   description: string;
@@ -17,6 +19,7 @@ export interface ConfigurationDefinitionState {
     service?: string;
     revisions?: { result?: []; next?: string; active?: number; latest?: number; isCore?: boolean };
   };
+  registers?: RegisterData;
   serviceList: string[];
 }
 
