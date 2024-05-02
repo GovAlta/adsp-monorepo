@@ -12,17 +12,10 @@ export interface enumerators {
   functions: Map<string, () => (file: File, propertyId: string) => void | undefined>;
   submitFunction: Map<string, () => (id: string) => void | undefined>;
   addFormContextData: (key: string, data: Record<string, unknown> | unknown[]) => void;
-  addDataByOptions: (
-    key: string,
-    url: string,
-    location: string[] | string,
-    type: string,
-    values?: string[] | string
-  ) => string[];
-  addDataByUrl: (key: string, url: string, processDataFunction: (data: object) => string[], token?: string) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getFormContextData: (key: string) => Record<string, any>;
   getAllFormContextData: () => AllData;
+  isFormSubmitted: boolean;
 }
 
 interface FileManagement {
@@ -47,7 +40,7 @@ type Props = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 };
 
-class ContextProviderClass {
+export class ContextProviderClass {
   selfProps: Props | undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   enumValues: Map<string, () => Record<string, any>> = new Map<string, () => Record<string, any>>();
@@ -69,14 +62,6 @@ class ContextProviderClass {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submitFunction: Map<string, () => ((data: any) => void) | undefined>;
     addFormContextData: (key: string, data: Record<string, unknown> | unknown[]) => void;
-    addDataByOptions: (
-      key: string,
-      url: string,
-      location: string[] | string,
-      type: string,
-      values?: string[] | string
-    ) => void;
-    addDataByUrl: (key: string, url: string, processDataFunction: (data: object) => string[], token?: string) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getFormContextData: (key: string) => Record<string, any> | undefined;
     getAllFormContextData: () => AllData;
@@ -117,8 +102,6 @@ class ContextProviderClass {
       functions: this.enumFunctions,
       submitFunction: this.enumSubmitFunctions,
       addFormContextData: this.addFormContextData,
-      addDataByOptions: this.addDataByOptions,
-      addDataByUrl: this.addDataByUrl,
       getFormContextData: this.getFormContextData,
       getAllFormContextData: this.getAllFormContextData,
     };
@@ -155,6 +138,7 @@ class ContextProviderClass {
     if (!props.children) {
       return null;
     }
+    this.baseEnumerator.isFormSubmitted = props.isFormSubmitted ?? false;
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
   };
 
@@ -172,50 +156,6 @@ class ContextProviderClass {
 
     return [requestId, axios];
   };
-
-  addDataByOptions = (
-    key: string,
-    url: string,
-    location: string[] | string,
-    type: string,
-    values: string[] | string = ['']
-  ) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dataFunction = (data: any) => {
-      let dataLink = data;
-      let returnData = [''];
-
-      const locationArray = location && Array.isArray(location) ? location : [location];
-      const locationArrayTyped = locationArray as string[];
-      locationArrayTyped?.forEach((attribute) => {
-        dataLink = dataLink[attribute];
-      });
-
-      const valuesArray = Array.isArray(values) ? values : [values];
-
-      if (type === 'keys') {
-        returnData = Object.keys(dataLink);
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        returnData = dataLink.map((entry: any) => {
-          let parse = '';
-          valuesArray.forEach((v, index) => {
-            parse += `${entry[v]}`;
-
-            if (index < valuesArray.length - 1) {
-              parse += ' ';
-            }
-          });
-          return parse;
-        });
-      }
-
-      return returnData;
-    };
-
-    this.addDataByUrl(key, url, dataFunction);
-  };
-
   /**
    * Grabs data stored under a given key
    *
@@ -246,6 +186,6 @@ class ContextProviderClass {
 }
 
 export const ContextProviderC = new ContextProviderClass();
-export const ContextProvider = ContextProviderC.setup;
+export const ContextProviderFactory = () => new ContextProviderClass().setup;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const JsonFormContext = createContext<any>(null);

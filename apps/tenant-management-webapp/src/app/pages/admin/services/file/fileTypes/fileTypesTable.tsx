@@ -3,13 +3,14 @@ import DataTable from '@components/DataTable';
 import { Role } from '@store/tenant/models';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
-import { GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAModal, GoAButton, GoABadge } from '@abgov/react-components-new';
 import { FileTypeItem } from '@store/file/models';
 import { useNavigate } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { DeleteFileTypeService, checkFileTypeHasFile } from '@store/file/actions';
 import { RootState } from '@store/index';
+import { RolesWrap } from '../styled-components';
 
 interface FileTypeRowProps extends FileTypeItem {
   editId: string;
@@ -28,9 +29,6 @@ interface FileTypeTableProps {
 const FileTypeTableRow = ({
   id,
   name,
-  readRoles,
-  updateRoles,
-  anonymousRead,
   securityClassification,
   rules,
   onEdit,
@@ -67,23 +65,61 @@ const FileTypeTableRow = ({
   );
 };
 
-const CoreFileTypeTableRow = ({
+export const CoreFileTypeTableRow = ({
   id,
   name,
   readRoles,
   updateRoles,
   securityClassification,
-  anonymousRead,
   rules,
   onEdit,
   onDelete,
 }: FileTypeRowProps): JSX.Element => {
+  const [showCoreRoles, setShowCoreRoles] = useState<boolean>(false);
+
   return (
-    <tr key={id}>
-      <td>{name}</td>
-      <td style={{ textTransform: 'capitalize' }}>{securityClassification ? securityClassification : ''}</td>
-      <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
-    </tr>
+    <>
+      <tr key={id}>
+        <td>{name}</td>
+        <td style={{ textTransform: 'capitalize' }}>{securityClassification ? securityClassification : ''}</td>
+        <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
+        <td className="actionCol">
+          <GoAContextMenu>
+            <GoAContextMenuIcon
+              type={showCoreRoles ? 'eye-off' : 'eye'}
+              title="Toggle details"
+              onClick={() => {
+                setShowCoreRoles(!showCoreRoles);
+              }}
+              testId="configuration-toggle-details-visibility"
+            />
+          </GoAContextMenu>
+        </td>
+      </tr>
+      {showCoreRoles && (
+        <tr>
+          <td
+            colSpan={4}
+            style={{
+              padding: '0px',
+            }}
+          >
+            <RolesWrap>
+              Read Roles:{' '}
+              {readRoles.map((role): JSX.Element => {
+                return <GoABadge key={`read-roles-${role}`} type="information" content={role} />;
+              })}
+            </RolesWrap>
+            <RolesWrap>
+              Modify Roles:{' '}
+              {updateRoles?.map((role): JSX.Element => {
+                return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
+              })}
+            </RolesWrap>
+          </td>
+        </tr>
+      )}
+    </>
   );
 };
 
@@ -153,6 +189,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                     Security <br /> classification
                   </th>
                   <th id="retention-policy-core">Retention period</th>
+                  <th id="Actions">Actions</th>
                 </tr>
               </thead>
               <tbody>

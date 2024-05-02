@@ -1,90 +1,17 @@
 import React, { ReactNode, useContext } from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ContextProvider, enumerators } from '.';
+import { enumerators, ContextProviderC, ContextProviderFactory } from '.';
 import axios from 'axios';
-import { JsonFormContext, ContextProviderC } from '.';
+import { JsonFormContext } from '.';
+
+export const ContextProvider = ContextProviderFactory();
 
 jest.mock('axios');
 
 describe('addDataByOptions', () => {
   afterEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('should add data by options', async () => {
-    const key = 'testKey';
-    const url = 'http://example.com/data';
-    const location = ['nested', 'data'];
-    const type = 'values';
-    const values = ['firstName', 'lastName'];
-
-    const responseData = {
-      nested: {
-        data: [
-          { firstName: 'Bob', lastName: 'Smith' },
-          { firstName: 'Jim', lastName: 'Jones' },
-        ],
-      },
-    };
-
-    // Mocking axios.get to return the response data
-    jest.spyOn(axios, 'get').mockResolvedValue({ data: responseData });
-
-    // Calling the function
-
-    await ContextProviderC.addDataByOptions(key, url, location, type, values);
-
-    // Expecting processDataFunction to be called with the response data
-    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
-    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
-  });
-  it('should add data by options single location single name', async () => {
-    const key = 'testKey';
-    const url = 'http://example.com/data';
-    const location = 'nested';
-    const type = 'values';
-    const values = 'firstName';
-
-    const responseData = {
-      nested: [
-        { firstName: 'Bob', lastName: 'Smith' },
-        { firstName: 'Jim', lastName: 'Jones' },
-      ],
-    };
-
-    // Mocking axios.get to return the response data
-    jest.spyOn(axios, 'get').mockResolvedValue({ data: responseData });
-
-    // Calling the function
-    await ContextProviderC.addDataByOptions(key, url, location, type, values);
-
-    // Expecting processDataFunction to be called with the response data
-    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob', 'Jim']);
-    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob', 'Jim'] }]);
-  });
-
-  it('should add data by options with keys', async () => {
-    const key = 'testKey';
-    const url = 'http://example.com/data';
-    const location = ['nested', 'data'];
-    const type = 'keys';
-
-    const responseData = {
-      nested: {
-        data: { 'Bob Smith': 'abc', 'Jim Jones': '234' },
-      },
-    };
-
-    // Mocking axios.get to return the response data
-    jest.spyOn(axios, 'get').mockResolvedValue({ data: responseData });
-
-    // Calling the function
-    await ContextProviderC.addDataByOptions(key, url, location, type);
-
-    // Expecting processDataFunction to be called with the response data
-    expect(ContextProviderC.getFormContextData('testKey')).toEqual(['Bob Smith', 'Jim Jones']);
-    expect(ContextProviderC.getAllFormContextData()).toEqual([{ testKey: ['Bob Smith', 'Jim Jones'] }]);
   });
 
   it('should add data with addFormContextData', async () => {
@@ -142,7 +69,6 @@ describe('addDataByOptions', () => {
   it('adds data by url with token and processing function', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function processData(rawData: any): string[] {
-      console.log(JSON.stringify(rawData.nested.data) + '<rawData.nested.data');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return rawData.nested.data.map((person: any) => `${person.firstName} ${person.lastName}`);
     }
@@ -197,7 +123,6 @@ describe('contextProvider', () => {
   });
   it('works with submit props', async () => {
     const onSubmitFunction = (text: string) => {
-      console.log(text);
       ContextProviderC.addFormContextData('submittedData', { text: text });
     };
     const SubmitComponent = () => {

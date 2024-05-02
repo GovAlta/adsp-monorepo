@@ -14,12 +14,15 @@ export const noticeReducer = (state: Notices = NoticeInit, action: ActionTypes):
   switch (action.type) {
     case 'status/notices/fetch/success': {
       const notices = action.payload;
-      const allApplicationsNotices = notices.filter((notice) => {
-        return notice.isAllApplications === true && new Date(notice.endDate) > new Date();
+      const validNotices = notices.filter((notice) => {
+        return new Date(notice.endDate) > new Date();
+      });
+      const allApplicationsNotices = validNotices.filter((notice) => {
+        return notice.isAllApplications === true;
       });
       return {
         ...state,
-        notices: notices,
+        notices: validNotices,
         allApplicationsNotices,
       };
     }
