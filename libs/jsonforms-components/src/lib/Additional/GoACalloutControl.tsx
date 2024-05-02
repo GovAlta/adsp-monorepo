@@ -17,7 +17,12 @@ export const callout = (props: CalloutProps): JSX.Element => {
     message: 'unknown',
     ...props,
   };
-  return <GoACallout {...componentProps}>{componentProps.message}</GoACallout>;
+  const testid = componentProps.message?.replace(/\s/g, '');
+  return (
+    <GoACallout {...componentProps} data-testid={testid}>
+      {componentProps.message}
+    </GoACallout>
+  );
 };
 
 const CalloutControl = (props: JsonFormsProps) => {
