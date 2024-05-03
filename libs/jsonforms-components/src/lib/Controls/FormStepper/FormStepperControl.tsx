@@ -219,7 +219,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                         </ReviewItemHeader>
                         <Grid>
                           <RenderFormReviewFields
-                            elements={category.elements}
+                            elements={category?.elements}
                             data={data}
                             requiredFields={requiredFields}
                           />
@@ -231,7 +231,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               }
             </div>
           </GoAPages>
-          {step && step !== 0 && (
+          {step !== 0 && (
             <GoAGrid minChildWidth="100px">
               <div>
                 {step !== 1 ? (

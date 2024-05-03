@@ -6,6 +6,7 @@ import { FILE_FEATURE_KEY, fileReducer } from './file.slice';
 import { QUEUE_FEATURE_KEY, queueReducers } from './queue.slice';
 import { TASK_FEATURE_KEY, taskReducer } from './task.slice';
 import { USER_FEATURE_KEY, userReducer } from './user.slice';
+import { FORM_FEATURE_KEY, formReducer } from './form.slice';
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     [QUEUE_FEATURE_KEY]: queueReducers,
     [TASK_FEATURE_KEY]: taskReducer,
     [USER_FEATURE_KEY]: userReducer,
+    [FORM_FEATURE_KEY]: formReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
   // Optional Redux store enhancers
