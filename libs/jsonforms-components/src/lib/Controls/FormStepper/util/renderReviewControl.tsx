@@ -59,7 +59,7 @@ export const renderReviewControl = (
   return (
     <React.Fragment key={index}>
       {fieldValues.type === 'primitive' &&
-        renderValue(`${label}${asterisk}:`, `${index}`, fieldValues.value, fileUploaderElement, downloadFile)}
+        renderValue(`${label}${asterisk}: `, `${index}`, fieldValues.value, fileUploaderElement, downloadFile)}
       {fieldValues.type === 'object' &&
         values &&
         values.length > 0 &&
