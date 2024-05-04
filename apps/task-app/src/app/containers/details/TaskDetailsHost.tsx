@@ -16,7 +16,7 @@ import {
   topicsSelector,
 } from '../../state';
 import CommentsViewer from '../CommentsViewer';
-import { GoAIconButton } from '@abgov/react-components-new';
+import { GoABlock, GoAIconButton, GoASpacer } from '@abgov/react-components-new';
 import { getRegisteredDetailsComponents } from './register';
 
 // Built in task detail components are loaded via import here.
@@ -80,6 +80,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
           <CommentsViewer key={open.urn} />
         </div>
       )}
+
       <GoAIconButton
         disabled={!open || !topics[open.urn]}
         icon={showComments ? 'chatbubble-ellipses' : 'chatbubble'}
@@ -95,6 +96,10 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
   );
 };
 
+export const ChatBubblePadding = styled.div`
+  margin-bottom: 5rem;
+  margin-top: 5rem;
+`;
 export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
   z-index: 0;
   position: relative;
@@ -122,10 +127,8 @@ export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
   }
 
   & > :last-child {
-    z-index: 2;
     position: absolute;
-    bottom: var(--goa-space-l);
-    left: var(--goa-space-l);
+    bottom: var(--goa-space-xl);
   }
 
   &[data-opened='true'] {

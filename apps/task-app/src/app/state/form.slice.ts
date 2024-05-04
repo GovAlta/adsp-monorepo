@@ -7,7 +7,6 @@ import { getAccessToken } from './user.slice';
 
 export const FORM_FEATURE_KEY = 'form';
 
-
 export type FormFilter = 'active' | 'pending' | 'assigned';
 
 export interface FormMetric {
@@ -35,8 +34,6 @@ export const initialFormState: FormState = {
   selected: null,
 };
 
-
-
 export interface Form {
   definition: { id: string };
   id: string;
@@ -44,21 +41,19 @@ export interface Form {
   status: 'draft' | 'locked' | 'submitted' | 'archived';
   created: Date;
   submitted?: Date;
-   
 }
 
 export interface FormState {
   busy: {
     initializing: boolean;
     loadedForm: boolean;
-    loadedDefinition: boolean
+    loadedDefinition: boolean;
     executing: boolean;
   };
-  forms:  Record<string, FormSubmission>;
+  forms: Record<string, FormSubmission>;
   definitions: Record<string, FormDefinition>;
   selected: string;
 }
-
 
 interface FormEvent {
   timestamp: string;
@@ -67,6 +62,11 @@ interface FormEvent {
   };
 }
 
+interface DispositionState {
+  id: string;
+  name: string;
+  description: string;
+}
 export interface FormDefinition {
   id: string;
   name: string;
@@ -74,6 +74,7 @@ export interface FormDefinition {
   uiSchema: UISchemaElement;
   applicantRoles: string[];
   clerkRoles: string[];
+  dispositionStates: DispositionState[];
 }
 
 export const selectForm = createAsyncThunk(
@@ -82,17 +83,17 @@ export const selectForm = createAsyncThunk(
     const { form } = getState() as AppState;
 
     if (formId && !form.forms[formId]) {
-      dispatch(loadForm({formId, submissionId}));
+      dispatch(loadForm({ formId, submissionId }));
     }
-
   }
 );
 
-
-
 export const loadForm = createAsyncThunk(
   'form/get-form',
-  async ({ formId, submissionId }: { formId: string; submissionId: string }, { getState, rejectWithValue, dispatch }) => {
+  async (
+    { formId, submissionId }: { formId: string; submissionId: string },
+    { getState, rejectWithValue, dispatch }
+  ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
 
@@ -101,7 +102,7 @@ export const loadForm = createAsyncThunk(
       const { data } = await axios.get<FormSubmission>(
         `${directory[FORM_SERVICE_ID]}/form/v1/forms/${formId}/submissions/${submissionId}`,
         {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
       dispatch(loadDefinition(data.formDefinitionId));
@@ -126,14 +127,14 @@ export const loadDefinition = createAsyncThunk(
       const { config } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
       const token = await getAccessToken();
-  
+
       const { data } = await axios.get<FormDefinition>(
         new URL(`/form/v1/definitions/${definitionId}`, formServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-   
+
       return data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -148,15 +149,10 @@ export const loadDefinition = createAsyncThunk(
   }
 );
 
-
-
 export const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
-  reducers: {
-
-
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(selectForm.fulfilled, (state, { meta }) => {
@@ -180,17 +176,17 @@ export const formSlice = createSlice({
       })
       .addCase(loadDefinition.pending, (state, { meta }) => {
         state.busy.initializing = true;
-        state.busy.loadedDefinition = false; 
+        state.busy.loadedDefinition = false;
       })
       .addCase(loadDefinition.fulfilled, (state, { payload }) => {
         state.busy.initializing = false;
-        state.busy.loadedDefinition = true;        
+        state.busy.loadedDefinition = true;
         state.definitions[payload.id] = payload;
       })
       .addCase(loadDefinition.rejected, (state) => {
         state.busy.loadedDefinition = true;
         state.busy.initializing = false;
-      })
+      });
   },
 });
 
@@ -200,16 +196,15 @@ export const formActions = formSlice.actions;
 
 export const formSelector = createSelector(
   (state: AppState) => state.form,
-  (form) => {return form} 
+  (form) => {
+    return form;
+  }
 );
 
 export const formLoadingSelector = createSelector(
   (state: AppState) => state.form.busy,
-  (busy) =>{
-    const isBusy = busy.initializing && (!busy.loadedDefinition || !busy.loadedForm)
-    return isBusy
-  
-  } 
+  (busy) => {
+    const isBusy = busy.initializing && (!busy.loadedDefinition || !busy.loadedForm);
+    return isBusy;
+  }
 );
-
-

@@ -1,5 +1,16 @@
-import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButtonGroup, GoAButton } from '@abgov/react-components-new';
+import React, { FunctionComponent, useEffect, useState } from 'react';
+import {
+  GoAButtonGroup,
+  GoAButton,
+  GoAFormItem,
+  GoADropdown,
+  GoADropdownItem,
+  GoATextArea,
+  GoASpacer,
+  GoABlock,
+  GoADetails,
+  GoAAccordion,
+} from '@abgov/react-components-new';
 import { Grid } from '../../../lib/common/Grid';
 import { useDispatch, useSelector } from 'react-redux';
 import { TaskDetailsProps } from './types';
@@ -9,11 +20,27 @@ import { getAllRequiredFields } from './getRequiredFields';
 import { Categorization, isVisible, ControlElement, Category } from '@jsonforms/core';
 
 import { AdspId } from '../../../lib/adspId';
-import { ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle, ReviewItemBasic } from './styled-components';
+import {
+  ReviewItem,
+  ReviewItemHeader,
+  ReviewItemSection,
+  ReviewItemTitle,
+  ReviewItemBasic,
+  FormDispositionDetail,
+} from './styled-components';
 import { RenderFormReviewFields } from './RenderFormReviewFields';
 import { ajv } from '../../../lib/validations/checkInput';
 import { Element } from './RenderFormReviewFields';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
+import styled from 'styled-components';
+const PlaceholderDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  > *:first-child {
+    flex-grow: 1;
+  }
+`;
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   user,
@@ -42,52 +69,105 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const [categories, setCategories] = React.useState<(Categorization | Category | ControlElement)[]>(
     categorization?.elements
   );
+  const [dispositionReason, setDispositionReason] = useState<string>('');
+  const [dispositionStatus, setDispositionStatus] = useState<string>('');
 
   useEffect(() => {
     const cats = categorization?.elements.filter((category) => isVisible(category, currentForm?.formData, '', ajv));
     setCategories(cats as (Categorization | Category | ControlElement)[]);
   }, [categorization, currentForm]);
 
+  const renderFormSubmissionReview = () => {
+    return (
+      <PlaceholderDiv>
+        <GoAAccordion ml="s" heading="Form submission review" open={true}>
+          <ReviewItem>
+            {categories &&
+              categories.map((category, index) => {
+                const categoryLabel = category.label || category.i18n || '';
+                const requiredFields = getAllRequiredFields(definition?.dataSchema);
+
+                return (
+                  <div>
+                    <LoadingIndicator isLoading={isLoading} />
+                    {category?.type === 'Control' ? (
+                      <ReviewItemBasic>
+                        <Element
+                          element={category}
+                          index={index}
+                          data={currentForm?.formData}
+                          requiredFields={requiredFields}
+                        />
+                      </ReviewItemBasic>
+                    ) : (
+                      <ReviewItemSection key={index}>
+                        <ReviewItemHeader>
+                          <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
+                        </ReviewItemHeader>
+                        <Grid>
+                          <RenderFormReviewFields
+                            elements={category?.elements}
+                            data={currentForm?.formData}
+                            requiredFields={requiredFields}
+                          />
+                        </Grid>
+                      </ReviewItemSection>
+                    )}
+                  </div>
+                );
+              })}
+          </ReviewItem>
+        </GoAAccordion>
+      </PlaceholderDiv>
+    );
+  };
+
+  const renderFormDisposition = () => {
+    return (
+      <GoAAccordion ml="s" heading="Form disposition">
+        <FormDispositionDetail>
+          <GoAFormItem label="Disposition" mt="m" mb="s">
+            <GoADropdown
+              testId="formDispositionStatus"
+              value={dispositionStatus}
+              onChange={(_, value: string) => {
+                setDispositionStatus(value);
+              }}
+              relative={true}
+              width={'50ch'}
+            >
+              <GoADropdownItem key="" value="" label="" />
+              {/* {workers.map((w) => (
+                <GoADropdownItem key={w.id} value={w.id} label={w.name} />
+              ))} */}
+            </GoADropdown>
+          </GoAFormItem>
+
+          <GoAFormItem label="Reason">
+            <GoATextArea
+              name="reason"
+              value={dispositionReason}
+              width="100ch"
+              testId="reason"
+              aria-label="reason"
+              onKeyPress={(name, value: string) => {
+                setDispositionReason(value);
+              }}
+              // eslint-disable-next-line
+              onChange={() => {}}
+            />
+          </GoAFormItem>
+        </FormDispositionDetail>
+      </GoAAccordion>
+    );
+  };
+
   return (
     <div>
-      <h2>Form submission review</h2>
-      <ReviewItem>
-        {categories &&
-          categories.map((category, index) => {
-            const categoryLabel = category.label || category.i18n || '';
-            const requiredFields = getAllRequiredFields(definition?.dataSchema);
+      {renderFormSubmissionReview()}
+      {renderFormDisposition()}
 
-            return (
-              <div>
-                <LoadingIndicator isLoading={isLoading} />
-                {category?.type === 'Control' ? (
-                  <ReviewItemBasic>
-                    <Element
-                      element={category}
-                      index={index}
-                      data={currentForm?.formData}
-                      requiredFields={requiredFields}
-                    />
-                  </ReviewItemBasic>
-                ) : (
-                  <ReviewItemSection key={index}>
-                    <ReviewItemHeader>
-                      <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
-                    </ReviewItemHeader>
-                    <Grid>
-                      <RenderFormReviewFields
-                        elements={category?.elements}
-                        data={currentForm?.formData}
-                        requiredFields={requiredFields}
-                      />
-                    </Grid>
-                  </ReviewItemSection>
-                )}
-              </div>
-            );
-          })}
-      </ReviewItem>
-      <GoAButtonGroup alignment="end" mt="l">
+      <GoAButtonGroup alignment="start" mt="l">
         <GoAButton type="secondary" onClick={onClose}>
           Close
         </GoAButton>
