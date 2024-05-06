@@ -31,7 +31,7 @@ const resolveLabelFromScope = (scope: string): string => {
 
 export interface InputValue {
   type: 'primitive' | 'object';
-  value?: string[][];
+  value?: string | string[][];
 }
 
 /*
@@ -101,5 +101,12 @@ export const getFormFieldValue = (scope: string, data: unknown): InputValue => {
   }
   return typeof currentValue === 'object'
     ? { type: 'object', value: flatten(objToArray(currentValue)) }
-    : { type: 'primitive', value: currentValue };
+    : { type: 'primitive', value: getValue(currentValue) };
+};
+
+const getValue = (currentValue: unknown): string | undefined => {
+  if (typeof currentValue === 'boolean') {
+    return currentValue ? 'Yes' : 'No';
+  }
+  return currentValue ? String(currentValue) : undefined;
 };

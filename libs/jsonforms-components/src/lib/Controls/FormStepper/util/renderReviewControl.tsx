@@ -63,7 +63,7 @@ export const renderReviewControl = (
       {fieldValues.type === 'object' &&
         values &&
         values.length > 0 &&
-        values.map((v, i) => {
+        (values as string[][]).map((v, i) => {
           return renderValue(`${v[0]}: `, `${index}:${i}`, v[1]);
         })}
     </React.Fragment>
