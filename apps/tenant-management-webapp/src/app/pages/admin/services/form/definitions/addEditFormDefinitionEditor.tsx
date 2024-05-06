@@ -76,6 +76,9 @@ import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/aut
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { hasSchemaErrors, parseDataSchema, parseUiSchema } from './schemaUtils';
 import { CustomLoader } from '@components/CustomLoader';
+import { getConfigurationDefinitions } from '@store/configuration/action';
+import { FETCH_REGISTER_DATA_ACTION } from '@store/configuration/action';
+
 export const ContextProvider = ContextProviderFactory();
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
@@ -133,6 +136,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     dispatch(FetchFileTypeService());
+    dispatch(getConfigurationDefinitions());
   }, [dispatch]);
 
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
