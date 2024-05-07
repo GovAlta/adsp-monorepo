@@ -10,7 +10,7 @@ Feature: Form app
     When a user goes to form app overview site
     Then no critical or serious accessibility issues on "form app overview" page
 
-  @regression
+  @TEST_CS-3110 @regression
   Scenario: As an authenticated user, I can log in to submit an application
     When an authenticated user is logged in to see "autotest-testFormApp" application
     Then the user views a from draft of "autotest-testFormApp"

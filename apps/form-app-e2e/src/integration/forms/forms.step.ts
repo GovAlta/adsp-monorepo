@@ -154,13 +154,14 @@ Then('the user views a callout with a message of {string}', function (message) {
   formsObj.formSuccessCallout().shadow().find('h3').should('have.text', message);
 });
 
+// List with detail label need to be passed in the format of <child element field label:parent array label>, i.e. First name:Dependant
 Then(
   'the user views the summary of {string} with {string} as {string} {string}',
   function (sectionName, value, requiredOrNot, label) {
     let isFound = false;
     if (label.includes(':')) {
       const listWithDetailLabels = label.split(':');
-      const arrayLabel = listWithDetailLabels[1].toLowerCase();
+      const arrayLabel = listWithDetailLabels[1].toLowerCase(); // Array labels need to be changed to lower case to use in xpath
       const fieldLabel = listWithDetailLabels[0];
       formsObj
         .formSummaryPageListWithDetailItems(sectionName, arrayLabel)
