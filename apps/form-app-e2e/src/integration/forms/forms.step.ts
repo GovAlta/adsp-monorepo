@@ -133,21 +133,21 @@ When('the user clicks submit button in the form', function () {
   cy.wait(10000);
 });
 
-When('the user clicks object array button labelled as {string} in the form', function (label) {
-  formsObj.formObjectArrayButton(label).shadow().find('button').click({ force: true });
+When('the user clicks list with detail button labelled as {string} in the form', function (label) {
+  formsObj.formListWithDetailButton(label).shadow().find('button').click({ force: true });
 });
 
-When('the user enters {string} in object array element text field labelled {string}', function (text, label) {
+When('the user enters {string} in list with detail element text field labelled {string}', function (text, label) {
   formsObj
-    .formObjectArrayDependantTextField(label)
+    .formListWithDetailDependantTextField(label)
     .shadow()
     .find('input')
     .clear()
     .type(text, { force: true, delay: 200 });
 });
 
-When('the user enters {string} in object array element date input labelled {string}', function (date, label) {
-  formsObj.formObjectArrayDependantDateInput(label).shadow().find('input').clear().type(date, { force: true });
+When('the user enters {string} in list with detail element date input labelled {string}', function (date, label) {
+  formsObj.formListWithDetailDependantDateInput(label).shadow().find('input').clear().type(date, { force: true });
 });
 
 Then('the user views a callout with a message of {string}', function (message) {
@@ -159,11 +159,11 @@ Then(
   function (sectionName, value, requiredOrNot, label) {
     let isFound = false;
     if (label.includes(':')) {
-      const objectArrayLabels = label.split(':');
-      const arrayLabel = objectArrayLabels[1].toLowerCase();
-      const fieldLabel = objectArrayLabels[0];
+      const listWithDetailLabels = label.split(':');
+      const arrayLabel = listWithDetailLabels[1].toLowerCase();
+      const fieldLabel = listWithDetailLabels[0];
       formsObj
-        .formSummaryPageOjectArrayItems(sectionName, arrayLabel)
+        .formSummaryPageListWithDetailItems(sectionName, arrayLabel)
         .then((items) => {
           for (let i = 0; i < items.length; i++) {
             cy.log(items[i].outerText);
@@ -171,13 +171,13 @@ Then(
               case 'required':
                 if (items[i].outerText == fieldLabel + ' *: ' + value) {
                   isFound = true;
-                  cy.log(String(isFound));
+                  cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
                 }
                 break;
               case 'not required':
                 if (items[i].outerText == fieldLabel + ': ' + value) {
                   isFound = true;
-                  cy.log(String(isFound));
+                  cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
                 }
                 break;
               default:
@@ -198,13 +198,13 @@ Then(
               case 'required':
                 if (items[i].outerText == label + ' *: ' + value) {
                   isFound = true;
-                  cy.log(String(isFound));
+                  cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
                 }
                 break;
               case 'not required':
                 if (items[i].outerText == label + ': ' + value) {
                   isFound = true;
-                  cy.log(String(isFound));
+                  cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
                 }
                 break;
               default:

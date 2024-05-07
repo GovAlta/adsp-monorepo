@@ -39,15 +39,15 @@ class FormsPage {
     return cy.xpath('//goa-button[@data-testid="stepper-submit-btn"]');
   }
 
-  formObjectArrayButton(label) {
+  formListWithDetailButton(label) {
     return cy.xpath(`//goa-button[contains(@data-testid, "object-array-toolbar") and text()="${label}"]`);
   }
 
-  formObjectArrayDependantTextField(label) {
+  formListWithDetailDependantTextField(label) {
     return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label}"]//goa-input`);
   }
 
-  formObjectArrayDependantDateInput(label) {
+  formListWithDetailDependantDateInput(label) {
     return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label}"]//goa-input`);
   }
 
@@ -62,16 +62,14 @@ class FormsPage {
   }
 
   //pageName is case sensitive and arrayName is lower case
-  formSummaryPageOjectArrayItems(pageName, arrayName) {
+  formSummaryPageListWithDetailItems(pageName, arrayName) {
     return cy.xpath(
       `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/parent::div/following-sibling::div//h3[text()="${arrayName}"]/following-sibling::div/div`
     );
   }
 
   formRadioGroup(question) {
-    return cy.xpath(
-      `//goa-form-item[@label="${question}"]//goa-radio-group`
-    );
+    return cy.xpath(`//goa-form-item[@label="${question}"]//goa-radio-group`);
   }
 }
 
