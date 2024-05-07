@@ -72,7 +72,7 @@ describe('Label to string', () => {
 });
 
 describe('getFormFieldValue', () => {
-  it('will return the correct value for the specified scope', () => {
+  it('will return the correct value for a scope', () => {
     const scope = '#/properties/firstName';
     const data = { firstName: 'Alex', address: { street: 'Springfield' } };
     const alex = getFormFieldValue(scope, data);
@@ -80,7 +80,7 @@ describe('getFormFieldValue', () => {
     expect(alex.value).toEqual('Alex');
   });
 
-  it('will return the correct value for the specified scope', () => {
+  it('will return the correct value for a nested scope', () => {
     const scope = '#/properties/address/properties/street';
     const data = { firstName: 'Alex', address: { street: 'Springfield' } };
     const springfield = getFormFieldValue(scope, data);
@@ -93,6 +93,13 @@ describe('getFormFieldValue', () => {
     const empty = getFormFieldValue(scope, {});
     expect(empty.type).toBe('primitive');
     expect(empty.value).toBe(undefined);
+  });
+
+  it('returns the correct value for a checkbox', () => {
+    const scope = '#/properties/isAlive';
+    const empty = getFormFieldValue(scope, { isAlive: true });
+    expect(empty.type).toBe('primitive');
+    expect(empty.value).toBe('Yes');
   });
 
   it('will return empty value for the specified scope and undefined data', () => {

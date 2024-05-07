@@ -1,3 +1,4 @@
+import { FetchAccessSuccessAction } from '@store/access/actions';
 import {
   ServiceConfigurationTypes,
   ConfigDefinition,
@@ -6,6 +7,7 @@ import {
   ReplaceConfiguration,
   Revision,
 } from './model';
+import { RegisterData } from '@abgov/jsonforms-components';
 
 export const DELETE_CONFIGURATION_DEFINITION_ACTION = 'configuration/DELETE_CONFIGURATION_DEFINITION_ACTION';
 export const DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS =
@@ -48,6 +50,9 @@ export const RESET_IMPORTS_LIST_ACTION = 'configuration/RESET_IMPORTS_LIST_ACTIO
 
 export const RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION =
   'configuration/RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION';
+
+export const FETCH_REGISTER_DATA_ACTION = 'configuration/FETCH_REGISTER_DATA';
+export const FETCH_REGISTER_DATA_SUCCESS_ACTION = 'configuration/FETCH_REGISTER_DATA_SUCCESS_ACTION';
 
 export const UPDATE_LATEST_REVISION_SUCCESS_ACTION = 'configuration/UPDATE_LATEST_REVISION_SUCCESS_ACTION';
 export interface DeleteConfigurationDefinitionAction {
@@ -160,6 +165,15 @@ export interface ResetReplaceConfigurationListSuccessAction {
   type: typeof RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION;
 }
 
+export interface FetchRegisterDataAction {
+  type: typeof FETCH_REGISTER_DATA_ACTION;
+}
+
+export interface FetchRegisterDataSuccessAction {
+  type: typeof FETCH_REGISTER_DATA_SUCCESS_ACTION;
+  payload: RegisterData;
+}
+
 export type ConfigurationDefinitionActionTypes =
   | FetchConfigurationDefinitionsAction
   | FetchConfigurationDefinitionsSuccessAction
@@ -182,6 +196,8 @@ export type ConfigurationDefinitionActionTypes =
   | FetchConfigurationRevisionsAction
   | FetchConfigurationRevisionsSuccessAction
   | FetchConfigurationActionRevisionAction
+  | FetchRegisterDataAction
+  | FetchRegisterDataSuccessAction
   | FetchConfigurationActiveRevisionSuccessAction;
 
 export type ServiceId = { namespace: string; service: string };
@@ -351,4 +367,13 @@ export const getReplaceConfigurationErrorSuccessAction = (
 ): GetReplaceConfigurationErrorSuccessAction => ({
   type: REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
   payload: replacedConfiguration,
+});
+
+export const getRegisterDataSuccessAction = (registerData: RegisterData): FetchRegisterDataSuccessAction => ({
+  type: FETCH_REGISTER_DATA_SUCCESS_ACTION,
+  payload: registerData,
+});
+
+export const getRegisterDataAction = (): FetchRegisterDataAction => ({
+  type: FETCH_REGISTER_DATA_ACTION,
 });

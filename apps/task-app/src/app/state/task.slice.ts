@@ -529,7 +529,7 @@ export const taskSlice = createSlice({
     },
     resetTask: (state) => {
       state.results = [];
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -713,8 +713,8 @@ export const tasksSelector = createSelector(
           result = a.createdOn.getTime() - b.createdOn.getTime();
         }
         return result;
-      })
-    }
+      });
+  }
 );
 
 export const busySelector = (state: AppState) => state.task.busy;
