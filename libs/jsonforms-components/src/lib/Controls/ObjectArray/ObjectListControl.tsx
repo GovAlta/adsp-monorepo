@@ -38,6 +38,10 @@ const extractScopesFromUISchema = (uischema: any): string[] => {
             scopes.push(internalElement?.scope);
           }
         });
+      } else {
+        if (element?.scope) {
+          scopes.push(element?.scope);
+        }
       }
     });
   }
