@@ -11,7 +11,7 @@ const mockHost = 'http://mock-api.com';
 const TestComponent = (): JSX.Element => {
   const context = useContext(JsonFormsRegisterContext);
   useEffect(() => {
-    context?.selectRegisterDataByUrl(`${mockHost}/mock-test`);
+    context?.selectRegisterData(`${mockHost}/mock-test`);
     context?.fetchRegisterByUrl(`${mockHost}/mock-test`);
   }, [context]);
   return <div data-testid={'mock-test'}></div>;
