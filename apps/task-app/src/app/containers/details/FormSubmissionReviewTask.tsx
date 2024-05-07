@@ -49,7 +49,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   onClose,
   onStart,
   onComplete,
-  onSetCompleteData,
   onCancel,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -89,19 +88,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     .build();
 
   const onCompleteValidationCheck = () => {
-    if (dispositionStatus !== NO_DISPOSITION_SELECTED.value && dispositionReason === '') {
-      validators.remove('dispositionReason');
-      validators.remove('dispositionStatus');
-      validators['dispositionReason'].check(dispositionReason);
-      return;
-    } else if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.value) {
-      validators.remove('dispositionReason');
-      validators.remove('dispositionStatus');
-      validators['dispositionStatus'].check(dispositionStatus);
-      return;
-    }
-    onSetCompleteData({ formId: form.selected, submissionId, dispositionStatus, dispositionReason });
-    //onComplete();
+    onComplete({ formId: form.selected, submissionId, dispositionStatus, dispositionReason });
     validators.clear();
   };
 
@@ -109,6 +96,10 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     const cats = categorization?.elements.filter((category) => isVisible(category, currentForm?.formData, '', ajv));
     setCategories(cats as (Categorization | Category | ControlElement)[]);
   }, [categorization, currentForm]);
+
+  const isTaskCompleted = () => {
+    return task.status === 'Completed';
+  };
 
   const renderFormSubmissionReview = () => {
     return (
@@ -159,12 +150,15 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     return (
       <GoADetails ml="s" heading="Form disposition">
         <FormDispositionDetail>
-          <GoAFormItem error={errors?.['dispositionStatus']} label="Status" mt="m" mb="s">
+          <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition" mt="m" mb="s">
             <GoADropdown
               testId="formDispositionStatus"
               value={dispositionStatus}
+              disabled={isTaskCompleted()}
               onChange={(_, value: string) => {
                 setDispositionStatus(value);
+                validators.remove('dispositionStatus');
+                validators['dispositionStatus'].check(value);
               }}
               relative={true}
               width={'67ch'}
@@ -180,15 +174,18 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             </GoADropdown>
           </GoAFormItem>
 
-          <GoAFormItem label="Reason" error={errors?.['dispositionReason']}>
+          <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']}>
             <GoATextArea
               name="reason"
               value={dispositionReason}
+              disabled={isTaskCompleted()}
               width="75ch"
               testId="reason"
               aria-label="reason"
               onKeyPress={(name, value: string) => {
                 setDispositionReason(value);
+                validators.remove('dispositionReason');
+                validators['dispositionReason'].check(value);
               }}
               // eslint-disable-next-line
               onChange={() => {}}
@@ -214,7 +211,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
       <GoAButtonGroup alignment="start" mt="l">
         {task?.status === 'In Progress' && (
           <>
-            <GoAButton disabled={!user.isWorker || isExecuting} onClick={() => onCompleteValidationCheck()}>
+            <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
               Complete task
             </GoAButton>
             <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>

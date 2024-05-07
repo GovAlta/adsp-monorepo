@@ -25,7 +25,6 @@ import { getRegisteredDetailsComponents } from './register';
 // Custom ones will be imported via a script element with src to URL of bundle file.
 import './FileTask';
 import './FormSubmissionReviewTask';
-import { AdspId } from '../../../lib/adspId';
 
 // Lazy import detail containers for bundle code splitting and application load performance.
 const Placeholder = lazy(() => import('./Placeholder'));
@@ -49,10 +48,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
   const topic = useSelector(selectedTopicSelector);
   const form = useSelector(formSelector);
 
-  // const adspId = AdspId.parse(open?.recordId);
-  // const [_, _type, id, _submission, submissionId] = adspId.resource.split('/');
-
-  const [completedData, setOnCompleteData] = useState<TaskCompleteProps>(null);
+  const [completedData, setOnCompleteData] = useState<TaskCompleteProps>({} as TaskCompleteProps);
   const definitionId = form.forms[form.selected]?.formDefinitionId;
   const definition = form.definitions[definitionId];
   const params = useParams<{ namespace: string; name: string; taskId: string }>();
@@ -76,16 +72,18 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
       }
     })?.detailsComponent || Placeholder;
 
-  const onCompleteTask = () => {
-    // dispatch(
-    //   updateFormDisposition({
-    //     formId: data.formId,
-    //     submissionId: data.submissionId,
-    //     dispositionReason: data.dispositionReason,
-    //     dispositionStatus: data.dispositionStatus,
-    //   })
-    // );
-    //dispatch(completeTask({ taskId: open.id }));
+  const onCompleteTask = (data: TaskCompleteProps) => {
+    console.log('completedData', data);
+    dispatch(
+      updateFormDisposition({
+        formId: data.formId,
+        submissionId: data.submissionId,
+        dispositionReason: data.dispositionReason,
+        dispositionStatus: data.dispositionStatus,
+      })
+    ).then(() => {
+      dispatch(completeTask({ taskId: open.id }));
+    });
   };
 
   return (
@@ -98,12 +96,8 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
             isExecuting={busy.executing}
             onClose={onClose}
             onStart={() => dispatch(startTask({ taskId: open.id }))}
-            onComplete={() => onCompleteTask()}
+            onComplete={(data) => onCompleteTask(data)}
             onCancel={(reason) => dispatch(cancelTask({ taskId: open.id, reason }))}
-            onSetCompleteData={(data) => {
-              console.log('data', data);
-              setOnCompleteData(data);
-            }}
           />
         </Suspense>
       )}

@@ -90,7 +90,7 @@ export const updateFormDisposition = createAsyncThunk(
         const formServiceUrl = `${directory[FORM_SERVICE_ID]}/form/v1/forms/${formId}/submissions/${submissionId}`;
         const { data } = await axios.post<FormSubmission>(
           formServiceUrl,
-          { dispositionStatus: 'status', dispositionReason: 'reason' },
+          { dispositionStatus: dispositionStatus, dispositionReason: dispositionReason },
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         return data;
@@ -226,6 +226,7 @@ export const formSlice = createSlice({
       })
       .addCase(updateFormDisposition.fulfilled, (state, { payload }) => {
         state.busy.executing = false;
+        state.forms[payload.formId] = payload;
       });
   },
 });

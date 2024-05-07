@@ -8,6 +8,5 @@ export interface TaskDetailsProps {
   onClose: () => void;
   onStart: () => void;
   onCancel: (reason: string) => void;
-  onComplete: () => void;
-  onSetCompleteData: (data: TaskCompleteProps) => void;
+  onComplete: (data: TaskCompleteProps) => void;
 }
