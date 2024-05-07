@@ -12,7 +12,7 @@ import { fetchRegister } from './util';
 interface JsonFormsRegisterContextProps {
   registerDispatch: JsonFormRegisterDispatch;
   fetchRegisterByUrl: (registerConfig: RegisterConfig) => Promise<void>;
-  selectRegisterDataByUrl: (url: string) => string[];
+  selectRegisterData: (registerConfig: RegisterConfig) => string[];
   isProvided: boolean;
 }
 
@@ -26,7 +26,7 @@ interface JsonFormsRegisterProviderProps {
 export const JsonFormRegisterProvider = ({
   children,
   defaultRegisters,
-}: JsonFormsRegisterProviderProps): JSX.Element | ReactNode => {
+}: JsonFormsRegisterProviderProps): JSX.Element => {
   const registerCtx = useContext(JsonFormsRegisterContext);
   const [registers, dispatch] = useReducer(registerReducer, []);
 
@@ -34,8 +34,16 @@ export const JsonFormRegisterProvider = ({
     return {
       isProvided: true,
       registerDispatch: dispatch,
-      selectRegisterDataByUrl: (url: string): string[] => {
-        return registers?.find((r) => r.url === url)?.data || [];
+      selectRegisterData: (criteria: RegisterConfig): string[] => {
+        if (criteria?.url) {
+          return registers?.find((r) => r.url === criteria.url)?.data || [];
+        }
+
+        if (criteria?.urn) {
+          return registers?.find((r) => r.urn === criteria.urn)?.data || [];
+        }
+
+        return [];
       },
       fetchRegisterByUrl: async (registerConfig: RegisterConfig) => {
         // Prevent re-freshing remote data
@@ -70,7 +78,8 @@ export const JsonFormRegisterProvider = ({
   }, [dispatch, defaultRegisters]);
   /* The client might use the context outside of the Jsonform to provide custom register data */
   if (registerCtx?.isProvided) {
-    return children;
+    // eslint-disable-next-line
+    return <>{children}</>;
   }
   return <JsonFormsRegisterContext.Provider value={context}>{children}</JsonFormsRegisterContext.Provider>;
 };

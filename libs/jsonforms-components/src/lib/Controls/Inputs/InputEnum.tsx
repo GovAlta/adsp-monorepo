@@ -13,7 +13,7 @@ import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 
 function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undefined): RegisterConfig | undefined {
-  if (!options?.url) return undefined;
+  if (!options?.url && !options?.urn) return undefined;
   const config: RegisterConfig = {
     ...options,
   };
@@ -24,13 +24,12 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   const { data, id, enabled, errors, schema, path, handleChange, options, config, label, uischema, required } = props;
 
   const registerCtx = useContext(JsonFormsRegisterContext);
-  const registerConfig = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
+  const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
   let registerData: string[] = [];
   if (registerConfig) {
-    registerData = registerCtx?.selectRegisterDataByUrl(
-      (registerConfig as unknown as RegisterConfig).url as string
-    ) as string[];
+    registerData = registerCtx?.selectRegisterData(registerConfig) as string[];
   }
+
   const autocompletion = props.uischema?.options?.autocomplete === true;
 
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options);
@@ -56,7 +55,6 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
       value={data}
       disabled={!enabled}
       relative={true}
-      width="100%"
       filterable={autocompletion}
       key={`${id}-jsonform-key`}
       testId={`${id || label}-jsonform`}

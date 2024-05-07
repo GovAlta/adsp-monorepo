@@ -34,14 +34,20 @@ import {
   setConfigurationRevisionActiveSuccessAction,
   SET_CONFIGURATION_REVISION_ACTIVE_ACTION,
   ServiceId,
+  FETCH_REGISTER_DATA_ACTION,
+  getRegisterDataAction,
+  FetchRegisterDataAction,
+  getRegisterDataSuccessAction,
+  FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '..';
-import { select, call, put, takeEvery, all } from 'redux-saga/effects';
+import { select, call, put, takeEvery, all, take } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getAccessToken } from '@store/tenant/sagas';
+import { RegisterConfigData } from '@abgov/jsonforms-components';
 
 export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
@@ -66,6 +72,7 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
           headers: { Authorization: `Bearer ${token}` },
         }),
       });
+      console.log(tenant);
       yield put(
         getConfigurationDefinitionsSuccess({
           tenant: tenant.data,
@@ -77,6 +84,8 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
           show: false,
         })
       );
+
+      yield put(getRegisterDataAction());
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
@@ -168,6 +177,59 @@ export function* fetchConfigurationRevisions(action: FetchConfigurationRevisions
           show: false,
         })
       );
+    }
+  }
+}
+
+export function* fetchRegisterData(): SagaIterator {
+  take(FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION);
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield call(getAccessToken);
+
+  const tenantConfigDefinition = yield select(
+    (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration
+  );
+
+  const tenantConfigs = Object.entries(tenantConfigDefinition);
+
+  const registerConfigs =
+    tenantConfigs
+      // eslint-disable-next-line
+      .filter(([name, config]) => {
+        // eslint-disable-next-line
+        const _c = config as any;
+        return _c?.configurationSchema?.properties?.register?.type === 'array';
+      })
+      // eslint-disable-next-line
+      .map(([name, config]) => name) || [];
+
+  for (const registerConfig of registerConfigs) {
+    const registerData: RegisterConfigData[] = [];
+
+    try {
+      const [namespace, service] = registerConfig.split(':');
+      const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}`;
+      const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
+      // if there is active configuration, use the register in the active configuration first.
+      if (data?.active && data?.active?.configuration?.register) {
+        registerData.push({
+          urn: `urn:ads:register:${registerConfig}`,
+          data: data?.active?.configuration?.register,
+        });
+      } else {
+        if (data?.latest && data?.latest?.configuration?.register) {
+          registerData.push({
+            urn: `urn:ads:register:${registerConfig}`,
+            data: data?.latest?.configuration?.register,
+          });
+        }
+      }
+
+      yield put(getRegisterDataSuccessAction(registerData));
+    } catch (error) {
+      console.warn(`Error in fetching the register data from service: ${registerConfig}`);
     }
   }
 }
@@ -415,4 +477,5 @@ export function* watchConfigurationSagas(): Generator {
   yield takeEvery(RESET_REPLACE_CONFIGURATION_LIST_ACTION, resetReplaceList);
   yield takeEvery(FETCH_CONFIGURATION_REVISIONS_ACTION, fetchConfigurationRevisions);
   yield takeEvery(FETCH_CONFIGURATION_ACTIVE_REVISION_ACTION, fetchConfigurationActiveRevision);
+  yield takeEvery(FETCH_REGISTER_DATA_ACTION, fetchRegisterData);
 }
