@@ -207,7 +207,10 @@ export const updateApplicationStatus =
       const user = req.user as User;
       const { appKey } = req.params;
       const { status } = req.body;
+      console.log(JSON.stringify(status) + '<xx status');
       const apps = await applicationRepo.getTenantApps(user.tenantId);
+
+      console.log(JSON.stringify(apps) + '<xx apps');
       const app = apps.find(appKey);
 
       if (!app) {
@@ -352,7 +355,8 @@ export function createServiceStatusRouter({
     endpointStatusEntryRepository,
     serviceId,
     directory,
-    tokenProvider
+    tokenProvider,
+    configurationService
   );
 
   const webhookRepo = new WebhookRepo(

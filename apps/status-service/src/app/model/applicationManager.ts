@@ -40,7 +40,8 @@ export class ApplicationManager {
       endpointStatusEntryRepository,
       serviceId,
       directory,
-      tokenProvider
+      tokenProvider,
+      configurationService
     );
     this.#tokenProvider = tokenProvider;
     this.#directory = directory;
