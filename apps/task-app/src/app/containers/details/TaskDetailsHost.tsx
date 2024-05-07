@@ -60,6 +60,10 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
       }
     })?.detailsComponent || Placeholder;
 
+  const onCompleteTask = () => {
+    dispatch(completeTask({ taskId: open.id }));
+  };
+
   return (
     <div key={params.taskId} data-opened={!!open} className={className}>
       {open && (
@@ -70,7 +74,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
             isExecuting={busy.executing}
             onClose={onClose}
             onStart={() => dispatch(startTask({ taskId: open.id }))}
-            onComplete={() => dispatch(completeTask({ taskId: open.id }))}
+            onComplete={() => onCompleteTask()}
             onCancel={(reason) => dispatch(cancelTask({ taskId: open.id, reason }))}
           />
         </Suspense>

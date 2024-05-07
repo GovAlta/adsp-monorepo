@@ -77,6 +77,43 @@ export interface FormDefinition {
   dispositionStates: DispositionState[];
 }
 
+export const updateFormDisposition = createAsyncThunk(
+  'form/update-form-disposition',
+  async (
+    {
+      formId,
+      submissionId,
+      dispositionStatus,
+      dispositionReason,
+    }: {
+      formId: string;
+      submissionId: string;
+      dispositionStatus: string;
+      dispositionReason: string;
+    },
+    { getState, rejectWithValue, dispatch }
+  ) => {
+    const state = getState() as AppState;
+    const { directory } = state.config;
+
+    try {
+      const accessToken = await getAccessToken();
+      if (formId && submissionId) {
+        // `${directory[FORM_SERVICE_ID]}/form/v1/forms/${formId}/submissions/${submissionId}`
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const selectForm = createAsyncThunk(
   'form/select-form',
   ({ formId, submissionId }: { formId: string; submissionId: string }, { getState, dispatch }) => {

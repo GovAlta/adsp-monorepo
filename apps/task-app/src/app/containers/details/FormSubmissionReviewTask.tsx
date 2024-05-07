@@ -6,8 +6,6 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoATextArea,
-  GoASpacer,
-  GoABlock,
   GoADetails,
   GoAAccordion,
 } from '@abgov/react-components-new';
@@ -18,8 +16,10 @@ import { registerDetailsComponent } from './register';
 import { AppDispatch, formSelector, selectForm, AppState, formLoadingSelector } from '../../state';
 import { getAllRequiredFields } from './getRequiredFields';
 import { Categorization, isVisible, ControlElement, Category } from '@jsonforms/core';
-
+import { useValidators } from '../../../lib/validations/useValidators';
+import { isNotEmptyCheck, isNotTextCheck } from '../../../lib/validations/checkInput';
 import { AdspId } from '../../../lib/adspId';
+
 import {
   ReviewItem,
   ReviewItemHeader,
@@ -62,6 +62,12 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     dispatch(selectForm({ formId: id, submissionId: submissionId }));
   }, [dispatch, id, submissionId]);
 
+  const NO_DISPOSITION_SELECTED = {
+    id: 'No disposition selected',
+    label: 'No disposition selected',
+    value: 'No disposition selected',
+  };
+
   const definitionId = form.forms[id]?.formDefinitionId;
   const definition = form.definitions[definitionId];
   const currentForm = form.forms[id];
@@ -69,8 +75,30 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const [categories, setCategories] = React.useState<(Categorization | Category | ControlElement)[]>(
     categorization?.elements
   );
+
+  const dispositionStates = [...(definition?.dispositionStates ?? [])].sort((a, b) =>
+    a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+  );
+
   const [dispositionReason, setDispositionReason] = useState<string>('');
-  const [dispositionStatus, setDispositionStatus] = useState<string>('');
+  const [dispositionStatus, setDispositionStatus] = useState<string>(NO_DISPOSITION_SELECTED.value);
+
+  const { errors, validators } = useValidators('dispositionReason', 'dispositionReason', isNotEmptyCheck('Reason'))
+    .add('dispositionStatus', 'dispositionStatus', isNotTextCheck('Disposition', NO_DISPOSITION_SELECTED.label))
+    .build();
+
+  const onCompleteValidationCheck = () => {
+    const validations = {
+      dispositionReason: dispositionReason,
+      dispositionStatus: dispositionStatus,
+    };
+
+    if (!validators.checkAll(validations)) {
+      return;
+    }
+    //onComplete();
+    // validators.clear();
+  };
 
   useEffect(() => {
     const cats = categorization?.elements.filter((category) => isVisible(category, currentForm?.formData, '', ajv));
@@ -80,7 +108,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const renderFormSubmissionReview = () => {
     return (
       <PlaceholderDiv>
-        <GoAAccordion ml="s" heading="Form submission review" open={true}>
+        <GoADetails ml="s" heading="Form submission review">
           <ReviewItem>
             {categories &&
               categories.map((category, index) => {
@@ -117,40 +145,65 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
                 );
               })}
           </ReviewItem>
-        </GoAAccordion>
+        </GoADetails>
       </PlaceholderDiv>
     );
   };
 
   const renderFormDisposition = () => {
     return (
-      <GoAAccordion ml="s" heading="Form disposition">
+      <GoADetails ml="s" heading="Form disposition">
         <FormDispositionDetail>
-          <GoAFormItem label="Disposition" mt="m" mb="s">
+          <GoAFormItem error={errors?.['dispositionStatus']} label="Status" mt="m" mb="s">
             <GoADropdown
               testId="formDispositionStatus"
               value={dispositionStatus}
               onChange={(_, value: string) => {
+                if (value === NO_DISPOSITION_SELECTED.label) {
+                  validators.remove('dispositionReason');
+                  validators.clear();
+                  validators.remove('dispositionStatus');
+                  validators['dispositionStatus'].check(value);
+                } else if (value !== NO_DISPOSITION_SELECTED.label) {
+                  validators.remove('dispositionReason');
+                  validators['dispositionReason'].check(dispositionReason);
+                } else {
+                  validators.clear();
+                }
+
                 setDispositionStatus(value);
               }}
               relative={true}
-              width={'50ch'}
+              width={'67ch'}
             >
-              <GoADropdownItem key="" value="" label="" />
-              {/* {workers.map((w) => (
-                <GoADropdownItem key={w.id} value={w.id} label={w.name} />
-              ))} */}
+              <GoADropdownItem
+                key={NO_DISPOSITION_SELECTED.id}
+                value={NO_DISPOSITION_SELECTED.value}
+                label={NO_DISPOSITION_SELECTED.label}
+              />
+              {dispositionStates?.sort().map((dip) => (
+                <GoADropdownItem key={dip.id} value={dip.name} label={dip.description} />
+              ))}
             </GoADropdown>
           </GoAFormItem>
 
-          <GoAFormItem label="Reason">
+          <GoAFormItem label="Reason" error={errors?.['dispositionReason']}>
             <GoATextArea
               name="reason"
               value={dispositionReason}
-              width="100ch"
+              width="75ch"
               testId="reason"
               aria-label="reason"
               onKeyPress={(name, value: string) => {
+                if (dispositionStatus !== NO_DISPOSITION_SELECTED.label) {
+                  validators.remove('dispositionReason');
+                  validators['dispositionReason'].check(value);
+                } else if (value !== '') {
+                  validators.remove('dispositionStatus');
+                  validators['dispositionStatus'].check(dispositionStatus);
+                } else {
+                  validators.clear();
+                }
                 setDispositionReason(value);
               }}
               // eslint-disable-next-line
@@ -158,8 +211,15 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             />
           </GoAFormItem>
         </FormDispositionDetail>
-      </GoAAccordion>
+      </GoADetails>
     );
+  };
+
+  const buttonDisabledForCompleteTask = () => {
+    if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
+    if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
+
+    return !user.isWorker || isExecuting;
   };
 
   return (
@@ -168,23 +228,23 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
       {renderFormDisposition()}
 
       <GoAButtonGroup alignment="start" mt="l">
-        <GoAButton type="secondary" onClick={onClose}>
+        {task?.status === 'In Progress' && (
+          <>
+            <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={onComplete}>
+              Complete task
+            </GoAButton>
+            <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>
+              Cancel task
+            </GoAButton>
+          </>
+        )}
+        <GoAButton type="tertiary" onClick={onClose}>
           Close
         </GoAButton>
         {task?.status === 'Pending' && (
           <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
             Start task
           </GoAButton>
-        )}
-        {task?.status === 'In Progress' && (
-          <>
-            <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>
-              Cancel task
-            </GoAButton>
-            <GoAButton disabled={!user.isWorker || isExecuting} onClick={onComplete}>
-              Complete task
-            </GoAButton>
-          </>
         )}
       </GoAButtonGroup>
     </div>
