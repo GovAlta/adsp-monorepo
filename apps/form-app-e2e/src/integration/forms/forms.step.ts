@@ -175,7 +175,7 @@ Then(
                 }
                 break;
               case 'not required':
-                if (items[i].outerText == fieldLabel + ' : ' + value) {
+                if (items[i].outerText == fieldLabel + ': ' + value) {
                   isFound = true;
                   cy.log(String(isFound));
                 }
@@ -202,7 +202,7 @@ Then(
                 }
                 break;
               case 'not required':
-                if (items[i].outerText == label + ' : ' + value) {
+                if (items[i].outerText == label + ': ' + value) {
                   isFound = true;
                   cy.log(String(isFound));
                 }
