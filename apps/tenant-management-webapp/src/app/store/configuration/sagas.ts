@@ -189,7 +189,7 @@ export function* fetchRegisterData(): SagaIterator {
   const token: string = yield call(getAccessToken);
 
   const tenantConfigDefinition = yield select(
-    (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration
+    (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration || {}
   );
 
   const tenantConfigs = Object.entries(tenantConfigDefinition);
