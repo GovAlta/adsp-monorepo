@@ -1,4 +1,5 @@
 import { Task, TaskUser } from '../../state';
+import { TaskCompleteProps } from './TaskDetailsHost';
 
 export interface TaskDetailsProps {
   user: TaskUser;
@@ -8,4 +9,5 @@ export interface TaskDetailsProps {
   onStart: () => void;
   onCancel: (reason: string) => void;
   onComplete: () => void;
+  onSetCompleteData: (data: TaskCompleteProps) => void;
 }

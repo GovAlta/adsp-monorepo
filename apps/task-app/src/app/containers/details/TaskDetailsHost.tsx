@@ -7,6 +7,7 @@ import {
   busySelector,
   cancelTask,
   completeTask,
+  formSelector,
   openTask,
   openTaskSelector,
   queueUserSelector,
@@ -14,15 +15,17 @@ import {
   selectedTopicSelector,
   startTask,
   topicsSelector,
+  updateFormDisposition,
 } from '../../state';
 import CommentsViewer from '../CommentsViewer';
-import { GoABlock, GoAIconButton, GoASpacer } from '@abgov/react-components-new';
+import { GoAIconButton } from '@abgov/react-components-new';
 import { getRegisteredDetailsComponents } from './register';
 
 // Built in task detail components are loaded via import here.
 // Custom ones will be imported via a script element with src to URL of bundle file.
 import './FileTask';
 import './FormSubmissionReviewTask';
+import { AdspId } from '../../../lib/adspId';
 
 // Lazy import detail containers for bundle code splitting and application load performance.
 const Placeholder = lazy(() => import('./Placeholder'));
@@ -31,6 +34,12 @@ interface TaskDetailsHostProps {
   className?: string;
   onClose: () => void;
 }
+export interface TaskCompleteProps {
+  formId: string;
+  submissionId: string;
+  dispositionReason: string;
+  dispositionStatus: string;
+}
 
 const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ className, onClose }) => {
   const user = useSelector(queueUserSelector);
@@ -38,7 +47,14 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
   const busy = useSelector(busySelector);
   const topics = useSelector(topicsSelector);
   const topic = useSelector(selectedTopicSelector);
+  const form = useSelector(formSelector);
 
+  // const adspId = AdspId.parse(open?.recordId);
+  // const [_, _type, id, _submission, submissionId] = adspId.resource.split('/');
+
+  const [completedData, setOnCompleteData] = useState<TaskCompleteProps>(null);
+  const definitionId = form.forms[form.selected]?.formDefinitionId;
+  const definition = form.definitions[definitionId];
   const params = useParams<{ namespace: string; name: string; taskId: string }>();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -61,7 +77,15 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
     })?.detailsComponent || Placeholder;
 
   const onCompleteTask = () => {
-    dispatch(completeTask({ taskId: open.id }));
+    // dispatch(
+    //   updateFormDisposition({
+    //     formId: data.formId,
+    //     submissionId: data.submissionId,
+    //     dispositionReason: data.dispositionReason,
+    //     dispositionStatus: data.dispositionStatus,
+    //   })
+    // );
+    //dispatch(completeTask({ taskId: open.id }));
   };
 
   return (
@@ -76,6 +100,10 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
             onStart={() => dispatch(startTask({ taskId: open.id }))}
             onComplete={() => onCompleteTask()}
             onCancel={(reason) => dispatch(cancelTask({ taskId: open.id, reason }))}
+            onSetCompleteData={(data) => {
+              console.log('data', data);
+              setOnCompleteData(data);
+            }}
           />
         </Suspense>
       )}

@@ -17,7 +17,7 @@ import { AppDispatch, formSelector, selectForm, AppState, formLoadingSelector } 
 import { getAllRequiredFields } from './getRequiredFields';
 import { Categorization, isVisible, ControlElement, Category } from '@jsonforms/core';
 import { useValidators } from '../../../lib/validations/useValidators';
-import { isNotEmptyCheck, isNotTextCheck } from '../../../lib/validations/checkInput';
+import { isNotEmptyCheck } from '../../../lib/validations/checkInput';
 import { AdspId } from '../../../lib/adspId';
 
 import {
@@ -49,6 +49,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   onClose,
   onStart,
   onComplete,
+  onSetCompleteData,
   onCancel,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -65,7 +66,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const NO_DISPOSITION_SELECTED = {
     id: 'No disposition selected',
     label: 'No disposition selected',
-    value: 'No disposition selected',
+    value: '',
   };
 
   const definitionId = form.forms[id]?.formDefinitionId;
@@ -84,20 +85,24 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const [dispositionStatus, setDispositionStatus] = useState<string>(NO_DISPOSITION_SELECTED.value);
 
   const { errors, validators } = useValidators('dispositionReason', 'dispositionReason', isNotEmptyCheck('Reason'))
-    .add('dispositionStatus', 'dispositionStatus', isNotTextCheck('Disposition', NO_DISPOSITION_SELECTED.label))
+    .add('dispositionStatus', 'dispositionStatus', isNotEmptyCheck('Disposition'))
     .build();
 
   const onCompleteValidationCheck = () => {
-    const validations = {
-      dispositionReason: dispositionReason,
-      dispositionStatus: dispositionStatus,
-    };
-
-    if (!validators.checkAll(validations)) {
+    if (dispositionStatus !== NO_DISPOSITION_SELECTED.value && dispositionReason === '') {
+      validators.remove('dispositionReason');
+      validators.remove('dispositionStatus');
+      validators['dispositionReason'].check(dispositionReason);
+      return;
+    } else if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.value) {
+      validators.remove('dispositionReason');
+      validators.remove('dispositionStatus');
+      validators['dispositionStatus'].check(dispositionStatus);
       return;
     }
+    onSetCompleteData({ formId: form.selected, submissionId, dispositionStatus, dispositionReason });
     //onComplete();
-    // validators.clear();
+    validators.clear();
   };
 
   useEffect(() => {
@@ -159,18 +164,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
               testId="formDispositionStatus"
               value={dispositionStatus}
               onChange={(_, value: string) => {
-                if (value === NO_DISPOSITION_SELECTED.label) {
-                  validators.remove('dispositionReason');
-                  validators.clear();
-                  validators.remove('dispositionStatus');
-                  validators['dispositionStatus'].check(value);
-                } else if (value !== NO_DISPOSITION_SELECTED.label) {
-                  validators.remove('dispositionReason');
-                  validators['dispositionReason'].check(dispositionReason);
-                } else {
-                  validators.clear();
-                }
-
                 setDispositionStatus(value);
               }}
               relative={true}
@@ -195,15 +188,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
               testId="reason"
               aria-label="reason"
               onKeyPress={(name, value: string) => {
-                if (dispositionStatus !== NO_DISPOSITION_SELECTED.label) {
-                  validators.remove('dispositionReason');
-                  validators['dispositionReason'].check(value);
-                } else if (value !== '') {
-                  validators.remove('dispositionStatus');
-                  validators['dispositionStatus'].check(dispositionStatus);
-                } else {
-                  validators.clear();
-                }
                 setDispositionReason(value);
               }}
               // eslint-disable-next-line
@@ -230,7 +214,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
       <GoAButtonGroup alignment="start" mt="l">
         {task?.status === 'In Progress' && (
           <>
-            <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={onComplete}>
+            <GoAButton disabled={!user.isWorker || isExecuting} onClick={() => onCompleteValidationCheck()}>
               Complete task
             </GoAButton>
             <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>

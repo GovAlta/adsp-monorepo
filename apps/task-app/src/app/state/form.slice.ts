@@ -55,13 +55,6 @@ export interface FormState {
   selected: string;
 }
 
-interface FormEvent {
-  timestamp: string;
-  payload: {
-    form: SerializedForm;
-  };
-}
-
 interface DispositionState {
   id: string;
   name: string;
@@ -85,13 +78,8 @@ export const updateFormDisposition = createAsyncThunk(
       submissionId,
       dispositionStatus,
       dispositionReason,
-    }: {
-      formId: string;
-      submissionId: string;
-      dispositionStatus: string;
-      dispositionReason: string;
-    },
-    { getState, rejectWithValue, dispatch }
+    }: { formId: string; submissionId: string; dispositionStatus: string; dispositionReason: string },
+    { getState, rejectWithValue }
   ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
@@ -99,7 +87,13 @@ export const updateFormDisposition = createAsyncThunk(
     try {
       const accessToken = await getAccessToken();
       if (formId && submissionId) {
-        // `${directory[FORM_SERVICE_ID]}/form/v1/forms/${formId}/submissions/${submissionId}`
+        const formServiceUrl = `${directory[FORM_SERVICE_ID]}/form/v1/forms/${formId}/submissions/${submissionId}`;
+        const { data } = await axios.post<FormSubmission>(
+          formServiceUrl,
+          { dispositionStatus: 'status', dispositionReason: 'reason' },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        return data;
       }
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -223,6 +217,15 @@ export const formSlice = createSlice({
       .addCase(loadDefinition.rejected, (state) => {
         state.busy.loadedDefinition = true;
         state.busy.initializing = false;
+      })
+      .addCase(updateFormDisposition.pending, (state, { payload }) => {
+        state.busy.executing = true;
+      })
+      .addCase(updateFormDisposition.rejected, (state, { payload }) => {
+        state.busy.executing = true;
+      })
+      .addCase(updateFormDisposition.fulfilled, (state, { payload }) => {
+        state.busy.executing = false;
       });
   },
 });
