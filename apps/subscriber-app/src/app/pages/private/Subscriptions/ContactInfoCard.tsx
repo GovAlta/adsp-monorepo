@@ -41,7 +41,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     subscriber?.channels?.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
 
   useEffect(() => {
-    setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+    setPreferredChannel(subscriber?.channels ? subscriber?.channels[0]?.channel : null);
   }, [subscriber]);
   // we need to wait for userInfo api call so that the followup api calls can make use of the jwt token
 
@@ -178,7 +178,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             testId="edit-contact-cancel-button"
             onClick={() => {
               setEditContactInformation(!editContactInformation);
-              setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+              setPreferredChannel(subscriber?.channels ? subscriber?.channels[0]?.channel : null);
               setFormErrors({});
             }}
           >
@@ -371,7 +371,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                     setEditContactInformation(!editContactInformation);
                     setEmailContactInformation(subscriberEmail);
                     setSMSContactInformation(subscriberSMS);
-                    setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+                    setPreferredChannel(subscriber?.channels ? subscriber?.channels[0]?.channel : null);
                   }}
                 >
                   Edit contact information
