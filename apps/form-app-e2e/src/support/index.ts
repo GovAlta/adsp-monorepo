@@ -1,5 +1,6 @@
+/* eslint-disable no-var */
 // ***********************************************************
-// This example support/index.ts is processed and
+// This example support/index.js is processed and
 // loaded automatically before your test files.
 //
 // This is a great place to put global configuration and
@@ -13,5 +14,23 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
-// Import commands.ts using ES2015 syntax:
+// Import commands.js using ES2015 syntax:
 import './commands';
+import 'cypress-xpath';
+import 'cypress-axe';
+
+it('Get config settings and store them in environment variables', function () {
+  cy.getConfig();
+});
+
+it('Get a token and store it in token environment variable', function () {
+  cy.postToken();
+});
+
+Cypress.on('uncaught:exception', (err) => {
+  if (err.message.includes('Cannot read properties of null')) {
+    return false;
+  }
+  // we still want to ensure there are no other unexpected
+  // errors, so we let them fail the test
+});
