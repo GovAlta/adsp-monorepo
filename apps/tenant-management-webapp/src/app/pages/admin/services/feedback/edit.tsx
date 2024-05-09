@@ -60,26 +60,6 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
   )
     .add('duplicate', 'url', duplicateNameCheck(allUrls, 'url'))
     .build();
-  // const isValidUrl = (url) => {
-  //   const pattern = new RegExp(
-  //     /[(http(s)?):\\/\\/(www\\.)?a-zA-Z0-9@:%._\\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)/gi
-  //   );
-  //   return !!pattern.test(url);
-  // };
-
-  // const handleUrlChange = (name, value) => {
-  //   const validations = {
-  //     url: value,
-  //     duplicate: value,
-  //   };
-  //   validators.checkAll(validations);
-  //   if (errors?.length) {
-  //     setUrlError(errors['url']);
-  //   } else {
-  //     setUrlError('');
-  //     setSite({ ...site, url: value });
-  //   }
-  // };
 
   return (
     <ModalOverwrite>
