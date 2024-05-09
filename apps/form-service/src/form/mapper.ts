@@ -14,6 +14,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity) {
     formDraftUrlTemplate: entity.formDraftUrlTemplate,
     dataSchema: entity.dataSchema,
     uiSchema: entity.uiSchema,
+    dispositionStates: entity.dispositionStates,
   };
 }
 

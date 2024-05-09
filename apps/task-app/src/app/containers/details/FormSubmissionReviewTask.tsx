@@ -1,19 +1,45 @@
-import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButtonGroup, GoAButton } from '@abgov/react-components-new';
+import React, { FunctionComponent, useEffect, useState } from 'react';
+import {
+  GoAButtonGroup,
+  GoAButton,
+  GoAFormItem,
+  GoADropdown,
+  GoADropdownItem,
+  GoATextArea,
+  GoADetails,
+} from '@abgov/react-components-new';
 import { Grid } from '../../../lib/common/Grid';
 import { useDispatch, useSelector } from 'react-redux';
-import { TaskDetailsProps } from './types';
+import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
 import { AppDispatch, formSelector, selectForm, AppState, formLoadingSelector } from '../../state';
 import { getAllRequiredFields } from './getRequiredFields';
 import { Categorization, isVisible, ControlElement, Category } from '@jsonforms/core';
-
+import { useValidators } from '../../../lib/validations/useValidators';
+import { isNotEmptyCheck } from '../../../lib/validations/checkInput';
 import { AdspId } from '../../../lib/adspId';
-import { ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle, ReviewItemBasic } from './styled-components';
+
+import {
+  ReviewItem,
+  ReviewItemHeader,
+  ReviewItemSection,
+  ReviewItemTitle,
+  ReviewItemBasic,
+  FormDispositionDetail,
+} from './styled-components';
 import { RenderFormReviewFields } from './RenderFormReviewFields';
 import { ajv } from '../../../lib/validations/checkInput';
 import { Element } from './RenderFormReviewFields';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
+import styled from 'styled-components';
+const PlaceholderDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  > *:first-child {
+    flex-grow: 1;
+  }
+`;
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   user,
@@ -35,6 +61,12 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     dispatch(selectForm({ formId: id, submissionId: submissionId }));
   }, [dispatch, id, submissionId]);
 
+  const NO_DISPOSITION_SELECTED = {
+    id: 'No disposition selected',
+    label: 'No disposition selected',
+    value: '',
+  };
+
   const definitionId = form.forms[id]?.formDefinitionId;
   const definition = form.definitions[definitionId];
   const currentForm = form.forms[id];
@@ -43,70 +75,165 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     categorization?.elements
   );
 
+  const dispositionStates = [...(definition?.dispositionStates ?? [])].sort((a, b) =>
+    a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+  );
+
+  const [dispositionReason, setDispositionReason] = useState<string>('');
+  const [dispositionStatus, setDispositionStatus] = useState<string>(NO_DISPOSITION_SELECTED.value);
+
+  const { errors, validators } = useValidators('dispositionReason', 'dispositionReason', isNotEmptyCheck('Reason'))
+    .add('dispositionStatus', 'dispositionStatus', isNotEmptyCheck('Disposition'))
+    .build();
+
+  const onCompleteValidationCheck = () => {
+    onComplete({ formId: form.selected, submissionId, dispositionStatus, dispositionReason });
+    validators.clear();
+  };
+
   useEffect(() => {
     const cats = categorization?.elements.filter((category) => isVisible(category, currentForm?.formData, '', ajv));
     setCategories(cats as (Categorization | Category | ControlElement)[]);
   }, [categorization, currentForm]);
 
-  return (
-    <div>
-      <h2>Form submission review</h2>
-      <ReviewItem>
-        {categories &&
-          categories.map((category, index) => {
-            const categoryLabel = category.label || category.i18n || '';
-            const requiredFields = getAllRequiredFields(definition?.dataSchema);
+  const isTaskCompleted = () => {
+    return task.status === TASK_STATUS.COMPLETED;
+  };
 
-            return (
-              <div>
-                <LoadingIndicator isLoading={isLoading} />
-                {category?.type === 'Control' ? (
-                  <ReviewItemBasic>
-                    <Element
-                      element={category}
-                      index={index}
-                      data={currentForm?.formData}
-                      requiredFields={requiredFields}
-                    />
-                  </ReviewItemBasic>
-                ) : (
-                  <ReviewItemSection key={index}>
-                    <ReviewItemHeader>
-                      <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
-                    </ReviewItemHeader>
-                    <Grid>
-                      <RenderFormReviewFields
-                        elements={category?.elements}
-                        data={currentForm?.formData}
-                        requiredFields={requiredFields}
-                      />
-                    </Grid>
-                  </ReviewItemSection>
-                )}
-              </div>
-            );
-          })}
-      </ReviewItem>
-      <GoAButtonGroup alignment="end" mt="l">
-        <GoAButton type="secondary" onClick={onClose}>
+  const buttonDisabledForCompleteTask = () => {
+    if (dispositionReason === '' && dispositionStatus === '') return true;
+
+    if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
+    if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
+
+    return !user.isWorker || isExecuting;
+  };
+
+  const renderFormSubmissionReview = () => {
+    return (
+      <PlaceholderDiv>
+        <GoADetails ml="s" heading="Form submission review">
+          <ReviewItem>
+            {categories &&
+              categories.map((category, index) => {
+                const categoryLabel = category.label || category.i18n || '';
+                const requiredFields = getAllRequiredFields(definition?.dataSchema);
+
+                return (
+                  <div>
+                    <LoadingIndicator isLoading={isLoading} />
+                    {category?.type === 'Control' ? (
+                      <ReviewItemBasic>
+                        <Element
+                          element={category}
+                          index={index}
+                          data={currentForm?.formData}
+                          requiredFields={requiredFields}
+                        />
+                      </ReviewItemBasic>
+                    ) : (
+                      <ReviewItemSection key={index}>
+                        <ReviewItemHeader>
+                          <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
+                        </ReviewItemHeader>
+                        <Grid>
+                          <RenderFormReviewFields
+                            elements={category?.elements}
+                            data={currentForm?.formData}
+                            requiredFields={requiredFields}
+                          />
+                        </Grid>
+                      </ReviewItemSection>
+                    )}
+                  </div>
+                );
+              })}
+          </ReviewItem>
+        </GoADetails>
+      </PlaceholderDiv>
+    );
+  };
+
+  const renderFormDisposition = () => {
+    return (
+      <GoADetails ml="s" heading="Form disposition">
+        <FormDispositionDetail>
+          <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition" mt="m" mb="s">
+            <GoADropdown
+              testId="formDispositionStatus"
+              value={dispositionStatus}
+              disabled={isTaskCompleted()}
+              onChange={(_, value: string) => {
+                setDispositionStatus(value);
+                validators.remove('dispositionStatus');
+                validators['dispositionStatus'].check(value);
+              }}
+              relative={true}
+              width={'67ch'}
+            >
+              <GoADropdownItem
+                key={NO_DISPOSITION_SELECTED.id}
+                value={NO_DISPOSITION_SELECTED.value}
+                label={NO_DISPOSITION_SELECTED.label}
+              />
+              {dispositionStates?.map((dip) => (
+                <GoADropdownItem key={dip.id} value={dip.name} label={dip.description} />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
+
+          <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']}>
+            <GoATextArea
+              name="reason"
+              value={dispositionReason}
+              disabled={isTaskCompleted()}
+              width="75ch"
+              testId="reason"
+              aria-label="reason"
+              onKeyPress={(name, value: string) => {
+                setDispositionReason(value);
+                validators.remove('dispositionReason');
+                validators['dispositionReason'].check(value);
+              }}
+              // eslint-disable-next-line
+              onChange={() => {}}
+            />
+          </GoAFormItem>
+        </FormDispositionDetail>
+      </GoADetails>
+    );
+  };
+
+  const renderButtonGroup = () => {
+    return (
+      <GoAButtonGroup alignment="start" mt="l">
+        {task?.status === TASK_STATUS.IN_PROGRESS && (
+          <>
+            <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
+              Complete task
+            </GoAButton>
+            <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>
+              Cancel task
+            </GoAButton>
+          </>
+        )}
+        <GoAButton type="tertiary" onClick={onClose}>
           Close
         </GoAButton>
-        {task?.status === 'Pending' && (
+        {task?.status === TASK_STATUS.PENDING && (
           <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
             Start task
           </GoAButton>
         )}
-        {task?.status === 'In Progress' && (
-          <>
-            <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>
-              Cancel task
-            </GoAButton>
-            <GoAButton disabled={!user.isWorker || isExecuting} onClick={onComplete}>
-              Complete task
-            </GoAButton>
-          </>
-        )}
       </GoAButtonGroup>
+    );
+  };
+
+  return (
+    <div>
+      {renderFormSubmissionReview()}
+      {renderFormDisposition()}
+      {renderButtonGroup()}
     </div>
   );
 };
