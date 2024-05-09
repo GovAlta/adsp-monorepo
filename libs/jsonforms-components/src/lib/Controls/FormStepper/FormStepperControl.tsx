@@ -273,6 +273,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               </RightAlignmentDiv>
             </GoAGrid>
           )}
+
           <GoAModal
             testId="submit-confirmation"
             open={isOpen}
@@ -283,20 +284,11 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
                   Close
                 </GoAButton>
-
-                {!showNextBtn && (
-                  <GoAButton
-                    type="primary"
-                    onClick={handleSubmit}
-                    disabled={!isFormValid || !enabled}
-                    testId="submit-form"
-                  >
-                    Submit
-                  </GoAButton>
-                )}
               </GoAButtonGroup>
             }
-          />
+          >
+            <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
+          </GoAModal>
         </div>
       </Visible>
     </div>

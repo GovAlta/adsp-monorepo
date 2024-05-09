@@ -27,17 +27,17 @@ describe('CoreFileTypeTableRow', () => {
   it('should show and hide core roles with detailed role information on toggle', async () => {
     render(<CoreFileTypeTableRow {...mockProps} />);
 
-    expect(screen.queryByText(/Read Roles:/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Modify Roles:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Read :/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Modify :/)).not.toBeInTheDocument();
     const ToggleButton = screen.queryByTestId('configuration-toggle-details-visibility');
     fireEvent(ToggleButton, new CustomEvent('_click'));
-    const read = await screen.getByText('Read Roles:');
+    const read = await screen.getByText('Read :');
     expect(read).toBeInTheDocument();
-    const modify = await screen.getByText('Modify Roles:');
+    const modify = await screen.getByText('Modify :');
     expect(modify).toBeInTheDocument();
     fireEvent(ToggleButton, new CustomEvent('_click'));
 
-    expect(screen.queryByText(/Read Roles:/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Modify Roles:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Read :/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Modify :/)).not.toBeInTheDocument();
   });
 });

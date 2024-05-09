@@ -32,26 +32,32 @@ export interface Task {
     };
   };
 }
+export interface FormDisposition {
+  id: string;
+  status: string;
+  reason: string;
+  date: Date;
+}
 
 export interface FormSubmission {
-  urn: string,
-  id: string,
-  formId: string,
-  formDefinitionId: string,
+  urn: string;
+  id: string;
+  formId: string;
+  formDefinitionId: string;
   formData: Record<string, string>;
-  formFiles: Record<string, string>,
-  created:Date,
-  createdBy:{
-      id:string,
-      name:string
-  },
-  disposition: Record<string, string>,
-  updated:Date,
-  updatedBy:{
-      id:string,
-      name:string
-  },
-  hash: string
+  formFiles: Record<string, string>;
+  created: Date;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+  disposition: FormDisposition;
+  updated: Date;
+  updatedBy: {
+    id: string;
+    name: string;
+  };
+  hash: string;
 }
 
 export interface Person {

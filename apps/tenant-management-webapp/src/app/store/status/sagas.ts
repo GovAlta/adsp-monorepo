@@ -109,7 +109,6 @@ export function* saveApplication(action: SaveApplicationAction): SagaIterator {
       data = yield call([api, api.saveApplication], action.payload);
     }
     yield put(saveApplicationSuccess(data));
-    yield put(refreshServiceStatusApps());
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
   }

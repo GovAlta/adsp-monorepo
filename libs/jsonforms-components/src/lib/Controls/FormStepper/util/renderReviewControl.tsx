@@ -1,7 +1,8 @@
 import { ControlElement } from '@jsonforms/core';
-import { GridItem } from '../../../common/Grid';
-import { InputValue, getFormFieldValue, labelToString } from './GenerateFormFields';
+import { Grid, GridItem } from '../../../common/Grid';
+import { InputValue, NestedStringArray, getFormFieldValue, labelToString } from './GenerateFormFields';
 import React from 'react';
+import { GoADivider } from '@abgov/react-components-new';
 
 export interface FileElement extends File {
   filename: string;
@@ -24,6 +25,8 @@ const renderValue = (
     </GridItem>
   );
 };
+
+const renderArray = () => {};
 
 const renderFileLink = (
   fileUploaderElement: FileElement,
@@ -66,6 +69,28 @@ export const renderReviewControl = (
         (values as string[][]).map((v, i) => {
           return renderValue(`${v[0]}: `, `${index}:${i}`, v[1]);
         })}
+      {fieldValues.type === 'array' && values && values.length > 0 && renderListDetails(values as NestedStringArray)}
+    </React.Fragment>
+  );
+};
+
+const renderListDetails = (items: NestedStringArray): JSX.Element => {
+  return (
+    <React.Fragment>
+      {items.map((item, itemIndex) => {
+        const details = Array.isArray(item) ? item : [undefined, [undefined, undefined]];
+        return (
+          <>
+            <Grid key={`item-${itemIndex}`}>
+              {(details[1] as NestedStringArray).map((detail, detailIndex) => {
+                const safeDetail = Array.isArray(detail) ? detail : [undefined, undefined];
+                return renderValue(`${safeDetail[0]}: `, `item-${itemIndex}-detail-${detailIndex}}`, safeDetail[1]);
+              })}
+            </Grid>
+            {itemIndex < items.length - 1 ? <GoADivider mb="m"></GoADivider> : null}
+          </>
+        );
+      })}
     </React.Fragment>
   );
 };

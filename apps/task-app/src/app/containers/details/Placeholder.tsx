@@ -1,7 +1,7 @@
 import { GoACallout, GoADetails, GoAButtonGroup, GoAButton } from '@abgov/react-components-new';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { TaskDetailsProps } from './types';
+import { TASK_STATUS, TaskDetailsProps } from './types';
 
 const PlaceholderDiv = styled.div`
   display: flex;
@@ -42,17 +42,17 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
         <GoAButton type="secondary" onClick={onClose}>
           Close
         </GoAButton>
-        {task?.status === 'Pending' && (
+        {task?.status === TASK_STATUS.PENDING && (
           <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
             Start task
           </GoAButton>
         )}
-        {task?.status === 'In Progress' && (
+        {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
             <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>
               Cancel task
             </GoAButton>
-            <GoAButton disabled={!user.isWorker || isExecuting} onClick={onComplete}>
+            <GoAButton disabled={!user.isWorker || isExecuting} onClick={() => onComplete(null)}>
               Complete task
             </GoAButton>
           </>

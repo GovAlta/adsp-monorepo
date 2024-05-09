@@ -5,6 +5,7 @@ import { RootState } from '@store/index';
 import React, { FunctionComponent, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { FeedbackOverview } from './overview';
+import { FeedbackSites } from './sites';
 
 import AsideLinks from '@components/AsideLinks';
 
@@ -30,7 +31,7 @@ export const Feedback: FunctionComponent = () => {
             />
           </Tab>
           <Tab label="Sites" data-testid="feedbacks-definitions-tab">
-            Sites List
+            <FeedbackSites activeEdit={activateEditState} />
           </Tab>
         </Tabs>
       </Main>
