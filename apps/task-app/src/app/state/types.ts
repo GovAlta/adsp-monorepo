@@ -51,7 +51,7 @@ export interface FormSubmission {
     id: string;
     name: string;
   };
-  disposition: Record<string, FormDisposition>;
+  disposition: FormDisposition;
   updated: Date;
   updatedBy: {
     id: string;

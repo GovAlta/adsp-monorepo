@@ -10,3 +10,11 @@ export interface TaskDetailsProps {
   onCancel: (reason: string) => void;
   onComplete: (data: TaskCompleteProps) => void;
 }
+
+export const TASK_STATUS = {
+  PENDING: 'Pending',
+  IN_PROGRESS: 'In Progress',
+  COMPLETED: 'Completed',
+  STOPPED: 'Stopped',
+  CANCELLED: 'Cancelled',
+};

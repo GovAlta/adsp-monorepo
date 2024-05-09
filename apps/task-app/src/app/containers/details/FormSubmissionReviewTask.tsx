@@ -7,11 +7,10 @@ import {
   GoADropdownItem,
   GoATextArea,
   GoADetails,
-  GoAAccordion,
 } from '@abgov/react-components-new';
 import { Grid } from '../../../lib/common/Grid';
 import { useDispatch, useSelector } from 'react-redux';
-import { TaskDetailsProps } from './types';
+import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
 import { AppDispatch, formSelector, selectForm, AppState, formLoadingSelector } from '../../state';
 import { getAllRequiredFields } from './getRequiredFields';
@@ -98,7 +97,16 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   }, [categorization, currentForm]);
 
   const isTaskCompleted = () => {
-    return task.status === 'Completed';
+    return task.status === TASK_STATUS.COMPLETED;
+  };
+
+  const buttonDisabledForCompleteTask = () => {
+    if (dispositionReason === '' && dispositionStatus === '') return true;
+
+    if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
+    if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
+
+    return !user.isWorker || isExecuting;
   };
 
   const renderFormSubmissionReview = () => {
@@ -168,7 +176,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
                 value={NO_DISPOSITION_SELECTED.value}
                 label={NO_DISPOSITION_SELECTED.label}
               />
-              {dispositionStates?.sort().map((dip) => (
+              {dispositionStates?.map((dip) => (
                 <GoADropdownItem key={dip.id} value={dip.name} label={dip.description} />
               ))}
             </GoADropdown>
@@ -196,20 +204,10 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     );
   };
 
-  const buttonDisabledForCompleteTask = () => {
-    if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
-    if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
-
-    return !user.isWorker || isExecuting;
-  };
-
-  return (
-    <div>
-      {renderFormSubmissionReview()}
-      {renderFormDisposition()}
-
+  const renderButtonGroup = () => {
+    return (
       <GoAButtonGroup alignment="start" mt="l">
-        {task?.status === 'In Progress' && (
+        {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
             <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
               Complete task
@@ -222,12 +220,20 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
         <GoAButton type="tertiary" onClick={onClose}>
           Close
         </GoAButton>
-        {task?.status === 'Pending' && (
+        {task?.status === TASK_STATUS.PENDING && (
           <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
             Start task
           </GoAButton>
         )}
       </GoAButtonGroup>
+    );
+  };
+
+  return (
+    <div>
+      {renderFormSubmissionReview()}
+      {renderFormDisposition()}
+      {renderButtonGroup()}
     </div>
   );
 };

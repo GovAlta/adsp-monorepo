@@ -78,12 +78,6 @@ export const isNotEmptyCheck = (label: string): Validator => {
   };
 };
 
-export const isNotTextCheck = (label: string, compareText: string): Validator => {
-  return (input: string) => {
-    return input.toLowerCase() !== compareText.toLowerCase() ? '' : `${label} is required`;
-  };
-};
-
 export const isNotUndefinedCheck = (value: string, label: string): Validator => {
   return (input: string) => {
     return input !== undefined ? '' : `${label} is required`;

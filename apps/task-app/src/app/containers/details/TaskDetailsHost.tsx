@@ -48,9 +48,6 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
   const topic = useSelector(selectedTopicSelector);
   const form = useSelector(formSelector);
 
-  const [completedData, setOnCompleteData] = useState<TaskCompleteProps>({} as TaskCompleteProps);
-  const definitionId = form.forms[form.selected]?.formDefinitionId;
-  const definition = form.definitions[definitionId];
   const params = useParams<{ namespace: string; name: string; taskId: string }>();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -73,7 +70,6 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
     })?.detailsComponent || Placeholder;
 
   const onCompleteTask = (data: TaskCompleteProps) => {
-    console.log('completedData', data);
     dispatch(
       updateFormDisposition({
         formId: data.formId,
