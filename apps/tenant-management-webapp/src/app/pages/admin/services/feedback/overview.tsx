@@ -31,14 +31,14 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
           <b>Widget section:</b> Include the feedback script in your site, and initialize it from javascript. On
           initialization, the script will attach a widget element which includes a badge and form that users can use to
           send feedback.
-          <ul className="goa-unordered-list">
-            <li>Include a code example of the &lt;script&gt; with src to feedback API in &lt;head&gt;</li>
-            <li>
-              include a code example of the &lt;script&gt; in body to{' '}
-              <PRE>adspFeedback.initialize(&#123;tenant: &quot;&lt;tenant name&gt;&quot;&#125;)</PRE>
-            </li>
-          </ul>
         </p>
+        <ul className="goa-unordered-list">
+          <li>Include a code example of the &lt;script&gt; with src to feedback API in &lt;head&gt;</li>
+          <li>
+            include a code example of the &lt;script&gt; in body to{' '}
+            <PRE>adspFeedback.initialize(&#123;tenant: &quot;&lt;tenant name&gt;&quot;&#125;)</PRE>
+          </li>
+        </ul>
       </section>
       <GoAButton
         testId="add-definition"

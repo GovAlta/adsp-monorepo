@@ -10,4 +10,5 @@ export default {
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageReporters: ['html'],
   projects: getJestProjects(),
+  testEnvironment: 'node',
 };
