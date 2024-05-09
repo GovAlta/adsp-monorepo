@@ -93,7 +93,7 @@ describe('SiteAddEditForm', () => {
     const urlInput = queryByTestId('feedback-url');
     fireEvent(urlInput, new CustomEvent('_change', { detail: { value: 'gggghj' } }));
     const urlFormItem = queryByTestId('feedback-url-formitem');
-    expect(urlFormItem).toHaveAttribute('error', 'Invalid URL Format');
+    expect(urlFormItem).toHaveAttribute('error', 'Please enter a valid URL');
   });
   it('No error should exists when valid url is provided', async () => {
     const { findByText, queryByTestId } = render(
