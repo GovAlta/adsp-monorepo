@@ -12,7 +12,14 @@ import { Grid } from '../../../lib/common/Grid';
 import { useDispatch, useSelector } from 'react-redux';
 import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
-import { AppDispatch, formSelector, selectForm, AppState, formLoadingSelector } from '../../state';
+import {
+  AppDispatch,
+  formSelector,
+  selectForm,
+  AppState,
+  formLoadingSelector,
+  anyFileLoadingSelector,
+} from '../../state';
 import { getAllRequiredFields } from './getRequiredFields';
 import { Categorization, isVisible, ControlElement, Category } from '@jsonforms/core';
 import { useValidators } from '../../../lib/validations/useValidators';
@@ -52,7 +59,9 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const form = useSelector(formSelector);
-  const isLoading = useSelector((state: AppState) => formLoadingSelector(state));
+  const formIsLoading = useSelector((state: AppState) => formLoadingSelector(state));
+
+  const anyFileIsLoading = useSelector((state: AppState) => anyFileLoadingSelector(state));
 
   const adspId = AdspId.parse(task.recordId);
   const [_, _type, id, _submission, submissionId] = adspId.resource.split('/');
@@ -109,19 +118,21 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     return !user.isWorker || isExecuting;
   };
 
+  const loading = formIsLoading || anyFileIsLoading;
+
   const renderFormSubmissionReview = () => {
     return (
       <PlaceholderDiv>
         <GoADetails ml="s" heading="Form submission review">
-          <ReviewItem>
-            {categories &&
-              categories.map((category, index) => {
+          <LoadingIndicator isLoading={loading} />
+          {!loading && categories && (
+            <ReviewItem>
+              {categories.map((category, index) => {
                 const categoryLabel = category.label || category.i18n || '';
                 const requiredFields = getAllRequiredFields(definition?.dataSchema);
 
                 return (
                   <div>
-                    <LoadingIndicator isLoading={isLoading} />
                     {category?.type === 'Control' ? (
                       <ReviewItemBasic>
                         <Element
@@ -148,7 +159,8 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
                   </div>
                 );
               })}
-          </ReviewItem>
+            </ReviewItem>
+          )}
         </GoADetails>
       </PlaceholderDiv>
     );
