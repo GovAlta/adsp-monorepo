@@ -9,3 +9,11 @@ export const PRE = styled.div`
   padding: var(--goa-space-m);
   margin-top: var(--goa-space-s);
 `;
+
+export const UrlWrapper = styled.div`
+  display: flex;
+  width: 100%;
+`;
+export const DropdownWrapper = styled.div`
+  width: 120px;
+`;
