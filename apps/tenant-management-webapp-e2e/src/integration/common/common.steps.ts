@@ -186,6 +186,7 @@ Then('the user views a notification message of {string}', function (message) {
 });
 
 Then('the user views delete {string} confirmation modal for {string}', function (deleteItemType, deleteItemName) {
+  cy.wait(4000);
   commonObj
     .deleteConfirmationModalTitle()
     .invoke('text')
