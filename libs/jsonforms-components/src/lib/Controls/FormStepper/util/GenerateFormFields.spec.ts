@@ -141,4 +141,16 @@ describe('getFormFieldValue', () => {
       ['city', 'nowhere'],
     ]);
   });
+
+  it('will evaluate an array of objects', () => {
+    const data = [
+      { animal: 'skunk', color: 'black' },
+      { animal: 'polar bear', color: 'white' },
+    ];
+    const animals = getFormFieldValue('', data);
+    expect(animals.type).toBe('array');
+    expect(animals.value?.length).toBe(2);
+    expect((animals.value as string[][])[0][1].length).toBe(2);
+    expect((animals.value as string[][])[0][1][0]).toEqual(['animal', 'skunk']);
+  });
 });
