@@ -207,10 +207,8 @@ export const updateApplicationStatus =
       const user = req.user as User;
       const { appKey } = req.params;
       const { status } = req.body;
-      console.log(JSON.stringify(status) + '<xx status');
       const apps = await applicationRepo.getTenantApps(user.tenantId);
 
-      console.log(JSON.stringify(apps) + '<xx apps');
       const app = apps.find(appKey);
 
       if (!app) {
