@@ -68,6 +68,8 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       });
       if (index !== -1) {
         state.applications[index] = action.payload;
+      } else {
+        state.applications = [action.payload, ...state.applications];
       }
       return { ...state };
     }
