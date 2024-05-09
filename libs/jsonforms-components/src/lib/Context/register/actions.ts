@@ -11,8 +11,14 @@ export interface RegisterConfig {
   objectPathInArray?: string;
 }
 
+export interface LabelValueRegisterData {
+  key: string;
+  value: string;
+}
+
+export type RegisterDataType = string[] | LabelValueRegisterData[];
 export interface RegisterConfigData extends RegisterConfig {
-  data?: string[];
+  data?: RegisterDataType;
 }
 
 export type RegisterData = RegisterConfigData[];

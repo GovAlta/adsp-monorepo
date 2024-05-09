@@ -6,13 +6,14 @@ import {
   RegisterData,
   JsonFormRegisterDispatch,
   ADD_REGISTER_DATA_ACTION,
+  RegisterDataType,
 } from './actions';
 import { fetchRegister } from './util';
 
 interface JsonFormsRegisterContextProps {
   registerDispatch: JsonFormRegisterDispatch;
   fetchRegisterByUrl: (registerConfig: RegisterConfig) => Promise<void>;
-  selectRegisterData: (registerConfig: RegisterConfig) => string[];
+  selectRegisterData: (registerConfig: RegisterConfig) => RegisterDataType;
   isProvided: boolean;
 }
 
@@ -34,7 +35,7 @@ export const JsonFormRegisterProvider = ({
     return {
       isProvided: true,
       registerDispatch: dispatch,
-      selectRegisterData: (criteria: RegisterConfig): string[] => {
+      selectRegisterData: (criteria: RegisterConfig): RegisterDataType => {
         if (criteria?.url) {
           return registers?.find((r) => r.url === criteria.url)?.data || [];
         }
