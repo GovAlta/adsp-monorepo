@@ -30,8 +30,8 @@ const resolveLabelFromScope = (scope: string): string => {
 };
 
 export interface InputValue {
-  type: 'primitive' | 'object';
-  value?: string | string[][];
+  type: 'primitive' | 'object' | 'array';
+  value?: string | NestedStringArray;
 }
 
 /*
@@ -43,11 +43,11 @@ const objToArray = (obj: object): NestedStringArray => {
     if (typeof value === 'object' && !Array.isArray(value)) {
       return [key, objToArray(value)];
     }
-    return [key, value];
+    return [key, getValue(value)];
   });
 };
 
-type NestedStringArray = string[] | NestedStringArray[];
+export type NestedStringArray = (string | undefined | NestedStringArray)[];
 
 // test for ['name', 'fred']
 const isNameValuePair = (value: NestedStringArray): boolean => {
@@ -59,13 +59,17 @@ const isNestedValue = (value: NestedStringArray): boolean => {
   return Array.isArray(value) && value.length === 2 && typeof value[0] === 'string' && Array.isArray(value[1]);
 };
 
+const isObjectArray = (value: unknown): boolean => {
+  return Array.isArray(value) && value.length > 0 && typeof value[0] === 'object';
+};
+
 /*
  * Convert ['name', [['first', 'fred'], ['middle', 'jolly'], ['last', 'mcguire']]]
  * into [['first', 'fred'], ['middle', 'jolly'], ['last', 'mcguire']]
  */
 const flatten = (arr: NestedStringArray): string[][] => {
   return arr.reduce<string[][]>((acc, val) => {
-    if (typeof val === 'string') {
+    if (typeof val === 'string' || !val) {
       return acc;
     }
     if (isNestedValue(val)) {
@@ -74,7 +78,7 @@ const flatten = (arr: NestedStringArray): string[][] => {
     }
     // If the current value is a string, add it to the accumulator
     if (isNameValuePair(val)) {
-      return acc.concat([val as string[]]);
+      return acc.concat([[String(val[0]), getValue(val[1]) || '']]);
     }
     return acc;
   }, []);
@@ -92,14 +96,18 @@ const flatten = (arr: NestedStringArray): string[][] => {
  * page before messing with it.
  */
 export const getFormFieldValue = (scope: string, data: unknown): InputValue => {
-  const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let currentValue: any = data;
-  for (const key of pathArray) {
-    if (!currentValue) break;
-    currentValue = currentValue[key];
+  if (scope) {
+    const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
+    for (const key of pathArray) {
+      if (!currentValue) break;
+      currentValue = currentValue[key];
+    }
   }
-  return typeof currentValue === 'object'
+  return isObjectArray(currentValue)
+    ? { type: 'array', value: objToArray(currentValue) }
+    : typeof currentValue === 'object'
     ? { type: 'object', value: flatten(objToArray(currentValue)) }
     : { type: 'primitive', value: getValue(currentValue) };
 };
