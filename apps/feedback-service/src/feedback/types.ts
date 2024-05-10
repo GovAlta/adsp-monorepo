@@ -16,4 +16,5 @@ export interface Feedback {
   context: FeedbackContext;
   rating: Rating | string;
   comment?: string;
+  technicalIssue?: string;
 }
