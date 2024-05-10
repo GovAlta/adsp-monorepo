@@ -7,6 +7,7 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
+import { RegisterDataType } from '../../Context/register';
 
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 
@@ -25,9 +26,9 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
 
   const registerCtx = useContext(JsonFormsRegisterContext);
   const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
-  let registerData: string[] = [];
+  let registerData: RegisterDataType = [];
   if (registerConfig) {
-    registerData = registerCtx?.selectRegisterData(registerConfig) as string[];
+    registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
   }
 
   const autocompletion = props.uischema?.options?.autocomplete === true;
@@ -38,7 +39,14 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     return [
       ...(options || []),
       ...registerData.map((d) => {
-        return { value: d, label: d };
+        if (typeof d === 'string') {
+          return {
+            value: d,
+            label: d,
+          };
+        } else {
+          return { ...d };
+        }
       }),
     ];
   }, [registerData, options]);

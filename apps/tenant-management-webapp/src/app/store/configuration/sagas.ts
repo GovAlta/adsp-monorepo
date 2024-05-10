@@ -72,7 +72,7 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
           headers: { Authorization: `Bearer ${token}` },
         }),
       });
-      console.log(tenant);
+
       yield put(
         getConfigurationDefinitionsSuccess({
           tenant: tenant.data,
@@ -108,6 +108,7 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
+
   const token: string = yield call(getAccessToken);
   const urls = getFetchUrls(action.services, configBaseUrl);
   if (configBaseUrl && token && urls.length > 0) {
@@ -182,55 +183,60 @@ export function* fetchConfigurationRevisions(action: FetchConfigurationRevisions
 }
 
 export function* fetchRegisterData(): SagaIterator {
-  take(FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION);
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
-  );
-  const token: string = yield call(getAccessToken);
+  try {
+    take(FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION);
+    const configBaseUrl: string = yield select(
+      (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    );
+    const tenantName: string = yield select((state: RootState) => state.tenant.name);
+    const token: string = yield call(getAccessToken);
 
-  const tenantConfigDefinition = yield select(
-    (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration || {}
-  );
+    const tenantConfigDefinition = yield select(
+      (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration || {}
+    );
 
-  const tenantConfigs = Object.entries(tenantConfigDefinition);
+    const tenantConfigs = Object.entries(tenantConfigDefinition);
 
-  const registerConfigs =
-    tenantConfigs
-      // eslint-disable-next-line
-      .filter(([name, config]) => {
+    const registerConfigs =
+      tenantConfigs
         // eslint-disable-next-line
-        const _c = config as any;
-        return _c?.configurationSchema?.properties?.register?.type === 'array';
-      })
-      // eslint-disable-next-line
-      .map(([name, config]) => name) || [];
+        .filter(([name, config]) => {
+          // eslint-disable-next-line
+          const _c = config as any;
+          return _c?.configurationSchema?.properties?.register?.type === 'array';
+        })
+        // eslint-disable-next-line
+        .map(([name, config]) => name) || [];
 
-  for (const registerConfig of registerConfigs) {
-    const registerData: RegisterConfigData[] = [];
+    for (const registerConfig of registerConfigs) {
+      const registerData: RegisterConfigData[] = [];
 
-    try {
-      const [namespace, service] = registerConfig.split(':');
-      const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}`;
-      const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
-      // if there is active configuration, use the register in the active configuration first.
-      if (data?.active && data?.active?.configuration?.register) {
-        registerData.push({
-          urn: `urn:ads:register:${registerConfig}`,
-          data: data?.active?.configuration?.register,
-        });
-      } else {
-        if (data?.latest && data?.latest?.configuration?.register) {
+      try {
+        const [namespace, service] = registerConfig.split(':');
+        const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}`;
+        const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
+        // if there is active configuration, use the register in the active configuration first.
+        if (data?.active && data?.active?.configuration?.register) {
           registerData.push({
             urn: `urn:ads:register:${registerConfig}`,
-            data: data?.latest?.configuration?.register,
+            data: data?.active?.configuration?.register,
           });
+        } else {
+          if (data?.latest && data?.latest?.configuration?.register) {
+            registerData.push({
+              urn: `urn:ads:${tenantName}:${registerConfig}:register`,
+              data: data?.latest?.configuration?.register,
+            });
+          }
         }
-      }
 
-      yield put(getRegisterDataSuccessAction(registerData));
-    } catch (error) {
-      console.warn(`Error in fetching the register data from service: ${registerConfig}`);
+        yield put(getRegisterDataSuccessAction(registerData));
+      } catch (error) {
+        console.warn(`Error in fetching the register data from service: ${registerConfig}`);
+      }
     }
+  } catch (error) {
+    console.warn(`Error in fetching the register data from service: ${error}`);
   }
 }
 
