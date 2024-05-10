@@ -2,7 +2,9 @@
   "compilerOptions": {
     "allowJs": false,
     "esModuleInterop": false,
-    "strict": true
+    "strict": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true
   },
   "files": [],
   "include": [],
