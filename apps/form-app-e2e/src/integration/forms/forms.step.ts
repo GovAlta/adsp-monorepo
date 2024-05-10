@@ -93,6 +93,7 @@ When('the user enters {string} in a dropdown labelled {string}', function (value
 
 When('the user clicks Next button in the form', function () {
   formsObj.formNextButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
 
 When('the user {string} a checkbox labelled {string}', function (checkboxOperation, label) {
