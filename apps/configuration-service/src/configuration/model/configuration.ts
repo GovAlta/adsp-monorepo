@@ -78,8 +78,22 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     return Object.entries(update).reduce(
       (config, [key, value]) => {
         // If current value plus update value are both objects, then combine them with spread operator.
-        if (typeof config[key] === 'object' && typeof value === 'object') {
+        if (
+          typeof config[key] === 'object' &&
+          typeof value === 'object' &&
+          !Array.isArray(config[key]) &&
+          !Array.isArray(value)
+        ) {
           value = { ...config[key], ...value };
+        }
+
+        if (
+          typeof config[key] === 'object' &&
+          typeof value === 'object' &&
+          Array.isArray(config[key]) &&
+          Array.isArray(value)
+        ) {
+          value = [...config[key], ...value];
         }
 
         config[key] = value;

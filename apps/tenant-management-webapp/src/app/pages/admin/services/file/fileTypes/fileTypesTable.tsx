@@ -10,7 +10,7 @@ import { DeleteModal } from '@components/DeleteModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { DeleteFileTypeService, checkFileTypeHasFile } from '@store/file/actions';
 import { RootState } from '@store/index';
-import { RolesWrap } from '../styled-components';
+import { Gap, RolesContainer, RolesWrap } from '../styled-components';
 
 interface FileTypeRowProps extends FileTypeItem {
   editId: string;
@@ -101,21 +101,24 @@ export const CoreFileTypeTableRow = ({
           <td
             colSpan={4}
             style={{
-              padding: '0px',
+              padding: '0',
             }}
           >
-            <RolesWrap>
-              Read Roles:{' '}
-              {readRoles.map((role): JSX.Element => {
-                return <GoABadge key={`read-roles-${role}`} type="information" content={role} />;
-              })}
-            </RolesWrap>
-            <RolesWrap>
-              Modify Roles:{' '}
-              {updateRoles?.map((role): JSX.Element => {
-                return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
-              })}
-            </RolesWrap>
+            <RolesContainer>
+              <RolesWrap>
+                Read :{' '}
+                {readRoles.map((role): JSX.Element => {
+                  return <span>{role} </span>;
+                })}
+              </RolesWrap>
+              <Gap></Gap>
+              <RolesWrap>
+                Modify :{' '}
+                {updateRoles?.map((role): JSX.Element => {
+                  return <span>{role} </span>;
+                })}
+              </RolesWrap>
+            </RolesContainer>
           </td>
         </tr>
       )}

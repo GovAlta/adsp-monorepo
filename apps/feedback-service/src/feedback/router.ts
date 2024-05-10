@@ -58,7 +58,7 @@ export function sendFeedback(logger: Logger, queueService: WorkQueueService<Feed
     try {
       const tenantId = req.tenant.id;
       const user = req.user;
-      const { context, rating, comment } = req.body as Feedback;
+      const { context, rating, comment, technicalIssue } = req.body as Feedback;
 
       const { sites } = await req.getConfiguration<FeedbackConfiguration, FeedbackConfiguration>(tenantId);
       const siteConfiguration = sites[context.site];
@@ -79,6 +79,7 @@ export function sendFeedback(logger: Logger, queueService: WorkQueueService<Feed
         context,
         rating: rating.toString(),
         comment,
+        technicalIssue,
       };
 
       // Hash the content for duplicate detection later.
@@ -186,6 +187,11 @@ export async function createFeedbackRouter({ logger, tenantService, queueService
             isIn: { options: [['terrible', 'bad', 'neutral', 'good', 'delightful']] },
           },
           comment: {
+            optional: { options: { nullable: true } },
+            isString: true,
+            isLength: { options: { min: 1, max: 2000 } },
+          },
+          technicalIssue: {
             optional: { options: { nullable: true } },
             isString: true,
             isLength: { options: { min: 1, max: 2000 } },

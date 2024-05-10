@@ -54,12 +54,16 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
               {user || roles?.find((r) => user.roles?.includes(r)) ? (
                 <Placeholder>
                   <GoACallout heading="Not authorized" type="information">
-                    Sign in {roles?.length ? 'as a user with a permitted role' : ''} for access.
+                    You do not have a permitted role to access the form.
                   </GoACallout>
                 </Placeholder>
               ) : null}
               <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" onClick={onSignInStartApplication}>
+                <GoAButton
+                  type="primary"
+                  data-testid="form-start-application-sign-in"
+                  onClick={onSignInStartApplication}
+                >
                   Sign in
                 </GoAButton>
               </GoAButtonGroup>

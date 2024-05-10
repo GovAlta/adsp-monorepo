@@ -7,6 +7,7 @@ import {
   busySelector,
   cancelTask,
   completeTask,
+  formSelector,
   openTask,
   openTaskSelector,
   queueUserSelector,
@@ -14,6 +15,7 @@ import {
   selectedTopicSelector,
   startTask,
   topicsSelector,
+  updateFormDisposition,
 } from '../../state';
 import CommentsViewer from '../CommentsViewer';
 import { GoAIconButton } from '@abgov/react-components-new';
@@ -31,6 +33,12 @@ interface TaskDetailsHostProps {
   className?: string;
   onClose: () => void;
 }
+export interface TaskCompleteProps {
+  formId: string;
+  submissionId: string;
+  dispositionReason: string;
+  dispositionStatus: string;
+}
 
 const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ className, onClose }) => {
   const user = useSelector(queueUserSelector);
@@ -38,6 +46,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
   const busy = useSelector(busySelector);
   const topics = useSelector(topicsSelector);
   const topic = useSelector(selectedTopicSelector);
+  const form = useSelector(formSelector);
 
   const params = useParams<{ namespace: string; name: string; taskId: string }>();
   const dispatch = useDispatch<AppDispatch>();
@@ -60,6 +69,19 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
       }
     })?.detailsComponent || Placeholder;
 
+  const onCompleteTask = (data: TaskCompleteProps) => {
+    dispatch(
+      updateFormDisposition({
+        formId: data.formId,
+        submissionId: data.submissionId,
+        dispositionReason: data.dispositionReason,
+        dispositionStatus: data.dispositionStatus,
+      })
+    ).then(() => {
+      dispatch(completeTask({ taskId: open.id }));
+    });
+  };
+
   return (
     <div key={params.taskId} data-opened={!!open} className={className}>
       {open && (
@@ -70,7 +92,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
             isExecuting={busy.executing}
             onClose={onClose}
             onStart={() => dispatch(startTask({ taskId: open.id }))}
-            onComplete={() => dispatch(completeTask({ taskId: open.id }))}
+            onComplete={(data) => onCompleteTask(data)}
             onCancel={(reason) => dispatch(cancelTask({ taskId: open.id, reason }))}
           />
         </Suspense>
@@ -80,6 +102,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
           <CommentsViewer key={open.urn} />
         </div>
       )}
+
       <GoAIconButton
         disabled={!open || !topics[open.urn]}
         icon={showComments ? 'chatbubble-ellipses' : 'chatbubble'}
@@ -95,6 +118,10 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
   );
 };
 
+export const ChatBubblePadding = styled.div`
+  margin-bottom: 5rem;
+  margin-top: 5rem;
+`;
 export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
   z-index: 0;
   position: relative;
@@ -122,10 +149,8 @@ export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
   }
 
   & > :last-child {
-    z-index: 2;
     position: absolute;
-    bottom: var(--goa-space-l);
-    left: var(--goa-space-l);
+    bottom: var(--goa-space-xl);
   }
 
   &[data-opened='true'] {

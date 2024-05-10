@@ -73,18 +73,6 @@ export const schema = {
       type: 'string',
       enum: [''],
     },
-    countries: {
-      type: 'string',
-      enum: [''],
-    },
-    dogBreeds: {
-      type: 'string',
-      enum: [''],
-    },
-    basketballPlayers: {
-      type: 'string',
-      enum: [''],
-    },
   },
 };
 
@@ -137,50 +125,9 @@ export const uischema = {
               type: 'Control',
               scope: '#/properties/carBrands',
               options: {
-                enumContext: {
-                  key: 'car-brands',
+                register: {
                   url: 'https://parallelum.com.br/fipe/api/v1/carros/marcas',
-                  values: 'nome',
-                },
-              },
-            },
-            {
-              type: 'Control',
-              scope: '#/properties/dogBreeds',
-              options: {
-                enumContext: {
-                  key: 'dog-list',
-                  url: 'https://dog.ceo/api/breeds/list/all',
-                  location: 'message',
-                  type: 'keys',
-                },
-              },
-            },
-          ],
-        },
-        {
-          type: 'HorizontalLayout',
-          elements: [
-            {
-              type: 'Control',
-              scope: '#/properties/basketballPlayers',
-              options: {
-                autocomplete: true,
-                enumContext: {
-                  key: 'basketball-players',
-                  location: 'data',
-                  url: 'https://www.balldontlie.io/api/v1/players',
-                  values: ['first_name', 'last_name'],
-                },
-              },
-            },
-            {
-              type: 'Control',
-              scope: '#/properties/countries',
-              options: {
-                autocomplete: true,
-                enumContext: {
-                  key: 'countries',
+                  objectPathInArray: 'nome',
                 },
               },
             },
@@ -220,13 +167,6 @@ export const uischema = {
           ],
         },
       ],
-      rule: {
-        effect: 'SHOW',
-        condition: {
-          scope: '#/properties/provideAddress',
-          schema: { const: true },
-        },
-      },
     },
     {
       type: 'Category',

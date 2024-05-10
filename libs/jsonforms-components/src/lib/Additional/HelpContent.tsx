@@ -45,7 +45,7 @@ export const HelpContentComponent = ({
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
         <div className={marginClass}>
           {label && !uischema.options?.variant && uischema.options?.variant !== 'details' && (
-            <div className={labelClass}>
+            <div className={labelClass} data-testid={label}>
               {label}
               <br />
             </div>

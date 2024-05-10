@@ -219,7 +219,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                         </ReviewItemHeader>
                         <Grid>
                           <RenderFormReviewFields
-                            elements={category.elements}
+                            elements={category?.elements}
                             data={data}
                             requiredFields={requiredFields}
                           />
@@ -231,14 +231,20 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               }
             </div>
           </GoAPages>
-          {step && step !== 0 && (
+          {step !== 0 && (
             <GoAGrid minChildWidth="100px">
               <div>
                 {step !== 1 ? (
                   <GoAButton
                     type="secondary"
                     disabled={disabledCategoryMap[step - 1]}
-                    onClick={() => prevPage(step, disabledCategoryMap)}
+                    onClick={() => {
+                      const element = document.getElementById(`${path || `goa`}-form-stepper`);
+                      if (element) {
+                        element.scrollIntoView();
+                      }
+                      prevPage(step, disabledCategoryMap);
+                    }}
                     testId="prev-button"
                   >
                     Previous
@@ -252,7 +258,13 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                   <GoAButton
                     type="primary"
                     disabled={disabledCategoryMap[step - 1]}
-                    onClick={() => nextPage(step, disabledCategoryMap)}
+                    onClick={() => {
+                      const element = document.getElementById(`${path || `goa`}-form-stepper`);
+                      if (element) {
+                        element.scrollIntoView();
+                      }
+                      nextPage(step, disabledCategoryMap);
+                    }}
                     testId="next-button"
                   >
                     Next
@@ -273,6 +285,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               </RightAlignmentDiv>
             </GoAGrid>
           )}
+
           <GoAModal
             testId="submit-confirmation"
             open={isOpen}
@@ -283,20 +296,11 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
                   Close
                 </GoAButton>
-
-                {!showNextBtn && (
-                  <GoAButton
-                    type="primary"
-                    onClick={handleSubmit}
-                    disabled={!isFormValid || !enabled}
-                    testId="submit-form"
-                  >
-                    Submit
-                  </GoAButton>
-                )}
               </GoAButtonGroup>
             }
-          />
+          >
+            <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
+          </GoAModal>
         </div>
       </Visible>
     </div>

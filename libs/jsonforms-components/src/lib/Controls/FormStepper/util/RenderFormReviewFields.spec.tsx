@@ -32,8 +32,7 @@ console.error = (message: unknown) => {
   }
 };
 
-const mockRequiredFields = ['firstName'];
-const mockData = {
+const johnData = {
   firstName: 'John',
   testCategoryAddress: true,
   fileUploader: 'urn:ads:platform:file-service:v1:/files/791a90e4-6382-46c1-b0cf-a2c370e424f0',
@@ -76,7 +75,7 @@ const listCategory = {
   elements: [listUiSchema],
 };
 
-const categorization = {
+const listCategorization = {
   type: 'Categorization',
   label: 'Test Categorization',
   elements: [listCategory],
@@ -101,6 +100,57 @@ const listSchema = {
   },
 };
 
+const objectCategorization = {
+  type: 'Categorization',
+  label: 'Test Categorization',
+  elements: [
+    {
+      type: 'Category',
+      label: 'People',
+      elements: [
+        {
+          type: 'VerticalLayout',
+          elements: [
+            {
+              type: 'Control',
+              label: 'People',
+              scope: '#/properties/people',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  options: {
+    variant: 'stepper',
+    testId: 'stepper-test',
+    showNavButtons: 'false',
+    componentProps: {
+      controlledNav: 'true',
+    },
+  },
+};
+
+const objectSchema = {
+  type: 'object',
+  properties: {
+    people: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          firstName: {
+            type: 'string',
+          },
+          lastName: {
+            type: 'string',
+          },
+        },
+      },
+    },
+  },
+};
+
 const getForm = (schema: object, uiSchema: UISchemaElement, data: object = {}) => {
   return (
     <JsonForms
@@ -114,10 +164,10 @@ const getForm = (schema: object, uiSchema: UISchemaElement, data: object = {}) =
   );
 };
 
-describe('Generate Form Fields', () => {
+describe('Render Form Review Fields', () => {
   it('will render a Control element', () => {
     const LoadComponent = () => (
-      <RenderFormReviewFields elements={[nameSchema]} data={mockData} requiredFields={mockRequiredFields} />
+      <RenderFormReviewFields elements={[nameSchema]} data={johnData} requiredFields={['firstName']} />
     );
     const renderer = render(<LoadComponent />);
     expect(renderer.getByText(/First name/)).toBeInTheDocument();
@@ -127,7 +177,7 @@ describe('Generate Form Fields', () => {
 
   it('will render an asterisk on required fields', () => {
     const LoadComponent = () => (
-      <RenderFormReviewFields elements={[nameSchema, citySchema]} data={mockData} requiredFields={mockRequiredFields} />
+      <RenderFormReviewFields elements={[nameSchema, citySchema]} data={johnData} requiredFields={['firstName']} />
     );
     const renderer = render(<LoadComponent />);
     expect(renderer.queryByText(/name \*/)).toBeInTheDocument();
@@ -137,20 +187,44 @@ describe('Generate Form Fields', () => {
 
   it('will include file information', () => {
     const LoadComponent = () => (
-      <RenderFormReviewFields elements={[uploaderSchema]} data={mockData} requiredFields={mockRequiredFields} />
+      <RenderFormReviewFields elements={[uploaderSchema]} data={johnData} requiredFields={['firstName']} />
     );
     const renderer = render(<LoadComponent />);
-    expect(renderer.getByText(/File uploader /)).toBeInTheDocument();
+    expect(renderer.getByText(/File uploader:/)).toBeInTheDocument();
   });
 
   it('will render a ListWithDetail element', () => {
+    window.HTMLElement.prototype.scrollIntoView = function () {};
     const listData = {
       people: [
         { firstName: 'Bob', lastName: 'Bing' },
         { firstName: 'Polly', lastName: 'Pringle' },
       ],
     };
-    const form = getForm(listSchema, categorization, listData);
+    const form = getForm(listSchema, listCategorization, listData);
+    const renderer = render(form);
+    // Step to review Page
+    const nextButton = renderer.getByTestId('next-button');
+    expect(nextButton).toBeInTheDocument();
+    fireEvent(nextButton, new CustomEvent('_click'));
+    const newStep = renderer.getByTestId('stepper-test');
+    expect(newStep.getAttribute('step')).toBe('2');
+    const summary = renderer.getByTestId('summary_step-content');
+    expect(summary).toBeInTheDocument();
+    expect(renderer.getByText('Polly')).toBeInTheDocument();
+    expect(renderer.getByText('Pringle')).toBeInTheDocument();
+    expect(renderer.getByText('Bob')).toBeInTheDocument();
+    expect(renderer.getByText('Bing')).toBeInTheDocument();
+  });
+
+  it('will render an object array', () => {
+    const objectData = {
+      people: [
+        { firstName: 'Bob', lastName: 'Bing' },
+        { firstName: 'Polly', lastName: 'Pringle' },
+      ],
+    };
+    const form = getForm(objectSchema, objectCategorization, objectData);
     const renderer = render(form);
     // Step to review Page
     const nextButton = renderer.getByTestId('next-button');
