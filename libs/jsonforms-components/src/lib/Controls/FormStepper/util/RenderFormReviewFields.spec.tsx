@@ -194,6 +194,7 @@ describe('Render Form Review Fields', () => {
   });
 
   it('will render a ListWithDetail element', () => {
+    window.HTMLElement.prototype.scrollIntoView = function () {};
     const listData = {
       people: [
         { firstName: 'Bob', lastName: 'Bing' },
