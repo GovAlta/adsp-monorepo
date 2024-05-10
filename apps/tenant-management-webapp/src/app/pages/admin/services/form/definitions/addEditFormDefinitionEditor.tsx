@@ -820,7 +820,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       <SaveFormModal
         open={saveModal.visible}
         onDontSave={() => {
-          //setSaveModal({ visible: false, closeEditor: true });
           close();
         }}
         onSave={() => {
