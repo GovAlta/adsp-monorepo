@@ -16,6 +16,7 @@ import {
   FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
   REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
   UPDATE_LATEST_REVISION_SUCCESS_ACTION,
+  FETCH_REGISTER_DATA_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -32,6 +33,7 @@ const defaultState: ConfigurationDefinitionState = {
   importedConfigurationError: [],
   configurationRevisions: {},
   serviceList: [],
+  registers: [],
 };
 
 export default function (
@@ -191,6 +193,13 @@ export default function (
         };
         state.configurationRevisions[service].revisions.result.push(revision);
       }
+      return {
+        ...state,
+      };
+    }
+
+    case FETCH_REGISTER_DATA_SUCCESS_ACTION: {
+      state.registers = action.payload;
       return {
         ...state,
       };

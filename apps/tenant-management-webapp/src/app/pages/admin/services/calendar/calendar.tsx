@@ -5,15 +5,11 @@ import { CalendarsView } from './calendar/calendarsView';
 import React, { useState } from 'react';
 
 import BetaBadge from '@icons/beta-badge.svg';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
 import { HeadingDiv } from './styled-components';
 import AsideLinks from '@components/AsideLinks';
 import { CalendarEvents } from './events';
 
 export const Calendar = (): JSX.Element => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
 
@@ -21,19 +17,14 @@ export const Calendar = (): JSX.Element => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
-  const getCalenderDocsLink = () => {
-    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Calendar service`;
-  };
-  const getCalenderSupportCodeLink = () => {
-    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/calendar-service';
-  };
+
   return (
     <Page>
       <Main>
         <>
           <HeadingDiv>
             <h1 data-testid="calendar-title">Calendar service</h1>
-            <img src={BetaBadge} alt="Files Service" />
+            <img src={BetaBadge} alt="Calendar Service" />
           </HeadingDiv>
 
           <Tabs activeIndex={activeIndex} data-testid="calendar-tabs">
@@ -50,7 +41,7 @@ export const Calendar = (): JSX.Element => {
         </>
       </Main>
       <Aside>
-        <AsideLinks serviceLink={getCalenderSupportCodeLink()} docsLink={getCalenderDocsLink()} />
+        <AsideLinks serviceName={'calendar'} />
       </Aside>
     </Page>
   );

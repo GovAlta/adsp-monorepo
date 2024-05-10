@@ -10,8 +10,8 @@ import { DeleteFileModal } from './DeleteFileModal';
 
 export type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
 
-const DELAY_UPLOAD_TIMEOUT_MS = 200;
-const DELAY_DELETE_TIMEOUT_MS = 80;
+const DELAY_UPLOAD_TIMEOUT_MS = 5;
+const DELAY_DELETE_TIMEOUT_MS = 5;
 
 export const FileUploader = ({ data, path, handleChange, uischema, ...props }: FileUploaderLayoutRendererProps) => {
   const enumerators = useContext(JsonFormContext);
@@ -24,6 +24,20 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   const fileListValue = enumerators.data.get('file-list');
 
+  const countries = [
+    'Argentina',
+    'Brazil',
+    'Canada',
+    'Denmark',
+    'Egypt',
+    'France',
+    'Greece',
+    'India',
+    'Japan',
+    'Kenya',
+  ];
+
+  enumerators.addFormContextData('countries', countries);
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
 

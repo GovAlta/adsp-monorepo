@@ -4,20 +4,9 @@ import { Tab, Tabs } from '@components/Tabs';
 import { DirectoryOverview } from './overview';
 
 import { DirectoryService } from './services';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
-
 import AsideLinks from '@components/AsideLinks';
 
 export const Directory: FunctionComponent = () => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  function getDirectoryDocsLink() {
-    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Directory service`;
-  }
-  function getDirectorysupportcodeLink() {
-    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/directory-service';
-  }
   return (
     <Page>
       <Main>
@@ -35,7 +24,7 @@ export const Directory: FunctionComponent = () => {
         </>
       </Main>
       <Aside>
-        <AsideLinks serviceLink={getDirectorysupportcodeLink()} docsLink={getDirectoryDocsLink()} />
+        <AsideLinks serviceName="directory" />
       </Aside>
     </Page>
   );

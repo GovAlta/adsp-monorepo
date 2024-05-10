@@ -30,3 +30,15 @@ export const SpaceAdjust = styled.h3`
 export const LoadMoreWrapper = styled.div`
   padding-bottom: var(--goa-space-4xl);
 `;
+
+export const GapAdjustment = styled.h3`
+  padding-top: 2rem;
+  padding-button: 1rem;
+`;
+export const HyperLinkColor = styled.div`
+  a {
+    &:visited {
+      color: var(--color-primary);
+    }
+  }
+`;

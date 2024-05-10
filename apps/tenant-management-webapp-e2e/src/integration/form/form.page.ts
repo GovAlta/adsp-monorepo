@@ -40,7 +40,7 @@ class FormPage {
   }
 
   editorSaveButton() {
-    return cy.xpath('//*[@data-testid="form-save" and @disabled="false"]');
+    return cy.xpath('//*[@data-testid="definition-form-save" and @disabled="false"]');
   }
 
   editorBackButton() {

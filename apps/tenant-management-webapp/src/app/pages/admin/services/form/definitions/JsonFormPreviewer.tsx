@@ -2,13 +2,14 @@ import React, { useEffect } from 'react';
 import { ajv } from '@lib/validation/checkInput';
 import { JsonForms } from '@jsonforms/react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { GoARenderers } from '@abgov/jsonforms-components';
-import { vanillaCells } from '@jsonforms/vanilla-renderers';
+import { GoARenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
 import { parseDataSchema, parseUiSchema } from './schemaUtils';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { uiSchemaWrapper } from './schemaWrappers';
 import FallbackRender from './FallbackRenderer';
-
+import { useDebounce } from '@lib/useDebounce';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectRegisterData } from '@store/configuration/selectors';
 interface JSONFormPreviewerProps {
   schema: string;
   data: unknown;
@@ -26,6 +27,11 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
   const parsedUiSchema = parseUiSchema<UISchemaElement>(uischema);
   const parsedDataSchema = parseDataSchema<UISchemaElement>(schema);
 
+  const debouncedUiSchema = useDebounce(uischema, 100);
+  const [display, setDisplay] = React.useState<boolean>(true);
+  const dispatch = useDispatch();
+  const registerData = useSelector(selectRegisterData);
+
   useEffect(() => {
     if (!parsedUiSchema.hasError()) {
       if (uiSchemaError) {
@@ -37,6 +43,16 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uischema]);
+
+  useEffect(() => {
+    setDisplay(false);
+  }, [debouncedUiSchema]);
+
+  useEffect(() => {
+    if (!display) {
+      setDisplay(true);
+    }
+  }, [display]);
 
   useEffect(() => {
     if (!parsedDataSchema.hasError()) {
@@ -64,17 +80,21 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
 
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
-      <JsonForms
-        ajv={ajv}
-        renderers={GoARenderers}
-        cells={vanillaCells}
-        onChange={onChange}
-        data={data}
-        validationMode={'ValidateAndShow'}
-        //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
-        schema={{ ...lastGoodSchema }}
-        uischema={{ ...lastGoodUiSchema }}
-      />
+      {display && (
+        <JsonFormRegisterProvider defaultRegisters={registerData || undefined}>
+          <JsonForms
+            ajv={ajv}
+            renderers={GoARenderers}
+            cells={GoACells}
+            onChange={onChange}
+            data={data}
+            validationMode={'ValidateAndShow'}
+            //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
+            schema={{ ...lastGoodSchema }}
+            uischema={{ ...lastGoodUiSchema }}
+          />
+        </JsonFormRegisterProvider>
+      )}
     </ErrorBoundary>
   );
 };

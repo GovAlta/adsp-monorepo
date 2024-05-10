@@ -91,6 +91,7 @@ const initializeApp = async (): Promise<express.Application> => {
           {} as Record<string, TopicTypeEntity>
         ),
       enableConfigurationInvalidation: true,
+      useLongConfigurationCacheTTL: true,
       values: [ServiceMetricsValueDefinition],
     },
     { logger }

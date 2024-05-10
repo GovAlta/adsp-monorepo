@@ -29,6 +29,7 @@ Feature: Comment
     And the user views "Public, Protected A, Protected B, Protected C" in Select a security classification dropdown
     When the user enters "skip" as classification, "auto-test-role1" as admin roles, "auto-test-role2" as commenter roles, "empty" as reader roles
     And the user clicks Save button in topic type editor
+    And the user clicks Back button in topic type editor
     Then the user "views" the topic type of "autotest-aedTopicType", "Protected A"
     # Edit and back
     When the user clicks "Edit" button for the topic type of "autotest-aedTopicType", "Protected A"
@@ -49,6 +50,7 @@ Feature: Comment
     Then the user views topic type editor for "autotest-aedTopicType-edited"
     When the user enters "Protected B" as classification, "auto-test-role2" as admin roles, "auto-test-role1" as commenter roles, "auto-test-role3" as reader roles
     And the user clicks Save button in topic type editor
+    And the user clicks Back button in topic type editor
     Then the user "views" the topic type of "autotest-aedTopicType-edited", "Protected B"
     When the user clicks "Edit" button for the topic type of "autotest-aedTopicType-edited", "Protected B"
     Then the user views "Protected B" as classification, "auto-test-role2" as admin roles, "auto-test-role1" as commenter roles, "auto-test-role3" as reader roles

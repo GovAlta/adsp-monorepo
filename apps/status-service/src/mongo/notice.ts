@@ -27,7 +27,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
     let criteria = {};
 
     if (filter?.mode != null) {
-      criteria = { mode: filter.mode };
+      criteria = { mode: filter.mode === 'active' ? { $ne: 'archived' } : filter.mode };
     }
 
     if (filter?.tenantId) {
@@ -79,6 +79,13 @@ export default class MongoNoticeRepository implements NoticeRepository {
     } catch (e) {
       return false;
     }
+  }
+
+  private prioritizePublished(docs) {
+    // This function will reorder so that 'published' comes first
+    const published = docs.filter((doc) => doc.mode === 'published');
+    const others = docs.filter((doc) => doc.mode !== 'published');
+    return [...published, ...others];
   }
 
   private toDoc(application: NoticeApplicationEntity): Doc<NoticeApplication> {

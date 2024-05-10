@@ -36,8 +36,8 @@ describe('callout control', () => {
     it('can render callout', () => {
       const message = 'toot!';
       const props = { ...staticProps, uischema: uiSchema(message) };
-      const { getByText } = render(<GoACalloutControl {...props} />);
-      const component = getByText(message);
+      const renderer = render(<GoACalloutControl {...props} />);
+      const component = renderer.getByText(message);
       expect(component.getAttribute('type')).toBe('important');
       expect(component.getAttribute('size')).toBe('medium');
     });

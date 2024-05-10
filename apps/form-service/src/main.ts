@@ -5,7 +5,13 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, ServiceMetricsValueDefinition, adspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  ServiceMetricsValueDefinition,
+  adspId,
+  initializePlatform,
+  instrumentAxios,
+} from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -24,13 +30,13 @@ import {
   FormStatusUnlockedDefinition,
   FormStatusSetToDraftDefinition,
   SubmissionDispositionedDefinition,
+  GeneratedSupportingDocFileType,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
 import { createFileService } from './file';
 import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
-import { GeneratedSupportingDocFileType } from './form/types/fileTypes';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -47,6 +53,8 @@ const initializeApp = async (): Promise<express.Application> => {
   }
 
   const SUPPORT_COMMENT_TOPIC_TYPE_ID = 'form-questions';
+
+  instrumentAxios(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -129,6 +137,7 @@ const initializeApp = async (): Promise<express.Application> => {
         );
       },
       enableConfigurationInvalidation: true,
+      useLongConfigurationCacheTTL: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

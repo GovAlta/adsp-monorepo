@@ -1,54 +1,69 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect, useMemo } from 'react';
 import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { WithOptionLabel } from '@jsonforms/material-renderers';
+import { WithOptionLabel } from '../../util';
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
+import { RegisterDataType } from '../../Context/register';
 
-import { addDataByOptions, getData } from '../../Context';
-import { checkFieldValidity } from '../../util/stringUtils';
+import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 
-type EnumSelectProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
+type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 
-export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
-  const { data, id, enabled, errors, schema, path, handleChange, options, config, label, uischema } = props;
-  const { required } = props as ControlProps;
+function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undefined): RegisterConfig | undefined {
+  if (!options?.url && !options?.urn) return undefined;
+  const config: RegisterConfig = {
+    ...options,
+  };
+  return config;
+}
 
-  let enumData: unknown[] = schema?.enum || [];
+export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
+  const { data, id, enabled, errors, schema, path, handleChange, options, config, label, uischema, required } = props;
 
-  const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
+  const registerCtx = useContext(JsonFormsRegisterContext);
+  const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
+  let registerData: RegisterDataType = [];
+  if (registerConfig) {
+    registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
+  }
 
-  const dataKey = uischema?.options?.enumContext?.key;
+  const autocompletion = props.uischema?.options?.autocomplete === true;
 
-  const url = uischema?.options?.enumContext?.url;
-  const location = uischema?.options?.enumContext?.location;
-  const type = uischema?.options?.enumContext?.type;
-  const values = uischema?.options?.enumContext?.values;
+  const appliedUiSchemaOptions = merge({}, config, props.uischema.options);
 
-  const errorsFormInput = checkFieldValidity(props as ControlProps);
+  const mergedOptions = useMemo(() => {
+    return [
+      ...(options || []),
+      ...registerData.map((d) => {
+        if (typeof d === 'string') {
+          return {
+            value: d,
+            label: d,
+          };
+        } else {
+          return { ...d };
+        }
+      }),
+    ];
+  }, [registerData, options]);
 
   useEffect(() => {
-    if (dataKey && url) {
-      addDataByOptions(dataKey, url, location, type, values);
+    if (registerConfig) {
+      registerCtx?.fetchRegisterByUrl(registerConfig);
     }
-  }, [url, location, type, values, dataKey]);
-
-  if (dataKey && getData(dataKey)) {
-    const newData = getData(dataKey) as unknown[];
-
-    enumData = newData;
-  }
+  }, [registerCtx, registerConfig]);
 
   return (
     <GoADropdown
-      error={errorsFormInput.length > 0}
       name={`${label}`}
       value={data}
       disabled={!enabled}
       relative={true}
+      filterable={autocompletion}
       key={`${id}-jsonform-key`}
       testId={`${id || label}-jsonform`}
       {...appliedUiSchemaOptions}
@@ -57,18 +72,20 @@ export const EnumSelect = (props: EnumSelectProp): JSX.Element => {
       }}
       {...uischema?.options?.componentProps}
     >
-      {enumData?.map((item) => {
-        return <GoADropdownItem key={`json-form-dropdown-${item}`} value={`${item}`} label={`${item}`} />;
+      {mergedOptions?.map((item) => {
+        return (
+          <GoADropdownItem key={`json-form-dropdown-${item.value}`} value={`${item.value}`} label={`${item.label}`} />
+        );
       })}
     </GoADropdown>
   );
 };
 
-export const numControl = (props: ControlProps & OwnPropsOfEnum & WithOptionLabel & TranslateProps) => {
+export const enumControl = (props: ControlProps & OwnPropsOfEnum & WithOptionLabel & TranslateProps) => {
   return <GoAInputBaseControl {...props} input={EnumSelect} />;
 };
 
 export const GoAEnumControlTester: RankedTester = rankWith(2, isEnumControl);
 
 // HOC order can be reversed with https://github.com/eclipsesource/jsonforms/issues/1987
-export const GoAEnumControl = withJsonFormsEnumProps(withTranslateProps(numControl), true);
+export const GoAEnumControl = withJsonFormsEnumProps(withTranslateProps(enumControl), true);

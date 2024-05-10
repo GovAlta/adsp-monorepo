@@ -7,11 +7,10 @@
   "peerDependencies": {
     "@abgov/react-components": "^4.18.1",
     "@jsonforms/core": "^3.1.0",
-    "@jsonforms/material-renderers": "^3.1.0",
     "@jsonforms/react": "^3.1.0",
-    "@mui/material": "^5.15.10",
     "react": "^18.0.0",
-    "ajv": "^6.12.6"
+    "ajv": "^6.12.6",
+    "ajv8": "npm:ajv@^8.6.1"
   },
   "dependencies": {
     "axios": "^1.6.7",

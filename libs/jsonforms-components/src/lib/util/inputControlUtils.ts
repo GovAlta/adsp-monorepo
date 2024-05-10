@@ -1,7 +1,7 @@
 import { ControlProps } from '@jsonforms/core';
 import { EventBlurControlProps, EventChangeControlProps, EventKeyPressControlProps } from '../Controls/Inputs/type';
-import { standardizeDate } from '../Controls/Inputs/InputDateControl';
 import { isValidDate } from './stringUtils';
+import { standardizeDate } from './dateUtils';
 
 /**
  * Checks input controls data value to determine is required and has any data.

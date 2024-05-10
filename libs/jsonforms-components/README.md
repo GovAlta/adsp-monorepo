@@ -63,7 +63,7 @@ import { JsonFormContextInstance } from '@abgov/jsonforms-components';
       processCarBrands
     );
 
-    JsonFormContextInstance.addData(
+    JsonFormContextInstance.addFormContextData(
       'countries',
       Countries.map((country) => country.country)
     );

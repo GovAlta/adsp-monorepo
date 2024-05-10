@@ -14,6 +14,9 @@ import type { Logger } from 'winston';
  * @template C
  */
 export class ConfigurationEntity<C = Record<string, unknown>> implements Configuration<C> {
+  // This is lazy loaded via getter function.
+  private active?: number = undefined;
+
   constructor(
     public namespace: string,
     public name: string,
@@ -23,8 +26,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public validationService: ValidationService,
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
-    private schema?: Record<string, unknown>,
-    public active?: number
+    schema?: Record<string, unknown>
   ) {
     if (!namespace || !name) {
       throw new InvalidOperationError('Configuration must have a namespace and name.');
@@ -35,7 +37,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     }
 
     try {
-      validationService.setSchema(this.getSchemaKey(), schema);
+      validationService.setSchema(this.getSchemaKey(), schema || {});
       return;
     } catch {
       this.logger.warn(`JSON schema of ${namespace}:${name} is invalid. An empty JSON schema {} will be used.`);
@@ -76,8 +78,22 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     return Object.entries(update).reduce(
       (config, [key, value]) => {
         // If current value plus update value are both objects, then combine them with spread operator.
-        if (typeof config[key] === 'object' && typeof value === 'object') {
+        if (
+          typeof config[key] === 'object' &&
+          typeof value === 'object' &&
+          !Array.isArray(config[key]) &&
+          !Array.isArray(value)
+        ) {
           value = { ...config[key], ...value };
+        }
+
+        if (
+          typeof config[key] === 'object' &&
+          typeof value === 'object' &&
+          Array.isArray(config[key]) &&
+          Array.isArray(value)
+        ) {
+          value = [...config[key], ...value];
         }
 
         config[key] = value;
@@ -140,13 +156,21 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     return `${this.namespace}:${this.name}`;
   }
 
-  public async setActiveRevision(user: User, active: number): Promise<ConfigurationEntity<C>> {
+  public async getActiveRevision(): Promise<number> {
+    if (typeof this.active !== 'number') {
+      const doc = await this.activeRevisionRepository.get(this.namespace, this.name, this.tenantId);
+      this.active = doc?.active;
+    }
+    return this.active;
+  }
+
+  public async setActiveRevision(user: User, active: number): Promise<number> {
     if (!this.canModify(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
 
     this.active = (await this.activeRevisionRepository.setActiveRevision(this, active)).active;
 
-    return this;
+    return this.active;
   }
 }

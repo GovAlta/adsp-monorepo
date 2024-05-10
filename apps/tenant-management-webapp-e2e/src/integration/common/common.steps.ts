@@ -186,6 +186,7 @@ Then('the user views a notification message of {string}', function (message) {
 });
 
 Then('the user views delete {string} confirmation modal for {string}', function (deleteItemType, deleteItemName) {
+  cy.wait(4000);
   commonObj
     .deleteConfirmationModalTitle()
     .invoke('text')
@@ -201,7 +202,7 @@ When('the user clicks Delete button in delete confirmation modal', function () {
     .scrollIntoView()
     .should('be.visible')
     .click({ force: true });
-  cy.wait(2000); // Wait for the record to be removed from the page
+  cy.wait(4000); // Wait for the record to be removed from the page
 });
 
 When('the user waits {string} seconds', function (seconds) {

@@ -1,4 +1,4 @@
-import { GoARenderers } from '@abgov/jsonforms-components';
+import { ContextProviderClass, GoARenderers, ContextProviderFactory } from '@abgov/jsonforms-components';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { GoACallout } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
@@ -7,8 +7,8 @@ import moment from 'moment';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { Form, FormDefinition, metaDataSelector, AppDispatch, downloadFile } from '../state';
-import { ContextProvider } from '@abgov/jsonforms-components';
 import { useDispatch, useSelector } from 'react-redux';
+export const ContextProvider = ContextProviderFactory();
 
 interface ApplicationStatusProps {
   definition: FormDefinition;
@@ -71,6 +71,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
             fileList: metadata,
             downloadFile: downloadFormFile,
           }}
+          isFormSubmitted={true}
         >
           <JsonForms
             readonly={true}

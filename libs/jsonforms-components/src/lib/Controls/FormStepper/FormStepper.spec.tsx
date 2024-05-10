@@ -4,12 +4,15 @@ import '@testing-library/jest-dom/jest-globals';
 import '@testing-library/jest-dom';
 import FormStepper from './FormStepperControl';
 import { StatePropsOfLayout } from '@jsonforms/core';
-import Ajv from 'ajv';
+import ajv from 'ajv8';
 import { Translator } from '@jsonforms/core';
-import { AjvProps } from '@jsonforms/material-renderers';
+import { AjvProps } from '../../util/layout';
 import { TranslateProps } from '@jsonforms/react';
-import { ContextProvider } from '../../../lib/Context';
-const ajvInstance = new Ajv({ allErrors: true, verbose: true });
+import { ContextProviderFactory } from '../../../lib/Context';
+
+export const ContextProvider = ContextProviderFactory();
+const ajvInstance = new ajv({ allErrors: true, verbose: true, validateFormats: false });
+
 jest.mock('@jsonforms/core', () => ({
   ...jest.requireActual('@jsonforms/core'),
   isVisible: jest.fn(() => true), // Mocking isVisible to always return true

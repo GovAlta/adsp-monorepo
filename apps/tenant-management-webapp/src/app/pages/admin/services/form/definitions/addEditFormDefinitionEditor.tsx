@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
-import { ContextProvider } from '@abgov/jsonforms-components';
+import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import { Disposition, FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
@@ -11,6 +11,7 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
+import { JsonFormContext } from '@abgov/jsonforms-components';
 
 import {
   TextLoadingIndicator,
@@ -28,6 +29,7 @@ import {
   FakeButton,
   SubmissionRecordsBox,
   FormPreviewScrollPane,
+  SubmissionConfigurationPadding,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -39,6 +41,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useSecureParams } from '@lib/useSecureParams';
 import {
   GoAButtonGroup,
   GoAButton,
@@ -46,6 +49,7 @@ import {
   GoACheckbox,
   GoADropdownItem,
   GoADropdown,
+  GoACircularProgress,
 } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
@@ -71,6 +75,11 @@ import {
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { hasSchemaErrors, parseDataSchema, parseUiSchema } from './schemaUtils';
+import { CustomLoader } from '@components/CustomLoader';
+import { getConfigurationDefinitions } from '@store/configuration/action';
+import { FETCH_REGISTER_DATA_ACTION } from '@store/configuration/action';
+
+export const ContextProvider = ContextProviderFactory();
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = parseUiSchema<FormDefinition>(JSON.stringify(prev)).get();
@@ -127,6 +136,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     dispatch(FetchFileTypeService());
+    dispatch(getConfigurationDefinitions());
   }, [dispatch]);
 
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
@@ -154,9 +164,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
+  const [customIndicator, setCustomIndicator] = useState<boolean>(false);
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
-  const { id } = useParams<{ id: string }>();
+  const id = useSecureParams('id');
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
   const debouncedRenderUISchema = useDebounce(tempUiSchema, 1000);
@@ -236,11 +247,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   );
   const queueTasks = useSelector((state: RootState) => {
-    const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
-      tempObj[taskDefinitionId] = taskDefinitionData;
-      return tempObj;
-    }, {});
-    return values;
+    if (state.task && state.task.queues) {
+      const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
+        tempObj[taskDefinitionId] = taskDefinitionData;
+        return tempObj;
+      }, {});
+      return values;
+    }
   });
 
   useEffect(() => {
@@ -265,6 +278,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       }
       setInitialDefinition(parseUiSchema<FormDefinition>(JSON.stringify(formDefinitions[id])).get());
       setDefinition(formDefinitions[id]);
+      setCustomIndicator(false);
     }
   }, [formDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -273,6 +287,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       JSON.parse(tempUiSchema);
       setTempUiSchemaBounced(tempUiSchema);
       setError('');
+      setCustomIndicator(false);
     } catch {
       setTempUiSchemaBounced('{}');
     }
@@ -366,7 +381,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const definitions = useSelector((state: RootState) => {
     return state?.form?.definitions;
   });
-  const definitionIds = Object.keys(definitions);
+  const definitionIds = definitions ? Object.keys(definitions) : [];
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -446,6 +461,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         <PageIndicator />
       ) : (
         <FlexRow>
+          {customIndicator && <CustomLoader />}
           <NameDescriptionDataSchema>
             <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
             <hr className="hr-resize" />
@@ -575,123 +591,126 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </FlexRow>
 
                   <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
-                    <InfoCircleWithInlineHelp
-                      initialLabelValue={definition.submissionRecords}
-                      label="Task queue to process &nbsp;"
-                      text={
-                        getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
-                          ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
-                          : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
-                      }
-                    />
+                    <SubmissionConfigurationPadding>
+                      <InfoCircleWithInlineHelp
+                        initialLabelValue={definition.submissionRecords}
+                        label="Task queue to process &nbsp;"
+                        text={
+                          getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                            ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                            : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                        }
+                      />
 
-                    <QueueTaskDropdown>
-                      {Object.keys(queueTasks).length > 0 && (
-                        <GoADropdown
-                          data-test-id="form-submission-select-queue-task-dropdown"
-                          name="queueTasks"
-                          disabled={!definition.submissionRecords}
-                          value={[getQueueTaskToProcessValue()]}
-                          relative={true}
-                          onChange={(name, queueTask: string) => {
-                            const separatedQueueTask = queueTask.split(':');
-                            if (separatedQueueTask.length > 1) {
-                              setDefinition({
-                                ...definition,
-                                queueTaskToProcess: {
-                                  queueNameSpace: separatedQueueTask[0],
-                                  queueName: separatedQueueTask[1],
-                                },
-                              });
-                            } else {
-                              setDefinition({
-                                ...definition,
-                                queueTaskToProcess: {
-                                  queueNameSpace: '',
-                                  queueName: '',
-                                },
-                              });
-                            }
-                          }}
-                        >
-                          <GoADropdownItem
-                            data-testId={`task-Queue-ToCreate-DropDown`}
-                            key={`No-Task-Created`}
-                            value={NO_TASK_CREATED_OPTION}
-                            label={NO_TASK_CREATED_OPTION}
-                          />
-                          {Object.keys(queueTasks)
-                            .sort()
-                            .map((item) => (
-                              <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
-                            ))}
-                        </GoADropdown>
-                      )}
-                    </QueueTaskDropdown>
-                    <RowFlex>
-                      <h3>Disposition states</h3>
-                      <div>
-                        {definition.submissionRecords ? (
-                          <InfoCircleWithInlineHelp
-                            text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                            width={450}
-                          />
-                        ) : (
-                          <FakeButton />
-                        )}
-                      </div>
-                      <RightAlign>
-                        {definition.submissionRecords ? (
-                          <GoAButton
-                            type="secondary"
-                            testId="Add state"
+                      <QueueTaskDropdown>
+                        {queueTasks && Object.keys(queueTasks).length > 0 && (
+                          <GoADropdown
+                            data-test-id="form-submission-select-queue-task-dropdown"
+                            name="queueTasks"
                             disabled={!definition.submissionRecords}
-                            onClick={() => {
-                              setNewDisposition(true);
-                              setSelectedEditModalIndex(null);
+                            value={[getQueueTaskToProcessValue()]}
+                            relative={true}
+                            onChange={(name, queueTask: string) => {
+                              const separatedQueueTask = queueTask.split(':');
+                              if (separatedQueueTask.length > 1) {
+                                setDefinition({
+                                  ...definition,
+                                  queueTaskToProcess: {
+                                    queueNameSpace: separatedQueueTask[0],
+                                    queueName: separatedQueueTask[1],
+                                  },
+                                });
+                              } else {
+                                setDefinition({
+                                  ...definition,
+                                  queueTaskToProcess: {
+                                    queueNameSpace: '',
+                                    queueName: '',
+                                  },
+                                });
+                              }
                             }}
                           >
-                            Add state
-                          </GoAButton>
-                        ) : (
-                          <FakeButton />
+                            <GoADropdownItem
+                              data-testId={`task-Queue-ToCreate-DropDown`}
+                              key={`No-Task-Created`}
+                              value={NO_TASK_CREATED_OPTION}
+                              label={NO_TASK_CREATED_OPTION}
+                            />
+                            {queueTasks &&
+                              Object.keys(queueTasks)
+                                .sort()
+                                .map((item) => (
+                                  <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
+                                ))}
+                          </GoADropdown>
                         )}
-                      </RightAlign>
-                    </RowFlex>
+                      </QueueTaskDropdown>
+                      <RowFlex>
+                        <h3>Disposition states</h3>
+                        <div>
+                          {definition.submissionRecords ? (
+                            <InfoCircleWithInlineHelp
+                              text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                              width={450}
+                            />
+                          ) : (
+                            <FakeButton />
+                          )}
+                        </div>
+                        <RightAlign>
+                          {definition.submissionRecords ? (
+                            <GoAButton
+                              type="secondary"
+                              testId="Add state"
+                              disabled={!definition.submissionRecords}
+                              onClick={() => {
+                                setNewDisposition(true);
+                                setSelectedEditModalIndex(null);
+                              }}
+                            >
+                              Add state
+                            </GoAButton>
+                          ) : (
+                            <FakeButton />
+                          )}
+                        </RightAlign>
+                      </RowFlex>
 
-                    <div
-                      style={{
-                        overflowY: 'auto',
-                        height: EditorHeight - 228,
-                        zIndex: 0,
-                      }}
-                    >
-                      {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
-                        'No disposition states'
-                      ) : (
-                        <DataTable>
-                          <thead>
-                            <tr>
-                              <th>Name</th>
-                              <th>Description</th>
-                              <th>Order</th>
-                              <th>Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {definition && (
-                              <DispositionItems
-                                openModalFunction={openModalFunction}
-                                updateDispositions={updateDispositionFunction}
-                                openDeleteModalFunction={openDeleteModalFunction}
-                                dispositions={definition.dispositionStates}
-                                submissionRecords={definition.submissionRecords}
-                              />
-                            )}
-                          </tbody>
-                        </DataTable>
-                      )}
-                    </div>
+                      <div
+                        style={{
+                          overflowY: 'auto',
+                          height: EditorHeight - 228,
+                          zIndex: 0,
+                        }}
+                      >
+                        {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
+                          'No disposition states'
+                        ) : (
+                          <DataTable>
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Order</th>
+                                <th>Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {definition && (
+                                <DispositionItems
+                                  openModalFunction={openModalFunction}
+                                  updateDispositions={updateDispositionFunction}
+                                  openDeleteModalFunction={openDeleteModalFunction}
+                                  dispositions={definition.dispositionStates}
+                                  submissionRecords={definition.submissionRecords}
+                                />
+                              )}
+                            </tbody>
+                          </DataTable>
+                        )}
+                      </div>
+                    </SubmissionConfigurationPadding>
                   </div>
                 </div>
               </Tab>
@@ -702,7 +721,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <GoAButtonGroup alignment="start">
                 <GoAButton
                   type="primary"
-                  testId="form-save"
+                  testId="definition-form-save"
                   disabled={
                     !isFormUpdated(initialDefinition, {
                       ...definition,
@@ -715,7 +734,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     editorErrors.dataSchemaJSONSchema !== null ||
                     editorErrors.uiSchema !== null
                   }
-                  onClick={() => {
+                  onClick={async () => {
                     if (indicator.show === true) {
                       setSpinner(true);
                     } else {
@@ -727,16 +746,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           return;
                         }
                       }
-                      setSpinner(true);
-                      dispatch(
+                      setCustomIndicator(true);
+                      await dispatch(
                         updateFormDefinition({
                           ...definition,
                           uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
                           dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
                         })
                       );
-
-                      close();
                     }
                   }}
                 >
@@ -803,7 +820,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       <SaveFormModal
         open={saveModal.visible}
         onDontSave={() => {
-          setSaveModal({ visible: false, closeEditor: true });
+          close();
         }}
         onSave={() => {
           if (!isEdit) {

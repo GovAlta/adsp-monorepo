@@ -199,18 +199,20 @@ describe('Service router', () => {
     }),
   } as unknown as Response;
 
+  const configurationService = {
+    getConfiguration: jest.fn(),
+  };
+
   const applicationRepo = new ApplicationRepo(
     statusRepositoryMock,
     endpointRepositoryMock,
     serviceId,
     serviceDirectoryMock,
-    tokenProviderMock
+    tokenProviderMock,
+    configurationService
   );
 
   describe('createStatusServiceRouter', () => {
-    const configurationService = {
-      getConfiguration: jest.fn(() => Promise.resolve({})),
-    };
     beforeEach(() => {
       configurationService.getConfiguration.mockClear();
     });
@@ -278,7 +280,7 @@ describe('Service router', () => {
 
       statusRepositoryMock.find.mockResolvedValueOnce(applicationStatusMock);
       serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost'));
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
+      configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await getApplicationsHandler(req, resMock as unknown as Response, nextMock);
 
       expect(resMock.json).toHaveBeenCalledWith(expect.arrayContaining(returnMock));
@@ -298,9 +300,9 @@ describe('Service router', () => {
       } as unknown as Request;
 
       const handler = getApplicationEntries(loggerMock, applicationRepo, endpointRepositoryMock);
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[0]);
       endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce([entriesMock[1]]);
+      configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.send).toHaveBeenCalledWith(expect.arrayContaining([entriesMock[1]]));
     });
@@ -359,7 +361,7 @@ describe('Service router', () => {
       statusRepositoryMock.enable.mockResolvedValueOnce(
         new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: true })
       );
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
+      configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       const { _id, ...almostExpected } = bobsApplicationStatus;
       expect(resMock.json).toHaveBeenCalledWith(
@@ -388,7 +390,7 @@ describe('Service router', () => {
       statusRepositoryMock.disable.mockResolvedValueOnce(
         new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: false })
       );
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
+      configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       const { _id, ...expected } = bobsApplicationStatus;
       expect(resMock.json).toHaveBeenCalledWith(
@@ -411,7 +413,7 @@ describe('Service router', () => {
         params: { appKey: bobsAppKey },
       } as unknown as Request;
 
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
+      configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       statusRepositoryMock.find.mockResolvedValueOnce([
         new ServiceStatusApplicationEntity(statusRepositoryMock, bobsApplicationStatus),
       ]);
@@ -449,9 +451,9 @@ describe('Service router', () => {
       };
       const handler = createNewApplication(loggerMock, applicationRepo, tenantServiceMock);
       const randomId = 'app_do-not-mock-me';
-      axiosMock.get
-        .mockResolvedValueOnce({ data: configurationMock })
-        .mockResolvedValueOnce({ data: { ...configurationMock, [randomId]: expectedApp } });
+      configurationService.getConfiguration
+        .mockResolvedValueOnce(configurationMock)
+        .mockResolvedValueOnce({ ...configurationMock, [randomId]: expectedApp });
       statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
       await handler(req, resMock, nextMock);
       expect(resMock.status).toHaveBeenCalledWith(201);
@@ -473,7 +475,7 @@ describe('Service router', () => {
         },
       } as unknown as Request;
       const handler = createNewApplication(loggerMock, applicationRepo, tenantServiceMock);
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
+      configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.send).not.toHaveBeenCalled();
       expect(nextMock).toBeCalledWith(expect.any(InvalidValueError));
@@ -499,8 +501,7 @@ describe('Service router', () => {
         },
       } as unknown as Request;
       statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
-
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
+      configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -529,7 +530,7 @@ describe('Service router', () => {
           status: 'maintenance',
         },
       } as unknown as Request;
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
+      configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
@@ -539,6 +540,7 @@ describe('Service router', () => {
       );
     });
     it('Can delete application', async () => {
+      configurationService.getConfiguration.mockResolvedValue(configurationMock);
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       const handler = deleteApplication(loggerMock, applicationRepo, eventServiceMock);
       const req: Request = {
@@ -551,7 +553,6 @@ describe('Service router', () => {
           appKey: bobsAppKey,
         },
       } as unknown as Request;
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
       await handler(req, resMock, nextMock);
       expect(resMock.sendStatus).toHaveBeenCalledWith(204);

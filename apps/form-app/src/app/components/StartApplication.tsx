@@ -19,7 +19,7 @@ export const StartApplication: FunctionComponent<StartApplicationProps> = ({ def
           <GridItem md={10}>
             <div>
               <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" disabled={!canStart} onClick={onStart}>
+                <GoAButton type="primary" data-testid="form-start-application" disabled={!canStart} onClick={onStart}>
                   Start application
                 </GoAButton>
               </GoAButtonGroup>

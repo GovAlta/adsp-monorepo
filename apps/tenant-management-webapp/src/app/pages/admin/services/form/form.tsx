@@ -12,15 +12,7 @@ import BetaBadge from '@icons/beta-badge.svg';
 import { FetchRealmRoles } from '@store/tenant/actions';
 
 const HelpLink = (): JSX.Element => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  function getFormDocsLink() {
-    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Form service`;
-  }
-  function getFormSupportCodeLink() {
-    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/form-service';
-  }
-  return <AsideLinks serviceLink={getFormSupportCodeLink()} docsLink={getFormDocsLink()} />;
+  return <AsideLinks serviceName="form" />;
 };
 
 export const Form: FunctionComponent = () => {

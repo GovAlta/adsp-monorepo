@@ -82,6 +82,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   }, [initCalendarEvent]);
 
   const dispatch = useDispatch();
+  if (initCalendarEvent === null) return <></>;
   return (
     <GoAModal
       open={initCalendarEvent !== null}
@@ -90,20 +91,18 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
-            testId="calendar-modal-cancel"
+            testId="calendar-event-modal-cancel"
             onClick={() => {
-              if (!isEdit) {
-                setCalendarEvent(initCalendarEvent);
-              }
-              dispatch(ResetModalState());
               validators.clear();
+              setCalendarEvent(initCalendarEvent);
+              dispatch(ResetModalState());
             }}
           >
             Cancel
           </GoAButton>
           <GoAButton
             type="primary"
-            testId="calendar-modal-save"
+            testId="calendar-event-modal-save"
             disabled={validators.haveErrors() || areObjectsEqual(calendarEvent, initCalendarEvent)}
             onClick={() => {
               if (new Date(calendarEvent.start) > new Date(calendarEvent.end)) {
@@ -135,6 +134,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
               dispatch(ResetModalState());
               validators.clear();
               setIsEndBeforeStart(false);
+              setCalendarEvent(initCalendarEvent);
             }}
           >
             Save
@@ -157,7 +157,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           }}
         />
       </GoAFormItem>
-      <GoAFormItem error={errors?.['description']} label="Description">
+      <GoAFormItem error={errors?.['description']} label="Description" mb={'xl'}>
         <GoATextArea
           name="description"
           value={calendarEvent?.description}
@@ -173,7 +173,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           }}
         />
       </GoAFormItem>
-      <br />
+
       <GoACheckbox
         name="isPublicCheckbox"
         checked={calendarEvent?.isPublic}
@@ -220,9 +220,6 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             }}
           />
         </GoAFormItem>
-      </GoAGrid>
-
-      <GoAGrid minChildWidth="25ch" gap="s">
         <GoAFormItem label="End Date" error={errors?.['end']}>
           <GoAInputDate
             name="endDate"
@@ -237,6 +234,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             }}
           />
         </GoAFormItem>
+
         <GoAFormItem label="End time">
           <GoAInputTime
             name="endTime"

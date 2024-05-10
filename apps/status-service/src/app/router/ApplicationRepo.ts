@@ -1,4 +1,12 @@
-import { adspId, AdspId, ServiceDirectory, Tenant, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  ServiceDirectory,
+  Tenant,
+  TokenProvider,
+  User,
+  ConfigurationService,
+} from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
 import { isApp } from '../../mongo/schema';
@@ -24,19 +32,22 @@ export class ApplicationRepo {
   #serviceId: AdspId;
   #directoryService: ServiceDirectory;
   #tokenProvider: TokenProvider;
+  #configurationService: ConfigurationService;
 
   constructor(
     repository: ServiceStatusRepository,
     endpointStatusEntryRepository: EndpointStatusEntryRepository,
     serviceId: AdspId,
     directoryService: ServiceDirectory,
-    tokenProvider: TokenProvider
+    tokenProvider: TokenProvider,
+    configurationService: ConfigurationService
   ) {
     this.#repository = repository;
     this.#serviceId = serviceId;
     this.#directoryService = directoryService;
     this.#tokenProvider = tokenProvider;
     this.#endpointStatusEntryRepository = endpointStatusEntryRepository;
+    this.#configurationService = configurationService;
   }
 
   /*
@@ -75,25 +86,13 @@ export class ApplicationRepo {
     return await this.#repository.find({ appKey: { $in: appKeys }, tenantId: tenantId });
   };
 
-  /*
-   * Get apps from the configuration-service.  Because of the latency between
-   * creating a new app and the configuration-service cache being updated, even
-   * with the cache dirty flag being set, all API's need to use the configuration
-   * service directly, rather than $req.getConfiguration.  Users are faster than
-   * the above latency.
-   */
   getTenantApps = async (tenantId: AdspId): Promise<StatusApplications> => {
-    const baseUrl = await this.#directoryService.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
-    const configUrl = new URL(
-      `/configuration/v2/configuration/${this.#serviceId.namespace}/${
-        this.#serviceId.service
-      }/latest?tenantId=${tenantId}`,
-      baseUrl
-    );
     const token = await this.#tokenProvider.getAccessToken();
-    const { data } = await axios.get<StatusServiceConfiguration>(configUrl.href, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const data = await this.#configurationService.getConfiguration<
+      StatusServiceConfiguration,
+      StatusServiceConfiguration
+    >(this.#serviceId, token, tenantId);
+
     const keys = Object.keys(data);
     const apps = {};
     // Add the tenantId in, cause its not part of the configuration.
@@ -102,6 +101,7 @@ export class ApplicationRepo {
         apps[k] = { ...data[k], tenantId: tenantId };
       }
     });
+
     return new StatusApplications(apps);
   };
 

@@ -22,7 +22,7 @@ export const ContinueApplication: FunctionComponent<ContinueApplicationProps> = 
           <GridItem md={10}>
             <div>
               <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" onClick={onContinue}>
+                <GoAButton type="primary" data-testid="form-continue-application" onClick={onContinue}>
                   Continue application
                 </GoAButton>
               </GoAButtonGroup>
