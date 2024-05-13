@@ -23,7 +23,3 @@ export const IndicatorDiv = styled.div`
   background: ${(props) => props.color};
   border-radius: 100%;
 `;
-export const SpinnerPadding = styled.div`
-  margin: 0 0 0 5px;
-  float: right;
-`;

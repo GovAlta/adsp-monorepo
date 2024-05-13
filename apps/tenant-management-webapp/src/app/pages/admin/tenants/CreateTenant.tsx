@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAElementLoader } from '@abgov/react-components';
 
-import { GoANotification, GoAButton, GoAInput, GoAFormItem, GoAButtonGroup } from '@abgov/react-components-new';
+import {
+  GoANotification,
+  GoAButton,
+  GoAInput,
+  GoAFormItem,
+  GoAButtonGroup,
+} from '@abgov/react-components-new';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
@@ -10,7 +15,7 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
 import { TenantLogout } from '@store/tenant/actions';
-
+import { PageLoader } from '@core-services/app-common';
 const CreateRealm = (): JSX.Element => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
@@ -26,7 +31,7 @@ const CreateRealm = (): JSX.Element => {
   };
 
   const handleIsLoadedToggle = () => {
-    setIsLoaded((currentIsLoaded) => !currentIsLoaded);
+    setIsLoaded((isLoaded) => !isLoaded);
   };
 
   const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm, isInBeta, notifications } = useSelector(
@@ -70,14 +75,6 @@ const CreateRealm = (): JSX.Element => {
       </div>
     );
   };
-  const ButtonLoader = () => {
-    return (
-      <GoAButton type="primary" disabled>
-        Creating Tenant...
-        <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-      </GoAButton>
-    );
-  };
 
   const TenantCreated = () => {
     return (
@@ -106,7 +103,9 @@ const CreateRealm = (): JSX.Element => {
         >
           Back
         </GoALinkButton>
-        <GoAButton onClick={onCreateRealm}>Create tenant</GoAButton>
+        <GoAButton onClick={onCreateRealm} disabled={name.length === 0}>
+          Create tenant
+        </GoAButton>
       </>
     );
   };
@@ -123,7 +122,7 @@ const CreateRealm = (): JSX.Element => {
               <TenantCreated />
             ) : (
               <>
-                {isTenantAdmin === false ? (
+                {isTenantAdmin === false && (
                   <>
                     <h2>Create tenant</h2>
                     <p>
@@ -145,10 +144,14 @@ const CreateRealm = (): JSX.Element => {
                       />
                     </GoAFormItem>
                     <GoAButtonGroup alignment="start">
-                      {isLoaded ? <TenantCreateView /> : <ButtonLoader />}
+                      {isLoaded ? (
+                        <TenantCreateView />
+                      ) : (
+                        <PageLoader size="small" message={`Creating tenant for ${name} ... `} />
+                      )}
                     </GoAButtonGroup>
                   </>
-                ) : null}
+                )}
               </>
             )}
           </Main>

@@ -282,7 +282,7 @@ class AdspFeedback implements AdspFeedbackApi {
             width: 644px;
             height: 600px;
             left: 30%;
-            top: 16vh;
+            top: 10vh;
             bottom: 16px;
             border: 1px solid;
             overflow: hidden;
