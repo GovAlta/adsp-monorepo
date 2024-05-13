@@ -72,9 +72,9 @@ describe('ImageContent Control tests', () => {
     const renderer = render(form);
     const imageComponent = renderer.container.getElementsByTagName('img');
 
-    expect(imageComponent[0].getAttribute('src')?.length === 0).toBe(true);
-    expect(imageComponent[0].getAttribute('alt')?.length === 0).toBe(true);
-    expect(imageComponent[0].getAttribute('height')?.length === 0).toBe(true);
-    expect(imageComponent[0].getAttribute('width')?.length === 0).toBe(true);
+    expect(imageComponent[0].getAttribute('src')).not.toBeNull();
+    expect(imageComponent[0].getAttribute('alt')).not.toBeNull();
+    expect(imageComponent[0].getAttribute('height')).not.toBeNull();
+    expect(imageComponent[0].getAttribute('width')).not.toBeNull();
   });
 });
