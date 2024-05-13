@@ -9,17 +9,15 @@ interface OptionProps {
   alt?: string;
 }
 
-interface CustomControlElement extends ControlElement {
+interface ImageCustomControlElement extends ControlElement {
   options?: OptionProps;
 }
 
-interface CustomControlProps extends ControlProps {
-  uischema: CustomControlElement;
+interface ImageCustomControlProps extends ControlProps {
+  uischema: ImageCustomControlElement;
 }
 
-export const ImageComponent = ({ ...props }: CustomControlProps): JSX.Element => {
-  const { uischema } = props;
-
+export const ImageComponent = ({ uischema }: ImageCustomControlProps): JSX.Element => {
   const url = uischema.options?.url || '';
   const width = uischema.options?.width || '';
   const height = uischema.options?.height || '';
@@ -28,6 +26,6 @@ export const ImageComponent = ({ ...props }: CustomControlProps): JSX.Element =>
   return <img src={url} width={width} height={height} alt={alt} />;
 };
 
-export const ImageContentTester: RankedTester = rankWith(1, uiTypeIs('ImageContent'));
+export const ImageControlTester: RankedTester = rankWith(1, uiTypeIs('ImageContent'));
 
-export const ImageContent = withJsonFormsControlProps(ImageComponent);
+export const ImageControl = withJsonFormsControlProps(ImageComponent);

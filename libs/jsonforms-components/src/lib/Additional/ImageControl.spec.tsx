@@ -54,7 +54,27 @@ describe('ImageContent Control tests', () => {
     const form = getForm(uiSchema);
     const renderer = render(form);
     const imageComponent = renderer.container.getElementsByTagName('img');
-    console.log('imageData', imageComponent[0].outerHTML);
     expect(imageComponent[0].getAttribute('src')?.length === 0).toBe(true);
+  });
+
+  it('can contain image attributes', () => {
+    const uiSchema = {
+      type: 'ImageContent',
+      scope: '#/properties/myImage',
+      options: {
+        url: 'https://picsum.photos/200/300',
+        alt: 'This is a image',
+        height: '500',
+        width: '400',
+      },
+    };
+    const form = getForm(uiSchema);
+    const renderer = render(form);
+    const imageComponent = renderer.container.getElementsByTagName('img');
+
+    expect(imageComponent[0].getAttribute('src')?.length === 0).toBe(true);
+    expect(imageComponent[0].getAttribute('alt')?.length === 0).toBe(true);
+    expect(imageComponent[0].getAttribute('height')?.length === 0).toBe(true);
+    expect(imageComponent[0].getAttribute('width')?.length === 0).toBe(true);
   });
 });
