@@ -222,6 +222,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                             elements={category?.elements}
                             data={data}
                             requiredFields={requiredFields}
+                            schema={schema}
                           />
                         </Grid>
                       </ReviewItemSection>

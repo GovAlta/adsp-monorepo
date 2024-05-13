@@ -1,4 +1,4 @@
-import { LabelDescription } from '@jsonforms/core';
+import { JsonSchema, LabelDescription } from '@jsonforms/core';
 
 type jsonformsLabel = string | boolean | LabelDescription | undefined;
 export const labelToString = (label: jsonformsLabel, scope: string): string => {
@@ -14,7 +14,7 @@ export const labelToString = (label: jsonformsLabel, scope: string): string => {
   return '';
 };
 
-const resolveLabelFromScope = (scope: string): string => {
+export const resolveLabelFromScope = (scope: string): string => {
   // eslint-disable-next-line no-useless-escape
   const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;
   const isValid = validPatternRegex.test(scope);
@@ -76,7 +76,6 @@ const flatten = (arr: NestedStringArray): string[][] => {
       const flatter = flatten(val[1] as NestedStringArray);
       return acc.concat(flatter);
     }
-    // If the current value is a string, add it to the accumulator
     if (isNameValuePair(val)) {
       return acc.concat([[String(val[0]), getValue(val[1]) || '']]);
     }
@@ -95,7 +94,7 @@ const flatten = (arr: NestedStringArray): string[][] => {
  * However, we need to decide how to handle these sorts of nested data in the summary
  * page before messing with it.
  */
-export const getFormFieldValue = (scope: string, data: unknown): InputValue => {
+export const getFormFieldValue = (schema: JsonSchema, scope: string, data: unknown): InputValue => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let currentValue: any = data;
   if (scope) {
@@ -117,4 +116,22 @@ const getValue = (currentValue: unknown): string | undefined => {
     return currentValue ? 'Yes' : 'No';
   }
   return currentValue ? String(currentValue) : undefined;
+};
+
+const isDataKey = (key: string): boolean => {
+  return key !== 'type' && key !== 'properties' && key !== 'format';
+};
+
+const traverseJsonSchema = (schema: JsonSchema, keys: string[] = []): string[] => {
+  Object.keys(schema).forEach((key) => {
+    if (isDataKey(key)) {
+      keys.push(key);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const value = (schema as any)[key];
+    if (value && typeof value === 'object') {
+      traverseJsonSchema(value as JsonSchema, keys);
+    }
+  });
+  return keys;
 };
