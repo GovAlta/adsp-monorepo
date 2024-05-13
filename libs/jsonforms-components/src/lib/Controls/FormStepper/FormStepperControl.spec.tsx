@@ -247,7 +247,7 @@ describe('Form Stepper Control', () => {
   describe('step navigation', () => {
     it('can navigate between steps with the nav buttons', async () => {
       const renderer = render(getForm(formData));
-
+      window.HTMLElement.prototype.scrollIntoView = function () {};
       const stepperHeader = renderer.getByTestId('stepper-test');
       expect(stepperHeader).toBeInTheDocument();
       expect(stepperHeader.getAttribute('step')).toBe('1');
@@ -345,7 +345,7 @@ describe('Form Stepper Control', () => {
 
     it('will remove Prev button on 1st step', () => {
       const renderer = render(getForm(formData));
-
+      window.HTMLElement.prototype.scrollIntoView = function () {};
       // Move to page 3
       const next = renderer.getByTestId('next-button');
       const nextShadow = next.shadowRoot?.querySelector('button');
@@ -467,7 +467,7 @@ describe('Form Stepper Control', () => {
         address: { street: 'Sesame', city: 'Seattle' },
       });
       const renderer = render(<ContextProvider submit={{ submitForm: onSubmit }}>{form}</ContextProvider>);
-
+      window.HTMLElement.prototype.scrollIntoView = function () {};
       // Move to review Page
       const next = renderer.getByTestId('next-button');
       const nextShadow = next.shadowRoot?.querySelector('button');
@@ -488,7 +488,7 @@ describe('Form Stepper Control', () => {
         name: { firstName: 'Bob', lastName: 'Bing' },
         address: { street: 'Sesame', city: 'Seattle' },
       });
-
+      window.HTMLElement.prototype.scrollIntoView = function () {};
       const renderer = render(form);
 
       // Move to review Page
@@ -524,7 +524,7 @@ describe('Form Stepper Control', () => {
       address: { street: 'Sesame', city: 'Seattle' },
     });
     const renderer = render(<ContextProvider submit={{ submitForm: onSubmit }}>{form}</ContextProvider>);
-
+    window.HTMLElement.prototype.scrollIntoView = function () {};
     // Move to review Page
     const next = renderer.getByTestId('next-button');
     const nextShadow = next.shadowRoot?.querySelector('button');

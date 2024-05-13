@@ -39,6 +39,7 @@ export const isKnownType = (schema: UISchemaElement): boolean => {
     hasType(schema, 'Control') ||
     isLayoutType(schema) ||
     hasType(schema, 'HelpContent') ||
+    hasType(schema, 'ImageContent') ||
     isListWithDetail(schema) ||
     hasType(schema, 'Callout')
   );
