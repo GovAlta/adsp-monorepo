@@ -24,12 +24,17 @@ const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit }) => {
       <td headers="Allow Anonymous" data-testid="allowAnonymous">
         {site.allowAnonymous ? 'Yes' : 'No'}
       </td>
+      <td>
+        <GoAContextMenu>
+          <GoAContextMenuIcon testId="site-edit" title="Edit" type="create" onClick={() => onEdit(site)} />
+        </GoAContextMenu>
+      </td>
     </tr>
   );
 };
 
 interface SitesListComponentProps {
-  onEdit: (def: FeedbackSite) => void;
+  onEdit: (site: FeedbackSite) => void;
 }
 
 const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit }) => {
@@ -45,6 +50,7 @@ const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit
                 Site
               </th>
               <th id="description">Allow Anonymous</th>
+              <th id="description">Actions</th>
             </tr>
           </thead>
           <tbody>

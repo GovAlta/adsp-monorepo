@@ -3,16 +3,24 @@ import { GoAButton } from '@abgov/react-components-new';
 
 import { useDispatch } from 'react-redux';
 import { PRE } from '../feedback/styled-components';
+import { useNavigate } from 'react-router-dom';
 
 interface OverviewProps {
   setActiveEdit: (boolean) => void;
-  setActiveIndex: (index: number) => void;
 }
 
 export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
   const { setActiveEdit, setActiveIndex } = props;
 
-  const dispatch = useDispatch();
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
+  const navigate = useNavigate();
+  useEffect(() => {
+    setActiveEdit(false);
+    navigate('/admin/services/feedback');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div>
@@ -41,9 +49,10 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
         </ul>
       </section>
       <GoAButton
-        testId="add-definition"
+        testId="add-feedback"
         onClick={() => {
           setActiveEdit(true);
+          navigate('/admin/services/feedback?sites=true');
         }}
       >
         Add site
