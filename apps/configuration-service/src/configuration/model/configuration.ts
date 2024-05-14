@@ -85,9 +85,14 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
           !Array.isArray(value)
         ) {
           value = { ...config[key], ...value };
-        }
-
-        if (Array.isArray(config[key]) && Array.isArray(value)) {
+        } else if (
+          typeof config[key] === 'object' &&
+          typeof value[0] === 'string' &&
+          Array.isArray(config[key]) &&
+          Array.isArray(value)
+        ) {
+          value = [...config[key], ...value];
+        } else if (typeof value[0] === 'object' && Array.isArray(config[key]) && Array.isArray(value)) {
           const data = config[key];
           const currentRecord = value[0];
           const foundSite = data.find((s) => s.url === currentRecord.url);
