@@ -38,6 +38,21 @@ const johnData = {
   fileUploader: 'urn:ads:platform:file-service:v1:/files/791a90e4-6382-46c1-b0cf-a2c370e424f0',
 };
 
+const johnSchema = {
+  type: 'object',
+  properties: {
+    firstName: {
+      type: 'string',
+    },
+    testCategoryAddress: {
+      type: 'boolean',
+    },
+    fileUploader: {
+      type: 'string',
+    },
+  },
+};
+
 const nameSchema = {
   type: 'Control',
   scope: '#/properties/firstName',
@@ -167,7 +182,12 @@ const getForm = (schema: object, uiSchema: UISchemaElement, data: object = {}) =
 describe('Render Form Review Fields', () => {
   it('will render a Control element', () => {
     const LoadComponent = () => (
-      <RenderFormReviewFields elements={[nameSchema]} data={johnData} requiredFields={['firstName']} />
+      <RenderFormReviewFields
+        elements={[nameSchema]}
+        data={johnData}
+        requiredFields={['firstName']}
+        schema={johnSchema}
+      />
     );
     const renderer = render(<LoadComponent />);
     expect(renderer.getByText(/First name/)).toBeInTheDocument();
@@ -177,7 +197,12 @@ describe('Render Form Review Fields', () => {
 
   it('will render an asterisk on required fields', () => {
     const LoadComponent = () => (
-      <RenderFormReviewFields elements={[nameSchema, citySchema]} data={johnData} requiredFields={['firstName']} />
+      <RenderFormReviewFields
+        elements={[nameSchema, citySchema]}
+        data={johnData}
+        requiredFields={['firstName']}
+        schema={johnSchema}
+      />
     );
     const renderer = render(<LoadComponent />);
     expect(renderer.queryByText(/name \*/)).toBeInTheDocument();
@@ -187,7 +212,12 @@ describe('Render Form Review Fields', () => {
 
   it('will include file information', () => {
     const LoadComponent = () => (
-      <RenderFormReviewFields elements={[uploaderSchema]} data={johnData} requiredFields={['firstName']} />
+      <RenderFormReviewFields
+        elements={[uploaderSchema]}
+        data={johnData}
+        requiredFields={['firstName']}
+        schema={johnSchema}
+      />
     );
     const renderer = render(<LoadComponent />);
     expect(renderer.getByText(/File uploader:/)).toBeInTheDocument();
