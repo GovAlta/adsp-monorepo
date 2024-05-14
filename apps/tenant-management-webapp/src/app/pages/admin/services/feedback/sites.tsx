@@ -16,7 +16,8 @@ interface ParentCompProps {
 }
 
 export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }) => {
-  const [editSite, setEditSite] = useState(activeEdit);
+  const [toggleActiveEdit, setActiveEdit] = useState(activeEdit);
+  const [editSite, setEditSite] = useState(toggleActiveEdit);
   const [selectedSite, setSelectedSite] = useState<FeedbackSite>(defaultFeedbackSite);
 
   const sites = useSelector((state: RootState) => state.feedback.sites);
@@ -25,6 +26,10 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
     return state?.session?.indicator;
   });
 
+  const handleEdit = (site: FeedbackSite) => {
+    dispatch(updateFeedbackSite(site));
+    setEditSite(false);
+  };
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
@@ -37,6 +42,9 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
     dispatch(updateFeedbackSite(site));
     setEditSite(false);
   };
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
 
   return (
     <>
@@ -57,8 +65,8 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
           </Buttons>
 
           <SitesList
-            onEdit={(def: FeedbackSite) => {
-              setSelectedSite(def);
+            onEdit={(site: FeedbackSite) => {
+              setSelectedSite(site);
               setIsEdit(true);
               setEditSite(true);
             }}
@@ -71,8 +79,12 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
           initialValue={selectedSite}
           isEdit={isEdit}
           sites={sites}
-          onClose={() => setEditSite(false)}
+          onClose={() => {
+            setEditSite(false);
+            setActiveEdit(false);
+          }}
           onSave={createSite}
+          onEdit={handleEdit}
         />
       )}
     </>
