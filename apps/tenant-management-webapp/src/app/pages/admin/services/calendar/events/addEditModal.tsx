@@ -56,7 +56,10 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     .add('end', 'end', isNotEmptyCheck('end'))
     .build();
   const getTimeString = (calendarDateString: string) => {
-    const timeString = calendarDateString?.split('T')[1];
+    let timeString = calendarDateString?.split('T')[1];
+    if (timeString.split(':').length === 1) {
+      timeString += ':00';
+    }
     return timeString ? timeString.substring(0, 8) : '';
   };
   const setTimeString = (dateString, timeString) => {
