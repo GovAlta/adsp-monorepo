@@ -538,14 +538,14 @@ describe('ConfigurationEntity', () => {
         {
           revision: 2,
           configuration: {
-            items: ['items1', 'items1'],
+            items: ['items1', 'items2'],
           },
         }
       );
 
       const result = entity.mergeUpdate({ items: ['item3'] });
 
-      expect(result).toMatchObject({ items: ['items1', 'items1', 'item3'] });
+      expect(result).toMatchObject({ items: ['items1', 'items2', 'item3'] });
     });
 
     it('can merge update with latest revision with schema', () => {
