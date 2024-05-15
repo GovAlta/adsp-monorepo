@@ -71,17 +71,4 @@ describe('SitesListComponent', () => {
     const editButtons = screen.getAllByTestId('site-edit');
     expect(editButtons).toHaveLength(2);
   });
-
-  // it('Delete the site', async () => {
-  //   render(
-  //     <Provider store={store}>
-  //       <SitesList onEdit={onEditMock} onDelete={onDeleteMock} />
-  //     </Provider>
-  //   );
-  //   const firstDeleteButton = screen.getByTestId('site-delete-0');
-  //   fireEvent(firstDeleteButton, new CustomEvent('_click'));
-  //   await waitFor(() => {
-  //     expect(sites).toHaveLength(1);
-  //   });
-  // });
 });
