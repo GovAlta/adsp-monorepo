@@ -43,7 +43,7 @@ import {
 } from './lib/layouts';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 
-import { HelpContent, HelpContentTester, ImageControl, ImageControlTester } from './lib/Additional';
+import { HelpContent, HelpContentTester } from './lib/Additional';
 import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAErrorControl';
 import GoACalloutControl, { GoACalloutControlTester } from './lib/Additional/GoACalloutControl';
 
@@ -93,10 +93,6 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   {
     tester: HelpContentTester,
     renderer: HelpContent,
-  },
-  {
-    tester: ImageControlTester,
-    renderer: ImageControl,
   },
 ];
 
