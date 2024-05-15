@@ -346,7 +346,11 @@ When('the user clicks Add Event button on events page', function () {
 });
 
 Then('the user views Add calendar event modal', function () {
-  calendarObj.eventsAddCalendarEventModalHeading().invoke('text').should('eq', 'Add calendar event');
+  calendarObj.eventsCalendarEventModalHeading().invoke('text').should('eq', 'Add calendar event');
+});
+
+Then('the user views Edit calendar event modal', function () {
+  calendarObj.eventsCalendarEventModalHeading().invoke('text').should('eq', 'Edit calendar event');
 });
 
 When('the user enters {string} in name field in Add calendar event modal', function (name) {
@@ -367,9 +371,8 @@ Then('the user views the error message of {string} on name in Add calendar event
     .should('contain', errorMsg);
 });
 
-//Date time picker UI isn't finalized and the step uses the default dates without entering any date data
 When(
-  'the user enters {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string} in Add event modal',
+  'the user enters {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string} in calendar event modal',
   function (name, desc, isPublic, isAllDay, startDate, startTime, endDate, endTime) {
     calendarObj
       .eventsCalendarEventModalNameTextField()
@@ -460,50 +463,68 @@ When(
       default:
         expect(isPublic).to.be.oneOf(['yes', 'no']);
     }
-    // Enter start time and end time. Default day today is used
-    expect(startDate.toLowerCase()).to.eq('today');
-    expect(endDate.toLowerCase()).to.eq('today');
-    const startHr = startTime.substring(0, 2);
-    const startMin = startTime.substring(3, 5);
-    const startAmPm = startTime.substring(6, 8);
-    cy.log(startHr, startMin, startAmPm);
-    const endHr = endTime.substring(0, 2);
-    const endMin = endTime.substring(3, 5);
-    const endAmPm = endTime.substring(6, 8);
-    cy.log(endHr, endMin, endAmPm);
-    // Enter start time
-    if (startAmPm.toLowerCase() == 'pm' && startHr != '12') {
-      calendarObj
-        .eventsCalendarEventModalStartTimeField()
-        .shadow()
-        .find('input')
-        .type((Number(startHr) + 12).toString() + ':' + startMin);
-    } else {
-      calendarObj
-        .eventsCalendarEventModalStartTimeField()
-        .shadow()
-        .find('input')
-        .type(startHr + ':' + startMin);
+    // Enter start date and end date
+    if (startDate == 'Today') {
+      const todayDate = new Date().toISOString().slice(0, 10);
+      startDate = todayDate;
     }
-    // Enter end time
-    if (endAmPm.toLowerCase() == 'pm' && endHr != '12') {
-      calendarObj
-        .eventsCalendarEventModalEndTimeField()
-        .shadow()
-        .find('input')
-        .type((Number(endHr) + 12).toString() + ':' + endMin);
-    } else {
-      calendarObj
-        .eventsCalendarEventModalEndTimeField()
-        .shadow()
-        .find('input')
-        .type(endHr + ':' + endMin);
+    calendarObj.eventsCalendarEventModalStartDateField().shadow().find('input').type(startDate);
+    if (endDate == 'Today') {
+      const todayDate = new Date().toISOString().slice(0, 10);
+      endDate = todayDate;
+    }
+    calendarObj.eventsCalendarEventModalEndDateField().shadow().find('input').type(endDate);
+    // Enter start time and end time
+    if (isAllDay.toLowerCase() == 'no') {
+      // expect(startDate.toLowerCase()).to.eq('today');
+      // expect(endDate.toLowerCase()).to.eq('today');
+      const startHr = startTime.substring(0, 2);
+      const startMin = startTime.substring(3, 5);
+      const startAmPm = startTime.substring(6, 8);
+      cy.log(startHr, startMin, startAmPm);
+      const endHr = endTime.substring(0, 2);
+      const endMin = endTime.substring(3, 5);
+      const endAmPm = endTime.substring(6, 8);
+      cy.log(endHr, endMin, endAmPm);
+      // Enter start time
+      if (startAmPm.toLowerCase() == 'pm' && startHr != '12') {
+        calendarObj
+          .eventsCalendarEventModalStartTimeField()
+          .shadow()
+          .find('input')
+          .type((Number(startHr) + 12).toString() + ':' + startMin + ':00');
+      } else {
+        calendarObj
+          .eventsCalendarEventModalStartTimeField()
+          .shadow()
+          .find('input')
+          .type(startHr + ':' + startMin + ':00');
+      }
+      // Enter end time
+      if (endAmPm.toLowerCase() == 'pm' && endHr != '12') {
+        calendarObj
+          .eventsCalendarEventModalEndTimeField()
+          .shadow()
+          .find('input')
+          .type((Number(endHr) + 12).toString() + ':' + endMin + ':00');
+      } else {
+        calendarObj
+          .eventsCalendarEventModalEndTimeField()
+          .shadow()
+          .find('input')
+          .type(endHr + ':' + endMin + ':00');
+      }
     }
   }
 );
 
-When('the user clicks Save button in Add calendar event modal', function () {
+When('the user clicks Save button in calendar event modal', function () {
   calendarObj.eventsCalendarEventModalSaveButton().shadow().find('button').click({ force: true });
+  cy.wait(4000);
+});
+
+When('the user clicks Cancel button in calendar event modal', function () {
+  calendarObj.eventsCalendarEventModalCancelButton().shadow().find('button').click({ force: true });
   cy.wait(4000);
 });
 
@@ -513,9 +534,9 @@ Then(
     const todayDate = new Date().toISOString().slice(0, 10);
     const startDateTimeWithoutToday = startDateTime.replace('Today', todayDate);
     const endDateTimeWithoutToday = endDateTime.replace('Today', todayDate);
-    findEvent(name, startDateTimeWithoutToday, endDateTimeWithoutToday).then((rowNumber) => {
-      switch (viewOrNot) {
-        case 'views':
+    switch (viewOrNot) {
+      case 'views':
+        findEvent(name, startDateTimeWithoutToday, endDateTimeWithoutToday).then((rowNumber) => {
           expect(rowNumber).to.be.greaterThan(
             0,
             'Event of ' +
@@ -527,24 +548,32 @@ Then(
               ' has row #' +
               rowNumber
           );
-          break;
-        case 'should not view':
-          expect(rowNumber).to.equal(
-            0,
-            'Event of ' +
-              name +
-              ', ' +
-              startDateTimeWithoutToday +
-              ', ' +
-              endDateTimeWithoutToday +
-              ' has row #' +
-              rowNumber
-          );
-          break;
-        default:
-          expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-      }
-    });
+        });
+        break;
+      case 'should not view':
+        calendarObj.eventsTab().then((eventTab) => {
+          if (eventTab.find('tbody').length == 0) {
+            cy.log('No calendar event in the grid. ');
+          } else {
+            findEvent(name, startDateTimeWithoutToday, endDateTimeWithoutToday).then((rowNumber) => {
+              expect(rowNumber).to.equal(
+                0,
+                'Event of ' +
+                  name +
+                  ', ' +
+                  startDateTimeWithoutToday +
+                  ', ' +
+                  endDateTimeWithoutToday +
+                  ' has row #' +
+                  rowNumber
+              );
+            });
+          }
+        });
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
   }
 );
 
@@ -593,3 +622,24 @@ function findEvent(eventName, startDateTime, endDateTime) {
     }
   });
 }
+
+When(
+  'the user clicks {string} icon of {string}, {string}, {string}',
+  function (iconName, name, startDateTime, endDateTime) {
+    const todayDate = new Date().toISOString().slice(0, 10);
+    const startDateTimeWithoutToday = startDateTime.replace('Today', todayDate);
+    const endDateTimeWithoutToday = endDateTime.replace('Today', todayDate);
+    findEvent(name, startDateTimeWithoutToday, endDateTimeWithoutToday).then((rowNumber) => {
+      switch (iconName) {
+        case 'edit':
+          calendarObj.eventEditButton(rowNumber).shadow().find('button').click({ force: true });
+          break;
+        case 'delete':
+          calendarObj.eventDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+          break;
+        default:
+          expect(iconName).to.be.oneOf(['edit', 'delete']);
+      }
+    });
+  }
+);
