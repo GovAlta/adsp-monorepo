@@ -28,3 +28,22 @@ export const fetchRegister = async (props: RegisterConfig) => {
 
   return undefined;
 };
+
+interface Validate {
+  url?: string;
+}
+
+export const validateUrl = async (props: Validate): Promise<boolean> => {
+  const { url } = props;
+
+  if (url) {
+    try {
+      await axios.get(url);
+
+      return true;
+    } catch (err) {
+      console.warn(`Error in fetching data from remote: ${err}`);
+      return false;
+    }
+  } else return false;
+};
