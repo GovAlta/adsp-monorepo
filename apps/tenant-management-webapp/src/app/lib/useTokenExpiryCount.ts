@@ -15,8 +15,8 @@ export const useTokenExpiryCount = () => {
     let logoutCountdown = null;
 
     if (refreshTokenExp) {
-      // Consider as log out if token will be expired within 2 min.
-      const timeDiffInMin = refreshTokenExp - Date.now() / 1000 - 2 * 60;
+      // Consider as log out if token will be expired within 3 min.
+      const timeDiffInMin = refreshTokenExp - Date.now() / 1000 - 3 * 60;
       logoutCountdown = setInterval(() => {
         dispatch(SetSessionExpired(true));
       }, timeDiffInMin * 1000);
