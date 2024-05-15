@@ -31,7 +31,7 @@ import {
   GoABooleanRadioControlTester,
   GoABooleanRadioControl,
 } from './lib/Controls';
-import { GoALinkControlTester, linkControl } from './lib/Controls/Link/LinkControl';
+
 import { InputCells } from './lib/Cells';
 import {
   GoAVerticalLayout,
@@ -54,7 +54,6 @@ export * from './lib/Context/register';
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
   { tester: GoAEnumControlTester, renderer: GoAEnumControl },
-  { tester: GoALinkControlTester, renderer: linkControl },
   { tester: GoAIntegerControlTester, renderer: GoAInputIntegerControl },
   { tester: GoANumberControlTester, renderer: GoAInputNumberControl },
   { tester: GoATextControlTester, renderer: GoAInputTextControl },

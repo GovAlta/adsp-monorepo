@@ -186,17 +186,13 @@ export const uischema = {
             },
           ],
         },
-
         {
-          type: 'Control',
-          scope: '#/properties/link',
+          type: 'HelpContent',
+          label:
+            'This is a fillable application that can be completed online, printed, signed and sent to the AFFB Program',
           options: {
-            componentProps: {
-              heading: 'Fuel Benefit',
-              description: 'For more information about the fuel benefit:',
-              link: 'https://open.alberta.ca/dataset/70c50877-aaa9-442c-a10e-328eb53aa5f1/resource/2bfb6ff5-d246-4b76-8267-548ed58bf339/download/agi-alberta-farm-fuel-benefit-program-fuel-tax-exemption-application-2023.pdf',
-              label: 'Alberta Farm fuel benefit form',
-            },
+            help: 'Alberta Farm fuel benefit form',
+            link: 'https://open.alberta.ca/dataset/70c50877-aaa9-442c-a10e-328eb53aa5f1/resource/2bfb6ff5-d246-4b76-8267-548ed58bf339/download/agi-alberta-farm-fuel-benefit-program-fuel-tax-exemption-application-2023.pdf',
           },
         },
       ],
