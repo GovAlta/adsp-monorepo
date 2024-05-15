@@ -10,6 +10,10 @@ interface OptionProps {
   ariaLabel?: string;
   help?: string | string[];
   variant?: string;
+  img?: string;
+  alt?: string;
+  height?: string;
+  width?: string;
 }
 
 interface CustomControlElement extends ControlElement {
@@ -40,6 +44,10 @@ export const HelpContentComponent = ({
       <p className="single-line">{uischema?.options?.help}</p>
     );
 
+  const renderImage = ({ height, width, alt, img }: OptionProps): JSX.Element => {
+    return <img src={img} width={width} height={height} alt={alt} />;
+  };
+
   return (
     <Visible visible={visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
@@ -50,6 +58,7 @@ export const HelpContentComponent = ({
               <br />
             </div>
           )}
+          {uischema.options?.img && uischema.options?.img !== '' && renderImage(uischema.options)}
           {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
           {uischema.options?.variant && uischema.options?.variant === 'details' && (
             <GoADetails heading={label ? label : ''} mt="3xs" mb="none">
@@ -65,6 +74,7 @@ export const HelpContentComponent = ({
     </Visible>
   );
 };
+
 const HelpContents = ({ elements, isParent = false }: { elements: CustomControlElement[]; isParent?: boolean }) => (
   <div>
     {elements?.map((element: any) => {

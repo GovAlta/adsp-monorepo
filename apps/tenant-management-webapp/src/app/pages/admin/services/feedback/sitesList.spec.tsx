@@ -1,6 +1,6 @@
 import React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, fireEvent, screen, getAllByAltText } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import configureStore from 'redux-mock-store';
 import { SitesList } from './sitesList';
@@ -59,5 +59,15 @@ describe('SitesListComponent', () => {
     expect(rows.length).toBe(2);
     expect(rows[0]).toHaveTextContent('https://example.com');
     expect(rows[1]).toHaveTextContent('https://second-site.com');
+  });
+  it('lists feedback sites in the table', () => {
+    render(
+      <Provider store={store}>
+        <SitesList onEdit={onEditMock} />
+      </Provider>
+    );
+
+    const editButtons = screen.getAllByTestId('site-edit');
+    expect(editButtons).toHaveLength(2);
   });
 });

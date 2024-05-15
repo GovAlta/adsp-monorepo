@@ -538,14 +538,44 @@ describe('ConfigurationEntity', () => {
         {
           revision: 2,
           configuration: {
-            items: ['items1', 'items1'],
+            items: ['items1', 'items2'],
           },
         }
       );
 
       const result = entity.mergeUpdate({ items: ['item3'] });
 
-      expect(result).toMatchObject({ items: ['items1', 'items1', 'item3'] });
+      expect(result).toMatchObject({ items: ['items1', 'items2', 'item3'] });
+    });
+
+    it('can merge update with latest revision with array of objects', () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {
+            sites: [
+              { url: 'http://newsite.com', allowAnonymous: true, views: [] },
+              { url: 'http://example.com', allowAnonymous: true, views: [] },
+            ],
+          },
+        }
+      );
+
+      const result = entity.mergeUpdate({ sites: [{ url: 'http://third.com', allowAnonymous: true, views: [] }] });
+
+      expect(result).toMatchObject({
+        sites: [
+          { url: 'http://newsite.com', allowAnonymous: true, views: [] },
+          { url: 'http://example.com', allowAnonymous: true, views: [] },
+          { url: 'http://third.com', allowAnonymous: true, views: [] },
+        ],
+      });
     });
 
     it('can merge update with latest revision with schema', () => {

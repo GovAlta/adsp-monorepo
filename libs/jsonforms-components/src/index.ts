@@ -31,6 +31,7 @@ import {
   GoABooleanRadioControlTester,
   GoABooleanRadioControl,
 } from './lib/Controls';
+import { GoALinkControlTester, linkControl } from './lib/Controls/Link/LinkControl';
 import { InputCells } from './lib/Cells';
 import {
   GoAVerticalLayout,
@@ -42,7 +43,7 @@ import {
 } from './lib/layouts';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 
-import { HelpContent, HelpContentTester, ImageControl, ImageControlTester } from './lib/Additional';
+import { HelpContent, HelpContentTester } from './lib/Additional';
 import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAErrorControl';
 import GoACalloutControl, { GoACalloutControlTester } from './lib/Additional/GoACalloutControl';
 
@@ -53,6 +54,7 @@ export * from './lib/Context/register';
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
   { tester: GoAEnumControlTester, renderer: GoAEnumControl },
+  { tester: GoALinkControlTester, renderer: linkControl },
   { tester: GoAIntegerControlTester, renderer: GoAInputIntegerControl },
   { tester: GoANumberControlTester, renderer: GoAInputNumberControl },
   { tester: GoATextControlTester, renderer: GoAInputTextControl },
@@ -91,10 +93,6 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   {
     tester: HelpContentTester,
     renderer: HelpContent,
-  },
-  {
-    tester: ImageControlTester,
-    renderer: ImageControl,
   },
 ];
 

@@ -93,4 +93,29 @@ describe('Help Content Control', () => {
     console.log(sectionContent?.outerHTML);
     expect(sectionContent?.innerHTML).toBe(helpSchema.elements[0].options.help);
   });
+
+  it('will render image in help content', () => {
+    const helpSchema = {
+      type: 'HelpContent',
+      label: 'This is the main heading',
+      elements: [
+        {
+          type: 'HelpContent',
+          label: 'This is section heading',
+          options: {
+            img: 'https://picsum.photos/200/300',
+          },
+        },
+      ],
+      options: {
+        variant: 'details',
+      },
+    };
+    const form = getForm(helpSchema);
+    const renderer = render(form);
+
+    const image = renderer.container.getElementsByTagName('img');
+
+    expect(image[0]).toBeInTheDocument();
+  });
 });

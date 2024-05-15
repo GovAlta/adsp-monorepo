@@ -1,4 +1,4 @@
-import { ControlElement } from '@jsonforms/core';
+import { ControlElement, JsonSchema } from '@jsonforms/core';
 import { Grid, GridItem } from '../../../common/Grid';
 import { InputValue, NestedStringArray, getFormFieldValue, labelToString } from './GenerateFormFields';
 import React from 'react';
@@ -26,8 +26,6 @@ const renderValue = (
   );
 };
 
-const renderArray = () => {};
-
 const renderFileLink = (
   fileUploaderElement: FileElement,
   downloadFile: (file: File, propertyId: string) => void
@@ -40,6 +38,7 @@ const renderFileLink = (
 };
 
 export const renderReviewControl = (
+  schema: JsonSchema,
   data: unknown,
   element: ControlElement,
   requiredFields: string[],
@@ -53,12 +52,11 @@ export const renderReviewControl = (
   if (!fieldName || !label) return null;
   const isFileUploader = element.scope.includes('fileUploader');
   const fileUploaderElement = isFileUploader ? fileList && fileList[fieldName] : null;
-  const fieldValues: InputValue = getFormFieldValue(element.scope, data ? data : {});
+  const fieldValues: InputValue = getFormFieldValue(schema, element.scope, data ? data : {});
   const isRequired = requiredFields.includes(fieldName);
   const asterisk = isRequired ? ' *' : '';
 
   const values = fieldValues.value;
-
   return (
     <React.Fragment key={index}>
       {fieldValues.type === 'primitive' &&
@@ -69,18 +67,18 @@ export const renderReviewControl = (
         (values as string[][]).map((v, i) => {
           return renderValue(`${v[0]}: `, `${index}:${i}`, v[1]);
         })}
-      {fieldValues.type === 'array' && values && values.length > 0 && renderListDetails(values as NestedStringArray)}
+      {fieldValues.type === 'array' && values && values.length > 0 && renderList(values as NestedStringArray)}
     </React.Fragment>
   );
 };
 
-const renderListDetails = (items: NestedStringArray): JSX.Element => {
+export const renderList = (items: NestedStringArray): JSX.Element => {
   return (
     <React.Fragment>
       {items.map((item, itemIndex) => {
         const details = Array.isArray(item) ? item : [undefined, [undefined, undefined]];
         return (
-          <>
+          <div>
             <Grid key={`item-${itemIndex}`}>
               {(details[1] as NestedStringArray).map((detail, detailIndex) => {
                 const safeDetail = Array.isArray(detail) ? detail : [undefined, undefined];
@@ -88,7 +86,7 @@ const renderListDetails = (items: NestedStringArray): JSX.Element => {
               })}
             </Grid>
             {itemIndex < items.length - 1 ? <GoADivider mb="m"></GoADivider> : null}
-          </>
+          </div>
         );
       })}
     </React.Fragment>
