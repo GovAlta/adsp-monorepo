@@ -218,7 +218,7 @@ export function* fetchRegisterData(): SagaIterator {
         // if there is active configuration, use the register in the active configuration first.
         if (data?.active && data?.active?.configuration?.register) {
           registerData.push({
-            urn: `urn:ads:register:${registerConfig}`,
+            urn: `urn:ads:${tenantName}:${registerConfig}:register`,
             data: data?.active?.configuration?.register,
           });
         } else {
