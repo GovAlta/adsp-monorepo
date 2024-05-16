@@ -52,11 +52,14 @@ export const HelpContentComponent = ({
     return <img src={url} width={width} height={height} alt={alt} />;
   };
 
+  const textVariant =
+    !uischema.options?.variant || (uischema.options?.variant !== 'details' && uischema.options?.variant !== 'link');
+
   return (
     <Visible visible={visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
         <div className={marginClass}>
-          {label && !uischema.options?.variant && uischema.options?.variant !== 'details' && (
+          {label && (!uischema.options?.variant || uischema.options?.variant === 'link') && (
             <div className={labelClass} data-testid={label}>
               {label}
               <br />
@@ -64,8 +67,8 @@ export const HelpContentComponent = ({
           )}
 
           {uischema.options?.variant && uischema.options?.variant === 'img' && renderImage(uischema.options)}
-          {uischema?.options?.link && link !== '' && RenderLink(uischema?.options)}
-          {(!uischema.options?.variant || uischema.options?.variant !== 'details') && !link && renderHelp()}
+          {uischema?.options?.variant && uischema.options?.variant === 'link' && link && RenderLink(uischema?.options)}
+          {textVariant && renderHelp()}
           {uischema.options?.variant && uischema.options?.variant === 'details' && (
             <GoADetails heading={label ? label : ''} mt="3xs" mb="none">
               {renderHelp()}
