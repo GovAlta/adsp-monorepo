@@ -4,9 +4,7 @@ import { Category, UISchemaElement } from '@jsonforms/core';
 import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
-import { FormStepProps } from '@abgov/react-components-new';
 import { FormStepperComponentProps } from './FormStepperControl';
-import exp from 'constants';
 export const ContextProvider = ContextProviderFactory();
 
 /**
