@@ -61,7 +61,8 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     .build();
 
   useEffect(() => {
-    setDefinition(initialValue);
+    setDefinition({ ...initialValue });
+    setPayloadSchema(JSON.stringify(initialValue.configurationSchema, null, 2));
   }, [initialValue]);
 
   const validationCheck = () => {
