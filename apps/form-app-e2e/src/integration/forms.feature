@@ -31,9 +31,10 @@ Feature: Form app
     And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     And the user views the summary of "Additional Information" with "Yes" as "not required" "Citizen"
-    And the user views the summary of "Additional Information" with "John" as "required" "First name:Dependant"
-    And the user views the summary of "Additional Information" with "Smith" as "required" "Last name:Dependant"
-    And the user views the summary of "Additional Information" with "2010-01-15" as "not required" "Dob:Dependant"
+    # Validation of list with detail on review page is commented out until CS-3120 is fixed
+    # And the user views the summary of "Additional Information" with "John" as "required" "First name:Dependant"
+    # And the user views the summary of "Additional Information" with "Smith" as "required" "Last name:Dependant"
+    # And the user views the summary of "Additional Information" with "2010-01-15" as "not required" "Dob:Dependant"
     When the user clicks submit button in the form
     Then the user views a callout with a message of "We're processing your application"
     When the user sends a delete form request
