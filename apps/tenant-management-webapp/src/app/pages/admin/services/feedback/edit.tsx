@@ -32,6 +32,7 @@ interface SiteFormProps {
   sites: FeedbackSite[];
   onClose?: () => void;
   onSave?: (site: FeedbackSite) => void;
+  onEdit?: (site: FeedbackSite) => void;
   open: boolean;
   isEdit: boolean;
 }
@@ -43,6 +44,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
   isEdit,
   sites,
   onSave,
+  onEdit,
 }) => {
   const [site, setSite] = useState<FeedbackSite>(initialValue);
   const [urlError, setUrlError] = useState<string>('');
@@ -50,16 +52,15 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
   useEffect(() => {
     setSite(initialValue);
   }, [initialValue]);
-  const allUrls = sites.map((u) => u.url);
+  const allUrls = sites && sites.length > 0 ? sites.map((u) => u.url) : [];
   const { errors, validators } = useValidators(
     'url',
     'url',
     wordMaxLengthCheck(150, 'URL'),
     characterCheck(validationPattern.validURL),
-    isNotEmptyCheck('url')
-  )
-    .add('duplicate', 'url', duplicateNameCheck(allUrls, 'url'))
-    .build();
+    isNotEmptyCheck('url'),
+    duplicateNameCheck(allUrls, 'url')
+  ).build();
 
   return (
     <ModalOverwrite>
@@ -85,8 +86,10 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
               onClick={() => {
                 const validations = {};
 
-                if (onSave) {
+                if (isEdit) {
                   onSave(site);
+                } else {
+                  onEdit(site);
                 }
                 onClose();
               }}
@@ -109,6 +112,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
             value={site.url}
             testId="feedback-url"
             aria-label="url"
+            disabled={isEdit}
             onChange={(name, value) => {
               validators.remove('url');
               validators['url'].check(value);
@@ -130,7 +134,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
             }}
             name={'isAnonymous'}
             value={site.allowAnonymous}
-            checked={false}
+            checked={site.allowAnonymous}
           ></GoACheckbox>
         </GoAFormItem>
       </GoAModal>

@@ -222,6 +222,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                             elements={category?.elements}
                             data={data}
                             requiredFields={requiredFields}
+                            schema={schema}
                           />
                         </Grid>
                       </ReviewItemSection>
@@ -238,7 +239,13 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                   <GoAButton
                     type="secondary"
                     disabled={disabledCategoryMap[step - 1]}
-                    onClick={() => prevPage(step, disabledCategoryMap)}
+                    onClick={() => {
+                      const element = document.getElementById(`${path || `goa`}-form-stepper`);
+                      if (element) {
+                        element.scrollIntoView();
+                      }
+                      prevPage(step, disabledCategoryMap);
+                    }}
                     testId="prev-button"
                   >
                     Previous
@@ -252,7 +259,13 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                   <GoAButton
                     type="primary"
                     disabled={disabledCategoryMap[step - 1]}
-                    onClick={() => nextPage(step, disabledCategoryMap)}
+                    onClick={() => {
+                      const element = document.getElementById(`${path || `goa`}-form-stepper`);
+                      if (element) {
+                        element.scrollIntoView();
+                      }
+                      nextPage(step, disabledCategoryMap);
+                    }}
                     testId="next-button"
                   >
                     Next

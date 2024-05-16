@@ -1,6 +1,7 @@
 export const schema = {
   type: 'object',
   properties: {
+    link: {},
     firstName: {
       type: 'string',
       minLength: 3,
@@ -173,12 +174,26 @@ export const uischema = {
       label: 'Additional Information',
       elements: [
         {
-          type: 'Control',
-          scope: '#/properties/vegetarianOptions/properties/vegan',
+          type: 'HorizontalLayout',
+          elements: [
+            {
+              type: 'Control',
+              scope: '#/properties/vegetarianOptions/properties/favoriteVegetable',
+            },
+            {
+              type: 'Control',
+              scope: '#/properties/vegetarianOptions/properties/vegan',
+            },
+          ],
         },
         {
-          type: 'Control',
-          scope: '#/properties/vegetarianOptions/properties/favoriteVegetable',
+          type: 'HelpContent',
+          label:
+            'This is a fillable application that can be completed online, printed, signed and sent to the AFFB Program',
+          options: {
+            help: 'Alberta Farm fuel benefit form',
+            link: 'https://open.alberta.ca/dataset/70c50877-aaa9-442c-a10e-328eb53aa5f1/resource/2bfb6ff5-d246-4b76-8267-548ed58bf339/download/agi-alberta-farm-fuel-benefit-program-fuel-tax-exemption-application-2023.pdf',
+          },
         },
       ],
     },

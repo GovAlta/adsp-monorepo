@@ -1,5 +1,6 @@
 import { FeedbackState } from './models';
 import {
+  DELETE_FEEDBACK_SITE_SUCCESS_ACTION,
   FETCH_FEEDBACK_SITES_SUCCESS_ACTION,
   FeedbackActionTypes,
   UPDATE_FEEDBACK_SITE_SUCCESS_ACTION,
@@ -22,6 +23,12 @@ function feedbackReducer(state: FeedbackState = initialState, action: FeedbackAc
       return {
         ...state,
         sites: action.sites,
+      };
+    }
+    case DELETE_FEEDBACK_SITE_SUCCESS_ACTION: {
+      return {
+        ...state,
+        sites: state.sites.filter((site) => site.url !== action.siteUrl),
       };
     }
     default:

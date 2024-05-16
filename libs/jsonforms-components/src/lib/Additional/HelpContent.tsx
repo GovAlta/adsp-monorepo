@@ -6,10 +6,17 @@ import { HelpContentDiv } from './styled-components';
 import { ControlProps, ControlElement } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Visible } from '../util';
+import { RenderLink } from './LinkControl';
+
 interface OptionProps {
   ariaLabel?: string;
   help?: string | string[];
   variant?: string;
+  url?: string;
+  alt?: string;
+  height?: string;
+  width?: string;
+  link?: string;
 }
 
 interface CustomControlElement extends ControlElement {
@@ -29,6 +36,7 @@ export const HelpContentComponent = ({
   const marginClass = isParent ? 'parent-margin' : 'child-margin';
   // eslint-disable-next-line
   const { uischema, visible, label } = props;
+  const link = uischema?.options?.link;
   const renderHelp = () =>
     Array.isArray(uischema?.options?.help) ? (
       <ul>
@@ -40,6 +48,10 @@ export const HelpContentComponent = ({
       <p className="single-line">{uischema?.options?.help}</p>
     );
 
+  const renderImage = ({ height, width, alt, url }: OptionProps): JSX.Element => {
+    return <img src={url} width={width} height={height} alt={alt} />;
+  };
+
   return (
     <Visible visible={visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
@@ -50,7 +62,10 @@ export const HelpContentComponent = ({
               <br />
             </div>
           )}
-          {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
+
+          {uischema.options?.variant && uischema.options?.variant === 'img' && renderImage(uischema.options)}
+          {uischema?.options?.link && link !== '' && RenderLink(uischema?.options)}
+          {(!uischema.options?.variant || uischema.options?.variant !== 'details') && !link && renderHelp()}
           {uischema.options?.variant && uischema.options?.variant === 'details' && (
             <GoADetails heading={label ? label : ''} mt="3xs" mb="none">
               {renderHelp()}
@@ -65,6 +80,7 @@ export const HelpContentComponent = ({
     </Visible>
   );
 };
+
 const HelpContents = ({ elements, isParent = false }: { elements: CustomControlElement[]; isParent?: boolean }) => (
   <div>
     {elements?.map((element: any) => {

@@ -56,7 +56,10 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     .add('end', 'end', isNotEmptyCheck('end'))
     .build();
   const getTimeString = (calendarDateString: string) => {
-    const timeString = calendarDateString?.split('T')[1];
+    let timeString = calendarDateString?.split('T')[1];
+    if (timeString.split(':').length === 1) {
+      timeString += ':00';
+    }
     return timeString ? timeString.substring(0, 8) : '';
   };
   const setTimeString = (dateString, timeString) => {
@@ -216,6 +219,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             testId="calendar-event-modal-start-time-input"
             disabled={calendarEvent?.isAllDay}
             onChange={(name, value) => {
+              setStartTime(value);
               setCalendarEvent({ ...calendarEvent, start: setTimeString(startDate, value) });
             }}
           />
@@ -244,6 +248,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             disabled={calendarEvent?.isAllDay}
             testId="calendar-event-modal-end-time-input"
             onChange={(name, value) => {
+              setEndTime(value);
               setCalendarEvent({ ...calendarEvent, end: setTimeString(endDate, value) });
             }}
           />

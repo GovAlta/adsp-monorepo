@@ -1,6 +1,6 @@
 import React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, fireEvent, screen, getAllByAltText, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import configureStore from 'redux-mock-store';
 import { SitesList } from './sitesList';
@@ -17,11 +17,12 @@ const store = mockStore({
 
 describe('SitesListComponent', () => {
   const onEditMock = jest.fn();
+  const onDeleteMock = jest.fn();
 
   it('renders without errors', () => {
     render(
       <Provider store={store}>
-        <SitesList onEdit={onEditMock} />
+        <SitesList onEdit={onEditMock} onDelete={onDeleteMock} />
       </Provider>
     );
   });
@@ -30,7 +31,7 @@ describe('SitesListComponent', () => {
     const emptyStore = mockStore({ feedback: { sites: [] } });
     const renderer = render(
       <Provider store={emptyStore}>
-        <SitesList onEdit={onEditMock} />
+        <SitesList onEdit={onEditMock} onDelete={onDeleteMock} />
       </Provider>
     );
 
@@ -40,7 +41,7 @@ describe('SitesListComponent', () => {
   it('renders table headers correctly', () => {
     render(
       <Provider store={store}>
-        <SitesList onEdit={onEditMock} />
+        <SitesList onEdit={onEditMock} onDelete={onDeleteMock} />
       </Provider>
     );
 
@@ -51,7 +52,7 @@ describe('SitesListComponent', () => {
   it('lists feedback sites in the table', () => {
     render(
       <Provider store={store}>
-        <SitesList onEdit={onEditMock} />
+        <SitesList onEdit={onEditMock} onDelete={onDeleteMock} />
       </Provider>
     );
 
@@ -59,5 +60,15 @@ describe('SitesListComponent', () => {
     expect(rows.length).toBe(2);
     expect(rows[0]).toHaveTextContent('https://example.com');
     expect(rows[1]).toHaveTextContent('https://second-site.com');
+  });
+  it('lists feedback sites in the table', () => {
+    render(
+      <Provider store={store}>
+        <SitesList onEdit={onEditMock} onDelete={onDeleteMock} />
+      </Provider>
+    );
+
+    const editButtons = screen.getAllByTestId('site-edit');
+    expect(editButtons).toHaveLength(2);
   });
 });

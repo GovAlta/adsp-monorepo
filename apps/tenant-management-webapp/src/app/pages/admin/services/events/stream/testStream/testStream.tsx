@@ -3,10 +3,9 @@ import { RootState } from '@store/index';
 import { fetchEventStreams, startSocket } from '@store/stream/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
-
-import { GoAElementLoader } from '@abgov/react-components';
+import { TextGoASkeleton } from '@core-services/app-common';
 import { GoADropdown, GoADropdownItem, GoAButton } from '@abgov/react-components-new';
-import { Divider, StreamHeading, StreamsDropdown, SpinnerPadding } from './styledComponents';
+import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
 import { StreamPayloadTable } from './streamPayloadTable';
@@ -197,11 +196,6 @@ export const TestStream = (): JSX.Element => {
             }}
           >
             Connect
-            {spinner && (
-              <SpinnerPadding>
-                <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-              </SpinnerPadding>
-            )}
           </GoAButton>
           <Divider />
           <GoAButton
@@ -213,9 +207,9 @@ export const TestStream = (): JSX.Element => {
           >
             Disconnect
           </GoAButton>
-
           <br />
           <StreamPayloadTable streams={streamData} />
+          {spinner && <TextGoASkeleton lineCount={1}></TextGoASkeleton>}
         </>
       )}
     </>

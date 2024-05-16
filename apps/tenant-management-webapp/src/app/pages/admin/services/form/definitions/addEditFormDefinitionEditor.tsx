@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 
@@ -49,7 +49,8 @@ import {
   GoACheckbox,
   GoADropdownItem,
   GoADropdown,
-  GoACircularProgress,
+  GoATabs,
+  GoATab,
 } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
@@ -784,8 +785,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           </NameDescriptionDataSchema>
 
           <FormPreviewContainer>
-            <Tabs activeIndex={0} data-testid="preview-tabs">
-              <Tab label="Preview" data-testid="preview-view-tab">
+            <GoATabs data-testid="preview-tabs">
+              <GoATab heading="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <FormPreviewScrollPane>
                     <ContextProvider
@@ -809,18 +810,18 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     </ContextProvider>
                   </FormPreviewScrollPane>
                 </div>
-              </Tab>
-              <Tab label="Data" data-testid="data-view">
+              </GoATab>
+              <GoATab heading="Data" data-testid="data-view">
                 {data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}
-              </Tab>
-            </Tabs>
+              </GoATab>
+            </GoATabs>
           </FormPreviewContainer>
         </FlexRow>
       )}
       <SaveFormModal
         open={saveModal.visible}
         onDontSave={() => {
-          setSaveModal({ visible: false, closeEditor: true });
+          close();
         }}
         onSave={() => {
           if (!isEdit) {
