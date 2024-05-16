@@ -1,9 +1,12 @@
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Category, UISchemaElement } from '@jsonforms/core';
 import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
+import { FormStepProps } from '@abgov/react-components-new';
+import { FormStepperComponentProps } from './FormStepperControl';
+import exp from 'constants';
 export const ContextProvider = ContextProviderFactory();
 
 /**
@@ -538,5 +541,63 @@ describe('Form Stepper Control', () => {
     expect(submitShadow).not.toBeNull();
     fireEvent.click(submitShadow!);
     expect(onSubmit).toBeCalledTimes(1);
+  });
+
+  it('first page has next button is has componentProps', () => {
+    const componentProps: FormStepperComponentProps = {
+      nextButtonLabel: 'testNext',
+      nextButtonType: 'primary',
+      previousButtonLabel: 'testPrevious',
+      previousButtonType: 'primary',
+    };
+
+    const form = getForm(
+      {
+        name: { firstName: 'Bob', lastName: 'Bing' },
+        address: { street: 'Sesame', city: 'Seattle' },
+      },
+      categorization,
+      componentProps
+    );
+    window.HTMLElement.prototype.scrollIntoView = function () {};
+    render(form);
+    const testNext = screen.getByText('testNext');
+    expect(testNext).toHaveTextContent('testNext');
+  });
+
+  it('has next previous buttons labels', () => {
+    const componentProps: FormStepperComponentProps = {
+      nextButtonLabel: 'testNext',
+      nextButtonType: 'primary',
+      previousButtonLabel: 'testPrevious',
+      previousButtonType: 'primary',
+    };
+
+    const renderer = render(getForm(formData, categorization, componentProps));
+    window.HTMLElement.prototype.scrollIntoView = function () {};
+    const stepperHeader = renderer.getByTestId('stepper-test');
+    expect(stepperHeader).toBeInTheDocument();
+    expect(stepperHeader.getAttribute('step')).toBe('1');
+
+    // Navigate to the 2nd page
+    const nextButton = renderer.getByTestId('next-button');
+    expect(nextButton).toBeInTheDocument();
+
+    const shadowNext = nextButton.shadowRoot?.querySelector('button');
+    expect(shadowNext).not.toBeNull();
+    fireEvent.click(shadowNext!);
+
+    const newStep = renderer.getByTestId('stepper-test');
+    expect(newStep.getAttribute('step')).toBe('2');
+
+    // Navigate back to the previous page
+    const prevButton = renderer.getByTestId('prev-button');
+    expect(prevButton).toBeInTheDocument();
+    const nextButton1 = renderer.getByTestId('next-button');
+
+    expect(nextButton1.textContent).toBe(componentProps.nextButtonLabel);
+    expect(prevButton.textContent).toBe(componentProps.previousButtonLabel);
+    expect(nextButton1.getAttribute('type')).toBe(componentProps.nextButtonType);
+    expect(prevButton.getAttribute('type')).toBe(componentProps.previousButtonType);
   });
 });
