@@ -52,11 +52,6 @@ export const HelpContentComponent = ({
     return <img src={url} width={width} height={height} alt={alt} />;
   };
 
-  const isLinkOrImageVariant = (variant: string | undefined) => {
-    const types = ['img', 'link'];
-    return !types.includes(variant ?? '');
-  };
-
   return (
     <Visible visible={visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
