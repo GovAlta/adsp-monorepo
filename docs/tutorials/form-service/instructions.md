@@ -94,7 +94,7 @@ Often a form will look cleaner if the end-user doesn't have to browse through in
 ```
 
 Which will render as
-![](/adsp-monorepo/assets/form-service/InstructionDetail.png)
+![](/adsp-monorepo/assets/form-service/InstructionDetails.png)
 
 In this variant the Help Content contains
 
