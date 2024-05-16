@@ -9,6 +9,7 @@ import {
   fetchPdfMetricsSucceeded,
   FETCH_PDF_METRICS_ACTION,
   FETCH_PDF_TEMPLATES_ACTION,
+  FETCH_CORE_PDF_TEMPLATES_ACTION,
   getPdfTemplatesSuccess,
   UpdatePdfTemplatesAction,
   updatePdfTemplateSuccess,
@@ -30,6 +31,7 @@ import {
   showCurrentFilePdfSuccess,
   GENERATE_PDF_SUCCESS_PROCESSING_ACTION,
   GeneratePdfSuccessProcessingAction,
+  getCorePdfTemplatesSuccess,
   DeletePdfFileServiceAction,
   DeletePdfFilesServiceAction,
   DELETE_PDF_FILE_SERVICE,
@@ -82,6 +84,40 @@ export function* fetchPdfTemplates(): SagaIterator {
     }
   }
 }
+export function* fetchCorePdfTemplates(): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading template...',
+    })
+  );
+
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield call(getAccessToken);
+  if (configBaseUrl && token) {
+    try {
+      const url = `${configBaseUrl}/configuration/v2/configuration/platform/pdf-service?core`;
+      const { latest } = yield call(fetchPdfTemplatesApi, token, url);
+
+      yield put(getCorePdfTemplatesSuccess(latest?.configuration));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
+  }
+}
+
 export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProcessingAction): SagaIterator {
   let jobs = yield select((state: RootState) => state.pdf?.jobs);
 
@@ -321,6 +357,7 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
         templateId: payload.templateId,
         data: payload.data,
         filename: payload.fileName,
+        formId: payload?.formId,
       };
 
       const createJobUrl = `${pdfServiceUrl}/pdf/v1/jobs`;
@@ -374,6 +411,7 @@ export function* fetchPdfMetrics(): SagaIterator {
 
 export function* watchPdfSagas(): Generator {
   yield takeEvery(FETCH_PDF_TEMPLATES_ACTION, fetchPdfTemplates);
+  yield takeEvery(FETCH_CORE_PDF_TEMPLATES_ACTION, fetchCorePdfTemplates);
   yield takeEvery(UPDATE_PDF_TEMPLATE_ACTION, updatePdfTemplate);
   yield takeEvery(FETCH_PDF_METRICS_ACTION, fetchPdfMetrics);
   yield takeEvery(GENERATE_PDF_ACTION, generatePdf);

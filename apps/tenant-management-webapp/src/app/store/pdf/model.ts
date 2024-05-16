@@ -51,6 +51,7 @@ export interface PdfGenerationPayload {
   templateId: string;
   data: Record<string, SchemaType>;
   fileName: string;
+  formId?: string;
 }
 
 interface SocketChannel {
@@ -104,6 +105,7 @@ interface Stream {
 
 export interface PdfState {
   pdfTemplates: Record<string, PdfTemplate>;
+  corePdfTemplates: Record<string, PdfTemplate>;
   metrics: PdfMetrics;
   stream: Stream[];
   jobs: PdfGenerationResponse[];

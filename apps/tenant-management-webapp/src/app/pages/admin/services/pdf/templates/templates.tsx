@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './addEditPdfTemplates';
 import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate } from '@store/pdf/action';
+import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate, getCorePdfTemplates } from '@store/pdf/action';
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
 import { PdfTemplatesTable } from './templatesList';
+import { CorePdfTemplatesTable } from './coreTemplatesList';
 import { PageIndicator } from '@components/Indicator';
 import { defaultPdfTemplate } from '@store/pdf/model';
 import { useNavigate } from 'react-router-dom';
@@ -42,6 +43,10 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
       }, {});
   });
 
+  const corePdfTemplates = useSelector((state: RootState) => {
+    return state?.pdf?.corePdfTemplates;
+  });
+
   const [currentTemplate, setCurrentTemplate] = useState(defaultPdfTemplate);
 
   const indicator = useSelector((state: RootState) => {
@@ -64,6 +69,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   useEffect(() => {
     if (isObjectEmpty(pdfTemplates)) {
       dispatch(getPdfTemplates());
+      dispatch(getCorePdfTemplates());
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -109,6 +115,9 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
           }}
         />
       )}
+
+      <h3>Core templates</h3>
+      {!indicator.show && corePdfTemplates && <CorePdfTemplatesTable templates={corePdfTemplates} />}
       {/* Delete confirmation */}
       <DeleteModal
         isOpen={showDeleteConfirmation}

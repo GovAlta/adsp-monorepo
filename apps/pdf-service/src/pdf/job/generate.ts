@@ -1,4 +1,11 @@
-import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  ConfigurationService,
+  EventService,
+  ServiceDirectory,
+  TokenProvider,
+} from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { pdfGenerated, pdfGenerationFailed } from '../events';
@@ -6,6 +13,7 @@ import { PdfTemplateEntity } from '../model';
 import { PdfJobRepository } from '../repository';
 import { FileService } from '../types';
 import { PdfServiceWorkItem } from './types';
+import axios from 'axios';
 
 export interface GenerateJobProps {
   logger: Logger;
@@ -15,6 +23,7 @@ export interface GenerateJobProps {
   repository: PdfJobRepository;
   fileService: FileService;
   eventService: EventService;
+  directory: ServiceDirectory;
 }
 
 const context = 'GenerateJob';
@@ -26,6 +35,7 @@ export function createGenerateJob({
   repository,
   fileService,
   eventService,
+  directory,
 }: GenerateJobProps) {
   return async (
     { tenantId: tenantIdValue, jobId, fileType, filename, recordId, templateId, data, requestedBy }: PdfServiceWorkItem,
@@ -52,7 +62,31 @@ export function createGenerateJob({
         throw new NotFoundError('PDF Template', templateId);
       }
 
-      const pdf = await pdfTemplate.generate({ data });
+      let pdf = null;
+
+      if (templateId === 'submitted-form') {
+        const formId = data.formId as string;
+        const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+        const configUrl = new URL(
+          `/configuration/v2/configuration/platform/form-service/latest?tenantId=${tenantId}`,
+          baseUrl
+        );
+        const token = await tokenProvider.getAccessToken();
+
+        const ConfigResponse = await axios.get(configUrl.href, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const formData = data?.formData as Record<string, string>;
+
+        const formDefinitions = {
+          content: { config: ConfigResponse.data[formId], form: data.form && data.form[0], data: formData?.data },
+        };
+
+        pdf = await pdfTemplate.generate(formDefinitions);
+      } else {
+        pdf = await pdfTemplate.generate({ data });
+      }
 
       logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content with ${pdf.length} bytes...`, {
         context,
