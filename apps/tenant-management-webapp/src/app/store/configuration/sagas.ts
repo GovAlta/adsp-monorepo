@@ -208,9 +208,9 @@ export function* fetchRegisterData(): SagaIterator {
         // eslint-disable-next-line
         .map(([name, config]) => name) || [];
 
-    for (const registerConfig of registerConfigs) {
-      const registerData: RegisterConfigData[] = [];
+    const registerData: RegisterConfigData[] = [];
 
+    for (const registerConfig of registerConfigs) {
       try {
         const [namespace, service] = registerConfig.split(':');
         const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}`;
