@@ -69,7 +69,7 @@ You will see something like this:
 
 ![](/adsp-monorepo/assets/form-service/FormPreview.png){: width="400" }
 
-That's it! You're on your way to building some pretty impressive forms for your end-users to fill in.
+That's it. Once you learn the basics of building forms through schemas, you'll be able to build some pretty impressive forms for your end-users to fill in.
 
 ### Form Steppers
 
@@ -77,57 +77,7 @@ Many forms at the GoA can be rather large and complex, and should be divided int
 
 ### Adding Instructions to your form
 
-One of the differences between a professional and an armature looking form is the quality of instruction that it contains for end-users. The ADSP _Form Service_ includes component renderers that are specifically geared toward rendering instructions. For example, there is the _HelpContent_ control-type that you can use to render a paragraph of text:
-
-```json
-{
-  "type": "HelpContent",
-  "label": "Program Overview",
-  "options": {
-    "help": "The Alberta Approved Farmers’ Market Program was started in 1973 as a way to provide an opportunity for local Alberta businesses to sell their products. Farmers’ markets are a critical channel for business incubation – entrepreneurs start in markets, test market their products and develop business skills. The Program creates an operational framework, providing direction and guidance to approved farmers’ markets in Alberta through provincial guidelines that outline minimum requirements and best practices."
-  }
-}
-```
-
-by combining several HelpContent types into a list you can create a full page of instructions to help your end-users navigate the form e.g.
-
-```json
-{
-  "type": "VerticalLayout",
-  "elements": [
-    {
-      "type": "HelpContent",
-      "label": "",
-      "options": {
-        "help": "1. Must operate on a non-profit basis. This can be achieved in a number of ways:"
-      }
-    },
-    {
-      "type": "HelpContent",
-      "elements": [
-        {
-          "type": "HelpContent",
-          "label": "Sponsored by:",
-          "options": {
-            "help": [
-              "Registered not-for-profit community group or organization;",
-              "Registered Chamber of Commerce;",
-              "Municipality; or",
-              "Agricultural society formed under the Agricultural Societies Act (Alberta)"
-            ]
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
-will render
-
-![](/adsp-monorepo/assets/form-service/HelpExample.png)
-
-Notice that providing an array of text fragments in options/help will render as a bulleted list of points.
+You can [add text, images, and links to your forms](/adsp-monorepo/tutorials/task-service/instructions.html) to help clarify the information that is needed from end-users when filling out the form.
 
 ### Form Rules
 
