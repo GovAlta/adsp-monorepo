@@ -12,7 +12,7 @@ interface OptionProps {
   ariaLabel?: string;
   help?: string | string[];
   variant?: string;
-  img?: string;
+  url?: string;
   alt?: string;
   height?: string;
   width?: string;
@@ -48,8 +48,8 @@ export const HelpContentComponent = ({
       <p className="single-line">{uischema?.options?.help}</p>
     );
 
-  const renderImage = ({ height, width, alt, img }: OptionProps): JSX.Element => {
-    return <img src={img} width={width} height={height} alt={alt} />;
+  const renderImage = ({ height, width, alt, url }: OptionProps): JSX.Element => {
+    return <img src={url} width={width} height={height} alt={alt} />;
   };
 
   return (
@@ -62,7 +62,8 @@ export const HelpContentComponent = ({
               <br />
             </div>
           )}
-          {uischema.options?.img && uischema.options?.img !== '' && renderImage(uischema.options)}
+
+          {uischema.options?.variant && uischema.options?.variant === 'img' && renderImage(uischema.options)}
           {uischema?.options?.link && link !== '' && RenderLink(uischema?.options)}
           {(!uischema.options?.variant || uischema.options?.variant !== 'details') && !link && renderHelp()}
           {uischema.options?.variant && uischema.options?.variant === 'details' && (
