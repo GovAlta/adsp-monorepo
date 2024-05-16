@@ -58,10 +58,9 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
     'url',
     wordMaxLengthCheck(150, 'URL'),
     characterCheck(validationPattern.validURL),
-    isNotEmptyCheck('url')
-  )
-    .add('duplicate', 'url', duplicateNameCheck(allUrls, 'url'))
-    .build();
+    isNotEmptyCheck('url'),
+    duplicateNameCheck(allUrls, 'url')
+  ).build();
 
   return (
     <ModalOverwrite>

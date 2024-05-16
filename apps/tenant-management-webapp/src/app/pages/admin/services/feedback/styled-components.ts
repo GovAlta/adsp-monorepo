@@ -17,3 +17,35 @@ export const UrlWrapper = styled.div`
 export const DropdownWrapper = styled.div`
   width: 120px;
 `;
+export const TableDiv = styled.div`
+  .noPadding {
+    padding: 0;
+  }
+  word-wrap: break-word;
+  table-layout: fixed;
+  & td:first-child {
+    width: 323px;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+  }
+  & td:nth-child(2) {
+    width: 270px;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
+  & th:last-child {
+    text-align: center;
+  }
+  & td:last-child {
+    width: 128px;
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }
+  & .meta {
+    padding: 0;
+  }
+`;
