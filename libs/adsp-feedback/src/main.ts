@@ -53,6 +53,9 @@ class AdspFeedback implements AdspFeedbackApi {
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'true');
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
+    if (this.feedbackFormRef.value) {
+      this.feedbackFormRef.value.style.height = '600px';
+    }
   }
 
   private closeFeedbackForm() {
@@ -61,7 +64,10 @@ class AdspFeedback implements AdspFeedbackApi {
     this.startRef?.value?.setAttribute('data-show', 'false');
     this.onDimChange(false);
   }
-
+  private closeErrorForm() {
+    this.closeFeedbackForm();
+    this.feedbackFormRef?.value?.setAttribute('data-error', 'false');
+  }
   private closeAllFeedback() {
     this.closeFeedbackForm();
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
@@ -587,7 +593,7 @@ class AdspFeedback implements AdspFeedbackApi {
                     we are experiencing an issue trying to load this page. Please try again in a few minutes. We apologize for the inconvenience.
                   </p>
                     <div>
-                      <button @click=${this.closeFeedbackForm} class="adsp-fb-form-primary" type="button">Close</button>
+                      <button @click=${this.closeErrorForm} class="adsp-fb-form-primary" type="button">Close</button>
                     </div>
                   </div>
                 </div>
