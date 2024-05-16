@@ -65,8 +65,8 @@ export const HelpContentComponent = ({
 
           {uischema.options?.variant && uischema.options?.variant === 'img' && renderImage(uischema.options)}
           {uischema?.options?.link && link !== '' && RenderLink(uischema?.options)}
-          {(!uischema.options?.variant || uischema.options?.variant !== 'details') && renderHelp()}
-          {uischema.options?.variant && uischema.options?.variant === 'details' && !link && (
+          {(!uischema.options?.variant || uischema.options?.variant !== 'details') && !link && renderHelp()}
+          {uischema.options?.variant && uischema.options?.variant === 'details' && (
             <GoADetails heading={label ? label : ''} mt="3xs" mb="none">
               {renderHelp()}
               {uischema?.elements && uischema?.elements?.length > 0 && <HelpContents elements={uischema?.elements} />}
