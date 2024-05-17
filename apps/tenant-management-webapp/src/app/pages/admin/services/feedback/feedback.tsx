@@ -8,30 +8,24 @@ import { FeedbackOverview } from './overview';
 import { FeedbackSites } from './sites';
 
 import AsideLinks from '@components/AsideLinks';
-
 export const Feedback: FunctionComponent = () => {
-  const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [activateEditState, setActivateEditState] = useState<boolean>(false);
-  const activateEdit = (edit: boolean) => {
-    setActiveIndex(1);
-    setActivateEditState(edit);
-  };
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
+  const [activateEdit, setActiveEdit] = useState(false);
+
+  const searchParams = new URLSearchParams(document.location.search);
+
+  const sites = tenantName && searchParams.get('sites');
 
   return (
     <Page>
       <Main>
         <h1 data-testid="feedback-title">Feedback service</h1>
-        <Tabs activeIndex={activeIndex} data-testid="feedbacks-tabs">
+        <Tabs activeIndex={sites === 'true' ? 1 : 0} data-testid="feedbacks-tabs">
           <Tab label="Overview" data-testid="feedbacks-overview-tab">
-            <FeedbackOverview
-              setActiveIndex={(index: number) => {
-                setActiveIndex(index);
-              }}
-              setActiveEdit={activateEdit}
-            />
+            <FeedbackOverview setActiveEdit={setActiveEdit} />
           </Tab>
           <Tab label="Sites" data-testid="feedbacks-definitions-tab">
-            <FeedbackSites activeEdit={activateEditState} />
+            <FeedbackSites activeEdit={activateEdit} />
           </Tab>
         </Tabs>
       </Main>

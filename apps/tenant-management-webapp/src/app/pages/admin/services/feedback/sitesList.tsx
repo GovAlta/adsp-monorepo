@@ -11,9 +11,11 @@ interface SiteProps {
   site: FeedbackSite;
   readonly?: boolean;
   onEdit: (site: FeedbackSite) => void;
+  onDelete: (site: FeedbackSite) => void;
+  siteindex?: number;
 }
 
-const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit }) => {
+const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit, onDelete, siteindex }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -24,15 +26,27 @@ const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit }) => {
       <td headers="Allow Anonymous" data-testid="allowAnonymous">
         {site.allowAnonymous ? 'Yes' : 'No'}
       </td>
+      <td>
+        <GoAContextMenu>
+          <GoAContextMenuIcon testId="site-edit" title="Edit" type="create" onClick={() => onEdit(site)} />
+          <GoAContextMenuIcon
+            testId={`site-delete-${siteindex}`}
+            title="Delete"
+            type="trash"
+            onClick={() => onDelete(site)}
+          />
+        </GoAContextMenu>
+      </td>
     </tr>
   );
 };
 
 interface SitesListComponentProps {
-  onEdit: (def: FeedbackSite) => void;
+  onEdit: (site: FeedbackSite) => void;
+  onDelete: (site: FeedbackSite) => void;
 }
 
-const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit }) => {
+const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit, onDelete }) => {
   const sites = useSelector((state: RootState) => state.feedback.sites);
   return (
     <div>
@@ -45,11 +59,12 @@ const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit
                 Site
               </th>
               <th id="description">Allow Anonymous</th>
+              <th id="description">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {sites.map((site) => (
-              <SiteComponent onEdit={onEdit} key={`${site.url}`} site={site} />
+            {sites.map((site, index) => (
+              <SiteComponent onEdit={onEdit} onDelete={onDelete} key={`${site.url}`} siteindex={index} site={site} />
             ))}
           </tbody>
         </DataTable>

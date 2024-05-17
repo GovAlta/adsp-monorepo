@@ -75,7 +75,7 @@ describe('getFormFieldValue', () => {
   it('will return the correct value for a scope', () => {
     const scope = '#/properties/firstName';
     const data = { firstName: 'Alex', address: { street: 'Springfield' } };
-    const alex = getFormFieldValue(scope, data);
+    const alex = getFormFieldValue({}, scope, data);
     expect(alex.type).toBe('primitive');
     expect(alex.value).toEqual('Alex');
   });
@@ -83,21 +83,21 @@ describe('getFormFieldValue', () => {
   it('will return the correct value for a nested scope', () => {
     const scope = '#/properties/address/properties/street';
     const data = { firstName: 'Alex', address: { street: 'Springfield' } };
-    const springfield = getFormFieldValue(scope, data);
+    const springfield = getFormFieldValue({}, scope, data);
     expect(springfield.type).toBe('primitive');
     expect(springfield.value).toEqual('Springfield');
   });
 
   it('can handle an empty data object', () => {
     const scope = '#/properties/firstName';
-    const empty = getFormFieldValue(scope, {});
+    const empty = getFormFieldValue({}, scope, {});
     expect(empty.type).toBe('primitive');
     expect(empty.value).toBe(undefined);
   });
 
   it('returns the correct value for a checkbox', () => {
     const scope = '#/properties/isAlive';
-    const empty = getFormFieldValue(scope, { isAlive: true });
+    const empty = getFormFieldValue({}, scope, { isAlive: true });
     expect(empty.type).toBe('primitive');
     expect(empty.value).toBe('Yes');
   });
@@ -106,23 +106,23 @@ describe('getFormFieldValue', () => {
     const scope1 = '#/properties/secondName';
     const scope2 = '#/properties/address/properties/street';
     const data = { firstName: 'bob', address: { street: undefined } };
-    const value1 = getFormFieldValue(scope1, data);
+    const value1 = getFormFieldValue({}, scope1, data);
     expect(value1.value).toBe(undefined);
     expect(value1.type).toBe('primitive');
-    const value2 = getFormFieldValue(scope2, data);
+    const value2 = getFormFieldValue({}, scope2, data);
     expect(value2.type).toBe('primitive');
     expect(value2.value).toBe(undefined);
   });
 
   it('will return a value for simple objects', () => {
     const data = { name: { firstName: 'bob', lastName: 'bing' }, address: { street: 'no-name', city: 'nowhere' } };
-    const name = getFormFieldValue('#/properties/name', data);
+    const name = getFormFieldValue({}, '#/properties/name', data);
     expect(name.type).toBe('object');
     expect(name.value).toEqual([
       ['firstName', 'bob'],
       ['lastName', 'bing'],
     ]);
-    const address = getFormFieldValue('#/properties/address', data);
+    const address = getFormFieldValue({}, '#/properties/address', data);
     expect(address.type).toBe('object');
     expect(address.value).toEqual([
       ['street', 'no-name'],
@@ -132,7 +132,7 @@ describe('getFormFieldValue', () => {
 
   it('will return a value for nested objects', () => {
     const data = { person: { firstName: 'bob', lastName: 'bing', address: { street: 'no-name', city: 'nowhere' } } };
-    const person = getFormFieldValue('#/properties/person', data);
+    const person = getFormFieldValue({}, '#/properties/person', data);
     expect(person.type).toBe('object');
     expect(person.value).toEqual([
       ['firstName', 'bob'],
@@ -147,7 +147,7 @@ describe('getFormFieldValue', () => {
       { animal: 'skunk', color: 'black' },
       { animal: 'polar bear', color: 'white' },
     ];
-    const animals = getFormFieldValue('', data);
+    const animals = getFormFieldValue({}, '', data);
     expect(animals.type).toBe('array');
     expect(animals.value?.length).toBe(2);
     expect((animals.value as string[][])[0][1].length).toBe(2);

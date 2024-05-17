@@ -7,6 +7,7 @@ import configureStore from 'redux-mock-store';
 import { Provider } from 'react-redux';
 import FeedbackSites from './sites';
 import { debug } from 'console';
+import { url } from 'inspector';
 
 const mockStore = configureStore([]);
 const sitesstore = mockStore({
@@ -69,7 +70,7 @@ describe('SiteAddEditForm', () => {
         onClose={onCloseMock}
         onSave={onSaveMock}
         open={true}
-        isEdit={true}
+        isEdit={false}
       />
     );
 
@@ -85,7 +86,7 @@ describe('SiteAddEditForm', () => {
           onClose={onCloseMock}
           onSave={onSaveMock}
           open={true}
-          isEdit={true}
+          isEdit={false}
         />
       </Provider>
     );
@@ -135,21 +136,18 @@ describe('SiteAddEditForm', () => {
     const saveBtn = queryByTestId('site-save');
     expect(saveBtn).toHaveAttribute('disabled', 'false');
   });
-
-  it('invokes onSave with correct data', () => {
-    const { getByText, getByTestId } = render(
+  it('URL field should be disabled when editing site', () => {
+    const { queryByTestId } = render(
       <SiteAddEditForm
         initialValue={initialSite}
         sites={sites}
         onClose={onCloseMock}
         onSave={onSaveMock}
         open={true}
-        isEdit={false}
+        isEdit={true}
       />
     );
-
-    fireEvent(getByTestId('site-save'), new CustomEvent('_click'));
-
-    expect(onSaveMock).toHaveBeenCalledWith(initialSite);
+    const urlInput = queryByTestId('feedback-url');
+    expect(urlInput).toBeDisabled();
   });
 });

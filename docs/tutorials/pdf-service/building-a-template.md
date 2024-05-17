@@ -16,7 +16,7 @@ The PDF service is ideal for these kinds of requirements, as it enables develope
 - generate fully customized PDF documents on demand, and
 - present the final document for the user to view or download.
 
-A template -  consisting of page headers, page footers, some boiler-plate text, placeholders for customization - is built via the [Template Editor](https://adsp.alberta.ca) within the PDF service, using HTML and CSS for page formatting.  Proficiency in those technologies is necessary for anyone wanting to build anything more than a trivial template.
+A template -  consisting of page headers, page footers, some boiler-plate text, placeholders for customization - is built via the [Template Editor](https://adsp-uat.alberta.ca) within the PDF service, using HTML and CSS for page formatting.  Proficiency in those technologies is necessary for anyone wanting to build anything more than a trivial template.
 
 Generating the final document, and providing access to it, is done through a series of RESTful API calls to the [PDF service](https://api.adsp.alberta.ca/autotest/?urls.primaryName=PDF%20service) in the language of your choice.  The examples given here are written with NodeJS.
 
