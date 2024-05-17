@@ -70,7 +70,7 @@ Feature: File service
     Given a service owner user is on Files overview page
     When the user selects "Uploaded files" tab for "File"
     Then the user views uploaded files page
-    When the user searches "autotest-file3.pdf" on Uploaded files page
+    When the user searches file types with "autotest-file3.pdf" as file name and "N/A" as file type on Uploaded files page
     And the user clicks download button for "autotest-file3.pdf"
     And the user waits "5" seconds
     And a developer user sends a file last access request with "<Request Endpoint>", "<Last Accessed After>", "<Last Accessed Before>"
@@ -165,3 +165,12 @@ Feature: File service
     When the user selects "File types" tab for "File"
     Then the user views file types page
     And the user views the core file types with no actions
+
+  @TEST_CS-2235 @REQ_CS-2061 @FileTypes @regression
+  Scenario: As tenant admin, I can filter test files by file type
+    Given a service owner user is on Files overview page
+    When the user selects "Uploaded files" tab for "File"
+    When the user searches file types with "N/A" as file name and "autotest-type3" as file type on Uploaded files page
+    Then the user views files with "autotest-type3" type on uploaded files page
+    When the user clicks Reset button on uploaded files page
+    Then the user views files for other types than "autotest-type3" on uploaded files page
