@@ -1,8 +1,6 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
-
-import { useDispatch } from 'react-redux';
-import { PRE } from '../feedback/styled-components';
+import { PRE, FeedbackSubHeading, FeedbackOverviewSection } from '../feedback/styled-components';
 import { useNavigate } from 'react-router-dom';
 
 interface OverviewProps {
@@ -24,21 +22,22 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
 
   return (
     <div>
-      <section>
+      <FeedbackOverviewSection>
         <p>
           The feedback service provides a backend API and a frontend widget for applications to accept feedback from
           users. Feedback comments are anonymized using the PII service and records are stored and available from the
           Value service API.
         </p>
+        <FeedbackSubHeading>Sites section</FeedbackSubHeading>
         <p>
-          <b>Sites section:</b> Configure the sites against which feedback is allowed. Enable anonymous feedback for a
-          site so that unauthenticated users can send feedback directly to the API, but note that this could reduce the
-          quality of feedback.
+          Configure the sites against which feedback is allowed. Enable anonymous feedback for a site so that
+          unauthenticated users can send feedback directly to the API, but note that this could reduce the quality of
+          feedback.
         </p>
+        <FeedbackSubHeading>Widget section</FeedbackSubHeading>
         <p>
-          <b>Widget section:</b> Include the feedback script in your site, and initialize it from javascript. On
-          initialization, the script will attach a widget element which includes a badge and form that users can use to
-          send feedback.
+          Include the feedback script in your site, and initialize it from javascript. On initialization, the script
+          will attach a widget element which includes a badge and form that users can use to send feedback.
         </p>
         <ul className="goa-unordered-list">
           <li>Include a code example of the &lt;script&gt; with src to feedback API in &lt;head&gt;</li>
@@ -47,7 +46,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
             <PRE>adspFeedback.initialize(&#123;tenant: &quot;&lt;tenant name&gt;&quot;&#125;)</PRE>
           </li>
         </ul>
-      </section>
+      </FeedbackOverviewSection>
       <GoAButton
         testId="add-feedback"
         onClick={() => {
@@ -55,7 +54,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
           navigate('/admin/services/feedback?sites=true');
         }}
       >
-        Add site
+        Register site
       </GoAButton>
     </div>
   );
