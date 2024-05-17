@@ -46,7 +46,7 @@ describe('SitesListComponent', () => {
     );
 
     expect(screen.getByTestId('feedbacks-sites-table-header-name')).toHaveTextContent('Site');
-    expect(screen.getByText('Allow Anonymous')).toBeInTheDocument();
+    expect(screen.getByText('Anonymous')).toBeInTheDocument();
   });
 
   it('lists feedback sites in the table', () => {

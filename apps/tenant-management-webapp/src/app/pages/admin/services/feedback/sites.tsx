@@ -6,7 +6,7 @@ import { SiteAddEditForm } from './edit';
 import { deleteFeedbackSite, getFeedbackSites, updateFeedbackSite } from '@store/feedback/actions';
 import { FeedbackSite, defaultFeedbackSite } from '@store/feedback/models';
 import { RootState } from '@store/index';
-import styled from 'styled-components';
+import { Buttons, Heading } from './styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { DeleteModal } from '@components/DeleteModal';
 import { update } from 'lodash';
@@ -51,7 +51,7 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
   };
   useEffect(() => {
     document.body.style.overflow = 'unset';
-  }, []);
+  }, [editSite]);
 
   return (
     <>
@@ -64,9 +64,10 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
             setEditSite(true);
           }}
         >
-          Add site
+          Register site
         </GoAButton>
       </Buttons>
+      <Heading>Registered sites</Heading>
       <PageIndicator />
       {!indicator.show && sites && (
         <div>
@@ -109,8 +110,3 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
 };
 
 export default FeedbackSites;
-
-const Buttons = styled.div`
-  margin-bottom: 1rem;
-  text-align: left;
-`;

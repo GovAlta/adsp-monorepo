@@ -1,22 +1,11 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
-import Editor from '@monaco-editor/react';
+
 import type { FeedbackSite } from '@store/feedback/models';
-import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAInput,
-  GoAFormItem,
-  GoAModal,
-  GoATextArea,
-  GoADropdown,
-  GoADropdownItem,
-  GoACheckbox,
-} from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal, GoACheckbox } from '@abgov/react-components-new';
 import { useValidators } from '@lib/validation/useValidators';
-import { useDispatch } from 'react-redux';
-import { DropdownWrapper, UrlWrapper } from './styled-components';
+
 import styled from 'styled-components';
-import { toKebabName } from '@lib/kebabName';
+
 import {
   isNotEmptyCheck,
   wordMaxLengthCheck,
@@ -26,6 +15,7 @@ import {
   characterCheck,
   validationPattern,
 } from '@lib/validation/checkInput';
+import { CheckboxSpaceWrapper, HelpText } from './styled-components';
 
 interface SiteFormProps {
   initialValue?: FeedbackSite;
@@ -67,7 +57,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
       <GoAModal
         testId="add-site-modal"
         open={open}
-        heading={isEdit ? 'Edit site' : 'Add site'}
+        heading={isEdit ? 'Edit registered site' : 'Register site'}
         actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
@@ -94,13 +84,13 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
                 onClose();
               }}
             >
-              Save
+              Register
             </GoAButton>
           </GoAButtonGroup>
         }
       >
         <GoAFormItem
-          label="URL of the Site"
+          label="Site URL"
           requirement="required"
           labelSize="regular"
           testId="feedback-url-formitem"
@@ -110,6 +100,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
             type="text"
             name="url"
             value={site.url}
+            width="100%"
             testId="feedback-url"
             aria-label="url"
             disabled={isEdit}
@@ -120,13 +111,9 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
             }}
           />
         </GoAFormItem>
-        <GoAFormItem
-          label="Anonymous feedback"
-          labelSize="regular"
-          helpText="enabling anonymous feedback may result in lower quality feedback."
-        >
+        <CheckboxSpaceWrapper>
           <GoACheckbox
-            text="Allow"
+            text="Allow anonymous feedback"
             testId="anonymous-feedback"
             ariaLabel="Anonymous feedback"
             onChange={(name, value) => {
@@ -136,7 +123,10 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
             value={site.allowAnonymous}
             checked={site.allowAnonymous}
           ></GoACheckbox>
-        </GoAFormItem>
+        </CheckboxSpaceWrapper>
+        <HelpText>
+          <div>Enabling anonymous feedback may result in lower quality feedback.</div>
+        </HelpText>
       </GoAModal>
     </ModalOverwrite>
   );
