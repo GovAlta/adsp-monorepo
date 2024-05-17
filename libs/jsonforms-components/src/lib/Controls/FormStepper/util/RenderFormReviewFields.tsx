@@ -20,7 +20,7 @@ const isControl = (type: string): boolean => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isListWithDetail = (type: string, data: any, fieldName: string): boolean => {
   return (
-    type === 'ListWithDetail' &&
+    (type === 'ListWithDetail' || type === 'Control') &&
     typeof data === 'object' &&
     data !== null &&
     fieldName in data &&
@@ -57,11 +57,11 @@ export const RenderFormReviewFields: React.FC<RenderFormReviewFieldsProps> = ({
     const clonedElement = JSON.parse(JSON.stringify(element));
     const fieldName: string = clonedElement.scope?.split('/').pop();
 
-    if (isControl(clonedElement.type)) {
-      return renderReviewControl(schema, data, clonedElement, requiredFields, index, fileList, downloadFile);
-    } else if (isListWithDetail(clonedElement.type, data, fieldName)) {
-      const elements = removeLayouts(clonedElement?.options?.detail?.elements) || [];
+    if (isListWithDetail(clonedElement.type, data, fieldName)) {
+      const elements = removeLayouts(clonedElement?.options?.detail?.elements || []) || [];
       return renderReviewListWithDetail(schema, elements, data, fieldName, index, requiredFields);
+    } else if (isControl(clonedElement.type)) {
+      return renderReviewControl(schema, data, clonedElement, requiredFields, index, fileList, downloadFile);
     } else if (isLayout(clonedElement)) {
       return (
         <React.Fragment key={index}>
