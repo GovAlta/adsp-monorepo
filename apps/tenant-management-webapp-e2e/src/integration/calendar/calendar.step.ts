@@ -381,47 +381,6 @@ When(
       .clear()
       .type(name, { force: true, delay: 200 });
     calendarObj.eventsCalendarEventModalDescription().shadow().find('textarea').clear().type(desc, { force: true });
-    // Is public checkbox
-    switch (isPublic.toLowerCase()) {
-      case 'yes':
-        calendarObj
-          .eventsCalendarEventModalIsPublicCheckbox()
-          .shadow()
-          .find('.goa-checkbox-container')
-          .invoke('attr', 'class')
-          .then((classAttr) => {
-            if (!classAttr?.includes('--selected')) {
-              calendarObj
-                .eventsCalendarEventModalIsPublicCheckbox()
-                .shadow()
-                .find('.goa-checkbox-container')
-                .click({ force: true });
-            } else {
-              cy.log('Is Public checkbox is already checked off. ');
-            }
-          });
-        break;
-      case 'no':
-        calendarObj
-          .eventsCalendarEventModalIsPublicCheckbox()
-          .shadow()
-          .find('.goa-checkbox-container')
-          .invoke('attr', 'class')
-          .then((classAttr) => {
-            if (classAttr?.includes('--selected')) {
-              calendarObj
-                .eventsCalendarEventModalIsPublicCheckbox()
-                .shadow()
-                .find('.goa-checkbox-container')
-                .click({ force: true });
-            } else {
-              cy.log('Is Public checkbox is already unchecked. ');
-            }
-          });
-        break;
-      default:
-        expect(isPublic).to.be.oneOf(['yes', 'no']);
-    }
     // Is all day checkbox
     switch (isAllDay.toLowerCase()) {
       case 'yes':
@@ -513,6 +472,47 @@ When(
           .shadow()
           .find('input')
           .type(endHr + ':' + endMin + ':00');
+      }
+      // Is public checkbox
+      switch (isPublic.toLowerCase()) {
+        case 'yes':
+          calendarObj
+            .eventsCalendarEventModalIsPublicCheckbox()
+            .shadow()
+            .find('.goa-checkbox-container')
+            .invoke('attr', 'class')
+            .then((classAttr) => {
+              if (!classAttr?.includes('--selected')) {
+                calendarObj
+                  .eventsCalendarEventModalIsPublicCheckbox()
+                  .shadow()
+                  .find('.goa-checkbox-container')
+                  .click({ force: true });
+              } else {
+                cy.log('Is Public checkbox is already checked off. ');
+              }
+            });
+          break;
+        case 'no':
+          calendarObj
+            .eventsCalendarEventModalIsPublicCheckbox()
+            .shadow()
+            .find('.goa-checkbox-container')
+            .invoke('attr', 'class')
+            .then((classAttr) => {
+              if (classAttr?.includes('--selected')) {
+                calendarObj
+                  .eventsCalendarEventModalIsPublicCheckbox()
+                  .shadow()
+                  .find('.goa-checkbox-container')
+                  .click({ force: true });
+              } else {
+                cy.log('Is Public checkbox is already unchecked. ');
+              }
+            });
+          break;
+        default:
+          expect(isPublic).to.be.oneOf(['yes', 'no']);
       }
     }
   }
@@ -643,3 +643,12 @@ When(
     });
   }
 );
+
+Then('the user views the error message of {string} on dates in Add calendar event modal', function (errorMsg) {
+  calendarObj
+    .eventsCalendarEventModalEndDateFormItem()
+    .shadow()
+    .find('.error-msg')
+    .invoke('text')
+    .should('contain', errorMsg);
+});

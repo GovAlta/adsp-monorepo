@@ -65,9 +65,13 @@ Feature: Calendar
     And the user selects "autotest-calendar" in Select a calendar on Events page
     And the user clicks Add Event button on events page
     Then the user views Add calendar event modal
-    # Invalid data
+    # Invalid name
     When the user enters "auto-test-1A $" in name field in Add calendar event modal
     Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" on name in Add calendar event modal
+    # Invalid dates
+    When the user enters "autotest-addEvent", "autotest event desc", "yes", "no", "Today", "10:30 am", "Today", "10:00 am" in calendar event modal
+    And the user clicks Save button in calendar event modal
+    Then the user views the error message of "End of event must be after start of event." on dates in Add calendar event modal
     # Valid data
     When the user enters "autotest-addEvent", "autotest event desc", "yes", "no", "Today", "10:30 am", "Today", "10:30 pm" in calendar event modal
     And the user clicks Save button in calendar event modal

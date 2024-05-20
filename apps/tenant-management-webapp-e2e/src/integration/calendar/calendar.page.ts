@@ -112,15 +112,19 @@ class CalendarPage {
   }
 
   eventsCalendarEventModalStartDateField() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="Start Date"]//goa-input');
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="Start date"]//goa-input');
   }
 
   eventsCalendarEventModalStartTimeField() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="Start Time"]//goa-input');
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="Start time"]//goa-input');
   }
 
   eventsCalendarEventModalEndDateField() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="End Date"]//goa-input');
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="End date"]//goa-input');
+  }
+
+  eventsCalendarEventModalEndDateFormItem() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="End date"]');
   }
 
   eventsCalendarEventModalEndTimeField() {
