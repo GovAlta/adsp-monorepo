@@ -3,13 +3,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components-new';
 import { SitesList } from './sitesList';
 import { SiteAddEditForm } from './edit';
-import { getFeedbackSites, updateFeedbackSite } from '@store/feedback/actions';
+import { deleteFeedbackSite, getFeedbackSites, updateFeedbackSite } from '@store/feedback/actions';
 import { FeedbackSite, defaultFeedbackSite } from '@store/feedback/models';
 import { RootState } from '@store/index';
-import styled from 'styled-components';
+import { Buttons, Heading } from './styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { DeleteModal } from '@components/DeleteModal';
 import { update } from 'lodash';
+import { DeleteConfirmationsView } from './deleteConfirmationsView';
 
 interface ParentCompProps {
   activeEdit?: boolean;
@@ -18,6 +19,7 @@ interface ParentCompProps {
 export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }) => {
   const [toggleActiveEdit, setActiveEdit] = useState(activeEdit);
   const [editSite, setEditSite] = useState(toggleActiveEdit);
+  const [deleteSiteConfirmation, setDeleteSiteConfirmation] = useState(false);
   const [selectedSite, setSelectedSite] = useState<FeedbackSite>(defaultFeedbackSite);
 
   const sites = useSelector((state: RootState) => state.feedback.sites);
@@ -29,6 +31,11 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
   const handleEdit = (site: FeedbackSite) => {
     dispatch(updateFeedbackSite(site));
     setEditSite(false);
+  };
+  const handleDelete = () => {
+    dispatch(deleteFeedbackSite(selectedSite));
+    setEditSite(false);
+    setDeleteSiteConfirmation(false);
   };
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
@@ -44,31 +51,35 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
   };
   useEffect(() => {
     document.body.style.overflow = 'unset';
-  }, []);
+  }, [editSite]);
 
   return (
     <>
+      <Buttons>
+        <GoAButton
+          testId="add-site"
+          onClick={() => {
+            setSelectedSite(defaultFeedbackSite);
+            setIsEdit(false);
+            setEditSite(true);
+          }}
+        >
+          Register site
+        </GoAButton>
+      </Buttons>
+      <Heading>Registered sites</Heading>
       <PageIndicator />
       {!indicator.show && sites && (
         <div>
-          <Buttons>
-            <GoAButton
-              testId="add-site"
-              onClick={() => {
-                setSelectedSite(defaultFeedbackSite);
-                setIsEdit(false);
-                setEditSite(true);
-              }}
-            >
-              Add site
-            </GoAButton>
-          </Buttons>
-
           <SitesList
             onEdit={(site: FeedbackSite) => {
               setSelectedSite(site);
               setIsEdit(true);
               setEditSite(true);
+            }}
+            onDelete={(site) => {
+              setSelectedSite(site);
+              setDeleteSiteConfirmation(true);
             }}
           />
         </div>
@@ -87,13 +98,15 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
           onEdit={handleEdit}
         />
       )}
+      {deleteSiteConfirmation && (
+        <DeleteConfirmationsView
+          site={selectedSite}
+          onCancel={() => setDeleteSiteConfirmation(false)}
+          deleteSite={handleDelete}
+        />
+      )}
     </>
   );
 };
 
 export default FeedbackSites;
-
-const Buttons = styled.div`
-  margin-bottom: 1rem;
-  text-align: left;
-`;

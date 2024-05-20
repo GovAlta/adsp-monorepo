@@ -93,7 +93,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
         ) {
           value = [...config[key], ...value];
         } else if (typeof value[0] === 'object' && Array.isArray(config[key]) && Array.isArray(value)) {
-          const data = config[key];
+          const data = JSON.parse(JSON.stringify(config[key]));
           const currentRecord = value[0];
           const foundSite = data.find((s) => s.url === currentRecord.url);
           const index = data.indexOf(foundSite);

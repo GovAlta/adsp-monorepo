@@ -11,9 +11,11 @@ interface SiteProps {
   site: FeedbackSite;
   readonly?: boolean;
   onEdit: (site: FeedbackSite) => void;
+  onDelete: (site: FeedbackSite) => void;
+  siteindex?: number;
 }
 
-const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit }) => {
+const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit, onDelete, siteindex }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -27,6 +29,12 @@ const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit }) => {
       <td>
         <GoAContextMenu>
           <GoAContextMenuIcon testId="site-edit" title="Edit" type="create" onClick={() => onEdit(site)} />
+          <GoAContextMenuIcon
+            testId={`site-delete-${siteindex}`}
+            title="Delete"
+            type="trash"
+            onClick={() => onDelete(site)}
+          />
         </GoAContextMenu>
       </td>
     </tr>
@@ -35,9 +43,10 @@ const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit }) => {
 
 interface SitesListComponentProps {
   onEdit: (site: FeedbackSite) => void;
+  onDelete: (site: FeedbackSite) => void;
 }
 
-const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit }) => {
+const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit, onDelete }) => {
   const sites = useSelector((state: RootState) => state.feedback.sites);
   return (
     <div>
@@ -47,15 +56,19 @@ const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit
           <thead data-testid="feedbacks-sites-table-header">
             <tr>
               <th id="name" data-testid="feedbacks-sites-table-header-name">
-                Site
+                Site URL
               </th>
-              <th id="description">Allow Anonymous</th>
-              <th id="description">Actions</th>
+              <th id="anonymous" data-testid="feedback-anonymous">
+                Anonymous
+              </th>
+              <th id="action" data-testid="feedback-actions">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
-            {sites.map((site) => (
-              <SiteComponent onEdit={onEdit} key={`${site.url}`} site={site} />
+            {sites.map((site, index) => (
+              <SiteComponent onEdit={onEdit} onDelete={onDelete} key={`${site.url}`} siteindex={index} site={site} />
             ))}
           </tbody>
         </DataTable>

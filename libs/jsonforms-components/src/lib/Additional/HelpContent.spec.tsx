@@ -108,7 +108,7 @@ describe('Help Content Control', () => {
         },
       ],
       options: {
-        variant: 'details',
+        variant: 'img',
       },
     };
     const form = getForm(helpSchema);
