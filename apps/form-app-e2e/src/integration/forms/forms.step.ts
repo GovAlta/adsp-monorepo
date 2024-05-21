@@ -1,4 +1,4 @@
-import { When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import FormsPage from './forms.page';
 import { injectAxe } from '../../support/app.po';
 import { htmlReport } from '../../support/axe-html-reporter-util';
@@ -131,7 +131,7 @@ When('the user {string} a checkbox labelled {string}', function (checkboxOperati
 When('the user clicks submit button in the form', function () {
   cy.wait(2000);
   formsObj.formSubmitButton().shadow().find('button').click({ force: true });
-  cy.wait(10000);
+  cy.wait(5000);
 });
 
 When('the user clicks list with detail button labelled as {string} in the form', function (label) {
@@ -223,4 +223,45 @@ Then(
 
 When('the user selects {string} radio button for the question of {string}', function (radioLabel, question) {
   formsObj.formRadioGroup(question).shadow().find(`[value="${radioLabel}"]`).click({ force: true });
+});
+
+Given('the user deletes any existing form from {string} for {string}', function (userAddressAs, formDefinitionId) {
+  let formId = 'NoFormFound';
+  const requestURLGetForms =
+    Cypress.env('formApi') + 'form/v1/forms?criteria={"definitionIdEquals":"' + formDefinitionId + '"}';
+  cy.request({
+    method: 'GET',
+    url: requestURLGetForms,
+    auth: {
+      bearer: Cypress.env('autotest-admin-token'),
+    },
+  })
+    .then((response) => {
+      for (let arrayIndex = 0; arrayIndex < response.body.results.length; arrayIndex++) {
+        cy.log(
+          'form #' +
+            String(arrayIndex + 1) +
+            ': ' +
+            response.body.results[arrayIndex].createdBy.name +
+            '; ' +
+            response.body.results[arrayIndex].id
+        );
+        if (response.body.results[arrayIndex].createdBy.name.includes(userAddressAs)) {
+          formId = response.body.results[arrayIndex].id;
+        }
+      }
+    })
+    .then(() => {
+      cy.log('Form id found: ' + formId);
+      if (formId !== 'NoFormFound') {
+        const requestURLDeleteForm = Cypress.env('formApi') + 'form/v1/forms/' + formId;
+        cy.request({
+          method: 'DELETE',
+          url: requestURLDeleteForm,
+          auth: {
+            bearer: Cypress.env('autotest-admin-token'),
+          },
+        });
+      }
+    });
 });
