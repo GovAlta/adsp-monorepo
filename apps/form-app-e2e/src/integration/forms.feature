@@ -12,6 +12,7 @@ Feature: Form app
 
   @TEST_CS-3110 @regression
   Scenario: As an authenticated user, I can log in to submit an application
+    Given the user deletes any existing form from "Auto Test" for "autotest-testFormApp"
     When an authenticated user is logged in to see "autotest-testFormApp" application
     Then the user views a from draft of "autotest-testFormApp"
     When the user enters "Joe" in a text field labelled "First name"
