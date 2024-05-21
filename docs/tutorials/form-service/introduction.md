@@ -54,4 +54,4 @@ There are three potential means for securing forms depending on the needs of the
 
 - Learn more about [deploying your form]().
 
-- Learn how to [use the Task App](/adsp-monorepo/tutorials/task-service/introduction.html) to review data collected from end-users.
+- Learn how to [use the Task App](/adsp-monorepo/tutorials/task-service/task-app.html) to review data collected from end-users.

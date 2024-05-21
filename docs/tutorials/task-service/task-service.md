@@ -1,9 +1,9 @@
 ---
 layout: page
-title: Task App
+title: Task Service
 nav_order: 8
 parent: Tutorials
 has_children: true
 ---
 
-# Task Application
+# Task Service
