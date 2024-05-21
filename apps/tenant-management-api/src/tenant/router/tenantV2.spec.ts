@@ -5,7 +5,7 @@ import { Logger } from 'winston';
 import { Tenant, TenantEntity } from '../models';
 import { TenantServiceRoles } from '../roles';
 import { RealmService } from '../services/realm';
-import { createTenant, createTenantV2Router, deleteTenant, getTenant, getTenants } from './tenantV2';
+import { createTenant, createTenantV2Router, deleteTenant, getTenant, getTenants, updateTenantName } from './tenantV2';
 
 describe('createTenantV2Router', () => {
   const repositoryMock = {
@@ -340,6 +340,28 @@ describe('createTenantV2Router', () => {
           }),
         })
       );
+    });
+
+    it('can update tenant name', async () => {
+      const req = {
+        params: { id: 'tenant-a' },
+        body: {
+          name: 'new-mock-name',
+        },
+        user: { isCore: true },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      const handler = updateTenantName(loggerMock, repositoryMock, eventServiceMock);
+
+      const entity = new TenantEntity(repositoryMock, tenant);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+      repositoryMock.save.mockResolvedValueOnce({ ...entity, name: 'new-mock-name' });
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'new-mock-name' }));
     });
 
     it('can call next with not found', async () => {
