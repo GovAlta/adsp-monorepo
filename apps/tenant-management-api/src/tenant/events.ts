@@ -73,3 +73,19 @@ export function tenantDeleted(user: User, tenant: Tenant): DomainEvent {
     },
   };
 }
+
+export function tenantNameUpdated(user: User, tenant: Tenant): DomainEvent {
+  return {
+    name: 'tenant-name-updated',
+    timestamp: new Date(),
+    correlationId: `${tenant.id}`,
+    tenantId: tenant.id,
+    payload: {
+      tenant,
+      updatedBy: {
+        id: user?.id,
+        name: user?.name,
+      },
+    },
+  };
+}
