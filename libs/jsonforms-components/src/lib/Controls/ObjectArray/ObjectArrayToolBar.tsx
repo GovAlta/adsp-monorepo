@@ -1,6 +1,7 @@
 import React from 'react';
 import { ControlElement, createDefaultValue, JsonSchema, ArrayTranslations } from '@jsonforms/core';
 import { GoAButton } from '@abgov/react-components-new';
+import { capitalizeFirstLetter, getLabelText } from '../../util';
 
 export interface ObjectArrayToolbarProps {
   numColumns: number;
@@ -29,6 +30,8 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
   uischema,
 }: ObjectArrayToolbarProps) {
   const buttonPosition = uischema?.options?.addButtonPosition || 'left';
+  const arrayLabel = getLabelText(uischema.scope, label);
+
   return (
     <>
       {/* Note: Paul 2024-01-05: need to add the GoATooltip after the upgrade of the ui components */}
@@ -39,8 +42,9 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
           testId={`object-array-toolbar-${label}`}
           aria-label={translations.addAriaLabel}
           onClick={addItem(path, createDefaultValue(schema, rootSchema))}
+          type={uischema.options?.addButtonType ?? 'primary'}
         >
-          {uischema?.options?.addButtonText || 'Add'}
+          {uischema?.options?.addButtonText || capitalizeFirstLetter(`Add ${arrayLabel}`)}
         </GoAButton>
       </div>
       {/* </GoATooltip> */}
