@@ -285,6 +285,8 @@ export const createStreamRouter = (
       const user = req.user;
       req.query = socket.handshake.query;
 
+      logger.info(`Tenant name for stream connection: ${tenant}`);
+
       getStream(tenantService, req, tenant, req.query.stream as string, (err?: unknown) => {
         if (!err && !(req[STREAM_KEY] as StreamEntity).canSubscribe(user)) {
           next(new UnauthorizedUserError('connect stream', user));
