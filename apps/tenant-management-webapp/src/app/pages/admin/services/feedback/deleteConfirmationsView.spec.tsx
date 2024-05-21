@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
 import { FeedbackSite } from '@store/feedback/models';
 import '@testing-library/jest-dom';
@@ -21,8 +21,16 @@ describe('DeleteConfirmationsView', () => {
 
   it('should render the dialog with the correct site name', () => {
     render(<DeleteConfirmationsView {...defaultProps} />);
-    expect(screen.getByText('Delete Site')).toBeInTheDocument();
-    expect(screen.getByText('Are you sure you wish to delete https://test.com?')).toBeInTheDocument();
+    expect(screen.getByText('Delete registered site')).toBeInTheDocument();
+    const { getByText } = within(screen.getByTestId('deleteMsg'));
+    const customTextMatcher = (content, element) => {
+      const hasText = (node) => node.textContent === 'Are you sure you wish to delete https://test.com?';
+      const elementHasText = hasText(element);
+      const childrenDontHaveText = Array.from(element.children).every((child) => !hasText(child));
+      return elementHasText && childrenDontHaveText;
+    };
+
+    expect(getByText(customTextMatcher)).toBeInTheDocument();
   });
 
   it('should call onClose when the cancel button is clicked', () => {

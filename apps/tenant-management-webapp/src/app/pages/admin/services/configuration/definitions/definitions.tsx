@@ -85,7 +85,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
               setShowDeleteConfirmation(true);
             }}
             onEdit={(editDefinition) => {
-              setSelectedDefinition(editDefinition);
+              setSelectedDefinition({ ...editDefinition });
               setIsEdit(true);
               setOpenAddDefinition(true);
             }}

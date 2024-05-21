@@ -1,8 +1,8 @@
 ---
-title: Introduction
+title: Task App
 layout: page
-nav_order: 1
-parent: Task App
+nav_order: 2
+parent: Task Service
 grand_parent: Tutorials
 ---
 
