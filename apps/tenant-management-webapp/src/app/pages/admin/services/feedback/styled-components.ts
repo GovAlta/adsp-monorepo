@@ -71,3 +71,41 @@ export const Heading = styled.div`
   font: var(--goa-typography-heading-m);
   margin-bottom: var(--goa-space-m);
 `;
+
+export const HeaderFont = styled.div`
+  font: var(--goa-typography-heading-m);
+  padding-bottom: var(--goa-space-2xs);
+`;
+
+export const MoreDetails = styled.div`
+   {
+    background-color: var(--goa-color-greyscale-100);
+    padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
+    width: 100%;
+    text-align: left;
+    p {
+      font-weight: bold;
+      padding-top: var(--goa-space-s);
+      margin-bottom: var(--goa-space-xs);
+    }
+    span {
+    }
+  }
+`;
+
+export const IconDiv = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  goa-icon-button {
+    margin: 0 4px;
+  }
+`;
+export const ProgressWrapper = styled.div`
+  margin-left: 30%;
+`;
+
+export const URL = styled.div`
+  line-break: anywhere;
+`;
