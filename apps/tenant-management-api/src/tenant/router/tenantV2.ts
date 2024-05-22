@@ -12,7 +12,7 @@ import { checkSchema } from 'express-validator';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
 import { requireBetaTesterOrAdmin, requireTenantServiceAdmin } from '../../middleware/authentication';
-import { tenantCreated, tenantDeleted } from '../events';
+import { tenantCreated, tenantDeleted, tenantNameUpdated } from '../events';
 import { Tenant, TenantEntity } from '../models';
 import { TenantRepository } from '../repository';
 import { TenantServiceRoles } from '../roles';
@@ -20,6 +20,7 @@ import { RealmService } from '../services/realm';
 import { ServiceClient, TenantCriteria } from '../types';
 import { mapTenant } from './mappers';
 import { validateEmailInDB, validateName } from './utils';
+import { rateLimit } from 'express-rate-limit';
 
 interface TenantRouterProps {
   logger: Logger;
@@ -29,6 +30,13 @@ interface TenantRouterProps {
 }
 
 const LOG_CONTEXT = { context: 'TenantRouter' };
+
+const rateLimitHandler = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 200,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
 
 export function getTenants(logger: Logger, repository: TenantRepository): RequestHandler {
   return async (req, res, next) => {
@@ -88,6 +96,42 @@ export function getTenant(logger: Logger, repository: TenantRepository): Request
       res.send(mapTenant(tenant));
     } catch (err) {
       logger.error(`Failed to get tenant with error: ${err.message}`, LOG_CONTEXT);
+      next(err);
+    }
+  };
+}
+
+export function updateTenantName(
+  logger: Logger,
+  repository: TenantRepository,
+  eventService: EventService
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const { id } = req.params;
+      const { name } = req.body;
+
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+      if (!user.isCore && user.tenantId.toString() !== tenantId.toString()) {
+        throw new UnauthorizedUserError('get tenant', user);
+      }
+
+      const tenant = await repository.get(id);
+
+      if (!tenant) {
+        throw new NotFoundError('tenant', id);
+      }
+      tenant.name = name;
+      const newTenant = await repository.save(tenant);
+
+      if (newTenant) {
+        eventService.send(tenantNameUpdated(req.user, { ...newTenant, id: AdspId.parse(mapTenant(newTenant).id) }));
+      }
+
+      res.send(mapTenant(tenant));
+    } catch (err) {
+      logger.error(`Failed to update tenant name with error: ${err.message}`, LOG_CONTEXT);
       next(err);
     }
   };
@@ -248,6 +292,26 @@ export const createTenantV2Router = ({
     assertAuthenticatedHandler,
     requireTenantServiceAdmin,
     deleteTenant(realmService, tenantRepository, eventService)
+  );
+
+  router.patch(
+    '/tenants/:id/name',
+    rateLimitHandler,
+    assertAuthenticatedHandler,
+    requireTenantServiceAdmin,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          name: {
+            isString: true,
+            isLength: { options: { min: 1, max: 50 } },
+            matches: { options: /^[0-9a-zA-Z _]{1,50}$/ },
+          },
+        },
+        ['body']
+      )
+    ),
+    updateTenantName(logger, tenantRepository, eventService)
   );
 
   return router;

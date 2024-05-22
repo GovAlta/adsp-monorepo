@@ -184,6 +184,31 @@ components:
               $ref: '#/components/schemas/Tenant'
       401:
         description: Unauthorized
+/api/tenant/v2/tenants/{id}/name:
+  parameters:
+    - in: path
+      name: id
+  patch:
+    tags:
+      - Tenant service
+    description: Update the tenant name.
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+    responses:
+      200:
+        description: Return updated tenant information
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+      401:
+        description: Unauthorized
 
 /api/tenant/v2/tenants/{id}:
   parameters:

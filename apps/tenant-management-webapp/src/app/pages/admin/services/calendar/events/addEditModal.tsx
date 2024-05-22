@@ -19,6 +19,7 @@ import { ResetModalState } from '@store/session/actions';
 import { CalendarEvent } from '@store/calendar/models';
 import { CreateEventsByCalendar, UpdateEventsByCalendar } from '@store/calendar/actions';
 import { areObjectsEqual } from '@lib/objectUtil';
+import { getDateTime } from '@lib/timeUtil';
 
 interface EventAddEditModalProps {
   calendarName: string;
@@ -32,8 +33,8 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   const [endTime, setEndTime] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  //eslint-disable-next-line
-  const [isEndBeforeStart, setIsEndBeforeStart] = useState(false);
+  const [endDateError, setEndDateError] = useState<string>('');
+
   const isEdit = !!initCalendarEvent?.id;
 
   if (isEdit) {
@@ -52,14 +53,16 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   )
     .add('duplicated', 'name', badCharsCheck, duplicateNameCheck(calendarEvents, 'Calendar Events'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
-    .add('start', 'start', isNotEmptyCheck('start'))
-    .add('end', 'end', isNotEmptyCheck('end'))
     .build();
+
   const getTimeString = (calendarDateString: string) => {
-    const timeString = calendarDateString?.split('T')[1];
+    let timeString = calendarDateString?.split('T')[1];
+    if (timeString.split(':').length === 1) {
+      timeString += ':00';
+    }
     return timeString ? timeString.substring(0, 8) : '';
   };
-  const setTimeString = (dateString, timeString) => {
+  const setTimeString = (dateString, timeString?) => {
     const dateDate = new Date(dateString);
     if (timeString) {
       dateDate.setHours(timeString?.split(':')[0]);
@@ -103,38 +106,38 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           <GoAButton
             type="primary"
             testId="calendar-event-modal-save"
-            disabled={validators.haveErrors() || areObjectsEqual(calendarEvent, initCalendarEvent)}
+            disabled={
+              validators.haveErrors() || areObjectsEqual(calendarEvent, initCalendarEvent) || endDateError.length > 0
+            }
             onClick={() => {
-              if (new Date(calendarEvent.start) > new Date(calendarEvent.end)) {
-                setIsEndBeforeStart(true);
-                errors['end'] = 'End of event must be after start of event.';
-                return;
-              }
-              const validations = {
-                name: calendarEvent.name,
-                end: calendarEvent.end,
-              };
-              validations['duplicated'] = calendarEvent.name;
-              if (!validators?.checkAll(validations)) {
-                return;
-              }
-
-              if (calendarEvent.isAllDay) {
-                const theDayStart = new Date(calendarEvent.start).setHours(0, 0, 0, 0);
-                const theDayEnd = new Date(calendarEvent.end).setHours(23, 59, 59, 999);
-                calendarEvent.start = new Date(theDayStart).toISOString();
-                calendarEvent.end = new Date(theDayEnd).toISOString();
-              }
-
-              if (isEdit) {
-                dispatch(UpdateEventsByCalendar(calendarName, calendarEvent?.id.toString(), calendarEvent));
+              if (getDateTime(endDate, endTime) < getDateTime(startDate, startTime)) {
+                setEndDateError('End of event must be after start of event.');
               } else {
-                dispatch(CreateEventsByCalendar(calendarName, calendarEvent));
+                const validations = {
+                  name: calendarEvent.name,
+                };
+
+                validations['duplicated'] = calendarEvent.name;
+                if (!validators?.checkAll(validations)) {
+                  return;
+                }
+
+                if (calendarEvent.isAllDay) {
+                  const theDayStart = new Date(calendarEvent.start).setHours(0, 0, 0, 0);
+                  const theDayEnd = new Date(calendarEvent.end).setHours(23, 59, 59, 999);
+                  calendarEvent.start = new Date(theDayStart).toISOString();
+                  calendarEvent.end = new Date(theDayEnd).toISOString();
+                }
+
+                if (isEdit) {
+                  dispatch(UpdateEventsByCalendar(calendarName, calendarEvent?.id.toString(), calendarEvent));
+                } else {
+                  dispatch(CreateEventsByCalendar(calendarName, calendarEvent));
+                }
+                dispatch(ResetModalState());
+                validators.clear();
+                setCalendarEvent(initCalendarEvent);
               }
-              dispatch(ResetModalState());
-              validators.clear();
-              setIsEndBeforeStart(false);
-              setCalendarEvent(initCalendarEvent);
             }}
           >
             Save
@@ -193,21 +196,19 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       />
 
       <GoAGrid minChildWidth="25ch" gap="s">
-        <GoAFormItem label="Start Date" error={errors?.['start']}>
+        <GoAFormItem label="Start date" error={errors?.['start']}>
           <GoAInputDate
             name="StartDate"
             value={calendarEvent?.start ? new Date(calendarEvent.start) : new Date()}
             width="100%"
             testId="calendar-event-modal-start-date-input"
             onChange={(name, value) => {
-              validators.remove('start');
-              validators['start'].check(value.toString());
               setStartDate(value.toLocaleString());
               setCalendarEvent({ ...calendarEvent, start: setTimeString(value.toLocaleString(), startTime) });
             }}
           />
         </GoAFormItem>
-        <GoAFormItem label="Start Time">
+        <GoAFormItem label="Start time">
           <GoAInputTime
             name="StartTime"
             value={startTime}
@@ -221,15 +222,14 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             }}
           />
         </GoAFormItem>
-        <GoAFormItem label="End Date" error={errors?.['end']}>
+        <GoAFormItem label="End date" error={endDateError}>
           <GoAInputDate
             name="endDate"
             value={calendarEvent?.end ? new Date(calendarEvent?.end) : new Date()}
             width="100%"
             testId="calendar-event-modal-end-date-input"
             onChange={(name, value) => {
-              validators.remove('end');
-              validators['end'].check(value.toString());
+              setEndDateError('');
               setEndDate(value.toLocaleString());
               setCalendarEvent({ ...calendarEvent, end: setTimeString(value.toLocaleString(), endTime) });
             }}
@@ -245,6 +245,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             disabled={calendarEvent?.isAllDay}
             testId="calendar-event-modal-end-time-input"
             onChange={(name, value) => {
+              setEndDateError('');
               setEndTime(value);
               setCalendarEvent({ ...calendarEvent, end: setTimeString(endDate, value) });
             }}

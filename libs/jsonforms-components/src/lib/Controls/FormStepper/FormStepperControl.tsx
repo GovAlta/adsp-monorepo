@@ -8,6 +8,7 @@ import {
   GoAButtonGroup,
   GoAGrid,
   GoAFormStepStatusType,
+  GoAButtonType,
 } from '@abgov/react-components-new';
 import {
   Categorization,
@@ -40,6 +41,14 @@ import { validateData } from './util/validateData';
 import { mapToVisibleStep } from './util/stepNavigation';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {}
+export interface FormStepperComponentProps {
+  nextButtonLabel?: string;
+  nextButtonType?: GoAButtonType;
+  previousButtonLabel?: string;
+  previousButtonType?: GoAButtonType;
+  controlledNav?: number;
+  readOnly?: boolean;
+}
 
 const summaryLabel = 'Summary';
 
@@ -51,6 +60,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   const submitForm = submitFormFunction && submitFormFunction();
   const categorization = uischema as Categorization;
   const allCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
+  const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
 
   const [step, setStep] = React.useState(0);
   const [isFormValid, setIsFormValid] = React.useState(false);
@@ -101,7 +111,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   useEffect(() => {
     // Override the "controlled Navigation", if property is supplied
     // Default: no controlled nav.
-    setStep(uischema?.options?.componentProps?.controlledNav ? 1 : 0);
+    setStep(componentProps?.controlledNav ? 1 : 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -147,7 +157,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     return inputId in inputStatuses;
   };
 
-  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const readOnly = componentProps?.readOnly ?? false;
   const isFormSubmitted = enumerators?.isFormSubmitted ?? false;
 
   return (
@@ -222,6 +232,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                             elements={category?.elements}
                             data={data}
                             requiredFields={requiredFields}
+                            schema={schema}
                           />
                         </Grid>
                       </ReviewItemSection>
@@ -236,7 +247,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               <div>
                 {step !== 1 ? (
                   <GoAButton
-                    type="secondary"
+                    type={componentProps?.previousButtonType ? componentProps?.previousButtonType : 'secondary'}
                     disabled={disabledCategoryMap[step - 1]}
                     onClick={() => {
                       const element = document.getElementById(`${path || `goa`}-form-stepper`);
@@ -247,7 +258,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                     }}
                     testId="prev-button"
                   >
-                    Previous
+                    {componentProps?.previousButtonLabel ? componentProps?.previousButtonLabel : 'Previous'}
                   </GoAButton>
                 ) : (
                   <div></div>
@@ -256,7 +267,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               <RightAlignmentDiv>
                 {step !== null && showNextBtn && (
                   <GoAButton
-                    type="primary"
+                    type={componentProps?.nextButtonType ? componentProps?.nextButtonType : 'primary'}
                     disabled={disabledCategoryMap[step - 1]}
                     onClick={() => {
                       const element = document.getElementById(`${path || `goa`}-form-stepper`);
@@ -267,13 +278,13 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                     }}
                     testId="next-button"
                   >
-                    Next
+                    {componentProps?.nextButtonLabel ? componentProps?.nextButtonLabel : 'Next'}
                   </GoAButton>
                 )}
                 {!showNextBtn && !isFormSubmitted && (
                   <div>
                     <GoAButton
-                      type="primary"
+                      type={'primary'}
                       onClick={handleSubmit}
                       disabled={!isFormValid}
                       testId="stepper-submit-btn"

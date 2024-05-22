@@ -1,11 +1,11 @@
-import { ControlElement } from '@jsonforms/core';
+import { ControlElement, JsonSchema } from '@jsonforms/core';
 import { ListWithDetail, ListWithDetailHeading } from '../styled-components';
-import { Grid } from '../../../common/Grid';
-import React from 'react';
-import { RenderFormReviewFields } from './RenderFormReviewFields';
+import { NestedStringArray, resolveLabelFromScope } from './GenerateFormFields';
+import { renderList } from './renderReviewControl';
 
 export const renderReviewListWithDetail = (
-  element: ControlElement,
+  schema: JsonSchema,
+  elements: ControlElement[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
   field: string,
@@ -13,23 +13,26 @@ export const renderReviewListWithDetail = (
   requiredFields: string[]
 ): JSX.Element => {
   const listData = data[field];
+  const detailData: NestedStringArray = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  listData.forEach((elementData: any, i: number) => {
+    const itemData: NestedStringArray = [];
+    elements.forEach((element, j) => {
+      const fieldName = element.scope.split('/').pop() || '';
+      const label = resolveLabelFromScope(element.scope);
+      const value = String(elementData[fieldName]);
+      itemData.push([label, value]);
+    });
+    detailData.push([`${i}`, itemData]);
+  });
+
   return (
     <ListWithDetail key={`${index}-${field}`}>
       <ListWithDetailHeading>
         {field}
         {listData.length > 1 && 's'}
       </ListWithDetailHeading>
-      <Grid>
-        {listData.map((childData: unknown, childIndex: number) => (
-          <React.Fragment key={`${index}-${childIndex}`}>
-            <RenderFormReviewFields
-              elements={element?.options?.detail?.elements || []}
-              data={childData}
-              requiredFields={requiredFields}
-            />
-          </React.Fragment>
-        ))}
-      </Grid>
+      {renderList(detailData)}
     </ListWithDetail>
   );
 };
