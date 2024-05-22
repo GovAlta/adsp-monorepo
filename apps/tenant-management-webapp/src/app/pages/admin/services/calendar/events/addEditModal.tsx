@@ -203,6 +203,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             width="100%"
             testId="calendar-event-modal-start-date-input"
             onChange={(name, value) => {
+              setEndDateError('');
               setStartDate(value.toLocaleString());
               setCalendarEvent({ ...calendarEvent, start: setTimeString(value.toLocaleString(), startTime) });
             }}
@@ -217,6 +218,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             testId="calendar-event-modal-start-time-input"
             disabled={calendarEvent?.isAllDay}
             onChange={(name, value) => {
+              setEndDateError('');
               setStartTime(value);
               setCalendarEvent({ ...calendarEvent, start: setTimeString(startDate, value) });
             }}
