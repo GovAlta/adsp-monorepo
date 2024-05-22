@@ -58,7 +58,7 @@ describe('SiteAddEditForm', () => {
         isEdit={false}
       />
     );
-    const saveBtn = queryByTestId('site-save');
+    const saveBtn = queryByTestId('site-register');
     expect(saveBtn).toBeDisabled();
   });
 
@@ -133,7 +133,7 @@ describe('SiteAddEditForm', () => {
     fireEvent(urlInput, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
     const urlFormItem = queryByTestId('feedback-url-formitem');
     expect(urlFormItem).toHaveAttribute('error', '');
-    const saveBtn = queryByTestId('site-save');
+    const saveBtn = queryByTestId('site-register');
     expect(saveBtn).toHaveAttribute('disabled', 'false');
   });
   it('URL field should be disabled when editing site', () => {
