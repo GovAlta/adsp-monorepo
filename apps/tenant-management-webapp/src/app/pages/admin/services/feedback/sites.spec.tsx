@@ -54,7 +54,7 @@ describe('FeedbackSites Component', () => {
 
     fireEvent(getByTestId('add-site'), new CustomEvent('_click'));
     fireEvent.change(getByTestId('feedback-url'), { target: { value: 'http://newsite.com' } });
-    fireEvent(getByTestId('site-save'), new CustomEvent('_click'));
+    fireEvent(getByTestId('site-register'), new CustomEvent('_click'));
 
     const newSiteURL = screen.getByText('http://newsite.com');
     expect(newSiteURL).toBeInTheDocument();
