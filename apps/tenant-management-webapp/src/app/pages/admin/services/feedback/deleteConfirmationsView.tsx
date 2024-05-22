@@ -1,5 +1,5 @@
 import { FeedbackSite } from '@store/feedback/models';
-import { TableDiv } from './styled-components';
+import { DeleteGap, TableDiv } from './styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 
 interface siteDeleteProps {
@@ -12,9 +12,18 @@ export const DeleteConfirmationsView = ({ site, onCancel, deleteSite }: siteDele
   return (
     <TableDiv key="site">
       <DeleteModal
-        title="Delete Site"
+        title="Delete registered site"
         isOpen={true}
-        content={<div>Are you sure you wish to delete {`${site.url}?`}</div>}
+        content={
+          <div>
+            <DeleteGap>
+              <div data-testid="deleteMsg">
+                Are you sure you wish to delete <b>{`${site.url}?`}</b>
+              </div>
+            </DeleteGap>
+            <small>* Please note that deleting this site will prevent receiving future feedback</small>
+          </div>
+        }
         onCancel={() => {
           onCancel();
         }}

@@ -56,10 +56,14 @@ const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit
           <thead data-testid="feedbacks-sites-table-header">
             <tr>
               <th id="name" data-testid="feedbacks-sites-table-header-name">
-                Site
+                Site URL
               </th>
-              <th id="description">Allow Anonymous</th>
-              <th id="description">Actions</th>
+              <th id="anonymous" data-testid="feedback-anonymous">
+                Anonymous
+              </th>
+              <th id="action" data-testid="feedback-actions">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>

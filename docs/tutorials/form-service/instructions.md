@@ -60,7 +60,7 @@ will render
 
 Notice that providing an array of text fragments in options/help will render as a bulleted list of points.
 
-### Instructions with details
+### Detail Variant
 
 Often a form will look cleaner if the end-user doesn't have to browse through instructions they are already familiar with, or those that are not directly relevant to the task at hand. One of the _Help Content variants_ will render instructions as a title that, when clicked on, will open up the details of the instruction. The variant looks like this:
 
@@ -102,7 +102,7 @@ In this variant the Help Content contains
 - The details of the instruction (elements) that get exposed when the section is opened,
 - the name of the variant (details), in the options section
 
-### Images
+### Image Variant
 
 You can add images to further clarify what is needed, with the img variant
 
@@ -110,14 +110,18 @@ You can add images to further clarify what is needed, with the img variant
 {
   "type": "HelpContent",
   "options": {
+    "variant": "img",
+    "url": "https://picsum.photos/200/300",
     "width": "300",
     "height": "300",
-    "img": "https://picsum.photos/200/300"
+    "alt": "Workflow diagram"
   }
 }
 ```
 
-### Links
+The width, height, and alt properties are optional.
+
+### Link Variant
 
 You can add links in the instructions to further clarify what is needed, with the link variant
 
@@ -125,8 +129,11 @@ You can add links in the instructions to further clarify what is needed, with th
 {
   "type": "HelpContent",
   "options": {
+    "variant": "link",
+    "link": "https://www.thelink.com",
     "help": "Text of the link"
-    "link": "https://www.thelink.com"
   }
 }
 ```
+
+The help text is optional and will be used as the text of the anchor when present, otherwise the URL will be rendered directly.
