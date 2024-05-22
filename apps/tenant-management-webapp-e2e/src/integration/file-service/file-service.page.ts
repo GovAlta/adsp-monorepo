@@ -175,6 +175,10 @@ class FileServicePage {
     return cy.xpath('//h2[text()="Please upload a file"]');
   }
 
+  uploadedFilesFilterFileTypeDropdown() {
+    return cy.xpath('//goa-dropdown[@data-testid="file-type-name-dropdown-2"]');
+  }
+
   uploadedFilesSearchFileName() {
     return cy.xpath('//goa-input[@id="name"]');
   }
@@ -183,10 +187,18 @@ class FileServicePage {
     return cy.xpath('//goa-button[text()="Search"]');
   }
 
+  uploadedFilesResetButton() {
+    return cy.xpath('//goa-button[text()="Reset"]');
+  }
+
   uploadedFilesDownloadButton(fileName) {
     return cy.xpath(
       `//tbody//td[text()="${fileName}"]/following-sibling::td//goa-icon-button[@data-testid="download-icon"]`
     );
+  }
+
+  uploadFilesGridTypeCells() {
+    return cy.xpath('//tbody//td[3]');
   }
 
   fileTypeClassificationDropdown() {
