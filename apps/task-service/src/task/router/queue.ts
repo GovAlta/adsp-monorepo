@@ -96,7 +96,8 @@ export function getQueueMetrics(
   serviceId: AdspId,
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
-  repository: TaskRepository
+  repository: TaskRepository,
+  logger: Logger
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -152,6 +153,7 @@ export function getQueueMetrics(
       if (includeEventMetrics) {
         const valueServiceUrl = await directory.getServiceUrl(VALUE_SERVICE_ID);
         let token = await tokenProvider.getAccessToken();
+        logger.info(`getQueueMetrics: includeEventMetrics - Begin `);
         const {
           data: {
             values: [queueDuration],
@@ -170,8 +172,12 @@ export function getQueueMetrics(
             },
           }
         );
+        logger.info(`getQueueMetrics: includeEventMetrics - End `);
 
         token = await tokenProvider.getAccessToken();
+
+        logger.info(`getQueueMetrics: event service - Begin `);
+
         const {
           data: {
             values: [completionDuration],
@@ -190,13 +196,16 @@ export function getQueueMetrics(
             },
           }
         );
-
+        logger.info(`getQueueMetrics: event service - Begin `);
         result.queue = queueDuration;
         result.completion = completionDuration;
 
         const timestampMin = DateTime.now().minus({ days: 7 }).toJSDate();
 
+        logger.info(`getQueueMetrics: event service - End `);
+
         token = await tokenProvider.getAccessToken();
+        logger.info(`getQueueMetrics: event service Created Count - Begin `);
         const {
           data: { count: created },
         } = await axios.get<{ count: number }>(
@@ -215,6 +224,7 @@ export function getQueueMetrics(
             },
           }
         );
+        logger.info(`getQueueMetrics: event service Created Count - End `);
 
         token = await tokenProvider.getAccessToken();
         const {
@@ -237,6 +247,7 @@ export function getQueueMetrics(
         );
 
         token = await tokenProvider.getAccessToken();
+        logger.info(`getQueueMetrics: event service Cancelled Count - Begin `);
         const {
           data: { count: cancelled },
         } = await axios.get<{ count: number }>(
@@ -255,7 +266,7 @@ export function getQueueMetrics(
             },
           }
         );
-
+        logger.info(`getQueueMetrics: event service Cancelled Count - End `);
         result.rate = {
           since: timestampMin,
           created,
@@ -266,6 +277,7 @@ export function getQueueMetrics(
 
       res.send(result);
     } catch (err) {
+      logger.error(`getQueueMetrics error: ${err.toString()}`);
       next(err);
     }
   };
@@ -448,7 +460,7 @@ export function createQueueRouter({
       query('includeEventMetrics').optional().isBoolean()
     ),
     getQueue,
-    getQueueMetrics(apiId, directory, tokenProvider, repository)
+    getQueueMetrics(apiId, directory, tokenProvider, repository, logger)
   );
   router.get(
     '/queues/:namespace/:name/tasks',
