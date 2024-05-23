@@ -12,9 +12,49 @@ import {
   UpdateFeedbackSiteAction,
   getFeedbackSitesSuccess,
   updateFeedbackSiteSuccess,
+  getFeedbacksSuccess,
+  FETCH_FEEDBACKS_ACTION,
+  FetchFeedbacksAction,
 } from './actions';
 
 import { getAccessToken } from '@store/tenant/sagas';
+function* fetchFeedbacks(payload: FetchFeedbacksAction) {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading Feedbacks...',
+    })
+  );
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+  const next = payload.next ? payload.next : '';
+  const contextData = encodeURI(JSON.stringify({ site: payload.feedback.url }));
+  const url = `${configBaseUrl}/value/v1/feedback-service/values/feedback?context=${contextData}&top=10&after=${next}`;
+  const headers = {
+    headers: { Authorization: `Bearer ${token}` },
+  };
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(axios.get, url, headers);
+      yield put(
+        getFeedbacksSuccess(
+          response.data['feedback-service'].feedback,
+          response.data.page.after,
+          response.data.page.next
+        )
+      );
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (error) {
+      yield put({ type: 'FETCH_FEEDBACKS_FAILURE', error });
+      yield put(UpdateIndicator({ show: false }));
+    }
+  }
+}
 
 function* fetchFeedbackSites() {
   yield put(
@@ -116,6 +156,7 @@ function* deleteFeedbackSite(action: DeleteFeedbackSiteAction) {
 }
 
 export function* watchFeedbackSagas(): Generator {
+  yield takeLatest(FETCH_FEEDBACKS_ACTION, fetchFeedbacks);
   yield takeLatest(FETCH_FEEDBACK_SITES_ACTION, fetchFeedbackSites);
   yield takeLatest(UPDATE_FEEDBACK_SITE_ACTION, updateFeedbackSite);
   yield takeLatest(DELETE_FEEDBACK_SITE_ACTION, deleteFeedbackSite);

@@ -6,6 +6,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { FeedbackOverview } from './overview';
 import { FeedbackSites } from './sites';
+import { FeedbacksList } from './feedbacks';
 
 import AsideLinks from '@components/AsideLinks';
 export const Feedback: FunctionComponent = () => {
@@ -24,8 +25,11 @@ export const Feedback: FunctionComponent = () => {
           <Tab label="Overview" data-testid="feedbacks-overview-tab">
             <FeedbackOverview setActiveEdit={setActiveEdit} />
           </Tab>
-          <Tab label="Sites" data-testid="feedbacks-definitions-tab">
+          <Tab label="Sites" data-testid="feedback-sites-tab">
             <FeedbackSites activeEdit={activateEdit} />
+          </Tab>
+          <Tab label="Feedback" data-testid="feedbacks-tab">
+            <FeedbacksList />
           </Tab>
         </Tabs>
       </Main>
