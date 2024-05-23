@@ -19,16 +19,45 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
     setShowDetails(false);
   }, [feedback]);
 
-  const createdOnDate = new Date(feedback.timestamp);
-  // Format the createdOn date
-  const formattedCreatedOn = `${createdOnDate.toISOString().substr(0, 10)}`;
-
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const suffixes = ['th', 'st', 'nd', 'rd'];
+    const month = monthNames[date.getUTCMonth()];
+    const day = date.getUTCDate();
+    const year = date.getUTCFullYear();
+    let hours = date.getUTCHours();
+    let minutes = date.getUTCMinutes()!;
+    let suffix = suffixes[day % 10] || suffixes[0];
+    if (day >= 11 && day <= 13) suffix = 'th';
+    minutes = minutes < 10 ? 0 + minutes : minutes;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const formattedDate = ` ${month} ${day}${suffix}, ${year}`;
+    const formattedDateTime = ` ${month} ${day}${suffix}, ${year} ${hours}:${minutes}${ampm}`;
+    return { formattedDate, formattedDateTime };
+  }
+  const submissionDate = formatDate(feedback.timestamp);
   const ratingValue = Rating[feedback.value.rating as unknown as keyof typeof Rating];
 
   return (
     <>
       <tr>
-        <td data-testid="feedback-list-created-on">{formattedCreatedOn}</td>
+        <td data-testid="feedback-list-created-on">{submissionDate.formattedDate}</td>
         <td data-testid="feedback-list-correlation-id">
           <URL>{feedback.correlationId}</URL>
         </td>
@@ -54,13 +83,14 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
           >
             <MoreDetails data-testId="moredetails">
               <p>
-                Feedback was submitted at view {feedback.context.view} on {formattedCreatedOn}
+                Feedback was submitted at a {feedback.context.view} on {submissionDate.formattedDateTime}
               </p>
-              <p>Additional Comments</p>
+              <h2>Additional Comments</h2>
               <span>{feedback.value.comment}</span>
+
               {feedback.value.technicalIssue && (
                 <>
-                  <p>Technical issues</p>
+                  <h2>Technical issues</h2>
                   <span>{feedback.value.technicalIssue}</span>
                 </>
               )}

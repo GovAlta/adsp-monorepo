@@ -3,7 +3,7 @@ import DataTable from '@components/DataTable';
 import { FeedbackTableItem } from './feedbackTableItem';
 import { Feedback } from '@store/feedback/models';
 
-import { HeaderFont, TableDiv } from './styled-components';
+import { HeaderFont, Heading, TableDiv } from './styled-components';
 
 export interface FeedbackTableProps {
   feedbacks: Feedback[];
@@ -12,7 +12,7 @@ export const FeedbackListTable: FunctionComponent<FeedbackTableProps> = ({ feedb
   return (
     <>
       <HeaderFont>
-        <h2>Feedback list</h2>
+        <Heading>Feedback list</Heading>
       </HeaderFont>
       <TableDiv>
         <DataTable data-testid="feedback-table">

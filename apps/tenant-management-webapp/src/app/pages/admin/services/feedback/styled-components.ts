@@ -64,11 +64,12 @@ export const DeleteGap = styled.div`
 
 export const Buttons = styled.div`
   margin-top: var(--goa-space-xs);
-  margin-bottom: var(--goa-space-2xl);
+
   text-align: left;
 `;
 export const Heading = styled.div`
   font: var(--goa-typography-heading-m);
+  margin-top: var(--goa-space-2xl);
   margin-bottom: var(--goa-space-m);
 `;
 
@@ -84,11 +85,17 @@ export const MoreDetails = styled.div`
     width: 100%;
     text-align: left;
     p {
-      font-weight: bold;
-      padding-top: var(--goa-space-s);
-      margin-bottom: var(--goa-space-xs);
+      font: var(--goa-typography-heading-xs);
+      margin-bottom: var(--goa-space-m);
+    }
+    h2 {
+      font: var(--goa-typography-heading-s);
+      padding-left: var(--goa-space-none);
+
+      margin-bottom: var(--goa-space-2xs);
     }
     span {
+      font: var(--goa-typography-body-m);
     }
   }
 `;
