@@ -277,7 +277,7 @@ export function getQueueMetrics(
 
       res.send(result);
     } catch (err) {
-      logger.error(`getQueueMetrics error: ${err}`);
+      logger.error(`getQueueMetrics error: ${err.toString()}`);
       next(err);
     }
   };
