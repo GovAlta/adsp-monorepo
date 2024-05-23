@@ -1,11 +1,7 @@
 import React from 'react';
-import { render, waitFor, getByText, queryByText } from '@testing-library/react';
+import { render, waitFor, queryByText } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { RenderLink, OptionProps } from './LinkControl';
-import { ControlElement } from '@jsonforms/core';
-import { validateUrl } from '../Context/register/util';
-
-jest.mock('../Context/register/util');
 
 describe('LinkSelect component', () => {
   const staticProps: OptionProps = {
@@ -14,9 +10,6 @@ describe('LinkSelect component', () => {
   };
 
   describe('can create LinkSelect component', () => {
-    afterEach(() => {
-      (validateUrl as jest.Mock).mockReset();
-    });
     it('renders basic LinkSelect component with link only', () => {
       const props = { ...staticProps };
       const component = render(<RenderLink {...props} />);
@@ -33,8 +26,6 @@ describe('LinkSelect component', () => {
 
       const props = { ...staticProps, link: Link };
 
-      (validateUrl as jest.Mock).mockResolvedValueOnce(true);
-
       const { container } = render(<RenderLink {...props} />);
       await waitFor(() => {
         const anchorElement = container.querySelector(`a[href="${Link}"]`);
@@ -48,12 +39,9 @@ describe('LinkSelect component', () => {
     });
 
     it('renders invalid link if we do not get a response by calling the url', async () => {
-      const Link = 'https://open.alberta.ca/dataset/70c50877-aaa9-442c-a10e-328eb53aa5f1/resource/abc.pdf';
+      const Link = 'abc.pdf';
 
       const props = { ...staticProps, link: Link };
-
-      // Fails to validate url = bad url
-      (validateUrl as jest.Mock).mockResolvedValueOnce(false);
 
       const { container } = render(<RenderLink {...props} />);
       await waitFor(() => {
