@@ -1,12 +1,12 @@
 ---
-title: Form Instructions
+title: Adding Instructions
 layout: page
 nav_order: 3
 parent: Form Service
 grand_parent: Tutorials
 ---
 
-## Form Instructions
+## Adding Instructions
 
 One of the differences between a professional and an armature looking form is the quality of instruction that it contains for end-users. The _Form Service_ includes component renderers that are specifically geared toward rendering instructions and may include text, images, or links. For example, the following fragment from the UI-schema will render a paragraph:
 
