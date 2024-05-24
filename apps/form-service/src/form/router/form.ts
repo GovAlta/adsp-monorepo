@@ -94,6 +94,10 @@ export const getFormDefinition: RequestHandler = async (req, res, next) => {
     const definition =
       configuration[Object.keys(configuration).find((key) => key.toLowerCase() === definitionId.toLowerCase())] ?? null;
 
+    if (!definition) {
+      throw new NotFoundError('form definition', definitionId);
+    }
+
     if (!definition.canAccessDefinition(user)) {
       throw new UnauthorizedUserError('access definition', user);
     }
