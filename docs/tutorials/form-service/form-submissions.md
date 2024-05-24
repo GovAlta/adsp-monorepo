@@ -30,9 +30,9 @@ _Submission records_ contain a snapshot of the form at the time of the submissio
 
 _Submission records_ can be used to help manage _Form Disposition_; that is, the status of the document throughout its history. For example, an assessor may determine the disposition of an application to _accepted_, or _active_, when first submitted, later move it to _inactive_, and finally _archived_. The disposition depends entirely on the intent of the form and what the ministry's policies are. For this reason, developers can define the _disposition states_ that their forms can have when creating a _form definition_:
 
-![](/adsp-monorepo/assets/form-service/dispositionState.png){: width="600" }
+![](/adsp-monorepo/assets/form-service/dispositionStates.png){: width="600" }
 
-### Task Queues
+### Submission Queues
 
 In addition, developers can also opt-in to have the submission record placed in a [Task Queue](/adsp-monorepo/tutorials/task-service.html) for further processing:
 
