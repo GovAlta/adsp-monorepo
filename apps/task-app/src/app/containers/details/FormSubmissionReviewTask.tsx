@@ -105,7 +105,9 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     setCategories(cats as (Categorization | Category | ControlElement)[]);
   }, [categorization, currentForm]);
 
-  const isTaskCompleted = () => {
+  const disableFormDispositionControls = () => {
+    if (task.status === TASK_STATUS.PENDING) return true;
+
     return task.status === TASK_STATUS.COMPLETED;
   };
 
@@ -114,6 +116,8 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
     if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
     if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
+
+    if (Object.keys(errors).length > 0) return true;
 
     return !user.isWorker || isExecuting;
   };
@@ -174,7 +178,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             <GoADropdown
               testId="formDispositionStatus"
               value={dispositionStatus}
-              disabled={isTaskCompleted()}
+              disabled={disableFormDispositionControls()}
               onChange={(_, value: string) => {
                 setDispositionStatus(value);
                 validators.remove('dispositionStatus');
@@ -198,7 +202,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             <GoATextArea
               name="reason"
               value={dispositionReason}
-              disabled={isTaskCompleted()}
+              disabled={disableFormDispositionControls()}
               width="75ch"
               testId="reason"
               aria-label="reason"
