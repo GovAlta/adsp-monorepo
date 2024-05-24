@@ -452,7 +452,7 @@ export function createQueueRouter({
       query('includeEventMetrics').optional().isBoolean()
     ),
     getQueue,
-    getQueueMetrics(apiId, directory, tokenProvider, repository, logger)
+    getQueueMetrics(apiId, directory, tokenProvider, repository)
   );
   router.get(
     '/queues/:namespace/:name/tasks',
