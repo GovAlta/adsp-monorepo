@@ -203,11 +203,15 @@ export function* getAccessToken(isForce = false): SagaIterator {
   try {
     // Check if credentials still present or if logout has occurred.
     const credentials: Credentials = yield select((state: RootState) => state.session.credentials);
+    const isExpired = yield select((state: RootState) => state.session.isExpired);
 
     // Check if token is within 1 min of expiry.
     if (credentials.tokenExp - Date.now() / 1000 < 60 || isForce) {
       const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
       const session: Session = yield call([keycloakAuth, keycloakAuth.refreshToken]);
+      if (isExpired === true) {
+        yield put(SetSessionExpired(false));
+      }
       if (session) {
         const { credentials } = session;
         yield put(CredentialRefresh(credentials));

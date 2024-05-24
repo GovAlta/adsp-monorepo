@@ -4,7 +4,7 @@ import Keycloak, { KeycloakConfig, KeycloakInitOptions, KeycloakInstance } from 
 const LOGOUT_REDIRECT = '/logout-redirect';
 const LOGIN_REDIRECT = '/login-redirect';
 
-export const MAX_ALLOWED_IDLE_IN_MINUTE = 10;
+export const MAX_ALLOWED_IDLE_IN_MINUTE = 28;
 export const REFRESH_TOKEN_EXPIRY_IN_MINUTE = 30;
 
 export enum LOGIN_TYPES {
