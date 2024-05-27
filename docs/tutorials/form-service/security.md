@@ -1,5 +1,5 @@
 ---
-title: Securing access to forms
+title: Securing access
 layout: page
 nav_order: 6
 parent: Form Service

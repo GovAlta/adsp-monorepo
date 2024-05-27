@@ -18,74 +18,27 @@ The _Form Service_ can be used to build some very sophisticated forms and includ
 - element lists
 - rules controlling the visibility of form elements
 
-Jsonforms itself has [moderately good documentation](https://jsonforms.io/examples/basic/) on how this all works; please read through their information to get a better sense of how the schemas need to be set up.
+Jsonforms itself has [moderately good documentation](https://jsonforms.io/examples/basic/) on how this all works; please read through their information to get a better sense of how the schemas need to be set up. If you wish to dive right in, however, here's how you can easily [build and preview](/adsp-monorepo/tutorials/form-service/form-editor.html) your forms through ADSP's Form Editor.
 
-### Getting Started
+### Steppers
 
-You build forms using the ADSP Form Service's _Form Editor_. Log in to the [Tenant-Management-Webapp](https://adsp-uat.alberta.ca) and select the _form service_. You will see something like this:
-
-![](/adsp-monorepo/assets/form-service/FormDefinition.png){: width="400" }
-
-Add a new _form definition_ to try things out. When you click save to create your form definition you will be brought to the form editor:
-
-![](/adsp-monorepo/assets/form-service/FormEditor.png){: width="600" }
-
-The editor has two components; the editor itself, and the preview. The latter shows you how your form will look to the end users and is useful as a guide when building. Try entering a simple data-schema:
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "firstName": {
-      "type": "string"
-    },
-    "lastName": {
-      "type": "string"
-    }
-  }
-}
-```
-
-followed by its corresponding ui-schema:
-
-```json
-{
-  "type": "HorizontalLayout",
-  "label": "Name",
-  "elements": [
-    {
-      "type": "Control",
-      "scope": "#/properties/firstName"
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/lastName"
-    }
-  ]
-}
-```
-
-You will see something like this:
-
-![](/adsp-monorepo/assets/form-service/FormPreview.png){: width="400" }
-
-That's it. Once you learn the basics of building forms through schemas, you'll be able to build some pretty impressive forms for your end-users to fill in.
-
-### Form Steppers
-
-Many forms at the GoA can be rather large and complex, and should be divided into a number of steps for the end-use to complete. This is where a form stepper becomes useful.
+Many forms at the GoA can be rather large and complex, and could be divided into a number of smaller steps for ease of use. This is where [form steppers](/adsp-monorepo/tutorials/form-service/steppers.html) become useful.
 
 ### Adding Instructions to your form
 
-You can [add text, images, and links to your forms](/adsp-monorepo/tutorials/form-service/instructions.html) to help clarify the information that is needed from end-users when filling out the form.
+You can [add text, images, and links](/adsp-monorepo/tutorials/form-service/instructions.html) to your forms to help clarify the information that is needed from end-users when filling out the form.
 
 ### Form Rules
 
-Sometimes a specific answer to a question will influence the flow of the form.
+Sometimes a specific answer to a question will influence the flow of the form. A yes answer, for example, may uncover further questions, or a particular income value may disable followup questions. Jsonforms uses [rules](https://jsonforms.io/docs/uischema/rules/) to handle the dynamic aspects of form intake.
 
 ### Input Validation
 
-### Element Arrays
+Jsonforms automatically handles basic input validation, such as ensuring required fields are filled in, dates are formatted correctly, or that numbers are, indeed, numbers. More sophisticated validation is also possible; you can add [custom error messages](https://jsonforms.io/docs/validation/) or even [integrate a custom AJV validator](https://jsonforms.io/docs/validation/) to [harness the full power of AJV](https://ajv.js.org/), which gives you complete control over validation.
+
+### Repeated Items
+
+You will sometimes need to capture [lists of information](docs/tutorials/form-service/repeated-items.md) in a form. Lists contain a variable number of items, each containing the necessary details. For example, an application for a Farmers Market License may require list of vendors, each with contact information, a classification, and their expected yearly revenue. Users are able to add one item at a time and fill in the details as needed.
 
 ## Learn More
 
