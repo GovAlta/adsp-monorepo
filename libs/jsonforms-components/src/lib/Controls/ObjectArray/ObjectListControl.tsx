@@ -156,11 +156,28 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
     return !scopesInElements.includes(scope);
   });
 
+  /**
+   * Get the first layout type in the elements for the object array and used it
+   * as the default type, if none is provided.
+   * @returns layout type
+   */
+  const getFirstLayoutType = () => {
+    let defaultType = 'VerticalLayout';
+
+    if (uischema?.options?.defaultType) return uischema?.options?.defaultType;
+
+    if (uischema?.options?.detail && uischema?.options?.detail?.elements?.length > 0) {
+      defaultType = uischema?.options?.detail?.elements.at(0).type;
+    }
+
+    return defaultType;
+  };
+
   /* Create default elements for scope not defined in the uischema
    * future work: merge the options
    */
   const uiSchemaElementsForNotDefined = {
-    type: uischema?.options?.defaultType || 'VerticalLayout',
+    type: getFirstLayoutType(),
     elements: scopesNotInElements.map((scope) => {
       return {
         type: 'Control',
