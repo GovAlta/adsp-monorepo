@@ -10,11 +10,11 @@ grand_parent: Tutorials
 
 The \_Form Service provides a means to build, deploy, and secure forms for data collection. It uses [jsonforms](https://jsonforms.io/) as the underlying technology, which in itself was integrated with GoA's design systems' React library. The result is the capability to quickly build, review, and deploy forms for public consumption.
 
-On its own, the _Form Service_ can be a huge time saver when it comes to developing GoA applications, but used in conjunction with ADSP's _Form_ and _Task_ Applications it takes on a life of its own. A form can be immediately available to your end-users through the ADSP Form App, and can be reviewed and dispositioned through the ADSP Task App.
+On its own, the _Form Service_ can be a huge time saver when it comes to developing GoA applications, but used in conjunction with ADSP's _Form App_ and _Task App_ it takes on a life of its own. A form can be immediately available to your end-users through the ADSP [Form App](/adsp-monorepo/tutorials/form-service/form-app.html), and can be reviewed and dispositioned through the ADSP [Task App](/adsp-monorepo/tutorials/task-service/task-app.html). All of that without any coding!
 
 ### Building
 
-Jsonforms provides a declarative means for creating new forms. Developers provide a JSON-schema to describe the data to be collected, and a UI-schema to describe what the form will look like. This can be done using the ADSP's [Form Editor](/adsp-monorepo/tutorials/form-service/building-a-form.html).
+Jsonforms provides a declarative means for creating new form definitions. Developers provide a JSON-schema to describe the data to be collected, and a UI-schema to describe what the form will look like. This can be done most easily using ADSP's [Form Editor](/adsp-monorepo/tutorials/form-service/building-forms.html). The form definitions are stored in the ADSP database and can be accessed through [its APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Form%20service#).
 
 ### Embedding a Form in an Application
 
@@ -34,24 +34,24 @@ The form app runs on the ADSP servers (ARO) and can be accessed at:
 https://form.adsp-uat.alberta.ca/\<your tenant\>/\<the form ID\> for testing and development, or
 https://form.adsp.alberta.ca/\<your tenant\>/\<the form ID\> for production.
 
-### Securing
+### Securing forms
 
-There are three potential means for securing forms depending on the needs of the client:
+Security is based on Keycloak roles. Usage of the APIs is restricted to authorized users or clients, and is further described [in the section on security](/adsp-monorepo/tutorials/form-service/security.html). Users logging in to your application can be restricted to:
 
-- User logs in with their GoA credentials. This is useful for forms that need to be filled out by GoA employees.
-- User logs in with their _My Alberta Digital ID_. This is useful for locking down end-user access.
-- User can enter an email address and use a handshaking protocol for authentication.
-
-**As of May, 2024, only the 1st option is supported. More coming soon**.
+- filling out the form (applicants),
+- reading and updating the form (clerks), and
+- managing [form submissions](/adsp-monorepo/tutorials/form-service/form-submissions.html) (assessors).
 
 ## Learn More
 
 - Learn how to [use jsonforms](https://jsonforms.io/) to declaratively build and render sophisticated forms.
 
-- Learn more about [ADSP's extensions](/adsp-monorepo/tutorials/task-service/building-forms.html) to jsonforms, for creating steppers, end-user instructions, and other tidbits.
+- Learn more about [ADSP's extensions](/adsp-monorepo/tutorials/form-service/building-forms.html) to jsonforms, for creating steppers, end-user instructions, and other UI tidbits.
 
-- Learn more about [securing your form]().
+- Learn about [form submissions](/adsp-monorepo/tutorials/form-service/form-submissions.html).
 
-- Learn more about [deploying your form]().
+- Learn more about [securing your form](/adsp-monorepo/tutorials/form-service/security.html).
+
+- Learn more about [deploying your form](/adsp-monorepo/tutorials/form-service/form-app.html).
 
 - Learn how to [use the Task App](/adsp-monorepo/tutorials/task-service/task-app.html) to review data collected from end-users.
