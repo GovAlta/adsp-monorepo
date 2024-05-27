@@ -112,7 +112,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   };
 
   const buttonDisabledForCompleteTask = () => {
-    if (dispositionReason === '' && dispositionStatus === '') return true;
+    if (dispositionReason === '' || dispositionStatus === '') return true;
 
     if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
     if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
