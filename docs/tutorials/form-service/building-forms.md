@@ -77,7 +77,7 @@ Many forms at the GoA can be rather large and complex, and should be divided int
 
 ### Adding Instructions to your form
 
-You can [add text, images, and links to your forms](/adsp-monorepo/tutorials/task-service/instructions.html) to help clarify the information that is needed from end-users when filling out the form.
+You can [add text, images, and links to your forms](/adsp-monorepo/tutorials/form-service/instructions.html) to help clarify the information that is needed from end-users when filling out the form.
 
 ### Form Rules
 
