@@ -33,7 +33,6 @@ export interface Page {
 export interface FeedbackSite {
   url: string;
   allowAnonymous: boolean;
-  views?: [];
 }
 
 export interface FeedbackState {
@@ -46,5 +45,4 @@ export interface FeedbackState {
 export const defaultFeedbackSite: FeedbackSite = {
   url: '',
   allowAnonymous: false,
-  views: [],
 };
