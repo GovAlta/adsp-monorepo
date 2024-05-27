@@ -29,6 +29,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       width={'100%'}
       readonly={readOnly}
       placeholder={placeholder}
+      {...uischema.options?.componentProps}
       // maxLength={appliedUiSchemaOptions?.maxLength}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}

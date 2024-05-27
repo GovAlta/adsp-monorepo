@@ -42,12 +42,15 @@ import { mapToVisibleStep } from './util/stepNavigation';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {}
 export interface FormStepperComponentProps {
+  controlledNav?: number;
+  readOnly?: boolean;
+}
+
+export interface FormStepperOptionProps {
   nextButtonLabel?: string;
   nextButtonType?: GoAButtonType;
   previousButtonLabel?: string;
   previousButtonType?: GoAButtonType;
-  controlledNav?: number;
-  readOnly?: boolean;
 }
 
 const summaryLabel = 'Summary';
@@ -61,6 +64,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   const categorization = uischema as Categorization;
   const allCategories = JSON.parse(JSON.stringify(categorization)) as Categorization;
   const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
+  const optionProps = (uischema.options as FormStepperOptionProps) || {};
 
   const [step, setStep] = React.useState(0);
   const [isFormValid, setIsFormValid] = React.useState(false);
@@ -247,7 +251,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               <div>
                 {step !== 1 ? (
                   <GoAButton
-                    type={componentProps?.previousButtonType ? componentProps?.previousButtonType : 'secondary'}
+                    type={optionProps?.previousButtonType ? optionProps?.previousButtonType : 'secondary'}
                     disabled={disabledCategoryMap[step - 1]}
                     onClick={() => {
                       const element = document.getElementById(`${path || `goa`}-form-stepper`);
@@ -258,7 +262,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                     }}
                     testId="prev-button"
                   >
-                    {componentProps?.previousButtonLabel ? componentProps?.previousButtonLabel : 'Previous'}
+                    {optionProps?.previousButtonLabel ? optionProps?.previousButtonLabel : 'Previous'}
                   </GoAButton>
                 ) : (
                   <div></div>
@@ -267,7 +271,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               <RightAlignmentDiv>
                 {step !== null && showNextBtn && (
                   <GoAButton
-                    type={componentProps?.nextButtonType ? componentProps?.nextButtonType : 'primary'}
+                    type={optionProps?.nextButtonType ? optionProps?.nextButtonType : 'primary'}
                     disabled={disabledCategoryMap[step - 1]}
                     onClick={() => {
                       const element = document.getElementById(`${path || `goa`}-form-stepper`);
@@ -278,7 +282,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                     }}
                     testId="next-button"
                   >
-                    {componentProps?.nextButtonLabel ? componentProps?.nextButtonLabel : 'Next'}
+                    {optionProps?.nextButtonLabel ? optionProps?.nextButtonLabel : 'Next'}
                   </GoAButton>
                 )}
                 {!showNextBtn && !isFormSubmitted && (

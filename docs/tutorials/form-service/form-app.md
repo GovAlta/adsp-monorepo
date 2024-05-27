@@ -1,7 +1,7 @@
 ---
-title: Form App
+title: The Form App
 layout: page
-nav_order: 5
+nav_order: 7
 parent: Form Service
 grand_parent: Tutorials
 ---
@@ -33,4 +33,4 @@ Developers can define the roles that are required to create, review and disposit
 
 Ideally users will be able to access the link to the _Form App_ directly from the alberta.ca website. Clicking on it will bring them to the form app where they will be asked to log in. If all their roles and permissions are correct they will see the form in question, e.g.
 
-![](/adsp-monorepo/assets/form-service/formAppExample.png){: width="600" }
+![](/adsp-monorepo/assets/form-service/formAppExample.png){: width="800" }

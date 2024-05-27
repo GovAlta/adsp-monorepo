@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { SetSessionExpired, SetSessionWillExpired } from '@store/session/actions';
 import { UpdateAccessToken } from '@store/tenant/actions';
 import { MAX_ALLOWED_IDLE_IN_MINUTE } from '@lib/keycloak';
+import { clearInterval, setInterval } from 'worker-timers';
 
 export const useTokenExpiryCount = () => {
   const { refreshTokenExp } = useSelector((state: RootState) => ({

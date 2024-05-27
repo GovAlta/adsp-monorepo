@@ -23,6 +23,8 @@ import {
   GoAEnumControlTester,
   GoAEnumRadioGroupControl,
   GoARadioGroupControlTester,
+  GoAEnumCheckboxGroupControl,
+  GoACheckoutGroupControlTester,
   GoAArrayControlTester,
   GoAArrayControlRenderer,
   GoAListWithDetailsTester,
@@ -64,6 +66,10 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   {
     tester: GoARadioGroupControlTester,
     renderer: GoAEnumRadioGroupControl,
+  },
+  {
+    tester: GoACheckoutGroupControlTester,
+    renderer: GoAEnumCheckboxGroupControl,
   },
   { tester: GoABooleanControlTester, renderer: GoABooleanControl },
 

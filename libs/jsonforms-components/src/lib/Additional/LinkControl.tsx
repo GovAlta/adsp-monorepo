@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { validateUrl } from '../Context/register/util';
+import { isValidUrl } from '../Context/register/util';
 import { GoAFormItem } from '@abgov/react-components-new';
 
 const linkLength = 40;
@@ -39,13 +39,9 @@ export const RenderLink = (props: OptionProps): JSX.Element => {
   }
 
   useEffect(() => {
-    async function validateLink(linkUrl: string) {
-      if (linkUrl) {
-        const response = await validateUrl({ url: linkUrl });
-        setLinkValid(response);
-      }
+    if (linkUrl) {
+      setLinkValid(isValidUrl(linkUrl));
     }
-    validateLink(linkUrl);
   }, [linkUrl]);
 
   if (!linkLabel && !error) {

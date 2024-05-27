@@ -1,14 +1,12 @@
 ---
-title: Form Instructions
+title: Adding Instructions
 layout: page
-nav_order: 3
-parent: Form Service
-grand_parent: Tutorials
+nav_excluded: true
 ---
 
-## Form Instructions
+## Adding Instructions
 
-One of the differences between a professional and an armature looking form is the quality of instruction that it contains for end-users. The _Form Service_ includes component renderers that are specifically geared toward rendering instructions and may include text, images, or links. For example, the following fragment from the UI-schema will render a paragraph:
+One of the differences between a professional and an amateur looking form is the quality of instruction that it contains for end-users. The _Form Service_ includes component renderers that are specifically geared toward rendering instructions and may include text, images, or links. For example, the following fragment from the UI-schema will render a paragraph:
 
 ```json
 {
@@ -111,7 +109,7 @@ You can add images to further clarify what is needed, with the img variant
   "type": "HelpContent",
   "options": {
     "variant": "img",
-    "url": "https://picsum.photos/200/300",
+    "src": "https://picsum.photos/200/300",
     "width": "300",
     "height": "300",
     "alt": "Workflow diagram"
@@ -123,17 +121,17 @@ The width, height, and alt properties are optional.
 
 ### Link Variant
 
-You can add links in the instructions to further clarify what is needed, with the link variant
+You can add hypertext links in the instructions to further clarify what is needed, with the link variant
 
 ```json
 {
   "type": "HelpContent",
   "options": {
     "variant": "link",
-    "link": "https://www.thelink.com",
-    "help": "Text of the link"
+    "src": "https://www.thelink.com",
+    "help": "Text to wrap the link in"
   }
 }
 ```
 
-The help text is optional and will be used as the text of the anchor when present, otherwise the URL will be rendered directly.
+The help text is optional and will be used as the text of the anchor when present, otherwise the src URL will be rendered directly.
