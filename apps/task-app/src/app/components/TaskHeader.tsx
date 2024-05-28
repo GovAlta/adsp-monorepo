@@ -1,7 +1,8 @@
 import { GoABadge, GoAButton, GoADivider } from '@abgov/react-components-new';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { Task } from '../state';
+import { Task, tenantSelector } from '../state';
+import { useSelector } from 'react-redux';
 
 interface TaskHeaderProps {
   className?: string;
@@ -20,6 +21,7 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({
   name,
   onClickTasks,
 }) => {
+  const tenant = useSelector(tenantSelector);
   return (
     <React.Fragment>
       <div className={className}>
@@ -29,10 +31,12 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({
               Tasks
             </GoAButton>
             <span>/</span>
-            <span>{open?.name}</span>
+            <span> {open?.name}</span>
           </>
         ) : (
-          <span>{`Tasks ${namespace ? `(${namespace}:${name})` : ''}`}</span>
+          <span>
+            <a href={`/${tenant.name}`}>Queues</a> / {`Tasks ${namespace ? `(${namespace}:${name})` : ''}`}
+          </span>
         )}
         <span>
           {isLive ? (
