@@ -1,3 +1,5 @@
+import { FormDefinition } from './form.slice';
+
 export const TASK_SERVICE_ID = 'urn:ads:platform:task-service';
 export const PUSH_SERVICE_ID = 'urn:ads:platform:push-service';
 export const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
@@ -19,6 +21,7 @@ export interface Task {
   recordId?: string;
   queue: { namespace: string; name: string };
   name: string;
+  definition: FormDefinition;
   description: string;
   priority: TaskPriority;
   status: TaskStatus;

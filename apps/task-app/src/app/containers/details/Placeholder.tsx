@@ -21,6 +21,13 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
   onComplete,
   onCancel,
 }) => {
+  const disableTaskButtons = () => {
+    //If they dont have a form submission then they shouldnt be able to start/cancel a task.
+    if (!task.definition) return true;
+
+    return !user.isWorker || isExecuting;
+  };
+
   return (
     <PlaceholderDiv>
       <div>
@@ -38,21 +45,21 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
           should complete the task.
         </GoADetails>
       </div>
-      <GoAButtonGroup alignment="end" mt="l">
+      <GoAButtonGroup alignment="start" mt="l">
         <GoAButton type="secondary" onClick={onClose}>
           Close
         </GoAButton>
         {task?.status === TASK_STATUS.PENDING && (
-          <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
+          <GoAButton disabled={disableTaskButtons()} onClick={onStart}>
             Start task
           </GoAButton>
         )}
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
-            <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>
+            <GoAButton type="secondary" disabled={disableTaskButtons()} onClick={() => onCancel(null)}>
               Cancel task
             </GoAButton>
-            <GoAButton disabled={!user.isWorker || isExecuting} onClick={() => onComplete(null)}>
+            <GoAButton disabled={disableTaskButtons()} onClick={() => onComplete(null)}>
               Complete task
             </GoAButton>
           </>
