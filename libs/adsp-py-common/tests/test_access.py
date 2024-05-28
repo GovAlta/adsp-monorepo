@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import Mock, patch
 
 from adsp_py_common.adsp_id import AdspId
