@@ -4,14 +4,14 @@ import CalendarPage from './calendar.page';
 
 const calendarObj = new CalendarPage();
 
-Given('a tenant admin user is on script service overview page', function () {
+Given('a tenant admin user is on calendar service overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Script', 4000);
+  commonlib.tenantAdminMenuItem('Calendar', 4000);
 });
 
 Then('the user clicks Add calendar button on overview tab', function () {
@@ -157,7 +157,7 @@ Then('the user {string} the calendar of {string}, {string}', function (viewOrNot
 
 //Find a calendar with name, description
 //Input: calendar name, calendar descriptionin a string separated with comma
-//Return: row number if the calendar is found; zero if the script isn't found
+//Return: row number if the calendar is found; zero if the record isn't found
 function findCalendar(name, desc) {
   return new Cypress.Promise((resolve, reject) => {
     try {
@@ -333,4 +333,322 @@ When('the user clicks Save button in Edit calendar modal', function () {
   cy.wait(1000); // Wait for the button to enable
   calendarObj.calendarModalSaveButton().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(2000); // Wait for the save operation
+});
+
+When('the user selects {string} in Select a calendar on Events page', function (calendarName) {
+  calendarObj.eventsSelectACalendarDropdown().shadow().find('input').click({ force: true });
+  calendarObj.eventsSelectACalendarDropdown().shadow().find('li').contains(calendarName).click({ force: true });
+  cy.wait(2000);
+});
+
+When('the user clicks Add Event button on events page', function () {
+  calendarObj.eventsAddEventButton().shadow().find('button').click({ force: true });
+});
+
+Then('the user views Add calendar event modal', function () {
+  calendarObj.eventsCalendarEventModalHeading().invoke('text').should('eq', 'Add calendar event');
+});
+
+Then('the user views Edit calendar event modal', function () {
+  calendarObj.eventsCalendarEventModalHeading().invoke('text').should('eq', 'Edit calendar event');
+});
+
+When('the user enters {string} in name field in Add calendar event modal', function (name) {
+  calendarObj
+    .eventsCalendarEventModalNameTextField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(name, { force: true, delay: 200 });
+});
+
+Then('the user views the error message of {string} on name in Add calendar event modal', function (errorMsg) {
+  calendarObj
+    .eventsCalendarEventModalNameFormItem()
+    .shadow()
+    .find('.error-msg')
+    .invoke('text')
+    .should('contain', errorMsg);
+});
+
+When(
+  'the user enters {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string} in calendar event modal',
+  function (name, desc, isPublic, isAllDay, startDate, startTime, endDate, endTime) {
+    calendarObj
+      .eventsCalendarEventModalNameTextField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(name, { force: true, delay: 200 });
+    calendarObj.eventsCalendarEventModalDescription().shadow().find('textarea').clear().type(desc, { force: true });
+    // Is all day checkbox
+    switch (isAllDay.toLowerCase()) {
+      case 'yes':
+        calendarObj
+          .eventsCalendarEventModalIsAllDayCheckbox()
+          .shadow()
+          .find('.goa-checkbox-container')
+          .invoke('attr', 'class')
+          .then((classAttr) => {
+            if (!classAttr?.includes('--selected')) {
+              calendarObj
+                .eventsCalendarEventModalIsAllDayCheckbox()
+                .shadow()
+                .find('.goa-checkbox-container')
+                .click({ force: true });
+            } else {
+              cy.log('Is all day checkbox is already checked off. ');
+            }
+          });
+        break;
+      case 'no':
+        calendarObj
+          .eventsCalendarEventModalIsAllDayCheckbox()
+          .shadow()
+          .find('.goa-checkbox-container')
+          .invoke('attr', 'class')
+          .then((classAttr) => {
+            if (classAttr?.includes('--selected')) {
+              calendarObj
+                .eventsCalendarEventModalIsAllDayCheckbox()
+                .shadow()
+                .find('.goa-checkbox-container')
+                .click({ force: true });
+            } else {
+              cy.log('Is all day checkbox is already unchecked. ');
+            }
+          });
+        break;
+      default:
+        expect(isPublic).to.be.oneOf(['yes', 'no']);
+    }
+    // Enter start date and end date
+    if (startDate == 'Today') {
+      const todayDate = new Date().toISOString().slice(0, 10);
+      startDate = todayDate;
+    }
+    calendarObj.eventsCalendarEventModalStartDateField().shadow().find('input').type(startDate);
+    if (endDate == 'Today') {
+      const todayDate = new Date().toISOString().slice(0, 10);
+      endDate = todayDate;
+    }
+    calendarObj.eventsCalendarEventModalEndDateField().shadow().find('input').type(endDate);
+    // Enter start time and end time
+    if (isAllDay.toLowerCase() == 'no') {
+      // expect(startDate.toLowerCase()).to.eq('today');
+      // expect(endDate.toLowerCase()).to.eq('today');
+      const startHr = startTime.substring(0, 2);
+      const startMin = startTime.substring(3, 5);
+      const startAmPm = startTime.substring(6, 8);
+      cy.log(startHr, startMin, startAmPm);
+      const endHr = endTime.substring(0, 2);
+      const endMin = endTime.substring(3, 5);
+      const endAmPm = endTime.substring(6, 8);
+      cy.log(endHr, endMin, endAmPm);
+      // Enter start time
+      if (startAmPm.toLowerCase() == 'pm' && startHr != '12') {
+        calendarObj
+          .eventsCalendarEventModalStartTimeField()
+          .shadow()
+          .find('input')
+          .type((Number(startHr) + 12).toString() + ':' + startMin + ':00');
+      } else {
+        calendarObj
+          .eventsCalendarEventModalStartTimeField()
+          .shadow()
+          .find('input')
+          .type(startHr + ':' + startMin + ':00');
+      }
+      // Enter end time
+      if (endAmPm.toLowerCase() == 'pm' && endHr != '12') {
+        calendarObj
+          .eventsCalendarEventModalEndTimeField()
+          .shadow()
+          .find('input')
+          .type((Number(endHr) + 12).toString() + ':' + endMin + ':00');
+      } else {
+        calendarObj
+          .eventsCalendarEventModalEndTimeField()
+          .shadow()
+          .find('input')
+          .type(endHr + ':' + endMin + ':00');
+      }
+      // Is public checkbox
+      switch (isPublic.toLowerCase()) {
+        case 'yes':
+          calendarObj
+            .eventsCalendarEventModalIsPublicCheckbox()
+            .shadow()
+            .find('.goa-checkbox-container')
+            .invoke('attr', 'class')
+            .then((classAttr) => {
+              if (!classAttr?.includes('--selected')) {
+                calendarObj
+                  .eventsCalendarEventModalIsPublicCheckbox()
+                  .shadow()
+                  .find('.goa-checkbox-container')
+                  .click({ force: true });
+              } else {
+                cy.log('Is Public checkbox is already checked off. ');
+              }
+            });
+          break;
+        case 'no':
+          calendarObj
+            .eventsCalendarEventModalIsPublicCheckbox()
+            .shadow()
+            .find('.goa-checkbox-container')
+            .invoke('attr', 'class')
+            .then((classAttr) => {
+              if (classAttr?.includes('--selected')) {
+                calendarObj
+                  .eventsCalendarEventModalIsPublicCheckbox()
+                  .shadow()
+                  .find('.goa-checkbox-container')
+                  .click({ force: true });
+              } else {
+                cy.log('Is Public checkbox is already unchecked. ');
+              }
+            });
+          break;
+        default:
+          expect(isPublic).to.be.oneOf(['yes', 'no']);
+      }
+    }
+  }
+);
+
+When('the user clicks Save button in calendar event modal', function () {
+  calendarObj.eventsCalendarEventModalSaveButton().shadow().find('button').click({ force: true });
+  cy.wait(4000);
+});
+
+When('the user clicks Cancel button in calendar event modal', function () {
+  calendarObj.eventsCalendarEventModalCancelButton().shadow().find('button').click({ force: true });
+  cy.wait(4000);
+});
+
+Then(
+  'the user {string} the event of {string}, {string}, {string}',
+  function (viewOrNot, name, startDateTime, endDateTime) {
+    const todayDate = new Date().toISOString().slice(0, 10);
+    const startDateTimeWithoutToday = startDateTime.replace('Today', todayDate);
+    const endDateTimeWithoutToday = endDateTime.replace('Today', todayDate);
+    switch (viewOrNot) {
+      case 'views':
+        findEvent(name, startDateTimeWithoutToday, endDateTimeWithoutToday).then((rowNumber) => {
+          expect(rowNumber).to.be.greaterThan(
+            0,
+            'Event of ' +
+              name +
+              ', ' +
+              startDateTimeWithoutToday +
+              ', ' +
+              endDateTimeWithoutToday +
+              ' has row #' +
+              rowNumber
+          );
+        });
+        break;
+      case 'should not view':
+        calendarObj.eventsTab().then((eventTab) => {
+          if (eventTab.find('tbody').length == 0) {
+            cy.log('No calendar event in the grid. ');
+          } else {
+            findEvent(name, startDateTimeWithoutToday, endDateTimeWithoutToday).then((rowNumber) => {
+              expect(rowNumber).to.equal(
+                0,
+                'Event of ' +
+                  name +
+                  ', ' +
+                  startDateTimeWithoutToday +
+                  ', ' +
+                  endDateTimeWithoutToday +
+                  ' has row #' +
+                  rowNumber
+              );
+            });
+          }
+        });
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+//Find an event with name, start date and time, end date and time
+//Input: calendar name, start date and time, end date and time
+//Return: row number if the event is found; zero if the record isn't found
+function findEvent(eventName, startDateTime, endDateTime) {
+  return new Cypress.Promise((resolve, reject) => {
+    try {
+      let rowNumber = 0;
+      const targetedNumber = 3; // name, start date and time, end date and time
+      calendarObj
+        .eventsTableBody()
+        .find('tr')
+        .then((rows) => {
+          rows.toArray().forEach((rowElement) => {
+            let counter = 0;
+            // cy.log(rowElement.cells[0].innerHTML); // Print out the name cell innerHTML for debug purpose
+            if (rowElement.cells[0].innerHTML.includes(eventName)) {
+              counter = counter + 1;
+            }
+            // cy.log(rowElement.cells[1].innerHTML); // Print out the start date and time cell innerHTML for debug purpose
+            if (rowElement.cells[1].innerHTML.includes(startDateTime)) {
+              counter = counter + 1;
+            }
+            // cy.log(rowElement.cells[2].innerHTML); // Print out the end date and time cell innerHTML for debug purpose
+            if (rowElement.cells[2].innerHTML.includes(endDateTime)) {
+              counter = counter + 1;
+            }
+            Cypress.log({
+              name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
+              message: String(String(counter)),
+            });
+            if (counter == targetedNumber) {
+              rowNumber = rowElement.rowIndex;
+            }
+          });
+          Cypress.log({
+            name: 'Row number for the found script: ',
+            message: String(rowNumber),
+          });
+          resolve(rowNumber);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+When(
+  'the user clicks {string} icon of {string}, {string}, {string}',
+  function (iconName, name, startDateTime, endDateTime) {
+    const todayDate = new Date().toISOString().slice(0, 10);
+    const startDateTimeWithoutToday = startDateTime.replace('Today', todayDate);
+    const endDateTimeWithoutToday = endDateTime.replace('Today', todayDate);
+    findEvent(name, startDateTimeWithoutToday, endDateTimeWithoutToday).then((rowNumber) => {
+      switch (iconName) {
+        case 'edit':
+          calendarObj.eventEditButton(rowNumber).shadow().find('button').click({ force: true });
+          break;
+        case 'delete':
+          calendarObj.eventDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+          break;
+        default:
+          expect(iconName).to.be.oneOf(['edit', 'delete']);
+      }
+    });
+  }
+);
+
+Then('the user views the error message of {string} on dates in Add calendar event modal', function (errorMsg) {
+  calendarObj
+    .eventsCalendarEventModalEndDateFormItem()
+    .shadow()
+    .find('.error-msg')
+    .invoke('text')
+    .should('contain', errorMsg);
 });

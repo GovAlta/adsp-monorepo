@@ -78,5 +78,85 @@ class CalendarPage {
   editCalendarModalTable() {
     return cy.xpath('//*[@data-testid="add-calendar-modal"]//goa-table');
   }
+
+  eventsSelectACalendarDropdown() {
+    return cy.xpath('//goa-dropdown[@data-testid="calendar-event-dropdown-list"]');
+  }
+
+  eventsAddEventButton() {
+    return cy.xpath('//goa-button[@type="primary" and text()="Add event"]');
+  }
+
+  eventsCalendarEventModalHeading() {
+    return cy.xpath('//goa-modal[@open="true"]/div[@slot="heading"]');
+  }
+
+  eventsCalendarEventModalNameTextField() {
+    return cy.xpath('//goa-form-item[@label="Name"]/goa-input[@data-testid="calendar-event-modal-name-input"]');
+  }
+
+  eventsCalendarEventModalNameFormItem() {
+    return cy.xpath('//goa-form-item[@label="Name"]');
+  }
+
+  eventsCalendarEventModalDescription() {
+    return cy.xpath('//goa-textarea[@data-testid="calendar-event-modal-description-input"]');
+  }
+
+  eventsCalendarEventModalIsPublicCheckbox() {
+    return cy.xpath('//goa-checkbox[@name="isPublicCheckbox"]');
+  }
+
+  eventsCalendarEventModalIsAllDayCheckbox() {
+    return cy.xpath('//goa-checkbox[@name="isAllDayCheckbox"]');
+  }
+
+  eventsCalendarEventModalStartDateField() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="Start date"]//goa-input');
+  }
+
+  eventsCalendarEventModalStartTimeField() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="Start time"]//goa-input');
+  }
+
+  eventsCalendarEventModalEndDateField() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="End date"]//goa-input');
+  }
+
+  eventsCalendarEventModalEndDateFormItem() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="End date"]');
+  }
+
+  eventsCalendarEventModalEndTimeField() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-form-item[@label="End time"]//goa-input');
+  }
+
+  eventsCalendarEventModalSaveButton() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save"]');
+  }
+
+  eventsCalendarEventModalCancelButton() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Cancel"]');
+  }
+
+  eventsTableBody() {
+    return cy.xpath('//*[@data-testid="calendar-event-tab"]//tbody');
+  }
+
+  eventEditButton(rowNumber) {
+    return cy.xpath(
+      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${rowNumber}]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="create"]`
+    );
+  }
+
+  eventDeleteButton(rowNumber) {
+    return cy.xpath(
+      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${rowNumber}]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="trash"]`
+    );
+  }
+
+  eventsTab() {
+    return cy.xpath('//*[@data-testid="calendar-event-tab"]');
+  }
 }
 export default CalendarPage;

@@ -22,12 +22,12 @@ const sitesstore = mockStore({
 
 describe('SiteAddEditForm', () => {
   afterEach(cleanup);
-  const initialSite: FeedbackSite = { url: 'https://example.com', allowAnonymous: true, views: [] };
-  const emptySite: FeedbackSite = { url: '', allowAnonymous: false, views: [] };
-  const inValidSite: FeedbackSite = { url: 'xyz', allowAnonymous: false, views: [] };
+  const initialSite: FeedbackSite = { url: 'https://example.com', allowAnonymous: true };
+  const emptySite: FeedbackSite = { url: '', allowAnonymous: false };
+  const inValidSite: FeedbackSite = { url: 'xyz', allowAnonymous: false };
   const onSaveMock = jest.fn();
   const onCloseMock = jest.fn();
-  const sites: FeedbackSite[] = [{ url: 'https://test.com', allowAnonymous: false, views: [] }];
+  const sites: FeedbackSite[] = [{ url: 'https://test.com', allowAnonymous: false }];
 
   afterEach(() => {
     jest.clearAllMocks();

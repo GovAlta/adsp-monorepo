@@ -254,9 +254,6 @@ class AdspFeedback implements AdspFeedbackApi {
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
             z-index: 1000; /* Ensure it overlays other content */
-            display: flex;
-            justify-content: center;
-            align-items: center;
             visibility: hidden;
           }
 
@@ -287,12 +284,14 @@ class AdspFeedback implements AdspFeedbackApi {
             position: fixed;
             width: 644px;
             height: 600px;
-            left: 30%;
+            left: 50%;
             top: 10vh;
+            position: absolute
             bottom: 16px;
             border: 1px solid;
             overflow: hidden;
             border-radius: 3px;
+            transform: translateX(-50%)
           }
           .adsp-fb .adsp-fb-start {
             height: 380px;

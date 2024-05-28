@@ -17,7 +17,15 @@ export const LogoutModal = (): JSX.Element => {
   useEffect(() => {
     if (isExpired === true && ref.current === null) {
       ref.current = setInterval(() => {
-        setCountdownTime(countdownTime - 1);
+        setCountdownTime((time) => {
+          if (time === 0) {
+            if (isExpired === true) {
+              dispatch(TenantLogout());
+            }
+            clearInterval(ref.current);
+            return 0;
+          } else return time - 1;
+        });
       }, 1000);
     } else {
       if (ref.current !== null) {
