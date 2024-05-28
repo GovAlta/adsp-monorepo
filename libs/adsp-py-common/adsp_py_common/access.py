@@ -65,21 +65,29 @@ class IssuerCache:
                 self._logger.debug("Including core issuer %s -> core", core_iss)
 
             for _, tenant in tenants.items():
-                metadata = get(
-                    f"{self.__access_service_url}/auth/realms/{tenant.realm}/.well-known/openid-configuration"
-                ).json()
-                iss, jwks_uri = self.__metadata_values_getter(metadata)
+                try:
+                    metadata = get(
+                        f"{self.__access_service_url}/auth/realms/{tenant.realm}/.well-known/openid-configuration"
+                    ).json()
+                    iss, jwks_uri = self.__metadata_values_getter(metadata)
 
-                issuer = _TokenIssuer(tenant, iss, _JWKClient(jwks_uri))
-                issuers[iss] = issuer
+                    issuer = _TokenIssuer(tenant, iss, _JWKClient(jwks_uri))
+                    issuers[iss] = issuer
 
-                key = keys.methodkey(self, iss)
-                with self._cache_lock:
-                    self._cache[key] = issuer
+                    key = keys.methodkey(self, iss)
+                    with self._cache_lock:
+                        self._cache[key] = issuer
 
-                self._logger.debug(
-                    "Cached issuer %s -> %s (%s)", iss, tenant.name, tenant.realm
-                )
+                    self._logger.debug(
+                        "Cached issuer %s -> %s (%s)", iss, tenant.name, tenant.realm
+                    )
+                except Exception as err:
+                    self._logger.warning(
+                        "Error encountered resolving issuer for tenant %s (realm: %s). %s",
+                        tenant.name,
+                        tenant.realm,
+                        err,
+                    )
 
             self._logger.info("Retrieved and cached tenant issuers.")
             return issuers

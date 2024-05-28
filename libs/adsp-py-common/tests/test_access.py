@@ -54,6 +54,9 @@ def test_get_issuer_allow_core():
 
 
 def test_get_issuer_request_error():
+    missing_tenant_id = AdspId.parse(
+        "urn:ads:platform:tenant-service:v2:/tenants/test2"
+    )
     with patch("adsp_py_common.access.get") as mock_get:
         iss = "https://access-service/auth/realms/core"
         tenant_service = Mock(TenantService)
@@ -63,10 +66,23 @@ def test_get_issuer_request_error():
                 "test",
                 "test_realm",
                 "test@test.co",
-            )
+            ),
+            missing_tenant_id: Tenant(
+                missing_tenant_id,
+                "test2",
+                "test_realm",
+                "test@test.co",
+            ),
         }
         cache = IssuerCache("https://access-service", tenant_service, True)
 
-        mock_get.side_effect = RequestError("Oh noes!")
-        with pytest.raises(RequestError):
-            cache.get_issuer(iss)
+        response = Mock(Response)
+        response.json.return_value = {
+            "issuer": iss,
+            "jwks_uri": "https://access-service/auth/realms/test_realm/certs",
+        }
+        mock_get.side_effect = [response, RequestError("Oh noes!")]
+
+        issuer = cache.get_issuer(iss)
+        assert issuer
+        assert issuer.iss == iss
