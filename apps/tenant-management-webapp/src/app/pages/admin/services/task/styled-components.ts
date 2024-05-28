@@ -272,7 +272,9 @@ export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
   }
 `;
 export const ModalContent = styled.div`
-  background: white;
+  background: var(--goa-color-greyscale-white);
+  margin-top: -23px;
+  padding-top: 23px;
 `;
 
 export const TabletMessage = styled.div`
