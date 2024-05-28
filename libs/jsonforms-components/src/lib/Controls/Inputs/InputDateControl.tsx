@@ -22,16 +22,18 @@ const invalidDateFormat = (scope: string, type: string): JSX.Element => {
   return callout({ message: errMalformedDate(scope, type) });
 };
 
-const reformatDateProps = (props: object): object => {
-  if (props) {
-    if ('min' in props && typeof props.min === 'string') {
-      props['min'] = standardizeDate(props.min);
+// eslint-disable-next-line
+const reformatDateProps = (props: any): any => {
+  const newProps = { ...props };
+  if (newProps) {
+    if (newProps?.min && typeof newProps.min === 'string') {
+      newProps.min = standardizeDate(newProps.min);
     }
-    if ('max' in props && typeof props.max === 'string') {
-      props['max'] = standardizeDate(props.max as string);
+    if (newProps?.max && typeof newProps.max === 'string') {
+      newProps.max = standardizeDate(newProps.max as string);
     }
   }
-  return props;
+  return newProps;
 };
 
 export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
