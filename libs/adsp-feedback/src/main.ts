@@ -101,41 +101,46 @@ class AdspFeedback implements AdspFeedbackApi {
       label: 'Very Difficult',
       rate: 'terrible',
       value: 0,
-      svgDefault: 'assets/feedback/Likert_Default_Very-Difficult.svg',
-      svgActive: 'assets/feedback/Likert_Active_Very-Difficult.svg',
-      svgHover: 'assets/feedback/Likert_Hover_Very-Difficult.svg',
+      svgDefault: 'assets/feedback/Very_Difficult-Default.svg',
+      svgError: 'assets/feedback/Very_Difficult-Error.svg',
+      svgHover: 'assets/feedback/Very_Difficult-Hover.svg',
+      svgClick: 'assets/feedback/Very_Difficult-Click.svg',
     },
     {
       label: 'Difficult',
       rate: 'bad',
       value: 1,
-      svgDefault: 'assets/feedback/Likert_Default_Difficult.svg',
-      svgActive: 'assets/feedback/Likert_Active_Difficult.svg',
-      svgHover: 'assets/feedback/Likert_Hover_Difficult.svg',
+      svgDefault: 'assets/feedback/Difficult-Default.svg',
+      svgError: 'assets/feedback/Difficult-Error.svg',
+      svgHover: 'assets/feedback/Difficult-Hover.svg',
+      svgClick: 'assets/feedback/Difficult-Click.svg',
     },
     {
       label: 'Neutral',
       rate: 'neutral',
       value: 2,
-      svgDefault: 'assets/feedback/Likert_Default_Neutral.svg',
-      svgActive: 'assets/feedback/Likert_Active_Neutral.svg',
-      svgHover: 'assets/feedback/Likert_Active_Neutral.svg',
+      svgDefault: 'assets/feedback/Neutral-Default.svg',
+      svgError: 'assets/feedback/Neutral-Error.svg',
+      svgHover: 'assets/feedback/Neutral-Hover.svg',
+      svgClick: 'assets/feedback/Neutral-Click.svg',
     },
     {
       label: 'Easy',
       rate: 'good',
       value: 3,
-      svgDefault: 'assets/feedback/Likert_Default_Easy.svg',
-      svgActive: 'assets/feedback/Likert_Active_Easy.svg',
-      svgHover: 'assets/feedback/Likert_Hover_Easy.svg',
+      svgDefault: 'assets/feedback/Easy-Default.svg',
+      svgError: 'assets/feedback/Easy-Error.svg',
+      svgHover: 'assets/feedback/Easy-Hover.svg',
+      svgClick: 'assets/feedback/Easy-Click.svg',
     },
     {
       label: 'Very Easy',
       rate: 'delightful',
       value: 4,
-      svgDefault: 'assets/feedback/Likert_Default_Very-Easy.svg',
-      svgActive: 'assets/feedback/Likert_Active_Very-Easy.svg',
-      svgHover: 'assets/feedback/Likert_Hover_Very-Easy.svg',
+      svgDefault: 'assets/feedback/Very_Easy-Default.svg',
+      svgError: 'assets/feedback/Very_Easy-Error.svg',
+      svgHover: 'assets/feedback/Very_Easy-Hover.svg',
+      svgClick: 'assets/feedback/Very_Easy-Click.svg',
     },
   ];
 
@@ -226,20 +231,22 @@ class AdspFeedback implements AdspFeedbackApi {
       const rating = this.ratings[index];
       const images = document.querySelectorAll('.rating');
       const image = images[index] as HTMLImageElement;
-      image.src = isHovering ? rating.svgHover : this.selectedRating === index ? rating.svgActive : rating.svgDefault;
+      image.src = isHovering ? rating.svgHover : this.selectedRating === index ? rating.svgClick : rating.svgDefault;
     };
 
     const selectRating = (index: number) => {
+      updateHover(index, false);
+      const images = document.querySelectorAll('.rating');
+      const ratingNew = this.ratings[index];
+      const imageNew = images[index] as HTMLImageElement;
+      imageNew.src = ratingNew.svgClick;
       if (this.selectedRating !== -1) {
         const rating = this.ratings[this.selectedRating];
-        const images = document.querySelectorAll('.rating');
         const image = images[this.selectedRating] as HTMLImageElement;
         image.src = rating.svgDefault;
       }
       this.selectedRating = index;
-      if (this.selectedRating !== -1) {
-        this.sendButtonRef.value?.removeAttribute('disabled');
-      }
+      this.sendButtonRef.value?.removeAttribute('disabled');
     };
 
     const head = document.querySelector('head');
@@ -405,7 +412,7 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .rating {
             cursor: pointer;
-            transition: transform 0.3s ease-in-out;
+            transition: transform 0.3s ease-in-out color 0.3s ease;
           }
           .rating:hover {
             transform: scale(1.2);
