@@ -196,9 +196,7 @@ export function createForm(
       const { definitionId, applicant: applicantInfo } = req.body;
 
       const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-      const definition =
-        configuration[Object.keys(configuration).find((key) => key.toLowerCase() === definitionId.toLowerCase())] ??
-        null;
+      const definition = configuration[definitionId];
 
       if (!definition) {
         throw new NotFoundError('form definition', definitionId);

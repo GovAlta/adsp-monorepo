@@ -441,7 +441,13 @@ export const formActions = formSlice.actions;
 export const definitionSelector = createSelector(
   (state: AppState) => state.form.definitions,
   (state: AppState) => state.form.selected,
-  (definitions, selected) => (selected ? definitions[selected] : null)
+  (definitions, selected) => {
+    if (selected) {
+      //Need to check case insenstive
+      return definitions[Object.keys(definitions).find((key) => key.toLowerCase() === selected.toLowerCase())];
+    }
+    return null;
+  }
 );
 
 export const formSelector = createSelector(
