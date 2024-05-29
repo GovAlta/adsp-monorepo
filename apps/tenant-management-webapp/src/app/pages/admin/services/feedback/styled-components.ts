@@ -86,6 +86,7 @@ export const MoreDetails = styled.div`
     text-align: left;
     p {
       font: var(--goa-typography-heading-xs);
+      color: var(--goa-color-text-secondary);
       margin-bottom: var(--goa-space-m);
     }
     h2 {
