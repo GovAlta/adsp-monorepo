@@ -26,7 +26,7 @@ export class MongoFormRepository implements FormRepository {
     }
 
     if (criteria?.definitionIdEquals) {
-      //lowercase so that we can ignore case insensitve.
+      //lowercase so that we can lookup definition with case insensitive.
       query.definitionId = criteria?.definitionIdEquals.toLowerCase();
     }
 

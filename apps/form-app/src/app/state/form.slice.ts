@@ -443,7 +443,7 @@ export const definitionSelector = createSelector(
   (state: AppState) => state.form.selected,
   (definitions, selected) => {
     if (selected) {
-      //Need to check case insenstive
+      //Need to check case insensitive
       return definitions[Object.keys(definitions).find((key) => key.toLowerCase() === selected.toLowerCase())];
     }
     return null;
