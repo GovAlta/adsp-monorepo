@@ -28,22 +28,30 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
           users. Feedback comments are anonymized using the PII service and records are stored and available from the
           Value service API.
         </p>
-        <FeedbackSubHeading>Sites section</FeedbackSubHeading>
+        <h2>Sites</h2>
         <p>
           Configure the sites against which feedback is allowed. Enable anonymous feedback for a site so that
           unauthenticated users can send feedback directly to the API, but note that this could reduce the quality of
           feedback.
         </p>
-        <FeedbackSubHeading>Widget section</FeedbackSubHeading>
+        <h2>Feedback widget</h2>
         <p>
           Include the feedback script in your site, and initialize it from javascript. On initialization, the script
           will attach a widget element which includes a badge and form that users can use to send feedback.
         </p>
         <ul className="goa-unordered-list">
-          <li>Include a code example of the &lt;script&gt; with src to feedback API in &lt;head&gt;</li>
+          <li> Code example of the &lt;script&gt; with src to feedback API in &lt;head&gt;</li>
+          <PRE>
+            &lt;head&gt; <br></br> ... <br></br>
+            &lt;script src=&quot;https://feedback-service.adsp.alberta.ca/feedback/v1/script/adspFeedback.js&quot;&gt;
+            &lt;/script&gt;<br></br>&lt;/head&gt;
+          </PRE>
           <li>
-            include a code example of the &lt;script&gt; in body to{' '}
-            <PRE>adspFeedback.initialize(&#123;tenant: &quot;&lt;tenant name&gt;&quot;&#125;)</PRE>
+            Code example of the &lt;script&gt; in body to{' '}
+            <PRE>
+              &lt;body&gt; <br></br> ... <br></br>&lt;script&gt; adspFeedback.initialize(&#123;tenant: &apos;&lt;tenant
+              name&gt;&apos;&#125;)<br></br>&lt;/script&gt;<br></br>&lt;/body&gt;
+            </PRE>
           </li>
         </ul>
       </FeedbackOverviewSection>
