@@ -6,6 +6,7 @@ import { FileMetrics } from './metrics';
 import { FetchFileMetrics } from '@store/file/actions';
 import { OverviewLayout } from '@components/Overview';
 import { useNavigate } from 'react-router-dom';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 interface FileOverviewProps {
   setActiveEdit: (boolean) => void;
@@ -31,19 +32,19 @@ const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps):
   return (
     <OverviewLayout
       description={
-        <section>
+        <>
           <p>
             The file service provides the capability to upload and download files. Consumers are registered with their
             own space (tenant) containing file types that include role based access policy, and can associate files to
             domain records.
           </p>
-          <h2>File types</h2>
+          <NoPaddingH2>File types</NoPaddingH2>
           <div>
             File types describe categories of files and include configuration of roles permitted to access and updated
             files.
           </div>
           <br />
-        </section>
+        </>
       }
       addButton={
         <GoAButton

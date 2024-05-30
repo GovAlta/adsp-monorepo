@@ -26,6 +26,7 @@ import styled from 'styled-components';
 import { selectActionStateStart, selectActionStateCompleted } from '@store/session/selectors';
 import { UPLOAD_FILE } from '@store/file/actions';
 import { LoadMoreWrapper } from '@components/styled-components';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
@@ -171,7 +172,7 @@ const FileList = (): JSX.Element => {
   };
   return (
     <FileTable>
-      <h2>Please upload a file</h2>
+      <NoPaddingH2>Please upload a file</NoPaddingH2>
       <>
         <input
           id="file-uploads"
@@ -228,7 +229,7 @@ const FileList = (): JSX.Element => {
       </GoAButton>
 
       <div className="mt-48">
-        <h2>File filtering</h2>
+        <NoPaddingH2>File filtering</NoPaddingH2>
         <GoAFormItem label="Search file name">
           <GoAInput
             type="text"

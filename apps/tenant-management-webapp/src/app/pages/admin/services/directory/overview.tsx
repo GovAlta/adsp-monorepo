@@ -3,6 +3,7 @@ import React, { FunctionComponent } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { OverviewLayout } from '@components/Overview';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 const Example = styled.div`
   background: #f3f3f3;
@@ -29,7 +30,7 @@ export const DirectoryOverview: FunctionComponent = () => {
               lookup URLs for services. Directory information is public and anonymous frontend applications can read
               this information. Add your own entry so they can be found using the directory.
             </p>
-            <h2>Service metadata</h2>
+            <NoPaddingH2>Service metadata</NoPaddingH2>
             <p>
               For services, the directory will make a GET request at the associated URL to look for additional metadata.
               Return a response body like the following example to provide information about your service.

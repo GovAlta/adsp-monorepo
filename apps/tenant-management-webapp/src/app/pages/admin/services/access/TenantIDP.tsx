@@ -22,6 +22,7 @@ import { characterCheck, validationPattern } from '@lib/validation/checkInput';
 import { DeleteModal } from '@components/DeleteModal';
 import { LoadingIndicatorContainer } from './styled-component';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 export const TenantIdp = (): JSX.Element => {
   const [email, setEmail] = useState('');
@@ -87,7 +88,7 @@ export const TenantIdp = (): JSX.Element => {
 
   return (
     <>
-      <h2>Unexpected error when authenticating with identity provider</h2>
+      <NoPaddingH2>Unexpected error when authenticating with identity provider</NoPaddingH2>
       <p>
         Known Issue - Government of Alberta AD user accounts are deleted and recreated in some cases. In such cases,
         users signing in with SSO account will encounter an identity provider error because their Keycloak account is
