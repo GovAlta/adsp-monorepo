@@ -41,4 +41,5 @@ export const HyperLinkColor = styled.div`
       color: var(--color-primary);
     }
   }
+  padding-bottom: 1.75rem;
 `;

@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 
 import { EventMetrics } from './metrics';
 import { fetchEventMetrics } from '@store/event/actions';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 interface OverviewProps {
   setActiveEdit: (boolean) => void;
@@ -42,7 +43,7 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
           to leverage additional capabilities as side effects through these events. For example, the event log provides
           traceability by recording the sequence of domain events for tenants aside from application components.
         </p>
-        <h2>Event definitions</h2>
+        <NoPaddingH2>Event definitions</NoPaddingH2>
         <p>
           Event definitions are optional metadata descriptions of domain events. If a definition is configured for a
           domain event, the event service will perform schema validation when that event is sent. The definition can be

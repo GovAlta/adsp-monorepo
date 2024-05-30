@@ -27,8 +27,16 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
       onChange={(name: string, value: string) => handleChange(path, value)}
       {...uischema?.options?.componentProps}
     >
-      {enumData.map((enumValue) => {
-        return <GoARadioItem name={enumValue} value={`${enumValue}`} {...appliedUiSchemaOptions} label={enumValue} />;
+      {enumData.map((enumValue, index) => {
+        return (
+          <GoARadioItem
+            key={`list-item-${enumValue}-${index}`}
+            name={enumValue}
+            value={`${enumValue}`}
+            {...appliedUiSchemaOptions}
+            label={enumValue}
+          />
+        );
       })}
     </GoARadioGroup>
   );

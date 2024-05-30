@@ -13,6 +13,7 @@ import styled from 'styled-components';
 import { ContactInformationModalForm } from './editContactInfo';
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { useActionStateCheck } from '@components/Indicator';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -52,7 +53,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   return (
     <section>
       <ContactInfoCss>
-        <h2>
+        <NoPaddingH2>
           <div className="left-float">Contact information </div>
           {hasConfigurationAdminRole ? (
             <div data-testid="edit-contact-info">
@@ -71,7 +72,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
               width={'18px'}
             />
           )}
-        </h2>
+        </NoPaddingH2>
         <p>
           The following contact information is provided to users on the service status application so they know how to
           report service issues.

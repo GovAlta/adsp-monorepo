@@ -110,7 +110,7 @@ export const DispositionItems: FunctionComponent<ActionComponentProps> = ({
                         title="Edit"
                         disabled={!submissionRecords}
                         onClick={() => openModalFunction(disposition)}
-                        testId={`edit-subscription-item-${disposition.name}`}
+                        testId={`edit-disposition-item-${disposition.name}`}
                       />
                       <GoAContextMenuIcon
                         testId="delete-icon"

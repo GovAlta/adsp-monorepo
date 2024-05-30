@@ -597,6 +597,7 @@ class AdspFeedback implements AdspFeedbackApi {
                     <div >
                       <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
                       <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
+
                         <label for="YesOrNo" class="radioButton">
                           <input name="YesOrNo" type="radio" id="yes" value="Yes" />
                           Yes

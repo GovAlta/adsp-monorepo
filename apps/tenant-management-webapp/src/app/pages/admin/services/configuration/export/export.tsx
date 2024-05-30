@@ -18,6 +18,7 @@ import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
 import { ReactComponent as Triangle } from '@assets/icons/triangle.svg';
 import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 import { GoAButton, GoACheckbox, GoAChip, GoAContainer } from '@abgov/react-components-new';
 
@@ -131,12 +132,12 @@ export const ConfigurationExport: FunctionComponent = () => {
 
   return (
     <Exports>
-      <h2>Export</h2>
+      <NoPaddingH2>Export</NoPaddingH2>
       <p>
         As a tenant admin, you can export the configuration to JSON, so that you could save, and potentially import them
         again later.
       </p>
-      <h2 className="header-background">Export configuration list</h2>
+      <NoPaddingH2 className="header-background">Export configuration list</NoPaddingH2>
       {indicator.show && <PageIndicator />}
       {!indicator.show && Object.keys(sortedConfiguration.namespaces).length > 0 && (
         <div className="flex-row ">
