@@ -14,8 +14,21 @@ export const LogoutModal = (): JSX.Element => {
   const dispatch = useDispatch();
   const ref = useRef(null);
 
+  const { refreshTokenExp } = useSelector((state: RootState) => ({
+    refreshTokenExp: state.session?.credentials?.refreshTokenExp,
+  }));
+
+  // If less than 132 seconde left, we will force the user to logout directly.
+  const canRefreshToken = refreshTokenExp ? refreshTokenExp - Date.now() / 1000 - 2.2 * 60 > 0 : undefined;
+
   useEffect(() => {
-    if (isExpired === true && ref.current === null) {
+    if (canRefreshToken === false) {
+      dispatch(TenantLogout());
+    }
+  }, [canRefreshToken]);
+
+  useEffect(() => {
+    if (isExpired === true) {
       ref.current = setInterval(() => {
         setCountdownTime((time) => {
           if (time === 0) {

@@ -15,6 +15,7 @@ import { ReactComponent as Edit } from '@icons/edit.svg';
 import { phoneWrapper } from '@lib/wrappers';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { useActionStateCheck } from '@components/Indicator';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -55,7 +56,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   return (
     <section>
       <ContactInfoCss>
-        <h2>
+        <NoPaddingH2>
           <div className="left-float">Contact information </div>
           {hasConfigurationAdminRole ? (
             <div data-testid="edit-contact-info">
@@ -75,11 +76,11 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
               width={'18px'}
             />
           )}
-        </h2>
-        <span>
+        </NoPaddingH2>
+        <p>
           The following contact information and instructions are provided to your subscribers in the subscription
           management application so they know how to get support for notification related issues.
-        </span>
+        </p>
 
         <Grid>
           <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>

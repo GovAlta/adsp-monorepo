@@ -24,23 +24,17 @@ In the Tenant-Management-Webapp developers can assign one or more these user typ
 
 ### ADSP roles
 
-The ADSP-specific roles needed in order for end-users to be able to access a form are:
+There are several roles that may be required for users to access the form service resources. These can be found under the form-service client in keycloak:
 
-#### urn:ads:platform:form-service
+![](/adsp-monorepo/assets/form-service/form-service-roles.png){: width="600" }
 
-- form-admin
-- form-file-reader
-- form-file-uploader
-- form-support
-- intake-application
+Applicants will need the _intake-application_ role to fill out forms. If the form requires files to be uploaded they will also need:
 
-#### realm-management
+- _form-file-reader_
+- _form-file-uploader_
 
-- query-clients
-- query-groups
-- query-realms
-- query-users
+Additional roles are available for form administrators. Clerks will need the _form-support_ and _form-file-reader_ roles, while assessors will be required to have the _form-admin_ and _form-file-reader_ roles.
 
 #### urn:ads:platform:tenant-service
 
-- tenant-admin
+Currently all users will need the _tenant-admin_ role.

@@ -86,6 +86,7 @@ export const MoreDetails = styled.div`
     text-align: left;
     p {
       font: var(--goa-typography-heading-xs);
+      color: var(--goa-color-text-secondary);
       margin-bottom: var(--goa-space-m);
     }
     h2 {
@@ -115,4 +116,8 @@ export const ProgressWrapper = styled.div`
 
 export const URL = styled.div`
   line-break: anywhere;
+`;
+export const ButtonPadding = styled.div`
+  padding-bottom: var(--goa-space-l);
+  padding-top: var(--goa-space-l);
 `;
