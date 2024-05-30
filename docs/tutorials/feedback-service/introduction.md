@@ -13,7 +13,7 @@ The feedback service gives you a simple means to collect information from end-us
 - Add a call-to-action to the application that, when clicked, pops up a modal with a couple of questions for the end-user to fill in.
 - Save the information collected in an ADSP database.
 
-![](/adsp-monorepo/assets/feedback-service/feedbackWidget.png)
+![](/adsp-monorepo/assets/feedback-service/feedbackWidget.png){: width="400" }
 
 ### Integration
 
@@ -39,7 +39,7 @@ The script creates a global variable called _adspFeedback_. Then, somewhere insi
 
 That's it! The script will attach the _call-to-action_ to right hand side of the page which, when clicked, will pop up the feedback modal:
 
-![](/adsp-monorepo/assets/feedback-service/call-to-action.png)
+![](/adsp-monorepo/assets/feedback-service/call-to-action.png){: width="300" }
 
 ### Configuring the widget
 
