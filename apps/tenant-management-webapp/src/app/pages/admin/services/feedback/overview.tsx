@@ -2,6 +2,7 @@ import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
 import { PRE, FeedbackSubHeading, FeedbackOverviewSection } from '../feedback/styled-components';
 import { useNavigate } from 'react-router-dom';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 interface OverviewProps {
   setActiveEdit: (boolean) => void;
@@ -28,13 +29,13 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
           users. Feedback comments are anonymized using the PII service and records are stored and available from the
           Value service API.
         </p>
-        <h2>Sites</h2>
+        <NoPaddingH2>Sites</NoPaddingH2>
         <p>
           Configure the sites against which feedback is allowed. Enable anonymous feedback for a site so that
           unauthenticated users can send feedback directly to the API, but note that this could reduce the quality of
           feedback.
         </p>
-        <h2>Feedback widget</h2>
+        <NoPaddingH2>Feedback widget</NoPaddingH2>
         <p>
           Include the feedback script in your site, and initialize it from javascript. On initialization, the script
           will attach a widget element which includes a badge and form that users can use to send feedback.
