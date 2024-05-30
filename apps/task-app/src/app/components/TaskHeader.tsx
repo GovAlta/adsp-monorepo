@@ -3,6 +3,7 @@ import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { Task, tenantSelector } from '../state';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 
 interface TaskHeaderProps {
   className?: string;
@@ -27,10 +28,10 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({
       <div className={className}>
         {open ? (
           <>
-            <GoAButton type="tertiary" size="compact" onClick={onClickTasks}>
-              Tasks
-            </GoAButton>
-            <span>/</span>
+            <Link to={`/${tenant.name}/${namespace}/${name}`} onClick={onClickTasks}>
+              Tasks ({namespace}:{name})
+            </Link>
+            <span> /</span>
             <span> {open?.name}</span>
           </>
         ) : (
