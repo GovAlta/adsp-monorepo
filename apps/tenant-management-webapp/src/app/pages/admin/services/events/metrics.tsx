@@ -4,6 +4,7 @@ import { Metrics } from '@components/Metrics';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 const Title = styled.div`
   display: flex;
@@ -17,7 +18,7 @@ export const EventMetrics: FunctionComponent = () => {
   return (
     <section>
       <Title>
-        <h2>Event information</h2>
+        <NoPaddingH2>Event information</NoPaddingH2>
         <p>for week of {moment().format('MMMM Do')}</p>
       </Title>
       <Metrics

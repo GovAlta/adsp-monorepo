@@ -9,6 +9,7 @@ import { fetchAccess, accessReset } from '@store/access/actions';
 import { OverviewLayout } from '@components/Overview';
 import { ExternalLink } from '@components/icons/ExternalLink';
 import { HyperLinkColor } from '@components/styled-components';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 export const Overview = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -67,7 +68,7 @@ export const Overview = (): JSX.Element => {
         <>
           <section id="keycloak-user-info">
             <TitleLinkHeader>
-              <Title>Keycloak user information</Title>
+              <NoPaddingH2>Keycloak user information</NoPaddingH2>
 
               <HyperLinkColor>
                 <ExternalLink link={getKeycloakAdminPortal()} text="Keycloak admin portal" />
