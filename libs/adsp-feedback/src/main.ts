@@ -217,7 +217,7 @@ class AdspFeedback implements AdspFeedbackApi {
       return html`
         <div>
           <img
-            src="${this.selectedRating >= index ? rating.svgActive : rating.svgDefault}"
+            src="${rating.svgDefault}"
             @mouseover="${() => updateHover(index, true)}"
             @mouseout="${() => updateHover(index, false)}"
             @click="${() => selectRating(index)}"
@@ -256,6 +256,9 @@ class AdspFeedback implements AdspFeedbackApi {
         const rating = this.ratings[this.selectedRating];
         const image = images[this.selectedRating] as HTMLImageElement;
         image.src = rating.svgDefault;
+        const texts = document.querySelectorAll('.ratingText');
+        const text = texts[this.selectedRating] as HTMLImageElement;
+        text.style.color = '#333333';
       }
       this.selectedRating = index;
       this.sendButtonRef.value?.removeAttribute('disabled');
@@ -343,6 +346,7 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: row;
             border: 0;
             padding: 0 48px 0 12px;
+            margin-top: 12px;
             justify-content: space-between;
 
             >div >img {
@@ -356,11 +360,14 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-form-comment {
             display: flex;
             flex-direction: column;
-            margin-top: 24px;
+            margin-bottom: 12px;
           }
+          .adsp-fb .adsp-fb-form-comment span{
+            color: var(--color-gray-600);
+          }
+
           .adsp-fb .adsp-fb-form-comment textarea {
             margin-top: 12px;
-            margin-bottom: 12px;
             resize: none;
             min-height: 100px;
             width: 100%;
@@ -435,6 +442,9 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-error {
             visibility: visible;
+          }
+          .radios{
+            margin-top: 12px;
           }
           .rating {
             cursor: pointer;
@@ -542,7 +552,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr />
                   <form class="adsp-fb-form">
-                    <h3>Tell us what your think</h3>
+                    <h3>Tell us what you think</h3>
                     <p>
                       Please help us improve our service by sharing feedback about your experience. This will only take a
                       minute.
@@ -566,23 +576,28 @@ class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr />
                   <form class="adsp-fb-form" >
+
+                  <label for="comment" ><b>How easy was it for you to use this service? <br/></b> </label>
+
                     <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
                       ${this.ratings.map((rating, index) => renderRating(rating, index))}
                     </div>
                     <div class="adsp-fb-form-comment">
                       <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
+
                       <textarea
                         id="comment"
                         ${ref(this.commentRef)}
-                        placeholder="Remember not to include personal information like SIN, password, addresses, etc.  "
+                        placeholder=""
                       ></textarea>
+                      <span>Do not include personal information like SIN, password, addresses, etc.</span>
                     </div>
                     <hr />
                     <br />
-                    <div>
+                    <div >
                       <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
-                      <br />
-                      <div ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
+                      <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
+
                         <label for="YesOrNo" class="radioButton">
                           <input name="YesOrNo" type="radio" id="yes" value="Yes" />
                           Yes
