@@ -136,7 +136,9 @@ export const eventObject = {
 export const dynamicGeneratePayload = (
   tenant: { name: string; realm: string },
   eventDef: EventDefinition,
-  managementUrl: string
+  managementUrl: string,
+  title: string,
+  subtitle: string
 ): Record<string, unknown> => {
   jsf.extend('faker', () => faker);
   jsf.option({
@@ -154,5 +156,7 @@ export const dynamicGeneratePayload = (
     event: { payload: payload },
     tenant,
     managementUrl,
+    title,
+    subtitle,
   };
 };

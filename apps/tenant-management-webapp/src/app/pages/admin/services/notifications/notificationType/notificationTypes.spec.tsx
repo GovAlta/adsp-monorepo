@@ -6,6 +6,7 @@ import '@testing-library/jest-dom';
 
 import { NotificationTypes } from './notificationTypes';
 import { DELETE_NOTIFICATION_TYPE, UPDATE_NOTIFICATION_TYPE } from '@store/notification/actions';
+import { debug } from 'console';
 
 describe('NotificationTypes Page', () => {
   const mockStore = configureStore([]);
@@ -25,6 +26,8 @@ describe('NotificationTypes Page', () => {
               templates: {
                 email: {
                   subject: 'hi',
+                  title: 'title loaded',
+                  subtitle: 'subtitle',
                   body: 'this is a triumph',
                 },
                 bot: {
@@ -50,6 +53,8 @@ describe('NotificationTypes Page', () => {
               templates: {
                 email: {
                   subject: 'diggles',
+                  title: 'title2',
+                  subtitle: 'subtitle2',
                   body: 'Lorem ipsum dolorLorem ipsum dolorLorem ipsum dolorLorem ipsum dolor',
                 },
                 bot: {
@@ -74,7 +79,7 @@ describe('NotificationTypes Page', () => {
               namespace: 'file-service',
               name: 'file-deleted',
               templates: {
-                email: { subject: 'sdd', body: 'sds' },
+                email: { subject: 'sdd', body: 'sds', title: 'title3', subtitle: 'subtitle3' },
               },
             },
           ],
@@ -358,6 +363,23 @@ describe('NotificationTypes Page', () => {
     const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
 
     expect(saveAction).toBeTruthy();
+  });
+  it('edit notification type should have title and subtitle field', async () => {
+    const { getAllByTestId, queryByTestId, queryAllByText } = render(
+      <Provider store={store}>
+        <NotificationTypes />
+      </Provider>
+    );
+
+    const editBtn = getAllByTestId('edit-event')[0];
+    await waitFor(() => {
+      fireEvent.click(editBtn);
+    });
+
+    const titleField = queryByTestId('templated-editor-title');
+    const subtitleField = queryByTestId('templated-editor-subtitle');
+    expect(titleField).toBeTruthy();
+    expect(subtitleField).toBeTruthy();
   });
 
   it('deletes an event', async () => {
