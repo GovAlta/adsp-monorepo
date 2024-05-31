@@ -55,7 +55,7 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({
 export const TaskHeader = styled(TaskHeaderComponent)`
   height: 55px;
   background: white;
-  z-index: 1;
+  z-index: 0;
   > span {
     margin: auto 0 auto 0;
   }
