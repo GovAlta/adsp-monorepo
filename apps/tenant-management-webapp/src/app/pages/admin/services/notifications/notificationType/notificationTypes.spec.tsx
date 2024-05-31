@@ -6,7 +6,6 @@ import '@testing-library/jest-dom';
 
 import { NotificationTypes } from './notificationTypes';
 import { DELETE_NOTIFICATION_TYPE, UPDATE_NOTIFICATION_TYPE } from '@store/notification/actions';
-import { debug } from 'console';
 
 describe('NotificationTypes Page', () => {
   const mockStore = configureStore([]);
