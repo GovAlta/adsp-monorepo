@@ -234,7 +234,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
               type="secondary"
               disabled={!user.isWorker || isExecuting}
               onClick={() => {
-                console.log(`in here`);
                 setShowTaskCancelConfirmation(true);
               }}
             >
