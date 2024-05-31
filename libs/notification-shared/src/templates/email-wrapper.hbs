@@ -140,6 +140,13 @@
         text-align: left;
         line-height: 3rem;
       }
+      #goa-callout-custom .subtitle {
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0em;
+        text-align: left;
+        line-height: 1.5rem;
+      }
       .goa-footer-event {
         background-color: #f1f1f1;
         padding-top: 1.75rem;
@@ -203,12 +210,19 @@
       </div>
       <div id='goa-callout-custom'>
         <div class='title'>
-        {{#if tenant.name}}
+        {{#if title}}
+            {{title}}
+        {{else if tenant.name}}
             {{tenant.name}}
           {{else}}
             Alberta Digital Service Platform
           {{/if}}
         </div>
+        {{#if subtitle}}
+        <div class='subtitle'>
+            {{subtitle}}
+        </div>
+          {{/if}}
 
       </div>
     </header>
