@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { ExternalLink } from '@components/icons/ExternalLink';
 import BetaBadge from '@icons/beta-badge.svg';
-import { DashboardAside, DashboardDiv, HeadingDiv, ListWrapper } from './styled-components';
+import { DashboardAside, DashboardDiv, HeadingDiv, ListWrapper, DashboardMinWidth } from './styled-components';
 import SupportLinks from '@components/SupportLinks';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { serviceVariables } from '../../../../featureFlag';
@@ -125,59 +125,66 @@ const Dashboard = (): JSX.Element => {
       <DashboardDiv>
         <Page>
           <Main>
-            {tenantName && (
-              <>
-                <h1 data-testid="dashboard-title">{tenantName} dashboard</h1>
-                {elementRefs.current.map(
-                  (ref, index) =>
-                    0 === index % 2 && (
-                      <Grid key={index}>
-                        <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
-                          <GoAContainer accent="thin" type="interactive">
-                            <div style={{ height: resetHeight ? 'inherit' : `${fixedHeights[index]}px` }} ref={ref}>
-                              <HeadingDiv>
-                                <h2>
-                                  <Link to={services[index].link}>{services[index].name}</Link>
-                                </h2>
-                                {services[index].beta && (
-                                  <img src={BetaBadge} alt={`${services[index].name} Service`} width={39} height={23} />
-                                )}
-                              </HeadingDiv>
-                              <div>{services[index].description}</div>
-                            </div>
-                          </GoAContainer>
-                        </GridItem>
-
-                        {services[index + 1] && (
-                          <GridItem key={index + 1} md={6} vSpacing={1} hSpacing={0.5}>
+            <DashboardMinWidth>
+              {tenantName && (
+                <>
+                  <h1 data-testid="dashboard-title">{tenantName} dashboard</h1>
+                  {elementRefs.current.map(
+                    (ref, index) =>
+                      0 === index % 2 && (
+                        <Grid key={index}>
+                          <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
                             <GoAContainer accent="thin" type="interactive">
-                              <div
-                                ref={elementRefs.current[index + 1]}
-                                style={{ height: resetHeight ? 'inherit' : `${fixedHeights[index + 1]}px` }}
-                              >
+                              <div style={{ height: resetHeight ? 'inherit' : `${fixedHeights[index]}px` }} ref={ref}>
                                 <HeadingDiv>
                                   <h2>
-                                    <Link to={services[index + 1].link}>{services[index + 1].name}</Link>
+                                    <Link to={services[index].link}>{services[index].name}</Link>
                                   </h2>
-                                  {services[index + 1].beta && (
+                                  {services[index].beta && (
                                     <img
                                       src={BetaBadge}
-                                      alt={`${services[index + 1].name} Service`}
+                                      alt={`${services[index].name} Service`}
                                       width={39}
                                       height={23}
                                     />
                                   )}
                                 </HeadingDiv>
-                                <div>{services[index + 1].description}</div>
+                                <div>{services[index].description}</div>
                               </div>
                             </GoAContainer>
                           </GridItem>
-                        )}
-                      </Grid>
-                    )
-                )}
-              </>
-            )}
+
+                          {services[index + 1] && (
+                            <GridItem key={index + 1} md={6} vSpacing={1} hSpacing={0.5}>
+                              <GoAContainer accent="thin" type="interactive">
+                                <div
+                                  ref={elementRefs.current[index + 1]}
+                                  style={{ height: resetHeight ? 'inherit' : `${fixedHeights[index + 1]}px` }}
+                                >
+                                  <HeadingDiv>
+                                    <h2>
+                                      <Link to={services[index + 1].link}>{services[index + 1].name}</Link>
+                                    </h2>
+                                    {services[index + 1].beta && (
+                                      <img
+                                        src={BetaBadge}
+                                        alt={`${services[index + 1].name} Service`}
+                                        width={39}
+                                        height={23}
+                                      />
+                                    )}
+                                  </HeadingDiv>
+                                  <div>{services[index + 1].description}</div>
+                                </div>
+                              </GoAContainer>
+                            </GridItem>
+                          )}
+                        </Grid>
+                      )
+                  )}
+                </>
+              )}
+            </DashboardMinWidth>
           </Main>
           <DashboardAside>
             <SupportLinks />
