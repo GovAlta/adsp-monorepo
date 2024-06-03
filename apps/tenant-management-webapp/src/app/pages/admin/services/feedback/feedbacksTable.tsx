@@ -14,8 +14,8 @@ export const FeedbackListTable: FunctionComponent<FeedbackTableProps> = ({ feedb
       <DataTable data-testid="feedback-table">
         <thead data-testid="feedback-table-header">
           <tr>
-            <th data-testid="feedback-table-header-submitted-date">Date Submitted</th>
-            <th data-testid="feedback-table-header-correlation-id">Correlation Id</th>
+            <th data-testid="feedback-table-header-submitted-date">Date submitted</th>
+            <th data-testid="feedback-table-header-correlation-id">Correlation ID</th>
             <th data-testid="feedback-table-header-rating">Rating</th>
             <th data-testid="feedback-table-header-action">Action</th>
           </tr>

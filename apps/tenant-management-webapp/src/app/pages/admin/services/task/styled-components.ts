@@ -304,7 +304,6 @@ export const HideTablet = styled.div`
   }
 `;
 export const ButtonPadding = styled.div`
-  // padding-bottom: var(--goa-space-l);
   padding-top: var(--goa-space-l);
 `;
 export const HeaderFont = styled.div`
