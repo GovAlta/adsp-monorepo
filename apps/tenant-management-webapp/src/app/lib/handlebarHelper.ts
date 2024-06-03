@@ -21,5 +21,5 @@ handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }:
 
 // eslint-disable-next-line
 export const generateMessage = (template, data) => {
-  return handlebars.compile(template)(data);
+  return handlebars.compile(template || '')(data);
 };
