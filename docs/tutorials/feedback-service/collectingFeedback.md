@@ -15,7 +15,7 @@ The feedback service gives you a simple means to collect information from end-us
 
 ![](/adsp-monorepo/assets/feedback-service/feedbackWidget.png){: width="400" }
 
-### Integration
+### Integration {#target-integration}
 
 To integrate the service you only need to add a couple of lines of code to your application. First, you must include some javascript inside the head to load the widget:
 
@@ -58,16 +58,16 @@ const getContext = function () {
   return Promise.resolve({ site: <your site>, view: <your view>, correlationId:<an id> });
 };
 
-adspFeedback.initialize({tenant: <your tenant>, site: <your site>, getContext: getContext})
+adspFeedback.initialize({tenant: <your tenant>, getContext: getContext})
 ```
 
-Note: _site_, _getContext_ and its parameters are optional so unless you want to override the site, view or correlationId you can ignore them.
+Note: _getContext_ and its parameters are optional so unless you want to override the site, view or correlationId you can ignore it.
 
 #### Tenant
 
-Normally you would set the tenant in the _adspFeedback.initialize()_ function, as illustrated above. In the special case where you have a multi-tenant application you can set the tenant as a query parameter in the application url, e.g. https://my-app.alberta.ca/start-page?tenant=<tenant name>.
+Normally you would set the tenant in the _adspFeedback.initialize()_ function, as illustrated [above](#target-integration). In the special case where you have a multi-tenant application you can set the tenant as a query parameter in the application url, e.g. https://my-app.alberta.ca/start-page?tenant=<tenant name>.
 
-#### Site
+#### Site {#target-site}
 
 The site defaults to:
 
@@ -75,7 +75,7 @@ The site defaults to:
 `${document.location.protocol}//${document.location.host}`;
 ```
 
-#### View
+#### View {#target-view}
 
 The view defaults to:
 
@@ -83,7 +83,7 @@ The view defaults to:
 document.location.pathname;
 ```
 
-#### CorrelationId
+#### CorrelationId {#target-correlationid}
 
 The correlationId is an optional string parameter that applications can use to correlate the feedback with another entity. For example, if your application requires users to log in you could _use a hash_ of their user id to determine if a user has submitted feedback more than once. Note: It is **important** that a user id is not used directly in the correlation ID, as it would be a violation of privacy.
 
@@ -105,14 +105,25 @@ The intent of the service is to put some protection in to mitigate the risk of D
 
 End users should not enter any information in their feedback that could be used to identify them (PII), in accordance with Alberta's Personal Information Protection Act (PIPA), but not all Albertan's are familiar with it. To ensure that no such information is saved along with the rest of the feedback all comments are run through a redaction algorithm to remove it.
 
-### Accessing feedback
+### Accessing your feedback
 
 Feedback is stored in the ADSP [value service](https://govalta.github.io/adsp-monorepo/services/value-service.html) with namespace : _feedback-service_ and name : _feedback_. You can use the [value service APIs](https://api.adsp-dev.gov.ab.ca/autotest/?urls.primaryName=Value%20service) to retrieve and analyze the data, or you can login to the [ADSP webapp](https://adsp-uat.alberta.ca) to look at the service metrics. The data includes the feedback itself and the context so that you can make constrained queries. For example:
 
 ```
 GET /value/v1/feedback-service/values/feedback
-    & timestampMIN=2024-05-01T00:00:00Z
-    ? timestampMAX=2024-06-03T59:59:59Z
+    ? timestampMIN=2024-05-01T00:00:00Z
+    & timestampMAX=2024-06-03T59:59:59Z
 ```
 
-will result in all the feedback submitted for your tenant between March 5, 2024 and June 3, 2024.
+will result in all the feedback submitted for your tenant between March 5, 2024 and June 3, 2024. You can also retrieve data by:
+
+- correlationId,
+- site,
+- view
+
+using context, e.g.
+
+```
+GET /value/v1/feedback-service/values/feedback
+    ? context={site:'Farmers Market License Application'}
+```
