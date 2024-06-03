@@ -41,16 +41,17 @@ That's it! The script will attach the _call-to-action_ to right hand side of the
 
 ![](/adsp-monorepo/assets/feedback-service/call-to-action.png){: width="300" }
 
-### Configuration & Metadata
+### Configuration & Context
 
-Of course, feedback it not all that useful unless you can identify where it came from. To this end metadata is saved along the the feedback, including:
+Of course, feedback it not all that useful unless you can identify where it came from. To this end some _context_ is saved along the the feedback, including:
 
 - the ADSP tenant,
-- the site and page/view the widget was attached to,
-- an optional, application defined _correlation ID_, and
+- [the site](#target-site)
+- [the view](#target-view),
+- [a _correlationId_](#target-correlationid), and
 - the time of submission.
 
-You can configure the the metadata you want included as follows:
+For the most part the widget defines reasonable defaults for the context, but if required you can configure it as follows:
 
 ```javascript
 const getContext = function () {
@@ -60,7 +61,7 @@ const getContext = function () {
 adspFeedback.initialize({tenant: <your tenant>, site: <your site>, getContext: getContext})
 ```
 
-Note that _getContext_ and its parameters are optional, as the service provides reasonable defaults as described below.
+Note: _site_, _getContext_ and its parameters are optional so unless you want to override the site, view or correlationId you can ignore them.
 
 #### Tenant
 
@@ -74,7 +75,7 @@ The site defaults to:
 `${document.location.protocol}//${document.location.host}`;
 ```
 
-#### view
+#### View
 
 The view defaults to:
 
@@ -82,9 +83,11 @@ The view defaults to:
 document.location.pathname;
 ```
 
-#### correlationId
+#### CorrelationId
 
 The correlationId is an optional string parameter that applications can use to correlate the feedback with another entity. For example, if your application requires users to log in you could _use a hash_ of their user id to determine if a user has submitted feedback more than once. Note: It is **important** that a user id is not used directly in the correlation ID, as it would be a violation of privacy.
+
+The correlationId defaults to _site:view_
 
 ### Security
 
@@ -104,4 +107,12 @@ End users should not enter any information in their feedback that could be used 
 
 ### Accessing feedback
 
-Feedback is stored in the ADSP _value service_.
+Feedback is stored in the ADSP [value service](https://govalta.github.io/adsp-monorepo/services/value-service.html) with namespace : _feedback-service_ and name : _feedback_. You can use the [value service APIs](https://api.adsp-dev.gov.ab.ca/autotest/?urls.primaryName=Value%20service) to retrieve and analyze the data, or you can login to the [ADSP webapp](https://adsp-uat.alberta.ca) to look at the service metrics. The data includes the feedback itself and the context so that you can make constrained queries. For example:
+
+```
+GET /value/v1/feedback-service/values/feedback
+    & timestampMIN=2024-05-01T00:00:00Z
+    ? timestampMAX=2024-06-03T59:59:59Z
+```
+
+will result in all the feedback submitted for your tenant between March 5, 2024 and June 3, 2024.
