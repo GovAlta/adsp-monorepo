@@ -34,11 +34,9 @@ export const TableDiv = styled.div`
   .noPadding {
     padding: 0;
   }
+  margin-top: var(--goa-space-m);
   word-wrap: break-word;
-  div {
-    line-height: 28px;
-    font-weight: 400;
-  }
+
   small {
     font-weight: 400;
     line-height: 20px;

@@ -88,7 +88,7 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
               <h2>Rating = {ratingValue}</h2>
               {feedback.value.comment && (
                 <>
-                  <h2>Additional Comments</h2>
+                  <h2>Additional comments</h2>
                   <span>{feedback.value.comment}</span>
                 </>
               )}
