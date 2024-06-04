@@ -47,6 +47,12 @@ class Common {
     );
   }
 
+  deleteConfirmationModalCancelBtn() {
+    return cy.xpath(
+      '//*[@data-testid="delete-confirmation" and @open="true"]//goa-button[@data-testid="delete-cancel"]'
+    );
+  }
+
   seeTheCodeLink() {
     return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::*//a[contains(text(), "See the code")]');
   }

@@ -635,7 +635,7 @@ When('the user clicks {string} icon for the topic of {string}, {string}', functi
     switch (iconName) {
       case 'eye':
         commentObj.topicEyeIcon(rowNumber).shadow().find('button').click({ force: true });
-        cy.wait(2000);
+        cy.wait(4000);
         break;
       case 'eye-off':
         commentObj.topicEyeOffIcon(rowNumber).shadow().find('button').click({ force: true });
