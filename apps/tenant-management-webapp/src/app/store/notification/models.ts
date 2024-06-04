@@ -47,7 +47,7 @@ export interface Template {
 }
 
 export const baseTemplate = {
-  email: { subject: '', body: '' },
+  email: { subject: '', body: '', title: '', subtitle: '' },
   bot: { subject: '', body: '' },
   sms: { subject: '', body: '' },
   mail: { subject: '', body: '' },
@@ -56,6 +56,8 @@ export const baseTemplate = {
 export interface notifyText {
   subject: string;
   body: string;
+  title?: string;
+  subtitle?: string;
 }
 
 export interface RequestBodyProperties {

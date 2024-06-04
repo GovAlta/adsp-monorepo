@@ -22,11 +22,7 @@ export const TopicListTable = ({ topics, selectedType, onDeleteTopic }: TopicTab
     dispatch(clearComments());
   }, [activeRow, dispatch]);
   return (
-    <>
-      <HeaderFont>
-        <h2>Topic list</h2>
-      </HeaderFont>
-      <TableDiv>
+        <TableDiv>
         <DataTable data-testid="topic-table">
           <thead data-testid="topic-table-header">
             <tr>
@@ -55,6 +51,5 @@ export const TopicListTable = ({ topics, selectedType, onDeleteTopic }: TopicTab
           </tbody>
         </DataTable>
       </TableDiv>
-    </>
   );
 };

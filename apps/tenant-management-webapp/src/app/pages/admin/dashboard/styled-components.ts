@@ -61,3 +61,7 @@ export const ListWrapper = styled.ul`
     margin-bottom: 0.5rem;
   }
 `;
+// 216 (GoAGrid min width) * 2 + 16 * 2 = 464
+export const DashboardMinWidth = styled.div`
+  min-width: 464px;
+`;

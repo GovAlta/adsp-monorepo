@@ -53,6 +53,7 @@ export const EventDetailDate = styled.div`
 
 export const CalendarEventListWrapper = styled.div`
   padding-bottom: var(--goa-space-l);
+  margin-top: var(--goa-space-m);
 `;
 
 export const EventListNameTd = styled.td`
