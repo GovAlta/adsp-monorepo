@@ -37,7 +37,7 @@ The script creates a global variable called _adspFeedback_. Then, somewhere insi
 </body>
 ```
 
-That's it! The script will attach the _call-to-action_ to right hand side of the page which, when clicked, will pop up the feedback modal:
+There are configuration parameters you will want to add to the initialization method, but essentially that's it. The script will attach the _call-to-action_ to right hand side of the page which, when clicked, will pop up the feedback modal:
 
 ![](/adsp-monorepo/assets/feedback-service/call-to-action.png){: width="300" }
 
@@ -82,7 +82,7 @@ For anonymous access you must submit your tenant name directly, as follows:
 </body>
 ```
 
-In the special case where you have a multi-tenant application you can set the tenant as a query parameter in the application url, e.g. https://my-app.alberta.ca/start-page?tenant=<your tenant>.
+In the special case where you have a multi-tenant application you can set the tenant as a query parameter in the application url, e.g. https://my-app.alberta.ca/start-page?tenant=\<your tenant\>.
 
 In addition though, for security purposes, you must explicitly configure your site to allow anonymous access. This can be done when you [register your site](#target-registered-usage), by checking the _Allow anonymous feedback_ checkbox.
 
@@ -105,7 +105,7 @@ const getContext = function () {
 adspFeedback.initialize({getAccessToken: <your function>, getContext: getContext})
 ```
 
-Note: _getContext_ and its parameters are optional so unless you want to override the site, view or correlationId you can ignore it.
+Note: _getContext_ and its parameters are optional so unless you want to override the _site_, _view_ or _correlationId_ you can ignore it.
 
 #### Site {#target-site}
 
@@ -123,9 +123,9 @@ The view defaults to:
 document.location.pathname;
 ```
 
-#### CorrelationId {#target-correlationid}
+#### Correlation ID {#target-correlationid}
 
-The correlationId is an optional string parameter that applications can use to correlate the feedback with another entity. For example, if your application requires users to log in you could _use a hash_ of their user id to determine if a user has submitted feedback more than once. Note: It is **important** that a user id is not used directly in the correlation ID, as it would be a violation of privacy.
+The correlation ID is an optional string parameter that applications can use to correlate the feedback with another entity. For example, if your application requires users to log in you could _use a hash_ of their user id to determine if a user has submitted feedback more than once. Note: It is **important** that a user id is not used directly in the correlation ID, as it would be a violation of privacy.
 
 The correlationId defaults to
 
