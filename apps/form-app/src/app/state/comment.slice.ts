@@ -47,7 +47,7 @@ export const loadTopic = createAsyncThunk(
 
     const { config } = getState() as AppState;
     const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
-
+    // Using comment service is an optional. We will not report error when if the user cannot fetch comments from remote.
     try {
       const token = await getAccessToken();
       const { data } = await axios.get<{ results: (Omit<Topic, 'typeId'> & { type?: TopicType })[] }>(
@@ -63,16 +63,11 @@ export const loadTopic = createAsyncThunk(
       const [topic] = data.results;
 
       return topic;
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        return rejectWithValue({
-          status: err.response?.status,
-          message: err.response?.data?.errorMessage || err.message,
-        });
-      } else {
-        throw err;
-      }
+    } finally {
+      // Using comment service is an optional. We will not report error when if the user cannot fetch comments from remote.
     }
+
+    return null;
   }
 );
 
