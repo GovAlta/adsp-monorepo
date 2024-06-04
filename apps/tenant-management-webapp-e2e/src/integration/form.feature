@@ -25,7 +25,7 @@ Feature: Form
     When the user enters "autotest-formDef", "autotest desc" in Add form definition modal
     And the user clicks Save button in Add form definition modal
     Then the user views form definition editor for "autotest-formDef", "autotest desc"
-    When the user clicks "roles" tab in form definition editor
+    When the user clicks "Roles" tab in form definition editor
     And the user enters "auto-test-role1" as applicant roles, "auto-test-role2" as clerk roles, "empty" as assessor roles
     And the user clicks Save button on form definition editor
     And the user clicks Back button on form definition editor
@@ -33,13 +33,13 @@ Feature: Form
     # Edit and back
     When the user clicks "Edit" button for the form definition of "autotest-formDef", "autotest desc"
     Then the user views form definition editor for "autotest-formDef", "autotest desc"
-    When the user clicks "roles" tab in form definition editor
+    When the user clicks "Roles" tab in form definition editor
     And the user enters "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles
     And the user clicks Back button on form definition editor
     And the user clicks "Don't save" button on unsaved changes modal
     And the user clicks "Edit" button for the form definition of "autotest-formDef", "autotest desc"
     Then the user views form definition editor for "autotest-formDef", "autotest desc"
-    When the user clicks "roles" tab in form definition editor
+    When the user clicks "Roles" tab in form definition editor
     Then the user views "auto-test-role1" as applicant roles, "auto-test-role2" as clerk roles, "empty" as assessor roles in roles tab
     And the user clicks Back button on form definition editor
     # Edit and save
@@ -49,13 +49,13 @@ Feature: Form
     Then the user views Edit definition modal in form definition editor
     When the user enters "autotest-formDef-edited", "autotest desc edited" in Edit definition modal
     And the user clicks Save button in Edit definition modal
-    And the user clicks "roles" tab in form definition editor
+    And the user clicks "Roles" tab in form definition editor
     And the user enters "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles
     And the user clicks Save button on form definition editor
     And the user clicks Back button on form definition editor
     Then the user "views" the form definition of "autotest-formDef-edited", "autotest desc edited"
     When the user clicks "Edit" button for the form definition of "autotest-formDef-edited", "autotest desc edited"
-    And the user clicks "roles" tab in form definition editor
+    And the user clicks "Roles" tab in form definition editor
     Then the user views "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles in roles tab
     And the user clicks Back button on form definition editor
     # Delete
