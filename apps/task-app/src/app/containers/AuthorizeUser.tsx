@@ -11,7 +11,9 @@ import {
   tenantSelector,
   loginUser,
   feedbackSelector,
+  busySelector,
 } from '../state';
+import { LoadingIndicator } from '../components/LoadingIndicator';
 
 interface AuthorizeUserProps {
   roles?: string[];
@@ -26,6 +28,7 @@ export const AuthorizeUser: FunctionComponent<AuthorizeUserProps> = ({ roles, ch
   const [searchParams, _] = useSearchParams();
   const loggedOut = searchParams.get('logout');
   const location = useLocation();
+  const busy = useSelector(busySelector);
 
   const dispatch = useDispatch<AppDispatch>();
   const { initialized, user } = useSelector(userSelector);
@@ -55,6 +58,8 @@ export const AuthorizeUser: FunctionComponent<AuthorizeUserProps> = ({ roles, ch
         </Placeholder>
       </div>
     )
-  ) : // Not initialized placeholder; in this state we don't know yet if there is a logged in user.
-  null;
+  ) : (
+    // Not initialized placeholder; in this state we don't know yet if there is a logged in user.
+    <LoadingIndicator isLoading={busy.initializing || busy.loading} />
+  );
 };
