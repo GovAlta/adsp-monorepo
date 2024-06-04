@@ -26,7 +26,8 @@ export class MongoFormRepository implements FormRepository {
     }
 
     if (criteria?.definitionIdEquals) {
-      query.definitionId = criteria?.definitionIdEquals;
+      //check for case insensitivity.
+      query.definitionId = { $regex: `${criteria?.definitionIdEquals}`, $options: 'i' };
     }
 
     if (criteria?.statusEquals) {

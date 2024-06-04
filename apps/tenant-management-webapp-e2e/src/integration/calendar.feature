@@ -10,7 +10,7 @@ Feature: Calendar
     And the user views the link of See the code for "calendar-service"
     And the user views the link of "Get support" under Support
 
-  #TEST DATA: precreated calendar of "autotest-calendarAccessibility", "DO NOT DELETE", "auto-test-role1"
+  #TEST DATA: precreated calendar of "autotest-accessibility", "DO NOT DELETE", "auto-test-role1"
   @accessibility @regression
   Scenario: As a tenant admin, I can use calendar pages without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
@@ -22,7 +22,7 @@ Feature: Calendar
     When the user clicks Cancel button in Add calendar modal
     Then the user views Calendar tab table header on calendars page
     And no critical or serious accessibility issues on "calendar calendars page"
-    When the user clicks "Edit" button for the calendar of "autotest-calendarAccessibility", "DO NOT DELETE"
+    When the user clicks "Edit" button for the calendar of "autotest-accessibility", "DO NOT DELETE"
     Then the user views Edit calendar modal
     And no critical or serious accessibility issues on "calendar edit calendar modal"
 
@@ -55,3 +55,44 @@ Feature: Calendar
     Then the user views delete "calendar" confirmation modal for "autotest-addcalendar"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the calendar of "autotest-addcalendar", "autotest calendar desc edit"
+
+  #TEST DATA: precreated calendar of "autotest-calendar", "DO NOT DELETE", "auto-test-role1, auto-test-role2"
+  @TEST_CS-2460 @TEST_CS-2477 @TEST_CS-2478 @REQ_CS-1675 @REQ_CS-1677 @REQ_CS-1676 @regression
+  Scenario: As a tenant admin, I can add, edit and delete calendar-events
+    Given a tenant admin user is on calendar service overview page
+    When the user selects "Events" tab for "Calendar"
+    # Add an event
+    And the user selects "autotest-calendar" in Select a calendar on Events page
+    And the user clicks Add Event button on events page
+    Then the user views Add calendar event modal
+    # Invalid name
+    When the user enters "auto-test-1A $" in name field in Add calendar event modal
+    Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" on name in Add calendar event modal
+    # Invalid dates
+    When the user enters "autotest-addEvent", "autotest event desc", "yes", "no", "Today", "10:30 am", "Today", "10:00 am" in calendar event modal
+    And the user clicks Save button in calendar event modal
+    Then the user views the error message of "End of event must be after start of event." on dates in Add calendar event modal
+    # Valid data
+    When the user enters "autotest-addEvent", "autotest event desc", "yes", "no", "Today", "10:30 am", "Today", "10:30 pm" in calendar event modal
+    And the user clicks Save button in calendar event modal
+    Then the user "views" the event of "autotest-addEvent", "Today, 10:30 AM", "Today, 10:30 PM"
+    # Edit event
+    When the user clicks "edit" icon of "autotest-addEvent", "Today, 10:30 AM", "Today, 10:30 PM"
+    Then the user views Edit calendar event modal
+    When the user enters "autotest-editEvent", "autotest event desc edited", "yes", "yes", "Today", "10:30 am", "Today", "10:30 pm" in calendar event modal
+    And the user clicks Cancel button in calendar event modal
+    Then the user "views" the event of "autotest-addEvent", "Today, 10:30 AM", "Today, 10:30 PM"
+    When the user clicks "edit" icon of "autotest-addEvent", "Today, 10:30 AM", "Today, 10:30 PM"
+    Then the user views Edit calendar event modal
+    When the user enters "autotest-editEvent", "autotest event desc edited", "no", "yes", "Today", "10:30 am", "Today", "10:30 pm" in calendar event modal
+    And the user clicks Save button in calendar event modal
+    Then the user "views" the event of "autotest-editEvent", "Today", "Today"
+    # Delete event
+    When the user clicks "delete" icon of "autotest-editEvent", "Today", "Today"
+    Then the user views delete "calendar event" confirmation modal for "autotest-editEvent"
+    When the user clicks Cancel button in delete confirmation modal
+    Then the user "views" the event of "autotest-editEvent", "Today", "Today"
+    When the user clicks "delete" icon of "autotest-editEvent", "Today", "Today"
+    Then the user views delete "calendar event" confirmation modal for "autotest-editEvent"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the event of "autotest-editEvent", "Today", "Today"

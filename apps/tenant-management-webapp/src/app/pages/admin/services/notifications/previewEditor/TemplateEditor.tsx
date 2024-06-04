@@ -4,7 +4,7 @@ import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody 
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
-import { Template } from '@store/notification/models';
+import { Template, baseTemplate } from '@store/notification/models';
 import { SaveFormModal } from '@components/saveModal';
 import { subjectEditorConfig, bodyEditorConfig } from './config';
 import { Tab, Tabs } from '@components/Tabs';
@@ -15,6 +15,8 @@ interface TemplateEditorProps {
   modelOpen: boolean;
   mainTitle: string;
   onSubjectChange: (value: string, channel: string) => void;
+  onTitleChange: (value: string, channel: string) => void;
+  onSubtitleChange: (value: string, channel: string) => void;
   onBodyChange: (value: string, channel: string) => void;
 
   setPreview: (channel: string) => void;
@@ -40,6 +42,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   modelOpen,
   mainTitle,
   onSubjectChange,
+  onTitleChange,
+  onSubtitleChange,
   onBodyChange,
   setPreview,
   templates,
@@ -126,6 +130,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         body: templates[eventKey]?.body,
         label: eventKey,
         key: index,
+        title: templates[eventKey]?.title,
+        subtitle: templates[eventKey]?.subtitle,
         dataTestId: `${eventKey}-radio-button`,
       };
     });
@@ -188,6 +194,34 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   </MonacoDiv>
                 </GoAFormItem>
 
+                <GoAFormItem error={errors['title'] ?? ''} label="Title">
+                  <MonacoDiv data-testid="templated-editor-title">
+                    <MonacoEditor
+                      language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                      data-testid="templated-editor-title"
+                      onChange={(value) => {
+                        onTitleChange(value, item.name);
+                      }}
+                      value={templates[item.name]?.title}
+                      {...subjectEditorConfig}
+                    />
+                  </MonacoDiv>
+                </GoAFormItem>
+
+                <GoAFormItem error={errors['subtitle'] ?? ''} label="Subtitle">
+                  <MonacoDiv data-testid="templated-editor-subtitle">
+                    <MonacoEditor
+                      language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                      data-testid="templated-editor-subtitle"
+                      onChange={(value) => {
+                        onSubtitleChange(value, item.name);
+                      }}
+                      value={templates[item.name]?.subtitle}
+                      {...subjectEditorConfig}
+                    />
+                  </MonacoDiv>
+                </GoAFormItem>
+
                 <GoAFormItem
                   error={errors['body'] ?? ''}
                   helpText={errors['body'] ? '' : bodyEditorHintText}
@@ -216,6 +250,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               if (JSON.stringify(savedTemplates) !== JSON.stringify(templates)) {
                 setSaveModal(true);
               } else {
+                templates = baseTemplate;
                 resetSavedAction();
               }
             }}

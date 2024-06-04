@@ -18,6 +18,8 @@ class AdspFeedback implements AdspFeedbackApi {
   private technicalCommentDivRef: Ref<HTMLFieldSetElement> = createRef();
   private technicalCommentRef: Ref<HTMLTextAreaElement> = createRef();
   private dimRef: Ref<HTMLTextAreaElement> = createRef();
+  private radio1Ref: Ref<HTMLInputElement> = createRef();
+  private radio2Ref: Ref<HTMLInputElement> = createRef();
 
   constructor() {
     const site = `${document.location.protocol}//${document.location.host}`;
@@ -59,6 +61,7 @@ class AdspFeedback implements AdspFeedbackApi {
   }
 
   private closeFeedbackForm() {
+    this.reset();
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'true');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
     this.startRef?.value?.setAttribute('data-show', 'false');
@@ -77,10 +80,8 @@ class AdspFeedback implements AdspFeedbackApi {
     if (event.target instanceof HTMLInputElement && this.feedbackFormRef.value) {
       if (event.target.value.toLowerCase() === 'yes') {
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
-        this.feedbackFormRef.value.style.height = '820px';
       } else {
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
-        this.feedbackFormRef.value.style.height = '600px';
       }
     }
   }
@@ -101,43 +102,65 @@ class AdspFeedback implements AdspFeedbackApi {
       label: 'Very Difficult',
       rate: 'terrible',
       value: 0,
-      svgDefault: 'assets/feedback/Likert_Default_Very-Difficult.svg',
-      svgActive: 'assets/feedback/Likert_Active_Very-Difficult.svg',
-      svgHover: 'assets/feedback/Likert_Hover_Very-Difficult.svg',
+      svgDefault: 'assets/feedback/Very_Difficult-Default.svg',
+      svgError: 'assets/feedback/Very_Difficult-Error.svg',
+      svgHover: 'assets/feedback/Very_Difficult-Hover.svg',
+      svgClick: 'assets/feedback/Very_Difficult-Click.svg',
     },
     {
       label: 'Difficult',
       rate: 'bad',
       value: 1,
-      svgDefault: 'assets/feedback/Likert_Default_Difficult.svg',
-      svgActive: 'assets/feedback/Likert_Active_Difficult.svg',
-      svgHover: 'assets/feedback/Likert_Hover_Difficult.svg',
+      svgDefault: 'assets/feedback/Difficult-Default.svg',
+      svgError: 'assets/feedback/Difficult-Error.svg',
+      svgHover: 'assets/feedback/Difficult-Hover.svg',
+      svgClick: 'assets/feedback/Difficult-Click.svg',
     },
     {
       label: 'Neutral',
       rate: 'neutral',
       value: 2,
-      svgDefault: 'assets/feedback/Likert_Default_Neutral.svg',
-      svgActive: 'assets/feedback/Likert_Active_Neutral.svg',
-      svgHover: 'assets/feedback/Likert_Active_Neutral.svg',
+      svgDefault: 'assets/feedback/Neutral-Default.svg',
+      svgError: 'assets/feedback/Neutral-Error.svg',
+      svgHover: 'assets/feedback/Neutral-Hover.svg',
+      svgClick: 'assets/feedback/Neutral-Click.svg',
     },
     {
       label: 'Easy',
       rate: 'good',
       value: 3,
-      svgDefault: 'assets/feedback/Likert_Default_Easy.svg',
-      svgActive: 'assets/feedback/Likert_Active_Easy.svg',
-      svgHover: 'assets/feedback/Likert_Hover_Easy.svg',
+      svgDefault: 'assets/feedback/Easy-Default.svg',
+      svgError: 'assets/feedback/Easy-Error.svg',
+      svgHover: 'assets/feedback/Easy-Hover.svg',
+      svgClick: 'assets/feedback/Easy-Click.svg',
     },
     {
       label: 'Very Easy',
       rate: 'delightful',
       value: 4,
-      svgDefault: 'assets/feedback/Likert_Default_Very-Easy.svg',
-      svgActive: 'assets/feedback/Likert_Active_Very-Easy.svg',
-      svgHover: 'assets/feedback/Likert_Hover_Very-Easy.svg',
+      svgDefault: 'assets/feedback/Very_Easy-Default.svg',
+      svgError: 'assets/feedback/Very_Easy-Error.svg',
+      svgHover: 'assets/feedback/Very_Easy-Hover.svg',
+      svgClick: 'assets/feedback/Very_Easy-Click.svg',
     },
   ];
+
+  private reset() {
+    this.clearRating(this.selectedRating);
+    this.selectedRating = -1;
+    if (this.commentRef.value) {
+      this.commentRef.value.value = '';
+    }
+    if (this.technicalCommentRef?.value) {
+      this.technicalCommentRef.value.value = '';
+    }
+    if (this.radio1Ref.value) {
+      this.radio1Ref.value.checked = false;
+    }
+    if (this.radio2Ref.value) {
+      this.radio2Ref.value.checked = false;
+    }
+  }
 
   private async sendFeedback() {
     const headers: Record<string, string> = {
@@ -150,12 +173,13 @@ class AdspFeedback implements AdspFeedbackApi {
     }
 
     const context = await this.getContext();
+
     const comment = this.commentRef.value?.value || undefined;
     const technicalIssue = this.technicalCommentRef?.value?.value || undefined;
 
     const rating = this.ratings[this.selectedRating].rate;
     const request: Record<string, unknown> = { context, rating, comment, technicalIssue };
-
+    this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
     if (this.tenant) {
       request.tenant = this.tenant;
     }
@@ -184,6 +208,74 @@ class AdspFeedback implements AdspFeedbackApi {
       }
     }
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private renderRating = (rating: any, index: number) => {
+    return html`
+      <div>
+        <img
+          src="${rating.svgDefault}"
+          @mouseover="${() => this.updateHover(index, true)}"
+          @mouseout="${() => this.updateHover(index, false)}"
+          @click="${() => this.selectRating(index)}"
+          class="rating"
+          alt="${rating.label}"
+        />
+        <p
+          class="ratingText"
+          @mouseover="${() => this.updateHover(index, true)}"
+          @mouseout="${() => this.updateHover(index, false)}"
+          @click="${() => this.selectRating(index)}"
+        >
+          ${rating.label}
+        </p>
+      </div>
+    `;
+  };
+  private updateHover = (index: number, isHovering: boolean) => {
+    const rating = this.ratings[index];
+    const images = document.querySelectorAll('.rating');
+    const image = images[index] as HTMLImageElement;
+    image.src = isHovering ? rating.svgHover : this.selectedRating === index ? rating.svgClick : rating.svgDefault;
+
+    const texts = document.querySelectorAll('.ratingText');
+    const text = texts[index] as HTMLImageElement;
+    text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+  };
+
+  private clearRating = (index: number) => {
+    if (index > 0) {
+      const rating = this.ratings[index];
+      const images = document.querySelectorAll('.rating');
+      const image = images[index] as HTMLImageElement;
+      image.src = rating.svgDefault;
+
+      const texts = document.querySelectorAll('.ratingText');
+      const text = texts[index] as HTMLImageElement;
+      text.style.color = '#333333';
+    }
+  };
+
+  private selectRating = (index: number) => {
+    this.updateHover(index, false);
+    const images = document.querySelectorAll('.rating');
+    const ratingNew = this.ratings[index];
+    const imageNew = images[index] as HTMLImageElement;
+    imageNew.src = ratingNew.svgClick;
+    if (this.selectedRating !== -1) {
+      const rating = this.ratings[this.selectedRating];
+      const image = images[this.selectedRating] as HTMLImageElement;
+      image.src = rating.svgDefault;
+      const texts = document.querySelectorAll('.ratingText');
+      const text = texts[this.selectedRating] as HTMLImageElement;
+      text.style.color = '#333333';
+    }
+    this.selectedRating = index;
+    this.sendButtonRef.value?.removeAttribute('disabled');
+
+    const texts = document.querySelectorAll('.ratingText');
+    const text = texts[index] as HTMLImageElement;
+    text.style.color = '#0081A2';
+  };
 
   public initialize({ apiUrl, tenant, getAccessToken, getContext }: FeedbackOptions) {
     if (apiUrl && typeof apiUrl === 'string') {
@@ -210,37 +302,6 @@ class AdspFeedback implements AdspFeedbackApi {
       this.getContext = getContext;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const renderRating = (rating: any, index: number) => {
-      return html`
-        <img
-          src="${this.selectedRating >= index ? rating.svgActive : rating.svgDefault}"
-          @mouseover="${() => updateHover(index, true)}"
-          @mouseout="${() => updateHover(index, false)}"
-          @click="${() => selectRating(index)}"
-          class="rating"
-          alt="${rating.label}"
-        />
-      `;
-    };
-    const updateHover = (index: number, isHovering: boolean) => {
-      const rating = this.ratings[index];
-      const images = document.querySelectorAll('.rating');
-      const image = images[index] as HTMLImageElement;
-      image.src = isHovering ? rating.svgHover : this.selectedRating === index ? rating.svgActive : rating.svgDefault;
-    };
-
-    const selectRating = (index: number) => {
-      if (this.selectedRating !== -1) {
-        const rating = this.ratings[this.selectedRating];
-        const images = document.querySelectorAll('.rating');
-        const image = images[this.selectedRating] as HTMLImageElement;
-        image.src = rating.svgDefault;
-      }
-      this.selectedRating = index;
-      if (this.selectedRating !== -1) {
-        this.sendButtonRef.value?.removeAttribute('disabled');
-      }
-    };
 
     const head = document.querySelector('head');
     if (head) {
@@ -254,9 +315,6 @@ class AdspFeedback implements AdspFeedbackApi {
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
             z-index: 1000; /* Ensure it overlays other content */
-            display: flex;
-            justify-content: center;
-            align-items: center;
             visibility: hidden;
           }
 
@@ -285,14 +343,15 @@ class AdspFeedback implements AdspFeedbackApi {
             z-index: 2;
             background: #ffffff;
             position: fixed;
-            width: 644px;
-            height: 600px;
-            left: 30%;
+            width: 640px;
+            max-height: 680px;
+            left: 50%;
             top: 10vh;
             bottom: 16px;
             border: 1px solid;
-            overflow: hidden;
+            overflow-y: scroll;
             border-radius: 3px;
+            transform: translateX(-50%);
           }
           .adsp-fb .adsp-fb-start {
             height: 380px;
@@ -303,6 +362,10 @@ class AdspFeedback implements AdspFeedbackApi {
             justify-content: space-between;
             padding-right: 20px;
             padding-top: 1rem;
+
+            > img {
+              cursor: pointer;
+            }
           }
           .adsp-fb .adsp-fb-form {
             display: flex;
@@ -317,26 +380,39 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: row;
             border: 0;
             padding: 0 48px 0 12px;
+            margin-top: 12px;
             justify-content: space-between;
+
+            > div > img {
+              width: 80px;
+            }
+            > div > p {
+              visibility: hidden;
+            }
           }
-          .adsp-fb .adsp-fb-form-rating legend {
-            margin-bottom: 12px;
-          }
+
           .adsp-fb .adsp-fb-form-comment {
             display: flex;
             flex-direction: column;
-            margin-top: 24px;
+            margin-bottom: 12px;
           }
+          .adsp-fb .adsp-fb-form-comment span {
+            color: var(--color-gray-600);
+          }
+
           .adsp-fb .adsp-fb-form-comment textarea {
             margin-top: 12px;
-            margin-bottom: 12px;
             resize: none;
             min-height: 100px;
             width: 100%;
           }
           .adsp-fb .adsp-fb-actions {
+            position: -webkit-sticky;
+            position: sticky;
             display: flex;
+            bottom: 0;
             margin-top: 24px;
+            margin-bottom: 24px;
           }
           .adsp-fb button {
             display: inline-flex;
@@ -404,9 +480,12 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-error {
             visibility: visible;
           }
+          .radios {
+            margin-top: 12px;
+          }
           .rating {
             cursor: pointer;
-            transition: transform 0.3s ease-in-out;
+            transition: transform 0.3s ease-in-out color 0.3s ease;
           }
           .rating:hover {
             transform: scale(1.2);
@@ -427,20 +506,55 @@ class AdspFeedback implements AdspFeedbackApi {
           .successButton {
             margin-top: 24px;
           }
-          @media screen and (max-width: 922px) {
+          @media screen and (max-width: 768px) {
             .adsp-fb div.adsp-fb-form-container {
-              left: 5vh;
             }
           }
-          @media screen and (max-width: 623px) {
+          @media screen and (max-width: 640px) {
             .adsp-fb div.adsp-fb-form-container {
               right: 0;
               top: 0;
               bottom: 0;
-              left: 0;
               border: 0;
+              width: 100%;
+            }
+            .adsp-fb .adsp-fb-actions {
+              position: -webkit-sticky;
+              position: sticky;
+              bottom: 0;
+              flex-direction: column;
+              > button {
+                width: 100%;
+                margin-top: 12px;
+              }
+            }
+            .adsp-fb button.adsp-fb-form-primary {
+              margin-left: 0;
+            }
+            .adsp-fb .adsp-fb-form-rating {
+              flex-direction: column;
+              align-items: left;
+
+              > div {
+                display: flex;
+                flex-direction: row;
+              }
+              > div > img {
+                width: 32px;
+              }
+              > div > p {
+                visibility: visible;
+              }
+              > div > p :hover {
+                color: #004f84;
+              }
+            }
+            .ratingText {
+              padding-top: 12px;
+              cursor: pointer;
             }
           }
+
           @media screen and (max-height: 800px) {
             .adsp-fb .adsp-fb-form-container {
               top: 16px;
@@ -460,7 +574,7 @@ class AdspFeedback implements AdspFeedbackApi {
                 <div ${ref(this.feedbackBadgeRef)} class="adsp-fb-badge" data-show="true" @click=${this.openStartForm}>
                   <span>Feedback</span>
                 </div>
-                </div>
+              </div>
             <div  ${ref(this.dimRef)} class="overlay">
               <div class="adsp-fb">
                 <div ${ref(this.startRef)} class="adsp-fb-form-container adsp-fb-start" data-show="false">
@@ -476,7 +590,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr />
                   <form class="adsp-fb-form">
-                    <h3>Tell us what your think</h3>
+                    <h3>Tell us what you think</h3>
                     <p>
                       Please help us improve our service by sharing feedback about your experience. This will only take a
                       minute.
@@ -500,29 +614,34 @@ class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr />
                   <form class="adsp-fb-form" >
+
+                    <label for="comment" ><b>How easy was it for you to use this service? <br/></b> </label>
+
                     <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
-                      ${this.ratings.map((rating, index) => renderRating(rating, index))}
+                      ${this.ratings.map((rating, index) => this.renderRating(rating, index))}
                     </div>
                     <div class="adsp-fb-form-comment">
                       <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
+
                       <textarea
                         id="comment"
                         ${ref(this.commentRef)}
-                        placeholder="Remember not to include personal information like SIN, password, addresses, etc.  "
+                        placeholder=""
                       ></textarea>
+                      <span>Do not include personal information like SIN, password, addresses, etc.</span>
                     </div>
                     <hr />
                     <br />
-                    <div>
+                    <div >
                       <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
+                      <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
 
-                      <div ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
                         <label for="YesOrNo" class="radioButton">
-                          <input name="YesOrNo" type="radio" id="yes" value="Yes" />
+                          <input name="YesOrNo" type="radio" id="yes" value="Yes" ${ref(this.radio1Ref)}/>
                           Yes
                         </label>
                         <label for="YesOrNo">
-                          <input name="YesOrNo" type="radio" id="no" value="No" />
+                          <input name="YesOrNo" type="radio" id="no" value="No" ${ref(this.radio2Ref)}/>
                           No
                         </label>
                       </div>
@@ -543,27 +662,21 @@ class AdspFeedback implements AdspFeedbackApi {
                       <br />
                     </div>
                     <div>
-                    <p>
-                      The personal information collected is pursuant to section 33(c) of the Freedom of information and
-                      Protection of Privacy Act (RSA 2000, C.F-25).
-                    </p>
-                    <p>
-                      Questions regarding the collection, use and disclosure may be directed to [program area contact info
-                      here].
-                    </p>
-                    <div class="adsp-fb-actions">
-                      <button @click=${this.closeFeedbackForm} type="button">Cancel</button>
-                      <button
-                        ${ref(this.sendButtonRef)}
-                        class="adsp-fb-form-primary"
-                        @click=${this.sendFeedback}
-                        type="button"
-                        disabled
-                      >
-                        Submit
-                      </button>
-                    </div>
+
+
                   </form>
+                  <div class="adsp-fb-actions">
+                  <button @click=${this.closeFeedbackForm} type="button">Cancel</button>
+                  <button
+                    ${ref(this.sendButtonRef)}
+                    class="adsp-fb-form-primary"
+                    @click=${this.sendFeedback}
+                    type="button"
+                    disabled
+                  >
+                    Submit
+                  </button>
+                </div>
                 <div class="adsp-fb-sent adsp-fb-message">
                     <p>Success! <img
                     src="assets/icons/green-circle-checkmark.svg"

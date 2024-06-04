@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { SetSessionExpired, SetSessionWillExpired } from '@store/session/actions';
 import { UpdateAccessToken } from '@store/tenant/actions';
 import { MAX_ALLOWED_IDLE_IN_MINUTE } from '@lib/keycloak';
+import { clearInterval, setInterval } from 'worker-timers';
 
 export const useTokenExpiryCount = () => {
   const { refreshTokenExp } = useSelector((state: RootState) => ({
@@ -15,8 +16,8 @@ export const useTokenExpiryCount = () => {
     let logoutCountdown = null;
 
     if (refreshTokenExp) {
-      // Consider as log out if token will be expired within 3 min.
-      const timeDiffInMin = refreshTokenExp - Date.now() / 1000 - 3 * 60;
+      // Consider as log out if token will be expired within 2 min.
+      const timeDiffInMin = refreshTokenExp - Date.now() / 1000 - 2 * 60;
       logoutCountdown = setInterval(() => {
         dispatch(SetSessionExpired(true));
       }, timeDiffInMin * 1000);

@@ -4,6 +4,7 @@ import { ContactInformation } from './contactInformation/contactInformation';
 import { StatusMetrics } from './metrics';
 import styled from 'styled-components';
 import { OverviewLayout } from '@components/Overview';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 interface StatusOverviewProps {
   setActiveEdit: (boolean) => void;
@@ -29,7 +30,7 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
               Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
-            <h2>Guidelines for choosing a health check endpoint</h2>
+            <NoPaddingH2>Guidelines for choosing a health check endpoint</NoPaddingH2>
             <ol>
               <li>A Health check endpoint needs to be publicly accessible over the internet</li>
               <li>

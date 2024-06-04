@@ -1,28 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { TenantLogout } from '@store/tenant/actions';
+import { clearInterval, setInterval } from 'worker-timers';
+import { UpdateAccessToken } from '@store/tenant/actions';
 
 export const LogoutModal = (): JSX.Element => {
   const { isExpired } = useSelector((state: RootState) => ({
     isExpired: state.session?.isExpired,
   }));
-  const [countdownTime, setCountdownTime] = useState(120);
+  const { refreshTokenExp } = useSelector((state: RootState) => ({
+    refreshTokenExp: state.session?.credentials?.refreshTokenExp,
+  }));
+  const [countdownTime, setCountdownTime] = useState(Math.ceil(refreshTokenExp - Date.now() / 1000));
   const dispatch = useDispatch();
+  const ref = useRef(null);
 
   useEffect(() => {
     if (isExpired === true) {
-      const timer = setInterval(() => {
-        setCountdownTime((time) => {
-          if (time === 0) {
-            clearInterval(timer);
-
+      ref.current = setInterval(() => {
+        setCountdownTime(() => {
+          const timeLeft = Math.ceil(refreshTokenExp - Date.now() / 1000);
+          if (timeLeft <= 1) {
+            clearInterval(ref.current);
             dispatch(TenantLogout());
-            return 0;
-          } else return time - 1;
+          }
+
+          return timeLeft;
         });
       }, 1000);
+    } else {
+      if (ref.current !== null) {
+        clearInterval(ref.current);
+      }
     }
   }, [dispatch, isExpired]);
 
@@ -36,16 +47,7 @@ export const LogoutModal = (): JSX.Element => {
           <GoAButton
             testId="session-continue-button"
             onClick={() => {
-              const tenantRealm = encodeURIComponent(localStorage.getItem('realm'));
-              const idpFromUrl = encodeURIComponent(localStorage.getItem('idpFromUrl'));
-              localStorage.removeItem('realm');
-              if (idpFromUrl === null || idpFromUrl === 'core') {
-                const url = `${tenantRealm}/login`;
-                window.location.replace(url);
-              } else {
-                const url = `${tenantRealm}/login?kc_idp_hint=${idpFromUrl}`;
-                window.location.replace(url);
-              }
+              dispatch(UpdateAccessToken());
             }}
           >
             Continue

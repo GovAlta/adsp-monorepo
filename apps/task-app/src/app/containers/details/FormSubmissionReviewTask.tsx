@@ -39,6 +39,7 @@ import { ajv } from '../../../lib/validations/checkInput';
 import { Element } from './RenderFormReviewFields';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import styled from 'styled-components';
+import { TaskCancelModal } from './TaskCancelModal';
 const PlaceholderDiv = styled.div`
   display: flex;
   flex-direction: column;
@@ -90,6 +91,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const [dispositionReason, setDispositionReason] = useState<string>('');
   const [dispositionStatus, setDispositionStatus] = useState<string>(NO_DISPOSITION_SELECTED.value);
+  const [showTaskCancelConfirmation, setShowTaskCancelConfirmation] = useState(false);
 
   const { errors, validators } = useValidators('dispositionReason', 'dispositionReason', isNotEmptyCheck('Reason'))
     .add('dispositionStatus', 'dispositionStatus', isNotEmptyCheck('Disposition'))
@@ -112,7 +114,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   };
 
   const buttonDisabledForCompleteTask = () => {
-    if (dispositionReason === '' && dispositionStatus === '') return true;
+    if (dispositionReason === '' || dispositionStatus === '') return true;
 
     if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
     if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
@@ -228,7 +230,13 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
               Complete task
             </GoAButton>
-            <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>
+            <GoAButton
+              type="secondary"
+              disabled={!user.isWorker || isExecuting}
+              onClick={() => {
+                setShowTaskCancelConfirmation(true);
+              }}
+            >
               Cancel task
             </GoAButton>
           </>
@@ -245,11 +253,35 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     );
   };
 
+  const renderTaskCancelModal = () => {
+    return (
+      <TaskCancelModal
+        title="Cancel Task"
+        isOpen={showTaskCancelConfirmation}
+        content={
+          <div>
+            <div>
+              Are you sure you wish to cancel <b>{`${task.description}?`}</b>
+              <br />
+            </div>
+          </div>
+        }
+        onYes={() => {
+          onCancel(null);
+          setShowTaskCancelConfirmation(false);
+        }}
+        onNo={() => {
+          setShowTaskCancelConfirmation(false);
+        }}
+      />
+    );
+  };
   return (
     <div>
       {renderFormSubmissionReview()}
       {renderFormDisposition()}
       {renderButtonGroup()}
+      {renderTaskCancelModal()}
     </div>
   );
 };

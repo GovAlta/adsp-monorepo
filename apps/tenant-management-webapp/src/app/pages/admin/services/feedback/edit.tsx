@@ -47,7 +47,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
     'url',
     'url',
     wordMaxLengthCheck(150, 'URL'),
-    characterCheck(validationPattern.validURL),
+    characterCheck(validationPattern.validURLOnlyDomain),
     isNotEmptyCheck('url'),
     duplicateNameCheck(allUrls, 'url')
   ).build();

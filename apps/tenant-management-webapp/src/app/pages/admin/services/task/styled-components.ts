@@ -11,6 +11,7 @@ export const TableDiv = styled.div`
   }
   word-wrap: break-word;
   table-layout: fixed;
+  margin-top: var(--goa-space-m);
   & td:first-child {
     width: 120px;
     overflow-x: hidden;
@@ -272,7 +273,9 @@ export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
   }
 `;
 export const ModalContent = styled.div`
-  background: white;
+  background: var(--goa-color-greyscale-white);
+  margin-top: -23px;
+  padding-top: 23px;
 `;
 
 export const TabletMessage = styled.div`
@@ -301,7 +304,6 @@ export const HideTablet = styled.div`
   }
 `;
 export const ButtonPadding = styled.div`
-  padding-bottom: var(--goa-space-l);
   padding-top: var(--goa-space-l);
 `;
 export const HeaderFont = styled.div`

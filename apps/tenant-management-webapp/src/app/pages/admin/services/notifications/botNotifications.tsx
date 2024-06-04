@@ -1,5 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 interface BotNotificationsProps {
   className?: string;
@@ -8,7 +9,7 @@ interface BotNotificationsProps {
 export const BotNotificationsComponent: FunctionComponent<BotNotificationsProps> = ({ className }) => {
   return (
     <section className={className}>
-      <h2>Bot notifications</h2>
+      <NoPaddingH2>Bot notifications</NoPaddingH2>
       <p>
         Notification service can send Slack or Teams messages using a Bot. Invite the ADSP Notification bot into your
         channel then message it for the subscriber address to use.

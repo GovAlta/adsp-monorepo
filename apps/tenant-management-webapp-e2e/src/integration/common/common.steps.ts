@@ -204,6 +204,17 @@ When('the user clicks Cancel button in delete confirmation modal', function () {
   cy.wait(2000);
 });
 
+When('the user clicks Cancel button in delete confirmation modal', function () {
+  commonObj
+    .deleteConfirmationModalCancelBtn()
+    .shadow()
+    .find('button')
+    .scrollIntoView()
+    .should('be.visible')
+    .click({ force: true });
+  cy.wait(4000); // Wait for the record to be removed from the page
+});
+
 When('the user waits {string} seconds', function (seconds) {
   expect(isNaN(seconds)).to.be.false; // Verify the pass in seconds is a number
   expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hang the test execution

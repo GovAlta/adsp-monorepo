@@ -161,7 +161,6 @@ export const ProgressWrapper = styled.div`
 `;
 
 export const ButtonPadding = styled.div`
-  padding-bottom: var(--goa-space-l);
   padding-top: var(--goa-space-l);
 `;
 
@@ -282,6 +281,7 @@ export const TableDiv = styled.div`
   }
   word-wrap: break-word;
   table-layout: fixed;
+  margin-top: var(--goa-space-m);
   & td:first-child {
     width: 323px;
     overflow-x: hidden;

@@ -37,10 +37,10 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
     ];
     const suffixes = ['th', 'st', 'nd', 'rd'];
     const month = monthNames[date.getUTCMonth()];
-    const day = date.getUTCDate();
-    const year = date.getUTCFullYear();
-    let hours = date.getUTCHours();
-    let minutes = date.getUTCMinutes()!;
+    const day = date.getDate();
+    const year = date.getFullYear();
+    let hours = date.getHours();
+    let minutes = date.getMinutes()!;
     let suffix = suffixes[day % 10] || suffixes[0];
     if (day >= 11 && day <= 13) suffix = 'th';
     minutes = minutes < 10 ? 0 + minutes : minutes;
@@ -85,8 +85,13 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
               <p>
                 Feedback was submitted at a {feedback.context.view} on {submissionDate.formattedDateTime}
               </p>
-              <h2>Additional Comments</h2>
-              <span>{feedback.value.comment}</span>
+              <h2>Rating = {ratingValue}</h2>
+              {feedback.value.comment && (
+                <>
+                  <h2>Additional comments</h2>
+                  <span>{feedback.value.comment}</span>
+                </>
+              )}
 
               {feedback.value.technicalIssue && (
                 <>

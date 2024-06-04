@@ -4,6 +4,7 @@ import { Metrics } from '@components/Metrics';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 const Title = styled.div`
   display: flex;
@@ -17,7 +18,7 @@ export const FileMetrics: FunctionComponent = () => {
   return (
     <section>
       <Title>
-        <h2>File information</h2>
+        <NoPaddingH2>File information</NoPaddingH2>
         <p>for week of {moment().format('MMMM Do')}</p>
       </Title>
       <Metrics
