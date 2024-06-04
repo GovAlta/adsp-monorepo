@@ -184,5 +184,5 @@ using context, e.g.
 
 ```
 GET /value/v1/feedback-service/values/feedback
-    ? context={site:'Farmers Market License Application'}
+    ? context={site:'https://adsp-dev.gov.ab.ca', view: 'admin/services/feedback'}
 ```
