@@ -61,7 +61,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
           <ExternalLink
             testId="feedback-tutorial-link"
             link="https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/collectingFeedback.html"
-            text="feedback service tutorial."
+            text="feedback service tutorial"
           />
         </p>
       </FeedbackOverviewSection>
