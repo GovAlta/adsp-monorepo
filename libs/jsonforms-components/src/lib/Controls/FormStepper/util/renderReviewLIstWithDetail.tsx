@@ -22,7 +22,6 @@ export const renderReviewListWithDetail = (
       const label = resolveLabelFromScope(element.scope);
       const value = elementData[fieldName] ?? '';
 
-      console.log('ListWithDetailValue', value);
       itemData.push([label, value]);
     });
     detailData.push([`${i}`, itemData]);
