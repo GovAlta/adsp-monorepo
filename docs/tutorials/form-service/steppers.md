@@ -1,9 +1,3 @@
----
-title: Steppers
-layout: page
-nav_excluded: true
----
-
 # Form Steppers
 
 Form steppers divide your form into manageable steps, like so:
