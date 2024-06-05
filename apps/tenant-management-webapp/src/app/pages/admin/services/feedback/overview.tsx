@@ -3,6 +3,7 @@ import { GoAButton } from '@abgov/react-components-new';
 import { PRE, FeedbackSubHeading, FeedbackOverviewSection } from '../feedback/styled-components';
 import { useNavigate } from 'react-router-dom';
 import { NoPaddingH2 } from '@components/AppHeader';
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 interface OverviewProps {
   setActiveEdit: (boolean) => void;
@@ -55,6 +56,14 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
             </PRE>
           </li>
         </ul>
+        <p>
+          For more information on integrating the feedback service with your application please see the{' '}
+          <ExternalLink
+            testId="feedback-tutorial-link"
+            link="https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/collectingFeedback.html"
+            text="feedback service tutorial"
+          />
+        </p>
       </FeedbackOverviewSection>
       <GoAButton
         testId="add-feedback"
