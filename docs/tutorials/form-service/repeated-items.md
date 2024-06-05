@@ -1,5 +1,6 @@
 ---
 layout: page
+parent: building-forms
 nav_excluded: true
 ---
 
