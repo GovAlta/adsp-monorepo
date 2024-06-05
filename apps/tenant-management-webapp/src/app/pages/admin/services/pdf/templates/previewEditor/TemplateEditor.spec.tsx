@@ -34,6 +34,20 @@ describe('ScriptEditor Component', () => {
           variables: '{\n      "service" : { "name" : "My Serrvice", "protection" : "Protected B" }}',
         },
       },
+      corePdfTemplates: {
+        'core-pdf-template': {
+          id: 'core-pdf-template',
+          name: 'A file server test 124  rthrtsd',
+          description: 'my pdf templates 13',
+          template: '<img src="{{fileId "1e98daea-08a9-4ff9-9b43-e85dda794f9e"}}" />r',
+          startWithDefault: true,
+          additionalStyles:
+            '<style>\n/*4\n * The CSS tab is useful for CSS that applies throughout your template  {\n  clear: both;\n}\n</style>\n',
+          header: '<img src="{{ fileId "bbf09e8a-26ad-4bc8-9636-1fdc2fc223f0"}}" />',
+          footer: '<div>footer</div>',
+          variables: '{\n      "service" : { "name" : "My Serrvice", "protection" : "Protected B" }}',
+        },
+      },
       metrics: {
         pdfGenerated: 0,
         pdfFailed: 0,

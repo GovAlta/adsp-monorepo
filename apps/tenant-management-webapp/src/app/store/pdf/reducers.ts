@@ -13,11 +13,13 @@ import {
   SET_PDF_DISPLAY_FILE_ID,
   UPDATE_JOBS,
   UPDATE_TEMP_TEMPLATE,
+  FETCH_CORE_PDF_TEMPLATES_SUCCESS_ACTION,
 } from './action';
 import { PdfState } from './model';
 
 export const defaultState: PdfState = {
   pdfTemplates: {},
+  corePdfTemplates: {},
   metrics: {},
   stream: [],
   jobs: [],
@@ -37,6 +39,11 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       return {
         ...state,
         pdfTemplates: action.payload,
+      };
+    case FETCH_CORE_PDF_TEMPLATES_SUCCESS_ACTION:
+      return {
+        ...state,
+        corePdfTemplates: action.payload,
       };
     case UPDATE_TEMP_TEMPLATE:
       //Intentionally don't want to cause an immediate refresh on update, as it refreshed the preview pane on text input

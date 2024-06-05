@@ -55,7 +55,7 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
   );
 };
 
-export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => {
+export const TemplateViewer = ({ errors }: TemplateEditorProps): JSX.Element => {
   const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();
@@ -182,26 +182,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
       <PDFTitle>PDF / Template Editor</PDFTitle>
       <hr />
 
-      {pdfTemplate && <PDFConfigForm template={pdfTemplate} />}
+      {pdfTemplate && <PDFConfigForm template={pdfTemplate} isEdit={false} />}
       <GoAFormItem label="">
         <Tabs activeIndex={0}>
-          <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
-            <GoAFormItem error={errors?.header ?? ''} label="">
-              <MonacoDivBody style={{ height: monacoHeight }}>
-                {pdfTemplate && (
-                  <MonacoEditor
-                    language={'handlebars'}
-                    value={tmpTemplate?.header}
-                    data-testid="templateForm-header"
-                    onChange={(value) => {
-                      setTmpTemplate({ ...tmpTemplate, header: value });
-                    }}
-                    {...bodyEditorConfig}
-                  />
-                )}
-              </MonacoDivBody>
-            </GoAFormItem>
-          </Tab>
           <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
             <GoAFormItem error={errors?.body ?? null} label="">
               <MonacoDivBody style={{ height: monacoHeight }}>
@@ -217,21 +200,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
               </MonacoDivBody>
             </GoAFormItem>
           </Tab>
-          <Tab testId={`pdf-edit-footer`} label={<PdfEditorLabelWrapper>Footer</PdfEditorLabelWrapper>}>
-            <GoAFormItem error={errors?.footer ?? ''} label="">
-              <MonacoDivBody style={{ height: monacoHeight }}>
-                <MonacoEditor
-                  language={'handlebars'}
-                  value={tmpTemplate?.footer}
-                  data-testid="templateForm-footer"
-                  onChange={(value) => {
-                    setTmpTemplate({ ...tmpTemplate, footer: value });
-                  }}
-                  {...bodyEditorConfig}
-                />
-              </MonacoDivBody>
-            </GoAFormItem>
-          </Tab>
+
           <Tab testId={`pdf-edit-css`} label={<PdfEditorLabelWrapper>CSS</PdfEditorLabelWrapper>}>
             <GoAFormItem error={errors?.body ?? null} label="">
               <MonacoDivBody style={{ height: monacoHeight }}>
@@ -242,32 +211,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   onChange={(value) => {
                     setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
                   }}
-                  {...bodyEditorConfig}
-                />
-              </MonacoDivBody>
-            </GoAFormItem>
-          </Tab>
-          <Tab testId={`pdf-test-generator`} label={<PdfEditorLabelWrapper>Test data</PdfEditorLabelWrapper>}>
-            <GoAFormItem error={errors?.body ?? EditorError?.testData ?? null} label="">
-              <MonacoDivBody style={{ height: monacoHeight }}>
-                <MonacoEditor
-                  data-testid="form-schema"
-                  value={tmpTemplate?.variables}
-                  onChange={(value) => {
-                    setTmpTemplate({ ...tmpTemplate, variables: value });
-                  }}
-                  onValidate={(makers) => {
-                    if (makers.length !== 0) {
-                      setEditorError({
-                        testData: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                      });
-                    } else {
-                      setEditorError({
-                        testData: null,
-                      });
-                    }
-                  }}
-                  language="json"
                   {...bodyEditorConfig}
                 />
               </MonacoDivBody>
@@ -298,17 +241,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
         <EditTemplateActions>
           <PdfEditActionLayout>
             <GoAButtonGroup alignment="start">
-              <GoAButton
-                disabled={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
-                onClick={() => {
-                  setCustomIndicator(true);
-                  savePdfTemplate(tmpTemplate);
-                }}
-                type="primary"
-                testId="template-form-save"
-              >
-                Save
-              </GoAButton>
               <GoAButton
                 onClick={() => {
                   if (isPDFUpdated(tmpTemplate, pdfTemplate)) {

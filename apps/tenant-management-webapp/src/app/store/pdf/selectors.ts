@@ -8,3 +8,10 @@ export const selectPdfTemplateById = createSelector(
     return templates[id];
   }
 );
+export const selectCorePdfTemplateById = createSelector(
+  (state: RootState) => state.pdf?.corePdfTemplates,
+  (_, id) => id,
+  (templates, id) => {
+    return templates[id];
+  }
+);

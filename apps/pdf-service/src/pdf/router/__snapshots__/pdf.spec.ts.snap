@@ -1,5 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`pdf generatePdf can generate core pdf 1`] = `
+{
+  "id": "job1",
+  "result": null,
+  "status": undefined,
+  "urn": "urn:ads:platform:pdf-service:v1:/jobs/job1",
+}
+`;
+
 exports[`pdf generatePdf can generate pdf 1`] = `
 {
   "id": "job1",
