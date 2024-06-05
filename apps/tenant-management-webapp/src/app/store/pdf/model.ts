@@ -51,7 +51,6 @@ export interface PdfGenerationPayload {
   templateId: string;
   data: Record<string, SchemaType>;
   fileName: string;
-  formId?: string;
 }
 
 interface SocketChannel {
