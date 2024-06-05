@@ -13,7 +13,9 @@ The feedback service gives you a simple means to collect information from end-us
 - Add a call-to-action to the application that, when clicked, pops up a modal with a couple of questions for the end-user to fill in.
 - Save the information collected in an ADSP database.
 
-![](/adsp-monorepo/assets/feedback-service/feedbackWidget.png){: width="400" }
+<p align='center' with='100%'>
+  <img src='/adsp-monorepo/assets/feedback-service/feedbackWidget.png' width='400px'/>
+</p>
 
 ## Application Integration {#target-integration}
 
@@ -184,5 +186,5 @@ using context, e.g.
 
 ```
 GET /value/v1/feedback-service/values/feedback
-    ? context={site:'https://adsp-dev.gov.ab.ca', view: 'admin/services/feedback'}
+    ? context={site:'https://adsp-dev.gov.ab.ca', view: '/admin/services/feedback'}
 ```
