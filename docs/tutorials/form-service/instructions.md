@@ -2,7 +2,7 @@
 layout: page
 parent: Form Service
 grand_parent: Tutorials
-nav_excluded: true
+nav_exclude: true
 ---
 
 ## Adding Instructions
