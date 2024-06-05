@@ -1,5 +1,4 @@
 ---
-title: The Form Editor
 layout: page
 nav_excluded: true
 ---
