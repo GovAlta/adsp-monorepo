@@ -41,7 +41,9 @@ The script creates a global variable called _adspFeedback_. Then, somewhere insi
 
 There are configuration parameters you will want to add to the initialization method, but essentially that's it. The script will attach the _call-to-action_ to right hand side of the page which, when clicked, will pop up the feedback modal:
 
-![](/adsp-monorepo/assets/feedback-service/call-to-action.png){: width="300" }
+<p align='center' with='100%'>
+  <img src='/adsp-monorepo/assets/feedback-service/call-to-action.png' width='300px'/>
+</p>
 
 ## Configuration
 
@@ -148,7 +150,9 @@ There are several ways ADSP has addressed security concerns regarding use of the
 
 As the widget is implemented in javascript and accessible through the browser it would be easy enough for anyone to try to use it for their own nefarious purposes, such as spam or DNS attacks. For this reason the service will only work with registered sites. To register your site, login to the ADSP website, select the feedback service, then the _Sites_ tab, and click the _Register site_ button.
 
-![](/adsp-monorepo/assets/feedback-service/registerSite.png){: width="300" }
+<p align='center' with='100%'>
+  <img src='/adsp-monorepo/assets/feedback-service/registerSite.png' width='300px'/>
+</p>
 
 #### Sub-resource Integrity (SRI)
 
