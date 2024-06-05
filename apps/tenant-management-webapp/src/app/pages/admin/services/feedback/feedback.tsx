@@ -34,7 +34,7 @@ export const Feedback: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideLinks serviceName="feedback" />
+        <AsideLinks serviceName="feedback" feedbackTutorialLink={true} />
       </Aside>
     </Page>
   );
