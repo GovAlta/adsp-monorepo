@@ -7,6 +7,8 @@ export interface FeedbackContext {
 
 export interface FeedbackOptions {
   tenant?: string;
+  name?: string;
+  email?: string;
   site?: string;
   apiUrl?: string;
   getAccessToken?: () => Promise<string>;
