@@ -1,5 +1,4 @@
 ---
-title: Adding Instructions
 layout: page
 nav_excluded: true
 ---
