@@ -343,9 +343,12 @@ class AdspFeedback implements AdspFeedbackApi {
     if (typeof getContext === 'function') {
       this.getContext = getContext;
     }
-
-    this.name = name;
-    this.email = email;
+    if (this.name) {
+      this.name = name;
+    }
+    if (this.email) {
+      this.email = email;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const head = document.querySelector('head');
@@ -392,9 +395,7 @@ class AdspFeedback implements AdspFeedbackApi {
             max-height: 680px;
             left: 50%;
             top: 10vh;
-            bottom: 16px;
             border: 1px solid;
-            overflow-y: scroll;
             border-radius: 3px;
             transform: translateX(-50%);
           }
@@ -416,9 +417,17 @@ class AdspFeedback implements AdspFeedbackApi {
             display: flex;
             box-sizing: border-box;
             flex-direction: column;
-            height: 100%;
             padding: 24px 24px;
             transition: transform 100ms;
+            height: 100%;
+            justify-content: space-between;
+          }
+          .adsp-fb .adsp-fb-content {
+            max-height: 375px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            flex: 1;
+            padding-right: 16px;
           }
           .adsp-fb .adsp-fb-form-rating {
             display: flex;
@@ -452,14 +461,12 @@ class AdspFeedback implements AdspFeedbackApi {
             width: 100%;
           }
           .adsp-fb .adsp-fb-actions {
-            position: -webkit-sticky;
-            position: sticky;
             display: flex;
             bottom: 0;
-            padding-bottom: 24px;
+            padding-bottom: 48px;
             padding-right: 24px;
             margin-top: 24px;
-            margin-bottom: 24px;
+            margin-bottom: 48px;
           }
           .adsp-fb button {
             display: inline-flex;
@@ -516,9 +523,11 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
             transform: translateX(-100%);
+            visibility: hidden;
           }
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
             transform: translateX(-100%);
+            visibility: hidden;
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             visibility: visible;
@@ -661,49 +670,63 @@ class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr />
                   <form class="adsp-fb-form">
-                    <label for="comment"
-                      ><b>How easy was it for you to use this service? <br /></b>
-                    </label>
-                    <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
-                      ${this.ratings.map((rating, index) => this.renderRating(rating, index))}
-                    </div>
-                    <div class="adsp-fb-form-comment">
-                      <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
-                      <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
-                      <span>Do not include personal information like SIN, password, addresses, etc.</span>
-                    </div>
-                    <hr />
-                    <br />
-                    <div>
-                      <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
-                      <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
-                        <label for="YesOrNo" class="radioButton">
-                          <input name="YesOrNo" type="radio" id="yes" value="Yes" ${ref(this.radio1Ref)} />
-                          Yes
-                        </label>
-                        <label for="YesOrNo">
-                          <input name="YesOrNo" type="radio" id="no" value="No" ${ref(this.radio2Ref)} />
-                          No
-                        </label>
+                    <div class="adsp-fb-content">
+                      <label for="comment"
+                        ><b>How easy was it for you to use this service? <br /></b>
+                      </label>
+                      <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
+                        ${this.ratings.map((rating, index) => this.renderRating(rating, index))}
                       </div>
-                      <div ${ref(this.technicalCommentDivRef)}>
-                        <div class="adsp-fb-form-comment">
-                          <label for="comment"
-                            ><b
-                              >Please describe the issue in detail. Mention the page or step where you experienced the
-                              issue, if applicable.</b
-                            >
+                      <div class="adsp-fb-form-comment">
+                        <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
+                        <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
+                        <span>Do not include personal information like SIN, password, addresses, etc.</span>
+                      </div>
+                      <hr />
+                      <br />
+                      <div>
+                        <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
+                        <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
+                          <label for="YesOrNo" class="radioButton">
+                            <input name="YesOrNo" type="radio" id="yes" value="Yes" ${ref(this.radio1Ref)} />
+                            Yes
                           </label>
-                          <textarea
-                            ${ref(this.technicalCommentRef)}
-                            id="technicalComment"
-                            placeholder="Remember not to include personal information like SIN, password, addresses, etc.  "
-                          ></textarea>
+                          <label for="YesOrNo">
+                            <input name="YesOrNo" type="radio" id="no" value="No" ${ref(this.radio2Ref)} />
+                            No
+                          </label>
                         </div>
-                        <br />
+                        <div ${ref(this.technicalCommentDivRef)}>
+                          <div class="adsp-fb-form-comment">
+                            <label for="comment"
+                              ><b
+                                >Please describe the issue in detail. Mention the page or step where you experienced the
+                                issue, if applicable.</b
+                              >
+                            </label>
+                            <textarea
+                              ${ref(this.technicalCommentRef)}
+                              id="technicalComment"
+                              placeholder="Remember not to include personal information like SIN, password, addresses, etc.  "
+                            ></textarea>
+                          </div>
+                          <br />
+                        </div>
                       </div>
                     </div>
-                    <div>
+                    <div class=" adsp-fb-actions">
+                      <button @click=${this.closeFeedbackForm} type="button">Cancel</button>
+                      <button
+                        ${ref(this.sendButtonRef)}
+                        class="adsp-fb-form-primary"
+                        @click=${this.sendFeedback}
+                        type="button"
+                        disabled
+                      >
+                        Submit
+                      </button>
+                    </div>
+
                     <div class="adsp-fb-sent adsp-fb-message">
                       <p>
                         Success!
@@ -742,20 +765,6 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                     </div>
                   </form>
-                  <div class="adsp-fb-actions">
-                    <button @click=${this.closeFeedbackForm} type="button">Cancel</button>
-                    <button
-                      ${ref(this.sendButtonRef)}
-                      class="adsp-fb-form-primary"
-                      @click=${this.sendFeedback}
-                      type="button"
-                      disabled
-                    >
-                      Submit
-                    </button>
-                  </div>
-
-                  </div>
                 </div>
               </div>
             </div>
