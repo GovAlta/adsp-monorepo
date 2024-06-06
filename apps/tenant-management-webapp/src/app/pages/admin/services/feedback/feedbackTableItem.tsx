@@ -23,7 +23,7 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
   function formatDate(dateString) {
     const date = new Date(dateString);
     const formattedDate = moment(date).format('MMMM Do, YYYY');
-    const formattedDateTime = moment(date).format('h:mm a');
+    const formattedDateTime = moment(date).format('h:mm A');
     return { formattedDate, formattedDateTime };
   }
   const submissionDate = formatDate(feedback.timestamp);
@@ -32,8 +32,8 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
   return (
     <>
       <tr>
-        <td data-testid={`feedback-list-created-on_${feedback.correlationId}`}>{submissionDate.formattedDate}</td>
-        <td data-testid={`feedback-list-${feedback.correlationId}`}>
+        <td data-testid={`feedback-list-created-on_${id}`}>{submissionDate.formattedDate}</td>
+        <td data-testid={`feedback-list-${id}`}>
           <URL>{feedback.context.view}</URL>
         </td>
         <td data-testid={`feedback-list-rating_${id}`}>{ratingValue}</td>
@@ -58,7 +58,7 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
           >
             <MoreDetails data-testId="moredetails">
               <p>
-                Feedback was submitted for view '{feedback.context.view}' on {submissionDate.formattedDate}{' '}
+                Feedback was submitted for '{feedback.context.view}' on {submissionDate.formattedDate}{' '}
                 {submissionDate.formattedDateTime}
               </p>
               <h2>Rating</h2>
