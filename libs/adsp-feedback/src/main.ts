@@ -2,6 +2,36 @@ import { html, render } from 'lit-html';
 import { ref, createRef, Ref } from 'lit-html/directives/ref.js';
 import { AdspFeedback as AdspFeedbackApi, FeedbackContext, FeedbackOptions } from './types';
 
+import blueUnderLineSvg from './assets/Blue-Underline.svg';
+import closeOutlineSvg from './assets/close-outline.svg';
+import errorIconSvg from './assets/Error_Icon.svg';
+import greenCircleCheckmarkSvg from './assets/green-circle-checkmark.svg';
+
+import veryDifficultSvgDefault from './assets/Very_Difficult-Default.svg';
+import veryDifficultSvgError from './assets/Very_Difficult-Error.svg';
+import veryDifficultSvgHover from './assets/Very_Difficult-Hover.svg';
+import veryDifficultSvgClick from './assets/Very_Difficult-Click.svg';
+
+import difficultSvgDefault from './assets/Difficult-Default.svg';
+import difficultSvgError from './assets/Difficult-Error.svg';
+import difficultSvgHover from './assets/Difficult-Hover.svg';
+import difficultSvgClick from './assets/Difficult-Click.svg';
+
+import neutralSvgDefault from './assets/Neutral-Default.svg';
+import neutralSvgError from './assets/Neutral-Error.svg';
+import neutralSvgHover from './assets/Neutral-Hover.svg';
+import neutralSvgClick from './assets/Neutral-Click.svg';
+
+import easySvgDefault from './assets/Easy-Default.svg';
+import easySvgError from './assets/Easy-Error.svg';
+import easySvgHover from './assets/Easy-Hover.svg';
+import easySvgClick from './assets/Easy-Click.svg';
+
+import veryEasySvgDefault from './assets/Very_Easy-Default.svg';
+import veryEasySvgError from './assets/Very_Easy-Error.svg';
+import veryEasySvgHover from './assets/Very_Easy-Hover.svg';
+import veryEasySvgClick from './assets/Very_Easy-Click.svg';
+
 class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
   private apiUrl?: URL;
@@ -113,46 +143,46 @@ class AdspFeedback implements AdspFeedbackApi {
       label: 'Very Difficult',
       rate: 'terrible',
       value: 0,
-      svgDefault: 'assets/feedback/Very_Difficult-Default.svg',
-      svgError: 'assets/feedback/Very_Difficult-Error.svg',
-      svgHover: 'assets/feedback/Very_Difficult-Hover.svg',
-      svgClick: 'assets/feedback/Very_Difficult-Click.svg',
+      svgDefault: veryDifficultSvgDefault,
+      svgError: veryDifficultSvgError,
+      svgHover: veryDifficultSvgHover,
+      svgClick: veryDifficultSvgClick,
     },
     {
       label: 'Difficult',
       rate: 'bad',
       value: 1,
-      svgDefault: 'assets/feedback/Difficult-Default.svg',
-      svgError: 'assets/feedback/Difficult-Error.svg',
-      svgHover: 'assets/feedback/Difficult-Hover.svg',
-      svgClick: 'assets/feedback/Difficult-Click.svg',
+      svgDefault: difficultSvgDefault,
+      svgError: difficultSvgError,
+      svgHover: difficultSvgHover,
+      svgClick: difficultSvgClick,
     },
     {
       label: 'Neutral',
       rate: 'neutral',
       value: 2,
-      svgDefault: 'assets/feedback/Neutral-Default.svg',
-      svgError: 'assets/feedback/Neutral-Error.svg',
-      svgHover: 'assets/feedback/Neutral-Hover.svg',
-      svgClick: 'assets/feedback/Neutral-Click.svg',
+      svgDefault: neutralSvgDefault,
+      svgError: neutralSvgError,
+      svgHover: neutralSvgHover,
+      svgClick: neutralSvgClick,
     },
     {
       label: 'Easy',
       rate: 'good',
       value: 3,
-      svgDefault: 'assets/feedback/Easy-Default.svg',
-      svgError: 'assets/feedback/Easy-Error.svg',
-      svgHover: 'assets/feedback/Easy-Hover.svg',
-      svgClick: 'assets/feedback/Easy-Click.svg',
+      svgDefault: easySvgDefault,
+      svgError: easySvgError,
+      svgHover: easySvgHover,
+      svgClick: easySvgClick,
     },
     {
       label: 'Very Easy',
       rate: 'delightful',
       value: 4,
-      svgDefault: 'assets/feedback/Very_Easy-Default.svg',
-      svgError: 'assets/feedback/Very_Easy-Error.svg',
-      svgHover: 'assets/feedback/Very_Easy-Hover.svg',
-      svgClick: 'assets/feedback/Very_Easy-Click.svg',
+      svgDefault: veryEasySvgDefault,
+      svgError: veryEasySvgError,
+      svgHover: veryEasySvgHover,
+      svgClick: veryEasySvgClick,
     },
   ];
 
@@ -598,7 +628,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   <div class="adsp-fb-container-heading">
                     <h2>Give feedback</h2>
                     <img
-                      src="assets/icons/close-outline.svg"
+                      src=${closeOutlineSvg}
                       width="30px"
                       height="30px"
                       @click="${this.closeFeedbackForm}"
@@ -622,7 +652,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   <div class="adsp-fb-container-heading">
                     <h2>Give feedback</h2>
                     <img
-                      src="assets/icons/close-outline.svg"
+                      src=${closeOutlineSvg}
                       width="30px"
                       height="30px"
                       @click="${this.closeFeedbackForm}"
@@ -677,7 +707,7 @@ class AdspFeedback implements AdspFeedbackApi {
                     <div class="adsp-fb-sent adsp-fb-message">
                       <p>
                         Success!
-                        <img src="assets/icons/green-circle-checkmark.svg" width="18px" height="18px" alt="Success" />
+                        <img src=${greenCircleCheckmarkSvg} width="18px" height="18px" alt="Success" />
                       </p>
                       <p>
                         Thank you for providing your feedback. We will use your input to improve the service. You will
@@ -692,11 +722,11 @@ class AdspFeedback implements AdspFeedbackApi {
                     </div>
                     <div class="adsp-fb-error adsp-fb-message">
                       <div>
-                        <img src="assets/feedback/Error_Icon.svg" width="50px" height="50px" alt="Error" />
+                        <img src=${errorIconSvg} width="50px" height="50px" alt="Error" />
                       </div>
                       <div class="errorText">Error 500</div>
                       <div>
-                        <img src="assets/feedback/Blue-Underline.svg" width="50px" />
+                        <img src=${blueUnderLineSvg} width="50px" />
                         <div>
                           <h3>We are experiencing a problem</h3>
                           <p>

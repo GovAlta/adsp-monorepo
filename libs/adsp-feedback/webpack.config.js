@@ -8,22 +8,8 @@ module.exports = composePlugins(withNx(), withWeb(), (config) => {
   // NOTE: workaround for https://github.com/nrwl/nx/issues/21773
   const svgRule = config.module.rules.find((rule) => typeof rule === 'object' && rule.test.toString().includes('svg'));
   if (svgRule) {
-    svgRule.use = [
-      {
-        loader: require.resolve('@svgr/webpack'),
-        options: {
-          svgo: false,
-          titleProp: true,
-          ref: true,
-        },
-      },
-      {
-        loader: require.resolve('file-loader'),
-        options: {
-          name: '[name].[hash].[ext]',
-        },
-      },
-    ];
+    // Always use data URL for svg assets since the widget needs to be self-contained.
+    svgRule.parser.dataUrlCondition = () => true;
   }
 
   config.output.library = {

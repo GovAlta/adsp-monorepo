@@ -16,7 +16,7 @@ export interface FeedbackOptions {
 }
 
 export interface AdspFeedback {
-  initialize(options: FeedbackOptions);
+  initialize(options: FeedbackOptions): void;
 }
 
 declare global {
