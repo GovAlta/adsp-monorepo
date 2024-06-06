@@ -33,7 +33,7 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
     <>
       <tr>
         <td data-testid={`feedback-list-created-on_${id}`}>{submissionDate.formattedDate}</td>
-        <td data-testid={`feedback-list-${id}`}>
+        <td data-testid={`feedback-list_${id}`}>
           <URL>{feedback.context.view}</URL>
         </td>
         <td data-testid={`feedback-list-rating_${id}`}>{ratingValue}</td>
