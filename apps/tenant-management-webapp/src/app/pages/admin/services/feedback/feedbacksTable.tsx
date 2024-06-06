@@ -14,15 +14,15 @@ export const FeedbackListTable: FunctionComponent<FeedbackTableProps> = ({ feedb
       <DataTable data-testid="feedback-table">
         <thead data-testid="feedback-table-header">
           <tr>
-            <th data-testid="feedback-table-header-submitted-date">Date submitted</th>
-            <th data-testid="feedback-table-header-correlation-id">Correlation ID</th>
+            <th data-testid="feedback-table-header-submitted-on">Submitted on</th>
+            <th data-testid="feedback-table-header-view">View</th>
             <th data-testid="feedback-table-header-rating">Rating</th>
             <th data-testid="feedback-table-header-action">Action</th>
           </tr>
         </thead>
         <tbody>
-          {feedbacks.map((feedback) => {
-            return <FeedbackTableItem key={feedback} id={feedback} feedback={feedback} />;
+          {feedbacks.map((feedback, id) => {
+            return <FeedbackTableItem key={feedback} id={id} feedback={feedback} />;
           })}
         </tbody>
       </DataTable>
