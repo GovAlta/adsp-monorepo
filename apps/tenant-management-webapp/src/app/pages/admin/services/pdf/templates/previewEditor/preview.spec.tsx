@@ -103,6 +103,7 @@ describe('Test pdf template preview', () => {
         pdfTemplates: {
           'mock-id': templateMock,
         },
+        corePdfTemplates: {},
       },
       fileService: {
         fileList: [
@@ -141,6 +142,11 @@ describe('Test pdf template preview', () => {
       pdf: {
         pdfTemplates: {
           'mock-id': templateMock,
+        },
+        corePdfTemplates: {
+          'core-pdf-template': {
+            id: 'core-pdf-template',
+          },
         },
       },
       fileService: {

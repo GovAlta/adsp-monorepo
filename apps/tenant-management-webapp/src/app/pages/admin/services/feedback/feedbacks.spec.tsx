@@ -96,8 +96,8 @@ describe('Feedbacks Components ', () => {
     );
     const dropDown = screen.getByTestId('sites-dropdown');
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    expect(screen.getByTestId('feedback-list-correlation-id')).toBeInTheDocument();
-    expect(screen.getByTestId('toggle-details-visibility')).toBeInTheDocument();
+    expect(screen.getByTestId('feedback-list_0')).toBeInTheDocument();
+    expect(screen.getByTestId('toggle-details-visibility_0')).toBeInTheDocument();
   });
   it('should show details of feedback when toggle-details-visibility icon button is clicked', () => {
     render(
@@ -107,7 +107,7 @@ describe('Feedbacks Components ', () => {
     );
     const dropDown = screen.getByTestId('sites-dropdown');
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    fireEvent(screen.getByTestId('toggle-details-visibility'), new CustomEvent('_click'));
+    fireEvent(screen.getByTestId('toggle-details-visibility_0'), new CustomEvent('_click'));
     expect(screen.getByTestId('moredetails')).toBeInTheDocument();
   });
 

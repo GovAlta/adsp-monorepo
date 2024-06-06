@@ -1,4 +1,4 @@
-import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { WorkQueueService } from '@core-services/core-common';
 import { Application } from 'express';
 import { Logger } from 'winston';
@@ -25,6 +25,7 @@ interface MiddlewareProps {
   fileService: FileService;
   eventService: EventService;
   queueService: WorkQueueService<PdfServiceWorkItem>;
+  directory: ServiceDirectory;
 }
 
 export function applyPdfMiddleware(app: Application, props: MiddlewareProps): Application {

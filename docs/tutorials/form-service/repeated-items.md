@@ -1,7 +1,9 @@
 ---
-title: Form lists
+title: Form Lists
 layout: page
-nav_excluded: true
+parent: Form Service
+grand_parent: Tutorials
+nav_exclude: false
 ---
 
 # Form lists

@@ -1,7 +1,9 @@
 ---
-title: Steppers
 layout: page
-nav_excluded: true
+title: Steppers
+parent: Form Service
+grand_parent: Tutorials
+nav_exclude: false
 ---
 
 # Form Steppers

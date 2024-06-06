@@ -13,7 +13,9 @@ The feedback service gives you a simple means to collect information from end-us
 - Add a call-to-action to the application that, when clicked, pops up a modal with a couple of questions for the end-user to fill in.
 - Save the information collected in an ADSP database.
 
-![](/adsp-monorepo/assets/feedback-service/feedbackWidget.png){: width="400" }
+<p align='center' with='100%'>
+  <img src='/adsp-monorepo/assets/feedback-service/feedbackWidget.png' width='400px'/>
+</p>
 
 ## Application Integration {#target-integration}
 
@@ -39,7 +41,9 @@ The script creates a global variable called _adspFeedback_. Then, somewhere insi
 
 There are configuration parameters you will want to add to the initialization method, but essentially that's it. The script will attach the _call-to-action_ to right hand side of the page which, when clicked, will pop up the feedback modal:
 
-![](/adsp-monorepo/assets/feedback-service/call-to-action.png){: width="300" }
+<p align='center' with='100%'>
+  <img src='/adsp-monorepo/assets/feedback-service/call-to-action.png' width='300px'/>
+</p>
 
 ## Configuration
 
@@ -65,7 +69,7 @@ For many applications feedback will be coming from logged in users. In order for
 </body>
 ```
 
-The tenant information will be extracted from the access token and the feedback associated with it.
+The tenant name will be extracted from the access token, and the feedback information will then be associated with it.
 
 Note: The service itself does not make a record of the user ID in the access token. If this is desired you can use the [correlation ID](#target-correlationid) for this purpose.
 
@@ -84,7 +88,11 @@ For anonymous access you must submit your tenant name directly, as follows:
 
 In the special case where you have a multi-tenant application you can set the tenant as a query parameter in the application url, e.g. https://my-app.alberta.ca/start-page?tenant=\<your tenant\>.
 
-In addition though, for security purposes, you must explicitly configure your site to allow anonymous access. This can be done when you [register your site](#target-registered-usage), by checking the _Allow anonymous feedback_ checkbox.
+In addition though, for security purposes, you must explicitly configure your site to allow anonymous access. This can be done when you [register your site](#target-registered-usage).
+
+<p align='center' with='100%'>
+  <img src='/adsp-monorepo/assets/feedback-service/allowAnonymousFeedback.png' width='300px'/>
+</p>
 
 ### Source Identification
 
@@ -99,7 +107,7 @@ For the most part the widget defines reasonable defaults for the context, but if
 
 ```javascript
 const getContext = function () {
-  return Promise.resolve({ site: <your site>, view: <your view>, correlationId:<an id> });
+  return Promise.resolve({ site: <your site>, view: <your view>, correlationId:<any id> });
 };
 
 adspFeedback.initialize({getAccessToken: <your function>, getContext: getContext})
@@ -127,10 +135,10 @@ document.location.pathname;
 
 The correlation ID is an optional string parameter that applications can use to correlate the feedback with another entity. For example, if your application requires users to log in you could _use a hash_ of their user id to determine if a user has submitted feedback more than once. Note: It is **important** that a user id is not used directly in the correlation ID, as it would be a violation of privacy.
 
-The correlationId defaults to
+The correlationId defaults to:
 
 ```javascript
-site: view;
+`${site}:${view}`;
 ```
 
 ### Security
@@ -146,7 +154,9 @@ There are several ways ADSP has addressed security concerns regarding use of the
 
 As the widget is implemented in javascript and accessible through the browser it would be easy enough for anyone to try to use it for their own nefarious purposes, such as spam or DNS attacks. For this reason the service will only work with registered sites. To register your site, login to the ADSP website, select the feedback service, then the _Sites_ tab, and click the _Register site_ button.
 
-![](/adsp-monorepo/assets/feedback-service/registerSite.png){: width="300" }
+<p align='center' with='100%'>
+  <img src='/adsp-monorepo/assets/feedback-service/registerSite.png' width='300px'/>
+</p>
 
 #### Sub-resource Integrity (SRI)
 
@@ -184,5 +194,5 @@ using context, e.g.
 
 ```
 GET /value/v1/feedback-service/values/feedback
-    ? context={site:'https://adsp-dev.gov.ab.ca', view: 'admin/services/feedback'}
+    ? context={site:'https://adsp-dev.gov.ab.ca', view: '/admin/services/feedback'}
 ```

@@ -10,8 +10,9 @@ import { updatePdfTemplate } from '@store/pdf/action';
 
 interface PDFConfigFormProps {
   template: PdfTemplate;
+  isEdit?: boolean;
 }
-export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
+export const PDFConfigForm = ({ template, isEdit = true }: PDFConfigFormProps) => {
   const { id, name, description } = template;
   const [openEditPdfTemplate, setOpenEditPdfTemplate] = useState(false);
   const dispatch = useDispatch();
@@ -97,20 +98,22 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
           </thead>
         </table>
       </div>
-      <div className="editColumn">
-        <Edit>
-          <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
-            Edit
-          </a>
-          <GoAIconButton
-            icon="create"
-            testId="pdf-template-information-edit-icon"
-            title="Edit"
-            size="small"
-            onClick={() => setOpenEditPdfTemplate(true)}
-          />
-        </Edit>
-      </div>
+      {isEdit && (
+        <div className="editColumn">
+          <Edit>
+            <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
+              Edit
+            </a>
+            <GoAIconButton
+              icon="create"
+              testId="pdf-template-information-edit-icon"
+              title="Edit"
+              size="small"
+              onClick={() => setOpenEditPdfTemplate(true)}
+            />
+          </Edit>
+        </div>
+      )}
       {openEditPdfTemplate && (
         <AddEditPdfTemplate
           open={openEditPdfTemplate}

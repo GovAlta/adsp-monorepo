@@ -38,7 +38,13 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   const templates = useSelector((state: RootState) => {
     return state?.pdf?.pdfTemplates;
   });
-  const templateIds = Object.keys(templates);
+
+  const corePdfTemplates = useSelector((state: RootState) => {
+    return state?.pdf?.corePdfTemplates;
+  });
+
+  const templateIds = Object.keys({ ...templates, ...corePdfTemplates });
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -101,7 +107,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
               } else {
                 if (!isEdit) {
                   const validations = {
-                    duplicate: template.name,
+                    duplicate: template.id,
                   };
                   if (!validators.checkAll(validations)) {
                     return;

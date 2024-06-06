@@ -6,6 +6,10 @@ import { PDF_GENERATED, PDF_GENERATION_FAILED } from '../events';
 import { GENERATED_PDF } from '../fileTypes';
 import { createGenerateJob } from './generate';
 import { PdfServiceWorkItem } from './types';
+import axios from 'axios';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('generate', () => {
   const serviceId = adspId`urn:ads:platform:pdf-service`;
@@ -41,6 +45,11 @@ describe('generate', () => {
     update: jest.fn(),
   };
 
+  const directoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
+    getResourceUrl: jest.fn(),
+  };
+
   it('can create job', () => {
     const job = createGenerateJob({
       logger: loggerMock,
@@ -50,6 +59,7 @@ describe('generate', () => {
       eventService: eventServiceMock,
       fileService: fileServiceMock,
       repository: repositoryMock,
+      directory: directoryMock,
     });
 
     expect(job).toBeTruthy();
@@ -64,6 +74,7 @@ describe('generate', () => {
       eventService: eventServiceMock,
       fileService: fileServiceMock,
       repository: repositoryMock,
+      directory: directoryMock,
     });
 
     const templateEntity = {
@@ -105,6 +116,52 @@ describe('generate', () => {
       templateEntity.evaluateTemplates.mockResolvedValueOnce('');
       const fileResult = {};
       fileServiceMock.upload.mockResolvedValueOnce(fileResult);
+
+      job(item, true, (err) => {
+        expect(err).toBeFalsy();
+        expect(repositoryMock.update).toHaveBeenCalledWith(item.jobId, 'completed', fileResult);
+        expect(eventServiceMock.send).toHaveBeenCalledWith(
+          expect.objectContaining({ name: PDF_GENERATED, payload: expect.objectContaining({ file: fileResult }) })
+        );
+        done();
+      });
+    });
+
+    it('can generate core pdf', (done) => {
+      const item: PdfServiceWorkItem = {
+        tenantId: `${tenantId}`,
+        work: 'generate',
+        jobId: uuid(),
+        timestamp: new Date(),
+        templateId: 'submitted-form',
+        fileType: GENERATED_PDF,
+        recordId: 'my-domain-record-1',
+        data: {
+          formId: 'my-form-id',
+          formData: { data: { firstName: 'bob', lastName: 'smith' } },
+          form: {
+            id: '262f0da7-f375-493a-bd96-c6035ca16bf7',
+          },
+        },
+        filename: 'test.pdf',
+        requestedBy: {
+          id: 'tester',
+          name: 'Testy McTester',
+        },
+      };
+
+      const myFormIdConfig = {
+        id: 'my-form-id',
+        name: 'my-form-id',
+      };
+
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce([{ 'submitted-form': templateEntity }]);
+      templateEntity.generate.mockResolvedValueOnce('content');
+      templateEntity.evaluateTemplates.mockResolvedValueOnce('');
+      const fileResult = {};
+      fileServiceMock.upload.mockResolvedValueOnce(fileResult);
+      axiosMock.get.mockResolvedValueOnce({ data: { 'my-form-id': myFormIdConfig } });
 
       job(item, true, (err) => {
         expect(err).toBeFalsy();
