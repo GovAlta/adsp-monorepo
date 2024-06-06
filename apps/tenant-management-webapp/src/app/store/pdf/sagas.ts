@@ -357,7 +357,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
         templateId: payload.templateId,
         data: payload.data,
         filename: payload.fileName,
-        formId: payload?.formId,
       };
 
       const createJobUrl = `${pdfServiceUrl}/pdf/v1/jobs`;

@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import DataTable from '@components/DataTable';
-import { PdfTemplateItem } from './coreTemplateListItem';
+import { CorePdfTemplateItem } from './coreTemplateListItem';
 import { PdfTemplate } from '@store/pdf/model';
 
 export interface PdfTemplatesTableProps {
@@ -21,14 +21,11 @@ export const CorePdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = 
           <th id="pdf-templates-Description" data-testid="pdf-templates-table-header-description">
             Description
           </th>
-          <th id="pdf-templates-action" data-testid="pdf-templates-table-header-action">
-            Actions
-          </th>
         </tr>
       </thead>
       <tbody>
         {Object.keys(newTemplates).map((templateName) => {
-          return <PdfTemplateItem key={templateName} pdfTemplate={newTemplates[templateName]} />;
+          return <CorePdfTemplateItem key={templateName} pdfTemplate={newTemplates[templateName]} />;
         })}
       </tbody>
     </DataTable>
