@@ -59,7 +59,7 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
       <tr>
         <td data-testid="feedback-list-created-on">{submissionDate.formattedDate}</td>
         <td data-testid="feedback-list-correlation-id">
-          <URL>{feedback.correlationId}</URL>
+          <URL>{feedback.context.view}</URL>
         </td>
         <td data-testid="feedback-list-rating">{ratingValue}</td>
         <td data-testid="feedback-list-action">
@@ -83,12 +83,13 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
           >
             <MoreDetails data-testId="moredetails">
               <p>
-                Feedback was submitted at a {feedback.context.view} on {submissionDate.formattedDateTime}
+                Feedback was submitted for {feedback.context.view} on {submissionDate.formattedDateTime}
               </p>
-              <h2>Rating = {ratingValue}</h2>
+              <h2>Rating</h2>
+              <span>{ratingValue}</span>
               {feedback.value.comment && (
                 <>
-                  <h2>Additional comments</h2>
+                  <h2>Comments</h2>
                   <span>{feedback.value.comment}</span>
                 </>
               )}
