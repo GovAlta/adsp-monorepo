@@ -115,13 +115,13 @@ class AdspFeedback implements AdspFeedbackApi {
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
         this.feedbackFormRef.value?.scrollTo({
           top: 640,
-          behavior: 'smooth', // Smooth scroll animation
+          behavior: 'smooth',
         });
       } else {
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
         this.feedbackFormRef.value?.scrollTo({
           top: 0,
-          behavior: 'smooth', // Smooth scroll animation
+          behavior: 'smooth',
         });
       }
     }
@@ -253,7 +253,7 @@ class AdspFeedback implements AdspFeedbackApi {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderRating = (rating: any, index: number) => {
     return html`
-      <div>
+      <div class="rating-div">
         <img
           src="${rating.svgDefault}"
           @mouseover="${() => this.updateHover(index, true)}"
@@ -261,7 +261,9 @@ class AdspFeedback implements AdspFeedbackApi {
           @click="${() => this.selectRating(index)}"
           class="rating"
           alt="${rating.label}"
+          tabindex="0"
         />
+        <span class="tooltip-text">${rating.label}</span>
         <p
           class="ratingText"
           @mouseover="${() => this.updateHover(index, true)}"
@@ -282,6 +284,11 @@ class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+
+    const tooltips = document.querySelectorAll('.tooltip-text');
+    const tooltip = tooltips[index] as HTMLImageElement;
+    tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
+    tooltip.style.opacity = isHovering ? '1' : '0';
   };
 
   private clearRating = (index: number) => {
@@ -510,7 +517,36 @@ class AdspFeedback implements AdspFeedbackApi {
             box-sizing: border-box;
             padding: 24px 24px;
           }
+          .adsp-fb .tooltip-text {
+            visibility: hidden;
 
+            margin-left: 40px;
+            background-color: #666666;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            margin-top: 60px;
+            position: absolute;
+            z-index: 1;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+          }
+          .adsp-fb .tooltip-text::before {
+            content: '';
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent #333 transparent;
+          }
+          .adsp-fb .rating-div {
+            display: flex;
+            flex-direction: column;
+          }
           .adsp-fb .adsp-fb-sent {
             text-align: left;
           }
@@ -538,6 +574,7 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .radios {
             margin-top: 12px;
+            margin-bottom: 12px;
           }
           .rating {
             cursor: pointer;
@@ -604,6 +641,9 @@ class AdspFeedback implements AdspFeedbackApi {
               > div > p :hover {
                 color: #004f84;
               }
+              > div > span {
+                display: none;
+              }
             }
             .ratingText {
               padding-top: 12px;
@@ -652,7 +692,9 @@ class AdspFeedback implements AdspFeedbackApi {
                       a minute.
                     </p>
                     <div class="adsp-fb-actions">
-                      <button class="adsp-fb-form-primary" @click=${this.closeStartForm} type="button">Start</button>
+                      <button class="adsp-fb-form-primary" @click=${this.closeStartForm} type="button" tabindex="0">
+                        Start
+                      </button>
                     </div>
                   </form>
                 </div>
@@ -715,13 +757,14 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                     </div>
                     <div class=" adsp-fb-actions">
-                      <button @click=${this.closeFeedbackForm} type="button">Cancel</button>
+                      <button @click=${this.closeFeedbackForm} type="button" tabindex="0">Cancel</button>
                       <button
                         ${ref(this.sendButtonRef)}
                         class="adsp-fb-form-primary"
                         @click=${this.sendFeedback}
                         type="button"
                         disabled
+                        tabindex="0"
                       >
                         Submit
                       </button>
@@ -738,7 +781,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         government through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
                       </p>
                       <div class="adsp-fb-actions">
-                        <button @click=${this.closeAllFeedback} class="adsp-fb-form-primary" type="button">
+                        <button @click=${this.closeAllFeedback} class="adsp-fb-form-primary" type="button" tabindex="0">
                           Close
                         </button>
                       </div>
@@ -757,7 +800,12 @@ class AdspFeedback implements AdspFeedbackApi {
                             apologize for the inconvenience.
                           </p>
                           <div>
-                            <button @click=${this.closeErrorForm} class="adsp-fb-form-primary" type="button">
+                            <button
+                              @click=${this.closeErrorForm}
+                              class="adsp-fb-form-primary"
+                              type="button"
+                              tabindex="0"
+                            >
                               Close
                             </button>
                           </div>
