@@ -768,7 +768,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               validChannels={selectedType.sortedChannels}
               serviceName={serviceName}
               onSubjectChange={(value, channel) => {
-                let newTemplates = templates;
+                let newTemplates = structuredClone(templates);
                 if (templates[channel]) {
                   newTemplates[channel].subject = value;
                 } else {
@@ -778,7 +778,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 setSubject(value);
               }}
               onTitleChange={(value, channel) => {
-                let newTemplates = templates;
+                let newTemplates = structuredClone(templates);
                 if (templates[channel]) {
                   newTemplates[channel].title = value;
                 } else {
@@ -789,7 +789,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 setTitle(value);
               }}
               onSubtitleChange={(value, channel) => {
-                let newTemplates = templates;
+                let newTemplates = structuredClone(templates);
                 if (templates[channel]) {
                   newTemplates[channel].subtitle = value;
                 } else {
@@ -800,7 +800,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 setSubtitle(value);
               }}
               onBodyChange={(value, channel) => {
-                let newTemplates = templates;
+                let newTemplates = structuredClone(templates);
                 if (templates[channel]) {
                   newTemplates[channel].body = value;
                 } else {
