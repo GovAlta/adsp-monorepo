@@ -128,7 +128,7 @@ describe('form router', () => {
     hash: 'hashid',
   };
 
-  const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+  const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
   const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
 
@@ -897,7 +897,7 @@ describe('form router', () => {
         data: {},
         files: {},
       };
-      const locked = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const locked = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
       const user = {
         tenantId,
