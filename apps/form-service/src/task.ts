@@ -33,7 +33,7 @@ export class QueueTaskServiceImpl implements QueueTaskService {
   private createQueueTaskDefinition(form: Form, submission: FormSubmission): New<Task> {
     return {
       name: 'Process form submission',
-      description: `Process form '${form.definition.name}' (ID: ${form.id}) submission: (${submission.id})`,
+      description: `Process form '${form.definition?.name}' (ID: ${form.id}) submission: (${submission.id})`,
       recordId: `${this.serviceId}:v1:/forms/${form.id}/submissions/${submission.id}`,
     };
   }
@@ -43,7 +43,7 @@ export class QueueTaskServiceImpl implements QueueTaskService {
     try {
       const directoryServiceUrl = await this.directory.getServiceUrl(TASK_SERVICE_ID);
 
-      const { queueNameSpace, queueName } = form.definition.queueTaskToProcess || {};
+      const { queueNameSpace, queueName } = form.definition?.queueTaskToProcess || {};
       if (!queueNameSpace || !queueName) {
         throw new InvalidOperationError('Cannot create task for submission of form without processing queue.');
       }

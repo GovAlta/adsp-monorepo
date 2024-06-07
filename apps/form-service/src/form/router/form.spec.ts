@@ -128,7 +128,7 @@ describe('form router', () => {
     hash: 'hashid',
   };
 
-  const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+  const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
   const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
 
@@ -330,7 +330,8 @@ describe('form router', () => {
       await handler(req as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
-    it('can find forms', async () => {
+
+    it('can find orphaned forms', async () => {
       const user = {
         tenantId,
         id: 'tester',
@@ -346,11 +347,19 @@ describe('form router', () => {
 
       const page = {};
 
-      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page });
+      repositoryMock.find.mockResolvedValueOnce({
+        results: [new FormEntity(repositoryMock, tenantId, null, subscriber, formInfo)],
+        page,
+      });
 
       const handler = findForms(apiId, repositoryMock);
       await handler(req as Request, res as unknown as Response, next);
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page,
+          results: expect.arrayContaining([expect.objectContaining({ id: formInfo.id, definition: null })]),
+        })
+      );
     });
 
     it('can find forms has query params', async () => {
@@ -897,7 +906,7 @@ describe('form router', () => {
         data: {},
         files: {},
       };
-      const locked = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const locked = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
       const user = {
         tenantId,

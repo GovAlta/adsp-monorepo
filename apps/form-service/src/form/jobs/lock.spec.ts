@@ -56,6 +56,7 @@ describe('lock', () => {
 
   const form = new FormEntity(
     repositoryMock,
+    tenantId,
     new FormDefinitionEntity(validationService, tenantId, {
       id: 'my-test-form',
       name: 'My test form',
