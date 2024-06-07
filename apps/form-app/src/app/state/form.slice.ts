@@ -209,7 +209,14 @@ export const createForm = createAsyncThunk(
       const token = await getAccessToken();
       const { data } = await axios.post<SerializedForm>(
         new URL(`/form/v1/forms`, formServiceUrl).href,
-        { definitionId, applicant: { userId: user.user.id } },
+        {
+          definitionId,
+          applicant: {
+            userId: user.user.id,
+            addressAs: user.user.name,
+            channels: [{ channel: 'email', address: user.user.email }],
+          },
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
