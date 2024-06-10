@@ -44,7 +44,7 @@ export class FormEntity implements Form {
       throw new UnauthorizedUserError('create form', user);
     }
 
-    const form = new FormEntity(repository, definition, applicant, {
+    const form = new FormEntity(repository, definition.tenantId, definition, applicant, {
       id,
       formDraftUrl,
       anonymousApplicant: isAnonymousApplicant(user, applicant),
@@ -64,13 +64,14 @@ export class FormEntity implements Form {
 
   constructor(
     private repository: FormRepository,
+    tenantId: AdspId,
     public definition: FormDefinitionEntity,
     public applicant: Subscriber,
     form: Omit<Form, 'definition' | 'applicant'>,
     public hash: string = null
   ) {
     this.definition = definition;
-    this.tenantId = definition.tenantId;
+    this.tenantId = tenantId;
     this.id = form.id;
     this.formDraftUrl = form.formDraftUrl;
     this.anonymousApplicant = form.anonymousApplicant;
@@ -78,7 +79,7 @@ export class FormEntity implements Form {
     this.createdBy = form.createdBy;
     this.locked = form.locked;
     this.dispositionStates = form?.dispositionStates || [];
-    this.submissionRecords = definition.submissionRecords;
+    this.submissionRecords = definition?.submissionRecords || false;
     this.submitted = form.submitted;
     this.lastAccessed = form.lastAccessed;
     this.status = form.status;
@@ -173,8 +174,8 @@ export class FormEntity implements Form {
     }
 
     if (
-      !isAllowedUser(user, this.tenantId, this.definition.clerkRoles) &&
-      !(this.definition.canApply(user) && user.id === this.createdBy.id)
+      !isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
+      !(this.definition?.canApply(user) && user.id === this.createdBy.id)
     ) {
       throw new UnauthorizedUserError('update form', user);
     }
@@ -227,7 +228,7 @@ export class FormEntity implements Form {
   }
 
   async setToDraft(user: User): Promise<FormEntity> {
-    if (!isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, ...this.definition.assessorRoles])) {
+    if (!isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, ...(this.definition?.assessorRoles || [])])) {
       throw new UnauthorizedUserError('set to draft form', user);
     }
 
@@ -250,8 +251,8 @@ export class FormEntity implements Form {
     }
 
     if (
-      !isAllowedUser(user, this.tenantId, this.definition.clerkRoles) &&
-      !(this.definition.canApply(user) && user.id === this.createdBy.id)
+      !isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
+      !(this.definition?.canApply(user) && user.id === this.createdBy.id)
     ) {
       throw new UnauthorizedUserError('update form', user);
     }
@@ -273,7 +274,7 @@ export class FormEntity implements Form {
       // We need the submissionId so that it is available for updates/lookups of the submission.
       submission = await FormSubmissionEntity.create(user, submissionRepository, this, uuidv4());
 
-      if (saved.definition.queueTaskToProcess?.queueNameSpace && saved.definition.queueTaskToProcess?.queueName) {
+      if (saved.definition?.queueTaskToProcess?.queueNameSpace && saved.definition?.queueTaskToProcess?.queueName) {
         queueTaskService.createTask(saved, submission);
       }
     }

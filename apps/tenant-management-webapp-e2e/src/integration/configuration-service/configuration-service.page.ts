@@ -189,6 +189,10 @@ class ConfigurationServicePage {
     return cy.xpath('//goa-modal[@open="true"]//goa-form-item');
   }
 
+  revisionTableEditRevisionModalPayloadEditorRows() {
+    return cy.xpath('//goa-modal[@open="true"]//div[@class="view-lines monaco-mouse-cursor-text"]/div/span');
+  }
+
   revisionTableEditRevisionModalSaveButton() {
     return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save"]');
   }

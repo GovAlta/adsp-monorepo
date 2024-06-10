@@ -148,6 +148,7 @@ export class MongoFormRepository implements FormRepository {
       : null;
     return new FormEntity(
       this,
+      tenantId,
       definition,
       applicant,
       {

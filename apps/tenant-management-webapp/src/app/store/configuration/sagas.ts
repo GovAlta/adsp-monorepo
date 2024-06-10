@@ -203,7 +203,13 @@ export function* fetchRegisterData(): SagaIterator {
         .filter(([name, config]) => {
           // eslint-disable-next-line
           const _c = config as any;
-          return _c?.configurationSchema?.properties?.register?.type === 'array';
+          return (
+            _c?.configurationSchema?.type === 'array' &&
+            (_c?.configurationSchema?.items?.type === 'string' ||
+              (_c?.configurationSchema?.items?.type === 'object' &&
+                _c?.configurationSchema?.items?.properties?.label?.type === 'string' &&
+                _c?.configurationSchema?.items?.properties?.value?.type === 'string'))
+          );
         })
         // eslint-disable-next-line
         .map(([name, config]) => name) || [];
@@ -216,16 +222,16 @@ export function* fetchRegisterData(): SagaIterator {
         const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}`;
         const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
         // if there is active configuration, use the register in the active configuration first.
-        if (data?.active && data?.active?.configuration?.register) {
+        if (data?.active && data?.active?.configuration) {
           registerData.push({
-            urn: `urn:ads:${tenantName}:${registerConfig}:register`,
-            data: data?.active?.configuration?.register,
+            urn: `urn:ads:${tenantName}:${registerConfig}`,
+            data: data?.active?.configuration,
           });
         } else {
-          if (data?.latest && data?.latest?.configuration?.register) {
+          if (data?.latest && data?.latest?.configuration) {
             registerData.push({
-              urn: `urn:ads:${tenantName}:${registerConfig}:register`,
-              data: data?.latest?.configuration?.register,
+              urn: `urn:ads:${tenantName}:${registerConfig}`,
+              data: data?.latest?.configuration,
             });
           }
         }
