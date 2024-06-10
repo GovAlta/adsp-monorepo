@@ -108,5 +108,108 @@ class FormPage {
   definitionEditorRolesTables() {
     return cy.xpath('//*[@data-testid="form-roles-tab"]//h4/following-sibling::goa-table[1]');
   }
+
+  definitionEditorSubmissionConfigSubmission() {
+    return cy.xpath('//*[@data-testid="submission-configuration"]');
+  }
+
+  definitionEditorSubmissionConfigSubmissionRecordCheckbox() {
+    return cy.xpath('//*[@data-testid="submission-configuration"]//goa-checkbox[@data-testid="submission-records"]');
+  }
+
+  definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle() {
+    return cy.xpath(
+      '//*[@data-testid="submission-configuration"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]'
+    );
+  }
+
+  definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox() {
+    return cy.xpath(
+      '//*[@data-testid="submission-configuration"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-text"]'
+    );
+  }
+
+  definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBoxCloseBtn() {
+    return cy.xpath(
+      '//*[@data-testid="submission-configuration"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-close-button"]'
+    );
+  }
+
+  definitionEditorSubmissionConfigAddStateBtn() {
+    return cy.xpath('//goa-button[@data-testid="Add state"]');
+  }
+
+  definitionEditorSubmissionConfigDispositionStatesInfoCircle() {
+    return cy.xpath(
+      '//*[@data-testid="submission-configuration"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="info-circle"]'
+    );
+  }
+
+  definitionEditorSubmissionConfigDispositionStatesInfoBox() {
+    return cy.xpath(
+      '//*[@data-testid="submission-configuration"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="small-text"]'
+    );
+  }
+
+  definitionEditorSubmissionConfigDispositionStatesInfoBoxCloseBtn() {
+    return cy.xpath(
+      '//*[@data-testid="submission-configuration"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="small-close-button"]'
+    );
+  }
+
+  definitionEditorSubmissionConfigDispositionStateModalTitle() {
+    return cy.xpath('//goa-modal[@open="true"]/div[@slot="heading"]');
+  }
+
+  definitionEditorSubmissionConfigDispositionStateModalNameField() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-input[@name="disposition-name"]');
+  }
+
+  definitionEditorSubmissionConfigDispositionStateModalDescriptionField() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-textarea[@name="disposition-description"]');
+  }
+
+  definitionEditorSubmissionConfigDispositionStateModalSaveBtn() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[@data-testid="disposition-state-save"]');
+  }
+
+  definitionEditorSubmissionConfigEditDispositionStateModalCancelBtn() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[@data-testid="disposition-state-cancel-edit"]');
+  }
+
+  definitionEditorSubmissionConfigDispositionStateTableBody() {
+    return cy.xpath('//div[@data-testid="submission-configuration"]//tbody');
+  }
+
+  definitionEditorSubmissionConfigDispositionStateTableArrowIcons(index) {
+    return cy.xpath(
+      `//div[@data-testid="submission-configuration"]//tbody//tr[${index}]//goa-icon-button[contains(@icon,"arrow")]`
+    );
+  }
+
+  definitionEditorSubmissionConfigDispositionStateEditBtn(index) {
+    return cy.xpath(
+      `(//div[@data-testid="submission-configuration"]//tbody//goa-icon-button[@icon="create"])[${index}]`
+    );
+  }
+
+  definitionEditorSubmissionConfigDispositionStateDeleteBtn(index) {
+    return cy.xpath(
+      `(//div[@data-testid="submission-configuration"]//tbody//goa-icon-button[@icon="trash"])[${index}]`
+    );
+  }
+
+  // index number for arrow down is row # plus 1 because the first row doesn't have arrow up button
+  definitionEditorSubmissionConfigDispositionStateArrowUpBtn(index) {
+    return cy.xpath(
+      `(//div[@data-testid="submission-configuration"]//tbody//goa-icon-button[@icon="arrow-up"])[${index}]`
+    );
+  }
+
+  definitionEditorSubmissionConfigDispositionStateArrowDownBtn(index) {
+    return cy.xpath(
+      `(//div[@data-testid="submission-configuration"]//tbody//goa-icon-button[@icon="arrow-down"])[${index}]`
+    );
+  }
 }
 export default FormPage;
