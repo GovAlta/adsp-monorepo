@@ -1,4 +1,4 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { PdfService, PdfTemplate, TemplateService } from '../types';
 
 export class PdfTemplateEntity implements PdfTemplate {
@@ -8,6 +8,8 @@ export class PdfTemplateEntity implements PdfTemplate {
   description: string;
   template: string;
   templateService: TemplateService;
+  tokenProvider: TokenProvider;
+  directory: ServiceDirectory;
   header?: string;
   footer?: string;
   additionalStyles?: string;
@@ -44,11 +46,11 @@ export class PdfTemplateEntity implements PdfTemplate {
         null
       );
       this.evaluateFooterTemplate = this.templateService.getTemplateFunction(
-        this.additionalStylesWrapped.concat(this.footer),
+        this.footer ? this.additionalStylesWrapped.concat(this.footer) : this.footer,
         'pdf-footer'
       );
       this.evaluateHeaderTemplate = this.templateService.getTemplateFunction(
-        this.additionalStylesWrapped.concat(this.header),
+        this.header ? this.additionalStylesWrapped.concat(this.header) : this.header,
         'pdf-header'
       );
     }
@@ -60,6 +62,7 @@ export class PdfTemplateEntity implements PdfTemplate {
     const content = this.evaluateTemplate(context);
     const footer = this.evaluateFooterTemplate(context);
     const header = this.evaluateHeaderTemplate(context);
+
     return this.pdfService.generatePdf({
       content,
       footer,

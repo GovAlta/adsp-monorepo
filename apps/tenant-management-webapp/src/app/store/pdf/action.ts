@@ -2,6 +2,8 @@ import { PdfMetrics, PdfTemplate, PdfGenerationResponse, PdfGenerationPayload, U
 import { FileItem } from '../file/models';
 
 export const FETCH_PDF_TEMPLATES_ACTION = 'pdf/FETCH_PDF_TEMPLATES_ACTION';
+export const FETCH_CORE_PDF_TEMPLATES_ACTION = 'pdf/FETCH_CORE_PDF_TEMPLATES_ACTION';
+export const FETCH_CORE_PDF_TEMPLATES_SUCCESS_ACTION = 'pdf/FETCH_CORE_PDF_TEMPLATES_SUCCESS_ACTION';
 export const FETCH_PDF_TEMPLATES_SUCCESS_ACTION = 'pdf/FETCH_PDF_TEMPLATES_SUCCESS_ACTION';
 
 export const DELETE_PDF_TEMPLATE_ACTION = 'pdf/DELETE_PDF_TEMPLATE_ACTION';
@@ -35,8 +37,16 @@ export interface FetchPdfTemplatesAction {
   type: typeof FETCH_PDF_TEMPLATES_ACTION;
 }
 
+export interface FetchCorePdfTemplatesAction {
+  type: typeof FETCH_CORE_PDF_TEMPLATES_ACTION;
+}
+
 export interface FetchPdfTemplatesSuccessAction {
   type: typeof FETCH_PDF_TEMPLATES_SUCCESS_ACTION;
+  payload: Record<string, PdfTemplate>;
+}
+export interface FetchCorePdfTemplatesSuccessAction {
+  type: typeof FETCH_CORE_PDF_TEMPLATES_SUCCESS_ACTION;
   payload: Record<string, PdfTemplate>;
 }
 
@@ -148,7 +158,9 @@ export interface FetchPdfMetricsSuccessAction {
 
 export type PdfActionTypes =
   | FetchPdfTemplatesSuccessAction
+  | FetchCorePdfTemplatesSuccessAction
   | FetchPdfTemplatesAction
+  | FetchCorePdfTemplatesAction
   | UpdatePdfTemplatesAction
   | UpdatePdfTemplatesSuccessAction
   | UpdatePdfTemplatesSuccessNoRefreshAction
@@ -204,9 +216,18 @@ export const deletePdfTemplateSuccess = (template: Record<string, PdfTemplate>):
 export const getPdfTemplates = (): FetchPdfTemplatesAction => ({
   type: FETCH_PDF_TEMPLATES_ACTION,
 });
+export const getCorePdfTemplates = (): FetchCorePdfTemplatesAction => ({
+  type: FETCH_CORE_PDF_TEMPLATES_ACTION,
+});
 
 export const getPdfTemplatesSuccess = (results: Record<string, PdfTemplate>): FetchPdfTemplatesSuccessAction => ({
   type: FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
+  payload: results,
+});
+export const getCorePdfTemplatesSuccess = (
+  results: Record<string, PdfTemplate>
+): FetchCorePdfTemplatesSuccessAction => ({
+  type: FETCH_CORE_PDF_TEMPLATES_SUCCESS_ACTION,
   payload: results,
 });
 

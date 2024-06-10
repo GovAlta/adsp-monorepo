@@ -5,6 +5,10 @@ import { Logger } from 'winston';
 import { PDF_GENERATION_QUEUED } from '../events';
 import { ServiceRoles } from '../roles';
 import { createPdfRouter, generatePdf, getGeneratedFile, getTemplate, getTemplates } from './pdf';
+import axios from 'axios';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('pdf', () => {
   const serviceId = adspId`urn:ads:platform:pdf-service`;
@@ -55,6 +59,11 @@ describe('pdf', () => {
     fileServiceMock.typeExists.mockReset();
   });
 
+  const serviceDirectoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+    getResourceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+  };
+
   it('can create router', () => {
     const router = createPdfRouter({
       serviceId,
@@ -63,6 +72,7 @@ describe('pdf', () => {
       queueService: queueServiceMock,
       eventService: eventServiceMock,
       fileService: fileServiceMock,
+      directory: serviceDirectoryMock,
     });
 
     expect(router).toBeTruthy();
@@ -168,7 +178,8 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
+        serviceDirectoryMock
       );
       expect(handler).toBeTruthy();
     });
@@ -205,7 +216,73 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
+        serviceDirectoryMock
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).not.toHaveBeenCalled();
+      expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          work: 'generate',
+          jobId: 'job1',
+          templateId: req.body.templateId,
+          data: req.body.data,
+          filename: req.body.filename,
+          requestedBy: expect.objectContaining({ id: req.user.id, name: req.user.name }),
+        })
+      );
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId, name: PDF_GENERATION_QUEUED })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'job1' }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+    });
+
+    it('can generate core pdf', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'test',
+          name: 'tester',
+          roles: [ServiceRoles.PdfGenerator],
+          token: { bearer: 'abc' },
+        },
+        body: {
+          templateId: 'test',
+          filename: 'test.pdf',
+          data: {},
+          formId: 'test-form-id',
+        },
+        template: configuration.test,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.create.mockResolvedValueOnce({ id: 'job1' });
+      fileServiceMock.typeExists.mockResolvedValueOnce(true);
+      queueServiceMock.enqueue.mockResolvedValueOnce(null);
+
+      axiosMock.get
+        .mockResolvedValueOnce({
+          data: {
+            results: [{ id: 'formId' }],
+          },
+        })
+        .mockResolvedValueOnce({ data: { firstName: 'bob', lastName: 'smith' } });
+
+      const handler = generatePdf(
+        serviceId,
+        repositoryMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        loggerMock,
+        serviceDirectoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
@@ -259,7 +336,8 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
+        serviceDirectoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -295,7 +373,8 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
+        serviceDirectoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

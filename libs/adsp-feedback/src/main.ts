@@ -2,9 +2,41 @@ import { html, render } from 'lit-html';
 import { ref, createRef, Ref } from 'lit-html/directives/ref.js';
 import { AdspFeedback as AdspFeedbackApi, FeedbackContext, FeedbackOptions } from './types';
 
+import blueUnderLineSvg from './assets/Blue-Underline.svg';
+import closeOutlineSvg from './assets/close-outline.svg';
+import errorIconSvg from './assets/Error_Icon.svg';
+import greenCircleCheckmarkSvg from './assets/green-circle-checkmark.svg';
+
+import veryDifficultSvgDefault from './assets/Very_Difficult-Default.svg';
+import veryDifficultSvgError from './assets/Very_Difficult-Error.svg';
+import veryDifficultSvgHover from './assets/Very_Difficult-Hover.svg';
+import veryDifficultSvgClick from './assets/Very_Difficult-Click.svg';
+
+import difficultSvgDefault from './assets/Difficult-Default.svg';
+import difficultSvgError from './assets/Difficult-Error.svg';
+import difficultSvgHover from './assets/Difficult-Hover.svg';
+import difficultSvgClick from './assets/Difficult-Click.svg';
+
+import neutralSvgDefault from './assets/Neutral-Default.svg';
+import neutralSvgError from './assets/Neutral-Error.svg';
+import neutralSvgHover from './assets/Neutral-Hover.svg';
+import neutralSvgClick from './assets/Neutral-Click.svg';
+
+import easySvgDefault from './assets/Easy-Default.svg';
+import easySvgError from './assets/Easy-Error.svg';
+import easySvgHover from './assets/Easy-Hover.svg';
+import easySvgClick from './assets/Easy-Click.svg';
+
+import veryEasySvgDefault from './assets/Very_Easy-Default.svg';
+import veryEasySvgError from './assets/Very_Easy-Error.svg';
+import veryEasySvgHover from './assets/Very_Easy-Hover.svg';
+import veryEasySvgClick from './assets/Very_Easy-Click.svg';
+
 class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
   private apiUrl?: URL;
+  private name?: string;
+  private email?: string;
   private getAccessToken?: () => Promise<string>;
   private getContext: () => Promise<FeedbackContext>;
 
@@ -57,6 +89,7 @@ class AdspFeedback implements AdspFeedbackApi {
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
     if (this.feedbackFormRef.value) {
       this.feedbackFormRef.value.style.height = '600px';
+      this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
 
@@ -80,8 +113,16 @@ class AdspFeedback implements AdspFeedbackApi {
     if (event.target instanceof HTMLInputElement && this.feedbackFormRef.value) {
       if (event.target.value.toLowerCase() === 'yes') {
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
+        this.feedbackFormRef.value?.scrollTo({
+          top: 640,
+          behavior: 'smooth',
+        });
       } else {
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
+        this.feedbackFormRef.value?.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
       }
     }
   }
@@ -102,46 +143,46 @@ class AdspFeedback implements AdspFeedbackApi {
       label: 'Very Difficult',
       rate: 'terrible',
       value: 0,
-      svgDefault: 'assets/feedback/Very_Difficult-Default.svg',
-      svgError: 'assets/feedback/Very_Difficult-Error.svg',
-      svgHover: 'assets/feedback/Very_Difficult-Hover.svg',
-      svgClick: 'assets/feedback/Very_Difficult-Click.svg',
+      svgDefault: veryDifficultSvgDefault,
+      svgError: veryDifficultSvgError,
+      svgHover: veryDifficultSvgHover,
+      svgClick: veryDifficultSvgClick,
     },
     {
       label: 'Difficult',
       rate: 'bad',
       value: 1,
-      svgDefault: 'assets/feedback/Difficult-Default.svg',
-      svgError: 'assets/feedback/Difficult-Error.svg',
-      svgHover: 'assets/feedback/Difficult-Hover.svg',
-      svgClick: 'assets/feedback/Difficult-Click.svg',
+      svgDefault: difficultSvgDefault,
+      svgError: difficultSvgError,
+      svgHover: difficultSvgHover,
+      svgClick: difficultSvgClick,
     },
     {
       label: 'Neutral',
       rate: 'neutral',
       value: 2,
-      svgDefault: 'assets/feedback/Neutral-Default.svg',
-      svgError: 'assets/feedback/Neutral-Error.svg',
-      svgHover: 'assets/feedback/Neutral-Hover.svg',
-      svgClick: 'assets/feedback/Neutral-Click.svg',
+      svgDefault: neutralSvgDefault,
+      svgError: neutralSvgError,
+      svgHover: neutralSvgHover,
+      svgClick: neutralSvgClick,
     },
     {
       label: 'Easy',
       rate: 'good',
       value: 3,
-      svgDefault: 'assets/feedback/Easy-Default.svg',
-      svgError: 'assets/feedback/Easy-Error.svg',
-      svgHover: 'assets/feedback/Easy-Hover.svg',
-      svgClick: 'assets/feedback/Easy-Click.svg',
+      svgDefault: easySvgDefault,
+      svgError: easySvgError,
+      svgHover: easySvgHover,
+      svgClick: easySvgClick,
     },
     {
       label: 'Very Easy',
       rate: 'delightful',
       value: 4,
-      svgDefault: 'assets/feedback/Very_Easy-Default.svg',
-      svgError: 'assets/feedback/Very_Easy-Error.svg',
-      svgHover: 'assets/feedback/Very_Easy-Hover.svg',
-      svgClick: 'assets/feedback/Very_Easy-Click.svg',
+      svgDefault: veryEasySvgDefault,
+      svgError: veryEasySvgError,
+      svgHover: veryEasySvgHover,
+      svgClick: veryEasySvgClick,
     },
   ];
 
@@ -206,12 +247,13 @@ class AdspFeedback implements AdspFeedbackApi {
       if (this.feedbackFormRef.value) {
         this.feedbackFormRef.value.style.height = '420px';
       }
+      this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderRating = (rating: any, index: number) => {
     return html`
-      <div>
+      <div class="rating-div">
         <img
           src="${rating.svgDefault}"
           @mouseover="${() => this.updateHover(index, true)}"
@@ -219,7 +261,9 @@ class AdspFeedback implements AdspFeedbackApi {
           @click="${() => this.selectRating(index)}"
           class="rating"
           alt="${rating.label}"
+          tabindex="0"
         />
+        <span class="tooltip-text">${rating.label}</span>
         <p
           class="ratingText"
           @mouseover="${() => this.updateHover(index, true)}"
@@ -240,6 +284,11 @@ class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+
+    const tooltips = document.querySelectorAll('.tooltip-text');
+    const tooltip = tooltips[index] as HTMLImageElement;
+    tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
+    tooltip.style.opacity = isHovering ? '1' : '0';
   };
 
   private clearRating = (index: number) => {
@@ -277,7 +326,7 @@ class AdspFeedback implements AdspFeedbackApi {
     text.style.color = '#0081A2';
   };
 
-  public initialize({ apiUrl, tenant, getAccessToken, getContext }: FeedbackOptions) {
+  public initialize({ apiUrl, tenant, name, email, getAccessToken, getContext }: FeedbackOptions) {
     if (apiUrl && typeof apiUrl === 'string') {
       this.apiUrl = new URL(apiUrl);
     }
@@ -301,8 +350,14 @@ class AdspFeedback implements AdspFeedbackApi {
     if (typeof getContext === 'function') {
       this.getContext = getContext;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (this.name) {
+      this.name = name;
+    }
+    if (this.email) {
+      this.email = email;
+    }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const head = document.querySelector('head');
     if (head) {
       render(
@@ -347,9 +402,7 @@ class AdspFeedback implements AdspFeedbackApi {
             max-height: 680px;
             left: 50%;
             top: 10vh;
-            bottom: 16px;
             border: 1px solid;
-            overflow-y: scroll;
             border-radius: 3px;
             transform: translateX(-50%);
           }
@@ -371,9 +424,17 @@ class AdspFeedback implements AdspFeedbackApi {
             display: flex;
             box-sizing: border-box;
             flex-direction: column;
-            height: 100%;
             padding: 24px 24px;
             transition: transform 100ms;
+            height: 100%;
+            justify-content: space-between;
+          }
+          .adsp-fb .adsp-fb-content {
+            max-height: 375px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            flex: 1;
+            padding-right: 16px;
           }
           .adsp-fb .adsp-fb-form-rating {
             display: flex;
@@ -407,12 +468,12 @@ class AdspFeedback implements AdspFeedbackApi {
             width: 100%;
           }
           .adsp-fb .adsp-fb-actions {
-            position: -webkit-sticky;
-            position: sticky;
             display: flex;
             bottom: 0;
+            padding-bottom: 48px;
+            padding-right: 24px;
             margin-top: 24px;
-            margin-bottom: 24px;
+            margin-bottom: 48px;
           }
           .adsp-fb button {
             display: inline-flex;
@@ -456,7 +517,36 @@ class AdspFeedback implements AdspFeedbackApi {
             box-sizing: border-box;
             padding: 24px 24px;
           }
+          .adsp-fb .tooltip-text {
+            visibility: hidden;
 
+            margin-left: 40px;
+            background-color: #666666;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            margin-top: 60px;
+            position: absolute;
+            z-index: 1;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+          }
+          .adsp-fb .tooltip-text::before {
+            content: '';
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent #333 transparent;
+          }
+          .adsp-fb .rating-div {
+            display: flex;
+            flex-direction: column;
+          }
           .adsp-fb .adsp-fb-sent {
             text-align: left;
           }
@@ -469,9 +559,11 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
             transform: translateX(-100%);
+            visibility: hidden;
           }
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
             transform: translateX(-100%);
+            visibility: hidden;
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             visibility: visible;
@@ -482,6 +574,7 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .radios {
             margin-top: 12px;
+            margin-bottom: 12px;
           }
           .rating {
             cursor: pointer;
@@ -548,6 +641,9 @@ class AdspFeedback implements AdspFeedbackApi {
               > div > p :hover {
                 color: #004f84;
               }
+              > div > span {
+                display: none;
+              }
             }
             .ratingText {
               padding-top: 12px;
@@ -571,17 +667,17 @@ class AdspFeedback implements AdspFeedbackApi {
         html`
           <div>
             <div class="adsp-fb">
-                <div ${ref(this.feedbackBadgeRef)} class="adsp-fb-badge" data-show="true" @click=${this.openStartForm}>
-                  <span>Feedback</span>
-                </div>
+              <div ${ref(this.feedbackBadgeRef)} class="adsp-fb-badge" data-show="true" @click=${this.openStartForm}>
+                <span>Feedback</span>
               </div>
-            <div  ${ref(this.dimRef)} class="overlay">
+            </div>
+            <div ${ref(this.dimRef)} class="overlay">
               <div class="adsp-fb">
                 <div ${ref(this.startRef)} class="adsp-fb-form-container adsp-fb-start" data-show="false">
                   <div class="adsp-fb-container-heading">
                     <h2>Give feedback</h2>
                     <img
-                      src="assets/icons/close-outline.svg"
+                      src=${closeOutlineSvg}
                       width="30px"
                       height="30px"
                       @click="${this.closeFeedbackForm}"
@@ -592,11 +688,13 @@ class AdspFeedback implements AdspFeedbackApi {
                   <form class="adsp-fb-form">
                     <h3>Tell us what you think</h3>
                     <p>
-                      Please help us improve our service by sharing feedback about your experience. This will only take a
-                      minute.
+                      Please help us improve our service by sharing feedback about your experience. This will only take
+                      a minute.
                     </p>
                     <div class="adsp-fb-actions">
-                      <button class="adsp-fb-form-primary" @click=${this.closeStartForm} type="button">Start</button>
+                      <button class="adsp-fb-form-primary" @click=${this.closeStartForm} type="button" tabindex="0">
+                        Start
+                      </button>
                     </div>
                   </form>
                 </div>
@@ -605,7 +703,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   <div class="adsp-fb-container-heading">
                     <h2>Give feedback</h2>
                     <img
-                      src="assets/icons/close-outline.svg"
+                      src=${closeOutlineSvg}
                       width="30px"
                       height="30px"
                       @click="${this.closeFeedbackForm}"
@@ -613,104 +711,109 @@ class AdspFeedback implements AdspFeedbackApi {
                     />
                   </div>
                   <hr />
-                  <form class="adsp-fb-form" >
-
-                    <label for="comment" ><b>How easy was it for you to use this service? <br/></b> </label>
-
-                    <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
-                      ${this.ratings.map((rating, index) => this.renderRating(rating, index))}
-                    </div>
-                    <div class="adsp-fb-form-comment">
-                      <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
-
-                      <textarea
-                        id="comment"
-                        ${ref(this.commentRef)}
-                        placeholder=""
-                      ></textarea>
-                      <span>Do not include personal information like SIN, password, addresses, etc.</span>
-                    </div>
-                    <hr />
-                    <br />
-                    <div >
-                      <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
-                      <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
-
-                        <label for="YesOrNo" class="radioButton">
-                          <input name="YesOrNo" type="radio" id="yes" value="Yes" ${ref(this.radio1Ref)}/>
-                          Yes
-                        </label>
-                        <label for="YesOrNo">
-                          <input name="YesOrNo" type="radio" id="no" value="No" ${ref(this.radio2Ref)}/>
-                          No
-                        </label>
+                  <form class="adsp-fb-form">
+                    <div class="adsp-fb-content">
+                      <label for="comment"
+                        ><b>How easy was it for you to use this service? <br /></b>
+                      </label>
+                      <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
+                        ${this.ratings.map((rating, index) => this.renderRating(rating, index))}
                       </div>
-                      <div ${ref(this.technicalCommentDivRef)} >
-                      <div class="adsp-fb-form-comment" >
-                        <label for="comment"
-                          ><b
-                            >Please describe the issue in detail. Mention the page or step where you experienced the issue,
-                            if applicable.</b
-                          >
-                        </label>
-                        <textarea
-                        ${ref(this.technicalCommentRef)}
-                          id="technicalComment"
-                          placeholder="Remember not to include personal information like SIN, password, addresses, etc.  "
-                        ></textarea>
+                      <div class="adsp-fb-form-comment">
+                        <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
+                        <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
+                        <span>Do not include personal information like SIN, password, addresses, etc.</span>
                       </div>
+                      <hr />
                       <br />
+                      <div>
+                        <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
+                        <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
+                          <label for="YesOrNo" class="radioButton">
+                            <input name="YesOrNo" type="radio" id="yes" value="Yes" ${ref(this.radio1Ref)} />
+                            Yes
+                          </label>
+                          <label for="YesOrNo">
+                            <input name="YesOrNo" type="radio" id="no" value="No" ${ref(this.radio2Ref)} />
+                            No
+                          </label>
+                        </div>
+                        <div ${ref(this.technicalCommentDivRef)}>
+                          <div class="adsp-fb-form-comment">
+                            <label for="comment"
+                              ><b
+                                >Please describe the issue in detail. Mention the page or step where you experienced the
+                                issue, if applicable.</b
+                              >
+                            </label>
+                            <textarea
+                              ${ref(this.technicalCommentRef)}
+                              id="technicalComment"
+                              placeholder="Remember not to include personal information like SIN, password, addresses, etc.  "
+                            ></textarea>
+                          </div>
+                          <br />
+                        </div>
+                      </div>
                     </div>
-                    <div>
+                    <div class=" adsp-fb-actions">
+                      <button @click=${this.closeFeedbackForm} type="button" tabindex="0">Cancel</button>
+                      <button
+                        ${ref(this.sendButtonRef)}
+                        class="adsp-fb-form-primary"
+                        @click=${this.sendFeedback}
+                        type="button"
+                        disabled
+                        tabindex="0"
+                      >
+                        Submit
+                      </button>
+                    </div>
 
-
+                    <div class="adsp-fb-sent adsp-fb-message">
+                      <p>
+                        Success!
+                        <img src=${greenCircleCheckmarkSvg} width="18px" height="18px" alt="Success" />
+                      </p>
+                      <p>
+                        Thank you for providing your feedback. We will use your input to improve the service. You will
+                        not receive a response from this submission. If you do require a response, you can contact
+                        government through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
+                      </p>
+                      <div class="adsp-fb-actions">
+                        <button @click=${this.closeAllFeedback} class="adsp-fb-form-primary" type="button" tabindex="0">
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                    <div class="adsp-fb-error adsp-fb-message">
+                      <div>
+                        <img src=${errorIconSvg} width="50px" height="50px" alt="Error" />
+                      </div>
+                      <div class="errorText">Error 500</div>
+                      <div>
+                        <img src=${blueUnderLineSvg} width="50px" />
+                        <div>
+                          <h3>We are experiencing a problem</h3>
+                          <p>
+                            we are experiencing an issue trying to load this page. Please try again in a few minutes. We
+                            apologize for the inconvenience.
+                          </p>
+                          <div>
+                            <button
+                              @click=${this.closeErrorForm}
+                              class="adsp-fb-form-primary"
+                              type="button"
+                              tabindex="0"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </form>
-                  <div class="adsp-fb-actions">
-                  <button @click=${this.closeFeedbackForm} type="button">Cancel</button>
-                  <button
-                    ${ref(this.sendButtonRef)}
-                    class="adsp-fb-form-primary"
-                    @click=${this.sendFeedback}
-                    type="button"
-                    disabled
-                  >
-                    Submit
-                  </button>
                 </div>
-                <div class="adsp-fb-sent adsp-fb-message">
-                    <p>Success! <img
-                    src="assets/icons/green-circle-checkmark.svg"
-                    width="18px"
-                    height="18px"
-                    alt="Success"
-                    /></p>
-                    <p>
-                      Thank you for providing your feedback. We will use your input to improve the service. You will not
-                      receive a response from this submission. If you do require a response, you can contact government
-                      through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
-                    </p>
-                    <div class="adsp-fb-actions">
-                      <button @click=${this.closeAllFeedback} class="adsp-fb-form-primary" type="button">Close</button>
-                    </div>
-                </div>
-                <div class="adsp-fb-error adsp-fb-message">
-                  <div>
-                    <img src="assets/feedback/Error_Icon.svg" width="50px" height="50px"alt="Error"/>
-                    </div>
-                    <div class="errorText">Error 500</div>
-                    <div>
-                    <img src="assets/feedback/Blue-Underline.svg" width="50px" />
-                    <div>
-                    <h3>We are experiencing a problem</h3>
-                  <p>
-                    we are experiencing an issue trying to load this page. Please try again in a few minutes. We apologize for the inconvenience.
-                  </p>
-                    <div>
-                      <button @click=${this.closeErrorForm} class="adsp-fb-form-primary" type="button">Close</button>
-                    </div>
-                  </div>
-                </div>
-
               </div>
             </div>
           </div>

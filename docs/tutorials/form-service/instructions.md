@@ -1,7 +1,9 @@
 ---
-title: Adding Instructions
 layout: page
-nav_excluded: true
+title: Instructions
+parent: Form Service
+grand_parent: Tutorials
+nav_exclude: false
 ---
 
 ## Adding Instructions

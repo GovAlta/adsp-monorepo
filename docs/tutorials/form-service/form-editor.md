@@ -1,7 +1,9 @@
 ---
-title: The Form Editor
 layout: page
-nav_excluded: true
+title: Form Editor
+parent: Form Service
+grand_parent: Tutorials
+nav_exclude: false
 ---
 
 # ADSP's Form Editor

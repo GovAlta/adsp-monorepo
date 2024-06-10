@@ -20,7 +20,8 @@ export const renderReviewListWithDetail = (
     elements.forEach((element, j) => {
       const fieldName = element.scope.split('/').pop() || '';
       const label = resolveLabelFromScope(element.scope);
-      const value = String(elementData[fieldName]);
+      const value = elementData[fieldName] ?? '';
+
       itemData.push([label, value]);
     });
     detailData.push([`${i}`, itemData]);

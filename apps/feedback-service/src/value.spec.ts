@@ -98,7 +98,7 @@ describe('value', () => {
         expect.stringContaining('/v1/feedback-service/values/feedback'),
         expect.objectContaining({
           timestamp: feedbackValue.timestamp,
-          correlationId: `${feedbackValue.context.site}:${feedbackValue.context.view}`,
+          correlationId: `${feedbackValue.context.site}${feedbackValue.context.view}`,
           context: expect.objectContaining(feedbackValue.context),
           value: expect.objectContaining({ rating: feedbackValue.rating, comment: feedbackValue.comment }),
         }),

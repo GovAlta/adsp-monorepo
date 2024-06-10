@@ -13,7 +13,7 @@ export enum LOGIN_TYPES {
   tenant = 'tenant',
 }
 
-let authInstance: KeycloakAuthImpl = null;
+export let authInstance: KeycloakAuthImpl = null;
 export const getOrCreateKeycloakAuth = async (config: KeycloakConfig, realm: string): Promise<KeycloakAuth> => {
   if (!realm) {
     throw new Error('Realm value not set on keycloak retrieval.');
@@ -99,6 +99,10 @@ class KeycloakAuthImpl implements KeycloakAuth {
       console.error('Failed to initialize', e);
       throw e;
     }
+  }
+
+  public getExpiryTime() {
+    return this.keycloak.refreshTokenParsed.exp;
   }
 
   async loginByTenant(idp: string) {
