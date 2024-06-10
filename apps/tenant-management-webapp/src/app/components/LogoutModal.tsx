@@ -1,34 +1,78 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { TenantLogout } from '@store/tenant/actions';
+import { clearInterval, setInterval } from 'worker-timers';
+import { UpdateAccessToken } from '@store/tenant/actions';
+import { authInstance } from '@lib/keycloak';
 
 export const LogoutModal = (): JSX.Element => {
-  const { isExpired } = useSelector((state: RootState) => ({
-    isExpired: state.session?.isExpired,
-  }));
-  const [countdownTime, setCountdownTime] = useState(120);
+  const [open, setOpen] = useState<boolean>(false);
+  const [countdownTime, setCountdownTime] = useState<number>(120);
+
   const dispatch = useDispatch();
+  const ref = useRef(null);
+  const countDownRef = useRef(null);
 
   useEffect(() => {
-    if (isExpired === true) {
-      const timer = setInterval(() => {
+    // windows.worker is added to avoid affecting the spec files
+    if (window?.Worker) {
+      ref.current = setInterval(() => {
+        if (authInstance) {
+          const expiry = authInstance.getExpiryTime();
+          if (expiry) {
+            const expiryInSecs = Math.ceil(expiry - Date.now() / 1000);
+            if (expiryInSecs <= 0) {
+              dispatch(TenantLogout());
+              return;
+            }
+            if (expiryInSecs <= 4 * 60 && expiryInSecs > 60 && open === false) {
+              setOpen(true);
+            }
+
+            if (expiryInSecs <= 60) {
+              dispatch(TenantLogout());
+            }
+          }
+        }
+      }, 1000 * 60);
+    }
+
+    return () => {
+      if (ref.current) {
+        clearInterval(ref.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      const expiry = authInstance.getExpiryTime();
+      const expiryInSecs = Math.ceil(expiry - Date.now() / 1000);
+      countDownRef.current = setInterval(() => {
         setCountdownTime((time) => {
           if (time === 0) {
-            clearInterval(timer);
-
             dispatch(TenantLogout());
             return 0;
-          } else return time - 1;
+          }
+
+          if (time > 0) {
+            return time - 1;
+          }
         });
       }, 1000);
+    } else {
+      if (countDownRef.current) {
+        clearInterval(countDownRef.current);
+        countDownRef.current = null;
+      }
     }
-  }, [dispatch, isExpired]);
+  }, [open]);
 
   return (
     <GoAModal
-      open={isExpired === true}
+      open={open}
       testId="tenant-logout-notice-modal"
       heading="Session expired"
       actions={
@@ -36,16 +80,9 @@ export const LogoutModal = (): JSX.Element => {
           <GoAButton
             testId="session-continue-button"
             onClick={() => {
-              const tenantRealm = encodeURIComponent(localStorage.getItem('realm'));
-              const idpFromUrl = encodeURIComponent(localStorage.getItem('idpFromUrl'));
-              localStorage.removeItem('realm');
-              if (idpFromUrl === null || idpFromUrl === 'core') {
-                const url = `${tenantRealm}/login`;
-                window.location.replace(url);
-              } else {
-                const url = `${tenantRealm}/login?kc_idp_hint=${idpFromUrl}`;
-                window.location.replace(url);
-              }
+              dispatch(UpdateAccessToken());
+              setCountdownTime(120);
+              setOpen(false);
             }}
           >
             Continue

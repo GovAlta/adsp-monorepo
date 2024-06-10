@@ -47,7 +47,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
     'url',
     'url',
     wordMaxLengthCheck(150, 'URL'),
-    characterCheck(validationPattern.validURL),
+    characterCheck(validationPattern.validURLOnlyDomain),
     isNotEmptyCheck('url'),
     duplicateNameCheck(allUrls, 'url')
   ).build();
@@ -69,23 +69,32 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
             >
               Cancel
             </GoAButton>
-            <GoAButton
-              type="primary"
-              testId="site-save"
-              disabled={!site.url || validators.haveErrors()}
-              onClick={() => {
-                const validations = {};
 
-                if (isEdit) {
+            {isEdit ? (
+              <GoAButton
+                type="primary"
+                testId="site-edit"
+                disabled={!site.url || validators.haveErrors()}
+                onClick={() => {
                   onSave(site);
-                } else {
+                  onClose();
+                }}
+              >
+                Save
+              </GoAButton>
+            ) : (
+              <GoAButton
+                type="primary"
+                testId="site-register"
+                disabled={!site.url || validators.haveErrors()}
+                onClick={() => {
                   onEdit(site);
-                }
-                onClose();
-              }}
-            >
-              Register
-            </GoAButton>
+                  onClose();
+                }}
+              >
+                Register
+              </GoAButton>
+            )}
           </GoAButtonGroup>
         }
       >

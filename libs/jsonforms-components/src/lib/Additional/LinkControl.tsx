@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { validateUrl } from '../Context/register/util';
+import { isValidUrl } from '../Context/register/util';
 import { GoAFormItem } from '@abgov/react-components-new';
+import { GoAIconButton } from '@abgov/react-components-new';
 
 const linkLength = 40;
 const invalidExtensions = ['exe'];
@@ -39,13 +40,9 @@ export const RenderLink = (props: OptionProps): JSX.Element => {
   }
 
   useEffect(() => {
-    async function validateLink(linkUrl: string) {
-      if (linkUrl) {
-        const response = await validateUrl({ url: linkUrl });
-        setLinkValid(response);
-      }
+    if (linkUrl) {
+      setLinkValid(isValidUrl(linkUrl));
     }
-    validateLink(linkUrl);
   }, [linkUrl]);
 
   if (!linkLabel && !error) {
@@ -59,9 +56,12 @@ export const RenderLink = (props: OptionProps): JSX.Element => {
     <GoAFormItem error={error} label="">
       <div data-testid="link-jsonform">
         {linkUrl && linkValid ? (
-          <a href={link} target="_blank" rel="noreferrer">
-            {linkLabel}
-          </a>
+          <div>
+            <a href={link} rel="noopener noreferrer" target="_blank">
+              {linkLabel as string}
+              <GoAIconButton icon="open" title="Open" testId="open-icon" size="small" />
+            </a>
+          </div>
         ) : (
           linkLabel
         )}

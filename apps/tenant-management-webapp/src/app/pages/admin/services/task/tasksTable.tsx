@@ -13,26 +13,21 @@ export const TaskListTable: FunctionComponent<TaskTableProps> = ({ tasks, onEdit
   const newTasks = tasks ? (JSON.parse(JSON.stringify(tasks)) as Record<string, QueueTaskDefinition>) : [];
 
   return (
-    <>
-      <HeaderFont>
-        <h2>Task list</h2>
-      </HeaderFont>
-      <TableDiv>
-        <DataTable data-testid="task-task-table">
-          <thead data-testid="task-task-table-header">
-            <tr>
-              <th data-testid="task-task-table-header-namespace">Name</th>
-              <th data-testid="task-task-table-header-name">Description</th>
-              <th data-testid="task-task-table-header-name">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(newTasks).map((task) => {
-              return <TaskTableItem key={task} id={task} task={newTasks[task]} onEditTask={onEditTask} />;
-            })}
-          </tbody>
-        </DataTable>
-      </TableDiv>
-    </>
+    <TableDiv>
+      <DataTable data-testid="task-task-table">
+        <thead data-testid="task-task-table-header">
+          <tr>
+            <th data-testid="task-task-table-header-namespace">Name</th>
+            <th data-testid="task-task-table-header-name">Description</th>
+            <th data-testid="task-task-table-header-name">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.keys(newTasks).map((task) => {
+            return <TaskTableItem key={task} id={task} task={newTasks[task]} onEditTask={onEditTask} />;
+          })}
+        </tbody>
+      </DataTable>
+    </TableDiv>
   );
 };

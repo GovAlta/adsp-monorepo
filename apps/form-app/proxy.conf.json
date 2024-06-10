@@ -3,5 +3,13 @@
     "target": "https://form-app-adsp-dev.apps.aro.gov.ab.ca",
     "secure": true,
     "changeOrigin": true
+  },
+  "/api/*": {
+    "target": "http://localhost:3348",
+    "pathRewrite": {
+      "^/api": ""
+    },
+    "secure": false,
+    "changeOrigin": true
   }
 }

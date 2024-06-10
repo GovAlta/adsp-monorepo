@@ -6,7 +6,7 @@ import { SiteAddEditForm } from './edit';
 import { deleteFeedbackSite, getFeedbackSites, updateFeedbackSite } from '@store/feedback/actions';
 import { FeedbackSite, defaultFeedbackSite } from '@store/feedback/models';
 import { RootState } from '@store/index';
-import { Buttons, Heading } from './styled-components';
+import { ButtonPadding, Buttons, Heading } from './styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { DeleteModal } from '@components/DeleteModal';
 import { update } from 'lodash';
@@ -55,7 +55,7 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
 
   return (
     <>
-      <Buttons>
+      <ButtonPadding>
         <GoAButton
           testId="add-site"
           onClick={() => {
@@ -66,8 +66,8 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
         >
           Register site
         </GoAButton>
-      </Buttons>
-      <Heading>Registered sites</Heading>
+      </ButtonPadding>
+
       <PageIndicator />
       {!indicator.show && sites && (
         <div>

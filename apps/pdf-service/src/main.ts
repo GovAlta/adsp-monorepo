@@ -5,7 +5,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -26,6 +26,8 @@ import { createPdfService } from './puppeteer';
 import { createFileService } from './file';
 import { createPdfQueueService } from './amqp';
 import { createJobRepository } from './redis';
+import { additionalStyles } from './submittedForm/additionalStyles';
+import { template } from './submittedForm/template';
 
 const logger = createLogger('pdf-service', environment.LOG_LEVEL);
 
@@ -40,6 +42,8 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  const SUBMITTED_FORM = 'submitted-form';
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -70,7 +74,10 @@ const initializeApp = async (): Promise<express.Application> => {
         Object.entries(config).reduce(
           (templates, [templateId, template]) => ({
             ...templates,
-            [templateId]: new PdfTemplateEntity(templateService, pdfService, { ...template, tenantId }),
+            [templateId]: new PdfTemplateEntity(templateService, pdfService, {
+              ...template,
+              tenantId,
+            }),
           }),
           {}
         ),
@@ -87,6 +94,20 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      serviceConfigurations: [
+        {
+          serviceId: adspId`urn:ads:platform:pdf-service`,
+          configuration: {
+            [SUBMITTED_FORM]: {
+              id: SUBMITTED_FORM,
+              name: 'Submitted Form',
+              description: 'Template used to generate a PDF when a form is submitted',
+              template: template,
+              additionalStyles: additionalStyles,
+            },
+          },
+        },
+      ],
       values: [ServiceMetricsValueDefinition],
       useLongConfigurationCacheTTL: true,
     },
@@ -139,6 +160,7 @@ const initializeApp = async (): Promise<express.Application> => {
     queueService,
     fileService: createFileService({ logger, tokenProvider, directory }),
     eventService,
+    directory,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));

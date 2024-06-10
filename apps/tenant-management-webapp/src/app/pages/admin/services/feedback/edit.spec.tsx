@@ -22,12 +22,12 @@ const sitesstore = mockStore({
 
 describe('SiteAddEditForm', () => {
   afterEach(cleanup);
-  const initialSite: FeedbackSite = { url: 'https://example.com', allowAnonymous: true, views: [] };
-  const emptySite: FeedbackSite = { url: '', allowAnonymous: false, views: [] };
-  const inValidSite: FeedbackSite = { url: 'xyz', allowAnonymous: false, views: [] };
+  const initialSite: FeedbackSite = { url: 'https://example.com', allowAnonymous: true };
+  const emptySite: FeedbackSite = { url: '', allowAnonymous: false };
+  const inValidSite: FeedbackSite = { url: 'xyz', allowAnonymous: false };
   const onSaveMock = jest.fn();
   const onCloseMock = jest.fn();
-  const sites: FeedbackSite[] = [{ url: 'https://test.com', allowAnonymous: false, views: [] }];
+  const sites: FeedbackSite[] = [{ url: 'https://test.com', allowAnonymous: false }];
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -58,7 +58,7 @@ describe('SiteAddEditForm', () => {
         isEdit={false}
       />
     );
-    const saveBtn = queryByTestId('site-save');
+    const saveBtn = queryByTestId('site-register');
     expect(saveBtn).toBeDisabled();
   });
 
@@ -133,7 +133,7 @@ describe('SiteAddEditForm', () => {
     fireEvent(urlInput, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
     const urlFormItem = queryByTestId('feedback-url-formitem');
     expect(urlFormItem).toHaveAttribute('error', '');
-    const saveBtn = queryByTestId('site-save');
+    const saveBtn = queryByTestId('site-register');
     expect(saveBtn).toHaveAttribute('disabled', 'false');
   });
   it('URL field should be disabled when editing site', () => {

@@ -975,3 +975,70 @@ Then('the user views {string} in security classification dropdown', function (dr
     }
   });
 });
+
+When('the user selects {string} in Filter file type dropdown on uploaded files page', function (dropdownItemName) {
+  fileServiceObj
+    .uploadedFilesFilterFileTypeDropdown()
+    .shadow()
+    .find('li')
+    .contains(dropdownItemName)
+    .click({ force: true });
+  cy.wait(1000);
+});
+
+When(
+  'the user searches file types with {string} as file name and {string} as file type on Uploaded files page',
+  function (fileName, fileType) {
+    // Enter file name if it's not N/A
+    if (fileName !== 'N/A') {
+      fileServiceObj
+        .uploadedFilesSearchFileName()
+        .shadow()
+        .find('input')
+        .clear()
+        .type(fileName, { delay: 200, force: true });
+    }
+    // Enter file type if it's not N/A
+    if (fileType !== 'N/A') {
+      fileServiceObj
+        .uploadedFilesFilterFileTypeDropdown()
+        .shadow()
+        .find('li')
+        .contains(fileType)
+        .click({ force: true });
+      cy.wait(1000);
+    }
+    // Click search button
+    fileServiceObj.uploadedFilesSearchButton().shadow().find('button').click({ force: true });
+    cy.wait(4000);
+  }
+);
+
+Then('the user views files with {string} type on uploaded files page', function (fileType) {
+  fileServiceObj.uploadFilesGridTypeCells().then((types) => {
+    for (let i = 0; i < types.length; i++) {
+      expect(types[i].outerText).to.eq(fileType);
+    }
+  });
+});
+
+When('the user clicks Reset button on uploaded files page', function () {
+  fileServiceObj.uploadedFilesResetButton().shadow().find('button').click({ force: true });
+  cy.wait(4000);
+});
+
+Then('the user views files for other types than {string} on uploaded files page', function (fileType) {
+  let counter = 0;
+  fileServiceObj
+    .uploadFilesGridTypeCells()
+    .then((types) => {
+      for (let i = 0; i < types.length; i++) {
+        if (types[i].outerText !== fileType) {
+          counter = counter + 1;
+        }
+      }
+    })
+    .then(() => {
+      expect(counter).to.gt(0);
+    });
+});

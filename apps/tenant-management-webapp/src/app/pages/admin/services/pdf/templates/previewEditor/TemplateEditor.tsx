@@ -25,6 +25,7 @@ import { LogoutModal } from '@components/LogoutModal';
 import {
   deletePdfFilesService,
   getPdfTemplates,
+  getCorePdfTemplates,
   updatePdfTemplate,
   setPdfDisplayFileId,
   updateTempTemplate,
@@ -34,7 +35,7 @@ import { RootState } from '@store/index';
 import { FetchFileService } from '@store/file/actions';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
-import { selectPdfTemplateById } from '@store/pdf/selectors';
+import { selectPdfTemplateById, selectCorePdfTemplateById } from '@store/pdf/selectors';
 import { CustomLoader } from '@components/CustomLoader';
 
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
@@ -61,7 +62,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [customIndicator, setCustomIndicator] = useState<boolean>(false);
 
-  const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id));
+  const pdfTemplate = useSelector((state) => selectCorePdfTemplateById(state, id) || selectPdfTemplateById(state, id));
 
   const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
 
@@ -83,6 +84,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   useEffect(() => {
     if (!pdfTemplate) {
       dispatch(getPdfTemplates());
+      dispatch(getCorePdfTemplates());
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

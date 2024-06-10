@@ -148,3 +148,7 @@ const Actions = styled.div`
     }
   }
 `;
+
+export const NoPaddingH2 = styled.h2`
+  padding-left: 0rem !important;
+`;

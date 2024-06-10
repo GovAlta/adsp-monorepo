@@ -193,3 +193,14 @@ export const onChangeForNumericControl = (props: EventChangeControlProps) => {
     }
   }
 };
+
+/**
+ * Helper function to process onChange event for input enum checkboxes controls.
+ * @param data
+ * @param name
+ * @param value
+ * @returns {string[]}
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const onChangeForCheckboxData = (data: any, name: string, value: string) =>
+  data ? (!value ? data?.filter((item: string | []) => item !== name) : [...data, name]) : [name];

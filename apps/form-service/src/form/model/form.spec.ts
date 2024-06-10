@@ -79,7 +79,7 @@ describe('FormEntity', () => {
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
     expect(entity).toBeTruthy();
     expect(entity).toMatchObject(formInfo);
   });
@@ -152,7 +152,7 @@ describe('FormEntity', () => {
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can send code', async () => {
       notificationMock.sendCode.mockResolvedValueOnce(null);
@@ -182,7 +182,7 @@ describe('FormEntity', () => {
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can return true for applicant', () => {
       const result = entity.canRead({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
@@ -234,7 +234,7 @@ describe('FormEntity', () => {
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can access form data', async () => {
       const code = '123';
@@ -251,7 +251,7 @@ describe('FormEntity', () => {
     });
 
     it('can throw for non-draft form', async () => {
-      const nonDraft = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const nonDraft = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       nonDraft.status = FormStatus.Archived;
       const code = '123';
       await expect(
@@ -289,7 +289,7 @@ describe('FormEntity', () => {
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can return true for applicant on draft form', async () => {
       const before = entity.lastAccessed;
@@ -324,7 +324,7 @@ describe('FormEntity', () => {
     });
 
     it('can return true for applicant on submitted form', async () => {
-      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const submitted = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       submitted.status = FormStatus.Submitted;
 
       const before = entity.lastAccessed;
@@ -333,7 +333,7 @@ describe('FormEntity', () => {
     });
 
     it('can return true for assessor on submitted form', async () => {
-      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const submitted = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       submitted.status = FormStatus.Submitted;
 
       const before = entity.lastAccessed;
@@ -342,7 +342,7 @@ describe('FormEntity', () => {
     });
 
     it('can return true for admin on submitted form', async () => {
-      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const submitted = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       submitted.status = FormStatus.Submitted;
 
       const before = entity.lastAccessed;
@@ -351,7 +351,7 @@ describe('FormEntity', () => {
     });
 
     it('can throw for user without role on submitted form', async () => {
-      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const submitted = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       submitted.status = FormStatus.Submitted;
 
       await expect(submitted.accessByUser({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(
@@ -360,7 +360,7 @@ describe('FormEntity', () => {
     });
 
     it('can throw for user without role on archived form', async () => {
-      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const submitted = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       submitted.status = FormStatus.Archived;
 
       await expect(submitted.accessByUser({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(
@@ -369,7 +369,7 @@ describe('FormEntity', () => {
     });
 
     it('can throw for locked form', async () => {
-      const locked = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const locked = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       locked.status = FormStatus.Locked;
 
       await expect(locked.accessByUser({ tenantId, id: 'tester', roles: ['test-applicant'] } as User)).rejects.toThrow(
@@ -392,7 +392,7 @@ describe('FormEntity', () => {
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can update form content', async () => {
       const data = {};
@@ -404,7 +404,7 @@ describe('FormEntity', () => {
     });
 
     it('can throw for form not in draft', async () => {
-      const locked = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const locked = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       locked.status = FormStatus.Locked;
 
       const data = {};
@@ -476,7 +476,7 @@ describe('FormEntity', () => {
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can lock form', async () => {
       const locked = await entity.lock({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
@@ -490,7 +490,7 @@ describe('FormEntity', () => {
     });
 
     it('can throw for form not in draft', async () => {
-      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const submitted = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       submitted.status = FormStatus.Submitted;
       await expect(entity.lock({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User)).rejects.toThrow(
         InvalidOperationError
@@ -512,7 +512,7 @@ describe('FormEntity', () => {
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can unlock form', async () => {
       const unlocked = await entity.unlock({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
@@ -526,7 +526,7 @@ describe('FormEntity', () => {
     });
 
     it('can throw for form not in locked', async () => {
-      const draft = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const draft = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       draft.status = FormStatus.Draft;
       await expect(draft.unlock({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User)).rejects.toThrow(
         InvalidOperationError
@@ -550,7 +550,7 @@ describe('FormEntity', () => {
     };
 
     it('can submit form', async () => {
-      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       const [submitted] = await entity.submit(
         { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
         queueTaskServiceMock,
@@ -563,7 +563,7 @@ describe('FormEntity', () => {
     });
 
     it('can submit form with task', async () => {
-      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       entity.submissionRecords = true;
 
       const [submitted] = await entity.submit(
@@ -578,7 +578,7 @@ describe('FormEntity', () => {
     });
 
     it('can throw for different user', async () => {
-      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       await expect(
         entity.submit(
           { tenantId, id: 'tester-2', roles: ['test-applicant'] } as User,
@@ -589,7 +589,7 @@ describe('FormEntity', () => {
     });
 
     it('can submit form by clerk', async () => {
-      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       const [submitted] = await entity.submit(
         { tenantId, id: 'tester-2', roles: ['test-clerk'] } as User,
         queueTaskServiceMock,
@@ -602,14 +602,14 @@ describe('FormEntity', () => {
     });
 
     it('can throw for user without applicant role', async () => {
-      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       await expect(
         entity.submit({ tenantId, id: 'tester', roles: [] } as User, queueTaskServiceMock, repositoryMock)
       ).rejects.toThrow(UnauthorizedUserError);
     });
 
     it('can throw for form not in draft', async () => {
-      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
         ...formInfo,
         status: FormStatus.Submitted,
       });
@@ -638,7 +638,7 @@ describe('FormEntity', () => {
       files: {},
     };
     it('can set to draft', async () => {
-      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
         ...formInfo,
         status: FormStatus.Submitted,
       });
@@ -647,7 +647,7 @@ describe('FormEntity', () => {
     });
 
     it('can set to draft not authorized', async () => {
-      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
         ...formInfo,
         status: FormStatus.Submitted,
       });
@@ -657,7 +657,7 @@ describe('FormEntity', () => {
     });
 
     it('can set to draft invalid', async () => {
-      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
         ...formInfo,
         status: FormStatus.Draft,
       });
@@ -681,7 +681,7 @@ describe('FormEntity', () => {
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can archive form', async () => {
       const archived = await entity.archive({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
@@ -712,7 +712,7 @@ describe('FormEntity', () => {
         test: adspId`urn:ads:platform:file-service:v1:/files/test`,
       },
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+    const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can delete form', async () => {
       repositoryMock.delete.mockResolvedValueOnce(true);

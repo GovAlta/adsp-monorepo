@@ -50,14 +50,14 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
     .build();
   return (
     <GoAModal
-      testId="template-form"
+      testId="add-disposition-model"
       open={open}
       heading={`${isEdit ? 'Edit' : 'Add'} disposition state`}
       width="640px"
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
-            testId={`disposition-form-cancel-${isEdit ? 'edit' : 'add'}`}
+            testId={`disposition-state-cancel-${isEdit ? 'edit' : 'add'}`}
             type="secondary"
             onClick={() => {
               validators.clear();
@@ -68,7 +68,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
           </GoAButton>
           <GoAButton
             type="primary"
-            testId="form-save"
+            testId="disposition-state-save"
             disabled={!template?.name || validators.haveErrors()}
             onClick={() => {
               if (!isEdit) {
@@ -95,10 +95,10 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
           <GoAFormItem error={errors?.['name']} label="Name">
             <GoAInput
               type="text"
-              name="disposition-template-name"
+              name="disposition-name"
               value={template?.name}
-              testId="pdf-template-name"
-              aria-label="pdf-template-name"
+              testId="disposition-name"
+              aria-label="disposition-name"
               width="100%"
               onChange={(name, value) => {
                 const validations = {
@@ -119,11 +119,11 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
         <GoAFormItem label="Description">
           <DescriptionItem>
             <GoATextArea
-              name="pdf-template-description"
+              name="disposition-description"
               value={template?.description}
               width="100%"
-              testId="pdf-template-description"
-              aria-label="pdf-template-description"
+              testId="disposition-description"
+              aria-label="disposition-description"
               onKeyPress={(name, value) => {
                 setTemplate({ ...template, description: value });
               }}

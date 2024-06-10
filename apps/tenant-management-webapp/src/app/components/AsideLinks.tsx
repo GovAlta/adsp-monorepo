@@ -7,9 +7,10 @@ import { RootState } from '@store/index';
 interface AsideLinksProps {
   serviceName: string;
   noDocsLink?: boolean;
+  feedbackTutorialLink?: boolean;
 }
 
-const AsideLinks = ({ serviceName, noDocsLink = false }: AsideLinksProps): JSX.Element => {
+const AsideLinks = ({ serviceName, noDocsLink = false, feedbackTutorialLink }: AsideLinksProps): JSX.Element => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
 
@@ -37,6 +38,15 @@ const AsideLinks = ({ serviceName, noDocsLink = false }: AsideLinksProps): JSX.E
       {!noDocsLink && (
         <HyperLinkColor>
           <ExternalLink link={getDocsLink()} testId="docs-link" text="Read the API docs" />
+        </HyperLinkColor>
+      )}
+      {feedbackTutorialLink && (
+        <HyperLinkColor>
+          <ExternalLink
+            testId="feedback-tutorial-link"
+            link="https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/collectingFeedback.html"
+            text="Feedback service tutorial"
+          />
         </HyperLinkColor>
       )}
       <SupportLinks />

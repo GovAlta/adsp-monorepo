@@ -4,7 +4,7 @@ import { Category, UISchemaElement } from '@jsonforms/core';
 import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
-import { FormStepperComponentProps } from './FormStepperControl';
+import { FormStepperOptionProps } from './FormStepperControl';
 export const ContextProvider = ContextProviderFactory();
 
 /**
@@ -108,6 +108,10 @@ const categorization = {
     variant: 'stepper',
     testId: 'stepper-test',
     showNavButtons: true,
+    nextButtonLabel: 'testNext',
+    nextButtonType: 'primary',
+    previousButtonLabel: 'testPrevious',
+    previousButtonType: 'primary',
     componentProps: { controlledNav: true },
   },
 };
@@ -542,7 +546,7 @@ describe('Form Stepper Control', () => {
   });
 
   it('first page has next button is has componentProps', () => {
-    const componentProps: FormStepperComponentProps = {
+    const componentProps: FormStepperOptionProps = {
       nextButtonLabel: 'testNext',
       nextButtonType: 'primary',
       previousButtonLabel: 'testPrevious',
@@ -564,14 +568,16 @@ describe('Form Stepper Control', () => {
   });
 
   it('has next previous buttons labels', () => {
-    const componentProps: FormStepperComponentProps = {
+    const optionProps: FormStepperOptionProps = {
       nextButtonLabel: 'testNext',
       nextButtonType: 'primary',
       previousButtonLabel: 'testPrevious',
       previousButtonType: 'primary',
     };
 
-    const renderer = render(getForm(formData, categorization, componentProps));
+    categorization.options = { ...categorization.options, ...optionProps };
+
+    const renderer = render(getForm(formData, categorization));
     window.HTMLElement.prototype.scrollIntoView = function () {};
     const stepperHeader = renderer.getByTestId('stepper-test');
     expect(stepperHeader).toBeInTheDocument();
@@ -593,9 +599,10 @@ describe('Form Stepper Control', () => {
     expect(prevButton).toBeInTheDocument();
     const nextButton1 = renderer.getByTestId('next-button');
 
-    expect(nextButton1.textContent).toBe(componentProps.nextButtonLabel);
-    expect(prevButton.textContent).toBe(componentProps.previousButtonLabel);
-    expect(nextButton1.getAttribute('type')).toBe(componentProps.nextButtonType);
-    expect(prevButton.getAttribute('type')).toBe(componentProps.previousButtonType);
+    console.log('Next', nextButton.innerHTML);
+    expect(nextButton1.textContent).toBe(categorization.options?.nextButtonLabel);
+    expect(prevButton.textContent).toBe(categorization.options?.previousButtonLabel);
+    expect(nextButton1.getAttribute('type')).toBe(categorization.options?.nextButtonType);
+    expect(prevButton.getAttribute('type')).toBe(categorization.options?.previousButtonType);
   });
 });

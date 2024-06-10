@@ -39,6 +39,7 @@ import { ajv } from '../../../lib/validations/checkInput';
 import { Element } from './RenderFormReviewFields';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import styled from 'styled-components';
+import { TaskCancelModal } from './TaskCancelModal';
 const PlaceholderDiv = styled.div`
   display: flex;
   flex-direction: column;
@@ -90,6 +91,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const [dispositionReason, setDispositionReason] = useState<string>('');
   const [dispositionStatus, setDispositionStatus] = useState<string>(NO_DISPOSITION_SELECTED.value);
+  const [showTaskCancelConfirmation, setShowTaskCancelConfirmation] = useState(false);
 
   const { errors, validators } = useValidators('dispositionReason', 'dispositionReason', isNotEmptyCheck('Reason'))
     .add('dispositionStatus', 'dispositionStatus', isNotEmptyCheck('Disposition'))
@@ -105,15 +107,19 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     setCategories(cats as (Categorization | Category | ControlElement)[]);
   }, [categorization, currentForm]);
 
-  const isTaskCompleted = () => {
+  const disableFormDispositionControls = () => {
+    if (task.status === TASK_STATUS.PENDING) return true;
+
     return task.status === TASK_STATUS.COMPLETED;
   };
 
   const buttonDisabledForCompleteTask = () => {
-    if (dispositionReason === '' && dispositionStatus === '') return true;
+    if (dispositionReason === '' || dispositionStatus === '') return true;
 
     if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
     if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
+
+    if (Object.keys(errors).length > 0) return true;
 
     return !user.isWorker || isExecuting;
   };
@@ -174,7 +180,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             <GoADropdown
               testId="formDispositionStatus"
               value={dispositionStatus}
-              disabled={isTaskCompleted()}
+              disabled={disableFormDispositionControls()}
               onChange={(_, value: string) => {
                 setDispositionStatus(value);
                 validators.remove('dispositionStatus');
@@ -198,7 +204,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             <GoATextArea
               name="reason"
               value={dispositionReason}
-              disabled={isTaskCompleted()}
+              disabled={disableFormDispositionControls()}
               width="75ch"
               testId="reason"
               aria-label="reason"
@@ -224,7 +230,13 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
               Complete task
             </GoAButton>
-            <GoAButton type="secondary" disabled={!user.isWorker || isExecuting} onClick={() => onCancel(null)}>
+            <GoAButton
+              type="secondary"
+              disabled={!user.isWorker || isExecuting}
+              onClick={() => {
+                setShowTaskCancelConfirmation(true);
+              }}
+            >
               Cancel task
             </GoAButton>
           </>
@@ -241,11 +253,35 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     );
   };
 
+  const renderTaskCancelModal = () => {
+    return (
+      <TaskCancelModal
+        title="Cancel Task"
+        isOpen={showTaskCancelConfirmation}
+        content={
+          <div>
+            <div>
+              Are you sure you wish to cancel <b>{`${task.description}?`}</b>
+              <br />
+            </div>
+          </div>
+        }
+        onYes={() => {
+          onCancel(null);
+          setShowTaskCancelConfirmation(false);
+        }}
+        onNo={() => {
+          setShowTaskCancelConfirmation(false);
+        }}
+      />
+    );
+  };
   return (
     <div>
       {renderFormSubmissionReview()}
       {renderFormDisposition()}
       {renderButtonGroup()}
+      {renderTaskCancelModal()}
     </div>
   );
 };

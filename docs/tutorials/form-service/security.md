@@ -1,44 +1,40 @@
 ---
-title: Securing access to forms
+title: Securing access
 layout: page
-nav_order: 4
+nav_order: 6
 parent: Form Service
 grand_parent: Tutorials
 ---
 
 ## Security
 
-The _Form Service_ defines three types of users:
+Security for the _Form Service_ APIs is based on Keycloak, and there are two types of roles that users and clients need to consider when accessing forms: _Form Definition_ roles, and _ADSP_ roles.
 
-- applicants,
-- clerks,
-- and assessors.
+### Form Definition roles
 
-An _applicant_ is someone who is able to fill in a form and submit it for review. _Clerks_ are able to read the information provided by the applicant, perhaps as a preliminary review, while _assessors_ are able to assess the information and disposition the form as appropriate.
+Developers should assign access roles to each _Form Definition_ within a tenant. The _Form Service_ defines three types of users:
 
-Developers can assign these user types to one or more keycloak roles, via the role tab in the form definition editor, as illustrated below:
+- **Applicant**: For users that fill in forms and submit them for review.
+- **Clerk**: For GOA personnel that need to review a form and perhaps fill in missing detail.
+- **Assessor**: For GOA personnel who are able to assess the information, make decisions, and disposition the form as appropriate
+
+In the Tenant-Management-Webapp developers can assign one or more these user types to one or more tenant-defined keycloak roles. Note: this security is important enough that this step is mandatory. If, when testing you find you are getting 403's, make sure your test user has the right tenant-defined roles. You can assign user types to these roles via the _Roles_ tab in the Form Definition editor:
 
 ![](/adsp-monorepo/assets/form-service/userRoles.png){: width="400" }
 
-### Additional roles
+### ADSP roles
 
-There are also some additional, ADSP-specific, roles needed in order for end-users to be able to access a form, including:
+There are several roles that may be required for users to access the form service resources. These can be found under the form-service client in keycloak:
 
-#### urn:ads:platform:form-service
+![](/adsp-monorepo/assets/form-service/form-service-roles.png){: width="600" }
 
-- form-admin
-- form-file-reader
-- form-file-uploader
-- form-support
-- intake-application
+Applicants will need the _intake-application_ role to fill out forms. If the form requires files to be uploaded they will also need:
 
-#### realm-management
+- _form-file-reader_
+- _form-file-uploader_
 
-- query-clients
-- query-groups
-- query-realms
-- query-users
+Additional roles are available for form administrators. Clerks will need the _form-support_ and _form-file-reader_ roles, while assessors will be required to have the _form-admin_ and _form-file-reader_ roles.
 
 #### urn:ads:platform:tenant-service
 
-- tenant-admin
+Currently all users will need the _tenant-admin_ role.

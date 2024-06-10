@@ -24,7 +24,7 @@
           },
           {
             "glob": "nginx.conf",
-            "input": "./",
+            "input": "apps/form-app/",
             "output": "./"
           }
         ],

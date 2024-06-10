@@ -1,4 +1,7 @@
-import { FeedbackSite } from './models';
+import { Feedback, FeedbackSite } from './models';
+
+export const FETCH_FEEDBACKS_ACTION = 'feedback/FETCH_FEEDBACKS_ACTION';
+export const FETCH_FEEDBACKS_SUCCESS_ACTION = 'feedback/FETCH_FEEDBACKS_SUCCESS_ACTION';
 
 export const FETCH_FEEDBACK_SITES_ACTION = 'feedback/FETCH_FEEDBACK_SITES_ACTION';
 export const FETCH_FEEDBACK_SITES_SUCCESS_ACTION = 'feedback/FETCH_FEEDBACK_SITES_SUCCESS_ACTION';
@@ -9,6 +12,17 @@ export const UPDATE_FEEDBACK_SITE_SUCCESS_ACTION = 'feedback/UPDATE_FEEDBACK_SIT
 export const DELETE_FEEDBACK_SITE_ACTION = 'feedback/DELETE_FEEDBACK_SITE_ACTION';
 export const DELETE_FEEDBACK_SITE_SUCCESS_ACTION = 'feedback/DELETE_FEEDBACK_SITE_SUCCESS_ACTION';
 
+export interface FetchFeedbacksAction {
+  type: typeof FETCH_FEEDBACKS_ACTION;
+  feedback: FeedbackSite;
+  next: string;
+}
+export interface FetchFeedbacksSuccessAction {
+  type: typeof FETCH_FEEDBACKS_SUCCESS_ACTION;
+  payload: Feedback[];
+  after: string;
+  next: string;
+}
 export interface FetchFeedbackSitesAction {
   type: typeof FETCH_FEEDBACK_SITES_ACTION;
 }
@@ -38,6 +52,8 @@ export interface DeleteFeedbackSiteSuccessAction {
 }
 
 export type FeedbackActionTypes =
+  | FetchFeedbacksAction
+  | FetchFeedbacksSuccessAction
   | FetchFeedbackSitesAction
   | FetchFeedbackSitesSuccessAction
   | UpdateFeedbackSiteAction
@@ -45,6 +61,18 @@ export type FeedbackActionTypes =
   | DeleteFeedbackSiteAction
   | DeleteFeedbackSiteSuccessAction;
 
+export const getFeedbacks = (payload: FeedbackSite, next?: string): FetchFeedbacksAction => ({
+  type: FETCH_FEEDBACKS_ACTION,
+  feedback: payload,
+  next,
+});
+
+export const getFeedbacksSuccess = (results: Feedback[], after: string, next: string): FetchFeedbacksSuccessAction => ({
+  type: FETCH_FEEDBACKS_SUCCESS_ACTION,
+  payload: results,
+  after,
+  next,
+});
 export const getFeedbackSites = (): FetchFeedbackSitesAction => ({
   type: FETCH_FEEDBACK_SITES_ACTION,
 });

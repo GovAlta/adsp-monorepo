@@ -209,7 +209,14 @@ export const createForm = createAsyncThunk(
       const token = await getAccessToken();
       const { data } = await axios.post<SerializedForm>(
         new URL(`/form/v1/forms`, formServiceUrl).href,
-        { definitionId, applicant: { userId: user.user.id } },
+        {
+          definitionId,
+          applicant: {
+            userId: user.user.id,
+            addressAs: user.user.name,
+            channels: [{ channel: 'email', address: user.user.email }],
+          },
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -368,6 +375,13 @@ export const formSlice = createSlice({
       .addCase(loadDefinition.fulfilled, (state, { payload }) => {
         state.busy.loading = false;
         state.definitions[payload.id] = payload;
+
+        //Check form definition id case sensitivity, and use the definition id in the payload object,
+        //instead of using the value in querystring because if the case is not the same
+        //grabbing the object using the form definition id in the querystring as the key wont work.
+        if (payload && payload.id?.toLowerCase() === state.selected?.toLowerCase()) {
+          state.selected = payload.id;
+        }
       })
       .addCase(loadDefinition.rejected, (state) => {
         state.busy.loading = false;

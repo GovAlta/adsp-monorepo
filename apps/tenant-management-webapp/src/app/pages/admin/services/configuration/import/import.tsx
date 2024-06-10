@@ -14,6 +14,7 @@ import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/validation/checkInput';
 import { ErrorStatusText, Import } from '../styled-components';
 import JobList from './jobList';
+import { NoPaddingH2 } from '@components/AppHeader';
 
 const exportSchema = {
   type: 'string',
@@ -134,7 +135,7 @@ export const ConfigurationImport: FunctionComponent = () => {
     <Import>
       {
         <div>
-          <h2>Import</h2>
+          <NoPaddingH2>Import</NoPaddingH2>
           <p className="pb3">
             As a tenant admin, you can import configuration from JSON file, so that you can apply previously exported
             configuration.
@@ -155,7 +156,9 @@ export const ConfigurationImport: FunctionComponent = () => {
                 const element = event.target as HTMLInputElement;
                 element.value = '';
               }}
-            />
+            />{' '}
+          </GoAFormItem>
+          <p>
             <div className="row-flex">
               <button
                 className="choose-button"
@@ -169,7 +172,8 @@ export const ConfigurationImport: FunctionComponent = () => {
                 {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
               </div>
             </div>
-          </GoAFormItem>
+          </p>
+
           <GoAButton
             type="primary"
             onClick={onUploadSubmit}

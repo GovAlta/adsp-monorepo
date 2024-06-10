@@ -152,6 +152,7 @@ export function getQueueMetrics(
       if (includeEventMetrics) {
         const valueServiceUrl = await directory.getServiceUrl(VALUE_SERVICE_ID);
         let token = await tokenProvider.getAccessToken();
+
         const {
           data: {
             values: [queueDuration],
@@ -172,6 +173,7 @@ export function getQueueMetrics(
         );
 
         token = await tokenProvider.getAccessToken();
+
         const {
           data: {
             values: [completionDuration],
@@ -197,6 +199,7 @@ export function getQueueMetrics(
         const timestampMin = DateTime.now().minus({ days: 7 }).toJSDate();
 
         token = await tokenProvider.getAccessToken();
+
         const {
           data: { count: created },
         } = await axios.get<{ count: number }>(
@@ -237,6 +240,7 @@ export function getQueueMetrics(
         );
 
         token = await tokenProvider.getAccessToken();
+
         const {
           data: { count: cancelled },
         } = await axios.get<{ count: number }>(

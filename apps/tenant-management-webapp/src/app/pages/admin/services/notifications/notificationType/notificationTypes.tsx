@@ -85,6 +85,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const templateDefaultError = {
     subject: '',
+    title: '',
+    subtitle: '',
     body: '',
   };
   const [templateEditErrors, setTemplateEditErrors] = useState(templateDefaultError);
@@ -96,15 +98,21 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [formTitle, setFormTitle] = useState<string>('');
 
   const [subject, setSubject] = useState('');
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
   const [body, setBody] = useState('');
   const [templates, setTemplates] = useState<Template>(baseTemplate);
   const [savedTemplates, setSavedTemplates] = useState<Template>(baseTemplate);
   const debouncedRenderSubject = useDebounce(subject, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+
   const debouncedRenderBody = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedXssCheckRenderSubject = useDebounce(subject, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
+
   const debouncedXssCheckRenderBody = useDebounce(body, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
 
   const [subjectPreview, setSubjectPreview] = useState('');
+  const [titlePreview, setTitlePreview] = useState('');
+  const [subtitlePreview, setSubTitlePreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
   const [currentChannel, setCurrentChannel] = useState('email');
 
@@ -115,7 +123,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
 
   const subscriberAppUrl = useSelector(subscriberAppUrlSelector);
-  const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl);
+  const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl, title, subtitle);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
   const contact = useSelector((state: RootState) => state.notification.supportContact);
   const tenantClientsRoles = useSelector(tenantRolesAndClients);
@@ -153,6 +161,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         const combinedPreview = template?.body
           ? ('<style>' + template?.additionalStyles + '</style>').concat(template?.body)
           : template?.body;
+        htmlPayload.title = template.title ? template.title : '';
+        htmlPayload.subtitle = template.subtitle ? template.subtitle : '';
         const bodyPreview = generateMessage(getTemplateBody(combinedPreview, currentChannel, htmlPayload), htmlPayload);
         setBodyPreview(bodyPreview);
         setTemplateEditErrors({
@@ -223,7 +233,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     renderBodyPreview(debouncedRenderBody);
-  }, [debouncedRenderBody, setBodyPreview]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [debouncedRenderBody, setBodyPreview, title, subtitle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const error = checkForProhibitedTags(debouncedXssCheckRenderBody as string);
@@ -268,8 +278,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const renderBodyPreview = (value) => {
     try {
+      htmlPayload.title = templates[currentChannel].title ? templates[currentChannel].title : '';
+      htmlPayload.subtitle = templates[currentChannel].subtitle ? templates[currentChannel].subtitle : '';
       const msg = generateMessage(
-        getTemplateBody(value ? value : templates[currentChannel]?.body, currentChannel, htmlPayload),
+        getTemplateBody(templates[currentChannel]?.body, currentChannel, htmlPayload),
         htmlPayload
       );
       setBodyPreview(msg);
@@ -756,7 +768,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               validChannels={selectedType.sortedChannels}
               serviceName={serviceName}
               onSubjectChange={(value, channel) => {
-                let newTemplates = templates;
+                let newTemplates = structuredClone(templates);
                 if (templates[channel]) {
                   newTemplates[channel].subject = value;
                 } else {
@@ -765,8 +777,30 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 setTemplates(newTemplates);
                 setSubject(value);
               }}
+              onTitleChange={(value, channel) => {
+                let newTemplates = structuredClone(templates);
+                if (templates[channel]) {
+                  newTemplates[channel].title = value;
+                } else {
+                  newTemplates = { ...templates, [channel]: { title: value } };
+                }
+
+                setTemplates(newTemplates);
+                setTitle(value);
+              }}
+              onSubtitleChange={(value, channel) => {
+                let newTemplates = structuredClone(templates);
+                if (templates[channel]) {
+                  newTemplates[channel].subtitle = value;
+                } else {
+                  newTemplates = { ...templates, [channel]: { subtitle: value } };
+                }
+
+                setTemplates(newTemplates);
+                setSubtitle(value);
+              }}
               onBodyChange={(value, channel) => {
-                let newTemplates = templates;
+                let newTemplates = structuredClone(templates);
                 if (templates[channel]) {
                   newTemplates[channel].body = value;
                 } else {
@@ -782,13 +816,25 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   const combinedPreview = ('<style>' + templates[channel]?.additionalStyles + '</style>').concat(
                     templates[channel]?.body
                   );
-                  setBodyPreview(generateMessage(getTemplateBody(combinedPreview, channel, htmlPayload), htmlPayload));
-                  setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
-                } else {
                   setBodyPreview(
-                    generateMessage(getTemplateBody(templates[channel]?.body, channel, htmlPayload), htmlPayload)
+                    generateMessage(
+                      getTemplateBody(combinedPreview, channel, { ...htmlPayload, ...{ title, subtitle } }),
+                      { ...htmlPayload, ...{ title, subtitle } }
+                    )
                   );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
+                  setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
+                  setSubTitlePreview(generateMessage(templates[channel]?.subtitle, htmlPayload));
+                } else {
+                  setBodyPreview(
+                    generateMessage(
+                      getTemplateBody(templates[channel]?.body, channel, { ...htmlPayload, ...{ title, subtitle } }),
+                      { ...htmlPayload, ...{ title, subtitle } }
+                    )
+                  );
+                  setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
+                  setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
+                  setSubTitlePreview(generateMessage(templates[channel]?.subtitle, htmlPayload));
                 }
                 setCurrentChannel(channel);
               }}

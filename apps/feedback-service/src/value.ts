@@ -17,11 +17,12 @@ class ValueServiceImpl implements ValueService {
         new URL('v1/feedback-service/values/feedback', valueApiUrl).href,
         {
           timestamp,
-          correlationId: context.correlationId || `${context.site}:${context.view}`,
+          correlationId: context.correlationId || `${context.site}${context.view}`,
           context: {
             ...context,
             digest,
             includesComment: !!feedback.comment,
+            includesTechnicalIssue: !!feedback.technicalIssue,
           },
           value: feedback,
           metrics: {

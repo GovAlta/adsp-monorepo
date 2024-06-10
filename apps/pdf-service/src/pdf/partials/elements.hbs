@@ -1,0 +1,19 @@
+
+
+{{#if (isControlAndHasScope element) }}
+    <div class="grid-item">
+        <strong>
+            {{ label element }}{{#if (isRequiredField requiredFields element )}}
+                *
+            {{/if}}
+            :
+        </strong>
+        {{ value element data }}
+    </div>
+
+{{else if (isNotListWithDetailAndHasElements element) }}
+    {{#withEach element.elements data requiredFields }}
+        {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
+    {{/withEach}}
+
+{{/if}}

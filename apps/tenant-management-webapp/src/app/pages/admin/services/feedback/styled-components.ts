@@ -34,11 +34,9 @@ export const TableDiv = styled.div`
   .noPadding {
     padding: 0;
   }
+  margin-top: var(--goa-space-m);
   word-wrap: break-word;
-  div {
-    line-height: 28px;
-    font-weight: 400;
-  }
+
   small {
     font-weight: 400;
     line-height: 20px;
@@ -64,10 +62,60 @@ export const DeleteGap = styled.div`
 
 export const Buttons = styled.div`
   margin-top: var(--goa-space-xs);
-  margin-bottom: var(--goa-space-2xl);
+
   text-align: left;
 `;
 export const Heading = styled.div`
   font: var(--goa-typography-heading-m);
+  margin-top: var(--goa-space-2xl);
   margin-bottom: var(--goa-space-m);
+`;
+
+export const HeaderFont = styled.div`
+  font: var(--goa-typography-heading-m);
+  padding-bottom: var(--goa-space-2xs);
+`;
+
+export const MoreDetails = styled.div`
+   {
+    background-color: var(--goa-color-greyscale-100);
+    padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
+    width: 100%;
+    text-align: left;
+    p {
+      font: var(--goa-typography-heading-xs);
+      color: var(--goa-color-text-secondary);
+      margin-bottom: var(--goa-space-m);
+    }
+    h2 {
+      font: var(--goa-typography-heading-s);
+      padding-left: var(--goa-space-none);
+
+      margin-bottom: var(--goa-space-2xs);
+    }
+    span {
+      font: var(--goa-typography-body-m);
+    }
+  }
+`;
+
+export const IconDiv = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  goa-icon-button {
+    margin: 0 4px;
+  }
+`;
+export const ProgressWrapper = styled.div`
+  margin-left: 30%;
+`;
+
+export const URL = styled.div`
+  line-break: anywhere;
+`;
+export const ButtonPadding = styled.div`
+  padding-bottom: var(--goa-space-l);
+  padding-top: var(--goa-space-l);
 `;

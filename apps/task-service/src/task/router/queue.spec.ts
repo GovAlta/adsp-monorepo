@@ -432,7 +432,6 @@ describe('queue', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toBeCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
