@@ -8,7 +8,7 @@ grand_parent: Tutorials
 
 ## Introduction
 
-The \_Form Service provides a means to build, deploy, and secure forms for data collection. It uses [jsonforms](https://jsonforms.io/) as the underlying technology, which in itself was integrated with GoA's design systems' React library. The result is the capability to quickly build, review, and deploy forms for public consumption.
+The _Form Service_ provides a means to build, deploy, and secure forms for data collection. It uses [jsonforms](https://jsonforms.io/) as the underlying technology, which in itself was integrated with GoA's design systems' React library. The result is the capability to quickly build, review, and deploy forms for public consumption.
 
 On its own, the _Form Service_ can be a huge time saver when it comes to developing GoA applications, but used in conjunction with ADSP's _Form App_ and _Task App_ it takes on a life of its own. A form can be immediately available to your end-users through the ADSP [Form App](/adsp-monorepo/tutorials/form-service/form-app.html), and can be reviewed and dispositioned through the ADSP [Task App](/adsp-monorepo/tutorials/task-service/task-app.html). All of that without any coding!
 
