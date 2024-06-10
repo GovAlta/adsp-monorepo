@@ -16,6 +16,18 @@ Given('a tenant admin user is on form service overview page', function () {
   commonlib.tenantAdminMenuItem('Form', 4000);
 });
 
+Given('a tenant admin user is on form definitions page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Form', 4000);
+  commonObj.serviceTab('Form', 'Definitions').click();
+  cy.wait(3000);
+});
+
 When('the user clicks Add definition button on form service overview page', function () {
   commonObj.activeTab().should('have.text', 'Overview');
   formObj.addDefinitionBtn().shadow().find('button').click({ force: true });
@@ -304,15 +316,15 @@ When('the user clicks Back button on form definition editor', function () {
   cy.wait(1000);
 });
 
-When('the user clicks roles tab in form definition editor', function () {
+When('the user clicks {string} tab in form definition editor', function (tabName) {
   formObj
-    .definitionEditorTab('Roles')
+    .definitionEditorTab(tabName)
     .invoke('attr', 'class')
     .then((classAttr) => {
       if (classAttr?.includes('active')) {
-        cy.log('Roles tab is already seleted.');
+        cy.log('Tab is already seleted.');
       } else {
-        formObj.definitionEditorTab('Roles').click();
+        formObj.definitionEditorTab(tabName).click();
         cy.wait(1000);
       }
     });
@@ -473,5 +485,348 @@ Then(
         });
       cy.log('No assessor role is selected');
     }
+  }
+);
+
+Then('the user views a checkbox of {string}', function (checkboxTitle) {
+  formObj
+    .definitionEditorSubmissionConfigSubmissionRecordCheckbox()
+    .shadow()
+    .find('slot')
+    .invoke('text')
+    .should('contain', checkboxTitle);
+});
+
+When(
+  'the user clicks the information icon button besides the checkbox of Create submission records on submit',
+  function () {
+    formObj.definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle().click();
+  }
+);
+
+Then(
+  'the user {string} the help tooltip for {string} create submission records on submit',
+  function (viewOrNot, enableOrDisable) {
+    switch (viewOrNot) {
+      case 'views':
+        if (enableOrDisable == 'enabling') {
+          formObj
+            .definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox()
+            .invoke('text')
+            .should('contain', 'Forms of this type will create submission records');
+        } else if (enableOrDisable !== 'enabling') {
+          formObj
+            .definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox()
+            .invoke('text')
+            .should('contain', 'Forms of this type will not create a submission record when submitted');
+        }
+        break;
+      case 'should not view':
+        formObj.definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox().should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+When(
+  'the user clicks x icon for the help tooltip for the checkbox of Create submission records on submit',
+  function () {
+    formObj.definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBoxCloseBtn().click();
+  }
+);
+
+When('the user {string} the checkbox of Create submission records on submit', function (checksOrUnchecks) {
+  switch (checksOrUnchecks) {
+    case 'checks':
+      formObj
+        .definitionEditorSubmissionConfigSubmissionRecordCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
+        .then((checkboxElement) => {
+          if (checkboxElement[0].getAttribute('class')?.includes('--selected')) {
+            cy.log('Create submission records on submit checkbox is already checked');
+          } else {
+            checkboxElement[0].click();
+            cy.wait(1000);
+          }
+        });
+      break;
+    case 'unchecks':
+      formObj
+        .definitionEditorSubmissionConfigSubmissionRecordCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
+        .then((checkboxElement) => {
+          if (checkboxElement[0].getAttribute('class')?.includes('--selected')) {
+            checkboxElement[0].click();
+            cy.wait(1000);
+          } else {
+            cy.log('Create submission records on submit checkbox is already unchecked');
+          }
+        });
+      break;
+    default:
+      expect(checksOrUnchecks).to.be.oneOf(['checks', 'unchecks']);
+  }
+});
+
+Then('the Add state button is invisible on submission configuration page', function () {
+  formObj.definitionEditorSubmissionConfigAddStateBtn().should('not.exist');
+});
+
+When('the user clicks the information icon button besides Disposition States', function () {
+  formObj.definitionEditorSubmissionConfigDispositionStatesInfoCircle().click();
+});
+
+Then('the user {string} the help tooltip text for Disposition States', function (viewOrNot) {
+  switch (viewOrNot) {
+    case 'views':
+      formObj
+        .definitionEditorSubmissionConfigDispositionStatesInfoBox()
+        .invoke('text')
+        .should('contain', 'Disposition states represent possible decisions applied to submissions by program staff');
+      break;
+    case 'should not view':
+      formObj.definitionEditorSubmissionConfigDispositionStatesInfoBox().should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+When('the user clicks x icon for the help tooltip for Disposition States', function () {
+  formObj.definitionEditorSubmissionConfigDispositionStatesInfoBoxCloseBtn().click();
+});
+
+When('the user adds a dispoistion state of {string}, {string}', function (name, description) {
+  formObj.definitionEditorSubmissionConfigAddStateBtn().shadow().find('button').click({ force: true });
+  formObj
+    .definitionEditorSubmissionConfigDispositionStateModalTitle()
+    .invoke('text')
+    .should('eq', 'Add disposition state');
+  formObj
+    .definitionEditorSubmissionConfigDispositionStateModalNameField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(name, { force: true, delay: 200 });
+  formObj
+    .definitionEditorSubmissionConfigDispositionStateModalDescriptionField()
+    .shadow()
+    .find('textarea')
+    .clear()
+    .type(description, { force: true });
+  formObj.definitionEditorSubmissionConfigDispositionStateModalSaveBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user {string} the disposition state of {string}, {string}', function (action, name, description) {
+  formObj.definitionEditorSubmissionConfigSubmission().then((submissionConfig) => {
+    if (submissionConfig.find('tbody').length == 0) {
+      cy.log('There is no disposition state table');
+      expect(action).to.eq('should not view');
+    } else {
+      findDispositionState(name, description).then((rowNumber) => {
+        switch (action) {
+          case 'views':
+            expect(rowNumber).to.be.greaterThan(
+              0,
+              'Disposition state of ' + name + ', ' + description + ' has row #' + rowNumber
+            );
+            break;
+          case 'should not view':
+            expect(rowNumber).to.equal(
+              0,
+              'Disposition state of ' + name + ', ' + description + ' has row #' + rowNumber
+            );
+            break;
+          default:
+            expect(action).to.be.oneOf(['views', 'should not view']);
+        }
+      });
+    }
+  });
+});
+
+//Find disposition state with name, description
+//Input: name, description in string
+//Return: row number if the topic type is found; zero if the item isn't found
+function findDispositionState(name, description) {
+  return new Cypress.Promise((resolve, reject) => {
+    try {
+      let rowNumber = 0;
+      let targetedNumber = 1;
+      if (description.toLowerCase() != 'empty') {
+        targetedNumber = targetedNumber + 1;
+      }
+      formObj
+        .definitionEditorSubmissionConfigDispositionStateTableBody()
+        .find('tr')
+        .then((rows) => {
+          rows.toArray().forEach((rowElement) => {
+            let counter = 0;
+            // cy.log(rowElement.cells[0].innerHTML); // Print out the namespace cell innerHTML for debug purpose
+            if (rowElement.cells[0].innerHTML.includes(name)) {
+              counter = counter + 1;
+            }
+            // cy.log(rowElement.cells[1].innerHTML); // Print out the worker role cell innerHTML for debug purpose
+            if (rowElement.cells[1].innerHTML.includes(description)) {
+              counter = counter + 1;
+            }
+            Cypress.log({
+              name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
+              message: String(String(counter)),
+            });
+            if (counter == targetedNumber) {
+              rowNumber = rowElement.rowIndex;
+            }
+          });
+          Cypress.log({
+            name: 'Row number for the found item: ',
+            message: String(rowNumber),
+          });
+          resolve(rowNumber);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+When(
+  'the user clicks {string} button for the disposition state of {string}, {string}',
+  function (button, name, description) {
+    findDispositionState(name, description).then((rowNumber) => {
+      switch (button.toLowerCase()) {
+        case 'edit':
+          formObj
+            .definitionEditorSubmissionConfigDispositionStateEditBtn(rowNumber)
+            .shadow()
+            .find('button')
+            .click({ force: true });
+          cy.wait(1000);
+          break;
+        case 'delete':
+          formObj
+            .definitionEditorSubmissionConfigDispositionStateDeleteBtn(rowNumber)
+            .shadow()
+            .find('button')
+            .click({ force: true });
+          cy.wait(1000);
+          break;
+        default:
+          expect(button).to.be.oneOf(['Edit', 'Delete']);
+      }
+    });
+  }
+);
+
+Then('the user views Edit disposition state modal', function () {
+  formObj
+    .definitionEditorSubmissionConfigDispositionStateModalTitle()
+    .invoke('text')
+    .should('eq', 'Edit disposition state');
+});
+
+When(
+  'the user enters {string} as name and {string} as description in Edit disposition state modal',
+  function (name, description) {
+    formObj
+      .definitionEditorSubmissionConfigDispositionStateModalNameField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(name, { force: true, delay: 200 });
+    formObj
+      .definitionEditorSubmissionConfigDispositionStateModalDescriptionField()
+      .shadow()
+      .find('textarea')
+      .clear()
+      .type(description, { force: true });
+  }
+);
+
+When('the user clicks Cancel button in Edit disposition state modal', function () {
+  formObj
+    .definitionEditorSubmissionConfigEditDispositionStateModalCancelBtn()
+    .shadow()
+    .find('button')
+    .click({ force: true });
+});
+
+When('the user clicks Save button in disposition state modal', function () {
+  formObj.definitionEditorSubmissionConfigDispositionStateModalSaveBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then(
+  'the user should only view {string} icon for the disposition state of {string}, {string}',
+  function (arrowType, name, description) {
+    findDispositionState(name, description).then((rowNumber) => {
+      switch (arrowType.toLowerCase()) {
+        case 'arrow up':
+          formObj
+            .definitionEditorSubmissionConfigDispositionStateTableArrowIcons(rowNumber)
+            .should('have.length.lte', 1);
+          formObj
+            .definitionEditorSubmissionConfigDispositionStateTableArrowIcons(rowNumber)
+            .invoke('attr', 'title')
+            .should('eq', 'Arrow-up');
+          break;
+        case 'arrow down':
+          formObj
+            .definitionEditorSubmissionConfigDispositionStateTableArrowIcons(rowNumber)
+            .should('have.length.lte', 1);
+          formObj
+            .definitionEditorSubmissionConfigDispositionStateTableArrowIcons(rowNumber)
+            .invoke('attr', 'title')
+            .should('eq', 'Arrow-down');
+          break;
+        default:
+          expect(arrowType.toLowerCase()).to.be.oneOf(['arrow up', 'arrow down']);
+      }
+    });
+  }
+);
+
+When(
+  'the user clicks {string} for the disposition state of {string}, {string}',
+  function (arrowType, name, description) {
+    findDispositionState(name, description).then((rowNumber) => {
+      switch (arrowType.toLowerCase()) {
+        case 'arrow up':
+          if (rowNumber == '1') {
+            expect(rowNumber).to.not.eq('1', 'There is no arrow up icon for first row of ' + name);
+          } else {
+            rowNumber = String(Number(rowNumber) - 1);
+          }
+          formObj
+            .definitionEditorSubmissionConfigDispositionStateArrowUpBtn(rowNumber)
+            .shadow()
+            .find('button')
+            .click({ force: true });
+          break;
+        case 'arrow down':
+          formObj
+            .definitionEditorSubmissionConfigDispositionStateArrowDownBtn(rowNumber)
+            .shadow()
+            .find('button')
+            .click({ force: true });
+          break;
+        default:
+          expect(arrowType.toLowerCase()).to.be.oneOf(['arrow up', 'arrow down']);
+      }
+    });
+  }
+);
+
+Then(
+  'the user views the disposition state of {string}, {string} being row {string}',
+  function (name, description, rowNum) {
+    findDispositionState(name, description).then((rowNumber) => {
+      expect(String(rowNumber)).to.eq(rowNum);
+    });
   }
 );
