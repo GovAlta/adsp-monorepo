@@ -1011,7 +1011,7 @@ When('the user views the link for managing email subscription', function () {
     .find('footer')
     .contains('Please do not reply to this email. Manage your subscription here.');
 
-  const urlSubscriptionLogin = Cypress.env('subscriptionUrl') + '/' + Cypress.env('realm') + '/login';
+  const urlSubscriptionLogin = Cypress.env('subscriptionUrl') + '/' + Cypress.env('tenantName') + '/login';
   cy.log(urlSubscriptionLogin);
   notificationsObj
     .templateModalPreviewPaneEmailBody()
