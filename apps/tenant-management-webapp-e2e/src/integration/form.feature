@@ -131,7 +131,7 @@ Feature: Form
     And the user clicks Back button on form definition editor
     And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
     When the user clicks "Submission configuration" tab in form definition editor
-    When the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
+    And the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
     Then the user views Edit disposition state modal
     When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
     And the user clicks Cancel button in Edit disposition state modal
@@ -141,12 +141,12 @@ Feature: Form
     When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
     And the user clicks Save button in disposition state modal
     Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
-    # # Delete states
+    # Delete states
     When the user clicks Save button on form definition editor
     And the user clicks Back button on form definition editor
     And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
     When the user clicks "Submission configuration" tab in form definition editor
-    When the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
+    And the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
     Then the user views delete "disposition state" confirmation modal for "Reviewed"
     When the user clicks Cancel button in delete confirmation modal
     Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
@@ -165,7 +165,7 @@ Feature: Form
     When the user clicks Save button on form definition editor
     And the user clicks Back button on form definition editor
     And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-    When the user clicks "Submission configuration" tab in form definition editor
+    And the user clicks "Submission configuration" tab in form definition editor
     Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
-    Then the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
-    Then the user "should not view" the disposition state of "Rejected", "The application is rejected"
+    And the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
+    And the user "should not view" the disposition state of "Rejected", "The application is rejected"
