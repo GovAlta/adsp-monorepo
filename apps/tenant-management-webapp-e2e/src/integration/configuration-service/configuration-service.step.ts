@@ -543,3 +543,18 @@ When('the user clicks Load more button on configuration service revisions page',
 Then('the user views more than ten revision records', function () {
   configurationObj.revisionTableRevisionRows().should('have.length.above', 10);
 });
+
+Then('the user views {string} in payload schema in configuration definition modal', function (schema) {
+  let jsonSchemaInEdit = '';
+  configurationObj
+    .revisionTableEditRevisionModalPayloadEditorRows()
+    .find('span')
+    .then((spanElements) => {
+      for (let i = 0; i < spanElements.length; i++) {
+        jsonSchemaInEdit = jsonSchemaInEdit + spanElements[i].outerText.replace(/\u00A0/g, ''); // Grab all texts and remove line breakers
+      }
+    })
+    .then(() => {
+      expect(jsonSchemaInEdit.replace(/[0-9]/g, '')).to.eq(schema.replace(/ /g, '').replace(/\*/g, ''));
+    });
+});

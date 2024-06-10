@@ -110,6 +110,7 @@ Feature: Configuration-service
     # Edit the latest revision
     When the user clicks "edit" icon for the latest revision
     Then the user views Edit revision modal for "autotest:test"
+    And the user views "{\"autotest-*\": {\"id\": \"autotest-*\", \"name\": \"autotest-*\", \"description\": \"test\"}}" in payload schema in configuration definition modal
     When the user enters "{\"test\"}" in payload schema in configuration definition modal
     Then the user views the error message of "Please provide a valid json configuration"
     And the save button in Edit revision modal is disabled
