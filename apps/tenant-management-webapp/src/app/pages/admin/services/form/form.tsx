@@ -10,9 +10,25 @@ import AsideLinks from '@components/AsideLinks';
 import { HeadingDiv } from './styled-components';
 import BetaBadge from '@icons/beta-badge.svg';
 import { FetchRealmRoles } from '@store/tenant/actions';
+import LinkCopyComponent from '@components/CopyLink/CopyLink';
+import { selectFormAppHost } from '@store/form/selectors';
+import { fetchDirectory } from '@store/directory/actions';
 
 const HelpLink = (): JSX.Element => {
-  return <AsideLinks serviceName="form" />;
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(fetchDirectory());
+  }, [dispatch]);
+  const defaultFormUrl = useSelector((state: RootState) => selectFormAppHost(state));
+  return (
+    <Aside>
+      <AsideLinks serviceName="form" />
+      <h3>Submit applications</h3>
+      <span>Users can access forms and submit applications here:</span>
+      <h3>Form app link</h3>
+      <LinkCopyComponent text={'Copy link'} link={defaultFormUrl} />
+    </Aside>
+  );
 };
 
 export const Form: FunctionComponent = () => {
