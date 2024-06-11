@@ -16,6 +16,7 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
       ? formDefinition.description?.substring(0, 80) + '...'
       : formDefinition.description;
   const navigate = useNavigate();
+
   return (
     <>
       <tr>
@@ -30,7 +31,15 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
               type={showSchema ? 'eye-off' : 'eye'}
               title="Toggle details"
               onClick={() => setShowSchema(!showSchema)}
-              testId="configuration-toggle-details-visibility"
+              testId="form-toggle-details-visibility"
+            />
+            <GoAContextMenuIcon
+              type="link"
+              title="link"
+              onClick={() => {
+                window.open(formDefinition.formDraftUrlTemplate.replace(/\/[^/]*$/, '/'), '_blank');
+              }}
+              testId="form-definition-link"
             />
             <GoAContextMenuIcon
               testId="form-definition-edit"

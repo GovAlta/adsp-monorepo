@@ -2,6 +2,8 @@ import React from 'react';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { useNavigate } from 'react-router-dom';
 import { TaskDefinition } from '@store/task/model';
+import { taskAppUrlSelector } from './selectors';
+import { useSelector } from 'react-redux';
 
 interface QueueTableItemProps {
   id: string;
@@ -11,11 +13,18 @@ interface QueueTableItemProps {
 
 export const QueueTableItem = ({ id, queue, onDelete }: QueueTableItemProps): JSX.Element => {
   const navigate = useNavigate();
+  const taskAppUrl = useSelector(taskAppUrlSelector);
   return (
     <tr>
       <td data-testid="queue-list-namespace">{queue.namespace}</td>
       <td data-testid="queue-list-name">{queue.name}</td>
       <td data-testid="queue-list-action">
+        <GoAContextMenuIcon
+          testId="task-app-open"
+          title="Open Task"
+          type="open"
+          onClick={() => window.open(`${taskAppUrl}/${queue.namespace}/${queue.name}`)}
+        />
         <GoAContextMenuIcon
           testId="task-definition-edit"
           title="Edit"

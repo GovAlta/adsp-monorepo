@@ -29,6 +29,10 @@ Currently only GoA personnel are able to log-in and use the _Form-App_, although
 
 Developers can define the roles that are required to create, review and disposition their forms specifically, as described in the [security section](/adsp-monorepo/tutorials/task-service/security.html) of the tutorial. In addition, they will also need the ADSP-specific roles . The former should be specific to your _Tenant_ and _Form Definition_, as they will lock down access so that only your users can log-in and fill in the information for a specific form. For the _Form App_, a user will need to be an _applicant_. _Clerks_ and _Assessors_ will be able to review and disposition this forms through the [Task App](/adsp-monorepo/tutorials/task-service/task-app.html).
 
+#### Client Security
+
+AUD
+
 ### User Experience
 
 Ideally users will be able to access the link to the _Form App_ directly from the alberta.ca website. Clicking on it will bring them to the form app where they will be asked to log in. If all their roles and permissions are correct they will see the form in question, e.g.

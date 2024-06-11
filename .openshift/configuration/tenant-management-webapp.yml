@@ -43,5 +43,6 @@ data:
         "configurationServiceApiUrl": "https://configuration-service.adsp-dev.gov.ab.ca",
         "directoryServiceApiUrl": "https://directory-service.adsp-dev.gov.ab.ca",
         "taskServiceApiUrl": "https://task-service.adsp-dev.gov.ab.ca",
+        "taskWebApp": "https://task.adsp-dev.gov.ab.ca"
       }
     }
