@@ -65,12 +65,10 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
 
   const dispatch = useDispatch();
 
-  const onDelete = (calendar) => {
-    dispatch(FetchEventsByCalendar(calendar.name));
+  const onDelete = async (calendar) => {
+    await dispatch(FetchEventsByCalendar(calendar.name));
     setSelectedDeleteCalendar(calendar);
-    setTimeout(() => {
-      setShowDeleteConfirmation(true);
-    }, 600);
+    setShowDeleteConfirmation(true);
   };
 
   return (
