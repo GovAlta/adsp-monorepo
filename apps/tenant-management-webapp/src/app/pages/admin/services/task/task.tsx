@@ -5,8 +5,12 @@ import { QueuesList } from './queuesList';
 import { TasksList } from './tasksList';
 import { TaskOverview } from './taskOverview';
 import AsideLinks from '@components/AsideLinks';
+import { useSelector } from 'react-redux';
+import { taskAppLoginUrlSelector } from './selectors';
+import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
 export const Task: FunctionComponent = () => {
+  const loginUrl = useSelector(taskAppLoginUrlSelector);
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
 
   const searchParams = new URLSearchParams(document.location.search);
@@ -32,6 +36,10 @@ export const Task: FunctionComponent = () => {
 
       <Aside>
         <AsideLinks serviceName="task" />
+        <h3>Work on tasks</h3>
+        <span>Users can view and work on tasks in queues here:</span>
+        <h3>Task app link</h3>
+        <LinkCopyComponent text={'Copy link'} link={loginUrl} />
       </Aside>
     </Page>
   );
