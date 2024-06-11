@@ -50,7 +50,9 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   if (maxDate && !isValidDateFormat(maxDate)) {
     return invalidDateFormat(uischema.scope, 'Max');
   }
-
+  if (uischema?.options?.isStepperReview) {
+    return <div>{data}</div>;
+  }
   return (
     <GoAInputDate
       error={checkFieldValidity(props as ControlProps).length > 0}

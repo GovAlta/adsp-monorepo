@@ -19,7 +19,7 @@ import {
   isEnabled,
 } from '@jsonforms/core';
 
-import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
+import { JsonFormsDispatch, TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '../../util/layout';
 import { Grid } from '../../common/Grid';
 
@@ -231,14 +231,20 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                             {readOnly ? 'View' : 'Edit'}
                           </Anchor>
                         </ReviewItemHeader>
-                        <Grid>
-                          <RenderFormReviewFields
-                            elements={category?.elements}
-                            data={data}
-                            requiredFields={requiredFields}
-                            schema={schema}
-                          />
-                        </Grid>
+                        <GoAGrid minChildWidth="600px">
+                          {category.elements.map((element) => {
+                            return (
+                              <JsonFormsDispatch
+                                data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                                schema={schema}
+                                uischema={{ ...element, options: { ...element?.options, isStepperReview: true } }}
+                                enabled={enabled}
+                                renderers={renderers}
+                                cells={cells}
+                              />
+                            );
+                          })}
+                        </GoAGrid>
                       </ReviewItemSection>
                     );
                   })}

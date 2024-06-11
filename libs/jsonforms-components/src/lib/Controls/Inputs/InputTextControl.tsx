@@ -20,6 +20,10 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
+  if (uischema?.options?.isStepperReview) {
+    return <div>{data}</div>;
+  }
+
   return (
     <GoAInput
       error={errorsFormInput.length > 0}

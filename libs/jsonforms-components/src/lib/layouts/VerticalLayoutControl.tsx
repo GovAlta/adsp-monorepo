@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutRenderer, LayoutRendererProps } from '../util/layout';
+import { LayoutRenderer, LayoutRendererProps, forwardOptionsInElements } from '../util/layout';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { LayoutProps, RankedTester, rankWith, uiTypeIs, VerticalLayout } from '@jsonforms/core';
 
@@ -12,9 +12,8 @@ export const GoAVerticalLayoutComponent = ({
   cells,
   visible,
 }: LayoutProps) => {
-  const verticalLayout = uischema as VerticalLayout;
   const childProps: LayoutRendererProps = {
-    elements: verticalLayout.elements,
+    elements: forwardOptionsInElements(uischema),
     schema,
     path,
     enabled,

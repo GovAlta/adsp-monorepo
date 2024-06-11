@@ -55,7 +55,8 @@ const GenerateRows = (
   rowPath: string,
   enabled: boolean,
   cells?: JsonFormsCellRendererRegistryEntry[],
-  uischema?: ControlElement
+  uischema?: ControlElement,
+  isInReview?: boolean
 ) => {
   if (schema.type === 'object') {
     const props = {
@@ -64,6 +65,7 @@ const GenerateRows = (
       enabled,
       cells,
       uischema,
+      isInReview,
     };
     return <Cell {...props} />;
   } else {
@@ -73,6 +75,7 @@ const GenerateRows = (
       rowPath,
       cellPath: rowPath,
       enabled,
+      isInReview,
     };
     return <Cell key={rowPath} {...props} />;
   }
@@ -112,6 +115,7 @@ interface OwnPropsOfNonEmptyCell {
   renderers?: JsonFormsRendererRegistryEntry[];
   cells?: JsonFormsCellRendererRegistryEntry[];
   uischema?: ControlElement;
+  isInReview?: boolean;
 }
 const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOfNonEmptyCell): NonEmptyCellProps => {
   const path = ownProps.rowPath + (ownProps.schema.type === 'object' ? '.' + ownProps.propName : '');
@@ -139,16 +143,19 @@ interface NonEmptyRowComponentProps {
   cells?: JsonFormsCellRendererRegistryEntry[];
   isValid: boolean;
   uischema?: ControlElement | Layout;
+  isInReview?: boolean;
 }
 
 export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(props: NonEmptyRowComponentProps) {
-  const { schema, errors, enabled, renderers, cells, rowPath, isValid, uischema } = props;
+  const { schema, errors, enabled, renderers, cells, rowPath, isValid, uischema, isInReview } = props;
   const propNames = getValidColumnProps(schema);
   const propScopes = (uischema as ControlElement)?.scope
     ? propNames.map((name) => {
         return `#/properties/${name}`;
       })
     : [];
+
+  console.log(isInReview);
 
   const scopesInElements = extractScopesFromUISchema(uischema);
 
@@ -182,6 +189,9 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
       return {
         type: 'Control',
         scope,
+        options: {
+          isStepperReview: isInReview,
+        },
       };
     }),
   };
@@ -196,7 +206,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
               data-testid={`jsonforms-object-list-defined-elements-dispatch`}
               key={rowPath}
               schema={schema}
-              uischema={element}
+              uischema={isInReview ? { ...element, options: { ...element?.options, isStepperReview: true } } : element}
               path={rowPath}
               enabled={enabled}
               renderers={renderers}
@@ -224,7 +234,7 @@ const NonEmptyCell = (ownProps: OwnPropsOfNonEmptyCell) => {
   const emptyCellProps = ctxToNonEmptyCellProps(ctx, ownProps);
   const isValid = isEmpty(emptyCellProps.errors);
 
-  return <NonEmptyCellComponent {...emptyCellProps} isValid={isValid} />;
+  return <NonEmptyCellComponent {...emptyCellProps} isInReview={ownProps?.isInReview} isValid={isValid} />;
 };
 
 interface NonEmptyRowProps {
@@ -237,6 +247,7 @@ interface NonEmptyRowProps {
   path: string;
   translations: ArrayTranslations;
   uischema: ControlElement;
+  isInReview?: boolean;
 }
 
 const NonEmptyRowComponent = ({
@@ -249,19 +260,22 @@ const NonEmptyRowComponent = ({
   path,
   translations,
   uischema,
+  isInReview,
 }: NonEmptyRowProps & WithDeleteDialogSupport) => {
   return (
     <div key={childPath}>
       {enabled ? (
         <GoAContainer>
-          <GoAGrid minChildWidth="30ch">
-            <GoAIconButton
-              icon="trash"
-              aria-label={translations.removeAriaLabel}
-              onClick={() => openDeleteDialog(childPath, rowIndex)}
-            ></GoAIconButton>
-          </GoAGrid>
-          {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}
+          {isInReview !== true && (
+            <GoAGrid minChildWidth="30ch">
+              <GoAIconButton
+                icon="trash"
+                aria-label={translations.removeAriaLabel}
+                onClick={() => openDeleteDialog(childPath, rowIndex)}
+              ></GoAIconButton>
+            </GoAGrid>
+          )}
+          {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema, isInReview)}
         </GoAContainer>
       ) : null}
     </div>
@@ -278,7 +292,9 @@ interface TableRowsProp {
   enabled: boolean;
   cells?: JsonFormsCellRendererRegistryEntry[];
   translations: ArrayTranslations;
+  isInReview?: boolean;
 }
+
 const ObjectArrayList = ({
   data,
   path,
@@ -289,6 +305,7 @@ const ObjectArrayList = ({
   enabled,
   cells,
   translations,
+  isInReview,
 }: TableRowsProp & WithDeleteDialogSupport) => {
   const isEmptyList = data === 0;
 
@@ -316,6 +333,7 @@ const ObjectArrayList = ({
             path={path}
             uischema={uischema}
             translations={translations}
+            isInReview={isInReview}
           />
         );
       })}
@@ -348,23 +366,26 @@ export class ObjectArrayControl extends React.Component<ObjectArrayControlProps,
     const controlElement = uischema as ControlElement;
     // eslint-disable-next-line
     const listTitle = label || uischema.options?.title;
-
+    const isInReview = uischema.options?.isStepperReview === true;
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>
-          {listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
-          <ObjectArrayToolBar
-            errors={errors}
-            label={label}
-            addItem={this.addItem}
-            numColumns={0}
-            path={path}
-            uischema={controlElement}
-            schema={schema}
-            rootSchema={rootSchema}
-            enabled={enabled}
-            translations={translations}
-          />
+          {isInReview && listTitle && <b>{listTitle}</b>}
+          {!isInReview && listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
+          {!isInReview && (
+            <ObjectArrayToolBar
+              errors={errors}
+              label={label}
+              addItem={this.addItem}
+              numColumns={0}
+              path={path}
+              uischema={controlElement}
+              schema={schema}
+              rootSchema={rootSchema}
+              enabled={enabled}
+              translations={translations}
+            />
+          )}
         </ToolBarHeader>
         <div>
           <ObjectArrayList
@@ -377,6 +398,7 @@ export class ObjectArrayControl extends React.Component<ObjectArrayControlProps,
             data={data}
             cells={cells}
             config={config}
+            isInReview={isInReview}
             {...additionalProps}
           />
         </div>
