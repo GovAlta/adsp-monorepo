@@ -1,4 +1,4 @@
-import Ajv from 'ajv8';
+import Ajv from 'ajv';
 
 export interface ValidInput {
   pattern: RegExp;

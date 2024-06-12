@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { JsonForms } from '@jsonforms/react';
-import Ajv from 'ajv8';
+import Ajv from 'ajv';
 import { GoACells, GoARenderers } from '../../index';
 import { UISchemaElement } from '@jsonforms/core';
 import { render } from '@testing-library/react';
