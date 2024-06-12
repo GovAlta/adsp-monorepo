@@ -36,7 +36,6 @@ import {
   ServiceId,
   FETCH_REGISTER_DATA_ACTION,
   getRegisterDataAction,
-  FetchRegisterDataAction,
   getRegisterDataSuccessAction,
   FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
 } from './action';

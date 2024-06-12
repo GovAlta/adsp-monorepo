@@ -164,6 +164,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             activeParam++;
           }
           if (textUntilPosition.slice(-1) === ')') {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             activeParam = 0;
           }
           const functionNamePosition = model.getValueInRange({
@@ -183,6 +184,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
           for (let i = 0; i < functionSignature.length; i++) {
             if (functionSuggestion[i].label.split('(')[0] === functionName.trim()) {
+              // eslint-disable-next-line react-hooks/exhaustive-deps
               activeSignature = i;
             }
           }

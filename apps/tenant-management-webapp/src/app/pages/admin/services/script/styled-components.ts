@@ -501,3 +501,10 @@ export const OuterNotificationTemplateEditorContainer = styled.div`
   overflow: hidden;
   margin-top: 90px;
 `;
+
+export const Anchor = styled.div`
+  color: #0070c4;
+  text-decoration: underline;
+  outline: none;
+  cursor: pointer;
+`;

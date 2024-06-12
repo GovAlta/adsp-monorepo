@@ -85,7 +85,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   }, [initCalendarEvent]);
 
   const dispatch = useDispatch();
-  if (initCalendarEvent === null) return <></>;
+  if (initCalendarEvent === null) return null;
   return (
     <GoAModal
       open={initCalendarEvent !== null}
