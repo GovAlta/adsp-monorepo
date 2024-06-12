@@ -30,10 +30,11 @@ export interface ValidInput {
   onFailureMessage: string;
 }
 
-export const ajv = new Ajv({ allErrors: true, verbose: true });
+export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
 
-ajv.addKeyword('isNotEmpty', {
-  validate: function (schema, data: string) {
+ajv.addKeyword({
+  keyword: 'isNotEmpty',
+  validate: function (_schema, data: string) {
     return typeof data === 'string' && data.trim() !== '';
   },
   // This will get checked again in our GoA JsonForm controls to render user friendly error message
