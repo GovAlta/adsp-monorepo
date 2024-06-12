@@ -1,18 +1,18 @@
 import { AjvValidationService } from '@core-services/core-common';
-import { ValidateFunction } from 'ajv';
 import { Logger } from 'winston';
 import { ValueDefinitionEntity } from './values';
 
 export class AjvValueValidationService extends AjvValidationService {
   constructor(logger: Logger) {
     super(logger);
-    this.ajv.addKeyword(ValueDefinitionEntity.METRIC_META_KEY, {
+    this.ajv.addKeyword({
+      keyword: ValueDefinitionEntity.METRIC_META_KEY,
       valid: true,
       modifying: true,
       type: ['integer', 'number'],
       compile:
-        (schema): ValidateFunction =>
-        (data, _dataPath, _parentData, _parentDataProperty, rootData) => {
+        (schema) =>
+        (data, { rootData }) => {
           const name = Array.isArray(schema)
             ? schema.map((element) => rootData[element] || element).join(':')
             : `${schema}`;

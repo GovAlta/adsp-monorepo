@@ -1,6 +1,6 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
-import KeycloakAdminClient from '@keycloak/keycloak-admin-client';
+import type KeycloakAdminClient from '@keycloak/keycloak-admin-client';
 import axios from 'axios';
 import { Logger } from 'winston';
 import { Tenant, TenantServiceRoles } from '../tenant';

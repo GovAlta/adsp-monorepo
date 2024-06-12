@@ -1,11 +1,11 @@
-import Ajv from 'ajv8';
+import Ajv from 'ajv';
 
 export interface ValidInput {
   pattern: RegExp;
   onFailureMessage: string;
 }
 
-export const ajv = new Ajv({ allErrors: true, verbose: true });
+export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
 
 ajv.addFormat('file-urn', /urn:[^:]+:[^:]+:[^:]+:[^:]+/);
 

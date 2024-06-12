@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/jest-globals';
 import '@testing-library/jest-dom';
 import FormStepper from './FormStepperControl';
 import { StatePropsOfLayout } from '@jsonforms/core';
-import ajv from 'ajv8';
+import ajv from 'ajv';
 import { Translator } from '@jsonforms/core';
 import { AjvProps } from '../../util/layout';
 import { TranslateProps } from '@jsonforms/react';

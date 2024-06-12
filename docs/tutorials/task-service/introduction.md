@@ -14,16 +14,10 @@ The service is based on message queues, and consists of a set of APIs that allow
 
 As with most ADSP services, the task service is a highly scalable microservice deployed on the Government's ARO servers so that developers can use it with confidence.
 
-## Message Queues
+### Learn More
 
-The task service uses [RabbitMQ](https://www.rabbitmq.com/) for task management. The latter is not exposed to developers; however, it is managed by an abstract set of API wrappers that ensure easy, fault-tolerant, access to the underlying message queuing framework.
+Learn how to create and use [Task Queues](/adsp-monorepo/tutorials/task-service/task-queues.html) in your application.
 
-To start using the service, login to the ADSP Tenant-management-webapp and select the _Task Service_. There you will be able to create your first _message queue_. Queues are identified by a _namespace:name_ pair which you specify when creating one. There is no particular significance to the naming convention, it just gives you a means to help organize things when the number of queues in your tenant are large.
+Learn how [tasks are defined](/adsp-monorepo/tutorials/task-service/task-definitions.html).
 
-In addition you must associate one or more roles with the queue, which will be used for authorization when accessing the service through the APIs. Only authorized users - those with the correct role(s) - will be able to read and write information to your queue.
-
-![](/adsp-monorepo/assets/task-service/createQueue.png){: width="600" }
-
-Once your queue is created you can then start accessing it through [the APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Task%20service).
-
-## Task Definitions
+Learn about the use of the [task app](/adsp-monorepo/tutorials/task-service/task-app.html) to deliver _form review_ capabilities to your clients, without deployment.

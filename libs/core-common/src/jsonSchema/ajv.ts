@@ -1,11 +1,11 @@
-import * as Ajv from 'ajv';
+import Ajv from 'ajv';
 import { Logger } from 'winston';
 import { InvalidValueError } from '..';
 import { ValidationService } from './service';
 import * as schemaMigration from 'json-schema-migrate';
 
 export class AjvValidationService implements ValidationService {
-  protected ajv: Ajv.Ajv = new Ajv({ allErrors: true, verbose: true });
+  protected ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
   protected ajvErrors: string[] = [];
 
   constructor(private logger: Logger) {

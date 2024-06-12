@@ -22,6 +22,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Install Red Hat CLI tools to specific versions
+      uses: redhat-actions/openshift-tools-installer@v1
+      with:
+        source: "github"
+        github_pat: ${{ github.token }}
+        s2i: "1.4"
     - name: Log in to Red Hat Registry
       uses: redhat-actions/podman-login@v1
       with:
@@ -34,7 +40,7 @@ runs:
       uses: redhat-actions/s2i-build@v2
       with:
         path_context: ${{ inputs.build-context }}
-        builder_image: 'registry.access.redhat.com/ubi8/nginx-118:latest'
+        builder_image: "registry.access.redhat.com/ubi8/nginx-118:latest"
         image: ${{ inputs.app }}
         tags: latest ${{ github.sha }}
     - if: ${{ !contains(inputs.build-context, 'dist') }}
