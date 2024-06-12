@@ -85,7 +85,8 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   }, [initCalendarEvent]);
 
   const dispatch = useDispatch();
-  if (initCalendarEvent === null) return null;
+  // eslint-disable-next-line react/jsx-no-useless-fragment
+  if (initCalendarEvent === null) return <></>;
   return (
     <GoAModal
       open={initCalendarEvent !== null}
