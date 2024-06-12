@@ -66,7 +66,7 @@ jobs:
           echo "affected_apps_array=$(echo ${{ steps.production-build.outputs.affected-apps }} | sed -e "s/ /\",\"/g" -e "s/^/[\"/" -e "s/$/\"]/")" >> $GITHUB_OUTPUT
 
   buildContainers:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build
     if: needs.build.outputs.affected_apps
     strategy:
