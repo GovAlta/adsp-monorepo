@@ -4,7 +4,7 @@ import { ContextProviderFactory } from '../../Context/index';
 import { ControlElement, UISchemaElement } from '@jsonforms/core';
 import { GoACells, GoARenderers } from '../../../index';
 import { JsonForms } from '@jsonforms/react';
-import Ajv from 'ajv8';
+import Ajv from 'ajv';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following

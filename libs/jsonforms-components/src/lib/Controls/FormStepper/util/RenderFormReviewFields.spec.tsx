@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { RenderFormReviewFields } from './RenderFormReviewFields';
 import { JsonForms } from '@jsonforms/react';
 import { UISchemaElement } from '@jsonforms/core';
-import Ajv from 'ajv8';
+import Ajv from 'ajv';
 import { GoACells, GoARenderers } from '../../../../index';
 
 /**

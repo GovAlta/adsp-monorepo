@@ -6,6 +6,7 @@ export default {
   coverageDirectory: '../../coverage/apps/tenant-management-api',
   moduleNameMapper: {
     '^uuid$': require.resolve('uuid'),
+    '^@keycloak/keycloak-admin-client$': '<rootDir>/.jest/keycloak-stub.js'
   },
   testEnvironment: 'node',
   setupFiles: ['./.jest/setEnvVars.js'],

@@ -28,13 +28,9 @@ There are several roles that may be required for users to access the form servic
 
 ![](/adsp-monorepo/assets/form-service/form-service-roles.png){: width="600" }
 
-Applicants will need the _intake-application_ role to fill out forms. If the form requires files to be uploaded they will also need:
+Applicants will need the _form-admin_ and _intake-application_ role to create and fill out forms, respectively. If the form requires files to be uploaded they will also need:
 
 - _form-file-reader_
 - _form-file-uploader_
 
-Additional roles are available for form administrators. Clerks will need the _form-support_ and _form-file-reader_ roles, while assessors will be required to have the _form-admin_ and _form-file-reader_ roles.
-
-#### urn:ads:platform:tenant-service
-
-Currently all users will need the _tenant-admin_ role.
+Additional roles are available for form administrators. Clerks and assessors should have the _form-support_ and _form-file-reader_ roles.

@@ -3,7 +3,7 @@ import { FormDefinition } from '@store/form/model';
 import { OverflowWrap, EntryDetail } from '../styled-components';
 import { useNavigate } from 'react-router-dom';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-
+import { isValidUrl } from '@lib/validation/urlUtil';
 interface PdfTemplateItemProps {
   formDefinition: FormDefinition;
   onDelete?: (FormDefinition) => void;
@@ -16,6 +16,7 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
       ? formDefinition.description?.substring(0, 80) + '...'
       : formDefinition.description;
   const navigate = useNavigate();
+
   return (
     <>
       <tr>
@@ -30,7 +31,21 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
               type={showSchema ? 'eye-off' : 'eye'}
               title="Toggle details"
               onClick={() => setShowSchema(!showSchema)}
-              testId="configuration-toggle-details-visibility"
+              testId="form-toggle-details-visibility"
+            />
+            <GoAContextMenuIcon
+              type="open"
+              title="Open Form"
+              onClick={() => {
+                //eslint-disable-next-line
+                const urlStr = formDefinition.formDraftUrlTemplate.replace(/\/[^\/]*$/, '/');
+                if (isValidUrl(urlStr)) {
+                  window.open(urlStr, '_blank');
+                } else {
+                  console.error('Invalid URL:', urlStr);
+                }
+              }}
+              testId="form-app-open"
             />
             <GoAContextMenuIcon
               testId="form-definition-edit"

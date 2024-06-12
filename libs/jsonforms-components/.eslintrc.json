@@ -41,8 +41,7 @@
           {
             "ignoredDependencies": [
               "@abgov/react-components",
-              "@abgov/react-components-new",
-              "ajv8"
+              "@abgov/react-components-new"
             ],
             "ignoredFiles": [
               "libs/jsonforms-components/rollup.config.js"
