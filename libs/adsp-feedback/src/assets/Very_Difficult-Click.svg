@@ -1,8 +1,8 @@
-<svg width="74" height="46" viewBox="0 0 74 46" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="37" cy="23" r="21.5" fill="#0081A2" stroke="#0081A2" stroke-width="3"/>
-<path d="M25 13.5L31.5 17.5" stroke="white" stroke-width="3" stroke-linecap="round"/>
-<path d="M48 13.5L42.5 17.5" stroke="white" stroke-width="3" stroke-linecap="round"/>
-<rect x="30" y="16" width="3" height="5" rx="1.5" fill="white"/>
-<rect width="3" height="5" rx="1.5" transform="matrix(-1 0 0 1 44 16)" fill="white"/>
-<path d="M47 33V33C43.2283 24.5844 31.3796 24.3138 27.2277 32.5485L27 33" stroke="white" stroke-width="3" stroke-linecap="round"/>
+<svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="23" cy="23" r="21.5" fill="#0081A2" stroke="#0081A2" stroke-width="3"/>
+<path d="M11 13.5L17.5 17.5" stroke="white" stroke-width="3" stroke-linecap="round"/>
+<path d="M34 13.5L28.5 17.5" stroke="white" stroke-width="3" stroke-linecap="round"/>
+<rect x="16" y="16" width="3" height="5" rx="1.5" fill="white"/>
+<rect width="3" height="5" rx="1.5" transform="matrix(-1 0 0 1 30 16)" fill="white"/>
+<path d="M33 33V33C29.2283 24.5844 17.3796 24.3138 13.2277 32.5485L13 33" stroke="white" stroke-width="3" stroke-linecap="round"/>
 </svg>
