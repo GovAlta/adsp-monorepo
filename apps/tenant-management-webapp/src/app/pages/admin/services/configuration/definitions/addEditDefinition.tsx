@@ -189,7 +189,6 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           key="anonymousRead"
           checked={definition.anonymousRead ?? false}
           onChange={(name, value) => {
-            console.log('definition.anonymousRead', definition.anonymousRead);
             setDefinition({ ...definition, anonymousRead: !definition.anonymousRead ?? false });
           }}
           testId={'anonymousRead'}
