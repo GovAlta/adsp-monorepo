@@ -24,13 +24,14 @@
  */
 import Ajv from 'ajv';
 import * as schemaMigration from 'json-schema-migrate';
+import addFormats from 'ajv-formats';
 
 export interface ValidInput {
   pattern: RegExp;
   onFailureMessage: string;
 }
 
-export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
+export const ajv = new Ajv({ allErrors: true, verbose: true });
 
 ajv.addKeyword({
   keyword: 'isNotEmpty',
@@ -42,7 +43,7 @@ ajv.addKeyword({
 });
 
 ajv.addFormat('file-urn', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
-
+addFormats(ajv);
 /**
  * Given a list of validators and name of the input field, report on its cleanliness
  */
@@ -149,6 +150,7 @@ export const isValidJSONSchemaCheck = (label?: string): Validator => {
       ajv.compile(JSON.parse(str));
       return '';
     } catch (err) {
+      console.log('err', err);
       return `${capitalize(label)} is invalid for JSON Schema.`;
     }
   };
