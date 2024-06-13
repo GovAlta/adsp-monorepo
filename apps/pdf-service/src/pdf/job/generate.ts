@@ -51,7 +51,7 @@ export function createGenerateJob({
 
     try {
       const token = await tokenProvider.getAccessToken();
-      const [configuration] = await configurationService.getConfiguration<Record<string, PdfTemplateEntity>>(
+      const configuration = await configurationService.getConfiguration<Record<string, PdfTemplateEntity>>(
         serviceId,
         token,
         tenantId
@@ -80,7 +80,7 @@ export function createGenerateJob({
         const formData = data?.formData as Record<string, string>;
 
         const formDefinitions = {
-          content: { config: ConfigResponse.data[formId], form: data.form && data.form[0], data: formData?.data },
+          content: { config: ConfigResponse.data[formId], data: formData?.data },
         };
 
         pdf = await pdfTemplate.generate(formDefinitions);

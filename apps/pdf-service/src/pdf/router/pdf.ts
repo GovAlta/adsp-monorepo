@@ -61,7 +61,7 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
   return async (req, res, next) => {
     try {
       const { templateId } = req[templateIn];
-      const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
+      const configuration = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
 
       const template = configuration[templateId];
 
@@ -130,7 +130,6 @@ export function generatePdf(
 
         data.formId = formId;
         data.formData = formData.data;
-        data.form = results;
       }
 
       const job = await repository.create(tenantId);

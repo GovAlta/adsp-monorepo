@@ -23,15 +23,6 @@ export const template = `
                 {{/if}}
             {{/each}}
         </div>
-        <div>
-            <b>Status: </b> {{content.form.status}}
-            <h4>Disposition states </h4>
-            <ol>
-            {{#each content.config.dispositionStates}}
-                <li>{{this.name}}</b>: {{this.description}}</li>
-            {{/each}}
-            </ol>
-        </div>
     </div>
 </body>
 
