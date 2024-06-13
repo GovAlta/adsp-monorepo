@@ -5,7 +5,7 @@ export interface ValidInput {
   onFailureMessage: string;
 }
 
-export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
+export const ajv = new Ajv({ allErrors: true, verbose: true, strict: false });
 
 ajv.addFormat('file-urn', /urn:[^:]+:[^:]+:[^:]+:[^:]+/);
 
