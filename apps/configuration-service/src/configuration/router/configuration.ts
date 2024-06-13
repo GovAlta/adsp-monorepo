@@ -247,7 +247,8 @@ export const getActiveRevision =
         if (orLatest) {
           result = configuration.latest;
         } else {
-          throw new NotFoundError('active revision');
+          end();
+          res.status(200).send([]);
         }
       }
 
