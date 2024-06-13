@@ -150,7 +150,6 @@ export const isValidJSONSchemaCheck = (label?: string): Validator => {
       ajv.compile(JSON.parse(str));
       return '';
     } catch (err) {
-      console.log('err', err);
       return `${capitalize(label)} is invalid for JSON Schema.`;
     }
   };
