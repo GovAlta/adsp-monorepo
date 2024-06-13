@@ -62,7 +62,7 @@ const getDefinition = async (
 };
 
 const getTenantId = (req: Request): AdspId => {
-  if (!req.isAuthenticated() && req.query.tenant) {
+  if (req.isAuthenticated && !req.isAuthenticated() && req.query.tenant) {
     return AdspId.parse(req.query.tenant as string);
   }
 
@@ -141,7 +141,6 @@ export const getConfiguration =
 
 export const getConfigurationWithActive = (): RequestHandler => async (req, res) => {
   const configuration: ConfigurationEntity = req[ENTITY_KEY];
-
   const revision = await configuration.getActiveRevision();
   let active: ConfigurationRevision = undefined;
   // 0 is falsy and a valid revision.
@@ -244,6 +243,7 @@ export const getActiveRevision =
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
+
       const { orLatest: orLatestValue } = req.query;
       const orLatest = orLatestValue === 'true';
       const configuration: ConfigurationEntity = req[ENTITY_KEY];
@@ -271,11 +271,19 @@ export const getActiveRevision =
       end();
       res.send(result);
 
-      logger.info(`Active revision ${revision} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
-        tenant: configuration.tenantId?.toString(),
-        context: 'configuration-router',
-        user: `${user.name} (ID: ${user.id})`,
-      });
+      if (user) {
+        logger.info(`Active revision ${revision} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
+          tenant: configuration.tenantId?.toString(),
+          context: 'configuration-router',
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      } else {
+        //If this an anonymous user, just log the tenant as there will be no user context information
+        logger.info(`Active revision ${revision} for ${configuration.tenantId?.toString()}.`, {
+          tenant: configuration.tenantId?.toString(),
+          context: 'configuration-router',
+        });
+      }
     } catch (err) {
       next(err);
     }
@@ -295,6 +303,7 @@ export const configurationOperations =
         const updated = await configuration.createRevision(user);
 
         end();
+
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
           eventService.send(

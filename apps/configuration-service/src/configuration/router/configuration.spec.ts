@@ -412,6 +412,7 @@ describe('router', () => {
         try {
           expect(req['entity']).not.toBeNull();
           expect(req['entity'].name).toBe(entity.name);
+          expect(repositoryMock.get.mock.calls[1][3]).toEqual(expect.objectContaining({ configurationSchema }));
           expect(repositoryMock.get.mock.calls.length).toBeGreaterThan(0);
           done();
         } catch (err) {
@@ -488,7 +489,6 @@ describe('router', () => {
           expect(req['entity']).not.toBeNull();
           expect(req['entity'].name).toBe(entity.name);
           expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
-
           expect(repositoryMock.get.mock.calls.length).toBeGreaterThan(0);
           done();
         } catch (err) {
