@@ -44,7 +44,7 @@ export const LogoutModal = (): JSX.Element => {
         clearInterval(ref.current);
       }
     };
-  }, []);
+  }, [dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (open) {
@@ -68,7 +68,7 @@ export const LogoutModal = (): JSX.Element => {
         countDownRef.current = null;
       }
     }
-  }, [open]);
+  }, [open, dispatch]);
 
   return (
     <GoAModal
