@@ -231,7 +231,7 @@ describe('router', () => {
         }
       });
     });
-    it('can get tenant entity', (done) => {
+    it('can get configuration entity for unauthenticated users.', (done) => {
       const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
 
       // Configuration definition retrieval.
