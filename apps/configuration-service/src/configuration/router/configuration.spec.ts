@@ -1193,6 +1193,7 @@ describe('router', () => {
 
       const res = {
         send: jest.fn(),
+        status: jest.fn(),
       };
 
       const next = jest.fn();
@@ -1200,7 +1201,8 @@ describe('router', () => {
       entity.getActiveRevision.mockResolvedValueOnce(undefined);
 
       await handler(req, res as unknown as Response, next);
-      expect(next).toHaveBeenCalledWith(new NotFoundError('active revision'));
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith([]);
     });
 
     it('can get active revision', async () => {
