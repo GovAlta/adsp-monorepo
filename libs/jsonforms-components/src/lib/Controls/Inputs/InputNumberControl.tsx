@@ -24,7 +24,9 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const errorsFormInput = checkFieldValidity(props as ControlProps);
-
+  if (uischema?.options?.isStepperReview) {
+    return <div>{InputValue}</div>;
+  }
   return (
     <GoAInput
       type="number"

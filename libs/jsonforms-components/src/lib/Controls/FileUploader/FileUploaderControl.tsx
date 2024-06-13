@@ -94,7 +94,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     return () => clearTimeout(timeoutId);
   }, [handleChange, fileList, propertyId]);
 
-  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const readOnly = (uischema?.options?.componentProps?.readOnly || uischema?.options?.isStepperReview) ?? false;
 
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">

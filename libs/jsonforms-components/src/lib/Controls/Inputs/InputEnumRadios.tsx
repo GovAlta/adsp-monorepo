@@ -12,10 +12,15 @@ import { checkFieldValidity } from '../../util/stringUtils';
 type RadioGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
-  const { data, className, id, enabled, schema, uischema, path, handleChange, options, config, label, t } = props;
+  const { data, id, enabled, schema, uischema, path, handleChange, options, config, label, t } = props;
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
   const errorsFormInput = checkFieldValidity(props as ControlProps);
+
+  if (uischema?.options?.isStepperReview) {
+    return <div>{data}</div>;
+  }
+
   return (
     <GoARadioGroup
       error={errorsFormInput.length > 0}

@@ -40,6 +40,7 @@ export const renderLayoutElements = (
 export interface LayoutRendererProps extends OwnPropsOfRenderer {
   elements: UISchemaElement[];
   direction: 'row' | 'column';
+  width?: string;
 }
 export interface AjvProps {
   ajv: Ajv;
@@ -65,6 +66,14 @@ export const forwardOptionsInElements = (uischema: UISchemaElement) => {
   return elements;
 };
 
+export const fetchWidthInLayout = (uischema: UISchemaElement) => {
+  if (uischema?.options?.isStepperReview) {
+    return uischema?.options?.review?.width || '30ch';
+  }
+
+  return uischema?.options?.review?.width || '10ch';
+};
+
 export const LayoutRenderer = ({
   elements,
   schema,
@@ -74,6 +83,7 @@ export const LayoutRenderer = ({
   renderers,
   cells,
   visible,
+  width,
 }: LayoutRendererProps) => {
   if (isEmpty(elements)) {
     return null;
@@ -81,7 +91,7 @@ export const LayoutRenderer = ({
     if (direction === 'row') {
       return (
         <Visible visible={visible}>
-          <GoAGrid minChildWidth="10ch">
+          <GoAGrid minChildWidth={width || '10ch'}>
             {renderLayoutElements(elements, schema, path, enabled, renderers, cells)}
           </GoAGrid>
         </Visible>

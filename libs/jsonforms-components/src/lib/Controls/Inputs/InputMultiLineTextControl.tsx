@@ -26,7 +26,9 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
-
+  if (uischema?.options?.isStepperReview) {
+    return <div>{data}</div>;
+  }
   return (
     <GoATextArea
       error={errorsFormInput.length > 0}

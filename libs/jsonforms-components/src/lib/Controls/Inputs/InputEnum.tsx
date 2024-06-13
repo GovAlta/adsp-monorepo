@@ -59,6 +59,11 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   if (uischema?.options?.isStepperReview) {
     return <div>{data}</div>;
   }
+
+  if (uischema?.options?.isStepperReview) {
+    return <div>{data}</div>;
+  }
+
   return (
     <GoADropdown
       name={`${label}`}

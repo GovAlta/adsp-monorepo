@@ -17,6 +17,7 @@ interface OptionProps {
   height?: string;
   width?: string;
   link?: string;
+  isStepperReview?: boolean;
 }
 
 interface CustomControlElement extends ControlElement {
@@ -55,7 +56,9 @@ export const HelpContentComponent = ({
   const textVariant =
     !uischema.options?.variant ||
     (uischema.options?.variant !== 'details' && uischema.options?.variant !== 'hyperlink');
-
+  if (uischema?.options?.isStepperReview) {
+    return <></>;
+  }
   return (
     <Visible visible={visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>

@@ -23,6 +23,10 @@ export const BooleanComponent = ({
   } as ControlProps);
 
   const text = label + (required ? ' (required)' : '');
+
+  if (uischema?.options?.isStepperReview) {
+    return <div>{data}</div>;
+  }
   return (
     <GoACheckbox
       error={errorsFormInput.length > 0}

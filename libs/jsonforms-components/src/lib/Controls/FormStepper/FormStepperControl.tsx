@@ -21,7 +21,6 @@ import {
 
 import { JsonFormsDispatch, TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '../../util/layout';
-import { Grid } from '../../common/Grid';
 
 import {
   Anchor,
@@ -32,8 +31,6 @@ import {
   RightAlignmentDiv,
 } from './styled-components';
 import { JsonFormContext } from '../../Context';
-import { getAllRequiredFields } from './util/getRequiredFields';
-import { RenderFormReviewFields } from './util/RenderFormReviewFields';
 import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
 import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } from './StepperContext';
@@ -221,7 +218,6 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 <ReviewItem>
                   {categories.map((category, index) => {
                     const categoryLabel = category.label || category.i18n || 'Unknown Category';
-                    const requiredFields = getAllRequiredFields(schema);
                     const testId = `${categoryLabel}-review-link`;
                     return (
                       <ReviewItemSection key={index}>
