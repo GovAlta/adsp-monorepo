@@ -245,12 +245,15 @@ describe('router', () => {
           validationMock
         )
       );
+
       activeRevisionMock.get.mockResolvedValueOnce({
         namespace: configurationServiceId.namespace,
         name: configurationServiceId.service,
         tenant: tenantId,
         active: 2,
       });
+      const configurationSchema = {};
+
       repositoryMock.get.mockResolvedValueOnce(
         new ConfigurationEntity(
           configurationServiceId.namespace,
@@ -259,7 +262,13 @@ describe('router', () => {
           repositoryMock,
           activeRevisionMock,
           validationMock,
-          null,
+          {
+            revision: 1,
+            configuration: {
+              [`${namespace}:${name}`]: { configurationSchema },
+              [namespace]: { configurationSchema: {} },
+            },
+          },
           tenantId
         )
       );
@@ -274,6 +283,7 @@ describe('router', () => {
         null,
         tenantId
       );
+
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = {
@@ -287,6 +297,7 @@ describe('router', () => {
       handler(req, null, () => {
         try {
           expect(req.user).toBeNull();
+          expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
           expect(repositoryMock.get.mock.calls[2][2].toString()).toEqual(tenantId.toString());
           done();
         } catch (err) {
