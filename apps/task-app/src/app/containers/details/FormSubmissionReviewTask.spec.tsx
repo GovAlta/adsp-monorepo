@@ -170,7 +170,7 @@ describe('form submission review task', () => {
             applicantRoles: [],
             assessorRoles: [],
             clerkRoles: [],
-            formDraftUrlTemplate: 'https://form.adsp-dev.gov.ab.ca/autotest/aa/{{id}}',
+            formDraftUrlTemplate: 'https://form.adsp-dev.gov.ab.ca/autotest/aa',
             dataSchema: {
               type: 'object',
               properties: {
