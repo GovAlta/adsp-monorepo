@@ -24,6 +24,7 @@
  */
 import Ajv from 'ajv';
 import * as schemaMigration from 'json-schema-migrate';
+import addFormats from 'ajv-formats';
 
 export interface ValidInput {
   pattern: RegExp;
@@ -42,7 +43,7 @@ ajv.addKeyword({
 });
 
 ajv.addFormat('file-urn', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
-
+addFormats(ajv);
 /**
  * Given a list of validators and name of the input field, report on its cleanliness
  */
