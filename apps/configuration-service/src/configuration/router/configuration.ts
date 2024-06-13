@@ -62,7 +62,7 @@ const getDefinition = async (
 };
 
 const getTenantId = (req: Request): AdspId => {
-  if (!req.isAuthenticated && req.query.tenant) {
+  if (!req.isAuthenticated() && req.query.tenant) {
     return AdspId.parse(req.query.tenant as string);
   }
 
@@ -412,7 +412,7 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name/latest',
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     validateNamespaceNameHandler,
-    //createValidationHandler(query('tenant').optional().isString()),
+    createValidationHandler(query('tenant').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
