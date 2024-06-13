@@ -3,7 +3,7 @@ import { PdfTemplate } from '@store/pdf/model';
 
 import { GoAIconButton } from '@abgov/react-components-new';
 
-import { Edit, PdfConfigFormWrapper, Tooltip } from '../../styled-components';
+import { Anchor, Edit, PdfConfigFormWrapper, Tooltip } from '../../styled-components';
 import { AddEditPdfTemplate } from '../addEditPdfTemplates';
 import { useDispatch } from 'react-redux';
 import { updatePdfTemplate } from '@store/pdf/action';
@@ -101,9 +101,9 @@ export const PDFConfigForm = ({ template, isEdit = true }: PDFConfigFormProps) =
       {isEdit && (
         <div className="editColumn">
           <Edit>
-            <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
+            <Anchor rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
               Edit
-            </a>
+            </Anchor>
             <GoAIconButton
               icon="create"
               testId="pdf-template-information-edit-icon"

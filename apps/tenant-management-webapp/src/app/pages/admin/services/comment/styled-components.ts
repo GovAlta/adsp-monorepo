@@ -415,3 +415,9 @@ export const CommentWrapper = styled.div`
 export const CommentLoader = styled.div`
   text-align: center;
 `;
+export const Anchor = styled.div`
+  color: #0070c4;
+  text-decoration: underline;
+  outline: none;
+  cursor: pointer;
+`;

@@ -454,3 +454,10 @@ export const ErrorMsg = styled.div`
     gap: 0.25rem;
   }
 `;
+
+export const Anchor = styled.div`
+  color: #0070c4;
+  text-decoration: underline;
+  outline: none;
+  cursor: pointer;
+`;

@@ -10,7 +10,6 @@ import {
   FETCH_FORM_DEFINITIONS_ACTION,
   UPDATE_FORM_DEFINITION_ACTION,
   DELETE_FORM_DEFINITION_ACTION,
-  deleteFormDefinitionSuccess,
   DeleteFormDefinitionAction,
   deleteFormById,
 } from './action';

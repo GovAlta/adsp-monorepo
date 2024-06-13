@@ -5,7 +5,7 @@ import { GoAIconButton } from '@abgov/react-components-new';
 
 import { updateCommentTopicType } from '@store/comment/action';
 
-import { Edit, ConfigCommentWrapper } from '../styled-components';
+import { Edit, ConfigCommentWrapper, Anchor } from '../styled-components';
 import { AddEditCommentTopicType } from './addEditCommentTopicType';
 import { useDispatch } from 'react-redux';
 
@@ -51,9 +51,9 @@ export const TopicConfigTopicType = ({ topicType }: CommentConfigCommentProps) =
 
       <div className="editColumn">
         <Edit>
-          <a rel="noopener noreferrer" onClick={() => setOpenEditCommentTemplate(true)}>
+          <Anchor rel="noopener noreferrer" onClick={() => setOpenEditCommentTemplate(true)}>
             Edit
-          </a>
+          </Anchor>
           <GoAIconButton
             icon="create"
             testId="comment-template-incommentation-edit-icon"

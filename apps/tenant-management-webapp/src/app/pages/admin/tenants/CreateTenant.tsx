@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import {
-  GoANotification,
-  GoAButton,
-  GoAInput,
-  GoAFormItem,
-  GoAButtonGroup,
-} from '@abgov/react-components-new';
+import { GoANotification, GoAButton, GoAInput, GoAFormItem, GoAButtonGroup } from '@abgov/react-components-new';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
@@ -47,7 +41,7 @@ const CreateRealm = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(KeycloakCheckSSO('core'));
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -57,7 +51,7 @@ const CreateRealm = (): JSX.Element => {
     if (userInfo) {
       dispatch(IsTenantAdmin(userInfo.email));
     }
-  }, [userInfo]);
+  }, [userInfo, dispatch]);
 
   const ErrorMessage = (props) => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
@@ -121,6 +115,7 @@ const CreateRealm = (): JSX.Element => {
             {isTenantCreated ? (
               <TenantCreated />
             ) : (
+              // eslint-disable-next-line react/jsx-no-useless-fragment
               <>
                 {isTenantAdmin === false && (
                   <>

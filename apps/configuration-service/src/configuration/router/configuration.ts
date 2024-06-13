@@ -259,6 +259,10 @@ export const getActiveRevision =
       if (!result) {
         if (orLatest) {
           result = configuration.latest;
+        } else if (!revision) {
+          end();
+          res.status(200);
+          res.send([]);
         } else {
           throw new NotFoundError('active revision');
         }
