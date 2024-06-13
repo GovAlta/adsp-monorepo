@@ -51,7 +51,7 @@ export function createGenerateJob({
 
     try {
       const token = await tokenProvider.getAccessToken();
-      const configuration = await configurationService.getConfiguration<Record<string, PdfTemplateEntity>>(
+      const [configuration] = await configurationService.getConfiguration<Record<string, PdfTemplateEntity>>(
         serviceId,
         token,
         tenantId

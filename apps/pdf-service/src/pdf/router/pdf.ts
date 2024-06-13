@@ -61,7 +61,7 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
   return async (req, res, next) => {
     try {
       const { templateId } = req[templateIn];
-      const configuration = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
+      const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
 
       const template = configuration[templateId];
 
@@ -108,7 +108,7 @@ export function generatePdf(
 
       if (formId) {
         const formServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:form-service`);
-        const token = user.token?.bearer;
+        const token = user.token.bearer;
 
         const {
           data: { results },

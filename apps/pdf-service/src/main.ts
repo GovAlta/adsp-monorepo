@@ -94,10 +94,12 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      combineConfiguration: (tenantConfig: Record<string, PdfTemplate>, coreConfig: Record<string, PdfTemplate>) => ({
-        ...tenantConfig,
-        ...coreConfig,
-      }),
+      combineConfiguration: (tenantConfig: Record<string, PdfTemplate>, coreConfig: Record<string, PdfTemplate>) => [
+        {
+          ...tenantConfig,
+          ...coreConfig,
+        },
+      ],
       serviceConfigurations: [
         {
           serviceId: adspId`urn:ads:platform:pdf-service`,
