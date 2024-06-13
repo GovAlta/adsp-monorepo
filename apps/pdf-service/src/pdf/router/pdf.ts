@@ -108,7 +108,7 @@ export function generatePdf(
 
       if (formId) {
         const formServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:form-service`);
-        const token = user.token?.bearer;
+        const token = user.token.bearer;
 
         const {
           data: { results },
@@ -130,7 +130,6 @@ export function generatePdf(
 
         data.formId = formId;
         data.formData = formData.data;
-        data.form = results;
       }
 
       const job = await repository.create(tenantId);
