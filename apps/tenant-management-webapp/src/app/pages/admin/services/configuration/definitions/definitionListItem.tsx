@@ -9,6 +9,7 @@ interface serviceItemProps {
   tenantName: string;
   nameSpace: string;
   description: string;
+  anonymousRead: boolean;
   isTenantSpecificConfig?: boolean;
   onEdit: (definition: ConfigDefinition) => void;
   onDelete: (definitionName: string) => void;
@@ -22,6 +23,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
   tenantName,
   nameSpace,
   description,
+  anonymousRead,
   isTenantSpecificConfig,
 }) => {
   const [showSchema, setShowSchema] = useState(false);
@@ -49,6 +51,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
                         namespace: nameSpace,
                         name: configName,
                         description: description,
+                        anonymousRead: anonymousRead,
                         configurationSchema: { ...configSchema },
                       })
                     }

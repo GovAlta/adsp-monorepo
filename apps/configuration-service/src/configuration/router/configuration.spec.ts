@@ -121,6 +121,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
+        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -153,6 +154,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
+        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -216,11 +218,75 @@ describe('router', () => {
         user: { isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User,
         params: { namespace, name },
         query: { tenantId: tenantId.toString() },
+        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
       } as unknown as Request;
 
       handler(req, null, () => {
         try {
           expect(req['entity']).toBe(entity);
+          expect(repositoryMock.get.mock.calls[2][2].toString()).toEqual(tenantId.toString());
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+    it('can get tenant entity', (done) => {
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
+
+      // Configuration definition retrieval.
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          loggerMock as Logger,
+          repositoryMock,
+          activeRevisionMock,
+          validationMock
+        )
+      );
+      activeRevisionMock.get.mockResolvedValueOnce({
+        namespace: configurationServiceId.namespace,
+        name: configurationServiceId.service,
+        tenant: tenantId,
+        active: 2,
+      });
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          loggerMock as Logger,
+          repositoryMock,
+          activeRevisionMock,
+          validationMock,
+          null,
+          tenantId
+        )
+      );
+
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      const req = {
+        tenant: { id: tenantId },
+        user: null,
+        params: { namespace, name },
+        query: { tenantId: tenantId.toString() },
+        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
+      } as unknown as Request;
+
+      handler(req, null, () => {
+        try {
+          expect(req.user).toBeNull();
           expect(repositoryMock.get.mock.calls[2][2].toString()).toEqual(tenantId.toString());
           done();
         } catch (err) {
@@ -338,6 +404,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
+        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -409,6 +476,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
+        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -479,6 +547,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
+        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
       } as unknown as Request;
 
       handler(req, null, () => {

@@ -1,4 +1,5 @@
 import { AdspId, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import * as passport from 'passport';
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
@@ -60,6 +61,14 @@ const getDefinition = async (
   }
 };
 
+const getTenantId = (req: Request): AdspId => {
+  if (!req.isAuthenticated && req.query.tenant) {
+    return AdspId.parse(req.query.tenant as string);
+  }
+
+  return req.tenant?.id;
+};
+
 /**
  * Get the configuration entity for the configuration namespace and name.
  *
@@ -83,19 +92,21 @@ export function getConfigurationEntity(
       const user = req.user;
       const { namespace, name } = req.params;
       const getCore = requestCore(req);
-      const tenantId = req.tenant?.id;
+      const tenantId = getTenantId(req);
 
       const definition = loadDefinition
         ? await getDefinition(configurationServiceId, repository, namespace, name, tenantId)
         : undefined;
 
       const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition);
-      if (!entity.canAccess(user)) {
-        throw new UnauthorizedUserError('access configuration', user);
+
+      if (req.isAuthenticated() && user) {
+        if (!entity.canAccess(user)) {
+          throw new UnauthorizedUserError('access configuration', user);
+        }
       }
 
       req[ENTITY_KEY] = entity;
-
       end();
       next();
     } catch (err) {
@@ -124,7 +135,8 @@ export const getConfiguration =
   async (req, res) => {
     const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
-    res.send(mapResult(configuration));
+    const result = mapResult(configuration);
+    res.send(result);
   };
 
 export const getConfigurationWithActive = (): RequestHandler => async (req, res) => {
@@ -164,6 +176,7 @@ export const patchConfigurationRevision =
           if (!request.update) {
             throw new InvalidOperationError(`Update request must include 'update' property.`);
           }
+
           update = entity.mergeUpdate(request.update);
           updateData = request.update;
           break;
@@ -192,8 +205,8 @@ export const patchConfigurationRevision =
         end();
         res.send(mapConfiguration(entity));
       } else {
-        const updated = await entity.update(user, update);
-
+        let updated = null;
+        updated = await entity.update(user, update);
         end();
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
@@ -388,6 +401,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name',
+    passport.authenticate(['anonymous'], { session: false }),
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
@@ -396,8 +410,9 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/latest',
-    assertAuthenticatedHandler,
+    passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     validateNamespaceNameHandler,
+    //createValidationHandler(query('tenant').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
@@ -441,7 +456,8 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/active',
-    assertAuthenticatedHandler,
+    passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
+    // assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
