@@ -42,3 +42,13 @@ Once your queue is created you can then start accessing it through [the APIs](ht
 as well as other, basic, CRUD operations. Note: you cannot remove queues that have tasks within them.
 
 ## Events
+
+Various events are triggered throughout the lifecycle of a task. These events can notify users about important developments. Additionally, all events are logged to ensure traceability and auditability. The events include:
+
+- task-updated
+- task-created
+- task-priority-set
+- task-assigned
+- task-started
+- task-completed
+- task-cancelled
