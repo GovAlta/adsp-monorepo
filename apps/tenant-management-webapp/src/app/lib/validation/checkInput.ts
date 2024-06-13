@@ -31,7 +31,7 @@ export interface ValidInput {
   onFailureMessage: string;
 }
 
-export const ajv = new Ajv({ allErrors: true, verbose: true, strict: false });
+export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
 
 ajv.addKeyword({
   keyword: 'isNotEmpty',

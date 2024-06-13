@@ -9,7 +9,8 @@
     "@jsonforms/core": "^3.1.0",
     "@jsonforms/react": "^3.1.0",
     "react": "^18.0.0",
-    "ajv": "^8.6.1"
+    "ajv": "^8.6.1",
+    "ajv-formats": "^3.0.1"
   },
   "dependencies": {
     "axios": "^1.6.7",
