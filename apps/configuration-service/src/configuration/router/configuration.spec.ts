@@ -121,7 +121,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -154,7 +154,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -218,7 +218,7 @@ describe('router', () => {
         user: { isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User,
         params: { namespace, name },
         query: { tenantId: tenantId.toString() },
-        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -281,7 +281,7 @@ describe('router', () => {
         user: null,
         params: { namespace, name },
         query: { tenantId: tenantId.toString() },
-        isAuthenticated: jest.fn().mockResolvedValueOnce(true),
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -405,7 +405,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: () => true,
+        isAuthenticated: jest.fn(() => true),
       };
 
       handler(req as unknown as Request, null, () => {
@@ -480,13 +480,15 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: () => true,
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
         try {
           expect(req['entity']).not.toBeNull();
           expect(req['entity'].name).toBe(entity.name);
+          expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
+
           expect(repositoryMock.get.mock.calls.length).toBeGreaterThan(0);
           done();
         } catch (err) {
@@ -552,7 +554,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: () => true,
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {

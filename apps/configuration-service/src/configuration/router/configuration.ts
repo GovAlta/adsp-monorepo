@@ -456,8 +456,6 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/active',
-    passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
-    // assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
