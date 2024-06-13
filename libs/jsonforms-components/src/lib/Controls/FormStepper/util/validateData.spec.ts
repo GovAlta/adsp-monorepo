@@ -1,7 +1,7 @@
 import Ajv from 'ajv';
 import { validateData } from './validateData';
 
-const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
+const ajv = new Ajv({ allErrors: true, verbose: true, strict: false });
 const nameSchema = {
   type: 'object',
   properties: {

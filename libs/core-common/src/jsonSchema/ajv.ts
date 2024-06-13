@@ -6,7 +6,7 @@ import { InvalidValueError } from '../errors';
 import { ValidationService } from './service';
 
 export class AjvValidationService implements ValidationService {
-  protected ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
+  protected ajv = new Ajv({ allErrors: true, verbose: true });
   protected ajvErrors: string[] = [];
 
   constructor(private logger: Logger) {
