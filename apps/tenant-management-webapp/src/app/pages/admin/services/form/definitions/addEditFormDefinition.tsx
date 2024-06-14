@@ -41,10 +41,11 @@ export const checkFormDefaultUrl = (): Validator => {
     const url = _url.replace(/\s/g, '');
     const isHttps = url.toLowerCase().startsWith('https://');
     const numberOfVariables = url.split('{{').length;
+    const containsIdVariable = url.includes('{{id}}');
 
     if (!isHttps) return 'Only secure HTTP protocol is allowed.';
-    if (numberOfVariables > 1) {
-      return 'Can only contain one handlebar variable {{formId}} in the url';
+    if (numberOfVariables > 2 || !containsIdVariable) {
+      return 'Can only contain one handlebar variable {{id}} in the url';
     }
   };
 };
