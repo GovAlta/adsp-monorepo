@@ -7,6 +7,7 @@ import {
   Results,
   decodeAfter,
 } from '@core-services/core-common';
+import { rateLimit } from 'express-rate-limit';
 import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, query } from 'express-validator';
 import { isEqual as isDeepEqual, unset, cloneDeep } from 'lodash';
@@ -33,6 +34,12 @@ export interface ConfigurationRouterProps extends Repositories {
 }
 
 const ENTITY_KEY = 'entity';
+const rateLimitHandler = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
 
 const getDefinition = async (
   configurationServiceId: AdspId,
@@ -421,6 +428,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/latest',
+    rateLimitHandler,
     validateNamespaceNameHandler,
     createValidationHandler(query('tenant').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
@@ -467,6 +475,7 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/active',
     validateNamespaceNameHandler,
+    rateLimitHandler,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after')
