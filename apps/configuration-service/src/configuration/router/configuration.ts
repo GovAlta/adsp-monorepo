@@ -7,6 +7,7 @@ import {
   Results,
   decodeAfter,
 } from '@core-services/core-common';
+import { rateLimit } from 'express-rate-limit';
 import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, query } from 'express-validator';
 import { isEqual as isDeepEqual, unset, cloneDeep } from 'lodash';
@@ -33,6 +34,12 @@ export interface ConfigurationRouterProps extends Repositories {
 }
 
 const ENTITY_KEY = 'entity';
+const rateLimitHandler = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
 
 const getDefinition = async (
   configurationServiceId: AdspId,
@@ -60,6 +67,14 @@ const getDefinition = async (
   }
 };
 
+const getTenantId = (req: Request): AdspId => {
+  if (req.isAuthenticated && !req.isAuthenticated() && req.query.tenant) {
+    return AdspId.parse(req.query.tenant as string);
+  }
+
+  return req.tenant?.id;
+};
+
 /**
  * Get the configuration entity for the configuration namespace and name.
  *
@@ -83,19 +98,21 @@ export function getConfigurationEntity(
       const user = req.user;
       const { namespace, name } = req.params;
       const getCore = requestCore(req);
-      const tenantId = req.tenant?.id;
+      const tenantId = getTenantId(req);
 
       const definition = loadDefinition
         ? await getDefinition(configurationServiceId, repository, namespace, name, tenantId)
         : undefined;
 
       const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition);
-      if (!entity.canAccess(user)) {
-        throw new UnauthorizedUserError('access configuration', user);
+
+      if (req.isAuthenticated() && user) {
+        if (!entity.canAccess(user)) {
+          throw new UnauthorizedUserError('access configuration', user);
+        }
       }
 
       req[ENTITY_KEY] = entity;
-
       end();
       next();
     } catch (err) {
@@ -124,12 +141,12 @@ export const getConfiguration =
   async (req, res) => {
     const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
-    res.send(mapResult(configuration));
+    const result = mapResult(configuration);
+    res.send(result);
   };
 
 export const getConfigurationWithActive = (): RequestHandler => async (req, res) => {
   const configuration: ConfigurationEntity = req[ENTITY_KEY];
-
   const revision = await configuration.getActiveRevision();
   let active: ConfigurationRevision = undefined;
   // 0 is falsy and a valid revision.
@@ -164,6 +181,7 @@ export const patchConfigurationRevision =
           if (!request.update) {
             throw new InvalidOperationError(`Update request must include 'update' property.`);
           }
+
           update = entity.mergeUpdate(request.update);
           updateData = request.update;
           break;
@@ -192,8 +210,8 @@ export const patchConfigurationRevision =
         end();
         res.send(mapConfiguration(entity));
       } else {
-        const updated = await entity.update(user, update);
-
+        let updated = null;
+        updated = await entity.update(user, update);
         end();
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
@@ -231,6 +249,7 @@ export const getActiveRevision =
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
+
       const { orLatest: orLatestValue } = req.query;
       const orLatest = orLatestValue === 'true';
       const configuration: ConfigurationEntity = req[ENTITY_KEY];
@@ -258,11 +277,19 @@ export const getActiveRevision =
       end();
       res.send(result);
 
-      logger.info(`Active revision ${revision} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
-        tenant: configuration.tenantId?.toString(),
-        context: 'configuration-router',
-        user: `${user.name} (ID: ${user.id})`,
-      });
+      if (user) {
+        logger.info(`Active revision ${revision} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
+          tenant: configuration.tenantId?.toString(),
+          context: 'configuration-router',
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      } else {
+        //If this an anonymous user, just log the tenant as there will be no user context information
+        logger.info(`Active revision ${revision} for ${configuration.tenantId?.toString()}.`, {
+          tenant: configuration.tenantId?.toString(),
+          context: 'configuration-router',
+        });
+      }
     } catch (err) {
       next(err);
     }
@@ -282,6 +309,7 @@ export const configurationOperations =
         const updated = await configuration.createRevision(user);
 
         end();
+
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
           eventService.send(
@@ -392,6 +420,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
@@ -400,14 +429,16 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/latest',
-    assertAuthenticatedHandler,
+    rateLimitHandler,
     validateNamespaceNameHandler,
+    createValidationHandler(query('tenant').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
 
   router.patch(
     '/configuration/:namespace/:name',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
@@ -417,6 +448,7 @@ export function createConfigurationRouter({
 
   router.post(
     '/configuration/:namespace/:name',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -428,6 +460,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/revisions',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -445,8 +478,8 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/active',
-    assertAuthenticatedHandler,
     validateNamespaceNameHandler,
+    rateLimitHandler,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after')
@@ -463,6 +496,7 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/revisions/:revision',
     assertAuthenticatedHandler,
+    rateLimitHandler,
     createValidationHandler(
       ...checkSchema(
         {

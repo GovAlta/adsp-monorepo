@@ -10,6 +10,10 @@ export const revisionSchema = new Schema({
     required: true,
   },
   tenant: String,
+  anonymousRead: {
+    type: Boolean,
+    required: false,
+  },
   revision: {
     type: Number,
     required: true,
@@ -40,6 +44,10 @@ export const activeRevisionSchema = new Schema({
     required: true,
   },
   tenant: String,
+  anonymousRead: {
+    type: Boolean,
+    required: false,
+  },
   active: {
     type: Number,
     required: false,
