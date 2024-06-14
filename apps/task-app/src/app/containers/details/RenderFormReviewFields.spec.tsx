@@ -141,7 +141,7 @@ describe('Generate Form Fields', () => {
             applicantRoles: [],
             assessorRoles: [],
             clerkRoles: [],
-            formDraftUrlTemplate: 'https://form.adsp-dev.gov.ab.ca/autotest/aa/{{id}}',
+            formDraftUrlTemplate: 'https://form.adsp-dev.gov.ab.ca/autotest/aa',
             dataSchema: {
               type: 'object',
               properties: {
