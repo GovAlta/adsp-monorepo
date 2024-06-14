@@ -29,7 +29,8 @@ export const fetchRegister = async (props: RegisterConfig) => {
   return undefined;
 };
 
-export const isValidUrl = function (url: string) {
-  const pattern = new RegExp(/^(http|https):\/\/[^ "]+$/);
-  return pattern.test(url);
+export const isValidHref = function (url: string) {
+  const httPattern = new RegExp(/^(http|https):\/\/[^ "]+$/);
+  const mailToPattern = new RegExp(/^(mailto):[^ "]+$/);
+  return httPattern.test(url) || mailToPattern.test(url);
 };
