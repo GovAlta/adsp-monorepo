@@ -42,6 +42,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .limit(1)
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
+
     const latest = this.fromDoc<C>(latestDoc);
 
     return new ConfigurationEntity<C>(
@@ -105,6 +106,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     const update: Record<string, unknown> = {
       namespace: entity.namespace,
       name: entity.name,
+      anonymousRead: true,
       revision: revision.revision,
       lastUpdated: new Date(),
       created: revision.created ? revision.created : new Date(),

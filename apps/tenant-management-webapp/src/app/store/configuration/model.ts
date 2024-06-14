@@ -27,6 +27,7 @@ export interface ConfigDefinition {
   name: string;
   namespace: string;
   description?: string;
+  anonymousRead?: boolean;
   configurationSchema: ConfigurationSchema;
   serviceSchemas?: ServiceSchemas;
 }
@@ -41,6 +42,7 @@ export const defaultConfigDefinition: ConfigDefinition = {
   namespace: '',
   name: '',
   description: '',
+  anonymousRead: false,
   configurationSchema: {
     type: 'object',
     properties: {},

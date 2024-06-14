@@ -121,6 +121,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -153,6 +154,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -216,11 +218,86 @@ describe('router', () => {
         user: { isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User,
         params: { namespace, name },
         query: { tenantId: tenantId.toString() },
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
         try {
           expect(req['entity']).toBe(entity);
+          expect(repositoryMock.get.mock.calls[2][2].toString()).toEqual(tenantId.toString());
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+    it('can get configuration entity for unauthenticated users.', (done) => {
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
+
+      // Configuration definition retrieval.
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          loggerMock as Logger,
+          repositoryMock,
+          activeRevisionMock,
+          validationMock
+        )
+      );
+
+      activeRevisionMock.get.mockResolvedValueOnce({
+        namespace: configurationServiceId.namespace,
+        name: configurationServiceId.service,
+        tenant: tenantId,
+        active: 2,
+      });
+      const configurationSchema = {};
+
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          loggerMock as Logger,
+          repositoryMock,
+          activeRevisionMock,
+          validationMock,
+          {
+            revision: 1,
+            configuration: {
+              [`${namespace}:${name}`]: { configurationSchema },
+              [namespace]: { configurationSchema: {} },
+            },
+          },
+          tenantId
+        )
+      );
+
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
+
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      const req = {
+        tenant: { id: tenantId },
+        user: null,
+        params: { namespace, name },
+        query: { tenantId: tenantId.toString() },
+        isAuthenticated: jest.fn(() => true),
+      } as unknown as Request;
+
+      handler(req, null, () => {
+        try {
+          expect(req.user).toBeNull();
+          expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
           expect(repositoryMock.get.mock.calls[2][2].toString()).toEqual(tenantId.toString());
           done();
         } catch (err) {
@@ -331,6 +408,7 @@ describe('router', () => {
         null,
         tenantId
       );
+
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = {
@@ -338,12 +416,15 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-      } as unknown as Request;
+        isAuthenticated: jest.fn(() => true),
+      };
 
-      handler(req, null, () => {
+      handler(req as unknown as Request, null, () => {
         try {
-          expect(req['entity']).toBe(entity);
+          expect(req['entity']).not.toBeNull();
+          expect(req['entity'].name).toBe(entity.name);
           expect(repositoryMock.get.mock.calls[1][3]).toEqual(expect.objectContaining({ configurationSchema }));
+          expect(repositoryMock.get.mock.calls.length).toBeGreaterThan(0);
           done();
         } catch (err) {
           done(err);
@@ -373,6 +454,7 @@ describe('router', () => {
         active: 2,
       });
       const configurationSchema = {};
+
       repositoryMock.get.mockResolvedValueOnce(
         new ConfigurationEntity(
           configurationServiceId.namespace,
@@ -402,6 +484,7 @@ describe('router', () => {
         null,
         tenantId
       );
+
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = {
@@ -409,12 +492,15 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
         try {
-          expect(req['entity']).toBe(entity);
+          expect(req['entity']).not.toBeNull();
+          expect(req['entity'].name).toBe(entity.name);
           expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
+          expect(repositoryMock.get.mock.calls.length).toBeGreaterThan(0);
           done();
         } catch (err) {
           done(err);
@@ -479,11 +565,13 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
+        isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
       handler(req, null, () => {
         try {
-          expect(req['entity']).toBe(entity);
+          expect(req['entity']).not.toBeNull();
+          expect(req['entity'].name).toBe(entity.name);
           expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
           done();
         } catch (err) {

@@ -286,6 +286,7 @@ export function* updateConfigurationDefinition({
           [`${definition.namespace}:${definition.name}`]: {
             configurationSchema: definition.configurationSchema,
             description: definition.description,
+            anonymousRead: definition.anonymousRead,
           },
         },
       };
