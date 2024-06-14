@@ -1,5 +1,4 @@
 import { AdspId, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import * as passport from 'passport';
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
@@ -414,7 +413,6 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name',
-    passport.authenticate(['anonymous'], { session: false }),
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
@@ -423,7 +421,6 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/latest',
-    passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     validateNamespaceNameHandler,
     createValidationHandler(query('tenant').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
