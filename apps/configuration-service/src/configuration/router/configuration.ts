@@ -36,7 +36,7 @@ export interface ConfigurationRouterProps extends Repositories {
 const ENTITY_KEY = 'entity';
 const rateLimitHandler = rateLimit({
   windowMs: 5 * 60 * 1000,
-  limit: 5,
+  limit: 10,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
 });
