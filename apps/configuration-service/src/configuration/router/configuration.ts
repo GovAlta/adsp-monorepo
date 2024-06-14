@@ -420,6 +420,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
@@ -437,6 +438,7 @@ export function createConfigurationRouter({
 
   router.patch(
     '/configuration/:namespace/:name',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
@@ -446,6 +448,7 @@ export function createConfigurationRouter({
 
   router.post(
     '/configuration/:namespace/:name',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -457,6 +460,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/revisions',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -492,6 +496,7 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/revisions/:revision',
     assertAuthenticatedHandler,
+    rateLimitHandler,
     createValidationHandler(
       ...checkSchema(
         {
