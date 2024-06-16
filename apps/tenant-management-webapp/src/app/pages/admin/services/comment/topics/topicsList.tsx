@@ -86,12 +86,7 @@ export const TopicsList = (): JSX.Element => {
   };
 
   const onDeleteTopic = () => {
-    indicator.show = true;
     setShowDeleteConfirmation(false);
-    setTimeout(() => {
-      fetchTopics();
-      indicator.show = false;
-    }, 800);
   };
 
   const handleSave = (topic) => {
