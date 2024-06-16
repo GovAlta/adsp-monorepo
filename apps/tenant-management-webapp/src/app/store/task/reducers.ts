@@ -8,6 +8,7 @@ import {
   FETCH_QUEUE_TASKS_SUCCESS_ACTION,
   UPDATE_QUEUE_TASK_SUCCESS_ACTION,
   SET_QUEUE_TASK_SUCCESS_ACTION,
+  CREATE_TASKS_SUCCESS_ACTION
 } from './action';
 
 import { TaskState } from './model';
@@ -48,6 +49,13 @@ export default function (state: TaskState = defaultState, action: TaskActionType
         nextEntries: action.next,
       };
     }
+    case CREATE_TASKS_SUCCESS_ACTION: {
+      return {
+        ...state,
+        tasks:
+          state.nextEntries ? state.tasks : [...state.tasks, action.payload]
+      };
+    }
     case GET_TASKS_ACTION:
       return {
         ...state,
@@ -58,13 +66,16 @@ export default function (state: TaskState = defaultState, action: TaskActionType
         ...state,
         queues: action.payload,
       };
-    case UPDATE_QUEUE_TASK_SUCCESS_ACTION:
+    case UPDATE_QUEUE_TASK_SUCCESS_ACTION: {
+       const index = state.tasks.findIndex((task) => task.id === action.payload?.id )
+       const updatedTasks = [...state.tasks]
+       updatedTasks[index] = action.payload
       return {
         ...state,
-        tasks: action.payload,
+        tasks: updatedTasks,
       };
-
-    case DELETE_TASK_QUEUE_SUCCESS_ACTION:
+     } 
+     case DELETE_TASK_QUEUE_SUCCESS_ACTION:
       return {
         ...state,
         queues: {

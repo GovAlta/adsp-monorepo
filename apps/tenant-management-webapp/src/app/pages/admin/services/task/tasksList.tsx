@@ -78,9 +78,6 @@ export const TasksList = (): JSX.Element => {
       } else {
         dispatch(updateQueueTask(task));
       }
-      setTimeout(() => {
-        dispatch(getTasks(taskQueues[selectedTask]));
-      }, 800);
     } catch (error) {
       console.error('Error while saving task:', error);
     }
