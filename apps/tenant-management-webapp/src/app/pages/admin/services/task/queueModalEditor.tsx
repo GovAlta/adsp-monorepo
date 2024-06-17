@@ -64,7 +64,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   }, [dispatch]);
   const navigate = useNavigate();
   const close = () => {
-    navigate('/admin/services/task?definitions=true');
+    navigate('/admin/services/task?queues=true');
   };
   useEffect(() => {
     if (saveModal.closeEditor) {

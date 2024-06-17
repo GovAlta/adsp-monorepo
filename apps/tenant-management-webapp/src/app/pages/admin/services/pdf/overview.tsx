@@ -12,12 +12,13 @@ interface PdfOverviewProps {
 
 export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ setOpenAddTemplate }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   useEffect(() => {
     setOpenAddTemplate(false);
     dispatch(fetchPdfMetrics());
+    navigate('/admin/services/pdf');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const navigate = useNavigate();
   const description =
     'The PDF service provides PDF operations like generating new PDFs from templates. It runs operations as asynchronous jobs and uploads the output PDF files to the file service.';
   return (
