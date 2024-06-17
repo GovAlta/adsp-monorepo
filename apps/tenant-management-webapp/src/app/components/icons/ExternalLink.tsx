@@ -7,7 +7,7 @@ interface ExternalLinkProps {
   testId?: string;
 }
 
-const ExternalLinkWrapper = styled.div`
+const ExternalLinkWrapper = styled.span`
   display: inline-block;
   color: #0070c4;
   .goa-icon {
