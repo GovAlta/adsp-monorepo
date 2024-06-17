@@ -14,10 +14,6 @@ The service uses [RabbitMQ](https://www.rabbitmq.com/) for task management. The 
 
 To start using the service, login to the ADSP Tenant-management-webapp and select the _Task Service_. There you will be able to create your first _task queue_. Queues are identified by a _namespace:name_ pair which you specify when creating one. There is no particular significance to the naming convention, it just gives you a means to help organize things when the number of queues in your tenant are large.
 
-In addition you must associate one or more roles with the queue, which will be used for authorization when accessing the service through the APIs. Only authorized users - those with the correct role(s) - will be able to read/write information to your queue.
-
-![](/adsp-monorepo/assets/task-service/createQueue.png){: width="600" }
-
 ## Metrics
 
 Several queue metrics are tracked by the Task Service, including
