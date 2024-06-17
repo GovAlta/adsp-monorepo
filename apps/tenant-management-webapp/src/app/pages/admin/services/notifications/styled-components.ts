@@ -229,3 +229,10 @@ export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
 export const ModalContent = styled.div`
   background: white;
 `;
+
+export const Anchor = styled.div`
+  color: #0070c4;
+  text-decoration: underline;
+  outline: none;
+  cursor: pointer;
+`;

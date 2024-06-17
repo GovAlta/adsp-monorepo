@@ -11,6 +11,7 @@ export const UPDATE_TASK_QUEUE_SUCCESS_ACTION = 'queue/UPDATE_TASK_QUEUE_SUCCESS
 
 export const GET_TASKS_ACTION = 'task/GET_TASKS_ACTION';
 export const GET_TASKS_SUCCESS_ACTION = 'task/GET_TASKS_SUCCESS_ACTION';
+export const CREATE_TASKS_SUCCESS_ACTION = 'task/CREATE_TASKS_SUCCESS_ACTION';
 
 export const CLEAR_Tasks_ACTION = 'comment/CLEAR_Tasks_ACTION';
 
@@ -54,6 +55,10 @@ export interface GetsTasksSuccessAction {
   payload: TaskEntry[];
   after: string;
   next: string;
+}
+export interface CreateTasksSuccessAction {
+  type: typeof CREATE_TASKS_SUCCESS_ACTION;
+  payload: TaskEntry;
 }
 export interface GetsTasksAction {
   type: typeof GET_TASKS_ACTION;
@@ -101,6 +106,7 @@ export type TaskActionTypes =
   | DeleteTaskDefinitionSuccessAction
   | UpdateIndicatorAction
   | GetsTasksSuccessAction
+  | CreateTasksSuccessAction
   | GetsTasksAction
   | FetchQueueTasksSuccessAction
   | FetchQueueTasksAction
@@ -154,6 +160,10 @@ export const getTasksSuccess = (results: TaskEntry[], after: string, next: strin
   after,
   next,
 });
+export const createTasksSuccess = (result: TaskEntry): CreateTasksSuccessAction => ({
+  type: CREATE_TASKS_SUCCESS_ACTION,
+  payload: result
+});
 export const getTask = (payload: TaskDefinition): GetsTaskAction => ({
   type: GET_TASK_ACTION,
   queue: payload,
@@ -167,7 +177,7 @@ export const updateQueueTask = (payload: QueueTaskDefinition): UpdateQueueTaskAc
   type: UPDATE_QUEUE_TASK_ACTION,
   payload: payload,
 });
-export const updateQueueTaskSuccess = (results: QueueTaskDefinition[]): UpdateQueueTaskSuccessAction => ({
+export const updateQueueTaskSuccess = (results: QueueTaskDefinition): UpdateQueueTaskSuccessAction => ({
   type: UPDATE_QUEUE_TASK_SUCCESS_ACTION,
   payload: results,
 });
@@ -203,7 +213,7 @@ export interface UpdateQueueTaskAction {
 }
 export interface UpdateQueueTaskSuccessAction {
   type: typeof UPDATE_QUEUE_TASK_SUCCESS_ACTION;
-  payload: QueueTaskDefinition[];
+  payload: QueueTaskDefinition;
 }
 
 export const UpdateQueueTask = (payload: QueueTaskDefinition): UpdateQueueTaskAction => ({
@@ -211,7 +221,7 @@ export const UpdateQueueTask = (payload: QueueTaskDefinition): UpdateQueueTaskAc
   payload,
 });
 
-export const UpdateQueueTaskSuccess = (queue: QueueTaskDefinition[]): UpdateQueueTaskSuccessAction => ({
+export const UpdateQueueTaskSuccess = (queue: QueueTaskDefinition): UpdateQueueTaskSuccessAction => ({
   type: UPDATE_QUEUE_TASK_SUCCESS_ACTION,
   payload: queue,
 });

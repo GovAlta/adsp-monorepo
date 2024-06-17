@@ -95,11 +95,18 @@ export default function (state: CommentState = defaultState, action: CommentActi
         nextCommentEntries: action.next,
       };
 
-    case DELETE_COMMENT_TOPIC_SUCCESS:
+    case DELETE_COMMENT_TOPIC_SUCCESS: {
+      const newTopicList = [...state.topics];
+      const index = newTopicList.findIndex((comment) =>  comment.id === action.payload);
+
+      if (index !== -1) {
+        newTopicList.splice(index, 1);
+      }
       return {
         ...state,
+        topics: newTopicList
       };
-
+    }
     case DELETE_COMMENT_COMMENTS_SUCCESS:
       // eslint-disable-next-line no-case-declarations
       const filteredComments = state.comments.filter((comment) => comment.id !== action.payload.comment);

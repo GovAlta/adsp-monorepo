@@ -22,12 +22,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Red Hat CLI tools to specific versions
-      uses: redhat-actions/openshift-tools-installer@v1
-      with:
-        source: "github"
-        github_pat: ${{ github.token }}
-        s2i: "1.4"
     - name: Log in to Red Hat Registry
       uses: redhat-actions/podman-login@v1
       with:

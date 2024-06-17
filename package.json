@@ -36,14 +36,14 @@
   },
   "private": true,
   "dependencies": {
-    "worker-timers": "^8.0.0",
     "@azure/storage-blob": "^12.9.0",
     "@emotion/react": "11.11.1",
     "@emotion/styled": "11.11.0",
     "@faker-js/faker": "7.0.1",
-    "@keycloak/keycloak-admin-client": "^19.0.3",
+    "@keycloak/keycloak-admin-client": "^18.0.2",
     "@socket.io/redis-adapter": "7.2.0",
     "ajv": "^8.6.1",
+    "ajv-formats": "^3.0.1",
     "amqp-connection-manager": "^3.7.0",
     "amqplib": "^0.8.0",
     "app-root-path": "^3.0.0",
@@ -101,6 +101,7 @@
     "promise-retry": "^2.0.1",
     "puppeteer": "22.2.0",
     "qs": "^6.11.2",
+    "react-components-new": "npm:@abgov/react-components@^4.18.1",
     "react-error-boundary": "4.0.12",
     "redis": "^3.1.2",
     "rehype-raw": "^6.1.1",
@@ -116,6 +117,7 @@
     "uuid": "^9.0.0",
     "valid-filename": "^3.1.0",
     "winston": "^3.3.3",
+    "worker-timers": "^8.0.0",
     "xss": "^1.0.10"
   },
   "devDependencies": {
@@ -289,4 +291,3 @@
     "semantic-release": "^23.0.0"
   }
 }
-

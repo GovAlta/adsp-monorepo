@@ -14,6 +14,7 @@ export function CheckSubscriberRoles({ children }: privateAppProps): JSX.Element
   );
 
   const DefaultView = () => {
+    // eslint-disable-next-line react/jsx-no-useless-fragment
     return <>{children}</>;
   };
 

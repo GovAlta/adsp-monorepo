@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { QueuesList } from './queuesList';
@@ -8,14 +8,19 @@ import AsideLinks from '@components/AsideLinks';
 import { useSelector } from 'react-redux';
 import { taskAppLoginUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
+import { RootState } from '@store/index';
 
 export const Task: FunctionComponent = () => {
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const loginUrl = useSelector(taskAppLoginUrlSelector);
-  const [openAddDefinition, setOpenAddDefinition] = useState(false);
+  const [openAddTask, setOpenAddTask] = useState(false);
 
   const searchParams = new URLSearchParams(document.location.search);
 
-  const queues = searchParams.get('definitions');
+  const queues = tenantName && searchParams.get('queues');
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
 
   return (
     <Page>
@@ -23,10 +28,10 @@ export const Task: FunctionComponent = () => {
         <h1 data-testid="task-title">Task service</h1>
         <Tabs activeIndex={queues === 'true' ? 1 : 0}>
           <Tab label="Overview" data-testid="task-service-overview-tab">
-            <TaskOverview setOpenAddDefinition={setOpenAddDefinition} />
+            <TaskOverview setOpenAddTask={setOpenAddTask} />
           </Tab>
           <Tab label="Queues" data-testid="task-service-queues-tab">
-            <QueuesList openAddDefinition={openAddDefinition} />
+            <QueuesList openAddTask={openAddTask} />
           </Tab>
           <Tab label="Tasks" data-testid="task-service-tasks-tab">
             <TasksList />

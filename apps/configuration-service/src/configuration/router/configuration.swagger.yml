@@ -184,6 +184,10 @@ components:
       required: true
       schema:
         type: string
+    - name: tenant
+      description: tenant id for the tenant
+      in: query
+      required: false
   get:
     tags:
       - Configuration
@@ -235,6 +239,10 @@ components:
         in: query
         required: false
         schema: {}
+      - name: tenant
+        description: tenant id for the tenant
+        in: query
+        required: false
     responses:
       200:
         description: Request completed successfully.
