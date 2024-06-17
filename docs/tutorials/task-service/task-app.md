@@ -16,6 +16,12 @@ However, in practice, the Task App is currently configured to work only with the
 
 ## Security
 
+The task app is only intended for a GoA audience. Anyone logging into the _app_ must have the roles described in the [task queue section](/adsp-monorepo/tutorials/task-service/task-queues.html) in order to access any task related information.
+
+#### Client Security
+
+The _Task App_ uses the _task-app_ keycloak client, configured in your tenant, to access the necessary resources, specifically _urn:ads:platform:task-app_. If your tenant is recent you may already have the client added to your keycloak tenant; however, if not, you can add it yourself. The task-app client requires no particular configuration.
+
 ## Form Review and Disposition
 
 When you first sign in to the app, e.g.
