@@ -10,6 +10,7 @@ interface CommentOverviewProps {
 export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOpenAddTopicTypes }) => {
   useEffect(() => {
     setOpenAddTopicTypes(false);
+    navigate('/admin/services/comment');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();

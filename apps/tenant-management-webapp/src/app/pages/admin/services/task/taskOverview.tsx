@@ -10,6 +10,7 @@ interface TaskOverviewProps {
 export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.Element => {
   useEffect(() => {
     setOpenAddDefinition(false);
+    navigate('/admin/services/task');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
