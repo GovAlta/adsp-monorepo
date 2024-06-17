@@ -11,9 +11,9 @@ import { ButtonPadding, ProgressWrapper } from './styled-components';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
 
 interface AddEditQueueProps {
-  openAddDefinition: boolean;
+  openAddTask: boolean;
 }
-export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Element => {
+export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
   const dispatch = useDispatch();
   const [modalType, setModalType] = useState('');
   const [editQueue, setEditQueue] = useState(false);
@@ -53,21 +53,17 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   }, [selectedQueue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (openAddDefinition) {
+    if (openAddTask) {
       reset();
       setOpenAddQueue(true);
     }
-  }, [openAddDefinition]);
-
-  // eslint-disable-next-line
-  useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
+  }, [openAddTask]);
 
   const reset = () => {
     setEditQueue(false);
     setSelectedQueue(defaultTaskQueue);
     setOpenAddQueue(false);
+    document.body.style.overflow = 'unset';
   };
 
   return (

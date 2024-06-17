@@ -4,12 +4,12 @@ import { GoAButton } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
 
 interface TaskOverviewProps {
-  setOpenAddDefinition: (val: boolean) => void;
+  setOpenAddTask: (val: boolean) => void;
 }
 
-export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.Element => {
+export const TaskOverview = ({ setOpenAddTask }: TaskOverviewProps): JSX.Element => {
   useEffect(() => {
-    setOpenAddDefinition(false);
+    setOpenAddTask(false);
     navigate('/admin/services/task');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -29,8 +29,8 @@ export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.E
         <GoAButton
           testId="add-queue"
           onClick={() => {
-            setOpenAddDefinition(true);
-            navigate('/admin/services/task?definitions=true');
+            navigate('/admin/services/task?queues=true');
+            setOpenAddTask(true);
           }}
         >
           Add queue
