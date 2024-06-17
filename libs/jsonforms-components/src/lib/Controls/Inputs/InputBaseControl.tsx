@@ -70,7 +70,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
         <FormFieldWrapper>
           <GoAFormItem
             requirement={required ? 'required' : undefined}
-            error={''}
+            error={modifiedErrors}
             testId={`${path}`}
             label={props?.noLabel === true ? '' : labelToUpdate}
             helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}

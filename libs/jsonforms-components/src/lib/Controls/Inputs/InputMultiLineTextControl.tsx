@@ -27,7 +27,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   if (uischema?.options?.isStepperReview) {
-    return <div>{data}</div>;
+    return <div data-testid="input-multi-line-text-control-review">{data}</div>;
   }
   return (
     <GoATextArea

@@ -54,6 +54,12 @@ describe('Input Boolean Radio Control', () => {
     expect(radio).toBeInTheDocument();
   });
 
+  it('will render radio buttons', () => {
+    const renderer = render(getForm(dataSchema, { ...uiSchema, options: { isStepperReview: true, format: 'radio' } }));
+    const radio = renderer.getByTestId('input-enum-radios-review');
+    expect(radio).toBeInTheDocument();
+  });
+
   it('will accept a yes click', () => {
     const data = { radio: false };
     const renderer = render(getForm(dataSchema, uiSchema, data));

@@ -15,7 +15,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const errorsFormInput = checkFieldValidity(props as ControlProps);
   if (uischema?.options?.isStepperReview) {
-    return <div>{data}</div>;
+    return <div data-testid="input-time-control-review">{data}</div>;
   }
   return (
     <GoAInputTime

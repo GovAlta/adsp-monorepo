@@ -17,7 +17,7 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
   if (uischema?.options?.isStepperReview) {
     return (
-      <div>
+      <div data-testid="input-enum-checkbox-review">
         {data
           ? enumData.filter((e) => {
               return data.includes(e);

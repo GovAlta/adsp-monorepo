@@ -31,10 +31,17 @@ describe('input number controls', () => {
 
   describe('can create input number control', () => {
     it('can create control', () => {
+      const props = { ...staticProps, uischema: { ...staticProps.uischema, options: { isStepperReview: true } } };
+      const component = render(GoAInputInteger(props));
+      expect(component.getByTestId('input-integer-control-review')).toBeInTheDocument();
+    });
+
+    it('can create control in review mode', () => {
       const props = { ...staticProps };
       const component = render(GoAInputInteger(props));
       expect(component.getByTestId('age-input')).toBeInTheDocument();
     });
+
     it('can create base control', () => {
       const props = { ...staticProps };
       const baseControl = render(GoAIntegerControl(props));

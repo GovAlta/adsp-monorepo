@@ -21,7 +21,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
   if (uischema?.options?.isStepperReview) {
-    return <div>{data}</div>;
+    return <div data-testid="input-text-control-review">{data}</div>;
   }
 
   return (

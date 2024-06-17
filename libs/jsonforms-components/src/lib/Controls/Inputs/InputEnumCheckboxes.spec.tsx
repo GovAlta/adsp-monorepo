@@ -51,6 +51,12 @@ describe('Input Boolean Checkbox Control', () => {
     expect(checkboxes).toBeInTheDocument();
   });
 
+  it('will render checkboxes in review mode', () => {
+    render(getForm(dataSchema, { ...uiSchema, options: { isStepperReview: true, format: 'checkbox' } }));
+    const checkboxes = screen.getByTestId('input-enum-checkbox-review');
+    expect(checkboxes).toBeInTheDocument();
+  });
+
   it('renders all checkboxes with correct labels', () => {
     const data = { checkboxes: ['one', 'two', 'three'] };
     const renderer = render(getForm(dataSchema, uiSchema, data));

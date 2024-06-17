@@ -25,7 +25,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const errorsFormInput = checkFieldValidity(props as ControlProps);
   if (uischema?.options?.isStepperReview) {
-    return <div>{InputValue}</div>;
+    return <div data-testid="input-number-control-review">{InputValue}</div>;
   }
   return (
     <GoAInput

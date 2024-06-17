@@ -37,6 +37,14 @@ describe('Input Text Control tests', () => {
       expect(component.getByTestId('firstName-input')).toBeInTheDocument();
     });
 
+    it('can create control in review mode', () => {
+      const props = { ...staticProps };
+      const component = render(
+        MultiLineText({ ...props, uischema: { ...props.uischema, options: { isStepperReview: true } } })
+      );
+      expect(component.getByTestId('input-multi-line-text-control-review')).toBeInTheDocument();
+    });
+
     it('can create base control for InputMultiLineTextControl', () => {
       const props = { ...staticProps };
       const baseControl = render(MultiLineTextControlInput(props));

@@ -56,12 +56,9 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
       registerCtx?.fetchRegisterByUrl(registerConfig);
     }
   }, [registerCtx, registerConfig]);
-  if (uischema?.options?.isStepperReview) {
-    return <div>{data}</div>;
-  }
 
   if (uischema?.options?.isStepperReview) {
-    return <div>{data}</div>;
+    return <div data-testid="input-enum-control-review">{data}</div>;
   }
 
   return (

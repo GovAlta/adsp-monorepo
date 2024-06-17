@@ -18,7 +18,7 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   if (uischema?.options?.isStepperReview) {
-    return <div>{data}</div>;
+    return <div data-testid="input-enum-radios-review">{data}</div>;
   }
 
   return (
