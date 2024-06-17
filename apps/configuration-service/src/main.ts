@@ -18,6 +18,7 @@ import {
   ConfigurationUpdatedDefinition,
   ConfigurationUpdatesStream,
 } from './configuration';
+import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 
 const logger = createLogger('configuration-service', environment.LOG_LEVEL);
 
@@ -69,6 +70,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
+  passport.use('anonymous', new AnonymousStrategy());
 
   passport.serializeUser(function (user, done) {
     done(null, user);
@@ -83,7 +85,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(
     '/configuration',
     metricsHandler,
-    passport.authenticate(['core', 'tenant'], { session: false }),
+    passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler
   );
 

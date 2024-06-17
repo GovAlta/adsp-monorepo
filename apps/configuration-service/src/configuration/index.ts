@@ -25,6 +25,10 @@ export const applyConfigurationMiddleware = async (
           description: {
             type: ['string', 'null'],
           },
+          anonymousRead: {
+            type: 'boolean',
+            default: false,
+          },
           configurationSchema: {
             $ref: 'http://json-schema.org/draft-07/schema#',
           },
