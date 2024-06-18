@@ -80,6 +80,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                           onEdit(configurationDefinition);
                         }}
                         description={sortedConfig?.description}
+                        anonymousRead={sortedConfig.anonymousRead}
                         configSchema={sortedConfig?.configurationSchema}
                       />
                     );

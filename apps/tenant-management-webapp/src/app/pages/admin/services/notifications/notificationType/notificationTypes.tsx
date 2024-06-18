@@ -44,6 +44,7 @@ import {
   Modal,
   BodyGlobalStyles,
   ModalContent,
+  Anchor,
 } from '../styled-components';
 import { FetchRealmRoles } from '@store/tenant/actions';
 
@@ -508,7 +509,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   </div>
                                 </div>
                                 <div className="flex3 textAlignLastRight">
-                                  <a
+                                  <Anchor
                                     data-testid="edit-event"
                                     onClick={() => {
                                       setSelectedEvent(event);
@@ -520,7 +521,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                     }}
                                   >
                                     Edit
-                                  </a>
+                                  </Anchor>
                                 </div>
                               </div>
                             </div>
@@ -624,7 +625,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               </div>
                               <div className="flex4 textAlignLastRight">
                                 {event.customized && (
-                                  <a
+                                  <Anchor
                                     className="resetButton"
                                     onClick={() => {
                                       setSelectedEvent(event);
@@ -635,9 +636,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                     data-testid="reset-button"
                                   >
                                     Reset
-                                  </a>
+                                  </Anchor>
                                 )}
-                                <a
+                                <Anchor
                                   data-testid="edit-event"
                                   className="coreEditButton"
                                   onClick={() => {
@@ -650,7 +651,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   }}
                                 >
                                   Edit
-                                </a>
+                                </Anchor>
                               </div>
                             </div>
                           </div>

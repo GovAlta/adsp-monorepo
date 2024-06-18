@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { isValidUrl } from '../Context/register/util';
+import { isValidHref } from '../Context/register/util';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { GoAIconButton } from '@abgov/react-components-new';
 
@@ -41,7 +41,7 @@ export const RenderLink = (props: OptionProps): JSX.Element => {
 
   useEffect(() => {
     if (linkUrl) {
-      setLinkValid(isValidUrl(linkUrl));
+      setLinkValid(isValidHref(linkUrl));
     }
   }, [linkUrl]);
 

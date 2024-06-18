@@ -1,15 +1,17 @@
-import * as Ajv from 'ajv';
-import { Logger } from 'winston';
-import { InvalidValueError } from '..';
-import { ValidationService } from './service';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 import * as schemaMigration from 'json-schema-migrate';
+import { Logger } from 'winston';
+import { InvalidValueError } from '../errors';
+import { ValidationService } from './service';
 
 export class AjvValidationService implements ValidationService {
-  protected ajv: Ajv.Ajv = new Ajv({ allErrors: true, verbose: true });
+  protected ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
   protected ajvErrors: string[] = [];
 
   constructor(private logger: Logger) {
     this.ajv.addFormat('file-urn', /^urn:ads:platform:file-service:v[0-9]:\/files\/[a-zA-Z0-9.-]*$/);
+    addFormats(this.ajv);
   }
 
   setSchema(schemaKey: string, schema: Record<string, unknown>): void {

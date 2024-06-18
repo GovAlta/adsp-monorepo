@@ -24,16 +24,18 @@
  */
 import Ajv from 'ajv';
 import * as schemaMigration from 'json-schema-migrate';
+import addFormats from 'ajv-formats';
 
 export interface ValidInput {
   pattern: RegExp;
   onFailureMessage: string;
 }
 
-export const ajv = new Ajv({ allErrors: true, verbose: true });
+export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
 
-ajv.addKeyword('isNotEmpty', {
-  validate: function (schema, data: string) {
+ajv.addKeyword({
+  keyword: 'isNotEmpty',
+  validate: function (_schema, data: string) {
     return typeof data === 'string' && data.trim() !== '';
   },
   // This will get checked again in our GoA JsonForm controls to render user friendly error message
@@ -41,7 +43,7 @@ ajv.addKeyword('isNotEmpty', {
 });
 
 ajv.addFormat('file-urn', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
-
+addFormats(ajv);
 /**
  * Given a list of validators and name of the input field, report on its cleanliness
  */

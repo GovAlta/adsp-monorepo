@@ -16,6 +16,7 @@ import {
   GetsTasksAction,
   GetsTaskAction,
   getTasksSuccess,
+  createTasksSuccess,
   getTaskSuccess,
   UpdateTaskQueueAction,
   UpdateTaskQueueSuccess,
@@ -207,7 +208,7 @@ export function* updateQueueTask({ payload }: UpdateQueueTaskAction): SagaIterat
   if (taskUrl && token) {
     try {
       const url = `${taskUrl}/task/v1/queues/${payload.queue.namespace}/${payload.queue.name}/tasks/${payload.id}`;
-      const { results } = yield call(updateQueueTaskApi, token, url, payload);
+      const results = yield call(updateQueueTaskApi, token, url, payload);
 
       yield put(updateQueueTaskSuccess(results));
       yield put(UpdateIndicator({ show: false }));
@@ -229,10 +230,8 @@ export function* createTask({ payload }: SetQueueTaskAction): SagaIterator {
   if (taskUrl && token) {
     try {
       const url = `${taskUrl}/task/v1/queues/${payload.recordId.split(':')[0]}/${payload.recordId.split(':')[1]}/tasks`;
-      const { results } = yield call(postTasksApi, token, url, payload);
-
-      yield put(getTasksSuccess(results, '', ''));
-
+      const results = yield call(postTasksApi, token, url, payload);
+      yield put(createTasksSuccess(results));
       yield put(UpdateIndicator({ show: false }));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));

@@ -68,6 +68,7 @@ function Status(): JSX.Element {
 
   useEffect(() => {
     if (applications && applications.length > 0 && intervalId === null) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       intervalId = setInterval(() => dispatch(fetchServiceStatusApps()), 30000);
       return () => {
         if (intervalId !== null) {

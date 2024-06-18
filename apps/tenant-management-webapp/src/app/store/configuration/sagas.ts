@@ -36,7 +36,6 @@ import {
   ServiceId,
   FETCH_REGISTER_DATA_ACTION,
   getRegisterDataAction,
-  FetchRegisterDataAction,
   getRegisterDataSuccessAction,
   FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
 } from './action';
@@ -287,6 +286,7 @@ export function* updateConfigurationDefinition({
           [`${definition.namespace}:${definition.name}`]: {
             configurationSchema: definition.configurationSchema,
             description: definition.description,
+            anonymousRead: definition.anonymousRead,
           },
         },
       };
