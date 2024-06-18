@@ -80,5 +80,15 @@ class TaskPage {
       `(//table[@data-testid="task-queue-table"]//*[contains(@data-testid, "task-definition-delete")])[${rowNumber}]`
     );
   }
+
+  tasksSelectAQueueDropdown() {
+    return cy.xpath('//goa-dropdown[@data-testid="task-select-definition-dropdown"]');
+  }
+
+  tasksTaskRecord(taskName, taskDescriptionKeyword) {
+    return cy.xpath(
+      `//table[@data-testid="task-task-table"]/tbody/tr/td[@data-testid="task-list-namespace" and text()="${taskName}"]/following-sibling::td[@data-testid="task-list-name" and contains(text(), "${taskDescriptionKeyword}")]`
+    );
+  }
 }
 export default TaskPage;
