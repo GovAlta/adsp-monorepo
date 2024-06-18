@@ -112,12 +112,18 @@ class AdspFeedback implements AdspFeedbackApi {
   private onIssueChange(event: Event) {
     if (event.target instanceof HTMLInputElement && this.feedbackFormRef.value) {
       if (event.target.value.toLowerCase() === 'yes') {
+        if (this.radio1Ref.value) {
+          this.radio1Ref.value.checked = true;
+        }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
         this.feedbackFormRef.value?.scrollTo({
           top: 640,
           behavior: 'smooth',
         });
       } else {
+        if (this.radio2Ref.value) {
+          this.radio2Ref.value.checked = true;
+        }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
         this.feedbackFormRef.value?.scrollTo({
           top: 0,
@@ -279,7 +285,12 @@ class AdspFeedback implements AdspFeedbackApi {
     const rating = this.ratings[index];
     const images = document.querySelectorAll('.rating');
     const image = images[index] as HTMLImageElement;
-    image.src = isHovering ? rating.svgHover : this.selectedRating === index ? rating.svgClick : rating.svgDefault;
+    image.src =
+      isHovering && this.selectedRating !== index
+        ? rating.svgHover
+        : this.selectedRating === index
+        ? rating.svgClick
+        : rating.svgDefault;
 
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
@@ -473,8 +484,10 @@ class AdspFeedback implements AdspFeedbackApi {
             min-height: 100px;
             width: 100%;
             border-radius: 3px;
-            cursor: pointer;
+            cursor: text;
             padding: 10px 8px;
+            box-sizing: border-box;
+            outline: none;
           }
           .adsp-fb .adsp-fb-form-comment textarea:hover {
             box-shadow: 0 0 0 var(--goa-border-width-m) var(--goa-color-interactive-hover);
@@ -521,6 +534,11 @@ class AdspFeedback implements AdspFeedbackApi {
             background: #0070c4;
             color: #ffffff;
           }
+          .adsp-fb button.adsp-fb-form-primary:hover {
+            border-color: #004f84;
+            background-color: #004f84;
+          }
+
           .adsp-fb button[disabled] {
             pointer-events: none;
             opacity: 0.5;
@@ -595,7 +613,11 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .radios {
             margin-bottom: 32px;
+            margin-top: 16px;
+            display: flex;
+            flex-direction: row;
           }
+
           .rating {
             cursor: pointer;
             transition: transform 0.3s ease-in-out color 0.3s ease;
@@ -614,8 +636,60 @@ class AdspFeedback implements AdspFeedbackApi {
             font-size: 14px;
             line-height: 28px;
           }
-          .radioButton {
-            padding-right: 24px;
+          .radio-container {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+          }
+
+          .radio {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            position: relative;
+            outline: none;
+            background-color: #fff;
+            transition: box-shadow 100ms ease-in-out;
+            cursor: pointer;
+          }
+          .radio *,
+          .radio *:before,
+          .radio *:after {
+            box-sizing: border-box;
+          }
+
+          .radio::not(:checked) {
+            border: 1px solid #666666;
+          }
+          .radio:checked:hover {
+            border: 7px solid #004f84;
+            box-shadow: 0 0 0 1px #004f84;
+          }
+          .radio:checked {
+            border: 7px solid #0070c4;
+          }
+          .radio:hover {
+            border: 1px solid #004f84;
+            box-shadow: 0 0 0 1px #004f84;
+          }
+          .radio:focus {
+            box-shadow: 0 0 0 3px #feba35;
+          }
+          .radio:hover:active {
+            box-shadow: 0 0 0 3px #feba35;
+          }
+          .radio:hover:focus {
+            box-shadow: 0 0 0 3px #feba35;
+          }
+          .radio:active {
+            box-shadow: 0 0 0 3px #feba35;
+          }
+
+          .radio-label {
+            padding: 0 8px;
+            font-weight: normal;
           }
           .errorText {
             color: #dcdcdc;
@@ -759,17 +833,33 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                       <hr />
                       <br />
-                      <div>
+                      <div class="radio-container">
                         <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
-                          <label for="YesOrNo" class="radioButton">
-                            <input name="YesOrNo" type="radio" id="yes" value="Yes" ${ref(this.radio1Ref)} />
-                            Yes
-                          </label>
-                          <label for="YesOrNo">
-                            <input name="YesOrNo" type="radio" id="no" value="No" ${ref(this.radio2Ref)} />
-                            No
-                          </label>
+                          <div>
+                            <input
+                              name="YesOrNo"
+                              type="radio"
+                              id="yes"
+                              value="Yes"
+                              class="radio"
+                              ${ref(this.radio1Ref)}
+                            />
+
+                            <span class="goa-radio-label"> Yes </span>
+                          </div>
+                          <div>
+                            <input
+                              name="YesOrNo"
+                              type="radio"
+                              id="no"
+                              value="No"
+                              class="radio"
+                              ${ref(this.radio2Ref)}
+                            />
+
+                            <span class="radio-label"> No </span>
+                          </div>
                         </div>
                         <hr />
                         <div ${ref(this.technicalCommentDivRef)}>
