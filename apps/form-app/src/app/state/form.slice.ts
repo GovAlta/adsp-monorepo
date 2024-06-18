@@ -7,6 +7,8 @@ import { getAccessToken } from './user.slice';
 import { hashData } from './util';
 import { loadTopic, selectTopic } from './comment.slice';
 import { loadFileMetadata } from './file.slice';
+import { RegisterData } from '@abgov/jsonforms-components';
+import * as _ from 'lodash';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -17,6 +19,7 @@ export interface FormDefinition {
   uiSchema: UISchemaElement;
   applicantRoles: string[];
   clerkRoles: string[];
+  registerData?: RegisterData;
 }
 
 export interface Form {
@@ -55,6 +58,7 @@ export interface FormState {
 }
 
 const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
+const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service';
 
 export const selectedDefinition = createAsyncThunk(
   'form/select-definition',
@@ -67,12 +71,41 @@ export const selectedDefinition = createAsyncThunk(
   }
 );
 
+function pickRegisters(obj) {
+  let registers = [];
+  Object.keys(obj).forEach(function (key) {
+    if (key === 'register' && 'urn' in obj[key]) {
+      if (!registers.includes(obj[key]?.urn)) {
+        registers.push(obj[key]?.urn);
+      }
+    } else if (_.isObject(obj[key])) {
+      registers = [...registers, ...pickRegisters(obj[key])];
+    } else if (_.isArray(obj[key])) {
+      const nextRegisters = obj[key].map(function (arrayObj) {
+        return pickRegisters(arrayObj);
+      });
+      registers = [...registers, ...nextRegisters];
+    }
+  });
+  return registers;
+}
+
+const extraRegisterUrns = (uiSchema) => {
+  if (uiSchema) {
+    return pickRegisters(uiSchema);
+  }
+
+  return null;
+};
+
 export const loadDefinition = createAsyncThunk(
   'form/load-definition',
   async (definitionId: string, { getState, rejectWithValue }) => {
     try {
-      const { config } = getState() as AppState;
+      const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const configServiceUrl = config.directory[CONFIGURATION_SERVICE_ID];
+      const tenantId = user.tenant.id;
 
       const token = await getAccessToken();
       const { data } = await axios.get<FormDefinition>(
@@ -81,6 +114,45 @@ export const loadDefinition = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      const registerUrns = extraRegisterUrns(data?.uiSchema);
+      const registerData = [];
+      if (registerUrns) {
+        await Promise.all(
+          registerUrns.map(async (urn) => {
+            const service = urn.split(':').slice(-2);
+            const baseConfigServiceUrl = new URL(
+              `/configuration/v2/configuration/${service[0]}/${service[1]}`,
+              configServiceUrl
+            ).href;
+            try {
+              const { data } = await axios.get(`${baseConfigServiceUrl}/active`, { params: { tenant: tenantId } });
+              if (!_.isEmpty(data))
+                registerData.push({
+                  urn,
+                  data,
+                });
+            } catch (error) {
+              console.warn(`Error fetching ${urn} active: ${error.message}`);
+            }
+
+            try {
+              const { data } = await axios.get(`${baseConfigServiceUrl}/latest`, { params: { tenant: tenantId } });
+              if (!_.isEmpty(data))
+                registerData.push({
+                  urn,
+                  data,
+                });
+            } catch (error) {
+              console.warn(`Error fetching ${urn} latest: ${error.message}`);
+            }
+          })
+        );
+      }
+
+      if (!_.isEmpty(data)) {
+        data.registerData = registerData;
+      }
 
       return data;
     } catch (err) {
