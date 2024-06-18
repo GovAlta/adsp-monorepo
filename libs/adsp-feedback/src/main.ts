@@ -81,6 +81,19 @@ class AdspFeedback implements AdspFeedbackApi {
     this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
     this.onDimChange(true);
   }
+  private handleKeyFeedback(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openStartForm();
+    }
+  }
+
+  private handleKeyHowEasy(event: KeyboardEvent, index: number) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.selectRating(index);
+    }
+  }
 
   private closeStartForm() {
     this.startRef?.value?.setAttribute('data-show', 'false');
@@ -259,6 +272,7 @@ class AdspFeedback implements AdspFeedbackApi {
           @mouseover="${() => this.updateHover(index, true)}"
           @mouseout="${() => this.updateHover(index, false)}"
           @click="${() => this.selectRating(index)}"
+          @keydown=${(event: KeyboardEvent) => this.handleKeyHowEasy(event, index)}
           class="rating"
           alt="${rating.label}"
           tabindex="0"
@@ -694,7 +708,14 @@ class AdspFeedback implements AdspFeedbackApi {
         html`
           <div>
             <div class="adsp-fb">
-              <div ${ref(this.feedbackBadgeRef)} class="adsp-fb-badge" data-show="true" @click=${this.openStartForm}>
+              <div
+                tabindex="0"
+                ${ref(this.feedbackBadgeRef)}
+                class="adsp-fb-badge"
+                data-show="true"
+                @click=${this.openStartForm}
+                @keydown=${this.handleKeyFeedback}
+              >
                 <span>Feedback</span>
               </div>
             </div>
