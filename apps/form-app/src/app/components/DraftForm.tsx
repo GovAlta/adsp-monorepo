@@ -1,4 +1,11 @@
-import { GoARenderers, ajv, JsonFormContext, enumerators, ContextProviderFactory } from '@abgov/jsonforms-components';
+import {
+  GoARenderers,
+  ajv,
+  JsonFormContext,
+  enumerators,
+  ContextProviderFactory,
+  JsonFormRegisterProvider,
+} from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { UISchemaElement, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
@@ -49,16 +56,18 @@ const JsonFormsWrapper = ({ definition, data, onChange }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
 
   return (
-    <JsonForms
-      ajv={ajv}
-      readonly={false}
-      schema={populateDropdown(definition.dataSchema, enumerators)}
-      uischema={definition.uiSchema}
-      data={data}
-      validationMode="ValidateAndShow"
-      renderers={GoARenderers}
-      onChange={onChange}
-    />
+    <JsonFormRegisterProvider defaultRegisters={definition?.registerData || []}>
+      <JsonForms
+        ajv={ajv}
+        readonly={false}
+        schema={populateDropdown(definition.dataSchema, enumerators)}
+        uischema={definition.uiSchema}
+        data={data}
+        validationMode="ValidateAndShow"
+        renderers={GoARenderers}
+        onChange={onChange}
+      />
+    </JsonFormRegisterProvider>
   );
 };
 
