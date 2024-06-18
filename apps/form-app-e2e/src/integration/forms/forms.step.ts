@@ -43,7 +43,7 @@ When('an authenticated user is in the form app', function () {
 });
 
 When('an authenticated user is logged in to see {string} application', function (formDefinition) {
-  cy.visit('/' + Cypress.env('realm-name') + '/' + formDefinition + '/login?kc_idp_hint=');
+  cy.visit('/' + Cypress.env('tenantName') + '/' + formDefinition + '/login?kc_idp_hint=');
   // Enter user name and password and click log in button
   formsObj.usernameEmailField().type(Cypress.env('email'));
   formsObj.passwordField().type(Cypress.env('password'));

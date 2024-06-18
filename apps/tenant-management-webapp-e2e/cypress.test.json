@@ -26,7 +26,9 @@
     "tenantManagementApi": "",
     "accessManagementApi": "",
     "uiComponentUrl": "",
-    "fileApi": ""
+    "fileApi": "",
+    "formApi": "",
+    "formAppUrl": ""
   },
   "baseUrl": "https://tenant-management-webapp-core-services-test.os99.gov.ab.ca",
   "numTestsKeptInMemory": 0,
