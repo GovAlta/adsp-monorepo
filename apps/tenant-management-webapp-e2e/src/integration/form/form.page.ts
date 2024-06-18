@@ -39,8 +39,12 @@ class FormPage {
     return cy.get('[data-testid="template-description"]');
   }
 
-  editorSaveButton() {
+  editorSaveButtonEnabled() {
     return cy.xpath('//*[@data-testid="definition-form-save" and @disabled="false"]');
+  }
+
+  editorSaveButton() {
+    return cy.xpath('//*[@data-testid="definition-form-save"]');
   }
 
   editorBackButton() {
@@ -209,6 +213,30 @@ class FormPage {
   definitionEditorSubmissionConfigDispositionStateArrowDownBtn(index) {
     return cy.xpath(
       `(//div[@data-testid="submission-configuration"]//tbody//goa-icon-button[@icon="arrow-down"])[${index}]`
+    );
+  }
+
+  definitionEditorSubmissionConfigTaskQueueToProcessDropdown() {
+    return cy.xpath('//goa-dropdown[@name="queueTasks"]');
+  }
+
+  definitionEditorSubmissionConfigTaskQueueToProcessDropdownItem(value) {
+    return cy.xpath(`//goa-dropdown[@name="queueTasks"]/goa-dropdown-item[@value="${value}"]`);
+  }
+
+  definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoCircle() {
+    return cy.xpath('//goa-dropdown[@name="queueTasks"]/parent::*/preceding-sibling::div[@class="info-circle"]');
+  }
+
+  definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBox() {
+    return cy.xpath(
+      '//goa-dropdown[@name="queueTasks"]/parent::*/preceding-sibling::div[@class="info-circle"]//*[@class="small-text"]'
+    );
+  }
+
+  definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBoxCloseBtn() {
+    return cy.xpath(
+      '//goa-dropdown[@name="queueTasks"]/parent::*/preceding-sibling::*//*[@class="small-close-button"]'
     );
   }
 }

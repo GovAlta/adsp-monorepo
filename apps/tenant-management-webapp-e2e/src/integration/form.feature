@@ -171,33 +171,45 @@ Feature: Form
   #   And the user "should not view" the disposition state of "Rejected", "The application is rejected"
 
   # TEST DATA: a form definition named "autotest-submission-task" is precreated
+  # TEST DATA: a task queue named autotest:testSubmissionQueue is precreated
   @TEST_CS-2780 @REQ_CS-2570 @regression
   Scenario: As a tenant admin, I can configure if and what task is created for processing a form submission record
-    # Create a task queue
-    Given a tenant admin user is on task service overview page
-    # When the user clicks Add queue button on task service overview page
-    # Then the user views Add queue modal
-    # When the user enters "autotest", "testSubmissionQueue" in Add queue modal
-    # And the user clicks Save button in Add queue modal
-    # Then the user views Queue page for "autotest", "testSubmissionQueue"
-    # When the user enters "auto-test-role1" as Assigner roles and "empty" as Worker roles
-    # And the user clicks Save button on Queue page
-    # And the user clicks Back button on Queue page
-    # Then the user "views" the queue of "autotest", "testSubmissionQueue"
-    # Verify help content for No task created option
-    When the user selects the "Form" menu item
-    And the user selects "Definitions" tab for "Form"
+    Given all existing tasks in "testSubmissionQueue" if any have been deleted
+    And a tenant admin user is on form definitions page
     When the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
     Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
     When the user clicks "Submission configuration" tab in form definition editor
-    When the user "checks" the checkbox of Create submission records on submit
-# Select a task and verify help content for a task queue is selected
-# Submit a form
-# Verify a task is created for form submission
-# Delete the task
-# When the user selects the "Task" menu item
-# And the user selects "Queues" tab for "Task"
-# And the user clicks "Delete" button for the queue of "autotest", "testSubmissionQueue"
-# Then the user views delete "task queue" confirmation modal for "testSubmissionQueue"
-# When the user clicks Delete button in delete confirmation modal
-# Then the user "should not view" the queue of "autotest", "testSubmissionQueue"
+    # Verify help content for No task created option
+    And the user "checks" the checkbox of Create submission records on submit
+    And the user selects "No task created" in task queue to process dropdown
+    And the user clicks the information icon button besides task queue to process dropdown
+    Then the user "views" the help tooltip for "disabling" task queue to process dropdown
+    When the user clicks x icon for the help tooltip for task queue to process dropdown
+    Then the user "should not view" the help tooltip for "disabling" task queue to process dropdown
+    # Select a task and verify help content for a task queue is selected
+    When the user selects "autotest:testSubmissionQueue" in task queue to process dropdown
+    And the user clicks the information icon button besides task queue to process dropdown
+    Then the user "views" the help tooltip for "enabling" task queue to process dropdown
+    When the user clicks x icon for the help tooltip for task queue to process dropdown
+    Then the user "should not view" the help tooltip for "enabling" task queue to process dropdown
+    When the user saves the changes if any and go back out of form definition editor
+    # Submit a form
+    Given the user deletes any existing form from "Auto Test" for "autotest-submission-task"
+    When the user is logged in to see "autotest-submission-task" application
+    Then the user views a from draft of "autotest-submission-task"
+    When the user enters "Joe" in a text field labelled "First name"
+    And the user clicks submit button in the form
+    # Verify a task is created for form submission
+    Given a tenant admin user is on task service overview page
+    When the user selects "Tasks" tab for "Task"
+    And the user selects "autotest:testSubmissionQueue" in Select a queue dropdown
+    Then the user "views" the task of "Process form submission", "autotest-submission-task" on tasks page
+    # Set task queue to No task created for the form
+    When the user selects the "Form" menu item
+    And the user selects "Definitions" tab for "Form"
+    And the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
+    Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
+    When the user clicks "Submission configuration" tab in form definition editor
+    And the user selects "No task created" in task queue to process dropdown
+    And the user clicks Save button on form definition editor
+    And the user clicks Back button on form definition editor
