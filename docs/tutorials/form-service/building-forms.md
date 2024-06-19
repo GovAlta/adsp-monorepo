@@ -24,10 +24,6 @@ Jsonforms itself has [moderately good documentation](https://jsonforms.io/exampl
 
 Many forms at the GoA can be rather large and complex, and could be divided into a number of smaller steps for ease of use. This is where [form steppers](/adsp-monorepo/tutorials/form-service/steppers.html) become useful.
 
-### Adding Instructions to your form
-
-You can [add text, images, and links](/adsp-monorepo/tutorials/form-service/instructions.html) to your forms to help clarify the information that is needed from end-users when filling out the form.
-
 ### Form Rules
 
 Sometimes a specific answer to a question will influence the flow of the form. A yes answer, for example, may uncover further questions, or a particular income value may disable followup questions. Jsonforms uses [rules](https://jsonforms.io/docs/uischema/rules/) to handle the dynamic aspects of form intake.
@@ -39,6 +35,14 @@ Jsonforms automatically handles basic input validation, such as ensuring require
 ### Repeated Items
 
 You will sometimes need to capture [lists of information](/adsp-monorepo/tutorials/form-service/repeated-items.html) in a form. Lists contain a variable number of items, each containing the necessary details. For example, an application for a Farmers Market License may require list of vendors, each with contact information, a classification, and their expected yearly revenue. Users are able to add one item at a time and fill in the details as needed.
+
+### ADSP Enhancements
+
+ADSP has added several enhancements to the form builder in order to help designers and developers create professional looking forms. These include:
+
+- Adding [text, images, and links](/adsp-monorepo/tutorials/form-service/instructions.html) to forms in order to help clarify the information that is needed from end-users when filling them out.
+- A [file upload widget](/adsp-monorepo/tutorials/form-service/file-uploader.md)
+- Data registries
 
 ## Learn More
 

@@ -121,7 +121,7 @@ You can add images to further clarify what is needed, with the img variant
 
 The width, height, and alt properties are optional.
 
-### Link Variant
+### Hyperlink Variant
 
 You can add hypertext links in the instructions to further clarify what is needed, with the link variant
 
@@ -129,7 +129,7 @@ You can add hypertext links in the instructions to further clarify what is neede
 {
   "type": "HelpContent",
   "options": {
-    "variant": "link",
+    "variant": "hyperlink",
     "src": "https://www.thelink.com",
     "help": "Text to wrap the link in"
   }
