@@ -33,13 +33,14 @@ import { buildSuggestions, luaTriggerInScope } from '@lib/autoComplete';
 import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton, GoACircularProgress } from '@abgov/react-components-new';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
-import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { selectRoleList } from '@store/sharedSelectors/roles';
 import { ScriptEditorEventsTab } from './scriptEditorEventsTab';
 import { getEventDefinitions } from '@store/event/actions';
 import { scriptEditorConfig, scriptEditorJsonConfig } from './config';
 import { CustomLoader } from '@components/CustomLoader';
+import { FetchRealmRoles } from '@store/tenant/actions';
 export interface ScriptEditorProps {
   name: string;
   description: string;
@@ -77,6 +78,11 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const [script, setScript] = useState<ScriptItem>(selectedScript);
   const [activeIndex] = useState<number>(0);
   const [customIndicator, setCustomIndicator] = useState<boolean>(false);
+
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetSavedAction = () => {
     onNameChange(selectedScript?.name || '');
