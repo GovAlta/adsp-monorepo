@@ -36,13 +36,6 @@ export const Form: FunctionComponent = () => {
 
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
 
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
-  }, [dispatch]);
-
   const searchParams = new URLSearchParams(document.location.search);
 
   const definitions = tenantName && searchParams.get('definitions');
