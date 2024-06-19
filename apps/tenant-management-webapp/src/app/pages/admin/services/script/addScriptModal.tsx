@@ -60,6 +60,7 @@ export const AddScriptModal = ({
 
   // eslint-disable-next-line
   useEffect(() => {}, [roles]);
+
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());

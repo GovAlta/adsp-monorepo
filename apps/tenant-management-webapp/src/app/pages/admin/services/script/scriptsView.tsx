@@ -58,8 +58,8 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
 
   useEffect(() => {
     dispatch(fetchScripts());
-    dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
+    // dispatch(FetchRealmRoles());
+    // dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -162,16 +162,18 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           <ScriptTableComponent scripts={scripts} onEdit={onEdit} />
         </div>
       )}
-      <AddScriptModal
-        open={openAddScript}
-        isNew={true}
-        initialValue={selectedScript}
-        onCancel={() => {
-          reset();
-        }}
-        openEditorOnAdd={openEditorOnAdd}
-        onSave={saveScript}
-      />
+      {openAddScript ? (
+        <AddScriptModal
+          open={openAddScript}
+          isNew={true}
+          initialValue={selectedScript}
+          onCancel={() => {
+            reset();
+          }}
+          openEditorOnAdd={openEditorOnAdd}
+          onSave={saveScript}
+        />
+      ) : null}
 
       {showScriptEditForm && (
         <Modal open={showScriptEditForm} isNotificationActive={isNotificationActive} data-testid="script-edit-form">

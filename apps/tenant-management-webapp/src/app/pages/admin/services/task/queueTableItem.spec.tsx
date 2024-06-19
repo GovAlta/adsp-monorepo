@@ -51,8 +51,8 @@ describe('QueueTableItem Component', () => {
   it('should have 3 action items', () => {
     render(<QueueTableItem id="1" queue={queue} />);
     expect(screen.getByTestId('task-app-open')).toBeInTheDocument();
-    expect(screen.getByTestId('task-definition-edit')).toBeInTheDocument();
-    expect(screen.getByTestId('task-definition-delete')).toBeInTheDocument();
+    expect(screen.getByTestId('queue-definition-edit')).toBeInTheDocument();
+    expect(screen.getByTestId('queue-definition-delete')).toBeInTheDocument();
   });
 
   it('should handle the "Open Task" action', async () => {
@@ -68,7 +68,7 @@ describe('QueueTableItem Component', () => {
   it('should handle the "Delete" action', () => {
     const onDeleteMock = jest.fn();
     render(<QueueTableItem id="1" queue={queue} onDelete={onDeleteMock} />);
-    const deleteButton = screen.getByTestId('task-definition-delete');
+    const deleteButton = screen.getByTestId('queue-definition-delete');
     fireEvent(deleteButton, new CustomEvent('_click'));
   });
 });
