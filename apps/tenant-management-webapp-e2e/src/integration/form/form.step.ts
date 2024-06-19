@@ -229,7 +229,7 @@ When(
 );
 
 Then('the user clicks Save button on form definition editor', function () {
-  formObj.editorSaveButton().shadow().find('button').click({ force: true });
+  formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
   cy.wait(6000);
 });
 
@@ -830,3 +830,74 @@ Then(
     });
   }
 );
+
+When('the user selects {string} in task queue to process dropdown', function (dropdownItem) {
+  formObj
+    .definitionEditorSubmissionConfigTaskQueueToProcessDropdown()
+    .invoke('attr', 'value')
+    .then((dropdownValue) => {
+      if (!dropdownValue?.includes(dropdownItem)) {
+        formObj
+          .definitionEditorSubmissionConfigTaskQueueToProcessDropdown()
+          .shadow()
+          .find('input')
+          .click({ force: true });
+        cy.wait(1000);
+        formObj
+          .definitionEditorSubmissionConfigTaskQueueToProcessDropdown()
+          .shadow()
+          .find('li')
+          .contains(dropdownItem)
+          .click({ force: true });
+        cy.wait(2000);
+      } else {
+        cy.log('Task queue to process dropdown item is already selected: ' + dropdownItem);
+      }
+    });
+});
+
+When('the user clicks the information icon button besides task queue to process dropdown', function () {
+  formObj.definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoCircle().click();
+});
+
+Then(
+  'the user {string} the help tooltip for {string} task queue to process dropdown',
+  function (viewOrNot, enableOrDisable) {
+    switch (viewOrNot) {
+      case 'views':
+        if (enableOrDisable == 'enabling') {
+          formObj
+            .definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBox()
+            .invoke('text')
+            .should('contain', 'A task will be created in queue');
+        } else if (enableOrDisable !== 'enabling') {
+          formObj
+            .definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBox()
+            .invoke('text')
+            .should('contain', 'No task will be created for processing of the submissions');
+        }
+        break;
+      case 'should not view':
+        formObj.definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBox().should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+When('the user clicks x icon for the help tooltip for task queue to process dropdown', function () {
+  formObj.definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBoxCloseBtn().click();
+});
+
+When('the user saves the changes if any and go back out of form definition editor', function () {
+  formObj.editorSaveButton().then((element) => {
+    cy.log(element.prop('disabled'));
+    if (element.prop('disabled') == 'false') {
+      formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
+      cy.wait(6000);
+    }
+  });
+  formObj.editorBackButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});

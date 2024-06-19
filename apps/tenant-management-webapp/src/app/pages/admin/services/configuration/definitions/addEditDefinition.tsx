@@ -1,6 +1,15 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem, GoATextArea } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoAButtonGroup,
+  GoAInput,
+  GoAModal,
+  GoAFormItem,
+  GoATextArea,
+  GoACheckbox,
+  GoASpacer,
+} from '@abgov/react-components-new';
 import { ConfigDefinition } from '@store/configuration/model';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
@@ -80,7 +89,12 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     }
     const payloadSchemaObj = JSON.parse(payloadSchema);
     // if no errors in the form then save the definition
-    onSave({ ...definition, configurationSchema: payloadSchemaObj, description: definition.description });
+    onSave({
+      ...definition,
+      configurationSchema: payloadSchemaObj,
+      description: definition.description,
+      anonymousRead: definition.anonymousRead,
+    });
     setDefinition(initialValue);
     onClose();
   };
@@ -169,6 +183,18 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             }}
           />
         </GoAFormItem>
+        <GoASpacer vSpacing="xs"></GoASpacer>
+        <GoACheckbox
+          name="anonymousRead"
+          key="anonymousRead"
+          checked={definition.anonymousRead ?? false}
+          onChange={(name, value) => {
+            setDefinition({ ...definition, anonymousRead: !definition.anonymousRead ?? false });
+          }}
+          testId={'anonymousRead'}
+          ariaLabel="anonymous-read"
+          text="Allow anonymous access"
+        />
         <GoAFormItem error={errors?.['payloadSchema']} label="Payload schema">
           <Editor
             data-testid="form-schema"

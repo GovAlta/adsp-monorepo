@@ -83,6 +83,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
               const key = new Date().valueOf();
               const status = file?.filename ? 'pdf-generated' : job.status;
               return (
+                // eslint-disable-next-line react/jsx-no-useless-fragment
                 <>
                   {(file || indicator.show) && (
                     <tr key={key}>
@@ -110,32 +111,30 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                       </td>
                       <td className="display-flex">
                         {file?.filename ? (
-                          <>
-                            <GoAContextMenu>
-                              {currentFile?.filename !== job?.filename ? (
-                                <GoAContextMenuIcon
-                                  title="Toggle details"
-                                  type={'eye'}
-                                  onClick={() => showCurrentPdf(file)}
-                                  testId="toggle-details-visibility"
-                                />
-                              ) : (
-                                <ButtonBox />
-                              )}
+                          <GoAContextMenu>
+                            {currentFile?.filename !== job?.filename ? (
                               <GoAContextMenuIcon
-                                disabled={!file?.size}
-                                testId="download-icon"
-                                type="download"
-                                onClick={() => onDownloadFile(file)}
+                                title="Toggle details"
+                                type={'eye'}
+                                onClick={() => showCurrentPdf(file)}
+                                testId="toggle-details-visibility"
                               />
-                              <GoAContextMenuIcon
-                                data-testid="delete-icon"
-                                type="trash"
-                                testId="delete-file-icon"
-                                onClick={() => onDeleteFile(file)}
-                              />
-                            </GoAContextMenu>
-                          </>
+                            ) : (
+                              <ButtonBox />
+                            )}
+                            <GoAContextMenuIcon
+                              disabled={!file?.size}
+                              testId="download-icon"
+                              type="download"
+                              onClick={() => onDownloadFile(file)}
+                            />
+                            <GoAContextMenuIcon
+                              data-testid="delete-icon"
+                              type="trash"
+                              testId="delete-file-icon"
+                              onClick={() => onDeleteFile(file)}
+                            />
+                          </GoAContextMenu>
                         ) : (
                           <div>{indicator.show && <TextGoASkeleton />}</div>
                         )}

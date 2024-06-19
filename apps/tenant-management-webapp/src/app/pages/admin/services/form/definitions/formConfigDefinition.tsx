@@ -5,7 +5,7 @@ import { GoAIconButton } from '@abgov/react-components-new';
 
 import { updateFormDefinition } from '@store/form/action';
 
-import { Edit, ConfigFormWrapper } from '../styled-components';
+import { Edit, ConfigFormWrapper, Anchor } from '../styled-components';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { useDispatch } from 'react-redux';
 
@@ -68,9 +68,9 @@ export const FormConfigDefinition = ({ definition }: PDFConfigFormProps) => {
       </div>
       <div className="editColumn">
         <Edit>
-          <a rel="noopener noreferrer" onClick={() => setOpenEditFormTemplate(true)}>
+          <Anchor rel="noopener noreferrer" onClick={() => setOpenEditFormTemplate(true)}>
             Edit
-          </a>
+          </Anchor>
           <GoAIconButton
             icon="create"
             testId="form-template-information-edit-icon"

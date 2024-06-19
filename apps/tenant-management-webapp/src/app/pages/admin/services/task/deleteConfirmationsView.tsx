@@ -28,6 +28,7 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
     if (tasks?.length > 0 && tasks && tasks[0].queue.name === queue.name) {
       setShowUnableToDeleteConfirmation(true);
     } else if (tasks) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       tasks = [];
       setShowDeleteConfirmation(true);
     }

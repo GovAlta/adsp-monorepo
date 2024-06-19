@@ -18,8 +18,8 @@ export const selectDefaultFormUrl = createSelector(
   (state, appFormHost, formId) => {
     const tenantName = toKebabName(state.name);
     if (formId === null) {
-      return `${appFormHost}/${tenantName}/{{formId}}/{{id}}`;
+      return `${appFormHost}/${tenantName}/{{formId}}`;
     }
-    return `${appFormHost}/${tenantName}/${formId}/{{id}}`;
+    return `${appFormHost}/${tenantName}/${formId}`;
   }
 );

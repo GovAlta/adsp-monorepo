@@ -36,7 +36,6 @@ import {
   ServiceId,
   FETCH_REGISTER_DATA_ACTION,
   getRegisterDataAction,
-  FetchRegisterDataAction,
   getRegisterDataSuccessAction,
   FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
 } from './action';
@@ -196,7 +195,6 @@ export function* fetchRegisterData(): SagaIterator {
     );
 
     const tenantConfigs = Object.entries(tenantConfigDefinition);
-
     const registerConfigs =
       tenantConfigs
         // eslint-disable-next-line
@@ -205,6 +203,7 @@ export function* fetchRegisterData(): SagaIterator {
           const _c = config as any;
           return (
             _c?.configurationSchema?.type === 'array' &&
+            _c.anonymousRead === true &&
             (_c?.configurationSchema?.items?.type === 'string' ||
               (_c?.configurationSchema?.items?.type === 'object' &&
                 _c?.configurationSchema?.items?.properties?.label?.type === 'string' &&
@@ -287,6 +286,7 @@ export function* updateConfigurationDefinition({
           [`${definition.namespace}:${definition.name}`]: {
             configurationSchema: definition.configurationSchema,
             description: definition.description,
+            anonymousRead: definition.anonymousRead,
           },
         },
       };

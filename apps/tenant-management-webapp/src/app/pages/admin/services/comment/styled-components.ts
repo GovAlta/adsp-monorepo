@@ -415,3 +415,29 @@ export const CommentWrapper = styled.div`
 export const CommentLoader = styled.div`
   text-align: center;
 `;
+export const Anchor = styled.div`
+  color: #0070c4;
+  text-decoration: underline;
+  outline: none;
+  cursor: pointer;
+`;
+
+export const RolesContainer = styled.div`
+  padding: var(--goa-space-l);
+  display: flex;
+  flex-direction: column;
+  background: var(--goa-color-greyscale-100);
+`;
+export const RolesWrap = styled.div`
+  font: var(--goa-typography-heading-s);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  span {
+    font: var(--goa-typography-body-m);
+    padding-left: var(--goa-space-2xs);
+  }
+`;
+export const Gap = styled.div`
+  padding: var(--goa-space-s);
+`;

@@ -10,6 +10,7 @@ interface FormOverviewProps {
 const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
   useEffect(() => {
     setOpenAddDefinition(false);
+    navigate('/admin/services/form');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();

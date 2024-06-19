@@ -20,6 +20,7 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
     isAuthenticated: state.session?.authenticated ?? false,
   }));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const urlParams = new URLSearchParams(window.location.search);
   const realm = encodeURIComponent(urlParams.get('realm'));
 
@@ -58,7 +59,7 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
       const searchQuery = skipSSO ? '?kc_idp_hint=' : '';
       navigate(`/tenant/creation${searchQuery}`, { state: { from: props.location } });
     }
-  }, [navigate, tenantRealm, isTenantAdmin, isAuthenticated, props.location]);
+  }, [navigate, tenantRealm, isTenantAdmin, isAuthenticated, props.location, urlParams, realm]);
 
   return <Page></Page>;
 };

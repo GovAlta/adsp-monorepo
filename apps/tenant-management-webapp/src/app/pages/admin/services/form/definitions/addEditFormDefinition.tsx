@@ -42,8 +42,9 @@ export const checkFormDefaultUrl = (): Validator => {
     const isHttps = url.toLowerCase().startsWith('https://');
     const numberOfVariables = url.split('{{').length;
     const containsIdVariable = url.includes('{{id}}');
+
     if (!isHttps) return 'Only secure HTTP protocol is allowed.';
-    if (numberOfVariables > 2 || (numberOfVariables === 2 && !containsIdVariable)) {
+    if (numberOfVariables > 2 || !containsIdVariable) {
       return 'Can only contain one handlebar variable {{id}} in the url';
     }
   };

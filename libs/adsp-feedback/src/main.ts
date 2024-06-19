@@ -112,12 +112,18 @@ class AdspFeedback implements AdspFeedbackApi {
   private onIssueChange(event: Event) {
     if (event.target instanceof HTMLInputElement && this.feedbackFormRef.value) {
       if (event.target.value.toLowerCase() === 'yes') {
+        if (this.radio1Ref.value) {
+          this.radio1Ref.value.checked = true;
+        }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
         this.feedbackFormRef.value?.scrollTo({
           top: 640,
           behavior: 'smooth',
         });
       } else {
+        if (this.radio2Ref.value) {
+          this.radio2Ref.value.checked = true;
+        }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
         this.feedbackFormRef.value?.scrollTo({
           top: 0,
@@ -279,7 +285,12 @@ class AdspFeedback implements AdspFeedbackApi {
     const rating = this.ratings[index];
     const images = document.querySelectorAll('.rating');
     const image = images[index] as HTMLImageElement;
-    image.src = isHovering ? rating.svgHover : this.selectedRating === index ? rating.svgClick : rating.svgDefault;
+    image.src =
+      isHovering && this.selectedRating !== index
+        ? rating.svgHover
+        : this.selectedRating === index
+        ? rating.svgClick
+        : rating.svgDefault;
 
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
@@ -362,343 +373,390 @@ class AdspFeedback implements AdspFeedbackApi {
     if (head) {
       render(
         html`<style>
-              .overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-                z-index: 1000; /* Ensure it overlays other content */
-                visibility: hidden;
-              }
+          .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+            z-index: 1000; /* Ensure it overlays other content */
+            visibility: hidden;
+          }
 
-              .adsp-fb {
-                z-index: 100;
-                font-family: acumin-pro-semi-condensed, helvetica-neue, arial, sans-serif;
+          .adsp-fb {
+            z-index: 100;
+            font-family: acumin-pro-semi-condensed, helvetica-neue, arial, sans-serif;
+          }
+          .adsp-fb > *[data-show]:not([data-show='true']) {
+            display: none;
+          }
+          .adsp-fb .adsp-fb-badge {
+            z-index: 1;
+            background: #0081a2;
+            color: #ffffff;
+            position: fixed;
+            right: 0;
+            top: 60vh;
+            padding: 16px 8px;
+            writing-mode: vertical-rl;
+            cursor: pointer;
+            border-radius: 0 0.25rem 0.25rem 0;
+            transform: rotate(-180deg);
+          }
+
+          .adsp-fb .adsp-fb-form-container {
+            z-index: 2;
+            background: #ffffff;
+            position: fixed;
+            width: 640px;
+            max-height: 680px;
+            left: 50%;
+            top: 10vh;
+            border: 1px solid;
+            border-radius: 3px;
+            transform: translateX(-50%);
+          }
+          .adsp-fb .adsp-fb-start {
+            height: 325px;
+          }
+          .adsp-fb .adsp-fb-container-heading {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            padding-right: 20px;
+            padding-top: 1rem;
+            padding-left: 1rem;
+            > img {
+              cursor: pointer;
+            }
+          }
+          .adsp-fb .adsp-fb-form {
+            display: flex;
+            box-sizing: border-box;
+            flex-direction: column;
+            padding: 36px 24px;
+            transition: transform 100ms;
+            height: 100%;
+            justify-content: space-between;
+          }
+          .adsp-fb .adsp-fb-content {
+            max-height: 375px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            flex: 1;
+            padding-right: 16px;
+          }
+          .adsp-fb .adsp-fb-form-rating {
+            display: flex;
+            flex-direction: row;
+            border: 0;
+            margin-top: 12px;
+            justify-content: space-between;
+            width: 90%;
+
+            > div > img {
+              height: 46px;
+              padding-right: 24px;
+            }
+            > div > p {
+              visibility: hidden;
+              display: none;
+            }
+          }
+
+          .adsp-fb .adsp-fb-form-comment {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+            > label {
+              margin-top: 32px;
+            }
+          }
+          .adsp-fb .adsp-fb-form-comment span {
+            color: var(--color-gray-600);
+          }
+
+          .adsp-fb .adsp-fb-form-comment textarea {
+            margin-top: 12px;
+            margin-left: 3px;
+            resize: none;
+            min-height: 100px;
+            width: 100%;
+            border-radius: 3px;
+            cursor: text;
+            padding: 10px 8px;
+            box-sizing: border-box;
+            outline: none;
+          }
+          .adsp-fb .adsp-fb-form-comment textarea:hover {
+            box-shadow: 0 0 0 var(--goa-border-width-m) var(--goa-color-interactive-hover);
+          }
+          .adsp-fb .adsp-fb-form-comment textarea:focus {
+            box-shadow: 0 0 0 3px var(--goa-color-interactive-focus);
+          }
+          .adsp-fb .adsp-fb-form-comment textarea::placeholder {
+            text-align: right;
+            position: absolute;
+            bottom: 10px;
+            right: 16px;
+          }
+
+          .adsp-fb .adsp-fb-actions {
+            display: flex;
+            bottom: 0;
+            padding-bottom: 48px;
+            padding-right: 24px;
+            margin-top: 32px;
+            margin-bottom: 32px;
+          }
+          .adsp-fb button {
+            display: inline-flex;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            box-sizing: border-box;
+            font-size: 1.25rem;
+            font-weight: 400;
+            height: 2.625rem;
+            line-height: 100%;
+            padding: 0 0.75rem;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #0070c4;
+            color: #0070c4;
+          }
+          .adsp-fb button:first-child {
+            margin-left: auto !important;
+          }
+          .adsp-fb button.adsp-fb-form-primary {
+            margin-left: 24px;
+            background: #0070c4;
+            color: #ffffff;
+          }
+          .adsp-fb button.adsp-fb-form-primary:hover {
+            border-color: #004f84;
+            background-color: #004f84;
+          }
+
+          .adsp-fb button[disabled] {
+            pointer-events: none;
+            opacity: 0.5;
+          }
+          .adsp-fb .adsp-fb-message {
+            position: absolute;
+            visibility: hidden;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 100%;
+            transition: transform 200ms;
+            transform: translateX(100%);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 24px 24px;
+          }
+          .adsp-fb .tooltip-text {
+            visibility: hidden;
+            margin-left: 40px;
+            background-color: #666666;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            margin-top: 53px;
+            position: absolute;
+            z-index: 1;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+          }
+          .adsp-fb .tooltip-text::before {
+            content: '';
+            position: absolute;
+            top: -9px;
+            left: 40%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent #333 transparent;
+          }
+          .adsp-fb .rating-div {
+            display: flex;
+            flex-direction: column;
+          }
+          .adsp-fb .adsp-fb-sent {
+            text-align: left;
+          }
+          .adsp-fb .adsp-fb-error {
+            text-align: center;
+          }
+          .adsp-fb .adsp-fb-sent .adsp-fb-error .adsp-fb-actions {
+            margin-top: auto;
+          }
+
+          .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
+            transform: translateX(-100%);
+            visibility: hidden;
+          }
+          .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
+            transform: translateX(-100%);
+            visibility: hidden;
+          }
+          .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
+            visibility: visible;
+          }
+
+          .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-error {
+            visibility: visible;
+          }
+          .radios {
+            margin-bottom: 32px;
+            margin-top: 16px;
+            display: flex;
+            flex-direction: row;
+          }
+
+          .rating {
+            cursor: pointer;
+            transition: transform 0.3s ease-in-out color 0.3s ease;
+          }
+
+          hr {
+            margin-top: 0.25rem;
+          }
+          .title {
+            font-weight: 700;
+            line-height: 24px;
+            text-align: left;
+          }
+          .help-text {
+            margin-bottom: 32px;
+            font-size: 14px;
+            line-height: 28px;
+          }
+          .radio-container {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+          }
+
+          .radio {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            position: relative;
+            outline: none;
+            background-color: #fff;
+            transition: box-shadow 100ms ease-in-out;
+            cursor: pointer;
+          }
+          .radio *,
+          .radio *:before,
+          .radio *:after {
+            box-sizing: border-box;
+          }
+
+          .radio::not(:checked) {
+            border: 1px solid #666666;
+          }
+          .radio:checked:hover {
+            border: 7px solid #004f84;
+            box-shadow: 0 0 0 1px #004f84;
+          }
+          .radio:checked {
+            border: 7px solid #0070c4;
+          }
+          .radio:hover {
+            border: 1px solid #004f84;
+            box-shadow: 0 0 0 1px #004f84;
+          }
+          .radio:focus {
+            box-shadow: 0 0 0 3px #feba35;
+          }
+          .radio:hover:active {
+            box-shadow: 0 0 0 3px #feba35;
+          }
+          .radio:hover:focus {
+            box-shadow: 0 0 0 3px #feba35;
+          }
+          .radio:active {
+            box-shadow: 0 0 0 3px #feba35;
+          }
+
+          .radio-label {
+            padding: 0 8px;
+            font-weight: normal;
+          }
+          .errorText {
+            color: #dcdcdc;
+            font-size: 18px;
+          }
+          .successButton {
+            margin-top: 24px;
+          }
+          @media screen and (max-width: 768px) {
+            .adsp-fb div.adsp-fb-form-container {
+            }
+          }
+          @media screen and (max-width: 640px) {
+            .adsp-fb div.adsp-fb-form-container {
+              bottom: 0;
+              border: 0;
+              width: 100%;
+            }
+            .adsp-fb .adsp-fb-actions {
+              position: -webkit-sticky;
+              position: sticky;
+              bottom: 0;
+              flex-direction: column-reverse;
+              > button {
+                width: 100%;
+                margin-top: 12px;
               }
-              .adsp-fb > *[data-show]:not([data-show='true']) {
+            }
+            .adsp-fb button.adsp-fb-form-primary {
+              margin-left: 0;
+            }
+            .adsp-fb .adsp-fb-form-rating {
+              flex-direction: column-reverse;
+              align-items: left;
+
+              > div {
+                display: flex;
+                flex-direction: row;
+                margin-bottom: 8px;
+              }
+              > div > img {
+                height: 32px;
+              }
+              > div > p {
+                visibility: visible;
+                display: block;
+                padding: 0;
+                margin-left: 6px;
+              }
+              > div > p :hover {
+                color: #004f84;
+              }
+              > div > span {
                 display: none;
               }
-              .adsp-fb .adsp-fb-badge {
-                z-index: 1;
-                background: #0081a2;
-                color: #ffffff;
-                position: fixed;
-                right: 0;
-                top: 60vh;
-                padding: 16px 8px;
-                writing-mode: vertical-rl;
-                cursor: pointer;
-                border-radius: 0 0.25rem 0.25rem 0;
-                transform: rotate(-180deg);
-              }
+            }
+            .ratingText {
+              padding-top: 12px;
+              cursor: pointer;
+            }
+          }
 
-              .adsp-fb .adsp-fb-form-container {
-                z-index: 2;
-                background: #ffffff;
-                position: fixed;
-                width: 640px;
-                max-height: 680px;
-                left: 50%;
-                top: 10vh;
-                border: 1px solid;
-                border-radius: 3px;
-                transform: translateX(-50%);
-              }
-              .adsp-fb .adsp-fb-start {
-                height: 380px;
-              }
-              .adsp-fb .adsp-fb-container-heading {
-                display: flex;
-                flex-direction: row;
-                justify-content: space-between;
-                padding-right: 20px;
-                padding-top: 1rem;
-                padding-left: 1rem;
-
-                > img {
-                  cursor: pointer;
-                }
-              }
-              .adsp-fb .adsp-fb-form {
-                display: flex;
-                box-sizing: border-box;
-                flex-direction: column;
-                padding: 24px 24px;
-                transition: transform 100ms;
-                height: 100%;
-                justify-content: space-between;
-              }
-              .adsp-fb .adsp-fb-content {
-                max-height: 375px;
-                overflow-y: scroll;
-                overflow-x: hidden;
-                flex: 1;
-                padding-right: 16px;
-              }
-              .adsp-fb .adsp-fb-form-rating {
-                display: flex;
-                flex-direction: row;
-                border: 0;
-                margin-top: 12px;
-                justify-content: space-between;
-
-                > div > img {
-                  width: 80px;
-                }
-                > div > p {
-                  visibility: hidden;
-                  display:none;
-                }
-              }
-
-              .adsp-fb .adsp-fb-form-comment {
-                display: flex;
-                flex-direction: column;
-                margin-bottom: 12px;
-                >label{
-                  margin-top:32px
-                }
-              }
-              .adsp-fb .adsp-fb-form-comment span {
-                color: var(--color-gray-600);
-              }
-
-              .adsp-fb .adsp-fb-form-comment textarea {
-                margin-top: 12px;
-                margin-left:3px;
-                resize: none;
-                min-height: 100px;
-                width: 100%;
-                border-radius: 3px;
-                cursor: pointer;
-                padding: 10px 8px;
-              }
-
-              .adsp-fb .adsp-fb-form-comment textarea:hover {
-
-               box-shadow: 0 0 0 var(--goa-border-width-m)
-               var(--goa-color-interactive-hover);
-              }
-              .adsp-fb .adsp-fb-form-comment textarea:focus-within {
-
-                box-shadow: 0 0 0 var(--goa-border-width-l)
-          var(--goa-color-interactive-focus);
-              }
-
-              .adsp-fb .adsp-fb-form-comment textarea::placeholder {
-                text-align: right;
-                position: absolute;
-                bottom: 10px;
-                right: 16px;
-              }
-
-              .adsp-fb .adsp-fb-actions {
-                display: flex;
-                bottom: 0;
-                padding-bottom: 48px;
-                padding-right: 24px;
-                margin-top: 24px;
-                margin-bottom: 48px;
-              }
-              .adsp-fb button {
-                display: inline-flex;
-                cursor: pointer;
-                border-radius: 0.25rem;
-                box-sizing: border-box;
-                font-size: 1.25rem;
-                font-weight: 400;
-                height: 2.625rem;
-                line-height: 100%;
-                padding: 0 0.75rem;
-                gap: 0.5rem;
-                align-items: center;
-                justify-content: center;
-                border: 2px solid #0070c4;
-                color: #0070c4;
-              }
-              .adsp-fb button:first-child {
-                margin-left: auto !important;
-              }
-              .adsp-fb button.adsp-fb-form-primary {
-                margin-left: 24px;
-                background: #0070c4;
-                color: #ffffff;
-              }
-              .adsp-fb button[disabled] {
-                pointer-events: none;
-                opacity: 0.5;
-              }
-              .adsp-fb .adsp-fb-message {
-                position: absolute;
-                visibility: hidden;
-                top: 0;
-                right: 0;
-                height: 100%;
-                width: 100%;
-                transition: transform 200ms;
-                transform: translateX(100%);
-                display: flex;
-                flex-direction: column;
-                box-sizing: border-box;
-                padding: 24px 24px;
-              }
-              .adsp-fb .tooltip-text {
-                visibility: hidden;
-
-                margin-left: 40px;
-                background-color: #666666;
-                color: #fff;
-                text-align: center;
-                border-radius: 5px;
-                padding: 5px;
-                margin-top: 60px;
-                position: absolute;
-                z-index: 1;
-                transform: translateX(-50%);
-                opacity: 0;
-                transition: opacity 0.3s;
-              }
-              .adsp-fb .tooltip-text::before {
-                content: '';
-                position: absolute;
-                top: -9px;
-                left: 50%;
-                margin-left: -5px;
-                border-width: 5px;
-                border-style: solid;
-                border-color: transparent transparent #333 transparent;
-              }
-              .adsp-fb .rating-div {
-                display: flex;
-                flex-direction: column;
-              }
-              .adsp-fb .adsp-fb-sent {
-                text-align: left;
-              }
-              .adsp-fb .adsp-fb-error {
-                text-align: center;
-              }
-              .adsp-fb .adsp-fb-sent .adsp-fb-error .adsp-fb-actions {
-                margin-top: auto;
-              }
-
-              .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
-                transform: translateX(-100%);
-                visibility: hidden;
-              }
-              .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
-                transform: translateX(-100%);
-                visibility: hidden;
-              }
-              .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
-                visibility: visible;
-              }
-
-              .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-error {
-                visibility: visible;
-              }
-              .radios {
-                margin-top: 12px;
-                margin-bottom: 12px;
-                >input[type="radio]" {
-                  width: 0;
-                  height: 0;
-                  margin: 0;
-                  opacity: 0;
-                }
-                > input[type="radio"]:not(:checked) {
-                  border: 1px solid #666666;
-                }
-              }
-              .rating {
-                cursor: pointer;
-                transition: transform 0.3s ease-in-out color 0.3s ease;
-              }
-
-              hr {
-                margin-top: 0.25rem;
-              }
-              h2 {
-                padding-left: 24px;
-              }
-              .radioButton {
-                padding-right: 24px;
-              }
-              .errorText {
-                color: #dcdcdc;
-                font-size: 18px;
-              }
-              .successButton {
-                margin-top: 24px;
-              }
-              .title {
-                font-weight: 700;
-                line-height: 24px;
-                text-align: left;
-              }
-
-              @media screen and (max-width: 768px) {
-                .adsp-fb div.adsp-fb-form-container {
-                }
-              }
-              @media screen and (max-width: 640px) {
-                .adsp-fb div.adsp-fb-form-container {
-                  right: 0;
-                  top: 0;
-                  bottom: 0;
-                  border: 0;
-                  width: 100%;
-                }
-                .adsp-fb .adsp-fb-actions {
-                  position: -webkit-sticky;
-                  position: sticky;
-                  bottom: 0;
-                  display: flex;
-                  flex-direction: column-reverse;
-                  > button {
-                    width: 100%;
-                    margin-top: 12px;
-                  }
-                }
-                .adsp-fb button.adsp-fb-form-primary {
-                  margin-left: 0;
-                }
-                .adsp-fb .adsp-fb-form-rating {
-                  display: flex;
-                  flex-direction: column-reverse;
-                  align-items: left;
-
-                  > div {
-                    display: flex;
-                    flex-direction: row;
-                  }
-                  > div > img {
-                    width: 32px;
-                  }
-                  > div > p {
-                    visibility: visible;
-                    display: block;
-                  }
-                  > div > p :hover {
-                    color: #004f84;
-                  }
-                  > div > span {
-                    display: none;
-                  }
-                }
-                .ratingText {
-                  padding-top: 12px;
-                  cursor: pointer;
-                }
-              }
-
-              @media screen and (max-height: 800px) {
-                .adsp-fb .adsp-fb-form-container {
-                  top: 16px;
-                }
-              }
+          @media screen and (max-height: 800px) {
+            .adsp-fb .adsp-fb-form-container {
+              top: 16px;
+            }
+          }
         </style>`,
         head
       );
@@ -769,22 +827,39 @@ class AdspFeedback implements AdspFeedbackApi {
                           ${ref(this.commentRef)}
                           placeholder="300 characters remaining"
                         ></textarea>
-                        </br>
-                        <span>Do not include personal information like SIN, password, addresses, etc.</span>
+                        <span class="help-text"
+                          >Do not include personal information like SIN, password, addresses, etc.</span
+                        >
                       </div>
                       <hr />
                       <br />
-                      <div>
+                      <div class="radio-container">
                         <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
-                          <label for="YesOrNo" class="radioButton">
-                            <input name="YesOrNo" type="radio" id="yes" value="Yes" ${ref(this.radio1Ref)} />
-                            Yes
-                          </label>
-                          <label for="YesOrNo">
-                            <input name="YesOrNo" type="radio" id="no" value="No" ${ref(this.radio2Ref)} />
-                            No
-                          </label>
+                          <div>
+                            <input
+                              name="YesOrNo"
+                              type="radio"
+                              id="yes"
+                              value="Yes"
+                              class="radio"
+                              ${ref(this.radio1Ref)}
+                            />
+
+                            <span class="goa-radio-label"> Yes </span>
+                          </div>
+                          <div>
+                            <input
+                              name="YesOrNo"
+                              type="radio"
+                              id="no"
+                              value="No"
+                              class="radio"
+                              ${ref(this.radio2Ref)}
+                            />
+
+                            <span class="radio-label"> No </span>
+                          </div>
                         </div>
                         <hr />
                         <div ${ref(this.technicalCommentDivRef)}>
@@ -795,8 +870,10 @@ class AdspFeedback implements AdspFeedbackApi {
                                 issue, if applicable.</b
                               >
                             </label>
-                            <tex
-                            tarea ${ref(this.technicalCommentRef)} id="technicalComment"></textarea>
+                            <textarea ${ref(this.technicalCommentRef)} id="technicalComment"></textarea>
+                            <span class="help-text"
+                              >Do not include personal information like SIN, password, addresses, etc.</span
+                            >
                           </div>
                           <br />
                         </div>
