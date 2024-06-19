@@ -26,13 +26,13 @@ export const QueueTableItem = ({ id, queue, onDelete }: QueueTableItemProps): JS
           onClick={() => window.open(`${taskAppUrl}/${queue.namespace}/${queue.name}`)}
         />
         <GoAContextMenuIcon
-          testId="task-definition-edit"
+          testId="queue-definition-edit"
           title="Edit"
           type="create"
           onClick={() => navigate(`edit/${queue.namespace}:${queue.name}`)}
         />
         <GoAContextMenuIcon
-          testId={`task-definition-delete`}
+          testId={`queue-definition-delete`}
           title="Delete"
           type="trash"
           onClick={() => {
