@@ -26,8 +26,8 @@ export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
   const dispatch = useDispatch();
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
   useEffect(() => {
-    dispatch(fetchKeycloakServiceRoles());
-    dispatch(FetchRealmRoles());
+    // dispatch(fetchKeycloakServiceRoles());
+    // dispatch(FetchRealmRoles());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

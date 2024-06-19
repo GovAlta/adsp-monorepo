@@ -35,13 +35,14 @@ import { ConfigServiceRole } from '@store/access/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { ActionState } from '@store/session/models';
-import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
 import { UpdateFileTypeService } from '@store/file/actions';
 import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
 import { PageLoader } from '@core-services/app-common';
 import { areObjectsEqual } from '@lib/objectUtil';
 import { CustomLoader } from '@components/CustomLoader';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -84,6 +85,9 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   });
 
   useEffect(() => {
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(FetchRealmRoles());
+
     const foundFileType = fileTypes?.find((f) => f.id === id);
     if (id && foundFileType) {
       const selectedFileType = foundFileType;

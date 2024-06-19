@@ -63,9 +63,11 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     dispatch(fetchKeycloakServiceRoles());
   }, [dispatch]);
   const navigate = useNavigate();
+
   const close = () => {
     navigate('/admin/services/task?queues=true');
   };
+
   useEffect(() => {
     if (saveModal.closeEditor) {
       close();
@@ -81,9 +83,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
       setInitialQueue(selectedQueue);
     }
     setCustomIndicator(false);
-
-    // const selectedQueue = location.state as TaskDefinition;
-    // setQueue(selectedQueue);
   }, [queues]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
@@ -97,6 +96,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
 
   const assignerRoles = types[0];
   const workerRoles = types[1];
+
   //eslint-disable-next-line
   useEffect(() => {}, [fetchKeycloakRolesState]);
   const ClientRole = ({ roleNames, clientId }) => {
