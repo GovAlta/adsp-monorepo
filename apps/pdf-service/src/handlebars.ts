@@ -201,8 +201,8 @@ class HandlebarsTemplateService implements TemplateService {
       return element.type === 'Control';
     });
 
-    handlebars.registerHelper('isNotListWithDetailAndHasElements', function (element) {
-      return element.type !== 'ListWithDetail' && element.elements && element.elements.length > 0;
+    handlebars.registerHelper('hasElements', function (element) {
+      return element.elements && element.elements.length > 0;
     });
 
     return handlebars.compile(styledTemplate, { noEscape: true });
