@@ -174,6 +174,8 @@ Then('the number of users from admin page should equal to the number of users fr
 
   // Get numbers from keycloak APIs
   const requestURLUsers = Cypress.env('accessManagementApi') + '/admin/realms/' + Cypress.env('realm') + '/users';
+  const requestURLActiveUsers =
+    Cypress.env('accessManagementApi') + '/admin/realms/' + Cypress.env('realm') + '/users?enabled=true';
   const requestURLRoles = Cypress.env('accessManagementApi') + '/admin/realms/' + Cypress.env('realm') + '/roles';
   cy.request({
     method: 'GET',
@@ -183,12 +185,6 @@ Then('the number of users from admin page should equal to the number of users fr
     },
   }).then(function (response) {
     expect(response.body.length).equals(numOfUsers);
-    for (let arrayIndex = 0; arrayIndex < response.body.length; arrayIndex++) {
-      if (response.body[arrayIndex].enabled == true) {
-        count = count + 1;
-      }
-    }
-    expect(count).equals(numOfActiveUsers);
   });
   cy.request({
     method: 'GET',
@@ -204,6 +200,15 @@ Then('the number of users from admin page should equal to the number of users fr
       }
     }
     expect(count).equals(numOfRoles);
+  });
+  cy.request({
+    method: 'GET',
+    url: requestURLActiveUsers,
+    auth: {
+      bearer: Cypress.env('autotest-admin-token'),
+    },
+  }).then(function (response) {
+    expect(response.body.length).equals(numOfActiveUsers);
   });
 });
 
