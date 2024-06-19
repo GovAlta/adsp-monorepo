@@ -11,7 +11,7 @@
         {{ value element data }}
     </div>
 
-{{else if (isNotListWithDetailAndHasElements element) }}
+{{else if (hasElements element) }}
     {{#withEach element.elements data requiredFields }}
         {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
     {{/withEach}}
