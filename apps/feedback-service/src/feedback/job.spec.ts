@@ -53,6 +53,7 @@ describe('job', () => {
 
         const comment = 'This is a comment.';
         const anonymized = 'This is an anonymized comment.';
+        const technicalIssue = 'This is a technical issue';
         piiServiceMock.anonymize.mockResolvedValue(anonymized);
         valueServiceMock.writeValue.mockResolvedValueOnce(null);
 
@@ -66,6 +67,7 @@ describe('job', () => {
               context: { site: 'http://test.org', view: '/' },
               rating: 'bad',
               comment,
+              technicalIssue,
             },
           },
           true,
@@ -73,12 +75,14 @@ describe('job', () => {
         );
 
         expect(piiServiceMock.anonymize).toHaveBeenCalledWith(expect.any(AdspId), comment);
+        expect(piiServiceMock.anonymize).toHaveBeenCalledWith(expect.any(AdspId), technicalIssue);
         expect(valueServiceMock.writeValue).toHaveBeenCalledWith(
           expect.any(AdspId),
           expect.objectContaining({
             context: expect.objectContaining({ site: 'http://test.org', view: '/' }),
             rating: 'bad',
             comment: anonymized,
+            technicalIssue: anonymized,
             timestamp: expect.any(Date),
           })
         );

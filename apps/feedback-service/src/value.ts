@@ -10,8 +10,9 @@ class ValueServiceImpl implements ValueService {
 
   async writeValue(tenantId: AdspId, { timestamp, digest, context, ...feedback }: FeedbackValue): Promise<void> {
     try {
-      const valueApiUrl = await this.directory.getServiceUrl(VALUE_API_ID);
+      const ratingValue = Rating[feedback.rating];
 
+      const valueApiUrl = await this.directory.getServiceUrl(VALUE_API_ID);
       const token = await this.tokenProvider.getAccessToken();
       await axios.post(
         new URL('v1/feedback-service/values/feedback', valueApiUrl).href,
@@ -24,12 +25,12 @@ class ValueServiceImpl implements ValueService {
             includesComment: !!feedback.comment,
             includesTechnicalIssue: !!feedback.technicalIssue,
           },
-          value: feedback,
+          value: { ...feedback, ratingValue },
           metrics: {
             [`${context.site}:count`]: 1,
             [`${context.site}:${context.view}:count`]: 1,
-            [`${context.site}:rating`]: Rating[feedback.rating],
-            [`${context.site}:${context.view}:rating`]: Rating[feedback.rating],
+            [`${context.site}:rating`]: ratingValue,
+            [`${context.site}:${context.view}:rating`]: ratingValue,
           },
         },
         {

@@ -2,6 +2,7 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Logger } from 'winston';
 import { createValueService } from './value';
+import { Rating } from './feedback';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -24,11 +25,11 @@ describe('value', () => {
     getResourceUrl: jest.fn(),
   };
 
-  describe('createValueService', () => {
-    beforeEach(() => {
-      axiosMock.post.mockReset();
-    });
+  beforeEach(() => {
+    axiosMock.post.mockReset();
+  });
 
+  describe('createValueService', () => {
     it('can create service', () => {
       const service = createValueService({
         logger: loggerMock,
@@ -57,6 +58,7 @@ describe('value', () => {
         digest: '123',
         rating: 'good',
         comment: 'This is ok.',
+        technicalIssue: 'This is broken',
       };
       axiosMock.post.mockResolvedValueOnce({ data: undefined });
       await service.writeValue(tenantId, feedbackValue);
@@ -66,7 +68,12 @@ describe('value', () => {
           timestamp: feedbackValue.timestamp,
           correlationId: feedbackValue.context.correlationId,
           context: expect.objectContaining(feedbackValue.context),
-          value: expect.objectContaining({ rating: feedbackValue.rating, comment: feedbackValue.comment }),
+          value: expect.objectContaining({
+            rating: feedbackValue.rating,
+            ratingValue: Rating[feedbackValue.rating],
+            comment: feedbackValue.comment,
+            technicalIssue: feedbackValue.technicalIssue,
+          }),
         }),
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer token' }),
@@ -100,7 +107,11 @@ describe('value', () => {
           timestamp: feedbackValue.timestamp,
           correlationId: `${feedbackValue.context.site}${feedbackValue.context.view}`,
           context: expect.objectContaining(feedbackValue.context),
-          value: expect.objectContaining({ rating: feedbackValue.rating, comment: feedbackValue.comment }),
+          value: expect.objectContaining({
+            rating: feedbackValue.rating,
+            ratingValue: Rating[feedbackValue.rating],
+            comment: feedbackValue.comment,
+          }),
         }),
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer token' }),
