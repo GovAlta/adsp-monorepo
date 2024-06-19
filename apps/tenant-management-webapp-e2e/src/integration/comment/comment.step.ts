@@ -872,11 +872,11 @@ Then(
   }
 );
 
-Then('the user should not view actions for core topic Types', function () {
+Then('the user views only eye icon for core topic Types', function () {
   commentObj.topicTypesCoreTypesTableRows().then((elements) => {
     for (let i = 0; i < elements.length; i++) {
-      cy.wrap(elements[i]).find('td').should('have.length', 3); // Only 3 cells for the row
-      cy.wrap(elements[i]).find('td').children().should('have.length', 0); // No cell element has child element (action icons have child elements)
+      cy.wrap(elements[i]).find('goa-icon-button').should('have.length', 1); // Only 1 button
+      cy.wrap(elements[i]).find('goa-icon-button').invoke('attr', 'icon').should('eq', 'eye'); // button icon is eye
     }
   });
 });

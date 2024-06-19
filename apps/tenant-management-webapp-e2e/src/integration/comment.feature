@@ -149,7 +149,7 @@ Feature: Comment
     When the user selects "Topic types" tab for "Comment"
     Then the user views Core types below the tenant topic types list
     And the user views core types with "Name", "Topic type ID", "Security classification"
-    And the user should not view actions for core topic Types
+    And the user views only eye icon for core topic Types
     # Validate user cannot create a topic type with the same name of a core type
     When the user clicks Add topic type button on topic types page
     Then the user views Add topic type modal
