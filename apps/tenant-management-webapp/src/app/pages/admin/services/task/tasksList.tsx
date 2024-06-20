@@ -44,8 +44,15 @@ export const TasksList = (): JSX.Element => {
 
   const taskQueues = useSelector((state: RootState) => {
     return Object.entries(state?.task?.queues)
-      .sort((template1, template2) => {
-        return template1[1].name.localeCompare(template2[1].name);
+      .sort(([key1, value1], [key2, value2]) => {
+        const [namespace1, name1] = key1.split(':');
+        const [namespace2, name2] = key2.split(':');
+
+        if (namespace1 === namespace2) {
+          return name1.localeCompare(name2);
+        } else {
+          return namespace1.localeCompare(namespace2);
+        }
       })
       .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
         tempObj[taskDefinitionId] = taskDefinitionData;
