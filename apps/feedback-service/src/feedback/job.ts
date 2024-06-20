@@ -22,9 +22,14 @@ export function createAnonymizeJob(logger: Logger, piiService: PiiService, value
       const tenantId = AdspId.parse(tenantIdValue);
 
       const comment = feedback.comment ? await piiService.anonymize(tenantId, feedback.comment) : '';
+      const technicalIssue = feedback.technicalIssue
+        ? await piiService.anonymize(tenantId, feedback.technicalIssue)
+        : '';
+
       await valueService.writeValue(tenantId, {
         ...feedback,
         comment,
+        technicalIssue,
         timestamp: new Date(timestampValue),
         digest,
       });

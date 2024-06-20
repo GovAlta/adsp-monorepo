@@ -67,14 +67,16 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
         </div>
       )}
 
-      <CalendarModal
-        open={openEditCalendar}
-        calendarName={selectedCalendarName}
-        onCancel={() => {
-          reset();
-        }}
-        onSave={(calendar) => dispatch(UpdateCalendar(calendar))}
-      />
+      {openEditCalendar ? (
+        <CalendarModal
+          open={openEditCalendar}
+          calendarName={selectedCalendarName}
+          onCancel={() => {
+            reset();
+          }}
+          onSave={(calendar) => dispatch(UpdateCalendar(calendar))}
+        />
+      ) : null}
     </>
   );
 };
