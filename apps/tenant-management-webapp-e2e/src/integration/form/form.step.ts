@@ -62,7 +62,7 @@ Then('the user views the error message of {string} for Name field in Add form de
 
 When('the user clicks Save button in Add form definition modal', function () {
   formObj.addDefinitionModalSaveButton().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user views form definition editor for {string}, {string}', function (name, description) {
