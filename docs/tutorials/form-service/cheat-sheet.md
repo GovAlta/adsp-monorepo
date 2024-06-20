@@ -78,7 +78,7 @@ Here are some out-of-the-box formats that not only render with the correct input
 }
     </code></pre></td>
   </tr>
-    <tr>
+  <tr>
     <td>Limited Text</td>
     <td><pre><code>
 {
@@ -117,6 +117,29 @@ Here are some out-of-the-box formats that not only render with the correct input
 }
     </code></pre></td>
   </tr>
+  <tr>
+    <td>Boolean (yes,no)</td>
+    <td><pre><code>
+{
+  "isOver18": {
+    "type": "boolean"
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Control",
+  "scope": "#/properties/isOver18"
+  "label": "Are you over 18 years of age?",
+  "options": {
+    "radio": true,
+    "textForTrue": "Yes",
+    "textForFalse": "No"
+  }
+}
+    </code></pre></td>
+  </tr>
+
 </table>
 
 ### Selectors
@@ -164,8 +187,6 @@ For when the user must select from a limited set of answers.
   "label": "What's your favorite colour?",
   "options": {
     "radio": true,
-    "textForTrue": "Yes",
-    "textForFalse": "No",
     "componentProps": {
       "orientation": "horizontal"
     }
