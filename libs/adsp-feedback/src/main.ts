@@ -673,7 +673,6 @@ class AdspFeedback implements AdspFeedbackApi {
             visibility: visible;
           }
           .radios {
-            margin-bottom: 32px;
             margin-top: 16px;
             display: flex;
             flex-direction: row;
@@ -726,6 +725,10 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .radio:checked:hover {
             border: 7px solid #004f84;
+            box-shadow: 0 0 0 1px #004f84;
+          }
+          .radio:hover {
+            border: 1px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
           }
           .radio:checked {
@@ -897,11 +900,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                       <div class="adsp-fb-form-comment">
                         <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
-                        <textarea
-                          id="comment"
-                          ${ref(this.commentRef)}
-                          placeholder="300 characters remaining"
-                        ></textarea>
+                        <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
                         <span class="help-text"
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
@@ -936,7 +935,6 @@ class AdspFeedback implements AdspFeedbackApi {
                             <span class="radio-label"> No </span>
                           </div>
                         </div>
-                        <hr />
                         <div ${ref(this.technicalCommentDivRef)}>
                           <div class="adsp-fb-form-comment">
                             <label for="comment"
