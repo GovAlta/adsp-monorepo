@@ -210,6 +210,8 @@ components:
         description: tenant id for the tenant
         in: query
         required: false
+        schema:
+          type: string
     responses:
       200:
         description: Request completed successfully.
