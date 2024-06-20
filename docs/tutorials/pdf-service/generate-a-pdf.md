@@ -23,7 +23,7 @@ The API calls to the Platform Service require authentication, via Keycloak. See 
 
 Continuing on from the tutorial on how to [build a template](/adsp-monorepo/tutorials/building-a-template.html) with the PDF service, our examples will be based on the template set up there for the Child Service's Intervention Record Check. Familiarity with that particular template is not necessary to follow along here, but the information will be useful if you want to understand how the pieces relate to each other.
 
-See the [PDF Service](https://api.adsp-dev.gov.ab.ca/autotest/?urls.primaryName=PDF%20service) Swagger documentation for detailed descriptions of the APIs.
+See the [PDF Service](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=PDF%20service) Swagger documentation for detailed descriptions of the APIs.
 
 ## Submit a PDF Generator Job
 
