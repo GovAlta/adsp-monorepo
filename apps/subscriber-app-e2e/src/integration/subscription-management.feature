@@ -31,7 +31,7 @@ Feature: Subscription management
     When an authenticated user with "auto.contact" and "autotest" is in the subscriber app
     Then the user views subscription management page
     When the user clicks edit contact information button
-    And the user enters an invalid phone number in contact information
+    And the user enters "auto.contact.test@gmail.com" as email, "123" as phone number and "email" as preferred channel
     And the user clicks Save button in contact information
     Then the user views an error message for the invalid phone number in contact information
     When the user removes phone number value in contact information

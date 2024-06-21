@@ -71,13 +71,13 @@ class TaskPage {
 
   queueEditButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="task-queue-table"]//*[contains(@data-testid, "task-definition-edit")])[${rowNumber}]`
+      `(//table[@data-testid="task-queue-table"]//*[contains(@data-testid, "queue-definition-edit")])[${rowNumber}]`
     );
   }
 
   queueDeleteButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="task-queue-table"]//*[contains(@data-testid, "task-definition-delete")])[${rowNumber}]`
+      `(//table[@data-testid="task-queue-table"]//*[contains(@data-testid, "queue-definition-delete")])[${rowNumber}]`
     );
   }
 
