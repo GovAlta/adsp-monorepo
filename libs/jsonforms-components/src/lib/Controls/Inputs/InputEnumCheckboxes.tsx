@@ -15,17 +15,7 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
   const { data, className, id, schema, uischema, path, handleChange, options, config, label, t } = props;
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
-  if (uischema?.options?.isStepperReview) {
-    return (
-      <div data-testid="input-enum-checkbox-review">
-        {data
-          ? enumData.filter((e) => {
-              return data.includes(e);
-            })
-          : []}
-      </div>
-    );
-  }
+
   return (
     <Checkboxes
       orientation={uischema.options?.orientation ? uischema.options?.orientation : 'vertical'}

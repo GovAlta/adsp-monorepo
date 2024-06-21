@@ -36,6 +36,7 @@ import { RenderStepElements, StepProps } from './RenderStepElements';
 import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } from './StepperContext';
 import { validateData } from './util/validateData';
 import { mapToVisibleStep } from './util/stepNavigation';
+import { GoAReviewRenderers } from '../../../index';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {}
 export interface FormStepperComponentProps {
@@ -233,9 +234,9 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                               <JsonFormsDispatch
                                 data-testid={`jsonforms-object-list-defined-elements-dispatch`}
                                 schema={schema}
-                                uischema={{ ...element, options: { ...element?.options, isStepperReview: true } }}
+                                uischema={element}
                                 enabled={enabled}
-                                renderers={renderers}
+                                renderers={GoAReviewRenderers}
                                 cells={cells}
                               />
                             );

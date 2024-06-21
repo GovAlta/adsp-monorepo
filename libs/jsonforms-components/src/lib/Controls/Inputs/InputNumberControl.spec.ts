@@ -41,12 +41,6 @@ describe('input number controls', () => {
       const baseControl = render(GoANumberControl(props));
       expect(baseControl).toBeDefined();
     });
-
-    it('can create base control in review mode', () => {
-      const props = { ...staticProps, uischema: { ...textBoxUiSchema, options: { isStepperReview: true } } };
-      const baseControl = render(GoANumberControl(props));
-      expect(baseControl.getByTestId('input-number-control-review')).toBeInTheDocument();
-    });
   });
 
   describe('can trigger input events', () => {

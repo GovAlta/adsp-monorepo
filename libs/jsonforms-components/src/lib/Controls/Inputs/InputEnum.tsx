@@ -57,10 +57,6 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     }
   }, [registerCtx, registerConfig]);
 
-  if (uischema?.options?.isStepperReview) {
-    return <div data-testid="input-enum-control-review">{data}</div>;
-  }
-
   return (
     <GoADropdown
       name={`${label}`}

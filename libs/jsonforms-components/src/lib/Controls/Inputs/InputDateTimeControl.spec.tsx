@@ -48,13 +48,6 @@ describe('input date time controls', () => {
       const component = render(GoADateTimeInput(props));
       expect(component.getByTestId('myDateId-input')).toBeInTheDocument();
     });
-
-    it('can render date input control for control', () => {
-      const props = { ...staticProps, uischema: { ...uiSchema, options: { isStepperReview: true } } };
-      const component = render(GoADateTimeInput(props));
-      expect(component.getByTestId('date-time-control-review')).toBeInTheDocument();
-    });
-
     it('can create base control', () => {
       const props = { ...staticProps };
       const baseControl = render(GoADateTimeControl(props as ControlProps));

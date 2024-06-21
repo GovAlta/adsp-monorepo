@@ -60,12 +60,6 @@ describe('EnumSelect component', () => {
       const component = render(<EnumSelect {...props} />);
       expect(component.getByTestId('enum-jsonform')).toBeInTheDocument();
     });
-
-    it('renders EnumSelect component in review', () => {
-      const props = { ...staticProps, uischema: { ...staticProps.uischema, options: { isStepperReview: true } } };
-      const component = render(<EnumSelect {...props} />);
-      expect(component.getByTestId('input-enum-control-review')).toBeInTheDocument();
-    });
   });
 
   describe('can trigger input events', () => {

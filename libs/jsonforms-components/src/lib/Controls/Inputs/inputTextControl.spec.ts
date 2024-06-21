@@ -36,13 +36,6 @@ describe('Input Text Control tests', () => {
       const component = render(GoAInputText(props));
       expect(component.getByTestId('firstName-input')).toBeInTheDocument();
     });
-
-    it('can create control in review mode', () => {
-      const props = { ...staticProps, uischema: { ...textBoxUiSchema, options: { isStepperReview: true } } };
-      const component = render(GoAInputText(props));
-      expect(component.getByTestId('input-text-control-review')).toBeInTheDocument();
-    });
-
     it('can create base control', () => {
       const props = { ...staticProps };
       const baseControl = render(GoATextControl(props));

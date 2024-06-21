@@ -21,8 +21,13 @@ import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid, GoAIconButton, GoAContainer } from '@abgov/react-components-new';
 import { ToolBarHeader, ObjectArrayTitle, TextCenter } from './styled-components';
 import { Visible } from '../../util';
+import { GoAReviewRenderers } from '../../../index';
 
-export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport;
+interface ArrayLayoutExtProps {
+  isStepperReview?: boolean;
+}
+
+export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport & ArrayLayoutExtProps;
 
 // eslint-disable-next-line
 const extractScopesFromUISchema = (uischema: any): string[] => {
@@ -206,10 +211,10 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
               data-testid={`jsonforms-object-list-defined-elements-dispatch`}
               key={rowPath}
               schema={schema}
-              uischema={isInReview ? { ...element, options: { ...element?.options, isStepperReview: true } } : element}
+              uischema={element}
               path={rowPath}
               enabled={enabled}
-              renderers={renderers}
+              renderers={isInReview ? GoAReviewRenderers : renderers}
               cells={cells}
             />
           );
@@ -221,7 +226,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
           uischema={uiSchemaElementsForNotDefined}
           path={rowPath}
           enabled={enabled}
-          renderers={renderers}
+          renderers={isInReview ? GoAReviewRenderers : renderers}
           cells={cells}
         />
       )}
@@ -340,7 +345,6 @@ const ObjectArrayList = ({
     </>
   );
 };
-
 // eslint-disable-next-line
 export class ObjectArrayControl extends React.Component<ObjectArrayControlProps, any> {
   // eslint-disable-next-line
@@ -360,13 +364,16 @@ export class ObjectArrayControl extends React.Component<ObjectArrayControlProps,
       translations,
       data,
       config,
+      isStepperReview,
       ...additionalProps
     } = this.props;
 
     const controlElement = uischema as ControlElement;
     // eslint-disable-next-line
     const listTitle = label || uischema.options?.title;
-    const isInReview = uischema.options?.isStepperReview === true;
+
+    const isInReview = isStepperReview === true;
+
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>

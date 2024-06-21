@@ -49,26 +49,6 @@ describe('input number controls', () => {
       const component = render(GoATimeInput(props));
       expect(component.getByTestId('myDateId-input')).toBeInTheDocument();
     });
-
-    it('can render time input control in review mode', () => {
-      const props = {
-        ...staticProps,
-        uischema: {
-          type: 'Control',
-          scope: '#/properties/age',
-          options: { isStepperReview: true },
-        },
-      };
-      const component = render(GoATimeInput(props));
-      expect(component.getByTestId('input-time-control-review')).toBeInTheDocument();
-    });
-
-    it('can create base control', () => {
-      const props = { ...staticProps };
-      const baseControl = render(GoATimeControl(props as ControlProps));
-      expect(baseControl).toBeDefined();
-    });
-
     it('can trigger time onKeyPress event', async () => {
       const props = { ...staticProps };
       const component = render(GoATimeInput(props));

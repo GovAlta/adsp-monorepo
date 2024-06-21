@@ -20,10 +20,6 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
-  if (uischema?.options?.isStepperReview) {
-    return <div data-testid="input-text-control-review">{data}</div>;
-  }
-
   return (
     <GoAInput
       error={errorsFormInput.length > 0}
@@ -65,3 +61,4 @@ export const GoATextControl = (props: ControlProps) => <GoAInputBaseControl {...
 
 export const GoATextControlTester: RankedTester = rankWith(1, isStringControl);
 export const GoAInputTextControl = withJsonFormsControlProps(GoATextControl);
+export const GoAInputTextReviewControl = withJsonFormsControlProps(GoATextControl);

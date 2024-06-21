@@ -19,9 +19,6 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
-  if (uischema?.options?.isStepperReview) {
-    return <div data-testid="date-time-control-review">{data}</div>;
-  }
   return (
     <GoAInputDateTime
       error={checkFieldValidity(props as ControlProps).length > 0}

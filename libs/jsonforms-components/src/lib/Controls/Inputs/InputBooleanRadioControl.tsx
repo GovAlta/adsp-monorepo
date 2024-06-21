@@ -34,10 +34,6 @@ export const BooleanRadioComponent = ({
     errors,
   } as ControlProps);
 
-  if (uischema?.options?.isStepperReview) {
-    return <div>{data === true ? TrueValue : data === false ? FalseValue : null}</div>;
-  }
-
   return (
     <Visible visible={visible}>
       <GoARadioGroup
