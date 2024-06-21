@@ -176,7 +176,7 @@ End users should not enter any information in their feedback that could be used 
 
 ### Accessing your feedback
 
-Feedback is stored in the ADSP [value service](https://govalta.github.io/adsp-monorepo/services/value-service.html) with namespace : _feedback-service_ and name : _feedback_. You can use the [value service APIs](https://api.adsp-dev.gov.ab.ca/autotest/?urls.primaryName=Value%20service) to retrieve and analyze the data, or you can login to the [ADSP webapp](https://adsp-uat.alberta.ca) to look at the service metrics. The data includes the feedback itself and the context so that you can make constrained queries. For example:
+Feedback is stored in the ADSP [value service](https://govalta.github.io/adsp-monorepo/services/value-service.html) with namespace : _feedback-service_ and name : _feedback_. You can use the [value service APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Value%20service) to retrieve and analyze the data, or you can login to the [ADSP webapp](https://adsp-uat.alberta.ca) to look at the service metrics. The data includes the feedback itself and the context so that you can make constrained queries. For example:
 
 ```
 GET /value/v1/feedback-service/values/feedback
@@ -194,5 +194,5 @@ using context, e.g.
 
 ```
 GET /value/v1/feedback-service/values/feedback
-    ? context={site:'https://adsp-dev.gov.ab.ca', view: '/admin/services/feedback'}
+    ? context={site:'https://adsp-uat.alberta.ca', view: '/admin/services/feedback'}
 ```

@@ -53,6 +53,8 @@ Security is based on Keycloak roles. Usage of the APIs is restricted to authoriz
 
 - Learn how to [use jsonforms](https://jsonforms.io/) to declaratively build and render sophisticated forms.
 
+- Use the [cheat sheet](/adsp-monorepo/tutorials/form-service/cheat-sheet.html) to quickly lookup how to render form elements.
+
 - Learn more about [ADSP's extensions](/adsp-monorepo/tutorials/form-service/building-forms.html) to jsonforms, for creating steppers, end-user instructions, and other UI tidbits.
 
 - Learn about [form submissions](/adsp-monorepo/tutorials/form-service/form-submissions.html).
