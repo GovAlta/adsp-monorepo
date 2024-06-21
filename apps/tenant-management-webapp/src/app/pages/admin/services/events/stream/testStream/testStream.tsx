@@ -179,7 +179,7 @@ export const TestStream = (): JSX.Element => {
             >
               {Object.keys(streams)
                 .filter((streamId) => streamId !== 'webhooks')
-                .sort((a, b) => (a < b ? -1 : 1))
+                .sort(([a], [b]) => a.localeCompare(b))
                 .map((streamId) => (
                   <GoADropdownItem label={streams[streamId].name} value={streamId} key={streamId} testId={streamId} />
                 ))}
