@@ -101,7 +101,7 @@ class AdspFeedback implements AdspFeedbackApi {
     this.feedbackFormRef?.value?.setAttribute('data-show', 'true');
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
     if (this.feedbackFormRef.value) {
-      this.feedbackFormRef.value.style.height = '600px';
+      this.feedbackFormRef.value.style.height = '620px';
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
@@ -467,7 +467,7 @@ class AdspFeedback implements AdspFeedbackApi {
             justify-content: space-between;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 375px;
+            max-height: 415px;
             overflow-y: scroll;
             overflow-x: hidden;
             flex: 1;
@@ -691,8 +691,8 @@ class AdspFeedback implements AdspFeedbackApi {
           }
 
           .help-text {
-            margin-top: 16px;
-            margin-bottom: 16px;
+            margin-top: 12px;
+            margin-bottom: 12px;
             font-size: 14px;
             line-height: 28px;
           }
@@ -905,7 +905,7 @@ class AdspFeedback implements AdspFeedbackApi {
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
                       </div>
-                      <hr />
+                      <hr class="styled-hr" />
                       <br />
                       <div class="radio-container">
                         <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
