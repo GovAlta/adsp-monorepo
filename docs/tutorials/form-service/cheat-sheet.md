@@ -78,7 +78,7 @@ Here are some out-of-the-box formats that not only render with the correct input
 }
     </code></pre></td>
   </tr>
-    <tr>
+  <tr>
     <td>Limited Text</td>
     <td><pre><code>
 {
@@ -117,6 +117,29 @@ Here are some out-of-the-box formats that not only render with the correct input
 }
     </code></pre></td>
   </tr>
+  <tr>
+    <td>Boolean (yes,no)</td>
+    <td><pre><code>
+{
+  "isOver18": {
+    "type": "boolean"
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Control",
+  "scope": "#/properties/isOver18"
+  "label": "Are you over 18 years of age?",
+  "options": {
+    "radio": true,
+    "textForTrue": "Yes",
+    "textForFalse": "No"
+  }
+}
+    </code></pre></td>
+  </tr>
+
 </table>
 
 ### Selectors
@@ -164,8 +187,6 @@ For when the user must select from a limited set of answers.
   "label": "What's your favorite colour?",
   "options": {
     "radio": true,
-    "textForTrue": "Yes",
-    "textForFalse": "No",
     "componentProps": {
       "orientation": "horizontal"
     }
@@ -194,6 +215,166 @@ For when the user must select from a limited set of answers.
       "orientation": "vertical"
     }
   }
+}
+    </code></pre></td>
+  </tr>
+</table>
+
+### Form Layout
+
+Layouts let you organize input fields they way you want them. You can lay out the fields in rows (horizontally), in columns (vertically), or in a mixture of both.
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>JSON schema</th>
+    <th>UI schema</th>
+  </tr>
+  <tr>
+    <td>Vertical Layout (columns)</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/firstName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/lastName"
+    }
+  ]
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td>Horizontal Layout (rows)</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "HorizontalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/firstName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/lastName"
+    }
+  ]
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td>Mixed</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "reasonForLeaving": {
+      "type": "string"
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "HorizontalLayout",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/lastName"
+        }
+      ]
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/reasonForLeaving",
+      "options": {
+        "multi": true
+      }
+    },
+  ]
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td>Groups</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "initial": {
+      "type": "string",
+      "maxLength": 1
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Group",
+  "label": "Group Name",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/firstName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/lastName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/initial"
+    },
+  ]
 }
     </code></pre></td>
   </tr>
@@ -384,3 +565,145 @@ For when the user needs to upload supporting documentation. For a more complete 
     </code></pre></td>
   </tr>
 </table>
+
+### Repeating Items
+
+_Repeating Items_ are useful when you need to capture multiple instances of similar information from your applicants. For example, you may want to collect contact information for one or more family members. With the _List with Details_ or _Object Array_ components, users can easily add as many rows as needed to complete the form. For more information on how these components work, please see the section on [Repeating Items](/adsp-monorepo/tutorials/form-service/repeated-items.html).
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>JSON schema</th>
+    <th>UI schema</th>
+  </tr>
+  <tr>
+    <td>List With Detail</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "people": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "ListWithDetail",
+  "scope": "#/properties/people",
+  "options": {
+    "detail": {
+      "type": "HorizontalLayout",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/lastName"
+        }
+      ]
+    }
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td>Object Array</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "people": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Control",
+  "label": "People",
+  "scope": "#/properties/people"
+}
+    </code></pre></td>
+  </tr>
+</table>
+
+### Steppers
+
+Steppers allow you to partition your form into one or more steps, so users can focus on one group of questions at a time. For more information on how these components work, please see the section on [steppers](/adsp-monorepo/tutorials/form-service/steppers.html).
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>JSON schema</th>
+    <th>UI schema</th>
+  </tr>
+  <tr>
+    <td>Categorization</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "elements": [
+    {
+      "type": "Category",
+      "label": "First Name,
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Last Name,
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/last
+        }
+      ]
+    }
+  ]
+}
+    </code></pre></td>
+  </tr>

@@ -16,7 +16,7 @@ Integrating Jsonforms into your application is straight forward. You simply plac
 
 where:
 
-- The schema and uiSchema are the ones you built in [the Form Editor](/adsp-monorepo/tutorials/form-service/form-editor.html), and can be retrieved with [the Form Service APIs](https://api.adsp-dev.gov.ab.ca/autotest/?urls.primaryName=Form%20service).
+- The schema and uiSchema are the ones you built in [the Form Editor](/adsp-monorepo/tutorials/form-service/form-editor.html), and can be retrieved with [the Form Service APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Form%20service).
 
 - The data is a javascript object conforming to your JSON schema, which will be updated as the user enters information.
 
