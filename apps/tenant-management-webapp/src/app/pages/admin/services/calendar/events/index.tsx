@@ -70,7 +70,10 @@ export const CalendarEvents = (): JSX.Element => {
     }
   }, [exportEvents, willExport]);
 
-  const calendars = useSelector(selectCalendars);
+  const calendarsData = useSelector(selectCalendars);
+
+  const calendars =
+    calendarsData && Object.fromEntries(Object.entries(calendarsData).sort(([a], [b]) => a.localeCompare(b)));
   const selectedEvents = useSelector((state: RootState) => selectSelectedCalendarEvents(state, selectedCalendar));
 
   const handleExport = () => {
