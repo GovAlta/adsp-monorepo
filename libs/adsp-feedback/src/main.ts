@@ -101,7 +101,7 @@ class AdspFeedback implements AdspFeedbackApi {
     this.feedbackFormRef?.value?.setAttribute('data-show', 'true');
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
     if (this.feedbackFormRef.value) {
-      this.feedbackFormRef.value.style.height = '620px';
+      this.feedbackFormRef.value.style.height = '640px';
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
@@ -461,17 +461,18 @@ class AdspFeedback implements AdspFeedbackApi {
             display: flex;
             box-sizing: border-box;
             flex-direction: column;
-            padding: 36px 24px;
+            padding: 0 0 36px 24px;
             transition: transform 0.001ms;
             height: 100%;
             justify-content: space-between;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 415px;
-            overflow-y: scroll;
+            max-height: 455px;
+            overflow-y: auto !important;
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
+            padding-top: 36px;
           }
           .adsp-fb .adsp-fb-form-rating {
             display: flex;
@@ -513,7 +514,7 @@ class AdspFeedback implements AdspFeedbackApi {
             margin-left: 3px;
             resize: none;
             min-height: 100px;
-            width: 100%;
+            width: 97%;
             border-radius: 3px;
             cursor: text;
             padding: 10px 8px;
@@ -536,7 +537,7 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-actions {
             display: flex;
             padding-bottom: 48px;
-            padding-right: 16px;
+            padding-right: 32px;
             margin-top: 16px;
             margin-bottom: 32px;
           }
@@ -766,6 +767,12 @@ class AdspFeedback implements AdspFeedbackApi {
             margin-left: 36px;
             margin-right: 36px;
           }
+          .h3-subtitle {
+            padding-top: 36px;
+          }
+          .p-content {
+            margin-right: 24px;
+          }
           @media screen and (max-width: 768px) {
             .adsp-fb div.adsp-fb-form-container {
             }
@@ -808,7 +815,6 @@ class AdspFeedback implements AdspFeedbackApi {
                 visibility: visible;
                 display: block;
                 padding: 0;
-                margin-left: 6px;
               }
               > div > p :hover {
                 color: #004f84;
@@ -865,8 +871,8 @@ class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr class="styled-hr" />
                   <form class="adsp-fb-form">
-                    <h3>Tell us what you think</h3>
-                    <p>
+                    <h3 class="h3-subtitle">Tell us what you think</h3>
+                    <p class="p-content">
                       Please help us improve our service by sharing feedback about your experience. This will only take
                       a minute.
                     </p>
@@ -978,7 +984,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         Success!
                         <img src=${greenCircleCheckmarkSvg} width="18px" height="18px" alt="Success" />
                       </h3>
-                      <p>
+                      <p class="p-content">
                         Thank you for providing your feedback. We will use your input to improve the service. You will
                         not receive a response from this submission. If you do require a response, you can contact
                         government through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
