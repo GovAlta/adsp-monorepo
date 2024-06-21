@@ -9,9 +9,7 @@ import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { AddFileType } from './fileTypeNew';
 import styled from 'styled-components';
-import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { Role } from '@store/tenant/models';
-import { FetchRealmRoles } from '@store/tenant/actions';
 
 const NoContentContainer = styled.div`
   margin-bottom: 2em;
@@ -25,19 +23,15 @@ interface AddFileTypeProps {
 export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
 
-  return (
-    <div>
-      {roles && <AddFileType roles={roles} activeEdit={activeEdit} />}
-      <FileTypesTableContainer roles={roles} />
-    </div>
-  );
+  return <FileTypesTableContainer roles={roles} activeEdit={activeEdit} />;
 };
 
 interface FileTypesTableContainerProps {
   roles: Role[];
+  activeEdit: boolean;
 }
 
-const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.Element => {
+const FileTypesTableContainer = ({ roles, activeEdit }: FileTypesTableContainerProps): JSX.Element => {
   const dispatch = useDispatch();
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
   const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
@@ -65,12 +59,15 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
       )}
       {indicator.show && <PageIndicator />}
       {!indicator.show && fileTypes && (
-        <FileTypeTable
-          roles={roles}
-          fileTypes={fileTypes}
-          coreFileTypes={coreFileTypes}
-          data-testid="file-type-table"
-        />
+        <div>
+          <AddFileType roles={roles} activeEdit={activeEdit} />
+          <FileTypeTable
+            roles={roles}
+            fileTypes={fileTypes}
+            coreFileTypes={coreFileTypes}
+            data-testid="file-type-table"
+          />
+        </div>
       )}
     </>
   );
