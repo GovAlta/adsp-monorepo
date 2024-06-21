@@ -40,7 +40,7 @@
     "@emotion/react": "11.11.1",
     "@emotion/styled": "11.11.0",
     "@faker-js/faker": "7.0.1",
-    "@keycloak/keycloak-admin-client": "^18.0.2",
+    "@keycloak/keycloak-admin-client": "^19.0.3",
     "@socket.io/redis-adapter": "7.2.0",
     "ajv": "^8.6.1",
     "ajv-formats": "^3.0.1",
