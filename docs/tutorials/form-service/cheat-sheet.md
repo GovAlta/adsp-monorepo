@@ -653,3 +653,57 @@ _Repeating Items_ are useful when you need to capture multiple instances of simi
     </code></pre></td>
   </tr>
 </table>
+
+### Steppers
+
+Steppers allow you to partition your form into one or more steps, so users can focus on one group of questions at a time. For more information on how these components work, please see the section on [steppers](/adsp-monorepo/tutorials/form-service/steppers.html).
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>JSON schema</th>
+    <th>UI schema</th>
+  </tr>
+  <tr>
+    <td>Categorization</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "elements": [
+    {
+      "type": "Category",
+      "label": "First Name,
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Last Name,
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/last
+        }
+      ]
+    }
+  ]
+}
+    </code></pre></td>
+  </tr>
