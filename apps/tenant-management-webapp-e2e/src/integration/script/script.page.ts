@@ -130,7 +130,7 @@ class ScriptPage {
   }
 
   editorEditButton() {
-    return cy.xpath('//a[@rel="noopener noreferrer" and text()="Edit"]');
+    return cy.xpath('//div[@rel="noopener noreferrer" and text()="Edit"]');
   }
 
   editorNameField() {
