@@ -220,6 +220,126 @@ For when the user must select from a limited set of answers.
   </tr>
 </table>
 
+### Form Layout
+
+Layouts let you organize input fields they way you want them. You can lay out the fields in rows (horizontally), in columns (vertically), or in a mixture of both.
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>JSON schema</th>
+    <th>UI schema</th>
+  </tr>
+  <tr>
+    <td>Vertical Layout (columns)</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/firstName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/lastName"
+    }
+  ]
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td>Horizontal Layout (rows)</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "HorizontalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/firstName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/lastName"
+    }
+  ]
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td>Mixed</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "reasonForLeaving": {
+      "type": "string"
+    }
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "HorizontalLayout",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/lastName"
+        }
+      ]
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/reasonForLeaving",
+      "options": {
+        "multi": true
+      }
+    },
+  ]
+}
+    </code></pre></td>
+  </tr>
+</table>
+
 ### Instructional Content
 
 For when you need to add instructions, or help, to guide users when they are filling out a form. Instructions can be rendered in text, as hyperlinks, or with images. See the [section on help text](/adsp-monorepo/tutorials/form-service/instructions.html) for more information.
