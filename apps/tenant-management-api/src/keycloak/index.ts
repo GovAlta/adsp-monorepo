@@ -1,4 +1,4 @@
-import KcAdminClient from '@keycloak/keycloak-admin-client';
+import type KcAdminClient from '@keycloak/keycloak-admin-client';
 import { Logger } from 'winston';
 import { environment } from '../environments/environment';
 import { RealmService } from '../tenant';
@@ -15,6 +15,7 @@ const defaultOptions: Options = {
 };
 
 export async function createkcAdminClient(opts?: Options): Promise<KcAdminClient> {
+  const KcAdminClient = (await import('@keycloak/keycloak-admin-client')).default;
   const client = new KcAdminClient({
     ...defaultOptions,
     ...opts,

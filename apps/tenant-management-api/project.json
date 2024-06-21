@@ -16,7 +16,6 @@
         "webpackConfig": "apps/tenant-management-api/webpack.config.js",
         "target": "node",
         "compiler": "tsc",
-        "isolatedConfig": true,
         "babelUpwardRootMode": true
       },
       "configurations": {
