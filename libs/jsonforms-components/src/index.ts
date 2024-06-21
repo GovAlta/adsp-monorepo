@@ -27,11 +27,13 @@ import {
   GoACheckoutGroupControlTester,
   GoAArrayControlTester,
   GoAArrayControlRenderer,
+  GoAArrayControlReviewRenderer,
   GoAListWithDetailsTester,
   GoABooleanControlTester,
   GoABooleanControl,
   GoABooleanRadioControlTester,
   GoABooleanRadioControl,
+  GoInputBaseReviewControl,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -42,6 +44,7 @@ import {
   GoAGroupControl,
   GoAHorizontalLayoutTester,
   GoAlVerticalLayoutTester,
+  GoAHorizontalReviewLayout,
 } from './lib/layouts';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 
@@ -99,6 +102,50 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
     tester: HelpContentTester,
     renderer: HelpContent,
   },
+];
+
+export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
+  // controls
+  { tester: GoAEnumControlTester, renderer: GoInputBaseReviewControl },
+  { tester: GoAIntegerControlTester, renderer: GoInputBaseReviewControl },
+  { tester: GoANumberControlTester, renderer: GoInputBaseReviewControl },
+  { tester: GoATextControlTester, renderer: GoInputBaseReviewControl },
+  { tester: GoADateControlTester, renderer: GoInputBaseReviewControl },
+  { tester: GoADateTimeControlTester, renderer: GoInputBaseReviewControl },
+  { tester: GoATimeControlTester, renderer: GoInputBaseReviewControl },
+  {
+    tester: GoARadioGroupControlTester,
+    renderer: GoInputBaseReviewControl,
+  },
+  {
+    tester: GoACheckoutGroupControlTester,
+    renderer: GoInputBaseReviewControl,
+  },
+  { tester: GoABooleanControlTester, renderer: GoInputBaseReviewControl },
+
+  { tester: GoABooleanRadioControlTester, renderer: GoInputBaseReviewControl },
+  {
+    tester: MultiLineTextControlTester,
+    renderer: GoInputBaseReviewControl,
+  },
+  {
+    tester: GoAArrayControlTester,
+    renderer: GoAArrayControlReviewRenderer,
+  },
+  {
+    tester: GoAListWithDetailsTester,
+    renderer: GoAArrayControlReviewRenderer,
+  },
+  {
+    tester: GoAHorizontalLayoutTester,
+    renderer: GoAHorizontalReviewLayout,
+  },
+  { tester: GoAlVerticalLayoutTester, renderer: GoAVerticalLayout },
+];
+
+export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
+  ...GoABaseReviewRenderers,
+  { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
 ];
 
 export const GoARenderers: JsonFormsRendererRegistryEntry[] = [

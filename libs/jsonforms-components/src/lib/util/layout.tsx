@@ -54,26 +54,6 @@ export const withAjvProps = <P extends object>(Component: ComponentType<AjvProps
     return <Component {...props} ajv={ajv} />;
   };
 
-export const forwardOptionsInElements = (uischema: UISchemaElement) => {
-  const elements = (uischema as unknown as LayoutRendererProps)?.elements || [];
-
-  if (uischema?.options?.isStepperReview) {
-    return elements?.map((e) => {
-      return { ...e, options: { ...e?.options, isStepperReview: true } };
-    });
-  }
-
-  return elements;
-};
-
-export const fetchWidthInLayout = (uischema: UISchemaElement) => {
-  if (uischema?.options?.isStepperReview) {
-    return uischema?.options?.review?.width || '30ch';
-  }
-
-  return uischema?.options?.review?.width || '10ch';
-};
-
 export const LayoutRenderer = ({
   elements,
   schema,
