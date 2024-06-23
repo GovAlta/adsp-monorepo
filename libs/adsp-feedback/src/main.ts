@@ -42,6 +42,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
   private feedbackBadgeRef: Ref<HTMLDivElement> = createRef();
   private feedbackFormRef: Ref<HTMLDivElement> = createRef();
+  private feedbackContentFormRef: Ref<HTMLDivElement> = createRef();
   private ratingRef: Ref<HTMLFieldSetElement> = createRef();
   private commentRef: Ref<HTMLTextAreaElement> = createRef();
   private sendButtonRef: Ref<HTMLButtonElement> = createRef();
@@ -52,6 +53,8 @@ class AdspFeedback implements AdspFeedbackApi {
   private dimRef: Ref<HTMLTextAreaElement> = createRef();
   private radio1Ref: Ref<HTMLInputElement> = createRef();
   private radio2Ref: Ref<HTMLInputElement> = createRef();
+  private firstFocusableElement?: HTMLElement;
+  private lastFocusableElement?: HTMLElement;
 
   constructor() {
     const site = `${document.location.protocol}//${document.location.host}`;
@@ -79,9 +82,14 @@ class AdspFeedback implements AdspFeedbackApi {
     this.startRef?.value?.setAttribute('data-show', 'true');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
+    this.lastFocusableElement = this.startRef?.value?.querySelector('#start') as HTMLElement;
+    this.firstFocusableElement = this.startRef?.value?.querySelector('.feedback-close-button') as HTMLElement;
+    document.addEventListener('keydown', this.trapTabKey);
+    document.addEventListener('keydown', this.handleEscapeKey);
+
     this.onDimChange(true);
   }
-  private handleKeyFeedback(event: KeyboardEvent) {
+  private handleKeyOpenStartForm(event: KeyboardEvent) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       this.openStartForm();
@@ -94,17 +102,63 @@ class AdspFeedback implements AdspFeedbackApi {
       this.selectRating(index);
     }
   }
+  private handleKeyExit(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.closeFeedbackForm();
+    }
+  }
+  private handleKeyFeedbackExit(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.closeFeedbackForm();
+    }
+  }
 
   private closeStartForm() {
     this.startRef?.value?.setAttribute('data-show', 'false');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'true');
+    this.firstFocusableElement = this.feedbackFormRef?.value?.querySelector('.feedback-close-button') as HTMLElement;
+    this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-secondary') as HTMLElement;
+
+    document.addEventListener('keydown', this.trapTabKey);
+    document.addEventListener('keydown', this.handleEscapeKey);
+
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
     if (this.feedbackFormRef.value) {
       this.feedbackFormRef.value.style.height = '600px';
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
+
+  trapTabKey = (e: KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      if (e.shiftKey) {
+        // If Shift + Tab
+        if (document.activeElement === this.firstFocusableElement) {
+          e.preventDefault();
+          this.lastFocusableElement!.focus();
+        }
+      } else {
+        // If Tab
+        if (document.activeElement === this.lastFocusableElement) {
+          e.preventDefault();
+          this.firstFocusableElement!.focus();
+        }
+      }
+    }
+  };
+
+  handleEscapeKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      this.reset();
+      this.feedbackBadgeRef?.value?.setAttribute('data-show', 'true');
+      this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
+      this.startRef?.value?.setAttribute('data-show', 'false');
+      this.onDimChange(false);
+    }
+  };
 
   private closeFeedbackForm() {
     this.reset();
@@ -255,13 +309,16 @@ class AdspFeedback implements AdspFeedbackApi {
         if (!response.ok) {
           console.log(`Response received for sending feedback to API not 200: ${response.status}`);
           this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
+          this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
         } else {
           this.feedbackFormRef.value?.setAttribute('data-completed', 'true');
+          this.lastFocusableElement = document.querySelector('#feedback-close-success') as HTMLElement;
         }
       } catch (err) {
         console.log(`Error encountered sending feedback to API: ${err}`);
 
         this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
+        this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
       }
       if (this.feedbackFormRef.value) {
         this.feedbackFormRef.value.style.height = '420px';
@@ -345,6 +402,7 @@ class AdspFeedback implements AdspFeedbackApi {
     }
     this.selectedRating = index;
     this.sendButtonRef.value?.removeAttribute('disabled');
+    this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-primary') as HTMLElement;
 
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
@@ -788,7 +846,7 @@ class AdspFeedback implements AdspFeedbackApi {
                 class="adsp-fb-badge"
                 data-show="true"
                 @click=${this.openStartForm}
-                @keydown=${this.handleKeyFeedback}
+                @keydown=${this.handleKeyOpenStartForm}
               >
                 <span>Feedback</span>
               </div>
@@ -799,10 +857,13 @@ class AdspFeedback implements AdspFeedbackApi {
                   <div class="adsp-fb-container-heading">
                     <h3 class="title">Give feedback</h3>
                     <img
+                      class="feedback-close-button"
+                      tabindex="0"
                       src=${closeOutlineSvg}
                       width="30px"
                       height="30px"
                       @click="${this.closeFeedbackForm}"
+                      @keydown=${this.handleKeyExit}
                       alt="close feedback"
                     />
                   </div>
@@ -814,7 +875,13 @@ class AdspFeedback implements AdspFeedbackApi {
                       a minute.
                     </p>
                     <div class="adsp-fb-actions">
-                      <button class="adsp-fb-form-primary" @click=${this.closeStartForm} type="button" tabindex="0">
+                      <button
+                        class="adsp-fb-form-primary"
+                        id="start"
+                        @click=${this.closeStartForm}
+                        type="button"
+                        tabindex="0"
+                      >
                         Start
                       </button>
                     </div>
@@ -825,16 +892,19 @@ class AdspFeedback implements AdspFeedbackApi {
                   <div class="adsp-fb-container-heading">
                     <h3 class="title">Give feedback</h3>
                     <img
+                      class="feedback-close-button"
+                      tabindex="0"
                       src=${closeOutlineSvg}
                       width="30px"
                       height="30px"
                       @click="${this.closeFeedbackForm}"
+                      @keydown=${this.handleKeyFeedbackExit}
                       alt="close feedback"
                     />
                   </div>
                   <hr />
                   <form class="adsp-fb-form">
-                    <div class="adsp-fb-content">
+                    <div ${ref(this.feedbackContentFormRef)} class="adsp-fb-content">
                       <label for="comment"
                         ><b>How easy was it for you to use this service? <br /></b>
                       </label>
@@ -900,8 +970,15 @@ class AdspFeedback implements AdspFeedbackApi {
                         </div>
                       </div>
                     </div>
-                    <div class=" adsp-fb-actions">
-                      <button @click=${this.closeFeedbackForm} type="button" tabindex="0">Cancel</button>
+                    <div class="adsp-fb-actions">
+                      <button
+                        @click=${this.closeFeedbackForm}
+                        class="adsp-fb-form-secondary"
+                        type="button"
+                        tabindex="0"
+                      >
+                        Cancel
+                      </button>
                       <button
                         ${ref(this.sendButtonRef)}
                         class="adsp-fb-form-primary"
@@ -925,7 +1002,13 @@ class AdspFeedback implements AdspFeedbackApi {
                         government through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
                       </p>
                       <div class="adsp-fb-actions">
-                        <button @click=${this.closeAllFeedback} class="adsp-fb-form-primary" type="button" tabindex="0">
+                        <button
+                          @click=${this.closeAllFeedback}
+                          id="feedback-close-success"
+                          class="adsp-fb-form-primary"
+                          type="button"
+                          tabindex="0"
+                        >
                           Close
                         </button>
                       </div>
@@ -947,6 +1030,7 @@ class AdspFeedback implements AdspFeedbackApi {
                             <button
                               @click=${this.closeErrorForm}
                               class="adsp-fb-form-primary"
+                              id="feedback-close-error"
                               type="button"
                               tabindex="0"
                             >
