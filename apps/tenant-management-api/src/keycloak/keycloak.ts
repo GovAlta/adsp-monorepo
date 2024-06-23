@@ -1,9 +1,9 @@
 import { InvalidOperationError } from '@core-services/core-common';
-import KeycloakAdminClient from '@keycloak/keycloak-admin-client';
-import ClientRepresentation from '@keycloak/keycloak-admin-client/lib/defs/clientRepresentation';
-import IdentityProviderRepresentation from '@keycloak/keycloak-admin-client/lib/defs/identityProviderRepresentation';
-import RealmRepresentation from '@keycloak/keycloak-admin-client/lib/defs/realmRepresentation';
-import RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
+import type KeycloakAdminClient from '@keycloak/keycloak-admin-client';
+import type ClientRepresentation from '@keycloak/keycloak-admin-client/lib/defs/clientRepresentation';
+import type IdentityProviderRepresentation from '@keycloak/keycloak-admin-client/lib/defs/identityProviderRepresentation';
+import type RealmRepresentation from '@keycloak/keycloak-admin-client/lib/defs/realmRepresentation';
+import type RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
 import axios from 'axios';
 import * as util from 'util';
 import { v4 as uuidv4 } from 'uuid';

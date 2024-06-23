@@ -195,6 +195,7 @@ export function* fetchRegisterData(): SagaIterator {
     );
 
     const tenantConfigs = Object.entries(tenantConfigDefinition);
+
     const registerConfigs =
       tenantConfigs
         // eslint-disable-next-line
@@ -223,13 +224,13 @@ export function* fetchRegisterData(): SagaIterator {
         // if there is active configuration, use the register in the active configuration first.
         if (data?.active && data?.active?.configuration) {
           registerData.push({
-            urn: `urn:ads:${tenantName}:${registerConfig}`,
+            urn: `urn:ads:${tenantName}:configuration:v2:/configuration/${namespace}/${service}`,
             data: data?.active?.configuration,
           });
         } else {
           if (data?.latest && data?.latest?.configuration) {
             registerData.push({
-              urn: `urn:ads:${tenantName}:${registerConfig}`,
+              urn: `urn:ads:${tenantName}:configuration:v2:/configuration/${namespace}/${service}`,
               data: data?.latest?.configuration,
             });
           }

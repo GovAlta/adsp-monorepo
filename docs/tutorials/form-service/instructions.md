@@ -130,7 +130,7 @@ You can add hypertext links in the instructions to further clarify what is neede
   "type": "HelpContent",
   "options": {
     "variant": "hyperlink",
-    "src": "https://www.thelink.com",
+    "link": "https://www.thelink.com",
     "help": "Text to wrap the link in"
   }
 }

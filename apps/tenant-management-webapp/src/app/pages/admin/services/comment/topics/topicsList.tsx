@@ -121,15 +121,17 @@ export const TopicsList = (): JSX.Element => {
             width="100%"
             testId="comment-select-topic-type-dropdown"
           >
-            {Object.keys(topicTypes).map((item) => (
-              <GoADropdownItem
-                name="TopicTypes"
-                key={item}
-                label={item}
-                value={item}
-                testId={`${item}-get-comment-options`}
-              />
-            ))}
+            {Object.keys(topicTypes)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map((item) => (
+                <GoADropdownItem
+                  name="TopicTypes"
+                  key={item}
+                  label={item}
+                  value={item}
+                  testId={`${item}-get-comment-options`}
+                />
+              ))}
             {Object.keys(coreTopicTypes).map((item) => (
               <GoADropdownItem
                 name="CoreTopicTypes"

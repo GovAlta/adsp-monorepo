@@ -40,7 +40,7 @@ Developers should try to keep the concept of _context_ separate from that of _da
 
 ## APIs
 
-There are several [API endpoints](https://api.adsp-dev.gov.ab.ca/autotest/?urls.primaryName=Task%20service) that provide the basic operations needed to manage tasks within a queue. These operations include:
+There are several [API endpoints](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Task%20service) that provide the basic operations needed to manage tasks within a queue. These operations include:
 
 - assigning workers to tasks
 - setting task priority

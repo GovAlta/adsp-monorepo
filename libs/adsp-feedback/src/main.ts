@@ -127,7 +127,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
     if (this.feedbackFormRef.value) {
-      this.feedbackFormRef.value.style.height = '600px';
+      this.feedbackFormRef.value.style.height = '640px';
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
@@ -321,7 +321,7 @@ class AdspFeedback implements AdspFeedbackApi {
         this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
       }
       if (this.feedbackFormRef.value) {
-        this.feedbackFormRef.value.style.height = '420px';
+        this.feedbackFormRef.value.style.height = '390px';
       }
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
@@ -476,6 +476,17 @@ class AdspFeedback implements AdspFeedbackApi {
             border-radius: 0 0.25rem 0.25rem 0;
             transform: rotate(-180deg);
           }
+          .adsp-fb .adsp-fb-badge:hover {
+            border-color: #004f84;
+            background-color: #004f84;
+          }
+          .adsp-fb .adsp-fb-badge:focus {
+            border-color: #004f84;
+            background-color: #004f84;
+          }
+          .adsp-fb .adsp-fb-badge:active {
+            box-shadow: 0 0 0 3px #feba35;
+          }
 
           .adsp-fb .adsp-fb-form-container {
             z-index: 2;
@@ -490,15 +501,16 @@ class AdspFeedback implements AdspFeedbackApi {
             transform: translateX(-50%);
           }
           .adsp-fb .adsp-fb-start {
-            height: 325px;
+            height: 330px;
           }
           .adsp-fb .adsp-fb-container-heading {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
             padding-right: 20px;
-            padding-top: 1rem;
-            padding-left: 1rem;
+            padding-left: 1.25rem;
+            align-items: center;
+            height: 74px;
             > img {
               cursor: pointer;
             }
@@ -507,21 +519,23 @@ class AdspFeedback implements AdspFeedbackApi {
             display: flex;
             box-sizing: border-box;
             flex-direction: column;
-            padding: 36px 24px;
-            transition: transform 100ms;
+            padding: 0 0 36px 24px;
+            transition: transform 0.001ms;
             height: 100%;
             justify-content: space-between;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 375px;
-            overflow-y: scroll;
+            max-height: 455px;
+            overflow-y: auto !important;
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
+            padding-top: 36px;
           }
           .adsp-fb .adsp-fb-form-rating {
             display: flex;
             flex-direction: row;
+            gap: 24px;
             border: 0;
             margin-top: 12px;
             justify-content: space-between;
@@ -529,7 +543,11 @@ class AdspFeedback implements AdspFeedbackApi {
 
             > div > img {
               height: 46px;
-              padding-right: 24px;
+              padding-right: 14px;
+              padding-left: 14px;
+            }
+            > div > img:first-child {
+              padding-left: 0px;
             }
             > div > p {
               visibility: hidden;
@@ -554,7 +572,7 @@ class AdspFeedback implements AdspFeedbackApi {
             margin-left: 3px;
             resize: none;
             min-height: 100px;
-            width: 100%;
+            width: 97%;
             border-radius: 3px;
             cursor: text;
             padding: 10px 8px;
@@ -576,10 +594,9 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .adsp-fb .adsp-fb-actions {
             display: flex;
-            bottom: 0;
             padding-bottom: 48px;
-            padding-right: 24px;
-            margin-top: 32px;
+            padding-right: 32px;
+            margin-top: 16px;
             margin-bottom: 32px;
           }
           .adsp-fb button {
@@ -598,23 +615,54 @@ class AdspFeedback implements AdspFeedbackApi {
             border: 2px solid #0070c4;
             color: #0070c4;
           }
+          .adsp-fb button:active {
+            transform: translateY(2px);
+          }
+
           .adsp-fb button:first-child {
             margin-left: auto !important;
           }
           .adsp-fb button.adsp-fb-form-primary {
+            border: 2px solid #0070c4;
             margin-left: 24px;
             background: #0070c4;
             color: #ffffff;
           }
-          .adsp-fb button.adsp-fb-form-primary:hover {
+
+          .adsp-fb button:hover {
             border-color: #004f84;
             background-color: #004f84;
+          }
+
+          .adsp-fb button:focus:active {
+            border-color: #004f84;
+            background-color: #004f84;
+            box-shadow: 0 0 0 3px #feba35;
           }
 
           .adsp-fb button[disabled] {
             pointer-events: none;
             opacity: 0.5;
           }
+
+          .adsp-fb button.adsp-fb-form-secondary {
+            border: 2px solid #0070c4;
+            background-color: #ffffff;
+            color: #0070c4;
+          }
+
+          .adsp-fb button.adsp-fb-form-secondary:hover {
+            border-color: #004f84;
+            color: #004f84;
+            background-color: #f1f1f1;
+          }
+          .adsp-fb button.adsp-fb-form-secondary:focus,
+          .adsp-fb button.adsp-fb-form-secondary:active {
+            border-color: #004f84;
+            background-color: #f1f1f1;
+            outline: none;
+          }
+
           .adsp-fb .adsp-fb-message {
             position: absolute;
             visibility: hidden;
@@ -684,7 +732,6 @@ class AdspFeedback implements AdspFeedbackApi {
             visibility: visible;
           }
           .radios {
-            margin-bottom: 32px;
             margin-top: 16px;
             display: flex;
             flex-direction: row;
@@ -695,16 +742,16 @@ class AdspFeedback implements AdspFeedbackApi {
             transition: transform 0.3s ease-in-out color 0.3s ease;
           }
 
-          hr {
-            margin-top: 0.25rem;
-          }
           .title {
             font-weight: 700;
             line-height: 24px;
             text-align: left;
+            margin-bottom: 0px;
           }
+
           .help-text {
-            margin-bottom: 32px;
+            margin-top: 12px;
+            margin-bottom: 12px;
             font-size: 14px;
             line-height: 28px;
           }
@@ -739,16 +786,14 @@ class AdspFeedback implements AdspFeedbackApi {
             border: 7px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
           }
-          .radio:checked {
-            border: 7px solid #0070c4;
-          }
           .radio:hover {
             border: 1px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
           }
-          .radio:focus {
-            box-shadow: 0 0 0 3px #feba35;
+          .radio:checked {
+            border: 7px solid #0070c4;
           }
+
           .radio:hover:active {
             box-shadow: 0 0 0 3px #feba35;
           }
@@ -769,6 +814,22 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .successButton {
             margin-top: 24px;
+          }
+          .styled-hr {
+            border: none;
+            height: 1px;
+            background-color: #ccc;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+          }
+          .p-error {
+            margin-left: 36px;
+            margin-right: 36px;
+          }
+          .h3-subtitle {
+            padding-top: 36px;
+          }
+          .p-content {
+            margin-right: 24px;
           }
           @media screen and (max-width: 768px) {
             .adsp-fb div.adsp-fb-form-container {
@@ -793,6 +854,9 @@ class AdspFeedback implements AdspFeedbackApi {
             .adsp-fb button.adsp-fb-form-primary {
               margin-left: 0;
             }
+            .adsp-fb .adsp-fb-container-heading {
+              height: 55px !important;
+            }
             .adsp-fb .adsp-fb-form-rating {
               flex-direction: column-reverse;
               align-items: left;
@@ -809,7 +873,6 @@ class AdspFeedback implements AdspFeedbackApi {
                 visibility: visible;
                 display: block;
                 padding: 0;
-                margin-left: 6px;
               }
               > div > p :hover {
                 color: #004f84;
@@ -867,10 +930,10 @@ class AdspFeedback implements AdspFeedbackApi {
                       alt="close feedback"
                     />
                   </div>
-                  <hr />
+                  <hr class="styled-hr" />
                   <form class="adsp-fb-form">
-                    <h3>Tell us what you think</h3>
-                    <p>
+                    <h3 class="h3-subtitle">Tell us what you think</h3>
+                    <p class="p-content">
                       Please help us improve our service by sharing feedback about your experience. This will only take
                       a minute.
                     </p>
@@ -902,7 +965,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       alt="close feedback"
                     />
                   </div>
-                  <hr />
+                  <hr class="styled-hr" />
                   <form class="adsp-fb-form">
                     <div ${ref(this.feedbackContentFormRef)} class="adsp-fb-content">
                       <label for="comment"
@@ -913,16 +976,12 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                       <div class="adsp-fb-form-comment">
                         <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
-                        <textarea
-                          id="comment"
-                          ${ref(this.commentRef)}
-                          placeholder="300 characters remaining"
-                        ></textarea>
+                        <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
                         <span class="help-text"
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
                       </div>
-                      <hr />
+                      <hr class="styled-hr" />
                       <br />
                       <div class="radio-container">
                         <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
@@ -952,7 +1011,6 @@ class AdspFeedback implements AdspFeedbackApi {
                             <span class="radio-label"> No </span>
                           </div>
                         </div>
-                        <hr />
                         <div ${ref(this.technicalCommentDivRef)}>
                           <div class="adsp-fb-form-comment">
                             <label for="comment"
@@ -996,7 +1054,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         Success!
                         <img src=${greenCircleCheckmarkSvg} width="18px" height="18px" alt="Success" />
                       </h3>
-                      <p>
+                      <p class="p-content">
                         Thank you for providing your feedback. We will use your input to improve the service. You will
                         not receive a response from this submission. If you do require a response, you can contact
                         government through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
@@ -1022,7 +1080,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         <img src=${blueUnderLineSvg} width="50px" />
                         <div>
                           <h3>We are experiencing a problem</h3>
-                          <p>
+                          <p class="p-error">
                             we are experiencing an issue trying to load this page. Please try again in a few minutes. We
                             apologize for the inconvenience.
                           </p>

@@ -1,6 +1,6 @@
 import { AdspId, ServiceRole } from '@abgov/adsp-service-sdk';
-import ClientRepresentation from '@keycloak/keycloak-admin-client/lib/defs/clientRepresentation';
-import RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
+import type ClientRepresentation from '@keycloak/keycloak-admin-client/lib/defs/clientRepresentation';
+import type RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
 import { v4 as uuidv4 } from 'uuid';
 import { environment } from '../environments/environment';
 

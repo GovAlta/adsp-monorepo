@@ -32,7 +32,8 @@
     "statusAppUrl": "https://status.adsp-uat.alberta.ca",
     "subscriptionUrl": "https://subscription.adsp-uat.alberta.ca",
     "formApi": "https://form-service.adsp-uat.alberta.ca/",
-    "formAppUrl": "https://form.adsp-uat.alberta.ca/"
+    "formAppUrl": "https://form.adsp-uat.alberta.ca/",
+    "taskApi": "https://task-service.adsp-uat.alberta.ca"
   },
   "baseUrl": "https://adsp-uat.alberta.ca",
   "numTestsKeptInMemory": 0,
