@@ -840,10 +840,11 @@ class AdspFeedback implements AdspFeedbackApi {
               bottom: 0;
               border: 0;
               width: 100%;
+              position: fixed;
+              width: 640px;
+              top: auto;
             }
             .adsp-fb .adsp-fb-actions {
-              position: -webkit-sticky;
-              position: sticky;
               bottom: 0;
               flex-direction: column-reverse;
               > button {
