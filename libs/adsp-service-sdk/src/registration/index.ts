@@ -10,14 +10,66 @@ import { ValueDefinition } from '../value';
 import { ServiceRegistrarImpl } from './registration';
 
 export interface ServiceRole {
+  /**
+   * Name of the role.
+   *
+   * @type {string}
+   * @memberof ServiceRole
+   */
   role: string;
+  /**
+   * Description of the role.
+   *
+   * @type {string}
+   * @memberof ServiceRole
+   */
   description: string;
+  /**
+   * Flag indicating if the role should be part of the tenant admin composite role.
+   * If true tenant administrators will have permissions associated with this role.
+   *
+   * @type {boolean}
+   * @memberof ServiceRole
+   */
   inTenantAdmin?: boolean;
 }
 
-export interface ServiceRegistration {
-  /** Service ID: ADSP ID of the service. */
+interface ConfigurationRegistrationOptions {
+  /**
+   * JSON schema of the configuration.
+   *
+   * @type {Record<string, unknown>}
+   * @memberof ConfigurationRegistrationOptions
+   */
+  schema: Record<string, unknown>;
+  /**
+   * Description of the configuration.
+   *
+   * @type {string}
+   * @memberof ConfigurationRegistrationOptions
+   */
+  description: string;
+  /**
+   * Flag indicating if the service uses a full namespace for configuration.
+   * If false the service configuration is a single document stored under [service namespace]:[service name];
+   * otherwise the service can have many configuration at different names under [service name]:[configuration name].
+   *
+   * @type {boolean}
+   * @memberof ConfigurationRegistrationOptions
+   */
+  useNamespace?: boolean;
+  /**
+   * Flag indicating if the active revision should be retrieved.
+   * If true active revision will be retrieved with fallback to latest is no active revision is set;
+   * otherwise the latest revision is retrieved.
+   *
+   * @type {boolean}
+   * @memberof ConfigurationRegistrationOptions
+   */
+  useActive?: boolean;
+}
 
+export interface ServiceRegistration {
   /**
    * Service ID: ADSP ID of the service.
    *
@@ -76,7 +128,7 @@ export interface ServiceRegistration {
    * @type {schema: Record<string, unknown>, description: string}
    * @memberof ServiceRegistration
    */
-  configuration?: { schema: Record<string, unknown>; description: string };
+  configuration?: ConfigurationRegistrationOptions;
   /**
    * Events: Definitions of domain events of the service.
    *

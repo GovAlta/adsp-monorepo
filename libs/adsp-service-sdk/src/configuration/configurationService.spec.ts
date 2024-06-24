@@ -17,6 +17,7 @@ jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('ConfigurationService', () => {
+  const serviceId = adspId`urn:ads:platform:test`;
   const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
@@ -29,17 +30,23 @@ describe('ConfigurationService', () => {
     getResourceUrl: jest.fn(),
   };
 
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(() => Promise.resolve('token')),
+  };
+
   beforeEach(() => {
+    cacheMock.mockReset();
     cacheClear.mockReset();
+    axiosMock.get.mockReset();
   });
 
   it('can be constructed', () => {
-    const service = new ConfigurationServiceImpl(logger, directoryMock);
+    const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
     expect(service).toBeTruthy();
   });
 
   it('can getConfiguration from cache', async () => {
-    const service = new ConfigurationServiceImpl(logger, directoryMock);
+    const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
     const config = { value: 'this is config' };
     cacheMock.mockReturnValueOnce(config);
@@ -53,7 +60,7 @@ describe('ConfigurationService', () => {
   });
 
   it('can retrieve from API on cache miss', async () => {
-    const service = new ConfigurationServiceImpl(logger, directoryMock);
+    const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(null);
@@ -73,8 +80,29 @@ describe('ConfigurationService', () => {
     expect(options.value).toBe(configOptions.value);
   });
 
+  it('can retrieve active from API on cache miss', async () => {
+    const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock, false, true);
+
+    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce(null);
+
+    const config = { value: 'this is config' };
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
+    const configOptions = { value: 'this is core' };
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: configOptions } }));
+
+    const [result, options] = await service.getConfiguration<{ value: string }>(
+      adspId`urn:ads:platform:test`,
+      'test',
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+    );
+
+    expect(result.value).toBe(config.value);
+    expect(options.value).toBe(configOptions.value);
+  });
+
   it('can handle no configuration from API', async () => {
-    const service = new ConfigurationServiceImpl(logger, directoryMock);
+    const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(null);
@@ -96,7 +124,15 @@ describe('ConfigurationService', () => {
   it('can use converter', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const converter = () => ({ value: 'converted' });
-    const service = new ConfigurationServiceImpl(logger, directoryMock, converter);
+    const service = new ConfigurationServiceImpl(
+      serviceId,
+      logger,
+      directoryMock,
+      tokenProviderMock,
+      false,
+      false,
+      converter
+    );
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(null);
@@ -117,7 +153,15 @@ describe('ConfigurationService', () => {
   });
 
   it('can use default if null converter provided', async () => {
-    const service = new ConfigurationServiceImpl(logger, directoryMock, null);
+    const service = new ConfigurationServiceImpl(
+      serviceId,
+      logger,
+      directoryMock,
+      tokenProviderMock,
+      false,
+      false,
+      null
+    );
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(null);
@@ -139,7 +183,16 @@ describe('ConfigurationService', () => {
 
   it('can use combine', async () => {
     const combine = () => 'combined';
-    const service = new ConfigurationServiceImpl(logger, directoryMock, null, combine);
+    const service = new ConfigurationServiceImpl(
+      serviceId,
+      logger,
+      directoryMock,
+      tokenProviderMock,
+      false,
+      false,
+      null,
+      combine
+    );
 
     cacheMock.mockReturnValueOnce({ value: 'this is tenant' });
     cacheMock.mockReturnValueOnce({ value: 'this is core' });
@@ -155,7 +208,16 @@ describe('ConfigurationService', () => {
 
   it('can use combine with memoized result', async () => {
     const combine = jest.fn(() => 'combined');
-    const service = new ConfigurationServiceImpl(logger, directoryMock, null, combine);
+    const service = new ConfigurationServiceImpl(
+      serviceId,
+      logger,
+      directoryMock,
+      tokenProviderMock,
+      false,
+      false,
+      null,
+      combine
+    );
 
     const tenant = { value: 'this is tenant' };
     const core = { value: 'this is core' };
@@ -184,12 +246,91 @@ describe('ConfigurationService', () => {
 
   it('can clear cached', () => {
     const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-    const serviceId = adspId`urn:ads:platform:test`;
-    const service = new ConfigurationServiceImpl(logger, directoryMock);
+    const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
     cacheClear.mockReturnValueOnce(1);
-    service.clearCached(tenantId, serviceId);
+    service.clearCached(tenantId, serviceId.namespace, serviceId.service);
 
     expect(cacheClear).toHaveBeenCalled();
+  });
+
+  describe('getServiceConfiguration', () => {
+    it('can retrieve configuration', async () => {
+      const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
+
+      const config = { value: 'this is config' };
+      cacheMock.mockReturnValueOnce(config);
+      const [result] = await service.getServiceConfiguration<{ value: string }>(
+        null,
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      );
+
+      expect(result.value).toBe(config.value);
+    });
+
+    it('can retrieve named configuration', async () => {
+      const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock, true, false);
+
+      const config = { value: 'this is config' };
+      cacheMock.mockReturnValueOnce(config);
+      const [result] = await service.getServiceConfiguration<{ value: string }>(
+        'test',
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      );
+
+      expect(result.value).toBe(config.value);
+    });
+
+    it('can throw for unspecified named configuration', async () => {
+      const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock, true, false);
+
+      const config = { value: 'this is config' };
+      cacheMock.mockReturnValueOnce(config);
+      await expect(
+        service.getServiceConfiguration<{ value: string }>(
+          null,
+          adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        )
+      ).rejects.toThrow(Error);
+    });
+
+    it('can retrieve from API on cache miss', async () => {
+      const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock, true);
+
+      cacheMock.mockReturnValueOnce(null);
+      cacheMock.mockReturnValueOnce(null);
+
+      const config = { value: 'this is config' };
+      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
+      const configOptions = { value: 'this is core' };
+      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: configOptions }));
+
+      const [result, options] = await service.getServiceConfiguration<{ value: string }>(
+        'test',
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      );
+
+      expect(result.value).toBe(config.value);
+      expect(options.value).toBe(configOptions.value);
+    });
+
+    it('can handle no configuration from API', async () => {
+      const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
+
+      cacheMock.mockReturnValueOnce(null);
+      cacheMock.mockReturnValueOnce(null);
+
+      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: null }));
+      const configOptions = { value: 'this is core' };
+      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: configOptions }));
+
+      const [result, options] = await service.getServiceConfiguration<{ value: string }>(
+        'test',
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      );
+
+      expect(result).toBeFalsy();
+      expect(options.value).toBe(configOptions.value);
+    });
   });
 });

@@ -69,8 +69,12 @@ describe('ConfigurationEntity', () => {
   });
 
   it('can handle invalid schema', () => {
-    const schema = { type: 'object', properties: { valueA: { type: 'number' } }, additionalProperties: null };
-    const revisedDefinition: ConfigurationDefinition = { ...definition, configurationSchema: schema };
+    const configurationSchema = {
+      type: 'object',
+      properties: { valueA: { type: 'number' } },
+      additionalProperties: null,
+    };
+    const revisedDefinition: ConfigurationDefinition = { ...definition, configurationSchema };
     validationMock.setSchema.mockImplementationOnce(() => {
       throw new Error('');
     });
