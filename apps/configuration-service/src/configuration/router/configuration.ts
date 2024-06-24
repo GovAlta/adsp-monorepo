@@ -433,7 +433,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name',
-    //coreTenantPassortAuthenticateHandler,
+    coreTenantPassortAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(
