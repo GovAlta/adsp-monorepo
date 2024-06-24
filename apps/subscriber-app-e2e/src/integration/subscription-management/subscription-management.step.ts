@@ -74,10 +74,6 @@ When('the user clicks edit contact information button', function () {
   subscriptionManagementObj.editContactInformation().shadow().find('button').click({ force: true });
 });
 
-And('the user enters an invalid phone number in contact information', function () {
-  subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear().type('123', { force: true });
-});
-
 And('the user clicks Save button in contact information', function () {
   subscriptionManagementObj.contactInformationSaveBtn().shadow().find('button').click({ force: true });
 });
