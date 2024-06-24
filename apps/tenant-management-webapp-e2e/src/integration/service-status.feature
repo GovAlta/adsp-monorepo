@@ -108,7 +108,7 @@ Feature: Service status
     Then the user views the subscribe checkbox is "unchecked"
     # Subscribe application health change notifications
     When the user "selects" the subscribe checkbox for health check notification type
-    Then the user views a notification message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+    Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
     When the user selects the "Dashboard" menu item
     And the user selects the "Status" menu item
     And the user selects "Applications" tab for "Status"
@@ -257,9 +257,9 @@ Feature: Service status
     Then the user should be able to view "autotest-status-admin@gov.ab.ca" as support email in the status app for "Autotest" tenant
     Given a tenant admin user is on status overview page
     When the user clicks Edit button for contact information
-    And the user enters "test@gov.ab.ca" in Edit contact information modal
+    And the user enters "adsp1.t@gov.ab.ca" in Edit contact information modal
     And the user clicks Save button on contact information modal
-    Then the user views "test@gov.ab.ca" as the email of contact information
+    Then the user views "adsp1.t@gov.ab.ca" as the email of contact information
 
   @TEST_CS-333 @REQ_CS-163 @regression
   Scenario: As a tenant admin, I can update the status of my service/app, so it is available to the public
