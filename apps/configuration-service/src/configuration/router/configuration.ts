@@ -107,8 +107,8 @@ export function getConfigurationEntity(
       const getCore = requestCore(req);
       const tenantId = getTenantId(req);
 
-      //if user is is not logged in and is not authenticate we want
-      //to do rate limiting
+      //if user is not logged in and is not authenticated we want
+      //to do rate limiting for anonymous users.
       if (!req.isAuthenticated && !req.isAuthenticated() && !user) {
         rateLimitHandler(req, _res, next);
       }
