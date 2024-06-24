@@ -854,10 +854,13 @@ class AdspFeedback implements AdspFeedbackApi {
               bottom: 0;
               border: 0;
               width: 100%;
-              position: fixed;
-              width: 640px;
               top: auto;
             }
+
+            .overlay {
+              background: rgb(128, 128, 128);
+            }
+
             .adsp-fb .adsp-fb-actions {
               bottom: 0;
               flex-direction: column-reverse;
