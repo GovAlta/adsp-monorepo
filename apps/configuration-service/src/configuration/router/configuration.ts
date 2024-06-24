@@ -1,4 +1,5 @@
 import { AdspId, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import * as passport from 'passport';
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
@@ -7,7 +8,7 @@ import {
   Results,
   decodeAfter,
 } from '@core-services/core-common';
-import { rateLimit } from 'express-rate-limit';
+import { rateLimit, RateLimitRequestHandler } from 'express-rate-limit';
 import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, query } from 'express-validator';
 import { isEqual as isDeepEqual, unset, cloneDeep } from 'lodash';
@@ -41,6 +42,11 @@ const rateLimitHandler = rateLimit({
   legacyHeaders: false,
 });
 
+const coreTenantPassortAuthenticateHandler: RequestHandler = (req, res, next) => {
+  passport.authenticate(['core', 'tenant'], { session: false });
+  next();
+};
+
 const getDefinition = async (
   configurationServiceId: AdspId,
   repository: ConfigurationRepository,
@@ -67,7 +73,7 @@ const getDefinition = async (
   }
 };
 
-const getTenantId = (req: Request): AdspId => {
+export const getTenantId = (req: Request): AdspId => {
   if (req.isAuthenticated && !req.isAuthenticated() && req.query.tenant) {
     return AdspId.parse(req.query.tenant as string);
   }
@@ -88,6 +94,7 @@ const getTenantId = (req: Request): AdspId => {
 export function getConfigurationEntity(
   configurationServiceId: AdspId,
   repository: ConfigurationRepository,
+  rateLimitHandler: RateLimitRequestHandler,
   loadDefinition: boolean = true,
   requestCore = (_req: Request): boolean => false
 ): RequestHandler {
@@ -100,13 +107,19 @@ export function getConfigurationEntity(
       const getCore = requestCore(req);
       const tenantId = getTenantId(req);
 
+      //if user is is not logged in and is not authenticate we want
+      //to do rate limiting
+      if (!req.isAuthenticated && !req.isAuthenticated() && !user) {
+        rateLimitHandler(req, _res, next);
+      }
+
       const definition = loadDefinition
         ? await getDefinition(configurationServiceId, repository, namespace, name, tenantId)
         : undefined;
 
       const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition);
 
-      if (req.isAuthenticated() && user) {
+      if (req.isAuthenticated && req.isAuthenticated() && user) {
         if (!entity.canAccess(user)) {
           throw new UnauthorizedUserError('access configuration', user);
         }
@@ -420,47 +433,58 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name',
-    rateLimitHandler,
+    //coreTenantPassortAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
+    getConfigurationEntity(
+      serviceId,
+      configurationRepository,
+      rateLimitHandler,
+      false,
+      (req) => req.query.core !== undefined
+    ),
     getConfigurationWithActive()
   );
 
   router.get(
     '/configuration/:namespace/:name/latest',
-    rateLimitHandler,
     validateNamespaceNameHandler,
     createValidationHandler(query('tenant').optional().isString()),
-    getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
+    getConfigurationEntity(
+      serviceId,
+      configurationRepository,
+      rateLimitHandler,
+      false,
+      (req) => req.query.core !== undefined
+    ),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
 
   router.patch(
     '/configuration/:namespace/:name',
-    rateLimitHandler,
+    coreTenantPassortAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
-    getConfigurationEntity(serviceId, configurationRepository),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
     patchConfigurationRevision(logger, eventService)
   );
 
   router.post(
     '/configuration/:namespace/:name',
-    rateLimitHandler,
+    coreTenantPassortAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
       body('operation').isString().isIn([OPERATION_SET_ACTIVE_REVISION, OPERATION_CREATE_REVISION])
     ),
-    getConfigurationEntity(serviceId, configurationRepository),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
     configurationOperations(logger, eventService)
   );
 
   router.get(
     '/configuration/:namespace/:name/revisions',
-    rateLimitHandler,
+    coreTenantPassortAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -472,14 +496,13 @@ export function createConfigurationRouter({
           return !isNaN(decodeAfter(val));
         })
     ),
-    getConfigurationEntity(serviceId, configurationRepository, false),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, false),
     getRevisions()
   );
 
   router.get(
     '/configuration/:namespace/:name/active',
     validateNamespaceNameHandler,
-    rateLimitHandler,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after')
@@ -489,14 +512,14 @@ export function createConfigurationRouter({
           return !isNaN(decodeAfter(val));
         })
     ),
-    getConfigurationEntity(serviceId, configurationRepository, false),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, false),
     getActiveRevision(logger)
   );
 
   router.get(
     '/configuration/:namespace/:name/revisions/:revision',
+    coreTenantPassortAuthenticateHandler,
     assertAuthenticatedHandler,
-    rateLimitHandler,
     createValidationHandler(
       ...checkSchema(
         {
@@ -507,7 +530,7 @@ export function createConfigurationRouter({
         ['params']
       )
     ),
-    getConfigurationEntity(serviceId, configurationRepository, false),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, false),
     getRevisions(
       (req) => ({ revision: req.params.revision }),
       (req, { results }) => {

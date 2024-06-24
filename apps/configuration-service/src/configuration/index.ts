@@ -41,10 +41,12 @@ export const applyConfigurationMiddleware = async (
   };
 
   const entity = await configuration.get<ConfigurationDefinitions>(serviceId.namespace, serviceId.service, null, {
+    anonymousRead: false,
     configurationSchema: schema,
   });
 
   const serviceConfiguration = {
+    anonymousRead: false,
     description: 'Definitions of configuration with description and schema.',
     configurationSchema: schema,
   };

@@ -1,5 +1,5 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import { ConfigurationEntity } from '../model';
@@ -13,6 +13,7 @@ import {
   getRevisions,
   getActiveRevision,
 } from './configuration';
+import { RateLimitRequestHandler } from 'express-rate-limit';
 
 describe('router', () => {
   const configurationServiceId = adspId`urn:ads:platform:configuration-service`;
@@ -67,12 +68,24 @@ describe('router', () => {
 
   describe('getServiceConfigurationEntity', () => {
     it('can create handler', () => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock);
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler
+      );
       expect(handler).toBeTruthy();
     });
 
     it('can get entity', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => true);
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        true,
+        () => true
+      );
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
@@ -135,7 +148,14 @@ describe('router', () => {
     });
 
     it('can get entity and not load definition', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, false, () => true);
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        false,
+        () => true
+      );
 
       const entity = new ConfigurationEntity(
         namespace,
@@ -169,7 +189,14 @@ describe('router', () => {
     });
 
     it('can get tenant entity', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        true,
+        () => false
+      );
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
@@ -232,7 +259,14 @@ describe('router', () => {
       });
     });
     it('can get configuration entity for unauthenticated users.', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        true,
+        () => false
+      );
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
@@ -306,71 +340,15 @@ describe('router', () => {
       });
     });
 
-    it('can return error for unauthorized', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
-
-      // Configuration definition retrieval.
-      repositoryMock.get.mockResolvedValueOnce(
-        new ConfigurationEntity(
-          configurationServiceId.namespace,
-          configurationServiceId.service,
-          loggerMock as Logger,
-          repositoryMock,
-          activeRevisionMock,
-          validationMock
-        )
-      );
-
-      activeRevisionMock.get.mockResolvedValueOnce({
-        namespace: configurationServiceId.namespace,
-        name: configurationServiceId.service,
-        tenant: tenantId,
-        active: 2,
-      });
-      repositoryMock.get.mockResolvedValueOnce(
-        new ConfigurationEntity(
-          configurationServiceId.namespace,
-          configurationServiceId.service,
-          loggerMock as Logger,
-          repositoryMock,
-          activeRevisionMock,
-          validationMock,
-          null,
-          tenantId
-        )
-      );
-
-      const entity = new ConfigurationEntity(
-        namespace,
-        name,
-        loggerMock as Logger,
-        repositoryMock,
-        activeRevisionMock,
-        validationMock,
-        null,
-        tenantId
-      );
-      repositoryMock.get.mockResolvedValueOnce(entity);
-
-      const req = {
-        tenant: { id: tenantId },
-        user: { isCore: false, roles: [], tenantId } as User,
-        params: { namespace, name },
-        query: {},
-      } as unknown as Request;
-
-      handler(req, null, (err) => {
-        try {
-          expect(err).toBeTruthy();
-          done();
-        } catch (err) {
-          done(err);
-        }
-      });
-    });
-
     it('can get entity with core definition', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        true,
+        () => false
+      );
 
       // Configuration definition retrieval.
       const configurationSchema = {};
@@ -433,7 +411,14 @@ describe('router', () => {
     });
 
     it('can get entity with tenant definition', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        true,
+        () => false
+      );
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
@@ -509,7 +494,14 @@ describe('router', () => {
     });
 
     it('can get entity with tenant namespace definition', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        true,
+        () => false
+      );
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
@@ -1311,6 +1303,48 @@ describe('router', () => {
       const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+      } as unknown as Request;
+
+      entity.getActiveRevision.mockResolvedValueOnce(activeRevision);
+
+      entity.getRevisions.mockResolvedValueOnce({
+        results: [{ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } }],
+      });
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      await handler(req, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } })
+      );
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+    });
+
+    it('can get active revision with no user context', async () => {
+      const handler = getActiveRevision(loggerMock as Logger);
+
+      const activeRevision = 3;
+
+      const entity = {
+        tenantId,
+        namespace,
+        name,
+        createRevision: jest.fn(() => Promise.resolve(entity)),
+        getRevisions: jest.fn(),
+        getActiveRevision: jest.fn(),
+        latest: null,
+      };
+
+      const req = {
+        entity,
+        user: null,
         params: { namespace, name },
         query: {},
       } as unknown as Request;
