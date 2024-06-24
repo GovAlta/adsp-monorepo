@@ -42,7 +42,7 @@ const rateLimitHandler = rateLimit({
   legacyHeaders: false,
 });
 
-const coreTenantPassortAuthenticateHandler: RequestHandler = (req, res, next) => {
+const coreTenantPassportAuthenticateHandler: RequestHandler = (req, res, next) => {
   passport.authenticate(['core', 'tenant'], { session: false });
   next();
 };
@@ -433,7 +433,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name',
-    coreTenantPassortAuthenticateHandler,
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(
@@ -462,7 +462,7 @@ export function createConfigurationRouter({
 
   router.patch(
     '/configuration/:namespace/:name',
-    coreTenantPassortAuthenticateHandler,
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
@@ -472,7 +472,7 @@ export function createConfigurationRouter({
 
   router.post(
     '/configuration/:namespace/:name',
-    coreTenantPassortAuthenticateHandler,
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -484,7 +484,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/revisions',
-    coreTenantPassortAuthenticateHandler,
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -518,7 +518,7 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/revisions/:revision',
-    coreTenantPassortAuthenticateHandler,
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     createValidationHandler(
       ...checkSchema(
