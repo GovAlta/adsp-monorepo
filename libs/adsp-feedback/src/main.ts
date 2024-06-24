@@ -736,7 +736,10 @@ class AdspFeedback implements AdspFeedbackApi {
             display: flex;
             flex-direction: row;
           }
-
+          .radio-span {
+            display: flex;
+            align-items: center;
+          }
           .rating {
             cursor: pointer;
             transition: transform 0.3s ease-in-out color 0.3s ease;
@@ -760,7 +763,11 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: column;
             cursor: pointer;
           }
-
+          .radio-div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+          }
           .radio {
             appearance: none;
             width: 24px;
@@ -821,6 +828,13 @@ class AdspFeedback implements AdspFeedbackApi {
             background-color: #ccc;
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
           }
+          .hr-width {
+            width: 97%;
+          }
+          .full-width-hr-container {
+            margin-left: -24px;
+          }
+
           .p-error {
             margin-left: 36px;
             margin-right: 36px;
@@ -848,8 +862,6 @@ class AdspFeedback implements AdspFeedbackApi {
             }
 
             .adsp-fb .adsp-fb-actions {
-              position: -webkit-sticky;
-              position: sticky;
               bottom: 0;
               flex-direction: column-reverse;
               > button {
@@ -987,12 +999,12 @@ class AdspFeedback implements AdspFeedbackApi {
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
                       </div>
-                      <hr class="styled-hr" />
+                      <hr class="hr-width hr-width" />
                       <br />
                       <div class="radio-container">
                         <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
-                          <div>
+                          <div class="radio-span">
                             <input
                               name="YesOrNo"
                               type="radio"
@@ -1004,7 +1016,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
                             <span class="goa-radio-label"> Yes </span>
                           </div>
-                          <div>
+                          <div class="radio-span">
                             <input
                               name="YesOrNo"
                               type="radio"
@@ -1033,6 +1045,9 @@ class AdspFeedback implements AdspFeedbackApi {
                           <br />
                         </div>
                       </div>
+                    </div>
+                    <div class="full-width-hr-container">
+                      <hr class="styled-hr" />
                     </div>
                     <div class="adsp-fb-actions">
                       <button

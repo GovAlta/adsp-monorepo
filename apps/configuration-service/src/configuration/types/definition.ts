@@ -1,4 +1,5 @@
 export interface ConfigurationDefinition {
+  anonymousRead: boolean;
   configurationSchema: Record<string, unknown>;
 }
 
