@@ -72,6 +72,17 @@ exports[`router getActiveRevision can get active revision at revision 0 1`] = `
 }
 `;
 
+exports[`router getActiveRevision can get active revision with no user context 1`] = `
+{
+  "data": {
+    "a": 42,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+  "revision": 3,
+}
+`;
+
 exports[`router getRevisions can get revisions 1`] = `{}`;
 
 exports[`router getServiceConfiguration can get configuration 1`] = `
