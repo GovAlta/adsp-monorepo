@@ -33,6 +33,9 @@ import {
   ReviewItemTitle,
   ReviewItemBasic,
   FormDispositionDetail,
+  ReviewContainer,
+  FormInformation,
+  ReviewMenu,
 } from './styled-components';
 import { RenderFormReviewFields } from './RenderFormReviewFields';
 import { ajv } from '../../../lib/validations/checkInput';
@@ -129,50 +132,52 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const renderFormSubmissionReview = () => {
     return (
       <PlaceholderDiv>
-        <LoadingIndicator isLoading={loading} />
-        {!loading && categories && (
-          <ReviewItem>
-            {categories.map((category, index) => {
-              const categoryLabel = category.label || category.i18n || '';
-              const requiredFields = getAllRequiredFields(definition?.dataSchema);
+        <div>
+          <LoadingIndicator isLoading={loading} />
+          {!loading && categories && (
+            <ReviewItem>
+              {categories.map((category, index) => {
+                const categoryLabel = category.label || category.i18n || '';
+                const requiredFields = getAllRequiredFields(definition?.dataSchema);
 
-              return (
-                <div>
-                  {category?.type === 'Control' ? (
-                    <ReviewItemBasic>
-                      <Element
-                        element={category}
-                        index={index}
-                        data={currentForm?.formData}
-                        requiredFields={requiredFields}
-                      />
-                    </ReviewItemBasic>
-                  ) : (
-                    <ReviewItemSection key={index}>
-                      <ReviewItemHeader>
-                        <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
-                      </ReviewItemHeader>
-                      <Grid>
-                        <RenderFormReviewFields
-                          elements={category?.elements}
+                return (
+                  <div>
+                    {category?.type === 'Control' ? (
+                      <ReviewItemBasic>
+                        <Element
+                          element={category}
+                          index={index}
                           data={currentForm?.formData}
                           requiredFields={requiredFields}
                         />
-                      </Grid>
-                    </ReviewItemSection>
-                  )}
-                </div>
-              );
-            })}
-          </ReviewItem>
-        )}
+                      </ReviewItemBasic>
+                    ) : (
+                      <ReviewItemSection key={index}>
+                        <ReviewItemHeader>
+                          <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
+                        </ReviewItemHeader>
+                        <Grid>
+                          <RenderFormReviewFields
+                            elements={category?.elements}
+                            data={currentForm?.formData}
+                            requiredFields={requiredFields}
+                          />
+                        </Grid>
+                      </ReviewItemSection>
+                    )}
+                  </div>
+                );
+              })}
+            </ReviewItem>
+          )}
+        </div>
       </PlaceholderDiv>
     );
   };
 
   const renderFormDisposition = () => {
     return (
-      <GoADetails ml="s" heading="Form disposition">
+      <div id="form-disposition-block">
         <FormDispositionDetail>
           <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition" mt="m" mb="s">
             <GoADropdown
@@ -216,7 +221,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             />
           </GoAFormItem>
         </FormDispositionDetail>
-      </GoADetails>
+      </div>
     );
   };
 
@@ -275,12 +280,15 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     );
   };
   return (
-    <div>
-      {renderFormSubmissionReview()}
-      {renderFormDisposition()}
-      {renderButtonGroup()}
-      {renderTaskCancelModal()}
-    </div>
+    <ReviewContainer>
+      <FormInformation>
+        {renderFormSubmissionReview()}
+        {renderFormDisposition()}
+        {renderButtonGroup()}
+        {renderTaskCancelModal()}
+      </FormInformation>
+      <ReviewMenu>Menu Item 1</ReviewMenu>
+    </ReviewContainer>
   );
 };
 

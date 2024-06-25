@@ -436,10 +436,6 @@ describe('form submission review task', () => {
       </Provider>
     );
 
-    const element = component.container.querySelectorAll('goa-details');
-    expect(element[0].getAttribute('heading') === 'Form submission review').toBe(true);
-    expect(element[1].getAttribute('heading') === 'Form disposition').toBe(true);
-
     expect(component.getByText('Personal Information')).toBeInTheDocument();
     expect(component.getByText('Address Information')).toBeInTheDocument();
     expect(component.getByText('Additional Information')).toBeInTheDocument();

@@ -48,3 +48,18 @@ export const FormDispositionDetail = styled.div`
   display: flex;
   flex-direction: column;
 `;
+
+export const ReviewContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 20px;
+`;
+
+export const FormInformation = styled.div`
+  flex: 1;
+`;
+
+export const ReviewMenu = styled.div`
+  width: 300px;
+`;
