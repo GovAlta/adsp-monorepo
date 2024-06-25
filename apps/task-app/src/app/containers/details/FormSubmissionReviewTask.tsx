@@ -129,45 +129,43 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const renderFormSubmissionReview = () => {
     return (
       <PlaceholderDiv>
-        <GoADetails ml="s" heading="Form submission review">
-          <LoadingIndicator isLoading={loading} />
-          {!loading && categories && (
-            <ReviewItem>
-              {categories.map((category, index) => {
-                const categoryLabel = category.label || category.i18n || '';
-                const requiredFields = getAllRequiredFields(definition?.dataSchema);
+        <LoadingIndicator isLoading={loading} />
+        {!loading && categories && (
+          <ReviewItem>
+            {categories.map((category, index) => {
+              const categoryLabel = category.label || category.i18n || '';
+              const requiredFields = getAllRequiredFields(definition?.dataSchema);
 
-                return (
-                  <div>
-                    {category?.type === 'Control' ? (
-                      <ReviewItemBasic>
-                        <Element
-                          element={category}
-                          index={index}
+              return (
+                <div>
+                  {category?.type === 'Control' ? (
+                    <ReviewItemBasic>
+                      <Element
+                        element={category}
+                        index={index}
+                        data={currentForm?.formData}
+                        requiredFields={requiredFields}
+                      />
+                    </ReviewItemBasic>
+                  ) : (
+                    <ReviewItemSection key={index}>
+                      <ReviewItemHeader>
+                        <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
+                      </ReviewItemHeader>
+                      <Grid>
+                        <RenderFormReviewFields
+                          elements={category?.elements}
                           data={currentForm?.formData}
                           requiredFields={requiredFields}
                         />
-                      </ReviewItemBasic>
-                    ) : (
-                      <ReviewItemSection key={index}>
-                        <ReviewItemHeader>
-                          <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
-                        </ReviewItemHeader>
-                        <Grid>
-                          <RenderFormReviewFields
-                            elements={category?.elements}
-                            data={currentForm?.formData}
-                            requiredFields={requiredFields}
-                          />
-                        </Grid>
-                      </ReviewItemSection>
-                    )}
-                  </div>
-                );
-              })}
-            </ReviewItem>
-          )}
-        </GoADetails>
+                      </Grid>
+                    </ReviewItemSection>
+                  )}
+                </div>
+              );
+            })}
+          </ReviewItem>
+        )}
       </PlaceholderDiv>
     );
   };
