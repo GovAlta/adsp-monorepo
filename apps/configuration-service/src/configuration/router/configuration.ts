@@ -117,20 +117,7 @@ export function getConfigurationEntity(
         ? await getDefinition(configurationServiceId, repository, namespace, name, tenantId)
         : undefined;
 
-      let tenant: string | AdspId = undefined;
-      if (getCore) {
-        tenant = null;
-      } else if (!getCore && user) {
-        tenant = tenantId;
-      } else if (!getCore) {
-        if (req.query.tenant === '') {
-          tenant = '';
-        } else {
-          tenant = AdspId.isAdspId(req.query.tenant) ? AdspId.parse(req.query.tenant as string) : '';
-        }
-      }
-
-      const entity = await repository.get(namespace, name, tenant, definition);
+      const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition);
 
       if (req.isAuthenticated && req.isAuthenticated() && user) {
         if (!entity.canAccess(user)) {

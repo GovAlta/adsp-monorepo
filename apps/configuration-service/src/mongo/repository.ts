@@ -33,8 +33,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     tenantId?: AdspId,
     definition?: ConfigurationDefinition
   ): Promise<ConfigurationEntity<C>> {
-    const tenant = tenantId;
-    const query = { namespace, name, tenant };
+    const tenant = tenantId?.toString() || { $exists: true };
+    const query = { namespace, name, tenant: tenantId === null || tenantId === undefined ? '' : tenant };
 
     const latestDoc = await new Promise<ConfigurationRevisionDoc>((resolve, reject) => {
       this.revisionModel
