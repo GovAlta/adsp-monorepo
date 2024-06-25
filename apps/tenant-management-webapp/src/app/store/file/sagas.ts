@@ -217,12 +217,12 @@ export function* fetchFileTypes(): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }),
       });
-      const fileTypeInfo = Object.entries(tenant?.data)
+      const fileTypeInfo = Object.entries(tenant?.data || {})
         .map(([_k, type]) => type as FileTypeItem)
         .sort((fileType1, fileType2) => {
           return fileType1.name.localeCompare(fileType2.name);
         });
-      const coreFileTypeInfo = Object.entries(core?.data?.latest?.configuration)
+      const coreFileTypeInfo = Object.entries(core?.data?.latest?.configuration || {})
         .map(([_k, type]) => type as FileTypeItem)
         .sort((fileType1, fileType2) => {
           return fileType1.name.localeCompare(fileType2.name);
