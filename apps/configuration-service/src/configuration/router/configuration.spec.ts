@@ -244,7 +244,7 @@ describe('router', () => {
         tenant: { id: tenantId },
         user: { isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User,
         params: { namespace, name },
-        query: { tenantId: tenantId.toString() },
+        query: { tenantId: tenantId.toString(), core: false },
         isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
@@ -258,6 +258,7 @@ describe('router', () => {
         }
       });
     });
+
     it('can get configuration entity for unauthenticated users.', (done) => {
       const rateLimitHandler = jest.fn();
       const handler = getConfigurationEntity(
@@ -324,7 +325,7 @@ describe('router', () => {
         tenant: { id: tenantId },
         user: null,
         params: { namespace, name },
-        query: { tenantId: tenantId.toString() },
+        query: { tenant: tenantId.toString() },
         isAuthenticated: jest.fn(() => true),
       } as unknown as Request;
 
