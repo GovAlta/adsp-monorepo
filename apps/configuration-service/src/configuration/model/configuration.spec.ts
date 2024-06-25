@@ -2,11 +2,17 @@ import { adspId, User } from '@abgov/adsp-service-sdk';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationEntity } from './configuration';
 import type { Logger } from 'winston';
+import { ConfigurationDefinition } from '../types';
 
 describe('ConfigurationEntity', () => {
   const namespace = 'platform';
   const name = 'test-service';
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+
+  const definition: ConfigurationDefinition = {
+    anonymousRead: true,
+    configurationSchema: { type: 'object', properties: { a: { type: 'object' } } },
+  };
   const repositoryMock = {
     get: jest.fn(),
     getRevisions: jest.fn(),
@@ -64,7 +70,7 @@ describe('ConfigurationEntity', () => {
 
   it('can handle invalid schema', () => {
     const schema = { type: 'object', properties: { valueA: { type: 'number' } }, additionalProperties: null };
-
+    const revisedDefinition: ConfigurationDefinition = { ...definition, configurationSchema: schema };
     validationMock.setSchema.mockImplementationOnce(() => {
       throw new Error('');
     });
@@ -77,7 +83,7 @@ describe('ConfigurationEntity', () => {
       validationMock,
       null,
       null,
-      schema
+      revisedDefinition
     );
     expect(loggerMock.warn).toBeCalledWith(
       'JSON schema of platform:test-service is invalid. An empty JSON schema {} will be used.'
@@ -86,42 +92,73 @@ describe('ConfigurationEntity', () => {
 
   describe('canAccess', () => {
     it('can return false for null user', () => {
+      const revisedDefinition: ConfigurationDefinition = { ...definition, anonymousRead: false };
       const entity = new ConfigurationEntity(
         namespace,
         name,
         loggerMock,
         repositoryMock,
         activeRevisionMock,
-        validationMock
+        validationMock,
+        null,
+        null,
+        revisedDefinition
       );
       const result = entity.canAccess(null);
       expect(result).toBeFalsy();
     });
 
     it('can return false for core user with null role', () => {
+      const revisedDefinition: ConfigurationDefinition = { ...definition, anonymousRead: false };
       const entity = new ConfigurationEntity(
         namespace,
         name,
         loggerMock,
         repositoryMock,
         activeRevisionMock,
-        validationMock
+        validationMock,
+        null,
+        null,
+        revisedDefinition
       );
       const result = entity.canAccess({ isCore: true, roles: null } as User);
       expect(result).toBeFalsy();
     });
 
     it('can return false for core user without role', () => {
+      const revisedDefinition: ConfigurationDefinition = { ...definition, anonymousRead: false };
+
       const entity = new ConfigurationEntity(
         namespace,
         name,
         loggerMock,
         repositoryMock,
         activeRevisionMock,
-        validationMock
+        validationMock,
+        null,
+        null,
+        revisedDefinition
       );
       const result = entity.canAccess({ isCore: true, roles: [] } as User);
       expect(result).toBeFalsy();
+    });
+
+    it('can return true for anonymousRead without role', () => {
+      const revisedDefinition: ConfigurationDefinition = { ...definition, anonymousRead: true };
+
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        null,
+        revisedDefinition
+      );
+      const result = entity.canAccess({ isCore: true, roles: [] } as User);
+      expect(result).toBeTruthy();
     });
 
     it('can return true for core service user accessing core context', () => {
@@ -591,7 +628,7 @@ describe('ConfigurationEntity', () => {
           configuration: { a: '321', b: '321' } as unknown,
         },
         tenantId,
-        { type: 'object', properties: { a: { type: 'string' } } }
+        definition
       );
 
       const result = entity.mergeUpdate({ a: '123' });
@@ -611,7 +648,7 @@ describe('ConfigurationEntity', () => {
           configuration: { a: { b: '321' } } as unknown,
         },
         tenantId,
-        { type: 'object', properties: { a: { type: 'object' } } }
+        definition
       );
 
       const result = entity.mergeUpdate({ a: { a: '123' } });
