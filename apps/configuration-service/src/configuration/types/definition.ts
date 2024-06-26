@@ -1,6 +1,7 @@
 export interface ConfigurationDefinition {
-  anonymousRead: boolean;
   configurationSchema: Record<string, unknown>;
+  anonymousRead?: boolean;
+  isForNamespace?: boolean;
 }
 
 export type ConfigurationDefinitions = Record<string, ConfigurationDefinition>;

@@ -21,6 +21,7 @@ describe('createLogEventJob', () => {
 
   const configurationService = {
     getConfiguration: jest.fn(() => Promise.resolve({})),
+    getServiceConfiguration: jest.fn(),
   };
 
   beforeEach(() => {

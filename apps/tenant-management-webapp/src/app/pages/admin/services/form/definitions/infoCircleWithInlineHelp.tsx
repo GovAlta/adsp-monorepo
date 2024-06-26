@@ -8,7 +8,7 @@ import styled from 'styled-components';
 
 export interface InfoCircleWithInlineHelpProps {
   text: string;
-  width?: number;
+  width?: number | string;
   label?: string;
   initialLabelValue?: boolean;
 }

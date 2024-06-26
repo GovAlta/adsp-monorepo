@@ -2,7 +2,7 @@ import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-
 import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
 import { ConfigurationRepository, ActiveRevisionRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
-import { ConfigurationRevision, Configuration, RevisionCriteria } from '../types';
+import { ConfigurationRevision, Configuration, RevisionCriteria, ConfigurationDefinition } from '../types';
 import type { Logger } from 'winston';
 
 /**
@@ -26,7 +26,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public validationService: ValidationService,
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
-    schema?: Record<string, unknown>
+    public definition?: ConfigurationDefinition
   ) {
     if (!namespace || !name) {
       throw new InvalidOperationError('Configuration must have a namespace and name.');
@@ -37,7 +37,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     }
 
     try {
-      validationService.setSchema(this.getSchemaKey(), schema || {});
+      validationService.setSchema(this.getSchemaKey(), definition?.configurationSchema || {});
       return;
     } catch {
       this.logger.warn(`JSON schema of ${namespace}:${name} is invalid. An empty JSON schema {} will be used.`);
@@ -54,6 +54,8 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   }
 
   public canAccess(user: User): boolean {
+    if (this.definition && this.definition.anonymousRead) return true;
+
     return isAllowedUser(
       user,
       this.tenantId,

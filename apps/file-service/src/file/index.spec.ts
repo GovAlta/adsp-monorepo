@@ -41,6 +41,7 @@ const tokenProviderMock = {
 
 const configurationServiceMock = {
   getConfiguration: jest.fn(),
+  getServiceConfiguration: jest.fn(),
 };
 
 const logger = {

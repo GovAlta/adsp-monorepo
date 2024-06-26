@@ -7,6 +7,7 @@ import { createConfigurationHandler, createTenantConfigurationHandler } from './
 describe('createTenantHandler', () => {
   const serviceMock = {
     getConfiguration: jest.fn(),
+    getServiceConfiguration: jest.fn(),
   };
 
   const tokenProviderMock = {
@@ -15,6 +16,7 @@ describe('createTenantHandler', () => {
 
   beforeEach(() => {
     serviceMock.getConfiguration.mockReset();
+    serviceMock.getServiceConfiguration.mockReset();
   });
 
   it('can create handler', () => {
@@ -65,6 +67,47 @@ describe('createTenantHandler', () => {
       expect((req as Request).getConfiguration).toBeTruthy();
       expect(await (req as Request).getConfiguration()).toBe(config);
       expect(serviceMock.getConfiguration).toHaveBeenCalledWith(serviceId, expect.any(String), tenantId);
+
+      done();
+    };
+
+    handler(req, {} as unknown as Response, next);
+  });
+
+  it('can add service configuration getter', (done) => {
+    const handler = createConfigurationHandler(tokenProviderMock, serviceMock, adspId`urn:ads:platform:test`);
+
+    const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+    const config = 'this is config';
+    serviceMock.getServiceConfiguration.mockResolvedValueOnce(config);
+
+    const req: Request = { user: { tenantId, token: { bearer: 'test' } } } as Request;
+    const next = async () => {
+      expect((req as Request).getServiceConfiguration).toBeTruthy();
+      expect(await (req as Request).getServiceConfiguration('test')).toBe(config);
+      expect(serviceMock.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
+
+      done();
+    };
+
+    handler(req, {} as unknown as Response, next);
+  });
+
+  it('can add tenant service configuration getter', (done) => {
+    const serviceId = adspId`urn:ads:platform:test`;
+    const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+    const handler = createTenantConfigurationHandler(tokenProviderMock, serviceMock, serviceId, tenantId);
+
+    const config = 'this is config';
+    serviceMock.getServiceConfiguration.mockResolvedValueOnce(config);
+
+    const req: Request = {
+      user: { tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test2`, token: { bearer: 'test' } },
+    } as Request;
+    const next = async () => {
+      expect((req as Request).getServiceConfiguration).toBeTruthy();
+      expect(await (req as Request).getServiceConfiguration('test')).toBe(config);
+      expect(serviceMock.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
 
       done();
     };
