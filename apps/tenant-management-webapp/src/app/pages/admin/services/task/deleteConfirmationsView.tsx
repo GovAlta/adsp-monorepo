@@ -11,11 +11,11 @@ import { deleteTaskQueue } from '@store/task/action';
 import { RootState } from '@store/index';
 import { TaskDefinition } from '@store/task/model';
 
-interface calendarTableProps {
+interface taskTableProps {
   queue: TaskDefinition;
 }
 
-export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({ queue }) => {
+export const DeleteConfirmationsView: FunctionComponent<taskTableProps> = ({ queue }) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showUnableToDeleteConfirmation, setShowUnableToDeleteConfirmation] = useState(false);
   const dispatch = useDispatch();
