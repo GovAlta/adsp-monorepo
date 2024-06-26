@@ -104,6 +104,7 @@ describe('Test AddEditFormDefinitionEditor', () => {
     uiSchema: null,
     dispositionStates: dispositionsToTest,
     submissionRecords: true,
+    supportTopic: false,
     queueTaskToProcess: { queueName: 'test-queue', queueNameSpace: 'queue-namespace' },
   };
 

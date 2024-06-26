@@ -202,6 +202,14 @@ export const FormTemplateEditorContainer = styled.div`
 export const NameDescriptionDataSchema = styled.div`
   flex: 6;
   padding-right: 3rem;
+
+  .life-cycle-auto-scroll {
+    overflow-y: auto;
+  }
+`;
+
+export const GoACheckboxPad = styled.div`
+  margin-left: 4px;
 `;
 
 export const FormPermissions = styled.div`
@@ -327,6 +335,12 @@ export const MonacoDivTabBody = styled.div`
   min-height: 65px;
   margin-bottom: 1rem;
 `;
+export const RolesTabBody = styled.div`
+  display: flex;
+  border-radius: 3px;
+  min-height: 65px;
+  margin-bottom: 1rem;
+`;
 
 export const EditTemplateActions = styled.div`
   display: flex;
@@ -364,6 +378,7 @@ export const FormEditorLabelWrapper = styled.div`
 
 export const SubmissionRecordsBox = styled.div`
   margin-bottom: 12px;
+  margin-left: 4px;
 `;
 
 export const SpinnerSpace = styled.div`
