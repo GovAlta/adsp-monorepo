@@ -238,7 +238,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
             <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
-              Complete task
+              Finalize Decision
             </GoAButton>
             <GoAButton
               type="secondary"
@@ -247,12 +247,12 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
                 setShowTaskCancelConfirmation(true);
               }}
             >
-              Cancel task
+              Cancel Review
             </GoAButton>
           </>
         )}
         <GoAButton type="tertiary" onClick={onClose}>
-          Close
+          Back
         </GoAButton>
         {task?.status === TASK_STATUS.PENDING && (
           <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
@@ -290,10 +290,12 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     <ReviewContainer>
       <ReviewContent paddingBottom={paddingBottom}>
         {renderFormSubmissionReview()}
-        {renderFormDisposition()}
         {renderTaskCancelModal()}
       </ReviewContent>
-      <ActionContainer ref={actionContainerRef}>{renderButtonGroup()}</ActionContainer>
+      <ActionContainer ref={actionContainerRef}>
+        {renderFormDisposition()}
+        {renderButtonGroup()}
+      </ActionContainer>
     </ReviewContainer>
   );
 };
