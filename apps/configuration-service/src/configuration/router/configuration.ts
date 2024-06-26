@@ -47,6 +47,20 @@ const coreTenantPassportAuthenticateHandler: RequestHandler = (req, res, next) =
   next();
 };
 
+function resolveDefinition(entity: ConfigurationEntity<ConfigurationDefinitions>, namespace: string, name: string) {
+  let result = entity?.latest?.configuration[`${namespace}:${name}`];
+
+  // Look for a configuration definition at the namespace level.
+  if (!result) {
+    result = entity?.latest?.configuration[namespace];
+    if (result) {
+      result.isForNamespace = true;
+    }
+  }
+
+  return result;
+}
+
 const getDefinition = async (
   configurationServiceId: AdspId,
   repository: ConfigurationRepository,
@@ -54,23 +68,22 @@ const getDefinition = async (
   name: string,
   tenantId?: AdspId
 ): Promise<ConfigurationDefinition> => {
-  const key = `${namespace}:${name}`;
   const core = await repository.get<ConfigurationDefinitions>(
     configurationServiceId.namespace,
     configurationServiceId.service
   );
-  if (core?.latest?.configuration[key]) {
-    return core.latest.configuration[key];
-  } else if (tenantId) {
+
+  let result = resolveDefinition(core, namespace, name);
+  if (!result && tenantId) {
     const tenant = await repository.get<ConfigurationDefinitions>(
       configurationServiceId.namespace,
       configurationServiceId.service,
       tenantId
     );
-    return tenant?.latest?.configuration[key] || tenant?.latest?.configuration[namespace];
-  } else {
-    return null;
+    result = resolveDefinition(tenant, namespace, name);
   }
+
+  return result;
 };
 
 export const getTenantId = (req: Request): AdspId => {

@@ -22,6 +22,7 @@ describe('stream router', () => {
 
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
+    getServiceConfiguration: jest.fn(),
   };
 
   const loggerMock = {

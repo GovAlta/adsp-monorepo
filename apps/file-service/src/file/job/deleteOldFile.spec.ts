@@ -30,10 +30,12 @@ describe('Delete old files', () => {
 
   const configurationServiceMockZero = {
     getConfiguration: jest.fn(),
+    getServiceConfiguration: jest.fn(),
   };
 
   const configurationService = {
     getConfiguration: jest.fn(() => Promise.resolve({})),
+    getServiceConfiguration: jest.fn(),
   };
 
   const tokenProviderMock = {
