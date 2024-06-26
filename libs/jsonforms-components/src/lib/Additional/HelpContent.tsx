@@ -28,6 +28,10 @@ interface CustomControlProps extends ControlProps {
   uischema: CustomControlElement;
 }
 
+const HelpContentReviewComponent = (): JSX.Element => {
+  return <></>;
+};
+
 export const HelpContentComponent = ({
   isParent = true,
   ...props
@@ -114,3 +118,4 @@ const HelpContents = ({ elements, isParent = false }: { elements: CustomControlE
 export const HelpContentTester: RankedTester = rankWith(1, uiTypeIs('HelpContent'));
 
 export const HelpContent = withJsonFormsControlProps(HelpContentComponent);
+export const HelpReviewContent = withJsonFormsControlProps(HelpContentReviewComponent);

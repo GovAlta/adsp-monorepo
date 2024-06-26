@@ -26,10 +26,11 @@ export interface WithInput {
   //eslint-disable-next-line
   input: any;
   noLabel?: boolean;
+  isStepperReview?: boolean;
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
-  const { uischema, visible, label, input, required, errors, path } = props;
+  const { uischema, visible, label, input, required, errors, path, isStepperReview } = props;
   const InnerComponent = input;
   const labelToUpdate: string = getLabelText(uischema.scope, label || '');
 
@@ -70,8 +71,8 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
         <FormFieldWrapper>
           <GoAFormItem
             requirement={required ? 'required' : undefined}
-            error={''}
-            testId={`${path}`}
+            error={modifiedErrors}
+            testId={`${isStepperReview === true && 'review-base-'}${path}`}
             label={props?.noLabel === true ? '' : labelToUpdate}
             helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
           >
