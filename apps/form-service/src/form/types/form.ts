@@ -21,6 +21,7 @@ export interface Form {
   submitted: Date;
   dispositionStates?: Array<Disposition>;
   submissionRecords?: boolean;
+  supportTopic?: boolean;
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;

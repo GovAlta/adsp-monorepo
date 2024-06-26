@@ -47,6 +47,10 @@ export const formSchema = new Schema(
       type: Boolean,
       required: false,
     },
+    supportTopic: {
+      type: Boolean,
+      required: false,
+    },
     submitted: Date,
     lastAccessed: { type: Date, required: true },
 
