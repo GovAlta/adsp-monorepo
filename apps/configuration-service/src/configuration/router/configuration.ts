@@ -440,7 +440,7 @@ export function createConfigurationRouter({
       serviceId,
       configurationRepository,
       rateLimitHandler,
-      false,
+      true,
       (req) => req.query.core !== undefined
     ),
     getConfigurationWithActive()
@@ -454,7 +454,7 @@ export function createConfigurationRouter({
       serviceId,
       configurationRepository,
       rateLimitHandler,
-      false,
+      true,
       (req) => req.query.core !== undefined
     ),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
@@ -496,7 +496,7 @@ export function createConfigurationRouter({
           return !isNaN(decodeAfter(val));
         })
     ),
-    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, false),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
     getRevisions()
   );
 
@@ -512,7 +512,7 @@ export function createConfigurationRouter({
           return !isNaN(decodeAfter(val));
         })
     ),
-    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, false),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
     getActiveRevision(logger)
   );
 
@@ -530,7 +530,7 @@ export function createConfigurationRouter({
         ['params']
       )
     ),
-    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, false),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
     getRevisions(
       (req) => ({ revision: req.params.revision }),
       (req, { results }) => {
