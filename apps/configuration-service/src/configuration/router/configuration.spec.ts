@@ -495,7 +495,14 @@ describe('router', () => {
     });
 
     it('can get entity with core namespace definition', (done) => {
-      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, true, () => false);
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        true,
+        () => false
+      );
 
       // Configuration definition retrieval.
       const configurationSchema = {};
