@@ -1,6 +1,6 @@
 export interface ConfigurationDefinition {
-  anonymousRead: boolean;
   configurationSchema: Record<string, unknown>;
+  anonymousRead?: boolean;
 }
 
 export type ConfigurationDefinitions = Record<string, ConfigurationDefinition>;
