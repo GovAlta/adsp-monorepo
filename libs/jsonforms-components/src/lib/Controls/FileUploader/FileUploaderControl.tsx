@@ -8,10 +8,18 @@ import { JsonFormContext } from '../../Context';
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 import { DeleteFileModal } from './DeleteFileModal';
 
-export type FileUploaderLayoutRendererProps = ControlProps & WithClassname;
+interface FileUploadAdditionalProps {
+  isStepperReview?: boolean;
+}
+
+export type FileUploaderLayoutRendererProps = ControlProps & WithClassname & FileUploadAdditionalProps;
 
 const DELAY_UPLOAD_TIMEOUT_MS = 5;
 const DELAY_DELETE_TIMEOUT_MS = 5;
+
+export const FileUploaderReview = (props: FileUploaderLayoutRendererProps) => {
+  return FileUploader({ ...props, isStepperReview: true });
+};
 
 export const FileUploader = ({ data, path, handleChange, uischema, ...props }: FileUploaderLayoutRendererProps) => {
   const enumerators = useContext(JsonFormContext);
@@ -94,7 +102,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     return () => clearTimeout(timeoutId);
   }, [handleChange, fileList, propertyId]);
 
-  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const readOnly = uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true;
 
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">
