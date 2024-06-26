@@ -88,7 +88,6 @@ export async function initializePlatform(
       directory,
       tokenProvider,
       useNamespace: registration.configuration?.useNamespace || false,
-      useActive: registration.configuration?.useActive || false,
       converter: configurationConverter,
       combine: combineConfiguration,
       enableConfigurationInvalidation,

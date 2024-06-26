@@ -15,7 +15,7 @@ import { TokenProvider } from '../access';
  */
 export interface ConfigurationService {
   /**
-   * Retrieves configuration for a service.
+   * Retrieves latest configuration revision for a service.
    *
    * @template C Type of the configuration.
    * @template R Type of the combined tenant and core configuration.
@@ -28,7 +28,7 @@ export interface ConfigurationService {
   getConfiguration<C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<R>;
 
   /**
-   * Retrieves configuration for the service initialized with the SDK under its service account context.
+   * Retrieves active configuration revision, with fallback to latest, for the service initialized with the SDK under its service account context.
    *
    * @template C Type of the configuration.
    * @template R Type of the combined tenant and core configuration.
@@ -55,7 +55,6 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     private readonly directory: ServiceDirectory,
     private readonly tokenProvider: TokenProvider,
     private readonly useNamespace = false,
-    private readonly useActive = false,
     converter: ConfigurationConverter = null,
     combine: CombineConfiguration = null,
     cacheTTL = 900
@@ -86,6 +85,10 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     }
   }
 
+  private getCacheKey(namespace: string, name: string, tenantId?: AdspId): string {
+    return `${tenantId ? tenantId.toString() + '-' : ''}${namespace}:${name}`;
+  }
+
   @LimitToOne(
     (propertyKey, namespace: string, name: string, _token, tenantId?: AdspId) =>
       `${propertyKey}-${tenantId ? `${tenantId}-` : ''}${namespace}:${name}`
@@ -94,7 +97,8 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     namespace: string,
     name: string,
     token: string,
-    tenantId?: AdspId
+    tenantId?: AdspId,
+    useActive?: boolean
   ): Promise<C> {
     this.logger.debug(
       `Retrieving tenant '${tenantId?.toString() || 'core'}' configuration for ${namespace}${name}...'`,
@@ -108,7 +112,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       adspId`urn:ads:platform:configuration-service:v2`
     );
 
-    const configUrl = this.useActive
+    const configUrl = useActive
       ? new URL(`v2/configuration/${namespace}/${name}/active`, configurationServiceUrl)
       : new URL(`v2/configuration/${namespace}/${name}/latest`, configurationServiceUrl);
 
@@ -122,18 +126,18 @@ export class ConfigurationServiceImpl implements ConfigurationService {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           tenantId: tenantId?.toString(),
-          orLatest: this.useActive || undefined,
+          orLatest: useActive || undefined,
         },
       });
 
       // Active endpoint returns the revision instead of just the raw configuration value.
-      if (this.useActive) {
+      if (useActive) {
         data = data?.configuration;
       }
 
       const config = (data ? this.#converter(data, tenantId) : null) as C;
       if (config) {
-        this.#configuration.set(`${tenantId ? tenantId.toString() + '-' : ''}${namespace}:${name}`, config);
+        this.#configuration.set(this.getCacheKey(namespace, name, tenantId), config);
         this.logger.info(
           `Retrieved and cached '${tenantId?.toString() || 'core'}' configuration for ${namespace}:${name}.`,
           {
@@ -165,13 +169,13 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
 
       tenantConfiguration =
-        this.#configuration.get<C>(`${tenantId}-${namespace}:${name}`) ||
+        this.#configuration.get<C>(this.getCacheKey(namespace, name, tenantId)) ||
         (await this.retrieveConfiguration<C>(namespace, name, token, tenantId)) ||
         null;
     }
 
     const coreConfiguration =
-      this.#configuration.get<C>(`${namespace}:${name}`) ||
+      this.#configuration.get<C>(this.getCacheKey(namespace, name)) ||
       (await this.retrieveConfiguration<C>(namespace, name, token)) ||
       null;
 
@@ -198,21 +202,21 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
 
       tenantConfiguration =
-        this.#configuration.get<C>(`${tenantId}-${namespace}:${name}`) ||
-        (await this.retrieveConfiguration<C>(namespace, name, token, tenantId)) ||
+        this.#configuration.get<C>(this.getCacheKey(namespace, name, tenantId)) ||
+        (await this.retrieveConfiguration<C>(namespace, name, token, tenantId, true)) ||
         null;
     }
 
     const coreConfiguration =
-      this.#configuration.get<C>(`${namespace}:${name}`) ||
-      (await this.retrieveConfiguration<C>(namespace, name, token)) ||
+      this.#configuration.get<C>(this.getCacheKey(namespace, name)) ||
+      (await this.retrieveConfiguration<C>(namespace, name, token, null, true)) ||
       null;
 
     return this.#combine(tenantConfiguration, coreConfiguration, tenantId) as R;
   };
 
   clearCached(tenantId: AdspId, namespace: string, name: string): void {
-    if (this.#configuration.del(`${tenantId}-${namespace}:${name}`) > 0) {
+    if (this.#configuration.del(this.getCacheKey(namespace, name, tenantId)) > 0) {
       this.logger.info(`Cleared cached configuration for ${namespace}:${name} of tenant ${tenantId}.`, {
         ...this.LOG_CONTEXT,
         tenant: tenantId?.toString(),

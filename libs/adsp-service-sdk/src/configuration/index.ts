@@ -10,7 +10,20 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
+      /**
+       * Retrieves latest configuration revision for service initialized with SDK.
+       * Configuration is retrieved from {service namespace}:{service}.
+       *
+       * @memberof Request
+       */
       getConfiguration?: <C, R = [C, C]>(tenantId?: AdspId) => Promise<R>;
+
+      /**
+       * Retrieves active configuration revision, with fallback to latest, for service initialized with SDK.
+       * Note that configuration is retrieved from {service}:{name} if useNamespace is true in SDK initialization.
+       *
+       * @memberof Request
+       */
       getServiceConfiguration?: <C, R = [C, C]>(name?: string, tenantId?: AdspId) => Promise<R>;
     }
   }
@@ -26,7 +39,6 @@ interface ConfigurationServiceOptions {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   useNamespace: boolean;
-  useActive: boolean;
   converter: ConfigurationConverter;
   combine: CombineConfiguration;
   enableConfigurationInvalidation?: boolean;
@@ -39,7 +51,6 @@ export const createConfigurationService = ({
   directory,
   tokenProvider,
   useNamespace,
-  useActive,
   converter,
   combine,
   enableConfigurationInvalidation,
@@ -51,7 +62,6 @@ export const createConfigurationService = ({
     directory,
     tokenProvider,
     useNamespace,
-    useActive,
     converter,
     combine,
     useLongConfigurationCacheTTL ? 36000 : 900

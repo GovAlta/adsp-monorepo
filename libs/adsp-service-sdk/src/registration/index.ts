@@ -58,15 +58,6 @@ interface ConfigurationRegistrationOptions {
    * @memberof ConfigurationRegistrationOptions
    */
   useNamespace?: boolean;
-  /**
-   * Flag indicating if the active revision should be retrieved.
-   * If true active revision will be retrieved with fallback to latest is no active revision is set;
-   * otherwise the latest revision is retrieved.
-   *
-   * @type {boolean}
-   * @memberof ConfigurationRegistrationOptions
-   */
-  useActive?: boolean;
 }
 
 export interface ServiceRegistration {
