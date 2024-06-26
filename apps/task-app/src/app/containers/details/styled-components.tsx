@@ -51,15 +51,26 @@ export const FormDispositionDetail = styled.div`
 
 export const ReviewContainer = styled.div`
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 20px;
+  flex-direction: column;
+  height: 100%;
 `;
 
-export const FormInformation = styled.div`
+export interface ReviewContentProps {
+  paddingBottom: string;
+}
+
+export const ReviewContent = styled.div<ReviewContentProps>`
   flex: 1;
+  overflow-y: auto;
+  padding-bottom: ${(props) => props.paddingBottom || '60px'};
 `;
 
-export const ReviewMenu = styled.div`
-  width: 300px;
+export const ActionContainer = styled.div`
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #fff;
+  padding: 10px 0;
+  display: flex;
+  gap: 10px;
 `;

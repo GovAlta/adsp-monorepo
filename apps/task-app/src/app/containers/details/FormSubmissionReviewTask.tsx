@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
 import {
   GoAButtonGroup,
   GoAButton,
@@ -6,7 +6,6 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoATextArea,
-  GoADetails,
 } from '@abgov/react-components-new';
 import { Grid } from '../../../lib/common/Grid';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,14 +27,14 @@ import { AdspId } from '../../../lib/adspId';
 
 import {
   ReviewItem,
-  ReviewItemHeader,
+  //  ReviewItemHeader,
   ReviewItemSection,
   ReviewItemTitle,
   ReviewItemBasic,
   FormDispositionDetail,
   ReviewContainer,
-  FormInformation,
-  ReviewMenu,
+  ReviewContent,
+  ActionContainer,
 } from './styled-components';
 import { RenderFormReviewFields } from './RenderFormReviewFields';
 import { ajv } from '../../../lib/validations/checkInput';
@@ -43,14 +42,14 @@ import { Element } from './RenderFormReviewFields';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import styled from 'styled-components';
 import { TaskCancelModal } from './TaskCancelModal';
-const PlaceholderDiv = styled.div`
-  display: flex;
-  flex-direction: column;
+// const PlaceholderDiv = styled.div`
+//   display: flex;
+//   flex-direction: column;
 
-  > *:first-child {
-    flex-grow: 1;
-  }
-`;
+//   > *:first-child {
+//     flex-grow: 1;
+//   }
+// `;
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   user,
@@ -70,9 +69,20 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const adspId = AdspId.parse(task.recordId);
   const [_, _type, id, _submission, submissionId] = adspId.resource.split('/');
 
+  // To help determine height of the content container
+  const actionContainerRef = useRef(null);
+  const [paddingBottom, setPaddingBottom] = useState('60px');
+
   useEffect(() => {
     dispatch(selectForm({ formId: id, submissionId: submissionId }));
   }, [dispatch, id, submissionId]);
+
+  useEffect(() => {
+    if (actionContainerRef.current) {
+      const height = actionContainerRef.current.offsetHeight;
+      setPaddingBottom(`${height}px`);
+    }
+  }, []);
 
   const NO_DISPOSITION_SELECTED = {
     id: 'No disposition selected',
@@ -131,47 +141,44 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const renderFormSubmissionReview = () => {
     return (
-      <PlaceholderDiv>
-        <div>
-          <LoadingIndicator isLoading={loading} />
-          {!loading && categories && (
-            <ReviewItem>
-              {categories.map((category, index) => {
-                const categoryLabel = category.label || category.i18n || '';
-                const requiredFields = getAllRequiredFields(definition?.dataSchema);
+      <div>
+        <LoadingIndicator isLoading={loading} />
+        {!loading && categories && (
+          <ReviewItem>
+            {categories.map((category, index) => {
+              const categoryLabel = category.label || category.i18n || '';
+              const requiredFields = getAllRequiredFields(definition?.dataSchema);
 
-                return (
-                  <div>
-                    {category?.type === 'Control' ? (
-                      <ReviewItemBasic>
-                        <Element
-                          element={category}
-                          index={index}
+              return (
+                <div>
+                  {category?.type === 'Control' ? (
+                    <ReviewItemBasic>
+                      <Element
+                        element={category}
+                        index={index}
+                        data={currentForm?.formData}
+                        requiredFields={requiredFields}
+                      />
+                    </ReviewItemBasic>
+                  ) : (
+                    // eslint-disable-next-line react/jsx-no-comment-textnodes
+                    <ReviewItemSection key={index}>
+                      <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
+                      <Grid>
+                        <RenderFormReviewFields
+                          elements={category?.elements}
                           data={currentForm?.formData}
                           requiredFields={requiredFields}
                         />
-                      </ReviewItemBasic>
-                    ) : (
-                      <ReviewItemSection key={index}>
-                        <ReviewItemHeader>
-                          <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
-                        </ReviewItemHeader>
-                        <Grid>
-                          <RenderFormReviewFields
-                            elements={category?.elements}
-                            data={currentForm?.formData}
-                            requiredFields={requiredFields}
-                          />
-                        </Grid>
-                      </ReviewItemSection>
-                    )}
-                  </div>
-                );
-              })}
-            </ReviewItem>
-          )}
-        </div>
-      </PlaceholderDiv>
+                      </Grid>
+                    </ReviewItemSection>
+                  )}
+                </div>
+              );
+            })}
+          </ReviewItem>
+        )}
+      </div>
     );
   };
 
@@ -281,13 +288,12 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   };
   return (
     <ReviewContainer>
-      <FormInformation>
+      <ReviewContent paddingBottom={paddingBottom}>
         {renderFormSubmissionReview()}
         {renderFormDisposition()}
-        {renderButtonGroup()}
         {renderTaskCancelModal()}
-      </FormInformation>
-      <ReviewMenu>Menu Item 1</ReviewMenu>
+      </ReviewContent>
+      <ActionContainer ref={actionContainerRef}>{renderButtonGroup()}</ActionContainer>
     </ReviewContainer>
   );
 };
