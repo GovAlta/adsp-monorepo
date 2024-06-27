@@ -258,6 +258,7 @@ describe('router', () => {
         }
       });
     });
+
     it('can get configuration entity for unauthenticated users.', (done) => {
       const rateLimitHandler = jest.fn();
       const handler = getConfigurationEntity(
@@ -485,6 +486,76 @@ describe('router', () => {
           expect(req['entity']).not.toBeNull();
           expect(req['entity'].name).toBe(entity.name);
           expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
+          expect(repositoryMock.get.mock.calls.length).toBeGreaterThan(0);
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+
+    it('can get entity with core namespace definition', (done) => {
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        true,
+        () => false
+      );
+
+      // Configuration definition retrieval.
+      const configurationSchema = {};
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          loggerMock as Logger,
+          repositoryMock,
+          activeRevisionMock,
+          validationMock,
+          {
+            revision: 1,
+            configuration: {
+              [namespace]: { configurationSchema },
+            },
+          }
+        )
+      );
+
+      activeRevisionMock.get.mockResolvedValueOnce({
+        namespace: configurationServiceId.namespace,
+        name: configurationServiceId.service,
+        tenant: tenantId,
+        active: 2,
+      });
+
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
+
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      const req = {
+        tenant: { id: tenantId },
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+        isAuthenticated: jest.fn(() => true),
+      };
+
+      handler(req as unknown as Request, null, () => {
+        try {
+          expect(req['entity']).not.toBeNull();
+          expect(req['entity'].name).toBe(entity.name);
+          expect(repositoryMock.get.mock.calls[1][3]).toEqual(expect.objectContaining({ configurationSchema }));
           expect(repositoryMock.get.mock.calls.length).toBeGreaterThan(0);
           done();
         } catch (err) {

@@ -1,13 +1,10 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent } from 'react';
 import { CalendarItem } from '@store/calendar/models';
-import { useDispatch } from 'react-redux';
+
 import DataTable from '@components/DataTable';
 import { TableDiv } from '../styled-components';
 
-import { FetchEventsByCalendar } from '@store/calendar/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-
-import { DeleteConfirmationsView } from './deleteConfirmationsView';
 
 interface CalendarItemProps {
   calendar: CalendarItem;
@@ -27,27 +24,22 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
 
       <td headers="calendar-description">{calendar.description}</td>
       <td headers="calendar-actions">
-        {onDelete && (
-          <div style={{ display: 'flex' }}>
-            <GoAContextMenuIcon
-              type="create"
-              title="Edit"
-              testId={`calendar-edit-${calendar.name}`}
-              onClick={() => {
-                onEdit(calendar);
-              }}
-            />
-
-            <GoAContextMenuIcon
-              testId="delete-icon"
-              title="Delete"
-              type="trash"
-              onClick={() => {
-                onDelete(calendar);
-              }}
-            />
-          </div>
-        )}
+        <GoAContextMenuIcon
+          type="create"
+          title="Edit"
+          testId={`calendar-edit-${calendar.name}`}
+          onClick={() => {
+            onEdit(calendar);
+          }}
+        />
+        <GoAContextMenuIcon
+          testId="delete-icon"
+          title="Delete"
+          type="trash"
+          onClick={() => {
+            onDelete(calendar);
+          }}
+        />
       </td>
     </tr>
   );
@@ -59,18 +51,7 @@ interface calendarTableProps {
   onDelete?: (calendar: CalendarItem) => void;
 }
 
-export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ calendars, onEdit }) => {
-  const [selectedDeleteCalendar, setSelectedDeleteCalendar] = useState(null);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-
-  const dispatch = useDispatch();
-
-  const onDelete = async (calendar) => {
-    await dispatch(FetchEventsByCalendar(calendar.name));
-    setSelectedDeleteCalendar(calendar);
-    setShowDeleteConfirmation(true);
-  };
-
+export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ calendars, onEdit, onDelete }) => {
   return (
     <TableDiv key="calendar">
       <DataTable data-testid="calendar-table">
@@ -102,9 +83,6 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
           ))}
         </tbody>
       </DataTable>
-      {showDeleteConfirmation && selectedDeleteCalendar && (
-        <DeleteConfirmationsView calendarName={selectedDeleteCalendar.name}></DeleteConfirmationsView>
-      )}
       <br />
     </TableDiv>
   );

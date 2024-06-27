@@ -50,13 +50,13 @@ export const handleConfigurationUpdates = async (
 
   const invalidateCached = (e: StreamItem) => {
     const tenantId = AdspId.parse(e.tenantId);
-    const serviceId = adspId`urn:ads:${e.payload.namespace}:${e.payload.name}`;
+    const { namespace, name } = e.payload;
     logger.debug(
-      `Received configuration updated stream item ${e.namespace}:${e.name} and invalidating cache for ${serviceId} of tenant ${tenantId}`,
+      `Received configuration updated stream item ${namespace}:${name} and invalidating cache of tenant ${tenantId}`,
       { ...LOG_CONTEXT, tenantId: e.tenantId }
     );
 
-    configurationService.clearCached(tenantId, serviceId);
+    configurationService.clearCached(tenantId, namespace, name);
   };
 
   socket.on('configuration-service:configuration-updated', invalidateCached);

@@ -127,7 +127,6 @@ class AdspFeedback implements AdspFeedbackApi {
 
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
     if (this.feedbackFormRef.value) {
-      this.feedbackFormRef.value.style.height = '640px';
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
@@ -320,9 +319,6 @@ class AdspFeedback implements AdspFeedbackApi {
         this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
         this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
       }
-      if (this.feedbackFormRef.value) {
-        this.feedbackFormRef.value.style.height = '390px';
-      }
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
@@ -493,16 +489,20 @@ class AdspFeedback implements AdspFeedbackApi {
             background: #ffffff;
             position: fixed;
             width: 640px;
-            max-height: 680px;
+            max-height: 80%;
+            height: min-content;
             left: 50%;
             top: 10vh;
+            bottom: 10vh;
+            overflow-y: auto;
+            overflow-x: hidden;
             border: 1px solid;
             border-radius: 3px;
             transform: translateX(-50%);
           }
-          .adsp-fb .adsp-fb-start {
-            height: 330px;
-          }
+          // .adsp-fb .adsp-fb-start {
+          //   height: 330px;
+          // }
           .adsp-fb .adsp-fb-container-heading {
             display: flex;
             flex-direction: row;
@@ -521,16 +521,15 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: column;
             padding: 0 0 36px 24px;
             transition: transform 0.001ms;
-            height: 100%;
-            justify-content: space-between;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 455px;
+            //max-height: 455px;
             overflow-y: auto !important;
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
             padding-top: 36px;
+            margin-bottom: 4px;
           }
           .adsp-fb .adsp-fb-form-rating {
             display: flex;
@@ -594,11 +593,11 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .adsp-fb .adsp-fb-actions {
             display: flex;
-            padding-bottom: 48px;
             padding-right: 32px;
-            margin-top: 16px;
-            margin-bottom: 32px;
+            margin-top: 20px;
+            margin-bottom: 5px;
           }
+
           .adsp-fb button {
             display: inline-flex;
             cursor: pointer;
@@ -684,13 +683,14 @@ class AdspFeedback implements AdspFeedbackApi {
             color: #fff;
             text-align: center;
             border-radius: 5px;
-            padding: 5px;
+            padding: 8px 16px;
             margin-top: 53px;
             position: absolute;
             z-index: 1;
             transform: translateX(-50%);
             opacity: 0;
             transition: opacity 0.3s;
+            white-space: nowrap;
           }
           .adsp-fb .tooltip-text::before {
             content: '';
@@ -719,10 +719,12 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
             transform: translateX(-100%);
             visibility: hidden;
+            height: 320px;
           }
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
             transform: translateX(-100%);
             visibility: hidden;
+            height: 320px;
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             visibility: visible;
@@ -736,7 +738,10 @@ class AdspFeedback implements AdspFeedbackApi {
             display: flex;
             flex-direction: row;
           }
-
+          .radio-span {
+            display: flex;
+            align-items: center;
+          }
           .rating {
             cursor: pointer;
             transition: transform 0.3s ease-in-out color 0.3s ease;
@@ -760,7 +765,11 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: column;
             cursor: pointer;
           }
-
+          .radio-div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+          }
           .radio {
             appearance: none;
             width: 24px;
@@ -815,12 +824,30 @@ class AdspFeedback implements AdspFeedbackApi {
           .successButton {
             margin-top: 24px;
           }
+
           .styled-hr {
             border: none;
             height: 1px;
             background-color: #ccc;
+          }
+
+          /* Top-facing shadow */
+          .styled-hr-top {
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
           }
+
+          /* Bottom-facing shadow */
+          .styled-hr-bottom {
+            box-shadow: -2px -3px 3px rgba(0, 0, 0, 0.1);
+          }
+
+          .hr-width {
+            width: 97%;
+          }
+          .full-width-hr-container {
+            margin-left: -24px;
+          }
+
           .p-error {
             margin-left: 36px;
             margin-right: 36px;
@@ -836,14 +863,28 @@ class AdspFeedback implements AdspFeedbackApi {
             }
           }
           @media screen and (max-width: 640px) {
+            .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
+              height: 400px;
+            }
+            .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
+              height: 400px;
+            }
             .adsp-fb div.adsp-fb-form-container {
               bottom: 0;
               border: 0;
               width: 100%;
-              position: fixed;
-              width: 640px;
               top: auto;
+              max-height: 100%;
+              overflow-x: hidden;
             }
+            .adsp-fb-main {
+              overflow-y: auto;
+            }
+
+            .adsp-fb .adsp-fb-content {
+              max-height: 100%;
+            }
+
             .adsp-fb .adsp-fb-actions {
               bottom: 0;
               flex-direction: column-reverse;
@@ -931,7 +972,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       alt="close feedback"
                     />
                   </div>
-                  <hr class="styled-hr" />
+                  <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
                     <h3 class="h3-subtitle">Tell us what you think</h3>
                     <p class="p-content">
@@ -952,7 +993,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   </form>
                 </div>
 
-                <div ${ref(this.feedbackFormRef)} class="adsp-fb-form-container" data-show="false">
+                <div ${ref(this.feedbackFormRef)} class="adsp-fb-form-container adsp-fb-main" data-show="false">
                   <div class="adsp-fb-container-heading">
                     <h3 class="title">Give feedback</h3>
                     <img
@@ -966,28 +1007,28 @@ class AdspFeedback implements AdspFeedbackApi {
                       alt="close feedback"
                     />
                   </div>
-                  <hr class="styled-hr" />
+                  <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
                     <div ${ref(this.feedbackContentFormRef)} class="adsp-fb-content">
-                      <label for="comment"
+                      <label
                         ><b>How easy was it for you to use this service? <br /></b>
                       </label>
                       <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
                         ${this.ratings.map((rating, index) => this.renderRating(rating, index))}
                       </div>
                       <div class="adsp-fb-form-comment">
-                        <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
+                        <label><b>Do you have any additional comments?</b> <span>(optional)</span></label>
                         <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
                         <span class="help-text"
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
                       </div>
-                      <hr class="styled-hr" />
+                      <hr class="hr-width hr-width" />
                       <br />
                       <div class="radio-container">
                         <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
-                          <div>
+                          <div class="radio-span">
                             <input
                               name="YesOrNo"
                               type="radio"
@@ -999,7 +1040,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
                             <span class="goa-radio-label"> Yes </span>
                           </div>
-                          <div>
+                          <div class="radio-span">
                             <input
                               name="YesOrNo"
                               type="radio"
@@ -1014,7 +1055,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         </div>
                         <div ${ref(this.technicalCommentDivRef)}>
                           <div class="adsp-fb-form-comment">
-                            <label for="comment"
+                            <label
                               ><b
                                 >Please describe the issue in detail. Mention the page or step where you experienced the
                                 issue, if applicable.</b
@@ -1028,6 +1069,9 @@ class AdspFeedback implements AdspFeedbackApi {
                           <br />
                         </div>
                       </div>
+                    </div>
+                    <div class="full-width-hr-container">
+                      <hr class="styled-hr styled-hr-bottom" />
                     </div>
                     <div class="adsp-fb-actions">
                       <button

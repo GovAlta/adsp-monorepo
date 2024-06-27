@@ -465,6 +465,13 @@ components:
     tags:
       - Form Submission
     description: Update the form disposition for the form submission.
+    responses:
+      200:
+        description: Successfully updated the form submission.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormSubmission'
     requestBody:
       required: true
       content:

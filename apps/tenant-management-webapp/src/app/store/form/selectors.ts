@@ -10,6 +10,15 @@ export const selectFormAppHost = createSelector(
     return selectDirectoryByServiceName(state, PUBLIC_FORM_APP)?.url;
   }
 );
+export const selectFormAppLink = createSelector(
+  (state: RootState) => state.tenant,
+  selectFormAppHost,
+  (_, formId: string | null) => formId,
+  (state, appFormHost, formId) => {
+    const tenantName = toKebabName(state.name);
+    return `${appFormHost}/${tenantName}/${formId}`;
+  }
+);
 
 export const selectDefaultFormUrl = createSelector(
   (state: RootState) => state.tenant,

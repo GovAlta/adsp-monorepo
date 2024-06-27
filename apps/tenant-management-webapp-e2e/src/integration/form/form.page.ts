@@ -114,28 +114,28 @@ class FormPage {
   }
 
   definitionEditorSubmissionConfigSubmission() {
-    return cy.xpath('//*[@data-testid="submission-configuration"]');
+    return cy.xpath('//*[@data-testid="lifecycle"]');
   }
 
   definitionEditorSubmissionConfigSubmissionRecordCheckbox() {
-    return cy.xpath('//*[@data-testid="submission-configuration"]//goa-checkbox[@data-testid="submission-records"]');
+    return cy.xpath('//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]');
   }
 
   definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle() {
     return cy.xpath(
-      '//*[@data-testid="submission-configuration"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]'
+      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]'
     );
   }
 
   definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox() {
     return cy.xpath(
-      '//*[@data-testid="submission-configuration"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-text"]'
+      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-text"]'
     );
   }
 
   definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBoxCloseBtn() {
     return cy.xpath(
-      '//*[@data-testid="submission-configuration"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-close-button"]'
+      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-close-button"]'
     );
   }
 
@@ -145,19 +145,19 @@ class FormPage {
 
   definitionEditorSubmissionConfigDispositionStatesInfoCircle() {
     return cy.xpath(
-      '//*[@data-testid="submission-configuration"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="info-circle"]'
+      '//*[@data-testid="lifecycle"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="info-circle"]'
     );
   }
 
   definitionEditorSubmissionConfigDispositionStatesInfoBox() {
     return cy.xpath(
-      '//*[@data-testid="submission-configuration"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="small-text"]'
+      '//*[@data-testid="lifecycle"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="small-text"]'
     );
   }
 
   definitionEditorSubmissionConfigDispositionStatesInfoBoxCloseBtn() {
     return cy.xpath(
-      '//*[@data-testid="submission-configuration"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="small-close-button"]'
+      '//*[@data-testid="lifecycle"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="small-close-button"]'
     );
   }
 
@@ -182,38 +182,28 @@ class FormPage {
   }
 
   definitionEditorSubmissionConfigDispositionStateTableBody() {
-    return cy.xpath('//div[@data-testid="submission-configuration"]//tbody');
+    return cy.xpath('//div[@data-testid="lifecycle"]//tbody');
   }
 
   definitionEditorSubmissionConfigDispositionStateTableArrowIcons(index) {
-    return cy.xpath(
-      `//div[@data-testid="submission-configuration"]//tbody//tr[${index}]//goa-icon-button[contains(@icon,"arrow")]`
-    );
+    return cy.xpath(`//div[@data-testid="lifecycle"]//tbody//tr[${index}]//goa-icon-button[contains(@icon,"arrow")]`);
   }
 
   definitionEditorSubmissionConfigDispositionStateEditBtn(index) {
-    return cy.xpath(
-      `(//div[@data-testid="submission-configuration"]//tbody//goa-icon-button[@icon="create"])[${index}]`
-    );
+    return cy.xpath(`(//div[@data-testid="lifecycle"]//tbody//goa-icon-button[@icon="create"])[${index}]`);
   }
 
   definitionEditorSubmissionConfigDispositionStateDeleteBtn(index) {
-    return cy.xpath(
-      `(//div[@data-testid="submission-configuration"]//tbody//goa-icon-button[@icon="trash"])[${index}]`
-    );
+    return cy.xpath(`(//div[@data-testid="lifecycle"]//tbody//goa-icon-button[@icon="trash"])[${index}]`);
   }
 
   // index number for arrow down is row # plus 1 because the first row doesn't have arrow up button
   definitionEditorSubmissionConfigDispositionStateArrowUpBtn(index) {
-    return cy.xpath(
-      `(//div[@data-testid="submission-configuration"]//tbody//goa-icon-button[@icon="arrow-up"])[${index}]`
-    );
+    return cy.xpath(`(//div[@data-testid="lifecycle"]//tbody//goa-icon-button[@icon="arrow-up"])[${index}]`);
   }
 
   definitionEditorSubmissionConfigDispositionStateArrowDownBtn(index) {
-    return cy.xpath(
-      `(//div[@data-testid="submission-configuration"]//tbody//goa-icon-button[@icon="arrow-down"])[${index}]`
-    );
+    return cy.xpath(`(//div[@data-testid="lifecycle"]//tbody//goa-icon-button[@icon="arrow-down"])[${index}]`);
   }
 
   definitionEditorSubmissionConfigTaskQueueToProcessDropdown() {
