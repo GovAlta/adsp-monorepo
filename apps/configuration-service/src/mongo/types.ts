@@ -2,7 +2,6 @@ export interface ConfigurationRevisionDoc<C = unknown> {
   namespace: string;
   name: string;
   tenant?: string;
-  anonymousRead?: boolean;
   revision: number;
   created?: Date;
   lastUpdated?: Date;
@@ -12,7 +11,10 @@ export interface ConfigurationRevisionDoc<C = unknown> {
 export interface ActiveRevisionDoc {
   namespace: string;
   name: string;
-  anonymousRead?: boolean;
   tenant?: string;
   active: number;
 }
+
+export type RevisionAggregateDoc<C = unknown> = Omit<ConfigurationRevisionDoc<C>, 'namespace' | 'name' | 'tenant'> & {
+  _id: Pick<ConfigurationRevisionDoc<C>, 'namespace' | 'name' | 'tenant'>;
+};

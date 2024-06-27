@@ -39,6 +39,30 @@ export const ConfigurationUpdatedDefinition: DomainEventDefinition = {
   },
 };
 
+const CONFIGURATION_DELETED = 'configuration-deleted';
+export const ConfigurationDeletedDefinition: DomainEventDefinition = {
+  name: CONFIGURATION_DELETED,
+  description: 'Signalled when configuration and all its revisions are deleted.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      namespace: {
+        type: 'string',
+      },
+      name: {
+        type: 'string',
+      },
+      deletedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
 const REVISION_CREATED = 'revision-created';
 export const RevisionCreatedDefinition: DomainEventDefinition = {
   name: REVISION_CREATED,
@@ -126,6 +150,30 @@ export const configurationUpdated = (
     updatedBy: {
       name: updatedBy.name,
       id: updatedBy.id,
+    },
+  },
+});
+
+export const configurationDeleted = (
+  deletedBy: User,
+  tenantId: AdspId,
+  namespace: string,
+  name: string
+): DomainEvent => ({
+  name: CONFIGURATION_DELETED,
+  timestamp: new Date(),
+  tenantId,
+  correlationId: `${namespace}:${name}`,
+  context: {
+    namespace,
+    name,
+  },
+  payload: {
+    namespace,
+    name,
+    deletedBy: {
+      name: deletedBy.name,
+      id: deletedBy.id,
     },
   },
 });
