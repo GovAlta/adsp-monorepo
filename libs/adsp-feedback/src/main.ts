@@ -684,13 +684,14 @@ class AdspFeedback implements AdspFeedbackApi {
             color: #fff;
             text-align: center;
             border-radius: 5px;
-            padding: 5px;
+            padding: 8px 16px;
             margin-top: 53px;
             position: absolute;
             z-index: 1;
             transform: translateX(-50%);
             opacity: 0;
             transition: opacity 0.3s;
+            white-space: nowrap;
           }
           .adsp-fb .tooltip-text::before {
             content: '';
@@ -822,12 +823,23 @@ class AdspFeedback implements AdspFeedbackApi {
           .successButton {
             margin-top: 24px;
           }
+
           .styled-hr {
             border: none;
             height: 1px;
             background-color: #ccc;
+          }
+
+          /* Top-facing shadow */
+          .styled-hr-top {
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
           }
+
+          /* Bottom-facing shadow */
+          .styled-hr-bottom {
+            box-shadow: -2px -3px 3px rgba(0, 0, 0, 0.1);
+          }
+
           .hr-width {
             width: 97%;
           }
@@ -948,7 +960,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       alt="close feedback"
                     />
                   </div>
-                  <hr class="styled-hr" />
+                  <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
                     <h3 class="h3-subtitle">Tell us what you think</h3>
                     <p class="p-content">
@@ -983,17 +995,17 @@ class AdspFeedback implements AdspFeedbackApi {
                       alt="close feedback"
                     />
                   </div>
-                  <hr class="styled-hr" />
+                  <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
                     <div ${ref(this.feedbackContentFormRef)} class="adsp-fb-content">
-                      <label for="comment"
+                      <label
                         ><b>How easy was it for you to use this service? <br /></b>
                       </label>
                       <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
                         ${this.ratings.map((rating, index) => this.renderRating(rating, index))}
                       </div>
                       <div class="adsp-fb-form-comment">
-                        <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
+                        <label><b>Do you have any additional comments?</b> <span>(optional)</span></label>
                         <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
                         <span class="help-text"
                           >Do not include personal information like SIN, password, addresses, etc.</span
@@ -1031,7 +1043,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         </div>
                         <div ${ref(this.technicalCommentDivRef)}>
                           <div class="adsp-fb-form-comment">
-                            <label for="comment"
+                            <label
                               ><b
                                 >Please describe the issue in detail. Mention the page or step where you experienced the
                                 issue, if applicable.</b
@@ -1047,7 +1059,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                     </div>
                     <div class="full-width-hr-container">
-                      <hr class="styled-hr" />
+                      <hr class="styled-hr styled-hr-bottom" />
                     </div>
                     <div class="adsp-fb-actions">
                       <button
