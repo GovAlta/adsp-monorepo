@@ -44,9 +44,7 @@ export const ListWithDetailHeading = styled.h3`
 `;
 
 export const FormDispositionDetail = styled.div`
-  margin: var(--goa-space-s);
-  display: flex;
-  flex-direction: column;
+  margin-top, margin-bottom: var(--goa-space-s);
 `;
 
 export const ReviewContainer = styled.div`
@@ -72,5 +70,16 @@ export const ActionContainer = styled.div`
   background-color: #fff;
   padding: 10px 0;
   display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   gap: 10px;
+`;
+
+export const DispositionForm = styled.div`
+  align-items: flex-start;
+`;
+
+export const ActionControl = styled.div`
+  padding: 10px;
+  margin: 5px 0;
 `;

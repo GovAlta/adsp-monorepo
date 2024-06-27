@@ -35,6 +35,8 @@ import {
   ReviewContainer,
   ReviewContent,
   ActionContainer,
+  ActionControl,
+  DispositionForm,
 } from './styled-components';
 import { RenderFormReviewFields } from './RenderFormReviewFields';
 import { ajv } from '../../../lib/validations/checkInput';
@@ -182,52 +184,55 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     );
   };
 
-  const renderFormDisposition = () => {
+  const renderDisposition = () => {
     return (
-      <div id="form-disposition-block">
-        <FormDispositionDetail>
-          <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition" mt="m" mb="s">
-            <GoADropdown
-              testId="formDispositionStatus"
-              value={dispositionStatus}
-              disabled={disableFormDispositionControls()}
-              onChange={(_, value: string) => {
-                setDispositionStatus(value);
-                validators.remove('dispositionStatus');
-                validators['dispositionStatus'].check(value);
-              }}
-              relative={true}
-              width={'67ch'}
-            >
-              <GoADropdownItem
-                key={NO_DISPOSITION_SELECTED.id}
-                value={NO_DISPOSITION_SELECTED.value}
-                label={NO_DISPOSITION_SELECTED.label}
-              />
-              {dispositionStates?.map((dip) => (
-                <GoADropdownItem key={dip.id} value={dip.name} label={dip.description} />
-              ))}
-            </GoADropdown>
-          </GoAFormItem>
-
-          <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']}>
-            <GoATextArea
-              name="reason"
-              value={dispositionReason}
-              disabled={disableFormDispositionControls()}
-              width="75ch"
-              testId="reason"
-              aria-label="reason"
-              onKeyPress={(name, value: string) => {
-                setDispositionReason(value);
-                validators.remove('dispositionReason');
-                validators['dispositionReason'].check(value);
-              }}
-              // eslint-disable-next-line
-              onChange={() => {}}
+      <div id="form-disposition-block" style={{ marginTop: '-17px' }}>
+        <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition" mt="m" mb="s">
+          <GoADropdown
+            testId="formDispositionStatus"
+            value={dispositionStatus}
+            disabled={disableFormDispositionControls()}
+            onChange={(_, value: string) => {
+              setDispositionStatus(value);
+              validators.remove('dispositionStatus');
+              validators['dispositionStatus'].check(value);
+            }}
+            relative={true}
+            width={'300px'}
+          >
+            <GoADropdownItem
+              key={NO_DISPOSITION_SELECTED.id}
+              value={NO_DISPOSITION_SELECTED.value}
+              label={NO_DISPOSITION_SELECTED.label}
             />
-          </GoAFormItem>
-        </FormDispositionDetail>
+            {dispositionStates?.map((dip, i) => (
+              <GoADropdownItem key={dip.id} value={dip.name} label={dip.description} />
+            ))}
+          </GoADropdown>
+        </GoAFormItem>
+      </div>
+    );
+  };
+  const renderReason = () => {
+    return (
+      <div id="form-reason-block">
+        <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']}>
+          <GoATextArea
+            name="reason"
+            value={dispositionReason}
+            disabled={disableFormDispositionControls()}
+            width="91%"
+            testId="reason"
+            aria-label="reason"
+            onKeyPress={(name, value: string) => {
+              setDispositionReason(value);
+              validators.remove('dispositionReason');
+              validators['dispositionReason'].check(value);
+            }}
+            // eslint-disable-next-line
+            onChange={() => {}}
+          />
+        </GoAFormItem>
       </div>
     );
   };
@@ -256,7 +261,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
         </GoAButton>
         {task?.status === TASK_STATUS.PENDING && (
           <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
-            Start task
+            Start review
           </GoAButton>
         )}
       </GoAButtonGroup>
@@ -293,7 +298,10 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
         {renderTaskCancelModal()}
       </ReviewContent>
       <ActionContainer ref={actionContainerRef}>
-        {renderFormDisposition()}
+        <DispositionForm>
+          <ActionControl>{renderDisposition()}</ActionControl>
+          <ActionControl>{renderReason()}</ActionControl>
+        </DispositionForm>
         {renderButtonGroup()}
       </ActionContainer>
     </ReviewContainer>

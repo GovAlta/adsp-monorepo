@@ -102,7 +102,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
           <CommentsViewer key={open.urn} />
         </div>
       )}
-
+      {/*  Jun, 2024, disable until we have chat capabilities
       <GoAIconButton
         disabled={!open || !topics[open.urn]}
         icon={showComments ? 'chatbubble-ellipses' : 'chatbubble'}
@@ -114,6 +114,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
           }
         }}
       />
+      */}
     </div>
   );
 };
