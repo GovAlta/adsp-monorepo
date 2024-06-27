@@ -127,7 +127,6 @@ class AdspFeedback implements AdspFeedbackApi {
 
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
     if (this.feedbackFormRef.value) {
-      this.feedbackFormRef.value.style.height = '640px';
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
@@ -320,9 +319,6 @@ class AdspFeedback implements AdspFeedbackApi {
         this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
         this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
       }
-      if (this.feedbackFormRef.value) {
-        this.feedbackFormRef.value.style.height = '390px';
-      }
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
@@ -493,16 +489,20 @@ class AdspFeedback implements AdspFeedbackApi {
             background: #ffffff;
             position: fixed;
             width: 640px;
-            max-height: 680px;
+            max-height: 80%;
+            height: min-content;
             left: 50%;
             top: 10vh;
+            bottom: 10vh;
+            overflow-y: auto;
+            overflow-x: hidden;
             border: 1px solid;
             border-radius: 3px;
             transform: translateX(-50%);
           }
-          .adsp-fb .adsp-fb-start {
-            height: 330px;
-          }
+          // .adsp-fb .adsp-fb-start {
+          //   height: 330px;
+          // }
           .adsp-fb .adsp-fb-container-heading {
             display: flex;
             flex-direction: row;
@@ -521,16 +521,15 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: column;
             padding: 0 0 36px 24px;
             transition: transform 0.001ms;
-            height: 100%;
-            justify-content: space-between;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 455px;
+            //max-height: 455px;
             overflow-y: auto !important;
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
             padding-top: 36px;
+            margin-bottom: 4px;
           }
           .adsp-fb .adsp-fb-form-rating {
             display: flex;
@@ -594,11 +593,11 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .adsp-fb .adsp-fb-actions {
             display: flex;
-            padding-bottom: 48px;
             padding-right: 32px;
-            margin-top: 16px;
-            margin-bottom: 32px;
+            margin-top: 20px;
+            margin-bottom: 5px;
           }
+
           .adsp-fb button {
             display: inline-flex;
             cursor: pointer;
@@ -720,10 +719,12 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
             transform: translateX(-100%);
             visibility: hidden;
+            height: 320px;
           }
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
             transform: translateX(-100%);
             visibility: hidden;
+            height: 320px;
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             visibility: visible;
@@ -862,15 +863,26 @@ class AdspFeedback implements AdspFeedbackApi {
             }
           }
           @media screen and (max-width: 640px) {
+            .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
+              height: 400px;
+            }
+            .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
+              height: 400px;
+            }
             .adsp-fb div.adsp-fb-form-container {
               bottom: 0;
               border: 0;
               width: 100%;
               top: auto;
+              max-height: 100%;
+              overflow-x: hidden;
+            }
+            .adsp-fb-main {
+              overflow-y: auto;
             }
 
-            .overlay {
-              background: rgb(128, 128, 128);
+            .adsp-fb .adsp-fb-content {
+              max-height: 100%;
             }
 
             .adsp-fb .adsp-fb-actions {
@@ -981,7 +993,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   </form>
                 </div>
 
-                <div ${ref(this.feedbackFormRef)} class="adsp-fb-form-container" data-show="false">
+                <div ${ref(this.feedbackFormRef)} class="adsp-fb-form-container adsp-fb-main" data-show="false">
                   <div class="adsp-fb-container-heading">
                     <h3 class="title">Give feedback</h3>
                     <img
