@@ -48,6 +48,21 @@ import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getAccessToken } from '@store/tenant/sagas';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
 
+/**
+ * Filter out namespace level configuration since it's not currently handled by the admin app.
+ *
+ * @param {Record<string, unknown>} configuration
+ * @returns
+ */
+function filterNamespaceConfiguration(configuration: Record<string, unknown>) {
+  return Object.entries(configuration || {}).reduce((config, [key, value]) => {
+    if (key.includes(':')) {
+      config[key] = value;
+    }
+    return config;
+  }, {} as Record<string, unknown>);
+}
+
 export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
     UpdateIndicator({
@@ -74,8 +89,14 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
 
       yield put(
         getConfigurationDefinitionsSuccess({
-          tenant: tenant.data,
-          core: core.data,
+          tenant: {
+            ...tenant.data,
+            latest: { ...tenant.data?.latest, configuration: filterNamespaceConfiguration(tenant.data?.latest?.configuration) },
+          },
+          core: {
+            ...core.data,
+            latest: { ...core.data?.latest, configuration: filterNamespaceConfiguration(core.data?.latest?.configuration) },
+          },
         })
       );
       yield put(
