@@ -184,4 +184,12 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
 
     return this.active;
   }
+
+  public async delete(user: User): Promise<boolean> {
+    if (!this.canModify(user)) {
+      throw new UnauthorizedUserError('delete configuration', user);
+    }
+
+    return await this.repository.delete(this);
+  }
 }

@@ -1,4 +1,4 @@
-import { AdspId, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, isAllowedUser, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import * as passport from 'passport';
 import {
   assertAuthenticatedHandler,
@@ -10,10 +10,10 @@ import {
 } from '@core-services/core-common';
 import { rateLimit, RateLimitRequestHandler } from 'express-rate-limit';
 import { Request, RequestHandler, Router } from 'express';
-import { body, checkSchema, query } from 'express-validator';
+import { body, checkSchema, param, query } from 'express-validator';
 import { isEqual as isDeepEqual, unset, cloneDeep } from 'lodash';
 import { Logger } from 'winston';
-import { configurationUpdated, revisionCreated, activeRevisionSet } from '../events';
+import { configurationUpdated, revisionCreated, activeRevisionSet, configurationDeleted } from '../events';
 import { ConfigurationEntity } from '../model';
 import { ConfigurationRepository, Repositories } from '../repository';
 import { ConfigurationDefinition, ConfigurationDefinitions, ConfigurationRevision } from '../types';
@@ -27,6 +27,7 @@ import {
   PostRequests,
   ConfigurationMap,
 } from './types';
+import { ConfigurationServiceRoles } from '../roles';
 
 export interface ConfigurationRouterProps extends Repositories {
   serviceId: AdspId;
@@ -161,6 +162,35 @@ const mapActiveRevision = (configuration: ConfigurationEntity, active: number): 
   tenantId: configuration.tenantId,
   active,
 });
+
+export function findConfiguration(repository: ConfigurationRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { namespace } = req.params;
+      const { top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string) : null;
+
+      if (!isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin)) {
+        throw new UnauthorizedUserError('find configuration', user);
+      }
+
+      const { results, page } = await repository.find(
+        { tenantIdEquals: tenantId, namespaceEquals: namespace },
+        top,
+        after as string
+      );
+
+      res.send({
+        results: results.map(mapConfiguration),
+        page,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export const getConfiguration =
   (mapResult = mapConfiguration): RequestHandler =>
@@ -403,6 +433,38 @@ export const configurationOperations =
     }
   };
 
+export function deleteConfiguration(logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
+      const user = req.user;
+      const configuration: ConfigurationEntity = req[ENTITY_KEY];
+
+      const deleted = await configuration.delete(user);
+
+      end();
+      res.send({ deleted });
+      if (deleted) {
+        eventService.send(
+          configurationDeleted(user, configuration.tenantId, configuration.namespace, configuration.name)
+        );
+      }
+
+      logger.info(
+        `Configuration ${configuration.namespace}:${configuration.name} deleted by ${user.name} (ID: ${user.id}).`,
+        {
+          tenant: configuration.tenantId?.toString(),
+          context: 'configuration-router',
+          user: `${user.name} (ID: ${user.id})`,
+        }
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export const getRevisions =
   (
     getCriteria = (_req: Request) => ({}),
@@ -437,11 +499,25 @@ export function createConfigurationRouter({
   const validateNamespaceNameHandler = createValidationHandler(
     ...checkSchema(
       {
-        namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-        name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        namespace: { isString: true, matches: { options: /^[a-zA-Z0-9-]{1,50}$/ } },
+        name: { isString: true, matches: { options: /^[a-zA-Z0-9-]{1,50}$/ } },
       },
       ['params']
     )
+  );
+
+  router.get(
+    '/configuration/:namespace',
+    coreTenantPassportAuthenticateHandler,
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('namespace')
+        .isString()
+        .matches(/^[a-zA-Z0-9-]{1,50}$/),
+      query('top').optional().isInt({ min: 1, max: 100 }),
+      query('after').optional().isString()
+    ),
+    findConfiguration(configurationRepository)
   );
 
   router.get(
@@ -495,6 +571,15 @@ export function createConfigurationRouter({
     configurationOperations(logger, eventService)
   );
 
+  router.delete(
+    '/configuration/:namespace/:name',
+    coreTenantPassportAuthenticateHandler,
+    assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
+    deleteConfiguration(logger, eventService)
+  );
+
   router.get(
     '/configuration/:namespace/:name/revisions',
     coreTenantPassportAuthenticateHandler,
@@ -533,11 +618,10 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name/revisions/:revision',
     coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
     createValidationHandler(
       ...checkSchema(
         {
-          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
           revision: { isInt: { options: { min: 0 } } },
         },
         ['params']

@@ -26,6 +26,18 @@ export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
     return activeDoc;
   }
 
+  async delete<C>(entity: ConfigurationEntity<C>): Promise<boolean> {
+    const query = {
+      namespace: entity.namespace,
+      name: entity.name,
+      tenant: entity.tenantId?.toString() || { $exists: false },
+    };
+
+    const { deletedCount } = await this.activeRevisionModel.deleteOne(query);
+
+    return deletedCount > 0;
+  }
+
   async setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ActiveRevisionDoc> {
     if (!(active >= 0)) {
       throw new InvalidOperationError('Active revision value must be greater than or equal to 0.');
