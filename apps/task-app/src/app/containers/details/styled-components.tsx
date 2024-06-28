@@ -3,8 +3,6 @@ import styled from 'styled-components';
 export const ReviewItem = styled.div`
   display: flex;
   flex-direction: column;
-  border: var(--goa-border-width-s) solid grey;
-  border-radius: var(--goa-border-radius-m);
   margin: var(--goa-space-2xs);
   margin-top: var(--goa-space-m);
   padding: var(--goa-space-xs);
@@ -23,12 +21,6 @@ export const ReviewItemBasic = styled.div`
   padding: 1rem;
 `;
 
-export const ReviewItemHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-`;
 export const ReviewItemTitle = styled.div`
   font-size: var(--fs-xl);
   line-height: var(--lh-lg);
@@ -43,14 +35,11 @@ export const ListWithDetailHeading = styled.h3`
   text-transform: capitalize;
 `;
 
-export const FormDispositionDetail = styled.div`
-  margin-top, margin-bottom: var(--goa-space-s);
-`;
-
 export const ReviewContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  padding-top: 0;
 `;
 
 export interface ReviewContentProps {
@@ -60,7 +49,7 @@ export interface ReviewContentProps {
 export const ReviewContent = styled.div<ReviewContentProps>`
   flex: 1;
   overflow-y: auto;
-  padding-bottom: ${(props) => props.paddingBottom || '60px'};
+  padding-bottom: ${(props) => props.paddingBottom || '0'};
 `;
 
 export const ActionContainer = styled.div`
@@ -68,18 +57,10 @@ export const ActionContainer = styled.div`
   bottom: 0;
   width: 100%;
   background-color: #fff;
-  padding: 10px 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 10px;
+  gap: var(--goa-space-s);
+  margin-left: var(--goa-space-s);
 `;
 
-export const DispositionForm = styled.div`
-  align-items: flex-start;
-`;
-
-export const ActionControl = styled.div`
-  padding: 10px;
-  margin: 5px 0;
-`;
+export const ActionControl = styled.div``;

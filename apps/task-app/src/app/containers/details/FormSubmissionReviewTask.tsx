@@ -27,31 +27,19 @@ import { AdspId } from '../../../lib/adspId';
 
 import {
   ReviewItem,
-  //  ReviewItemHeader,
   ReviewItemSection,
   ReviewItemTitle,
   ReviewItemBasic,
-  FormDispositionDetail,
   ReviewContainer,
   ReviewContent,
   ActionContainer,
   ActionControl,
-  DispositionForm,
 } from './styled-components';
 import { RenderFormReviewFields } from './RenderFormReviewFields';
 import { ajv } from '../../../lib/validations/checkInput';
 import { Element } from './RenderFormReviewFields';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
-import styled from 'styled-components';
 import { TaskCancelModal } from './TaskCancelModal';
-// const PlaceholderDiv = styled.div`
-//   display: flex;
-//   flex-direction: column;
-
-//   > *:first-child {
-//     flex-grow: 1;
-//   }
-// `;
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   user,
@@ -73,7 +61,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   // To help determine height of the content container
   const actionContainerRef = useRef(null);
-  const [paddingBottom, setPaddingBottom] = useState('60px');
+  const [paddingBottom, setPaddingBottom] = useState('0');
 
   useEffect(() => {
     dispatch(selectForm({ formId: id, submissionId: submissionId }));
@@ -186,8 +174,8 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const renderDisposition = () => {
     return (
-      <div id="form-disposition-block" style={{ marginTop: '-17px' }}>
-        <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition" mt="m" mb="s">
+      <div id="form-disposition-block">
+        <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition">
           <GoADropdown
             testId="formDispositionStatus"
             value={dispositionStatus}
@@ -198,7 +186,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
               validators['dispositionStatus'].check(value);
             }}
             relative={true}
-            width={'300px'}
+            width={'600px'}
           >
             <GoADropdownItem
               key={NO_DISPOSITION_SELECTED.id}
@@ -221,7 +209,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             name="reason"
             value={dispositionReason}
             disabled={disableFormDispositionControls()}
-            width="91%"
+            width="600px"
             testId="reason"
             aria-label="reason"
             onKeyPress={(name, value: string) => {
@@ -239,11 +227,11 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const renderButtonGroup = () => {
     return (
-      <GoAButtonGroup alignment="start" mt="l">
+      <GoAButtonGroup alignment="start">
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
             <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
-              Finalize Decision
+              Submit Decision
             </GoAButton>
             <GoAButton
               type="secondary"
@@ -298,10 +286,9 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
         {renderTaskCancelModal()}
       </ReviewContent>
       <ActionContainer ref={actionContainerRef}>
-        <DispositionForm>
-          <ActionControl>{renderDisposition()}</ActionControl>
-          <ActionControl>{renderReason()}</ActionControl>
-        </DispositionForm>
+        <goa-divider mt="m" mb="none"></goa-divider>
+        <ActionControl>{renderDisposition()}</ActionControl>
+        <ActionControl>{renderReason()}</ActionControl>
         {renderButtonGroup()}
       </ActionContainer>
     </ReviewContainer>
