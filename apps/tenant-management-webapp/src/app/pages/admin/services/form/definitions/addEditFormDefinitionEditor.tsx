@@ -593,10 +593,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     <FlexRow>
                       <GoACheckboxPad>
                         <GoACheckbox
-                          name="submission-records"
-                          key="submission-records"
+                          name="support-topic"
+                          key="support-topic"
                           checked={definition.supportTopic}
-                          testId="submission-records"
+                          testId="support-topic"
                           onChange={() => {
                             const topic = definition.supportTopic ? false : true;
                             setDefinition({ ...definition, supportTopic: topic });
