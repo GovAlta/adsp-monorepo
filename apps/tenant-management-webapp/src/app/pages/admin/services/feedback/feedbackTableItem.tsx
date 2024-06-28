@@ -31,7 +31,7 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
 
   return (
     <>
-      <tr>
+      <tr key={Number(id) * 10}>
         <td data-testid={`feedback-list-created-on_${id}`}>{submissionDate.formattedDate}</td>
         <td data-testid={`feedback-list_${id}`}>
           <URL>{feedback.context.view}</URL>
@@ -49,31 +49,31 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
         </td>
       </tr>
       {showDetails && (
-        <tr>
+        <tr key={Number(id) + 1 * 10}>
           <td
             colSpan={5}
             style={{
               padding: '0px',
             }}
           >
-            <MoreDetails data-testId="moredetails">
+            <MoreDetails data-testid="moredetails">
               <p>
                 Feedback was submitted for '{feedback.context.view}' on {submissionDate.formattedDate}{' '}
                 {submissionDate.formattedDateTime}
               </p>
               <h2>Rating</h2>
-              <span data-testId={`feedbackRating_${id}`}>{ratingValue}</span>
+              <span data-testid={`feedbackRating_${id}`}>{ratingValue}</span>
               {feedback.value.comment && (
                 <>
                   <h2>Comments</h2>
-                  <span data-testId={`feedbackComments_${id}`}>{feedback.value.comment}</span>
+                  <span data-testid={`feedbackComments_${id}`}>{feedback.value.comment}</span>
                 </>
               )}
 
               {feedback.value.technicalIssue && (
                 <>
                   <h2>Technical issues</h2>
-                  <span data-testId={`feedbackTechnicalIssue_${id}`}>{feedback.value.technicalIssue}</span>
+                  <span data-testid={`feedbackTechnicalIssue_${id}`}>{feedback.value.technicalIssue}</span>
                 </>
               )}
             </MoreDetails>

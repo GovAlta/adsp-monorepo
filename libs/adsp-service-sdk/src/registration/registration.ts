@@ -31,8 +31,11 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
     if (registration.configuration) {
       const namespace = registration.serviceId.namespace;
       const name = registration.serviceId.service;
+      // If useNamespace is enabled, then the service is the configuration namespace and no name is specified.
+      // Used in cases where the service can have a lot of configuration, and cannot store all of it in a single document.
+      const key = registration.configuration.useNamespace ? name : `${namespace}:${name}`;
       const update = {
-        [`${namespace}:${name}`]: {
+        [key]: {
           configurationSchema: registration.configuration.schema,
           description: registration.configuration.description,
         },

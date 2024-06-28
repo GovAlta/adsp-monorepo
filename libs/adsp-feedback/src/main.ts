@@ -42,6 +42,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
   private feedbackBadgeRef: Ref<HTMLDivElement> = createRef();
   private feedbackFormRef: Ref<HTMLDivElement> = createRef();
+  private feedbackContentFormRef: Ref<HTMLDivElement> = createRef();
   private ratingRef: Ref<HTMLFieldSetElement> = createRef();
   private commentRef: Ref<HTMLTextAreaElement> = createRef();
   private sendButtonRef: Ref<HTMLButtonElement> = createRef();
@@ -52,6 +53,8 @@ class AdspFeedback implements AdspFeedbackApi {
   private dimRef: Ref<HTMLTextAreaElement> = createRef();
   private radio1Ref: Ref<HTMLInputElement> = createRef();
   private radio2Ref: Ref<HTMLInputElement> = createRef();
+  private firstFocusableElement?: HTMLElement;
+  private lastFocusableElement?: HTMLElement;
 
   constructor() {
     const site = `${document.location.protocol}//${document.location.host}`;
@@ -79,9 +82,14 @@ class AdspFeedback implements AdspFeedbackApi {
     this.startRef?.value?.setAttribute('data-show', 'true');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
+    this.lastFocusableElement = this.startRef?.value?.querySelector('#start') as HTMLElement;
+    this.firstFocusableElement = this.startRef?.value?.querySelector('.feedback-close-button') as HTMLElement;
+    document.addEventListener('keydown', this.trapTabKey);
+    document.addEventListener('keydown', this.handleEscapeKey);
+
     this.onDimChange(true);
   }
-  private handleKeyFeedback(event: KeyboardEvent) {
+  private handleKeyOpenStartForm(event: KeyboardEvent) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       this.openStartForm();
@@ -94,17 +102,62 @@ class AdspFeedback implements AdspFeedbackApi {
       this.selectRating(index);
     }
   }
+  private handleKeyExit(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.closeFeedbackForm();
+    }
+  }
+  private handleKeyFeedbackExit(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.closeFeedbackForm();
+    }
+  }
 
   private closeStartForm() {
     this.startRef?.value?.setAttribute('data-show', 'false');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'true');
+    this.firstFocusableElement = this.feedbackFormRef?.value?.querySelector('.feedback-close-button') as HTMLElement;
+    this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-secondary') as HTMLElement;
+
+    document.addEventListener('keydown', this.trapTabKey);
+    document.addEventListener('keydown', this.handleEscapeKey);
+
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
     if (this.feedbackFormRef.value) {
-      this.feedbackFormRef.value.style.height = '640px';
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
   }
+
+  trapTabKey = (e: KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      if (e.shiftKey) {
+        // If Shift + Tab
+        if (document.activeElement === this.firstFocusableElement) {
+          e.preventDefault();
+          this.lastFocusableElement!.focus();
+        }
+      } else {
+        // If Tab
+        if (document.activeElement === this.lastFocusableElement) {
+          e.preventDefault();
+          this.firstFocusableElement!.focus();
+        }
+      }
+    }
+  };
+
+  handleEscapeKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      this.reset();
+      this.feedbackBadgeRef?.value?.setAttribute('data-show', 'true');
+      this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
+      this.startRef?.value?.setAttribute('data-show', 'false');
+      this.onDimChange(false);
+    }
+  };
 
   private closeFeedbackForm() {
     this.reset();
@@ -255,16 +308,16 @@ class AdspFeedback implements AdspFeedbackApi {
         if (!response.ok) {
           console.log(`Response received for sending feedback to API not 200: ${response.status}`);
           this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
+          this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
         } else {
           this.feedbackFormRef.value?.setAttribute('data-completed', 'true');
+          this.lastFocusableElement = document.querySelector('#feedback-close-success') as HTMLElement;
         }
       } catch (err) {
         console.log(`Error encountered sending feedback to API: ${err}`);
 
         this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
-      }
-      if (this.feedbackFormRef.value) {
-        this.feedbackFormRef.value.style.height = '390px';
+        this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
       }
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
@@ -345,6 +398,7 @@ class AdspFeedback implements AdspFeedbackApi {
     }
     this.selectedRating = index;
     this.sendButtonRef.value?.removeAttribute('disabled');
+    this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-primary') as HTMLElement;
 
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
@@ -435,16 +489,18 @@ class AdspFeedback implements AdspFeedbackApi {
             background: #ffffff;
             position: fixed;
             width: 640px;
-            max-height: 680px;
+            max-height: 80%;
+            height: min-content;
             left: 50%;
             top: 10vh;
+            bottom: 10vh;
+            overflow-y: auto;
+            overflow-x: hidden;
             border: 1px solid;
             border-radius: 3px;
             transform: translateX(-50%);
           }
-          .adsp-fb .adsp-fb-start {
-            height: 330px;
-          }
+
           .adsp-fb .adsp-fb-container-heading {
             display: flex;
             flex-direction: row;
@@ -461,32 +517,28 @@ class AdspFeedback implements AdspFeedbackApi {
             display: flex;
             box-sizing: border-box;
             flex-direction: column;
-            padding: 0 0 36px 24px;
+            padding: 0 0 24px 24px;
             transition: transform 0.001ms;
-            height: 100%;
-            justify-content: space-between;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 455px;
             overflow-y: auto !important;
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
             padding-top: 36px;
+            margin-bottom: 4px;
           }
           .adsp-fb .adsp-fb-form-rating {
             display: flex;
             flex-direction: row;
-            gap: 24px;
+            gap: 32px;
             border: 0;
             margin-top: 12px;
             justify-content: space-between;
-            width: 90%;
+            width: 97%;
 
             > div > img {
-              height: 46px;
               padding-right: 14px;
-              padding-left: 14px;
             }
             > div > img:first-child {
               padding-left: 0px;
@@ -536,11 +588,10 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .adsp-fb .adsp-fb-actions {
             display: flex;
-            padding-bottom: 48px;
             padding-right: 32px;
-            margin-top: 16px;
-            margin-bottom: 32px;
+            margin-top: 24px;
           }
+
           .adsp-fb button {
             display: inline-flex;
             cursor: pointer;
@@ -626,13 +677,14 @@ class AdspFeedback implements AdspFeedbackApi {
             color: #fff;
             text-align: center;
             border-radius: 5px;
-            padding: 5px;
+            padding: 8px 16px;
             margin-top: 53px;
             position: absolute;
             z-index: 1;
             transform: translateX(-50%);
             opacity: 0;
             transition: opacity 0.3s;
+            white-space: nowrap;
           }
           .adsp-fb .tooltip-text::before {
             content: '';
@@ -661,10 +713,12 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
             transform: translateX(-100%);
             visibility: hidden;
+            height: 264px;
           }
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
             transform: translateX(-100%);
             visibility: hidden;
+            height: 334px;
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             visibility: visible;
@@ -678,7 +732,10 @@ class AdspFeedback implements AdspFeedbackApi {
             display: flex;
             flex-direction: row;
           }
-
+          .radio-span {
+            display: flex;
+            align-items: center;
+          }
           .rating {
             cursor: pointer;
             transition: transform 0.3s ease-in-out color 0.3s ease;
@@ -702,7 +759,11 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: column;
             cursor: pointer;
           }
-
+          .radio-div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+          }
           .radio {
             appearance: none;
             width: 24px;
@@ -745,7 +806,6 @@ class AdspFeedback implements AdspFeedbackApi {
           .radio:active {
             box-shadow: 0 0 0 3px #feba35;
           }
-
           .radio-label {
             padding: 0 8px;
             font-weight: normal;
@@ -757,35 +817,69 @@ class AdspFeedback implements AdspFeedbackApi {
           .successButton {
             margin-top: 24px;
           }
+
           .styled-hr {
             border: none;
             height: 1px;
             background-color: #ccc;
+          }
+
+          /* Top-facing shadow */
+          .styled-hr-top {
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
           }
+
+          /* Bottom-facing shadow */
+          .styled-hr-bottom {
+            box-shadow: -2px -3px 3px rgba(0, 0, 0, 0.1);
+          }
+
+          .hr-width {
+            width: 97%;
+          }
+          .full-width-hr-container {
+            margin-left: -24px;
+          }
+
           .p-error {
             margin-left: 36px;
             margin-right: 36px;
+            line-height: 28px;
           }
           .h3-subtitle {
             padding-top: 36px;
           }
           .p-content {
             margin-right: 24px;
+            line-height: 28px;
           }
           @media screen and (max-width: 768px) {
             .adsp-fb div.adsp-fb-form-container {
             }
           }
           @media screen and (max-width: 640px) {
+            .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
+              height: 400px;
+            }
+            .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
+              height: 400px;
+            }
             .adsp-fb div.adsp-fb-form-container {
               bottom: 0;
               border: 0;
               width: 100%;
+              top: auto;
+              max-height: 100%;
+              overflow-x: hidden;
             }
+            .adsp-fb-main {
+              overflow-y: auto;
+            }
+            .adsp-fb .adsp-fb-content {
+              max-height: 100%;
+            }
+
             .adsp-fb .adsp-fb-actions {
-              position: -webkit-sticky;
-              position: sticky;
               bottom: 0;
               flex-direction: column-reverse;
               > button {
@@ -851,7 +945,7 @@ class AdspFeedback implements AdspFeedbackApi {
                 class="adsp-fb-badge"
                 data-show="true"
                 @click=${this.openStartForm}
-                @keydown=${this.handleKeyFeedback}
+                @keydown=${this.handleKeyOpenStartForm}
               >
                 <span>Feedback</span>
               </div>
@@ -862,14 +956,17 @@ class AdspFeedback implements AdspFeedbackApi {
                   <div class="adsp-fb-container-heading">
                     <h3 class="title">Give feedback</h3>
                     <img
+                      class="feedback-close-button"
+                      tabindex="0"
                       src=${closeOutlineSvg}
                       width="30px"
                       height="30px"
                       @click="${this.closeFeedbackForm}"
+                      @keydown=${this.handleKeyExit}
                       alt="close feedback"
                     />
                   </div>
-                  <hr class="styled-hr" />
+                  <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
                     <h3 class="h3-subtitle">Tell us what you think</h3>
                     <p class="p-content">
@@ -877,46 +974,55 @@ class AdspFeedback implements AdspFeedbackApi {
                       a minute.
                     </p>
                     <div class="adsp-fb-actions">
-                      <button class="adsp-fb-form-primary" @click=${this.closeStartForm} type="button" tabindex="0">
+                      <button
+                        class="adsp-fb-form-primary"
+                        id="start"
+                        @click=${this.closeStartForm}
+                        type="button"
+                        tabindex="0"
+                      >
                         Start
                       </button>
                     </div>
                   </form>
                 </div>
 
-                <div ${ref(this.feedbackFormRef)} class="adsp-fb-form-container" data-show="false">
+                <div ${ref(this.feedbackFormRef)} class="adsp-fb-form-container adsp-fb-main" data-show="false">
                   <div class="adsp-fb-container-heading">
                     <h3 class="title">Give feedback</h3>
                     <img
+                      class="feedback-close-button"
+                      tabindex="0"
                       src=${closeOutlineSvg}
                       width="30px"
                       height="30px"
                       @click="${this.closeFeedbackForm}"
+                      @keydown=${this.handleKeyFeedbackExit}
                       alt="close feedback"
                     />
                   </div>
-                  <hr class="styled-hr" />
+                  <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
-                    <div class="adsp-fb-content">
-                      <label for="comment"
+                    <div ${ref(this.feedbackContentFormRef)} class="adsp-fb-content">
+                      <label
                         ><b>How easy was it for you to use this service? <br /></b>
                       </label>
                       <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
                         ${this.ratings.map((rating, index) => this.renderRating(rating, index))}
                       </div>
                       <div class="adsp-fb-form-comment">
-                        <label for="comment"><b>Do you have any additional comments?</b> <span>(optional)</span></label>
+                        <label><b>Do you have any additional comments?</b> <span>(optional)</span></label>
                         <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
                         <span class="help-text"
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
                       </div>
-                      <hr class="styled-hr" />
+                      <hr class="hr-width hr-width" />
                       <br />
                       <div class="radio-container">
                         <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
-                          <div>
+                          <div class="radio-span">
                             <input
                               name="YesOrNo"
                               type="radio"
@@ -928,7 +1034,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
                             <span class="goa-radio-label"> Yes </span>
                           </div>
-                          <div>
+                          <div class="radio-span">
                             <input
                               name="YesOrNo"
                               type="radio"
@@ -943,7 +1049,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         </div>
                         <div ${ref(this.technicalCommentDivRef)}>
                           <div class="adsp-fb-form-comment">
-                            <label for="comment"
+                            <label
                               ><b
                                 >Please describe the issue in detail. Mention the page or step where you experienced the
                                 issue, if applicable.</b
@@ -958,7 +1064,10 @@ class AdspFeedback implements AdspFeedbackApi {
                         </div>
                       </div>
                     </div>
-                    <div class=" adsp-fb-actions">
+                    <div class="full-width-hr-container">
+                      <hr class="styled-hr styled-hr-bottom" />
+                    </div>
+                    <div class="adsp-fb-actions">
                       <button
                         @click=${this.closeFeedbackForm}
                         class="adsp-fb-form-secondary"
@@ -990,7 +1099,13 @@ class AdspFeedback implements AdspFeedbackApi {
                         government through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
                       </p>
                       <div class="adsp-fb-actions">
-                        <button @click=${this.closeAllFeedback} class="adsp-fb-form-primary" type="button" tabindex="0">
+                        <button
+                          @click=${this.closeAllFeedback}
+                          id="feedback-close-success"
+                          class="adsp-fb-form-primary"
+                          type="button"
+                          tabindex="0"
+                        >
                           Close
                         </button>
                       </div>
@@ -1012,6 +1127,7 @@ class AdspFeedback implements AdspFeedbackApi {
                             <button
                               @click=${this.closeErrorForm}
                               class="adsp-fb-form-primary"
+                              id="feedback-close-error"
                               type="button"
                               tabindex="0"
                             >

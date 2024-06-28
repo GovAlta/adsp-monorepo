@@ -6,10 +6,11 @@ import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { GoAButton } from '@abgov/react-components-new';
 import { CalendarModal } from './calendarModal';
-import { CalendarTableComponent } from './calendarList';
+import { CalendarTableComponent } from './calendarTable';
 import { fetchEventStreams } from '@store/stream/actions';
 import { ActionState } from '@store/session/models';
-
+import { DeleteConfirmationsView } from './deleteConfirmationsView';
+import { FetchEventsByCalendar } from '@store/calendar/actions';
 interface AddEditCalendarProps {
   activeEdit: boolean;
 }
@@ -17,6 +18,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   const dispatch = useDispatch();
   const [openEditCalendar, setOpenEditCalendar] = useState(false);
   const [selectedCalendarName, setSelectedCalendarName] = useState<string | undefined>();
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCalendars());
@@ -34,16 +36,22 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
       setOpenEditCalendar(true);
     }
   }, [activeEdit]);
-
   // eslint-disable-next-line
 
   const reset = () => {
     setOpenEditCalendar(false);
+    setSelectedCalendarName('');
   };
 
   const onEdit = (calendar) => {
     setSelectedCalendarName(calendar.name);
     setOpenEditCalendar(true);
+  };
+
+  const onDelete = (calendar) => {
+    dispatch(FetchEventsByCalendar(calendar.name));
+    setSelectedCalendarName(calendar.name);
+    setShowDeleteConfirmation(true);
   };
 
   return (
@@ -63,11 +71,11 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
       {fetchCalendarState === ActionState.completed && !calendars && renderNoItem('calendar')}
       {fetchCalendarState === ActionState.completed && calendars && (
         <div>
-          <CalendarTableComponent calendars={calendars} onEdit={onEdit} />
+          <CalendarTableComponent calendars={calendars} onEdit={onEdit} onDelete={onDelete} />
         </div>
       )}
 
-      {openEditCalendar ? (
+      {openEditCalendar && (
         <CalendarModal
           open={openEditCalendar}
           calendarName={selectedCalendarName}
@@ -76,7 +84,10 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
           }}
           onSave={(calendar) => dispatch(UpdateCalendar(calendar))}
         />
-      ) : null}
+      )}
+      {showDeleteConfirmation && (
+        <DeleteConfirmationsView calendarName={selectedCalendarName}></DeleteConfirmationsView>
+      )}
     </>
   );
 };

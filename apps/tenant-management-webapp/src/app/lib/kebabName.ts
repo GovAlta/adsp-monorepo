@@ -1,3 +1,5 @@
-export const toKebabName = (tenantName: string): string => {
-  return tenantName.replace(/ /g, '-');
+import dashify from 'dashify';
+
+export const toKebabName = (value: string): string => {
+  return dashify(value);
 };

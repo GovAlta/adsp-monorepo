@@ -59,6 +59,7 @@ describe('Create File Job', () => {
 
   const configurationService = {
     getConfiguration: jest.fn(() => Promise.resolve({})),
+    getServiceConfiguration: jest.fn(),
   };
 
   it('can run scan job', () => {

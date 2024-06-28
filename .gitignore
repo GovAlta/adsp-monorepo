@@ -67,3 +67,6 @@ coveragereport/*
 
 .nx/cache
 .cache
+
+# Github Pages doesn't use the lock file; keep local when working with docs in jekyll
+**/Gemfile.lock

@@ -11,7 +11,6 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
-import { JsonFormContext } from '@abgov/jsonforms-components';
 
 import {
   TextLoadingIndicator,
@@ -23,13 +22,14 @@ import {
   FormEditorTitle,
   FormEditor,
   ScrollPane,
-  MonacoDivTabBody,
+  RolesTabBody,
   RightAlign,
   PRE,
   FakeButton,
   SubmissionRecordsBox,
   FormPreviewScrollPane,
   SubmissionConfigurationPadding,
+  GoACheckboxPad,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
@@ -51,6 +51,7 @@ import {
   GoADropdown,
   GoATabs,
   GoATab,
+  GoAInput,
 } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
@@ -80,6 +81,8 @@ import { CustomLoader } from '@components/CustomLoader';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { FETCH_REGISTER_DATA_ACTION } from '@store/configuration/action';
 
+import { FormFormItem } from '../styled-components';
+
 export const ContextProvider = ContextProviderFactory();
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
@@ -91,6 +94,7 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.clerkRoles) !== JSON.stringify(tempNext?.clerkRoles) ||
     JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
     JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
+    JSON.stringify(tempPrev?.supportTopic) !== JSON.stringify(tempNext?.supportTopic) ||
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
     JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
     JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess);
@@ -285,10 +289,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     try {
-      JSON.parse(tempUiSchema);
-      setTempUiSchemaBounced(tempUiSchema);
-      setError('');
-      setCustomIndicator(false);
+      if (tempUiSchema !== '{}') {
+        JSON.parse(tempUiSchema);
+        setTempUiSchemaBounced(tempUiSchema);
+        setError('');
+        setCustomIndicator(false);
+      }
     } catch {
       setTempUiSchemaBounced('{}');
     }
@@ -296,9 +302,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     try {
-      JSON.parse(tempDataSchema);
-      setDataSchemaBounced(tempDataSchema);
-      setError('');
+      if (tempDataSchema !== '{}') {
+        JSON.parse(tempDataSchema);
+        setDataSchemaBounced(tempDataSchema);
+        setError('');
+      }
     } catch (e) {
       setDataSchemaBounced('{}');
     }
@@ -555,7 +563,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </GoAFormItem>
               </Tab>
               <Tab label="Roles" data-testid="form-roles-tab">
-                <MonacoDivTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
+                <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
                   <ScrollPane>
                     {elements.map((e, key) => {
                       return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
@@ -564,10 +572,49 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
                     )}
                   </ScrollPane>
-                </MonacoDivTabBody>
+                </RolesTabBody>
               </Tab>
-              <Tab label="Submission configuration" data-testid="submission-configuration">
-                <div style={{ height: EditorHeight + 7 }}>
+              <Tab label="Lifecycle" data-testid="lifecycle">
+                <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
+                  <h3>Application</h3>
+                  <div>
+                    <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
+                      <FormFormItem>
+                        <GoAInput
+                          name="form-url-id"
+                          value={definition?.formDraftUrlTemplate}
+                          testId="form-url-id"
+                          disabled={true}
+                          width="100%"
+                          onChange={null}
+                        />
+                      </FormFormItem>
+                    </GoAFormItem>
+                    <FlexRow>
+                      <GoACheckboxPad>
+                        <GoACheckbox
+                          name="support-topic"
+                          key="support-topic"
+                          checked={definition.supportTopic}
+                          testId="support-topic"
+                          onChange={() => {
+                            const topic = definition.supportTopic ? false : true;
+                            setDefinition({ ...definition, supportTopic: topic });
+                          }}
+                          text="Create support topic"
+                        />
+                      </GoACheckboxPad>
+                      <InfoCircleWithInlineHelp
+                        text={
+                          definition.supportTopic
+                            ? 'Forms of this type will create a comment topic used for supporting applicants. Applicants will be able to read and write comments to the topic to interact with staff.'
+                            : 'Forms of this type will not create a comment topic used for supporting applicants.'
+                        }
+                        width="280"
+                      />
+                    </FlexRow>
+                  </div>
+                  <h3>Submission configuration</h3>
                   <FlexRow>
                     <SubmissionRecordsBox>
                       <GoACheckbox
@@ -579,7 +626,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           const records = definition.submissionRecords ? false : true;
                           setDefinition({ ...definition, submissionRecords: records });
                         }}
-                        text="  Create submission records on submit"
+                        text="Create submission records on submit"
                       />
                     </SubmissionRecordsBox>
                     <InfoCircleWithInlineHelp
@@ -681,7 +728,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       <div
                         style={{
                           overflowY: 'auto',
-                          height: EditorHeight - 228,
                           zIndex: 0,
                         }}
                       >

@@ -76,19 +76,19 @@ Feature: Notifications
     Then the user views the subscribe checkbox is "checked"
     # Test subscription deletion
     Given a tenant admin user is on notification subscriptions page
-    When the user types "Auto Test" in Search subuscriber address as field and "auto.test@gov.ab.ca" in Search subscriber email field
+    When the user types "Auto Test" in Search subuscriber address as field and "adsp1.t@gov.ab.ca" in Search subscriber email field
     And the user clicks Search button on notifications page
-    Then the user "views" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application health check change"
-    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" under "Application health check change"
+    Then the user "views" the subscription of "Auto Test", "adsp1.t@gov.ab.ca" under "Application health check change"
+    When the user clicks delete button of "Auto Test", "adsp1.t@gov.ab.ca" under "Application health check change"
     Then the user views Delete subscription modal
-    And the user views the Delete subscription confirmation message of "auto.test@gov.ab.ca"
+    And the user views the Delete subscription confirmation message of "adsp1.t@gov.ab.ca"
     When the user clicks Confirm button on Delete subscription modal
-    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application health check change"
+    Then the user "should not view" the subscription of "Auto Test", "adsp1.t@gov.ab.ca" under "Application health check change"
     # Restore the subscription
     Given a tenant admin user is on status applications page
     Then the user views the subscribe checkbox is "unchecked"
     When the user "selects" the subscribe checkbox for health check notification type
-    Then the user views a notification message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+    Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
 
   @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
   Scenario: As a tenant admin, I can see notification type for application status change updates
@@ -108,12 +108,12 @@ Feature: Notifications
     Given a tenant admin user is on notification subscribers page
     When the user searches subscribers with "address as" containing "auto"
     Then the user views all the subscribers with "address as" containing "auto"
-    When the user searches subscribers with "email" containing "auto.Test"
-    Then the user views all the subscribers with "email" containing "auto.Test"
-    When the user searches subscribers with address as containing "auto.test", email containing "auto.test" and phone number containing "EMPTY"
-    Then the user views subscribers with "address as" containing "auto.test" and "email" containing "auto.test"
-    When the user expands the subscription list for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
-    Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
+    When the user searches subscribers with "email" containing "adsp1.t"
+    Then the user views all the subscribers with "email" containing "adsp1.t"
+    When the user searches subscribers with address as containing "auto", email containing "adsp1.t" and phone number containing "EMPTY"
+    Then the user views subscribers with "address as" containing "auto" and "email" containing "adsp1.t"
+    When the user expands the subscription list for the subscriber of "Auto Test" and "adsp1.t@gov.ab.ca"
+    Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "adsp1.t@gov.ab.ca"
 
   @TEST_CS-1224 @REQ_CS-1183 @regression
   Scenario: As a tenant admin, I can delete a subscriber
@@ -123,21 +123,21 @@ Feature: Notifications
     Then the user views the subscribe checkbox is "checked"
     # Test subscriber deletion
     Given a tenant admin user is on notification subscribers page
-    When the user searches subscribers with address as containing "Auto Test", email containing "auto.test@gov.ab.ca" and phone number containing "EMPTY"
-    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca", "EMPTY"
-    When the user clicks "delete" button of "Auto Test", "auto.test@gov.ab.ca" on subscribers page
+    When the user searches subscribers with address as containing "Auto Test", email containing "adsp1.t@gov.ab.ca" and phone number containing "EMPTY"
+    Then the user "views" the subscriber of "Auto Test", "adsp1.t@gov.ab.ca", "EMPTY"
+    When the user clicks "delete" button of "Auto Test", "adsp1.t@gov.ab.ca" on subscribers page
     Then the user views Delete subscriber modal
     # The validation of delete confirmation modal content is skipped due to the bug of CS-1266
-    # And the user views the Delete subscriber confirmation message of "auto.test@gov.ab.ca"
+    # And the user views the Delete subscriber confirmation message of "adsp1.t@gov.ab.ca"
     When the user clicks Delete button on Delete subscriber modal
-    Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca", "EMPTY"
+    Then the user "should not view" the subscriber of "Auto Test", "adsp1.t@gov.ab.ca", "EMPTY"
     When the user selects "Subscriptions" tab for "Notification"
-    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    Then the user "should not view" the subscription of "Auto Test", "adsp1.t@gov.ab.ca" under "Status-Application-Health-Change"
     # Restore the subscription
     Given a tenant admin user is on status applications page
     Then the user views the subscribe checkbox is "unchecked"
     When the user "selects" the subscribe checkbox for health check notification type
-    Then the user views a notification message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+    Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
 
   @TEST_CS-1191 @REQ_CS-1148 @regression
   Scenario Outline: As a tenant admin, I can configure subscription management contact information on notifications overview page
@@ -153,48 +153,49 @@ Feature: Notifications
       | Email              | Phone           | Instructions  |
       | rnd{abc@gov.ab.ca} | rnd{7805671456} | rnd{autotest} |
 
+  # TEST DATA: an existing subscriber with address as of "autotest-DO-NOT-DELETE" and email of "adsp2.t@gov.ab.ca"
   @TEST_CS-1102 @REQ_CS-1130 @regression
   Scenario: As a tenant admin, I can modify a subscriber name and email
     Given a tenant admin user is on notification subscribers page
-    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test2@gov.ab.ca" and phone number containing "EMPTY"
-    And the user clicks Edit button of "autotest-DO-NOT-DELETE" and "auto.test2@gov.ab.ca" on subscribers page
+    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp2.t@gov.ab.ca" and phone number containing "EMPTY"
+    And the user clicks Edit button of "autotest-DO-NOT-DELETE" and "adsp2.t@gov.ab.ca" on subscribers page
     Then the user views Edit subscriber modal
     When the user modifies the name to "autotest2-DO-NOT-DELETE" and email to "auto.test22@gov.ab.ca" in subscriber modal
     And the user clicks Save button in Edit subscriber modal
     When the user searches subscribers with address as containing "autotest2-DO-NOT-DELETE", email containing "auto.test22@gov.ab.ca" and phone number containing "EMPTY"
     Then the user "views" the subscriber of "autotest2-DO-NOT-DELETE", "auto.test22@gov.ab.ca", "EMPTY"
     When the user clicks Edit button of "autotest2-DO-NOT-DELETE" and "auto.test22@gov.ab.ca" on subscribers page
-    And the user modifies the name to "autotest-DO-NOT-DELETE" and email to "auto.test2@gov.ab.ca" in subscriber modal
+    And the user modifies the name to "autotest-DO-NOT-DELETE" and email to "adsp2.t@gov.ab.ca" in subscriber modal
     Then the user clicks Save button in Edit subscriber modal
-    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test2@gov.ab.ca" and phone number containing "EMPTY"
-    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test2@gov.ab.ca", "EMPTY"
+    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp2.t@gov.ab.ca" and phone number containing "EMPTY"
+    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp2.t@gov.ab.ca", "EMPTY"
 
   @TEST_CS-1372 @REQ_CS-1308 @REQ_CS-1309 @regression
   Scenario: As a tenant admin, I can search, add, edit and delete SMS number of a subscriber
     Given a tenant admin user is on notification subscribers page
     # Add a number
-    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test@abc.com" and phone number containing "EMPTY"
-    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test@abc.com", "EMPTY"
-    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "auto.test@abc.com" on subscribers page
+    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "EMPTY"
+    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "EMPTY"
+    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" on subscribers page
     Then the user views Edit subscriber modal
     When the user enters "7808001234" in Phone number field
     And the user clicks Save button in Edit subscriber modal
-    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test@abc.com" and phone number containing "7808001234"
-    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test@abc.com", "7808001234"
+    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "7808001234"
+    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "7808001234"
     # Edit a number
-    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "auto.test@abc.com" on subscribers page
+    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" on subscribers page
     Then the user views Edit subscriber modal
     When the user enters "7808005678" in Phone number field
     And the user clicks Save button in Edit subscriber modal
-    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test@abc.com" and phone number containing "7808005678"
-    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test@abc.com", "7808005678"
+    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "7808005678"
+    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "7808005678"
     # Delete a number
-    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "auto.test@abc.com" on subscribers page
+    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" on subscribers page
     Then the user views Edit subscriber modal
     When the user enters "EMPTY" in Phone number field
     And the user clicks Save button in Edit subscriber modal
-    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test@abc.com" and phone number containing "EMPTY"
-    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test@abc.com", "EMPTY"
+    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "EMPTY"
+    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "EMPTY"
 
   @TEST_CS-1339 @REQ_CS-1308 @REQ_CS-1233 @regression
   Scenario: As a tenant admin, I can configure what channels are supported by a notification type, so that I can support multiple channels of notifications.
@@ -277,15 +278,15 @@ Feature: Notifications
     When the user clicks Delete button in Reset email template modal
     Then the user "should not view" Reset button for "status-service:application-status-changed" in "Application status update"
 
-  # TEST DATA: a precreated subscription of "autotest-DO-NOT-DELETE", "test-criteria@gov.ab.ca" under "Application health check change" with some criteria details
+  # TEST DATA: a precreated subscription of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" under "Application health check change" with some criteria details
   @TEST_CS-1431 @REQ_CS-1404 @regression
   Scenario: As a tenant admin, I can see criteria details for a subscription with criteria, so I know the context for which a user receives notifications
     Given a tenant admin user is on notification subscriptions page
-    When the user types "autotest-DO-NOT-DELETE" in Search subuscriber address as field and "test-criteria@gov.ab.ca" in Search subscriber email field
+    When the user types "autotest-DO-NOT-DELETE" in Search subuscriber address as field and "adsp4.t@gov.ab.ca" in Search subscriber email field
     And the user clicks Search button on notifications page
-    Then the user "views" the subscription of "autotest-DO-NOT-DELETE", "test-criteria@gov.ab.ca" under "Application health check change"
-    When the user clicks eye icon of "autotest-DO-NOT-DELETE", "test-criteria@gov.ab.ca" under "Application health check change"
-    Then the user views the details of "autotest-DO-NOT-DELETE", "test-criteria@gov.ab.ca" under "Application health check change"
+    Then the user "views" the subscription of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" under "Application health check change"
+    When the user clicks eye icon of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" under "Application health check change"
+    Then the user views the details of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" under "Application health check change"
 
   @TEST_CS-329 @REQ_CS-1087 @regression
   Scenario: As a tenant admin, I can preview an email template as I edit, so I have an accurate preview of the notification.

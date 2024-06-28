@@ -1,4 +1,5 @@
-import { AdspId, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, isAllowedUser, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import * as passport from 'passport';
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
@@ -7,12 +8,12 @@ import {
   Results,
   decodeAfter,
 } from '@core-services/core-common';
-import { rateLimit } from 'express-rate-limit';
+import { rateLimit, RateLimitRequestHandler } from 'express-rate-limit';
 import { Request, RequestHandler, Router } from 'express';
-import { body, checkSchema, query } from 'express-validator';
+import { body, checkSchema, param, query } from 'express-validator';
 import { isEqual as isDeepEqual, unset, cloneDeep } from 'lodash';
 import { Logger } from 'winston';
-import { configurationUpdated, revisionCreated, activeRevisionSet } from '../events';
+import { configurationUpdated, revisionCreated, activeRevisionSet, configurationDeleted } from '../events';
 import { ConfigurationEntity } from '../model';
 import { ConfigurationRepository, Repositories } from '../repository';
 import { ConfigurationDefinition, ConfigurationDefinitions, ConfigurationRevision } from '../types';
@@ -26,6 +27,7 @@ import {
   PostRequests,
   ConfigurationMap,
 } from './types';
+import { ConfigurationServiceRoles } from '../roles';
 
 export interface ConfigurationRouterProps extends Repositories {
   serviceId: AdspId;
@@ -41,6 +43,25 @@ const rateLimitHandler = rateLimit({
   legacyHeaders: false,
 });
 
+const coreTenantPassportAuthenticateHandler: RequestHandler = (req, res, next) => {
+  passport.authenticate(['core', 'tenant'], { session: false });
+  next();
+};
+
+function resolveDefinition(entity: ConfigurationEntity<ConfigurationDefinitions>, namespace: string, name: string) {
+  let result = entity?.latest?.configuration[`${namespace}:${name}`];
+
+  // Look for a configuration definition at the namespace level.
+  if (!result) {
+    result = entity?.latest?.configuration[namespace];
+    if (result) {
+      result.isForNamespace = true;
+    }
+  }
+
+  return result;
+}
+
 const getDefinition = async (
   configurationServiceId: AdspId,
   repository: ConfigurationRepository,
@@ -48,26 +69,25 @@ const getDefinition = async (
   name: string,
   tenantId?: AdspId
 ): Promise<ConfigurationDefinition> => {
-  const key = `${namespace}:${name}`;
   const core = await repository.get<ConfigurationDefinitions>(
     configurationServiceId.namespace,
     configurationServiceId.service
   );
-  if (core?.latest?.configuration[key]) {
-    return core.latest.configuration[key];
-  } else if (tenantId) {
+
+  let result = resolveDefinition(core, namespace, name);
+  if (!result && tenantId) {
     const tenant = await repository.get<ConfigurationDefinitions>(
       configurationServiceId.namespace,
       configurationServiceId.service,
       tenantId
     );
-    return tenant?.latest?.configuration[key] || tenant?.latest?.configuration[namespace];
-  } else {
-    return null;
+    result = resolveDefinition(tenant, namespace, name);
   }
+
+  return result;
 };
 
-const getTenantId = (req: Request): AdspId => {
+export const getTenantId = (req: Request): AdspId => {
   if (req.isAuthenticated && !req.isAuthenticated() && req.query.tenant) {
     return AdspId.parse(req.query.tenant as string);
   }
@@ -88,6 +108,7 @@ const getTenantId = (req: Request): AdspId => {
 export function getConfigurationEntity(
   configurationServiceId: AdspId,
   repository: ConfigurationRepository,
+  rateLimitHandler: RateLimitRequestHandler,
   loadDefinition: boolean = true,
   requestCore = (_req: Request): boolean => false
 ): RequestHandler {
@@ -100,13 +121,19 @@ export function getConfigurationEntity(
       const getCore = requestCore(req);
       const tenantId = getTenantId(req);
 
+      //if user is not logged in and is not authenticated we want
+      //to do rate limiting for anonymous users.
+      if (!req.isAuthenticated && !req.isAuthenticated() && !user) {
+        rateLimitHandler(req, _res, next);
+      }
+
       const definition = loadDefinition
         ? await getDefinition(configurationServiceId, repository, namespace, name, tenantId)
         : undefined;
 
       const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition);
 
-      if (req.isAuthenticated() && user) {
+      if (req.isAuthenticated && req.isAuthenticated() && user) {
         if (!entity.canAccess(user)) {
           throw new UnauthorizedUserError('access configuration', user);
         }
@@ -135,6 +162,35 @@ const mapActiveRevision = (configuration: ConfigurationEntity, active: number): 
   tenantId: configuration.tenantId,
   active,
 });
+
+export function findConfiguration(repository: ConfigurationRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { namespace } = req.params;
+      const { top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string) : null;
+
+      if (!isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin)) {
+        throw new UnauthorizedUserError('find configuration', user);
+      }
+
+      const { results, page } = await repository.find(
+        { tenantIdEquals: tenantId, namespaceEquals: namespace },
+        top,
+        after as string
+      );
+
+      res.send({
+        results: results.map(mapConfiguration),
+        page,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export const getConfiguration =
   (mapResult = mapConfiguration): RequestHandler =>
@@ -377,6 +433,38 @@ export const configurationOperations =
     }
   };
 
+export function deleteConfiguration(logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
+      const user = req.user;
+      const configuration: ConfigurationEntity = req[ENTITY_KEY];
+
+      const deleted = await configuration.delete(user);
+
+      end();
+      res.send({ deleted });
+      if (deleted) {
+        eventService.send(
+          configurationDeleted(user, configuration.tenantId, configuration.namespace, configuration.name)
+        );
+      }
+
+      logger.info(
+        `Configuration ${configuration.namespace}:${configuration.name} deleted by ${user.name} (ID: ${user.id}).`,
+        {
+          tenant: configuration.tenantId?.toString(),
+          context: 'configuration-router',
+          user: `${user.name} (ID: ${user.id})`,
+        }
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export const getRevisions =
   (
     getCriteria = (_req: Request) => ({}),
@@ -411,56 +499,90 @@ export function createConfigurationRouter({
   const validateNamespaceNameHandler = createValidationHandler(
     ...checkSchema(
       {
-        namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-        name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        namespace: { isString: true, matches: { options: /^[a-zA-Z0-9-_ ]{1,50}$/ } },
+        name: { isString: true, matches: { options: /^[a-zA-Z0-9-_ ]{1,50}$/ } },
       },
       ['params']
     )
   );
 
   router.get(
+    '/configuration/:namespace',
+    coreTenantPassportAuthenticateHandler,
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('namespace')
+        .isString()
+        .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
+      query('top').optional().isInt({ min: 1, max: 100 }),
+      query('after').optional().isString()
+    ),
+    findConfiguration(configurationRepository)
+  );
+
+  router.get(
     '/configuration/:namespace/:name',
-    rateLimitHandler,
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
+    getConfigurationEntity(
+      serviceId,
+      configurationRepository,
+      rateLimitHandler,
+      true,
+      (req) => req.query.core !== undefined
+    ),
     getConfigurationWithActive()
   );
 
   router.get(
     '/configuration/:namespace/:name/latest',
-    rateLimitHandler,
     validateNamespaceNameHandler,
     createValidationHandler(query('tenant').optional().isString()),
-    getConfigurationEntity(serviceId, configurationRepository, false, (req) => req.query.core !== undefined),
+    getConfigurationEntity(
+      serviceId,
+      configurationRepository,
+      rateLimitHandler,
+      true,
+      (req) => req.query.core !== undefined
+    ),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
 
   router.patch(
     '/configuration/:namespace/:name',
-    rateLimitHandler,
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
-    getConfigurationEntity(serviceId, configurationRepository),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
     patchConfigurationRevision(logger, eventService)
   );
 
   router.post(
     '/configuration/:namespace/:name',
-    rateLimitHandler,
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
       body('operation').isString().isIn([OPERATION_SET_ACTIVE_REVISION, OPERATION_CREATE_REVISION])
     ),
-    getConfigurationEntity(serviceId, configurationRepository),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
     configurationOperations(logger, eventService)
+  );
+
+  router.delete(
+    '/configuration/:namespace/:name',
+    coreTenantPassportAuthenticateHandler,
+    assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
+    deleteConfiguration(logger, eventService)
   );
 
   router.get(
     '/configuration/:namespace/:name/revisions',
-    rateLimitHandler,
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -472,14 +594,13 @@ export function createConfigurationRouter({
           return !isNaN(decodeAfter(val));
         })
     ),
-    getConfigurationEntity(serviceId, configurationRepository, false),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
     getRevisions()
   );
 
   router.get(
     '/configuration/:namespace/:name/active',
     validateNamespaceNameHandler,
-    rateLimitHandler,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after')
@@ -489,25 +610,24 @@ export function createConfigurationRouter({
           return !isNaN(decodeAfter(val));
         })
     ),
-    getConfigurationEntity(serviceId, configurationRepository, false),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
     getActiveRevision(logger)
   );
 
   router.get(
     '/configuration/:namespace/:name/revisions/:revision',
+    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
-    rateLimitHandler,
+    validateNamespaceNameHandler,
     createValidationHandler(
       ...checkSchema(
         {
-          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
           revision: { isInt: { options: { min: 0 } } },
         },
         ['params']
       )
     ),
-    getConfigurationEntity(serviceId, configurationRepository, false),
+    getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
     getRevisions(
       (req) => ({ revision: req.params.revision }),
       (req, { results }) => {

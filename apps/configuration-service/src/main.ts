@@ -17,6 +17,7 @@ import {
   ConfigurationServiceRoles,
   ConfigurationUpdatedDefinition,
   ConfigurationUpdatesStream,
+  ConfigurationDeletedDefinition,
 } from './configuration';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 
@@ -56,7 +57,12 @@ const initializeApp = async (): Promise<express.Application> => {
             description: 'Service role that grants service accounts access to configuration.',
           },
         ],
-        events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition, ActiveRevisionSetDefinition],
+        events: [
+          ConfigurationUpdatedDefinition,
+          ConfigurationDeletedDefinition,
+          RevisionCreatedDefinition,
+          ActiveRevisionSetDefinition,
+        ],
         eventStreams: [ConfigurationUpdatesStream],
         clientSecret: environment.CLIENT_SECRET,
         accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
@@ -82,16 +88,25 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.use(passport.initialize());
   app.use(traceHandler);
+
   app.use(
     '/configuration',
     metricsHandler,
+    // Adding the anonymous strategy at this level, but in the individual api end point
+    // in the router we are more fine grained in specifying which end point should include/allow
+    // the anonymous strategy.
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler
   );
 
   const validationService = new AjvValidationService(logger);
   const repositories = await createRepositories({ ...environment, validationService, logger });
-  await applyConfigurationMiddleware(app, { ...repositories, eventService, serviceId, logger });
+  await applyConfigurationMiddleware(app, {
+    ...repositories,
+    eventService,
+    serviceId,
+    logger,
+  });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

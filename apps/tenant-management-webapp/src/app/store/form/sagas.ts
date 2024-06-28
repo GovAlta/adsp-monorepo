@@ -15,7 +15,6 @@ import {
 } from './action';
 
 import { getAccessToken } from '@store/tenant/sagas';
-import { UpdateFormConfig, DeleteFormConfig } from './model';
 import { fetchFormDefinitionsApi, updateFormDefinitionApi, deleteFormDefinitionApi } from './api';
 
 export function* fetchFormDefinitions(): SagaIterator {
@@ -57,15 +56,7 @@ export function* updateFormDefinition({ definition }: UpdateFormDefinitionsActio
 
   if (baseUrl && token) {
     try {
-      const FormDefinition = {
-        [definition.id]: {
-          ...definition,
-        },
-      };
-
-      const body: UpdateFormConfig = { operation: 'UPDATE', update: { ...FormDefinition } };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/form-service`;
-      const { latest } = yield call(updateFormDefinitionApi, token, url, body);
+      const { latest } = yield call(updateFormDefinitionApi, token, baseUrl, definition);
 
       yield put(
         updateFormDefinitionSuccess({
@@ -84,10 +75,8 @@ export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction
 
   if (baseUrl && token) {
     try {
-      const payload: DeleteFormConfig = { operation: 'DELETE', property: definition.id };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/form-service`;
+      yield call(deleteFormDefinitionApi, token, baseUrl, definition.id);
       yield put(deleteFormById(definition.id));
-      yield call(deleteFormDefinitionApi, token, url, payload);
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }

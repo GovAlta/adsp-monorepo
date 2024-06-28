@@ -9,10 +9,17 @@ export const createConfigurationHandler =
   async (req, _res, next) => {
     const contextTenantId = req.tenant?.id || req.user?.tenantId;
 
-    req['getConfiguration'] = async <C, R = [C, C]>(tenantId?: AdspId) => {
+    req.getConfiguration = async <C, R = [C, C]>(tenantId?: AdspId) => {
       const end = startBenchmark(req, 'get-configuration-time');
       const token = await tokenProvider.getAccessToken();
       const config = await service.getConfiguration<C, R>(serviceId, token, tenantId || contextTenantId);
+      end();
+      return config;
+    };
+
+    req.getServiceConfiguration = async <C, R = [C, C]>(name?: string, tenantId?: AdspId) => {
+      const end = startBenchmark(req, 'get-configuration-time');
+      const config = await service.getServiceConfiguration<C, R>(name, tenantId || contextTenantId);
       end();
       return config;
     };
@@ -23,10 +30,17 @@ export const createConfigurationHandler =
 export const createTenantConfigurationHandler =
   (tokenProvider: TokenProvider, service: ConfigurationService, serviceId: AdspId, tenantId: AdspId): RequestHandler =>
   async (req, _res, next) => {
-    req['getConfiguration'] = async <C, R = [C, C]>() => {
+    req.getConfiguration = async <C, R = [C, C]>() => {
       const end = startBenchmark(req, 'get-configuration-time');
       const token = await tokenProvider.getAccessToken();
       const config = await service.getConfiguration<C, R>(serviceId, token, tenantId);
+      end();
+      return config;
+    };
+
+    req.getServiceConfiguration = async <C, R = [C, C]>(name?: string) => {
+      const end = startBenchmark(req, 'get-configuration-time');
+      const config = await service.getServiceConfiguration<C, R>(name, tenantId);
       end();
       return config;
     };

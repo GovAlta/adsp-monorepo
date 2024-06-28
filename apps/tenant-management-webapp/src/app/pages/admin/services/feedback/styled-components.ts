@@ -119,3 +119,18 @@ export const ButtonPadding = styled.div`
   padding-bottom: var(--goa-space-l);
   padding-top: var(--goa-space-l);
 `;
+
+export const ExportDates = styled.div`
+  display: flex;
+  margin-top: var(--goa-space-l);
+  margin-bottom: var(--goa-space-l);
+  gap: var(--goa-space-xl);
+`;
+export const FeedbackFilterError = styled.span`
+  color: var(--goa-color-emergency-default);
+  padding-left: 5px;
+  display: inline-flex;
+  line-height: 2.5rem;
+  position: relative;
+  top: -3px;
+`;

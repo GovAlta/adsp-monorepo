@@ -6,19 +6,21 @@ import { FeedbackSite, Feedback } from '@store/feedback/models';
 import configureStore from 'redux-mock-store';
 import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
-import { getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
+import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
 
 jest.mock('@store/feedback/actions', () => ({
   getFeedbackSites: jest.fn(),
   getFeedbacks: jest.fn(),
+  exportFeedbacks: jest.fn(),
 }));
 
 const mockStore = configureStore([thunk]);
 
-describe('Feedbacks Components ', () => {
+describe('Feedbacks Components', () => {
   let store;
   beforeEach(() => {
     store = mockStore({
+      tenant: { name: 'autotest' },
       feedback: {
         sites: [
           {
@@ -47,6 +49,7 @@ describe('Feedbacks Components ', () => {
           },
         ],
         isLoading: false,
+        exportData: [],
       },
       session: {
         indicator: { show: false },
@@ -55,10 +58,20 @@ describe('Feedbacks Components ', () => {
         next: 'MTA=',
         size: 10,
       },
+      searchCriteria: {
+        startDate: null,
+        endDate: null,
+        isExport: false,
+      },
     });
     store.dispatch = jest.fn();
   });
-  it('should renders correctly', () => {
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('should render correctly', () => {
     render(
       <Provider store={store}>
         <FeedbacksList />
@@ -66,6 +79,7 @@ describe('Feedbacks Components ', () => {
     );
     expect(screen.getByTestId('sites-dropdown')).toBeInTheDocument();
   });
+
   it('should dispatch getFeedbackSites action on mount', () => {
     render(
       <Provider store={store}>
@@ -84,7 +98,7 @@ describe('Feedbacks Components ', () => {
     const dropDown = screen.getByTestId('sites-dropdown');
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
     expect(store.dispatch).toHaveBeenCalledWith(
-      getFeedbacks({ url: 'http://newsite.com', allowAnonymous: true, views: [] })
+      getFeedbacks({ url: 'http://newsite.com', allowAnonymous: true }, store.getState().searchCriteria)
     );
   });
 
@@ -99,6 +113,7 @@ describe('Feedbacks Components ', () => {
     expect(screen.getByTestId('feedback-list_0')).toBeInTheDocument();
     expect(screen.getByTestId('toggle-details-visibility_0')).toBeInTheDocument();
   });
+
   it('should show details of feedback when toggle-details-visibility icon button is clicked', () => {
     render(
       <Provider store={store}>
@@ -142,5 +157,50 @@ describe('Feedbacks Components ', () => {
     const dropDown = screen.getByTestId('sites-dropdown');
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
     expect(screen.getByText('No feedbacks found')).toBeInTheDocument();
+  });
+
+  it('should enable the export button when both start and end dates are provided', async () => {
+    render(
+      <Provider store={store}>
+        <FeedbacksList />
+      </Provider>
+    );
+    const dropDown = screen.getByTestId('sites-dropdown');
+    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
+
+    const startDateInput = screen.getByTestId('startDate');
+    const endDateInput = screen.getByTestId('endDate');
+
+    await waitFor(() => {
+      expect(startDateInput).toBeInTheDocument();
+      expect(endDateInput).toBeInTheDocument();
+    });
+  });
+
+  it('should call exportFeedbacks with searchCriteria when export button is clicked', async () => {
+    render(
+      <Provider store={store}>
+        <FeedbacksList />
+      </Provider>
+    );
+
+    const dropDown = screen.getByTestId('sites-dropdown');
+    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
+
+    const startDateInput = screen.getByTestId('startDate');
+    const endDateInput = screen.getByTestId('endDate');
+
+    fireEvent(startDateInput, new CustomEvent('_change', { detail: { value: '2023-01-01' } }));
+    fireEvent(endDateInput, new CustomEvent('_change', { detail: { value: '2023-01-31' } }));
+
+    const exportButton = screen.getByTestId('exportBtn');
+
+    fireEvent.click(exportButton);
+
+    await waitFor(() => {
+      expect(store.dispatch).toHaveBeenCalledWith(
+        exportFeedbacks({ site: 'http://newsite.com' }, { ...store.getState().searchCriteria })
+      );
+    });
   });
 });

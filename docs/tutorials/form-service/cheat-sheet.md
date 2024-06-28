@@ -8,9 +8,21 @@ grand_parent: Tutorials
 
 ## Cheat Sheet
 
-Use the cheat sheet to determine how you could configure the _data and UI schemas_ to render specific form elements. Note: in some UI schemas you will see "ComponentProps" in the options element. Component props are passed directly to the underlying _Design Systems components_ to alter their behaviour, See [their documentation](https://design.alberta.ca/components) for a complete list of properties that can be managed this way.
+Use the cheat sheet to determine how you could configure the _data and UI schemas_ to render specific form elements.
 
-### Common data formats
+Note: in some UI schemas you will see "ComponentProps" in the options element. Component props are passed directly to the underlying _Design Systems components_ to alter their behaviour, See [their documentation](https://design.alberta.ca/components) for a complete list of properties that can be managed this way.
+
+### TOC
+
+- [Common Data Formats](#target-common-formats)
+- [Selectors](#target-selectors)
+- [Form Layout](#target-layout)
+- [Instructional Content](#target-instructions)
+- [File Uploads](#target-uploads)
+- [Repeating Items](#target-lists)
+- [Steppers](#target-steppers)
+
+### Common data formats {#target-common-formats}
 
 Here are some out-of-the-box formats that not only render with the correct input widget, but ensure that the data provided by users is valid.
 
@@ -142,7 +154,7 @@ Here are some out-of-the-box formats that not only render with the correct input
 
 </table>
 
-### Selectors
+### Selectors {#target-selectors}
 
 For when the user must select from a limited set of answers.
 
@@ -220,7 +232,7 @@ For when the user must select from a limited set of answers.
   </tr>
 </table>
 
-### Form Layout
+### Form Layout {#target-layout}
 
 Layouts let you organize input fields they way you want them. You can lay out the fields in rows (horizontally), in columns (vertically), or in a mixture of both.
 
@@ -380,7 +392,7 @@ Layouts let you organize input fields they way you want them. You can lay out th
   </tr>
 </table>
 
-### Instructional Content
+### Instructional Content {#target-instructions}
 
 For when you need to add instructions, or help, to guide users when they are filling out a form. Instructions can be rendered in text, as hyperlinks, or with images. See the [section on help text](/adsp-monorepo/tutorials/form-service/instructions.html) for more information.
 
@@ -534,7 +546,7 @@ Note: the optional labels are used as paragraph headings, when so desired. Nesti
   </tr>
 </table>
 
-### File Uploads
+### File Uploads {#target-uploads}
 
 For when the user needs to upload supporting documentation. For a more complete description of file uploads, see [the documentation](/adsp-monorepo/tutorials/form-service/file-uploader.md).
 
@@ -566,7 +578,7 @@ For when the user needs to upload supporting documentation. For a more complete 
   </tr>
 </table>
 
-### Repeating Items
+### Repeating Items {#target-lists}
 
 _Repeating Items_ are useful when you need to capture multiple instances of similar information from your applicants. For example, you may want to collect contact information for one or more family members. With the _List with Details_ or _Object Array_ components, users can easily add as many rows as needed to complete the form. For more information on how these components work, please see the section on [Repeating Items](/adsp-monorepo/tutorials/form-service/repeated-items.html).
 
@@ -654,7 +666,7 @@ _Repeating Items_ are useful when you need to capture multiple instances of simi
   </tr>
 </table>
 
-### Steppers
+### Steppers {#target-steppers}
 
 Steppers allow you to partition your form into one or more steps, so users can focus on one group of questions at a time. For more information on how these components work, please see the section on [steppers](/adsp-monorepo/tutorials/form-service/steppers.html).
 

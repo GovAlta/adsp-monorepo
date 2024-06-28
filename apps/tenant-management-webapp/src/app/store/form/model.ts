@@ -12,6 +12,7 @@ export interface FormDefinition {
   dispositionStates: Array<Disposition>;
   submissionRecords: boolean;
   queueTaskToProcess: QueueTaskToProcess;
+  supportTopic: boolean;
 }
 
 export interface Disposition {
@@ -39,18 +40,9 @@ export const defaultFormDefinition: FormDefinition = {
   dispositionStates: [],
   submissionRecords: false,
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
+  supportTopic: false,
 };
 
 export interface FormState {
   definitions: Record<string, FormDefinition>;
-}
-
-export interface UpdateFormConfig {
-  operation: string;
-  update: Record<string, FormDefinition>;
-}
-
-export interface DeleteFormConfig {
-  operation: string;
-  property: string;
 }

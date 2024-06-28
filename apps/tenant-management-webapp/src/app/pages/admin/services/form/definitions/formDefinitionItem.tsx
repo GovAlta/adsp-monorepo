@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { FormDefinition } from '@store/form/model';
 import { OverflowWrap, EntryDetail } from '../styled-components';
 import { useNavigate } from 'react-router-dom';
+import { RootState } from '@store/index';
+import { useSelector } from 'react-redux';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+import { selectFormAppLink } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
 interface PdfTemplateItemProps {
   formDefinition: FormDefinition;
@@ -16,6 +19,8 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
       ? formDefinition.description?.substring(0, 80) + '...'
       : formDefinition.description;
   const navigate = useNavigate();
+
+  const formLink = useSelector((state: RootState) => selectFormAppLink(state, formDefinition?.id));
 
   return (
     <>
@@ -37,12 +42,10 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
               type="open"
               title="Open Form"
               onClick={() => {
-                //eslint-disable-next-line
-                const urlStr = formDefinition.formDraftUrlTemplate.replace(/\/[^\/]*$/, '/');
-                if (isValidUrl(urlStr)) {
-                  window.open(urlStr, '_blank');
+                if (isValidUrl(formLink)) {
+                  window.open(formLink, '_blank');
                 } else {
-                  console.error('Invalid URL:', urlStr);
+                  console.error('Invalid URL:', formLink);
                 }
               }}
               testId="form-app-open"

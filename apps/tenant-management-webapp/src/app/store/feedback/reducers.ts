@@ -6,11 +6,13 @@ import {
   FETCH_FEEDBACK_SITES_SUCCESS_ACTION,
   FeedbackActionTypes,
   UPDATE_FEEDBACK_SITE_SUCCESS_ACTION,
+  EXPORT_FEEDBACKS_SUCCESS_ACTION,
 } from './actions';
 
 export const initialState: FeedbackState = {
   feedbacks: [],
   sites: [],
+  exportData: [],
   isLoading: false,
   nextEntries: null,
 };
@@ -27,6 +29,12 @@ function feedbackReducer(state: FeedbackState = initialState, action: FeedbackAc
             ? action.payload
             : state.feedbacks,
         nextEntries: action.next,
+      };
+    }
+    case EXPORT_FEEDBACKS_SUCCESS_ACTION: {
+      return {
+        ...state,
+        exportData: action.exportData,
       };
     }
     case FETCH_FEEDBACKS_ACTION: {

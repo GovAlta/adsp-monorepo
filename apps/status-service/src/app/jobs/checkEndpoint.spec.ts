@@ -43,6 +43,7 @@ describe('checkEndpoint', () => {
 
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
+    getServiceConfiguration: jest.fn(),
   };
 
   const mockTokenProvider = {

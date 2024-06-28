@@ -1,6 +1,7 @@
 import { User } from '@abgov/adsp-service-sdk';
 import { isEqual as isDeepEqual } from 'lodash';
 import { Application } from 'express';
+import { configurationSchema } from './configuration';
 import { ConfigurationServiceRoles } from './roles';
 import { ConfigurationRouterProps, createConfigurationRouter } from './router';
 import { ConfigurationDefinitions } from './types';
@@ -16,37 +17,16 @@ export const applyConfigurationMiddleware = async (
   { serviceId, configuration, ...props }: ConfigurationRouterProps
 ): Promise<Application> => {
   // Load a configuration-service configuration that requires configuration with a schema property.
-  const schema = {
-    type: 'object',
-    patternProperties: {
-      '^[a-zA-Z0-9-]{1,50}:[a-zA-Z0-9-]{1,50}$': {
-        type: 'object',
-        properties: {
-          description: {
-            type: ['string', 'null'],
-          },
-          anonymousRead: {
-            type: 'boolean',
-            default: false,
-          },
-          configurationSchema: {
-            $ref: 'http://json-schema.org/draft-07/schema#',
-          },
-        },
-        required: ['configurationSchema'],
-        additionalProperties: false,
-      },
-    },
-    additionalProperties: false,
-  };
 
   const entity = await configuration.get<ConfigurationDefinitions>(serviceId.namespace, serviceId.service, null, {
-    configurationSchema: schema,
+    anonymousRead: false,
+    configurationSchema,
   });
 
   const serviceConfiguration = {
+    anonymousRead: false,
     description: 'Definitions of configuration with description and schema.',
-    configurationSchema: schema,
+    configurationSchema,
   };
   if (
     !entity.latest ||

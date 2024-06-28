@@ -28,6 +28,7 @@ describe('generate', () => {
 
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
+    getServiceConfiguration: jest.fn(),
   };
 
   const eventServiceMock = {
