@@ -42,25 +42,27 @@ export const ReviewContainer = styled.div`
   padding-top: 0;
 `;
 
-export interface ReviewContentProps {
-  paddingBottom: string;
+export interface ContentPadding {
+  offset: string;
 }
 
-export const ReviewContent = styled.div<ReviewContentProps>`
-  flex: 1;
+export const ReviewContent = styled.div<ContentPadding>`
+  flex-grow: 1;
   overflow-y: auto;
-  padding-bottom: ${(props) => props.paddingBottom || '0'};
+  padding-bottom: ${(props) => props.offset || '0'};
 `;
 
 export const ActionContainer = styled.div`
-  position: fixed;
-  bottom: 0;
   width: 100%;
+  flex: 1;
   background-color: #fff;
-  display: flex;
-  flex-direction: column;
   gap: var(--goa-space-s);
   margin-left: var(--goa-space-s);
+  padding-bottom: var(--goa-space-s);
+  position: fixed;
+  bottom: 0;
 `;
 
-export const ActionControl = styled.div``;
+export const ActionControl = styled.div`
+  padding-top: var(--goa-space-s);
+`;

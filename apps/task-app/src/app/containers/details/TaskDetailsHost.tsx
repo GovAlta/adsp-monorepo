@@ -126,8 +126,9 @@ export const ChatBubblePadding = styled.div`
 export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
   z-index: 0;
   position: relative;
-  display: none;
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
 
   & > :first-child {
     flex: 1;

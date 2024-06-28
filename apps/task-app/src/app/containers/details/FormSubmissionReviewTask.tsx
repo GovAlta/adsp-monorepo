@@ -61,16 +61,19 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   // To help determine height of the content container
   const actionContainerRef = useRef(null);
-  const [paddingBottom, setPaddingBottom] = useState('0');
+  const [actionOffset, setActionOffset] = useState('0');
 
   useEffect(() => {
     dispatch(selectForm({ formId: id, submissionId: submissionId }));
   }, [dispatch, id, submissionId]);
 
   useEffect(() => {
+    // The Action Container is fixed to the bottom of the screen;
+    // compute padding of the review content so it scrolls above it.
     if (actionContainerRef.current) {
       const height = actionContainerRef.current.offsetHeight;
-      setPaddingBottom(`${height}px`);
+      // Fudge factor 64 to reduce scroll area
+      setActionOffset(`${height - 64}px`);
     }
   }, []);
 
@@ -281,7 +284,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   };
   return (
     <ReviewContainer>
-      <ReviewContent paddingBottom={paddingBottom}>
+      <ReviewContent offset={actionOffset}>
         {renderFormSubmissionReview()}
         {renderTaskCancelModal()}
       </ReviewContent>
@@ -289,7 +292,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
         <goa-divider mt="m" mb="none"></goa-divider>
         <ActionControl>{renderDisposition()}</ActionControl>
         <ActionControl>{renderReason()}</ActionControl>
-        {renderButtonGroup()}
+        <ActionControl>{renderButtonGroup()}</ActionControl>
       </ActionContainer>
     </ReviewContainer>
   );
