@@ -289,10 +289,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     try {
-      JSON.parse(tempUiSchema);
-      setTempUiSchemaBounced(tempUiSchema);
-      setError('');
-      setCustomIndicator(false);
+      if (tempUiSchema !== '{}') {
+        JSON.parse(tempUiSchema);
+        setTempUiSchemaBounced(tempUiSchema);
+        setError('');
+        setCustomIndicator(false);
+      }
     } catch {
       setTempUiSchemaBounced('{}');
     }
@@ -300,9 +302,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     try {
-      JSON.parse(tempDataSchema);
-      setDataSchemaBounced(tempDataSchema);
-      setError('');
+      if (tempDataSchema !== '{}') {
+        JSON.parse(tempDataSchema);
+        setDataSchemaBounced(tempDataSchema);
+        setError('');
+      }
     } catch (e) {
       setDataSchemaBounced('{}');
     }
