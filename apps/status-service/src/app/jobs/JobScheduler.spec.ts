@@ -22,6 +22,7 @@ describe('JobScheduler', () => {
 
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
+    getServiceConfiguration: jest.fn(),
   };
 
   const tenantServiceMock = {

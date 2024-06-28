@@ -94,6 +94,7 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.clerkRoles) !== JSON.stringify(tempNext?.clerkRoles) ||
     JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
     JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
+    JSON.stringify(tempPrev?.supportTopic) !== JSON.stringify(tempNext?.supportTopic) ||
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
     JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
     JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess);

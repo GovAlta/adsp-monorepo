@@ -14,12 +14,15 @@ describe('ConfigurationEntity', () => {
     configurationSchema: { type: 'object', properties: { a: { type: 'object' } } },
   };
   const repositoryMock = {
+    find: jest.fn(),
     get: jest.fn(),
+    delete: jest.fn(),
     getRevisions: jest.fn(),
     saveRevision: jest.fn(),
   };
   const activeRevisionMock = {
     get: jest.fn(),
+    delete: jest.fn(),
     setActiveRevision: jest.fn(),
   };
   const validationMock = {
@@ -35,6 +38,7 @@ describe('ConfigurationEntity', () => {
 
   beforeEach(() => {
     repositoryMock.saveRevision.mockClear();
+    repositoryMock.delete.mockClear();
     validationMock.validate.mockClear();
   });
 
@@ -69,8 +73,12 @@ describe('ConfigurationEntity', () => {
   });
 
   it('can handle invalid schema', () => {
-    const schema = { type: 'object', properties: { valueA: { type: 'number' } }, additionalProperties: null };
-    const revisedDefinition: ConfigurationDefinition = { ...definition, configurationSchema: schema };
+    const configurationSchema = {
+      type: 'object',
+      properties: { valueA: { type: 'number' } },
+      additionalProperties: null,
+    };
+    const revisedDefinition: ConfigurationDefinition = { ...definition, configurationSchema };
     validationMock.setSchema.mockImplementationOnce(() => {
       throw new Error('');
     });
@@ -955,6 +963,49 @@ describe('ConfigurationEntity', () => {
 
       await expect(entity.setActiveRevision({ id: 'test', name: 'test' } as User, active)).rejects.toThrow(
         /User test \(ID: test\) not permitted to modify configuration./
+      );
+    });
+  });
+
+  describe('delete', () => {
+    it('can delete configuration', async () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
+
+      repositoryMock.delete.mockResolvedValueOnce(true);
+
+      const deleted = await entity.delete({
+        isCore: false,
+        tenantId,
+        roles: [ConfigurationServiceRoles.ConfigurationAdmin],
+      } as User);
+
+      expect(deleted).toBe(true);
+      expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
+    });
+
+    it('can throw for unauthorized user', async () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
+
+      await expect(entity.delete({ id: 'test', name: 'test' } as User)).rejects.toThrow(
+        /User test \(ID: test\) not permitted to delete configuration./
       );
     });
   });

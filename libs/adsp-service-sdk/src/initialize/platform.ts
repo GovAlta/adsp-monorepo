@@ -83,9 +83,11 @@ export async function initializePlatform(
   };
   if (!configurationService) {
     const configServiceImpl = createConfigurationService({
+      serviceId,
       logger,
       directory,
       tokenProvider,
+      useNamespace: registration.configuration?.useNamespace || false,
       converter: configurationConverter,
       combine: combineConfiguration,
       enableConfigurationInvalidation,
@@ -94,7 +96,7 @@ export async function initializePlatform(
     configurationService = configServiceImpl;
 
     clearCached = function (tenantId: AdspId, serviceId: AdspId) {
-      configServiceImpl.clearCached(tenantId, serviceId);
+      configServiceImpl.clearCached(tenantId, serviceId.namespace, serviceId.service);
     };
   }
 

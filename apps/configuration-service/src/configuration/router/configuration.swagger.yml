@@ -57,6 +57,72 @@ components:
           type: number
       required: [operation, setActiveRevision]
 
+/configuration/v2/configuration/{namespace}:
+  parameters:
+    - name: namespace
+      description: Namespace of the configuration.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    tags:
+      - Configuration
+    description: Find configuration in a namespace.
+    parameters:
+      - name: top
+        description: Number of results to return in the page, e.g. the top N results.
+        example: 10
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for retrieving additional pages.  Use the **next** value returned by the previous call.
+        example: Mw==
+        in: query
+        required: false
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      namespace:
+                        type: string
+                      name:
+                        type: string
+                      latest:
+                        $ref: "#/components/schemas/ConfigurationRevision"
+                page:
+                  type: object
+                  properties:
+                    next:
+                      description: Cursor for requesting the next next page, if any.  Next will be undefined if no more results are available.
+                      example: Ng==
+                      type: string
+                    size:
+                      description: The number of results returned.
+                      example: 10
+                      type: number
+                    after:
+                      description: |
+                        The cursor used to generate the current page. Note - Do not use this as the *after* parameter in subsequent calls,
+                        as it will just repeat the set just returned.
+                      example: Mw==
+                      type: string
+      401:
+        description: User not authorized to retrieve configuration.
+
 /configuration/v2/configuration/{namespace}/{name}:
   parameters:
     - name: namespace
@@ -94,7 +160,7 @@ components:
                 name:
                   type: string
                 latest:
-                  $ref: '#/components/schemas/ConfigurationRevision'
+                  $ref: "#/components/schemas/ConfigurationRevision"
       401:
         description: User not authorized to retrieve configuration.
   patch:
@@ -108,15 +174,15 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/ReplaceOperation'
-              - $ref: '#/components/schemas/UpdateOperation'
-              - $ref: '#/components/schemas/DeleteOperation'
+              - $ref: "#/components/schemas/ReplaceOperation"
+              - $ref: "#/components/schemas/UpdateOperation"
+              - $ref: "#/components/schemas/DeleteOperation"
             discriminator:
               propertyName: operation
               mapping:
-                REPLACE: '#/components/schemas/ReplaceOperation'
-                UPDATE: '#/components/schemas/UpdateOperation'
-                DELETE: '#/components/schemas/DeleteOperation'
+                REPLACE: "#/components/schemas/ReplaceOperation"
+                UPDATE: "#/components/schemas/UpdateOperation"
+                DELETE: "#/components/schemas/DeleteOperation"
     responses:
       200:
         description: Request completed successfully.
@@ -130,7 +196,7 @@ components:
                 name:
                   type: string
                 latest:
-                  $ref: '#/components/schemas/ConfigurationRevision'
+                  $ref: "#/components/schemas/ConfigurationRevision"
       401:
         description: User not authorized to update configuration.
   post:
@@ -143,13 +209,13 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/CreateRevisionOperation'
-              - $ref: '#/components/schemas/SetActiveRevisionOperation'
+              - $ref: "#/components/schemas/CreateRevisionOperation"
+              - $ref: "#/components/schemas/SetActiveRevisionOperation"
             discriminator:
               propertyName: operation
               mapping:
-                CREATE-REVISION: '#/components/schemas/CreateRevisionOperation'
-                SET-ACTIVE-REVISION: '#/components/schemas/SetActiveRevisionOperation'
+                CREATE-REVISION: "#/components/schemas/CreateRevisionOperation"
+                SET-ACTIVE-REVISION: "#/components/schemas/SetActiveRevisionOperation"
 
     responses:
       200:
@@ -164,11 +230,28 @@ components:
                 name:
                   type: string
                 latest:
-                  $ref: '#/components/schemas/ConfigurationRevision'
+                  $ref: "#/components/schemas/ConfigurationRevision"
       401:
         description: User not authorized to update configuration.
       400:
         description: The selected revision does not exist
+  delete:
+    tags:
+      - Configuration
+    description: Deletes configuration and all its revisions.
+
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+      401:
+        description: User not authorized to delete configuration.
 
 /configuration/v2/configuration/{namespace}/{name}/active:
   parameters:
@@ -218,7 +301,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigurationRevision'
+              $ref: "#/components/schemas/ConfigurationRevision"
       401:
         description: User not authorized to retrieve configuration.
       404:
@@ -304,7 +387,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/ConfigurationRevision'
+                    $ref: "#/components/schemas/ConfigurationRevision"
                 page:
                   type: object
                   properties:

@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -12,6 +12,8 @@ import {
   patchConfigurationRevision,
   getRevisions,
   getActiveRevision,
+  deleteConfiguration,
+  findConfiguration,
 } from './configuration';
 import { RateLimitRequestHandler } from 'express-rate-limit';
 
@@ -37,18 +39,23 @@ describe('router', () => {
   };
 
   const repositoryMock = {
+    find: jest.fn(),
     get: jest.fn(),
+    delete: jest.fn(),
     getRevisions: jest.fn(),
     saveRevision: jest.fn(),
   };
 
   const activeRevisionMock = {
     get: jest.fn(),
+    delete: jest.fn(),
     setActiveRevision: jest.fn(),
   };
 
   beforeEach(() => {
+    repositoryMock.find.mockClear();
     repositoryMock.get.mockClear();
+    repositoryMock.delete.mockClear();
     eventServiceMock.send.mockClear();
   });
 
@@ -63,6 +70,79 @@ describe('router', () => {
       });
 
       expect(router).toBeTruthy();
+    });
+  });
+
+  describe('findConfiguration', () => {
+    it('can create handler', () => {
+      const handler = findConfiguration(repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can find configuration', async () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
+
+      const req = {
+        user: { isCore: false, roles: [ConfigurationServiceRoles.ConfigurationAdmin], tenantId } as User,
+        tenant: { id: tenantId },
+        params: { namespace, name },
+        query: { top: '12', after: 'next' },
+      } as unknown as Request;
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      const page = {};
+      repositoryMock.find.mockResolvedValueOnce({ page, results: [entity] });
+
+      const handler = findConfiguration(repositoryMock);
+      await handler(req, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page,
+          results: expect.arrayContaining([
+            expect.objectContaining({ namespace: entity.namespace, name: entity.name }),
+          ]),
+        })
+      );
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        expect.objectContaining({ namespaceEquals: req.params.namespace, tenantIdEquals: tenantId }),
+        12,
+        'next'
+      );
+    });
+
+    it('can call next with unauthorized user error', async () => {
+      const req = {
+        user: { isCore: false, roles: [], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+      } as unknown as Request;
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      const handler = findConfiguration(repositoryMock);
+      await handler(req, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 
@@ -258,6 +338,7 @@ describe('router', () => {
         }
       });
     });
+
     it('can get configuration entity for unauthenticated users.', (done) => {
       const rateLimitHandler = jest.fn();
       const handler = getConfigurationEntity(
@@ -485,6 +566,76 @@ describe('router', () => {
           expect(req['entity']).not.toBeNull();
           expect(req['entity'].name).toBe(entity.name);
           expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
+          expect(repositoryMock.get.mock.calls.length).toBeGreaterThan(0);
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+
+    it('can get entity with core namespace definition', (done) => {
+      const rateLimitHandler = jest.fn();
+      const handler = getConfigurationEntity(
+        configurationServiceId,
+        repositoryMock,
+        rateLimitHandler as unknown as RateLimitRequestHandler,
+        true,
+        () => false
+      );
+
+      // Configuration definition retrieval.
+      const configurationSchema = {};
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          loggerMock as Logger,
+          repositoryMock,
+          activeRevisionMock,
+          validationMock,
+          {
+            revision: 1,
+            configuration: {
+              [namespace]: { configurationSchema },
+            },
+          }
+        )
+      );
+
+      activeRevisionMock.get.mockResolvedValueOnce({
+        namespace: configurationServiceId.namespace,
+        name: configurationServiceId.service,
+        tenant: tenantId,
+        active: 2,
+      });
+
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
+
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      const req = {
+        tenant: { id: tenantId },
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+        isAuthenticated: jest.fn(() => true),
+      };
+
+      handler(req as unknown as Request, null, () => {
+        try {
+          expect(req['entity']).not.toBeNull();
+          expect(req['entity'].name).toBe(entity.name);
+          expect(repositoryMock.get.mock.calls[1][3]).toEqual(expect.objectContaining({ configurationSchema }));
           expect(repositoryMock.get.mock.calls.length).toBeGreaterThan(0);
           done();
         } catch (err) {
@@ -1032,6 +1183,87 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('deleteConfiguration', () => {
+    it('can create handler', () => {
+      const handler = deleteConfiguration(loggerMock as Logger, eventServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can delete configuration', async () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
+
+      const req = {
+        entity,
+        user: { isCore: false, roles: [ConfigurationServiceRoles.ConfigurationAdmin], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+      } as unknown as Request;
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      repositoryMock.delete.mockResolvedValueOnce(true);
+
+      const handler = deleteConfiguration(loggerMock as Logger, eventServiceMock);
+      await handler(req, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+      expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'configuration-deleted',
+          payload: expect.objectContaining({ namespace, name }),
+        })
+      );
+    });
+
+    it('can call next with unauthorized user error', async () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
+
+      const req = {
+        entity,
+        user: { isCore: false, roles: [], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+      } as unknown as Request;
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      repositoryMock.delete.mockResolvedValueOnce(true);
+
+      const handler = deleteConfiguration(loggerMock as Logger, eventServiceMock);
+      await handler(req, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 

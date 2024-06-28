@@ -201,6 +201,7 @@ describe('Service router', () => {
 
   const configurationService = {
     getConfiguration: jest.fn(),
+    getServiceConfiguration: jest.fn(),
   };
 
   const applicationRepo = new ApplicationRepo(
