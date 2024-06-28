@@ -499,8 +499,8 @@ export function createConfigurationRouter({
   const validateNamespaceNameHandler = createValidationHandler(
     ...checkSchema(
       {
-        namespace: { isString: true, matches: { options: /^[a-zA-Z0-9-]{1,50}$/ } },
-        name: { isString: true, matches: { options: /^[a-zA-Z0-9-]{1,50}$/ } },
+        namespace: { isString: true, matches: { options: /^[a-zA-Z0-9-_ ]{1,50}$/ } },
+        name: { isString: true, matches: { options: /^[a-zA-Z0-9-_ ]{1,50}$/ } },
       },
       ['params']
     )
@@ -513,7 +513,7 @@ export function createConfigurationRouter({
     createValidationHandler(
       param('namespace')
         .isString()
-        .matches(/^[a-zA-Z0-9-]{1,50}$/),
+        .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       query('top').optional().isInt({ min: 1, max: 100 }),
       query('after').optional().isString()
     ),

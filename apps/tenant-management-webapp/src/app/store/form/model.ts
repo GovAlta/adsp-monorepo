@@ -46,13 +46,3 @@ export const defaultFormDefinition: FormDefinition = {
 export interface FormState {
   definitions: Record<string, FormDefinition>;
 }
-
-export interface UpdateFormConfig {
-  operation: string;
-  update: Record<string, FormDefinition>;
-}
-
-export interface DeleteFormConfig {
-  operation: string;
-  property: string;
-}

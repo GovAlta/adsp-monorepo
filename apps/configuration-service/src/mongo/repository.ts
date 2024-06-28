@@ -31,7 +31,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
   async find<C>(
     criteria: ConfigurationEntityCriteria,
     top: number = 10,
-    after: string = null
+    after?: string
   ): Promise<Results<ConfigurationEntity<C>>> {
     const skip = decodeAfter(after);
     const tenant = criteria.tenantIdEquals?.toString() || { $exists: false };
