@@ -75,7 +75,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
         </div>
       )}
 
-      {openEditCalendar && selectedCalendarName && (
+      {openEditCalendar && (
         <CalendarModal
           open={openEditCalendar}
           calendarName={selectedCalendarName}
