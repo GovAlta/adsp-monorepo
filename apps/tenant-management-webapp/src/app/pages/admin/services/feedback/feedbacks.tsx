@@ -8,6 +8,7 @@ import { flattenDepth } from 'lodash';
 
 import { renderNoItem } from '@components/NoItem';
 import {
+  GoABadge,
   GoAButton,
   GoACircularProgress,
   GoADate,
@@ -20,12 +21,28 @@ import {
   GoASkeleton,
 } from '@abgov/react-components-new';
 import { LoadMoreWrapper } from '@components/styled-components';
-import { FeedbackSite, defaultFeedbackSite, getDefaultSearchCriteria } from '@store/feedback/models';
+import {
+  FeedbackSearchCriteria,
+  FeedbackSite,
+  defaultFeedbackSite,
+  getDefaultSearchCriteria,
+} from '@store/feedback/models';
 import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
-import { ExportDates, ProgressWrapper } from './styled-components';
+import { ExportDates, FeedbackFilterError, ProgressWrapper } from './styled-components';
+import { stat } from 'fs';
 
 interface VisibleProps {
   visible: boolean;
+}
+interface ExportObj {
+  timestamp?: string;
+  site?: string;
+  view?: string;
+  correlationId?: string;
+  rating?: string;
+  ratingValue?: string;
+  comment?: string;
+  technicalIssue?: string;
 }
 
 const Visible = styled.div<VisibleProps>`
@@ -40,10 +57,19 @@ export const FeedbacksList = (): JSX.Element => {
   const [isExport, setIsExport] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [showDateError, setShowDateError] = useState<boolean>(false);
+
+  const tenantName = useSelector((state: RootState) => {
+    return state?.tenant?.name;
+  });
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const isSearchCriteriaValid = (criteria?: FeedbackSearchCriteria) => {
+    return new Date(criteria.startDate) < new Date(criteria.endDate);
+  };
 
   const feedbacks = useSelector((state: RootState) => {
     return state?.feedback.feedbacks;
@@ -78,16 +104,22 @@ export const FeedbacksList = (): JSX.Element => {
   };
 
   const flattenJSON = (data) => {
-    const flattenObject = (obj, parentKey = '', result = {}) => {
-      Object.keys(obj).forEach((key) => {
-        const newKey = parentKey ? `${parentKey}_${key}` : key;
-        if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-          flattenObject(obj[key], newKey, result);
-        } else {
-          result[newKey] = obj[key];
-        }
-      });
-      return result;
+    const flattenObject = (obj) => {
+      const flat: ExportObj = {};
+
+      if (obj.timestamp) {
+        const date = new Date(obj.timestamp);
+        flat.timestamp = date.toLocaleString();
+      }
+      if (obj.context && obj.context.site) flat.site = obj.context.site;
+      if (obj.context && obj.context.view) flat.view = obj.context.view;
+      if (obj.context && obj.correlationId) flat.correlationId = obj.correlationId;
+      if (obj.value && obj.value.rating) flat.rating = obj.value.rating;
+      if (obj.value && obj.value.ratingValue !== undefined) flat.ratingValue = obj.value.ratingValue;
+      if (obj.value && obj.value.comment !== undefined) flat.comment = obj.value.comment;
+      if (obj.value && obj.value.technicalIssue !== undefined) flat.technicalIssue = obj.value.technicalIssue;
+
+      return flat;
     };
 
     return data.map((item) => flattenObject(item));
@@ -96,11 +128,12 @@ export const FeedbacksList = (): JSX.Element => {
   useEffect(() => {
     if (isExport) {
       const data = flattenJSON(exportData);
-      const fileName = 'download';
+      const fileName = `${tenantName}-feedbacks`;
       const exportType = exportFromJSON.types.csv;
       exportFromJSON({ data, fileName, exportType });
       setIsExport(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exportData]);
 
   return (
@@ -145,49 +178,70 @@ export const FeedbacksList = (): JSX.Element => {
         feedbacks &&
         Object.keys(feedbacks).length === 0 &&
         renderNoItem('feedbacks')}
-      {selectedSite !== '' && (
-        <>
-          <ExportDates>
-            <GoAFormItem label="Start date" helpText="File will be exported as a CSV">
-              <GoAInput
-                type="date"
-                width="22.54ch"
-                name="calendar-event-filter-start-date"
-                value={''}
-                disabled={selectedSite === null}
-                onChange={(name, value) => {
-                  setSearchCriteria({
-                    startDate: new Date(value).toISOString(),
-                    endDate: searchCriteria.endDate,
-                    isExport: false,
-                  });
-                }}
-                testId="startDate"
-              />
-            </GoAFormItem>
+      <ExportDates>
+        <GoAFormItem label="Start date" helpText="File will be exported as a CSV">
+          <GoAInput
+            type="date"
+            width="22.54ch"
+            name="calendar-event-filter-start-date"
+            value={''}
+            disabled={!selectedSite}
+            onChange={(name, value) => {
+              searchCriteria.startDate = new Date(value).toISOString();
+              if (!isSearchCriteriaValid(searchCriteria)) {
+                setShowDateError(true);
+              } else {
+                setShowDateError(false);
+                setSearchCriteria({
+                  startDate: searchCriteria.startDate,
+                  endDate: searchCriteria.endDate,
+                  isExport: false,
+                });
+              }
+            }}
+            testId="startDate"
+          />
+        </GoAFormItem>
 
-            <GoAFormItem label="End date">
-              <GoAInputDate
-                width="22.54ch"
-                name="calendar-event-filter-end-date"
-                value={''}
-                disabled={selectedSite === null}
-                onChange={(name, value) => {
-                  setSearchCriteria({
-                    startDate: searchCriteria.startDate,
-                    endDate: new Date(value).toISOString(),
-                    isExport: false,
-                  });
-                }}
-                testId="endDate"
-              />
-            </GoAFormItem>
-          </ExportDates>
-          <GoAButton type="secondary" size="normal" variant="normal" onClick={exportToCsv} testId="exportBtn">
-            Export
-          </GoAButton>
+        <GoAFormItem label="End date">
+          <GoAInputDate
+            width="22.54ch"
+            name="calendar-event-filter-end-date"
+            value={''}
+            disabled={!selectedSite}
+            onChange={(name, value) => {
+              searchCriteria.endDate = new Date(value).toISOString();
+              if (!isSearchCriteriaValid(searchCriteria)) {
+                setShowDateError(true);
+              } else {
+                setShowDateError(false);
+                setSearchCriteria({
+                  startDate: searchCriteria.startDate,
+                  endDate: searchCriteria.endDate,
+                  isExport: false,
+                });
+              }
+            }}
+            testId="endDate"
+          />
+        </GoAFormItem>
+      </ExportDates>
+      {showDateError && (
+        <>
+          <GoABadge type="emergency" icon />
+          <FeedbackFilterError>Start date timestamp should be after the end date timestamp.</FeedbackFilterError>
         </>
       )}
+      <GoAButton
+        type="secondary"
+        size="normal"
+        variant="normal"
+        onClick={exportToCsv}
+        testId="exportBtn"
+        disabled={!selectedSite || showDateError}
+      >
+        Export
+      </GoAButton>
       {selectedSite !== '' && !searchCriteria.isExport && feedbacks && Object.keys(feedbacks).length !== 0 && (
         <Visible visible={selectedSite !== '' && feedbacks && Object.keys(feedbacks).length !== 0}>
           <FeedbackListTable feedbacks={feedbacks} />

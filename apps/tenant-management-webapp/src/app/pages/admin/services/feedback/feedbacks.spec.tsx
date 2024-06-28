@@ -20,6 +20,7 @@ describe('Feedbacks Components', () => {
   let store;
   beforeEach(() => {
     store = mockStore({
+      tenant: { name: 'autotest' },
       feedback: {
         sites: [
           {
