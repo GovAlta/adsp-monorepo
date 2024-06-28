@@ -84,7 +84,7 @@ export const getFormDefinitions: RequestHandler = async (req, res, next) => {
 };
 
 async function getDefinitionFromConfiguration(req: Request, definitionId: string): Promise<FormDefinitionEntity> {
-  let [definition] = await req.getServiceConfiguration<FormDefinitionEntity>();
+  let [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId);
 
   // TODO: Remove after configuration is transitioned to form-service namespace.
   if (!definition) {

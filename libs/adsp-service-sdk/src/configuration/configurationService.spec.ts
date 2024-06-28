@@ -59,11 +59,26 @@ describe('ConfigurationService', () => {
     expect(result.value).toBe(config.value);
   });
 
-  it('can retrieve from API on cache miss', async () => {
+  it('can getConfiguration from cache with null value', async () => {
+    // Null value means the API received no value for the configuration (which is a valid state).
+    // This should still be a cache hit to avoid extraneous API requests.
     const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
     cacheMock.mockReturnValueOnce(null);
-    cacheMock.mockReturnValueOnce(null);
+    const [result] = await service.getConfiguration<{ value: string }>(
+      adspId`urn:ads:platform:test`,
+      'test',
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('can retrieve from API on cache miss', async () => {
+    const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
+
+    cacheMock.mockReturnValueOnce(undefined);
+    cacheMock.mockReturnValueOnce(undefined);
 
     const config = { value: 'this is config' };
     axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
@@ -83,8 +98,8 @@ describe('ConfigurationService', () => {
   it('can handle no configuration from API', async () => {
     const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
-    cacheMock.mockReturnValueOnce(null);
-    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce(undefined);
+    cacheMock.mockReturnValueOnce(undefined);
 
     axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: null }));
     const configOptions = { value: 'this is core' };
@@ -105,8 +120,8 @@ describe('ConfigurationService', () => {
     const converter = () => ({ value: 'converted' });
     const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock, false, converter);
 
-    cacheMock.mockReturnValueOnce(null);
-    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce(undefined);
+    cacheMock.mockReturnValueOnce(undefined);
 
     const config = { value: 'this is tenant' };
     axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
@@ -126,8 +141,8 @@ describe('ConfigurationService', () => {
   it('can use default if null converter provided', async () => {
     const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock, false, null);
 
-    cacheMock.mockReturnValueOnce(null);
-    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce(undefined);
+    cacheMock.mockReturnValueOnce(undefined);
 
     const config = { value: 'this is tenant' };
     axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
@@ -258,8 +273,8 @@ describe('ConfigurationService', () => {
     it('can retrieve from API on cache miss', async () => {
       const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock, true);
 
-      cacheMock.mockReturnValueOnce(null);
-      cacheMock.mockReturnValueOnce(null);
+      cacheMock.mockReturnValueOnce(undefined);
+      cacheMock.mockReturnValueOnce(undefined);
 
       const config = { value: 'this is config' };
       axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
@@ -278,8 +293,8 @@ describe('ConfigurationService', () => {
     it('can handle no configuration from API', async () => {
       const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
-      cacheMock.mockReturnValueOnce(null);
-      cacheMock.mockReturnValueOnce(null);
+      cacheMock.mockReturnValueOnce(undefined);
+      cacheMock.mockReturnValueOnce(undefined);
 
       axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: null }));
       axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: null } }));

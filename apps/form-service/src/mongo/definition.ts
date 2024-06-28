@@ -9,13 +9,19 @@ export class ConfigurationFormDefinitionRepository implements FormDefinitionRepo
   ) {}
 
   async getDefinition(tenantId: AdspId, id: string): Promise<FormDefinitionEntity> {
-    const token = await this.tokenProvider.getAccessToken();
-    const [configuration] = await this.configurationService.getConfiguration<Record<string, FormDefinitionEntity>>(
-      this.serviceId,
-      token,
-      tenantId
-    );
+    let [definition] = await this.configurationService.getServiceConfiguration<FormDefinitionEntity>(id, tenantId);
 
-    return configuration[id];
+    // TODO: Remove after configuration is transitioned to form-service namespace.
+    if (!definition) {
+      const token = await this.tokenProvider.getAccessToken();
+      const [configuration] = await this.configurationService.getConfiguration<Record<string, FormDefinitionEntity>>(
+        this.serviceId,
+        token,
+        tenantId
+      );
+      definition = configuration[id];
+    }
+
+    return definition;
   }
 }
