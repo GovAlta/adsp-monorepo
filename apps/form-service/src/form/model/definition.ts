@@ -42,7 +42,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
     this.dataSchema = definition.dataSchema || {};
     this.uiSchema = definition.uiSchema || {};
-    this.validationService.setSchema(this.id, this.dataSchema);
+    this.validationService.setSchema(`${this.tenantId.resource}:${this.id}`, this.dataSchema);
   }
 
   public canAccessDefinition(user: User): boolean {
@@ -72,7 +72,7 @@ export class FormDefinitionEntity implements FormDefinition {
   }
 
   public validateData(context: string, data: Record<string, unknown>) {
-    return this.validationService.validate(context, this.id, data);
+    return this.validationService.validate(context, `${this.tenantId.resource}:${this.id}`, data);
   }
 
   public async createForm(
