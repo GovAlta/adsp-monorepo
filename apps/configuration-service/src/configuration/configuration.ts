@@ -1,7 +1,7 @@
 export const configurationSchema = {
   type: 'object',
   patternProperties: {
-    '^[a-zA-Z0-9-]{1,50}(:[a-zA-Z0-9-]{1,50}$|$)': {
+    '^[a-zA-Z0-9-_ ]{1,50}(:[a-zA-Z0-9-_ ]{1,50}$|$)': {
       type: 'object',
       properties: {
         description: {
