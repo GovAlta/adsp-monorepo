@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import {
   GoAButtonGroup,
   GoAButton,
@@ -59,20 +59,9 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const adspId = AdspId.parse(task.recordId);
   const [_, _type, id, _submission, submissionId] = adspId.resource.split('/');
 
-  // To help determine height of the content container
-  const actionContainerRef = useRef(null);
-  const [paddingBottom, setPaddingBottom] = useState('0');
-
   useEffect(() => {
     dispatch(selectForm({ formId: id, submissionId: submissionId }));
   }, [dispatch, id, submissionId]);
-
-  useEffect(() => {
-    if (actionContainerRef.current) {
-      const height = actionContainerRef.current.offsetHeight;
-      setPaddingBottom(`${height}px`);
-    }
-  }, []);
 
   const NO_DISPOSITION_SELECTED = {
     id: 'No disposition selected',
@@ -281,15 +270,15 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   };
   return (
     <ReviewContainer>
-      <ReviewContent paddingBottom={paddingBottom}>
+      <ReviewContent>
         {renderFormSubmissionReview()}
         {renderTaskCancelModal()}
       </ReviewContent>
-      <ActionContainer ref={actionContainerRef}>
+      <ActionContainer>
         <goa-divider mt="m" mb="none"></goa-divider>
         <ActionControl>{renderDisposition()}</ActionControl>
         <ActionControl>{renderReason()}</ActionControl>
-        {renderButtonGroup()}
+        <ActionControl>{renderButtonGroup()}</ActionControl>
       </ActionContainer>
     </ReviewContainer>
   );

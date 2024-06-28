@@ -4,8 +4,8 @@ export const ReviewItem = styled.div`
   display: flex;
   flex-direction: column;
   margin: var(--goa-space-2xs);
-  margin-top: var(--goa-space-m);
   padding: var(--goa-space-xs);
+  padding-top: 0;
 `;
 
 export const ReviewItemSection = styled.div`
@@ -42,25 +42,21 @@ export const ReviewContainer = styled.div`
   padding-top: 0;
 `;
 
-export interface ReviewContentProps {
-  paddingBottom: string;
-}
-
-export const ReviewContent = styled.div<ReviewContentProps>`
-  flex: 1;
+export const ReviewContent = styled.div`
+  margin-top: var(--goa-space-l);
+  flex-grow: 1;
   overflow-y: auto;
-  padding-bottom: ${(props) => props.paddingBottom || '0'};
+  padding-bottom: 0;
 `;
 
 export const ActionContainer = styled.div`
-  position: fixed;
-  bottom: 0;
   width: 100%;
+  flex-shrink: 0;
   background-color: #fff;
-  display: flex;
-  flex-direction: column;
   gap: var(--goa-space-s);
   margin-left: var(--goa-space-s);
 `;
 
-export const ActionControl = styled.div``;
+export const ActionControl = styled.div`
+  padding-top: var(--goa-space-s);
+`;
