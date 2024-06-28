@@ -275,7 +275,7 @@ describe('form router', () => {
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
       await getFormDefinition(req as unknown as Request, res as unknown as Response, next);
 
-      expect(req.getServiceConfiguration).toHaveBeenCalled();
+      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test');
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'test-form-definition' }));
     });
 
