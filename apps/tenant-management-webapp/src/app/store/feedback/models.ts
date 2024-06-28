@@ -34,13 +34,30 @@ export interface FeedbackSite {
   url: string;
   allowAnonymous: boolean;
 }
+export interface SelectedSite {
+  site: string;
+}
 
 export interface FeedbackState {
   sites: FeedbackSite[];
   feedbacks: Feedback[];
+  exportData: Feedback[];
   isLoading: boolean;
   nextEntries: string;
 }
+
+export interface FeedbackSearchCriteria {
+  startDate?: string;
+  endDate?: string;
+  isExport?: boolean;
+}
+
+export const getDefaultSearchCriteria = (): FeedbackSearchCriteria => {
+  return {
+    startDate: '',
+    endDate: '',
+  };
+};
 
 export const defaultFeedbackSite: FeedbackSite = {
   url: '',
