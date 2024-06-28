@@ -7,7 +7,7 @@ import {
   UnauthorizedUserError,
 } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { RequestHandler, Router } from 'express';
+import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, param, query } from 'express-validator';
 import { NotificationService } from '../../notification';
 import {
@@ -83,19 +83,30 @@ export const getFormDefinitions: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const getFormDefinition: RequestHandler = async (req, res, next) => {
-  try {
-    const { definitionId } = req.params;
-    const user = req.user;
+async function getDefinitionFromConfiguration(req: Request, definitionId: string): Promise<FormDefinitionEntity> {
+  let [definition] = await req.getServiceConfiguration<FormDefinitionEntity>();
 
+  // TODO: Remove after configuration is transitioned to form-service namespace.
+  if (!definition) {
     const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
 
-    const definition =
+    definition =
       configuration[Object.keys(configuration).find((key) => key.toLowerCase() === definitionId.toLowerCase())] ?? null;
+  }
 
-    if (!definition) {
-      throw new NotFoundError('form definition', definitionId);
-    }
+  if (!definition) {
+    throw new NotFoundError('form definition', definitionId);
+  }
+
+  return definition;
+}
+
+export const getFormDefinition: RequestHandler = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const { definitionId } = req.params;
+
+    const definition = await getDefinitionFromConfiguration(req, definitionId);
 
     if (!definition.canAccessDefinition(user)) {
       throw new UnauthorizedUserError('access definition', user);
@@ -154,10 +165,8 @@ export function findFormSubmissions(
       const { criteria: criteriaValue } = req.query;
       const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
-      const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
       const formEntity: FormEntity = await formRepository.get(tenantId, formId);
-
-      const definition = formEntity?.definition?.id ? configuration[formEntity.definition.id] : null;
+      const definition = formEntity?.definition;
 
       if (!isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...(definition?.assessorRoles || [])])) {
         throw new UnauthorizedUserError('find form submissions', user);
@@ -194,14 +203,7 @@ export function createForm(
       const user = req.user;
       const { definitionId, applicant: applicantInfo } = req.body;
 
-      const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-      const definition =
-        configuration[Object.keys(configuration).find((key) => key.toLowerCase() === definitionId.toLowerCase())] ??
-        null;
-      if (!definition) {
-        throw new NotFoundError('form definition', definitionId);
-      }
-
+      const definition = await getDefinitionFromConfiguration(req, definitionId);
       const form = await definition.createForm(user, repository, notificationService, applicantInfo);
 
       end();

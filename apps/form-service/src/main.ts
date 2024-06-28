@@ -37,6 +37,7 @@ import { createNotificationService } from './notification';
 import { createFileService } from './file';
 import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
+import { isFormDefinition } from './utils';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -55,6 +56,8 @@ const initializeApp = async (): Promise<express.Application> => {
   const SUPPORT_COMMENT_TOPIC_TYPE_ID = 'form-questions';
 
   instrumentAxios(logger);
+
+  const validationService = new AjvValidationService(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -128,13 +131,18 @@ const initializeApp = async (): Promise<express.Application> => {
       configuration: {
         description: 'Definitions of forms with configuration of roles allowed to submit and assess.',
         schema: configurationSchema,
+        useNamespace: true,
       },
-      configurationConverter: (config: Record<string, FormDefinition>, tenantId) => {
-        const validationService = new AjvValidationService(logger);
-        return Object.entries(config).reduce(
-          (defs, [id, def]) => ({ ...defs, [id]: new FormDefinitionEntity(validationService, tenantId, def) }),
-          {}
-        );
+      configurationConverter: (config: Record<string, FormDefinition> | FormDefinition, tenantId) => {
+        if (isFormDefinition(config)) {
+          return new FormDefinitionEntity(validationService, tenantId, config);
+        } else {
+          // For backwards compatibility, handle conversion of form definitions configured in a single document.
+          return Object.entries(config).reduce(
+            (defs, [id, def]) => ({ ...defs, [id]: new FormDefinitionEntity(validationService, tenantId, def) }),
+            {} as Record<string, FormDefinitionEntity>
+          );
+        }
       },
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
