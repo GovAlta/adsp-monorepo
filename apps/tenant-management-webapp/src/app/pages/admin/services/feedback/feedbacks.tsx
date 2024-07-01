@@ -141,7 +141,7 @@ export const FeedbacksList = (): JSX.Element => {
       {!sites && renderNoItem('feedback sites')}
       {!indicator.show && sites && Object.keys(sites).length === 0 && renderNoItem('feedback sites')}
       {sites && Object.keys(sites).length > 0 && (
-        <>
+        <div>
           <GoAFormItem label="Registered sites">
             {indicator.show && Object.keys(sites).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
             {Object.keys(sites).length > 0 && (
@@ -215,6 +215,12 @@ export const FeedbacksList = (): JSX.Element => {
               />
             </GoAFormItem>
           </ExportDates>
+          {showDateError && (
+            <div>
+              <GoABadge type="emergency" icon />
+              <FeedbackFilterError>Start date timestamp should be after the end date timestamp.</FeedbackFilterError>
+            </div>
+          )}
           <GoAButton
             type="secondary"
             size="normal"
@@ -225,14 +231,7 @@ export const FeedbacksList = (): JSX.Element => {
           >
             Export
           </GoAButton>
-        </>
-      )}
-
-      {showDateError && (
-        <>
-          <GoABadge type="emergency" icon />
-          <FeedbackFilterError>Start date timestamp should be after the end date timestamp.</FeedbackFilterError>
-        </>
+        </div>
       )}
 
       {!next && indicator.show && (
