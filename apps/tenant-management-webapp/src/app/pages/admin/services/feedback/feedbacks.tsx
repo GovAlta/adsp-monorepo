@@ -141,31 +141,98 @@ export const FeedbacksList = (): JSX.Element => {
       {!sites && renderNoItem('feedback sites')}
       {!indicator.show && sites && Object.keys(sites).length === 0 && renderNoItem('feedback sites')}
       {sites && Object.keys(sites).length > 0 && (
-        <GoAFormItem label="Registered sites">
-          {indicator.show && Object.keys(sites).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
-          {Object.keys(sites).length > 0 && (
-            <GoADropdown
-              name="Sites"
-              value={selectedSite}
-              onChange={(name, site: string) => {
-                setSelectedSite(site);
-              }}
-              aria-label="select-site-dropdown"
-              width="100%"
-              testId="sites-dropdown"
-            >
-              {sites.map((item) => (
-                <GoADropdownItem
-                  name="feedbacks"
-                  key={item.url}
-                  label={item.url}
-                  value={item.url}
-                  testId={`${item.url}`}
-                />
-              ))}
-            </GoADropdown>
-          )}
-        </GoAFormItem>
+        <>
+          <GoAFormItem label="Registered sites">
+            {indicator.show && Object.keys(sites).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
+            {Object.keys(sites).length > 0 && (
+              <GoADropdown
+                name="Sites"
+                value={selectedSite}
+                onChange={(name, site: string) => {
+                  setSelectedSite(site);
+                }}
+                aria-label="select-site-dropdown"
+                width="100%"
+                testId="sites-dropdown"
+              >
+                {sites.map((item) => (
+                  <GoADropdownItem
+                    name="feedbacks"
+                    key={item.url}
+                    label={item.url}
+                    value={item.url}
+                    testId={`${item.url}`}
+                  />
+                ))}
+              </GoADropdown>
+            )}
+          </GoAFormItem>
+          <ExportDates>
+            <GoAFormItem label="Start date" helpText="File will be exported as a CSV">
+              <GoAInput
+                type="date"
+                width="22.54ch"
+                name="calendar-event-filter-start-date"
+                value={''}
+                disabled={!selectedSite}
+                onChange={(name, value) => {
+                  searchCriteria.startDate = new Date(value).toISOString();
+                  if (!isSearchCriteriaValid(searchCriteria)) {
+                    setShowDateError(true);
+                  } else {
+                    setShowDateError(false);
+                    setSearchCriteria({
+                      startDate: searchCriteria.startDate,
+                      endDate: searchCriteria.endDate,
+                      isExport: false,
+                    });
+                  }
+                }}
+                testId="startDate"
+              />
+            </GoAFormItem>
+
+            <GoAFormItem label="End date">
+              <GoAInputDate
+                width="22.54ch"
+                name="calendar-event-filter-end-date"
+                value={''}
+                disabled={!selectedSite}
+                onChange={(name, value) => {
+                  searchCriteria.endDate = new Date(value).toISOString();
+                  if (!isSearchCriteriaValid(searchCriteria)) {
+                    setShowDateError(true);
+                  } else {
+                    setShowDateError(false);
+                    setSearchCriteria({
+                      startDate: searchCriteria.startDate,
+                      endDate: searchCriteria.endDate,
+                      isExport: false,
+                    });
+                  }
+                }}
+                testId="endDate"
+              />
+            </GoAFormItem>
+          </ExportDates>
+          <GoAButton
+            type="secondary"
+            size="normal"
+            variant="normal"
+            onClick={exportToCsv}
+            testId="exportBtn"
+            disabled={!selectedSite || showDateError}
+          >
+            Export
+          </GoAButton>
+        </>
+      )}
+
+      {showDateError && (
+        <>
+          <GoABadge type="emergency" icon />
+          <FeedbackFilterError>Start date timestamp should be after the end date timestamp.</FeedbackFilterError>
+        </>
       )}
 
       {!next && indicator.show && (
@@ -178,70 +245,6 @@ export const FeedbacksList = (): JSX.Element => {
         feedbacks &&
         Object.keys(feedbacks).length === 0 &&
         renderNoItem('feedbacks')}
-      <ExportDates>
-        <GoAFormItem label="Start date" helpText="File will be exported as a CSV">
-          <GoAInput
-            type="date"
-            width="22.54ch"
-            name="calendar-event-filter-start-date"
-            value={''}
-            disabled={!selectedSite}
-            onChange={(name, value) => {
-              searchCriteria.startDate = new Date(value).toISOString();
-              if (!isSearchCriteriaValid(searchCriteria)) {
-                setShowDateError(true);
-              } else {
-                setShowDateError(false);
-                setSearchCriteria({
-                  startDate: searchCriteria.startDate,
-                  endDate: searchCriteria.endDate,
-                  isExport: false,
-                });
-              }
-            }}
-            testId="startDate"
-          />
-        </GoAFormItem>
-
-        <GoAFormItem label="End date">
-          <GoAInputDate
-            width="22.54ch"
-            name="calendar-event-filter-end-date"
-            value={''}
-            disabled={!selectedSite}
-            onChange={(name, value) => {
-              searchCriteria.endDate = new Date(value).toISOString();
-              if (!isSearchCriteriaValid(searchCriteria)) {
-                setShowDateError(true);
-              } else {
-                setShowDateError(false);
-                setSearchCriteria({
-                  startDate: searchCriteria.startDate,
-                  endDate: searchCriteria.endDate,
-                  isExport: false,
-                });
-              }
-            }}
-            testId="endDate"
-          />
-        </GoAFormItem>
-      </ExportDates>
-      {showDateError && (
-        <>
-          <GoABadge type="emergency" icon />
-          <FeedbackFilterError>Start date timestamp should be after the end date timestamp.</FeedbackFilterError>
-        </>
-      )}
-      <GoAButton
-        type="secondary"
-        size="normal"
-        variant="normal"
-        onClick={exportToCsv}
-        testId="exportBtn"
-        disabled={!selectedSite || showDateError}
-      >
-        Export
-      </GoAButton>
       {selectedSite !== '' && !searchCriteria.isExport && feedbacks && Object.keys(feedbacks).length !== 0 && (
         <Visible visible={selectedSite !== '' && feedbacks && Object.keys(feedbacks).length !== 0}>
           <FeedbackListTable feedbacks={feedbacks} />
