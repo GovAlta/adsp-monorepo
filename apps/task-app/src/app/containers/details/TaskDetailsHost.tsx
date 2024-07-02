@@ -102,7 +102,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
           <CommentsViewer key={open.urn} />
         </div>
       )}
-
+      {/*  Jun, 2024, disable until we have chat capabilities
       <GoAIconButton
         disabled={!open || !topics[open.urn]}
         icon={showComments ? 'chatbubble-ellipses' : 'chatbubble'}
@@ -114,6 +114,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
           }
         }}
       />
+      */}
     </div>
   );
 };
@@ -125,12 +126,12 @@ export const ChatBubblePadding = styled.div`
 export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
   z-index: 0;
   position: relative;
-  display: none;
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
 
   & > :first-child {
     flex: 1;
-    padding: var(--goa-space-l);
     padding-top: var(--goa-space-m);
   }
 

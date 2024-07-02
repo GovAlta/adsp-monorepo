@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
 import {
   GoAButtonGroup,
   GoAButton,
@@ -6,7 +6,6 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoATextArea,
-  GoADetails,
 } from '@abgov/react-components-new';
 import { Grid } from '../../../lib/common/Grid';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,26 +27,19 @@ import { AdspId } from '../../../lib/adspId';
 
 import {
   ReviewItem,
-  ReviewItemHeader,
   ReviewItemSection,
   ReviewItemTitle,
   ReviewItemBasic,
-  FormDispositionDetail,
+  ReviewContainer,
+  ReviewContent,
+  ActionContainer,
+  ActionControl,
 } from './styled-components';
 import { RenderFormReviewFields } from './RenderFormReviewFields';
 import { ajv } from '../../../lib/validations/checkInput';
 import { Element } from './RenderFormReviewFields';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
-import styled from 'styled-components';
 import { TaskCancelModal } from './TaskCancelModal';
-const PlaceholderDiv = styled.div`
-  display: flex;
-  flex-direction: column;
-
-  > *:first-child {
-    flex-grow: 1;
-  }
-`;
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   user,
@@ -67,9 +59,23 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const adspId = AdspId.parse(task.recordId);
   const [_, _type, id, _submission, submissionId] = adspId.resource.split('/');
 
+  // To help determine height of the content container
+  const actionContainerRef = useRef(null);
+  const [actionOffset, setActionOffset] = useState('0');
+
   useEffect(() => {
     dispatch(selectForm({ formId: id, submissionId: submissionId }));
   }, [dispatch, id, submissionId]);
+
+  useEffect(() => {
+    // The Action Container is fixed to the bottom of the screen;
+    // compute padding of the review content so it scrolls above it.
+    if (actionContainerRef.current) {
+      const height = actionContainerRef.current.offsetHeight;
+      // Fudge factor 64 to reduce scroll area
+      setActionOffset(`${height - 64}px`);
+    }
+  }, []);
 
   const NO_DISPOSITION_SELECTED = {
     id: 'No disposition selected',
@@ -128,107 +134,107 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const renderFormSubmissionReview = () => {
     return (
-      <PlaceholderDiv>
-        <GoADetails ml="s" heading="Form submission review">
-          <LoadingIndicator isLoading={loading} />
-          {!loading && categories && (
-            <ReviewItem>
-              {categories.map((category, index) => {
-                const categoryLabel = category.label || category.i18n || '';
-                const requiredFields = getAllRequiredFields(definition?.dataSchema);
+      <div>
+        <LoadingIndicator isLoading={loading} />
+        {!loading && categories && (
+          <ReviewItem>
+            {categories.map((category, index) => {
+              const categoryLabel = category.label || category.i18n || '';
+              const requiredFields = getAllRequiredFields(definition?.dataSchema);
 
-                return (
-                  <div>
-                    {category?.type === 'Control' ? (
-                      <ReviewItemBasic>
-                        <Element
-                          element={category}
-                          index={index}
+              return (
+                <div>
+                  {category?.type === 'Control' ? (
+                    <ReviewItemBasic>
+                      <Element
+                        element={category}
+                        index={index}
+                        data={currentForm?.formData}
+                        requiredFields={requiredFields}
+                      />
+                    </ReviewItemBasic>
+                  ) : (
+                    // eslint-disable-next-line react/jsx-no-comment-textnodes
+                    <ReviewItemSection key={index}>
+                      <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
+                      <Grid>
+                        <RenderFormReviewFields
+                          elements={category?.elements}
                           data={currentForm?.formData}
                           requiredFields={requiredFields}
                         />
-                      </ReviewItemBasic>
-                    ) : (
-                      <ReviewItemSection key={index}>
-                        <ReviewItemHeader>
-                          <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
-                        </ReviewItemHeader>
-                        <Grid>
-                          <RenderFormReviewFields
-                            elements={category?.elements}
-                            data={currentForm?.formData}
-                            requiredFields={requiredFields}
-                          />
-                        </Grid>
-                      </ReviewItemSection>
-                    )}
-                  </div>
-                );
-              })}
-            </ReviewItem>
-          )}
-        </GoADetails>
-      </PlaceholderDiv>
+                      </Grid>
+                    </ReviewItemSection>
+                  )}
+                </div>
+              );
+            })}
+          </ReviewItem>
+        )}
+      </div>
     );
   };
 
-  const renderFormDisposition = () => {
+  const renderDisposition = () => {
     return (
-      <GoADetails ml="s" heading="Form disposition">
-        <FormDispositionDetail>
-          <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition" mt="m" mb="s">
-            <GoADropdown
-              testId="formDispositionStatus"
-              value={dispositionStatus}
-              disabled={disableFormDispositionControls()}
-              onChange={(_, value: string) => {
-                setDispositionStatus(value);
-                validators.remove('dispositionStatus');
-                validators['dispositionStatus'].check(value);
-              }}
-              relative={true}
-              width={'67ch'}
-            >
-              <GoADropdownItem
-                key={NO_DISPOSITION_SELECTED.id}
-                value={NO_DISPOSITION_SELECTED.value}
-                label={NO_DISPOSITION_SELECTED.label}
-              />
-              {dispositionStates?.map((dip) => (
-                <GoADropdownItem key={dip.id} value={dip.name} label={dip.description} />
-              ))}
-            </GoADropdown>
-          </GoAFormItem>
-
-          <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']}>
-            <GoATextArea
-              name="reason"
-              value={dispositionReason}
-              disabled={disableFormDispositionControls()}
-              width="75ch"
-              testId="reason"
-              aria-label="reason"
-              onKeyPress={(name, value: string) => {
-                setDispositionReason(value);
-                validators.remove('dispositionReason');
-                validators['dispositionReason'].check(value);
-              }}
-              // eslint-disable-next-line
-              onChange={() => {}}
+      <div id="form-disposition-block">
+        <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition">
+          <GoADropdown
+            testId="formDispositionStatus"
+            value={dispositionStatus}
+            disabled={disableFormDispositionControls()}
+            onChange={(_, value: string) => {
+              setDispositionStatus(value);
+              validators.remove('dispositionStatus');
+              validators['dispositionStatus'].check(value);
+            }}
+            relative={true}
+            width={'600px'}
+          >
+            <GoADropdownItem
+              key={NO_DISPOSITION_SELECTED.id}
+              value={NO_DISPOSITION_SELECTED.value}
+              label={NO_DISPOSITION_SELECTED.label}
             />
-          </GoAFormItem>
-        </FormDispositionDetail>
-      </GoADetails>
+            {dispositionStates?.map((dip, i) => (
+              <GoADropdownItem key={dip.id} value={dip.name} label={dip.description} />
+            ))}
+          </GoADropdown>
+        </GoAFormItem>
+      </div>
+    );
+  };
+  const renderReason = () => {
+    return (
+      <div id="form-reason-block">
+        <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']}>
+          <GoATextArea
+            name="reason"
+            value={dispositionReason}
+            disabled={disableFormDispositionControls()}
+            width="600px"
+            testId="reason"
+            aria-label="reason"
+            onKeyPress={(name, value: string) => {
+              setDispositionReason(value);
+              validators.remove('dispositionReason');
+              validators['dispositionReason'].check(value);
+            }}
+            // eslint-disable-next-line
+            onChange={() => {}}
+          />
+        </GoAFormItem>
+      </div>
     );
   };
 
   const renderButtonGroup = () => {
     return (
-      <GoAButtonGroup alignment="start" mt="l">
+      <GoAButtonGroup alignment="start">
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
             <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
-              Complete task
+              Submit Decision
             </GoAButton>
             <GoAButton
               type="secondary"
@@ -237,16 +243,16 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
                 setShowTaskCancelConfirmation(true);
               }}
             >
-              Cancel task
+              Cancel Review
             </GoAButton>
           </>
         )}
         <GoAButton type="tertiary" onClick={onClose}>
-          Close
+          Back
         </GoAButton>
         {task?.status === TASK_STATUS.PENDING && (
           <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
-            Start task
+            Start review
           </GoAButton>
         )}
       </GoAButtonGroup>
@@ -277,12 +283,18 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     );
   };
   return (
-    <div>
-      {renderFormSubmissionReview()}
-      {renderFormDisposition()}
-      {renderButtonGroup()}
-      {renderTaskCancelModal()}
-    </div>
+    <ReviewContainer>
+      <ReviewContent offset={actionOffset}>
+        {renderFormSubmissionReview()}
+        {renderTaskCancelModal()}
+      </ReviewContent>
+      <ActionContainer ref={actionContainerRef}>
+        <goa-divider mt="m" mb="none"></goa-divider>
+        <ActionControl>{renderDisposition()}</ActionControl>
+        <ActionControl>{renderReason()}</ActionControl>
+        <ActionControl>{renderButtonGroup()}</ActionControl>
+      </ActionContainer>
+    </ReviewContainer>
   );
 };
 
