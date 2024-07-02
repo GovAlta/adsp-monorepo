@@ -11,3 +11,4 @@ export * from './InputEnumRadios';
 export * from './InputBooleanControl';
 export * from './InputBooleanRadioControl';
 export * from './InputEnumCheckboxes';
+export * from './InputBaseReviewControl';
