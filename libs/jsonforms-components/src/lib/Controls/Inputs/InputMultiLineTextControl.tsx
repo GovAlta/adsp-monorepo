@@ -73,20 +73,20 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       // maxCount={schema.maxLength || 256}
       onKeyPress={(name: string, value: string, key: string) => {
         const newValue = autoCapitalize ? value.toUpperCase() : value;
-        if (value.length === 0) {
+        if (value.length === 0 || (required && errorsFormInput.length === 0 && value.length > 0)) {
           onKeyPressForTextControl({
             name,
             value: newValue,
             key,
             controlProps: props as ControlProps,
           });
-        } else if (required && errorsFormInput.length === 0 && value.length > 0) {
-          handleChange(path, newValue);
         }
       }}
       onChange={(name: string, value: string) => {
-        const newValue = autoCapitalize ? value.toUpperCase() : value;
-        handleChange(path, newValue);
+        if (data !== value) {
+          const newValue = autoCapitalize ? value.toUpperCase() : value;
+          handleChange(path, newValue);
+        }
       }}
       {...uischema?.options?.componentProps}
     />
