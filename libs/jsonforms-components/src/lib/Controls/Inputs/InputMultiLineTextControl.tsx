@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   CellProps,
   WithClassname,
@@ -21,17 +21,30 @@ export type GoAInputMultiLineTextProps = CellProps & WithClassname & WithInputPr
 export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, path, handleChange, schema, label } = props;
   const { required } = props as ControlProps;
+  const [textAreaValue, _] = React.useState<string>(data);
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const errorsFormInput = checkFieldValidity(props as ControlProps);
-  const [textAreaValue, _] = useState(data);
 
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const textAreaName = `${label || path}-text-area` || '';
   const textarea = document.getElementsByName(textAreaName)[0] ?? null;
+
+  useEffect(() => {
+    if (textarea) {
+      textarea.addEventListener('blur', onBlur);
+    }
+    return () => {
+      if (textarea) {
+        textarea.removeEventListener('blur', onBlur);
+      }
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textarea]);
 
   const onBlur = (event: FocusEvent) => {
     let eventTargetValue: string = '';
@@ -78,19 +91,6 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       {...uischema?.options?.componentProps}
     />
   );
-
-  useEffect(() => {
-    if (textarea) {
-      textarea.addEventListener('blur', onBlur);
-    }
-    return () => {
-      if (textarea) {
-        textarea.removeEventListener('blur', onBlur);
-      }
-    };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [textarea]);
 
   return txtAreaComponent;
 };
