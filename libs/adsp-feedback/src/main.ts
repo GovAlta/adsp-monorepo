@@ -544,7 +544,6 @@ class AdspFeedback implements AdspFeedbackApi {
               padding-left: 0px;
             }
             > div > p {
-              visibility: hidden;
               display: none;
             }
           }
@@ -559,6 +558,7 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .adsp-fb .adsp-fb-form-comment span {
             color: var(--color-gray-600);
+            font-size: 14px;
           }
 
           .adsp-fb .adsp-fb-form-comment textarea {
@@ -749,9 +749,8 @@ class AdspFeedback implements AdspFeedbackApi {
           }
 
           .help-text {
-            margin-top: 12px;
+            margin-top: 4px;
             margin-bottom: 12px;
-            font-size: 14px;
             line-height: 28px;
           }
           .radio-container {
@@ -896,17 +895,19 @@ class AdspFeedback implements AdspFeedbackApi {
             .adsp-fb .adsp-fb-form-rating {
               flex-direction: column-reverse;
               align-items: left;
+              gap: 16px;
 
               > div {
                 display: flex;
                 flex-direction: row;
-                margin-bottom: 8px;
+                align-items: center;
               }
               > div > img {
                 height: 32px;
+                padding-right: 8px;
               }
               > div > p {
-                visibility: visible;
+                margin-bottom: 0px !important;
                 display: block;
                 padding: 0;
               }
