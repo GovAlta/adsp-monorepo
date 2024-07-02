@@ -289,10 +289,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     try {
-      JSON.parse(tempUiSchema);
-      setTempUiSchemaBounced(tempUiSchema);
-      setError('');
-      setCustomIndicator(false);
+      if (tempUiSchema !== '{}') {
+        JSON.parse(tempUiSchema);
+        setTempUiSchemaBounced(tempUiSchema);
+        setError('');
+        setCustomIndicator(false);
+      }
     } catch {
       setTempUiSchemaBounced('{}');
     }
@@ -300,9 +302,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     try {
-      JSON.parse(tempDataSchema);
-      setDataSchemaBounced(tempDataSchema);
-      setError('');
+      if (tempDataSchema !== '{}') {
+        JSON.parse(tempDataSchema);
+        setDataSchemaBounced(tempDataSchema);
+        setError('');
+      }
     } catch (e) {
       setDataSchemaBounced('{}');
     }
@@ -589,10 +593,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     <FlexRow>
                       <GoACheckboxPad>
                         <GoACheckbox
-                          name="submission-records"
-                          key="submission-records"
+                          name="support-topic"
+                          key="support-topic"
                           checked={definition.supportTopic}
-                          testId="submission-records"
+                          testId="support-topic"
                           onChange={() => {
                             const topic = definition.supportTopic ? false : true;
                             setDefinition({ ...definition, supportTopic: topic });

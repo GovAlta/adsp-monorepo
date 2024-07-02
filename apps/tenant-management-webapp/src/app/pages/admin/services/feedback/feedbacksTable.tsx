@@ -22,7 +22,7 @@ export const FeedbackListTable: FunctionComponent<FeedbackTableProps> = ({ feedb
         </thead>
         <tbody>
           {feedbacks.map((feedback, id) => {
-            return <FeedbackTableItem key={feedback} id={id} feedback={feedback} />;
+            return <FeedbackTableItem key={Number(id) * 11} id={id} feedback={feedback} />;
           })}
         </tbody>
       </DataTable>

@@ -500,9 +500,7 @@ class AdspFeedback implements AdspFeedbackApi {
             border-radius: 3px;
             transform: translateX(-50%);
           }
-          // .adsp-fb .adsp-fb-start {
-          //   height: 330px;
-          // }
+
           .adsp-fb .adsp-fb-container-heading {
             display: flex;
             flex-direction: row;
@@ -519,11 +517,10 @@ class AdspFeedback implements AdspFeedbackApi {
             display: flex;
             box-sizing: border-box;
             flex-direction: column;
-            padding: 0 0 36px 24px;
+            padding: 0 0 24px 24px;
             transition: transform 0.001ms;
           }
           .adsp-fb .adsp-fb-content {
-            //max-height: 455px;
             overflow-y: auto !important;
             overflow-x: hidden;
             flex: 1;
@@ -534,16 +531,14 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-form-rating {
             display: flex;
             flex-direction: row;
-            gap: 24px;
+            gap: 32px;
             border: 0;
             margin-top: 12px;
             justify-content: space-between;
-            width: 90%;
+            width: 97%;
 
             > div > img {
-              height: 46px;
               padding-right: 14px;
-              padding-left: 14px;
             }
             > div > img:first-child {
               padding-left: 0px;
@@ -594,8 +589,7 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-actions {
             display: flex;
             padding-right: 32px;
-            margin-top: 20px;
-            margin-bottom: 5px;
+            margin-top: 24px;
           }
 
           .adsp-fb button {
@@ -719,12 +713,12 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
             transform: translateX(-100%);
             visibility: hidden;
-            height: 320px;
+            height: 264px;
           }
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
             transform: translateX(-100%);
             visibility: hidden;
-            height: 320px;
+            height: 334px;
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             visibility: visible;
@@ -812,7 +806,6 @@ class AdspFeedback implements AdspFeedbackApi {
           .radio:active {
             box-shadow: 0 0 0 3px #feba35;
           }
-
           .radio-label {
             padding: 0 8px;
             font-weight: normal;
@@ -851,12 +844,14 @@ class AdspFeedback implements AdspFeedbackApi {
           .p-error {
             margin-left: 36px;
             margin-right: 36px;
+            line-height: 28px;
           }
           .h3-subtitle {
             padding-top: 36px;
           }
           .p-content {
             margin-right: 24px;
+            line-height: 28px;
           }
           @media screen and (max-width: 768px) {
             .adsp-fb div.adsp-fb-form-container {
@@ -880,7 +875,6 @@ class AdspFeedback implements AdspFeedbackApi {
             .adsp-fb-main {
               overflow-y: auto;
             }
-
             .adsp-fb .adsp-fb-content {
               max-height: 100%;
             }

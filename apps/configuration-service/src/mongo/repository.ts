@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, Results, ValidationService } from '@core-services/core-common';
-import { model, Model } from 'mongoose';
+import { model, Model, PipelineStage } from 'mongoose';
 import { Logger } from 'winston';
 import {
   ConfigurationRepository,
@@ -9,10 +9,11 @@ import {
   RevisionCriteria,
   ActiveRevisionRepository,
   ConfigurationDefinition,
+  ConfigurationEntityCriteria,
 } from '../configuration';
 import { renamePrefixProperties } from './prefix';
 import { revisionSchema } from './schema';
-import { ConfigurationRevisionDoc } from './types';
+import { ConfigurationRevisionDoc, RevisionAggregateDoc } from './types';
 
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
@@ -25,6 +26,52 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     private activeRevisionRepository: ActiveRevisionRepository
   ) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
+  }
+
+  async find<C>(
+    criteria: ConfigurationEntityCriteria,
+    top: number = 10,
+    after?: string
+  ): Promise<Results<ConfigurationEntity<C>>> {
+    const skip = decodeAfter(after);
+    const tenant = criteria.tenantIdEquals?.toString() || { $exists: false };
+    const query = { namespace: criteria.namespaceEquals, tenant };
+
+    const pipeline: PipelineStage[] = [
+      { $match: query },
+      { $sort: { revision: -1 } },
+      {
+        $group: {
+          _id: { namespace: '$namespace', name: '$name', tenant: '$tenant' },
+          revision: { $first: '$revision' },
+          created: { $first: '$created' },
+          lastUpdated: { $first: '$lastUpdated' },
+          configuration: { $first: '$configuration' },
+        },
+      },
+    ];
+
+    const docs: RevisionAggregateDoc<C>[] = await this.revisionModel.aggregate(pipeline).skip(skip).limit(top).exec();
+
+    return {
+      results: docs.map(
+        (result) =>
+          new ConfigurationEntity<C>(
+            result._id.namespace,
+            result._id.name,
+            this.logger,
+            this,
+            this.activeRevisionRepository,
+            this.validationService,
+            result
+          )
+      ),
+      page: {
+        after,
+        next: encodeNext(docs.length, top, skip),
+        size: docs.length,
+      },
+    };
   }
 
   async get<C>(
@@ -57,6 +104,19 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       tenantId,
       definition
     );
+  }
+
+  async delete<C>(entity: ConfigurationEntity<C>): Promise<boolean> {
+    const query = {
+      namespace: entity.namespace,
+      name: entity.name,
+      tenant: entity.tenantId?.toString() || { $exists: false },
+    };
+
+    const { deletedCount } = await this.revisionModel.deleteMany(query);
+    await this.activeRevisionRepository.delete(entity);
+
+    return deletedCount > 0;
   }
 
   async getRevisions<C>(

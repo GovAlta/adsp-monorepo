@@ -15,6 +15,9 @@ import {
   getFeedbacksSuccess,
   FETCH_FEEDBACKS_ACTION,
   FetchFeedbacksAction,
+  ExportFeedbacksAction,
+  exportFeedbacksSuccess,
+  EXPORT_FEEDBACKS_ACTION,
 } from './actions';
 
 import { getAccessToken } from '@store/tenant/sagas';
@@ -29,7 +32,17 @@ function* fetchFeedbacks(payload: FetchFeedbacksAction) {
   const token: string = yield call(getAccessToken);
   const next = payload.next ? payload.next : '';
   const contextData = encodeURI(JSON.stringify({ site: payload.feedback.url }));
-  const url = `${configBaseUrl}/value/v1/feedback-service/values/feedback?context=${contextData}&top=10&after=${next}`;
+  const isWithTimestamp = payload.searchCriteria.startDate && payload.searchCriteria.endDate;
+  if (isWithTimestamp) {
+    const setEndDateEod = new Date(payload.searchCriteria.endDate);
+    setEndDateEod.setUTCHours(25, 59, 59, 999);
+    payload.searchCriteria.endDate = setEndDateEod.toISOString();
+  }
+  const url = `${configBaseUrl}/value/v1/feedback-service/values/feedback?context=${contextData}&top=10&after=${next}${
+    isWithTimestamp
+      ? `&timestampMin=${payload.searchCriteria.startDate}&timestampMax=${payload.searchCriteria.endDate}`
+      : ''
+  }`;
   const headers = {
     headers: { Authorization: `Bearer ${token}` },
   };
@@ -37,13 +50,42 @@ function* fetchFeedbacks(payload: FetchFeedbacksAction) {
   if (configBaseUrl && token) {
     try {
       const response = yield call(axios.get, url, headers);
+      const feedbacks = response.data['feedback-service'].feedback;
+      yield put(getFeedbacksSuccess(feedbacks, response.data.page.after, response.data.page.next));
       yield put(
-        getFeedbacksSuccess(
-          response.data['feedback-service'].feedback,
-          response.data.page.after,
-          response.data.page.next
-        )
+        UpdateIndicator({
+          show: false,
+        })
       );
+    } catch (error) {
+      yield put({ type: 'FETCH_FEEDBACKS_FAILURE', error });
+      yield put(UpdateIndicator({ show: false }));
+    }
+  }
+}
+function* exportFeedbacks(payload: ExportFeedbacksAction) {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading Feedbacks...',
+    })
+  );
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+  const contextData = encodeURI(JSON.stringify(payload.site));
+  const url = `${configBaseUrl}/value/v1/feedback-service/values/feedback?context=${contextData}${
+    payload.searchCriteria.startDate && payload.searchCriteria.endDate
+      ? `&timestampMin=${payload.searchCriteria.startDate}&timestampMax=${payload.searchCriteria.endDate}&top=5000`
+      : '&top=5000'
+  }`;
+  const headers = {
+    headers: { Authorization: `Bearer ${token}` },
+  };
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(axios.get, url, headers);
+      yield put(exportFeedbacksSuccess(response.data['feedback-service'].feedback));
       yield put(
         UpdateIndicator({
           show: false,
@@ -157,6 +199,7 @@ function* deleteFeedbackSite(action: DeleteFeedbackSiteAction) {
 
 export function* watchFeedbackSagas(): Generator {
   yield takeLatest(FETCH_FEEDBACKS_ACTION, fetchFeedbacks);
+  yield takeLatest(EXPORT_FEEDBACKS_ACTION, exportFeedbacks);
   yield takeLatest(FETCH_FEEDBACK_SITES_ACTION, fetchFeedbackSites);
   yield takeLatest(UPDATE_FEEDBACK_SITE_ACTION, updateFeedbackSite);
   yield takeLatest(DELETE_FEEDBACK_SITE_ACTION, deleteFeedbackSite);

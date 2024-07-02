@@ -11,7 +11,6 @@ export interface Configuration<C = Record<string, unknown>> {
   namespace: string;
   name: string;
   description?: string;
-  anonymousRead?: boolean;
   tenantId?: AdspId;
   latest?: ConfigurationRevision<C>;
 }

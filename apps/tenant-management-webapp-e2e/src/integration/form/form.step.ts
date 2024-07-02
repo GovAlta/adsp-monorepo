@@ -572,7 +572,7 @@ When('the user {string} the checkbox of Create submission records on submit', fu
   }
 });
 
-Then('the Add state button is invisible on submission configuration page', function () {
+Then('the Add state button is invisible on Lifecycle page', function () {
   formObj.definitionEditorSubmissionConfigAddStateBtn().should('not.exist');
 });
 

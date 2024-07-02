@@ -225,12 +225,13 @@ Feature: Service status
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "autotest-status-change-event" in the application list
 
+  # TEST DATA: existing subscription of "autotest-DO-NOT-DELETE", "adsp5.t@gov.ab.ca" under "Application status update"
   @TEST_CS-1282 @REQ_CS-905 @regression
   Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
     Given a tenant admin user is on notification subscriptions page
-    When the user types "auto.test@abc.com" in Search subscriber email field
+    When the user types "adsp5.t@gov.ab.ca" in Search subscriber email field
     And the user clicks Search button on notifications page
-    Then the user "views" the subscription of "autotest-DO-NOT-DELETE", "auto.test@abc.com" under "Application status update"
+    Then the user "views" the subscription of "autotest-DO-NOT-DELETE", "adsp5.t@gov.ab.ca" under "Application status update"
     Given a tenant admin user is on status applications page
     Then the user "views" "autotest-DO-NOT-DELETE" in the application list
     And the user views current status for "autotest-DO-NOT-DELETE"
@@ -243,7 +244,7 @@ Feature: Service status
     Then the "Event log" landing page is displayed
     When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     Then the user views the events matching the search filter of "notification-service:notification-sent"
-    And the user views the event details of "autotest-DO-NOT-DELETE" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@abc.com"
+    And the user views the event details of "autotest-DO-NOT-DELETE" application status changed from "{original status}" to "{new status}" for subscriber of "adsp5.t@gov.ab.ca"
 
   @TEST_CS-1287 @REQ_CS-1261 @REQ_CS-1262 @regression
   Scenario: As a tenant admin, I can modify tenant support email for status page so that users know where to report the issues.

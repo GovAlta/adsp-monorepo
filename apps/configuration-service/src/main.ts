@@ -17,6 +17,7 @@ import {
   ConfigurationServiceRoles,
   ConfigurationUpdatedDefinition,
   ConfigurationUpdatesStream,
+  ConfigurationDeletedDefinition,
 } from './configuration';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 
@@ -56,7 +57,12 @@ const initializeApp = async (): Promise<express.Application> => {
             description: 'Service role that grants service accounts access to configuration.',
           },
         ],
-        events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition, ActiveRevisionSetDefinition],
+        events: [
+          ConfigurationUpdatedDefinition,
+          ConfigurationDeletedDefinition,
+          RevisionCreatedDefinition,
+          ActiveRevisionSetDefinition,
+        ],
         eventStreams: [ConfigurationUpdatesStream],
         clientSecret: environment.CLIENT_SECRET,
         accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),

@@ -1,15 +1,18 @@
 import { adspId, Channel, User } from '@abgov/adsp-service-sdk';
 import { FormServiceRoles } from '../roles';
-import { FormDefinitionEntity } from './definition';
-import { ValidationService } from '@core-services/core-common';
 import { QueueTaskToProcess } from '../types';
+import { FormDefinitionEntity } from './definition';
 
 describe('FormDefinitionEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const validationService: ValidationService = {
+  const validationService = {
     validate: jest.fn(),
     setSchema: jest.fn(),
   };
+
+  beforeEach(() => {
+    validationService.setSchema.mockClear();
+  });
 
   it('can be created', () => {
     const entity = new FormDefinitionEntity(validationService, tenantId, {
@@ -27,7 +30,7 @@ describe('FormDefinitionEntity', () => {
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
     expect(entity).toBeTruthy();
-    expect(validationService.setSchema).toHaveBeenCalledWith(entity.id, expect.any(Object));
+    expect(validationService.setSchema).toHaveBeenCalledWith(`${tenantId.resource}:${entity.id}`, expect.any(Object));
   });
 
   it('can be created with null roles', () => {
@@ -195,7 +198,11 @@ describe('FormDefinitionEntity', () => {
     it('can validate data', () => {
       const data = {};
       entity.validateData('form submission test', data);
-      expect(validationService.validate).toHaveBeenCalledWith(expect.any(String), entity.id, data);
+      expect(validationService.validate).toHaveBeenCalledWith(
+        expect.any(String),
+        `${tenantId.resource}:${entity.id}`,
+        data
+      );
     });
   });
 

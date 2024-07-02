@@ -87,10 +87,10 @@ Feature: Form
     Given a tenant admin user is on form definitions page
     When the user clicks "Edit" button for the form definition of "autotest-form-submission", "DO NOT DELETE"
     Then the user views form definition editor for "autotest-form-submission", "DO NOT DELETE"
-    When the user clicks "Submission configuration" tab in form definition editor
+    When the user clicks "Lifecycle" tab in form definition editor
     Then the user views a checkbox of "Create submission records on submit"
     When the user "unchecks" the checkbox of Create submission records on submit
-    Then the Add state button is invisible on submission configuration page
+    Then the Add state button is invisible on Lifecycle page
     When the user clicks the information icon button besides the checkbox of Create submission records on submit
     Then the user "views" the help tooltip for "disabling" create submission records on submit
     When the user clicks x icon for the help tooltip for the checkbox of Create submission records on submit
@@ -107,7 +107,7 @@ Feature: Form
     Given a tenant admin user is on form definitions page
     When the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
     Then the user views form definition editor for "autotest-form-disposition-states", "DO NOT DELETE"
-    When the user clicks "Submission configuration" tab in form definition editor
+    When the user clicks "Lifecycle" tab in form definition editor
     When the user "checks" the checkbox of Create submission records on submit
     # Add disposition states
     When the user clicks the information icon button besides Disposition States
@@ -131,7 +131,7 @@ Feature: Form
     When the user clicks Save button on form definition editor
     And the user clicks Back button on form definition editor
     And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-    When the user clicks "Submission configuration" tab in form definition editor
+    When the user clicks "Lifecycle" tab in form definition editor
     And the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
     Then the user views Edit disposition state modal
     When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
@@ -146,7 +146,7 @@ Feature: Form
     When the user clicks Save button on form definition editor
     And the user clicks Back button on form definition editor
     And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-    When the user clicks "Submission configuration" tab in form definition editor
+    When the user clicks "Lifecycle" tab in form definition editor
     And the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
     Then the user views delete "disposition state" confirmation modal for "Reviewed"
     When the user clicks Cancel button in delete confirmation modal
@@ -166,7 +166,7 @@ Feature: Form
     When the user clicks Save button on form definition editor
     And the user clicks Back button on form definition editor
     And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-    And the user clicks "Submission configuration" tab in form definition editor
+    And the user clicks "Lifecycle" tab in form definition editor
     Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
     And the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
     And the user "should not view" the disposition state of "Rejected", "The application is rejected"
@@ -179,7 +179,7 @@ Feature: Form
     And a tenant admin user is on form definitions page
     When the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
     Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
-    When the user clicks "Submission configuration" tab in form definition editor
+    When the user clicks "Lifecycle" tab in form definition editor
     # Verify help content for No task created option
     And the user "checks" the checkbox of Create submission records on submit
     And the user selects "No task created" in task queue to process dropdown
@@ -210,7 +210,7 @@ Feature: Form
     And the user selects "Definitions" tab for "Form"
     And the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
     Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
-    When the user clicks "Submission configuration" tab in form definition editor
+    When the user clicks "Lifecycle" tab in form definition editor
     And the user selects "No task created" in task queue to process dropdown
     And the user clicks Save button on form definition editor
     And the user clicks Back button on form definition editor

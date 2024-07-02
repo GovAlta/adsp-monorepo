@@ -1,7 +1,9 @@
-import { Feedback, FeedbackSite } from './models';
+import { Feedback, FeedbackSearchCriteria, FeedbackSite, SelectedSite } from './models';
 
 export const FETCH_FEEDBACKS_ACTION = 'feedback/FETCH_FEEDBACKS_ACTION';
+export const EXPORT_FEEDBACKS_ACTION = 'feedback/EXPORT_FEEDBACKS_ACTION';
 export const FETCH_FEEDBACKS_SUCCESS_ACTION = 'feedback/FETCH_FEEDBACKS_SUCCESS_ACTION';
+export const EXPORT_FEEDBACKS_SUCCESS_ACTION = 'feedback/EXPORT_FEEDBACKS_SUCCESS_ACTION';
 
 export const FETCH_FEEDBACK_SITES_ACTION = 'feedback/FETCH_FEEDBACK_SITES_ACTION';
 export const FETCH_FEEDBACK_SITES_SUCCESS_ACTION = 'feedback/FETCH_FEEDBACK_SITES_SUCCESS_ACTION';
@@ -15,13 +17,23 @@ export const DELETE_FEEDBACK_SITE_SUCCESS_ACTION = 'feedback/DELETE_FEEDBACK_SIT
 export interface FetchFeedbacksAction {
   type: typeof FETCH_FEEDBACKS_ACTION;
   feedback: FeedbackSite;
+  searchCriteria: FeedbackSearchCriteria;
   next: string;
+}
+export interface ExportFeedbacksAction {
+  type: typeof EXPORT_FEEDBACKS_ACTION;
+  site: SelectedSite;
+  searchCriteria: FeedbackSearchCriteria;
 }
 export interface FetchFeedbacksSuccessAction {
   type: typeof FETCH_FEEDBACKS_SUCCESS_ACTION;
   payload: Feedback[];
   after: string;
   next: string;
+}
+export interface ExportFeedbacksSuccessAction {
+  type: typeof EXPORT_FEEDBACKS_SUCCESS_ACTION;
+  exportData?: Feedback[];
 }
 export interface FetchFeedbackSitesAction {
   type: typeof FETCH_FEEDBACK_SITES_ACTION;
@@ -54,6 +66,7 @@ export interface DeleteFeedbackSiteSuccessAction {
 export type FeedbackActionTypes =
   | FetchFeedbacksAction
   | FetchFeedbacksSuccessAction
+  | ExportFeedbacksSuccessAction
   | FetchFeedbackSitesAction
   | FetchFeedbackSitesSuccessAction
   | UpdateFeedbackSiteAction
@@ -61,10 +74,23 @@ export type FeedbackActionTypes =
   | DeleteFeedbackSiteAction
   | DeleteFeedbackSiteSuccessAction;
 
-export const getFeedbacks = (payload: FeedbackSite, next?: string): FetchFeedbacksAction => ({
+export const getFeedbacks = (
+  payload: FeedbackSite,
+  searchCriteria: FeedbackSearchCriteria,
+  next?: string
+): FetchFeedbacksAction => ({
   type: FETCH_FEEDBACKS_ACTION,
   feedback: payload,
+  searchCriteria,
   next,
+});
+export const exportFeedbacks = (
+  payload: SelectedSite,
+  searchCriteria: FeedbackSearchCriteria
+): ExportFeedbacksAction => ({
+  type: EXPORT_FEEDBACKS_ACTION,
+  site: payload,
+  searchCriteria,
 });
 
 export const getFeedbacksSuccess = (results: Feedback[], after: string, next: string): FetchFeedbacksSuccessAction => ({
@@ -72,6 +98,10 @@ export const getFeedbacksSuccess = (results: Feedback[], after: string, next: st
   payload: results,
   after,
   next,
+});
+export const exportFeedbacksSuccess = (exportData?: Feedback[]): ExportFeedbacksSuccessAction => ({
+  type: EXPORT_FEEDBACKS_SUCCESS_ACTION,
+  exportData,
 });
 export const getFeedbackSites = (): FetchFeedbackSitesAction => ({
   type: FETCH_FEEDBACK_SITES_ACTION,
