@@ -489,16 +489,13 @@ class AdspFeedback implements AdspFeedbackApi {
             background: #ffffff;
             position: fixed;
             width: 640px;
-            max-height: 80%;
-            height: min-content;
             left: 50%;
             top: 10vh;
-            bottom: 10vh;
-            overflow-y: auto;
-            overflow-x: hidden;
             border: 1px solid;
             border-radius: 3px;
             transform: translateX(-50%);
+            max-height: 80%;
+            height: min-content;
           }
 
           .adsp-fb .adsp-fb-container-heading {
@@ -521,7 +518,8 @@ class AdspFeedback implements AdspFeedbackApi {
             transition: transform 0.001ms;
           }
           .adsp-fb .adsp-fb-content {
-            overflow-y: auto !important;
+            max-height: 450px;
+            overflow-y: auto;
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
@@ -729,6 +727,7 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .radios {
             margin-top: 16px;
+            margin-bottom: 16px;
             display: flex;
             flex-direction: row;
           }
@@ -758,11 +757,7 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: column;
             cursor: pointer;
           }
-          .radio-div {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-          }
+
           .radio {
             appearance: none;
             width: 24px;
@@ -788,6 +783,7 @@ class AdspFeedback implements AdspFeedbackApi {
             border: 7px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
           }
+
           .radio:hover {
             border: 1px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
@@ -796,18 +792,16 @@ class AdspFeedback implements AdspFeedbackApi {
             border: 7px solid #0070c4;
           }
 
+          .radio:hover:active,
+          .radio:hover:focus,
           .radio:hover:active {
             box-shadow: 0 0 0 3px #feba35;
           }
-          .radio:hover:focus {
-            box-shadow: 0 0 0 3px #feba35;
-          }
-          .radio:active {
-            box-shadow: 0 0 0 3px #feba35;
-          }
+
           .radio-label {
             padding: 0 8px;
             font-weight: normal;
+            cursor: pointer;
           }
           .errorText {
             color: #dcdcdc;
@@ -858,10 +852,10 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           @media screen and (max-width: 640px) {
             .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
-              height: 400px;
+              height: 320px;
             }
             .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
-              height: 400px;
+              height: 350px;
             }
             .adsp-fb div.adsp-fb-form-container {
               bottom: 0;
@@ -875,7 +869,7 @@ class AdspFeedback implements AdspFeedbackApi {
               overflow-y: auto;
             }
             .adsp-fb .adsp-fb-content {
-              max-height: 100%;
+              max-height: 50%;
             }
 
             .adsp-fb .adsp-fb-actions {
@@ -1033,7 +1027,7 @@ class AdspFeedback implements AdspFeedbackApi {
                               ${ref(this.radio1Ref)}
                             />
 
-                            <span class="goa-radio-label"> Yes </span>
+                            <label for="yes" class="radio-label"> Yes </label>
                           </div>
                           <div class="radio-span">
                             <input
@@ -1045,22 +1039,21 @@ class AdspFeedback implements AdspFeedbackApi {
                               ${ref(this.radio2Ref)}
                             />
 
-                            <span class="radio-label"> No </span>
+                            <label for="no" class="radio-label"> No </label>
                           </div>
                         </div>
-                        <div ${ref(this.technicalCommentDivRef)}>
-                          <div class="adsp-fb-form-comment">
-                            <label
-                              ><b
-                                >Please describe the issue in detail. Mention the page or step where you experienced the
-                                issue, if applicable.</b
-                              >
-                            </label>
-                            <textarea ${ref(this.technicalCommentRef)} id="technicalComment"></textarea>
-                            <span class="help-text"
-                              >Do not include personal information like SIN, password, addresses, etc.</span
+                        <div ${ref(this.technicalCommentDivRef)} class="adsp-fb-form-comment">
+                          <label
+                            ><b
+                              >Please describe the issue in detail. Mention the page or step where you experienced the
+                              issue, if applicable.</b
                             >
-                          </div>
+                          </label>
+                          <textarea ${ref(this.technicalCommentRef)} id="technicalComment"></textarea>
+                          <span class="help-text"
+                            >Do not include personal information like SIN, password, addresses, etc.</span
+                          >
+
                           <br />
                         </div>
                       </div>
