@@ -3,11 +3,9 @@ import styled from 'styled-components';
 export const ReviewItem = styled.div`
   display: flex;
   flex-direction: column;
-  border: var(--goa-border-width-s) solid grey;
-  border-radius: var(--goa-border-radius-m);
   margin: var(--goa-space-2xs);
-  margin-top: var(--goa-space-m);
   padding: var(--goa-space-xs);
+  padding-top: 0;
 `;
 
 export const ReviewItemSection = styled.div`
@@ -23,12 +21,6 @@ export const ReviewItemBasic = styled.div`
   padding: 1rem;
 `;
 
-export const ReviewItemHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-`;
 export const ReviewItemTitle = styled.div`
   font-size: var(--fs-xl);
   line-height: var(--lh-lg);
@@ -43,8 +35,28 @@ export const ListWithDetailHeading = styled.h3`
   text-transform: capitalize;
 `;
 
-export const FormDispositionDetail = styled.div`
-  margin: var(--goa-space-s);
+export const ReviewContainer = styled.div`
   display: flex;
   flex-direction: column;
+  height: 100%;
+  padding-top: 0;
+`;
+
+export const ReviewContent = styled.div`
+  margin-top: var(--goa-space-l);
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 0;
+`;
+
+export const ActionContainer = styled.div`
+  width: 100%;
+  flex-shrink: 0;
+  background-color: #fff;
+  gap: var(--goa-space-s);
+  margin-left: var(--goa-space-s);
+`;
+
+export const ActionControl = styled.div`
+  padding-top: var(--goa-space-s);
 `;
