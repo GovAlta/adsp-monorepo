@@ -124,11 +124,9 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
               width="100%"
               testId="disposition-description"
               aria-label="disposition-description"
-              onKeyPress={(name, value) => {
+              onChange={(name, value) => {
                 setTemplate({ ...template, description: value });
               }}
-              // eslint-disable-next-line
-              onChange={() => {}}
             />
           </DescriptionItem>
         </GoAFormItem>

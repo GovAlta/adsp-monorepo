@@ -208,13 +208,11 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
               width="75ch"
               testId="reason"
               aria-label="reason"
-              onKeyPress={(name, value: string) => {
+              onChange={(name, value: string) => {
                 setDispositionReason(value);
                 validators.remove('dispositionReason');
                 validators['dispositionReason'].check(value);
               }}
-              // eslint-disable-next-line
-              onChange={() => {}}
             />
           </GoAFormItem>
         </FormDispositionDetail>

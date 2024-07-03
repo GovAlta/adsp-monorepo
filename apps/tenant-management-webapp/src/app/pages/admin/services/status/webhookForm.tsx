@@ -249,7 +249,7 @@ export const WebhookFormModal = (): JSX.Element => {
               name="description"
               value={webhook?.description}
               width="100%"
-              onKeyPress={(name, value) => {
+              onChange={(name, value) => {
                 validators.remove('description');
                 validators['description'].check(value);
                 setWebhook({
@@ -257,8 +257,6 @@ export const WebhookFormModal = (): JSX.Element => {
                   description: value,
                 });
               }}
-              // eslint-disable-next-line
-              onChange={() => {}}
               aria-label="description"
             />
             <HelpText>

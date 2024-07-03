@@ -145,13 +145,11 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
               width="100%"
               testId="description"
               aria-label="description"
-              onKeyPress={(name, value) => {
+              onChange={(name, value) => {
                 validators.remove('description');
                 validators['description'].check(value);
                 setTask({ ...task, description: value });
               }}
-              // eslint-disable-next-line
-              onChange={() => {}}
             />
 
             <HelpText>
