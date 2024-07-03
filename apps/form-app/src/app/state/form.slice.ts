@@ -120,29 +120,35 @@ export const loadDefinition = createAsyncThunk(
       if (registerUrns) {
         await Promise.all(
           registerUrns.map(async (urn) => {
-            const service = urn.split(':').slice(-2);
+            let isFetched = false;
+            const service = urn.split('/').slice(-2);
+
             const baseConfigServiceUrl = new URL(
               `/configuration/v2/configuration/${service[0]}/${service[1]}`,
               configServiceUrl
             ).href;
             try {
               const { data } = await axios.get(`${baseConfigServiceUrl}/active`, { params: { tenant: tenantId } });
-              if (!_.isEmpty(data))
+              if (!_.isEmpty(data) && _.isArray(data)) {
+                isFetched = true;
                 registerData.push({
                   urn,
                   data,
                 });
+              }
             } catch (error) {
               console.warn(`Error fetching ${urn} active: ${error.message}`);
             }
 
             try {
-              const { data } = await axios.get(`${baseConfigServiceUrl}/latest`, { params: { tenant: tenantId } });
-              if (!_.isEmpty(data))
-                registerData.push({
-                  urn,
-                  data,
-                });
+              if (isFetched !== true) {
+                const { data } = await axios.get(`${baseConfigServiceUrl}/latest`, { params: { tenant: tenantId } });
+                if (!_.isEmpty(data) && _.isArray(data))
+                  registerData.push({
+                    urn,
+                    data,
+                  });
+              }
             } catch (error) {
               console.warn(`Error fetching ${urn} latest: ${error.message}`);
             }
