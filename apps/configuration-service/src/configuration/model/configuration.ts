@@ -54,8 +54,6 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   }
 
   public canAccess(user: User): boolean {
-    if (this.definition && this.definition.anonymousRead) return true;
-
     return isAllowedUser(
       user,
       this.tenantId,

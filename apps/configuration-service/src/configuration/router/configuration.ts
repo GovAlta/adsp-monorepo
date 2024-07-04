@@ -1,5 +1,4 @@
 import { AdspId, EventService, isAllowedUser, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import * as passport from 'passport';
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
@@ -43,11 +42,6 @@ const rateLimitHandler = rateLimit({
   legacyHeaders: false,
 });
 
-const coreTenantPassportAuthenticateHandler: RequestHandler = (req, res, next) => {
-  passport.authenticate(['core', 'tenant'], { session: false });
-  next();
-};
-
 function resolveDefinition(entity: ConfigurationEntity<ConfigurationDefinitions>, namespace: string, name: string) {
   let result = entity?.latest?.configuration[`${namespace}:${name}`];
 
@@ -88,12 +82,50 @@ const getDefinition = async (
 };
 
 export const getTenantId = (req: Request): AdspId => {
-  if (req.isAuthenticated && !req.isAuthenticated() && req.query.tenant) {
+  if (req.isAuthenticated && req.query.tenant) {
     return AdspId.parse(req.query.tenant as string);
   }
 
   return req.tenant?.id;
 };
+
+export const assertAuthenticateConfigHandler =
+  (configurationServiceId: AdspId, repository: ConfigurationRepository): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const { namespace, name } = req.params;
+
+      const isRequestNotAllowed = !req.isAuthenticated || !req.user;
+
+      if (!isRequestNotAllowed) {
+        next();
+      } else {
+        if (isRequestNotAllowed && !req.query.tenant) {
+          res.sendStatus(401);
+        }
+
+        let tenantId = null;
+
+        try {
+          tenantId = getTenantId(req);
+        } catch (err) {
+          res.sendStatus(401);
+        }
+
+        const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
+
+        if (!definition) {
+          res.sendStatus(401);
+        } else if (definition && !definition.anonymousRead && isRequestNotAllowed) {
+          res.sendStatus(401);
+        } else {
+          next();
+        }
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
 
 /**
  * Get the configuration entity for the configuration namespace and name.
@@ -123,7 +155,7 @@ export function getConfigurationEntity(
 
       //if user is not logged in and is not authenticated we want
       //to do rate limiting for anonymous users.
-      if (!req.isAuthenticated && !req.isAuthenticated() && !user) {
+      if (!req.isAuthenticated && !user) {
         rateLimitHandler(req, _res, next);
       }
 
@@ -133,7 +165,7 @@ export function getConfigurationEntity(
 
       const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition);
 
-      if (req.isAuthenticated && req.isAuthenticated() && user) {
+      if (req.isAuthenticated && user) {
         if (!entity.canAccess(user)) {
           throw new UnauthorizedUserError('access configuration', user);
         }
@@ -508,7 +540,6 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace',
-    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     createValidationHandler(
       param('namespace')
@@ -522,7 +553,6 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name',
-    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(
@@ -538,6 +568,7 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/latest',
     validateNamespaceNameHandler,
+    assertAuthenticateConfigHandler(serviceId, configurationRepository),
     createValidationHandler(query('tenant').optional().isString()),
     getConfigurationEntity(
       serviceId,
@@ -551,7 +582,6 @@ export function createConfigurationRouter({
 
   router.patch(
     '/configuration/:namespace/:name',
-    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
@@ -561,7 +591,6 @@ export function createConfigurationRouter({
 
   router.post(
     '/configuration/:namespace/:name',
-    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -573,7 +602,6 @@ export function createConfigurationRouter({
 
   router.delete(
     '/configuration/:namespace/:name',
-    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
@@ -582,7 +610,6 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/revisions',
-    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
@@ -601,6 +628,7 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/active',
     validateNamespaceNameHandler,
+    assertAuthenticateConfigHandler(serviceId, configurationRepository),
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after')
@@ -616,7 +644,6 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/revisions/:revision',
-    coreTenantPassportAuthenticateHandler,
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
