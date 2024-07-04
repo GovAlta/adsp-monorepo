@@ -63,6 +63,7 @@ function* fetchFeedbacks(payload: FetchFeedbacksAction) {
     }
   }
 }
+
 function* exportFeedbacks(payload: ExportFeedbacksAction) {
   yield put(
     UpdateIndicator({
@@ -70,22 +71,41 @@ function* exportFeedbacks(payload: ExportFeedbacksAction) {
       message: 'Loading Feedbacks...',
     })
   );
+
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
   const contextData = encodeURI(JSON.stringify(payload.site));
-  const url = `${configBaseUrl}/value/v1/feedback-service/values/feedback?context=${contextData}${
-    payload.searchCriteria.startDate && payload.searchCriteria.endDate
-      ? `&timestampMin=${payload.searchCriteria.startDate}&timestampMax=${payload.searchCriteria.endDate}&top=5000`
-      : '&top=5000'
-  }`;
   const headers = {
     headers: { Authorization: `Bearer ${token}` },
   };
 
   if (configBaseUrl && token) {
+    let allFeedbacks = [];
+    let page = 0;
+    let nextPage: string = '';
+    let hasMoreData: boolean = true;
+    const pageSize = 5000;
+
     try {
-      const response = yield call(axios.get, url, headers);
-      yield put(exportFeedbacksSuccess(response.data['feedback-service'].feedback));
+      while (hasMoreData) {
+        const url = `${configBaseUrl}/value/v1/feedback-service/values/feedback?context=${contextData}${
+          payload.searchCriteria.startDate && payload.searchCriteria.endDate
+            ? `&timestampMin=${payload.searchCriteria.startDate}&timestampMax=${payload.searchCriteria.endDate}`
+            : ''
+        }&top=${pageSize}${nextPage !== '' ? `&after=${nextPage}` : ''}`;
+
+        const response = yield call(axios.get, url, headers);
+        const feedbacks = response.data['feedback-service'].feedback;
+        nextPage = response.data?.page?.next ?? null;
+        if (!response.data.page.next) {
+          hasMoreData = false;
+        }
+
+        allFeedbacks = allFeedbacks.concat(feedbacks);
+        page++;
+      }
+
+      yield put(exportFeedbacksSuccess(allFeedbacks));
       yield put(
         UpdateIndicator({
           show: false,

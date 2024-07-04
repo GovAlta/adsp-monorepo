@@ -53,9 +53,15 @@ export interface FeedbackSearchCriteria {
 }
 
 export const getDefaultSearchCriteria = (): FeedbackSearchCriteria => {
+  const start = new Date();
+  start.setHours(24, 0, 0, 0);
+  const end = new Date();
+  end.setHours(24, 0, 0, 0);
+
   return {
-    startDate: '',
-    endDate: '',
+    // using absolute unit time will be more intuitive than using setDate;
+    startDate: new Date(start.setFullYear(start.getFullYear() - 1)).toISOString(),
+    endDate: end.toISOString(),
   };
 };
 
