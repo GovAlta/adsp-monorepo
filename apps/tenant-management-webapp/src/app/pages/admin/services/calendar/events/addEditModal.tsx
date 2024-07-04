@@ -169,8 +169,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           aria-label="description"
           width="100%"
           // eslint-disable-next-line
-          onChange={() => {}}
-          onKeyPress={(name, value) => {
+          onChange={(name, value) => {
             validators.remove('description');
             validators['description'].check(value);
             setCalendarEvent({ ...calendarEvent, description: value });
