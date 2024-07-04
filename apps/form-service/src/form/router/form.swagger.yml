@@ -33,7 +33,7 @@ components:
             id:
               type: string
             status:
-              name: string
+              type: string
             description:
               type: string
     Form:

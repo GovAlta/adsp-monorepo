@@ -21,6 +21,7 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
   const [showUnableToDeleteConfirmation, setShowUnableToDeleteConfirmation] = useState(false);
   const dispatch = useDispatch();
   useEffect(() => {
+    console.log('DeleteConfirmationsView useEffect');
     if (selectedEvents?.length > 0) {
       setShowUnableToDeleteConfirmation(true);
     } else if (selectedEvents) {

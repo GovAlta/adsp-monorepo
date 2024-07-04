@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import {
   CellProps,
   WithClassname,
@@ -13,47 +14,85 @@ import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-import { onKeyPressForTextControl } from '../../util/inputControlUtils';
+import { onBlurForTextControl, onKeyPressForTextControl } from '../../util/inputControlUtils';
+
 export type GoAInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
 export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element => {
-  // eslint-disable-next-line
   const { data, config, id, enabled, uischema, path, handleChange, schema, label } = props;
+  const { required } = props as ControlProps;
+  const [textAreaValue, _] = React.useState<string>(data);
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const errorsFormInput = checkFieldValidity(props as ControlProps);
+
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const textAreaName = `${label || path}-text-area` || '';
+  const textarea = document.getElementsByName(textAreaName)[0] ?? null;
 
-  return (
+  useEffect(() => {
+    if (textarea) {
+      textarea.addEventListener('blur', onBlur);
+    }
+    return () => {
+      if (textarea) {
+        textarea.removeEventListener('blur', onBlur);
+      }
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textarea]);
+
+  const onBlur = (event: FocusEvent) => {
+    let eventTargetValue: string = '';
+    if (event.target) {
+      eventTargetValue = (event.target as HTMLInputElement).value;
+    }
+
+    onBlurForTextControl({
+      name: path,
+      controlProps: props as ControlProps,
+      value: autoCapitalize ? eventTargetValue.toUpperCase() : eventTargetValue,
+    });
+  };
+
+  const txtAreaComponent = (
     <GoATextArea
       error={errorsFormInput.length > 0}
-      value={data}
+      value={textAreaValue}
       disabled={!enabled}
       readOnly={readOnly}
       placeholder={placeholder}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      name={`${label || path}-text-area`}
+      name={textAreaName}
       width={'100%'}
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
       onKeyPress={(name: string, value: string, key: string) => {
-        onKeyPressForTextControl({
-          name,
-          value: autoCapitalize ? value.toUpperCase() : value,
-          key,
-          controlProps: props as ControlProps,
-        });
+        const newValue = autoCapitalize ? value.toUpperCase() : value;
+        if (value.length === 0 || (required && errorsFormInput.length === 0 && value.length > 0)) {
+          onKeyPressForTextControl({
+            name,
+            value: newValue,
+            key,
+            controlProps: props as ControlProps,
+          });
+        }
       }}
-      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
-      // If you use it onChange along with keyPress event it will cause a
-      // side effect that causes the validation to render when it shouldnt.
-      onChange={(name, value: string) => {}}
+      onChange={(name: string, value: string) => {
+        if (data !== value) {
+          const newValue = autoCapitalize ? value.toUpperCase() : value;
+          handleChange(path, newValue);
+        }
+      }}
       {...uischema?.options?.componentProps}
     />
   );
+
+  return txtAreaComponent;
 };
 
 export const MultiLineTextControlInput = (props: ControlProps) => (
