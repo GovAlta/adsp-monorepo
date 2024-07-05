@@ -37,7 +37,6 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
           title="Delete"
           type="trash"
           onClick={() => {
-            console.log('Delete calendar test in UAT');
             onDelete(calendar);
           }}
         />
