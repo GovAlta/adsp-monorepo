@@ -169,11 +169,10 @@ export const FeedbacksList = (): JSX.Element => {
           </GoAFormItem>
           <ExportDates>
             <GoAFormItem label="Start date" helpText="File will be exported as a CSV">
-              <GoAInput
-                type="date"
+              <GoAInputDate
                 width="22.54ch"
                 name="calendar-event-filter-start-date"
-                value={''}
+                value={selectedSite && searchCriteria.startDate}
                 disabled={!selectedSite}
                 onChange={(name, value) => {
                   searchCriteria.startDate = new Date(value).toISOString();
@@ -196,7 +195,7 @@ export const FeedbacksList = (): JSX.Element => {
               <GoAInputDate
                 width="22.54ch"
                 name="calendar-event-filter-end-date"
-                value={''}
+                value={selectedSite && searchCriteria.endDate}
                 disabled={!selectedSite}
                 onChange={(name, value) => {
                   searchCriteria.endDate = new Date(value).toISOString();
