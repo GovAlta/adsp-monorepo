@@ -182,19 +182,12 @@ class AdspFeedback implements AdspFeedbackApi {
           this.radio1Ref.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
-        this.feedbackFormRef.value?.scrollTo({
-          top: 640,
-          behavior: 'smooth',
-        });
+        this.technicalCommentRef.value?.focus();
       } else {
         if (this.radio2Ref.value) {
           this.radio2Ref.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
-        this.feedbackFormRef.value?.scrollTo({
-          top: 0,
-          behavior: 'smooth',
-        });
       }
     }
   }
@@ -533,7 +526,7 @@ class AdspFeedback implements AdspFeedbackApi {
             border: 0;
             margin-top: 12px;
             justify-content: space-between;
-            width: 97%;
+            width: 98%;
 
             > div > img {
               padding-right: 14px;
@@ -564,7 +557,7 @@ class AdspFeedback implements AdspFeedbackApi {
             margin-left: 3px;
             resize: none;
             min-height: 100px;
-            width: 97%;
+            width: 98%;
             border-radius: 3px;
             cursor: text;
             padding: 10px 8px;
@@ -584,10 +577,14 @@ class AdspFeedback implements AdspFeedbackApi {
             right: 16px;
           }
 
-          .adsp-fb .adsp-fb-actions {
+          .adsp-fb .adsp-fb-actions,
+          .adsp-fb .adsp-fb-success-actions {
             display: flex;
-            padding-right: 32px;
+            padding-right: 24px;
             margin-top: 24px;
+          }
+          .adsp-fb .adsp-fb-success-actions {
+            padding-right: 0px;
           }
 
           .adsp-fb button {
@@ -828,7 +825,7 @@ class AdspFeedback implements AdspFeedbackApi {
           }
 
           .hr-width {
-            width: 97%;
+            width: 98%;
           }
           .full-width-hr-container {
             margin-left: -24px;
@@ -843,7 +840,6 @@ class AdspFeedback implements AdspFeedbackApi {
             padding-top: 36px;
           }
           .p-content {
-            margin-right: 24px;
             line-height: 28px;
           }
           @media screen and (max-width: 768px) {
@@ -867,9 +863,6 @@ class AdspFeedback implements AdspFeedbackApi {
             }
             .adsp-fb-main {
               overflow-y: auto;
-            }
-            .adsp-fb .adsp-fb-content {
-              max-height: 50%;
             }
 
             .adsp-fb .adsp-fb-actions {
@@ -1015,7 +1008,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       <hr class="hr-width hr-width" />
                       <br />
                       <div class="radio-container">
-                        <label for="technicalComment"><b>Did you experience any technical issues?</b></label>
+                        <label><b>Did you experience any technical issues?</b></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
                           <div class="radio-span">
                             <input
@@ -1092,7 +1085,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         not receive a response from this submission. If you do require a response, you can contact
                         government through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
                       </p>
-                      <div class="adsp-fb-actions">
+                      <div class="adsp-fb adsp-fb-success-actions">
                         <button
                           @click=${this.closeAllFeedback}
                           id="feedback-close-success"

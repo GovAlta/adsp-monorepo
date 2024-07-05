@@ -147,9 +147,7 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
   const calendarBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl);
   const token: string = yield call(getAccessToken);
   const calendarName = action.payload;
-  console.log('fetchEventsByCalendar calendarBaseUrl', calendarBaseUrl);
   const criteria = yield select((state: RootState) => state?.calendarService?.eventSearchCriteria);
-  console.log('fetchEventsByCalendar criteria', criteria);
   if (calendarBaseUrl && token) {
     const params = {};
 
