@@ -567,8 +567,8 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/latest',
-    validateNamespaceNameHandler,
     assertAuthenticateConfigHandler(serviceId, configurationRepository),
+    validateNamespaceNameHandler,
     createValidationHandler(query('tenant').optional().isString()),
     getConfigurationEntity(
       serviceId,
@@ -627,8 +627,8 @@ export function createConfigurationRouter({
 
   router.get(
     '/configuration/:namespace/:name/active',
-    validateNamespaceNameHandler,
     assertAuthenticateConfigHandler(serviceId, configurationRepository),
+    validateNamespaceNameHandler,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after')
