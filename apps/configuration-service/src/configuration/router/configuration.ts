@@ -82,7 +82,7 @@ const getDefinition = async (
 };
 
 export const getTenantId = (req: Request): AdspId => {
-  if (req.isAuthenticated && req.query.tenant) {
+  if ((!req.isAuthenticated || !req.user) && req.query.tenant) {
     return AdspId.parse(req.query.tenant as string);
   }
 
