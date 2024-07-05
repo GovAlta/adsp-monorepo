@@ -146,8 +146,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
             aria-label="stream-description"
             width="100%"
             // eslint-disable-next-line
-            onChange={() => {}}
-            onKeyPress={(name, value) => {
+            onChange={(name, value) => {
               validators.remove('description');
               validators['description'].check(value);
               setStream({ ...stream, description: value });
