@@ -1780,15 +1780,12 @@ describe('router', () => {
       expect(res.sendStatus).toBeCalled();
     });
   });
-  it('anonymous authenticate with no http 401', async () => {
+  it('anonymous check http codes', async () => {
     const handler = assertAuthenticateConfigHandler(configurationServiceId, repositoryMock);
     const req = {
       user: null,
       params: { namespace, name },
       query: { tenant: tenantId },
-      body: {
-        revision: true,
-      },
       isAuthenticated: true,
     } as unknown as Request;
 
