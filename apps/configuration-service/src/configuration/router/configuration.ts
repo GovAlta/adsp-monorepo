@@ -82,7 +82,7 @@ const getDefinition = async (
 };
 
 export const getTenantId = (req: Request): AdspId => {
-  if (req.isAuthenticated && req.query.tenant) {
+  if ((!req.isAuthenticated || !req.user) && req.query.tenant) {
     return AdspId.parse(req.query.tenant as string);
   }
 
@@ -153,6 +153,7 @@ export function getConfigurationEntity(
       const getCore = requestCore(req);
       const tenantId = getTenantId(req);
 
+      console.log('tenantId', tenantId);
       //if user is not logged in and is not authenticated we want
       //to do rate limiting for anonymous users.
       if (!req.isAuthenticated && !user) {
