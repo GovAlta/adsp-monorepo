@@ -14,8 +14,15 @@ const defaultOptions: Options = {
   realmName: 'master',
 };
 
+/**
+ * Paul Li July-8th-2024: https://github.com/keycloak/keycloak-nodejs-admin-client/issues/523
+ * We need to re-visit dynamicImport after we change the CommonJS to EMS.
+ */
+
+const dynamicImport = async (packageName: string) => new Function(`return import('${packageName}')`)();
+
 export async function createkcAdminClient(opts?: Options): Promise<KcAdminClient> {
-  const KcAdminClient = (await import('@keycloak/keycloak-admin-client')).default;
+  const KcAdminClient = (await dynamicImport('@keycloak/keycloak-admin-client')).default;
   const client = new KcAdminClient({
     ...defaultOptions,
     ...opts,
