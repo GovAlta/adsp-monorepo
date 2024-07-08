@@ -92,9 +92,6 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(
     '/configuration',
     metricsHandler,
-    // Adding the anonymous strategy at this level, but in the individual api end point
-    // in the router we are more fine grained in specifying which end point should include/allow
-    // the anonymous strategy.
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler
   );
