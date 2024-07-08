@@ -35,7 +35,7 @@ WORKDIR /usr/app
 # Puppeteer will check the $HOME/.cache for the chome.
 ENV HOME=/puppeteer
 # Puppeteer version shall be compatible with that in the package.json. Shall we add an arg here?
-RUN npm i puppeteer@22.2.0
+RUN npm i puppeteer@^22.12.1
 # To avoid the potential OpenShift contianer permission issue.
 RUN chmod 777 -R /puppeteer
 
