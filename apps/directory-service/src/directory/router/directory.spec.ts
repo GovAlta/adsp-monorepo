@@ -19,14 +19,23 @@ import {
   getServiceData,
   resolveNamespaceTenant,
   validateNamespaceEndpointsPermission,
+  deleteEntry,
 } from './directory';
+
 import axios from 'axios';
 import { DirectoryRepository } from '../../directory/repository';
 import { getEntriesForServiceImpl } from './directory';
 import { InvalidValueError, NotFoundError } from '@core-services/core-common';
+import * as NodeCache from 'node-cache';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
+jest.mock('node-cache', () => {
+  return jest.fn().mockImplementation(() => ({
+    get: jest.fn(),
+    set: jest.fn(),
+  }));
+});
 describe('router', () => {
   const namespace = 'platform';
   const name = 'test-service';
@@ -37,7 +46,7 @@ describe('router', () => {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-  } as unknown;
+  } as unknown as Logger;
 
   const eventServiceMock = {
     send: jest.fn(),
@@ -71,7 +80,53 @@ describe('router', () => {
     repositoryMock.getDirectories.mockClear();
     eventServiceMock.send.mockClear();
   });
-  describe('createConfigurationRouter', () => {
+  describe('deleteEntry', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      repositoryMock.getDirectories.mockClear();
+    });
+
+    it('should throw an error if the namespace is not found', async () => {
+      const namespace = 'testNamespace';
+      const entry = 'testService';
+
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+
+      await expect(deleteEntry(namespace, entry, repositoryMock)).rejects.toThrow(
+        new InvalidValueError('Delete namespace service', `Cannot find namespace: ${namespace}`)
+      );
+    });
+    it('should throw an error if the entry is not found', async () => {
+      const namespace = 'testNamespace';
+      const entry = 'testService';
+      const directoryEntity = { services: [] };
+
+      repositoryMock.getDirectories.mockResolvedValueOnce(directoryEntity);
+
+      await expect(deleteEntry(namespace, entry, repositoryMock)).rejects.toThrow(
+        new InvalidValueError('Delete namespace service', `Cannot find ${entry}`)
+      );
+    });
+    it('should delete the entry and return it on success', async () => {
+      const namespace = 'testNamespace';
+      const entry = 'testService';
+      const serviceToDelete = { service: entry, host: 'http://localhost' };
+      const directoryEntity = { services: [serviceToDelete] };
+
+      repositoryMock.getDirectories.mockResolvedValueOnce(directoryEntity);
+      repositoryMock.update.mockResolvedValue(undefined);
+
+      const result = await deleteEntry(namespace, entry, repositoryMock);
+
+      expect(result).toEqual(serviceToDelete);
+      expect(repositoryMock.update).toHaveBeenCalledWith({
+        name: namespace,
+        services: [],
+      });
+    });
+  });
+
+  describe('create directory router', () => {
     it('can create router', () => {
       const router = createDirectoryRouter({
         logger: loggerMock as Logger,
@@ -84,22 +139,26 @@ describe('router', () => {
     });
   });
   describe('getDirectoriesByNamespace', () => {
+    const handler = getDirectoriesByNamespace(repositoryMock);
+    const testDirectory = {
+      name: 'platform',
+      services: null,
+    };
+    const req = {
+      tenant: { id: tenantId },
+      user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+      params: { namespace, name },
+      query: {},
+    } as unknown as Request;
+    const res = {
+      json: jest.fn(),
+      send: jest.fn(),
+    };
+
     it('can create handler', () => {
-      const handler = getDirectoriesByNamespace(repositoryMock);
       expect(handler).toBeTruthy();
     });
     it('can get directories by namespace', async () => {
-      const handler = getDirectoriesByNamespace(repositoryMock);
-
-      const req = {
-        tenant: { id: tenantId },
-        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
-        params: { namespace, name },
-        query: {},
-      } as unknown as Request;
-      const res = {
-        json: jest.fn(),
-      };
       const next = jest.fn();
       const testDirectory = {
         name: 'platform',
@@ -114,21 +173,6 @@ describe('router', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining(platformDirectoryRes));
     });
     it('can return not found', async () => {
-      const handler = getDirectoriesByNamespace(repositoryMock);
-      const testDirectory = {
-        name: 'platform',
-        services: null,
-      };
-      const req = {
-        tenant: { id: tenantId },
-        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
-        params: { namespace, name },
-        query: {},
-      } as unknown as Request;
-      const res = {
-        json: jest.fn(),
-        send: jest.fn(),
-      };
       const next = jest.fn();
 
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
@@ -136,40 +180,48 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith([]);
     });
+    it('should call next(err) on error', async () => {
+      const error = new Error('Test error');
+      const next = jest.fn();
+      repositoryMock.getDirectories.mockRejectedValue(error);
+
+      await handler(req, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(error);
+    });
   });
 
   describe('getEntriesForService', () => {
+    const handler = getEntriesForService(repositoryMock);
+    const service = 'test-service';
+    const req = {
+      tenant: { id: tenantId },
+      user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+      params: { namespace, service },
+      query: {},
+    } as unknown as Request;
+    const res = {
+      json: jest.fn(),
+    };
+    const testDirectory = {
+      name: 'platform',
+      services: [
+        { service: 'test-service', host: '/test/service' },
+        { service: 'file-service', host: '/file/service' },
+      ],
+    };
+    const testServiceRes = {
+      service: {
+        namespace: 'platform',
+        service: 'test-service',
+        url: '/test/service',
+        urn: 'urn:ads:platform:test-service',
+      },
+    };
     it('can create handler', () => {
-      const handler = getEntriesForService(repositoryMock);
       expect(handler).toBeTruthy();
     });
     it('can get entries by namespace and service', async () => {
-      const handler = getEntriesForService(repositoryMock);
-      const service = 'test-service';
-      const req = {
-        tenant: { id: tenantId },
-        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
-        params: { namespace, service },
-        query: {},
-      } as unknown as Request;
-      const res = {
-        json: jest.fn(),
-      };
-      const testDirectory = {
-        name: 'platform',
-        services: [
-          { service: 'test-service', host: '/test/service' },
-          { service: 'file-service', host: '/file/service' },
-        ],
-      };
-      const testServiceRes = {
-        service: {
-          namespace: 'platform',
-          service: 'test-service',
-          url: '/test/service',
-          urn: 'urn:ads:platform:test-service',
-        },
-      };
       const next = jest.fn();
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
@@ -177,7 +229,6 @@ describe('router', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining(testServiceRes));
     });
     it('getEntriesForService can return not found', async () => {
-      const handler = getEntriesForService(repositoryMock);
       const testDirectory = {
         name: 'platform',
         services: null,
@@ -198,39 +249,45 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
       expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NOT_FOUND);
     });
+    it('should call next(err) on error', async () => {
+      const error = new Error('Test error');
+      const next = jest.fn();
+      repositoryMock.getDirectories.mockRejectedValue(error);
+      await handler(req, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(error);
+    });
+  });
+  describe('getEntriesForService Implementation', () => {
+    const repositoryMock = {
+      getDirectories: jest.fn(),
+    };
 
-    describe('getEntriesForService Implementation', () => {
-      const repositoryMock = {
-        getDirectories: jest.fn(),
+    it('can find a service with no APIs', async () => {
+      const directory = {
+        services: [
+          {
+            _id: '3',
+            namespace: 'test-namespace',
+            service: 'test-service',
+            host: 'http://test/service',
+          },
+        ],
       };
+      repositoryMock.getDirectories.mockResolvedValueOnce(directory);
+      const repository = repositoryMock as unknown as DirectoryRepository;
 
-      it('can find a service with no APIs', async () => {
-        const directory = {
-          services: [
-            {
-              _id: '3',
-              namespace: 'test-namespace',
-              service: 'test-service',
-              host: 'http://test/service',
-            },
-          ],
-        };
-        repositoryMock.getDirectories.mockResolvedValueOnce(directory);
-        const repository = repositoryMock as unknown as DirectoryRepository;
-
-        const results = await getEntriesForServiceImpl(
-          directory.services[0].namespace,
-          directory.services[0].service,
-          repository
-        );
-        expect(results.service).toEqual({
-          namespace: directory.services[0].namespace,
-          service: directory.services[0].service,
-          url: directory.services[0].host,
-          urn: 'urn:ads:test-namespace:test-service',
-        });
-        expect(results.apis).toEqual([]);
+      const results = await getEntriesForServiceImpl(
+        directory.services[0].namespace,
+        directory.services[0].service,
+        repository
+      );
+      expect(results.service).toEqual({
+        namespace: directory.services[0].namespace,
+        service: directory.services[0].service,
+        url: directory.services[0].host,
+        urn: 'urn:ads:test-namespace:test-service',
       });
+      expect(results.apis).toEqual([]);
     });
 
     it('can find a service with APIs', async () => {
@@ -332,31 +389,30 @@ describe('router', () => {
   });
 
   describe('getDirectoryEntryForApi', () => {
+    const handler = getDirectoryEntryForApi(repositoryMock);
+    const service = 'test-service';
+    const api = 'v2';
+    const req = {
+      tenant: { id: tenantId },
+      user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+      params: { namespace, service, api },
+      query: {},
+    } as unknown as Request;
+    const res = {
+      json: jest.fn(),
+    };
+    const next = jest.fn();
     it('can create handler', () => {
-      const handler = getDirectoryEntryForApi(repositoryMock);
       expect(handler).toBeTruthy();
     });
     it('can get entries by namespace , service and api', async () => {
-      const handler = getDirectoryEntryForApi(repositoryMock);
-      const service = 'test-service';
-      const api = 'v2';
-      const req = {
-        tenant: { id: tenantId },
-        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
-        params: { namespace, service, api },
-        query: {},
-      } as unknown as Request;
-      const res = {
-        json: jest.fn(),
-      };
-
       const testServiceRes = {
         namespace: 'platform',
         service: 'test-service:v2',
         url: '/test/service/v2',
         urn: 'urn:ads:platform:test-service:v2',
       };
-      const next = jest.fn();
+
       const testDirectory = {
         name: 'platform',
         services: [
@@ -370,12 +426,11 @@ describe('router', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining(testServiceRes));
     });
     it('getDirectoryEntryForApi will return with not found', async () => {
-      const handler = getDirectoryEntryForApi(repositoryMock);
       const testDirectory = {
         name: 'platform',
         services: null,
       };
-      const api = 'v2';
+
       const req = {
         tenant: { id: tenantId },
         user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
@@ -386,90 +441,121 @@ describe('router', () => {
         json: jest.fn(),
         sendStatus: jest.fn(),
       };
-      const next = jest.fn();
+
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
       await handler(req, res as unknown as Response, next);
       expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NOT_FOUND);
     });
+    it('should call next(err) on error', async () => {
+      const error = new Error('Test error');
+
+      repositoryMock.getDirectories.mockRejectedValue(error);
+      await handler(req, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(error);
+    });
   });
   describe('getServiceData', () => {
+    const handler = getServiceData(repositoryMock, loggerMock as Logger);
+
+    const cacheMock = jest.fn();
+
+    const service = 'file-service';
+    const req = {
+      tenant: { id: tenantId },
+      user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+      params: { namespace, service },
+      query: {},
+    } as unknown as Request;
+
+    const res = {
+      status: jest.fn(),
+      json: jest.fn(),
+    };
+    const metadata = {
+      name: 'Event service',
+      description: 'Service for sending of domain events.',
+      _links: {
+        self: {
+          href: 'https://event-service.adsp-dev.gov.ab.ca/',
+        },
+        health: {
+          href: 'https://event-service.adsp-dev.gov.ab.ca/health',
+        },
+        api: {
+          href: 'https://event-service.adsp-dev.gov.ab.ca/event/v1',
+        },
+        docs: {
+          href: 'https://event-service.adsp-dev.gov.ab.ca/swagger/docs/v1',
+        },
+      },
+    };
+    const response = {
+      host: '/file/service',
+      metadata: {
+        _links: {
+          api: { href: 'https://event-service.adsp-dev.gov.ab.ca/event/v1' },
+          docs: { href: 'https://event-service.adsp-dev.gov.ab.ca/swagger/docs/v1' },
+          health: { href: 'https://event-service.adsp-dev.gov.ab.ca/health' },
+          self: { href: 'https://event-service.adsp-dev.gov.ab.ca/' },
+        },
+        description: 'Service for sending of domain events.',
+        name: 'Event service',
+      },
+      service: 'file-service',
+    };
+    const next = jest.fn();
+    repositoryMock.getDirectories.mockClear();
+    const testDirectory = {
+      name: 'platform',
+      services: [
+        { service: 'event-service', host: '/test/service/v2' },
+        { service: 'file-service', host: '/file/service' },
+      ],
+    };
     it('can create handler', () => {
-      const handler = getServiceData(repositoryMock, loggerMock as Logger);
       expect(handler).toBeTruthy();
     });
     it('can get service metadata by service', async () => {
-      const handler = getServiceData(repositoryMock, loggerMock as Logger);
-
-      const cacheMock = jest.fn();
-      jest.mock('node-cache', () => {
-        return class FakeCache {
-          get = cacheMock;
-          set = jest.fn();
-          keys = jest.fn(() => ['platform']);
-        };
-      });
-
-      const service = 'file-service';
-      const req = {
-        tenant: { id: tenantId },
-        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
-        params: { namespace, service },
-        query: {},
-      } as unknown as Request;
-
-      const res = {
-        status: jest.fn(),
-        json: jest.fn(),
-      };
-      const metadata = {
-        name: 'Event service',
-        description: 'Service for sending of domain events.',
-        _links: {
-          self: {
-            href: 'https://event-service.adsp-dev.gov.ab.ca/',
-          },
-          health: {
-            href: 'https://event-service.adsp-dev.gov.ab.ca/health',
-          },
-          api: {
-            href: 'https://event-service.adsp-dev.gov.ab.ca/event/v1',
-          },
-          docs: {
-            href: 'https://event-service.adsp-dev.gov.ab.ca/swagger/docs/v1',
-          },
-        },
-      };
-      const response = {
-        host: '/file/service',
-        metadata: {
-          _links: {
-            api: { href: 'https://event-service.adsp-dev.gov.ab.ca/event/v1' },
-            docs: { href: 'https://event-service.adsp-dev.gov.ab.ca/swagger/docs/v1' },
-            health: { href: 'https://event-service.adsp-dev.gov.ab.ca/health' },
-            self: { href: 'https://event-service.adsp-dev.gov.ab.ca/' },
-          },
-          description: 'Service for sending of domain events.',
-          name: 'Event service',
-        },
-        service: 'file-service',
-      };
-      const next = jest.fn();
-      repositoryMock.getDirectories.mockClear();
-      const testDirectory = {
-        name: 'platform',
-        services: [
-          { service: 'event-service', host: '/test/service/v2' },
-          { service: 'file-service', host: '/file/service' },
-        ],
-      };
-
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
       axiosMock.get.mockResolvedValueOnce({ data: metadata });
 
       await handler(req, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining(response));
+    });
+
+    it('should return BAD_REQUEST if directory entity is not found', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+      const res = {
+        sendStatus: jest.fn(),
+        json: jest.fn(),
+      };
+
+      const handler = getServiceData(repositoryMock, loggerMock as Logger);
+      await handler(req, res as unknown as Response, next);
+      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.BAD_REQUEST);
+    });
+
+    it('should throw an error if service is not found in directory', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce({ services: [] });
+      const handler = getServiceData(repositoryMock, loggerMock as Logger);
+      await handler(req, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalled();
+    });
+    it('should handle metadata fetch error', async () => {
+      const entity = new DirectoryEntity(repositoryMock, testDirectory);
+
+      repositoryMock.getDirectories.mockResolvedValueOnce(entity);
+
+      axiosMock.get.mockResolvedValueOnce(new Error('Fetch error'));
+
+      const handler = getServiceData(repositoryMock, loggerMock as Logger);
+      await handler(req, res as unknown as Response, next);
+
+      expect(loggerMock.warn).toHaveBeenCalled();
+      expect(next).toHaveBeenCalled();
     });
   });
 
@@ -548,28 +634,26 @@ describe('router', () => {
   });
 
   describe('addService', () => {
+    const handler = addService(repositoryMock, eventServiceMock, loggerMock as Logger);
+    const req = {
+      tenant: { id: tenantId },
+      user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+      params: { namespace },
+      query: {},
+      body: {
+        service: 'added-service',
+        host: '/add-service/core',
+      },
+    } as unknown as Request;
+    const res = {
+      status: jest.fn(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
     it('can create handler', () => {
-      const handler = addService(repositoryMock, eventServiceMock, loggerMock as Logger);
       expect(handler).toBeTruthy();
     });
     it('can add service by post', async () => {
-      const handler = addService(repositoryMock, eventServiceMock, loggerMock as Logger);
-
-      const req = {
-        tenant: { id: tenantId },
-        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
-        params: { namespace },
-        query: {},
-        body: {
-          service: 'added-service',
-          host: '/add-service/core',
-        },
-      } as unknown as Request;
-      const res = {
-        status: jest.fn(),
-        json: jest.fn(),
-      };
-      const next = jest.fn();
       const testDirectory = {
         name: 'platform',
         services: [
@@ -587,25 +671,14 @@ describe('router', () => {
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
     });
     it('addService can call next with not found', async () => {
-      const handler = addService(repositoryMock, eventServiceMock, loggerMock as Logger);
       const testDirectory = {
         name: 'platform',
         services: null,
       };
-
-      const req = {
-        tenant: { id: tenantId },
-        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
-        params: { namespace },
-        query: {},
-        body: {
-          namespace: namespace,
-        },
-      } as unknown as Request;
       const res = {
         json: jest.fn(),
       };
-      const next = jest.fn();
+
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
 
