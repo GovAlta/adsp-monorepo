@@ -353,7 +353,7 @@ export const deleteApi =
     }
   };
 
-const deleteEntry = async (
+export const deleteEntry = async (
   namespace: string,
   entry: string,
   directoryRepository: DirectoryRepository
