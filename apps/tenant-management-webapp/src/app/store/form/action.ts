@@ -1,8 +1,12 @@
-import { FormDefinition } from './model';
+import { FormDefinition, RefDefinition } from './model';
 
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_SUCCESS_ACTION = 'form/FETCH_FORM_DEFINITIONS_SUCCESS_ACTION';
+export const FETCH_REF_DEFINITIONS_ACTION = 'form/FETCH_REF_DEFINITIONS_ACTION';
+export const FETCH_REF_DEFINITIONS_SUCCESS_ACTION = 'form/FETCH_REF_DEFINITIONS_SUCCESS_ACTION';
 
+export const UPDATE_REF_DEFINITION_ACTION = 'form/UPDATE_REF_DEFINITION_ACTION';
+export const UPDATE_REF_DEFINITION_SUCCESS_ACTION = 'form/UPDATE_REF_DEFINITION_SUCCESS_ACTION';
 export const UPDATE_FORM_DEFINITION_ACTION = 'form/UPDATE_FORM_DEFINITION_ACTION';
 export const UPDATE_FORM_DEFINITION_SUCCESS_ACTION = 'form/UPDATE_FORM_DEFINITION_SUCCESS_ACTION';
 
@@ -17,6 +21,14 @@ export interface FetchFormDefinitionsAction {
 export interface FetchFormDefinitionsSuccessAction {
   type: typeof FETCH_FORM_DEFINITIONS_SUCCESS_ACTION;
   payload: Record<string, FormDefinition>;
+}
+export interface FetchRefDefinitionsAction {
+  type: typeof FETCH_REF_DEFINITIONS_ACTION;
+}
+
+export interface FetchRefDefinitionsSuccessAction {
+  type: typeof FETCH_REF_DEFINITIONS_SUCCESS_ACTION;
+  payload: Record<string, RefDefinition>;
 }
 
 export interface UpdateFormDefinitionsAction {
@@ -35,6 +47,17 @@ export interface DeleteFormDefinitionAction {
   definition: FormDefinition;
 }
 
+export interface UpdateRefDefinitionsSuccessAction {
+  type: typeof UPDATE_REF_DEFINITION_SUCCESS_ACTION;
+  payload: Record<string, RefDefinition>;
+}
+
+export interface UpdateRefDefinitionsAction {
+  type: typeof UPDATE_REF_DEFINITION_ACTION;
+  definition: RefDefinition;
+  options?: string;
+}
+
 export interface DeleteFormDefinitionSuccessAction {
   type: typeof DELETE_FORM_DEFINITION_SUCCESS_ACTION;
   payload: Record<string, FormDefinition>;
@@ -48,9 +71,13 @@ export interface DeleteFormByIDAction {
 export type FormActionTypes =
   | FetchFormDefinitionsSuccessAction
   | FetchFormDefinitionsAction
+  | FetchRefDefinitionsSuccessAction
+  | FetchRefDefinitionsAction
   | DeleteFormDefinitionAction
   | DeleteFormDefinitionSuccessAction
   | UpdateFormDefinitionsAction
+  | UpdateRefDefinitionsAction
+  | UpdateRefDefinitionsSuccessAction
   | DeleteFormByIDAction
   | UpdateFormDefinitionsSuccessAction;
 
@@ -65,6 +92,28 @@ export const updateFormDefinitionSuccess = (
 ): UpdateFormDefinitionsSuccessAction => ({
   type: UPDATE_FORM_DEFINITION_SUCCESS_ACTION,
   payload: definition,
+});
+
+export const updateRefDefinition = (definition: RefDefinition, options?: string): UpdateRefDefinitionsAction => ({
+  type: UPDATE_REF_DEFINITION_ACTION,
+  definition,
+  options,
+});
+
+export const updateRefDefinitionSuccess = (
+  definition: Record<string, RefDefinition>
+): UpdateRefDefinitionsSuccessAction => ({
+  type: UPDATE_REF_DEFINITION_SUCCESS_ACTION,
+  payload: definition,
+});
+
+export const getRefDefinitions = (): FetchRefDefinitionsAction => ({
+  type: FETCH_REF_DEFINITIONS_ACTION,
+});
+
+export const getRefDefinitionsSuccess = (results: Record<string, RefDefinition>): FetchRefDefinitionsSuccessAction => ({
+  type: FETCH_REF_DEFINITIONS_SUCCESS_ACTION,
+  payload: results,
 });
 
 export const deleteFormDefinition = (definition: FormDefinition): DeleteFormDefinitionAction => ({

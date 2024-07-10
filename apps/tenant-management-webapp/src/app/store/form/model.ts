@@ -14,6 +14,17 @@ export interface FormDefinition {
   queueTaskToProcess: QueueTaskToProcess;
   supportTopic: boolean;
 }
+export interface RefDefinition {
+  id: string;
+  name: string;
+  refData: Record<string, unknown> | string;
+}
+
+export const defaultRefDefinition: RefDefinition = {
+  id: '',
+  name: '',
+  refData: {},
+};
 
 export interface Disposition {
   id: string;
@@ -45,4 +56,5 @@ export const defaultFormDefinition: FormDefinition = {
 
 export interface FormState {
   definitions: Record<string, FormDefinition>;
+  refs: Record<string, RefDefinition>;
 }

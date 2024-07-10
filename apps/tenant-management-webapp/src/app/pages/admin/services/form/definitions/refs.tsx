@@ -3,35 +3,24 @@ import React, { useEffect, useState } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getFormDefinitions, updateFormDefinition, deleteFormDefinition } from '@store/form/action';
+import { getFormDefinitions, updateRefDefinition, deleteFormDefinition, getRefDefinitions } from '@store/form/action';
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
-import { FormDefinitionsTable } from './definitionsList';
+import { RefsTable } from './refsList';
 import { PageIndicator } from '@components/Indicator';
-import { defaultFormDefinition } from '@store/form/model';
+import { defaultRefDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
-import { AddEditFormDefinition } from './addEditFormDefinition';
+import { AddEditRefs } from './addEditRef';
 import { fetchDirectory } from '@store/directory/actions';
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
 }
-export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
+export const FormRefs = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
+  const [currentDefinition, setCurrentDefinition] = useState(defaultRefDefinition);
 
   const formDefinitions = useSelector((state: RootState) => {
-    const def = state?.form?.definitions;
-
-    delete def.refs;
-
-    return Object.entries(def)
-      .sort((template1, template2) => {
-        return template1[1].name.localeCompare(template2[1].name);
-      })
-      .reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
-        tempObj[formDefinitionId] = formDefinitionData;
-        return tempObj;
-      }, {});
+    return state?.form?.refs;
   });
 
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
@@ -40,21 +29,11 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     return state?.session?.indicator;
   });
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (openAddDefinition) {
-      setOpenAddFormDefinition(true);
-    }
-  }, [openAddDefinition]);
-
-  useEffect(() => {
     if (Object.keys(formDefinitions).length === 0) {
-      dispatch(getFormDefinitions());
-      dispatch(fetchDirectory());
+      dispatch(getRefDefinitions());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
@@ -77,23 +56,23 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         mt={'xl'}
         mb={'xl'}
       >
-        Add definition
+        Add refs
       </GoAButton>
 
-      <AddEditFormDefinition
+      <AddEditRefs
         open={openAddFormDefinition}
         isEdit={false}
         onClose={reset}
-        initialValue={defaultFormDefinition}
+        initialValue={defaultRefDefinition}
         onSave={(definition) => {
-          dispatch(updateFormDefinition(definition));
+          dispatch(updateRefDefinition(definition));
         }}
       />
 
       {!indicator.show && !formDefinitions && renderNoItem('form templates')}
       {indicator.show && <PageIndicator />}
       {!indicator.show && Object.keys(formDefinitions).length > 0 && (
-        <FormDefinitionsTable
+        <RefsTable
           definitions={formDefinitions}
           onDelete={(currentTemplate) => {
             setShowDeleteConfirmation(true);
@@ -113,7 +92,6 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         onCancel={() => setShowDeleteConfirmation(false)}
         onDelete={() => {
           setShowDeleteConfirmation(false);
-          dispatch(deleteFormDefinition(currentDefinition));
         }}
       />
     </div>

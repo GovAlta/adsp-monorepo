@@ -25,7 +25,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       error={errorsFormInput.length > 0}
       type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
       disabled={!enabled}
-      value={data}
+      value={data || props.schema?.default}
       width={'100%'}
       readonly={readOnly}
       placeholder={placeholder}

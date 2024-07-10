@@ -4,6 +4,7 @@ import FormOverview from './formOverview';
 import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { FormDefinitions } from './definitions/definitions';
+import { FormRefs } from './definitions/refs';
 import { Tab, Tabs } from '@components/Tabs';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import AsideLinks from '@components/AsideLinks';
@@ -54,6 +55,9 @@ export const Form: FunctionComponent = () => {
             </Tab>
             <Tab label="Definitions" data-testid="form-templates">
               <FormDefinitions openAddDefinition={openAddDefinition} />
+            </Tab>
+            <Tab label="Refs" data-testid="form-refs">
+              <FormRefs />
             </Tab>
           </Tabs>
         </>

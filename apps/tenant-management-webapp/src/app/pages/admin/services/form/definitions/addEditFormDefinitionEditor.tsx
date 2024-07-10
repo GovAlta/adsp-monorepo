@@ -11,6 +11,7 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
+import { AnySchema } from 'ajv';
 
 import {
   TextLoadingIndicator,
@@ -130,6 +131,25 @@ export const onSaveDispositionForModal = (
   return [definition, null];
 };
 
+function getRefs(schema) {
+  const refs = [];
+
+  function findRefs(obj) {
+    if (typeof obj === 'object' && obj !== null) {
+      for (const key in obj) {
+        if (key === '$ref') {
+          refs.push(obj);
+        } else if (typeof obj[key] === 'object') {
+          findRefs(obj[key]);
+        }
+      }
+    }
+  }
+
+  findRefs(schema);
+  return refs;
+}
+
 const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
@@ -162,6 +182,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(definition?.dataSchema || {}, null, 2));
+  // const [tempRef, setTempRef] = useState<string>(JSON.stringify(definition? || {}, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
@@ -488,6 +509,18 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       height={EditorHeight}
                       value={tempDataSchema}
                       onChange={(value) => {
+                        const refs = getRefs(JSON.parse(value));
+                        refs.forEach((ref) => {
+                          const schemaKey = ref['$ref'] as string;
+                          ref['$id'] = schemaKey;
+                          ref.type = 'string';
+                          const newRef = { ...ref };
+                          delete newRef['$ref'];
+                          if (!ajv.getSchema(schemaKey)) {
+                            ajv.addSchema(newRef as AnySchema, schemaKey);
+                          }
+                        });
+
                         const jsonSchemaValidResult = JSONSchemaValidator(value);
                         setTempDataSchema(value);
 

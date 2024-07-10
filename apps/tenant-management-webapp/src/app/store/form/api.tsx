@@ -24,6 +24,19 @@ export const updateFormDefinitionApi = async (token: string, serviceUrl: string,
 
   return data;
 };
+export const updateFormDefinitionApiRef = async (
+  token: string,
+  serviceUrl: string,
+  definition: Record<string, unknown>
+) => {
+  const { data } = await axios.patch<{ latest: { configuration: Record<string, unknown> } }>(
+    new URL('configuration/v2/configuration/platform/form-service', serviceUrl).href,
+    { operation: 'UPDATE', update: definition },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  return data;
+};
 
 export const deleteFormDefinitionApi = async (token: string, serviceUrl: string, definitionId: string) => {
   const { data } = await axios.patch<{ latest: { configuration: Record<string, FormDefinition> } }>(
