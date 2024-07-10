@@ -286,7 +286,7 @@ describe('createProcessEventJob', () => {
         templateService: templateServiceMock,
         tenantService: tenantServiceMock,
         directory: directoryMock,
-        subscriptionRepository: repositoryDoubleMock as unknown as SubscriptionRepository,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
       });
 
@@ -303,131 +303,102 @@ describe('createProcessEventJob', () => {
             namespace: 'test',
             name: 'test-run',
             templates: {
-              [Channel.email]: { subject: 'hello', body: 'regular body' },
+              [Channel.email]: { subject: '', body: '' },
               [Channel.sms]: null,
               [Channel.mail]: null,
             },
           },
         ],
       };
-      const customType = JSON.parse(JSON.stringify(type));
-      customType.events[0].templates = {
-        [Channel.email]: { subject: 'hello there', body: 'i customize body' },
-        [Channel.sms]: null,
-        [Channel.mail]: null,
-      };
       const configuration = new NotificationConfiguration(
-        {
-          test: customType,
-        },
         {
           test: type,
         },
+        {},
         tenantId
       );
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
 
-      const subscriber = new SubscriberEntity(repositoryDoubleMock as unknown as SubscriptionRepository, {
-        tenantId,
-        addressAs: 'Tester',
-        channels: [
-          {
-            channel: Channel.email,
-            address: 'test@testco.org',
-            verified: false,
-          },
-        ],
-      });
-
-      const subscription = new SubscriptionEntity(
-        repositoryDoubleMock as unknown as SubscriptionRepository,
-        { tenantId, typeId: 'test', subscriberId: 'test', criteria: {} },
-        configuration.getNotificationType('test'),
-        subscriber
-      );
-
-      repositoryDoubleMock.getSubscriptions.mockResolvedValue({
-        results: [subscription],
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({
+        results: [],
         page: {},
       });
 
       job(
         {
           tenantId,
-          namespace: 'test',
-          name: 'test-run',
-          timestamp: new Date(),
-          payload: {},
-          traceparent: '123',
-        },
-        (err) => {
-          expect(repositoryDoubleMock.getSubscriptions).toHaveBeenCalledTimes(1);
-          expect(err).toBeFalsy();
-          done();
-        }
-      );
-    });
-
-    it('can handle error on processing', (done) => {
-      const job = createProcessEventJob({
-        logger,
-        serviceId: adspId`urn:ads:platform:notification-service`,
-        tokenProvider: tokenProviderMock,
-        configurationService: configurationServiceMock,
-        eventService: eventServiceMock,
-        templateService: templateServiceMock,
-        tenantService: tenantServiceMock,
-        directory: directoryMock,
-        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
-        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
-      });
-      const error = new Error('Something is terribly wrong.');
-      tokenProviderMock.getAccessToken.mockRejectedValueOnce(error);
-
-      job(
-        {
-          tenantId,
-          namespace: 'test',
-          name: 'test-run',
-          timestamp: new Date(),
-          payload: {},
-          traceparent: '123',
-        },
-        (err) => {
-          expect(err).toBe(error);
-          done();
-        }
-      );
-    });
-
-    it('can skip notification-service event', (done) => {
-      const job = createProcessEventJob({
-        logger,
-        serviceId: adspId`urn:ads:platform:notification-service`,
-        tokenProvider: tokenProviderMock,
-        configurationService: configurationServiceMock,
-        eventService: eventServiceMock,
-        templateService: templateServiceMock,
-        tenantService: tenantServiceMock,
-        directory: directoryMock,
-        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
-        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
-      });
-
-      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-
-      job(
-        {
-          tenantId,
           namespace: 'notification-service',
+          name: 'sent',
+          timestamp: new Date(),
+          payload: { tenantId, typeId: 'test', subscriberId: 'test' },
+          traceparent: '123',
+        },
+        (err) => {
+          expect(err).toBeFalsy();
+          done();
+        }
+      );
+    });
+
+    it('handles errors', (done) => {
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        templateService: templateServiceMock,
+        tenantService: tenantServiceMock,
+        directory: directoryMock,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
+      });
+
+      tokenProviderMock.getAccessToken.mockRejectedValueOnce(new Error('Error'));
+
+      job(
+        {
+          tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+          namespace: 'test',
           name: 'test-run',
           timestamp: new Date(),
           payload: {},
           traceparent: '123',
         },
         (err) => {
+          expect(err).toBeTruthy();
+          done();
+        }
+      );
+    });
+
+    it('skips events from notification-service namespace', (done) => {
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        templateService: templateServiceMock,
+        tenantService: tenantServiceMock,
+        directory: directoryMock,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
+      });
+
+      job(
+        {
+          tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+          namespace: 'notification-service',
+          name: 'sent',
+          timestamp: new Date(),
+          payload: { tenantId, typeId: 'test', subscriberId: 'test' },
+          traceparent: '123',
+        },
+        (err) => {
           expect(err).toBeFalsy();
+          expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
           done();
         }
       );

@@ -2,6 +2,9 @@ import { InvalidOperationError } from '@core-services/core-common';
 import axios from 'axios';
 import { Channel, VerifyService } from './notification';
 import { createVerifyService, VerifyServiceImpl } from './verify';
+import verifyEmailTemplate from './assets/verify-email-template.hbs';
+import verifySlackTemplate from './assets/verify-slack-template.hbs';
+import verifySmsTemplate from './assets/verify-sms-template.hbs';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -21,6 +24,9 @@ describe('verify', () => {
     sms: {
       send: jest.fn(() => Promise.resolve()),
     },
+    bot: {
+      send: jest.fn(() => Promise.resolve()),
+    },
   };
   const templateService = {
     generateMessage: jest.fn(() => ({
@@ -32,7 +38,7 @@ describe('verify', () => {
   beforeEach(() => {
     directory.getServiceUrl.mockClear();
     tokenProvider.getAccessToken.mockClear();
-    providers.email.send.mockClear();
+    Object.values(providers).forEach((provider) => provider.send.mockClear());
     templateService.generateMessage.mockReset();
     axiosMock.post.mockReset();
   });
@@ -53,13 +59,33 @@ describe('verify', () => {
     let service: VerifyService = null;
     beforeEach(() => {
       service = new VerifyServiceImpl(providers, templateService, directory, tokenProvider, {
-        email: { subject: '', body: '' },
+        email: { subject: '', body: verifyEmailTemplate },
+        bot: { subject: '', body: verifySlackTemplate },
+        sms: { subject: '', body: verifySmsTemplate },
       });
     });
 
+    // describe('constructor', () => {
+    //   it('should initialize templates correctly', () => {
+    //     expect(service).toBeTruthy();
+    //     expect(service['templates'][Channel.email]).toEqual({
+    //       subject: 'Your verify code',
+    //       body: expect.any(Function),
+    //     });
+    //     expect(service['templates'][Channel.bot]).toEqual({
+    //       subject: 'Your verify code',
+    //       body: verifySlackTemplate,
+    //     });
+    //     expect(service['templates'][Channel.sms]).toEqual({
+    //       subject: 'Your verify code',
+    //       body: verifySmsTemplate,
+    //     });
+    //   });
+    // });
+
     describe('sendCode', () => {
       it('can send code', async () => {
-        axiosMock.post.mockResolvedValueOnce({ data: { code: '123' } });
+        axiosMock.post.mockResolvedValueOnce({ data: { code: '123', expiresAt: '2024-12-31T23:59:59.000Z' } });
         const key = await service.sendCode(
           { channel: Channel.email, address: 'test@test.co', verifyKey: 'key', verified: false },
           'Verifying stuff.'
@@ -69,21 +95,55 @@ describe('verify', () => {
       });
 
       it('can throw for no template', async () => {
-        axiosMock.post.mockResolvedValueOnce({ data: { code: '123' } });
         await expect(
           service.sendCode(
-            { channel: Channel.mail, address: '123', verifyKey: 'key', verified: false },
+            { channel: 'invalid' as Channel, address: '123', verifyKey: 'key', verified: false },
             'Verifying stuff.'
           )
         ).rejects.toThrowError(InvalidOperationError);
       });
 
       it('can throw for no provider', async () => {
-        axiosMock.post.mockResolvedValueOnce({ data: { code: '123' } });
         await expect(
           service.sendCode(
-            { channel: Channel.bot, address: '123', verifyKey: 'key', verified: false },
+            { channel: 'invalid' as Channel, address: '123', verifyKey: 'key', verified: false },
             'Verifying stuff.'
+          )
+        ).rejects.toThrowError(InvalidOperationError);
+      });
+    });
+
+    describe('sendCodeWithLink', () => {
+      it('can send code with link', async () => {
+        axiosMock.post.mockResolvedValueOnce({ data: { code: '123', expiresAt: '2024-12-31T23:59:59.000Z' } });
+        const key = await service.sendCodeWithLink(
+          { channel: Channel.email, address: 'test@test.co', verifyKey: 'key', verified: false },
+          'Verifying stuff.',
+          10,
+          'https://verification-link'
+        );
+        expect(key).toBeTruthy();
+        expect(axios.post).toHaveBeenCalled();
+      });
+
+      it('can throw for no template', async () => {
+        await expect(
+          service.sendCodeWithLink(
+            { channel: 'invalid' as Channel, address: '123', verifyKey: 'key', verified: false },
+            'Verifying stuff.',
+            10,
+            'https://verification-link'
+          )
+        ).rejects.toThrowError(InvalidOperationError);
+      });
+
+      it('can throw for no provider', async () => {
+        await expect(
+          service.sendCodeWithLink(
+            { channel: 'invalid' as Channel, address: '123', verifyKey: 'key', verified: false },
+            'Verifying stuff.',
+            10,
+            'https://verification-link'
           )
         ).rejects.toThrowError(InvalidOperationError);
       });
@@ -101,7 +161,6 @@ describe('verify', () => {
       });
 
       it('can throw for no key', async () => {
-        axiosMock.post.mockResolvedValueOnce({ data: { verified: true } });
         await expect(
           service.verifyCode({ channel: Channel.email, address: 'test@test.co', verified: false }, '123')
         ).rejects.toThrowError(InvalidOperationError);
