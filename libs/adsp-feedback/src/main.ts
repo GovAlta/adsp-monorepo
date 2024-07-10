@@ -487,8 +487,10 @@ class AdspFeedback implements AdspFeedbackApi {
             border: 1px solid;
             border-radius: 3px;
             transform: translateX(-50%);
-            max-height: 80%;
+            max-height: 100%;
             height: min-content;
+            overflow-y: auto;
+            overflow-x: hidden;
           }
 
           .adsp-fb .adsp-fb-container-heading {

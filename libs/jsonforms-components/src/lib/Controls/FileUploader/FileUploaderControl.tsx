@@ -95,6 +95,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   }, [handleChange, fileList, propertyId]);
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? '';
+  const accept = uischema?.options?.componentProps?.accept ?? '';
 
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">
@@ -105,7 +107,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
       )}
       {!readOnly && (
         <div className="file-upload">
-          <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} />
+          <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} maxFileSize={maxFileSize} accept={accept} />
         </div>
       )}
       <div>

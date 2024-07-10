@@ -11,7 +11,7 @@ interface URNComponent {
   resource?: string;
 }
 
-const getUrn = (component: URNComponent) => {
+export const getUrn = (component: URNComponent) => {
   let urn = `${component.scheme}:${component.nic}:${component.core}:${component.service}`;
   urn = component.apiVersion ? `${urn}:${component.apiVersion}` : urn;
   urn = component.resource ? `${urn}:${component.resource}` : urn;

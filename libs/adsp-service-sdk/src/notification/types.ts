@@ -8,6 +8,8 @@ export enum Channel {
 export interface Template {
   subject: unknown;
   body: unknown;
+  title?: string;
+  subtitle?: string;
 }
 
 export interface NotificationTypeEvent {
