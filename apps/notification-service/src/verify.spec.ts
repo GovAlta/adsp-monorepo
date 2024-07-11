@@ -65,24 +65,6 @@ describe('verify', () => {
       });
     });
 
-    // describe('constructor', () => {
-    //   it('should initialize templates correctly', () => {
-    //     expect(service).toBeTruthy();
-    //     expect(service['templates'][Channel.email]).toEqual({
-    //       subject: 'Your verify code',
-    //       body: expect.any(Function),
-    //     });
-    //     expect(service['templates'][Channel.bot]).toEqual({
-    //       subject: 'Your verify code',
-    //       body: verifySlackTemplate,
-    //     });
-    //     expect(service['templates'][Channel.sms]).toEqual({
-    //       subject: 'Your verify code',
-    //       body: verifySmsTemplate,
-    //     });
-    //   });
-    // });
-
     describe('sendCode', () => {
       it('can send code', async () => {
         axiosMock.post.mockResolvedValueOnce({ data: { code: '123', expiresAt: '2024-12-31T23:59:59.000Z' } });
