@@ -46,11 +46,6 @@ describe('generate', () => {
     update: jest.fn(),
   };
 
-  const directoryMock = {
-    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
-    getResourceUrl: jest.fn(),
-  };
-
   it('can create job', () => {
     const job = createGenerateJob({
       logger: loggerMock,
@@ -60,7 +55,6 @@ describe('generate', () => {
       eventService: eventServiceMock,
       fileService: fileServiceMock,
       repository: repositoryMock,
-      directory: directoryMock,
     });
 
     expect(job).toBeTruthy();
@@ -75,7 +69,6 @@ describe('generate', () => {
       eventService: eventServiceMock,
       fileService: fileServiceMock,
       repository: repositoryMock,
-      directory: directoryMock,
     });
 
     const templateEntity = {
