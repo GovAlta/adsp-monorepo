@@ -73,7 +73,15 @@ describe('webhook', () => {
         const result = entity.shouldTrigger({ namespace: 'test', name: 'test-prepared', payload: {} } as DomainEvent);
         expect(result).toBe(false);
       });
-
+      it('can return false for missing context event', () => {
+        const result = entity.shouldTrigger({
+          namespace: 'test',
+          name: 'test-paused',
+          context: undefined,
+          payload: {},
+        } as unknown as DomainEvent);
+        expect(result).toBe(false);
+      });
       it('can return true for match with criteria on context', () => {
         const result = entity.shouldTrigger({
           namespace: 'test',
@@ -204,6 +212,28 @@ describe('webhook', () => {
         const result = await entity.process({ namespace: 'test', name: 'test-started', payload: {} } as DomainEvent);
         expect(result).toBeFalsy();
       });
+
+      it('should log event processing with tenantId undefined', async () => {
+        const event: DomainEvent = {
+          namespace: 'testNamespace',
+          name: 'testEvent',
+          tenantId: undefined,
+          timestamp: new Date(),
+          context: {},
+          payload: {},
+        };
+        const id = 'test-123';
+        const name = 'test';
+
+        const entity = new WebhookEntity(loggerMock, webhook);
+        entity.shouldTrigger = jest.fn().mockReturnValue(false);
+        await entity.process(event);
+
+        expect(loggerMock.debug).toHaveBeenCalledWith(
+          `Processing event ${event.namespace}:${event.name} for webhook ${name} (ID: ${id})...`,
+          { context: 'WebHookEntity', tenant: undefined }
+        );
+      });
     });
   });
 
@@ -268,6 +298,33 @@ describe('webhook', () => {
           namespace: 'test',
           name: 'test-started',
           payload: { application: { id: 'app-123' } },
+        } as unknown as DomainEvent);
+        expect(result).toBe(false);
+      });
+
+      it('can return false for application undefined', () => {
+        const result = entity.shouldTrigger({
+          namespace: 'test',
+          name: 'test-started',
+          payload: { application: undefined },
+        } as unknown as DomainEvent);
+        expect(result).toBe(false);
+      });
+      it('can return false for payload undefined', () => {
+        const result = entity.shouldTrigger({
+          namespace: 'test',
+          name: 'test-started',
+          payload: undefined,
+        } as unknown as DomainEvent);
+        expect(result).toBe(false);
+      });
+      it('can return false for eventTypes empty', () => {
+        webhook.eventTypes = undefined;
+        const entity = new AppStatusWebhookEntity(loggerMock, webhook);
+        const result = entity.shouldTrigger({
+          namespace: 'test',
+          name: 'test-started',
+          payload: undefined,
         } as unknown as DomainEvent);
         expect(result).toBe(false);
       });
