@@ -64,6 +64,10 @@ export const ServiceRoles = (): JSX.Element => {
     dispatch(fetchKeycloakServiceRoles(true));
   }, [dispatch]);
 
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, [newClientId]);
+
   return (
     <div>
       {newClientId && (

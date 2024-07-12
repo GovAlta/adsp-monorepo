@@ -34,7 +34,8 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   useEffect(() => {}, [roles]);
   useEffect(() => {
     setCalendar(initialValue);
-  }, [calendarName, initialValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
