@@ -1,6 +1,6 @@
 import {
   GoARenderers,
-  ajv,
+  createDefaultAjv,
   JsonFormContext,
   enumerators,
   ContextProviderFactory,
@@ -58,7 +58,7 @@ const JsonFormsWrapper = ({ definition, data, onChange }) => {
   return (
     <JsonFormRegisterProvider defaultRegisters={definition?.registerData || []}>
       <JsonForms
-        ajv={ajv}
+        ajv={createDefaultAjv()}
         readonly={false}
         schema={populateDropdown(definition.dataSchema, enumerators)}
         uischema={definition.uiSchema}
