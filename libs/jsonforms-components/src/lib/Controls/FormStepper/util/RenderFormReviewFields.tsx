@@ -81,11 +81,14 @@ export const RenderFormReviewFields: React.FC<RenderFormReviewFieldsProps> = ({
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const removeLayouts = (elements: any[]): any[] => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return elements.reduce((acc, item) => {
-    if (isLayout(item)) {
-      return acc.concat(removeLayouts(item.elements));
-    } else {
-      return acc.concat(item);
-    }
-  }, []);
+  return (
+    elements &&
+    elements.reduce((acc, item) => {
+      if (isLayout(item)) {
+        return acc.concat(removeLayouts(item.elements));
+      } else {
+        return acc.concat(item);
+      }
+    }, [])
+  );
 };

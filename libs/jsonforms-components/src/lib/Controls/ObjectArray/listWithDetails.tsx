@@ -1,29 +1,22 @@
 import React, { useCallback, useState } from 'react';
-import {
-  ArrayLayoutProps,
-  RankedTester,
-  isObjectArrayControl,
-  isPrimitiveArrayControl,
-  or,
-  rankWith,
-  uiTypeIs,
-  and,
-} from '@jsonforms/core';
+import { ArrayLayoutProps, RankedTester, rankWith, uiTypeIs, and } from '@jsonforms/core';
 import { withJsonFormsArrayLayoutProps } from '@jsonforms/react';
-import { ObjectArrayControl } from './ObjectListControl';
+import { ListWithDetailControl } from './ListWithDetailControl';
 import { DeleteDialog } from './DeleteDialog';
 import { Visible } from '../../util';
 
-export const ArrayControl = (props: ArrayLayoutProps) => {
+export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
   const [open, setOpen] = useState(false);
   const [path, setPath] = useState<string>();
+  const [name, setName] = useState<string>();
   const [rowData, setRowData] = useState<number>(0);
   const { removeItems, visible } = props;
 
   const openDeleteDialog = useCallback(
-    (p: string, rowIndex: number) => {
+    (p: string, rowIndex: number, name?: string) => {
       setOpen(true);
       setPath(p);
+      setName(name);
       setRowData(rowIndex);
     },
     [setOpen, setPath, setRowData]
@@ -42,17 +35,18 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
 
   return (
     <Visible visible={visible}>
-      <ObjectArrayControl {...props} openDeleteDialog={openDeleteDialog} />
+      <ListWithDetailControl {...props} openDeleteDialog={openDeleteDialog} />
+
       <DeleteDialog
         open={open}
         onCancel={deleteCancel}
         onConfirm={deleteConfirm}
         title={props.translations.deleteDialogTitle || ''}
-        message={props.translations.deleteDialogMessage || ''}
+        message={`Are you sure you wish to delete ${name} `}
       />
     </Visible>
   );
 };
 
-export const GoAArrayControlTester: RankedTester = rankWith(3, or(isObjectArrayControl, isPrimitiveArrayControl));
-export const GoAArrayControlRenderer = withJsonFormsArrayLayoutProps(ArrayControl);
+export const GoAListWithDetailsControlRenderer = withJsonFormsArrayLayoutProps(ListWithDetailsControl);
+export const GoAListWithDetailsTester: RankedTester = rankWith(3, and(uiTypeIs('ListWithDetail')));

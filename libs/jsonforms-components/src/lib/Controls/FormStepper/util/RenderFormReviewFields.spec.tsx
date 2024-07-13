@@ -6,6 +6,16 @@ import { UISchemaElement } from '@jsonforms/core';
 import Ajv from 'ajv';
 import { GoACells, GoARenderers } from '../../../../index';
 
+class MockResizeObserver {
+  // Implement necessary methods used by your component
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+// Mock ResizeObserver globally for this test file
+global.ResizeObserver = MockResizeObserver as never;
+
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
  * is included.
