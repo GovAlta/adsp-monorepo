@@ -32,7 +32,7 @@ describe('StreamEntity', () => {
     });
   });
 
-  it('can be created', () => {
+  it('StreamEntity can be created', () => {
     const newEntity = new StreamEntity(loggerMock, tenantId, {
       id: 'test',
       name: 'Test Stream',
@@ -47,6 +47,34 @@ describe('StreamEntity', () => {
       ],
     });
     expect(newEntity).toBeTruthy();
+  });
+  it('should initialize events to an empty array if undefined', () => {
+    const stream = {
+      id: 'streamId',
+      name: 'testStream',
+      description: 'Test Stream',
+      publicSubscribe: true,
+      subscriberRoles: ['test-subscriber'],
+      events: undefined,
+    };
+
+    const entity = new StreamEntity(loggerMock, tenantId, stream);
+
+    expect(entity.events).toEqual([]);
+  });
+  it('should initialize subscriberRoles to an empty array if undefined', () => {
+    const stream = {
+      id: 'streamId',
+      name: 'testStream',
+      description: 'Test Stream',
+      publicSubscribe: true,
+      subscriberRoles: undefined,
+      events: [],
+    };
+
+    const entity = new StreamEntity(loggerMock, tenantId, stream);
+
+    expect(entity.subscriberRoles).toEqual([]);
   });
 
   describe('canSubscribe', () => {
@@ -214,7 +242,19 @@ describe('StreamEntity', () => {
 
       expect(result).toBe(false);
     });
+    it('can return false for event missing context', () => {
+      const result = stream.isMatch(
+        {
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          correlationId: '123',
+        },
+        { correlationId: '123', context: { value: 123 } }
+      );
 
+      expect(result).toBe(false);
+    });
     it('can return false for event not matching context criteria', () => {
       const result = stream.isMatch(
         {

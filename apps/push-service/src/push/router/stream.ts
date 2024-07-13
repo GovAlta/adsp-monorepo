@@ -51,7 +51,7 @@ function mapStream(entity: StreamEntity): Stream {
   };
 }
 
-function mapStreamItem(item: StreamItem): Record<string, unknown> {
+export function mapStreamItem(item: StreamItem): Record<string, unknown> {
   const result: Record<string, unknown> = {
     ...item,
   };
