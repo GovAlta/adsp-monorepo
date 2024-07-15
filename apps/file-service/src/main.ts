@@ -6,7 +6,7 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
-import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import { environment, POD_TYPES } from './environments/environment';
 import {
   applyFileMiddleware,
@@ -83,6 +83,16 @@ async function initializeApp(): Promise<express.Application> {
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
       values: [ServiceMetricsValueDefinition],
+      serviceConfigurations: [
+        {
+          serviceId: adspId`urn:ads:platform:cache-service`,
+          configuration: {
+            targets: {
+              [serviceId.toString()]: { ttl: 60 * 60 },
+            },
+          },
+        },
+      ],
     },
     { logger }
   );
