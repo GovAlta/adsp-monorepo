@@ -15,6 +15,8 @@ import { fetchDirectory } from '@store/directory/actions';
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
 }
+const FORM_APPLICANT_SERVICE_ID = `urn:ads:platform:form-service:form-applicant`;
+
 export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
@@ -63,6 +65,11 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     document.body.style.overflow = 'unset';
   }, []);
 
+  const doesNotContainFormRolesToAdd = (role: string, applicantFormRoles: string[]) => {
+    if (applicantFormRoles.length === 0) return false;
+    return applicantFormRoles.filter((roleToCheck) => roleToCheck === role).length === 0;
+  };
+
   return (
     <div>
       <GoAButton
@@ -82,6 +89,10 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         onClose={reset}
         initialValue={defaultFormDefinition}
         onSave={(definition) => {
+          if (!doesNotContainFormRolesToAdd(FORM_APPLICANT_SERVICE_ID, definition.applicantRoles)) {
+            definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
+          }
+
           dispatch(updateFormDefinition(definition));
         }}
       />
