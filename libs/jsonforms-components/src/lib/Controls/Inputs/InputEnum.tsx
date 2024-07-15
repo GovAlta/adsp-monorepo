@@ -63,6 +63,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
       value={data}
       disabled={!enabled}
       relative={true}
+      width="100%"
       filterable={autocompletion}
       key={`${id}-jsonform-key`}
       testId={`${id || label}-jsonform`}
