@@ -19,9 +19,8 @@ import {
   isEnabled,
 } from '@jsonforms/core';
 
-import { TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
+import { JsonFormsDispatch, TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { AjvProps, withAjvProps } from '../../util/layout';
-import { Grid } from '../../common/Grid';
 
 import {
   Anchor,
@@ -32,13 +31,12 @@ import {
   RightAlignmentDiv,
 } from './styled-components';
 import { JsonFormContext } from '../../Context';
-import { getAllRequiredFields } from './util/getRequiredFields';
-import { RenderFormReviewFields } from './util/RenderFormReviewFields';
 import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
 import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } from './StepperContext';
 import { validateData } from './util/validateData';
 import { mapToVisibleStep } from './util/stepNavigation';
+import { GoAReviewRenderers } from '../../../index';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {}
 export interface FormStepperComponentProps {
@@ -221,7 +219,6 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 <ReviewItem>
                   {categories.map((category, index) => {
                     const categoryLabel = category.label || category.i18n || 'Unknown Category';
-                    const requiredFields = getAllRequiredFields(schema);
                     const testId = `${categoryLabel}-review-link`;
                     return (
                       <ReviewItemSection key={index}>
@@ -231,14 +228,20 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                             {readOnly ? 'View' : 'Edit'}
                           </Anchor>
                         </ReviewItemHeader>
-                        <Grid>
-                          <RenderFormReviewFields
-                            elements={category?.elements}
-                            data={data}
-                            requiredFields={requiredFields}
-                            schema={schema}
-                          />
-                        </Grid>
+                        <GoAGrid minChildWidth="600px">
+                          {category.elements.map((element) => {
+                            return (
+                              <JsonFormsDispatch
+                                data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                                schema={schema}
+                                uischema={element}
+                                enabled={enabled}
+                                renderers={GoAReviewRenderers}
+                                cells={cells}
+                              />
+                            );
+                          })}
+                        </GoAGrid>
                       </ReviewItemSection>
                     );
                   })}

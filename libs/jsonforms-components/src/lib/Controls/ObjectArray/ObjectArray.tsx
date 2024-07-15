@@ -54,6 +54,15 @@ export const ArrayControl = (props: ArrayLayoutProps) => {
   );
 };
 
+export const ArrayBaseReviewControl = (props: ArrayLayoutProps) => {
+  const { visible } = props;
+
+  return (
+    <Visible visible={visible}>
+      <ObjectArrayControl {...props} openDeleteDialog={() => {}} isStepperReview={true} />
+    </Visible>
+  );
+};
 export const GoAArrayControlTester: RankedTester = rankWith(3, or(isObjectArrayControl, isPrimitiveArrayControl));
 export const GoAArrayControlRenderer = withJsonFormsArrayLayoutProps(ArrayControl);
-export const GoAListWithDetailsTester: RankedTester = rankWith(3, and(uiTypeIs('ListWithDetail')));
+export const GoAArrayControlReviewRenderer = withJsonFormsArrayLayoutProps(ArrayBaseReviewControl);

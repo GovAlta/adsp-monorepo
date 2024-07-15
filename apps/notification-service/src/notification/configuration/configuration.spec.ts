@@ -87,9 +87,17 @@ describe('NotificationConfiguration', () => {
     ],
   };
 
-  it('can be created', () => {
+  it('can be created with empty configurations', () => {
     const configuration = new NotificationConfiguration({}, {}, tenantId);
     expect(configuration).toBeTruthy();
+  });
+
+  it('assigns core types when tenant types are not provided', () => {
+    const configuration = new NotificationConfiguration({}, { base: baseType }, tenantId);
+    const types = configuration.getNotificationTypes();
+    expect(types.length).toBe(1);
+    expect(types[0].id).toBe('base');
+    expect(types[0].name).toBe('Base Type');
   });
 
   describe('getNotificationType', () => {

@@ -54,7 +54,7 @@ export const InfoCircleWithInlineHelp = ({
             </div>
           )}
         </div>
-        <div>
+        <FixedHeight>
           {viewSubmissionInclineHelp && (
             <ViewBox>
               <div className="overflow-wrap bubble-border" style={{ width: `${width}px` }}>
@@ -70,14 +70,14 @@ export const InfoCircleWithInlineHelp = ({
               </div>
             </ViewBox>
           )}
-        </div>
+        </FixedHeight>
       </InlinePadding>
     </div>
   );
 };
 
 export const ViewBox = styled.div`
-  position: fixed;
+  position: relative;
   margin-top: -50px;
   z-index: 1000;
 
@@ -116,6 +116,10 @@ export const ViewBox = styled.div`
     margin-left: auto;
     margin-top: -10px;
   }
+`;
+
+const FixedHeight = styled.div`
+  height: 20px;
 `;
 
 export const InlinePadding = styled.div`
