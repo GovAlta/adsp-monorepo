@@ -28,6 +28,7 @@ import {
   GoACheckoutGroupControlTester,
   GoAArrayControlTester,
   GoAArrayControlRenderer,
+  GoAListWithDetailsControlRenderer,
   GoAArrayControlReviewRenderer,
   GoAListWithDetailsTester,
   GoABooleanControlTester,
@@ -84,7 +85,7 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   },
   {
     tester: GoAListWithDetailsTester,
-    renderer: GoAArrayControlRenderer,
+    renderer: GoAListWithDetailsControlRenderer,
   },
   // layouts
   { tester: GoAGroupLayoutTester, renderer: GoAGroupControl },
