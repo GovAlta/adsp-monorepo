@@ -96,6 +96,7 @@ describe('stream router', () => {
     });
 
     it('should process events for clients', async () => {
+      //eslint-disable-next-line
       const eventsSubject = new Subject<any>();
       eventServiceAmpMock.getItems.mockReturnValue(eventsSubject.asObservable());
 
@@ -125,6 +126,7 @@ describe('stream router', () => {
     });
 
     it('should process events for webhooks', async () => {
+      //eslint-disable-next-line
       const webhookEventsSubject = new Subject<any>();
       eventServiceAmpMock.getItems.mockReturnValue(webhookEventsSubject.asObservable());
 
@@ -154,6 +156,7 @@ describe('stream router', () => {
     });
 
     it('should handle webhook-triggered events correctly', async () => {
+      //eslint-disable-next-line
       const webhookEventsSubject = new Subject<any>();
       eventServiceAmpMock.getItems.mockReturnValue(webhookEventsSubject.asObservable());
       const token = 'testToken';
@@ -186,6 +189,7 @@ describe('stream router', () => {
     });
 
     it('should log error when processing webhook fails', async () => {
+      //eslint-disable-next-line
       const webhookEventsSubject = new Subject<any>();
       eventServiceAmpMock.getItems.mockReturnValue(webhookEventsSubject.asObservable());
       const error = new Error('Test error');

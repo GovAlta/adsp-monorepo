@@ -19,6 +19,7 @@ describe('getCircularReplacer', () => {
 
   it('should handle circular references by returning undefined', () => {
     const replacer = getCircularReplacer();
+    //eslint-disable-next-line
     const obj: any = { a: 1 };
     obj.b = obj;
 
@@ -28,6 +29,7 @@ describe('getCircularReplacer', () => {
 
   it('should work correctly with nested circular references', () => {
     const replacer = getCircularReplacer();
+    //eslint-disable-next-line
     const obj: any = { a: 1, b: {} };
     obj.b.c = obj;
 
@@ -48,6 +50,7 @@ describe('getCircularReplacer', () => {
   it('should handle a mix of objects with and without circular references', () => {
     const replacer = getCircularReplacer();
     const obj1 = { a: 1 };
+    //eslint-disable-next-line
     const obj2: any = { b: 2 };
     obj2.c = obj2;
 
