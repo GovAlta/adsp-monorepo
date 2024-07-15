@@ -2,12 +2,12 @@ export const template = `
 
 <body>
     <div class="content">
-        <h3>Form summary for form {{content.config.id}} </h3>
+        <h3>Form summary for form {{data.content.config.id}} </h3>
         <div class="review-item">
-            {{#each content.config.uiSchema.elements }}
+            {{#each data.content.config.uiSchema.elements }}
                 {{#if (isControl this)}}
                     <div class="review-item-basic">
-                        {{> elements element=this data=@root.content.data requiredFields=(requiredField @root.content.config.dataSchema) }}
+                        {{> elements element=this data=@root.data.content.data requiredFields=(requiredField @root.content.config.dataSchema) }}
                     </div>
                 {{else}}
                     <div class="review-item-section">
@@ -16,7 +16,7 @@ export const template = `
                         </div>
                         <div class="grid">
                         {{#each this.elements }}
-                            {{> elements element=this data=@root.content.data requiredFields=(requiredField @root.content.config.dataSchema) styles=@root.content.styles }}
+                            {{> elements element=this data=@root.data.content.data requiredFields=(requiredField @root.content.config.dataSchema) styles=@root.content.styles }}
                         {{/each}}
                         </div>
                     </div>

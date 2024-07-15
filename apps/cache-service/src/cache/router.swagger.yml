@@ -1,0 +1,23 @@
+/cache/v1/cache/{targetId}/{resource}:
+  get:
+    tags:
+      - Cache
+    description: Read through cache
+    parameters:
+      - name: targetId
+        description: ID of the service or API for the upstream request.
+        in: path
+        required: true
+        example: urn:ads:platform:file-service
+        schema:
+          type: string
+      - name: resource
+        description: Path to the resource to read from the upstream target.
+        in: path
+        required: true
+        example: file/v1/files
+        schema:
+          type: string
+    responses:
+      200:
+        description: Resource successfully read through cache.

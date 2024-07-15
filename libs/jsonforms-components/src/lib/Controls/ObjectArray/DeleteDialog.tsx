@@ -11,7 +11,7 @@ export interface DeleteDialogProps {
 }
 
 export interface WithDeleteDialogSupport {
-  openDeleteDialog(path: string, data: number): void;
+  openDeleteDialog(path: string, data: number, name?: string): void;
 }
 
 export const DeleteDialog = React.memo(function DeleteDialog({
@@ -36,6 +36,7 @@ export const DeleteDialog = React.memo(function DeleteDialog({
         </GoAButton>
         <GoAButton
           type="primary"
+          variant="destructive"
           testId="object-array-confirm-button"
           onClick={() => {
             onConfirm();

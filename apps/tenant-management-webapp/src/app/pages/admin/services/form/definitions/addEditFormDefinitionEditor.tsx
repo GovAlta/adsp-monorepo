@@ -614,7 +614,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       />
                     </FlexRow>
                   </div>
-                  <h3>Submission configuration</h3>
+                  <h3>Submission</h3>
                   <FlexRow>
                     <SubmissionRecordsBox>
                       <GoACheckbox

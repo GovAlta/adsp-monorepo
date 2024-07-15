@@ -4,9 +4,11 @@ import { Request, Response } from 'express';
 import { of } from 'rxjs';
 import { Namespace, Socket } from 'socket.io';
 import { Logger } from 'winston';
-import { getStream, getStreams, subscribeBySse } from './stream';
-import { StreamEntity } from '../model';
+import { getStream, getStreams, subscribeBySse, mapStreamItem } from './stream';
+import { StreamEntity, StreamItem, WebhookEntity } from '../model';
 import { createStreamRouter, onIoConnection } from './stream';
+import { Subject } from 'rxjs';
+import { webhookTriggered } from '../events';
 
 describe('stream router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -29,6 +31,7 @@ describe('stream router', () => {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
+    error: jest.fn(),
   } as unknown as Logger;
 
   const tenantServiceMock = {
@@ -75,22 +78,201 @@ describe('stream router', () => {
       ],
     });
   });
+  describe('createStreamRouter', () => {
+    const LOG_CONTEXT = { context: 'StreamRouter' };
+    it('router', () => {
+      const router = createStreamRouter([ioMock as unknown as Namespace], {
+        logger: loggerMock,
+        eventServiceAmp: eventServiceAmpMock as DomainEventSubscriberService,
+        eventServiceAmpWebhooks: eventServiceAmpMock as DomainEventSubscriberService,
+        eventService: eventServiceMock as EventService,
+        tenantService: tenantServiceMock as unknown as TenantService,
+        tokenProvider: tokenProviderMock as unknown as TokenProvider,
+        configurationService: configurationServiceMock,
+        serviceId: adspId`urn:ads:platform:push-service`,
+      });
 
-  it('createStreamRouter', () => {
-    const router = createStreamRouter([ioMock as unknown as Namespace], {
-      logger: loggerMock,
-      eventServiceAmp: eventServiceAmpMock as DomainEventSubscriberService,
-      eventServiceAmpWebhooks: eventServiceAmpMock as DomainEventSubscriberService,
-      eventService: eventServiceMock as EventService,
-      tenantService: tenantServiceMock as unknown as TenantService,
-      tokenProvider: tokenProviderMock as unknown as TokenProvider,
-      configurationService: configurationServiceMock,
-      serviceId: adspId`urn:ads:platform:push-service`,
+      expect(router).toBeTruthy();
     });
 
-    expect(router).toBeTruthy();
-  });
+    it('should process events for clients', async () => {
+      //eslint-disable-next-line
+      const eventsSubject = new Subject<any>();
+      eventServiceAmpMock.getItems.mockReturnValue(eventsSubject.asObservable());
 
+      createStreamRouter([ioMock as unknown as Namespace], {
+        logger: loggerMock,
+        eventServiceAmp: eventServiceAmpMock as DomainEventSubscriberService,
+        eventServiceAmpWebhooks: eventServiceAmpMock as DomainEventSubscriberService,
+        eventService: eventServiceMock as EventService,
+        tenantService: tenantServiceMock as unknown as TenantService,
+        tokenProvider: tokenProviderMock as unknown as TokenProvider,
+        configurationService: configurationServiceMock,
+        serviceId: adspId`urn:ads:platform:push-service`,
+      });
+
+      const nextEvent = { namespace: 'testNamespace', name: 'testEvent', tenantId: 'tenantId' };
+      eventsSubject.next({ item: nextEvent, done: jest.fn() });
+
+      await new Promise(process.nextTick);
+
+      expect(loggerMock.debug).toHaveBeenCalledWith(
+        `Processing event ${nextEvent.namespace}:${nextEvent.name} for clients...`,
+        {
+          tenantId: nextEvent.tenantId,
+          ...LOG_CONTEXT,
+        }
+      );
+    });
+
+    it('should process events for webhooks', async () => {
+      //eslint-disable-next-line
+      const webhookEventsSubject = new Subject<any>();
+      eventServiceAmpMock.getItems.mockReturnValue(webhookEventsSubject.asObservable());
+
+      createStreamRouter([ioMock as unknown as Namespace], {
+        logger: loggerMock,
+        eventServiceAmp: eventServiceAmpMock as DomainEventSubscriberService,
+        eventServiceAmpWebhooks: eventServiceAmpMock as DomainEventSubscriberService,
+        eventService: eventServiceMock as EventService,
+        tenantService: tenantServiceMock as unknown as TenantService,
+        tokenProvider: tokenProviderMock as unknown as TokenProvider,
+        configurationService: configurationServiceMock,
+        serviceId: adspId`urn:ads:platform:push-service`,
+      });
+
+      const nextEvent = { namespace: 'testNamespace', name: 'testEvent', tenantId: 'tenantId' };
+      webhookEventsSubject.next({ item: nextEvent, done: jest.fn() });
+
+      await new Promise(process.nextTick);
+
+      expect(loggerMock.debug).toHaveBeenCalledWith(
+        `Processing event ${nextEvent.namespace}:${nextEvent.name} for webhooks...`,
+        {
+          tenantId: nextEvent.tenantId,
+          ...LOG_CONTEXT,
+        }
+      );
+    });
+
+    it('should handle webhook-triggered events correctly', async () => {
+      //eslint-disable-next-line
+      const webhookEventsSubject = new Subject<any>();
+      eventServiceAmpMock.getItems.mockReturnValue(webhookEventsSubject.asObservable());
+      const token = 'testToken';
+      const nextEvent = { namespace: 'testNamespace', name: 'testEvent', tenantId: 'tenantId' };
+      const webhookEntity = {
+        process: jest.fn().mockResolvedValue('response'),
+      } as unknown as WebhookEntity;
+      const webhooks = { testWebhook: webhookEntity };
+      tokenProviderMock.getAccessToken.mockResolvedValue(token);
+      configurationServiceMock.getConfiguration.mockResolvedValue({ webhooks });
+
+      createStreamRouter([ioMock as unknown as Namespace], {
+        logger: loggerMock,
+        eventServiceAmp: eventServiceAmpMock as DomainEventSubscriberService,
+        eventServiceAmpWebhooks: eventServiceAmpMock as DomainEventSubscriberService,
+        eventService: eventServiceMock as EventService,
+        tenantService: tenantServiceMock as unknown as TenantService,
+        tokenProvider: tokenProviderMock as unknown as TokenProvider,
+        configurationService: configurationServiceMock,
+        serviceId: adspId`urn:ads:platform:push-service`,
+      });
+
+      webhookEventsSubject.next({ item: nextEvent, done: jest.fn() });
+
+      await new Promise(process.nextTick);
+
+      expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
+      expect(webhookEntity.process).toHaveBeenCalledWith(nextEvent);
+      expect(eventServiceMock.send).toHaveBeenCalled();
+    });
+
+    it('should log error when processing webhook fails', async () => {
+      //eslint-disable-next-line
+      const webhookEventsSubject = new Subject<any>();
+      eventServiceAmpMock.getItems.mockReturnValue(webhookEventsSubject.asObservable());
+      const error = new Error('Test error');
+      tokenProviderMock.getAccessToken.mockRejectedValue(error);
+
+      createStreamRouter([ioMock as unknown as Namespace], {
+        logger: loggerMock,
+        eventServiceAmp: eventServiceAmpMock as DomainEventSubscriberService,
+        eventServiceAmpWebhooks: eventServiceAmpMock as DomainEventSubscriberService,
+        eventService: eventServiceMock as EventService,
+        tenantService: tenantServiceMock as unknown as TenantService,
+        tokenProvider: tokenProviderMock as unknown as TokenProvider,
+        configurationService: configurationServiceMock,
+        serviceId: adspId`urn:ads:platform:push-service`,
+      });
+
+      const nextEvent = { namespace: 'testNamespace', name: 'testEvent', tenantId: 'tenantId' };
+      webhookEventsSubject.next({ item: nextEvent, done: jest.fn() });
+
+      await new Promise(process.nextTick);
+
+      expect(loggerMock.error).toHaveBeenCalledWith(`Error encountered processing webhook: ${error}`, {
+        tenantId: nextEvent.tenantId,
+        ...LOG_CONTEXT,
+      });
+    });
+  });
+  describe('webhookTriggered', () => {
+    let triggerEvent;
+    let response;
+
+    it('should set response.timestamp to undefined if response.headers.date is not set', () => {
+      const webhook = {
+        id: 'webhookId',
+        name: 'testWebhook',
+        url: 'http://example.com/webhook',
+        targetId: 'targetId',
+        intervalMinutes: 10,
+        generatedByTest: false,
+        eventTypes: [{ id: 'namespace:event' }],
+      };
+      triggerEvent = {
+        namespace: 'testNamespace',
+        name: 'testEvent',
+        correlationId: 'eventCorrelationId',
+        context: {},
+      };
+      response = {
+        status: 200,
+        statusText: 'OK',
+        headers: {
+          date: 'Wed, 21 Oct 2015 07:28:00 GMT',
+        },
+        config: {},
+        data: {},
+      };
+      const responseTime = 100;
+
+      delete response.headers.date;
+
+      const event = webhookTriggered(tenantId, webhook, triggerEvent, response, responseTime);
+
+      expect(event.payload.response).toEqual({ status: 'OK', statusCode: 200, timestamp: undefined });
+    });
+  });
+  describe('mapStreamItem', () => {
+    it('should convert tenantId to string when tenantId is defined as object', () => {
+      const item: StreamItem = {
+        namespace: 'testNamespace',
+        name: 'testName',
+        correlationId: 'testCorrelationId',
+        context: {},
+        tenantId: tenantId,
+      };
+
+      const result = mapStreamItem(item);
+
+      expect(result.namespace).toBe('testNamespace');
+      expect(result.name).toBe('testName');
+      expect(result.correlationId).toBe('testCorrelationId');
+      expect(result.context).toEqual({});
+    });
+  });
   describe('getStream', () => {
     it('can get stream', async () => {
       const req = {

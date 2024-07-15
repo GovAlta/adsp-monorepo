@@ -16,10 +16,13 @@ export const selectCalendarsByName = createSelector(
   selectCalendars,
   (_, name: string | undefined) => name,
   (calendars, name) => {
-    if (name === undefined) return defaultCalendar;
-    return Object.entries(calendars)
-      .map((e) => e[1])
-      .find((c) => c.name === name);
+    if (name === undefined || calendars === null) {
+      return defaultCalendar;
+    } else {
+      return Object.entries(calendars)
+        .map((e) => e[1])
+        .find((c) => c.name === name);
+    }
   }
 );
 
