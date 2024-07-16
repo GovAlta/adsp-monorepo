@@ -1,4 +1,4 @@
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import * as cors from 'cors';
@@ -54,6 +54,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantService,
     tenantStrategy,
     healthCheck,
+    metricsHandler,
     traceHandler,
   } = await initializePlatform(
     {
@@ -76,6 +77,7 @@ const initializeApp = async (): Promise<express.Application> => {
       },
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
+      values: [ServiceMetricsValueDefinition],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -101,6 +103,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const anonymousTenantHandler = createAnonymousTenantHandler(tenantService);
   app.use(
     '/cache',
+    metricsHandler,
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler,
     anonymousTenantHandler,
