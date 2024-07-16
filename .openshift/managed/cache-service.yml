@@ -244,6 +244,8 @@ objects:
             - envFrom:
                 - configMapRef:
                     name: cache-service
+                - configMapRef:
+                    name: directory-overrides
                 - secretRef:
                     name: cache-service
               env:

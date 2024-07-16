@@ -88,7 +88,8 @@ async function initializeApp(): Promise<express.Application> {
           serviceId: adspId`urn:ads:platform:cache-service`,
           configuration: {
             targets: {
-              [serviceId.toString()]: { ttl: 60 * 60 },
+              [`${serviceId}`]: { ttl: 60 * 60 },
+              [`${serviceId}:v1`]: { ttl: 60 * 60 },
             },
           },
         },
