@@ -830,8 +830,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       setCustomIndicator(true);
 
                       if (
-                        isEdit &&
-                        //Should add form applicant if tenant has updated the role in there realm.
                         !doesRoleExistForClientInKeyCloak(FORM_SERVICE_ID.toString(), FORM_APPLICANT_ID, elements) &&
                         isRoleUpdated(
                           initialDefinition.applicantRoles,

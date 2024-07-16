@@ -100,15 +100,6 @@ async function getDefinitionFromConfiguration(req: Request, definitionId: string
     throw new NotFoundError('form definition', definitionId);
   }
 
-  // For backwards compatability for old form definitions that dont have the form applicant role
-  // added before hand and wasnt updated in tenant admin.
-  if (definition && definition.applicantRoles) {
-    const { applicantRoles } = definition;
-
-    if (applicantRoles.filter((appRole) => appRole === FORM_APPLICANT_SERVICE_ID)?.length === 0) {
-      definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
-    }
-  }
   return definition;
 }
 
