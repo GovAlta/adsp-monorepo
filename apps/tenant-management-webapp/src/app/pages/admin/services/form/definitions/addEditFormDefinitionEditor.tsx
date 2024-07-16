@@ -815,7 +815,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     editorErrors.uiSchema !== null
                   }
                   onClick={async () => {
-                    console.log('here');
                     if (indicator.show === true) {
                       setSpinner(true);
                     } else {
