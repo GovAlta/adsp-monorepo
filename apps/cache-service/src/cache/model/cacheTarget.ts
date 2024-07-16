@@ -39,7 +39,7 @@ export class CacheTarget implements Target {
   }
 
   async get(req: Request, res: Response) {
-    const { method, headers } = req;
+    const { method, headers, tenant, user, path, query } = req;
     if (method !== 'GET') {
       throw new InvalidOperationError('request is not a GET.');
     }
@@ -49,8 +49,6 @@ export class CacheTarget implements Target {
     if (acceptEncoding && !acceptEncoding.includes('gzip') && !acceptEncoding.includes('*')) {
       throw new InvalidOperationError('client must accept gzip encoding.');
     }
-
-    const { user, path, query } = req;
 
     // Cache entries are per-user but shared for anonymous users.
     // When request is under a user context, the user needs the cache-reader role.
@@ -67,16 +65,30 @@ export class CacheTarget implements Target {
         .header({ ...cached.headers, [ADSP_CACHE_HEADER]: 'HIT' })
         .send(cached.content);
 
-      this.logger.debug(`Cache hit for request to ${path}.`, { context: 'CacheTarget' });
+      this.logger.debug(`Cache hit for request to ${path}.`, {
+        context: 'CacheTarget',
+        tenant: tenant?.id?.toString(),
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
     } else {
-      this.logger.info(`Cache miss for request to ${path}. Making request to upstream...`, { context: 'CacheTarget' });
+      this.logger.info(`Cache miss for request to ${path}. Making request to upstream...`, {
+        context: 'CacheTarget',
+        tenant: tenant?.id?.toString(),
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
 
       const response = await this.getUpstream(req, res);
-
       if (response) {
         await this.provider.set(key, this.ttl, response);
 
-        this.logger.info(`Cached upstream response for request to ${path}.`, { context: 'CacheTarget' });
+        this.logger.info(
+          `Cached upstream response (status: ${response.status}) for request to ${path} with TTL ${this.ttl}.`,
+          {
+            context: 'CacheTarget',
+            tenant: tenant?.id?.toString(),
+            user: user ? `${user.name} (ID: ${user.id})` : null,
+          }
+        );
       }
     }
   }
@@ -100,8 +112,7 @@ export class CacheTarget implements Target {
   }
 
   private async getUpstream(req: Request, res: Response): Promise<CachedResponse> {
-    const query = req.query;
-    const user = req.user;
+    const { tenant, user, query } = req;
     const trace = getContextTrace();
 
     const upstreamUrl = await this.directory.getServiceUrl(this.serviceId);
@@ -170,6 +181,15 @@ export class CacheTarget implements Target {
                 content,
               });
             } else {
+              this.logger.debug(
+                `Content length ${content.length} outside of limits. Skipping caching of response from: ${requestUrl}`,
+                {
+                  context: 'CacheTarget',
+                  tenant: tenant?.id?.toString(),
+                  user: user ? `${user.name} (ID: ${user.id})` : null,
+                }
+              );
+
               resolve(null);
             }
           });
