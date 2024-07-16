@@ -88,6 +88,10 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Intake application role for form service.',
         },
         {
+          role: FormServiceRoles.Applicant,
+          description: 'Applicant role for form service that allows a user to apply from the form app.',
+        },
+        {
           role: FormServiceRoles.Support,
           description: 'Support role for viewing and responding to form question topics.',
         },

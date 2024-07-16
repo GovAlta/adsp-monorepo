@@ -65,6 +65,7 @@ export const ServiceRoles = (): JSX.Element => {
   }, [dispatch]);
 
   useEffect(() => {
+    document.body.style.borderRight = '';
     document.body.style.overflow = 'unset';
   }, [newClientId]);
 
