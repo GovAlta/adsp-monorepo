@@ -37,6 +37,8 @@ import { QueueTaskService } from '../../task';
 import { CommentService } from '../comment';
 import { mapForm, mapFormDefinition } from '../mapper';
 
+const FORM_APPLICANT_SERVICE_ID = `urn:ads:platform:form-service:form-applicant`;
+
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
     id: entity.id,

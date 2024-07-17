@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
-
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import { Disposition, FormDefinition } from '@store/form/model';
 import { useValidators } from '@lib/validation/useValidators';
@@ -79,11 +78,45 @@ import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { hasSchemaErrors, parseDataSchema, parseUiSchema } from './schemaUtils';
 import { CustomLoader } from '@components/CustomLoader';
 import { getConfigurationDefinitions } from '@store/configuration/action';
-import { FETCH_REGISTER_DATA_ACTION } from '@store/configuration/action';
-
 import { FormFormItem } from '../styled-components';
+import { adspId } from '@lib/adspId';
 
 export const ContextProvider = ContextProviderFactory();
+
+const FORM_SERVICE_ID = adspId`urn:ads:platform:form-service`;
+const FORM_APPLICANT_ID = `form-applicant`;
+const FORM_APPLICANT_SERVICE_ID = `${FORM_SERVICE_ID.toString()}:${FORM_APPLICANT_ID}`;
+
+interface ClientElement {
+  roleNames: string[];
+  clientId: string;
+  //eslint-disable-next-line
+  currentElements: any;
+}
+
+const doesRoleExistForClientInKeyCloak = (clientId: string, roleName: string, clientElements: ClientElement[]) => {
+  const client = clientElements.find((client) => client.clientId === clientId);
+
+  if (client && client.roleNames.filter((clientRoleName) => clientRoleName === roleName).length > 0) {
+    return true;
+  }
+  return false;
+};
+
+const isRoleUpdated = (prevRoles: string[], nextRoles: string[], validateRole: string = null): boolean => {
+  const prevRolesCount = prevRoles.filter((role) => role === validateRole).length;
+  const nextRolesCount = nextRoles.filter((role) => role === validateRole).length;
+
+  if (prevRolesCount === 1 && nextRolesCount === 0) {
+    return false;
+  }
+
+  if (prevRolesCount === 0 && nextRolesCount === 1) {
+    return true;
+  }
+
+  return false;
+};
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = parseUiSchema<FormDefinition>(JSON.stringify(prev)).get();
@@ -370,9 +403,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   });
 
   const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
-  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
+  let elements: ClientElement[] = [{ roleNames: roleNames, clientId: '', currentElements: null }];
 
-  const clientElements =
+  const clientElements: ClientElement[] =
     Object.entries(keycloakClientRoles).length > 0 &&
     Object.entries(keycloakClientRoles)
       .filter(([clientId, config]) => {
@@ -794,6 +827,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         }
                       }
                       setCustomIndicator(true);
+
+                      if (
+                        !doesRoleExistForClientInKeyCloak(FORM_SERVICE_ID.toString(), FORM_APPLICANT_ID, elements) &&
+                        isRoleUpdated(
+                          initialDefinition.applicantRoles,
+                          definition.applicantRoles,
+                          FORM_APPLICANT_SERVICE_ID
+                        )
+                      ) {
+                        definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
+                      }
                       await dispatch(
                         updateFormDefinition({
                           ...definition,

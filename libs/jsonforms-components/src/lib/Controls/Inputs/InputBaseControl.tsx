@@ -36,7 +36,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
 
   let modifiedErrors = checkFieldValidity(props as ControlProps);
 
-  if (modifiedErrors === 'should be equal to one of the allowed values') {
+  if (modifiedErrors === 'must be equal to one of the allowed values') {
     modifiedErrors = '';
   }
 

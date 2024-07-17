@@ -46,7 +46,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
     return state?.calendarService?.calendars;
   });
 
-  const calendarNames = calendars ? Object.keys(calendars) : [];
+  const calendarNames = calendars ? Object.values(calendars).map((c) => c.displayName) : [];
   const title = isNew ? 'Add calendar' : 'Edit calendar';
 
   const { errors, validators } = useValidators(

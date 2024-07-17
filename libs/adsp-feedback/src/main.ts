@@ -540,7 +540,33 @@ class AdspFeedback implements AdspFeedbackApi {
               display: none;
             }
           }
+          .adsp-fb .tooltip-text {
+            visibility: hidden;
+            margin-left: 37px;
+            background-color: #666666;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 8px 15px;
+            margin-top: 53px;
+            position: absolute;
+            z-index: 1;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+          }
 
+          .adsp-fb .tooltip-text::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 45%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent #666666 transparent;
+          }
           .adsp-fb .adsp-fb-form-comment {
             display: flex;
             flex-direction: column;
@@ -666,32 +692,6 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: column;
             box-sizing: border-box;
             padding: 24px 24px;
-          }
-          .adsp-fb .tooltip-text {
-            visibility: hidden;
-            margin-left: 40px;
-            background-color: #666666;
-            color: #fff;
-            text-align: center;
-            border-radius: 5px;
-            padding: 8px 16px;
-            margin-top: 53px;
-            position: absolute;
-            z-index: 1;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-            white-space: nowrap;
-          }
-          .adsp-fb .tooltip-text::before {
-            content: '';
-            position: absolute;
-            top: -9px;
-            left: 40%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: transparent transparent #333 transparent;
           }
           .adsp-fb .rating-div {
             display: flex;
