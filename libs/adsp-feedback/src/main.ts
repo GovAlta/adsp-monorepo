@@ -1098,7 +1098,6 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="no"
                               value="No"
                               class="radio"
-                              @keypress=${this.handleRadioButtonKeyPress}
                               ${ref(this.radio2Ref)}
                             />
 
