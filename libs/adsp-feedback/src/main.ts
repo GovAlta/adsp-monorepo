@@ -191,6 +191,42 @@ class AdspFeedback implements AdspFeedbackApi {
       }
     }
   }
+
+  handleRadioKeyDown = (e: KeyboardEvent, targetId: string) => {
+    if (e.key === 'Enter') {
+      if (targetId === 'technicalIssueYes') {
+        if (this.radio1Ref.value) {
+          this.radio1Ref.value.focus();
+          this.radio1Ref.value.checked = true;
+          this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
+          this.technicalCommentRef.value?.focus();
+        }
+      }
+      if (targetId === 'technicalIssueNo') {
+        if (this.radio2Ref.value) {
+          this.radio2Ref.value.focus();
+          this.radio2Ref.value.checked = true;
+        }
+      }
+    } else if (e.key === 'ArrowRight') {
+      if (this.radio2Ref.value) {
+        if (this.radio2Ref.value.checked === false) {
+          this.radio2Ref.value.focus();
+          this.radio2Ref.value.checked = true;
+          this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
+        }
+      }
+    } else if (e.key === 'ArrowLeft') {
+      if (this.radio1Ref.value) {
+        if (this.radio1Ref.value.checked === false) {
+          this.radio1Ref.value.focus();
+          this.radio1Ref.value.checked = true;
+          this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
+        }
+      }
+    }
+  };
+
   private onDimChange(isDim: boolean) {
     if (isDim) {
       if (this.dimRef.value) {
@@ -202,6 +238,7 @@ class AdspFeedback implements AdspFeedbackApi {
       }
     }
   }
+
   private selectedRating: number = -1;
   private ratings = [
     {
@@ -444,6 +481,11 @@ class AdspFeedback implements AdspFeedbackApi {
             z-index: 1000; /* Ensure it overlays other content */
             visibility: hidden;
           }
+          img:focus-visible {
+            border-radius: 0.25rem;
+            border: 1px solid #feba35;
+            outline: #feba35 solid 1px;
+          }
 
           .adsp-fb {
             z-index: 100;
@@ -492,7 +534,6 @@ class AdspFeedback implements AdspFeedbackApi {
             overflow-y: auto;
             overflow-x: hidden;
           }
-
           .adsp-fb .adsp-fb-container-heading {
             display: flex;
             flex-direction: row;
@@ -644,6 +685,11 @@ class AdspFeedback implements AdspFeedbackApi {
             background: #0070c4;
             color: #ffffff;
           }
+          .adsp-fb button.adsp-fb-form-primary:focus-visible {
+            border-radius: 0.25rem;
+            border: 1px solid #feba35;
+            outline: #feba35 solid 1px;
+          }
 
           .adsp-fb button:hover {
             border-color: #004f84;
@@ -666,6 +712,11 @@ class AdspFeedback implements AdspFeedbackApi {
             background-color: #ffffff;
             color: #0070c4;
           }
+          .adsp-fb button.adsp-fb-form-secondary:focus-visible {
+            border-radius: 0.25rem;
+            border: 1px solid #feba35;
+            outline: #feba35 solid 1px;
+          }
 
           .adsp-fb button.adsp-fb-form-secondary:hover {
             border-color: #004f84;
@@ -676,7 +727,9 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb button.adsp-fb-form-secondary:active {
             border-color: #004f84;
             background-color: #f1f1f1;
-            outline: none;
+            border-radius: 0.25rem;
+            border: 1px solid #feba35;
+            outline: #feba35 solid 1px;
           }
 
           .adsp-fb .adsp-fb-message {
@@ -733,6 +786,11 @@ class AdspFeedback implements AdspFeedbackApi {
           .radio-span {
             display: flex;
             align-items: center;
+          }
+          .radio-span:focus-visible {
+            border-radius: 0.25rem;
+            border: 1px solid #feba35;
+            outline: #feba35 solid 1px;
           }
           .rating {
             cursor: pointer;
@@ -1012,8 +1070,16 @@ class AdspFeedback implements AdspFeedbackApi {
                       <div class="radio-container">
                         <label><b>Did you experience any technical issues?</b></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
-                          <div class="radio-span">
+                          <div
+                            id="technicalIssueYes"
+                            class="radio-span"
+                            tabindex="0"
+                            @keydown=${(e: KeyboardEvent) => {
+                              this.handleRadioKeyDown(e, 'technicalIssueYes');
+                            }}
+                          >
                             <input
+                              tabindex="0"
                               name="YesOrNo"
                               type="radio"
                               id="yes"
@@ -1024,13 +1090,15 @@ class AdspFeedback implements AdspFeedbackApi {
 
                             <label for="yes" class="radio-label"> Yes </label>
                           </div>
-                          <div class="radio-span">
+                          <div class="radio-span" id="technicalIssueNo">
                             <input
+                              tabindex="0"
                               name="YesOrNo"
                               type="radio"
                               id="no"
                               value="No"
                               class="radio"
+                              @keypress=${this.handleRadioButtonKeyPress}
                               ${ref(this.radio2Ref)}
                             />
 
