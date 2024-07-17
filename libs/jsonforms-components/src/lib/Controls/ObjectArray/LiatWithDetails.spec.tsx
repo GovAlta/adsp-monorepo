@@ -113,7 +113,8 @@ describe('Object List component', () => {
   });
   it('Can render the list with detail component and no label', async () => {
     const newMockProps = { ...baseMockProps };
-    delete newMockProps.label;
+    // @ts-expect-error not explicity defined
+    delete newMockProps?.label;
     render(<ListWithDetailControl {...newMockProps} />);
     const ObjectListWrapper = screen.getByTestId('jsonforms-object-list-wrapper');
     expect(ObjectListWrapper).toBeTruthy();
