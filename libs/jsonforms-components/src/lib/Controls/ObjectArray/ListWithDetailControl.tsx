@@ -290,13 +290,13 @@ const LeftTab = ({
 }: LeftRowProps & WithDeleteDialogSupport) => {
   return (
     <div key={childPath}>
-      {enabled ? (
-        <SideMenuItem
-          style={currentTab === rowIndex ? { background: '#EFF8FF' } : {}}
-          onClick={() => selectCurrentTab(rowIndex)}
-        >
-          <RowFlexMenu>
-            <TabName>{name}</TabName>
+      <SideMenuItem
+        style={currentTab === rowIndex ? { background: '#EFF8FF' } : {}}
+        onClick={() => selectCurrentTab(rowIndex)}
+      >
+        <RowFlexMenu>
+          <TabName>{name}</TabName>
+          {enabled ? (
             <Trash>
               <GoAIconButton
                 icon="trash"
@@ -304,9 +304,9 @@ const LeftTab = ({
                 onClick={() => openDeleteDialog(childPath, rowIndex, name)}
               ></GoAIconButton>
             </Trash>
-          </RowFlexMenu>
-        </SideMenuItem>
-      ) : null}
+          ) : null}
+        </RowFlexMenu>
+      </SideMenuItem>
     </div>
   );
 };
@@ -337,13 +337,15 @@ const ObjectArrayList = ({
   const isEmptyList = data === 0;
   const rightRef = useRef(null);
   const current = rightRef.current as HTMLElement | null;
-  const [rightHeight, setRightHeight] = useState<number | undefined>(0);
+  const minHeight = 300;
+  const [rightHeight, setRightHeight] = useState<number | undefined>(minHeight);
 
   const [currentTab, setCurrentTab] = useState(0);
 
   useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (rightHeight !== current?.offsetHeight) setRightHeight(current?.offsetHeight);
+    const resizeObserver = new ResizeObserver(() => {
+      if (rightHeight !== current?.offsetHeight && current?.offsetHeight)
+        setRightHeight(current?.offsetHeight > minHeight ? current?.offsetHeight : minHeight);
     });
 
     if (current) {
@@ -355,8 +357,9 @@ const ObjectArrayList = ({
         resizeObserver.unobserve(current);
       }
     };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current]);
+  }, [current, rightHeight, rightRef]);
   if (isEmptyList) {
     return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
   }
