@@ -501,8 +501,13 @@ class AdspFeedback implements AdspFeedbackApi {
             background-color: #004f84;
           }
 
-          .adsp-fb .adsp-fb-badge:active,
+          .adsp-fb .adsp-fb-badge:active {
+            outline: initial;
+            box-shadow: 0 0 0 3px #feba35;
+          }
+
           .adsp-fb .adsp-fb-badge:focus-visible {
+            outline: none;
             box-shadow: 0 0 0 3px #feba35;
           }
 
@@ -829,12 +834,17 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .radio:hover,
           .radio:focus-visible,
-          .radio:hover:active,
           .radio:focus:active {
             outline: initial;
             border: 1px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
           }
+
+          .radio:hover:active,
+          .radio:hover:focus {
+            box-shadow: 0 0 0 3px #feba35;
+          }
+
           .radio:checked {
             border: 7px solid #0070c4;
           }
