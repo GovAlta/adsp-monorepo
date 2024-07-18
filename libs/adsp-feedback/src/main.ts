@@ -1072,7 +1072,7 @@ class AdspFeedback implements AdspFeedbackApi {
                             />
                             <label for="yes" class="radio-label"> Yes </label>
                           </div>
-                          <div class="radio-span" id="technicalIssueNo">
+                          <div class="radio-span">
                             <input
                               tabindex="0"
                               name="YesOrNo"
@@ -1080,7 +1080,6 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="no"
                               value="No"
                               class="radio"
-                              Inp
                               ${ref(this.radio2Ref)}
                             />
 
