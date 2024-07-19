@@ -25,13 +25,14 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const width = uischema?.options?.componentProps?.width ?? '100%';
   const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoAInput
       type="number"
       error={errorsFormInput.length > 0}
-      width="100%"
+      width={width}
       disabled={!enabled}
       readonly={readOnly}
       value={InputValue}

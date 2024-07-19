@@ -23,6 +23,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const MinValue = clonedSchema.minimum ? clonedSchema.minimum : '';
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const width = uischema?.options?.componentProps?.width ?? '100%';
   const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
@@ -36,7 +37,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       step={StepValue}
       min={MinValue}
       max={MaxValue}
-      width="100%"
+      width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onKeyPress={(name: string, value: string, key: string) => {
