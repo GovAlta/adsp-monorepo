@@ -476,9 +476,9 @@ class AdspFeedback implements AdspFeedbackApi {
           .feedback-close-button:active,
           .feedback-close-button:focus {
             background-color: #f1f1f1;
-
             border-radius: 0.25rem;
           }
+
           .feedback-close-button:active {
             transform: translateY(2px);
           }
