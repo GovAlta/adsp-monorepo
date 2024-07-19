@@ -472,6 +472,17 @@ class AdspFeedback implements AdspFeedbackApi {
             outline: #feba35 solid 3px;
           }
 
+          .feedback-close-button:hover,
+          .feedback-close-button:active,
+          .feedback-close-button:focus {
+            background-color: #f1f1f1;
+            border-radius: 0.25rem;
+          }
+
+          .feedback-close-button:active {
+            transform: translateY(2px);
+          }
+
           .adsp-fb {
             z-index: 100;
             font-family: acumin-pro-semi-condensed, helvetica-neue, arial, sans-serif;
