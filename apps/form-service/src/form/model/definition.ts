@@ -18,6 +18,7 @@ export class FormDefinitionEntity implements FormDefinition {
   clerkRoles: string[];
   dispositionStates: Array<Disposition>;
   submissionRecords: boolean;
+  submissionPdfTemplate: string;
   supportTopic: boolean;
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
@@ -36,6 +37,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.clerkRoles = definition.clerkRoles || [];
     this.dispositionStates = definition.dispositionStates || [];
     this.submissionRecords = definition.submissionRecords || false;
+    this.submissionPdfTemplate = definition.submissionPdfTemplate || null;
     this.supportTopic = definition.supportTopic || false;
     this.queueTaskToProcess = definition.queueTaskToProcess;
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;

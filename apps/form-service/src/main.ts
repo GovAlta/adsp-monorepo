@@ -143,7 +143,10 @@ const initializeApp = async (): Promise<express.Application> => {
         } else {
           // For backwards compatibility, handle conversion of form definitions configured in a single document.
           return Object.entries(config).reduce(
-            (defs, [id, def]) => ({ ...defs, [id]: new FormDefinitionEntity(validationService, tenantId, def) }),
+            (defs, [id, def]) => ({
+              ...defs,
+              [id]: new FormDefinitionEntity(validationService, tenantId, def),
+            }),
             {} as Record<string, FormDefinitionEntity>
           );
         }
@@ -206,6 +209,7 @@ const initializeApp = async (): Promise<express.Application> => {
     fileService,
     commentService,
     queueTaskService,
+    directory,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));

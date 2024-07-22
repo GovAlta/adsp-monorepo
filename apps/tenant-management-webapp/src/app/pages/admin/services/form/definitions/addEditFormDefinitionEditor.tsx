@@ -130,8 +130,8 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.supportTopic) !== JSON.stringify(tempNext?.supportTopic) ||
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
     JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
+    JSON.stringify(tempPrev?.submissionPdfTemplate) !== JSON.stringify(tempNext?.submissionPdfTemplate) ||
     JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess);
-
   return isUpdated;
 };
 
@@ -668,6 +668,29 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
                           : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
                       }
+                    />
+                  </FlexRow>
+                  <FlexRow>
+                    <SubmissionRecordsBox>
+                      <GoACheckbox
+                        name="submission-records"
+                        key="submission-records"
+                        checked={definition.submissionPdfTemplate ? true : false}
+                        testId="submission-records"
+                        onChange={() => {
+                          const records = definition.submissionPdfTemplate ? null : 'submitted-form';
+                          setDefinition({ ...definition, submissionPdfTemplate: records });
+                        }}
+                        text="Create PDF on submit"
+                      />
+                    </SubmissionRecordsBox>
+                    <InfoCircleWithInlineHelp
+                      text={
+                        definition.submissionPdfTemplate
+                          ? 'Forms of this type will generate a PDF on submission '
+                          : 'Forms of this type will not generate a PDF on submission'
+                      }
+                      width="180"
                     />
                   </FlexRow>
 
