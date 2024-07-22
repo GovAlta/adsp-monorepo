@@ -124,6 +124,7 @@ describe('notification', () => {
         clerkRoles: [],
         dataSchema: null,
         submissionRecords: false,
+        submissionPdfTemplate: '',
         supportTopic: false,
         queueTaskToProcess: null,
       });

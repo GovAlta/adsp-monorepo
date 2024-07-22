@@ -26,6 +26,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      submissionPdfTemplate: '',
       supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
@@ -45,6 +46,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: null,
       dataSchema: null,
       submissionRecords: false,
+      submissionPdfTemplate: '',
       supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
@@ -63,6 +65,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      submissionPdfTemplate: '',
       supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
@@ -122,6 +125,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      submissionPdfTemplate: '',
       supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
@@ -148,6 +152,7 @@ describe('FormDefinitionEntity', () => {
         clerkRoles: [],
         dataSchema: null,
         submissionRecords: false,
+        submissionPdfTemplate: '',
         supportTopic: false,
         queueTaskToProcess: {} as QueueTaskToProcess,
       });
@@ -191,6 +196,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: { type: 'object' },
       submissionRecords: false,
+      submissionPdfTemplate: '',
       supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
@@ -248,6 +254,7 @@ describe('FormDefinitionEntity', () => {
       clerkRoles: [],
       dataSchema: null,
       submissionRecords: false,
+      submissionPdfTemplate: '',
       supportTopic: false,
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
