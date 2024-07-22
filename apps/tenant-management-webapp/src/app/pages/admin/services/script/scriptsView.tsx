@@ -88,6 +88,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setOpenAddScript(false);
     setShowScriptEditForm(false);
     validators.clear();
+    document.body.style.overflow = 'unset';
   };
 
   const openEditorOnAdd = (script) => {
