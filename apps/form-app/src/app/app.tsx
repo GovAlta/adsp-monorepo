@@ -4,7 +4,6 @@ import { AuthCallback } from './components/AuthCallback';
 import { FormTenant } from './containers/FormTenant';
 import { Landing } from './components/Landing';
 import { Login } from './components/Login';
-
 import styles from './app.module.scss';
 
 export function App() {
