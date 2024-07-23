@@ -36,6 +36,7 @@
   },
   "private": true,
   "dependencies": {
+    "@apidevtools/json-schema-ref-parser": "^11.6.4",
     "@azure/storage-blob": "^12.9.0",
     "@emotion/react": "11.11.1",
     "@emotion/styled": "11.11.0",
@@ -50,6 +51,8 @@
     "async-es": "^3.2.0",
     "axios": "1.6.7",
     "botbuilder": "^4.15.0",
+    "browserify-fs": "^1.0.0",
+    "buffer": "^6.0.3",
     "clamscan": "^2.0.1",
     "class-transformer": "^0.3.1",
     "class-validator": "^0.14.0",

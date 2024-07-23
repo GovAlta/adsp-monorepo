@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 const { composePlugins, withNx } = require('@nx/webpack');
 const { withReact } = require('@nx/react');
 
@@ -28,6 +29,19 @@ module.exports = composePlugins(withNx(), withReact(), (config, { options, conte
       },
     ];
   }
+
+  // Add fallback for 'path' module
+  config.resolve.fallback = {
+    ...(config.resolve.fallback || {}),
+    path: require.resolve('path-browserify'),
+    fs: require.resolve('browserify-fs'),
+  };
+
+  config.plugins.push(
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+    })
+  );
 
   return require('./webpack.config.old.js')(config, context);
 });

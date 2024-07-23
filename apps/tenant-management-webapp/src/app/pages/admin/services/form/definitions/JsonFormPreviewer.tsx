@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ajv } from '@lib/validation/checkInput';
+import $RefParser from '@apidevtools/json-schema-ref-parser';
 import addFormats from 'ajv-formats';
 import { JsonForms } from '@jsonforms/react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -40,6 +41,25 @@ function getRefs(schema) {
   findRefs(schema);
   return refs;
 }
+
+// const yourRemoteSchemaResolver = {
+//   order: 1,
+//   canRead: function (file) {
+//     return file.url.indexOf('yourRemoteSchemaIdentifier') !== -1;
+//   },
+//   read: function () {
+//     return JSON.stringify(yourSchemaObject);
+//   },
+// };
+
+// const refParserOptions = {
+//   dereference: {
+//     circular: false,
+//   },
+//   resolve: {
+//     foo: yourRemoteSchemaResolver,
+//   },
+// };
 
 export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element => {
   const { schema, uischema, data, onChange } = props;
@@ -84,6 +104,20 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
     }
   }, [display]);
 
+  // useEffect(() => {
+  //   //  $RefParser.dereference(lastGoodSchema, {}).then((res) => setLastGoodSchema(res.$schema as JsonSchema));
+
+  //   try {
+  //     $RefParser.dereference(lastGoodSchema);
+
+  //     // note - by default, mySchema is modified in place, and the returned value is a reference to the same object
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // }, [lastGoodSchema]);
+
+  console.log(JSON.stringify(lastGoodSchema) + '<--lastGoodSchema');
+
   useEffect(() => {
     //ignore non-valid $refs for now - you will need to generate refs with them once a form is submitted
 
@@ -107,12 +141,17 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
 
     if (!parsedDataSchema.hasError()) {
       setLastGoodSchema(parsedDataSchema.get());
+      // $RefParser.dereference(parsedDataSchema.get(), {}).then((res) => {
+      //   console.log(JSON.stringify(res) + '<res');
+      //   setLastGoodSchema(res.$schema as JsonSchema);
+      // });
       if (dataSchemaError) {
         setDataSchemaError(undefined);
       }
     } else {
       setDataSchemaError(parsedDataSchema.error());
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schema]);
 

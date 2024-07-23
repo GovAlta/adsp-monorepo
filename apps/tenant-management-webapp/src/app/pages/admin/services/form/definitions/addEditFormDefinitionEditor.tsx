@@ -12,6 +12,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
 import { AnySchema } from 'ajv';
+import $RefParser from '@apidevtools/json-schema-ref-parser';
 
 import {
   TextLoadingIndicator,
@@ -182,6 +183,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(definition?.dataSchema || {}, null, 2));
+  const [tempDataSchemaNew, setTempDataSchemaNew] = useState<string>('{}');
   // const [tempRef, setTempRef] = useState<string>(JSON.stringify(definition? || {}, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
@@ -307,6 +309,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       setCustomIndicator(false);
     }
   }, [formDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (tempDataSchema !== '{}') {
+      $RefParser.dereference(JSON.parse(tempDataSchema)).then((res) => {
+        setTempDataSchemaNew(JSON.stringify(res));
+      });
+    }
+  }, [tempDataSchema]);
 
   useEffect(() => {
     try {
@@ -879,7 +889,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       <GoAFormItem error={error} label="">
                         <JSONFormPreviewer
                           uischema={tempUiSchema}
-                          schema={tempDataSchema}
+                          schema={tempDataSchemaNew}
                           onChange={({ data }) => {
                             setData(data);
                           }}
