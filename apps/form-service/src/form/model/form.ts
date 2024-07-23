@@ -27,6 +27,7 @@ export class FormEntity implements Form {
   submitted: Date;
   dispositionStates: Disposition[];
   submissionRecords: boolean;
+  submissionPdfTemplate: string;
   supportTopic: boolean;
   lastAccessed: Date;
   status: FormStatus;
@@ -81,6 +82,7 @@ export class FormEntity implements Form {
     this.locked = form.locked;
     this.dispositionStates = form?.dispositionStates || [];
     this.submissionRecords = definition?.submissionRecords || false;
+    this.submissionPdfTemplate = definition?.submissionPdfTemplate || '';
     this.supportTopic = definition?.supportTopic || false;
     this.submitted = form.submitted;
     this.lastAccessed = form.lastAccessed;

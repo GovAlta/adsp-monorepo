@@ -88,7 +88,7 @@ export function generatePdf(
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
-      const { templateId, fileType, filename, recordId, data, formId } = req.body;
+      const { templateId, fileType, filename, recordId, data } = req.body;
       const template: PdfTemplateEntity = req[TEMPLATE];
       logger.info(`Start to process the template: ${templateId}`);
 

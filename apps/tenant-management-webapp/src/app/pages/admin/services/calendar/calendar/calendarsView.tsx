@@ -41,6 +41,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   const reset = () => {
     setOpenEditCalendar(false);
     setSelectedCalendarName('');
+    document.body.style.overflow = 'unset';
   };
 
   const onEdit = (calendar) => {

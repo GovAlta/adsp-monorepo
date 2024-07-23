@@ -11,6 +11,7 @@ export interface FormDefinition {
   uiSchema?: Record<string, unknown>;
   dispositionStates: Array<Disposition>;
   submissionRecords: boolean;
+  submissionPdfTemplate: string;
   queueTaskToProcess: QueueTaskToProcess;
   supportTopic: boolean;
 }
@@ -39,6 +40,7 @@ export const defaultFormDefinition: FormDefinition = {
   anonymousApply: false,
   dispositionStates: [],
   submissionRecords: false,
+  submissionPdfTemplate: '',
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
 };

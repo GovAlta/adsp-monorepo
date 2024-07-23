@@ -91,11 +91,11 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
         getConfigurationDefinitionsSuccess({
           tenant: {
             ...tenant.data,
-            latest: { ...tenant.data?.latest, configuration: filterNamespaceConfiguration(tenant.data?.latest?.configuration) },
+            latest: { ...tenant.data?.latest, configuration: tenant.data?.latest?.configuration },
           },
           core: {
             ...core.data,
-            latest: { ...core.data?.latest, configuration: filterNamespaceConfiguration(core.data?.latest?.configuration) },
+            latest: { ...core.data?.latest, configuration: core.data?.latest?.configuration },
           },
         })
       );
