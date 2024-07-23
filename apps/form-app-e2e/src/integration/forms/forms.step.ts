@@ -192,21 +192,35 @@ Then(
         });
     } else {
       formsObj
-        .formSummaryPageItems(sectionName)
+        .formSummaryPageControlValue(sectionName)
         .then((items) => {
           for (let i = 0; i < items.length; i++) {
             cy.log(items[i].outerText);
             switch (requiredOrNot) {
               case 'required':
-                if (items[i].outerText == label + ' *: ' + value) {
-                  isFound = true;
-                  cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
+                if (items[i].outerText == value) {
+                  formsObj.formSummaryPageControlLabel(sectionName).then((labels) => {
+                    if (
+                      labels[i].getAttribute('requirement') == 'required' &&
+                      labels[i].getAttribute('label') == label
+                    ) {
+                      isFound = true;
+                      cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
+                    }
+                  });
                 }
                 break;
               case 'not required':
-                if (items[i].outerText == label + ': ' + value) {
-                  isFound = true;
-                  cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
+                if (items[i].outerText == value) {
+                  formsObj.formSummaryPageControlLabel(sectionName).then((labels) => {
+                    if (
+                      labels[i].getAttribute('requirement') != 'required' &&
+                      labels[i].getAttribute('label') == label
+                    ) {
+                      isFound = true;
+                      cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
+                    }
+                  });
                 }
                 break;
               default:
