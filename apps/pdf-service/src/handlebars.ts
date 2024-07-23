@@ -205,6 +205,10 @@ class HandlebarsTemplateService implements TemplateService {
       return element.elements && element.elements.length > 0;
     });
 
+    handlebars.registerHelper('eq', function (a, b) {
+      return a === b;
+    });
+
     return handlebars.compile(styledTemplate, { noEscape: true });
   }
 }
