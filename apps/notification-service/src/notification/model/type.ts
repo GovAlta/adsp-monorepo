@@ -181,6 +181,8 @@ export class NotificationTypeEntity implements NotificationType {
         event,
         subscriber,
         managementUrl: subscriberAppUrl ? new URL(`/${subscriber.id}`, subscriberAppUrl).href : null,
+        title: eventNotification.templates[Channel.email].title ?? '',
+        subtitle: eventNotification.templates[Channel.email].subtitle ?? '',
       };
 
       return {

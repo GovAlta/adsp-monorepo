@@ -15,14 +15,15 @@
         "webpackConfig": "apps/form-service/webpack.config.js",
         "target": "node",
         "compiler": "tsc",
-        "isolatedConfig": true,
-        "babelUpwardRootMode": true
+        "babelUpwardRootMode": true,
+        "sourceMap": true
       },
       "configurations": {
         "production": {
           "optimization": true,
           "extractLicenses": true,
           "inspect": false,
+          "sourceMap": false,
           "fileReplacements": []
         }
       }

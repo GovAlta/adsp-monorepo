@@ -178,8 +178,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock,
-        serviceDirectoryMock
+        loggerMock
       );
       expect(handler).toBeTruthy();
     });
@@ -216,8 +215,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock,
-        serviceDirectoryMock
+        loggerMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
@@ -281,8 +279,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock,
-        serviceDirectoryMock
+        loggerMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
@@ -336,8 +333,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock,
-        serviceDirectoryMock
+        loggerMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -373,8 +369,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock,
-        serviceDirectoryMock
+        loggerMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

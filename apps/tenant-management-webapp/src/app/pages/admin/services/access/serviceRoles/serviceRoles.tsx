@@ -9,6 +9,7 @@ import { ServiceRoleListContainer } from '../styled-component';
 import { PageIndicator } from '@components/Indicator';
 import { ConfirmationModal } from './addRoleModal';
 import { ServiceRoleSyncStatus } from '@store/access/models';
+import { sortedIndex } from 'lodash';
 
 export const selectServiceTenantRoles = createSelector(
   (state: RootState) => state.serviceRoles,
@@ -64,6 +65,23 @@ export const ServiceRoles = (): JSX.Element => {
     dispatch(fetchKeycloakServiceRoles(true));
   }, [dispatch]);
 
+  useEffect(() => {
+    document.body.style.borderRight = '';
+    document.body.style.overflow = 'unset';
+  }, [newClientId]);
+
+  const sortObjectByKeys = (obj) => {
+    const sortedKeys = Object.keys(obj).sort();
+    const sortedObj = {};
+    sortedKeys.forEach((key) => {
+      sortedObj[key] = obj[key];
+    });
+    return sortedObj;
+  };
+
+  const sortedTenantRoles = sortObjectByKeys(tenantRoles);
+  const sortedCoreRoles = sortObjectByKeys(coreRoles);
+
   return (
     <div>
       {newClientId && (
@@ -79,10 +97,10 @@ export const ServiceRoles = (): JSX.Element => {
 
       {!indicator.show && tenantRoles !== null && (
         <div>
-          {Object.entries(tenantRoles).length > 0 &&
-            Object.entries(tenantRoles)
+          {Object.entries(sortedTenantRoles).length > 0 &&
+            Object.entries(sortedTenantRoles)
               .filter(([clientId, config]) => {
-                const roles = (config as ConfigServiceRole).roles;
+                const roles = (config as ConfigServiceRole).roles.sort((a, b) => a.role.localeCompare(b.role));
                 return roles.length > 0;
               })
               .map(([clientId, config]): JSX.Element => {
@@ -112,10 +130,10 @@ export const ServiceRoles = (): JSX.Element => {
                 );
               })}
           <h2>Core service roles:</h2>
-          {Object.entries(coreRoles).length > 0 &&
-            Object.entries(coreRoles)
+          {Object.entries(sortedCoreRoles).length > 0 &&
+            Object.entries(sortedCoreRoles)
               .filter(([clientId, config]) => {
-                const roles = (config as ConfigServiceRole).roles;
+                const roles = (config as ConfigServiceRole).roles.sort((a, b) => a.role.localeCompare(b.role));
                 return roles.length > 0;
               })
               .map(([clientId, config]): JSX.Element => {

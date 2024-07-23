@@ -23,13 +23,15 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
   const nameSpaces: Record<string, string[]> = useMemo(() => {
     return {};
   }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
+  const isCore = !Object.keys(definitions)[0].includes(':');
 
   // to ensure it dosent re-calculate this value if value dosent change
   const memoizedReducedConfiguration = useMemo(() => {
     return Object.keys(definitions).reduce((obj, key) => {
       obj[key] = definitions[key];
-      const nameSpace = key.split(':')[0];
-      const name = key.split(':')[1];
+      const parts = key.split(':');
+      const nameSpace = parts[0];
+      const name = parts.length > 1 ? parts[1] : parts[0];
       if (nameSpaces[nameSpace]) {
         nameSpaces[nameSpace].push(name);
       } else {
@@ -65,11 +67,14 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                 </thead>
                 <tbody>
                   {sortedNamespaces[nameSpace].map((configName) => {
-                    const sortedConfig = memoizedReducedConfiguration[`${nameSpace}:${configName}`];
+                    const sortedConfig =
+                      memoizedReducedConfiguration[`${nameSpace}:${configName}`] ||
+                      memoizedReducedConfiguration[`${configName}`];
                     return (
                       <ConfigurationDefinitionItemComponent
                         key={`${configName}-${nameSpace}`}
                         tenantName={tenantName}
+                        isCore={isCore}
                         isTenantSpecificConfig={isTenantSpecificConfig}
                         configName={configName}
                         nameSpace={nameSpace}
@@ -80,7 +85,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                           onEdit(configurationDefinition);
                         }}
                         description={sortedConfig?.description}
-                        anonymousRead={sortedConfig.anonymousRead}
+                        anonymousRead={sortedConfig?.anonymousRead}
                         configSchema={sortedConfig?.configurationSchema}
                       />
                     );

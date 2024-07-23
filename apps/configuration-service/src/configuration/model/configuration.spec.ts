@@ -151,24 +151,6 @@ describe('ConfigurationEntity', () => {
       expect(result).toBeFalsy();
     });
 
-    it('can return true for anonymousRead without role', () => {
-      const revisedDefinition: ConfigurationDefinition = { ...definition, anonymousRead: true };
-
-      const entity = new ConfigurationEntity(
-        namespace,
-        name,
-        loggerMock,
-        repositoryMock,
-        activeRevisionMock,
-        validationMock,
-        null,
-        null,
-        revisedDefinition
-      );
-      const result = entity.canAccess({ isCore: true, roles: [] } as User);
-      expect(result).toBeTruthy();
-    });
-
     it('can return true for core service user accessing core context', () => {
       const entity = new ConfigurationEntity(
         namespace,

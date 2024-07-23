@@ -34,7 +34,8 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   useEffect(() => {}, [roles]);
   useEffect(() => {
     setCalendar(initialValue);
-  }, [calendarName, initialValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -45,7 +46,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
     return state?.calendarService?.calendars;
   });
 
-  const calendarNames = calendars ? Object.keys(calendars) : [];
+  const calendarNames = calendars ? Object.values(calendars).map((c) => c.displayName) : [];
   const title = isNew ? 'Add calendar' : 'Edit calendar';
 
   const { errors, validators } = useValidators(
@@ -172,8 +173,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
           aria-label="description"
           width="100%"
           // eslint-disable-next-line
-          onChange={() => {}}
-          onKeyPress={(name, value) => {
+          onChange={(name, value) => {
             validators.remove('description');
             validators['description'].check(value);
             setCalendar({ ...calendar, description: value });

@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default {
   displayName: 'notification-service',
-  preset: '../../jest.preset.js',
+  preset: '../../jest-cover.preset.js',
   globals: {},
   coverageDirectory: '../../coverage/apps/notification-service',
   testEnvironment: 'node',

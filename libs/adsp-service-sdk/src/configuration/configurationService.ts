@@ -101,7 +101,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     useActive?: boolean
   ): Promise<C> {
     this.logger.debug(
-      `Retrieving tenant '${tenantId?.toString() || 'core'}' configuration for ${namespace}${name}...'`,
+      `Retrieving (${tenantId?.toString() || 'core'}) configuration for ${namespace}${name}...'`,
       {
         ...this.LOG_CONTEXT,
         tenant: tenantId?.toString(),
@@ -139,13 +139,15 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       if (config) {
         this.#configuration.set(this.getCacheKey(namespace, name, tenantId), config);
         this.logger.info(
-          `Retrieved and cached '${tenantId?.toString() || 'core'}' configuration for ${namespace}:${name}.`,
+          `Retrieved and cached (${tenantId?.toString() || 'core'}) configuration for ${namespace}:${name}.`,
           {
             ...this.LOG_CONTEXT,
             tenant: tenantId?.toString(),
           }
         );
       } else {
+        // Cache a null to prevent API request every time.
+        this.#configuration.set(this.getCacheKey(namespace, name, tenantId), null);
         this.logger.info(`Retrieved configuration for ${namespace}:${name} and received no value.`, {
           ...this.LOG_CONTEXT,
           tenant: tenantId?.toString(),
@@ -162,22 +164,36 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     }
   }
 
+  private async getConfigurationFromCacheOrApi<C>(
+    namespace: string,
+    name: string,
+    token: string,
+    tenantId?: AdspId,
+    useActive = false
+  ) {
+    let configuration = this.#configuration.get<C>(this.getCacheKey(namespace, name, tenantId));
+    if (configuration === undefined) {
+      configuration = (await this.retrieveConfiguration<C>(namespace, name, token, tenantId, useActive)) || null;
+    } else {
+      this.logger.debug(`Configuration (${tenantId?.toString() || 'core'}) ${namespace}:${name} retrieved from cache.`, {
+        ...this.LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
+    }
+
+    return configuration;
+  }
+
   getConfiguration = async <C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<R> => {
     const { namespace, service: name } = serviceId;
     let tenantConfiguration = null;
     if (tenantId) {
       assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
 
-      tenantConfiguration =
-        this.#configuration.get<C>(this.getCacheKey(namespace, name, tenantId)) ||
-        (await this.retrieveConfiguration<C>(namespace, name, token, tenantId)) ||
-        null;
+      tenantConfiguration = await this.getConfigurationFromCacheOrApi(namespace, name, token, tenantId);
     }
 
-    const coreConfiguration =
-      this.#configuration.get<C>(this.getCacheKey(namespace, name)) ||
-      (await this.retrieveConfiguration<C>(namespace, name, token)) ||
-      null;
+    const coreConfiguration = await this.getConfigurationFromCacheOrApi(namespace, name, token);
 
     return this.#combine(tenantConfiguration, coreConfiguration, tenantId) as R;
   };
@@ -201,16 +217,10 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     if (tenantId) {
       assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
 
-      tenantConfiguration =
-        this.#configuration.get<C>(this.getCacheKey(namespace, name, tenantId)) ||
-        (await this.retrieveConfiguration<C>(namespace, name, token, tenantId, true)) ||
-        null;
+      tenantConfiguration = await this.getConfigurationFromCacheOrApi(namespace, name, token, tenantId, true);
     }
 
-    const coreConfiguration =
-      this.#configuration.get<C>(this.getCacheKey(namespace, name)) ||
-      (await this.retrieveConfiguration<C>(namespace, name, token, null, true)) ||
-      null;
+    const coreConfiguration = await this.getConfigurationFromCacheOrApi(namespace, name, token, null, true);
 
     return this.#combine(tenantConfiguration, coreConfiguration, tenantId) as R;
   };

@@ -22,6 +22,7 @@ describe('FormSubmission', () => {
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     submissionRecords: true,
+    submissionPdfTemplate: '',
     supportTopic: true,
     clerkRoles: [],
     dataSchema: null,

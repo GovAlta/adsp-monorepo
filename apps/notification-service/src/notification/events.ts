@@ -127,7 +127,7 @@ export const NotificationSendFailedDefinition: DomainEventDefinition = {
   },
 };
 
-function mapNotification(notification: Omit<Notification, 'tenantId' | 'correlationId' | 'context'>) {
+export function mapNotification(notification: Omit<Notification, 'tenantId' | 'correlationId' | 'context'>) {
   return {
     type: notification.type,
     event: notification.event,

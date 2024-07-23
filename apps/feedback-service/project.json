@@ -28,6 +28,7 @@
           "optimization": true,
           "extractLicenses": true,
           "inspect": false,
+          "sourceMap": false,
           "fileReplacements": []
         }
       }

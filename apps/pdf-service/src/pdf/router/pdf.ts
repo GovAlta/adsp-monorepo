@@ -16,8 +16,6 @@ import { PdfJobRepository } from '../repository';
 import { ServiceRoles } from '../roles';
 import { FileService, PdfJob } from '../types';
 import { ServiceDirectory } from '@abgov/adsp-service-sdk';
-import { adspId } from '@abgov/adsp-service-sdk';
-import axios from 'axios';
 
 export interface RouterProps {
   serviceId: AdspId;
@@ -84,14 +82,13 @@ export function generatePdf(
   eventService: EventService,
   fileService: FileService,
   queueService: WorkQueueService<PdfServiceWorkItem>,
-  logger: Logger,
-  directory: ServiceDirectory
+  logger: Logger
 ): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
-      const { templateId, fileType, filename, recordId, data, formId } = req.body;
+      const { templateId, fileType, filename, recordId, data } = req.body;
       const template: PdfTemplateEntity = req[TEMPLATE];
       logger.info(`Start to process the template: ${templateId}`);
 
@@ -106,31 +103,6 @@ export function generatePdf(
         }
       }
 
-      if (formId) {
-        const formServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:form-service`);
-        const token = user.token.bearer;
-
-        const {
-          data: { results },
-        } = await axios.get(new URL(`/form/v1/forms`, formServiceUrl).href, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            criteria: JSON.stringify({
-              definitionIdEquals: formId,
-            }),
-          },
-        });
-
-        let formData = {} as Record<string, string>;
-        if (results?.length > 0) {
-          formData = await axios.get(new URL(`/form/v1/forms/${results[0].id}/data`, formServiceUrl).href, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-        }
-
-        data.formId = formId;
-        data.formData = formData.data;
-      }
 
       const job = await repository.create(tenantId);
       logger.info(`Successfully created the job ${job.id}.`);
@@ -191,7 +163,6 @@ export function createPdfRouter({
   fileService,
   queueService,
   logger,
-  directory,
 }: RouterProps): Router {
   const router = Router();
 
@@ -214,7 +185,7 @@ export function createPdfRouter({
       body('formId').optional().isString()
     ),
     getTemplate('body'),
-    generatePdf(serviceId, repository, eventService, fileService, queueService, logger, directory)
+    generatePdf(serviceId, repository, eventService, fileService, queueService, logger)
   );
   router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getGeneratedFile(serviceId, repository));
 

@@ -18,6 +18,7 @@ export class FormDefinitionEntity implements FormDefinition {
   clerkRoles: string[];
   dispositionStates: Array<Disposition>;
   submissionRecords: boolean;
+  submissionPdfTemplate: string;
   supportTopic: boolean;
   formDraftUrlTemplate: string;
   dataSchema: Record<string, unknown>;
@@ -36,13 +37,14 @@ export class FormDefinitionEntity implements FormDefinition {
     this.clerkRoles = definition.clerkRoles || [];
     this.dispositionStates = definition.dispositionStates || [];
     this.submissionRecords = definition.submissionRecords || false;
+    this.submissionPdfTemplate = definition.submissionPdfTemplate || null;
     this.supportTopic = definition.supportTopic || false;
     this.queueTaskToProcess = definition.queueTaskToProcess;
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
     this.dataSchema = definition.dataSchema || {};
     this.uiSchema = definition.uiSchema || {};
-    this.validationService.setSchema(this.id, this.dataSchema);
+    this.validationService.setSchema(`${this.tenantId.resource}:${this.id}`, this.dataSchema);
   }
 
   public canAccessDefinition(user: User): boolean {
@@ -72,7 +74,7 @@ export class FormDefinitionEntity implements FormDefinition {
   }
 
   public validateData(context: string, data: Record<string, unknown>) {
-    return this.validationService.validate(context, this.id, data);
+    return this.validationService.validate(context, `${this.tenantId.resource}:${this.id}`, data);
   }
 
   public async createForm(

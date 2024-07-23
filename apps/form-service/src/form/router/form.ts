@@ -1,13 +1,15 @@
 import {
   AdspId,
+  adspId,
   DomainEvent,
   EventService,
   isAllowedUser,
   startBenchmark,
   UnauthorizedUserError,
+  ServiceDirectory,
 } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { RequestHandler, Router } from 'express';
+import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, param, query } from 'express-validator';
 import { NotificationService } from '../../notification';
 import {
@@ -36,6 +38,7 @@ import validator from 'validator';
 import { QueueTaskService } from '../../task';
 import { CommentService } from '../comment';
 import { mapForm, mapFormDefinition } from '../mapper';
+import axios from 'axios';
 
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
@@ -43,6 +46,33 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
     data: entity.data,
     files: Object.entries(entity.files || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
   };
+}
+
+async function GeneratePdf(form: FormEntity, directory: ServiceDirectory, recordId: string, token: string) {
+  const config = {
+    id: form.definition?.id,
+    name: form.definition?.name,
+    dataSchema: form.definition?.dataSchema,
+    uiSchema: form.definition?.uiSchema,
+  };
+
+  const formDefinitions = {
+    content: { config, data: form.data },
+  };
+
+  const pdfGenerateBody = {
+    operation: 'generate',
+    templateId: form.submissionPdfTemplate,
+    data: formDefinitions,
+    filename: `${form.submissionPdfTemplate}-${form.definition?.id}.pdf`,
+    recordId: recordId,
+  };
+
+  const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:pdf-service`);
+  const configUrl = new URL(`/pdf/v1/jobs`, baseUrl);
+  await axios.post(configUrl.href, pdfGenerateBody, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntity): FormSubmission & { urn: string } {
@@ -83,19 +113,30 @@ export const getFormDefinitions: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const getFormDefinition: RequestHandler = async (req, res, next) => {
-  try {
-    const { definitionId } = req.params;
-    const user = req.user;
+async function getDefinitionFromConfiguration(req: Request, definitionId: string): Promise<FormDefinitionEntity> {
+  let [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId);
 
+  // TODO: Remove after configuration is transitioned to form-service namespace.
+  if (!definition) {
     const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
 
-    const definition =
+    definition =
       configuration[Object.keys(configuration).find((key) => key.toLowerCase() === definitionId.toLowerCase())] ?? null;
+  }
 
-    if (!definition) {
-      throw new NotFoundError('form definition', definitionId);
-    }
+  if (!definition) {
+    throw new NotFoundError('form definition', definitionId);
+  }
+
+  return definition;
+}
+
+export const getFormDefinition: RequestHandler = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const { definitionId } = req.params;
+
+    const definition = await getDefinitionFromConfiguration(req, definitionId);
 
     if (!definition.canAccessDefinition(user)) {
       throw new UnauthorizedUserError('access definition', user);
@@ -154,10 +195,8 @@ export function findFormSubmissions(
       const { criteria: criteriaValue } = req.query;
       const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
-      const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
       const formEntity: FormEntity = await formRepository.get(tenantId, formId);
-
-      const definition = formEntity?.definition?.id ? configuration[formEntity.definition.id] : null;
+      const definition = formEntity?.definition;
 
       if (!isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...(definition?.assessorRoles || [])])) {
         throw new UnauthorizedUserError('find form submissions', user);
@@ -194,14 +233,7 @@ export function createForm(
       const user = req.user;
       const { definitionId, applicant: applicantInfo } = req.body;
 
-      const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-      const definition =
-        configuration[Object.keys(configuration).find((key) => key.toLowerCase() === definitionId.toLowerCase())] ??
-        null;
-      if (!definition) {
-        throw new NotFoundError('form definition', definitionId);
-      }
-
+      const definition = await getDefinitionFromConfiguration(req, definitionId);
       const form = await definition.createForm(user, repository, notificationService, applicantInfo);
 
       end();
@@ -345,15 +377,19 @@ export function formOperation(
   eventService: EventService,
   notificationService: NotificationService,
   queueTaskService: QueueTaskService,
-  submissionRepository: FormSubmissionRepository
+  submissionRepository: FormSubmissionRepository,
+  directory: ServiceDirectory
 ): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
+
       const form: FormEntity = req[FORM];
       const request: FormOperations = req.body;
+
+      const token = user?.token?.bearer;
 
       let result: FormEntity = null;
       let event: DomainEvent = null;
@@ -369,9 +405,15 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          const [submittedForm, _submission] = await form.submit(user, queueTaskService, submissionRepository);
+          const [submittedForm, submission] = await form.submit(user, queueTaskService, submissionRepository);
           result = submittedForm;
-          event = formSubmitted(apiId, user, result, _submission);
+          const recordId = submission?.id || submittedForm.id;
+
+          event = formSubmitted(apiId, user, result, submission);
+          if (form.submissionPdfTemplate.length > 0) {
+            GeneratePdf(form, directory, recordId, token);
+          }
+
           break;
         }
         case SET_TO_DRAFT_FORM_OPERATION: {
@@ -456,6 +498,7 @@ interface FormRouterProps {
   fileService: FileService;
   commentService: CommentService;
   submissionRepository: FormSubmissionRepository;
+  directory: ServiceDirectory;
 }
 
 export function createFormRouter({
@@ -467,6 +510,7 @@ export function createFormRouter({
   fileService,
   commentService,
   submissionRepository,
+  directory,
 }: FormRouterProps): Router {
   const router = Router();
 
@@ -546,7 +590,7 @@ export function createFormRouter({
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService, queueTaskService, submissionRepository)
+    formOperation(apiId, eventService, notificationService, queueTaskService, submissionRepository, directory)
   );
   router.delete(
     '/forms/:formId',

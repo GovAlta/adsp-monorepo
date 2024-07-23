@@ -5,7 +5,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -70,6 +70,17 @@ const initializeApp = async (): Promise<express.Application> => {
         // Configuration service registers against itself and Keycloak doesn't include aud in that case.
         ignoreServiceAud: true,
         values: [ServiceMetricsValueDefinition],
+        serviceConfigurations: [
+          {
+            serviceId: adspId`urn:ads:platform:cache-service`,
+            configuration: {
+              targets: {
+                [`${serviceId}`]: { ttl: 15 * 60 },
+                [`${serviceId}:v2`]: { ttl: 15 * 60 },
+              },
+            },
+          },
+        ],
       },
       { logger }
     );
@@ -92,9 +103,6 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(
     '/configuration',
     metricsHandler,
-    // Adding the anonymous strategy at this level, but in the individual api end point
-    // in the router we are more fine grained in specifying which end point should include/allow
-    // the anonymous strategy.
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler
   );

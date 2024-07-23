@@ -19,11 +19,12 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const width = uischema?.options?.componentProps?.width ?? '100%';
 
   return (
     <GoAInputDateTime
       error={checkFieldValidity(props as ControlProps).length > 0}
-      width="100%"
+      width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data ? new Date(data).toISOString() : ''}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}

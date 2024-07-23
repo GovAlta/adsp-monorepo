@@ -205,7 +205,7 @@ export const ApplicationFormModal: FC<Props> = ({
           width="100%"
           value={application?.description}
           testId="application-description"
-          onKeyPress={(name, value) => {
+          onChange={(name, value) => {
             validators.remove('description');
             validators['description'].check(value);
             setApplication({
@@ -213,8 +213,6 @@ export const ApplicationFormModal: FC<Props> = ({
               description: value,
             });
           }}
-          // eslint-disable-next-line
-          onChange={() => {}}
           aria-label="description"
         />
       </GoAFormItem>

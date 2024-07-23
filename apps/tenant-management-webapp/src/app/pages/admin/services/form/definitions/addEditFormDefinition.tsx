@@ -65,7 +65,7 @@ export const AddEditFormDefinition = ({
   const definitions = useSelector((state: RootState) => {
     return state?.form?.definitions;
   });
-  const definitionIds = Object.keys(definitions);
+  const definitionIds = Object.values(definitions).map((x) => x.name);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -211,9 +211,7 @@ export const AddEditFormDefinition = ({
                 width="100%"
                 testId="form-definition-description"
                 aria-label="form-definition-description"
-                // eslint-disable-next-line
-                onChange={() => {}}
-                onKeyPress={(name, value) => {
+                onChange={(name, value) => {
                   validators.remove('description');
                   validators['description'].check(value);
                   setDefinition({ ...definition, description: value });

@@ -14,6 +14,7 @@ import {
   getActiveRevision,
   deleteConfiguration,
   findConfiguration,
+  assertAuthenticateConfigHandler,
 } from './configuration';
 import { RateLimitRequestHandler } from 'express-rate-limit';
 
@@ -214,7 +215,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: jest.fn(() => true),
+        isAuthenticated: true,
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -254,7 +255,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: jest.fn(() => true),
+        isAuthenticated: true,
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -325,7 +326,7 @@ describe('router', () => {
         user: { isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User,
         params: { namespace, name },
         query: { tenantId: tenantId.toString() },
-        isAuthenticated: jest.fn(() => true),
+        isAuthenticated: true,
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -406,7 +407,7 @@ describe('router', () => {
         user: null,
         params: { namespace, name },
         query: { tenantId: tenantId.toString() },
-        isAuthenticated: jest.fn(() => true),
+        isAuthenticated: true,
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -475,7 +476,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: jest.fn(() => true),
+        isAuthenticated: true,
       };
 
       handler(req as unknown as Request, null, () => {
@@ -558,7 +559,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: jest.fn(() => true),
+        isAuthenticated: true,
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -628,7 +629,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: jest.fn(() => true),
+        isAuthenticated: true,
       };
 
       handler(req as unknown as Request, null, () => {
@@ -708,7 +709,7 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        isAuthenticated: jest.fn(() => true),
+        isAuthenticated: true,
       } as unknown as Request;
 
       handler(req, null, () => {
@@ -1756,5 +1757,64 @@ describe('router', () => {
       expect(entity.getRevisions).toHaveBeenCalledWith(12, '123', {});
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
+  });
+
+  describe('assertConfigurationHandler', () => {
+    it('anonymous authenticate with http 401', async () => {
+      const handler = assertAuthenticateConfigHandler(configurationServiceId, repositoryMock);
+      const req = {
+        params: { namespace, name },
+        query: {},
+        body: {
+          revision: true,
+        },
+        isAuthenticated: false,
+      } as unknown as Request;
+
+      const res = {
+        sendStatus: jest.fn(),
+      };
+
+      const next = jest.fn();
+      await handler(req, res as unknown as Response, next);
+      expect(res.sendStatus).toBeCalled();
+    });
+  });
+  it('anonymous check http codes', async () => {
+    const handler = assertAuthenticateConfigHandler(configurationServiceId, repositoryMock);
+    const req = {
+      user: null,
+      params: { namespace, name },
+      query: { tenant: tenantId },
+      isAuthenticated: true,
+    } as unknown as Request;
+
+    const res = {
+      sendStatus: jest.fn(),
+    };
+
+    const next = jest.fn();
+    await handler(req, res as unknown as Response, next);
+  });
+
+  it('authenticated user with roles can pass', async () => {
+    const handler = assertAuthenticateConfigHandler(configurationServiceId, repositoryMock);
+    const req = {
+      user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+      params: { namespace, name },
+      query: { tenant: tenantId },
+      body: {
+        revision: true,
+      },
+      isAuthenticated: true,
+    } as unknown as Request;
+
+    const res = {
+      sendStatus: jest.fn(),
+    };
+
+    const next = jest.fn();
+    await handler(req, res as unknown as Response, next);
+    expect(next).toBeCalledTimes(1);
   });
 });

@@ -47,6 +47,10 @@ export const formSchema = new Schema(
       type: Boolean,
       required: false,
     },
+    submissionPdfTemplate: {
+      type: String,
+      required: false,
+    },
     supportTopic: {
       type: Boolean,
       required: false,

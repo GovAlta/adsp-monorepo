@@ -86,9 +86,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
             name="comment"
             value={draft.content || ''}
             disabled={!canComment}
-            // eslint-disable-next-line
-            onChange={() => {}}
-            onKeyPress={(_, value) => onUpdateDraft({ title: draft.title, content: value })}
+            onChange={(_, value) => onUpdateDraft({ title: draft.title, content: value })}
             placeholder={`Write your ${typeLabel}...`}
             width="100%"
           />
