@@ -96,6 +96,13 @@ const completeServiceVariables = [
       'The task service provides a model for tasks, task queues, and task assignment. Applications can use the task service for work management as an aspect to augment domain specific concepts and processes..',
     beta: true,
   },
+  {
+    name: 'Value',
+    link: 'services/value',
+    description:
+      'The value service provides an append-only data store for time-series data, and supports storing json documents as values. Configure optional value definitions to specify the json schema for value writes.',
+    beta: false,
+  },
 ];
 
 export const defaultFeaturesVisible = {
@@ -113,6 +120,7 @@ export const defaultFeaturesVisible = {
   Script: true,
   Status: true,
   Task: false,
+  Value: true,
 };
 
 export const serviceVariables = (featuresVisible = {}) => {
