@@ -21,10 +21,18 @@ export const EditEmailInformationTypeModalForm: FunctionComponent<EmailNotificat
   errors,
   open,
 }) => {
+  const x = JSON.stringify(initialValue);
   const [formErrors, setFormErrors] = useState(null);
-  const [emailInformation, setEmailInformation] = useState<FromEmailInformation>(initialValue);
-  const fromEmail = useSelector((state: RootState) => state.notification.email);
+  const [emailInformation, setEmailInformation] = useState<FromEmailInformation>(JSON.parse(x));
+
+  useEffect(() => {
+    const x = JSON.stringify(initialValue);
+    setEmailInformation(JSON.parse(x));
+  }, [initialValue]);
+
   const tryCancel = () => {
+    const x = JSON.stringify(initialValue);
+    setEmailInformation(JSON.parse(x));
     setFormErrors(null);
     onCancel();
   };
@@ -68,7 +76,7 @@ export const EditEmailInformationTypeModalForm: FunctionComponent<EmailNotificat
               name="email"
               width="100%"
               testId="edit-email-form-email"
-              value={fromEmail?.fromEmail}
+              value={emailInformation.fromEmail}
               aria-label="email"
               onChange={(_, value) => {
                 setEmailInformation({ ...emailInformation, fromEmail: value });
