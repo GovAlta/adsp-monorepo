@@ -15,6 +15,8 @@ import {
   UPDATE_CONTACT_INFORMATION,
   FETCH_NOTIFICATION_METRICS,
   FetchNotificationMetricsSucceeded,
+  UpdateEmailInformationAction,
+  UPDATE_EMAIL_INFORMATION,
 } from './actions';
 
 import { RootState } from '../index';
@@ -49,8 +51,8 @@ export function* fetchNotificationTypes(): SagaIterator {
       );
 
       if (configuration.latest) {
-        const { contact, ...notificationTypeInfo } = configuration.latest.configuration;
-        yield put(FetchNotificationConfigurationSucceededService({ data: notificationTypeInfo }, contact));
+        const { contact, email: fromEmail, ...notificationTypeInfo } = configuration.latest.configuration;
+        yield put(FetchNotificationConfigurationSucceededService({ data: notificationTypeInfo }, contact, fromEmail));
       }
 
       yield put(
@@ -248,6 +250,37 @@ export function* updateContactInformation({ payload }: UpdateContactInformationA
   }
 }
 
+export function* updateEmailInformation({ payload }: UpdateEmailInformationAction): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield call(getAccessToken);
+
+  if (configBaseUrl && token) {
+    try {
+      yield call(
+        axios.patch,
+        `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,
+        {
+          operation: 'UPDATE',
+          update: {
+            email: {
+              fromEmail: payload.fromEmail,
+            },
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(FetchNotificationConfigurationService());
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
 interface MetricResponse {
   values: { sum: string; avg: string }[];
 }
@@ -294,5 +327,6 @@ export function* watchNotificationSagas(): Generator {
   yield takeEvery(DELETE_NOTIFICATION_TYPE, deleteNotificationTypes);
   yield takeEvery(UPDATE_NOTIFICATION_TYPE, updateNotificationType);
   yield takeEvery(UPDATE_CONTACT_INFORMATION, updateContactInformation);
+  yield takeEvery(UPDATE_EMAIL_INFORMATION, updateEmailInformation);
   yield takeLatest(FETCH_NOTIFICATION_METRICS, fetchNotificationMetrics);
 }
