@@ -1,5 +1,4 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import type { Subscriber } from '@store/subscription/models';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { NoPaddingH2 } from '@components/AppHeader';
@@ -15,12 +14,7 @@ import {
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { EditEmailInformationTypeModalForm } from './editEmail';
 
-interface Props {
-  subscribers?: Subscriber[];
-  readonly?: boolean;
-}
-
-export const EmailInformation: FunctionComponent<Props> = () => {
+export const EmailInformation: FunctionComponent = () => {
   const [editEmailInformation, setEditEmailInformation] = useState<boolean>(false);
   const dispatch = useDispatch();
   const isFetchLoading = useActionStateCheck(FETCH_NOTIFICATION_CONFIGURATION, 'start');
