@@ -16,6 +16,7 @@ export const configurationSchema = {
       type: 'object',
       properties: {
         contactEmail: { type: 'string' },
+        phoneNumber: { type: 'string' },
         supportInstructions: { type: 'string' },
       },
     },
