@@ -201,7 +201,7 @@ export class NotificationTypeEntity implements NotificationType {
         correlationId: event.correlationId,
         context: event.context,
         to: address,
-        from: configurationService.email.fromEmail,
+        from: configurationService.email?.fromEmail,
         channel,
         message: templateService.generateMessage(
           this.getTemplate(channel, eventNotification.templates[channel], context),
