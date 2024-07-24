@@ -66,6 +66,7 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
       return {
         ...state,
         supportContact: action.payload.contact,
+        email: action.payload.email,
         notificationTypes: notificationTypes,
       };
     }

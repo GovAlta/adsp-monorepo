@@ -117,6 +117,7 @@ export class NotificationTypeEntity implements NotificationType {
           const notification = this.generateNotification(
             logger,
             templateService,
+            configuration,
             subscriberAppUrl,
             event,
             subscription,
@@ -150,6 +151,7 @@ export class NotificationTypeEntity implements NotificationType {
   private generateNotification(
     logger: Logger,
     templateService: TemplateService,
+    configurationService: NotificationConfiguration,
     subscriberAppUrl: URL,
     event: DomainEvent,
     subscription: SubscriptionEntity,
@@ -199,6 +201,7 @@ export class NotificationTypeEntity implements NotificationType {
         correlationId: event.correlationId,
         context: event.context,
         to: address,
+        from: configurationService.email.fromEmail,
         channel,
         message: templateService.generateMessage(
           this.getTemplate(channel, eventNotification.templates[channel], context),

@@ -16,13 +16,18 @@ export const configurationSchema = {
       type: 'object',
       properties: {
         contactEmail: { type: 'string' },
-        phoneNumber: { type: 'string' },
         supportInstructions: { type: 'string' },
+      },
+    },
+    email: {
+      type: 'object',
+      properties: {
+        fromEmail: { type: 'string' },
       },
     },
   },
   patternProperties: {
-    '^(?!contact)[a-zA-Z0-9-_ ]{1,50}$': {
+    '^(?!email|contact)[a-zA-Z0-9-_ ]{1,50}$': {
       type: 'object',
       properties: {
         id: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
@@ -67,6 +72,7 @@ export const configurationSchema = {
       required: ['id', 'name', 'publicSubscribe', 'subscriberRoles', 'events'],
     },
   },
+
   additionalProperties: false,
 };
 
@@ -76,6 +82,11 @@ export interface SupportContact {
   supportInstructions: string;
 }
 
+export interface FromEmail {
+  fromEmail: string;
+}
+
 export type Configuration = {
   contact?: SupportContact;
+  email?: FromEmail;
 } & Record<string, NotificationType>;
