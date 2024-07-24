@@ -102,7 +102,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     return () => clearTimeout(timeoutId);
   }, [handleChange, fileList, propertyId]);
 
-  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const readOnly = uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true;
   const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? '';
   const accept = uischema?.options?.componentProps?.accept ?? '';
 
