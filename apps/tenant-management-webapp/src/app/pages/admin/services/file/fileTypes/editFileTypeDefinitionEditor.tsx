@@ -10,22 +10,20 @@ import {
   FileTypesEditorTitle,
   FinalButtonPadding,
   FlexRow,
-  InfoCircleWrapper,
   MakePublicPadding,
   NameDescriptionDataSchema,
   RetentionPeriodText,
   RetentionPolicyLabel,
   RetentionPolicyWrapper,
-  RetentionToolTip,
   ScrollPane,
   TextLoadingIndicator,
 } from '../styled-components';
-import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 
+import { InfoCircleWithInlineHelpForFile } from './infoCircleWithInlineHelpForFile';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACallout, GoACircularProgress, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
-import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { FileTypeDefault, FileTypeDefaultOnEdit, FileTypeItem } from '@store/file/models';
 import { SecurityClassification } from '@store/common/models';
@@ -43,6 +41,7 @@ import { PageLoader } from '@core-services/app-common';
 import { areObjectsEqual } from '@lib/objectUtil';
 import { CustomLoader } from '@components/CustomLoader';
 import { FetchRealmRoles } from '@store/tenant/actions';
+import styled from 'styled-components';
 
 export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -268,16 +267,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
               </MakePublicPadding>
 
               <GoAFormItem label="">
-                <RetentionPolicyLabel>
-                  Retention policy
-                  <InfoCircleWrapper>
-                    <GoAPopover testId={'file-type-retention-tooltip'} target={<InfoCircle />} maxWidth="260px">
-                      <RetentionToolTip>
-                        The untouched files within the file type will be deleted after the retention period provided.
-                      </RetentionToolTip>
-                    </GoAPopover>
-                  </InfoCircleWrapper>
-                </RetentionPolicyLabel>
+                <RetentionPolicyLabel>Retention policy</RetentionPolicyLabel>
+                <InfoCircleWithInlineHelpForFile text="The untouched files within the file type will be deleted after the retention period provided." />
                 <RetentionPolicyWrapper>
                   <GoACheckbox
                     name="retentionActive"
