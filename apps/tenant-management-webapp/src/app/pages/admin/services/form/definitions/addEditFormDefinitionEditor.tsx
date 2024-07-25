@@ -39,7 +39,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSecureParams } from '@lib/useSecureParams';
 import {
   GoAButtonGroup,
@@ -48,8 +48,6 @@ import {
   GoACheckbox,
   GoADropdownItem,
   GoADropdown,
-  GoATabs,
-  GoATab,
   GoAInput,
 } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
@@ -80,6 +78,7 @@ import { CustomLoader } from '@components/CustomLoader';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { FormFormItem } from '../styled-components';
 import { adspId } from '@lib/adspId';
+import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -898,8 +897,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           </NameDescriptionDataSchema>
 
           <FormPreviewContainer>
-            <GoATabs data-testid="preview-tabs">
-              <GoATab heading="Preview" data-testid="preview-view-tab">
+            <Tabs data-testid="preview-tabs" activeIndex={0}>
+              <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <FormPreviewScrollPane>
                     <ContextProvider
@@ -923,11 +922,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     </ContextProvider>
                   </FormPreviewScrollPane>
                 </div>
-              </GoATab>
-              <GoATab heading="Data" data-testid="data-view">
+              </Tab>
+              <Tab label="Data" data-testid="data-view">
                 {data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}
-              </GoATab>
-            </GoATabs>
+              </Tab>
+              <Tab label={<PreviewTop title="PDF Preview" form={definition} data={data} />} data-testid="data-view">
+                <PDFPreviewTemplateCore />
+              </Tab>
+            </Tabs>
           </FormPreviewContainer>
         </FlexRow>
       )}

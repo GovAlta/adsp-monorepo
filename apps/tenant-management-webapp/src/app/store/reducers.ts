@@ -22,6 +22,7 @@ import ServiceMetrics from './metrics/reducers';
 import Form from './form/reducers';
 import Task from './task/reducers';
 import Feedback from './feedback/reducers';
+import Value from './value/reducers';
 
 export const rootReducer = combineReducers({
   fileService: File,
@@ -48,4 +49,5 @@ export const rootReducer = combineReducers({
   serviceRoles: ServiceRoles,
   serviceMetrics: ServiceMetrics,
   scriptService: Script,
+  valueService: Value,
 });

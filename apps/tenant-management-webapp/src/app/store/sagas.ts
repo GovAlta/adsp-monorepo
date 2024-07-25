@@ -72,6 +72,7 @@ import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationSt
 import { TOGGLE_APPLICATION_STATUS_ACTION } from './status/actions/toggleApplication';
 import { watchServiceMetricsSagas } from './metrics/sagas';
 import { watchScriptSagas } from './script/sagas';
+import { watchValueSagas } from './value/sagas';
 
 // eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
@@ -139,6 +140,8 @@ export function* watchSagas() {
     watchCalendarSagas(),
     //Script
     watchScriptSagas(),
+    //Value
+    watchValueSagas(),
   ]);
 
   // yield all([watchNotixSagas()]);

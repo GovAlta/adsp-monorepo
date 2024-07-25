@@ -1,4 +1,4 @@
-import { ContactInformation, NotificationItem, NotificationMetrics } from './models';
+import { ContactInformation, FromEmailInformation, NotificationItem, NotificationMetrics } from './models';
 
 export const DELETE_NOTIFICATION = 'tenant/notification-service/notification/delete';
 export const DELETE_NOTIFICATION_FAILED = 'tenant/notification-service/notification/delete/fail';
@@ -19,6 +19,7 @@ export const FETCH_NOTIFICATION_TYPE_HAS_NOTIFICATION_SUCCEEDED =
 export const FETCH_NOTIFICATION_METRICS = 'tenant/notification-service/metrics/fetch';
 export const FETCH_NOTIFICATION_METRICS_SUCCEEDED = 'tenant/notification-service/metrics/fetch/succeeded';
 export const UPDATE_CONTACT_INFORMATION = 'tenant/notification-service/contact-information';
+export const UPDATE_EMAIL_INFORMATION = 'tenant/notification-service/email-information';
 
 // =============
 // Actions Types
@@ -45,6 +46,7 @@ interface FetchNotificationConfigurationSucceededAction {
   payload: {
     notificationInfo: { data: Record<string, NotificationItem> };
     contact: ContactInformation;
+    email: FromEmailInformation;
   };
 }
 
@@ -71,6 +73,11 @@ export interface UpdateNotificationTypeAction {
 export interface UpdateContactInformationAction {
   type: typeof UPDATE_CONTACT_INFORMATION;
   payload: ContactInformation;
+}
+
+export interface UpdateEmailInformationAction {
+  type: typeof UPDATE_EMAIL_INFORMATION;
+  payload: FromEmailInformation;
 }
 
 export interface DeleteNotificationTypeAction {
@@ -102,12 +109,14 @@ export const FetchNotificationConfigurationSucceededService = (
   notificationInfo: {
     data: Record<string, NotificationItem>;
   },
-  contact: ContactInformation
+  contact: ContactInformation,
+  email: FromEmailInformation
 ): FetchNotificationConfigurationSucceededAction => ({
   type: FETCH_NOTIFICATION_CONFIGURATION_SUCCEEDED,
   payload: {
     notificationInfo,
     contact,
+    email,
   },
 });
 
@@ -138,6 +147,13 @@ export const UpdateContactInformationService = (
 ): UpdateContactInformationAction => ({
   type: UPDATE_CONTACT_INFORMATION,
   payload: contactInformation,
+});
+
+export const UpdateEmailInformationService = (
+  emailInformation: FromEmailInformation
+): UpdateEmailInformationAction => ({
+  type: UPDATE_EMAIL_INFORMATION,
+  payload: emailInformation,
 });
 
 export const DeleteNotificationTypeService = (notificationType: NotificationItem): DeleteNotificationTypeAction => ({

@@ -414,9 +414,9 @@ export const PreviewTopStyleWrapper = styled.div`
 `;
 
 export const FormTitle = styled.div`
-  font-size: var(--fs-xl);
-  line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
+  font-family: var(--goa-font-family-sans);
+  margin-bottom: var(--goa-space-s);
 `;
 
 export const FormEditorContainer = styled.div`
