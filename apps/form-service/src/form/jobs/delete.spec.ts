@@ -72,6 +72,7 @@ describe('delete', () => {
       formDraftUrlTemplate: '',
       dataSchema: null,
       submissionRecords: false,
+      submissionPdfTemplate: '',
       supportTopic: false,
       queueTaskToProcess: { queueName: 'test-queue', queueNameSpace: 'test-queuename' },
     }),

@@ -4,6 +4,7 @@ import { Message } from './message';
 export interface NotificationContent {
   to: string;
   message: Message;
+  from?: string;
 }
 
 export interface Notification extends NotificationContent {

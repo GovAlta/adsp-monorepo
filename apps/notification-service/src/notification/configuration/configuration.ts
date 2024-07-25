@@ -2,7 +2,7 @@ import type { AdspId } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { DirectNotificationTypeEntity, NotificationTypeEntity } from '../model';
 import { NotificationType } from '../types';
-import { Configuration, SupportContact } from './schema';
+import { Configuration, FromEmail, SupportContact } from './schema';
 
 function createTypeEntity(type: NotificationType, tenantId: AdspId): NotificationTypeEntity {
   return type.addressPath || type.address
@@ -14,6 +14,8 @@ export class NotificationConfiguration {
   private types: Record<string, NotificationTypeEntity>;
   private eventTypes: Record<string, NotificationTypeEntity[]>;
   public contact: SupportContact;
+  public email: FromEmail;
+
   constructor(tenantTypes: Configuration, coreTypes: Configuration, tenantId?: AdspId) {
     const coreTypesEntities: Record<string, NotificationTypeEntity> = Object.entries(coreTypes).reduce(
       (entities, [typeId, type]: [string, NotificationType]) => {
@@ -25,9 +27,11 @@ export class NotificationConfiguration {
 
     // Override core types with tenant configuration if it exists
     if (tenantTypes) {
-      // remove contact from tenantTypes because it's a special type
+      // remove contact, email from tenantTypes because it's a special type
       this.contact = tenantTypes?.contact;
+      this.email = tenantTypes?.email;
       delete tenantTypes.contact;
+      delete tenantTypes.email;
 
       this.types = Object.entries(tenantTypes).reduce((entities, [typeId, type]: [string, NotificationType]) => {
         const typeEntity = createTypeEntity(type, tenantId);

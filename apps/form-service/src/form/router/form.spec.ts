@@ -1,6 +1,7 @@
 import { adspId, Channel, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError, ValidationService } from '@core-services/core-common';
 import { Request, Response } from 'express';
+import axios from 'axios';
 import { accessForm, deleteForm, findForms, formOperation, getForm, getFormDefinition, updateFormData } from '.';
 import { FormServiceRoles, FormStatus, FORM_SUBMITTED, QueueTaskToProcess, FormSubmission } from '..';
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
@@ -14,6 +15,9 @@ import {
   updateFormSubmissionDisposition,
   validateCriteria,
 } from './form';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('form router', () => {
   const serviceId = adspId`urn:ads:platform:form-service`;
@@ -32,6 +36,23 @@ describe('form router', () => {
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     submissionRecords: false,
+    submissionPdfTemplate: '',
+    supportTopic: true,
+    clerkRoles: [],
+    dataSchema: null,
+    dispositionStates: [{ id: 'rejectedStatus', name: 'rejected', description: 'err' }],
+    queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
+  });
+  const definitionWithPdfTemplate = new FormDefinitionEntity(validationService, tenantId, {
+    id: 'test',
+    name: 'test-form-definition',
+    description: null,
+    formDraftUrlTemplate: 'https://my-form/{{ id }}',
+    anonymousApply: false,
+    applicantRoles: ['test-applicant'],
+    assessorRoles: ['test-assessor'],
+    submissionRecords: false,
+    submissionPdfTemplate: 'test-template',
     supportTopic: true,
     clerkRoles: [],
     dataSchema: null,
@@ -71,6 +92,11 @@ describe('form router', () => {
 
   const queueTaskServiceMock = {
     createTask: jest.fn(),
+  };
+
+  const directoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
+    getResourceUrl: jest.fn(),
   };
 
   const formSubmissionEntityMock = {
@@ -129,6 +155,13 @@ describe('form router', () => {
   };
 
   const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
+  const entityWithPdfTemplate = new FormEntity(
+    repositoryMock,
+    tenantId,
+    definitionWithPdfTemplate,
+    subscriber,
+    formInfo
+  );
 
   const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
 
@@ -162,6 +195,7 @@ describe('form router', () => {
       fileService: fileServiceMock,
       commentService: commentServiceMock,
       submissionRepository: repositoryMock,
+      directory: directoryMock,
     });
     expect(router).toBeTruthy();
   });
@@ -801,7 +835,8 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        directoryMock
       );
       expect(handler).toBeTruthy();
     });
@@ -828,12 +863,44 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        directoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(notificationServiceMock.sendCode).toHaveBeenCalled();
       expect(res.send).toHaveBeenCalled();
+    });
+
+    it('can submit form with pdf template', async () => {
+      axiosMock.post.mockResolvedValueOnce({ response: 'succees' });
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['test-applicant'],
+      };
+      const req = {
+        user,
+        body: { operation: 'submit' },
+        params: { formId: 'test-form' },
+        form: entityWithPdfTemplate,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      notificationServiceMock.sendCode.mockResolvedValueOnce(null);
+
+      const handler = formOperation(
+        apiId,
+        eventServiceMock,
+        notificationServiceMock,
+        queueTaskServiceMock,
+        repositoryMock,
+        directoryMock
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Submitted }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: FORM_SUBMITTED }));
     });
 
     it('can submit form', async () => {
@@ -858,7 +925,8 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        directoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Submitted }));
@@ -885,7 +953,8 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        directoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
@@ -912,7 +981,8 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        directoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
@@ -954,7 +1024,8 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        directoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(locked);
@@ -981,7 +1052,8 @@ describe('form router', () => {
         eventServiceMock,
         notificationServiceMock,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        directoryMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();

@@ -9,6 +9,7 @@ interface serviceItemProps {
   tenantName: string;
   nameSpace: string;
   description: string;
+  isCore: boolean;
   anonymousRead: boolean;
   isTenantSpecificConfig?: boolean;
   onEdit: (definition: ConfigDefinition) => void;
@@ -23,6 +24,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
   tenantName,
   nameSpace,
   description,
+  isCore,
   anonymousRead,
   isTenantSpecificConfig,
 }) => {
@@ -30,7 +32,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
   return (
     <>
       <tr>
-        <td data-testid="configuration-name">{configName}</td>
+        <td data-testid="configuration-name">{!isCore ? configName : ''}</td>
         <td data-testid="configuration-description">{description}</td>
         <td data-testid="configuration-action" id="configuration-action-icons">
           <IconDiv>
@@ -41,7 +43,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
                 onClick={() => setShowSchema(!showSchema)}
                 testId="configuration-toggle-details-visibility"
               />
-              {tenantName !== 'Platform' || isTenantSpecificConfig ? (
+              {(tenantName !== 'Platform' && !isCore) || isTenantSpecificConfig ? (
                 <>
                   <GoAContextMenuIcon
                     type="create"

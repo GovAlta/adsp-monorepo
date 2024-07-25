@@ -35,7 +35,7 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
 
   return (
     <Visible visible={visible}>
-      <ListWithDetailControl {...props} openDeleteDialog={openDeleteDialog} />
+      <ListWithDetailControl {...props} openDeleteDialog={openDeleteDialog} enabled={true} />
 
       <DeleteDialog
         open={open}

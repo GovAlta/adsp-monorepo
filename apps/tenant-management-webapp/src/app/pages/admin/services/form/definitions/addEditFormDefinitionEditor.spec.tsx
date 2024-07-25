@@ -47,6 +47,11 @@ describe('ScriptEditor Component', () => {
       ],
     },
     notifications: { notifications: [] },
+    pdf: {
+      corePdfTemplates: {},
+      jobs: [],
+      files: {},
+    },
     tenant: {
       realmRoles: [
         {
@@ -59,6 +64,7 @@ describe('ScriptEditor Component', () => {
         },
       ],
     },
+
     session: SESSION_INIT,
   });
   test('Save button does not route', async () => {

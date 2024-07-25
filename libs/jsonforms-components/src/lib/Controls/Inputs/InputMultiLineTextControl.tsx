@@ -27,6 +27,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const errorsFormInput = checkFieldValidity(props as ControlProps);
 
+  const width = uischema?.options?.componentProps?.readOnly ?? '100%';
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
@@ -68,7 +69,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       placeholder={placeholder}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       name={textAreaName}
-      width={'100%'}
+      width={width}
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
       onKeyPress={(name: string, value: string, key: string) => {

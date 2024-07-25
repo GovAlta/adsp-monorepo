@@ -14,6 +14,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const errorsFormInput = checkFieldValidity(props as ControlProps);
+  const width = uischema?.options?.componentProps?.readOnly ?? '100%';
 
   return (
     <GoAInputTime
@@ -21,7 +22,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data}
       step={1}
-      width="100%"
+      width={width}
       disabled={!enabled}
       readonly={readOnly}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}

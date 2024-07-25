@@ -59,7 +59,7 @@ export const ArrayBaseReviewControl = (props: ArrayLayoutProps) => {
 
   return (
     <Visible visible={visible}>
-      <ObjectArrayControl {...props} openDeleteDialog={() => {}} isStepperReview={true} />
+      <ObjectArrayControl {...props} openDeleteDialog={() => {}} isStepperReview={true} enabled={true} />
     </Visible>
   );
 };

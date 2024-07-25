@@ -67,10 +67,8 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   }, [openAddTemplate]);
 
   useEffect(() => {
-    if (isObjectEmpty(pdfTemplates)) {
-      dispatch(getPdfTemplates());
-      dispatch(getCorePdfTemplates());
-    }
+    dispatch(getPdfTemplates());
+    dispatch(getCorePdfTemplates());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line

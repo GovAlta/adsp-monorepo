@@ -13,13 +13,33 @@ import {
 } from '@store/configuration/action';
 import { AddEditConfigDefinition } from './addEditDefinition';
 import { DeleteModal } from '@components/DeleteModal';
+import { NameDiv } from '../styled-components';
 
 interface ParentCompProps {
   activeEdit?: boolean;
 }
 
+const transformConfigDefinitions = (configDefinitions: Record<string, unknown>) => {
+  const tenantServices: Record<string, unknown> = {};
+  const coreServices: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(configDefinitions)) {
+    if (key.includes(':')) {
+      tenantServices[key] = value;
+    } else {
+      coreServices[key] = value;
+    }
+  }
+
+  return {
+    tenant: tenantServices,
+    core: coreServices,
+  };
+};
+
 export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdit }) => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
+  const transformedCoreConfigDefinitions = transformConfigDefinitions(coreConfigDefinitions?.configuration || {});
   const coreTenant = 'Platform';
   const [selectedDefinition, setSelectedDefinition] = useState(defaultConfigDefinition);
   const [selectedDefinitionName, setSelectedDefinitionName] = useState('');
@@ -101,8 +121,21 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
         {!indicator.show && coreConfigDefinitions && (
           <ConfigurationDefinitionsTableComponent
             tenantName={coreTenant}
-            definitions={coreConfigDefinitions.configuration}
+            definitions={transformedCoreConfigDefinitions.tenant}
           />
+        )}
+      </div>
+      {/* core config definitions */}
+      <div>
+        {!indicator.show && !coreConfigDefinitions && renderNoItem('core configuration')}
+        {!indicator.show && coreConfigDefinitions && (
+          <>
+            <NameDiv>Core definitions</NameDiv>
+            <ConfigurationDefinitionsTableComponent
+              tenantName={tenantName}
+              definitions={transformedCoreConfigDefinitions.core}
+            />
+          </>
         )}
       </div>
       {/* Delete confirmation */}

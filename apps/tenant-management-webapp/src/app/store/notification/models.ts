@@ -32,6 +32,10 @@ export interface ContactInformation {
   supportInstructions?: string;
 }
 
+export interface FromEmailInformation {
+  fromEmail?: string;
+}
+
 export interface EventItem {
   name: string;
   namespace?: string;
@@ -79,6 +83,7 @@ export interface NotificationMetrics {
 
 export interface NotificationState {
   supportContact: ContactInformation;
+  email: FromEmailInformation;
   notificationTypes: Record<string, NotificationItem> | undefined;
   core: Record<string, NotificationItem>;
   metrics: NotificationMetrics;
@@ -86,6 +91,7 @@ export interface NotificationState {
 
 export const NOTIFICATION_INIT: NotificationState = {
   supportContact: {},
+  email: {},
   notificationTypes: undefined,
   core: {},
   metrics: {},
