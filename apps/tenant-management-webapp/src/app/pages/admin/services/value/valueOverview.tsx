@@ -2,8 +2,15 @@ import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { getValueDefinitions } from '@store/value/actions';
 
 export const ValueOverview = (): JSX.Element => {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(getValueDefinitions());
+  }, [dispatch]);
+
   return (
     <OverviewLayout
       description={

@@ -2,6 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { ValueOverview } from './valueOverview';
+import { ValueDefinitions } from './definitions';
 import AsideLinks from '@components/AsideLinks';
 
 export const Value: FunctionComponent = () => {
@@ -14,6 +15,9 @@ export const Value: FunctionComponent = () => {
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview" data-testid="value-service-overview-tab">
             <ValueOverview />
+          </Tab>
+          <Tab label="Definitions" data-testid="value-service-definitions-tab">
+            <ValueDefinitions />
           </Tab>
         </Tabs>
       </Main>
