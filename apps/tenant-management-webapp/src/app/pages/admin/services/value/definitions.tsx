@@ -19,7 +19,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
   );
 
   const tenantDefinitions = definitions.filter((d) => !d.isCore);
-  const coreDefinitions = []; //definitions.filter((d) => d.isCore);
+  const coreDefinitions = definitions.filter((d) => d.isCore);
 
   return (
     <div>
