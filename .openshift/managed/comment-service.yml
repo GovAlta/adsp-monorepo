@@ -136,6 +136,8 @@ objects:
             - envFrom:
                 - configMapRef:
                     name: comment-service
+                - configMapRef:
+                    name: directory-overrides
                 - secretRef:
                     name: comment-service
               env:
@@ -186,26 +188,26 @@ objects:
                   memory: 50Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
-              # readinessProbe:
-              #   httpGet:
-              #     path: /
-              #     port: 3333
-              #     scheme: HTTP
-              #   initialDelaySeconds: 2
-              #   timeoutSeconds: 1
-              #   periodSeconds: 5
-              #   successThreshold: 1
-              #   failureThreshold: 20
-              # livenessProbe:
-              #   httpGet:
-              #     path: /
-              #     port: 3333
-              #     scheme: HTTP
-              #   initialDelaySeconds: 60
-              #   timeoutSeconds: 2
-              #   periodSeconds: 60
-              #   successThreshold: 1
-              #   failureThreshold: 5
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 2
+                timeoutSeconds: 1
+                periodSeconds: 5
+                successThreshold: 1
+                failureThreshold: 20
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 2
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 5
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
