@@ -88,6 +88,7 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
                 validators['content'].check(value);
                 setComment({ ...comment, content: value });
               }}
+              // eslint-disable-next-line
               onChange={(name, value) => {}}
             />
 
