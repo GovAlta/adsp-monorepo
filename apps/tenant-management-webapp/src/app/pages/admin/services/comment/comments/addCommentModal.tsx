@@ -83,11 +83,13 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
               width="100%"
               testId="content"
               aria-label="content"
-              onChange={(name, value) => {
+              onKeyPress={(name, value, key) => {
                 validators.remove('content');
                 validators['content'].check(value);
                 setComment({ ...comment, content: value });
               }}
+              // eslint-disable-next-line
+              onChange={(name, value) => {}}
             />
 
             <HelpText>

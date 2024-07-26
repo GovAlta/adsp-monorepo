@@ -213,9 +213,11 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                 value={bot}
                 aria-label="slack"
                 width="100%"
-                onChange={(name, value) => {
+                onKeyPress={(name, value, key) => {
                   setBot(value);
                 }}
+                // eslint-disable-next-line
+                onChange={(name, value) => {}}
               />
             </GoAFormItem>
           )}
