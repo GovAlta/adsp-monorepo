@@ -103,7 +103,6 @@ export function generatePdf(
         }
       }
 
-
       const job = await repository.create(tenantId);
       logger.info(`Successfully created the job ${job.id}.`);
       await queueService.enqueue({
@@ -181,8 +180,7 @@ export function createPdfRouter({
       body('data').optional().isObject(),
       body('filename').isString().isLength({ min: 1, max: 50 }),
       body('fileType').optional().isString().isLength({ min: 1, max: 50 }),
-      body('recordId').optional().isString(),
-      body('formId').optional().isString()
+      body('recordId').optional().isString()
     ),
     getTemplate('body'),
     generatePdf(serviceId, repository, eventService, fileService, queueService, logger)
