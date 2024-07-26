@@ -168,12 +168,13 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           testId={`calendar-event-modal-description-input`}
           aria-label="description"
           width="100%"
-          // eslint-disable-next-line
-          onChange={(name, value) => {
+          onKeyPress={(name, value, key) => {
             validators.remove('description');
             validators['description'].check(value);
             setCalendarEvent({ ...calendarEvent, description: value });
           }}
+          // eslint-disable-next-line
+          onChange={(name, value) => {}}
         />
       </GoAFormItem>
 
