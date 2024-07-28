@@ -163,9 +163,11 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           name="message"
           value={message}
           width="100%"
-          onChange={(name, value) => {
+          onKeyPress={(name, value, key) => {
             setMessage(value);
           }}
+          // eslint-disable-next-line
+          onChange={(name, value) => {}}
         />
       </GoAFormItem>
       <br />

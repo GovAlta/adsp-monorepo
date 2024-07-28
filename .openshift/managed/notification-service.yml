@@ -290,6 +290,8 @@ objects:
             - envFrom:
                 - configMapRef:
                     name: notification-service
+                - configMapRef:
+                    name: directory-overrides
                 - secretRef:
                     name: notification-service
               env:

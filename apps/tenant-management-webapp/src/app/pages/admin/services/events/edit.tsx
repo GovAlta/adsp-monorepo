@@ -154,12 +154,13 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             value={definition.description}
             aria-label="description"
             width="100%"
-            // eslint-disable-next-line
-            onChange={(name, value) => {
+            onKeyPress={(name, value, key) => {
               validators.remove('description');
               validators['description'].check(value);
               setDefinition({ ...definition, description: value });
             }}
+            // eslint-disable-next-line
+            onChange={(name, value) => {}}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['payloadSchema']} label="Payload schema">

@@ -407,6 +407,8 @@ objects:
             - envFrom:
                 - configMapRef:
                     name: ${APP_NAME}
+                - configMapRef:
+                    name: directory-overrides
                 - secretRef:
                     name: ${APP_NAME}
               env:
