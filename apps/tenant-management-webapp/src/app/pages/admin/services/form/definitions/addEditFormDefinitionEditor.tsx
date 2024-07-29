@@ -673,10 +673,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <FlexRow>
                     <SubmissionRecordsBox>
                       <GoACheckbox
-                        name="submission-records"
-                        key="submission-records"
+                        name="generate-pdf-on-submit"
+                        key="generate-pdf-on-submit"
                         checked={definition.submissionPdfTemplate ? true : false}
-                        testId="submission-records"
+                        testId="generate-pdf-on-submit"
                         onChange={() => {
                           const records = definition.submissionPdfTemplate ? null : 'submitted-form';
                           setDefinition({ ...definition, submissionPdfTemplate: records });
