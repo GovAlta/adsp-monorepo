@@ -107,8 +107,11 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
               testId="form-support-instructions"
               aria-label="name"
               width="100%"
+              onKeyPress={(name, value, key) => {
+                setContactInformation({ ...contactInformation, supportInstructions: value });
+              }}
               // eslint-disable-next-line
-              onChange={(name, value) => setContactInformation({ ...contactInformation, supportInstructions: value })}
+              onChange={(name, value) => {}}
             />
           </GoAFormItem>
         </ErrorWrapper>
