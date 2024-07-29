@@ -68,6 +68,7 @@ export function* fetchConfig(): SagaIterator {
           scriptServiceApiUrl: entryMapping['script-service'],
           taskServiceApiUrl: entryMapping['task-service'],
           commentServiceApiUrl: entryMapping['comment-service'],
+          feedbackServiceUrl: entryMapping['feedback-service'],
         },
         featureFlags: data.featureFlags,
       };

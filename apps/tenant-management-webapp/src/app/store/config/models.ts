@@ -39,6 +39,7 @@ export interface ServiceUrls {
   calendarServiceApiUrl?: string;
   scriptServiceApiUrl?: string;
   taskServiceApiUrl?: string;
+  feedbackServiceUrl: string;
 }
 
 export interface FeatureFlags {

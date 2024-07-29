@@ -15,6 +15,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
   const { setActiveEdit, setActiveIndex } = props;
 
   const tenant = useSelector((state: RootState) => state.tenant);
+  const feedbackServiceUrl = useSelector((state: RootState) => state.config.serviceUrls?.feedbackServiceUrl);
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, []);
@@ -53,7 +54,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
             ...
             <br />
             &lt;script
-            src=&quot;https://feedback-service.adsp.alberta.ca/feedback/v1/script/adspFeedback.js&quot;&gt;&lt;/script&gt;
+            src=&quot;{feedbackServiceUrl}/feedback/v1/script/adspFeedback.js&quot;&gt;&lt;/script&gt;
             <br />
             &lt;/head&gt;
           </PRE>
