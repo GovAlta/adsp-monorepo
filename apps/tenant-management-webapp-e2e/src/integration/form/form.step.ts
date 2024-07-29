@@ -230,7 +230,7 @@ When(
 
 Then('the user clicks Save button on form definition editor', function () {
   formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
-  cy.wait(6000);
+  cy.wait(8000);
 });
 
 Then('the user {string} the form definition of {string}, {string}', function (action, name, description) {
