@@ -5,6 +5,7 @@
   },
   "baseUrl": "https://status.adsp.alberta.ca/",
   "tenantWebAppUrl": "https://adsp.alberta.ca/",
+  "defaultCommandTimeout": 10000,
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",
