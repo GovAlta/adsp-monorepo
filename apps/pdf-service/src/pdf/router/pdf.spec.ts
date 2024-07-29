@@ -252,7 +252,6 @@ describe('pdf', () => {
           templateId: 'test',
           filename: 'test.pdf',
           data: {},
-          formId: 'test-form-id',
         },
         template: configuration.test,
       };

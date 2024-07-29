@@ -183,9 +183,17 @@ class AdspFeedback implements AdspFeedbackApi {
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
         this.technicalCommentRef.value?.focus();
+        if (this.technicalCommentRef.value?.value.length === 0) {
+          this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
+        } else {
+          this.sendButtonRef.value?.removeAttribute('disabled');
+        }
       } else {
         if (this.radio2Ref.value) {
           this.radio2Ref.value.checked = true;
+        }
+        if (this.selectedRating > 0) {
+          this.sendButtonRef.value?.removeAttribute('disabled');
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
       }
@@ -351,7 +359,7 @@ class AdspFeedback implements AdspFeedbackApi {
           alt="${rating.label}"
           tabindex="0"
         />
-        <span class="tooltip-text">${rating.label}</span>
+        <div class="tooltip-text">${rating.label}</div>
         <p
           class="ratingText"
           @mouseover="${() => this.updateHover(index, true)}"
@@ -394,6 +402,18 @@ class AdspFeedback implements AdspFeedbackApi {
       const texts = document.querySelectorAll('.ratingText');
       const text = texts[index] as HTMLImageElement;
       text.style.color = '#333333';
+    }
+  };
+
+  private technicalCommentRefOnChange = (e: KeyboardEvent) => {
+    if (
+      this.technicalCommentRef?.value &&
+      this.technicalCommentRef?.value?.value.length > 0 &&
+      this.selectedRating > 0
+    ) {
+      this.sendButtonRef.value?.removeAttribute('disabled');
+    } else {
+      this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
     }
   };
 
@@ -534,8 +554,7 @@ class AdspFeedback implements AdspFeedbackApi {
             transform: translateX(-50%);
             max-height: 100%;
             height: min-content;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: hidden;
           }
           .adsp-fb .adsp-fb-container-heading {
             display: flex;
@@ -583,14 +602,14 @@ class AdspFeedback implements AdspFeedbackApi {
               display: none;
             }
           }
-          .adsp-fb .tooltip-text {
+          .adsp-fb .adsp-fb-form-rating .tooltip-text {
             visibility: hidden;
-            margin-left: 37px;
+            margin-left: 26px;
             background-color: #666666;
             color: #fff;
             text-align: center;
             border-radius: 5px;
-            padding: 8px 15px;
+            padding: 8px 12px;
             margin-top: 53px;
             position: absolute;
             z-index: 1;
@@ -604,12 +623,13 @@ class AdspFeedback implements AdspFeedbackApi {
             content: '';
             position: absolute;
             top: -10px;
-            left: 45%;
+            left: 48%;
             margin-left: -5px;
             border-width: 5px;
             border-style: solid;
             border-color: transparent transparent #666666 transparent;
           }
+
           .adsp-fb .adsp-fb-form-comment {
             display: flex;
             flex-direction: column;
@@ -1114,7 +1134,11 @@ class AdspFeedback implements AdspFeedbackApi {
                               issue, if applicable.</b
                             >
                           </label>
-                          <textarea ${ref(this.technicalCommentRef)} id="technicalComment"></textarea>
+                          <textarea
+                            ${ref(this.technicalCommentRef)}
+                            id="technicalComment"
+                            @input=${this.technicalCommentRefOnChange}
+                          ></textarea>
                           <span class="help-text"
                             >Do not include personal information like SIN, password, addresses, etc.</span
                           >
