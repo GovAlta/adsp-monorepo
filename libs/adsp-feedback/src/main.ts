@@ -184,10 +184,6 @@ class AdspFeedback implements AdspFeedbackApi {
           this.radio1Ref.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
-        if (this.feedbackContentFormRef?.value) {
-          this.feedbackContentFormRef.value.style.overflowY = 'auto';
-        }
-
         this.technicalCommentRef.value?.focus();
         if (this.technicalCommentRef.value?.value.length === 0) {
           this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
@@ -200,9 +196,6 @@ class AdspFeedback implements AdspFeedbackApi {
         }
         if (this.selectedRating > 0) {
           this.sendButtonRef.value?.removeAttribute('disabled');
-        }
-        if (this.feedbackContentFormRef?.value) {
-          this.feedbackContentFormRef.value.style.overflowY = 'hidden';
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
       }
@@ -308,9 +301,6 @@ class AdspFeedback implements AdspFeedbackApi {
     if (this.sendButtonRef) {
       this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
     }
-    if (this.feedbackContentFormRef?.value) {
-      this.feedbackContentFormRef.value.style.overflowY = 'hidden';
-    }
   }
 
   private async sendFeedback() {
@@ -405,6 +395,10 @@ class AdspFeedback implements AdspFeedbackApi {
     const tooltip = tooltips[index] as HTMLImageElement;
     tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
     tooltip.style.opacity = isHovering ? '1' : '0';
+    if (index === 0) {
+      tooltip.style.marginLeft = '35px';
+      tooltip.classList.add('modified');
+    }
   };
 
   private clearRating = (index: number) => {
@@ -589,8 +583,8 @@ class AdspFeedback implements AdspFeedbackApi {
             transition: transform 0.001ms;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 450px;
-            overflow-y: hidden;
+            max-height: 452px;
+            overflow-y: auto;
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
@@ -617,7 +611,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
             span.tooltip-text {
               visibility: hidden;
-              margin-left: 26px;
+              margin-left: 25px;
               background-color: #666666;
               color: #fff;
               text-align: center;
@@ -641,6 +635,10 @@ class AdspFeedback implements AdspFeedbackApi {
             border-width: 5px;
             border-style: solid;
             border-color: transparent transparent #666666 transparent;
+          }
+
+          .adsp-fb .adsp-fb-form-rating .tooltip-text.modified::before {
+            left: 40%;
           }
 
           .adsp-fb .adsp-fb-form-comment {
