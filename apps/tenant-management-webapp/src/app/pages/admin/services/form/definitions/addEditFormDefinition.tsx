@@ -211,11 +211,13 @@ export const AddEditFormDefinition = ({
                 width="100%"
                 testId="form-definition-description"
                 aria-label="form-definition-description"
-                onChange={(name, value) => {
+                onKeyPress={(name, value, key) => {
                   validators.remove('description');
                   validators['description'].check(value);
                   setDefinition({ ...definition, description: value });
                 }}
+                // eslint-disable-next-line
+                onChange={(name, value) => {}}
               />
               <HelpText>
                 {definition.description.length <= 180 ? (

@@ -119,23 +119,23 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
       <div>
         {!indicator.show && !coreConfigDefinitions && renderNoItem('core configuration')}
         {!indicator.show && coreConfigDefinitions && (
-          <ConfigurationDefinitionsTableComponent
-            tenantName={coreTenant}
-            definitions={transformedCoreConfigDefinitions.tenant}
-          />
+          <>
+            <NameDiv>Core definitions</NameDiv>
+            <ConfigurationDefinitionsTableComponent
+              tenantName={coreTenant}
+              definitions={transformedCoreConfigDefinitions.tenant}
+            />
+          </>
         )}
       </div>
       {/* core config definitions */}
       <div>
         {!indicator.show && !coreConfigDefinitions && renderNoItem('core configuration')}
         {!indicator.show && coreConfigDefinitions && (
-          <>
-            <NameDiv>Core definitions</NameDiv>
-            <ConfigurationDefinitionsTableComponent
-              tenantName={tenantName}
-              definitions={transformedCoreConfigDefinitions.core}
-            />
-          </>
+          <ConfigurationDefinitionsTableComponent
+            tenantName={tenantName}
+            definitions={transformedCoreConfigDefinitions.core}
+          />
         )}
       </div>
       {/* Delete confirmation */}

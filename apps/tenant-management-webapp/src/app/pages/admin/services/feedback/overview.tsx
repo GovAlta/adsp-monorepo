@@ -1,9 +1,11 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
-import { PRE, FeedbackSubHeading, FeedbackOverviewSection } from '../feedback/styled-components';
+import { CodeSpan, PRE, FeedbackOverviewSection } from '../feedback/styled-components';
 import { useNavigate } from 'react-router-dom';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { ExternalLink } from '@components/icons/ExternalLink';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 
 interface OverviewProps {
   setActiveEdit: (boolean) => void;
@@ -12,6 +14,8 @@ interface OverviewProps {
 export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
   const { setActiveEdit, setActiveIndex } = props;
 
+  const tenant = useSelector((state: RootState) => state.tenant);
+  const feedbackServiceUrl = useSelector((state: RootState) => state.config.serviceUrls?.feedbackServiceUrl);
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, []);
@@ -41,21 +45,44 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
           Include the feedback script in your site, and initialize it from javascript. On initialization, the script
           will attach a widget element which includes a badge and form that users can use to send feedback.
         </p>
-        <ul className="goa-unordered-list">
-          <li> Code example of the &lt;script&gt; with src to feedback API in &lt;head&gt;</li>
+        <p>
+          Reference the feedback widget script in <CodeSpan>&lt;head&gt;</CodeSpan> to set the{' '}
+          <CodeSpan>adspFeedback</CodeSpan> global variable.
           <PRE>
-            &lt;head&gt; <br></br> ... <br></br>
-            &lt;script src=&quot;https://feedback-service.adsp.alberta.ca/feedback/v1/script/adspFeedback.js&quot;&gt;
-            &lt;/script&gt;<br></br>&lt;/head&gt;
+            &lt;head&gt;
+            <br />
+            ...
+            <br />
+            &lt;script
+            src=&quot;{feedbackServiceUrl}/feedback/v1/script/adspFeedback.js&quot;&gt;&lt;/script&gt;
+            <br />
+            &lt;/head&gt;
           </PRE>
-          <li>
-            Code example of the &lt;script&gt; in body to{' '}
-            <PRE>
-              &lt;body&gt; <br></br> ... <br></br>&lt;script&gt; adspFeedback.initialize(&#123;tenant: &apos;&lt;tenant
-              name&gt;&apos;&#125;)<br></br>&lt;/script&gt;<br></br>&lt;/body&gt;
-            </PRE>
-          </li>
-        </ul>
+        </p>
+        <p>
+          Initialize the widget via the <CodeSpan>adspFeedback</CodeSpan> variable in <CodeSpan>&lt;body&gt;</CodeSpan>{' '}
+          to identify your tenant and mount the widget element to DOM. A <CodeSpan>getAccessToken</CodeSpan> function
+          for feedback under the user's context is required for sites that don't allow anonymous feedback.
+          <PRE>
+            &lt;body&gt;
+            <br />
+            ...
+            <br />
+            &lt;script&gt;
+            <br />
+            adspFeedback.initialize(&#123;
+            <br />
+            {`  tenant: '${tenant.name}',`}
+            <br />
+            {`  getAccessToken: () => Promise.resolve(<token value>),`}
+            <br />
+            &#125;);
+            <br />
+            &lt;/script&gt;
+            <br />
+            &lt;/body&gt;
+          </PRE>
+        </p>
         <p>
           For more information on integrating the feedback service with your application please see the{' '}
           <ExternalLink

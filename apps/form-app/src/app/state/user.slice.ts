@@ -27,6 +27,15 @@ export interface UserState {
 }
 
 let client: KeycloakInstance;
+
+export const getKeycloakExpiry = () => {
+  if (client) {
+    return client?.refreshTokenParsed?.exp || 0;
+  }
+
+  return 0;
+};
+
 async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
   if (client?.realm !== realm) {
     client = keycloak({
@@ -56,7 +65,7 @@ export async function getAccessToken(): Promise<string> {
   let token = null;
   if (client) {
     try {
-      await client.updateToken(60);
+      await client.updateToken(5 * 60);
       token = client.token;
     } catch (err) {
       // If we're unable to update token, return no value and the request will fail on 401.
@@ -188,9 +197,6 @@ const userSlice = createSlice({
       .addCase(initializeUser.fulfilled, (state, { payload }) => {
         state.user = payload;
         state.initialized = true;
-      })
-      .addCase(loginUser.fulfilled, (state, { payload }) => {
-        state.user = payload as typeof state.user;
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;

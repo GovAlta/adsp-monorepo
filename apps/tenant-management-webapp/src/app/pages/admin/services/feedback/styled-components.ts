@@ -10,6 +10,16 @@ export const PRE = styled.div`
   margin-top: var(--goa-space-s);
 `;
 
+export const CodeSpan = styled.span`
+  font-family: monospace;
+  font-size: var(--fs-sm);
+  background-color: var(--color-gray-100);
+  padding: 0.25rem;
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+  line-height: normal;
+`;
+
 export const UrlWrapper = styled.div`
   display: flex;
   width: 100%;

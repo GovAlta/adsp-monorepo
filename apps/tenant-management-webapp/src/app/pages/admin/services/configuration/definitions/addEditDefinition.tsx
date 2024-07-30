@@ -174,12 +174,13 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             testId="form-description"
             aria-label="description"
             width="100%"
-            // eslint-disable-next-line
-            onChange={(name, value) => {
+            onKeyPress={(name, value, key) => {
               validators.remove('description');
               validators['description'].check(value);
               setDefinition({ ...definition, description: value });
             }}
+            // eslint-disable-next-line
+            onChange={(name, value) => {}}
           />
         </GoAFormItem>
         <GoASpacer vSpacing="xs"></GoASpacer>

@@ -271,6 +271,8 @@ objects:
             - envFrom:
                 - configMapRef:
                     name: task-service
+                - configMapRef:
+                    name: directory-overrides
                 - secretRef:
                     name: task-service
               env:

@@ -177,11 +177,13 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 width="100%"
                 testId="pdf-template-description"
                 aria-label="pdf-template-description"
-                onChange={(name, value) => {
+                onKeyPress={(name, value, key) => {
                   validators.remove('description');
                   validators['description'].check(value);
                   setTemplate({ ...template, description: value });
                 }}
+                // eslint-disable-next-line
+                onChange={(name, value) => {}}
               />
 
               <HelpText>

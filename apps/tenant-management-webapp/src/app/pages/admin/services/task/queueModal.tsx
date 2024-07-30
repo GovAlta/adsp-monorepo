@@ -131,7 +131,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
               validations['namespace'] = value;
             }
             validators.checkAll(validations);
-            value = toKebabName(value);
+
             setQueue({ ...queue, namespace: value });
           }}
         />
@@ -154,7 +154,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
               validations['duplicated'] = value;
             }
             validators.checkAll(validations);
-            value = toKebabName(value);
+
             setQueue({ ...queue, name: value });
           }}
         />

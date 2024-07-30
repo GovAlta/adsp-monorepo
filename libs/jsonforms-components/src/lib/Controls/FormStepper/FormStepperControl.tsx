@@ -229,16 +229,18 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                           </Anchor>
                         </ReviewItemHeader>
                         <GoAGrid minChildWidth="600px">
-                          {category.elements.map((element) => {
+                          {category.elements.map((element, index) => {
                             return (
-                              <JsonFormsDispatch
-                                data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-                                schema={schema}
-                                uischema={element}
-                                enabled={enabled}
-                                renderers={GoAReviewRenderers}
-                                cells={cells}
-                              />
+                              <div key={`form-stepper-category-${index}`}>
+                                <JsonFormsDispatch
+                                  data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                                  schema={schema}
+                                  uischema={element}
+                                  enabled={enabled}
+                                  renderers={GoAReviewRenderers}
+                                  cells={cells}
+                                />
+                              </div>
                             );
                           })}
                         </GoAGrid>
