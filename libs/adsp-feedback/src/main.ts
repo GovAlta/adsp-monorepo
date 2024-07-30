@@ -169,10 +169,12 @@ class AdspFeedback implements AdspFeedbackApi {
   private closeErrorForm() {
     this.closeFeedbackForm();
     this.feedbackFormRef?.value?.setAttribute('data-error', 'false');
+    this.reset();
   }
   private closeAllFeedback() {
     this.closeFeedbackForm();
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
+    this.reset();
   }
 
   private onIssueChange(event: Event) {
@@ -182,6 +184,10 @@ class AdspFeedback implements AdspFeedbackApi {
           this.radio1Ref.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
+        if (this.feedbackContentFormRef?.value) {
+          this.feedbackContentFormRef.value.style.overflowY = 'auto';
+        }
+
         this.technicalCommentRef.value?.focus();
         if (this.technicalCommentRef.value?.value.length === 0) {
           this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
@@ -194,6 +200,9 @@ class AdspFeedback implements AdspFeedbackApi {
         }
         if (this.selectedRating > 0) {
           this.sendButtonRef.value?.removeAttribute('disabled');
+        }
+        if (this.feedbackContentFormRef?.value) {
+          this.feedbackContentFormRef.value.style.overflowY = 'hidden';
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
       }
@@ -296,6 +305,12 @@ class AdspFeedback implements AdspFeedbackApi {
     if (this.radio2Ref.value) {
       this.radio2Ref.value.checked = false;
     }
+    if (this.sendButtonRef) {
+      this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
+    }
+    if (this.feedbackContentFormRef?.value) {
+      this.feedbackContentFormRef.value.style.overflowY = 'hidden';
+    }
   }
 
   private async sendFeedback() {
@@ -359,7 +374,7 @@ class AdspFeedback implements AdspFeedbackApi {
           alt="${rating.label}"
           tabindex="0"
         />
-        <div class="tooltip-text">${rating.label}</div>
+        <span class="tooltip-text">${rating.label}</span>
         <p
           class="ratingText"
           @mouseover="${() => this.updateHover(index, true)}"
@@ -432,7 +447,6 @@ class AdspFeedback implements AdspFeedbackApi {
       text.style.color = '#333333';
     }
     this.selectedRating = index;
-    this.sendButtonRef.value?.removeAttribute('disabled');
     this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-primary') as HTMLElement;
 
     const texts = document.querySelectorAll('.ratingText');
@@ -488,7 +502,6 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           img:focus-visible {
             border-radius: 0.25rem;
-            border: 1px solid #feba35;
             outline: #feba35 solid 3px;
           }
 
@@ -577,7 +590,7 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .adsp-fb .adsp-fb-content {
             max-height: 450px;
-            overflow-y: auto;
+            overflow-y: hidden;
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
@@ -601,29 +614,29 @@ class AdspFeedback implements AdspFeedbackApi {
             > div > p {
               display: none;
             }
-          }
-          .adsp-fb .adsp-fb-form-rating .tooltip-text {
-            visibility: hidden;
-            margin-left: 26px;
-            background-color: #666666;
-            color: #fff;
-            text-align: center;
-            border-radius: 5px;
-            padding: 8px 12px;
-            margin-top: 53px;
-            position: absolute;
-            z-index: 1;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-            white-space: nowrap;
+
+            span.tooltip-text {
+              visibility: hidden;
+              margin-left: 26px;
+              background-color: #666666;
+              color: #fff;
+              text-align: center;
+              border-radius: 5px;
+              padding: 8px 12px;
+              margin-top: 53px;
+              position: absolute;
+              transform: translateX(-50%);
+              opacity: 0;
+              transition: opacity 0.3s;
+              white-space: nowrap;
+            }
           }
 
-          .adsp-fb .tooltip-text::before {
+          .adsp-fb .adsp-fb-form-rating .tooltip-text::before {
             content: '';
             position: absolute;
             top: -10px;
-            left: 48%;
+            left: 50%;
             margin-left: -5px;
             border-width: 5px;
             border-style: solid;
@@ -771,6 +784,7 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .rating-div {
             display: flex;
             flex-direction: column;
+            padding-left: 2px;
           }
           .adsp-fb .adsp-fb-sent {
             text-align: left;
@@ -836,7 +850,10 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: column;
             cursor: pointer;
           }
-
+          .radio-container span {
+            color: var(--color-gray-600);
+            font-size: 14px;
+          }
           .radio {
             appearance: none;
             width: 24px;
@@ -1093,7 +1110,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       <hr class="hr-width hr-width" />
                       <br />
                       <div class="radio-container">
-                        <label><b>Did you experience any technical issues?</b></label>
+                        <label><b>Did you experience any technical issues?</b><span> (required)</span></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
                           <div
                             id="technicalIssueYes"
