@@ -184,9 +184,6 @@ class AdspFeedback implements AdspFeedbackApi {
           this.radio1Ref.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
-        if (this.feedbackContentFormRef?.value) {
-          this.feedbackContentFormRef.value.style.overflowY = 'auto';
-        }
 
         this.technicalCommentRef.value?.focus();
         if (this.technicalCommentRef.value?.value.length === 0) {
@@ -198,13 +195,14 @@ class AdspFeedback implements AdspFeedbackApi {
         if (this.radio2Ref.value) {
           this.radio2Ref.value.checked = true;
         }
-        if (this.selectedRating > 0) {
+        if (this.selectedRating > -1) {
           this.sendButtonRef.value?.removeAttribute('disabled');
         }
-        if (this.feedbackContentFormRef?.value) {
-          this.feedbackContentFormRef.value.style.overflowY = 'hidden';
-        }
+
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
+        if (this.technicalCommentDivRef?.value) {
+          this.technicalCommentDivRef?.value?.removeAttribute('value');
+        }
       }
     }
   }
@@ -409,7 +407,7 @@ class AdspFeedback implements AdspFeedbackApi {
   };
 
   private clearRating = (index: number) => {
-    if (index > 0) {
+    if (index > -1) {
       const rating = this.ratings[index];
       const images = document.querySelectorAll('.rating');
       const image = images[index] as HTMLImageElement;
@@ -425,7 +423,7 @@ class AdspFeedback implements AdspFeedbackApi {
     if (
       this.technicalCommentRef?.value &&
       this.technicalCommentRef?.value?.value.length > 0 &&
-      this.selectedRating > 0
+      this.selectedRating > -1
     ) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     } else {
@@ -453,6 +451,9 @@ class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
+    if (this.radio2Ref.value && this.radio2Ref.value.checked === true) {
+      this.sendButtonRef.value?.removeAttribute('disabled');
+    }
   };
 
   public initialize({ apiUrl, tenant, name, email, getAccessToken, getContext }: FeedbackOptions) {
@@ -590,7 +591,7 @@ class AdspFeedback implements AdspFeedbackApi {
             transition: transform 0.001ms;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 450px;
+            max-height: 453px;
             overflow-y: auto;
             overflow-x: hidden;
             flex: 1;
