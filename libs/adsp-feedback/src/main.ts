@@ -184,6 +184,10 @@ class AdspFeedback implements AdspFeedbackApi {
           this.radio1Ref.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
+        if (this.feedbackContentFormRef?.value) {
+          this.feedbackContentFormRef.value.style.overflowY = 'auto';
+        }
+
         this.technicalCommentRef.value?.focus();
         if (this.technicalCommentRef.value?.value.length === 0) {
           this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
@@ -196,6 +200,9 @@ class AdspFeedback implements AdspFeedbackApi {
         }
         if (this.selectedRating > 0) {
           this.sendButtonRef.value?.removeAttribute('disabled');
+        }
+        if (this.feedbackContentFormRef?.value) {
+          this.feedbackContentFormRef.value.style.overflowY = 'hidden';
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
       }
@@ -583,7 +590,7 @@ class AdspFeedback implements AdspFeedbackApi {
             transition: transform 0.001ms;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 452px;
+            max-height: 450px;
             overflow-y: auto;
             overflow-x: hidden;
             flex: 1;
