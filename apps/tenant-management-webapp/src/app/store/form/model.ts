@@ -40,7 +40,7 @@ export const defaultFormDefinition: FormDefinition = {
   anonymousApply: false,
   dispositionStates: [],
   submissionRecords: false,
-  submissionPdfTemplate: '',
+  submissionPdfTemplate: 'submitted-form',
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
 };
