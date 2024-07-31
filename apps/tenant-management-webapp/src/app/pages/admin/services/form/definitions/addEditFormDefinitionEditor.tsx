@@ -206,6 +206,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [spinner, setSpinner] = useState<boolean>(false);
   const id = useSecureParams('id');
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
+  const [currentTab, setCurrentTab] = useState(0);
 
   const debouncedRenderUISchema = useDebounce(tempUiSchema, 1000);
   const debouncedRenderDataSchema = useDebounce(tempDataSchema, 1000);
@@ -494,6 +495,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       return definition?.dispositionStates && definition.dispositionStates[selectedEditModalIndex];
     }
     return { id: '', name: '', description: '' } as Disposition;
+  };
+  const saveCurrentTab = (tab: number) => {
+    setCurrentTab(tab);
   };
 
   return (
@@ -897,7 +901,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           </NameDescriptionDataSchema>
 
           <FormPreviewContainer>
-            <Tabs data-testid="preview-tabs" activeIndex={0}>
+            <Tabs data-testid="preview-tabs" activeIndex={0} changeTabCallback={saveCurrentTab}>
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <FormPreviewScrollPane>
@@ -926,9 +930,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Data" data-testid="data-view">
                 {data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}
               </Tab>
-              <Tab label={<PreviewTop title="PDF Preview" form={definition} data={data} />} data-testid="data-view">
-                <PDFPreviewTemplateCore />
-              </Tab>
+              {definition?.submissionPdfTemplate && (
+                <Tab
+                  label={<PreviewTop title="PDF Preview" form={definition} data={data} currentTab={currentTab} />}
+                  data-testid="data-view"
+                >
+                  <PDFPreviewTemplateCore />
+                </Tab>
+              )}
             </Tabs>
           </FormPreviewContainer>
         </FlexRow>

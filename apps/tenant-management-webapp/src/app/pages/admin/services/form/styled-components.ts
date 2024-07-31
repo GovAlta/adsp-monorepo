@@ -1,5 +1,9 @@
 import styled from 'styled-components';
 
+export const DisplayFlex = styled.div`
+  display: flex;
+`;
+
 export const PopulateTemplateWrapper = styled.div`
   display: flex;
   margin-left: 3px;
@@ -16,6 +20,13 @@ export const EditorPadding = styled.div`
   .margin-view-overlays {
     margin-top: 5px !important;
   }
+`;
+
+export const ButtonIconPadding = styled.div`
+  margin-top: -4px;
+`;
+export const ButtonIconPaddingThree = styled.div`
+  margin-top: -3px;
 `;
 
 export const FakeButton = styled.div`
@@ -411,12 +422,12 @@ export const PreviewTopStyleWrapper = styled.div`
   .hr-resize {
     margin-top: calc(0.75rem - 3px);
   }
+  margin-top: -3px;
 `;
 
 export const FormTitle = styled.div`
   font-weight: var(--fw-regular);
   font-family: var(--goa-font-family-sans);
-  margin-bottom: var(--goa-space-s);
 `;
 
 export const FormEditorContainer = styled.div`
