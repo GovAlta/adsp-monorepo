@@ -7,6 +7,7 @@ import {
   FeedbackActionTypes,
   UPDATE_FEEDBACK_SITE_SUCCESS_ACTION,
   EXPORT_FEEDBACKS_SUCCESS_ACTION,
+  FETCH_FEEDBACK_METRICS_SUCCESS_ACTION,
 } from './actions';
 
 export const initialState: FeedbackState = {
@@ -15,6 +16,7 @@ export const initialState: FeedbackState = {
   exportData: [],
   isLoading: false,
   nextEntries: null,
+  metrics: {},
 };
 
 function feedbackReducer(state: FeedbackState = initialState, action: FeedbackActionTypes): FeedbackState {
@@ -58,6 +60,12 @@ function feedbackReducer(state: FeedbackState = initialState, action: FeedbackAc
       return {
         ...state,
         sites: state.sites.filter((site) => site.url !== action.siteUrl),
+      };
+    }
+    case FETCH_FEEDBACK_METRICS_SUCCESS_ACTION: {
+      return {
+        ...state,
+        metrics: action.metrics,
       };
     }
     default:

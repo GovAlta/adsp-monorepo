@@ -4,8 +4,10 @@ import { CodeSpan, PRE, FeedbackOverviewSection } from '../feedback/styled-compo
 import { useNavigate } from 'react-router-dom';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { ExternalLink } from '@components/icons/ExternalLink';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { FeedbackMetrics } from './metrics';
+import { fetchFeedbackMetrics } from '@store/feedback/actions';
 
 interface OverviewProps {
   setActiveEdit: (boolean) => void;
@@ -19,12 +21,19 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, []);
+
   const navigate = useNavigate();
   useEffect(() => {
     setActiveEdit(false);
     navigate('/admin/services/feedback');
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(fetchFeedbackMetrics());
+  }, [dispatch]);
 
   return (
     <div>
@@ -53,8 +62,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
             <br />
             ...
             <br />
-            &lt;script
-            src=&quot;{feedbackServiceUrl}/feedback/v1/script/adspFeedback.js&quot;&gt;&lt;/script&gt;
+            &lt;script src=&quot;{feedbackServiceUrl}/feedback/v1/script/adspFeedback.js&quot;&gt;&lt;/script&gt;
             <br />
             &lt;/head&gt;
           </PRE>
@@ -101,6 +109,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
       >
         Register site
       </GoAButton>
+      <FeedbackMetrics />
     </div>
   );
 };
