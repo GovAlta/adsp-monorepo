@@ -16,6 +16,9 @@ import {
   PreviewTopStyleWrapper,
   PreviewContainer,
   FormTitle,
+  DisplayFlex,
+  ButtonIconPadding,
+  ButtonIconPaddingThree,
 } from '../styled-components';
 
 import { RootState } from '@store/index';
@@ -143,7 +146,7 @@ export const PDFPreviewTemplateCore = () => {
   );
 };
 
-export const PreviewTop = ({ title, form, data }) => {
+export const PreviewTop = ({ title, form, data, currentTab }) => {
   const onDownloadFile = async (file) => {
     file && dispatch(DownloadFileService(file));
   };
@@ -157,6 +160,7 @@ export const PreviewTop = ({ title, form, data }) => {
   const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
 
   const blobUrl = blob && URL.createObjectURL(blob);
+  const pdfPreviewTab = 2;
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getCorePdfTemplates());
@@ -189,30 +193,37 @@ export const PreviewTop = ({ title, form, data }) => {
     <PreviewTopStyleWrapper>
       <PreviewTopStyle>
         <FormTitle>{title}</FormTitle>
-        <GoAButton
-          type="secondary"
-          testId="generate-template"
-          size="compact"
-          onClick={() => {
-            generateTemplate();
-          }}
-        >
-          Generate PDF
-        </GoAButton>
-
-        <GoAIconButton
-          icon="download"
-          title="Download"
-          testId="download-template-icon"
-          size="medium"
-          disabled={!blobUrl}
-          onClick={() => {
-            const file = fileList[0];
-            if (file.recordId === pdfList[0].id && file.filename.indexOf(pdfList[0].templateId) > -1) {
-              onDownloadFile(file);
-            }
-          }}
-        />
+        {currentTab === pdfPreviewTab && (
+          <DisplayFlex>
+            <ButtonIconPaddingThree>
+              <GoAButton
+                type="secondary"
+                testId="generate-template"
+                size="compact"
+                onClick={() => {
+                  generateTemplate();
+                }}
+              >
+                Generate PDF
+              </GoAButton>
+            </ButtonIconPaddingThree>
+            <ButtonIconPadding>
+              <GoAIconButton
+                icon="download"
+                title="Download"
+                testId="download-template-icon"
+                size="medium"
+                disabled={!blobUrl}
+                onClick={() => {
+                  const file = fileList[0];
+                  if (file.recordId === pdfList[0].id && file.filename.indexOf(pdfList[0].templateId) > -1) {
+                    onDownloadFile(file);
+                  }
+                }}
+              />
+            </ButtonIconPadding>
+          </DisplayFlex>
+        )}
       </PreviewTopStyle>
     </PreviewTopStyleWrapper>
   );

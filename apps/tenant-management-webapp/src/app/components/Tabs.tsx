@@ -32,12 +32,14 @@ function Tabs(props: TabsProps): JSX.Element {
     if (props.activeIndex !== null) setActiveTabIndex(props.activeIndex);
   }, [props.activeIndex]);
 
+  const filteredChildren = Children.toArray(props.children).filter((child) => child !== null);
+
   return (
     <>
       <SCTabs>
         {
           // eslint-disable-next-line
-          Children.map<JSX.Element, any>(props.children, (child: any, index: number) => {
+          Children.map<JSX.Element, any>(filteredChildren, (child: any, index: number) => {
             const testId = child.props?.testId ? `${child.props?.testId}-tab-btn` : `tab-btn-${index}`;
             return (
               <TabItem
@@ -54,7 +56,7 @@ function Tabs(props: TabsProps): JSX.Element {
       </SCTabs>
       {
         // eslint-disable-next-line
-        Children.toArray(props.children).filter((_child: any, index: number) => {
+        filteredChildren.filter((_child: any, index: number) => {
           return index === activeTabIndex;
         })
       }
