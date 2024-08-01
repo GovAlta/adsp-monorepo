@@ -18,5 +18,3 @@ export interface ActiveRevisionDoc {
 export type RevisionAggregateDoc<C = unknown> = Omit<ConfigurationRevisionDoc<C>, 'namespace' | 'name' | 'tenant'> & {
   _id: Pick<ConfigurationRevisionDoc<C>, 'namespace' | 'name' | 'tenant'>;
 };
-
-export type ActiveAggregateDoc<C = unknown> = ActiveRevisionDoc & { revision: ConfigurationRevisionDoc<C> []};
