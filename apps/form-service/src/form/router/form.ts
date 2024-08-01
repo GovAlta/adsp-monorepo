@@ -7,6 +7,7 @@ import {
   startBenchmark,
   UnauthorizedUserError,
   ServiceDirectory,
+  TokenProvider,
 } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
@@ -48,7 +49,13 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
   };
 }
 
-async function GeneratePdf(form: FormEntity, directory: ServiceDirectory, recordId: string, token: string) {
+async function GeneratePdf(
+  form: FormEntity,
+  directory: ServiceDirectory,
+  recordId: string,
+  token: string,
+  tenantId: string
+) {
   const config = {
     id: form.definition?.id,
     name: form.definition?.name,
@@ -69,7 +76,7 @@ async function GeneratePdf(form: FormEntity, directory: ServiceDirectory, record
   };
 
   const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:pdf-service`);
-  const configUrl = new URL(`/pdf/v1/jobs`, baseUrl);
+  const configUrl = new URL(`/pdf/v1/jobs?tenantId=${tenantId}`, baseUrl);
   await axios.post(configUrl.href, pdfGenerateBody, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -378,7 +385,8 @@ export function formOperation(
   notificationService: NotificationService,
   queueTaskService: QueueTaskService,
   submissionRepository: FormSubmissionRepository,
-  directory: ServiceDirectory
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -388,8 +396,6 @@ export function formOperation(
 
       const form: FormEntity = req[FORM];
       const request: FormOperations = req.body;
-
-      const token = user?.token?.bearer;
 
       let result: FormEntity = null;
       let event: DomainEvent = null;
@@ -407,11 +413,17 @@ export function formOperation(
         case SUBMIT_FORM_OPERATION: {
           const [submittedForm, submission] = await form.submit(user, queueTaskService, submissionRepository);
           result = submittedForm;
-          const recordId = submission?.id || submittedForm.id;
+
+          let recordId = `urn:ads:platform:form-service:v1:/forms/${submittedForm.id}`;
+          if (submission?.id) {
+            recordId = recordId + `/submissions/${submission?.id}`;
+          }
 
           event = formSubmitted(apiId, user, result, submission);
           if (form.submissionPdfTemplate.length > 0) {
-            GeneratePdf(form, directory, recordId, token);
+            const token = await tokenProvider.getAccessToken();
+            const tenantId = user?.tenantId.toString();
+            GeneratePdf(form, directory, recordId, token, tenantId);
           }
 
           break;
@@ -499,6 +511,7 @@ interface FormRouterProps {
   commentService: CommentService;
   submissionRepository: FormSubmissionRepository;
   directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
 }
 
 export function createFormRouter({
@@ -511,6 +524,7 @@ export function createFormRouter({
   commentService,
   submissionRepository,
   directory,
+  tokenProvider,
 }: FormRouterProps): Router {
   const router = Router();
 
@@ -590,7 +604,15 @@ export function createFormRouter({
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService, queueTaskService, submissionRepository, directory)
+    formOperation(
+      apiId,
+      eventService,
+      notificationService,
+      queueTaskService,
+      submissionRepository,
+      directory,
+      tokenProvider
+    )
   );
   router.delete(
     '/forms/:formId',

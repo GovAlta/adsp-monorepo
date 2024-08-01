@@ -1,4 +1,4 @@
-import { AdspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   createValidationHandler,
   InvalidOperationError,
@@ -87,12 +87,13 @@ export function generatePdf(
   return async (req, res, next) => {
     try {
       const user = req.user;
-      const tenantId = req.tenant.id;
+      const allowCore = true;
+      const tenantId = req.tenant?.id || (req.query.tenantId && adspId`${req.query.tenantId}`);
       const { templateId, fileType, filename, recordId, data } = req.body;
       const template: PdfTemplateEntity = req[TEMPLATE];
       logger.info(`Start to process the template: ${templateId}`);
 
-      if (!isAllowedUser(user, template.tenantId, ServiceRoles.PdfGenerator)) {
+      if (!isAllowedUser(user, template.tenantId || tenantId, ServiceRoles.PdfGenerator, allowCore)) {
         throw new UnauthorizedUserError('generate pdf', user);
       }
 
@@ -102,7 +103,6 @@ export function generatePdf(
           throw new InvalidOperationError(`Specified target file type '${fileType}' cannot be found.`);
         }
       }
-
 
       const job = await repository.create(tenantId);
       logger.info(`Successfully created the job ${job.id}.`);

@@ -28,6 +28,7 @@ interface FormMiddlewareProps extends Repositories {
   queueTaskService: QueueTaskService;
   formSubmissionRepository: FormSubmissionRepository;
   directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
 }
 
 export const applyFormMiddleware = (
@@ -43,6 +44,7 @@ export const applyFormMiddleware = (
     queueTaskService,
     formSubmissionRepository: submissionRepository,
     directory,
+    tokenProvider,
   }: FormMiddlewareProps
 ): Application => {
   const apiId = adspId`${serviceId}:v1`;
@@ -58,6 +60,7 @@ export const applyFormMiddleware = (
     commentService,
     submissionRepository,
     directory,
+    tokenProvider,
   });
   app.use('/form/v1', router);
 
