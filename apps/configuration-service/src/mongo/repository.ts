@@ -201,15 +201,11 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         $lookup: {
           from: 'revisions',
           as: 'revision',
-          let: { active: '$active' },
+          localField: 'active',
+          foreignField: 'revision',
           pipeline: [
             {
               $match: query,
-            },
-            {
-              $match: {
-                $expr: { $eq: ['$revision', '$$active'] },
-              },
             },
           ],
         },
