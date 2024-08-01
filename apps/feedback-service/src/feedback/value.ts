@@ -6,7 +6,24 @@ export const FeedbackValueDefinition: ValueDefinition = {
   id: 'feedback',
   name: FEEDBACK_VALUE,
   description: 'Value representing received feedback.',
-  jsonSchema: {},
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      rating: {
+        type: 'string',
+      },
+      ratingValue: {
+        type: 'number',
+      },
+      comment: {
+        type: ['string', 'null'],
+      },
+      technicalIssue: {
+        type: ['string', 'null'],
+      },
+    },
+    required: ['rating', 'ratingValue'],
+  },
 };
 
 export interface FeedbackValue extends Feedback {
