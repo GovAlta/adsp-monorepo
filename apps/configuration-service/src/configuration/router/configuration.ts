@@ -202,7 +202,7 @@ export function findConfiguration(repository: ConfigurationRepository): RequestH
       const tenantId = req.tenant?.id;
       const { namespace } = req.params;
       const { top: topValue, after } = req.query;
-      const top = topValue ? parseInt(topValue as string) : null;
+      const top = topValue ? parseInt(topValue as string) : 10;
 
       if (!isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin)) {
         throw new UnauthorizedUserError('find configuration', user);
@@ -233,17 +233,18 @@ export const getConfiguration =
     res.send(result);
   };
 
-export const getConfigurationWithActive = (): RequestHandler => async (req, res) => {
-  const configuration: ConfigurationEntity = req[ENTITY_KEY];
-  const revision = await configuration.getActiveRevision();
-  let active: ConfigurationRevision = undefined;
-  // 0 is falsy and a valid revision.
-  if (typeof revision === 'number') {
-    active = (await configuration.getRevisions(1, null, { revision })).results[0];
-  }
+export function getConfigurationWithActive(): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const configuration: ConfigurationEntity = req[ENTITY_KEY];
+      const active = await configuration.getActiveRevision();
 
-  res.send({ ...mapConfiguration(configuration), active });
-};
+      res.send({ ...mapConfiguration(configuration), active });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export const patchConfigurationRevision =
   (logger: Logger, eventService: EventService): RequestHandler =>
@@ -342,23 +343,11 @@ export const getActiveRevision =
       const orLatest = orLatestValue === 'true';
       const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
-      const revision = await configuration.getActiveRevision();
-
-      const revisions = revision >= 0 ? await configuration.getRevisions(1, null, { revision }) : { results: [] };
-
-      let {
-        results: [result],
-      } = revisions;
-
+      let result = await configuration.getActiveRevision();
+      const revision = result?.revision;
       if (!result) {
         if (orLatest) {
           result = configuration.latest;
-        } else if (!revision) {
-          end();
-          res.status(200);
-          res.send([]);
-        } else {
-          throw new NotFoundError('active revision');
         }
       }
 
@@ -428,30 +417,29 @@ export const configurationOperations =
           throw new InvalidOperationError(`Set active revision request must include setActiveRevision property.`);
         }
         const revisions = await configuration.getRevisions(1, null, { revision: request.setActiveRevision });
-        const results = revisions.results;
-        const currentRevision = results[0];
-        if (!currentRevision) {
+        const [targetRevision] = revisions.results;
+        if (!targetRevision) {
           throw new InvalidOperationError(`The selected revision does not exist`);
         }
 
         const oldRevision = await configuration.getActiveRevision();
-        const active = await configuration.setActiveRevision(user, currentRevision.revision);
+        const newRevision = await configuration.setActiveRevision(user, targetRevision.revision);
 
         end();
-        res.send(mapActiveRevision(configuration, active));
+        res.send(mapActiveRevision(configuration, newRevision.revision));
         eventService.send(
           activeRevisionSet(
             user,
             configuration.tenantId,
             configuration.namespace,
             configuration.name,
-            active,
-            oldRevision
+            newRevision.revision,
+            oldRevision?.revision
           )
         );
 
         logger.info(
-          `Active revision ${configuration.namespace}:${configuration.name}:${active} changed to revision ${currentRevision.revision}` +
+          `Active revision ${configuration.namespace}:${configuration.name}:${oldRevision?.revision} changed to revision ${newRevision.revision}` +
             ` by ${user.name} (ID: ${user.id}).`,
           {
             tenant: configuration.tenantId?.toString(),

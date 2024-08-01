@@ -45,11 +45,8 @@ describe('router', () => {
     delete: jest.fn(),
     getRevisions: jest.fn(),
     saveRevision: jest.fn(),
-  };
-
-  const activeRevisionMock = {
-    get: jest.fn(),
-    delete: jest.fn(),
+    getActiveRevision: jest.fn(),
+    clearActiveRevision: jest.fn(),
     setActiveRevision: jest.fn(),
   };
 
@@ -57,6 +54,8 @@ describe('router', () => {
     repositoryMock.find.mockClear();
     repositoryMock.get.mockClear();
     repositoryMock.delete.mockClear();
+    repositoryMock.getActiveRevision.mockClear();
+    repositoryMock.setActiveRevision.mockClear();
     eventServiceMock.send.mockClear();
   });
 
@@ -86,7 +85,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -175,15 +173,13 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock
         )
       );
-      activeRevisionMock.get.mockResolvedValueOnce({
-        namespace: configurationServiceId.namespace,
-        name: configurationServiceId.service,
-        tenant: tenantId,
-        active: 2,
+      repositoryMock.getActiveRevision.mockResolvedValueOnce({
+        revision: 1,
+        configuration: {},
+        lastUpdated: new Date(),
       });
       repositoryMock.get.mockResolvedValueOnce(
         new ConfigurationEntity(
@@ -191,7 +187,6 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock,
           null,
           tenantId
@@ -203,7 +198,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -243,7 +237,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -286,15 +279,13 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock
         )
       );
-      activeRevisionMock.get.mockResolvedValueOnce({
-        namespace: configurationServiceId.namespace,
-        name: configurationServiceId.service,
-        tenant: tenantId,
-        active: 2,
+      repositoryMock.getActiveRevision.mockResolvedValueOnce({
+        revision: 1,
+        configuration: {},
+        lastUpdated: new Date(),
       });
       repositoryMock.get.mockResolvedValueOnce(
         new ConfigurationEntity(
@@ -302,7 +293,6 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock,
           null,
           tenantId
@@ -314,7 +304,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -357,16 +346,14 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock
         )
       );
 
-      activeRevisionMock.get.mockResolvedValueOnce({
-        namespace: configurationServiceId.namespace,
-        name: configurationServiceId.service,
-        tenant: tenantId,
-        active: 2,
+      repositoryMock.getActiveRevision.mockResolvedValueOnce({
+        revision: 1,
+        configuration: {},
+        lastUpdated: new Date(),
       });
       const configurationSchema = {};
 
@@ -376,7 +363,6 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock,
           {
             revision: 1,
@@ -394,7 +380,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -440,7 +425,6 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock,
           {
             revision: 1,
@@ -451,11 +435,10 @@ describe('router', () => {
         )
       );
 
-      activeRevisionMock.get.mockResolvedValueOnce({
-        namespace: configurationServiceId.namespace,
-        name: configurationServiceId.service,
-        tenant: tenantId,
-        active: 2,
+      repositoryMock.getActiveRevision.mockResolvedValueOnce({
+        revision: 1,
+        configuration: {},
+        lastUpdated: new Date(),
       });
 
       const entity = new ConfigurationEntity(
@@ -463,7 +446,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -509,16 +491,14 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock
         )
       );
 
-      activeRevisionMock.get.mockResolvedValueOnce({
-        namespace: configurationServiceId.namespace,
-        name: configurationServiceId.service,
-        tenant: tenantId,
-        active: 2,
+      repositoryMock.getActiveRevision.mockResolvedValueOnce({
+        revision: 1,
+        configuration: {},
+        lastUpdated: new Date(),
       });
       const configurationSchema = {};
 
@@ -528,7 +508,6 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock,
           {
             revision: 1,
@@ -546,7 +525,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -593,7 +571,6 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock,
           {
             revision: 1,
@@ -604,11 +581,10 @@ describe('router', () => {
         )
       );
 
-      activeRevisionMock.get.mockResolvedValueOnce({
-        namespace: configurationServiceId.namespace,
-        name: configurationServiceId.service,
-        tenant: tenantId,
-        active: 2,
+      repositoryMock.getActiveRevision.mockResolvedValueOnce({
+        revision: 1,
+        configuration: {},
+        lastUpdated: new Date(),
       });
 
       const entity = new ConfigurationEntity(
@@ -616,7 +592,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -662,16 +637,14 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock
         )
       );
 
-      activeRevisionMock.get.mockResolvedValueOnce({
-        namespace: configurationServiceId.namespace,
-        name: configurationServiceId.service,
-        tenant: tenantId,
-        active: 2,
+      repositoryMock.getActiveRevision.mockResolvedValueOnce({
+        revision: 1,
+        configuration: {},
+        lastUpdated: new Date(),
       });
       const configurationSchema = {};
       repositoryMock.get.mockResolvedValueOnce(
@@ -680,7 +653,6 @@ describe('router', () => {
           configurationServiceId.service,
           loggerMock as Logger,
           repositoryMock,
-          activeRevisionMock,
           validationMock,
           {
             revision: 1,
@@ -697,7 +669,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -739,7 +710,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -1199,7 +1169,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -1239,7 +1208,6 @@ describe('router', () => {
         name,
         loggerMock as Logger,
         repositoryMock,
-        activeRevisionMock,
         validationMock,
         null,
         tenantId
@@ -1453,14 +1421,9 @@ describe('router', () => {
         },
       } as unknown as Request;
 
-      const active = revisionValue;
-
-      entity.getRevisions.mockResolvedValueOnce({
-        results: [{ revision: revisionValue }],
-      });
-
-      entity.getActiveRevision.mockResolvedValueOnce(1);
-      entity.setActiveRevision.mockResolvedValueOnce(active);
+      entity.getRevisions.mockResolvedValueOnce({ results: [{ revision: revisionValue }] });
+      entity.getActiveRevision.mockResolvedValueOnce({ revision: 1 });
+      entity.setActiveRevision.mockResolvedValueOnce({ revision: revisionValue });
 
       const res = {
         send: jest.fn(),
@@ -1484,7 +1447,7 @@ describe('router', () => {
   });
 
   describe('getActiveRevision', () => {
-    it('throws errors when there are no active revisions', async () => {
+    it('can return undefined when no active revision', async () => {
       const handler = getActiveRevision(loggerMock as Logger);
 
       const entity = {
@@ -1514,14 +1477,11 @@ describe('router', () => {
       entity.getActiveRevision.mockResolvedValueOnce(undefined);
 
       await handler(req, res as unknown as Response, next);
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith([]);
+      expect(res.send).toHaveBeenCalledWith(undefined);
     });
 
     it('can get active revision', async () => {
       const handler = getActiveRevision(loggerMock as Logger);
-
-      const activeRevision = 3;
 
       const entity = {
         tenantId,
@@ -1540,10 +1500,11 @@ describe('router', () => {
         query: {},
       } as unknown as Request;
 
-      entity.getActiveRevision.mockResolvedValueOnce(activeRevision);
-
-      entity.getRevisions.mockResolvedValueOnce({
-        results: [{ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } }],
+      entity.getActiveRevision.mockResolvedValueOnce({
+        namespace: namespace,
+        name: name,
+        revision: 3,
+        data: { a: 42 },
       });
 
       const res = {
@@ -1555,15 +1516,13 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } })
+        expect.objectContaining({ namespace: namespace, name: name, revision: 3, data: { a: 42 } })
       );
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can get active revision with no user context', async () => {
       const handler = getActiveRevision(loggerMock as Logger);
-
-      const activeRevision = 3;
 
       const entity = {
         tenantId,
@@ -1582,10 +1541,11 @@ describe('router', () => {
         query: {},
       } as unknown as Request;
 
-      entity.getActiveRevision.mockResolvedValueOnce(activeRevision);
-
-      entity.getRevisions.mockResolvedValueOnce({
-        results: [{ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } }],
+      entity.getActiveRevision.mockResolvedValueOnce({
+        namespace: namespace,
+        name: name,
+        revision: 3,
+        data: { a: 42 },
       });
 
       const res = {
@@ -1597,15 +1557,13 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } })
+        expect.objectContaining({ namespace: namespace, name: name, revision: 3, data: { a: 42 } })
       );
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can get active revision at revision 0', async () => {
       const handler = getActiveRevision(loggerMock as Logger);
-
-      const activeRevision = 3;
 
       const entity = {
         tenantId,
@@ -1624,9 +1582,11 @@ describe('router', () => {
         query: {},
       } as unknown as Request;
 
-      entity.getActiveRevision.mockResolvedValueOnce(0);
-      entity.getRevisions.mockResolvedValueOnce({
-        results: [{ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } }],
+      entity.getActiveRevision.mockResolvedValueOnce({
+        namespace: namespace,
+        name: name,
+        revision: 3,
+        data: { a: 42 },
       });
 
       const res = {
@@ -1638,7 +1598,7 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } })
+        expect.objectContaining({ namespace: namespace, name: name, revision: 3, data: { a: 42 } })
       );
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
@@ -1700,10 +1660,7 @@ describe('router', () => {
         query: { orLatest: 'true' },
       } as unknown as Request;
 
-      entity.getActiveRevision.mockResolvedValueOnce(1);
-      entity.getRevisions.mockResolvedValueOnce({
-        results: [],
-      });
+      entity.getActiveRevision.mockResolvedValueOnce(null);
 
       const res = {
         send: jest.fn(),
