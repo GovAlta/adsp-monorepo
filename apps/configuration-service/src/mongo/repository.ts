@@ -12,7 +12,7 @@ import {
 } from '../configuration';
 import { renamePrefixProperties } from './prefix';
 import { activeRevisionSchema, revisionSchema } from './schema';
-import { ActiveAggregateDoc, ActiveRevisionDoc, ConfigurationRevisionDoc, RevisionAggregateDoc } from './types';
+import { ActiveRevisionDoc, ConfigurationRevisionDoc, RevisionAggregateDoc } from './types';
 
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
@@ -195,25 +195,22 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     const tenant = tenantId?.toString() || { $exists: false };
     const query = { namespace, name, tenant };
 
-    const pipeline: PipelineStage[] = [
-      { $match: query },
-      {
-        $lookup: {
-          from: 'revisions',
-          as: 'revision',
-          localField: 'active',
-          foreignField: 'revision',
-          pipeline: [
-            {
-              $match: query,
-            },
-          ],
-        },
-      },
-    ];
-    const [activeDoc]: ActiveAggregateDoc[] = await this.activeRevisionModel.aggregate(pipeline).exec();
+    let doc: ConfigurationRevisionDoc;
+    const result: ActiveRevisionDoc = await this.activeRevisionModel.findOne(query, null, { lean: true }).exec();
+    if (result) {
+      doc = await this.revisionModel
+        .findOne(
+          {
+            ...query,
+            revision: result.active,
+          },
+          null,
+          { lean: true }
+        )
+        .exec();
+    }
 
-    return this.fromDoc(activeDoc?.revision?.[0]);
+    return this.fromDoc(doc);
   }
 
   async clearActiveRevision<C>(entity: ConfigurationEntity<C>): Promise<boolean> {
