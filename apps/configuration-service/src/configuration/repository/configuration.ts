@@ -27,4 +27,8 @@ export interface ConfigurationRepository {
     entity: ConfigurationEntity<C>,
     revision: ConfigurationRevision<C>
   ): Promise<ConfigurationRevision<C>>;
+
+  getActiveRevision<C>(namespace: string, name: string, tenantId?: AdspId): Promise<ConfigurationRevision<C>>;
+  clearActiveRevision<C>(entity: ConfigurationEntity<C>): Promise<boolean>;
+  setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ConfigurationRevision<C>>;
 }

@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { decodeAfter, encodeNext, Results, ValidationService } from '@core-services/core-common';
+import { decodeAfter, encodeNext, InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
 import { model, Model, PipelineStage } from 'mongoose';
 import { Logger } from 'winston';
 import {
@@ -7,25 +7,22 @@ import {
   ConfigurationEntity,
   ConfigurationRevision,
   RevisionCriteria,
-  ActiveRevisionRepository,
   ConfigurationDefinition,
   ConfigurationEntityCriteria,
 } from '../configuration';
 import { renamePrefixProperties } from './prefix';
-import { revisionSchema } from './schema';
-import { ConfigurationRevisionDoc, RevisionAggregateDoc } from './types';
+import { activeRevisionSchema, revisionSchema } from './schema';
+import { ActiveAggregateDoc, ActiveRevisionDoc, ConfigurationRevisionDoc, RevisionAggregateDoc } from './types';
 
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
+  private activeRevisionModel: Model<ActiveRevisionDoc>;
 
   private readonly META_PREFIX = 'META_';
 
-  constructor(
-    private logger: Logger,
-    private validationService: ValidationService,
-    private activeRevisionRepository: ActiveRevisionRepository
-  ) {
+  constructor(private logger: Logger, private validationService: ValidationService) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
+    this.activeRevisionModel = model<ActiveRevisionDoc>('activeRevision', activeRevisionSchema);
   }
 
   async find<C>(
@@ -61,7 +58,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
             result._id.name,
             this.logger,
             this,
-            this.activeRevisionRepository,
             this.validationService,
             result
           )
@@ -98,7 +94,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       name,
       this.logger,
       this,
-      this.activeRevisionRepository,
       this.validationService,
       latest,
       tenantId,
@@ -114,7 +109,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     };
 
     const { deletedCount } = await this.revisionModel.deleteMany(query);
-    await this.activeRevisionRepository.delete(entity);
+    await this.clearActiveRevision(entity);
 
     return deletedCount > 0;
   }
@@ -194,6 +189,78 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       created: doc.created,
       configuration: doc.configuration,
     };
+  }
+
+  async getActiveRevision<C>(namespace: string, name: string, tenantId?: AdspId): Promise<ConfigurationRevision<C>> {
+    const tenant = tenantId?.toString() || { $exists: false };
+    const query = { namespace, name, tenant };
+
+    const pipeline: PipelineStage[] = [
+      { $match: query },
+      {
+        $lookup: {
+          from: 'revisions',
+          as: 'revision',
+          let: { active: '$active' },
+          pipeline: [
+            {
+              $match: query,
+            },
+            {
+              $match: {
+                $expr: { $eq: ['$revision', '$$active'] },
+              },
+            },
+          ],
+        },
+      },
+    ];
+    const [activeDoc]: ActiveAggregateDoc[] = await this.activeRevisionModel.aggregate(pipeline).exec();
+
+    return this.fromDoc(activeDoc?.revision?.[0]);
+  }
+
+  async clearActiveRevision<C>(entity: ConfigurationEntity<C>): Promise<boolean> {
+    const query = {
+      namespace: entity.namespace,
+      name: entity.name,
+      tenant: entity.tenantId?.toString() || { $exists: false },
+    };
+
+    const { deletedCount } = await this.activeRevisionModel.deleteOne(query);
+
+    return deletedCount > 0;
+  }
+
+  async setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ConfigurationRevision<C>> {
+    if (!(active >= 0)) {
+      throw new InvalidOperationError('Active revision value must be greater than or equal to 0.');
+    }
+
+    // TODO: This should verify that the active revision value actually corresponds to a real revision?
+    // Currently being checked in the router, but probably better to push down to repo level.
+
+    const query: Record<string, unknown> = {
+      namespace: entity.namespace,
+      name: entity.name,
+      tenant: entity.tenantId?.toString() || { $exists: false },
+    };
+
+    const update: Record<string, unknown> = {
+      namespace: entity.namespace,
+      name: entity.name,
+      active: active,
+      tenant: entity.tenantId?.toString() || { $exists: false },
+    };
+
+    // Only include tenant if there is a tenantId on the entity.
+    if (entity.tenantId) {
+      update.tenant = entity.tenantId.toString();
+    }
+
+    await this.activeRevisionModel.findOneAndUpdate(query, update, { upsert: true, new: true, lean: true }).exec();
+
+    return await this.getActiveRevision(entity.namespace, entity.name, entity.tenantId);
   }
 
   private fromDoc<C>(doc: ConfigurationRevisionDoc): ConfigurationRevision<C> {
