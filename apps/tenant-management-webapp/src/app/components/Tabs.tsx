@@ -48,7 +48,7 @@ function Tabs(props: TabsProps): JSX.Element {
                 active={activeTabIndex === index}
                 onSelect={() => selectTab(index)}
               >
-                {child.props.label}
+                {child.props?.label}
               </TabItem>
             );
           })
