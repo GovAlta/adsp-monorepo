@@ -174,7 +174,10 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
     const payload = {
       templateId: PDF_FORM_TEMPLATE_ID,
       data: getFormData(),
-      fileName: `${PDF_FORM_TEMPLATE_ID}_${form.name}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
+      fileName: `${PDF_FORM_TEMPLATE_ID}_${form.name.length > 5 ? form.name.substr(0, 5) : form.name}_${new Date()
+        .toJSON()
+        .slice(0, 19)
+        .replace(/:/g, '-')}.pdf`,
       formId: form.name,
     };
 
