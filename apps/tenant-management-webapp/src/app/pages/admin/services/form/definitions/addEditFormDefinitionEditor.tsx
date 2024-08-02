@@ -79,6 +79,7 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { FormFormItem } from '../styled-components';
 import { adspId } from '@lib/adspId';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
+import { SecurityClassification } from '@store/common/models';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -130,7 +131,9 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
     JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
     JSON.stringify(tempPrev?.submissionPdfTemplate) !== JSON.stringify(tempNext?.submissionPdfTemplate) ||
-    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess);
+    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess) ||
+    JSON.stringify(tempPrev?.securityClassification) !== JSON.stringify(tempNext?.securityClassification);
+
   return isUpdated;
 };
 
@@ -695,6 +698,25 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       }
                       width="180"
                     />
+                  </FlexRow>
+                  <FlexRow>
+                    <GoAFormItem label="Select a security classification">
+                      <GoADropdown
+                        name="securityClassifications"
+                        width="25rem"
+                        value={definition?.securityClassification || ''}
+                        relative={true}
+                        onChange={(name: string, value: SecurityClassification) => {
+                          definition.securityClassification = value;
+                          setDefinition({ ...definition });
+                        }}
+                      >
+                        <GoADropdownItem value={SecurityClassification.Public} label="Public" />
+                        <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                        <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                        <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
+                      </GoADropdown>
+                    </GoAFormItem>
                   </FlexRow>
 
                   <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>

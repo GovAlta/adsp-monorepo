@@ -16,6 +16,7 @@ interface FormDefinitionsProps {
   openAddDefinition: boolean;
 }
 const FORM_APPLICANT_SERVICE_ID = `urn:ads:platform:form-service:form-applicant`;
+import { SecurityClassification } from '@store/common/models';
 
 export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -92,6 +93,8 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
           if (!doesNotContainFormRolesToAdd(FORM_APPLICANT_SERVICE_ID, definition.applicantRoles)) {
             definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
           }
+
+          definition.securityClassification = SecurityClassification.ProtectedB;
 
           dispatch(updateFormDefinition(definition));
         }}
