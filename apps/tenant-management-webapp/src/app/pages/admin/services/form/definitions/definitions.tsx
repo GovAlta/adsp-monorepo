@@ -12,11 +12,12 @@ import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { fetchDirectory } from '@store/directory/actions';
+import { SecurityClassification } from '@store/common/models';
+
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
 }
 const FORM_APPLICANT_SERVICE_ID = `urn:ads:platform:form-service:form-applicant`;
-import { SecurityClassification } from '@store/common/models';
 
 export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
