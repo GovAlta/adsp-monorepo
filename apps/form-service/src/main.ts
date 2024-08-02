@@ -210,6 +210,7 @@ const initializeApp = async (): Promise<express.Application> => {
     commentService,
     queueTaskService,
     directory,
+    tokenProvider,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
