@@ -24,7 +24,6 @@ import {
   OPERATION_SET_ACTIVE_REVISION,
   PatchRequests,
   PostRequests,
-  ConfigurationMap,
 } from './types';
 import { ConfigurationServiceRoles } from '../roles';
 
@@ -180,7 +179,7 @@ export function getConfigurationEntity(
   };
 }
 
-const mapConfiguration = (configuration: ConfigurationEntity): ConfigurationMap => {
+const mapConfiguration = (configuration: ConfigurationEntity): Record<string, unknown> => {
   return {
     namespace: configuration.namespace,
     name: configuration.name,
@@ -188,10 +187,9 @@ const mapConfiguration = (configuration: ConfigurationEntity): ConfigurationMap 
   };
 };
 
-const mapActiveRevision = (configuration: ConfigurationEntity, active: number): unknown => ({
+const mapActiveRevision = (configuration: ConfigurationEntity, active: number) => ({
   namespace: configuration.namespace,
   name: configuration.name,
-  tenantId: configuration.tenantId,
   active,
 });
 
@@ -382,72 +380,89 @@ export const configurationOperations =
       const request: PostRequests = req.body;
       const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
-      if (request.operation === OPERATION_CREATE_REVISION) {
-        const updated = await configuration.createRevision(user);
+      switch (request.operation) {
+        case OPERATION_CREATE_REVISION: {
+          const updated = await configuration.createRevision(user);
 
-        end();
+          res.send(mapConfiguration(updated));
+          if (updated.tenantId) {
+            eventService.send(
+              revisionCreated(
+                user,
+                updated.tenantId,
+                updated.namespace,
+                updated.name,
+                updated.latest?.created.toISOString(),
+                updated.latest?.revision
+              )
+            );
+          }
 
-        res.send(mapConfiguration(updated));
-        if (updated.tenantId) {
-          eventService.send(
-            revisionCreated(
-              user,
-              updated.tenantId,
-              updated.namespace,
-              updated.name,
-              updated.latest?.created.toISOString(),
-              updated.latest?.revision
-            )
+          logger.info(
+            `Configuration revision ${updated.namespace}:${updated.name}:${updated.latest?.revision} created` +
+              ` by ${user.name} (ID: ${user.id}).`,
+            {
+              tenant: updated.tenantId?.toString(),
+              context: 'configuration-router',
+              user: `${user.name} (ID: ${user.id})`,
+            }
           );
+          break;
         }
-
-        logger.info(
-          `Configuration revision ${updated.namespace}:${updated.name}:${updated.latest?.revision} created` +
-            ` by ${user.name} (ID: ${user.id}).`,
-          {
-            tenant: updated.tenantId?.toString(),
-            context: 'configuration-router',
-            user: `${user.name} (ID: ${user.id})`,
+        case OPERATION_SET_ACTIVE_REVISION: {
+          // If the old property is set but new one isn't, then use it.
+          if (typeof request.setActiveRevision === 'number' && typeof request.revision !== 'number') {
+            request.revision = request.setActiveRevision;
           }
-        );
+
+          if (typeof request.revision !== 'number') {
+            throw new InvalidOperationError(`Set active revision request must include revision property.`);
+          }
+
+          const oldRevision = await configuration.getActiveRevision();
+          if (oldRevision?.revision !== request.revision) {
+            const newRevision = await configuration.setActiveRevision(user, request.revision);
+            eventService.send(
+              activeRevisionSet(
+                user,
+                configuration.tenantId,
+                configuration.namespace,
+                configuration.name,
+                newRevision.revision,
+                oldRevision?.revision
+              )
+            );
+
+            logger.info(
+              `Active revision ${configuration.namespace}:${configuration.name}:${oldRevision?.revision} changed to revision ${newRevision.revision}` +
+                ` by ${user.name} (ID: ${user.id}).`,
+              {
+                tenant: configuration.tenantId?.toString(),
+                context: 'configuration-router',
+                user: `${user.name} (ID: ${user.id})`,
+              }
+            );
+          } else {
+            logger.info(
+              `Active revision ${configuration.namespace}:${configuration.name}:${oldRevision?.revision} set` +
+                ` by ${user.name} (ID: ${user.id}) to same revision as current.`,
+              {
+                tenant: configuration.tenantId?.toString(),
+                context: 'configuration-router',
+                user: `${user.name} (ID: ${user.id})`,
+              }
+            );
+          }
+
+          res.send(mapActiveRevision(configuration, request.revision));
+
+          break;
+        }
+        default:
+          throw new InvalidOperationError('Specified operation not supported.');
       }
 
-      if (request.operation === OPERATION_SET_ACTIVE_REVISION) {
-        if (typeof request?.setActiveRevision !== 'number') {
-          throw new InvalidOperationError(`Set active revision request must include setActiveRevision property.`);
-        }
-        const revisions = await configuration.getRevisions(1, null, { revision: request.setActiveRevision });
-        const [targetRevision] = revisions.results;
-        if (!targetRevision) {
-          throw new InvalidOperationError(`The selected revision does not exist`);
-        }
-
-        const oldRevision = await configuration.getActiveRevision();
-        const newRevision = await configuration.setActiveRevision(user, targetRevision.revision);
-
-        end();
-        res.send(mapActiveRevision(configuration, newRevision.revision));
-        eventService.send(
-          activeRevisionSet(
-            user,
-            configuration.tenantId,
-            configuration.namespace,
-            configuration.name,
-            newRevision.revision,
-            oldRevision?.revision
-          )
-        );
-
-        logger.info(
-          `Active revision ${configuration.namespace}:${configuration.name}:${oldRevision?.revision} changed to revision ${newRevision.revision}` +
-            ` by ${user.name} (ID: ${user.id}).`,
-          {
-            tenant: configuration.tenantId?.toString(),
-            context: 'configuration-router',
-            user: `${user.name} (ID: ${user.id})`,
-          }
-        );
-      }
+      end();
     } catch (err) {
       next(err);
     }
@@ -582,7 +597,9 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(
-      body('operation').isString().isIn([OPERATION_SET_ACTIVE_REVISION, OPERATION_CREATE_REVISION])
+      body('operation').isString().isIn([OPERATION_SET_ACTIVE_REVISION, OPERATION_CREATE_REVISION]),
+      body('revision').optional().isNumeric(),
+      body('setActiveRevision').optional().isNumeric()
     ),
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
     configurationOperations(logger, eventService)

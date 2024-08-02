@@ -1318,20 +1318,15 @@ describe('router', () => {
         tenantId,
         namespace,
         name,
-        createRevision: jest.fn(() => Promise.resolve(entity)),
-        getRevisions: jest.fn(),
+        getActiveRevision: jest.fn(),
+        setActiveRevision: jest.fn(),
         latest: null,
       };
 
-      const activeRevisionEntity = {
-        get: jest.fn(),
-        setActiveRevision: jest.fn(),
-      };
       const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
-        activeRevisionEntity,
         query: {},
         body: {
           operation: 'SET-ACTIVE-REVISION',
@@ -1339,7 +1334,10 @@ describe('router', () => {
         },
       } as unknown as Request;
 
-      entity.getRevisions.mockResolvedValueOnce({ results: [null] });
+      entity.getActiveRevision.mockResolvedValueOnce({ revision: 0 });
+
+      const err = new InvalidOperationError(`Specified revision ${revisionValue} to set as active cannot be found.`);
+      entity.setActiveRevision.mockRejectedValueOnce(err);
 
       const res = {
         send: jest.fn(),
@@ -1348,7 +1346,7 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, res as unknown as Response, next);
-      expect(next).toHaveBeenCalledWith(new InvalidOperationError(`The selected revision does not exist`));
+      expect(next).toHaveBeenCalledWith(err);
     });
 
     it('fails because parameters are not set', async () => {
@@ -1390,7 +1388,7 @@ describe('router', () => {
 
       await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(
-        new InvalidOperationError('Set active revision request must include setActiveRevision property.')
+        new InvalidOperationError('Set active revision request must include revision property.')
       );
     });
 
@@ -1436,7 +1434,6 @@ describe('router', () => {
         expect.objectContaining({
           namespace,
           name,
-          tenantId,
           active: revisionValue,
         })
       );
