@@ -226,12 +226,9 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
   }
 
   async setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ConfigurationRevision<C>> {
-    if (!(active >= 0)) {
+    if (typeof active !== 'number' || active < 0) {
       throw new InvalidOperationError('Active revision value must be greater than or equal to 0.');
     }
-
-    // TODO: This should verify that the active revision value actually corresponds to a real revision?
-    // Currently being checked in the router, but probably better to push down to repo level.
 
     const query: Record<string, unknown> = {
       namespace: entity.namespace,
@@ -239,21 +236,25 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       tenant: entity.tenantId?.toString() || { $exists: false },
     };
 
-    const update: Record<string, unknown> = {
-      namespace: entity.namespace,
-      name: entity.name,
-      active: active,
-      tenant: entity.tenantId?.toString() || { $exists: false },
-    };
-
-    // Only include tenant if there is a tenantId on the entity.
-    if (entity.tenantId) {
-      update.tenant = entity.tenantId.toString();
+    const targetRevision = await this.revisionModel
+      .findOne({ ...query, revision: active }, null, { lean: true })
+      .exec();
+    if (!targetRevision) {
+      throw new InvalidOperationError(`Specified revision ${active} to set as active cannot be found.`);
     }
 
-    await this.activeRevisionModel.findOneAndUpdate(query, update, { upsert: true, new: true, lean: true }).exec();
+    let doc: ConfigurationRevisionDoc;
 
-    return await this.getActiveRevision(entity.namespace, entity.name, entity.tenantId);
+    const update: Record<string, unknown> = { active };
+    const updated = await this.activeRevisionModel
+      .findOneAndUpdate(query, update, { upsert: true, new: true, lean: true })
+      .exec();
+
+    if (updated) {
+      doc = await this.revisionModel.findOne({ ...query, revision: updated.active }, null, { lean: true }).exec();
+    }
+
+    return this.fromDoc(doc);
   }
 
   private fromDoc<C>(doc: ConfigurationRevisionDoc): ConfigurationRevision<C> {
