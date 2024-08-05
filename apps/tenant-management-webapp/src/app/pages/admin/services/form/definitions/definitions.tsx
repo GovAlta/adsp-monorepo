@@ -111,8 +111,8 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
           {next && (
             <LoadMoreWrapper>
               <GoAButton
-                testId="calendar-event-load-more-btn"
-                key="calendar-event-load-more-btn"
+                testId="form-event-load-more-btn"
+                key="form-event-load-more-btn"
                 type="tertiary"
                 onClick={onNext}
               >
