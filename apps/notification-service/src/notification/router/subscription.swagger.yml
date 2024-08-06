@@ -73,17 +73,15 @@ components:
           items:
             $ref: '#/components/schemas/Subscription'
     SubscriptionCriteria:
-      type: array
-      items:
-        type: object
-        properties:
-          description:
-            type: string
-          correlationId:
-            type: string
-          context:
-            type: object
-            additionalProperties: true
+      type: object
+      properties:
+        description:
+          type: string
+        correlationId:
+          type: string
+        context:
+          type: object
+          additionalProperties: true
     Subscription:
       type: object
       properties:
