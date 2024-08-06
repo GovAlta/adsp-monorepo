@@ -58,7 +58,8 @@ export interface FormState {
 }
 
 const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
-const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service';
+const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service:v2';
+const CACHE_SERVICE_ID = 'urn:ads:platform:cache-service';
 
 export const selectedDefinition = createAsyncThunk(
   'form/select-definition',
@@ -71,18 +72,18 @@ export const selectedDefinition = createAsyncThunk(
   }
 );
 
-function pickRegisters(obj) {
+function pickRegisters(obj, property) {
   let registers = [];
   Object.keys(obj).forEach(function (key) {
-    if (key === 'register' && 'urn' in obj[key]) {
-      if (!registers.includes(obj[key]?.urn)) {
-        registers.push(obj[key]?.urn);
+    if (key === 'register' && property in obj[key]) {
+      if (!registers.includes(obj[key]?.[property])) {
+        registers.push(obj[key]?.[property]);
       }
     } else if (_.isObject(obj[key])) {
-      registers = [...registers, ...pickRegisters(obj[key])];
+      registers = [...registers, ...pickRegisters(obj[key], property)];
     } else if (_.isArray(obj[key])) {
       const nextRegisters = obj[key].map(function (arrayObj) {
-        return pickRegisters(arrayObj);
+        return pickRegisters(arrayObj, property);
       });
       registers = [...registers, ...nextRegisters];
     }
@@ -92,7 +93,7 @@ function pickRegisters(obj) {
 
 const extraRegisterUrns = (uiSchema) => {
   if (uiSchema) {
-    return pickRegisters(uiSchema);
+    return pickRegisters(uiSchema, 'urn');
   }
 
   return null;
@@ -104,9 +105,9 @@ export const loadDefinition = createAsyncThunk(
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
-      const configServiceUrl = config.directory[CONFIGURATION_SERVICE_ID];
-      const tenantId = user.tenant.id;
+      const cacheServiceUrl = config.directory[CACHE_SERVICE_ID];
 
+      const tenantId = user.tenant.id;
       const token = await getAccessToken();
       const { data } = await axios.get<FormDefinition>(
         new URL(`/form/v1/definitions/${definitionId}`, formServiceUrl).href,
@@ -120,37 +121,24 @@ export const loadDefinition = createAsyncThunk(
       if (registerUrns) {
         await Promise.all(
           registerUrns.map(async (urn) => {
-            let isFetched = false;
             const service = urn.split('/').slice(-2);
-
-            const baseConfigServiceUrl = new URL(
-              `/configuration/v2/configuration/${service[0]}/${service[1]}`,
-              configServiceUrl
+            const baseCacheServiceUrl = new URL(
+              `/cache/v1/cache/${CONFIGURATION_SERVICE_ID}/configuration/${service[0]}/${service[1]}`,
+              cacheServiceUrl
             ).href;
+
             try {
-              const { data } = await axios.get(`${baseConfigServiceUrl}/active`, { params: { tenant: tenantId } });
-              if (!_.isEmpty(data) && _.isArray(data)) {
-                isFetched = true;
+              const { data } = await axios.get(`${baseCacheServiceUrl}/active`, {
+                params: { tenant: tenantId, orLatest: true },
+              });
+              if (!_.isEmpty(data?.configuration) && _.isArray(data?.configuration)) {
                 registerData.push({
                   urn,
-                  data,
+                  data: data?.configuration,
                 });
               }
             } catch (error) {
               console.warn(`Error fetching ${urn} active: ${error.message}`);
-            }
-
-            try {
-              if (isFetched !== true) {
-                const { data } = await axios.get(`${baseConfigServiceUrl}/latest`, { params: { tenant: tenantId } });
-                if (!_.isEmpty(data) && _.isArray(data))
-                  registerData.push({
-                    urn,
-                    data,
-                  });
-              }
-            } catch (error) {
-              console.warn(`Error fetching ${urn} latest: ${error.message}`);
             }
           })
         );

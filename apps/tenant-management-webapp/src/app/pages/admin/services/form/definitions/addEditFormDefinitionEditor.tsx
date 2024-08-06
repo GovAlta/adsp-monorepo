@@ -73,12 +73,13 @@ import {
 } from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
-import { hasSchemaErrors, parseDataSchema, parseUiSchema } from './schemaUtils';
+import { hasSchemaErrors, parseDataSchema, parseUiSchema, getDataRegisters } from './schemaUtils';
 import { CustomLoader } from '@components/CustomLoader';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { FormFormItem } from '../styled-components';
 import { adspId } from '@lib/adspId';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
+import { ErrorNotification } from '@store/notifications/actions';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -284,6 +285,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       return serviceRoles?.keycloak || {};
     }
   );
+  const selectDefinitionRegisters = useSelector((state: RootState) => state?.configuration?.registers || []);
   const queueTasks = useSelector((state: RootState) => {
     if (state.task && state.task.queues) {
       const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
@@ -498,6 +500,23 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   };
   const saveCurrentTab = (tab: number) => {
     setCurrentTab(tab);
+  };
+
+  const validateDefinitionRegisters = () => {
+    const registers = getDataRegisters(JSON.parse(tempUiSchema), 'urn');
+    const foundRegisters = selectDefinitionRegisters.filter((register) => {
+      return registers.filter((reg) => reg.urn === register.urn);
+    });
+
+    if (registers.length > 0 || foundRegisters.length === 0) {
+      if (foundRegisters.length === 0) {
+        dispatch(
+          ErrorNotification({
+            message: 'Data register not available or unauthorized',
+          })
+        );
+      }
+    }
   };
 
   return (
@@ -852,8 +871,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           return;
                         }
                       }
-                      setCustomIndicator(true);
 
+                      validateDefinitionRegisters();
+
+                      setCustomIndicator(true);
                       if (
                         !doesRoleExistForClientInKeyCloak(FORM_SERVICE_ID.toString(), FORM_APPLICANT_ID, elements) &&
                         isRoleUpdated(
@@ -956,6 +977,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               return;
             }
           }
+
           setSpinner(true);
           dispatch(updateFormDefinition(definition));
           setSaveModal({ visible: false, closeEditor: true });
