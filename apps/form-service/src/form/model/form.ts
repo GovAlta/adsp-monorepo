@@ -8,7 +8,7 @@ import { QueueTaskService } from '../../task';
 import { FormDefinitionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { Disposition, Form, FormStatus } from '../types';
+import { Disposition, Form, FormStatus, SecurityClassificationType } from '../types';
 import { FormSubmissionEntity } from './formSubmission';
 
 // Any form created by user with the intake app role is treated as anonymous.
@@ -33,6 +33,7 @@ export class FormEntity implements Form {
   status: FormStatus;
   data: Record<string, unknown>;
   files: Record<string, AdspId>;
+  securityClassification?: SecurityClassificationType;
 
   static async create(
     user: User,
@@ -59,6 +60,7 @@ export class FormEntity implements Form {
       status: FormStatus.Draft,
       data: {},
       files: {},
+      securityClassification: definition?.securityClassification,
     });
 
     return await repository.save(form);
@@ -89,6 +91,7 @@ export class FormEntity implements Form {
     this.status = form.status;
     this.data = form.data || {};
     this.files = form.files || {};
+    this.securityClassification = form?.securityClassification;
   }
 
   /**

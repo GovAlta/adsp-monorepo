@@ -9,6 +9,15 @@ export enum FormStatus {
   Archived = 'archived',
 }
 
+export enum SecurityClassification {
+  ProtectedA = 'protected a',
+  ProtectedB = 'protected b',
+  ProtectedC = 'protected c',
+  Public = 'public',
+}
+
+export type SecurityClassificationType = SecurityClassification & null;
+
 export interface Form {
   definition: FormDefinition;
   id: string;
@@ -21,12 +30,13 @@ export interface Form {
   submitted: Date;
   dispositionStates?: Array<Disposition>;
   submissionRecords?: boolean;
-  submissionPdfTemplate?: string,
+  submissionPdfTemplate?: string;
   supportTopic?: boolean;
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;
   files: Record<string, AdspId>;
+  securityClassification?: SecurityClassificationType;
 }
 
 export interface FormCriteria {
