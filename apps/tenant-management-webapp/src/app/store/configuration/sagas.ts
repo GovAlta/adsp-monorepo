@@ -47,6 +47,7 @@ import { ErrorNotification } from '@store/notifications/actions';
 import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getAccessToken } from '@store/tenant/sagas';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
+import { AdspId } from '@lib/adspId';
 
 /**
  * Filter out namespace level configuration since it's not currently handled by the admin app.
@@ -205,11 +206,13 @@ export function* fetchConfigurationRevisions(action: FetchConfigurationRevisions
 export function* fetchRegisterData(): SagaIterator {
   try {
     take(FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION);
+
     const configBaseUrl: string = yield select(
       (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
     );
+
     const tenantName: string = yield select((state: RootState) => state.tenant.name);
-    const token: string = yield call(getAccessToken);
+    const tenantId: AdspId = yield select((state: RootState) => state.tenant.id);
 
     const tenantConfigDefinition = yield select(
       (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration || {}
@@ -240,21 +243,14 @@ export function* fetchRegisterData(): SagaIterator {
     for (const registerConfig of registerConfigs) {
       try {
         const [namespace, service] = registerConfig.split(':');
-        const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}`;
-        const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
-        // if there is active configuration, use the register in the active configuration first.
-        if (data?.active && data?.active?.configuration) {
+        const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}/active`;
+        const { data } = yield call(axios.get, url, { params: { orLatest: true, tenant: tenantId } });
+
+        if (data?.configuration && data?.configuration) {
           registerData.push({
             urn: `urn:ads:${tenantName}:configuration:v2:/configuration/${namespace}/${service}`,
-            data: data?.active?.configuration,
+            data: data?.configuration,
           });
-        } else {
-          if (data?.latest && data?.latest?.configuration) {
-            registerData.push({
-              urn: `urn:ads:${tenantName}:configuration:v2:/configuration/${namespace}/${service}`,
-              data: data?.latest?.configuration,
-            });
-          }
         }
 
         yield put(getRegisterDataSuccessAction(registerData));
