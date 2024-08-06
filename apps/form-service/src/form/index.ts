@@ -17,6 +17,7 @@ export * from './types';
 export * from './repository';
 export * from './events';
 export * from './notifications';
+export * from './pdf';
 
 interface FormMiddlewareProps extends Repositories {
   serviceId: AdspId;
