@@ -122,16 +122,15 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
         </GoAFormItem>
         <CheckboxSpaceWrapper>
           <GoACheckbox
-            text="Allow anonymous feedback"
+            text={'Allow anonymous feedback'}
             testId="anonymous-feedback"
             ariaLabel="Anonymous feedback"
             onChange={(name, value) => {
               setSite({ ...site, allowAnonymous: value });
             }}
             name={'isAnonymous'}
-            value={site.allowAnonymous}
             checked={site.allowAnonymous}
-          ></GoACheckbox>
+          />
         </CheckboxSpaceWrapper>
         <HelpText>
           <div>Enabling anonymous feedback may result in lower quality feedback.</div>
