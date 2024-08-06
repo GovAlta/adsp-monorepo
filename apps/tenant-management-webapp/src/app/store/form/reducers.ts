@@ -9,7 +9,8 @@ import {
 import { FormState } from './model';
 
 export const defaultState: FormState = {
-  definitions: {},
+  definitions: [],
+  nextEntries: null,
 };
 
 export default function (state: FormState = defaultState, action: FormActionTypes): FormState {
@@ -17,7 +18,13 @@ export default function (state: FormState = defaultState, action: FormActionType
     case FETCH_FORM_DEFINITIONS_SUCCESS_ACTION:
       return {
         ...state,
-        definitions: action.payload,
+        definitions:
+          action.after && action.after !== ''
+            ? { ...state.definitions, ...action.payload }
+            : action.payload
+            ? action.payload
+            : state.definitions,
+        nextEntries: action.next,
       };
 
     case UPDATE_FORM_DEFINITION_SUCCESS_ACTION:

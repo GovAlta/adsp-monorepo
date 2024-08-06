@@ -46,5 +46,6 @@ export const defaultFormDefinition: FormDefinition = {
 };
 
 export interface FormState {
-  definitions: Record<string, FormDefinition>;
+  definitions: FormDefinition[];
+  nextEntries: string;
 }
