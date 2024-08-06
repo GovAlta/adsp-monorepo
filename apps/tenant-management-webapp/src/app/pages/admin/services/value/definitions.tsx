@@ -26,7 +26,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
       {tenantDefinitions && <ValueDefinitionsList definitions={tenantDefinitions} className={className} />}
       {coreDefinitions && (
         <div>
-          <h2>Core configuration</h2>
+          <h2>Core definitions</h2>
           <ValueDefinitionsList definitions={coreDefinitions} className={className} />
         </div>
       )}
