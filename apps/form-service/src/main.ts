@@ -31,6 +31,8 @@ import {
   FormStatusSetToDraftDefinition,
   SubmissionDispositionedDefinition,
   GeneratedSupportingDocFileType,
+  SUBMITTED_FORM,
+  SubmittedFormPdfTemplate,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -129,6 +131,12 @@ const initializeApp = async (): Promise<express.Application> => {
               commenterRoles: [`${serviceId}:${FormServiceRoles.Support}`],
               securityClassification: 'protected b',
             },
+          },
+        },
+        {
+          serviceId: adspId`urn:ads:platform:pdf-service`,
+          configuration: {
+            [SUBMITTED_FORM]: SubmittedFormPdfTemplate,
           },
         },
       ],

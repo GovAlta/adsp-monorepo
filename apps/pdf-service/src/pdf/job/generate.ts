@@ -1,9 +1,7 @@
 import {
-  adspId,
   AdspId,
   ConfigurationService,
   EventService,
-  ServiceDirectory,
   TokenProvider,
 } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
@@ -13,7 +11,6 @@ import { PdfTemplateEntity } from '../model';
 import { PdfJobRepository } from '../repository';
 import { FileService } from '../types';
 import { PdfServiceWorkItem } from './types';
-import axios from 'axios';
 
 export interface GenerateJobProps {
   logger: Logger;
