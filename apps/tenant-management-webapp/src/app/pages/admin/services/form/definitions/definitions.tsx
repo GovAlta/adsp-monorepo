@@ -12,7 +12,9 @@ import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { fetchDirectory } from '@store/directory/actions';
+import { SecurityClassification } from '@store/common/models';
 import { LoadMoreWrapper } from './style-components';
+
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
 }
@@ -92,6 +94,8 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
           if (!doesNotContainFormRolesToAdd(FORM_APPLICANT_SERVICE_ID, definition.applicantRoles)) {
             definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
           }
+
+          definition.securityClassification = SecurityClassification.ProtectedB;
 
           dispatch(updateFormDefinition(definition));
         }}
