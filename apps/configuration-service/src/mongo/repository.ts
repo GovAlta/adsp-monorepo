@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { decodeAfter, encodeNext, Results, ValidationService } from '@core-services/core-common';
+import { decodeAfter, encodeNext, InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
 import { model, Model, PipelineStage } from 'mongoose';
 import { Logger } from 'winston';
 import {
@@ -7,25 +7,22 @@ import {
   ConfigurationEntity,
   ConfigurationRevision,
   RevisionCriteria,
-  ActiveRevisionRepository,
   ConfigurationDefinition,
   ConfigurationEntityCriteria,
 } from '../configuration';
 import { renamePrefixProperties } from './prefix';
-import { revisionSchema } from './schema';
-import { ConfigurationRevisionDoc, RevisionAggregateDoc } from './types';
+import { activeRevisionSchema, revisionSchema } from './schema';
+import { ActiveRevisionDoc, ConfigurationRevisionDoc, RevisionAggregateDoc } from './types';
 
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
+  private activeRevisionModel: Model<ActiveRevisionDoc>;
 
   private readonly META_PREFIX = 'META_';
 
-  constructor(
-    private logger: Logger,
-    private validationService: ValidationService,
-    private activeRevisionRepository: ActiveRevisionRepository
-  ) {
+  constructor(private logger: Logger, private validationService: ValidationService) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
+    this.activeRevisionModel = model<ActiveRevisionDoc>('activeRevision', activeRevisionSchema);
   }
 
   async find<C>(
@@ -61,7 +58,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
             result._id.name,
             this.logger,
             this,
-            this.activeRevisionRepository,
             this.validationService,
             result
           )
@@ -98,7 +94,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       name,
       this.logger,
       this,
-      this.activeRevisionRepository,
       this.validationService,
       latest,
       tenantId,
@@ -114,7 +109,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     };
 
     const { deletedCount } = await this.revisionModel.deleteMany(query);
-    await this.activeRevisionRepository.delete(entity);
+    await this.clearActiveRevision(entity);
 
     return deletedCount > 0;
   }
@@ -194,6 +189,72 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       created: doc.created,
       configuration: doc.configuration,
     };
+  }
+
+  async getActiveRevision<C>(namespace: string, name: string, tenantId?: AdspId): Promise<ConfigurationRevision<C>> {
+    const tenant = tenantId?.toString() || { $exists: false };
+    const query = { namespace, name, tenant };
+
+    let doc: ConfigurationRevisionDoc;
+    const result: ActiveRevisionDoc = await this.activeRevisionModel.findOne(query, null, { lean: true }).exec();
+    if (result) {
+      doc = await this.revisionModel
+        .findOne(
+          {
+            ...query,
+            revision: result.active,
+          },
+          null,
+          { lean: true }
+        )
+        .exec();
+    }
+
+    return this.fromDoc(doc);
+  }
+
+  async clearActiveRevision<C>(entity: ConfigurationEntity<C>): Promise<boolean> {
+    const query = {
+      namespace: entity.namespace,
+      name: entity.name,
+      tenant: entity.tenantId?.toString() || { $exists: false },
+    };
+
+    const { deletedCount } = await this.activeRevisionModel.deleteOne(query);
+
+    return deletedCount > 0;
+  }
+
+  async setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ConfigurationRevision<C>> {
+    if (typeof active !== 'number' || active < 0) {
+      throw new InvalidOperationError('Active revision value must be greater than or equal to 0.');
+    }
+
+    const query: Record<string, unknown> = {
+      namespace: entity.namespace,
+      name: entity.name,
+      tenant: entity.tenantId?.toString() || { $exists: false },
+    };
+
+    const targetRevision = await this.revisionModel
+      .findOne({ ...query, revision: active }, null, { lean: true })
+      .exec();
+    if (!targetRevision) {
+      throw new InvalidOperationError(`Specified revision ${active} to set as active cannot be found.`);
+    }
+
+    let doc: ConfigurationRevisionDoc;
+
+    const update: Record<string, unknown> = { active };
+    const updated = await this.activeRevisionModel
+      .findOneAndUpdate(query, update, { upsert: true, new: true, lean: true })
+      .exec();
+
+    if (updated) {
+      doc = await this.revisionModel.findOne({ ...query, revision: updated.active }, null, { lean: true }).exec();
+    }
+
+    return this.fromDoc(doc);
   }
 
   private fromDoc<C>(doc: ConfigurationRevisionDoc): ConfigurationRevision<C> {

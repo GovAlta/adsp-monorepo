@@ -17,14 +17,6 @@ exports[`router configurationOperations can set the active revision 1`] = `
   "active": 2,
   "name": "test-service",
   "namespace": "platform",
-  "tenantId": AdspId {
-    "api": "v2",
-    "namespace": "platform",
-    "resource": "/tenants/test",
-    "service": "tenant-service",
-    "toString": [Function],
-    "type": "resource",
-  },
 }
 `;
 

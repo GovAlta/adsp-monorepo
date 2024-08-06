@@ -975,6 +975,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
             .adsp-fb .adsp-fb-actions {
               bottom: 0;
+              margin-top: 0px;
               flex-direction: column-reverse;
               > button {
                 width: 100%;

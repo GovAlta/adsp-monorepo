@@ -12,11 +12,14 @@ export const DELETE_FORM_BY_ID_ACTION = 'form/DELETE_FORM_BY_ID_ACTION';
 
 export interface FetchFormDefinitionsAction {
   type: typeof FETCH_FORM_DEFINITIONS_ACTION;
+  next: string;
 }
 
 export interface FetchFormDefinitionsSuccessAction {
   type: typeof FETCH_FORM_DEFINITIONS_SUCCESS_ACTION;
-  payload: Record<string, FormDefinition>;
+  payload: FormDefinition[];
+  next: string;
+  after: string;
 }
 
 export interface UpdateFormDefinitionsAction {
@@ -27,7 +30,7 @@ export interface UpdateFormDefinitionsAction {
 
 export interface UpdateFormDefinitionsSuccessAction {
   type: typeof UPDATE_FORM_DEFINITION_SUCCESS_ACTION;
-  payload: Record<string, FormDefinition>;
+  payload: FormDefinition[];
 }
 
 export interface DeleteFormDefinitionAction {
@@ -37,7 +40,7 @@ export interface DeleteFormDefinitionAction {
 
 export interface DeleteFormDefinitionSuccessAction {
   type: typeof DELETE_FORM_DEFINITION_SUCCESS_ACTION;
-  payload: Record<string, FormDefinition>;
+  payload: FormDefinition[];
 }
 
 export interface DeleteFormByIDAction {
@@ -60,9 +63,7 @@ export const updateFormDefinition = (definition: FormDefinition, options?: strin
   options,
 });
 
-export const updateFormDefinitionSuccess = (
-  definition: Record<string, FormDefinition>
-): UpdateFormDefinitionsSuccessAction => ({
+export const updateFormDefinitionSuccess = (definition: FormDefinition[]): UpdateFormDefinitionsSuccessAction => ({
   type: UPDATE_FORM_DEFINITION_SUCCESS_ACTION,
   payload: definition,
 });
@@ -72,22 +73,25 @@ export const deleteFormDefinition = (definition: FormDefinition): DeleteFormDefi
   definition,
 });
 
-export const deleteFormDefinitionSuccess = (
-  definitions: Record<string, FormDefinition>
-): DeleteFormDefinitionSuccessAction => ({
+export const deleteFormDefinitionSuccess = (definitions: FormDefinition[]): DeleteFormDefinitionSuccessAction => ({
   type: DELETE_FORM_DEFINITION_SUCCESS_ACTION,
   payload: definitions,
 });
 
-export const getFormDefinitions = (): FetchFormDefinitionsAction => ({
+export const getFormDefinitions = (next?: string): FetchFormDefinitionsAction => ({
   type: FETCH_FORM_DEFINITIONS_ACTION,
+  next,
 });
 
 export const getFormDefinitionsSuccess = (
-  results: Record<string, FormDefinition>
+  results: FormDefinition[],
+  next: string,
+  after: string
 ): FetchFormDefinitionsSuccessAction => ({
   type: FETCH_FORM_DEFINITIONS_SUCCESS_ACTION,
   payload: results,
+  next,
+  after,
 });
 
 export const deleteFormById = (id: string): DeleteFormByIDAction => ({

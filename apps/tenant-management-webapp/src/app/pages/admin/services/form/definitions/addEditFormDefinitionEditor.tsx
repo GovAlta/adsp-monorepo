@@ -79,6 +79,7 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { FormFormItem } from '../styled-components';
 import { adspId } from '@lib/adspId';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
+import { SecurityClassification } from '@store/common/models';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -130,7 +131,9 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
     JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
     JSON.stringify(tempPrev?.submissionPdfTemplate) !== JSON.stringify(tempNext?.submissionPdfTemplate) ||
-    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess);
+    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess) ||
+    JSON.stringify(tempPrev?.securityClassification) !== JSON.stringify(tempNext?.securityClassification);
+
   return isUpdated;
 };
 
@@ -650,29 +653,29 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       />
                     </FlexRow>
                   </div>
-                  <h3>Submission</h3>
-                  <FlexRow>
-                    <SubmissionRecordsBox>
-                      <GoACheckbox
-                        name="submission-records"
-                        key="submission-records"
-                        checked={definition.submissionRecords}
-                        testId="submission-records"
-                        onChange={() => {
-                          const records = definition.submissionRecords ? false : true;
-                          setDefinition({ ...definition, submissionRecords: records });
+
+                  <div>
+                    <h3>Security Classification</h3>
+                    {/* The style below is to fix an UI component bug */}
+                    <div style={{ paddingLeft: '3px' }}>
+                      <GoADropdown
+                        name="securityClassifications"
+                        width="25rem"
+                        value={definition?.securityClassification || ''}
+                        relative={true}
+                        onChange={(name: string, value: SecurityClassification) => {
+                          definition.securityClassification = value;
+                          setDefinition({ ...definition });
                         }}
-                        text="Create submission records on submit"
-                      />
-                    </SubmissionRecordsBox>
-                    <InfoCircleWithInlineHelp
-                      text={
-                        definition.submissionRecords
-                          ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
-                          : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
-                      }
-                    />
-                  </FlexRow>
+                      >
+                        <GoADropdownItem value={SecurityClassification.Public} label="Public" />
+                        <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                        <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                        <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
+                      </GoADropdown>
+                    </div>
+                  </div>
+                  <h3>Submission</h3>
                   <FlexRow>
                     <SubmissionRecordsBox>
                       <GoACheckbox
@@ -696,7 +699,28 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       width="180"
                     />
                   </FlexRow>
-
+                  <FlexRow>
+                    <SubmissionRecordsBox>
+                      <GoACheckbox
+                        name="submission-records"
+                        key="submission-records"
+                        checked={definition.submissionRecords}
+                        testId="submission-records"
+                        onChange={() => {
+                          const records = definition.submissionRecords ? false : true;
+                          setDefinition({ ...definition, submissionRecords: records });
+                        }}
+                        text="Create submission records on submit"
+                      />
+                    </SubmissionRecordsBox>
+                    <InfoCircleWithInlineHelp
+                      text={
+                        definition.submissionRecords
+                          ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
+                          : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
+                      }
+                    />
+                  </FlexRow>
                   <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                     <SubmissionConfigurationPadding>
                       <InfoCircleWithInlineHelp

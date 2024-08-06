@@ -41,3 +41,7 @@ export const Anchor = styled.div`
   outline: none;
   cursor: pointer;
 `;
+
+export const LoadMoreWrapper = styled.div`
+  padding-bottom: var(--goa-space-4xl);
+`;

@@ -21,7 +21,8 @@ export interface CreateRevisionRequest {
 
 export interface SetActiveRevision {
   operation: typeof OPERATION_SET_ACTIVE_REVISION;
-  setActiveRevision: number;
+  setActiveRevision?: number;
+  revision?: number;
 }
 export type PostRequests = CreateRevisionRequest | SetActiveRevision;
 
@@ -30,9 +31,3 @@ export const OPERATION_SET_ACTIVE_REVISION = 'SET-ACTIVE-REVISION';
 
 export const OPERATION_UPDATE = 'UPDATE';
 export type PatchRequests = ReplaceRequest | UpdateRequest | DeleteRequest;
-
-export interface ConfigurationMap {
-  namespace?: string;
-  name?: string;
-  latest?: unknown;
-}
