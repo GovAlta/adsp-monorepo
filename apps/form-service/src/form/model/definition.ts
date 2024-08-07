@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { NotificationService, Subscriber } from '../../notification';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDefinition, Disposition, QueueTaskToProcess } from '../types';
+import { FormDefinition, Disposition, QueueTaskToProcess, SecurityClassificationType } from '../types';
 import { FormEntity } from './form';
 
 export class FormDefinitionEntity implements FormDefinition {
@@ -24,6 +24,7 @@ export class FormDefinitionEntity implements FormDefinition {
   dataSchema: Record<string, unknown>;
   uiSchema: Record<string, unknown>;
   queueTaskToProcess?: QueueTaskToProcess;
+  securityClassification?: SecurityClassificationType;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
@@ -45,6 +46,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.dataSchema = definition.dataSchema || {};
     this.uiSchema = definition.uiSchema || {};
     this.validationService.setSchema(`${this.tenantId.resource}:${this.id}`, this.dataSchema);
+    this.securityClassification = definition?.securityClassification;
   }
 
   public canAccessDefinition(user: User): boolean {
