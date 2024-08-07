@@ -20,7 +20,7 @@ const userInfoSchema = {
   },
 };
 
-const formSchema = {
+export const formSchema = {
   type: 'object',
   properties: {
     definition: {
