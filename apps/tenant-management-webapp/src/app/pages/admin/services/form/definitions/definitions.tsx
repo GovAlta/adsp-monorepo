@@ -14,6 +14,7 @@ import { AddEditFormDefinition } from './addEditFormDefinition';
 import { fetchDirectory } from '@store/directory/actions';
 import { SecurityClassification } from '@store/common/models';
 import { LoadMoreWrapper } from './style-components';
+import { getConfigurationDefinitions } from '@store/configuration/action';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -50,6 +51,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   }, [openAddDefinition]);
 
   useEffect(() => {
+    dispatch(getConfigurationDefinitions());
     dispatch(getFormDefinitions());
     dispatch(fetchDirectory());
     // eslint-disable-next-line react-hooks/exhaustive-deps
