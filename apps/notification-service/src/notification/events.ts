@@ -351,6 +351,7 @@ export const subscriberCreated = (subscriber: Subscriber, createdBy: User): Doma
   name: SUBSCRIBER_CREATED,
   timestamp: new Date(),
   correlationId: subscriber.id,
+  tenantId: subscriber.tenantId,
   payload: {
     subscriber: mapSubscriber(subscriber),
     createdBy: {
@@ -368,6 +369,7 @@ export const subscriberUpdated = (
   name: SUBSCRIBER_UPDATED,
   timestamp: new Date(),
   correlationId: subscriber.id,
+  tenantId: subscriber.tenantId,
   payload: {
     subscriber: mapSubscriber(subscriber),
     update: {
@@ -385,6 +387,7 @@ export const subscriberDeleted = (subscriber: Subscriber, deletedBy: User): Doma
   name: SUBSCRIBER_DELETED,
   timestamp: new Date(),
   correlationId: subscriber.id,
+  tenantId: subscriber.tenantId,
   payload: {
     subscriber: mapSubscriber(subscriber),
     createdBy: {
@@ -403,6 +406,7 @@ export const subscriptionSet = (
   name: SUBSCRIPTION_SET,
   timestamp: new Date(),
   correlationId: subscriber.id,
+  tenantId: subscription.tenantId,
   payload: {
     type: {
       id: type.id,
@@ -423,6 +427,7 @@ export const subscriptionDeleted = (type: NotificationType, subscriber: Subscrib
   name: SUBSCRIPTION_DELETED,
   timestamp: new Date(),
   correlationId: subscriber.id,
+  tenantId: subscriber.tenantId,
   payload: {
     type: {
       id: type.id,
