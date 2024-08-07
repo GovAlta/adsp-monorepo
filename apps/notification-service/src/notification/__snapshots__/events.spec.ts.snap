@@ -1,0 +1,103 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`events notificationSendFailed should generate notification-send-failed event correctly 1`] = `
+{
+  "context": {
+    "generationId": "123",
+  },
+  "correlationId": "456",
+  "name": "notification-send-failed",
+  "payload": {
+    "channel": "email",
+    "error": "Sending failed: Connection timed out",
+    "event": {
+      "name": "test-event",
+      "namespace": "test-namespace",
+    },
+    "message": {
+      "body": "Test Body",
+      "subject": "Test Subject",
+    },
+    "subscriber": {
+      "addressAs": "User One",
+      "channels": [],
+      "id": "user1",
+      "userId": "user_id1",
+    },
+    "to": "test@example.com",
+    "type": "email",
+  },
+  "tenantId": AdspId {
+    "api": undefined,
+    "namespace": "789",
+    "resource": undefined,
+    "service": undefined,
+    "toString": [Function],
+    "type": "namespace",
+  },
+  "timestamp": 2024-08-07T16:35:04.583Z,
+}
+`;
+
+exports[`events notificationSent should generate notification-sent event correctly 1`] = `
+{
+  "context": {
+    "generationId": "123",
+  },
+  "correlationId": "456",
+  "name": "notification-sent",
+  "payload": {
+    "channel": "email",
+    "event": {
+      "name": "test-event",
+      "namespace": "test-namespace",
+      "timestamp": "2024-07-11T12:00:00Z",
+    },
+    "message": {
+      "body": "Test Body",
+      "subject": "Test Subject",
+    },
+    "subscriber": {
+      "addressAs": "User One",
+      "channels": [],
+      "id": "user1",
+      "userId": "user_id1",
+    },
+    "to": "test@example.com",
+    "type": "email",
+  },
+  "tenantId": AdspId {
+    "api": undefined,
+    "namespace": "789",
+    "resource": undefined,
+    "service": undefined,
+    "toString": [Function],
+    "type": "namespace",
+  },
+  "timestamp": 2024-08-07T16:35:04.529Z,
+}
+`;
+
+exports[`events notificationsGenerated should generate notifications-generated event correctly 1`] = `
+{
+  "context": {
+    "generationId": "123",
+  },
+  "correlationId": "123",
+  "name": "notifications-generated",
+  "payload": {
+    "event": {
+      "name": "test-event",
+      "namespace": "test-namespace",
+      "timestamp": "2024-07-11T12:00:00Z",
+    },
+    "generatedCount": 5,
+    "type": {
+      "id": "1",
+      "name": "test-type",
+    },
+  },
+  "tenantId": undefined,
+  "timestamp": 2024-08-07T16:35:04.390Z,
+}
+`;

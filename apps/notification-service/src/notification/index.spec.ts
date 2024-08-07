@@ -123,6 +123,7 @@ describe('applyNotificationMiddleware', () => {
       serviceId,
       logger,
       subscriptionRepository: repositories.subscriptionRepository,
+      eventService,
       verifyService,
       tenantService,
     });

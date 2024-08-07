@@ -47,6 +47,10 @@ describe('subscription router', () => {
     saveSubscriber: jest.fn((entity) => Promise.resolve(entity)),
   };
 
+  const eventServiceMock = {
+    send: jest.fn(),
+  };
+
   const tenantServiceMock = {
     getTenants: jest.fn(),
     getTenant: jest.fn(),
@@ -80,6 +84,7 @@ describe('subscription router', () => {
     repositoryMock.saveSubscription.mockReset();
     repositoryMock.deleteSubscriptions.mockReset();
     repositoryMock.deleteSubscriber.mockReset();
+    eventServiceMock.send.mockReset();
     verifyServiceMock.sendCode.mockReset();
     verifyServiceMock.sendCodeWithLink.mockReset();
     verifyServiceMock.verifyCode.mockReset();
@@ -91,6 +96,7 @@ describe('subscription router', () => {
         serviceId,
         logger: loggerMock,
         subscriptionRepository: repositoryMock,
+        eventService: eventServiceMock,
         verifyService: verifyServiceMock,
         tenantService: tenantServiceMock,
       });
@@ -285,7 +291,7 @@ describe('subscription router', () => {
 
   describe('createTypeSubscription', () => {
     it('can create handler', () => {
-      const handler = createTypeSubscription(apiId, repositoryMock);
+      const handler = createTypeSubscription(apiId, repositoryMock, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -321,11 +327,12 @@ describe('subscription router', () => {
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = createTypeSubscription(apiId, repositoryMock);
+      const handler = createTypeSubscription(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
     it('can create user subscription', async () => {
@@ -363,7 +370,7 @@ describe('subscription router', () => {
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = createTypeSubscription(apiId, repositoryMock);
+      const handler = createTypeSubscription(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -373,6 +380,7 @@ describe('subscription router', () => {
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
     it('can create subscription for existing user subscriber', async () => {
@@ -410,11 +418,12 @@ describe('subscription router', () => {
       repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = createTypeSubscription(apiId, repositoryMock);
+      const handler = createTypeSubscription(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'tester', true);
       expect(repositoryMock.saveSubscriber).not.toBeCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
     it('can create subscription for existing subscriber', async () => {
@@ -452,17 +461,18 @@ describe('subscription router', () => {
       repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = createTypeSubscription(apiId, repositoryMock);
+      const handler = createTypeSubscription(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscriber).not.toBeCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
   });
 
   describe('addOrUpdateTypeSubscription', () => {
     it('can create handler', () => {
-      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -502,11 +512,12 @@ describe('subscription router', () => {
       repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
     it('can add subscription with criteria', async () => {
@@ -545,7 +556,7 @@ describe('subscription router', () => {
       repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
@@ -559,6 +570,7 @@ describe('subscription router', () => {
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
     it('can update subscription criteria', async () => {
@@ -597,7 +609,7 @@ describe('subscription router', () => {
       repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
@@ -611,6 +623,7 @@ describe('subscription router', () => {
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
     it('can call next with error', async () => {
@@ -643,7 +656,7 @@ describe('subscription router', () => {
 
       repositoryMock.getSubscriber.mockResolvedValueOnce(null);
 
-      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
@@ -726,7 +739,7 @@ describe('subscription router', () => {
 
   describe('deleteTypeSubscription', () => {
     it('can create handler', () => {
-      const handler = deleteTypeSubscription(repositoryMock);
+      const handler = deleteTypeSubscription(repositoryMock, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -759,17 +772,18 @@ describe('subscription router', () => {
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.deleteSubscriptions.mockResolvedValueOnce(true);
 
-      const handler = deleteTypeSubscription(repositoryMock);
+      const handler = deleteTypeSubscription(repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.deleteSubscriptions).toHaveBeenCalledWith(tenantId, notificationType.id, 'subscriber');
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-deleted' }));
     });
   });
 
   describe('deleteTypeSubscriptionCriteria', () => {
     it('can create handler', () => {
-      const handler = deleteTypeSubscriptionCriteria(repositoryMock);
+      const handler = deleteTypeSubscriptionCriteria(repositoryMock, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -815,10 +829,11 @@ describe('subscription router', () => {
       repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = deleteTypeSubscriptionCriteria(repositoryMock);
+      const handler = deleteTypeSubscriptionCriteria(repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(subscription);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
     it('can call next with error', async () => {
@@ -860,7 +875,7 @@ describe('subscription router', () => {
 
       repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = deleteTypeSubscriptionCriteria(repositoryMock);
+      const handler = deleteTypeSubscriptionCriteria(repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -960,7 +975,7 @@ describe('subscription router', () => {
 
   describe('createSubscriber', () => {
     it('can create handler', () => {
-      const handler = createSubscriber(apiId, repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -987,7 +1002,7 @@ describe('subscription router', () => {
       });
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      const handler = createSubscriber(apiId, repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1000,6 +1015,7 @@ describe('subscription router', () => {
         })
       );
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-created' }));
     });
 
     it('can create user subscriber', async () => {
@@ -1028,7 +1044,7 @@ describe('subscription router', () => {
       });
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      const handler = createSubscriber(apiId, repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1038,6 +1054,7 @@ describe('subscription router', () => {
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-created' }));
     });
 
     it('can update existing subscriber with userId', async () => {
@@ -1065,7 +1082,7 @@ describe('subscription router', () => {
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      const handler = createSubscriber(apiId, repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1077,6 +1094,7 @@ describe('subscription router', () => {
           addressAs: 'new@test.com',
         })
       );
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-updated' }));
     });
 
     it('can call next with unauthorized', async () => {
@@ -1094,7 +1112,7 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = createSubscriber(apiId, repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.send).not.toHaveBeenCalled();
@@ -1394,6 +1412,11 @@ describe('subscription router', () => {
   });
 
   describe('deleteSubscriber', () => {
+    it('can create handler', () => {
+      const handler = deleteSubscriber(eventServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
     it('can delete subscriber', async () => {
       const subscriber = new SubscriberEntity(repositoryMock, {
         id: 'subscriber',
@@ -1421,9 +1444,11 @@ describe('subscription router', () => {
 
       repositoryMock.deleteSubscriber.mockResolvedValueOnce(true);
 
-      await deleteSubscriber(req as unknown as Request, res as unknown as Response, next);
+      const handler = deleteSubscriber(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-deleted' }));
     });
 
     it('can call next with unauthorized', async () => {
@@ -1451,7 +1476,8 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      await deleteSubscriber(req as unknown as Request, res as unknown as Response, next);
+      const handler = deleteSubscriber(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.send).not.toHaveBeenCalled();
     });
@@ -1580,11 +1606,11 @@ describe('subscription router', () => {
 
   describe('updateSubscriber', () => {
     it('can create handler', () => {
-      const handler = updateSubscriber(apiId);
+      const handler = updateSubscriber(apiId, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
-    it('can delete subscriber', async () => {
+    it('can update subscriber', async () => {
       const subscriber = new SubscriberEntity(repositoryMock, {
         id: 'subscriber',
         tenantId,
@@ -1618,10 +1644,11 @@ describe('subscription router', () => {
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [] });
 
-      const handler = updateSubscriber(apiId);
+      const handler = updateSubscriber(apiId, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-updated' }));
     });
 
     it('can call next with unauthorized', async () => {
@@ -1657,7 +1684,7 @@ describe('subscription router', () => {
 
       repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [] });
 
-      const handler = updateSubscriber(apiId);
+      const handler = updateSubscriber(apiId, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.send).not.toHaveBeenCalled();
@@ -1666,7 +1693,7 @@ describe('subscription router', () => {
 
   describe('subscriberOperations', () => {
     it('can create handler', () => {
-      const handler = subscriberOperations(verifyServiceMock);
+      const handler = subscriberOperations(eventServiceMock, verifyServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -1708,7 +1735,7 @@ describe('subscription router', () => {
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       verifyServiceMock.sendCode.mockResolvedValueOnce('key');
 
-      const handler = subscriberOperations(verifyServiceMock);
+      const handler = subscriberOperations(eventServiceMock, verifyServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
         subscriber.channels[0],
@@ -1758,7 +1785,7 @@ describe('subscription router', () => {
 
       verifyServiceMock.verifyCode.mockResolvedValueOnce(true);
 
-      const handler = subscriberOperations(verifyServiceMock);
+      const handler = subscriberOperations(eventServiceMock, verifyServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(subscriber.channels[0], '123');
       expect(subscriber.channels[0].verified).toBe(false);
@@ -1806,12 +1833,13 @@ describe('subscription router', () => {
       verifyServiceMock.verifyCode.mockResolvedValueOnce(true);
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      const handler = subscriberOperations(verifyServiceMock);
+      const handler = subscriberOperations(eventServiceMock, verifyServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(subscriber.channels[0], '123');
       expect(subscriber.channels[0].verified).toBe(true);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ verified: true }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-updated' }));
     });
 
     it('can call next with invalid operation for unrecognized operation', async () => {
@@ -1849,7 +1877,7 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = subscriberOperations(verifyServiceMock);
+      const handler = subscriberOperations(eventServiceMock, verifyServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
