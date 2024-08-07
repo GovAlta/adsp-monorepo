@@ -1,3 +1,4 @@
+import { SecurityClassificationType } from './form';
 export interface FormDefinition {
   id: string;
   name: string;
@@ -14,6 +15,7 @@ export interface FormDefinition {
   submissionPdfTemplate: string;
   supportTopic: boolean;
   queueTaskToProcess?: QueueTaskToProcess;
+  securityClassification?: SecurityClassificationType;
 }
 
 export interface QueueTaskToProcess {
