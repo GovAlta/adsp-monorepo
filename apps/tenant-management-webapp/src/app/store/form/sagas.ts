@@ -58,28 +58,14 @@ export function* fetchFormDefinitions(payload): SagaIterator {
 export function* updateFormDefinition({ definition }: UpdateFormDefinitionsAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  const currentState: RootState = yield select();
-
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
-  );
-  const next = currentState.form.nextEntries ?? '';
 
   if (baseUrl && token) {
     try {
       const { latest } = yield call(updateFormDefinitionApi, token, baseUrl, definition);
-      const url = `${configBaseUrl}/configuration/v2/configuration/form-service?top=10&after=${next}`;
-      const { results } = yield call(fetchFormDefinitionsApi, token, url);
-      const definitions = results.reduce((acc, def) => {
-        acc[def.name] = def.latest.configuration;
-        return acc;
-      }, {});
-      // adding created definition
-      definitions[definition.name] = latest.configuration[definition.name];
 
       yield put(
         updateFormDefinitionSuccess({
-          ...definitions,
+          ...latest.configuration,
         })
       );
     } catch (err) {
