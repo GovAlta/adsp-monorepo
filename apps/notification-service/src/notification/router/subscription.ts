@@ -183,6 +183,7 @@ export function createTypeSubscription(
       if (!subscriberEntity) {
         const { id: _id, ...newSubscriber } = subscriber;
         subscriberEntity = await SubscriberEntity.create(user, repository, newSubscriber);
+        eventService.send(subscriberCreated(subscriberEntity, user));
       }
 
       const subscription = await addOrUpdateSubscription(repository, user, type, subscriberEntity, criteria);
