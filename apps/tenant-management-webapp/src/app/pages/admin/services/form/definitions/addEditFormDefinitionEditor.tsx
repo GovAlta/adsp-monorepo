@@ -31,7 +31,7 @@ import {
   GoACheckboxPad,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
-import { getFormDefinitions } from '@store/form/action';
+import { clearFormDefinitions, getFormDefinitions } from '@store/form/action';
 import { updateFormDefinition } from '@store/form/action';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
@@ -959,7 +959,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     ) {
                       setSaveModal({ visible: true, closeEditor: false });
                     } else {
+                      dispatch(clearFormDefinitions());
                       validators.clear();
+
                       close();
                     }
                   }}
