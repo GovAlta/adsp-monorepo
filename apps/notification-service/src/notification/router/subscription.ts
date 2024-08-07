@@ -292,7 +292,9 @@ export function deleteTypeSubscriptionCriteria(
       }
 
       res.send({ deleted: result });
-      eventService.send(subscriptionSet(type, subscription.subscriber, subscription, user));
+      if (result) {
+        eventService.send(subscriptionSet(type, subscription.subscriber, subscription, user));
+      }
     } catch (err) {
       next(err);
     }
