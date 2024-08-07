@@ -35,7 +35,7 @@ exports[`events notificationSendFailed should generate notification-send-failed 
     "toString": [Function],
     "type": "namespace",
   },
-  "timestamp": 2024-08-07T16:35:04.583Z,
+  "timestamp": Any<Date>,
 }
 `;
 
@@ -74,7 +74,7 @@ exports[`events notificationSent should generate notification-sent event correct
     "toString": [Function],
     "type": "namespace",
   },
-  "timestamp": 2024-08-07T16:35:04.529Z,
+  "timestamp": Any<Date>,
 }
 `;
 
@@ -98,6 +98,6 @@ exports[`events notificationsGenerated should generate notifications-generated e
     },
   },
   "tenantId": undefined,
-  "timestamp": 2024-08-07T16:35:04.390Z,
+  "timestamp": Any<Date>,
 }
 `;

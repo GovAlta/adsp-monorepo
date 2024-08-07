@@ -44,7 +44,7 @@ describe('events', () => {
       const count = 5;
 
       const result = notificationsGenerated(generationId, event as any, type as any, count);
-      expect(result).toMatchSnapshot();
+      expect(result).toMatchSnapshot({ timestamp: expect.any(Date) });
     });
   });
 
@@ -81,7 +81,7 @@ describe('events', () => {
       };
 
       const result = notificationSent(notification as any);
-      expect(result).toMatchSnapshot();
+      expect(result).toMatchSnapshot({ timestamp: expect.any(Date) });
     });
   });
 
@@ -118,7 +118,7 @@ describe('events', () => {
       const error = 'Sending failed: Connection timed out';
 
       const result = notificationSendFailed(notification as any, error);
-      expect(result).toMatchSnapshot();
+      expect(result).toMatchSnapshot({ timestamp: expect.any(Date) });
     });
   });
 
