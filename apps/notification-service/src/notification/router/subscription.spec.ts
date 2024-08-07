@@ -332,6 +332,7 @@ describe('subscription router', () => {
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-created' }));
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
@@ -380,6 +381,7 @@ describe('subscription router', () => {
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-created' }));
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
@@ -423,6 +425,7 @@ describe('subscription router', () => {
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'tester', true);
       expect(repositoryMock.saveSubscriber).not.toBeCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(eventServiceMock.send).not.toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-created' }));
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
@@ -466,6 +469,7 @@ describe('subscription router', () => {
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscriber).not.toBeCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(eventServiceMock.send).not.toHaveBeenCalledWith(expect.objectContaining({ name: 'subscriber-created' }));
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
   });
