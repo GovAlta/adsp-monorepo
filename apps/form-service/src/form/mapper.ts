@@ -27,6 +27,7 @@ export function mapForm(apiId: AdspId, entity: FormEntity): FormResponse {
   return {
     urn: `${apiId}:/forms/${entity.id}`,
     id: entity.id,
+    securityClassification: entity?.securityClassification,
     definition: entity.definition
       ? {
           id: entity.definition.id,
