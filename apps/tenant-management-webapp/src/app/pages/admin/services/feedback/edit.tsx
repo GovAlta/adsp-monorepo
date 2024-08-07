@@ -9,9 +9,7 @@ import styled from 'styled-components';
 import {
   isNotEmptyCheck,
   wordMaxLengthCheck,
-  badCharsCheck,
   duplicateNameCheck,
-  Validator,
   characterCheck,
   validationPattern,
 } from '@lib/validation/checkInput';
@@ -129,7 +127,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
               setSite({ ...site, allowAnonymous: value });
             }}
             name={'isAnonymous'}
-            checked={site.allowAnonymous}
+            checked={site.allowAnonymous ?? false}
           />
         </CheckboxSpaceWrapper>
         <HelpText>
