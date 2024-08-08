@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
   GoAButton,
@@ -34,14 +34,14 @@ interface AddEditValueDefinitionProps {
   values: ValueDefinition[];
 }
 
-export const AddEditValueDefinition: FunctionComponent<AddEditValueDefinitionProps> = ({
+export const AddEditValueDefinition = ({
   onSave,
   initialValue,
   open,
   isEdit,
   onClose,
   values,
-}) => {
+}: AddEditValueDefinitionProps): JSX.Element => {
   const [definition, setDefinition] = useState<ValueDefinition>(initialValue);
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.jsonSchema, null, 2));
   const [spinner, setSpinner] = useState<boolean>(false);
@@ -72,7 +72,7 @@ export const AddEditValueDefinition: FunctionComponent<AddEditValueDefinitionPro
 
   useEffect(() => {
     setDefinition({ ...initialValue });
-    setPayloadSchema(JSON.stringify(initialValue.valueSchema, null, 2));
+    setPayloadSchema(JSON.stringify(initialValue?.jsonSchema, null, 2));
   }, [initialValue]);
 
   const validationCheck = () => {
@@ -92,7 +92,7 @@ export const AddEditValueDefinition: FunctionComponent<AddEditValueDefinitionPro
     // if no errors in the form then save the definition
     onSave({
       ...definition,
-      valueSchema: payloadSchemaObj,
+      jsonSchema: payloadSchemaObj,
       description: definition.description,
     });
     setDefinition(initialValue);
