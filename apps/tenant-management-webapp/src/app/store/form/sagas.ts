@@ -17,7 +17,7 @@ import {
 import { getAccessToken } from '@store/tenant/sagas';
 import { fetchFormDefinitionsApi, updateFormDefinitionApi, deleteFormDefinitionApi } from './api';
 
-export function* fetchFormDefinitions(): SagaIterator {
+export function* fetchFormDefinitions(payload): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
@@ -29,11 +29,16 @@ export function* fetchFormDefinitions(): SagaIterator {
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
+  const next = payload.next ?? '';
   if (configBaseUrl && token) {
     try {
-      const url = `${configBaseUrl}/configuration/v2/configuration/platform/form-service/latest`;
-      const Definitions = yield call(fetchFormDefinitionsApi, token, url);
-      yield put(getFormDefinitionsSuccess(Definitions));
+      const url = `${configBaseUrl}/configuration/v2/configuration/form-service?top=10&after=${next}`;
+      const { results, page } = yield call(fetchFormDefinitionsApi, token, url);
+      const definitions = results.reduce((acc, def) => {
+        acc[def.name] = def.latest.configuration;
+        return acc;
+      }, {});
+      yield put(getFormDefinitionsSuccess(definitions, page.next, page.after));
       yield put(
         UpdateIndicator({
           show: false,
@@ -57,12 +62,10 @@ export function* updateFormDefinition({ definition }: UpdateFormDefinitionsActio
   if (baseUrl && token) {
     try {
       const { latest } = yield call(updateFormDefinitionApi, token, baseUrl, definition);
-
-      yield put(
-        updateFormDefinitionSuccess({
-          ...latest.configuration,
-        })
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updatedDefinition: any = {};
+      updatedDefinition[latest.configuration.id] = latest.configuration;
+      yield put(updateFormDefinitionSuccess(updatedDefinition));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }

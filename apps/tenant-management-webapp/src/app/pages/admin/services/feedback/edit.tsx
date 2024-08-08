@@ -9,9 +9,7 @@ import styled from 'styled-components';
 import {
   isNotEmptyCheck,
   wordMaxLengthCheck,
-  badCharsCheck,
   duplicateNameCheck,
-  Validator,
   characterCheck,
   validationPattern,
 } from '@lib/validation/checkInput';
@@ -122,16 +120,15 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
         </GoAFormItem>
         <CheckboxSpaceWrapper>
           <GoACheckbox
-            text="Allow anonymous feedback"
+            text={'Allow anonymous feedback'}
             testId="anonymous-feedback"
             ariaLabel="Anonymous feedback"
             onChange={(name, value) => {
               setSite({ ...site, allowAnonymous: value });
             }}
             name={'isAnonymous'}
-            value={site.allowAnonymous}
-            checked={site.allowAnonymous}
-          ></GoACheckbox>
+            checked={site.allowAnonymous ?? false}
+          />
         </CheckboxSpaceWrapper>
         <HelpText>
           <div>Enabling anonymous feedback may result in lower quality feedback.</div>

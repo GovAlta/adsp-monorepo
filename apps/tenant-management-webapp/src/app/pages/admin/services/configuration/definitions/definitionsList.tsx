@@ -23,11 +23,18 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
   const nameSpaces: Record<string, string[]> = useMemo(() => {
     return {};
   }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
-  const isCore = !Object.keys(definitions)[0].includes(':');
+
+  const isCoreDefinition = () => {
+    let isCore = false;
+    if (definitions && definitions.length > 0) {
+      isCore = !Object.keys(definitions)[0].includes(':');
+    }
+    return isCore;
+  };
 
   // to ensure it dosent re-calculate this value if value dosent change
   const memoizedReducedConfiguration = useMemo(() => {
-    return Object.keys(definitions).reduce((obj, key) => {
+    return Object.keys(definitions ?? []).reduce((obj, key) => {
       obj[key] = definitions[key];
       const parts = key.split(':');
       const nameSpace = parts[0];
@@ -74,7 +81,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                       <ConfigurationDefinitionItemComponent
                         key={`${configName}-${nameSpace}`}
                         tenantName={tenantName}
-                        isCore={isCore}
+                        isCore={isCoreDefinition()}
                         isTenantSpecificConfig={isTenantSpecificConfig}
                         configName={configName}
                         nameSpace={nameSpace}

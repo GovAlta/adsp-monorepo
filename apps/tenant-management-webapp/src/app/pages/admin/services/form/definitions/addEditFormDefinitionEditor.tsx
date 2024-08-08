@@ -31,7 +31,7 @@ import {
   GoACheckboxPad,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
-import { getFormDefinitions } from '@store/form/action';
+import { clearFormDefinitions, getFormDefinitions } from '@store/form/action';
 import { updateFormDefinition } from '@store/form/action';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
@@ -73,12 +73,14 @@ import {
 } from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
-import { hasSchemaErrors, parseDataSchema, parseUiSchema } from './schemaUtils';
+import { hasSchemaErrors, parseDataSchema, parseUiSchema, getDataRegisters } from './schemaUtils';
 import { CustomLoader } from '@components/CustomLoader';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { FormFormItem } from '../styled-components';
 import { adspId } from '@lib/adspId';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
+import { ErrorNotification } from '@store/notifications/actions';
+import { SecurityClassification } from '@store/common/models';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -130,8 +132,18 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
     JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
     JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
     JSON.stringify(tempPrev?.submissionPdfTemplate) !== JSON.stringify(tempNext?.submissionPdfTemplate) ||
-    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess);
+    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess) ||
+    JSON.stringify(tempPrev?.securityClassification) !== JSON.stringify(tempNext?.securityClassification);
+
   return isUpdated;
+};
+
+const ensureRolesAreUniqueWithNoDuplicates = (definition: FormDefinition) => {
+  definition.applicantRoles = [...new Set(definition.applicantRoles)];
+  definition.clerkRoles = [...new Set(definition.clerkRoles)];
+  definition.assessorRoles = [...new Set(definition.assessorRoles)];
+
+  return definition;
 };
 
 export const formEditorJsonConfig = {
@@ -172,8 +184,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(FetchFileTypeService());
     dispatch(getConfigurationDefinitions());
+    dispatch(FetchFileTypeService());
   }, [dispatch]);
 
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
@@ -284,6 +296,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       return serviceRoles?.keycloak || {};
     }
   );
+  const selectDefinitionRegisters = useSelector((state: RootState) => state?.configuration?.registers || []);
   const queueTasks = useSelector((state: RootState) => {
     if (state.task && state.task.queues) {
       const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
@@ -371,17 +384,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           if (type === applicantRoles.name) {
             setDefinition({
               ...definition,
-              applicantRoles: roles,
+              applicantRoles: [...new Set(roles)],
             });
           } else if (type === clerkRoles.name) {
             setDefinition({
               ...definition,
-              clerkRoles: roles,
+              clerkRoles: [...new Set(roles)],
             });
           } else {
             setDefinition({
               ...definition,
-              assessorRoles: roles,
+              assessorRoles: [...new Set(roles)],
             });
           }
         }}
@@ -498,6 +511,37 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   };
   const saveCurrentTab = (tab: number) => {
     setCurrentTab(tab);
+  };
+
+  const validateDefinitionRegisters = () => {
+    const registers = getDataRegisters(JSON.parse(tempUiSchema), 'urn');
+    const registersLength = registers.length;
+    const selectDefinitionRegistersLength = selectDefinitionRegisters.length;
+
+    if (selectDefinitionRegisters.length > 0 && registersLength > 0) {
+      let isValidRegister = false;
+      for (let reg = 0; reg < selectDefinitionRegistersLength; reg++) {
+        for (let registersIndex = 0; registersIndex < registers.length; registersIndex++) {
+          if (selectDefinitionRegisters[reg].urn === registers[registersIndex]) {
+            isValidRegister = true;
+            break;
+          }
+        }
+      }
+      if (!isValidRegister) {
+        dispatch(
+          ErrorNotification({
+            message: 'Data register not available or unauthorized',
+          })
+        );
+      }
+    } else if (selectDefinitionRegistersLength === 0 && registersLength > 0) {
+      dispatch(
+        ErrorNotification({
+          message: 'Data register not available or unauthorized',
+        })
+      );
+    }
   };
 
   return (
@@ -650,29 +694,29 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       />
                     </FlexRow>
                   </div>
-                  <h3>Submission</h3>
-                  <FlexRow>
-                    <SubmissionRecordsBox>
-                      <GoACheckbox
-                        name="submission-records"
-                        key="submission-records"
-                        checked={definition.submissionRecords}
-                        testId="submission-records"
-                        onChange={() => {
-                          const records = definition.submissionRecords ? false : true;
-                          setDefinition({ ...definition, submissionRecords: records });
+
+                  <div>
+                    <h3>Security Classification</h3>
+                    {/* The style below is to fix an UI component bug */}
+                    <div style={{ paddingLeft: '3px' }}>
+                      <GoADropdown
+                        name="securityClassifications"
+                        width="25rem"
+                        value={definition?.securityClassification || ''}
+                        relative={true}
+                        onChange={(name: string, value: SecurityClassification) => {
+                          definition.securityClassification = value;
+                          setDefinition({ ...definition });
                         }}
-                        text="Create submission records on submit"
-                      />
-                    </SubmissionRecordsBox>
-                    <InfoCircleWithInlineHelp
-                      text={
-                        definition.submissionRecords
-                          ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
-                          : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
-                      }
-                    />
-                  </FlexRow>
+                      >
+                        <GoADropdownItem value={SecurityClassification.Public} label="Public" />
+                        <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                        <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                        <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
+                      </GoADropdown>
+                    </div>
+                  </div>
+                  <h3>Submission</h3>
                   <FlexRow>
                     <SubmissionRecordsBox>
                       <GoACheckbox
@@ -696,7 +740,28 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       width="180"
                     />
                   </FlexRow>
-
+                  <FlexRow>
+                    <SubmissionRecordsBox>
+                      <GoACheckbox
+                        name="submission-records"
+                        key="submission-records"
+                        checked={definition.submissionRecords}
+                        testId="submission-records"
+                        onChange={() => {
+                          const records = definition.submissionRecords ? false : true;
+                          setDefinition({ ...definition, submissionRecords: records });
+                        }}
+                        text="Create submission records on submit"
+                      />
+                    </SubmissionRecordsBox>
+                    <InfoCircleWithInlineHelp
+                      text={
+                        definition.submissionRecords
+                          ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
+                          : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
+                      }
+                    />
+                  </FlexRow>
                   <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                     <SubmissionConfigurationPadding>
                       <InfoCircleWithInlineHelp
@@ -852,6 +917,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           return;
                         }
                       }
+
+                      validateDefinitionRegisters();
+
                       setCustomIndicator(true);
 
                       if (
@@ -864,6 +932,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       ) {
                         definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
                       }
+
+                      ensureRolesAreUniqueWithNoDuplicates(definition);
                       await dispatch(
                         updateFormDefinition({
                           ...definition,
@@ -889,7 +959,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     ) {
                       setSaveModal({ visible: true, closeEditor: false });
                     } else {
+                      dispatch(clearFormDefinitions());
                       validators.clear();
+
                       close();
                     }
                   }}
@@ -956,6 +1028,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               return;
             }
           }
+
           setSpinner(true);
           dispatch(updateFormDefinition(definition));
           setSaveModal({ visible: false, closeEditor: true });
