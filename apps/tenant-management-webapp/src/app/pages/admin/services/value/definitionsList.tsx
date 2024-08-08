@@ -7,13 +7,15 @@ import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { renderNoItem } from '@components/NoItem';
 import { Dispatch } from '@jsonforms/react';
+import { EntryDetail, TableDiv } from '../styled-components';
 
 interface ValueDefinitionProps {
   definition: ValueDefinition;
   readonly?: boolean;
+  onDelete: (definition: ValueDefinition) => void;
 }
 
-export const ValueComponent: FunctionComponent<ValueDefinitionProps> = ({ definition }) => {
+export const ValueComponent: FunctionComponent<ValueDefinitionProps> = ({ definition, onDelete }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -33,13 +35,23 @@ export const ValueComponent: FunctionComponent<ValueDefinitionProps> = ({ defini
               onClick={() => setShowDetails(!showDetails)}
               testId="toggle-details-visibility"
             />
+            {!definition.isCore && (
+              <GoAContextMenuIcon
+                type="trash"
+                title="Delete"
+                onClick={() => onDelete(definition)}
+                testId="delete-details"
+              />
+            )}
           </GoAContextMenu>
         </td>
       </tr>
       {showDetails && (
         <tr>
           <td className="payload-details" headers="namespace name description payload" colSpan={5}>
-            <div data-testid="details">{JSON.stringify(definition.jsonSchema, null, 2)}</div>
+            <EntryDetail data-testid="value-schema-details">
+              {JSON.stringify(definition.jsonSchema, null, 2)}
+            </EntryDetail>
           </td>
         </tr>
       )}
@@ -49,13 +61,10 @@ export const ValueComponent: FunctionComponent<ValueDefinitionProps> = ({ defini
 
 interface ValueDefinitionsComponentProps {
   definitions: ValueDefinition[];
-  className: string;
+  onDelete: (def: ValueDefinition) => void;
 }
 
-const ValueDefinitionsListComponent: FunctionComponent<ValueDefinitionsComponentProps> = ({
-  definitions,
-  className,
-}) => {
+export const ValueDefinitionsList: FunctionComponent<ValueDefinitionsComponentProps> = ({ definitions, onDelete }) => {
   const groupedDefinitions = definitions.reduce((acc, def) => {
     acc[def.namespace] = acc[def.namespace] || [];
     acc[def.namespace].push(def);
@@ -73,10 +82,10 @@ const ValueDefinitionsListComponent: FunctionComponent<ValueDefinitionsComponent
   });
 
   return (
-    <div className={className}>
+    <div>
       {(orderedGroupNames.length === 0 || !orderedGroupNames) && renderNoItem('value definition')}
       {orderedGroupNames.map((group) => (
-        <div key={group}>
+        <TableDiv key={group}>
           <div className="group-name">{group}</div>
           <DataTable data-testid="values-definitions-table">
             <thead data-testid="values-definitions-table-header">
@@ -95,50 +104,13 @@ const ValueDefinitionsListComponent: FunctionComponent<ValueDefinitionsComponent
                   <ValueComponent
                     key={`${definition.namespace}:${definition.name}:${Math.random()}`}
                     definition={definition}
+                    onDelete={onDelete}
                   />
                 ))}
             </tbody>
           </DataTable>
-        </div>
+        </TableDiv>
       ))}
     </div>
   );
 };
-
-export const ValueDefinitionsList = styled(ValueDefinitionsListComponent)`
-  display: flex-inline-table;
-  & .group-name {
-    font-size: var(--fs-lg);
-    font-weight: var(--fw-bold);
-  }
-
-  & td:first-child {
-    width: 100px;
-    white-space: nowrap;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-  }
-
-  & td:last-child {
-    width: 40px;
-    white-space: nowrap;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-  }
-
-  & .payload-details {
-    div {
-      background: #f3f3f3;
-      white-space: pre-wrap;
-      font-family: monospace;
-      font-size: 12px;
-      line-height: 16px;
-      padding: 16px;
-    }
-    padding: 0;
-  }
-
-  table {
-    margin-bottom: 2rem;
-  }
-`;
