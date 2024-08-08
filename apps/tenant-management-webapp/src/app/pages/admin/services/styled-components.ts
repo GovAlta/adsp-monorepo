@@ -9,9 +9,9 @@ export const EntryDetail = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
   font-family: monospace;
-  font-size: 12px;
-  line-height: 12px;
-  padding: 16px;
+  font-size: var(--goa-font-size-1);
+  line-height: var(--goa-space-m);
+  padding: var(--goa-space-m);
   text-align: left;
 `;
 
@@ -35,8 +35,8 @@ export const TableDiv = styled.div`
     text-align: right;
   }
   & .group-name {
-    font-size: var(--fs-lg);
-    font-weight: var(--fw-bold);
+    font-size: var(--goa-font-size-5);
+    font-weight: var(--goa-font-weight-bold);
   }
 
   & td:first-child {
@@ -58,9 +58,9 @@ export const TableDiv = styled.div`
       background: #f3f3f3;
       white-space: pre-wrap;
       font-family: monospace;
-      font-size: 12px;
-      line-height: 16px;
-      padding: 16px;
+      font-size: var(--goa-font-size-1);
+      line-height: var(--goa-space-m);
+      padding: var(--goa-space-m);
     }
     padding: 0;
   }
