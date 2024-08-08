@@ -11,7 +11,7 @@ export const fetchFormDefinitionsApi = async (token: string, url: string): Promi
 export const updateFormDefinitionApi = async (token: string, serviceUrl: string, definition: FormDefinition) => {
   // Save to new namespace based configuration.
   const { data } = await axios.patch<{ latest: { configuration: Record<string, FormDefinition> } }>(
-    new URL(`configuration/v2/configuration/form-service/${definition.id.toLowerCase()}`, serviceUrl).href,
+    new URL(`configuration/v2/configuration/form-service/${definition.id}`, serviceUrl).href,
     { operation: 'UPDATE', update: definition },
     { headers: { Authorization: `Bearer ${token}` } }
   );
