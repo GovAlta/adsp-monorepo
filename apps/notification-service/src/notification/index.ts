@@ -76,6 +76,7 @@ export const applyNotificationMiddleware = (
     serviceId,
     logger,
     subscriptionRepository,
+    eventService,
     verifyService,
     tenantService,
   };

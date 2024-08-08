@@ -31,7 +31,7 @@ import {
   GoACheckboxPad,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
-import { getFormDefinitions } from '@store/form/action';
+import { clearFormDefinitions, getFormDefinitions } from '@store/form/action';
 import { updateFormDefinition } from '@store/form/action';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
@@ -138,6 +138,14 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   return isUpdated;
 };
 
+const ensureRolesAreUniqueWithNoDuplicates = (definition: FormDefinition) => {
+  definition.applicantRoles = [...new Set(definition.applicantRoles)];
+  definition.clerkRoles = [...new Set(definition.clerkRoles)];
+  definition.assessorRoles = [...new Set(definition.assessorRoles)];
+
+  return definition;
+};
+
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
   options: {
@@ -176,8 +184,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(FetchFileTypeService());
     dispatch(getConfigurationDefinitions());
+    dispatch(FetchFileTypeService());
   }, [dispatch]);
 
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
@@ -376,17 +384,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           if (type === applicantRoles.name) {
             setDefinition({
               ...definition,
-              applicantRoles: roles,
+              applicantRoles: [...new Set(roles)],
             });
           } else if (type === clerkRoles.name) {
             setDefinition({
               ...definition,
-              clerkRoles: roles,
+              clerkRoles: [...new Set(roles)],
             });
           } else {
             setDefinition({
               ...definition,
-              assessorRoles: roles,
+              assessorRoles: [...new Set(roles)],
             });
           }
         }}
@@ -507,18 +515,32 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const validateDefinitionRegisters = () => {
     const registers = getDataRegisters(JSON.parse(tempUiSchema), 'urn');
-    const foundRegisters = selectDefinitionRegisters.filter((register) => {
-      return registers.filter((reg) => reg.urn === register.urn);
-    });
+    const registersLength = registers.length;
+    const selectDefinitionRegistersLength = selectDefinitionRegisters.length;
 
-    if (registers.length > 0 || foundRegisters.length === 0) {
-      if (foundRegisters.length === 0) {
+    if (selectDefinitionRegisters.length > 0 && registersLength > 0) {
+      let isValidRegister = false;
+      for (let reg = 0; reg < selectDefinitionRegistersLength; reg++) {
+        for (let registersIndex = 0; registersIndex < registers.length; registersIndex++) {
+          if (selectDefinitionRegisters[reg].urn === registers[registersIndex]) {
+            isValidRegister = true;
+            break;
+          }
+        }
+      }
+      if (!isValidRegister) {
         dispatch(
           ErrorNotification({
             message: 'Data register not available or unauthorized',
           })
         );
       }
+    } else if (selectDefinitionRegistersLength === 0 && registersLength > 0) {
+      dispatch(
+        ErrorNotification({
+          message: 'Data register not available or unauthorized',
+        })
+      );
     }
   };
 
@@ -899,6 +921,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       validateDefinitionRegisters();
 
                       setCustomIndicator(true);
+
                       if (
                         !doesRoleExistForClientInKeyCloak(FORM_SERVICE_ID.toString(), FORM_APPLICANT_ID, elements) &&
                         isRoleUpdated(
@@ -909,6 +932,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       ) {
                         definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
                       }
+
+                      ensureRolesAreUniqueWithNoDuplicates(definition);
                       await dispatch(
                         updateFormDefinition({
                           ...definition,
@@ -934,7 +959,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     ) {
                       setSaveModal({ visible: true, closeEditor: false });
                     } else {
+                      dispatch(clearFormDefinitions());
                       validators.clear();
+
                       close();
                     }
                   }}

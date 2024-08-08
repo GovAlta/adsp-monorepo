@@ -62,12 +62,10 @@ export function* updateFormDefinition({ definition }: UpdateFormDefinitionsActio
   if (baseUrl && token) {
     try {
       const { latest } = yield call(updateFormDefinitionApi, token, baseUrl, definition);
-
-      yield put(
-        updateFormDefinitionSuccess({
-          ...latest.configuration,
-        })
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updatedDefinition: any = {};
+      updatedDefinition[latest.configuration.id] = latest.configuration;
+      yield put(updateFormDefinitionSuccess(updatedDefinition));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }

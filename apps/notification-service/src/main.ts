@@ -24,6 +24,11 @@ import {
   NotificationType,
   NotificationWorkItem,
   ServiceUserRoles,
+  SubscriberCreatedDefinition,
+  SubscriberDeletedDefinition,
+  SubscriberUpdatedDefinition,
+  SubscriptionDeletedDefinition,
+  SubscriptionSetDefinition,
 } from './notification';
 import { createRepositories } from './mongo';
 import { initializeProviders } from './provider';
@@ -77,7 +82,16 @@ async function initializeApp() {
         coreConfig: Record<string, NotificationType>,
         tenantId: AdspId
       ) => new NotificationConfiguration(tenantConfig, coreConfig, tenantId),
-      events: [NotificationsGeneratedDefinition, NotificationSentDefinition, NotificationSendFailedDefinition],
+      events: [
+        NotificationsGeneratedDefinition,
+        NotificationSentDefinition,
+        NotificationSendFailedDefinition,
+        SubscriberCreatedDefinition,
+        SubscriberUpdatedDefinition,
+        SubscriberDeletedDefinition,
+        SubscriptionSetDefinition,
+        SubscriptionDeletedDefinition,
+      ],
       roles: [
         {
           role: ServiceUserRoles.SubscriptionAdmin,

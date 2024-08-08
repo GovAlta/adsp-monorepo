@@ -1,5 +1,6 @@
 import { FormDefinition } from './model';
 
+export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_SUCCESS_ACTION = 'form/FETCH_FORM_DEFINITIONS_SUCCESS_ACTION';
 
@@ -10,6 +11,9 @@ export const DELETE_FORM_DEFINITION_ACTION = 'form/DELETE_FORM_DEFINITION_ACTION
 export const DELETE_FORM_DEFINITION_SUCCESS_ACTION = 'form/DELETE_FORM_DEFINITION_SUCCESS_ACTION';
 export const DELETE_FORM_BY_ID_ACTION = 'form/DELETE_FORM_BY_ID_ACTION';
 
+export interface ClearFormDefinitions {
+  type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
+}
 export interface FetchFormDefinitionsAction {
   type: typeof FETCH_FORM_DEFINITIONS_ACTION;
   next: string;
@@ -49,6 +53,7 @@ export interface DeleteFormByIDAction {
 }
 
 export type FormActionTypes =
+  | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
   | FetchFormDefinitionsAction
   | DeleteFormDefinitionAction
@@ -56,6 +61,10 @@ export type FormActionTypes =
   | UpdateFormDefinitionsAction
   | DeleteFormByIDAction
   | UpdateFormDefinitionsSuccessAction;
+
+export const clearFormDefinitions = (): ClearFormDefinitions => ({
+  type: CLEAR_FORM_DEFINITIONS_ACTION,
+});
 
 export const updateFormDefinition = (definition: FormDefinition, options?: string): UpdateFormDefinitionsAction => ({
   type: UPDATE_FORM_DEFINITION_ACTION,

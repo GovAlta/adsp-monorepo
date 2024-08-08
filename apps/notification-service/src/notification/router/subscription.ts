@@ -1,6 +1,15 @@
 import { Request, RequestHandler, Response, Router } from 'express';
 import { Logger } from 'winston';
-import { adspId, AdspId, isAllowedUser, TenantService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  DomainEvent,
+  EventService,
+  isAllowedUser,
+  TenantService,
+  UnauthorizedUserError,
+  User,
+} from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
@@ -16,11 +25,19 @@ import {
 } from './types';
 import { VerifyService } from '../verify';
 import { body, checkSchema, oneOf, param, query } from 'express-validator';
+import {
+  subscriberCreated,
+  subscriberDeleted,
+  subscriberUpdated,
+  subscriptionDeleted,
+  subscriptionSet,
+} from '../events';
 
 interface SubscriptionRouterProps {
   serviceId: AdspId;
   logger: Logger;
   subscriptionRepository: SubscriptionRepository;
+  eventService: EventService;
   verifyService: VerifyService;
   tenantService: TenantService;
 }
@@ -118,7 +135,11 @@ async function addOrUpdateSubscription(
   return subscription;
 }
 
-export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
+export function createTypeSubscription(
+  apiId: AdspId,
+  repository: SubscriptionRepository,
+  eventService: EventService
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant.id;
@@ -162,17 +183,23 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
       if (!subscriberEntity) {
         const { id: _id, ...newSubscriber } = subscriber;
         subscriberEntity = await SubscriberEntity.create(user, repository, newSubscriber);
+        eventService.send(subscriberCreated(subscriberEntity, user));
       }
 
       const subscription = await addOrUpdateSubscription(repository, user, type, subscriberEntity, criteria);
       res.send(mapSubscription(apiId, subscription));
+      eventService.send(subscriptionSet(type, subscriberEntity, subscription, user));
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function addOrUpdateTypeSubscription(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
+export function addOrUpdateTypeSubscription(
+  apiId: AdspId,
+  repository: SubscriptionRepository,
+  eventService: EventService
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -193,6 +220,7 @@ export function addOrUpdateTypeSubscription(apiId: AdspId, repository: Subscript
 
       const subscription = await addOrUpdateSubscription(repository, user, type, subscriberEntity, criteria);
       res.send(mapSubscription(apiId, subscription));
+      eventService.send(subscriptionSet(type, subscriberEntity, subscription, user));
     } catch (err) {
       next(err);
     }
@@ -227,7 +255,7 @@ export function getTypeSubscription(apiId: AdspId, repository: SubscriptionRepos
   };
 }
 
-export function deleteTypeSubscription(repository: SubscriptionRepository): RequestHandler {
+export function deleteTypeSubscription(repository: SubscriptionRepository, eventService: EventService): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant.id;
@@ -239,13 +267,17 @@ export function deleteTypeSubscription(repository: SubscriptionRepository): Requ
 
       const result = subscriberEntity ? await type.unsubscribe(repository, user, subscriberEntity) : false;
       res.send({ deleted: result });
+      eventService.send(subscriptionDeleted(type, subscriberEntity, user));
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function deleteTypeSubscriptionCriteria(repository: SubscriptionRepository): RequestHandler {
+export function deleteTypeSubscriptionCriteria(
+  repository: SubscriptionRepository,
+  eventService: EventService
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const type: NotificationTypeEntity = req[TYPE_KEY];
@@ -261,6 +293,9 @@ export function deleteTypeSubscriptionCriteria(repository: SubscriptionRepositor
       }
 
       res.send({ deleted: result });
+      if (result) {
+        eventService.send(subscriptionSet(type, subscription.subscriber, subscription, user));
+      }
     } catch (err) {
       next(err);
     }
@@ -296,7 +331,11 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
   };
 }
 
-export function createSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
+export function createSubscriber(
+  apiId: AdspId,
+  repository: SubscriptionRepository,
+  eventService: EventService
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -326,14 +365,20 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
               channels,
             };
 
+      let event: DomainEvent;
       let entity = subscriber.userId ? await repository.getSubscriber(tenantId, subscriber.userId, true) : null;
       if (entity) {
         entity = await entity.update(user, subscriber);
+        event = subscriberUpdated(entity, subscriber, user);
       } else {
         entity = await SubscriberEntity.create(user, repository, subscriber);
+        event = subscriberCreated(entity, user);
       }
 
       res.send(mapSubscriber(apiId, entity));
+      if (event) {
+        eventService.send(event);
+      }
     } catch (err) {
       next(err);
     }
@@ -389,28 +434,30 @@ export function getSubscriberByUserId(repository: SubscriptionRepository): Reque
   };
 }
 
-export function updateSubscriber(apiId: AdspId): RequestHandler {
+export function updateSubscriber(apiId: AdspId, eventService: EventService): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
-      const update = req.body;
+      const { addressAs, channels } = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
-      const updated = await subscriber.update(user, update);
+      const updated = await subscriber.update(user, { addressAs, channels });
       res.send(mapSubscriber(apiId, updated));
+      eventService.send(subscriberUpdated(subscriber, { addressAs, channels }, user));
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function subscriberOperations(verifyService: VerifyService): RequestHandler {
+export function subscriberOperations(eventService: EventService, verifyService: VerifyService): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const request: SubscriberOperationRequests = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
+      let event: DomainEvent;
       let result = null;
       switch (request.operation) {
         case SUBSCRIBER_SEND_VERIFY_CODE:
@@ -453,7 +500,7 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
           );
 
           result = { verified };
-
+          event = subscriberUpdated(subscriber, { channels: subscriber.channels }, user);
           break;
         }
         default:
@@ -461,23 +508,29 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
       }
 
       res.send(result);
+      if (event) {
+        eventService.send(event);
+      }
     } catch (err) {
       next(err);
     }
   };
 }
 
-export const deleteSubscriber: RequestHandler = async (req, res, next) => {
-  try {
-    const user = req.user;
-    const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
+export function deleteSubscriber(eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
-    const deleted = await subscriber.delete(user);
-    res.send({ deleted });
-  } catch (err) {
-    next(err);
-  }
-};
+      const deleted = await subscriber.delete(user);
+      res.send({ deleted });
+      eventService.send(subscriberDeleted(subscriber, user));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export function getSubscriberSubscriptions(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
@@ -561,6 +614,7 @@ export const getSubscriptionChannels = (repository: SubscriptionRepository): Req
 export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
+  eventService,
   verifyService,
 }: SubscriptionRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
@@ -613,7 +667,7 @@ export const createSubscriptionRouter = ({
       )
     ),
     getNotificationType,
-    createTypeSubscription(apiId, subscriptionRepository)
+    createTypeSubscription(apiId, subscriptionRepository, eventService)
   );
 
   subscriptionRouter.post(
@@ -636,14 +690,14 @@ export const createSubscriptionRouter = ({
       ])
     ),
     getNotificationType,
-    addOrUpdateTypeSubscription(apiId, subscriptionRepository)
+    addOrUpdateTypeSubscription(apiId, subscriptionRepository, eventService)
   );
 
   subscriptionRouter.delete(
     '/types/:type/subscriptions/:subscriber/criteria',
     validateTypeAndSubscriberHandler,
     getNotificationType,
-    deleteTypeSubscriptionCriteria(subscriptionRepository)
+    deleteTypeSubscriptionCriteria(subscriptionRepository, eventService)
   );
 
   subscriptionRouter.get(
@@ -657,7 +711,7 @@ export const createSubscriptionRouter = ({
     '/types/:type/subscriptions/:subscriber',
     validateTypeAndSubscriberHandler,
     getNotificationType,
-    deleteTypeSubscription(subscriptionRepository)
+    deleteTypeSubscription(subscriptionRepository, eventService)
   );
 
   subscriptionRouter.get(
@@ -673,7 +727,7 @@ export const createSubscriptionRouter = ({
     ),
     getSubscribers(apiId, subscriptionRepository)
   );
-  subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository));
+  subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository, eventService));
 
   subscriptionRouter.get(
     '/subscribers/my-subscriber',
@@ -701,7 +755,7 @@ export const createSubscriptionRouter = ({
       )
     ),
     getSubscriber(subscriptionRepository),
-    updateSubscriber(apiId)
+    updateSubscriber(apiId, eventService)
   );
   subscriptionRouter.post(
     '/subscribers/:subscriber',
@@ -720,13 +774,13 @@ export const createSubscriptionRouter = ({
       )
     ),
     getSubscriber(subscriptionRepository),
-    subscriberOperations(verifyService)
+    subscriberOperations(eventService, verifyService)
   );
   subscriptionRouter.delete(
     '/subscribers/:subscriber',
     validateSubscriberHandler,
     getSubscriber(subscriptionRepository),
-    deleteSubscriber
+    deleteSubscriber(eventService)
   );
 
   subscriptionRouter.get(
