@@ -59,7 +59,7 @@ components:
 '/directory/v2/namespaces/{namespace}/entries':
   get:
     tags:
-      - Directory service
+      - Directory
     description: Fetch all directory entries by namespace
     parameters:
       - name: namespace
@@ -81,7 +81,7 @@ components:
 '/directory/v2/namespaces/{namespace}/services':
   post:
     tags:
-      - Directory service
+      - Directory
     description: Add a new service to the directory
     parameters:
       - name: namespace
@@ -111,7 +111,7 @@ components:
 '/directory/v2/namespaces/{namespace}/services/{service}':
   get:
     tags:
-      - Directory service
+      - Directory
     description: Fetch the service data
     parameters:
       - name: namespace
@@ -146,7 +146,7 @@ components:
         description: Unauthorized
   patch:
     tags:
-      - Directory service
+      - Directory
     description: Update the url of the specified service
     parameters:
       - name: namespace
@@ -179,7 +179,7 @@ components:
 
   delete:
     tags:
-      - Directory service
+      - Directory
     description: Delete the specified service entry
     parameters:
       - name: namespace
@@ -203,7 +203,7 @@ components:
 '/directory/v2/namespaces/{namespace}/services/{service}/apis':
   get:
     tags:
-      - Directory service
+      - Directory
     description: Fetch the API entries for the specified service.
     parameters:
       - name: namespace
@@ -245,7 +245,7 @@ components:
                     $ref: '#/components/schemas/DirectoryEntry'
   post:
     tags:
-      - Directory service
+      - Directory
     description: Add a new service API to the directory
     parameters:
       - name: namespace
@@ -281,7 +281,7 @@ components:
 '/directory/v2/namespaces/{namespace}/services/{service}/apis/{api}':
   patch:
     tags:
-      - Directory service
+      - Directory
     description: Update the url of the specified service API
     parameters:
       - name: namespace
@@ -320,7 +320,7 @@ components:
 
   delete:
     tags:
-      - Directory service
+      - Directory
     description: Delete the specified service API entry
     parameters:
       - name: namespace
