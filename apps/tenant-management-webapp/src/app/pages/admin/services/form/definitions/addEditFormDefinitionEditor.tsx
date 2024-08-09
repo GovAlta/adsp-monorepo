@@ -1007,7 +1007,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   label={<PreviewTop title="PDF Preview" form={definition} data={data} currentTab={currentTab} />}
                   data-testid="data-view"
                 >
-                  <PDFPreviewTemplateCore />
+                  <PDFPreviewTemplateCore formName={definition.name} />
                 </Tab>
               )}
             </Tabs>
