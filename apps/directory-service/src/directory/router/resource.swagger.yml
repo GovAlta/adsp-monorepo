@@ -39,7 +39,7 @@ components:
           $ref: "#/components/schemas/Resource"
       required: [operation, tag, resource]
 
-/tags:
+/resource/v1/tags:
   get:
     tags:
       - Resource
@@ -121,7 +121,7 @@ components:
       401:
         description: Unauthorized
 
-/tags/{tag}/resources:
+/resource/v1/tags/{tag}/resources:
   get:
     tags:
       - Resource

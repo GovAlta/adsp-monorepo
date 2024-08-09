@@ -9,6 +9,7 @@ exports[`router configurationOperations can create revision 1`] = `
   },
   "name": "test-service",
   "namespace": "platform",
+  "urn": "urn:ads:platform:configuration-service:v2:/configuration/platform/test-service",
 }
 `;
 
@@ -82,6 +83,7 @@ exports[`router getServiceConfiguration can get configuration 1`] = `
   "latest": null,
   "name": "test-service",
   "namespace": "platform",
+  "urn": "urn:ads:platform:configuration-service:v2:/configuration/platform/test-service",
 }
 `;
 
@@ -96,6 +98,7 @@ exports[`router patchServiceConfigurationRevision can delete 1`] = `
   },
   "name": "test-service",
   "namespace": "platform",
+  "urn": "urn:ads:platform:configuration-service:v2:/configuration/platform/test-service",
 }
 `;
 
@@ -112,6 +115,7 @@ exports[`router patchServiceConfigurationRevision can delete at path 1`] = `
   },
   "name": "test-service",
   "namespace": "platform",
+  "urn": "urn:ads:platform:configuration-service:v2:/configuration/platform/test-service",
 }
 `;
 
@@ -126,6 +130,7 @@ exports[`router patchServiceConfigurationRevision can replace 1`] = `
   },
   "name": "test-service",
   "namespace": "platform",
+  "urn": "urn:ads:platform:configuration-service:v2:/configuration/platform/test-service",
 }
 `;
 
@@ -140,5 +145,6 @@ exports[`router patchServiceConfigurationRevision can update 1`] = `
   },
   "name": "test-service",
   "namespace": "platform",
+  "urn": "urn:ads:platform:configuration-service:v2:/configuration/platform/test-service",
 }
 `;

@@ -5,7 +5,11 @@ import { ConfigurationDefinition, ConfigurationRevision } from '../types';
 import { ConfigurationEntityCriteria } from './types';
 
 export interface ConfigurationRepository {
-  find<C>(criteria: ConfigurationEntityCriteria, top: number, after?: string): Promise<Results<ConfigurationEntity<C>>>;
+  find<C = Record<string, unknown>>(
+    criteria: ConfigurationEntityCriteria,
+    top: number,
+    after?: string
+  ): Promise<Results<ConfigurationEntity<C>>>;
 
   get<C>(
     namespace: string,
