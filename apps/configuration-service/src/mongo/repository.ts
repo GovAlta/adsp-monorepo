@@ -52,10 +52,10 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
 
     return {
       results: docs.map(
-        (result) =>
+        ({ _id, ...result}) =>
           new ConfigurationEntity<C>(
-            result._id.namespace,
-            result._id.name,
+            _id.namespace,
+            _id.name,
             this.logger,
             this,
             this.validationService,
