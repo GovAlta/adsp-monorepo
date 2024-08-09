@@ -49,7 +49,18 @@ const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
   const blob = new Blob(byteArrays, { type: contentType });
   return blob;
 };
-export const PDFPreviewTemplateCore = () => {
+const PDF_FORM_TEMPLATE_ID = 'submitted-form';
+
+const getFileName = (formName) =>
+  `${PDF_FORM_TEMPLATE_ID}_${formName.length >= 10 ? formName.substr(0, 10) : formName}_${new Date()
+    .toJSON()
+    .slice(0, 19)
+    .replace(/:/g, '-')}.pdf`;
+const hasFormName = (jobFileName, formName) => {
+  const partFormName = formName.length >= 10 ? formName.substr(0, 10) : formName;
+  return jobFileName.indexOf(partFormName) !== -1;
+};
+export const PDFPreviewTemplateCore = (formName) => {
   const { id } = useParams<{ id: string }>();
   const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
 
@@ -57,7 +68,7 @@ export const PDFPreviewTemplateCore = () => {
     (state: RootState) => state.pdf?.corePdfTemplates['submitted-form'] || state?.pdf?.pdfTemplates[id]
   );
   const jobList = useSelector((state: RootState) =>
-    state?.pdf?.jobs.filter((job) => job.templateId === pdfTemplate.id)
+    state?.pdf?.jobs.filter((job) => job.templateId === pdfTemplate.id && hasFormName(job.filename, formName.formName))
   );
   const pdfGenerationError = jobList?.[0]?.payload?.error;
   const hasError = pdfGenerationError && pdfGenerationError.length > 0;
@@ -140,9 +151,11 @@ export const PDFPreviewTemplateCore = () => {
   };
 
   return (
-    <PreviewContainer>
-      <PdfPreview />
-    </PreviewContainer>
+    jobList.length > 0 && (
+      <PreviewContainer>
+        <PdfPreview />
+      </PreviewContainer>
+    )
   );
 };
 
@@ -150,16 +163,14 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
   const onDownloadFile = async (file) => {
     file && dispatch(DownloadFileService(file));
   };
-  const PDF_FORM_TEMPLATE_ID = 'submitted-form';
+
   const pdfTemplate = useSelector((state: RootState) => state.pdf?.corePdfTemplates['submitted-form']);
   const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
   const pdfList = useSelector((state: RootState) => state.pdf.jobs, _.isEqual);
 
   const currentId = useSelector((state: RootState) => state?.pdf?.currentId);
   const files = useSelector((state: RootState) => state?.pdf.files);
-  const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
 
-  const blobUrl = blob && URL.createObjectURL(blob);
   const pdfPreviewTab = 2;
   const dispatch = useDispatch();
   useEffect(() => {
@@ -174,10 +185,7 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
     const payload = {
       templateId: PDF_FORM_TEMPLATE_ID,
       data: getFormData(),
-      fileName: `${PDF_FORM_TEMPLATE_ID}_${form.name.length > 5 ? form.name.substr(0, 5) : form.name}_${new Date()
-        .toJSON()
-        .slice(0, 19)
-        .replace(/:/g, '-')}.pdf`,
+      fileName: getFileName(form.name),
       formId: form.name,
     };
 
@@ -216,7 +224,7 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
                 title="Download"
                 testId="download-template-icon"
                 size="medium"
-                disabled={!blobUrl}
+                disabled={!files[currentId]}
                 onClick={() => {
                   const file = fileList[0];
                   if (file.recordId === pdfList[0].id && file.filename.indexOf(pdfList[0].templateId) > -1) {
