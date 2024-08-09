@@ -8,17 +8,22 @@ import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
+import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
-import { ServiceRoles, bootstrapDirectory, applyDirectoryV2Middleware } from './directory';
+import { ServiceRoles, bootstrapDirectory, applyDirectoryMiddleware } from './directory';
 import { getServiceUrlById, getResourceUrlById } from './directory/router/util/getNamespaceEntries';
-import { EntryUpdatedDefinition, EntryDeletedDefinition, EntryUpdatesStream } from './directory/events';
+import {
+  EntryUpdatedDefinition,
+  EntryDeletedDefinition,
+  EntryUpdatesStream,
+  TaggedResourceDefinition,
+  UntaggedResourceDefinition,
+} from './directory/events';
 const logger = createLogger('directory-service', environment.LOG_LEVEL);
 
 const initializeApp = async (): Promise<express.Application> => {
-  const validationService = new AjvValidationService(logger);
-  const repositories = await createRepositories({ ...environment, validationService, logger });
+  const repositories = await createRepositories({ ...environment, logger });
   if (environment.DIRECTORY_BOOTSTRAP) {
     await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
   }
@@ -36,36 +41,54 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, eventService, healthCheck, tenantStrategy, tenantService, metricsHandler, traceHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Directory service',
-        description: 'Service that provides a register of services and APIs for service discovery.',
-        roles: [
-          {
-            role: ServiceRoles.DirectoryAdmin,
-            description: 'Administrator role for the directory service.',
-            inTenantAdmin: true,
-          },
-        ],
-        events: [EntryUpdatedDefinition, EntryDeletedDefinition],
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-        eventStreams: [EntryUpdatesStream],
-        values: [ServiceMetricsValueDefinition],
-      },
-      { logger },
-      {
-        // TODO: This needs to be implemented so that the directory doesn't make re-entrant request to
-        // itself via the SDK. Re-entrancy on start up can be a problem.
-        directory: {
-          getResourceUrl: (serviceId: AdspId) => getResourceUrlById(serviceId, repositories.directoryRepository),
-          getServiceUrl: (serviceId: AdspId) => getServiceUrlById(serviceId, repositories.directoryRepository),
+  const {
+    coreStrategy,
+    eventService,
+    healthCheck,
+    tenantStrategy,
+    tenantService,
+    metricsHandler,
+    tenantHandler,
+    traceHandler,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Directory service',
+      description: 'Service that provides a register of services and APIs for service discovery.',
+      roles: [
+        {
+          role: ServiceRoles.DirectoryAdmin,
+          description: 'Administrator role for the directory service.',
+          inTenantAdmin: true,
         },
-      }
-    );
+        {
+          role: ServiceRoles.ResourceBrowser,
+          description: 'Resource browser role for the directory service that grants access to resources and tags.',
+          inTenantAdmin: true,
+        },
+        {
+          role: ServiceRoles.ResourceTagger,
+          description: 'Resource tagger role for the directory service that allows tagging and untagging resources.',
+          inTenantAdmin: true,
+        },
+      ],
+      events: [EntryUpdatedDefinition, EntryDeletedDefinition, TaggedResourceDefinition, UntaggedResourceDefinition],
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      eventStreams: [EntryUpdatesStream],
+      values: [ServiceMetricsValueDefinition],
+    },
+    { logger },
+    {
+      // TODO: This needs to be implemented so that the directory doesn't make re-entrant request to
+      // itself via the SDK. Re-entrancy on start up can be a problem.
+      directory: {
+        getResourceUrl: (serviceId: AdspId) => getResourceUrlById(serviceId, repositories.directoryRepository),
+        getServiceUrl: (serviceId: AdspId) => getServiceUrlById(serviceId, repositories.directoryRepository),
+      },
+    }
+  );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -83,7 +106,8 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(traceHandler);
 
   app.use('/directory', metricsHandler, passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }));
-  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService, eventService });
+  app.use('/resource', metricsHandler, passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
+  applyDirectoryMiddleware(app, { ...repositories, logger, tenantService, eventService });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
@@ -103,7 +127,14 @@ const initializeApp = async (): Promise<express.Application> => {
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },
-        api: { href: new URL('/directory/v1', rootUrl).href },
+        api: [
+          {
+            href: new URL('/directory/v2', rootUrl).href,
+          },
+          {
+            href: new URL('/resource/v1', rootUrl).href,
+          },
+        ],
         docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
     });

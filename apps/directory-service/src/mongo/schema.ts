@@ -27,3 +27,44 @@ export const directorySchema = new Schema({
     },
   ],
 });
+
+export const tagSchema = new Schema({
+  tenantId: String,
+  label: {
+    type: String,
+    required: true,
+  },
+  value: {
+    type: String,
+    required: true,
+  },
+});
+tagSchema.index({ tenantId: 1, value: 1 }, { unique: true });
+
+export const resourceSchema = new Schema({
+  tenantId: String,
+  urn: {
+    type: String,
+    required: true,
+  },
+  name: { type: String },
+  description: { type: String },
+});
+tagSchema.index({ tenantId: 1, urn: 1 }, { unique: true });
+
+export const resourceTagSchema = new Schema(
+  {
+    tagId: {
+      type: Schema.Types.ObjectId,
+      ref: 'tag',
+      required: true,
+    },
+    resourceId: {
+      type: Schema.Types.ObjectId,
+      ref: 'resource',
+      required: true,
+    },
+  },
+  { _id: false }
+);
+resourceTagSchema.index({ resourceId: 1, tagId: 1 }, { unique: true });
