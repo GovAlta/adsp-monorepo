@@ -92,6 +92,7 @@ export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntit
     formFiles: Object.entries(entity.formFiles || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
     created: entity.created,
     createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
+    securityClassification: entity?.securityClassification,
     disposition: entity.disposition
       ? {
           id: entity.disposition.id,
