@@ -24,6 +24,7 @@ describe('FormEntity', () => {
     assessorRoles: ['test-assessor'],
     clerkRoles: ['test-clerk'],
     dataSchema: null,
+    securityClassification: 'protected b',
     queueTaskToProcess: { queueNameSpace: 'test-queue-namespace', queueName: 'test-queue' } as QueueTaskToProcess,
   });
 

@@ -9,14 +9,7 @@ export enum FormStatus {
   Archived = 'archived',
 }
 
-export enum SecurityClassification {
-  ProtectedA = 'protected a',
-  ProtectedB = 'protected b',
-  ProtectedC = 'protected c',
-  Public = 'public',
-}
-
-export type SecurityClassificationType = SecurityClassification & null;
+export type SecurityClassificationType = 'protected a' | 'protected b' | 'protected c' | 'public';
 
 export interface Form {
   definition: FormDefinition;
