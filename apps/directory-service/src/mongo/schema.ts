@@ -49,6 +49,7 @@ export const resourceSchema = new Schema({
   },
   name: { type: String },
   description: { type: String },
+  type: { type: String },
 });
 tagSchema.index({ tenantId: 1, urn: 1 }, { unique: true });
 
