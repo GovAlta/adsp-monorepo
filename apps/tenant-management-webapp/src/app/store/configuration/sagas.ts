@@ -248,7 +248,7 @@ export function* fetchRegisterData(): SagaIterator {
 
         if (data?.configuration && data?.configuration) {
           registerData.push({
-            urn: `urn:ads:${tenantName}:configuration:v2:/configuration/${namespace}/${service}`,
+            urn: `urn:ads:platform:configuration:v2:/configuration/${namespace}/${service}`,
             data: data?.configuration,
           });
         }
