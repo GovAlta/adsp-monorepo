@@ -1,7 +1,7 @@
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
-import { select, call, put, takeEvery } from 'redux-saga/effects';
+import { select, call, put, takeEvery, delay } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   UpdateFormDefinitionsAction,
@@ -18,13 +18,6 @@ import { getAccessToken } from '@store/tenant/sagas';
 import { fetchFormDefinitionsApi, updateFormDefinitionApi, deleteFormDefinitionApi } from './api';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
-  yield put(
-    UpdateIndicator({
-      show: true,
-      message: 'Loading Definition...',
-    })
-  );
-
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
@@ -39,11 +32,6 @@ export function* fetchFormDefinitions(payload): SagaIterator {
         return acc;
       }, {});
       yield put(getFormDefinitionsSuccess(definitions, page.next, page.after));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
@@ -64,7 +52,8 @@ export function* updateFormDefinition({ definition }: UpdateFormDefinitionsActio
       const { latest } = yield call(updateFormDefinitionApi, token, baseUrl, definition);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const loadedDefinitions = yield select((state: RootState) => state.form.definitions);
-
+      // const updatedDefinition: any = {};
+      // updatedDefinition[latest.configuration.id] = latest.configuration;
       loadedDefinitions[latest.configuration.id] = latest.configuration;
       yield put(updateFormDefinitionSuccess(loadedDefinitions));
     } catch (err) {
@@ -74,15 +63,30 @@ export function* updateFormDefinition({ definition }: UpdateFormDefinitionsActio
 }
 
 export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Deleting Definition...',
+    })
+  );
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
-
   if (baseUrl && token) {
     try {
       yield call(deleteFormDefinitionApi, token, baseUrl, definition.id);
       yield put(deleteFormById(definition.id));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     }
   }
 }

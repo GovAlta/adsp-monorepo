@@ -89,6 +89,16 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     return applicantFormRoles.filter((roleToCheck) => roleToCheck === role).length === 0;
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteAction = () => {
+    dispatch(deleteFormDefinition(currentDefinition));
+  };
+  useEffect(() => {
+    if (!indicator.show) {
+      setShowDeleteConfirmation(false);
+    }
+  }, [indicator.show]);
+
   return (
     <div>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
