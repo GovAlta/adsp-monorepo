@@ -36,15 +36,29 @@ interface AddEditFormDefinitionProps {
   onSave: (definition: FormDefinition) => void;
 }
 
+function isValidUrl(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
 export const checkFormDefaultUrl = (): Validator => {
   return (_url: string) => {
     const url = _url.replace(/\s/g, '');
     const isHttps = url.toLowerCase().startsWith('https://');
-    const numberOfVariables = url.split('{{').length;
     const containsIdVariable = url.includes('{{id}}');
+    const urlWithOutId = _url.replace(/{{id}}/g, '');
+    const numberOfVariables = urlWithOutId.split('{{').length;
+
+    if (!isValidUrl(urlWithOutId)) {
+      return 'Invalid URL format.';
+    }
 
     if (!isHttps) return 'Only secure HTTP protocol is allowed.';
-    if (numberOfVariables > 2 || !containsIdVariable) {
+    if (numberOfVariables > 1 && containsIdVariable) {
       return 'Can only contain one handlebar variable {{id}} in the url';
     }
   };
