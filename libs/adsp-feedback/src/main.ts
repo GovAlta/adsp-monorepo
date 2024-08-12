@@ -596,7 +596,7 @@ class AdspFeedback implements AdspFeedbackApi {
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
-            padding-top: 36px;
+            padding-top: 36px !important;
             margin-bottom: 4px;
           }
           .adsp-fb .adsp-fb-form-rating {
@@ -944,8 +944,8 @@ class AdspFeedback implements AdspFeedbackApi {
             margin-right: 36px;
             line-height: 28px;
           }
-          .h3-subtitle {
-            padding-top: 36px;
+          .h3-sub-title {
+            padding-top: 36px !important;
           }
           .p-content {
             line-height: 28px;
@@ -1065,7 +1065,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
-                    <h3 class="h3-subtitle">Tell us what you think</h3>
+                    <h3 class="h3-sub-title">Tell us what you think</h3>
                     <p class="p-content">
                       Please help us improve our service by sharing feedback about your experience. This will only take
                       a minute.
