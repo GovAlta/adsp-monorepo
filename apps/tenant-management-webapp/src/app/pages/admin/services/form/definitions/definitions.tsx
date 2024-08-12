@@ -67,6 +67,9 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     if (!showDefsFromState) {
       dispatch(getFormDefinitions());
     }
+    if (!showDefsFromState) {
+      dispatch(getFormDefinitions());
+    }
     dispatch(fetchDirectory());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

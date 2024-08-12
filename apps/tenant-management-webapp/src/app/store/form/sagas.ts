@@ -52,8 +52,7 @@ export function* updateFormDefinition({ definition }: UpdateFormDefinitionsActio
       const { latest } = yield call(updateFormDefinitionApi, token, baseUrl, definition);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const loadedDefinitions = yield select((state: RootState) => state.form.definitions);
-      // const updatedDefinition: any = {};
-      // updatedDefinition[latest.configuration.id] = latest.configuration;
+
       loadedDefinitions[latest.configuration.id] = latest.configuration;
       yield put(updateFormDefinitionSuccess(loadedDefinitions));
     } catch (err) {
