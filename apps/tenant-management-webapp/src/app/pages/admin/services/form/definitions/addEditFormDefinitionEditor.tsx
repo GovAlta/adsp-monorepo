@@ -31,7 +31,7 @@ import {
   GoACheckboxPad,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
-import { clearFormDefinitions, getFormDefinitions } from '@store/form/action';
+
 import { updateFormDefinition } from '@store/form/action';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
@@ -278,7 +278,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(FetchRealmRoles());
 
     dispatch(fetchKeycloakServiceRoles());
-    dispatch(getFormDefinitions());
     dispatch(getTaskQueues());
   }, [dispatch]);
 
@@ -362,7 +361,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const close = () => {
     dispatch(ClearNewFileList());
-    navigate('/admin/services/form?definitions=true');
+    navigate('/admin/services/form?definitions=true', { state: { isNavigatedFromEdit: true } });
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
@@ -959,7 +958,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     ) {
                       setSaveModal({ visible: true, closeEditor: false });
                     } else {
-                      dispatch(clearFormDefinitions());
                       validators.clear();
 
                       close();
