@@ -17,6 +17,7 @@ export * from './types';
 export * from './repository';
 export * from './events';
 export * from './notifications';
+export * from './pdf';
 
 interface FormMiddlewareProps extends Repositories {
   serviceId: AdspId;
@@ -28,6 +29,7 @@ interface FormMiddlewareProps extends Repositories {
   queueTaskService: QueueTaskService;
   formSubmissionRepository: FormSubmissionRepository;
   directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
 }
 
 export const applyFormMiddleware = (
@@ -43,6 +45,7 @@ export const applyFormMiddleware = (
     queueTaskService,
     formSubmissionRepository: submissionRepository,
     directory,
+    tokenProvider,
   }: FormMiddlewareProps
 ): Application => {
   const apiId = adspId`${serviceId}:v1`;
@@ -58,6 +61,7 @@ export const applyFormMiddleware = (
     commentService,
     submissionRepository,
     directory,
+    tokenProvider,
   });
   app.use('/form/v1', router);
 

@@ -1,25 +1,35 @@
-import React, { useEffect } from 'react';
-import { OverviewLayout } from '@components/Overview';
+import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { getValueDefinitions } from '@store/value/actions';
+import { OverviewLayout } from '@components/Overview';
 
-export const ValueOverview = (): JSX.Element => {
-  const dispatch = useDispatch();
+interface ValueOverviewProps {
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (number) => void;
+  disabled?: boolean;
+}
+export const ValueOverview: FunctionComponent<ValueOverviewProps> = (props) => {
+  const { setActiveEdit, setActiveIndex, disabled } = props;
+
   useEffect(() => {
-    dispatch(getValueDefinitions());
-  }, [dispatch]);
+    setActiveEdit(false);
+    setActiveIndex(0);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const description = `The value service provides an append-only data store for time-series data, and supports storing json
+            documents as values. Configure optional value definitions to specify the json schema for value writes.`;
 
   return (
     <OverviewLayout
-      description={
-        <section>
-          <p>
-            The value service provides an append-only data store for time-series data, and supports storing json
-            documents as values. Configure optional value definitions to specify the json schema for value writes.
-          </p>
-        </section>
+      description={description}
+      addButton={
+        <GoAButton
+          testId="add-definition"
+          disabled={disabled}
+          onClick={() => {
+            setActiveEdit(true);
+          }}
+        >
+          Add definition
+        </GoAButton>
       }
     />
   );

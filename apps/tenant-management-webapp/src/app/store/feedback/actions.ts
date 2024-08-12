@@ -1,4 +1,4 @@
-import { Feedback, FeedbackSearchCriteria, FeedbackSite, SelectedSite } from './models';
+import { Feedback, FeedbackMetrics, FeedbackSearchCriteria, FeedbackSite, SelectedSite } from './models';
 
 export const FETCH_FEEDBACKS_ACTION = 'feedback/FETCH_FEEDBACKS_ACTION';
 export const EXPORT_FEEDBACKS_ACTION = 'feedback/EXPORT_FEEDBACKS_ACTION';
@@ -13,6 +13,9 @@ export const UPDATE_FEEDBACK_SITE_SUCCESS_ACTION = 'feedback/UPDATE_FEEDBACK_SIT
 
 export const DELETE_FEEDBACK_SITE_ACTION = 'feedback/DELETE_FEEDBACK_SITE_ACTION';
 export const DELETE_FEEDBACK_SITE_SUCCESS_ACTION = 'feedback/DELETE_FEEDBACK_SITE_SUCCESS_ACTION';
+
+export const FETCH_FEEDBACK_METRICS_ACTION = 'feedback/FETCH_FEEDBACK_METRICS_ACTION';
+export const FETCH_FEEDBACK_METRICS_SUCCESS_ACTION = 'feedback/FETCH_FEEDBACK_METRICS_SUCCESS_ACTION';
 
 export interface FetchFeedbacksAction {
   type: typeof FETCH_FEEDBACKS_ACTION;
@@ -63,6 +66,15 @@ export interface DeleteFeedbackSiteSuccessAction {
   siteUrl: string;
 }
 
+export interface FetchFeedbackMetricsAction {
+  type: typeof FETCH_FEEDBACK_METRICS_ACTION;
+}
+
+export interface FetchFeedbackMetricsSuccessAction {
+  type: typeof FETCH_FEEDBACK_METRICS_SUCCESS_ACTION;
+  metrics: FeedbackMetrics;
+}
+
 export type FeedbackActionTypes =
   | FetchFeedbacksAction
   | FetchFeedbacksSuccessAction
@@ -72,7 +84,9 @@ export type FeedbackActionTypes =
   | UpdateFeedbackSiteAction
   | UpdateFeedbackSiteSuccessAction
   | DeleteFeedbackSiteAction
-  | DeleteFeedbackSiteSuccessAction;
+  | DeleteFeedbackSiteSuccessAction
+  | FetchFeedbackMetricsAction
+  | FetchFeedbackMetricsSuccessAction;
 
 export const getFeedbacks = (
   payload: FeedbackSite,
@@ -129,4 +143,13 @@ export const deleteFeedbackSite = (site: FeedbackSite): DeleteFeedbackSiteAction
 export const deleteFeedbackSiteSuccess = (siteUrl: string): DeleteFeedbackSiteSuccessAction => ({
   type: DELETE_FEEDBACK_SITE_SUCCESS_ACTION,
   siteUrl,
+});
+
+export const fetchFeedbackMetrics = (): FetchFeedbackMetricsAction => ({
+  type: FETCH_FEEDBACK_METRICS_ACTION,
+});
+
+export const fetchFeedbackMetricsSuccess = (metrics: FeedbackMetrics): FetchFeedbackMetricsSuccessAction => ({
+  type: FETCH_FEEDBACK_METRICS_SUCCESS_ACTION,
+  metrics,
 });

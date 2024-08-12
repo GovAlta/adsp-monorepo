@@ -1,3 +1,5 @@
+import { SecurityClassification } from '@store/common/models';
+
 export interface FormDefinition {
   id: string;
   name: string;
@@ -14,6 +16,7 @@ export interface FormDefinition {
   submissionPdfTemplate: string;
   queueTaskToProcess: QueueTaskToProcess;
   supportTopic: boolean;
+  securityClassification?: SecurityClassification;
 }
 
 export interface Disposition {
@@ -40,11 +43,13 @@ export const defaultFormDefinition: FormDefinition = {
   anonymousApply: false,
   dispositionStates: [],
   submissionRecords: false,
-  submissionPdfTemplate: '',
+  submissionPdfTemplate: 'submitted-form',
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
+  securityClassification: null,
 };
 
 export interface FormState {
-  definitions: Record<string, FormDefinition>;
+  definitions: FormDefinition[];
+  nextEntries: string;
 }

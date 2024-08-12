@@ -196,7 +196,7 @@ exports[`subscription router subscriberOperations can verify channel 1`] = `
 }
 `;
 
-exports[`subscription router updateSubscriber can delete subscriber 1`] = `
+exports[`subscription router updateSubscriber can update subscriber 1`] = `
 {
   "addressAs": "tester",
   "channels": [],

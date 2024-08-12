@@ -31,6 +31,8 @@ import {
   FormStatusSetToDraftDefinition,
   SubmissionDispositionedDefinition,
   GeneratedSupportingDocFileType,
+  SUBMITTED_FORM,
+  SubmittedFormPdfTemplate,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -131,6 +133,12 @@ const initializeApp = async (): Promise<express.Application> => {
             },
           },
         },
+        {
+          serviceId: adspId`urn:ads:platform:pdf-service`,
+          configuration: {
+            [SUBMITTED_FORM]: SubmittedFormPdfTemplate,
+          },
+        },
       ],
       configuration: {
         description: 'Definitions of forms with configuration of roles allowed to submit and assess.',
@@ -210,6 +218,7 @@ const initializeApp = async (): Promise<express.Application> => {
     commentService,
     queueTaskService,
     directory,
+    tokenProvider,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));

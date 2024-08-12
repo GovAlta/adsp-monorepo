@@ -1,6 +1,6 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
-import { ConfigurationRepository, ActiveRevisionRepository } from '../repository';
+import { ConfigurationRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationRevision, Configuration, RevisionCriteria, ConfigurationDefinition } from '../types';
 import type { Logger } from 'winston';
@@ -15,14 +15,13 @@ import type { Logger } from 'winston';
  */
 export class ConfigurationEntity<C = Record<string, unknown>> implements Configuration<C> {
   // This is lazy loaded via getter function.
-  private active?: number = undefined;
+  private active?: ConfigurationRevision<C>;
 
   constructor(
     public namespace: string,
     public name: string,
     private logger: Logger,
     public repository: ConfigurationRepository,
-    private activeRevisionRepository: ActiveRevisionRepository,
     public validationService: ValidationService,
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
@@ -165,21 +164,19 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     return `${this.namespace}:${this.name}`;
   }
 
-  public async getActiveRevision(): Promise<number> {
-    if (typeof this.active !== 'number') {
-      const doc = await this.activeRevisionRepository.get(this.namespace, this.name, this.tenantId);
-      this.active = doc?.active;
+  public async getActiveRevision(): Promise<ConfigurationRevision<C>> {
+    if (!this.active) {
+      this.active = await this.repository.getActiveRevision(this.namespace, this.name, this.tenantId);
     }
     return this.active;
   }
 
-  public async setActiveRevision(user: User, active: number): Promise<number> {
+  public async setActiveRevision(user: User, active: number): Promise<ConfigurationRevision<C>> {
     if (!this.canModify(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
 
-    this.active = (await this.activeRevisionRepository.setActiveRevision(this, active)).active;
-
+    this.active = await this.repository.setActiveRevision(this, active);
     return this.active;
   }
 

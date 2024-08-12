@@ -12,6 +12,10 @@ import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { fetchDirectory } from '@store/directory/actions';
+import { SecurityClassification } from '@store/common/models';
+import { LoadMoreWrapper } from './style-components';
+import { getConfigurationDefinitions } from '@store/configuration/action';
+
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
 }
@@ -20,16 +24,13 @@ const FORM_APPLICANT_SERVICE_ID = `urn:ads:platform:form-service:form-applicant`
 export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
+  const next = useSelector((state: RootState) => state.form.nextEntries);
 
   const formDefinitions = useSelector((state: RootState) => {
-    return Object.entries(state?.form?.definitions)
-      .sort((template1, template2) => {
-        return template1[1].name.localeCompare(template2[1].name);
-      })
-      .reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
-        tempObj[formDefinitionId] = formDefinitionData;
-        return tempObj;
-      }, {});
+    return Object.entries(state?.form?.definitions).reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
+      tempObj[formDefinitionId] = formDefinitionData;
+      return tempObj;
+    }, {});
   });
 
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
@@ -50,12 +51,15 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   }, [openAddDefinition]);
 
   useEffect(() => {
-    if (Object.keys(formDefinitions).length === 0) {
-      dispatch(getFormDefinitions());
-      dispatch(fetchDirectory());
-    }
+    dispatch(getConfigurationDefinitions());
+    dispatch(getFormDefinitions());
+    dispatch(fetchDirectory());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
+
+  const onNext = () => {
+    dispatch(getFormDefinitions(next));
+  };
 
   const reset = () => {
     setOpenAddFormDefinition(false);
@@ -93,20 +97,36 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
             definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
           }
 
+          definition.securityClassification = SecurityClassification.ProtectedB;
+
           dispatch(updateFormDefinition(definition));
         }}
       />
 
       {!indicator.show && !formDefinitions && renderNoItem('form templates')}
-      {indicator.show && <PageIndicator />}
-      {!indicator.show && Object.keys(formDefinitions).length > 0 && (
-        <FormDefinitionsTable
-          definitions={formDefinitions}
-          onDelete={(currentTemplate) => {
-            setShowDeleteConfirmation(true);
-            setCurrentDefinition(currentTemplate);
-          }}
-        />
+      {/* {indicator.show && <PageIndicator />} */}
+      {formDefinitions && Object.keys(formDefinitions).length > 0 && (
+        <>
+          <FormDefinitionsTable
+            definitions={formDefinitions}
+            onDelete={(currentTemplate) => {
+              setShowDeleteConfirmation(true);
+              setCurrentDefinition(currentTemplate);
+            }}
+          />
+          {next && (
+            <LoadMoreWrapper>
+              <GoAButton
+                testId="form-event-load-more-btn"
+                key="form-event-load-more-btn"
+                type="tertiary"
+                onClick={onNext}
+              >
+                Load more
+              </GoAButton>
+            </LoadMoreWrapper>
+          )}
+        </>
       )}
 
       <DeleteModal

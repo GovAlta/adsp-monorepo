@@ -15,22 +15,24 @@
         "webpackConfig": "apps/directory-service/webpack.config.js",
         "target": "node",
         "compiler": "tsc",
-        "isolatedConfig": true,
-        "babelUpwardRootMode": true
+        "babelUpwardRootMode": true,
+        "sourceMap": true
       },
       "configurations": {
         "production": {
           "optimization": true,
           "extractLicenses": true,
           "inspect": false,
-          "fileReplacements": []
+          "fileReplacements": [],
+          "sourceMap": false
         }
       }
     },
     "serve": {
       "executor": "@nx/js:node",
       "options": {
-        "buildTarget": "directory-service:build"
+        "buildTarget": "directory-service:build",
+        "port": 7778
       }
     },
     "lint": {

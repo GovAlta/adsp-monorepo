@@ -55,9 +55,14 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
     .build();
 
   const streamEvents = useMemo(() => {
-    return stream?.events.map((event) => {
-      return `${event.namespace}:${event.name}`;
-    });
+    let eventNames: string[] = [];
+
+    if (stream?.events !== undefined && stream.events !== null) {
+      eventNames = stream?.events?.map((event) => {
+        return `${event.namespace}:${event.name}`;
+      });
+    }
+    return eventNames;
   }, [stream?.events]);
 
   const eventOptions = eventDefinitions ? generateEventOptions(eventDefinitions) : undefined;

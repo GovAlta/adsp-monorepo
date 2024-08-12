@@ -26,6 +26,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
 
   const registerCtx = useContext(JsonFormsRegisterContext);
   const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   let registerData: RegisterDataType = [];
   if (registerConfig) {
     registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
@@ -36,7 +37,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options);
 
   const mergedOptions = useMemo(() => {
-    return [
+    const newOptions = [
       ...(options || []),
       ...registerData.map((d) => {
         if (typeof d === 'string') {
@@ -49,6 +50,11 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
         }
       }),
     ];
+    if (newOptions && newOptions.length === 0) {
+      newOptions.push({ label: '', value: '' });
+    }
+
+    return newOptions;
   }, [registerData, options]);
 
   useEffect(() => {
