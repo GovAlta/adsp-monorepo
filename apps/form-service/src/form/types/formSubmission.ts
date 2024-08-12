@@ -1,4 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
+import { SecurityClassificationType } from './form';
 
 export interface FormDisposition {
   id: string;
@@ -26,6 +27,7 @@ export interface FormSubmission {
   submissionStatus?: string;
   disposition: FormDisposition;
   hash: string;
+  securityClassification?: SecurityClassificationType;
 }
 
 export interface FormSubmissionCriteria {

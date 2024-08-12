@@ -20,7 +20,7 @@ const userInfoSchema = {
   },
 };
 
-const formSchema = {
+export const formSchema = {
   type: 'object',
   properties: {
     definition: {
@@ -31,6 +31,18 @@ const formSchema = {
       },
     },
     id: { type: 'string' },
+    securityClassification: {
+      type: ['string', 'null'],
+      enum: [
+        'public',
+        'protected a',
+        'protected b',
+        'protected c',
+        '', //The empty string is to handle old file types that do not have a security classification
+        null,
+      ],
+      default: 'protected b',
+    },
     formDraftUrl: { type: 'string' },
     status: { type: 'string' },
     created: { type: 'string', format: 'date-time' },

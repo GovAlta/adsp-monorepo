@@ -270,6 +270,7 @@ export class FormEntity implements Form {
 
     this.status = FormStatus.Submitted;
     this.submitted = new Date();
+    this.securityClassification = this.definition?.securityClassification;
     // Hash the form data on submit for duplicate detection.
     this.hash = await hasha.async(JSON.stringify(this.data), { algorithm: 'sha1' });
 

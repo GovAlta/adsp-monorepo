@@ -54,7 +54,6 @@ export const getEntry = (namespace: string, service: Service): DirectoryEntry =>
   return element as DirectoryEntry;
 };
 
-//eslint-disable-next-line
 export const getServiceUrlById = async (serviceId: AdspId, directoryRepository: DirectoryRepository) => {
   let directories = [];
   try {
@@ -69,7 +68,7 @@ export const getServiceUrlById = async (serviceId: AdspId, directoryRepository: 
     return null;
   }
 };
-//eslint-disable-next-line
+
 export const getResourceUrlById = async (serviceId: AdspId, directoryRepository: DirectoryRepository) => {
   const serviceUrl = await getServiceUrlById(
     adspId`urn:ads:${serviceId.namespace}:${serviceId.service}:${serviceId.api}`,
