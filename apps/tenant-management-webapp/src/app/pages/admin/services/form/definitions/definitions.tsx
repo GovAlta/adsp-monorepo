@@ -16,9 +16,11 @@ import { SecurityClassification } from '@store/common/models';
 import { LoadMoreWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
+  isNavigatedFromEdit?: boolean;
   isNavigatedFromEdit?: boolean;
 }
 const FORM_APPLICANT_SERVICE_ID = `urn:ads:platform:form-service:form-applicant`;
@@ -88,8 +90,6 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     if (applicantFormRoles.length === 0) return false;
     return applicantFormRoles.filter((roleToCheck) => roleToCheck === role).length === 0;
   };
-
-  const [isDeleting, setIsDeleting] = useState(false);
   const deleteAction = () => {
     dispatch(deleteFormDefinition(currentDefinition));
   };
