@@ -34,7 +34,7 @@ export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel }: dele
         </GoAButtonGroup>
       }
     >
-      {indicator.show && (
+      {indicator && indicator.show && (
         <CenterPosition>
           <PageIndicator variant="fullscreen" />
         </CenterPosition>
