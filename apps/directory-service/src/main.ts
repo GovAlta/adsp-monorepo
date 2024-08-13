@@ -57,6 +57,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantStrategy,
     tenantService,
     tokenProvider,
+    configurationService,
     metricsHandler,
     tenantHandler,
     traceHandler,
@@ -149,7 +150,14 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.use('/directory', metricsHandler, passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }));
   app.use('/resource', metricsHandler, passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
-  applyDirectoryMiddleware(app, { ...repositories, logger, tenantService, eventService, queueService });
+  applyDirectoryMiddleware(app, {
+    ...repositories,
+    logger,
+    tenantService,
+    eventService,
+    configurationService,
+    queueService,
+  });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
@@ -158,7 +166,11 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
-    res.json({ ...platform, db: repositories.isConnected() });
+    res.json({
+      ...platform,
+      db: repositories.isConnected(),
+      queue: queueService.isConnected(),
+    });
   });
 
   app.get('/', async (req, res) => {
