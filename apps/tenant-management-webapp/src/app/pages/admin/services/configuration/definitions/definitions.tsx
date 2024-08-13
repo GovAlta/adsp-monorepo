@@ -62,6 +62,8 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
+    document.body.style.borderRight = '';
+    document.body.style.overflow = 'unset';
   }, [dispatch]);
 
   useEffect(() => {
