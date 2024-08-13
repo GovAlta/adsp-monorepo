@@ -28,12 +28,13 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
     let isCore = false;
     const definitionsLength = Object.keys(definitions).length;
     if (definitions && definitionsLength > 0) {
-      isCore = !Object.keys(definitions)[0].includes(':');
+      const configObjects = Object.keys(definitions);
+      isCore = !configObjects[0].includes('platform:') || !configObjects[0].includes('form-service:');
     }
     return isCore;
   };
 
-  // to ensure it dosent re-calculate this value if value dosent change
+  // to ensure it doesnt re-calculate this value if value dosent change
   const memoizedReducedConfiguration = useMemo(() => {
     return Object.keys(definitions ?? []).reduce((obj, key) => {
       obj[key] = definitions[key];
