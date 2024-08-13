@@ -9,7 +9,21 @@ import { createClient } from 'redis';
 
 import { environment } from './environments/environment';
 import { ServiceRoles, applyGatewayMiddleware } from './gateway';
+import type { User } from '@abgov/adsp-service-sdk';
 import { configurePassport } from './access';
+
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
 
 const logger = createLogger('form-gateway', environment.LOG_LEVEL);
 
@@ -36,32 +50,57 @@ const initializeApp = async (): Promise<express.Application> => {
       })
     : null;
 
-  const { directory, healthCheck, metricsHandler, tenantHandler, tenantStrategy, tokenProvider, traceHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Form gateway',
-        description: 'Gateway to provide anonymous and session access to some form functionality.',
-        roles: [
-          {
-            role: ServiceRoles.Applicant,
-            description: 'Applicant role that allows users to complete form applications via the gateway.',
-          },
-        ],
-        values: [ServiceMetricsValueDefinition],
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-      },
-      { logger }
-    );
+  const {
+    directory,
+    healthCheck,
+    metricsHandler,
+    tenantHandler,
+    tenantStrategy,
+    coreStrategy,
+    tokenProvider,
+    traceHandler,
+    tenantService,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Form gateway',
+      description: 'Gateway to provide anonymous and session access to some form functionality.',
+      roles: [
+        {
+          role: ServiceRoles.Applicant,
+          description: 'Applicant role that allows users to complete form applications via the gateway.',
+        },
+      ],
+      values: [ServiceMetricsValueDefinition],
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger }
+  );
 
-  configurePassport(app, passport, { sessionSecret: environment.SESSION_SECRET, redisClient, tenantStrategy });
+  //configurePassport(app, passport, { sessionSecret: environment.SESSION_SECRET, redisClient, tenantStrategy });
+
+  passport.use('core', coreStrategy);
+  //passport.use('tenant', tenantStrategy);
+  passport.use('jwt', tenantStrategy);
+
+  passport.serializeUser(function (user, done) {
+    console.log(JSON.stringify(user, getCircularReplacer()) + '<user0');
+    done(null, user);
+  });
+
+  passport.deserializeUser(function (user, done) {
+    console.log(JSON.stringify(user, getCircularReplacer()) + '<user');
+    done(null, user as User);
+  });
+
+  app.use(passport.initialize());
 
   app.use(metricsHandler);
   app.use(traceHandler);
 
-  app.use('/gateway', passport.authenticate(['tenant', 'session'], { session: false }), tenantHandler);
+  app.use('/gateway', passport.authenticate(['jwt'], { session: false }), tenantHandler);
   await applyGatewayMiddleware(app, { logger, directory, tokenProvider });
 
   app.get('/health', async (_req, res) => {

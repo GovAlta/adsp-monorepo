@@ -38,6 +38,7 @@ describe('Mongo: FileEntity', () => {
     deleted: false,
     typeEquals: 'type-1',
     recordIdEquals: '1',
+    recordIdContains: '1',
     scanned: false,
     infected: false,
     filenameContains: 'bob',
