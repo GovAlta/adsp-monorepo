@@ -236,6 +236,10 @@ components:
                   description: An application-defined record ID; associated with a file when it is created. There is a one-to-many relationship between a record ID and files.
                   example: 53fca659-362d-407f-9c4d-c2c8c6427bdb
                   type: string
+                recordIdContains:
+                  description: Returns all files that represent a partial match of the recordId.
+                  example: 53fca659-362d-407f-9c4d-c2c8c6427bdb
+                  type: string
                 filenameContains:
                   description: Returns all files that have a file name matching "*.${inputString}*.", e.g. "Bobs" will match "Bobs PDF file", and "Word file of Bobs".
                   example: Bob
