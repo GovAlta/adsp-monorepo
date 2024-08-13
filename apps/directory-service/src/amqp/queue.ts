@@ -15,7 +15,7 @@ export class AmqpDirectoryQueueService extends AmqpWorkQueueService<DirectoryWor
     const { tenantId, name } = msg.properties.headers;
 
     return {
-      work: name === TAGGED_RESOURCE && resource?.isNew ? 'resolve' : 'unknown',
+      work: name === TAGGED_RESOURCE && resource?.isNew ? 'resolve' : name,
       tenantId: AdspId.parse(`${tenantId}`),
       urn: resource.urn,
     };
