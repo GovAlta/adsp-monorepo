@@ -11,23 +11,26 @@ import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
-import { ServiceRoles, bootstrapDirectory, applyDirectoryMiddleware } from './directory';
-import { getServiceUrlById, getResourceUrlById } from './directory/router/util/getNamespaceEntries';
 import {
-  EntryUpdatedDefinition,
+  ServiceRoles,
+  bootstrapDirectory,
+  applyDirectoryMiddleware,
+  configurationSchema,
+  ServiceDirectoryImpl,
+  DirectoryConfigurationValue,
+  ResourceType,
+  DirectoryConfiguration,
   EntryDeletedDefinition,
+  EntryUpdatedDefinition,
   EntryUpdatesStream,
   TaggedResourceDefinition,
   UntaggedResourceDefinition,
-} from './directory/events';
+} from './directory';
+import { createDirectoryQueueService } from './amqp';
+
 const logger = createLogger('directory-service', environment.LOG_LEVEL);
 
 const initializeApp = async (): Promise<express.Application> => {
-  const repositories = await createRepositories({ ...environment, logger });
-  if (environment.DIRECTORY_BOOTSTRAP) {
-    await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
-  }
-
   const app = express();
 
   app.use(compression());
@@ -39,6 +42,12 @@ const initializeApp = async (): Promise<express.Application> => {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
 
+  const repositories = await createRepositories({ ...environment, logger });
+  if (environment.DIRECTORY_BOOTSTRAP) {
+    await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
+  }
+  const directory = new ServiceDirectoryImpl(logger, repositories.directoryRepository);
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
@@ -47,6 +56,7 @@ const initializeApp = async (): Promise<express.Application> => {
     healthCheck,
     tenantStrategy,
     tenantService,
+    tokenProvider,
     metricsHandler,
     tenantHandler,
     traceHandler,
@@ -71,8 +81,41 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Resource tagger role for the directory service that allows tagging and untagging resources.',
           inTenantAdmin: true,
         },
+        {
+          role: ServiceRoles.ResourceResolver,
+          description: 'Resource resolver used by the directory. Resource APIs should give read access to the role.',
+        },
       ],
       events: [EntryUpdatedDefinition, EntryDeletedDefinition, TaggedResourceDefinition, UntaggedResourceDefinition],
+      configuration: {
+        description: 'Resource types for resolving browse name and description for tagged resources.',
+        schema: configurationSchema,
+      },
+      combineConfiguration: (
+        tenant: DirectoryConfigurationValue,
+        core: DirectoryConfigurationValue,
+        tenantId: AdspId
+      ) => {
+        return Object.entries({ ...tenant, ...core }).reduce(
+          (configuration, [api, apiConfiguration]) => ({
+            ...configuration,
+            [api]: apiConfiguration.resourceTypes
+              ?.map((type) => {
+                try {
+                  return new ResourceType(logger, directory, tokenProvider, repositories.directoryRepository, type);
+                } catch (err) {
+                  logger.warn(`Error encountered on initializing resource type ${type?.type} from configuration`, {
+                    context: 'ConfigurationConverter',
+                    tenant: tenantId?.toString(),
+                  });
+                  return null;
+                }
+              })
+              .filter((type) => !!type),
+          }),
+          {} as DirectoryConfiguration
+        );
+      },
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -83,10 +126,7 @@ const initializeApp = async (): Promise<express.Application> => {
     {
       // TODO: This needs to be implemented so that the directory doesn't make re-entrant request to
       // itself via the SDK. Re-entrancy on start up can be a problem.
-      directory: {
-        getResourceUrl: (serviceId: AdspId) => getResourceUrlById(serviceId, repositories.directoryRepository),
-        getServiceUrl: (serviceId: AdspId) => getServiceUrlById(serviceId, repositories.directoryRepository),
-      },
+      directory,
     }
   );
 
@@ -105,9 +145,11 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(passport.initialize());
   app.use(traceHandler);
 
+  const queueService = await createDirectoryQueueService({ ...environment, logger });
+
   app.use('/directory', metricsHandler, passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }));
   app.use('/resource', metricsHandler, passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
-  applyDirectoryMiddleware(app, { ...repositories, logger, tenantService, eventService });
+  applyDirectoryMiddleware(app, { ...repositories, logger, tenantService, eventService, queueService });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

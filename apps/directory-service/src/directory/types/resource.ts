@@ -17,3 +17,10 @@ export interface TagCriteria {
   tenantIdEquals?: AdspId;
   resourceUrnEquals?: AdspId;
 }
+
+export interface ResourceTypeConfiguration {
+  type: string;
+  matcher: string;
+  namePath: string;
+  descriptionPath?: string;
+}

@@ -5,9 +5,14 @@ import { Application } from 'express';
 import { Repositories } from '../directory/repository';
 import { createDirectoryRouter, createResourceRouter } from './router';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler } from '@core-services/core-common';
+import { assertAuthenticatedHandler, WorkQueueService } from '@core-services/core-common';
+import { DirectoryWorkItem } from './job';
 
 export * from './bootstrap';
+export * from './configuration';
+export * from './directory';
+export * from './events';
+export * from './job';
 export * from './model';
 export * from './repository';
 export * from './roles';
@@ -17,6 +22,7 @@ interface DirectoryMiddlewareProps extends Repositories {
   logger: Logger;
   tenantService: TenantService;
   eventService: EventService;
+  queueService: WorkQueueService<DirectoryWorkItem>;
 }
 
 export const applyDirectoryMiddleware = (

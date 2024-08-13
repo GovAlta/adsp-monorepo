@@ -29,6 +29,8 @@ describe('resource', () => {
     getTaggedResources: jest.fn(),
     applyTag: jest.fn(),
     removeTag: jest.fn(),
+    saveResource: jest.fn(),
+    deleteResource: jest.fn(),
   };
 
   beforeEach(() => {

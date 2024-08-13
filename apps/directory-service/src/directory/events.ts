@@ -3,7 +3,7 @@ import { Resource, Tag } from './types';
 
 const ENTRY_UPDATED = 'entry-updated';
 const ENTRY_DELETED = 'entry-deleted';
-const TAGGED_RESOURCE = 'tagged-resource';
+export const TAGGED_RESOURCE = 'tagged-resource';
 const UNTAGGED_RESOURCE = 'untagged-resource';
 
 export const EntryUpdatedDefinition: DomainEventDefinition = {
@@ -78,6 +78,7 @@ export const TaggedResourceDefinition: DomainEventDefinition = {
           urn: { type: 'string' },
           name: { type: 'string' },
           description: { type: 'string' },
+          isNew: { type: 'boolean' },
         },
       },
       tag: {
@@ -182,7 +183,7 @@ export const entryDeleted = (
   },
 });
 
-export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User): DomainEvent => ({
+export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, isNewResource: boolean): DomainEvent => ({
   name: TAGGED_RESOURCE,
   timestamp: new Date(),
   tenantId: resource.tenantId,
@@ -191,6 +192,7 @@ export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User): D
       urn: resource.urn,
       name: resource.name,
       description: resource.description,
+      isNew: isNewResource,
     },
     tag: {
       label: tag.label,

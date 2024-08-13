@@ -118,7 +118,12 @@ export function tagOperation(
       let result, event: DomainEvent;
       switch (tagRequest.operation) {
         case TAG_OPERATION_TAG: {
-          const { tag, resource, tagged } = await repository.applyTag(targetTag, targetResource);
+          const {
+            tag,
+            resource,
+            tagged,
+            isNewResource,
+          } = await repository.applyTag(targetTag, targetResource);
 
           result = {
             tagged,
@@ -127,7 +132,7 @@ export function tagOperation(
           };
 
           if (tagged) {
-            event = taggedResource(resource, tag, user);
+            event = taggedResource(resource, tag, user, isNewResource);
           }
           break;
         }
