@@ -26,7 +26,8 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
 
   const isCoreDefinition = () => {
     let isCore = false;
-    if (definitions && definitions.length > 0) {
+    const definitionsLength = Object.keys(definitions).length;
+    if (definitions && definitionsLength > 0) {
       isCore = !Object.keys(definitions)[0].includes(':');
     }
     return isCore;
