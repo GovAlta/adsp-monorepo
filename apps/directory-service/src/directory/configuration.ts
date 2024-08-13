@@ -21,7 +21,7 @@ export const configurationSchema = {
           },
         },
       },
-      required: ['types'],
+      required: ['resourceTypes'],
     },
   },
 };
