@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
+import { PageIndicator } from './Indicator';
+import { CenterPosition } from './styled-components';
 interface deleteModalProps {
   title: string;
   content?: string | JSX.Element;
@@ -9,6 +13,10 @@ interface deleteModalProps {
 }
 
 export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel }: deleteModalProps) => {
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
   return (
     <GoAModal
       testId="delete-confirmation"
@@ -26,6 +34,11 @@ export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel }: dele
         </GoAButtonGroup>
       }
     >
+      {indicator && indicator.show && (
+        <CenterPosition>
+          <PageIndicator variant="fullscreen" />
+        </CenterPosition>
+      )}
       {content}
     </GoAModal>
   );

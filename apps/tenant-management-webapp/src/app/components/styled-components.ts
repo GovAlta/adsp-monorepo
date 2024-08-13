@@ -43,3 +43,15 @@ export const HyperLinkColor = styled.div`
   }
   padding-bottom: 1.75rem;
 `;
+
+export const CenterPosition = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  height: 264px;
+  &:before {
+    content: '';
+    background-color: red;
+  }
+`;
