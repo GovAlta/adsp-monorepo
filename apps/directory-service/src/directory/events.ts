@@ -189,7 +189,7 @@ export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, is
   tenantId: resource.tenantId,
   payload: {
     resource: {
-      urn: resource.urn,
+      urn: resource.urn.toString(),
       name: resource.name,
       description: resource.description,
       isNew: isNewResource,
@@ -211,7 +211,7 @@ export const untaggedResource = (resource: Resource, tag: Tag, updatedBy: User):
   tenantId: resource.tenantId,
   payload: {
     resource: {
-      urn: resource.urn,
+      urn: resource.urn.toString(),
       name: resource.name,
       description: resource.description,
     },
