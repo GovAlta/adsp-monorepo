@@ -63,7 +63,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     const fileData = await dispatch(downloadFormPdf(file)).unwrap();
     const element = document.createElement('a');
     element.href = URL.createObjectURL(new Blob([fileData.data]));
-    element.download = `${form?.urn}.pdf`;
+    element.download = `${form?.definition?.id}.pdf`;
     document.body.appendChild(element);
     element.click();
   };
@@ -72,6 +72,18 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     if (pdfFileExists === null && form?.urn) {
       dispatch(checkPdfFile(form.urn));
     }
+
+    const intervalId = setInterval(() => {
+      if (!pdfFileExists) {
+        dispatch(checkPdfFile(form.urn));
+      }
+    }, 1000);
+
+    setTimeout(() => {
+      clearInterval(intervalId);
+    }, 10000);
+
+    return () => clearInterval(intervalId);
   }, [dispatch, form, pdfFile, pdfFileExists]);
 
   const metadata = useSelector(metaDataSelector);

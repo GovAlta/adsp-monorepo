@@ -147,8 +147,6 @@ export class MongoFileRepository implements FileRepository {
         $regex: criteria.recordIdContains,
         $options: 'i',
       };
-
-      console.log(JSON.stringify(query) + '<query');
     }
 
     if (criteria.scanned !== undefined) {

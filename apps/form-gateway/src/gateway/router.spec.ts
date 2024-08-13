@@ -1,16 +1,11 @@
-//import * as proxy from 'express-http-proxy';
 import * as proxy from 'express-http-proxy';
-import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
-
-jest.mock('express-http-proxy');
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
-
 import { downloadFile, createGatewayRouter, findFile } from './router';
 
+jest.mock('express-http-proxy');
 jest.mock('axios');
-
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockedProxy = proxy as jest.MockedFunction<typeof proxy>;
 
