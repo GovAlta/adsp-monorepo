@@ -187,6 +187,11 @@ export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, is
   name: TAGGED_RESOURCE,
   timestamp: new Date(),
   tenantId: resource.tenantId,
+  correlationId: tag.value,
+  context: {
+    tag: tag.value,
+    resources: resource.urn.toString(),
+  },
   payload: {
     resource: {
       urn: resource.urn.toString(),
@@ -209,6 +214,11 @@ export const untaggedResource = (resource: Resource, tag: Tag, updatedBy: User):
   name: UNTAGGED_RESOURCE,
   timestamp: new Date(),
   tenantId: resource.tenantId,
+  correlationId: tag.value,
+  context: {
+    tag: tag.value,
+    resources: resource.urn.toString(),
+  },
   payload: {
     resource: {
       urn: resource.urn.toString(),

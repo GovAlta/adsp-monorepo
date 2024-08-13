@@ -101,7 +101,7 @@ async function initializeApp(): Promise<express.Application> {
                 {
                   type: 'file',
                   matcher: '^/files/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-                  namePath: 'file.',
+                  namePath: 'filename',
                 },
               ],
             },
