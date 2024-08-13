@@ -33,17 +33,22 @@ describe('directory', () => {
   });
 
   describe('getServiceUrl', () => {
-    it('can return right service url for platform service', async () => {
+    it('can return right service url for service', async () => {
       const directoryData = {
         services: [{ namespace: 'platform', service: 'test-service', host: 'https://chat.adsp-dev.gov.ab.ca/api/' }],
       };
       repositoryMock.getDirectories.mockResolvedValueOnce(directoryData);
 
-      const directory = new ServiceDirectoryImpl(loggerMock, repositoryMock as unknown as DirectoryRepository);
+      const directory = new ServiceDirectoryImpl(
+        loggerMock,
+        repositoryMock as unknown as DirectoryRepository,
+        cacheMock as unknown as NodeCache
+      );
 
       const serviceId = adspId`urn:ads:platform:test-service`;
       const result = await directory.getServiceUrl(serviceId);
       expect(result.href).toEqual(directoryData.services[0].host);
+      expect(cacheMock.set).toHaveBeenCalledWith(serviceId.toString(), expect.any(URL));
     });
 
     it('can return falsy if service not found', async () => {
@@ -52,7 +57,11 @@ describe('directory', () => {
       };
       repositoryMock.getDirectories.mockResolvedValueOnce(directoryData);
 
-      const directory = new ServiceDirectoryImpl(loggerMock, repositoryMock as unknown as DirectoryRepository);
+      const directory = new ServiceDirectoryImpl(
+        loggerMock,
+        repositoryMock as unknown as DirectoryRepository,
+        cacheMock as unknown as NodeCache
+      );
 
       const serviceId = adspId`urn:ads:platform:test-service-2`;
       const result = await directory.getServiceUrl(serviceId);
@@ -62,14 +71,18 @@ describe('directory', () => {
     it('can return falsy on repository error', async () => {
       repositoryMock.getDirectories.mockRejectedValueOnce(new Error('oh noes!'));
 
-      const directory = new ServiceDirectoryImpl(loggerMock, repositoryMock as unknown as DirectoryRepository);
+      const directory = new ServiceDirectoryImpl(
+        loggerMock,
+        repositoryMock as unknown as DirectoryRepository,
+        cacheMock as unknown as NodeCache
+      );
 
       const serviceId = adspId`urn:ads:platform:test-service-2`;
       const result = await directory.getServiceUrl(serviceId);
       expect(result).toBeFalsy();
     });
 
-    it('ca return service url from cache', async () => {
+    it('can return service url from cache', async () => {
       const url = new URL('https://chat.adsp-dev.gov.ab.ca/api/');
       cacheMock.get.mockReturnValueOnce(url);
 
@@ -86,7 +99,7 @@ describe('directory', () => {
   });
 
   describe('getResourceUrl', () => {
-    it('should return the resource URL', async () => {
+    it('can return the resource URL', async () => {
       const directoryData = {
         services: [
           {
@@ -98,15 +111,20 @@ describe('directory', () => {
       };
       repositoryMock.getDirectories.mockResolvedValue(directoryData);
 
-      const directory = new ServiceDirectoryImpl(loggerMock, repositoryMock as unknown as DirectoryRepository);
+      const directory = new ServiceDirectoryImpl(
+        loggerMock,
+        repositoryMock as unknown as DirectoryRepository,
+        cacheMock as unknown as NodeCache
+      );
 
       const resourceId = adspId`urn:ads:platform:test-service:v1:/job`;
       const resourceUrl = await directory.getResourceUrl(resourceId);
 
       expect(resourceUrl.href).toBe('https://chat.adsp-dev.gov.ab.ca/v1/job');
+      expect(cacheMock.set).toHaveBeenCalledWith(resourceId.toString(), expect.any(URL));
     });
 
-    it('ca return service url from cache', async () => {
+    it('can return service url from cache', async () => {
       const url = new URL('https://chat.adsp-dev.gov.ab.ca/api/');
       cacheMock.get.mockReturnValueOnce(url);
 

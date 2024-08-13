@@ -1,5 +1,6 @@
-import { adspId, AdspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, assertAdspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import * as NodeCache from 'node-cache';
+import * as path from 'path';
 import { Logger } from 'winston';
 import { DirectoryRepository } from './repository';
 import { getNamespaceEntries } from './router/util';
@@ -17,8 +18,9 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
   ) {}
 
   public async getServiceUrl(serviceId: AdspId): Promise<URL> {
-    let url = this.directoryCache.get<URL>(serviceId.toString());
+    assertAdspId(serviceId, null, 'service', 'api');
 
+    let url = this.directoryCache.get<URL>(serviceId.toString());
     if (!url) {
       let directories = [];
       try {
@@ -40,19 +42,17 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
   }
 
   public async getResourceUrl(resourceId: AdspId): Promise<URL> {
-    let url = this.directoryCache.get<URL>(resourceId.toString());
+    assertAdspId(resourceId, null, 'resource');
 
+    let url = this.directoryCache.get<URL>(resourceId.toString());
     if (!url) {
       const serviceUrl = await this.getServiceUrl(
         adspId`urn:ads:${resourceId.namespace}:${resourceId.service}:${resourceId.api}`
       );
 
       if (serviceUrl) {
-        // Trim any trailing slash on API url and leading slash on resource
-        url = new URL(
-          `${serviceUrl.pathname.replace(/\/$/g, '')}/${resourceId.resource.replace(/^\//, '')}`,
-          serviceUrl
-        );
+        url = new URL(path.join(serviceUrl.pathname, resourceId.resource), serviceUrl);
+
         this.directoryCache.set(resourceId.toString(), url);
       }
     }
