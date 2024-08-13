@@ -11,13 +11,15 @@ export class AmqpDirectoryQueueService extends AmqpWorkQueueService<DirectoryWor
   }
 
   protected convertMessage(msg: ConsumeMessage): DirectoryWorkItem {
-    const { resource }: { resource: Resource & { isNew: boolean } } = JSON.parse(msg.content.toString());
+    const { resource }: { resource: Omit<Resource, 'urn'> & { isNew: boolean; urn: string } } = JSON.parse(
+      msg.content.toString()
+    );
     const { tenantId, name } = msg.properties.headers;
 
     return {
       work: name === TAGGED_RESOURCE && resource?.isNew ? 'resolve' : name,
       tenantId: AdspId.parse(`${tenantId}`),
-      urn: resource.urn,
+      urn: resource?.urn ? AdspId.parse(resource.urn) : null,
     };
   }
 
