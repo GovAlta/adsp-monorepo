@@ -30,11 +30,13 @@ const transformConfigDefinitions = (configDefinitions: Record<string, unknown>) 
       coreServices[key] = value;
     }
   }
-
-  return {
-    tenant: tenantServices,
-    core: coreServices,
-  };
+  const tenantKeys = Object.keys(tenantServices);
+  const coreKeys = Object.keys(coreServices);
+  if (tenantKeys[0] && coreKeys[0] && tenantKeys[0].localeCompare(coreKeys[0])) {
+    return { core: coreServices, tenant: tenantServices };
+  } else {
+    return { tenant: tenantServices, core: coreServices };
+  }
 };
 
 export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdit }) => {
@@ -60,6 +62,8 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
+    document.body.style.borderRight = '';
+    document.body.style.overflow = 'unset';
   }, [dispatch]);
 
   useEffect(() => {
@@ -115,30 +119,25 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
           />
         )}
       </div>
-      {/* platform config definitions */}
-      <div>
-        {!indicator.show && !coreConfigDefinitions && renderNoItem('core configuration')}
-        {!indicator.show && coreConfigDefinitions && (
-          <ConfigurationDefinitionsTableComponent
-            tenantName={coreTenant}
-            definitions={transformedCoreConfigDefinitions.tenant}
-          />
-        )}
-      </div>
       {/* core config definitions */}
       <div>
         {!indicator.show && !coreConfigDefinitions && renderNoItem('core configuration')}
         {!indicator.show && coreConfigDefinitions && (
           <>
             <NameDiv>Core definitions</NameDiv>
-            <ConfigurationDefinitionsTableComponent
-              tenantName={tenantName}
-              definitions={transformedCoreConfigDefinitions.core}
-            />
+            {Object.keys(transformedCoreConfigDefinitions).map((definition) => {
+              return (
+                <ConfigurationDefinitionsTableComponent
+                  key={definition}
+                  tenantName={definition}
+                  definitions={transformedCoreConfigDefinitions[definition]}
+                />
+              );
+            })}
+            ,
           </>
         )}
       </div>
-      {/* Delete confirmation */}
 
       <DeleteModal
         isOpen={showDeleteConfirmation}

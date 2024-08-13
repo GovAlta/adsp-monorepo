@@ -1,14 +1,3 @@
-import { Router, RequestHandler } from 'express';
-import * as HttpStatusCodes from 'http-status-codes';
-import { DirectoryRepository } from '../repository';
-import * as NodeCache from 'node-cache';
-import { Logger } from 'winston';
-import {
-  InvalidValueError,
-  InvalidOperationError,
-  createValidationHandler,
-  NotFoundError,
-} from '@core-services/core-common';
 import {
   TenantService,
   toKebabName,
@@ -17,13 +6,24 @@ import {
   UnauthorizedUserError,
   startBenchmark,
 } from '@abgov/adsp-service-sdk';
-
-import { ServiceRoles } from '../roles';
+import {
+  InvalidValueError,
+  InvalidOperationError,
+  createValidationHandler,
+  NotFoundError,
+} from '@core-services/core-common';
 import axios from 'axios';
-import { Service, Links, DirectoryEntry } from '../types/directory';
-import { getEntry, getNamespaceEntries } from './util/getNamespaceEntries';
+import { Router, RequestHandler } from 'express';
 import { checkSchema } from 'express-validator';
+import * as HttpStatusCodes from 'http-status-codes';
+import * as NodeCache from 'node-cache';
+import { Logger } from 'winston';
+
 import { entryUpdated, entryDeleted } from '../events';
+import { DirectoryRepository } from '../repository';
+import { ServiceRoles } from '../roles';
+import { Service, Links, DirectoryEntry } from '../types';
+import { getEntry, getNamespaceEntries } from './util';
 
 const TIME_OUT = 10000;
 

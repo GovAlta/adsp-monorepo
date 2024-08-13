@@ -4,7 +4,7 @@ import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-import { onBlurForTextControl, onKeyPressForTextControl } from '../../util/inputControlUtils';
+import { onBlurForTextControl, onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -36,7 +36,13 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       // Don't use handleChange in the onChange event, use the keyPress or onBlur.
       // If you use it onChange along with keyPress event it will cause a
       // side effect that causes the validation to render when it shouldn't.
-      onChange={(name: string, value: string) => {}}
+      onChange={(name: string, value: string) => {
+        onChangeForInputControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
+      }}
       onKeyPress={(name: string, value: string, key: string) => {
         onKeyPressForTextControl({
           name,

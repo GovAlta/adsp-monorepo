@@ -3,30 +3,57 @@ export * from '../directory/types';
 export * from '../directory/repository';
 import { Application } from 'express';
 import { Repositories } from '../directory/repository';
-import { createDirectoryRouter } from './router';
-import { TenantService, EventService } from '@abgov/adsp-service-sdk';
-export * from './roles';
+import { createDirectoryRouter, createResourceRouter } from './router';
+import { TenantService, EventService, ConfigurationService } from '@abgov/adsp-service-sdk';
+import { assertAuthenticatedHandler, WorkQueueService } from '@core-services/core-common';
+import { createDirectoryJobs, DirectoryWorkItem } from './job';
+
 export * from './bootstrap';
+export * from './configuration';
+export * from './directory';
+export * from './events';
+export * from './job';
+export * from './model';
+export * from './repository';
+export * from './roles';
+export * from './types';
+
 interface DirectoryMiddlewareProps extends Repositories {
   logger: Logger;
   tenantService: TenantService;
   eventService: EventService;
+  configurationService: ConfigurationService;
+  queueService: WorkQueueService<DirectoryWorkItem>;
 }
 
-export const applyDirectoryV2Middleware = (
+export const applyDirectoryMiddleware = (
   app: Application,
-  { logger, directoryRepository, tenantService, eventService }: DirectoryMiddlewareProps
-): Application => {
-  const directoryRouterProps = {
+  {
     logger,
     directoryRepository,
     tenantService,
     eventService,
-  };
+    configurationService,
+    queueService,
+  }: DirectoryMiddlewareProps
+): Application => {
+  const directoryRouter = createDirectoryRouter({
+    logger,
+    directoryRepository,
+    tenantService,
+    eventService,
+  });
 
-  const directoryRouter = createDirectoryRouter(directoryRouterProps);
+  const resourceRouter = createResourceRouter({
+    logger,
+    eventService,
+    repository: directoryRepository,
+  });
 
   app.use('/directory/v2', directoryRouter);
+  app.use('/resource/v1', assertAuthenticatedHandler, resourceRouter);
+
+  createDirectoryJobs({ logger, configurationService, queueService });
 
   return app;
 };

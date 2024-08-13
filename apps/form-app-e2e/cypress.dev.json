@@ -33,6 +33,7 @@
     "formApi": "https://form-service.adsp-dev.gov.ab.ca/"
   },
   "baseUrl": "https://form.adsp-dev.gov.ab.ca/",
+  "defaultCommandTimeout": 10000,
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",

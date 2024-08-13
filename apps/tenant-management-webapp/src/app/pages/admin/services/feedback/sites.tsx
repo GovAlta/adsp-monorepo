@@ -6,10 +6,8 @@ import { SiteAddEditForm } from './edit';
 import { deleteFeedbackSite, getFeedbackSites, updateFeedbackSite } from '@store/feedback/actions';
 import { FeedbackSite, defaultFeedbackSite } from '@store/feedback/models';
 import { RootState } from '@store/index';
-import { ButtonPadding, Buttons, Heading } from './styled-components';
+import { ButtonPadding } from './styled-components';
 import { PageIndicator } from '@components/Indicator';
-import { DeleteModal } from '@components/DeleteModal';
-import { update } from 'lodash';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
 
 interface ParentCompProps {
@@ -22,7 +20,11 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
   const [deleteSiteConfirmation, setDeleteSiteConfirmation] = useState(false);
   const [selectedSite, setSelectedSite] = useState<FeedbackSite>(defaultFeedbackSite);
 
-  const sites = useSelector((state: RootState) => state.feedback.sites);
+  const sites = useSelector((state: RootState) => {
+    return state.feedback.sites.sort((a, b) =>
+      a.url.replace(/^https?:\/\//, '').localeCompare(b.url.replace(/^https?:\/\//, ''))
+    );
+  });
   const [isEdit, setIsEdit] = useState(false);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;

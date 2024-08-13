@@ -1,9 +1,12 @@
 import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { InvalidValueError, NotFoundError } from '@core-services/core-common';
+import axios from 'axios';
 import { Request, Response } from 'express';
+import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { DirectoryEntity } from '../model';
+import { DirectoryRepository } from '../repository';
 import { ServiceRoles } from '../roles';
-import * as HttpStatusCodes from 'http-status-codes';
 import {
   createDirectoryRouter,
   getDirectoriesByNamespace,
@@ -20,13 +23,8 @@ import {
   resolveNamespaceTenant,
   validateNamespaceEndpointsPermission,
   deleteEntry,
+  getEntriesForServiceImpl,
 } from './directory';
-
-import axios from 'axios';
-import { DirectoryRepository } from '../../directory/repository';
-import { getEntriesForServiceImpl } from './directory';
-import { InvalidValueError, NotFoundError } from '@core-services/core-common';
-import * as NodeCache from 'node-cache';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -64,6 +62,12 @@ describe('router', () => {
     exists: jest.fn(),
     update: jest.fn(),
     save: jest.fn(),
+    getTags: jest.fn(),
+    getTaggedResources: jest.fn(),
+    applyTag: jest.fn(),
+    removeTag: jest.fn(),
+    saveResource: jest.fn(),
+    deleteResource: jest.fn(),
   };
 
   const platformDirectoryRes = [
@@ -457,8 +461,6 @@ describe('router', () => {
   });
   describe('getServiceData', () => {
     const handler = getServiceData(repositoryMock, loggerMock as Logger);
-
-    const cacheMock = jest.fn();
 
     const service = 'file-service';
     const req = {

@@ -3,6 +3,7 @@ import {
   benchmark,
   DomainEvent,
   EventService,
+  isAllowedUser,
   startBenchmark,
   UnauthorizedUserError,
 } from '@abgov/adsp-service-sdk';
@@ -22,7 +23,7 @@ import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
-import { FileCriteria } from '../types';
+import { FileCriteria, ServiceUserRoles } from '../types';
 import validator from 'validator';
 import { mapFile, mapFileType } from '../mapper';
 import { FileTypeEntity } from '../model';
@@ -134,7 +135,7 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
   };
 }
 
-export function getFile(repository: FileRepository): RequestHandler {
+export function getFile(repository: FileRepository, ...roles: string[]): RequestHandler {
   return async (req, _res, next) => {
     try {
       const end = startBenchmark(req, 'get-entity-time');
@@ -146,7 +147,7 @@ export function getFile(repository: FileRepository): RequestHandler {
 
       if (!fileEntity) {
         throw new NotFoundError('File', fileId);
-      } else if (!fileEntity.canAccess(user)) {
+      } else if (!fileEntity.canAccess(user) && !isAllowedUser(user, fileEntity.tenantId, roles)) {
         throw new UnauthorizedError('User not authorized to access file.');
       }
 
@@ -365,7 +366,7 @@ export const createFileRouter = ({
   fileRouter.get(
     '/files/:fileId',
     createValidationHandler(param('fileId').isUUID()),
-    getFile(fileRepository),
+    getFile(fileRepository, ServiceUserRoles.DirectoryResourceResolver),
     (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity))
   );
   fileRouter.delete(

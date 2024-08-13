@@ -229,5 +229,13 @@ class FormPage {
       '//goa-dropdown[@name="queueTasks"]/parent::*/preceding-sibling::*//*[@class="small-close-button"]'
     );
   }
+
+  definitionsLoadMoreButton() {
+    return cy.xpath('//goa-button[@data-testid="form-event-load-more-btn"]');
+  }
+
+  definitionsPage() {
+    return cy.xpath('//div[@data-testid="form-templates"]');
+  }
 }
 export default FormPage;

@@ -10,6 +10,7 @@ items:
       name: directory-service
     data:
       KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
+      AMQP_HOST: event-service-rabbitmq-balancer
       LOG_LEVEL: debug
   - apiVersion: v1
     kind: Secret
@@ -21,3 +22,5 @@ items:
     stringData:
       CLIENT_ID: urn:ads:platform:directory-service
       CLIENT_SECRET:
+      AMQP_USER: directory-service
+      AMQP_PASSWORD:

@@ -1,5 +1,6 @@
 import { JsonSchema } from '@jsonforms/core';
 import { ajv } from '@lib/validation/checkInput';
+import _ from 'lodash';
 
 export const propertiesErr = 'Data schema must have "properties"';
 const hasProperties = (schema: JsonSchema): boolean => {
@@ -80,4 +81,23 @@ export const getValidSchemaString = (schema: Record<string, unknown>): string =>
   // ignore any errors and return an empty object.  Often the error is just because
   // the developer is in the middle of typing out something in the form editor.
   return '{}';
+};
+
+export const getDataRegisters = (obj, property) => {
+  let registers = [];
+  Object.keys(obj).forEach(function (key) {
+    if (key === 'register' && property in obj[key]) {
+      if (!registers.includes(obj[key]?.[property])) {
+        registers.push(obj[key]?.[property]);
+      }
+    } else if (_.isObject(obj[key])) {
+      registers = [...registers, ...getDataRegisters(obj[key], property)];
+    } else if (_.isArray(obj[key])) {
+      const nextRegisters = obj[key].map(function (arrayObj) {
+        return getDataRegisters(arrayObj, property);
+      });
+      registers = [...registers, ...nextRegisters];
+    }
+  });
+  return registers;
 };

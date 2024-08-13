@@ -1,4 +1,6 @@
 import React from 'react';
+import { Provider } from 'react-redux';
+import configureStore from 'redux-mock-store';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
 import { FeedbackSite } from '@store/feedback/models';
@@ -8,6 +10,11 @@ interface siteDeleteProps {
   onCancel?: () => void;
   deleteSite?: () => void;
 }
+const mockStore = configureStore([]);
+
+const store = mockStore({
+  indicator: { show: false },
+});
 describe('DeleteConfirmationsView', () => {
   const mockOnClose = jest.fn();
   const mockOnConfirm = jest.fn();
@@ -20,7 +27,11 @@ describe('DeleteConfirmationsView', () => {
   const open = true;
 
   it('should render the dialog with the correct site name', () => {
-    render(<DeleteConfirmationsView {...defaultProps} />);
+    render(
+      <Provider store={store}>
+        <DeleteConfirmationsView {...defaultProps} />
+      </Provider>
+    );
     expect(screen.getByText('Delete registered site')).toBeInTheDocument();
     const { getByText } = within(screen.getByTestId('deleteMsg'));
     const customTextMatcher = (content, element) => {
@@ -34,13 +45,21 @@ describe('DeleteConfirmationsView', () => {
   });
 
   it('should call onClose when the cancel button is clicked', () => {
-    render(<DeleteConfirmationsView {...defaultProps} />);
+    render(
+      <Provider store={store}>
+        <DeleteConfirmationsView {...defaultProps} />
+      </Provider>
+    );
     fireEvent(screen.getByText('Cancel'), new CustomEvent('_click'));
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
   it('should call onConfirm when the delete button is clicked', () => {
-    render(<DeleteConfirmationsView {...defaultProps} />);
+    render(
+      <Provider store={store}>
+        <DeleteConfirmationsView {...defaultProps} />
+      </Provider>
+    );
     fireEvent(screen.getByText('Delete'), new CustomEvent('_click'));
     expect(mockOnConfirm).toHaveBeenCalledTimes(1);
   });

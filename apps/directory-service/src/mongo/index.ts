@@ -2,7 +2,7 @@ import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../directory';
 import { MongoDirectoryRepository } from './repository';
-import { ValidationService } from '@core-services/core-common';
+
 interface MongoRepositoryProps {
   MONGO_URI: string;
   MONGO_DB: string;
@@ -10,12 +10,7 @@ interface MongoRepositoryProps {
   MONGO_PASSWORD: string;
   MONGO_TLS: boolean;
   logger: Logger;
-  validationService: ValidationService;
 }
-
-// interface Repositories {
-//   isConnected: () => boolean;
-// }
 
 export const createRepositories = ({
   MONGO_URI,
@@ -24,7 +19,6 @@ export const createRepositories = ({
   MONGO_PASSWORD,
   MONGO_TLS,
   logger,
-  validationService,
 }: MongoRepositoryProps): Promise<Repositories> =>
   new Promise<Repositories>((resolve, reject) => {
     const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?retryWrites=false&ssl=${MONGO_TLS}`;
@@ -38,7 +32,7 @@ export const createRepositories = ({
         if (err) {
           reject(err);
         } else {
-          const directoryRepository = new MongoDirectoryRepository(validationService);
+          const directoryRepository = new MongoDirectoryRepository();
           resolve({
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
             // Possible that express js module doesn't actually export anything for ConnectionStates and

@@ -2,7 +2,6 @@ import { ValidationService } from '@core-services/core-common';
 import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../configuration';
-import { MongoActiveRevisionRepository } from './activeRevisions';
 import { MongoConfigurationRepository } from './repository';
 
 interface MongoRepositoryProps {
@@ -36,12 +35,7 @@ export const createRepositories = ({
         if (err) {
           reject(err);
         } else {
-          const activeRevisionRepository = new MongoActiveRevisionRepository();
-          const configurationRepository = new MongoConfigurationRepository(
-            logger,
-            validationService,
-            activeRevisionRepository
-          );
+          const configurationRepository = new MongoConfigurationRepository(logger, validationService);
           resolve({
             configuration: configurationRepository,
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.

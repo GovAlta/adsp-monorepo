@@ -55,9 +55,14 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
     .build();
 
   const streamEvents = useMemo(() => {
-    return stream?.events.map((event) => {
-      return `${event.namespace}:${event.name}`;
-    });
+    let eventNames: string[] = [];
+
+    if (stream?.events !== undefined && stream.events !== null) {
+      eventNames = stream?.events?.map((event) => {
+        return `${event.namespace}:${event.name}`;
+      });
+    }
+    return eventNames;
   }, [stream?.events]);
 
   const eventOptions = eventDefinitions ? generateEventOptions(eventDefinitions) : undefined;
@@ -145,12 +150,13 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
             testId="stream-description"
             aria-label="stream-description"
             width="100%"
-            // eslint-disable-next-line
-            onChange={(name, value) => {
+            onKeyPress={(name, value, key) => {
               validators.remove('description');
               validators['description'].check(value);
               setStream({ ...stream, description: value });
             }}
+            // eslint-disable-next-line
+            onChange={(name, value) => {}}
           />
         </GoAFormItem>
         <GoAFormItem label="Select events">

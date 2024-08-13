@@ -38,12 +38,19 @@ export interface SelectedSite {
   site: string;
 }
 
+export interface FeedbackMetrics {
+  averageRating?: number;
+  lowestSiteAverageRating?: number;
+  feedbackCount?: number;
+}
+
 export interface FeedbackState {
   sites: FeedbackSite[];
   feedbacks: Feedback[];
   exportData: Feedback[];
   isLoading: boolean;
   nextEntries: string;
+  metrics: FeedbackMetrics;
 }
 
 export interface FeedbackSearchCriteria {

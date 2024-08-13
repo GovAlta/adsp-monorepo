@@ -230,7 +230,7 @@ When(
 
 Then('the user clicks Save button on form definition editor', function () {
   formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
-  cy.wait(6000);
+  cy.wait(8000);
 });
 
 Then('the user {string} the form definition of {string}, {string}', function (action, name, description) {
@@ -257,6 +257,15 @@ function findDefinition(name, description) {
     try {
       let rowNumber = 0;
       const targetedNumber = 2;
+      // Click Load More button 10 times if it's there
+      for (let i = 0; i < 10; i++) {
+        formObj.definitionsPage().then((parentElement) => {
+          if (parentElement.find('goa-button:contains("Load more")').length > 0) {
+            formObj.definitionsLoadMoreButton().shadow().find('button').click({ force: true });
+            cy.wait(2000);
+          }
+        });
+      }
       formObj
         .definitionsTableBody()
         .find('tr')
@@ -313,7 +322,7 @@ When(
 
 When('the user clicks Back button on form definition editor', function () {
   formObj.editorBackButton().shadow().find('button').click({ force: true });
-  cy.wait(1000);
+  cy.wait(2000);
 });
 
 When('the user clicks {string} tab in form definition editor', function (tabName) {

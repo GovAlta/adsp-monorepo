@@ -24,6 +24,7 @@ import { LoadingIndicator } from '../components/LoadingIndicator';
 import CommentsViewer from './CommentsViewer';
 import { DraftForm } from '../components/DraftForm';
 import { SubmittedForm } from '../components/SubmittedForm';
+import { LogoutModal } from '../components/LogoutModal';
 
 const SavingIndicator = styled.span`
   display: flex;
@@ -63,6 +64,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   return (
     <div key={formId}>
       <LoadingIndicator isLoading={busy.loading} />
+      <LogoutModal />
       <div className={className} data-show={showComments}>
         <Container vs={3} hs={1} key={formId}>
           {definition && form && !fileBusy.loading && (

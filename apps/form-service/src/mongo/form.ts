@@ -133,6 +133,7 @@ export class MongoFormRepository implements FormRepository {
       supportTopic: entity.supportTopic,
       submitted: entity.submitted,
       lastAccessed: entity.lastAccessed,
+      securityClassification: entity.securityClassification,
       hash: entity.hash,
       data: entity.data,
       files: Object.entries(entity.files).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
@@ -165,6 +166,7 @@ export class MongoFormRepository implements FormRepository {
         submitted: doc.submitted,
         lastAccessed: doc.lastAccessed,
         data: doc.data,
+        securityClassification: definition?.securityClassification,
         files: Object.entries(doc.files).reduce((fs, [key, f]) => ({ ...fs, [key]: f ? AdspId.parse(f) : null }), {}),
       },
       doc.hash

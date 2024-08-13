@@ -3,11 +3,13 @@ import styled from 'styled-components';
 import { PageLoader } from '@core-services/app-common';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
+import { CircularProgressVariant } from '@abgov/react-components-new';
 
 interface IndicatorProps {
   delay?: number;
   message?: string;
   pageLock?: boolean;
+  variant?: CircularProgressVariant;
 }
 export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
   const [showIndicator, setShowIndicator] = useState<boolean>(false);
@@ -23,7 +25,7 @@ export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return showIndicator && <PageLoader message={message} />;
+  return showIndicator && <PageLoader message={message} variant={props.variant} />;
 };
 
 const Center = styled.div`
@@ -44,7 +46,7 @@ export const useActionStateCheck = (actionName: string, stateToCheck = 'complete
   return loadingState.state === stateToCheck;
 };
 
-export const PageIndicator = (): JSX.Element => {
+export const PageIndicator = (variant): JSX.Element => {
   // Using redux in component shall be limited.
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -53,6 +55,7 @@ export const PageIndicator = (): JSX.Element => {
   const props = {
     ...indicator,
     pageLock: false,
+    variant: variant.variant,
   };
 
   // eslint-disable-next-line

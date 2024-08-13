@@ -169,10 +169,12 @@ class AdspFeedback implements AdspFeedbackApi {
   private closeErrorForm() {
     this.closeFeedbackForm();
     this.feedbackFormRef?.value?.setAttribute('data-error', 'false');
+    this.reset();
   }
   private closeAllFeedback() {
     this.closeFeedbackForm();
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
+    this.reset();
   }
 
   private onIssueChange(event: Event) {
@@ -182,12 +184,25 @@ class AdspFeedback implements AdspFeedbackApi {
           this.radio1Ref.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
+
         this.technicalCommentRef.value?.focus();
+        if (this.technicalCommentRef.value?.value.length === 0) {
+          this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
+        } else {
+          this.sendButtonRef.value?.removeAttribute('disabled');
+        }
       } else {
         if (this.radio2Ref.value) {
           this.radio2Ref.value.checked = true;
         }
+        if (this.selectedRating > -1) {
+          this.sendButtonRef.value?.removeAttribute('disabled');
+        }
+
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
+        if (this.technicalCommentDivRef?.value) {
+          this.technicalCommentDivRef?.value?.removeAttribute('value');
+        }
       }
     }
   }
@@ -288,6 +303,9 @@ class AdspFeedback implements AdspFeedbackApi {
     if (this.radio2Ref.value) {
       this.radio2Ref.value.checked = false;
     }
+    if (this.sendButtonRef) {
+      this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
+    }
   }
 
   private async sendFeedback() {
@@ -382,10 +400,14 @@ class AdspFeedback implements AdspFeedbackApi {
     const tooltip = tooltips[index] as HTMLImageElement;
     tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
     tooltip.style.opacity = isHovering ? '1' : '0';
+    if (index === 0) {
+      tooltip.style.marginLeft = '35px';
+      tooltip.classList.add('modified');
+    }
   };
 
   private clearRating = (index: number) => {
-    if (index > 0) {
+    if (index > -1) {
       const rating = this.ratings[index];
       const images = document.querySelectorAll('.rating');
       const image = images[index] as HTMLImageElement;
@@ -394,6 +416,18 @@ class AdspFeedback implements AdspFeedbackApi {
       const texts = document.querySelectorAll('.ratingText');
       const text = texts[index] as HTMLImageElement;
       text.style.color = '#333333';
+    }
+  };
+
+  private technicalCommentRefOnChange = (e: KeyboardEvent) => {
+    if (
+      this.technicalCommentRef?.value &&
+      this.technicalCommentRef?.value?.value.length > 0 &&
+      this.selectedRating > -1
+    ) {
+      this.sendButtonRef.value?.removeAttribute('disabled');
+    } else {
+      this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
     }
   };
 
@@ -412,12 +446,14 @@ class AdspFeedback implements AdspFeedbackApi {
       text.style.color = '#333333';
     }
     this.selectedRating = index;
-    this.sendButtonRef.value?.removeAttribute('disabled');
     this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-primary') as HTMLElement;
 
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
+    if (this.radio2Ref.value && this.radio2Ref.value.checked === true) {
+      this.sendButtonRef.value?.removeAttribute('disabled');
+    }
   };
 
   public initialize({ apiUrl, tenant, name, email, getAccessToken, getContext }: FeedbackOptions) {
@@ -468,7 +504,6 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           img:focus-visible {
             border-radius: 0.25rem;
-            border: 1px solid #feba35;
             outline: #feba35 solid 3px;
           }
 
@@ -534,8 +569,7 @@ class AdspFeedback implements AdspFeedbackApi {
             transform: translateX(-50%);
             max-height: 100%;
             height: min-content;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: hidden;
           }
           .adsp-fb .adsp-fb-container-heading {
             display: flex;
@@ -557,12 +591,12 @@ class AdspFeedback implements AdspFeedbackApi {
             transition: transform 0.001ms;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 450px;
+            max-height: 453px;
             overflow-y: auto;
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
-            padding-top: 36px;
+            padding-top: 36px !important;
             margin-bottom: 4px;
           }
           .adsp-fb .adsp-fb-form-rating {
@@ -582,34 +616,39 @@ class AdspFeedback implements AdspFeedbackApi {
             > div > p {
               display: none;
             }
-          }
-          .adsp-fb .tooltip-text {
-            visibility: hidden;
-            margin-left: 37px;
-            background-color: #666666;
-            color: #fff;
-            text-align: center;
-            border-radius: 5px;
-            padding: 8px 15px;
-            margin-top: 53px;
-            position: absolute;
-            z-index: 1;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-            white-space: nowrap;
+
+            span.tooltip-text {
+              visibility: hidden;
+              margin-left: 25px;
+              background-color: #666666;
+              color: #fff;
+              text-align: center;
+              border-radius: 5px;
+              padding: 8px 12px;
+              margin-top: 53px;
+              position: absolute;
+              transform: translateX(-50%);
+              opacity: 0;
+              transition: opacity 0.3s;
+              white-space: nowrap;
+            }
           }
 
-          .adsp-fb .tooltip-text::before {
+          .adsp-fb .adsp-fb-form-rating .tooltip-text::before {
             content: '';
             position: absolute;
             top: -10px;
-            left: 45%;
+            left: 50%;
             margin-left: -5px;
             border-width: 5px;
             border-style: solid;
             border-color: transparent transparent #666666 transparent;
           }
+
+          .adsp-fb .adsp-fb-form-rating .tooltip-text.modified::before {
+            left: 40%;
+          }
+
           .adsp-fb .adsp-fb-form-comment {
             display: flex;
             flex-direction: column;
@@ -751,6 +790,7 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .rating-div {
             display: flex;
             flex-direction: column;
+            padding-left: 2px;
           }
           .adsp-fb .adsp-fb-sent {
             text-align: left;
@@ -816,7 +856,10 @@ class AdspFeedback implements AdspFeedbackApi {
             flex-direction: column;
             cursor: pointer;
           }
-
+          .radio-container span {
+            color: var(--color-gray-600);
+            font-size: 14px;
+          }
           .radio {
             appearance: none;
             width: 24px;
@@ -901,8 +944,8 @@ class AdspFeedback implements AdspFeedbackApi {
             margin-right: 36px;
             line-height: 28px;
           }
-          .h3-subtitle {
-            padding-top: 36px;
+          .h3-sub-title {
+            padding-top: 36px !important;
           }
           .p-content {
             line-height: 28px;
@@ -932,6 +975,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
             .adsp-fb .adsp-fb-actions {
               bottom: 0;
+              margin-top: 0px;
               flex-direction: column-reverse;
               > button {
                 width: 100%;
@@ -1021,7 +1065,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
-                    <h3 class="h3-subtitle">Tell us what you think</h3>
+                    <h3 class="h3-sub-title">Tell us what you think</h3>
                     <p class="p-content">
                       Please help us improve our service by sharing feedback about your experience. This will only take
                       a minute.
@@ -1073,7 +1117,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       <hr class="hr-width hr-width" />
                       <br />
                       <div class="radio-container">
-                        <label><b>Did you experience any technical issues?</b></label>
+                        <label><b>Did you experience any technical issues?</b><span> (required)</span></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
                           <div
                             id="technicalIssueYes"
@@ -1114,7 +1158,11 @@ class AdspFeedback implements AdspFeedbackApi {
                               issue, if applicable.</b
                             >
                           </label>
-                          <textarea ${ref(this.technicalCommentRef)} id="technicalComment"></textarea>
+                          <textarea
+                            ${ref(this.technicalCommentRef)}
+                            id="technicalComment"
+                            @input=${this.technicalCommentRefOnChange}
+                          ></textarea>
                           <span class="help-text"
                             >Do not include personal information like SIN, password, addresses, etc.</span
                           >

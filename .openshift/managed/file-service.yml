@@ -475,6 +475,8 @@ objects:
             - envFrom:
                 - configMapRef:
                     name: file-service
+                - configMapRef:
+                    name: directory-overrides
                 - secretRef:
                     name: file-service
               env:
@@ -595,6 +597,8 @@ objects:
             - envFrom:
                 - configMapRef:
                     name: file-service
+                - configMapRef:
+                    name: directory-overrides
                 - secretRef:
                     name: file-service
               env:

@@ -49,10 +49,6 @@ describe('createProcessEventJob', () => {
     getSubscriptions: jest.fn(),
   };
 
-  const repositoryDoubleMock = {
-    getSubscriptions: jest.fn(),
-  };
-
   const queueServiceMock = {
     enqueue: jest.fn(),
   };

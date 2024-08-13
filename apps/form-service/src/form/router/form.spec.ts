@@ -115,6 +115,10 @@ describe('form router', () => {
     delete: jest.fn(),
   };
 
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(),
+  };
+
   const commentServiceMock = {
     createSupportTopic: jest.fn(),
   };
@@ -196,6 +200,7 @@ describe('form router', () => {
       commentService: commentServiceMock,
       submissionRepository: repositoryMock,
       directory: directoryMock,
+      tokenProvider: tokenProviderMock,
     });
     expect(router).toBeTruthy();
   });
@@ -836,7 +841,8 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        directoryMock
+        directoryMock,
+        tokenProviderMock
       );
       expect(handler).toBeTruthy();
     });
@@ -864,7 +870,8 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        directoryMock
+        directoryMock,
+        tokenProviderMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -896,7 +903,8 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        directoryMock
+        directoryMock,
+        tokenProviderMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Submitted }));
@@ -926,7 +934,8 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        directoryMock
+        directoryMock,
+        tokenProviderMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Submitted }));
@@ -954,7 +963,8 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        directoryMock
+        directoryMock,
+        tokenProviderMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
@@ -982,7 +992,8 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        directoryMock
+        directoryMock,
+        tokenProviderMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
@@ -1025,7 +1036,8 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        directoryMock
+        directoryMock,
+        tokenProviderMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(locked);
@@ -1053,7 +1065,8 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        directoryMock
+        directoryMock,
+        tokenProviderMock
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();

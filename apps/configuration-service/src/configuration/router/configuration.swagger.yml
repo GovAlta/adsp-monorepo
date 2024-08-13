@@ -55,7 +55,9 @@ components:
           enum: [SET-ACTIVE-REVISION]
         setActiveRevision:
           type: number
-      required: [operation, setActiveRevision]
+        revision:
+          type: number
+      required: [operation]
 
 /configuration/v2/configuration/{namespace}:
   parameters:

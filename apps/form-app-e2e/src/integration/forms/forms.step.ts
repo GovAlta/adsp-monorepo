@@ -111,12 +111,14 @@ When('the user {string} a checkbox labelled {string}', function (checkboxOperati
             if (classAttVal.includes('selected')) {
               cy.log('The checkbox was already checked.');
             } else {
-              formsObj.formCheckbox(label).shadow().find('.goa-checkbox-container').click();
+              formsObj.formCheckbox(label).shadow().find('.goa-checkbox-container').click({ force: true });
+              cy.wait(1000);
             }
             break;
           case 'unselects':
             if (classAttVal.includes('selected')) {
-              formsObj.formCheckbox(label).shadow().find('.goa-checkbox-container').click();
+              formsObj.formCheckbox(label).shadow().find('.goa-checkbox-container').click({ force: true });
+              cy.wait(1000);
             } else {
               cy.log('The checkbox was already unchecked.');
             }
@@ -136,6 +138,7 @@ When('the user clicks submit button in the form', function () {
 
 When('the user clicks list with detail button labelled as {string} in the form', function (label) {
   formsObj.formListWithDetailButton(label).shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
 
 When('the user enters {string} in list with detail element text field labelled {string}', function (text, label) {
@@ -237,6 +240,7 @@ Then(
 
 When('the user selects {string} radio button for the question of {string}', function (radioLabel, question) {
   formsObj.formRadioGroup(question).shadow().find(`[value="${radioLabel}"]`).click({ force: true });
+  cy.wait(1000);
 });
 
 Given('the user deletes any existing form from {string} for {string}', function (userAddressAs, formDefinitionId) {

@@ -236,6 +236,92 @@ describe('pdf', () => {
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
+    it('with external tenant data it can generate pdf ', async () => {
+      const req = {
+        query: {
+          tenantId: tenantId.toString(),
+        },
+        user: {
+          tenantId,
+          id: 'test',
+          name: 'tester',
+          roles: [ServiceRoles.PdfGenerator],
+        },
+        body: {
+          templateId: 'test',
+          filename: 'test.pdf',
+          data: {},
+        },
+        template: configuration.test,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.create.mockResolvedValueOnce({ id: 'job1' });
+      fileServiceMock.typeExists.mockResolvedValueOnce(true);
+      queueServiceMock.enqueue.mockResolvedValueOnce(null);
+      const handler = generatePdf(
+        serviceId,
+        repositoryMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        loggerMock
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).not.toHaveBeenCalled();
+      expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          work: 'generate',
+          jobId: 'job1',
+          templateId: req.body.templateId,
+          data: req.body.data,
+          filename: req.body.filename,
+          requestedBy: expect.objectContaining({ id: req.user.id, name: req.user.name }),
+        })
+      );
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'job1' }));
+    });
+    it('can not generate pdf without tenantId', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'test',
+          name: 'tester',
+          roles: [ServiceRoles.PdfGenerator],
+        },
+        body: {
+          templateId: 'test',
+          filename: 'test.pdf',
+          data: {},
+        },
+        template: configuration.test,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.create.mockResolvedValueOnce({ id: 'job1' });
+      fileServiceMock.typeExists.mockResolvedValueOnce(true);
+      queueServiceMock.enqueue.mockResolvedValueOnce(null);
+      const handler = generatePdf(
+        serviceId,
+        repositoryMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        loggerMock
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
     it('can generate core pdf', async () => {
       const req = {
         tenant: {
@@ -252,7 +338,6 @@ describe('pdf', () => {
           templateId: 'test',
           filename: 'test.pdf',
           data: {},
-          formId: 'test-form-id',
         },
         template: configuration.test,
       };

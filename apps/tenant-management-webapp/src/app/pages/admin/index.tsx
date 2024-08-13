@@ -23,6 +23,7 @@ import { PDFRouter } from './services/pdf';
 import { CommentRouter } from './services/comment';
 import { FormRouter } from './services/form';
 import { FileRouter } from './services/file';
+import { ValueRouter } from './services/value';
 import { serviceVariables } from '../../../featureFlag';
 
 import { Script } from './services/script';
@@ -71,6 +72,8 @@ const TenantManagement = (): JSX.Element => {
         return <TaskRouter />;
       case 'Feedback':
         return <Feedback />;
+      case 'Value':
+        return <ValueRouter />;
       default:
         return <Navigate to="/404" />;
     }
