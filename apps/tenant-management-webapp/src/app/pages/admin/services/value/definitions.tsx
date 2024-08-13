@@ -112,6 +112,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
         onDelete={() => {
           setShowDeleteConfirmation(false);
           dispatch(deleteValueDefinition(selectedDefinition));
+          setSelectedDefinition(defaultValueDefinition);
         }}
       />
     </div>

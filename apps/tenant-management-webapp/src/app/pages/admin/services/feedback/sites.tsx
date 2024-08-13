@@ -20,7 +20,11 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
   const [deleteSiteConfirmation, setDeleteSiteConfirmation] = useState(false);
   const [selectedSite, setSelectedSite] = useState<FeedbackSite>(defaultFeedbackSite);
 
-  const sites = useSelector((state: RootState) => state.feedback.sites);
+  const sites = useSelector((state: RootState) => {
+    return state.feedback.sites.sort((a, b) =>
+      a.url.replace(/^https?:\/\//, '').localeCompare(b.url.replace(/^https?:\/\//, ''))
+    );
+  });
   const [isEdit, setIsEdit] = useState(false);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
