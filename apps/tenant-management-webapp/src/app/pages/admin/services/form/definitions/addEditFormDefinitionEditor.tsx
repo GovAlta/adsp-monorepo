@@ -32,7 +32,7 @@ import {
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 
-import { updateFormDefinition } from '@store/form/action';
+import { getFormDefinitions, updateFormDefinition } from '@store/form/action';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
@@ -183,11 +183,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    dispatch(getConfigurationDefinitions());
-    dispatch(FetchFileTypeService());
-  }, [dispatch]);
-
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const uploadFile = (file: File, propertyId: string) => {
@@ -229,6 +224,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
   );
 
+  const formDefinitions = useSelector((state: RootState) => state?.form?.definitions || []);
+
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
   const EditorHeight = calcHeight - 570;
@@ -241,6 +238,35 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const deleteFile = (file) => {
     dispatch(DeleteFileService(file?.id));
   };
+
+  const types = [
+    { type: 'applicantRoles', name: 'Applicant roles' },
+    { type: 'clerkRoles', name: 'Clerk roles' },
+    { type: 'assessorRoles', name: 'Assessor roles' },
+  ];
+
+  const selectServiceKeycloakRoles = createSelector(
+    (state: RootState) => state.serviceRoles,
+    (serviceRoles) => {
+      return serviceRoles?.keycloak || {};
+    }
+  );
+  const selectDefinitionRegisters = useSelector((state: RootState) => state?.configuration?.registers || []);
+  const queueTasks = useSelector((state: RootState) => {
+    if (state.task && state.task.queues) {
+      const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
+        tempObj[taskDefinitionId] = taskDefinitionData;
+        return tempObj;
+      }, {});
+      return values;
+    }
+  });
+
+  useEffect(() => {
+    if (formDefinitions && Object.keys(formDefinitions).length === 0) {
+      dispatch(getFormDefinitions());
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (monaco) {
@@ -275,36 +301,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   }, [monaco, tempDataSchema]);
 
   useEffect(() => {
+    dispatch(getConfigurationDefinitions());
+    dispatch(FetchFileTypeService());
     dispatch(FetchRealmRoles());
-
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getTaskQueues());
   }, [dispatch]);
-
-  const types = [
-    { type: 'applicantRoles', name: 'Applicant roles' },
-    { type: 'clerkRoles', name: 'Clerk roles' },
-    { type: 'assessorRoles', name: 'Assessor roles' },
-  ];
-
-  const formDefinitions = useSelector((state: RootState) => state?.form?.definitions || []);
-
-  const selectServiceKeycloakRoles = createSelector(
-    (state: RootState) => state.serviceRoles,
-    (serviceRoles) => {
-      return serviceRoles?.keycloak || {};
-    }
-  );
-  const selectDefinitionRegisters = useSelector((state: RootState) => state?.configuration?.registers || []);
-  const queueTasks = useSelector((state: RootState) => {
-    if (state.task && state.task.queues) {
-      const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
-        tempObj[taskDefinitionId] = taskDefinitionData;
-        return tempObj;
-      }, {});
-      return values;
-    }
-  });
 
   useEffect(() => {
     if (saveModal.closeEditor) {
