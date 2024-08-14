@@ -78,6 +78,7 @@ export interface FileCriteria {
   infected?: boolean;
   typeEquals?: string;
   recordIdEquals?: string;
+  recordIdContains?: string;
 }
 
 export interface FileMetrics {

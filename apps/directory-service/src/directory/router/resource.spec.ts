@@ -15,6 +15,11 @@ describe('resource', () => {
     error: jest.fn(),
   } as unknown as Logger;
 
+  const directoryMock = {
+    getServiceUrl: jest.fn(),
+    getResourceUrl: jest.fn(),
+  };
+
   const eventServiceMock = {
     send: jest.fn(),
   };
@@ -29,6 +34,8 @@ describe('resource', () => {
     getTaggedResources: jest.fn(),
     applyTag: jest.fn(),
     removeTag: jest.fn(),
+    saveResource: jest.fn(),
+    deleteResource: jest.fn(),
   };
 
   beforeEach(() => {
@@ -37,11 +44,13 @@ describe('resource', () => {
     repositoryMock.getTaggedResources.mockClear();
     repositoryMock.applyTag.mockClear();
     repositoryMock.removeTag.mockClear();
+    directoryMock.getResourceUrl.mockClear();
   });
 
   it('can create router', () => {
     const router = createResourceRouter({
       logger: loggerMock,
+      directory: directoryMock,
       eventService: eventServiceMock,
       repository: repositoryMock,
     });
@@ -138,7 +147,7 @@ describe('resource', () => {
 
   describe('tagOperation', () => {
     it('can create handler', () => {
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -159,6 +168,8 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
+      directoryMock.getResourceUrl.mockResolvedValueOnce(new URL('http://file-service/file/v1/files/123'));
+
       const tag = {
         label: 'Test tag',
         value: 'test-tag',
@@ -168,7 +179,7 @@ describe('resource', () => {
       };
       repositoryMock.applyTag.mockResolvedValueOnce({ tag, resource, tagged: true });
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.applyTag).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, ...tag }),
@@ -205,6 +216,8 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
+      directoryMock.getResourceUrl.mockResolvedValueOnce(new URL('http://file-service/file/v1/files/123'));
+
       const tag = {
         label: 'Test tag',
         value: 'test-tag',
@@ -214,7 +227,7 @@ describe('resource', () => {
       };
       repositoryMock.removeTag.mockResolvedValueOnce({ tag, resource, untagged: true });
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.removeTag).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, ...tag }),
@@ -251,6 +264,8 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
+      directoryMock.getResourceUrl.mockResolvedValueOnce(new URL('http://file-service/file/v1/files/123'));
+
       const tag = {
         label: 'Test tag',
         value: 'test-tag',
@@ -260,7 +275,7 @@ describe('resource', () => {
       };
       repositoryMock.applyTag.mockResolvedValueOnce({ tag, resource, tagged: true });
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.applyTag).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, ...req.body.tag }),
@@ -297,7 +312,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -322,7 +337,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -344,7 +359,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -367,7 +382,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -389,7 +404,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -414,7 +429,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -439,7 +454,34 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('can call next with invalid operation for resource not resolved by directory', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceTagger] },
+        body: {
+          operation: 'tag-resource',
+          tag: {
+            value: 'test-tag',
+          },
+          resource: {
+            urn: 'urn:ads:platform:file-service:v1',
+          },
+        },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      directoryMock.getResourceUrl.mockResolvedValueOnce(null);
+
+      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();

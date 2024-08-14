@@ -1,7 +1,7 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
 import { ConfigurationRepository } from '../repository';
-import { ConfigurationServiceRoles } from '../roles';
+import { ConfigurationServiceRoles, DirectoryServiceRoles } from '../roles';
 import { ConfigurationRevision, Configuration, RevisionCriteria, ConfigurationDefinition } from '../types';
 import type { Logger } from 'winston';
 
@@ -60,6 +60,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
         ConfigurationServiceRoles.ConfiguredService,
         ConfigurationServiceRoles.ConfigurationAdmin,
         ConfigurationServiceRoles.Reader,
+        DirectoryServiceRoles.ResourceResolver,
       ],
       true
     );

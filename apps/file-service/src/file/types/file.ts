@@ -32,6 +32,7 @@ export interface FileCriteria {
   infected?: boolean;
   typeEquals?: string;
   recordIdEquals?: string;
+  recordIdContains?: string;
   lastAccessedBefore?: string;
   lastAccessedAfter?: string;
 }

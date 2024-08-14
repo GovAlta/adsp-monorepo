@@ -80,6 +80,20 @@ const initializeApp = async (): Promise<express.Application> => {
               },
             },
           },
+          {
+            serviceId: adspId`urn:ads:platform:directory-service`,
+            configuration: {
+              [`${serviceId}:v2`]: {
+                resourceTypes: [
+                  {
+                    type: 'configuration',
+                    matcher: '^\\/configuration\\/[a-zA-Z0-9-_ ]{1,50}\\/[a-zA-Z0-9-_ ]{1,50}$',
+                    namePath: 'name'
+                  },
+                ],
+              },
+            },
+          },
         ],
       },
       { logger }

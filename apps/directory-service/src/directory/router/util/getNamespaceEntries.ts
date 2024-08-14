@@ -1,5 +1,4 @@
 import { DirectoryRepository } from '../../repository';
-import { AdspId, adspId } from '@abgov/adsp-service-sdk';
 import { DirectoryEntry, Service } from '../../types';
 
 interface URNComponent {
@@ -52,33 +51,4 @@ export const getEntry = (namespace: string, service: Service): DirectoryEntry =>
   };
   element['urn'] = getUrn(component);
   return element as DirectoryEntry;
-};
-
-export const getServiceUrlById = async (serviceId: AdspId, directoryRepository: DirectoryRepository) => {
-  let directories = [];
-  try {
-    directories = await getNamespaceEntries(directoryRepository, 'platform');
-    const entry = directories.find((entry) => entry.urn === `${serviceId}`);
-    if (!entry) {
-      throw new Error(`Directory entry for ${serviceId} not found.`);
-    }
-    return new URL(entry.url);
-  } catch (err) {
-    console.log(err);
-    return null;
-  }
-};
-
-export const getResourceUrlById = async (serviceId: AdspId, directoryRepository: DirectoryRepository) => {
-  const serviceUrl = await getServiceUrlById(
-    adspId`urn:ads:${serviceId.namespace}:${serviceId.service}:${serviceId.api}`,
-    directoryRepository
-  );
-  // Trim any trailing slash on API url and leading slash on resource
-  const resourceUrl = new URL(
-    `${serviceUrl.pathname.replace(/\/$/g, '')}/${serviceId.resource.replace(/^\//, '')}`,
-    serviceUrl
-  );
-
-  return resourceUrl;
 };

@@ -19,7 +19,7 @@ interface QueryProps {
   scanned: boolean;
   deleted: boolean;
   infected: boolean;
-  recordId: string;
+  recordId: string | { $regex: string; $options: string };
   lastAccessed?: {
     $gt?: string;
     $lt?: string;
@@ -140,6 +140,13 @@ export class MongoFileRepository implements FileRepository {
 
     if (criteria.recordIdEquals) {
       query.recordId = criteria.recordIdEquals;
+    }
+
+    if (criteria.recordIdContains) {
+      query.recordId = {
+        $regex: criteria.recordIdContains,
+        $options: 'i',
+      };
     }
 
     if (criteria.scanned !== undefined) {

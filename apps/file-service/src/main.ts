@@ -93,6 +93,25 @@ async function initializeApp(): Promise<express.Application> {
             },
           },
         },
+        {
+          serviceId: adspId`urn:ads:platform:directory-service`,
+          configuration: {
+            [`${serviceId}:v1`]: {
+              resourceTypes: [
+                {
+                  type: 'file',
+                  matcher: '^\\/files\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+                  namePath: 'filename',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: FileDeletedDefinition.name,
+                    resourceIdPath: 'file.urn',
+                  },
+                },
+              ],
+            },
+          },
+        },
       ],
     },
     { logger }
@@ -174,6 +193,7 @@ async function initializeApp(): Promise<express.Application> {
     res.json({
       ...platform,
       db: repositories.isConnected(),
+      queue: queueService.isConnected(),
     });
   });
 

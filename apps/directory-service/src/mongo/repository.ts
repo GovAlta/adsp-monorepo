@@ -252,7 +252,10 @@ export class MongoDirectoryRepository implements DirectoryRepository {
     };
   }
 
-  async applyTag(tag: Tag, resource: Resource): Promise<{ tag: Tag; resource: Resource; tagged: boolean }> {
+  async applyTag(
+    tag: Tag,
+    resource: Resource
+  ): Promise<{ tag: Tag; resource: Resource; tagged: boolean; isNewResource: boolean }> {
     const tagDoc = await this.tagModel
       .findOneAndUpdate(
         {
@@ -271,6 +274,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       )
       .exec();
 
+    const resourceObjectId = new Types.ObjectId();
     const resourceDoc = await this.resourceModel
       .findOneAndUpdate(
         {
@@ -279,7 +283,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
         },
         {
           $setOnInsert: {
-            _id: new Types.ObjectId(),
+            _id: resourceObjectId,
             tenantId: resource.tenantId?.toString(),
             urn: resource.urn.toString(),
             name: resource.name,
@@ -308,6 +312,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       tag: this.fromTagDoc(tagDoc),
       resource: this.fromResourceDoc(resourceDoc),
       tagged: !found,
+      isNewResource: resourceObjectId.equals(resourceDoc._id),
     };
   }
 
@@ -349,6 +354,39 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       resource: this.fromResourceDoc(resourceDoc),
       untagged: deleted,
     };
+  }
+
+  async saveResource(resource: Resource): Promise<Resource> {
+    const doc = await this.resourceModel
+      .findOneAndUpdate(
+        {
+          tenantId: resource.tenantId?.toString() || { $exists: false },
+          urn: resource.urn.toString(),
+        },
+        {
+          name: resource.name,
+          description: resource.description,
+        },
+        { lean: true, new: true }
+      )
+      .exec();
+
+    return this.fromResourceDoc(doc);
+  }
+
+  async deleteResource(resource: Resource): Promise<boolean> {
+    const deleted = await this.resourceModel
+      .findOneAndDelete({
+        tenantId: resource.tenantId?.toString() || { $exists: false },
+        urn: resource.urn.toString(),
+      })
+      .exec();
+
+    if (deleted) {
+      await this.resourceTagModel.deleteMany({ resourceId: deleted._id }).exec();
+    }
+
+    return !!deleted;
   }
 
   private fromTagDoc(doc: TagDoc) {
