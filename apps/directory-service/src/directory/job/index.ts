@@ -29,13 +29,20 @@ export function createDirectoryJobs({ serviceId, logger, configurationService, q
           if (urn && isNew) {
             const resourceId = AdspId.parse(urn);
             resolveJob(item.tenantId, resourceId, done);
+            return;
           }
-        } else {
-          done();
         }
       } else {
         deleteJob(item, done);
+        return;
       }
+
+      // Default done call to Ack events not matching any job.
+      logger.debug(`Processed event '${item.namespace}:${item.name}' with no associated job.`, {
+        context: 'DirectoryJobs',
+        tenant: item.tenantId?.toString(),
+      });
+      done();
     } catch (err) {
       done(err);
 
