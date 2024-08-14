@@ -127,108 +127,100 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
         </GoAButtonGroup>
       }
     >
-      {spinner ? (
-        <PageIndicator />
-      ) : (
-        <>
-          <PdfFormItem>
-            <GoAFormItem error={errors?.['name']} label="Name">
-              <GoAInput
-                type="text"
-                name="pdf-template-name"
-                value={template.name}
-                testId="pdf-template-name"
-                aria-label="pdf-template-name"
-                width="100%"
-                onChange={(name, value) => {
-                  const validations = {
-                    name: value,
-                  };
-                  validators.remove('name');
+      <PdfFormItem>
+        <GoAFormItem error={errors?.['name']} label="Name">
+          <GoAInput
+            type="text"
+            name="pdf-template-name"
+            value={template.name}
+            testId="pdf-template-name"
+            aria-label="pdf-template-name"
+            width="100%"
+            onChange={(name, value) => {
+              const validations = {
+                name: value,
+              };
+              validators.remove('name');
 
-                  validators.checkAll(validations);
+              validators.checkAll(validations);
 
-                  setTemplate(
-                    isEdit ? { ...template, name: value } : { ...template, name: value, id: toKebabName(value) }
-                  );
-                }}
-              />
-            </GoAFormItem>
-          </PdfFormItem>
-          <GoAFormItem label="Template ID">
-            <PdfFormItem>
-              <GoAInput
-                name="pdf-template-id"
-                value={template.id}
-                testId="pdf-template-id"
-                disabled={true}
-                width="100%"
-                // eslint-disable-next-line
-                onChange={() => {}}
-              />
-            </PdfFormItem>
-          </GoAFormItem>
+              setTemplate(isEdit ? { ...template, name: value } : { ...template, name: value, id: toKebabName(value) });
+            }}
+          />
+        </GoAFormItem>
+      </PdfFormItem>
+      <GoAFormItem label="Template ID">
+        <PdfFormItem>
+          <GoAInput
+            name="pdf-template-id"
+            value={template.id}
+            testId="pdf-template-id"
+            disabled={true}
+            width="100%"
+            // eslint-disable-next-line
+            onChange={() => {}}
+          />
+        </PdfFormItem>
+      </GoAFormItem>
 
-          <GoAFormItem label="Description">
-            <DescriptionItem>
-              <GoATextArea
-                name="pdf-template-description"
-                value={template.description}
-                width="100%"
-                testId="pdf-template-description"
-                aria-label="pdf-template-description"
-                onKeyPress={(name, value, key) => {
-                  validators.remove('description');
-                  validators['description'].check(value);
-                  setTemplate({ ...template, description: value });
-                }}
-                // eslint-disable-next-line
-                onChange={(name, value) => {}}
-              />
+      <GoAFormItem label="Description">
+        <DescriptionItem>
+          <GoATextArea
+            name="pdf-template-description"
+            value={template.description}
+            width="100%"
+            testId="pdf-template-description"
+            aria-label="pdf-template-description"
+            onKeyPress={(name, value, key) => {
+              validators.remove('description');
+              validators['description'].check(value);
+              setTemplate({ ...template, description: value });
+            }}
+            // eslint-disable-next-line
+            onChange={(name, value) => {}}
+          />
 
-              <HelpText>
-                {template.description.length <= 180 ? (
-                  <div> {descErrMessage} </div>
-                ) : (
-                  <ErrorMsg>
-                    <GoAIcon type="warning" size="small" theme="filled" />
-                    {`  ${errors?.['description']}`}
-                  </ErrorMsg>
-                )}
-                <div>{`${template.description.length}/180`}</div>
-              </HelpText>
-            </DescriptionItem>
-          </GoAFormItem>
-          {!isEdit && (
-            <PopulateTemplateWrapper>
-              <GoACheckbox
-                name={'populate-template'}
-                key={'populate-template'}
-                ariaLabel={'populate-template-checkbox'}
-                checked={template.startWithDefault}
-                testId={'populate-template'}
-                onChange={() => {
-                  template.startWithDefault = !template.startWithDefault;
-                  if (template.startWithDefault) {
-                    template.footer = initialValue.footer;
-                    template.header = initialValue.header;
-                    template.additionalStyles = initialValue.additionalStyles;
-                    template.template = initialValue.template;
-                    template.variables = initialValue.variables;
-                  } else {
-                    template.footer = '';
-                    template.header = '';
-                    template.additionalStyles = '';
-                    template.template = '';
-                    template.variables = '';
-                  }
-                }}
-              >
-                Populate template with ADSP default html
-              </GoACheckbox>
-            </PopulateTemplateWrapper>
-          )}
-        </>
+          <HelpText>
+            {template.description.length <= 180 ? (
+              <div> {descErrMessage} </div>
+            ) : (
+              <ErrorMsg>
+                <GoAIcon type="warning" size="small" theme="filled" />
+                {`  ${errors?.['description']}`}
+              </ErrorMsg>
+            )}
+            <div>{`${template.description.length}/180`}</div>
+          </HelpText>
+        </DescriptionItem>
+      </GoAFormItem>
+      {!isEdit && (
+        <PopulateTemplateWrapper>
+          <GoACheckbox
+            name={'populate-template'}
+            key={'populate-template'}
+            ariaLabel={'populate-template-checkbox'}
+            checked={template.startWithDefault}
+            testId={'populate-template'}
+            onChange={() => {
+              template.startWithDefault = !template.startWithDefault;
+              if (template.startWithDefault) {
+                template.footer = initialValue.footer;
+                template.header = initialValue.header;
+                template.additionalStyles = initialValue.additionalStyles;
+                template.template = initialValue.template;
+                template.variables = initialValue.variables;
+              } else {
+                template.footer = '';
+                template.header = '';
+                template.additionalStyles = '';
+                template.template = '';
+                template.variables = '';
+              }
+            }}
+          >
+            Populate template with ADSP default html
+          </GoACheckbox>
+        </PopulateTemplateWrapper>
       )}
     </GoAModal>
   );
