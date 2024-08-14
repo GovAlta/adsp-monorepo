@@ -72,11 +72,9 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
-  useEffect(() => {}, [pdfTemplates]);
-
   useEffect(() => {
     document.body.style.overflow = 'unset';
-  }, []);
+  }, [pdfTemplates]);
 
   return (
     <div>
@@ -114,8 +112,12 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
         />
       )}
 
-      <h3>Core templates</h3>
-      {!indicator.show && corePdfTemplates && <CorePdfTemplatesTable templates={corePdfTemplates} />}
+      {!indicator.show && corePdfTemplates && (
+        <>
+          <h3>Core templates</h3>
+          <CorePdfTemplatesTable templates={corePdfTemplates} />
+        </>
+      )}
       {/* Delete confirmation */}
       <DeleteModal
         isOpen={showDeleteConfirmation}
