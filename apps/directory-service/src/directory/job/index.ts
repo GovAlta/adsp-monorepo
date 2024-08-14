@@ -1,9 +1,9 @@
 import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { DomainEvent, WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
-import { createResolveJob } from './resolve';
-import { TAG_OPERATION_TAG } from '../router/types';
+import { TAGGED_RESOURCE } from '../events';
 import { createDeleteJob } from './delete';
+import { createResolveJob } from './resolve';
 
 interface DirectoryJobProps {
   serviceId: AdspId;
@@ -24,7 +24,7 @@ export function createDirectoryJobs({ serviceId, logger, configurationService, q
       });
 
       if (item.namespace === serviceId.service) {
-        if (item.name === TAG_OPERATION_TAG) {
+        if (item.name === TAGGED_RESOURCE) {
           const { urn, isNew } = item.payload.resource as { urn: string; isNew: boolean };
           if (urn && isNew) {
             const resourceId = AdspId.parse(urn);

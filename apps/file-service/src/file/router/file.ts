@@ -22,7 +22,7 @@ import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
-import { FileCriteria, ServiceUserRoles } from '../types';
+import { DirectoryServiceRoles, FileCriteria, ServiceUserRoles } from '../types';
 import validator from 'validator';
 import { mapFile, mapFileType } from '../mapper';
 import { FileTypeEntity } from '../model';
@@ -365,7 +365,7 @@ export const createFileRouter = ({
   fileRouter.get(
     '/files/:fileId',
     createValidationHandler(param('fileId').isUUID()),
-    getFile(fileRepository, ServiceUserRoles.DirectoryResourceResolver),
+    getFile(fileRepository, DirectoryServiceRoles.ResourceResolver),
     (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity))
   );
   fileRouter.delete(

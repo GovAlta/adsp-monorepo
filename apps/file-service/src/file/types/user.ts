@@ -1,4 +1,7 @@
 export enum ServiceUserRoles {
   Admin = 'file-service-admin',
-  DirectoryResourceResolver = 'urn:ads:platform:directory-service:resource-resolver',
+}
+
+export enum DirectoryServiceRoles {
+  ResourceResolver = 'urn:ads:platform:directory-service:resource-resolver',
 }
