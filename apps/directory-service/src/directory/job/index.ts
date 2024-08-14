@@ -17,16 +17,32 @@ export function createDirectoryJobs({ serviceId, logger, configurationService, q
   const deleteJob = createDeleteJob({ logger, configurationService });
 
   queueService.getItems().subscribe(({ item, done }) => {
-    if (item.namespace === serviceId.service) {
-      if (item.name === TAG_OPERATION_TAG) {
-        const { urn, isNew } = item.payload.resource as { urn: string; isNew: boolean };
-        if (urn && isNew) {
-          const resourceId = AdspId.parse(urn);
-          resolveJob(item.tenantId, resourceId, done);
+    try {
+      logger.debug(`Processing event '${item.namespace}:${item.name}'...`, {
+        context: 'DirectoryJobs',
+        tenant: item.tenantId?.toString(),
+      });
+
+      if (item.namespace === serviceId.service) {
+        if (item.name === TAG_OPERATION_TAG) {
+          const { urn, isNew } = item.payload.resource as { urn: string; isNew: boolean };
+          if (urn && isNew) {
+            const resourceId = AdspId.parse(urn);
+            resolveJob(item.tenantId, resourceId, done);
+          }
+        } else {
+          done();
         }
+      } else {
+        deleteJob(item, done);
       }
-    } else {
-      deleteJob(item, done);
+    } catch (err) {
+      done(err);
+
+      logger.warn(`Error encountered processing event '${item.namespace}:${item.name}' ${err}`, {
+        context: 'DirectoryJobs',
+        tenant: item.tenantId?.toString(),
+      });
     }
   });
 }
