@@ -137,6 +137,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use('/resource', metricsHandler, passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
   applyDirectoryMiddleware(app, {
     ...repositories,
+    serviceId,
     logger,
     tenantService,
     eventService,
