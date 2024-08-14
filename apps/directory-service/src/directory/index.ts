@@ -4,7 +4,7 @@ export * from '../directory/repository';
 import { Application } from 'express';
 import { Repositories } from '../directory/repository';
 import { createDirectoryRouter, createResourceRouter } from './router';
-import { TenantService, EventService, ConfigurationService, AdspId } from '@abgov/adsp-service-sdk';
+import { TenantService, EventService, ConfigurationService, AdspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, DomainEvent, WorkQueueService } from '@core-services/core-common';
 import { createDirectoryJobs } from './job';
 
@@ -21,6 +21,7 @@ export * from './types';
 interface DirectoryMiddlewareProps extends Repositories {
   serviceId: AdspId;
   logger: Logger;
+  directory: ServiceDirectory;
   tenantService: TenantService;
   eventService: EventService;
   configurationService: ConfigurationService;
@@ -32,6 +33,7 @@ export const applyDirectoryMiddleware = (
   {
     serviceId,
     logger,
+    directory,
     directoryRepository,
     tenantService,
     eventService,
@@ -48,6 +50,7 @@ export const applyDirectoryMiddleware = (
 
   const resourceRouter = createResourceRouter({
     logger,
+    directory,
     eventService,
     repository: directoryRepository,
   });
