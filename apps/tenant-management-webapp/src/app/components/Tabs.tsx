@@ -68,11 +68,17 @@ interface TabProps {
   label: ReactNode;
   testId?: string;
   style?: React.CSSProperties;
+  isTightContent?: boolean;
 }
 
 function Tab(props: TabProps & { children: ReactNode }): JSX.Element {
   return (
-    <TabContent data-testid={`${props.testId ? props.testId : props['data-testid']}`}>{props.children}</TabContent>
+    <TabContent
+      data-testid={`${props.testId ? props.testId : props['data-testid']}`}
+      isTightContent={props?.isTightContent}
+    >
+      {props.children}
+    </TabContent>
   );
 }
 
@@ -140,15 +146,12 @@ const SCTab = styled.div`
   }
 `;
 
-const TabContent = styled.div`
-  padding: 1rem 0;
+interface TabContentProps {
+  isTightContent?: boolean;
+}
 
-  > h1,
-  > h2,
-  > h3,
-  > h4,
-  > ul,
-  > ol {
+const TabContent = styled.div<TabContentProps>`
+  padding: ${(props) => (props?.isTightContent === true ? `0rem` : `1rem 0`)} > h1, > h2, > h3, > h4, > ul, > ol {
     margin-top: 0;
   }
 `;

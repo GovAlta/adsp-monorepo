@@ -62,7 +62,7 @@ import { AddEditDispositionModal } from './addEditDispositionModal';
 
 import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 
-import { RowFlex, QueueTaskDropdown } from './style-components';
+import { RowFlex, QueueTaskDropdown, H3 } from './style-components';
 import { getTaskQueues } from '@store/task/action';
 import {
   UploadFileService,
@@ -231,7 +231,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
-  const EditorHeight = calcHeight - 570;
+  const EditorHeight = calcHeight - 520;
   const [editorErrors, setEditorErrors] = useState({
     uiSchema: null,
     dataSchemaJSON: null,
@@ -556,7 +556,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             {definition && <FormConfigDefinition definition={definition} />}
 
             <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
-              <Tab label="Data schema" data-testid="form-editor-data-schema-tab">
+              <Tab label="Data schema" data-testid="form-editor-data-schema-tab" isTightContent={true}>
                 <GoAFormItem
                   error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
                   label=""
@@ -606,7 +606,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </EditorPadding>
                 </GoAFormItem>
               </Tab>
-              <Tab label="UI schema" data-testid="form-editor-ui-schema-tab">
+              <Tab label="UI schema" data-testid="form-editor-ui-schema-tab" isTightContent={true}>
                 <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
                   <EditorPadding>
                     <MonacoEditor
@@ -641,7 +641,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </EditorPadding>
                 </GoAFormItem>
               </Tab>
-              <Tab label="Roles" data-testid="form-roles-tab">
+              <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
                 <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
                   <ScrollPane>
                     {elements.map((e, key) => {
@@ -653,9 +653,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </ScrollPane>
                 </RolesTabBody>
               </Tab>
-              <Tab label="Lifecycle" data-testid="lifecycle">
+              <Tab label="Lifecycle" data-testid="lifecycle" isTightContent={true}>
                 <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
-                  <h3>Application</h3>
+                  <H3>Application</H3>
                   <div>
                     <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
                       <FormFormItem>
@@ -886,7 +886,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               </Tab>
             </Tabs>
 
-            <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoAButtonGroup alignment="start">
                 <GoAButton
@@ -973,29 +972,27 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           <FormPreviewContainer>
             <Tabs data-testid="preview-tabs" activeIndex={0} changeTabCallback={saveCurrentTab}>
               <Tab label="Preview" data-testid="preview-view-tab">
-                <div style={{ paddingTop: '2rem' }}>
-                  <FormPreviewScrollPane>
-                    <ContextProvider
-                      fileManagement={{
-                        fileList: fileList,
-                        uploadFile: uploadFile,
-                        downloadFile: downloadFile,
-                        deleteFile: deleteFile,
-                      }}
-                    >
-                      <GoAFormItem error={error} label="">
-                        <JSONFormPreviewer
-                          uischema={tempUiSchema}
-                          schema={tempDataSchema}
-                          onChange={({ data }) => {
-                            setData(data);
-                          }}
-                          data={data}
-                        />
-                      </GoAFormItem>
-                    </ContextProvider>
-                  </FormPreviewScrollPane>
-                </div>
+                <FormPreviewScrollPane>
+                  <ContextProvider
+                    fileManagement={{
+                      fileList: fileList,
+                      uploadFile: uploadFile,
+                      downloadFile: downloadFile,
+                      deleteFile: deleteFile,
+                    }}
+                  >
+                    <GoAFormItem error={error} label="">
+                      <JSONFormPreviewer
+                        uischema={tempUiSchema}
+                        schema={tempDataSchema}
+                        onChange={({ data }) => {
+                          setData(data);
+                        }}
+                        data={data}
+                      />
+                    </GoAFormItem>
+                  </ContextProvider>
+                </FormPreviewScrollPane>
               </Tab>
               <Tab label="Data" data-testid="data-view">
                 {data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}
