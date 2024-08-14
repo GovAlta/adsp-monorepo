@@ -525,7 +525,6 @@ class AdspFeedback implements AdspFeedbackApi {
           }
 
           .adsp-fb {
-            position: fixed;
             z-index: 999;
             font-family: acumin-pro-semi-condensed, helvetica-neue, arial, sans-serif;
           }
@@ -602,7 +601,7 @@ class AdspFeedback implements AdspFeedbackApi {
             transition: transform 0.001ms;
           }
           .adsp-fb .adsp-fb-content {
-            max-height: 453px;
+            max-height: 465px;
             overflow-y: auto;
             overflow-x: hidden;
             flex: 1;
@@ -931,6 +930,7 @@ class AdspFeedback implements AdspFeedbackApi {
             border: none;
             height: 1px;
             background-color: #ccc;
+            margin: 0;
           }
 
           /* Top-facing shadow */
@@ -945,6 +945,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .hr-width {
             width: 98%;
+            margin: 0;
           }
           .full-width-hr-container {
             margin-left: -24px;
@@ -957,6 +958,10 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .h3-sub-title {
             padding-top: 36px !important;
+            margin-top: 0;
+          }
+          .h3-success {
+            margin-top: 0;
           }
           .p-content {
             line-height: 28px;
@@ -1125,7 +1130,7 @@ class AdspFeedback implements AdspFeedbackApi {
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
                       </div>
-                      <hr class="hr-width hr-width" />
+                      <hr class="hr-width" />
                       <br />
                       <div class="radio-container">
                         <label><b>Did you experience any technical issues?</b><span> (required)</span></label>
@@ -1207,7 +1212,7 @@ class AdspFeedback implements AdspFeedbackApi {
                     </div>
 
                     <div class="adsp-fb-sent adsp-fb-message">
-                      <h3>
+                      <h3 class="h3-success">
                         Success!
                         <img src=${greenCircleCheckmarkSvg} width="18px" height="18px" alt="Success" />
                       </h3>
