@@ -14,9 +14,7 @@ export function createResolveJob({ logger, configurationService }: ResolveJobPro
         DirectoryConfiguration,
         DirectoryConfiguration
       >(null, tenantId);
-      const apiId = `urn:ads:${urn.namespace}:${urn.service}:${urn.api}`;
-      const types = configuration[apiId];
-      const type = types?.find((type) => type.matches(urn));
+      const type = configuration.getResourceType(urn);
 
       if (type) {
         logger.debug(`Matched type '${type.type}' to resource ${urn} and resolving...`, {
@@ -40,6 +38,11 @@ export function createResolveJob({ logger, configurationService }: ResolveJobPro
       done();
     } catch (err) {
       done(err);
+
+      logger.warn(`Error encountered resolving resource ${urn}: ${err}`, {
+        context: 'ResolveJob',
+        tenant: tenantId.toString(),
+      });
     }
   };
 }

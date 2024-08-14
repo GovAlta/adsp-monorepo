@@ -1,5 +1,5 @@
-import { adspId } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError } from '@core-services/core-common';
+import { AdspId, adspId } from '@abgov/adsp-service-sdk';
+import { DomainEvent, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
 import { Logger } from 'winston';
 import { ResourceType } from './resource';
@@ -43,12 +43,13 @@ describe('ResourceType', () => {
   beforeEach(() => {
     axiosMock.get.mockClear();
     directoryMock.getResourceUrl.mockClear();
+    repositoryMock.deleteResource.mockClear();
   });
 
   it('can be created', () => {
     const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
       type: 'test',
-      matcher: '^/tests',
+      matcher: '^\\/tests',
       namePath: 'testName',
       descriptionPath: 'testDescription',
     });
@@ -60,7 +61,7 @@ describe('ResourceType', () => {
     it('can match urn', () => {
       const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
         type: 'test',
-        matcher: '^/tests',
+        matcher: '^\\/tests',
         namePath: 'testName',
         descriptionPath: 'testDescription',
       });
@@ -74,7 +75,7 @@ describe('ResourceType', () => {
     it('can throw for non-resource URN', () => {
       const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
         type: 'test',
-        matcher: '^/tests',
+        matcher: '^\\/tests',
         namePath: 'testName',
         descriptionPath: 'testDescription',
       });
@@ -87,7 +88,7 @@ describe('ResourceType', () => {
     it('can resolve resource', async () => {
       const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
         type: 'test',
-        matcher: '^/tests',
+        matcher: '^\\/tests',
         namePath: 'testName',
         descriptionPath: 'testDescription',
       });
@@ -114,7 +115,7 @@ describe('ResourceType', () => {
     it('can default description getter', async () => {
       const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
         type: 'test',
-        matcher: '^/tests',
+        matcher: '^\\/tests',
         namePath: 'testName',
       });
 
@@ -137,7 +138,7 @@ describe('ResourceType', () => {
     it('can throw on resolve error', async () => {
       const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
         type: 'test',
-        matcher: '^/tests',
+        matcher: '^\\/tests',
         namePath: 'testName',
         descriptionPath: 'testDescription',
       });
@@ -151,10 +152,24 @@ describe('ResourceType', () => {
       await expect(type.resolve({ tenantId, urn })).rejects.toThrowError();
     });
 
+    it('can throw for resource not in directory', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+      });
+
+      directoryMock.getResourceUrl.mockResolvedValueOnce(null);
+
+      const urn = adspId`urn:ads:platform:test-service:v1:/tests/123`;
+      await expect(type.resolve({ tenantId, urn })).rejects.toThrow(NotFoundError);
+    });
+
     it('can throw for not matched resource', async () => {
       const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
         type: 'test',
-        matcher: '^/tests',
+        matcher: '^\\/tests',
         namePath: 'testName',
         descriptionPath: 'testDescription',
       });
@@ -167,12 +182,151 @@ describe('ResourceType', () => {
     it('can throw for null resource', async () => {
       const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
         type: 'test',
-        matcher: '^/tests',
+        matcher: '^\\/tests',
         namePath: 'testName',
         descriptionPath: 'testDescription',
       });
 
       await expect(type.resolve(null)).rejects.toThrow(Error);
+    });
+  });
+
+  describe('processDeleteEvent', () => {
+    it('can delete resource on event', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+        deleteEvent: {
+          namespace: 'test-service',
+          name: 'test-started',
+          resourceIdPath: 'test.id',
+        },
+      });
+
+      const event = {
+        namespace: 'test-service',
+        name: 'test-started',
+        tenantId,
+        payload: {
+          test: {
+            id: 'urn:ads:platform:test-service:v1:/tests/123',
+          },
+        },
+      };
+
+      repositoryMock.deleteResource.mockResolvedValueOnce(true);
+      const result = await type.processDeleteEvent(event as unknown as DomainEvent);
+      expect(result.toString()).toBe(event.payload.test.id);
+      expect(repositoryMock.deleteResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId,
+          urn: expect.any(AdspId),
+        })
+      );
+    });
+
+    it('can return null if no resource deleted', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+        deleteEvent: {
+          namespace: 'test-service',
+          name: 'test-started',
+          resourceIdPath: 'test.id',
+        },
+      });
+
+      const event = {
+        namespace: 'test-service',
+        name: 'test-started',
+        tenantId,
+        payload: {
+          test: {
+            id: 'urn:ads:platform:test-service:v1:/tests/123',
+          },
+        },
+      };
+
+      repositoryMock.deleteResource.mockResolvedValueOnce(false);
+      const result = await type.processDeleteEvent(event as unknown as DomainEvent);
+      expect(result).toBeNull();
+      expect(repositoryMock.deleteResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId,
+          urn: expect.any(AdspId),
+        })
+      );
+    });
+
+    it('can throw on null event', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+        deleteEvent: {
+          namespace: 'test-service',
+          name: 'test-started',
+          resourceIdPath: 'test.id',
+        },
+      });
+
+      await expect(type.processDeleteEvent(null)).rejects.toThrow(InvalidOperationError);
+    });
+
+    it('can throw on malformed event', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+        deleteEvent: {
+          namespace: 'test-service',
+          name: 'test-started',
+          resourceIdPath: 'test.id',
+        },
+      });
+
+      const event = {
+        namespace: 'test-service',
+        tenantId,
+        payload: {
+          test: {
+            id: 'urn:ads:platform:test-service:v1:/tests/123',
+          },
+        },
+      };
+
+      await expect(type.processDeleteEvent(event as unknown as DomainEvent)).rejects.toThrow(InvalidOperationError);
+    });
+
+    it('can throw on no resource ID from event payload', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+        deleteEvent: {
+          namespace: 'test-service',
+          name: 'test-started',
+          resourceIdPath: 'test.id',
+        },
+      });
+
+      const event = {
+        namespace: 'test-service',
+        name: 'test-started',
+        tenantId,
+        payload: {
+          testId: 'urn:ads:platform:test-service:v1:/tests/123',
+        },
+      };
+
+      await expect(type.processDeleteEvent(event as unknown as DomainEvent)).rejects.toThrow(InvalidOperationError);
     });
   });
 });

@@ -1,8 +1,8 @@
 import { AjvValidationService } from '@core-services/core-common';
 import { Logger } from 'winston';
-import { configurationSchema } from './configuration';
+import { configurationSchema } from './schema';
 
-describe('configuration', () => {
+describe('schema', () => {
   const logger = {
     debug: jest.fn(),
     info: jest.fn(),

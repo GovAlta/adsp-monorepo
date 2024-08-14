@@ -9,7 +9,6 @@ import {
 } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
-  UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
   createValidationHandler,
@@ -147,8 +146,8 @@ export function getFile(repository: FileRepository, ...roles: string[]): Request
 
       if (!fileEntity) {
         throw new NotFoundError('File', fileId);
-      } else if (!fileEntity.canAccess(user) && !isAllowedUser(user, fileEntity.tenantId, roles)) {
-        throw new UnauthorizedError('User not authorized to access file.');
+      } else if (!fileEntity.canAccess(user) && !isAllowedUser(user, fileEntity.tenantId, roles, true)) {
+        throw new UnauthorizedUserError('read file', user);
       }
 
       req.fileEntity = fileEntity;

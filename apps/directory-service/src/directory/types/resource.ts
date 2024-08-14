@@ -23,4 +23,9 @@ export interface ResourceTypeConfiguration {
   matcher: string;
   namePath: string;
   descriptionPath?: string;
+  deleteEvent?: {
+    namespace: string;
+    name: string;
+    resourceIdPath: string;
+  };
 }

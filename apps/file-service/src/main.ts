@@ -100,8 +100,13 @@ async function initializeApp(): Promise<express.Application> {
               resourceTypes: [
                 {
                   type: 'file',
-                  matcher: '^/files/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+                  matcher: '^\\/files\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
                   namePath: 'filename',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: FileDeletedDefinition.name,
+                    resourceIdPath: 'file.urn',
+                  },
                 },
               ],
             },

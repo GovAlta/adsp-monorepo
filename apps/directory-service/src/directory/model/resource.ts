@@ -1,5 +1,5 @@
 import { AdspId, assertAdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { DomainEvent, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { property } from 'lodash';
 import { Resource, ResourceTypeConfiguration } from '../types';
 import axios from 'axios';
@@ -11,18 +11,24 @@ export class ResourceType {
   private matcher: RegExp;
   private nameGetter: (value: unknown) => string;
   private descriptionGetter: (value: unknown) => string;
+  private eventResourceIdGetter: (value: unknown) => string;
+  private deleteEventNamespace: string;
+  private deleteEventName: string;
 
   constructor(
     private logger: Logger,
     private directory: ServiceDirectory,
     private tokenProvider: TokenProvider,
     private repository: DirectoryRepository,
-    { type, matcher, namePath, descriptionPath }: ResourceTypeConfiguration
+    { type, matcher, namePath, descriptionPath, deleteEvent }: ResourceTypeConfiguration
   ) {
     this.type = type;
     this.matcher = new RegExp(matcher);
     this.nameGetter = property(namePath);
     this.descriptionGetter = descriptionPath ? property(descriptionPath) : () => undefined;
+    this.eventResourceIdGetter = deleteEvent?.resourceIdPath ? property(deleteEvent?.resourceIdPath) : () => undefined;
+    this.deleteEventNamespace = deleteEvent?.namespace;
+    this.deleteEventName = deleteEvent?.name;
   }
 
   public matches(urn: AdspId): boolean {
@@ -70,5 +76,25 @@ export class ResourceType {
 
       throw err;
     }
+  }
+
+  public async processDeleteEvent(event: DomainEvent): Promise<AdspId> {
+    if (!event || event.namespace !== this.deleteEventNamespace || event.name !== this.deleteEventName) {
+      throw new InvalidOperationError(
+        `Event '${event?.namespace}:${event?.name}' not a delete event for resource type '${this.type}'.`
+      );
+    }
+
+    const resourceId = this.eventResourceIdGetter(event.payload);
+    if (!resourceId || !AdspId.isAdspId(resourceId)) {
+      throw new InvalidOperationError(
+        `Failed to retrieve resource type '${this.type}' resource ID from event '${event?.namespace}:${event?.name}' payload.`
+      );
+    }
+
+    const urn = AdspId.parse(resourceId);
+    const deleted = await this.repository.deleteResource({ tenantId: event.tenantId, urn });
+
+    return deleted ? urn : null;
   }
 }

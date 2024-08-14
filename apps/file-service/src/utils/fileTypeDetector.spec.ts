@@ -30,7 +30,7 @@ describe('File type detector', () => {
   it('can detect', () => {
     const mockedStream = new Readable();
 
-    mockedStream._read = function (size) {
+    mockedStream._read = function (_size) {
       /* do nothing */
     };
 
@@ -44,7 +44,7 @@ describe('File type detector', () => {
   it('can detect and return a filetype', () => {
     const mockedStream = new Readable();
 
-    mockedStream._read = function (size) {
+    mockedStream._read = function (_size) {
       /* do nothing */
     };
 
@@ -63,7 +63,7 @@ describe('File type detector', () => {
   it('deals with failing buffer', () => {
     const mockedStream = new Readable();
 
-    mockedStream._read = function (size) {
+    mockedStream._read = function (_size) {
       /* do nothing */
     };
 

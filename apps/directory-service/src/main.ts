@@ -18,7 +18,6 @@ import {
   configurationSchema,
   ServiceDirectoryImpl,
   DirectoryConfigurationValue,
-  ResourceType,
   DirectoryConfiguration,
   EntryDeletedDefinition,
   EntryUpdatedDefinition,
@@ -96,27 +95,13 @@ const initializeApp = async (): Promise<express.Application> => {
         tenant: DirectoryConfigurationValue,
         core: DirectoryConfigurationValue,
         tenantId: AdspId
-      ) => {
-        return Object.entries({ ...tenant, ...core }).reduce(
-          (configuration, [api, apiConfiguration]) => ({
-            ...configuration,
-            [api]: apiConfiguration.resourceTypes
-              ?.map((type) => {
-                try {
-                  return new ResourceType(logger, directory, tokenProvider, repositories.directoryRepository, type);
-                } catch (err) {
-                  logger.warn(`Error encountered on initializing resource type ${type?.type} from configuration`, {
-                    context: 'ConfigurationConverter',
-                    tenant: tenantId?.toString(),
-                  });
-                  return null;
-                }
-              })
-              .filter((type) => !!type),
-          }),
-          {} as DirectoryConfiguration
-        );
-      },
+      ) =>
+        new DirectoryConfiguration(
+          { logger, directory, tokenProvider, repository: repositories.directoryRepository },
+          tenant,
+          core,
+          tenantId
+        ),
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
