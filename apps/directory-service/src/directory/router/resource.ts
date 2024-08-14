@@ -32,6 +32,7 @@ function mapResource(resource: Resource) {
         urn: resource.urn.toString(),
         name: resource.name,
         description: resource.description,
+        type: resource.type,
       }
     : null;
 }
@@ -234,7 +235,9 @@ export function createResourceRouter({ logger, directory, eventService, reposito
         .isString()
         .matches(/^[0-9a-z-]{1,100}$/),
       body('resource').isObject(),
-      body('resource.urn').isString().isLength({ min: 1, max: 2000 })
+      body('resource.urn').isString().isLength({ min: 1, max: 2000 }),
+      body('resource.name').optional().isString().isLength({ min: 1, max: 250 }),
+      body('resource.description').optional().isString().isLength({ min: 1, max: 2000 })
     ),
     tagOperation(logger, directory, eventService, repository)
   );

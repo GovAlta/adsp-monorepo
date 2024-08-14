@@ -16,6 +16,18 @@ components:
           type: string
         description:
           type: string
+        type:
+          type: string
+    ResourceSpecification:
+      type: object
+      properties:
+        urn:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+      required: [urn]
     TagResourceOperation:
       type: object
       properties:
@@ -25,7 +37,7 @@ components:
         tag:
           $ref: "#/components/schemas/Tag"
         resource:
-          $ref: "#/components/schemas/Resource"
+          $ref: "#/components/schemas/ResourceSpecification"
       required: [operation, tag, resource]
     UntagResourceOperation:
       type: object
@@ -36,7 +48,7 @@ components:
         tag:
           $ref: "#/components/schemas/Tag"
         resource:
-          $ref: "#/components/schemas/Resource"
+          $ref: "#/components/schemas/ResourceSpecification"
       required: [operation, tag, resource]
 
 /resource/v1/tags:
