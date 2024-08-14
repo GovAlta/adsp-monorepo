@@ -14,9 +14,9 @@ export class MongoDirectoryRepository implements DirectoryRepository {
 
   constructor() {
     this.directoryModel = model('directories', directorySchema);
-    this.tagModel = model<TagDoc>('tag', tagSchema);
-    this.resourceModel = model<ResourceDoc>('resource', resourceSchema);
-    this.resourceTagModel = model<Document>('resourcetag', resourceTagSchema);
+    this.tagModel = model<TagDoc>('tag', tagSchema, 'directoryTags');
+    this.resourceModel = model<ResourceDoc>('resource', resourceSchema, 'directoryResources');
+    this.resourceTagModel = model<Document>('resourceTag', resourceTagSchema, 'taggedResources');
   }
 
   find(top: number, after: string, criteria: Criteria): Promise<Results<DirectoryEntity>> {
@@ -141,7 +141,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
         },
         {
           $lookup: {
-            from: 'resourcetags',
+            from: 'taggedResources',
             localField: '_id',
             foreignField: 'resourceId',
             as: 'taggedResources',
@@ -158,7 +158,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
         },
         {
           $lookup: {
-            from: 'tags',
+            from: 'directoryTags',
             localField: 'tagId',
             foreignField: '_id',
             as: 'tags',
@@ -202,7 +202,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       },
       {
         $lookup: {
-          from: 'resourcetags',
+          from: 'taggedResources',
           localField: '_id',
           foreignField: 'tagId',
           as: 'taggedResources',
@@ -221,7 +221,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       },
       {
         $lookup: {
-          from: 'resources',
+          from: 'directoryResources',
           localField: 'resourceId',
           foreignField: '_id',
           as: 'resources',
@@ -389,7 +389,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
     return !!deleted;
   }
 
-  private fromTagDoc(doc: TagDoc) {
+  private fromTagDoc(doc: TagDoc): Tag {
     return doc
       ? {
           tenantId: doc.tenantId ? AdspId.parse(doc.tenantId) : null,
@@ -399,13 +399,14 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       : null;
   }
 
-  private fromResourceDoc(doc: ResourceDoc) {
+  private fromResourceDoc(doc: ResourceDoc): Resource {
     return doc
       ? {
           tenantId: doc.tenantId ? AdspId.parse(doc.tenantId) : null,
           urn: doc.urn ? AdspId.parse(doc.urn) : null,
           name: doc.name,
           description: doc.description,
+          type: doc.type,
         }
       : null;
   }
