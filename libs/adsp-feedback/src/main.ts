@@ -86,7 +86,7 @@ class AdspFeedback implements AdspFeedbackApi {
     this.firstFocusableElement = this.startRef?.value?.querySelector('.feedback-close-button') as HTMLElement;
     document.addEventListener('keydown', this.trapTabKey);
     document.addEventListener('keydown', this.handleEscapeKey);
-
+    document.body.classList.add('modal-open');
     this.onDimChange(true);
   }
   private handleKeyOpenStartForm(event: KeyboardEvent) {
@@ -156,6 +156,7 @@ class AdspFeedback implements AdspFeedbackApi {
       this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
       this.startRef?.value?.setAttribute('data-show', 'false');
       this.onDimChange(false);
+      document.body.classList.remove('modal-open');
     }
   };
 
@@ -165,16 +166,19 @@ class AdspFeedback implements AdspFeedbackApi {
     this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
     this.startRef?.value?.setAttribute('data-show', 'false');
     this.onDimChange(false);
+    document.body.classList.remove('modal-open');
   }
   private closeErrorForm() {
     this.closeFeedbackForm();
     this.feedbackFormRef?.value?.setAttribute('data-error', 'false');
     this.reset();
+    document.body.classList.remove('modal-open');
   }
   private closeAllFeedback() {
     this.closeFeedbackForm();
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.reset();
+    document.body.classList.remove('modal-open');
   }
 
   private onIssueChange(event: Event) {
@@ -506,7 +510,9 @@ class AdspFeedback implements AdspFeedbackApi {
             border-radius: 0.25rem;
             outline: #feba35 solid 3px;
           }
-
+          body.modal-open {
+            overflow: hidden;
+          }
           .feedback-close-button:hover,
           .feedback-close-button:active,
           .feedback-close-button:focus {
@@ -519,8 +525,12 @@ class AdspFeedback implements AdspFeedbackApi {
           }
 
           .adsp-fb {
-            z-index: 100;
+            position: fixed;
+            z-index: 999;
             font-family: acumin-pro-semi-condensed, helvetica-neue, arial, sans-serif;
+          }
+          .adsp-fb h3 {
+            margin-top: 0px !important;
           }
           .adsp-fb > *[data-show]:not([data-show='true']) {
             display: none;
@@ -559,6 +569,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
           .adsp-fb .adsp-fb-form-container {
             z-index: 2;
+            position: fixed;
             background: #ffffff;
             position: fixed;
             width: 640px;
@@ -596,7 +607,7 @@ class AdspFeedback implements AdspFeedbackApi {
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
-            padding-top: 36px;
+            padding-top: 36px !important;
             margin-bottom: 4px;
           }
           .adsp-fb .adsp-fb-form-rating {
@@ -944,8 +955,8 @@ class AdspFeedback implements AdspFeedbackApi {
             margin-right: 36px;
             line-height: 28px;
           }
-          .h3-subtitle {
-            padding-top: 36px;
+          .h3-sub-title {
+            padding-top: 36px !important;
           }
           .p-content {
             line-height: 28px;
@@ -1065,7 +1076,7 @@ class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
-                    <h3 class="h3-subtitle">Tell us what you think</h3>
+                    <h3 class="h3-sub-title">Tell us what you think</h3>
                     <p class="p-content">
                       Please help us improve our service by sharing feedback about your experience. This will only take
                       a minute.

@@ -1,4 +1,4 @@
-import { adspId } from '@abgov/adsp-service-sdk';
+import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -557,7 +557,7 @@ describe('file router', () => {
 
       const handler = getFile(fileRepositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 

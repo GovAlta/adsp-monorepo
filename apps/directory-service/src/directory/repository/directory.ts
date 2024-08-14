@@ -13,6 +13,11 @@ export interface DirectoryRepository {
   getTags(top: number, after: string, criteria: TagCriteria): Promise<Results<Tag>>;
   getTaggedResources(tenantId: AdspId, tag: string, top: number, after: string): Promise<Results<Resource>>;
 
-  applyTag(tag: Tag, resource: Resource): Promise<{ tag: Tag; resource: Resource; tagged: boolean }>;
+  applyTag(
+    tag: Tag,
+    resource: Resource
+  ): Promise<{ tag: Tag; resource: Resource; tagged: boolean; isNewResource: boolean }>;
   removeTag(tag: Tag, resource: Resource): Promise<{ tag?: Tag; resource?: Resource; untagged: boolean }>;
+  saveResource(resource: Resource & { type?: string }): Promise<Resource>;
+  deleteResource(resource: Resource): Promise<boolean>;
 }

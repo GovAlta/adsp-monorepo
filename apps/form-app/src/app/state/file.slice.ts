@@ -14,6 +14,7 @@ export interface FileMetadata {
 }
 
 const FILE_SERVICE_ID = 'urn:ads:platform:file-service';
+const FORM_GATEWAY_ID = 'urn:ads:platform:form-gateway:v1';
 async function getFileMetadata(fileServiceUrl: string, urn: string): Promise<FileMetadata> {
   if (!AdspId.isAdspId(urn) || !urn.startsWith(FILE_SERVICE_ID)) {
     throw new Error('Specified urn is not recognized as a file URN.');
@@ -83,6 +84,73 @@ export const downloadFile = createAsyncThunk(
       });
 
       return { file, data, metadata: { ...metadata, mimeType } };
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const downloadFormPdf = createAsyncThunk(
+  'file/download-form-pdf',
+  async (id: string, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formGatewayUrl = config.directory[FORM_GATEWAY_ID];
+
+      const token = await getAccessToken();
+      const { data, headers } = await axios.get(
+        new URL(`/gateway/v1/file/v1/download?criteria={"recordIdContains": "${id}"}`, formGatewayUrl).href,
+        {
+          responseType: 'blob',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const mimeType = headers['content-type']?.toString();
+
+      const file = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(new File([data], 'temp.pdf', { type: mimeType }));
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+      });
+
+      return { file, data, metadata: { mimeType } };
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const checkPdfFile = createAsyncThunk(
+  'file/check-pdf-file',
+  async (id: string, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formGatewayUrl = config.directory[FORM_GATEWAY_ID];
+
+      const token = await getAccessToken();
+      const { data } = await axios.get(
+        new URL(`/gateway/v1/file/v1/file?criteria={"recordIdContains": "${id}"}`, formGatewayUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      return { data };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -176,6 +244,8 @@ export const deleteFile = createAsyncThunk(
 
 interface FileState {
   files: Record<string, string>;
+  pdfFile: string;
+  pdfFileExists: boolean;
   metadata: Record<string, FileMetadata>;
   upload: { name: string; progress: number };
   busy: {
@@ -188,6 +258,8 @@ interface FileState {
 
 const initialFileState: FileState = {
   files: {},
+  pdfFile: null,
+  pdfFileExists: null,
   metadata: {},
   upload: null,
   busy: {
@@ -233,6 +305,26 @@ const fileSlice = createSlice({
       .addCase(downloadFile.rejected, (state, { meta }) => {
         state.busy.download[meta.arg] = false;
       })
+      .addCase(downloadFormPdf.pending, (state, { meta }) => {
+        state.busy.download[meta.arg] = true;
+      })
+      .addCase(downloadFormPdf.fulfilled, (state, { meta, payload: { file } }) => {
+        state.pdfFile = file;
+        state.busy.download[meta.arg] = false;
+      })
+      .addCase(downloadFormPdf.rejected, (state, { meta }) => {
+        state.busy.download[meta.arg] = false;
+      })
+      .addCase(checkPdfFile.pending, (state, { meta }) => {
+        state.busy.download[meta.arg] = true;
+      })
+      .addCase(checkPdfFile.fulfilled, (state, { meta, payload: { data } }) => {
+        state.pdfFileExists = !!data.fileId;
+        state.busy.download[meta.arg] = false;
+      })
+      .addCase(checkPdfFile.rejected, (state, { meta }) => {
+        state.busy.download[meta.arg] = false;
+      })
       .addCase(uploadFile.pending, (state, { meta }) => {
         state.busy.uploading = true;
         state.upload = { name: meta.arg.file.name, progress: 0 };
@@ -268,6 +360,14 @@ export const fileDataUrlSelector = createSelector(
   (state: AppState) => state.file.files,
   (_state: AppState, urn: string) => urn,
   (files, urn) => files[urn]
+);
+export const pdfFileSelector = createSelector(
+  (state: AppState) => state.file.pdfFile,
+  (file) => file
+);
+export const checkPdfFileSelector = createSelector(
+  (state: AppState) => state.file.pdfFileExists,
+  (file) => file
 );
 
 export const fileMetaDataSelector = (state: AppState) => state.file.metadata;

@@ -32,7 +32,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
   return (
     <>
       <tr>
-        <td data-testid="configuration-name">{!isCore ? configName : ''}</td>
+        <td data-testid="configuration-name">{configName}</td>
         <td data-testid="configuration-description">{description}</td>
         <td data-testid="configuration-action" id="configuration-action-icons">
           <IconDiv>

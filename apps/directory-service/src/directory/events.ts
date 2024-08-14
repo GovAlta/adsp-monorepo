@@ -3,7 +3,7 @@ import { Resource, Tag } from './types';
 
 const ENTRY_UPDATED = 'entry-updated';
 const ENTRY_DELETED = 'entry-deleted';
-const TAGGED_RESOURCE = 'tagged-resource';
+export const TAGGED_RESOURCE = 'tagged-resource';
 const UNTAGGED_RESOURCE = 'untagged-resource';
 
 export const EntryUpdatedDefinition: DomainEventDefinition = {
@@ -78,6 +78,7 @@ export const TaggedResourceDefinition: DomainEventDefinition = {
           urn: { type: 'string' },
           name: { type: 'string' },
           description: { type: 'string' },
+          isNew: { type: 'boolean' },
         },
       },
       tag: {
@@ -182,15 +183,21 @@ export const entryDeleted = (
   },
 });
 
-export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User): DomainEvent => ({
+export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, isNewResource: boolean): DomainEvent => ({
   name: TAGGED_RESOURCE,
   timestamp: new Date(),
   tenantId: resource.tenantId,
+  correlationId: tag.value,
+  context: {
+    tag: tag.value,
+    resources: resource.urn.toString(),
+  },
   payload: {
     resource: {
-      urn: resource.urn,
+      urn: resource.urn.toString(),
       name: resource.name,
       description: resource.description,
+      isNew: isNewResource,
     },
     tag: {
       label: tag.label,
@@ -207,9 +214,14 @@ export const untaggedResource = (resource: Resource, tag: Tag, updatedBy: User):
   name: UNTAGGED_RESOURCE,
   timestamp: new Date(),
   tenantId: resource.tenantId,
+  correlationId: tag.value,
+  context: {
+    tag: tag.value,
+    resources: resource.urn.toString(),
+  },
   payload: {
     resource: {
-      urn: resource.urn,
+      urn: resource.urn.toString(),
       name: resource.name,
       description: resource.description,
     },
