@@ -6,7 +6,7 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -40,6 +40,8 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  instrumentAxios(logger);
 
   const repositories = await createRepositories({ ...environment, logger });
   if (environment.DIRECTORY_BOOTSTRAP) {
@@ -139,6 +141,7 @@ const initializeApp = async (): Promise<express.Application> => {
     ...repositories,
     serviceId,
     logger,
+    directory,
     tenantService,
     eventService,
     configurationService,

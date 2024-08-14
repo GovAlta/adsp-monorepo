@@ -1,4 +1,11 @@
-import { AdspId, DomainEvent, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  DomainEvent,
+  EventService,
+  isAllowedUser,
+  ServiceDirectory,
+  UnauthorizedUserError,
+} from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError } from '@core-services/core-common';
 import * as dashify from 'dashify';
 import { RequestHandler, Router } from 'express';
@@ -9,12 +16,6 @@ import { Resource, Tag } from '../types';
 import { TAG_OPERATION_TAG, TAG_OPERATION_UNTAG, TagOperationRequests } from './types';
 import { taggedResource, untaggedResource } from '../events';
 import { body, query } from 'express-validator';
-
-interface ResourceRouterProps {
-  logger: Logger;
-  eventService: EventService;
-  repository: DirectoryRepository;
-}
 
 function mapTag(tag: Tag) {
   return tag
@@ -64,6 +65,7 @@ export function getTags(repository: DirectoryRepository): RequestHandler {
 
 export function tagOperation(
   logger: Logger,
+  directory: ServiceDirectory,
   eventService: EventService,
   repository: DirectoryRepository
 ): RequestHandler {
@@ -108,6 +110,13 @@ export function tagOperation(
         throw new InvalidOperationError('Resource URN is not valid.');
       }
 
+      const resourceUrl = await directory.getResourceUrl(urn);
+      if (!resourceUrl) {
+        throw new InvalidOperationError(
+          'Resource URL cannot be resolved. Associated API must be registered in the directory.'
+        );
+      }
+
       const targetResource = {
         tenantId,
         urn,
@@ -118,12 +127,7 @@ export function tagOperation(
       let result, event: DomainEvent;
       switch (tagRequest.operation) {
         case TAG_OPERATION_TAG: {
-          const {
-            tag,
-            resource,
-            tagged,
-            isNewResource,
-          } = await repository.applyTag(targetTag, targetResource);
+          const { tag, resource, tagged, isNewResource } = await repository.applyTag(targetTag, targetResource);
 
           result = {
             tagged,
@@ -200,7 +204,14 @@ export function getTaggedResources(repository: DirectoryRepository): RequestHand
   };
 }
 
-export function createResourceRouter({ logger, eventService, repository }: ResourceRouterProps) {
+interface ResourceRouterProps {
+  logger: Logger;
+  directory: ServiceDirectory;
+  eventService: EventService;
+  repository: DirectoryRepository;
+}
+
+export function createResourceRouter({ logger, directory, eventService, repository }: ResourceRouterProps) {
   const router = Router();
 
   router.get(
@@ -225,7 +236,7 @@ export function createResourceRouter({ logger, eventService, repository }: Resou
       body('resource').isObject(),
       body('resource.urn').isString().isLength({ min: 1, max: 2000 })
     ),
-    tagOperation(logger, eventService, repository)
+    tagOperation(logger, directory, eventService, repository)
   );
 
   router.get(
