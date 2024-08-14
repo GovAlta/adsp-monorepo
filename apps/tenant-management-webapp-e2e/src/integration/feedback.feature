@@ -37,8 +37,7 @@ Feature: Feedback
     When the user enters "https://abctest.com", "No" in Register site modal
     And the user clicks Register button in Register site modal
     Then the user "views" "https://abctest.com", "No" on Sites page
-    # CS-3422 Feedback site URLs aren't sorted alphabetically
-    # And the user views the site of "https://abctest.com", "No" is listed before the site of "https://mytest.com", "Yes"
+    And the user views the site of "https://abctest.com", "No" is listed before the site of "https://mytest.com", "Yes"
     # Edit a site with Cancel button
     When the user clicks "Edit" button for the site of "https://mytest.com", "Yes"
     Then the user views Edit registered site modal
