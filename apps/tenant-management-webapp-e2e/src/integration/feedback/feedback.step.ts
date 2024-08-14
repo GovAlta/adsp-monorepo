@@ -280,3 +280,15 @@ When('the user clicks Save button in Edit registered site modal', function () {
   feedbackObj.feedbackSitesEditRegisteredSiteModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
+
+Then(
+  'the user views the site of {string}, {string} is listed before the site of {string}, {string}',
+  function (siteUrl1, isAnonymous1, siteUrl2, isAnonymous2) {
+    findSite(siteUrl1, isAnonymous1).then((rowNumber1) => {
+      findSite(siteUrl2, isAnonymous2).then((rowNumber2) => {
+        const row2 = Number(JSON.stringify(rowNumber2));
+        expect(rowNumber1).to.be.lessThan(row2);
+      });
+    });
+  }
+);
