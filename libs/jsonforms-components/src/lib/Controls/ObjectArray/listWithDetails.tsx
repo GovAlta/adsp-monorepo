@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { ArrayLayoutProps, RankedTester, rankWith, uiTypeIs, and } from '@jsonforms/core';
-import { withJsonFormsArrayLayoutProps } from '@jsonforms/react';
+import { ArrayLayoutProps, RankedTester, rankWith, uiTypeIs, and, ControlElement } from '@jsonforms/core';
+import { withJsonFormsArrayLayoutProps, withJsonFormsDetailProps } from '@jsonforms/react';
 import { ListWithDetailControl } from './ListWithDetailControl';
 import { DeleteDialog } from './DeleteDialog';
 import { Visible } from '../../util';
@@ -32,6 +32,11 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
     setOpen(false);
     // eslint-disable-next-line
   }, [setOpen, path, rowData]);
+
+  if (props.uischema?.options?.detail?.elements) {
+    // eslint-disable-next-line
+    props.uischema['elements'] = props.uischema?.options?.detail?.elements;
+  }
 
   return (
     <Visible visible={visible}>
