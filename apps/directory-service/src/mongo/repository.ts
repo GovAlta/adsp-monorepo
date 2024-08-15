@@ -237,6 +237,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
           urn: '$resources.urn',
           name: '$resources.name',
           description: '$resources.description',
+          type: '$resources.type',
         },
       },
     ];
