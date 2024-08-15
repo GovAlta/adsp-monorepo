@@ -5,14 +5,13 @@ import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { FormDefinitions } from './definitions/definitions';
 import { Tab, Tabs } from '@components/Tabs';
-import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import AsideLinks from '@components/AsideLinks';
 import { HeadingDiv } from './styled-components';
 import BetaBadge from '@icons/beta-badge.svg';
-import { FetchRealmRoles } from '@store/tenant/actions';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { selectFormAppHost } from '@store/form/selectors';
 import { fetchDirectory } from '@store/directory/actions';
+import { getFormDefinitions } from '@store/form/action';
 
 const HelpLink = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -39,6 +38,16 @@ export const Form: FunctionComponent = () => {
   const searchParams = new URLSearchParams(document.location.search);
 
   const definitions = tenantName && searchParams.get('definitions');
+  const dispatch = useDispatch();
+
+  const formDefinitions = useSelector((state: RootState) => state.form?.definitions);
+
+  useEffect(() => {
+    if (formDefinitions && Object.keys(formDefinitions).length === 0) {
+      dispatch(getFormDefinitions());
+    }
+    //  eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Page>

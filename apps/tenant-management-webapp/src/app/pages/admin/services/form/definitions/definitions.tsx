@@ -62,12 +62,12 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   useEffect(() => {
     document.body.style.overflow = 'unset';
     dispatch(getConfigurationDefinitions());
-    if (!showDefsFromState) {
+    const hasFormDefinitions = Object.keys(formDefinitions).length > 0;
+
+    if (!showDefsFromState && !hasFormDefinitions) {
       dispatch(getFormDefinitions());
     }
-    if (!showDefsFromState) {
-      dispatch(getFormDefinitions());
-    }
+
     dispatch(fetchDirectory());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
