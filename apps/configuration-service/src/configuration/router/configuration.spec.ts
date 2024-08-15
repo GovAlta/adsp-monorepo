@@ -1160,7 +1160,7 @@ describe('router', () => {
 
   describe('deleteConfiguration', () => {
     it('can create handler', () => {
-      const handler = deleteConfiguration(loggerMock as Logger, eventServiceMock);
+      const handler = deleteConfiguration(apiId, loggerMock as Logger, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -1190,7 +1190,7 @@ describe('router', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteConfiguration(loggerMock as Logger, eventServiceMock);
+      const handler = deleteConfiguration(apiId, loggerMock as Logger, eventServiceMock);
       await handler(req, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
@@ -1229,7 +1229,7 @@ describe('router', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteConfiguration(loggerMock as Logger, eventServiceMock);
+      const handler = deleteConfiguration(apiId, loggerMock as Logger, eventServiceMock);
       await handler(req, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();

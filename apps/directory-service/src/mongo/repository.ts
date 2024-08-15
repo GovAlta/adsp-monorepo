@@ -366,6 +366,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
         {
           name: resource.name,
           description: resource.description,
+          type: resource.type,
         },
         { lean: true, new: true }
       )
