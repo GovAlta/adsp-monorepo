@@ -330,7 +330,7 @@ export const taskDeleted = (apiId: AdspId, user: User, task: TaskEntity): Domain
   return {
     tenantId: task.tenantId,
     name: TASK_DELETED,
-    timestamp: task.endedOn,
+    timestamp: new Date(),
     correlationId: getCorrelationId(taskResponse),
     context: mapContext(task),
     payload: {
