@@ -42,6 +42,9 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
   useEffect(() => {
     dispatch(getValueDefinitions());
   }, [dispatch]);
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, [definitions]);
 
   useEffect(() => {
     if (activeEdit) {
