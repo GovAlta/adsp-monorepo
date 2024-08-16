@@ -4,10 +4,10 @@ import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import { mapTask } from '../mapper';
 import { QueueEntity, TaskEntity } from '../model';
-import { TaskServiceRoles } from '../roles';
+import { DirectoryServiceRoles, TaskServiceRoles } from '../roles';
 import { getTasks, taskOperation, updateTask } from '../router';
 import { TaskPriority, TaskStatus } from '../types';
-import { createTaskRouter, getTask } from './task';
+import { createTaskRouter, deleteTask, getTask } from './task';
 
 describe('task', () => {
   const apiId = adspId`urn:ads:platform:task-service:v1`;
@@ -26,6 +26,7 @@ describe('task', () => {
     getTasks: jest.fn(),
     getTaskMetrics: jest.fn(),
     save: jest.fn((entity) => entity),
+    delete: jest.fn(),
   };
 
   const getConfigurationMock = jest.fn();
@@ -59,6 +60,7 @@ describe('task', () => {
     repositoryMock.getTask.mockReset();
     repositoryMock.getTasks.mockReset();
     repositoryMock.save.mockClear();
+    repositoryMock.delete.mockClear();
     eventServiceMock.send.mockReset();
   });
 
@@ -266,6 +268,30 @@ describe('task', () => {
         getConfiguration: getConfigurationMock,
       };
 
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.getTask).toHaveBeenCalledWith(queues, tenantId, task.id);
+      expect(req['task']).toBe(task);
+      expect(next).toHaveBeenCalledTimes(1);
+    });
+
+    it('can handle get task request with additional allowed role', async () => {
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      getConfigurationMock.mockResolvedValueOnce([{ queues }]);
+      repositoryMock.getTask.mockResolvedValueOnce(task);
+
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'user-1', roles: [DirectoryServiceRoles.ResourceResolver] },
+        params: { id: task.id },
+        query: {},
+        getConfiguration: getConfigurationMock,
+      };
+
+      const handler = getTask(repositoryMock, DirectoryServiceRoles.ResourceResolver);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.getTask).toHaveBeenCalledWith(queues, tenantId, task.id);
@@ -512,6 +538,67 @@ describe('task', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('deleteTask', () => {
+    const handler = deleteTask(apiId, eventServiceMock);
+
+    it('can create request handler', () => {
+      const result = deleteTask(apiId, eventServiceMock);
+      expect(result).toBeTruthy();
+    });
+
+    it('can handle delete request', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.Admin] },
+        task,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.delete.mockResolvedValueOnce(true);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+      expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+    });
+
+    it('can handle delete request and skip event', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.Admin] },
+        task,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.delete.mockResolvedValueOnce(false);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: [] },
+        task,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.delete.mockResolvedValueOnce(true);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
     });
   });
 });
