@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { TaskServiceRoles } from '../roles';
 import { TaskPriority, TaskStatus } from '../types';
 import { QueueEntity } from './queue';
@@ -20,6 +20,7 @@ describe('TaskEntity', () => {
     getTasks: jest.fn(),
     getTaskMetrics: jest.fn(),
     save: jest.fn((entity) => Promise.resolve(entity)),
+    delete: jest.fn(),
   };
 
   it('can be constructed', () => {
@@ -553,6 +554,31 @@ describe('TaskEntity', () => {
 
       entity.cancel(user);
       expect(() => entity.cancel(user)).toThrow(/Can only cancel tasks that are Pending or In Progress./);
+    });
+  });
+
+  describe('delete', () => {
+    it('it can delete task', async () => {
+      const user = { id: 'test', name: 'test-user', tenantId, roles: [TaskServiceRoles.Admin] } as User;
+      const entity = await TaskEntity.create(user, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      repositoryMock.delete.mockResolvedValue(true);
+      const result = await entity.delete(user);
+      expect(result).toBe(true);
+    });
+
+    it('it can throw for unauthorized', async () => {
+      const user = { id: 'test', name: 'test-user', tenantId, roles: [TaskServiceRoles.Admin] } as User;
+      const entity = await TaskEntity.create(user, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      repositoryMock.delete.mockResolvedValue(true);
+      expect(() => entity.delete({ ...user, roles: [] })).toThrow(UnauthorizedUserError);
     });
   });
 });

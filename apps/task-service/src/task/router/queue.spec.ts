@@ -48,6 +48,7 @@ describe('queue', () => {
     getTasks: jest.fn(),
     getTaskMetrics: jest.fn(),
     save: jest.fn((entity) => entity),
+    delete: jest.fn(),
   };
 
   const getConfigurationMock = jest.fn();

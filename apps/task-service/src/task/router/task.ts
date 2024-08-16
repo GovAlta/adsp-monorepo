@@ -1,4 +1,4 @@
-import { AdspId, DomainEvent, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   createValidationHandler,
   InvalidOperationError,
@@ -9,10 +9,18 @@ import {
 import { Request, RequestHandler, Response, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
 import { Logger } from 'winston';
-import { taskAssigned, taskCancelled, taskCompleted, taskPrioritySet, taskStarted, taskUpdated } from '../events';
+import {
+  taskAssigned,
+  taskCancelled,
+  taskCompleted,
+  taskDeleted,
+  taskPrioritySet,
+  taskStarted,
+  taskUpdated,
+} from '../events';
 import { TaskEntity } from '../model/task';
 import { TaskRepository } from '../repository';
-import { TaskServiceRoles } from '../roles';
+import { DirectoryServiceRoles, TaskServiceRoles } from '../roles';
 import { Task, TaskPriority, TaskServiceConfiguration } from '../types';
 import {
   TaskOperations,
@@ -63,7 +71,7 @@ export const getTasks =
   };
 
 export const getTask =
-  (repository: TaskRepository): RequestHandler =>
+  (repository: TaskRepository, ...roles: string[]): RequestHandler =>
   async (req, _res, next) => {
     try {
       const user = req.user;
@@ -77,7 +85,7 @@ export const getTask =
       const entity = await repository.getTask(queues, tenantId, id);
       if (!entity) {
         throw new NotFoundError('task', id);
-      } else if (!entity.queue?.canAccessTask(user)) {
+      } else if (!entity.queue?.canAccessTask(user) && !isAllowedUser(user, entity.tenantId, roles, true)) {
         throw new UnauthorizedUserError('access task', user);
       }
 
@@ -158,6 +166,24 @@ export const taskOperation =
     }
   };
 
+export const deleteTask =
+  (apiId: AdspId, eventService: EventService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const user = req.user;
+      const task: TaskEntity = req[TASK_KEY];
+
+      const deleted = await task.delete(user);
+
+      res.send({ deleted });
+      if (deleted) {
+        eventService.send(taskDeleted(apiId, user, task));
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
+
 export function createTaskRouter({
   logger: _logger,
   apiId,
@@ -181,8 +207,11 @@ export function createTaskRouter({
     ),
     getTasks(apiId, repository)
   );
-  router.get('/tasks/:id', validateIdHandler, getTask(repository), (req: Request, res: Response) =>
-    res.send(mapTask(apiId, req[TASK_KEY]))
+  router.get(
+    '/tasks/:id',
+    validateIdHandler,
+    getTask(repository, DirectoryServiceRoles.ResourceResolver),
+    (req: Request, res: Response) => res.send(mapTask(apiId, req[TASK_KEY]))
   );
   router.patch(
     '/tasks/:id',
@@ -203,6 +232,8 @@ export function createTaskRouter({
   );
 
   router.post('/tasks/:id', validateIdHandler, getTask(repository), taskOperation(apiId, eventService));
+
+  router.delete('/tasks/:id', validateIdHandler, getTask(repository), deleteTask(apiId, eventService));
 
   return router;
 }

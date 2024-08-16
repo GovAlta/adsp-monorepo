@@ -28,6 +28,7 @@ import {
   TaskPrioritySetDefinition,
   TaskStartedDefinition,
   TaskUpdatedDefinition,
+  TaskDeletedDefinition,
 } from './task';
 import { createRepositories } from './postgres';
 import { createCommentService } from './comment';
@@ -45,6 +46,8 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  instrumentAxios(logger);
 
   const COMMENT_TOPIC_TYPE_ID = 'task-comments';
 
@@ -91,6 +94,7 @@ const initializeApp = async (): Promise<express.Application> => {
         TaskStartedDefinition,
         TaskCompletedDefinition,
         TaskCancelledDefinition,
+        TaskDeletedDefinition,
       ],
       eventStreams: [
         {
@@ -128,6 +132,10 @@ const initializeApp = async (): Promise<express.Application> => {
               namespace: serviceId.service,
               name: TaskCancelledDefinition.name,
             },
+            {
+              namespace: serviceId.service,
+              name: TaskDeletedDefinition.name,
+            },
           ],
         },
       ],
@@ -142,6 +150,25 @@ const initializeApp = async (): Promise<express.Application> => {
               readerRoles: [],
               commenterRoles: [`${serviceId}:${TaskServiceRoles.TaskReader}`],
               securityClassification: 'protected a',
+            },
+          },
+        },
+        {
+          serviceId: adspId`urn:ads:platform:directory-service`,
+          configuration: {
+            [`${serviceId}:v1`]: {
+              resourceTypes: [
+                {
+                  type: 'task',
+                  matcher: '^\\/tasks\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+                  namePath: 'name',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: TaskDeletedDefinition.name,
+                    resourceIdPath: 'task.urn',
+                  },
+                },
+              ],
             },
           },
         },
