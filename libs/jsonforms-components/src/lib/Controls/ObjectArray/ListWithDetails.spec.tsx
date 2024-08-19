@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import { ListWithDetailControl, NonEmptyCellComponent } from './ListWithDetailControl';
 import { ControlElement, ArrayTranslations } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
+import { extractScopesFromUISchema } from './ListWithDetailControl';
 jest.mock('@jsonforms/react');
 
 class MockResizeObserver {
@@ -185,5 +186,65 @@ describe('Object List component', () => {
     render(<NonEmptyCellComponent {...props} />);
 
     expect(JsonFormsDispatch).toHaveBeenCalledTimes(2);
+  });
+
+  it('Can extract scope in the elements', () => {
+    const uiSchema = {
+      elements: [
+        {
+          type: 'VerticalLayout',
+          elements: [
+            {
+              type: 'Control',
+              scope: '#properties/mock-one',
+            },
+          ],
+        },
+      ],
+    };
+
+    const scopes = extractScopesFromUISchema(uiSchema);
+    expect(scopes.length).toBe(1);
+  });
+
+  it('Can extract scope in the options elements', () => {
+    const uiSchema = {
+      options: {
+        detail: {
+          elements: [
+            {
+              type: 'Control',
+              scope: '#properties/mock-one',
+            },
+          ],
+        },
+      },
+    };
+
+    const scopes = extractScopesFromUISchema(uiSchema);
+    expect(scopes.length).toBe(1);
+  });
+
+  it('Can extract scope in the options elements in depth', () => {
+    const uiSchema = {
+      options: {
+        detail: {
+          elements: [
+            {
+              type: 'VerticalLayout',
+              elements: [
+                {
+                  type: 'Control',
+                  scope: '#properties/mock-one',
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    const scopes = extractScopesFromUISchema(uiSchema);
+    expect(scopes.length).toBe(1);
   });
 });

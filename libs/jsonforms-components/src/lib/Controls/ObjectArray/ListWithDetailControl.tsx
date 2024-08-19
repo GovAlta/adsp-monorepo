@@ -37,8 +37,27 @@ import { Visible } from '../../util';
 export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport;
 
 // eslint-disable-next-line
-const extractScopesFromUISchema = (uischema: any): string[] => {
+export const extractScopesFromUISchema = (uischema: any): string[] => {
   const scopes: string[] = [];
+
+  // eslint-disable-next-line
+  if (uischema?.options?.detail?.elements) {
+    // eslint-disable-next-line
+    uischema?.options?.detail?.elements?.forEach((element: any) => {
+      if (element?.elements) {
+        // eslint-disable-next-line
+        element?.elements?.forEach((internalElement: any) => {
+          if (internalElement?.scope) {
+            scopes.push(internalElement?.scope);
+          }
+        });
+      } else {
+        if (element?.scope) {
+          scopes.push(element?.scope);
+        }
+      }
+    });
+  }
 
   if (uischema?.elements) {
     // eslint-disable-next-line
@@ -217,6 +236,25 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
           );
         })
       }
+
+      {
+        // eslint-disable-next-line
+        (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement) => {
+          return (
+            <JsonFormsDispatch
+              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+              key={rowPath}
+              schema={schema}
+              uischema={element}
+              path={rowPath}
+              enabled={enabled}
+              renderers={renderers}
+              cells={cells}
+            />
+          );
+        })
+      }
+
       {uiSchemaElementsForNotDefined?.elements?.length > 0 && (
         <JsonFormsDispatch
           schema={schema}

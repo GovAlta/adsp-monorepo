@@ -44,3 +44,38 @@ You can use this URN, for example, to parse out the file Id (the UUID) and downl
 ```
 https://file/v1/files/<file Id>/download
 ```
+
+### Retrieve and store files from your own file storage
+
+If in the use case where you would need to store and retrieve files from your own defined, file storage
+instead of using the [File service](/adsp-monorepo/tutorials/file-service/file-service.html) you can
+accomplish this by adding a React Context provided by ADSP Form service and injecting your own custom callback functions.
+
+In order to use the file upload control and be able to setup how and where files are stored and retrieved we
+need to add in a Context provided by ADSP as shown below as an example.
+
+```
+      <ContextProvider
+          fileManagement={{
+            fileList: metadata,
+            uploadFile: uploadFormFile,
+            downloadFile: downloadFormFile,
+            deleteFile: deleteFormFile,
+          }}
+        >
+          <JsonForms
+            ajv={createDefaultAjv()}
+            readonly={false}
+            schema={definition.dataSchema}
+            uischema={definition.uiSchema}
+            data={data}
+            validationMode="ValidateAndShow"
+            renderers={GoARenderers}
+            onChange={onChange}
+          />
+      </ContextProvider>
+```
+
+Under the Context there is a property called fileMangement that contains a few functions that you can add in with your own callback functions to perform upload, download and delete operations.
+
+To see an example of the usage, please goto the [Github repo](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/form-app/src/app/components/DraftForm.tsx)

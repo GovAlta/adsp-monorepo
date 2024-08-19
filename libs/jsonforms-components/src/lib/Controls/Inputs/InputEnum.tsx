@@ -50,11 +50,16 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
         }
       }),
     ];
+    const hasNonEmptyOptions = newOptions.some((option) => option.value !== '');
+
+    if (!hasNonEmptyOptions && newOptions.length === 1 && newOptions[0].value === '') {
+      return newOptions;
+    }
     if (newOptions && newOptions.length === 0) {
       newOptions.push({ label: '', value: '' });
     }
 
-    return newOptions;
+    return newOptions.filter((option) => option.value !== '');
   }, [registerData, options]);
 
   useEffect(() => {

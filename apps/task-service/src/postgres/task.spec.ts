@@ -384,4 +384,26 @@ describe('PostgresTaskRepository', () => {
       expect(result).toBeTruthy();
     });
   });
+
+  describe('delete', () => {
+    it('can delete task', async () => {
+      const queryMock = {
+        limit: jest.fn(() => queryMock),
+        where: jest.fn(() => queryMock),
+        delete: jest.fn(),
+      };
+
+      knexMock.mockReturnValueOnce(queryMock);
+      queryMock.delete.mockResolvedValueOnce(1);
+
+      const result = await repository.delete(
+        new TaskEntity(repository, queue, { tenantId, id: task.id, name: 'test-1', description: 'test-1' })
+      );
+      expect(result).toBe(true);
+      expect(queryMock.where).toHaveBeenCalledWith(
+        expect.objectContaining({ tenant: tenantId.toString(), id: task.id })
+      );
+      expect(queryMock.delete).toHaveBeenCalled();
+    });
+  });
 });

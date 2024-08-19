@@ -21,8 +21,10 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
   const [selectedSite, setSelectedSite] = useState<FeedbackSite>(defaultFeedbackSite);
 
   const sites = useSelector((state: RootState) => {
-    return state.feedback.sites.sort((a, b) =>
-      a.url.replace(/^https?:\/\//, '').localeCompare(b.url.replace(/^https?:\/\//, ''))
+    return (
+      state.feedback.sites?.sort((a, b) =>
+        a.url.replace(/^https?:\/\//, '').localeCompare(b.url.replace(/^https?:\/\//, ''))
+      ) || []
     );
   });
   const [isEdit, setIsEdit] = useState(false);
