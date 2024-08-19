@@ -183,4 +183,9 @@ export class TaskEntity implements Task {
     this.status = TaskStatus.Cancelled;
     return this.repository.save(this);
   }
+
+  @AssertRole('delete task', TaskServiceRoles.Admin)
+  delete(_user: User): Promise<boolean> {
+    return this.repository.delete(this);
+  }
 }

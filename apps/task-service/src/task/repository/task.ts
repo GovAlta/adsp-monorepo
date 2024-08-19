@@ -13,4 +13,5 @@ export interface TaskRepository {
   getTask(queues: Record<string, QueueEntity>, tenantId: AdspId, id: string): Promise<TaskEntity>;
   getTaskMetrics(tenantId: AdspId, criteria?: TaskCriteria): Promise<TaskMetrics[]>;
   save(entity: TaskEntity): Promise<TaskEntity>;
+  delete(entity: TaskEntity): Promise<boolean>;
 }

@@ -233,4 +233,13 @@ export class PostgresTaskRepository implements TaskRepository {
 
     return this.mapRecord(record, { [`${entity.queue.namespace}:${entity.queue.name}`]: entity.queue });
   }
+
+  async delete(entity: TaskEntity): Promise<boolean> {
+    const result = await this.knex<TaskRecord>('tasks')
+      .limit(1)
+      .where({ tenant: entity.tenantId.toString(), id: entity.id })
+      .delete();
+
+    return result === 1;
+  }
 }
