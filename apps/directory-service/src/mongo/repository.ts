@@ -237,6 +237,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
           urn: '$resources.urn',
           name: '$resources.name',
           description: '$resources.description',
+          type: '$resources.type',
         },
       },
     ];
@@ -366,6 +367,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
         {
           name: resource.name,
           description: resource.description,
+          type: resource.type,
         },
         { lean: true, new: true }
       )

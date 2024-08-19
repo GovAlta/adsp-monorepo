@@ -60,14 +60,10 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
   };
 
   const dispatch = useDispatch();
-  useEffect(() => {
-    document.body.style.overflow = 'initial';
-  }, []);
 
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
     document.body.style.borderRight = '';
-    document.body.style.overflow = 'initial';
   }, [dispatch]);
 
   useEffect(() => {

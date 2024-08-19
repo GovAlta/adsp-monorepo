@@ -179,6 +179,19 @@ export const TaskCancelledDefinition: DomainEventDefinition = {
   },
 };
 
+const TASK_DELETED = 'task-deleted';
+export const TaskDeletedDefinition: DomainEventDefinition = {
+  name: TASK_DELETED,
+  description: '',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      task: taskSchema,
+      deletedBy: userSchema,
+    },
+  },
+};
+
 function mapContext(task: Task): Record<string, string | number | boolean> {
   return {
     queueNamespace: task.queue.namespace,
@@ -308,6 +321,21 @@ export const taskCancelled = (apiId: AdspId, user: User, task: TaskEntity, reaso
       task: taskResponse,
       cancelledBy: mapUser(user),
       reason,
+    },
+  };
+};
+
+export const taskDeleted = (apiId: AdspId, user: User, task: TaskEntity): DomainEvent => {
+  const taskResponse = mapTask(apiId, task);
+  return {
+    tenantId: task.tenantId,
+    name: TASK_DELETED,
+    timestamp: new Date(),
+    correlationId: getCorrelationId(taskResponse),
+    context: mapContext(task),
+    payload: {
+      task: taskResponse,
+      deletedBy: mapUser(user),
     },
   };
 };

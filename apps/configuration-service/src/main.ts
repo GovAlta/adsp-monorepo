@@ -88,7 +88,12 @@ const initializeApp = async (): Promise<express.Application> => {
                   {
                     type: 'configuration',
                     matcher: '^\\/configuration\\/[a-zA-Z0-9-_ ]{1,50}\\/[a-zA-Z0-9-_ ]{1,50}$',
-                    namePath: 'name'
+                    namePath: 'name',
+                    deleteEvent: {
+                      namespace: serviceId.service,
+                      name: ConfigurationDeletedDefinition.name,
+                      resourceIdPath: 'urn',
+                    },
                   },
                 ],
               },
