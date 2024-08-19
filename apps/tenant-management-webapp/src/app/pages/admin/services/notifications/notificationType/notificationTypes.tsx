@@ -146,7 +146,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     sms: <Chat style={{ color: '#666666' }} />,
     bot: <Slack style={{ color: '#666666' }} />,
   };
-
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
   useEffect(() => {
     // if an event is selected for editing
     if (selectedEvent) {

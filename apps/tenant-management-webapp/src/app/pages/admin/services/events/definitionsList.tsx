@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
@@ -16,6 +16,9 @@ interface EventDefinitionProps {
 
 const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ definition, onEdit, onDelete }) => {
   const [showDetails, setShowDetails] = useState(false);
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
 
   return (
     <>

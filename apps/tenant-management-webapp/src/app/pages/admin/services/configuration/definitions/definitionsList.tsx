@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useMemo } from 'react';
+import React, { FunctionComponent, useEffect, useMemo } from 'react';
 import { NameDiv, TableDiv } from '../styled-components';
 import DataTable from '@components/DataTable';
 import { ConfigurationDefinitionItemComponent } from './definitionListItem';
@@ -24,6 +24,9 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
     return {};
   }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
   const isCoreDefinition = () => {
     let isCore = false;
     const definitionsLength = Object.keys(definitions).length;
