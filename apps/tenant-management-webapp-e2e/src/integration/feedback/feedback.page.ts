@@ -55,16 +55,120 @@ class feedbackPage {
     return cy.xpath('//table[@data-testid="feedbacks-sites-table"]/tbody');
   }
 
-  feebackSitesEditButton(rowNumber) {
+  feedbackSitesEditButton(rowNumber) {
     return cy.xpath(
       `(//table[@data-testid="feedbacks-sites-table"]//*[contains(@data-testid, "site-edit")])[${rowNumber}]`
     );
   }
 
-  feebackSitesDeleteButton(rowNumber) {
+  feedbackSitesDeleteButton(rowNumber) {
     return cy.xpath(
       `(//table[@data-testid="feedbacks-sites-table"]//*[contains(@data-testid, "site-delete")])[${rowNumber}]`
     );
+  }
+
+  feedbackBadge() {
+    return cy.xpath('//div[@class="adsp-fb-badge"]');
+  }
+
+  feedbackStartModal() {
+    return cy.xpath('//div[@class="adsp-fb-form-container adsp-fb-start" and @data-show="true"]');
+  }
+
+  feedbackMainModal() {
+    return cy.xpath('//div[@class="adsp-fb-form-container adsp-fb-main" and @data-show="true"]');
+  }
+
+  feedbackStartModalCloseBtn() {
+    return cy.xpath(
+      '//div[@class="adsp-fb-form-container adsp-fb-start" and @data-show="true"]//img[@class="feedback-close-button"]'
+    );
+  }
+
+  feedbackStartModalStartBtn() {
+    return cy.xpath(
+      '//div[@class="adsp-fb-form-container adsp-fb-start" and @data-show="true"]//button[contains(text(),"Start")]'
+    );
+  }
+
+  feedbackMainModalRatingVeryDifficult() {
+    return cy.xpath('//div[@class="rating-div"]/img[@alt="Very Difficult"]');
+  }
+
+  feedbackMainModalRatingDifficult() {
+    return cy.xpath('//div[@class="rating-div"]/img[@alt="Difficult"]');
+  }
+
+  feedbackMainModalRatingVeryNeutral() {
+    return cy.xpath('//div[@class="rating-div"]/img[@alt="Neutral"]');
+  }
+
+  feedbackMainModalRatingEasy() {
+    return cy.xpath('//div[@class="rating-div"]/img[@alt="Easy"]');
+  }
+
+  feedbackMainModalRatingVeryEasy() {
+    return cy.xpath('//div[@class="rating-div"]/img[@alt="Very Easy"]');
+  }
+
+  feedbackMainModalRating(ratingName) {
+    return cy.xpath(`//div[@class="rating-div"]/img[@alt="${ratingName}"]`);
+  }
+
+  feedbackMainModalAdditionalCommentsLabel() {
+    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="adsp-fb-form-comment"]/label/b');
+  }
+
+  feedbackMainModalAdditionalCommentsLabelRequiredOrOptional() {
+    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="adsp-fb-form-comment"]/label/span');
+  }
+
+  feedbackMainModalAdditionalCommentsTextField() {
+    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="adsp-fb-form-comment"]/textarea');
+  }
+
+  feedbackMainModalTechnicalIssuesLabel() {
+    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="radio-container"]/label/b');
+  }
+
+  feedbackMainModalTechnicalIssuesLabelRequiredOrOptional() {
+    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="radio-container"]/label/span');
+  }
+
+  feedbackMainModalTechnicalIssuesRadios() {
+    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="radio-container"]/div[@class="radios"]');
+  }
+
+  feedbackMainModalTechnicalIssuesYesRadio() {
+    return cy.xpath(
+      '//div[@class="adsp-fb-content"]/div[@class="radio-container"]/div[@class="radios"]//input[@id="yes"]'
+    );
+  }
+
+  feedbackMainModalTechnicalIssuesNoRadio() {
+    return cy.xpath(
+      '//div[@class="adsp-fb-content"]/div[@class="radio-container"]/div[@class="radios"]//input[@id="no"]'
+    );
+  }
+
+  feedbackMainModalTechnicalIssuesTextField() {
+    return cy.xpath('//div[@class="adsp-fb-content"]//textarea[@id="technicalComment"]');
+  }
+
+  feedbackMainModalCancelButton() {
+    return cy.xpath('//div[@class="adsp-fb-actions"]//button[contains(text(), "Cancel")]');
+  }
+
+  feedbackMainModalSubmitButton() {
+    return cy.xpath('//div[@class="adsp-fb-actions"]//button[contains(text(), "Submit")]');
+  }
+
+  feedbackMainModalSuccessMessage() {
+    return cy.xpath('//h3[@class="h3-success"]');
+  }
+
+  feedbackMainModalSuccessMessageCloseBtn() {
+    return cy.xpath('//button[@id="feedback-close-success"]');
   }
 }
 
