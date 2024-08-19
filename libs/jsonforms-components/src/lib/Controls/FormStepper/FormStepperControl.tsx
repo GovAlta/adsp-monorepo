@@ -55,6 +55,17 @@ export interface FormStepperOptionProps {
 
 const summaryLabel = 'Summary';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getProperty: any = (obj: any, propName: string) => {
+  if (obj[propName] !== undefined) return obj[propName];
+  for (const key in obj) {
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      const result = getProperty(obj[key], propName);
+      if (result !== undefined) return result;
+    }
+  }
+};
+
 export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, path, cells, renderers, visible, enabled, t } = props;
 
@@ -163,17 +174,6 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
 
   const readOnly = componentProps?.readOnly ?? false;
   const isFormSubmitted = enumerators?.isFormSubmitted ?? false;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getProperty: any = (obj: any, propName: string) => {
-    if (obj[propName] !== undefined) return obj[propName];
-    for (const key in obj) {
-      if (typeof obj[key] === 'object' && obj[key] !== null) {
-        const result = getProperty(obj[key], propName);
-        if (result !== undefined) return result;
-      }
-    }
-  };
 
   return (
     <div data-testid="form-stepper-test-wrapper">
