@@ -7,7 +7,7 @@ import { ControlProps, ControlElement } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Visible } from '../util';
 import { RenderLink } from './LinkControl';
-
+import { CalculationWidget } from './CalculationWidget';
 interface OptionProps {
   ariaLabel?: string;
   help?: string | string[];
@@ -17,6 +17,7 @@ interface OptionProps {
   height?: string;
   width?: string;
   link?: string;
+  calculate?: string;
 }
 
 interface CustomControlElement extends ControlElement {
@@ -31,6 +32,18 @@ interface CustomControlProps extends ControlProps {
 const HelpContentReviewComponent = (): JSX.Element => {
   return <></>;
 };
+const CustomCalculationWidget: React.FC<any> = (props) => {
+  const { formData, onChange } = props;
+
+  return (
+    <CalculationWidget
+      a={formData?.a}
+      b={formData?.b}
+      expression="a + b" // Modify this expression as needed
+      onResultChange={(result) => onChange(result)}
+    />
+  );
+};
 
 export const HelpContentComponent = ({
   isParent = true,
@@ -39,7 +52,7 @@ export const HelpContentComponent = ({
   const labelClass = isParent ? 'parent-label' : 'child-label';
   const marginClass = isParent ? 'parent-margin' : 'child-margin';
   // eslint-disable-next-line
-  const { uischema, visible, label } = props;
+  const { uischema, visible, label, data } = props;
   const link = uischema?.options?.link;
   const renderHelp = () =>
     Array.isArray(uischema?.options?.help) ? (
@@ -85,6 +98,11 @@ export const HelpContentComponent = ({
           )}
           {uischema?.elements && uischema?.elements.length > 0 && uischema.options?.variant !== 'details' && (
             <HelpContents elements={uischema.elements} isParent={false} />
+          )}
+          {uischema?.options?.calculate && (
+            <div>
+              <CustomCalculationWidget formData={data} />
+            </div>
           )}
         </div>
       </HelpContentDiv>
