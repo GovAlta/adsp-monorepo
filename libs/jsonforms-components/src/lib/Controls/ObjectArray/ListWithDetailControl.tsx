@@ -42,6 +42,7 @@ export const extractScopesFromUISchema = (uischema: any): string[] => {
 
   // eslint-disable-next-line
   if (uischema?.options?.detail?.elements) {
+    // eslint-disable-next-line
     uischema?.options?.detail?.elements?.forEach((element: any) => {
       if (element?.elements) {
         // eslint-disable-next-line
