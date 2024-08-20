@@ -50,12 +50,15 @@ export class FormDefinitionEntity implements FormDefinition {
   }
 
   public canAccessDefinition(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, [
-      FormServiceRoles.Admin,
-      FormServiceRoles.IntakeApp,
-      ...this.applicantRoles,
-      ...this.clerkRoles,
-    ]);
+    return (
+      this.anonymousApply ||
+      isAllowedUser(user, this.tenantId, [
+        FormServiceRoles.Admin,
+        FormServiceRoles.IntakeApp,
+        ...this.applicantRoles,
+        ...this.clerkRoles,
+      ])
+    );
   }
 
   public canApply(user: User): boolean {
