@@ -1,10 +1,12 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Category, UISchemaElement } from '@jsonforms/core';
+import { Category, SchemaBasedCondition, UISchemaElement } from '@jsonforms/core';
 import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
-import { FormStepperOptionProps } from './FormStepperControl';
+import FormStepperControl, { FormStepperOptionProps, getProperty } from './FormStepperControl';
+import { StatusTable, StepInputStatus } from './StepperContext';
+import { useState } from 'react';
 export const ContextProvider = ContextProviderFactory();
 
 /**
@@ -604,5 +606,107 @@ describe('Form Stepper Control', () => {
     expect(prevButton.textContent).toBe(categorization.options?.previousButtonLabel);
     expect(nextButton1.getAttribute('type')).toBe(categorization.options?.nextButtonType);
     expect(prevButton.getAttribute('type')).toBe(categorization.options?.previousButtonType);
+  });
+
+  it('should exclude a field when the condition hides it', () => {
+    const testData = {
+      name: { firstName: 'John', lastName: 'Doe' },
+    };
+
+    const fields = [
+      {
+        type: 'Control',
+        label: 'first',
+        scope: '#/properties/name/properties/firstName',
+      },
+      {
+        type: 'Control',
+        label: 'last',
+        scope: '#/properties/name/properties/lastName',
+        rule: {
+          condition: {
+            scope: '#/properties/name/properties/lastName',
+            schema: { const: true },
+          },
+        },
+      },
+    ];
+
+    const result = fields.filter((field) => {
+      const conditionProps = field.rule?.condition as SchemaBasedCondition;
+      if (conditionProps && testData) {
+        const canHideControlParts = conditionProps?.scope?.split('/');
+        expect(canHideControlParts).toHaveLength(5);
+        const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts.length - 1];
+        expect(canHideControl).toBe('lastName');
+        const isHidden = getProperty(testData, canHideControl);
+        return !isHidden;
+      }
+      return field;
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].label).toBe('first');
+  });
+
+  it('should return property from flat object', () => {
+    const obj = {
+      name: 'John',
+      age: 30,
+    };
+    const result = getProperty(obj, 'name');
+    expect(result).toBe('John');
+  });
+  it('should return property from nested object', () => {
+    const obj = {
+      user: {
+        name: 'John',
+        details: {
+          age: 30,
+          city: 'Test City',
+        },
+      },
+    };
+    const result = getProperty(obj, 'city');
+    expect(result).toBe('Test City');
+  });
+  it('should split scope into parts', () => {
+    const conditionProps = { scope: '#/properties/name/properties/firstname' };
+    const canHideControlParts = conditionProps.scope.split('/');
+    expect(canHideControlParts).toEqual(['#', 'properties', 'name', 'properties', 'firstname']);
+  });
+
+  it('should include a field when the condition is invalid', () => {
+    const testData = {
+      name: { firstName: 'John', lastName: 'Doe' },
+    };
+
+    const fields = [
+      {
+        type: 'Control',
+        label: 'first',
+        scope: '#/properties/name/properties/firstName',
+        rule: {
+          condition: {
+            scope: '#/properties/invalidPath',
+            schema: { const: true },
+          },
+        },
+      },
+    ];
+
+    const result = fields.filter((field) => {
+      const conditionProps = field.rule?.condition as SchemaBasedCondition;
+      if (conditionProps && testData) {
+        const canHideControlParts = conditionProps?.scope?.split('/');
+        const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts.length - 1];
+        const isHidden = getProperty(testData, canHideControl);
+        return !isHidden;
+      }
+      return field;
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].label).toBe('first');
   });
 });
