@@ -2,6 +2,7 @@ import * as express from 'express';
 import { readFile } from 'fs';
 import { promisify } from 'util';
 import * as passport from 'passport';
+import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
@@ -170,6 +171,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
+  passport.use('anonymous', new AnonymousStrategy());
 
   passport.serializeUser(function (user, done) {
     done(null, user);
@@ -185,7 +187,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(
     '/form',
     metricsHandler,
-    passport.authenticate(['core', 'tenant'], { session: false }),
+    passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler,
     configurationHandler
   );
