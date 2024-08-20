@@ -47,14 +47,14 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
 
     const pipeline: PipelineStage[] = [
       { $match: query },
-      { $sort: { namespace: 1, name: 1, tenant: 1, revision: -1 } },
+      { $sort: { namespace: 1, name: 1, tenant: 1, revision: 1 } },
       {
         $group: {
           _id: { namespace: '$namespace', name: '$name', tenant: '$tenant' },
-          revision: { $first: '$revision' },
-          created: { $first: '$created' },
-          lastUpdated: { $first: '$lastUpdated' },
-          configuration: { $first: '$configuration' },
+          revision: { $last: '$revision' },
+          created: { $last: '$created' },
+          lastUpdated: { $last: '$lastUpdated' },
+          configuration: { $last: '$configuration' },
         },
       },
     ];
