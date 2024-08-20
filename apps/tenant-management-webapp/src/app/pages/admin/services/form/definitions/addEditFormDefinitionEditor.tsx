@@ -695,25 +695,26 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </div>
 
                   <div>
-                    <h3>Security Classification</h3>
-                    {/* The style below is to fix an UI component bug */}
-                    <div style={{ paddingLeft: '3px' }}>
-                      <GoADropdown
-                        name="securityClassifications"
-                        width="25rem"
-                        value={definition?.securityClassification || ''}
-                        relative={true}
-                        onChange={(name: string, value: SecurityClassification) => {
-                          definition.securityClassification = value;
-                          setDefinition({ ...definition });
-                        }}
-                      >
-                        <GoADropdownItem value={SecurityClassification.Public} label="Public" />
-                        <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
-                        <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
-                        <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
-                      </GoADropdown>
-                    </div>
+                    <GoAFormItem error={''} label="Security classification">
+                      {/* The style below is to fix an UI component bug */}
+                      <div style={{ paddingLeft: '3px' }}>
+                        <GoADropdown
+                          name="securityClassifications"
+                          width="25rem"
+                          value={definition?.securityClassification || ''}
+                          relative={true}
+                          onChange={(name: string, value: SecurityClassification) => {
+                            definition.securityClassification = value;
+                            setDefinition({ ...definition });
+                          }}
+                        >
+                          <GoADropdownItem value={SecurityClassification.Public} label="Public" />
+                          <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                          <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                          <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
+                        </GoADropdown>
+                      </div>
+                    </GoAFormItem>
                   </div>
                   <h3>Submission</h3>
                   <FlexRow>
