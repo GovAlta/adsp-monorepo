@@ -39,7 +39,7 @@ const CustomCalculationWidget: React.FC<any> = (props) => {
     <CalculationWidget
       a={formData?.a}
       b={formData?.b}
-      expression="a + b" // Modify this expression as needed
+      expression={props?.express}
       onResultChange={(result) => onChange(result)}
     />
   );
@@ -101,7 +101,7 @@ export const HelpContentComponent = ({
           )}
           {uischema?.options?.calculate && (
             <div>
-              <CustomCalculationWidget formData={data} />
+              <CustomCalculationWidget formData={data} express={uischema?.options?.calculate} />
             </div>
           )}
         </div>
