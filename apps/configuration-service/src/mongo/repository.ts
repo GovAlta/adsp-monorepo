@@ -31,12 +31,23 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     after?: string
   ): Promise<Results<ConfigurationEntity<C>>> {
     const skip = decodeAfter(after);
+
     const tenant = criteria.tenantIdEquals?.toString() || { $exists: false };
-    const query = { namespace: criteria.namespaceEquals, tenant };
+    const query: Record<string, unknown> = { tenant };
+    if (criteria.namespaceEquals) {
+      query.namespace = criteria.namespaceEquals;
+    }
+
+    if (criteria.nameContains) {
+      query.name = {
+        $regex: criteria.nameContains,
+        $options: 'i',
+      };
+    }
 
     const pipeline: PipelineStage[] = [
       { $match: query },
-      { $sort: { revision: -1 } },
+      { $sort: { namespace: 1, name: 1, tenant: 1, revision: -1 } },
       {
         $group: {
           _id: { namespace: '$namespace', name: '$name', tenant: '$tenant' },
@@ -52,14 +63,15 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
 
     return {
       results: docs.map(
-        ({ _id, ...result}) =>
+        ({ _id, ...result }) =>
           new ConfigurationEntity<C>(
             _id.namespace,
             _id.name,
             this.logger,
             this,
             this.validationService,
-            result
+            result,
+            criteria.tenantIdEquals
           )
       ),
       page: {
