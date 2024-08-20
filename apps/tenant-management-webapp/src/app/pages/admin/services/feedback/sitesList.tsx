@@ -47,7 +47,7 @@ interface SitesListComponentProps {
 }
 
 const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit, onDelete }) => {
-  const sites = useSelector((state: RootState) => state.feedback.sites);
+  const sites = useSelector((state: RootState) => state.feedback?.sites || []);
   return (
     <div>
       {!sites.length && renderNoItem('feedback sites')}

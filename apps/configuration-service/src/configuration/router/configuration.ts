@@ -476,7 +476,7 @@ export const configurationOperations =
     }
   };
 
-export function deleteConfiguration(logger: Logger, eventService: EventService): RequestHandler {
+export function deleteConfiguration(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -490,7 +490,7 @@ export function deleteConfiguration(logger: Logger, eventService: EventService):
       res.send({ deleted });
       if (deleted) {
         eventService.send(
-          configurationDeleted(user, configuration.tenantId, configuration.namespace, configuration.name)
+          configurationDeleted(apiId, user, configuration.tenantId, configuration.namespace, configuration.name)
         );
       }
 
@@ -619,7 +619,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
-    deleteConfiguration(logger, eventService)
+    deleteConfiguration(apiId, logger, eventService)
   );
 
   router.get(

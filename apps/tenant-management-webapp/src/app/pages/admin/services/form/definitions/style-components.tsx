@@ -45,3 +45,7 @@ export const Anchor = styled.div`
 export const LoadMoreWrapper = styled.div`
   padding-bottom: var(--goa-space-4xl);
 `;
+
+export const H3 = styled.h3`
+  margin-top: 2rem !important;
+`;

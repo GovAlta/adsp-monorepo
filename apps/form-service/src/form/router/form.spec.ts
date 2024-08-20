@@ -1,4 +1,4 @@
-import { adspId, Channel, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { adspId, Channel, GoAError, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError, ValidationService } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import axios from 'axios';
@@ -206,7 +206,7 @@ describe('form router', () => {
   });
 
   describe('getFormDefinitions', () => {
-    it('can get definitions', async () => {
+    it('calls next with error', async () => {
       const user = {
         tenantId,
         id: 'tester',
@@ -219,83 +219,13 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const configuration = { test: definition };
-      req.getConfiguration.mockResolvedValueOnce([configuration]);
       await getFormDefinitions(req as unknown as Request, res as unknown as Response, next);
 
-      expect(req.getConfiguration).toHaveBeenCalled();
-      expect(res.send).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ id: 'test', name: 'test-form-definition' })])
-      );
-    });
-
-    it('cannot get definitions with error', async () => {
-      const user = {
-        tenantId,
-        id: 'tester',
-        roles: ['test-applicant'],
-      };
-      const req = {
-        user,
-        getConfiguration: jest.fn(),
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      req.getConfiguration.mockResolvedValueOnce(null);
-      await getFormDefinitions(req as unknown as Request, res as unknown as Response, next);
-
-      expect(req.getConfiguration).toHaveBeenCalled();
-      expect(res.send).not.toBeCalled();
-      expect(next).toHaveBeenCalledWith(expect.any(Error));
-    });
-    it('can filter out definitions not accessible to user', async () => {
-      const user = {
-        tenantId,
-        id: 'tester',
-        roles: [],
-      };
-      const req = {
-        user,
-        getConfiguration: jest.fn(),
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const configuration = { test: definition };
-      req.getConfiguration.mockResolvedValueOnce([configuration]);
-      await getFormDefinitions(req as unknown as Request, res as unknown as Response, next);
-
-      expect(req.getConfiguration).toHaveBeenCalled();
-      expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([]));
+      expect(next).toHaveBeenCalledWith(expect.any(GoAError));
     });
   });
 
   describe('getFormDefinition', () => {
-    it('can get definition', async () => {
-      const user = {
-        tenantId,
-        id: 'tester',
-        roles: ['test-applicant'],
-      };
-      const req = {
-        user,
-        params: { definitionId: 'test' },
-        getServiceConfiguration: jest.fn(),
-        getConfiguration: jest.fn(),
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const configuration = { test: definition };
-      req.getServiceConfiguration.mockResolvedValueOnce([]);
-      req.getConfiguration.mockResolvedValueOnce([configuration]);
-      await getFormDefinition(req as unknown as Request, res as unknown as Response, next);
-
-      expect(req.getConfiguration).toHaveBeenCalled();
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'test-form-definition' }));
-    });
-
     it('can get definition from namespace', async () => {
       const user = {
         tenantId,
@@ -357,11 +287,9 @@ describe('form router', () => {
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([]);
-      req.getConfiguration.mockResolvedValueOnce([{}]);
       await getFormDefinition(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalled();
-      expect(req.getConfiguration).toHaveBeenCalled();
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });

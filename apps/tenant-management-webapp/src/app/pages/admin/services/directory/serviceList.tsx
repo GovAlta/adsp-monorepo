@@ -27,6 +27,9 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
 
     setShowDetails(!showDetails);
   };
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
   const elementIndicator = useSelector((state: RootState) => {
     return state?.session?.elementIndicator;
   });

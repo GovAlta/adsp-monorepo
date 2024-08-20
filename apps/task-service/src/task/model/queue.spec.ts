@@ -168,6 +168,7 @@ describe('QueueEntity', () => {
       getTasks: jest.fn(),
       getTaskMetrics: jest.fn(),
       save: jest.fn(),
+      delete: jest.fn(),
     };
 
     beforeEach(() => {

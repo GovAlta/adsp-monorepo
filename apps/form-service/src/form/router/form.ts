@@ -8,8 +8,14 @@ import {
   UnauthorizedUserError,
   ServiceDirectory,
   TokenProvider,
+  GoAError,
 } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import {
+  assertAuthenticatedHandler,
+  createValidationHandler,
+  InvalidOperationError,
+  NotFoundError,
+} from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, param, query } from 'express-validator';
 import { NotificationService } from '../../notification';
@@ -109,28 +115,14 @@ export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntit
 
 export const getFormDefinitions: RequestHandler = async (req, res, next) => {
   try {
-    const user = req.user;
-
-    const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-    const definitions = Object.entries(configuration)
-      .filter(([_id, entity]) => entity.canAccessDefinition(user))
-      .map(([_id, entity]) => mapFormDefinition(entity));
-    res.send(definitions);
+    throw new GoAError('Definitions endpoint no longer supported.', { statusCode: 410 });
   } catch (err) {
     next(err);
   }
 };
 
 async function getDefinitionFromConfiguration(req: Request, definitionId: string): Promise<FormDefinitionEntity> {
-  let [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId);
-
-  // TODO: Remove after configuration is transitioned to form-service namespace.
-  if (!definition) {
-    const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
-
-    definition =
-      configuration[Object.keys(configuration).find((key) => key.toLowerCase() === definitionId.toLowerCase())] ?? null;
-  }
+  const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId);
 
   if (!definition) {
     throw new NotFoundError('form definition', definitionId);
@@ -538,6 +530,7 @@ export function createFormRouter({
 
   router.get(
     '/forms',
+    assertAuthenticatedHandler,
     createValidationHandler(
       ...checkSchema(
         {
@@ -549,37 +542,9 @@ export function createFormRouter({
     ),
     findForms(apiId, repository)
   );
-
-  router.get(
-    '/forms/:formId/submissions/:submissionId',
-    createValidationHandler(
-      param('formId').isUUID(),
-      param('submissionId').isUUID(),
-      getFormSubmission(apiId, submissionRepository)
-    )
-  );
-  router.post(
-    '/forms/:formId/submissions/:submissionId',
-    createValidationHandler(
-      body('dispositionStatus').isString().isLength({ min: 1 }),
-      body('dispositionReason').isString().isLength({ min: 1 })
-    ),
-    updateFormSubmissionDisposition(apiId, eventService, repository, submissionRepository)
-  );
-
-  router.get(
-    '/forms/:formId/submissions',
-    createValidationHandler(
-      query('criteria')
-        .optional()
-        .custom(async (value: string) => {
-          validateCriteria(value);
-        })
-    ),
-    findFormSubmissions(apiId, submissionRepository, repository)
-  );
   router.post(
     '/forms',
+    assertAuthenticatedHandler,
     createValidationHandler(
       body('definitionId').isString().isLength({ min: 1, max: 50 }),
       body('applicant.id').optional().isString(),
@@ -589,11 +554,16 @@ export function createFormRouter({
     createForm(apiId, repository, eventService, notificationService, commentService)
   );
 
-  router.get('/forms/:formId', createValidationHandler(param('formId').isUUID()), getForm(repository), (req, res) =>
-    res.send(mapForm(apiId, req[FORM]))
+  router.get(
+    '/forms/:formId',
+    assertAuthenticatedHandler,
+    createValidationHandler(param('formId').isUUID()),
+    getForm(repository),
+    (req, res) => res.send(mapForm(apiId, req[FORM]))
   );
   router.post(
     '/forms/:formId',
+    assertAuthenticatedHandler,
     createValidationHandler(
       param('formId').isUUID(),
       body('operation').isIn([
@@ -617,6 +587,7 @@ export function createFormRouter({
   );
   router.delete(
     '/forms/:formId',
+    assertAuthenticatedHandler,
     createValidationHandler(param('formId').isUUID()),
     getForm(repository),
     deleteForm(apiId, eventService, fileService, notificationService)
@@ -624,6 +595,7 @@ export function createFormRouter({
 
   router.get(
     '/forms/:formId/data',
+    assertAuthenticatedHandler,
     createValidationHandler(
       param('formId').isUUID(),
       query('code').optional().isString().isLength({ min: 1, max: 10 })
@@ -631,9 +603,9 @@ export function createFormRouter({
     getForm(repository),
     accessForm(notificationService)
   );
-
   router.put(
     '/forms/:formId/data',
+    assertAuthenticatedHandler,
     createValidationHandler(
       param('formId').isUUID(),
       body('data').optional({ nullable: true }).isObject(),
@@ -641,6 +613,38 @@ export function createFormRouter({
     ),
     getForm(repository),
     updateFormData
+  );
+
+  router.get(
+    '/forms/:formId/submissions',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      query('criteria')
+        .optional()
+        .custom(async (value: string) => {
+          validateCriteria(value);
+        })
+    ),
+    findFormSubmissions(apiId, submissionRepository, repository)
+  );
+
+  router.get(
+    '/forms/:formId/submissions/:submissionId',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('formId').isUUID(),
+      param('submissionId').isUUID(),
+      getFormSubmission(apiId, submissionRepository)
+    )
+  );
+  router.post(
+    '/forms/:formId/submissions/:submissionId',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      body('dispositionStatus').isString().isLength({ min: 1 }),
+      body('dispositionReason').isString().isLength({ min: 1 })
+    ),
+    updateFormSubmissionDisposition(apiId, eventService, repository, submissionRepository)
   );
 
   return router;

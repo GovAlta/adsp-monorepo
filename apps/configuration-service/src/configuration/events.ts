@@ -155,6 +155,7 @@ export const configurationUpdated = (
 });
 
 export const configurationDeleted = (
+  apiId: AdspId,
   deletedBy: User,
   tenantId: AdspId,
   namespace: string,
@@ -175,6 +176,7 @@ export const configurationDeleted = (
       name: deletedBy.name,
       id: deletedBy.id,
     },
+    urn: `${apiId}:/configuration/${namespace}/${name}`,
   },
 });
 

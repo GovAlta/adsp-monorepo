@@ -28,11 +28,13 @@ export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> =
         </tr>
       </thead>
       <tbody>
-        {Object.keys(newTemplates).map((templateName) => {
-          return (
-            <FormDefinitionItem key={templateName} formDefinition={newTemplates[templateName]} onDelete={onDelete} />
-          );
-        })}
+        {Object.keys(newTemplates)
+          .sort()
+          .map((templateName) => {
+            return (
+              <FormDefinitionItem key={templateName} formDefinition={newTemplates[templateName]} onDelete={onDelete} />
+            );
+          })}
       </tbody>
     </DataTable>
   );

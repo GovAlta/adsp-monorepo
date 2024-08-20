@@ -111,6 +111,27 @@ describe('FormDefinitionEntity', () => {
       } as User);
       expect(result).toBe(false);
     });
+
+    it('can return true for anonymous apply form', () => {
+      const entity = new FormDefinitionEntity(validationService, tenantId, {
+        id: 'test',
+        name: 'test-form-definition',
+        description: null,
+        formDraftUrlTemplate: 'https://my-form/{{ id }}',
+        anonymousApply: true,
+        applicantRoles: null,
+        assessorRoles: null,
+        clerkRoles: null,
+        dataSchema: null,
+        submissionRecords: false,
+        submissionPdfTemplate: '',
+        supportTopic: false,
+        queueTaskToProcess: {} as QueueTaskToProcess,
+      });
+
+      const result = entity.canAccessDefinition(null);
+      expect(result).toBe(true);
+    });
   });
 
   describe('canApply', () => {

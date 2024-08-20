@@ -5,7 +5,13 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { adspId, AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+} from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -34,6 +40,8 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  instrumentAxios(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const { coreStrategy, tenantStrategy, tenantHandler, eventService, healthCheck, metricsHandler, traceHandler } =
@@ -88,7 +96,12 @@ const initializeApp = async (): Promise<express.Application> => {
                   {
                     type: 'configuration',
                     matcher: '^\\/configuration\\/[a-zA-Z0-9-_ ]{1,50}\\/[a-zA-Z0-9-_ ]{1,50}$',
-                    namePath: 'name'
+                    namePath: 'name',
+                    deleteEvent: {
+                      namespace: serviceId.service,
+                      name: ConfigurationDeletedDefinition.name,
+                      resourceIdPath: 'urn',
+                    },
                   },
                 ],
               },

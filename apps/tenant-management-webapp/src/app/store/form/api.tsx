@@ -12,7 +12,7 @@ export const updateFormDefinitionApi = async (token: string, serviceUrl: string,
   // Save to new namespace based configuration.
   const { data } = await axios.patch<{ latest: { configuration: Record<string, FormDefinition> } }>(
     new URL(`configuration/v2/configuration/form-service/${definition.id}`, serviceUrl).href,
-    { operation: 'UPDATE', update: definition },
+    { operation: 'REPLACE', configuration: definition },
     { headers: { Authorization: `Bearer ${token}` } }
   );
 
@@ -28,7 +28,7 @@ export const deleteFormDefinitionApi = async (token: string, serviceUrl: string,
 
   // Delete from new namespace based configuration.
   await axios.delete<{ latest: { configuration: Record<string, FormDefinition> } }>(
-    new URL(`configuration/v2/configuration/form-service/${definitionId.toLowerCase()}`, serviceUrl).href,
+    new URL(`configuration/v2/configuration/form-service/${definitionId}`, serviceUrl).href,
     { headers: { Authorization: `Bearer ${token}` } }
   );
 
