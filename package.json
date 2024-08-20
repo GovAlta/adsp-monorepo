@@ -48,7 +48,7 @@
     "amqplib": "^0.8.0",
     "app-root-path": "^3.0.0",
     "async-es": "^3.2.0",
-    "axios": "1.6.7",
+    "axios": "1.7.4",
     "botbuilder": "^4.15.0",
     "clamscan": "^2.0.1",
     "class-transformer": "^0.3.1",
