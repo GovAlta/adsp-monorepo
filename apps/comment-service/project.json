@@ -21,7 +21,6 @@
             "output": "migrations"
           }
         ],
-        "isolatedConfig": true,
         "webpackConfig": "apps/comment-service/webpack.config.js"
       },
       "configurations": {
