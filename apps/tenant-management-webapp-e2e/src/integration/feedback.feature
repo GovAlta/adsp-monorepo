@@ -65,5 +65,29 @@ Feature: Feedback
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "https://abctest.com", "No" on Sites page
 
-
-
+  @TEST_CS-3196 @REQ_CS-3031 @REQ_CS-3369 @regression
+  Scenario: As a site visitor, I can access and complete a feedback form, so that I can share my feedback
+    Given a tenant admin user is on tenant admin page
+    When the user clicks the Feedback badge
+    Then the user "views" Give feedback start modal
+    When the user clicks close icon on Give feedback start modal
+    Then the user "should not view" Give feedback start modal
+    When the user clicks the Feedback badge
+    And the user clicks Start button in Give feedback start modal
+    Then the user views 5 emoji ratings in Give feedback main modal
+    And the user views optional comments text field
+    And the user views a required technical issues area
+    When the user enters "Easy", "autotest comments", "No", "N/A" in Give feedback main modal
+    And the user clicks Cancel button in Give feedback main modal
+    Then the user "should not view" Give feedback main modal
+    When the user clicks the Feedback badge
+    Then the user "views" Give feedback start modal
+    And the user clicks Start button in Give feedback start modal
+    When the user enters "Easy", "autotest comments", "Yes", "autotest technical issue" in Give feedback main modal
+    And the user clicks Submit button in Give feedback main modal
+    Then the user views success message for submitting a feedback
+    When the user clicks Close button in Give feedback modal
+    Then the user "should not view" Give feedback main modal
+    And the user "should not view" the Feedback badge
+    When the user re-load the page and wait "5" seconds
+    Then the user "views" the Feedback badge
