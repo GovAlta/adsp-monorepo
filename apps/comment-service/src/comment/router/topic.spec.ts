@@ -1,7 +1,7 @@
 import { UnauthorizedUserError, adspId } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { Request, Response } from 'express';
-import { ServiceRoles } from '../roles';
+import { DirectoryServiceRoles, ServiceRoles } from '../roles';
 import { TopicEntity, TopicTypeEntity } from '../model';
 import {
   createTopic,
@@ -320,6 +320,35 @@ describe('topic', () => {
       repositoryMock.getTopic.mockResolvedValueOnce(topic);
 
       const handler = getTopic(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req['topic']).toBe(topic);
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('can get topic for directory resource resolver', async () => {
+      const req = {
+        user: { ...user, roles: [DirectoryServiceRoles.ResourceResolver] },
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicId: '1',
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const types = {
+        [type.id]: type,
+      };
+      req.getConfiguration.mockResolvedValueOnce(types);
+      repositoryMock.getTopic.mockResolvedValueOnce(topic);
+
+      const handler = getTopic(repositoryMock, DirectoryServiceRoles.ResourceResolver);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req['topic']).toBe(topic);
