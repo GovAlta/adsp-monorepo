@@ -103,7 +103,7 @@ export const initializeUser = createAsyncThunk(
     if (client.tokenParsed) {
       return {
         id: client.tokenParsed.sub,
-        name: client.tokenParsed['preferred_username'] || client.tokenParsed['email'],
+        name: client.tokenParsed['name'] || client.tokenParsed['preferred_username'] || client.tokenParsed['email'],
         email: client.tokenParsed['email'],
         roles: Object.entries(client.tokenParsed.resource_access || {}).reduce(
           (roles, [client, clientAccess]) => [
