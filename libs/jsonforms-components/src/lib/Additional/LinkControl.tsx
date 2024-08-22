@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { isValidHref } from '../Context/register/util';
+import { isValidHref, isMailToHref } from '../Context/register/util';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAContextMenuIcon } from '../Controls/FileUploader/ContextMenu';
 
 const linkLength = 40;
 const invalidExtensions = ['exe'];
@@ -59,7 +60,11 @@ export const RenderLink = (props: OptionProps): JSX.Element => {
           <div>
             <a href={link} rel="noopener noreferrer" target="_blank">
               {linkLabel as string}
-              <GoAIconButton icon="open" title="Open" testId="open-icon" size="small" />
+              {isMailToHref(link ?? '') ? (
+                <GoAContextMenuIcon type="mail" title="Email" testId="mail-icon" />
+              ) : (
+                <GoAIconButton icon="open" title="Open" testId="open-icon" size="small" />
+              )}
             </a>
           </div>
         ) : (
