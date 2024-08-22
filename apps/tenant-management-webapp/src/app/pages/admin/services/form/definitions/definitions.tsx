@@ -101,15 +101,14 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   }, [indicator.show]);
 
   return (
-    <div>
+    <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
       <GoAButton
         testId="add-definition"
         onClick={() => {
           setOpenAddFormDefinition(true);
         }}
-        mt={'xl'}
-        mb={'xl'}
+        mb={'l'}
       >
         Add definition
       </GoAButton>
@@ -170,6 +169,6 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
           dispatch(deleteFormDefinition(currentDefinition));
         }}
       />
-    </div>
+    </section>
   );
 };
