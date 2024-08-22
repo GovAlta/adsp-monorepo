@@ -42,6 +42,7 @@ class AdspFeedback implements AdspFeedbackApi {
 
   private feedbackBadgeRef: Ref<HTMLDivElement> = createRef();
   private feedbackFormRef: Ref<HTMLDivElement> = createRef();
+  private feedbackFormClassRef: Ref<HTMLDivElement> = createRef();
   private feedbackContentFormRef: Ref<HTMLDivElement> = createRef();
   private ratingRef: Ref<HTMLFieldSetElement> = createRef();
   private commentRef: Ref<HTMLTextAreaElement> = createRef();
@@ -124,8 +125,9 @@ class AdspFeedback implements AdspFeedbackApi {
 
     document.addEventListener('keydown', this.trapTabKey);
     document.addEventListener('keydown', this.handleEscapeKey);
-
+    this.feedbackFormClassRef?.value?.setAttribute('style', 'height:65vh;max-height:560px');
     this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
+
     if (this.feedbackFormRef.value) {
       this.feedbackFormRef.value?.scrollTo(0, 0);
     }
@@ -357,6 +359,7 @@ class AdspFeedback implements AdspFeedbackApi {
         this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
       }
       this.feedbackFormRef.value?.scrollTo(0, 0);
+      this.feedbackFormClassRef?.value?.setAttribute('style', 'max-height:560px');
     }
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -527,6 +530,8 @@ class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb {
             z-index: 999;
             font-family: acumin-pro-semi-condensed, helvetica-neue, arial, sans-serif;
+            line-height: var(--goa-line-height-2);
+            font-size: var(--fs-base);
           }
           .adsp-fb h3 {
             margin-top: 0px !important;
@@ -570,7 +575,6 @@ class AdspFeedback implements AdspFeedbackApi {
             z-index: 2;
             position: fixed;
             background: #ffffff;
-            position: fixed;
             width: 640px;
             left: 50%;
             top: 10vh;
@@ -606,8 +610,9 @@ class AdspFeedback implements AdspFeedbackApi {
             overflow-x: hidden;
             flex: 1;
             padding-right: 16px;
-            padding-top: 36px !important;
+            padding-top: 36px;
             margin-bottom: 4px;
+            padding-bottom: 0px !important;
           }
           .adsp-fb .adsp-fb-form-rating {
             display: flex;
@@ -988,6 +993,14 @@ class AdspFeedback implements AdspFeedbackApi {
             .adsp-fb-main {
               overflow-y: auto;
             }
+            .adsp-fb .adsp-fb-form {
+              height: auto !important;
+              max-height: none !important;
+            }
+            .adsp-fb .adsp-fb-content {
+              margin-bottom: 0px;
+              padding-top: 24px;
+            }
 
             .adsp-fb .adsp-fb-actions {
               bottom: 0;
@@ -1006,7 +1019,6 @@ class AdspFeedback implements AdspFeedbackApi {
             }
             .adsp-fb .adsp-fb-form-rating {
               flex-direction: column-reverse;
-              align-items: left;
               gap: 16px;
 
               > div {
@@ -1115,7 +1127,7 @@ class AdspFeedback implements AdspFeedbackApi {
                     />
                   </div>
                   <hr class="styled-hr styled-hr-top" />
-                  <form class="adsp-fb-form">
+                  <form ${ref(this.feedbackFormClassRef)} class="adsp-fb-form">
                     <div ${ref(this.feedbackContentFormRef)} class="adsp-fb-content">
                       <label
                         ><b>How easy was it for you to use this service? <br /></b>
