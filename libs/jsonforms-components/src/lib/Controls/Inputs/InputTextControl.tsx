@@ -5,6 +5,8 @@ import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForTextControl, onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
+import React, { useEffect, useState, useRef } from 'react';
+import axios from 'axios';
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -19,47 +21,80 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (data && data.length > 2) {
+      const fetchSuggestions = async () => {
+        try {
+          const response = await axios.get(uischema['options']?.source, {
+            params: { address: data },
+            withCredentials: true, // Ensure credentials are sent
+          });
+          setSuggestions(response.data.suggestions);
+        } catch (error) {
+          console.error('Error fetching address suggestions:', error);
+        }
+      };
+      fetchSuggestions();
+    } else {
+      setSuggestions([]);
+    }
+  }, [data, uischema]);
 
   return (
-    <GoAInput
-      error={errorsFormInput.length > 0}
-      type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
-      disabled={!enabled}
-      value={data}
-      width={'100%'}
-      readonly={readOnly}
-      placeholder={placeholder}
-      {...uischema.options?.componentProps}
-      // maxLength={appliedUiSchemaOptions?.maxLength}
-      name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-      testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      // Don't use handleChange in the onChange event, use the keyPress or onBlur.
-      // If you use it onChange along with keyPress event it will cause a
-      // side effect that causes the validation to render when it shouldn't.
-      onChange={(name: string, value: string) => {
-        onChangeForInputControl({
-          name,
-          value,
-          controlProps: props as ControlProps,
-        });
-      }}
-      onKeyPress={(name: string, value: string, key: string) => {
-        onKeyPressForTextControl({
-          name,
-          value: autoCapitalize ? value.toUpperCase() : value,
-          key,
-          controlProps: props as ControlProps,
-        });
-      }}
-      onBlur={(name: string, value: string) => {
-        onBlurForTextControl({
-          name,
-          controlProps: props as ControlProps,
-          value: autoCapitalize ? value.toUpperCase() : value,
-        });
-      }}
-      {...uischema?.options?.componentProps}
-    />
+    <div>
+      <GoAInput
+        ref={inputRef}
+        error={errorsFormInput.length > 0}
+        type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
+        disabled={!enabled}
+        value={data}
+        width={'100%'}
+        readonly={readOnly}
+        placeholder={placeholder}
+        {...uischema.options?.componentProps}
+        // maxLength={appliedUiSchemaOptions?.maxLength}
+        name={appliedUiSchemaOptions?.name || `${id || label}-input`}
+        testId={appliedUiSchemaOptions?.testId || `${id}-input`}
+        // Don't use handleChange in the onChange event, use the keyPress or onBlur.
+        // If you use it onChange along with keyPress event it will cause a
+        // side effect that causes the validation to render when it shouldn't.
+        onChange={(name: string, value: string) => {
+          onChangeForInputControl({
+            name,
+            value,
+            controlProps: props as ControlProps,
+          });
+        }}
+        onKeyPress={(name: string, value: string, key: string) => {
+          onKeyPressForTextControl({
+            name,
+            value: autoCapitalize ? value.toUpperCase() : value,
+            key,
+            controlProps: props as ControlProps,
+          });
+        }}
+        onBlur={(name: string, value: string) => {
+          onBlurForTextControl({
+            name,
+            controlProps: props as ControlProps,
+            value: autoCapitalize ? value.toUpperCase() : value,
+          });
+        }}
+        {...uischema?.options?.componentProps}
+      />
+      {suggestions.length > 0 && (
+        <ul>
+          {suggestions.map((suggestion, index) => (
+            <li key={index} onClick={() => {}}>
+              {suggestion}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 };
 
