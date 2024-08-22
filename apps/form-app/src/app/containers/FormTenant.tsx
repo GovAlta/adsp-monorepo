@@ -43,18 +43,13 @@ export const FormTenant = () => {
     }
   }, [configInitialized, tenantName, dispatch]);
 
-  const hasRoles = () => {
-    const mergedFormRoles = [...(definition?.applicantRoles || []), ...(definition?.applicantRoles || [])];
-    return !mergedFormRoles?.length || mergedFormRoles.find((r) => user.roles?.includes(r));
-  };
-
   return (
     <React.Fragment>
       <GoAMicrositeHeader type="alpha" />
       <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
         {userInitialized && (
           <AccountActionsSpan>
-            {user && hasRoles() ? (
+            {user ? (
               <>
                 <span className="username">{user?.name}</span>
                 <GoAButton
