@@ -17,6 +17,8 @@ import {
   StatePropsOfLayout,
   isVisible,
   isEnabled,
+  UISchemaElement,
+  SchemaBasedCondition,
 } from '@jsonforms/core';
 
 import { JsonFormsDispatch, TranslateProps, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
@@ -52,6 +54,17 @@ export interface FormStepperOptionProps {
 }
 
 const summaryLabel = 'Summary';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getProperty: any = (obj: any, propName: string) => {
+  if (obj[propName] !== undefined) return obj[propName];
+  for (const key in obj) {
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      const result = getProperty(obj[key], propName);
+      if (result !== undefined) return result;
+    }
+  }
+};
 
 export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, path, cells, renderers, visible, enabled, t } = props;
@@ -229,20 +242,35 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                           </Anchor>
                         </ReviewItemHeader>
                         <GoAGrid minChildWidth="600px">
-                          {category.elements.map((element, index) => {
-                            return (
-                              <div key={`form-stepper-category-${index}`}>
-                                <JsonFormsDispatch
-                                  data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-                                  schema={schema}
-                                  uischema={element}
-                                  enabled={enabled}
-                                  renderers={GoAReviewRenderers}
-                                  cells={cells}
-                                />
-                              </div>
-                            );
-                          })}
+                          {category.elements
+                            .filter((field) => {
+                              const conditionProps = field.rule?.condition as SchemaBasedCondition;
+                              if (conditionProps && data) {
+                                const canHideControlParts = conditionProps?.scope?.split('/');
+                                const canHideControl =
+                                  canHideControlParts && canHideControlParts[canHideControlParts?.length - 1];
+                                const isHidden = getProperty(data, canHideControl);
+                                if (!isHidden) {
+                                  return field;
+                                }
+                              } else {
+                                return field;
+                              }
+                            })
+                            .map((element, index) => {
+                              return (
+                                <div key={`form-stepper-category-${index}`}>
+                                  <JsonFormsDispatch
+                                    data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                                    schema={schema}
+                                    uischema={element}
+                                    enabled={enabled}
+                                    renderers={GoAReviewRenderers}
+                                    cells={cells}
+                                  />
+                                </div>
+                              );
+                            })}
                         </GoAGrid>
                       </ReviewItemSection>
                     );

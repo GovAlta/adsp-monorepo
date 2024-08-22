@@ -7,6 +7,9 @@ export const ReviewItem = styled.div`
   border-radius: var(--goa-border-radius-m);
   margin: var(--goa-space-2xs);
   padding: var(--goa-space-xs);
+  div:empty {
+    display: none;
+  }
 `;
 export const ReviewItemSection = styled.div`
   background-color: #f1f1f1;

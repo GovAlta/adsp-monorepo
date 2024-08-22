@@ -5,8 +5,6 @@ import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { renderLayoutElements } from '../util/layout';
 import { Visible } from '../util';
 
-export const groupTester: RankedTester = rankWith(1, uiTypeIs('Group'));
-
 export const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
   const { uischema, schema, path, enabled, renderers, cells, visible } = props;
   const group = uischema as GroupLayout;
@@ -45,6 +43,6 @@ export const GoAGroupControlComponent = (props: LayoutProps): JSX.Element => {
   );
 };
 
-export const GoAGroupLayoutTester: RankedTester = withIncreasedRank(1, groupTester);
+export const GoAGroupLayoutTester: RankedTester = rankWith(1, uiTypeIs('Group'));
 
-export const GoAGroupControl = withJsonFormsLayoutProps(GoAGroupControlComponent);
+export const GoAGroupControl = withJsonFormsLayoutProps(GoAGroupControlComponent, true);

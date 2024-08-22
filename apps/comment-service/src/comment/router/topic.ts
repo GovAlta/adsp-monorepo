@@ -6,7 +6,7 @@ import { Logger } from 'winston';
 import { commentCreated, commentDeleted, commentUpdated, topicCreated, topicDeleted, topicUpdated } from '../events';
 import { TopicEntity, TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
-import { ServiceRoles } from '../roles';
+import { DirectoryServiceRoles, ServiceRoles } from '../roles';
 import { Topic, TopicType } from '../types';
 
 interface TopicRouterProps {
@@ -114,7 +114,7 @@ export function createTopic(
 }
 
 const TopicKey = 'topic';
-export function getTopic(repository: TopicRepository): RequestHandler {
+export function getTopic(repository: TopicRepository, ...roles: string[]): RequestHandler {
   return async (req, _res, next) => {
     try {
       const user = req.user;
@@ -130,7 +130,7 @@ export function getTopic(repository: TopicRepository): RequestHandler {
         throw new NotFoundError('topic', topicIdValue);
       }
 
-      if (!entity.canRead(user) && !isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
+      if (!entity.canRead(user) && !isAllowedUser(user, tenantId, [ServiceRoles.TopicSetter, ...roles], true)) {
         throw new UnauthorizedUserError('get topic', user);
       }
 
@@ -348,7 +348,7 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
   router.get(
     '/topics/:topicId',
     createValidationHandler(param('topicId').isInt()),
-    getTopic(repository),
+    getTopic(repository, DirectoryServiceRoles.ResourceResolver),
     (req: Request, res: Response) => res.send(mapTopic(apiId, req[TopicKey]))
   );
   router.patch(

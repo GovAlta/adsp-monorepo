@@ -27,10 +27,17 @@ export function* fetchFormDefinitions(payload): SagaIterator {
     try {
       const url = `${configBaseUrl}/configuration/v2/configuration/form-service?top=10&after=${next}`;
       const { results, page } = yield call(fetchFormDefinitionsApi, token, url);
+
       const definitions = results.reduce((acc, def) => {
-        acc[def.name] = def.latest.configuration;
+        if (def.latest?.configuration?.id) {
+          acc[def.latest.configuration.id] = def.latest.configuration;
+        } else {
+          acc[def.id] = def.latest.configuration;
+        }
+
         return acc;
       }, {});
+
       yield put(getFormDefinitionsSuccess(definitions, page.next, page.after));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));

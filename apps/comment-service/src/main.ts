@@ -5,7 +5,13 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, ServiceMetricsValueDefinition, initializePlatform } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  ServiceMetricsValueDefinition,
+  adspId,
+  initializePlatform,
+  instrumentAxios,
+} from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -37,6 +43,8 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  instrumentAxios(logger);
 
   const repositories = await createRepositories({
     logger,
@@ -93,6 +101,27 @@ const initializeApp = async (): Promise<express.Application> => {
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
       values: [ServiceMetricsValueDefinition],
+      serviceConfigurations: [
+        {
+          serviceId: adspId`urn:ads:platform:directory-service`,
+          configuration: {
+            [`${serviceId}:v1`]: {
+              resourceTypes: [
+                {
+                  type: 'topic',
+                  matcher: '^\\/topics\\/[0-9]{1,20}$',
+                  namePath: 'name',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: TopicDeletedEventDefinition.name,
+                    resourceIdPath: 'topic.urn',
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
     },
     { logger }
   );

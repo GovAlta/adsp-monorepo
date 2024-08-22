@@ -9,9 +9,7 @@ export const Buttons = styled.div`
 `;
 
 export const NotificationBorder = styled.div`
-  border: 1px solid #666666;
   margin: 3px;
-  border-radius: 3px;
 `;
 
 export const EventBorder = styled.div`
