@@ -22,7 +22,7 @@ import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
-import { DirectoryServiceRoles, FileCriteria, ServiceUserRoles } from '../types';
+import { DirectoryServiceRoles, FileCriteria } from '../types';
 import validator from 'validator';
 import { mapFile, mapFileType } from '../mapper';
 import { FileTypeEntity } from '../model';
