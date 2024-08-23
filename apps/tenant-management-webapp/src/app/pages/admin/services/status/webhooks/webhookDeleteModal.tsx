@@ -11,21 +11,25 @@ export const WebhookDeleteModal = (): JSX.Element => {
   // eslint-disable-next-line
   useEffect(() => {}, [webhook]);
   return (
-    <DeleteModal
-      title="Delete webhook"
-      isOpen={webhook !== undefined}
-      onCancel={() => {
-        dispatch(ResetModalState());
-      }}
-      content={
-        <p>
-          Are you sure you wish to delete #<b>{`${webhook?.name}?`}</b>
-        </p>
-      }
-      onDelete={() => {
-        dispatch(DeleteWebhookService(webhook));
-        dispatch(ResetModalState());
-      }}
-    />
+    <div>
+      {webhook && (
+        <DeleteModal
+          title="Delete webhook"
+          isOpen={webhook !== undefined}
+          onCancel={() => {
+            dispatch(ResetModalState());
+          }}
+          content={
+            <p>
+              Are you sure you wish to delete #<b>{`${webhook?.name}?`}</b>
+            </p>
+          }
+          onDelete={() => {
+            dispatch(DeleteWebhookService(webhook));
+            dispatch(ResetModalState());
+          }}
+        />
+      )}
+    </div>
   );
 };
