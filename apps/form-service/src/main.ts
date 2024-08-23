@@ -203,9 +203,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const queueTaskService = createQueueTaskService(serviceId, logger, directory, tokenProvider);
   const repositories = await createRepositories({
     ...environment,
-    serviceId,
     logger,
-    tokenProvider,
     configurationService,
     notificationService,
   });

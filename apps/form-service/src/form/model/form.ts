@@ -264,9 +264,7 @@ export class FormEntity implements Form {
       throw new UnauthorizedUserError('update form', user);
     }
 
-    if (this.data) {
-      this.definition.validateData('form submission', this.data);
-    }
+    this.definition.validateData('form submission', this.data);
 
     this.status = FormStatus.Submitted;
     this.submitted = new Date();

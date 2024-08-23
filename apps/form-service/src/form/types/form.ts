@@ -12,7 +12,7 @@ export enum FormStatus {
 export type SecurityClassificationType = 'protected a' | 'protected b' | 'protected c' | 'public';
 
 export interface Form {
-  definition: FormDefinition;
+  definition?: FormDefinition;
   id: string;
   formDraftUrl: string;
   applicant?: Subscriber;
