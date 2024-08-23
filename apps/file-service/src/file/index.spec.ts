@@ -2,7 +2,7 @@ import * as express from 'express';
 import { Application } from 'express';
 import { adspId } from '@abgov/adsp-service-sdk';
 import { createFileRouter } from './router';
-import { Mock, It } from 'moq.ts';
+import { Mock } from 'moq.ts';
 import { Logger } from 'winston';
 import { createFileJobs } from './job';
 import { FileRepository } from './repository';

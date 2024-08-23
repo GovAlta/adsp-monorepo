@@ -55,24 +55,6 @@ describe('file router', () => {
     typeId: 'generated-pdf',
     securityClassification: 'protected a',
   };
-  const fileTypeWithoutTypeId: FileType = {
-    tenantId,
-    id: 'test',
-    name: 'Test',
-    anonymousRead: false,
-    readRoles: ['test-reader'],
-    updateRoles: ['test-updater'],
-  };
-  // const fileTypeWithRules: FileType & { typeId: string } = {
-  //   tenantId,
-  //   id: 'generated-pdf',
-  //   name: 'Test',
-  //   anonymousRead: false,
-  //   readRoles: ['test-reader'],
-  //   updateRoles: ['test-updater'],
-  //   typeId: 'generated-pdf',
-  //   rules: { retention: { deleteInDays: 42, createdAt: new Date().toString(), active: true } },
-  // };
 
   const file = new FileEntity(storageProviderMock, fileRepositoryMock, new FileTypeEntity(fileType), {
     tenantId,
@@ -99,6 +81,7 @@ describe('file router', () => {
     createdBy: { id: 'tester', name: 'Tester' },
     securityClassification: 'protected a',
   });
+
   const fileWithoutTenant = new FileEntity(storageProviderMock, fileRepositoryMock, new FileTypeEntity(fileType), {
     tenantId: null,
     id: 'test',
@@ -111,23 +94,7 @@ describe('file router', () => {
     createdBy: { id: 'tester', name: 'Tester' },
     securityClassification: 'protected a',
   });
-  const fileWithoutTypeId = new FileEntity(
-    storageProviderMock,
-    fileRepositoryMock,
-    new FileTypeEntity(fileTypeWithoutTypeId),
-    {
-      tenantId,
-      id: 'test',
-      filename: 'test.txt',
-      recordId: 'test-123',
-      deleted: false,
-      scanned: true,
-      size: 123,
-      created: new Date(),
-      createdBy: { id: 'tester', name: 'Tester' },
-      securityClassification: 'protected a',
-    }
-  );
+
   const fileVideo = new FileEntity(storageProviderMock, fileRepositoryMock, new FileTypeEntity(fileType), {
     tenantId,
     id: 'test',
