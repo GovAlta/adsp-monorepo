@@ -58,9 +58,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
   const coreDefinitions = definitions.filter((d) => d.isCore);
 
   return (
-    <div>
-      <br />
-
+    <section>
       <Buttons>
         <GoAButton
           testId="value-add-definition"
@@ -129,6 +127,6 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
           setSelectedDefinition(defaultValueDefinition);
         }}
       />
-    </div>
+    </section>
   );
 };

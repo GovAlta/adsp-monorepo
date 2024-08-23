@@ -28,7 +28,7 @@ export const DirectoryService = (): JSX.Element => {
   const indicator = useSelector(selectPageIndicator);
 
   return (
-    <>
+    <section>
       <PageIndicator />
       <DirectoryDeleteModal />
       <DirectoryModal />
@@ -63,7 +63,7 @@ export const DirectoryService = (): JSX.Element => {
           <ServiceTableComponent headerId={`directory-core-table`} directory={coreDirectory} />
         </div>
       )}
-    </>
+    </section>
   );
 };
 const NameDiv = styled.div`

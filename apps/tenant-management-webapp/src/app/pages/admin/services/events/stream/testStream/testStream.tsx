@@ -150,7 +150,7 @@ export const TestStream = (): JSX.Element => {
   };
 
   return (
-    <>
+    <section>
       {indicator.show && <PageIndicator />}
       {!indicator.show && streams && (
         <>
@@ -212,6 +212,6 @@ export const TestStream = (): JSX.Element => {
           {spinner && <TextGoASkeleton lineCount={1}></TextGoASkeleton>}
         </>
       )}
-    </>
+    </section>
   );
 };
