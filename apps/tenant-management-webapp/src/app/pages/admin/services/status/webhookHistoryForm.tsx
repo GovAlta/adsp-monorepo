@@ -147,7 +147,6 @@ export const WebhookHistoryModal = (): JSX.Element => {
     <GoAModalStyle>
       {isOpen && (
         <GoAModal
-          open={isOpen}
           testId="webhook-history-modal"
           heading="Webhook History"
           actions={

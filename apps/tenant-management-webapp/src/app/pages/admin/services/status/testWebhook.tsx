@@ -73,7 +73,6 @@ export const TestWebhookModal = (): JSX.Element => {
     <GoAModalStyle>
       {isOpen && (
         <GoAModal
-          open={isOpen}
           testId={'test-webhook'}
           heading={`Test webhook - ${webhook?.name}`}
           actions={
