@@ -310,6 +310,7 @@ const FileTableStyles = styled.div`
 `;
 
 const FileTable = styled.div`
+  padding: 1rem 0;
   .mt-48 {
     margin-top: 48px;
   }

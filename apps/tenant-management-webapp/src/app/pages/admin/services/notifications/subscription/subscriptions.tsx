@@ -50,39 +50,41 @@ export const Subscriptions: FunctionComponent = () => {
   const emailIndex = selectedSubscription?.channels?.findIndex((channel) => channel.channel === 'email');
 
   return (
-    <CheckSubscriberRoles>
-      <SubscribersSearchForm
-        onSearch={searchFn}
-        reset={resetState}
-        searchCriteria={criteriaState}
-        onUpdate={setCriteriaState}
-      />
-      {indicator.show && <PageIndicator />}
+    <section>
+      <CheckSubscriberRoles>
+        <SubscribersSearchForm
+          onSearch={searchFn}
+          reset={resetState}
+          searchCriteria={criteriaState}
+          onUpdate={setCriteriaState}
+        />
+        {indicator.show && <PageIndicator />}
 
-      {(indicator.show === false && loadingState === undefined) ||
-        (loadingState?.state === 'completed' && (
-          <SubscriptionList
-            onDelete={(sub: Subscriber, type: string) => {
-              setSelectedSubscription(sub);
-              setShowDeleteConfirmation(true);
-              setSelectedType(type);
-            }}
-            searchCriteria={criteriaState}
-          />
-        ))}
+        {(indicator.show === false && loadingState === undefined) ||
+          (loadingState?.state === 'completed' && (
+            <SubscriptionList
+              onDelete={(sub: Subscriber, type: string) => {
+                setSelectedSubscription(sub);
+                setShowDeleteConfirmation(true);
+                setSelectedType(type);
+              }}
+              searchCriteria={criteriaState}
+            />
+          ))}
 
-      {/* Delete confirmation */}
-      <DeleteModal
-        isOpen={showDeleteConfirmation}
-        title="Delete subscription"
-        content={`Delete subscription ${selectedSubscription?.channels[emailIndex]?.address}?`}
-        onCancel={() => setShowDeleteConfirmation(false)}
-        onDelete={() => {
-          setShowDeleteConfirmation(false);
-          dispatch(DeleteSubscription({ data: { type: selectedType, data: selectedSubscription } }));
-        }}
-      />
-    </CheckSubscriberRoles>
+        {/* Delete confirmation */}
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete subscription"
+          content={`Delete subscription ${selectedSubscription?.channels[emailIndex]?.address}?`}
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(DeleteSubscription({ data: { type: selectedType, data: selectedSubscription } }));
+          }}
+        />
+      </CheckSubscriberRoles>
+    </section>
   );
 };
 

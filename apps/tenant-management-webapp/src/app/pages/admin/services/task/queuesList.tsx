@@ -69,18 +69,16 @@ export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
   return (
     <section>
       <div>
-        <ButtonPadding>
-          <GoAButton
-            testId="add-queue-btn"
-            onClick={() => {
-              setSelectedQueue(defaultTaskQueue);
-              setModalType('new');
-              setEditQueue(true);
-            }}
-          >
-            Add queue
-          </GoAButton>
-        </ButtonPadding>
+        <GoAButton
+          testId="add-queue-btn"
+          onClick={() => {
+            setSelectedQueue(defaultTaskQueue);
+            setModalType('new');
+            setEditQueue(true);
+          }}
+        >
+          Add queue
+        </GoAButton>
       </div>
       {indicator.show && Object.keys(taskQueues).length === 0 && !showDeleteConfirmation && (
         <ProgressWrapper>

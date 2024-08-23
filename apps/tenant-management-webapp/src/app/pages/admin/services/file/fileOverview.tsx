@@ -30,36 +30,38 @@ const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps):
     navigate('/admin/services/file');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <OverviewLayout
-      description={
-        <>
-          <p>
-            The file service provides the capability to upload and download files. Consumers are registered with their
-            own space (tenant) containing file types that include role based access policy, and can associate files to
-            domain records.
-          </p>
-          <NoPaddingH2>File types</NoPaddingH2>
-          <div>
-            File types describe categories of files and include configuration of roles permitted to access and updated
-            files.
-          </div>
-          <br />
-        </>
-      }
-      addButton={
-        <GoAButton
-          testId="add-file-type-btn"
-          onClick={() => {
-            setOpenAddFileType(true);
-            setActiveEdit(true);
-            navigate('/admin/services/file?fileTypes=true');
-          }}
-        >
-          Add file type
-        </GoAButton>
-      }
-      extra={<FileMetrics />}
-    />
+    <section>
+      <OverviewLayout
+        description={
+          <>
+            <p>
+              The file service provides the capability to upload and download files. Consumers are registered with their
+              own space (tenant) containing file types that include role based access policy, and can associate files to
+              domain records.
+            </p>
+            <NoPaddingH2>File types</NoPaddingH2>
+            <div>
+              File types describe categories of files and include configuration of roles permitted to access and updated
+              files.
+            </div>
+            <br />
+          </>
+        }
+        addButton={
+          <GoAButton
+            testId="add-file-type-btn"
+            onClick={() => {
+              setOpenAddFileType(true);
+              setActiveEdit(true);
+              navigate('/admin/services/file?fileTypes=true');
+            }}
+          >
+            Add file type
+          </GoAButton>
+        }
+        extra={<FileMetrics />}
+      />
+    </section>
   );
 };
 export default FileOverview;

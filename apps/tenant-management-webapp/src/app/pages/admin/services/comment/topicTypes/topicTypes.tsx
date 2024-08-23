@@ -73,8 +73,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
   }, []);
 
   return (
-    <div>
-      <br />
+    <section>
       <GoAButton
         testId="add-topic-type"
         onClick={() => {
@@ -135,6 +134,6 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
           dispatch(deleteCommentTopicType(currentDefinition?.id));
         }}
       />
-    </div>
+    </section>
   );
 };

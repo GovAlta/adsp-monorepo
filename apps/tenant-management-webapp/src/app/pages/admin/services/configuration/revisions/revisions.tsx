@@ -20,7 +20,7 @@ export const ConfigurationRevisions = (): JSX.Element => {
   const filtteredServiceList = serviceList.filter((s) => s.includes(':'));
 
   return (
-    <div>
+    <section>
       <GoAFormItem label="Select definition">
         {indicator.show && filtteredServiceList?.length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
         {filtteredServiceList?.length > 0 && (
@@ -50,6 +50,6 @@ export const ConfigurationRevisions = (): JSX.Element => {
       </GoAFormItem>
 
       {showTable && <RevisionTable service={selectedConfiguration} />}
-    </div>
+    </section>
   );
 };
