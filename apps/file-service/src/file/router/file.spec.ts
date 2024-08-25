@@ -55,24 +55,6 @@ describe('file router', () => {
     typeId: 'generated-pdf',
     securityClassification: 'protected a',
   };
-  const fileTypeWithoutTypeId: FileType = {
-    tenantId,
-    id: 'test',
-    name: 'Test',
-    anonymousRead: false,
-    readRoles: ['test-reader'],
-    updateRoles: ['test-updater'],
-  };
-  // const fileTypeWithRules: FileType & { typeId: string } = {
-  //   tenantId,
-  //   id: 'generated-pdf',
-  //   name: 'Test',
-  //   anonymousRead: false,
-  //   readRoles: ['test-reader'],
-  //   updateRoles: ['test-updater'],
-  //   typeId: 'generated-pdf',
-  //   rules: { retention: { deleteInDays: 42, createdAt: new Date().toString(), active: true } },
-  // };
 
   const file = new FileEntity(storageProviderMock, fileRepositoryMock, new FileTypeEntity(fileType), {
     tenantId,
@@ -99,6 +81,7 @@ describe('file router', () => {
     createdBy: { id: 'tester', name: 'Tester' },
     securityClassification: 'protected a',
   });
+
   const fileWithoutTenant = new FileEntity(storageProviderMock, fileRepositoryMock, new FileTypeEntity(fileType), {
     tenantId: null,
     id: 'test',
@@ -111,23 +94,7 @@ describe('file router', () => {
     createdBy: { id: 'tester', name: 'Tester' },
     securityClassification: 'protected a',
   });
-  const fileWithoutTypeId = new FileEntity(
-    storageProviderMock,
-    fileRepositoryMock,
-    new FileTypeEntity(fileTypeWithoutTypeId),
-    {
-      tenantId,
-      id: 'test',
-      filename: 'test.txt',
-      recordId: 'test-123',
-      deleted: false,
-      scanned: true,
-      size: 123,
-      created: new Date(),
-      createdBy: { id: 'tester', name: 'Tester' },
-      securityClassification: 'protected a',
-    }
-  );
+
   const fileVideo = new FileEntity(storageProviderMock, fileRepositoryMock, new FileTypeEntity(fileType), {
     tenantId,
     id: 'test',
@@ -572,6 +539,7 @@ describe('file router', () => {
         getConfiguration: jest.fn(),
         query: {},
         fileEntity: file,
+        range: jest.fn(() => undefined),
       };
       const res = {
         setHeader: jest.fn(),
@@ -585,9 +553,11 @@ describe('file router', () => {
 
       const handler = downloadFile(loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(storageProviderMock.readFile).toHaveBeenCalledWith(file, 0, file.size - 1);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
     });
+
     it('can download file that is public', async () => {
       const req = {
         user: {
@@ -598,6 +568,7 @@ describe('file router', () => {
         getConfiguration: jest.fn(),
         query: { embed: 'true' },
         fileEntity: publicFile,
+        range: jest.fn(() => undefined),
       };
       const res = {
         setHeader: jest.fn(),
@@ -626,6 +597,7 @@ describe('file router', () => {
         getConfiguration: jest.fn(),
         query: {},
         fileEntity: fileImage,
+        range: jest.fn(() => undefined),
       };
       const res = {
         setHeader: jest.fn(),
@@ -642,6 +614,7 @@ describe('file router', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
     });
+
     it('can download file video', async () => {
       const req = {
         user: {
@@ -652,6 +625,7 @@ describe('file router', () => {
         getConfiguration: jest.fn(),
         query: {},
         fileEntity: fileVideo,
+        range: jest.fn(() => undefined),
       };
       const res = {
         setHeader: jest.fn(),
@@ -681,6 +655,7 @@ describe('file router', () => {
           embed: 'true',
         },
         fileEntity: file,
+        range: jest.fn(() => undefined),
       };
       const res = {
         setHeader: jest.fn(),
@@ -719,6 +694,7 @@ describe('file router', () => {
           created: new Date(),
           createdBy: { id: 'tester', name: 'Tester' },
         }),
+        range: jest.fn(() => undefined),
       };
       const res = {
         writeHead: jest.fn(),
@@ -755,6 +731,7 @@ describe('file router', () => {
           created: new Date(),
           createdBy: { id: 'tester', name: 'Tester' },
         }),
+        range: jest.fn(() => undefined),
       };
       const res = {
         status: jest.fn(),
@@ -770,6 +747,94 @@ describe('file router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalled();
+    });
+
+    it('can download file with range request', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'test',
+          roles: ['test-reader'],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+        fileEntity: file,
+        range: jest.fn(() => {
+          const range = [{ start: 10, end: file.size - 1 }];
+          range['type'] = 'bytes';
+          return range;
+        }),
+      };
+      const res = {
+        setHeader: jest.fn(),
+        status: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const stream = { pipe: jest.fn() };
+      storageProviderMock.readFile.mockResolvedValueOnce(stream);
+      fileRepositoryMock.get.mockResolvedValueOnce(file);
+
+      const handler = downloadFile(loggerMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(storageProviderMock.readFile).toHaveBeenCalledWith(file, 10, file.size - 1);
+      expect(res.status).toHaveBeenCalledWith(206);
+      expect(res.setHeader).toHaveBeenCalledWith('Content-Range', `bytes ${10}-${file.size - 1}/${file.size}`);
+      expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+    });
+
+    it('can call next with invalid operation for unsupported range request', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'test',
+          roles: ['test-reader'],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+        fileEntity: file,
+        range: jest.fn(() => {
+          const range = [{ start: 10, end: file.size - 1 }];
+          range['type'] = 'kudos';
+          return range;
+        }),
+      };
+      const res = {
+        setHeader: jest.fn(),
+        status: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = downloadFile(loggerMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.status).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('can call next with invalid operation for invalid range request', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'test',
+          roles: ['test-reader'],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+        fileEntity: file,
+        range: jest.fn(() => -1),
+      };
+      const res = {
+        setHeader: jest.fn(),
+        status: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = downloadFile(loggerMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.status).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
   });
 

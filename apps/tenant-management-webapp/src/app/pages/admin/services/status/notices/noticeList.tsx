@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Grid, GridItem } from '@core-services/app-common';
 import { NoticeCard } from './noticeCard';
@@ -82,6 +82,10 @@ export const NoticeList = (): JSX.Element => {
   const filterOnSelectFn = (option: string) => {
     setFilterOption(option);
   };
+
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, [notices]);
 
   const clickCardMenuFn = (id: string, isMenuAction): void => {
     if (isMenuAction) {

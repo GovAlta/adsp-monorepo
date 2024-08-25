@@ -462,6 +462,17 @@ describe('FormEntity', () => {
         UnauthorizedUserError
       );
     });
+
+    it('can throw unauthorized user for missing definition', async () => {
+      // Missing definition means that no user will pass authorization check for updating form.
+      const data = {};
+      const files = {};
+      const entity = new FormEntity(repositoryMock, tenantId, null, subscriber, formInfo);
+      await expect(
+        entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files)
+      ).rejects.toThrow(UnauthorizedUserError);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+    });
   });
 
   describe('lock', () => {
@@ -622,6 +633,19 @@ describe('FormEntity', () => {
           repositoryMock
         )
       ).rejects.toThrow(InvalidOperationError);
+    });
+
+    it('can throw unauthorized user for missing definition', async () => {
+      // Missing definition means that no user will pass authorization check for submitting form.
+      const entity = new FormEntity(repositoryMock, tenantId, null, subscriber, formInfo);
+      await expect(
+        entity.submit(
+          { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+          queueTaskServiceMock,
+          repositoryMock
+        )
+      ).rejects.toThrow(UnauthorizedUserError);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
     });
   });
 

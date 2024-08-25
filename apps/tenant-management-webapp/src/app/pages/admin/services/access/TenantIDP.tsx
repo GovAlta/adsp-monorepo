@@ -87,7 +87,7 @@ export const TenantIdp = (): JSX.Element => {
   };
 
   return (
-    <>
+    <section>
       <NoPaddingH2>Unexpected error when authenticating with identity provider</NoPaddingH2>
       <p>
         Known Issue - Government of Alberta AD user accounts are deleted and recreated in some cases. In such cases,
@@ -103,20 +103,18 @@ export const TenantIdp = (): JSX.Element => {
           onChange={InputUserEmailHandler}
         ></GoAInput>
       </GoAFormItem>
-      <>
-        <GoASpacer vSpacing="s"></GoASpacer>
+      <GoASpacer vSpacing="s"></GoASpacer>
 
-        <GoAButton
-          disabled={(fetchUserIdState?.state as unknown) === 'start'}
-          testId={'user-search-email-btn'}
-          onClick={searchUserByEmailHandler}
-        >
-          Search
-        </GoAButton>
-        <LoadingIndicatorContainer>
-          <GoACircularProgress size="small" visible={(fetchUserIdState?.state as unknown) === 'start'} />
-        </LoadingIndicatorContainer>
-      </>
+      <GoAButton
+        disabled={(fetchUserIdState?.state as unknown) === 'start'}
+        testId={'user-search-email-btn'}
+        onClick={searchUserByEmailHandler}
+      >
+        Search
+      </GoAButton>
+      <LoadingIndicatorContainer>
+        <GoACircularProgress size="small" visible={(fetchUserIdState?.state as unknown) === 'start'} />
+      </LoadingIndicatorContainer>
 
       {fetchedUserInfo && fetchUserIdState?.state === 'completed' && !fetchUserIdState?.id && (
         <div>
@@ -195,6 +193,6 @@ export const TenantIdp = (): JSX.Element => {
           onDelete={deleteUserIdPHandler}
         />
       )}
-    </>
+    </section>
   );
 };

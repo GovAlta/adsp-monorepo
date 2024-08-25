@@ -22,6 +22,7 @@ interface ValueDefinitionsComponentProps {
 export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps> = ({ activeEdit }) => {
   const [selectedDefinition, setSelectedDefinition] = useState(defaultValueDefinition);
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
+  const [editDefinition, setEditDefinition] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const indicator = useSelector((state: RootState) => {
@@ -57,9 +58,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
   const coreDefinitions = definitions.filter((d) => d.isCore);
 
   return (
-    <div>
-      <br />
-
+    <section>
       <Buttons>
         <GoAButton
           testId="value-add-definition"
@@ -75,6 +74,11 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
       {!indicator.show && tenantDefinitions && (
         <ValueDefinitionsList
           definitions={tenantDefinitions}
+          onEdit={(def: ValueDefinition) => {
+            setSelectedDefinition(def);
+            setIsEdit(true);
+            setOpenAddDefinition(true);
+          }}
           onDelete={(def: ValueDefinition) => {
             setSelectedDefinition(def);
             setIsEdit(false);
@@ -87,6 +91,11 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
           <h2>Core definitions</h2>
           <ValueDefinitionsList
             definitions={coreDefinitions}
+            onEdit={(def: ValueDefinition) => {
+              setSelectedDefinition(def);
+              setIsEdit(true);
+              setOpenAddDefinition(true);
+            }}
             onDelete={(def: ValueDefinition) => {
               setSelectedDefinition(def);
               setIsEdit(false);
@@ -118,6 +127,6 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
           setSelectedDefinition(defaultValueDefinition);
         }}
       />
-    </div>
+    </section>
   );
 };

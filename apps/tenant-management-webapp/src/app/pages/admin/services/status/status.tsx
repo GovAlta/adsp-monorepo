@@ -107,81 +107,87 @@ function Status(): JSX.Element {
             <StatusOverview setActiveEdit={addApplication} setActiveIndex={setActiveIndex} />
           </Tab>
           <Tab label="Applications" data-testid="status-applications-tab">
-            <p>
-              <GoAButton testId="add-application" onClick={() => addApplication(true)} type="primary">
-                Add application
-              </GoAButton>
-            </p>
-            <p>
-              <b>Do you want to subscribe and receive notifications for application health changes?</b>
-            </p>
-            <GoACheckbox
-              name="subscribe"
-              checked={!!subscription}
-              onChange={() => {
-                subscribeToggle();
-              }}
-              value="subscribed"
-              ariaLabel="subscribe-checkbox"
-              testId="subscribe-checkbox"
-            >
-              I want to subscribe and receive notifications
-            </GoACheckbox>
-            {isApplicationsFetched === true && applications.length === 0 && renderNoItem('application')}
-            <ApplicationList>
-              {applications.map((app) => (
-                <Application key={app.appKey} {...app} />
-              ))}
-            </ApplicationList>
+            <section>
+              <p>
+                <GoAButton testId="add-application" onClick={() => addApplication(true)} type="primary">
+                  Add application
+                </GoAButton>
+              </p>
+              <p>
+                <b>Do you want to subscribe and receive notifications for application health changes?</b>
+              </p>
+              <GoACheckbox
+                name="subscribe"
+                checked={!!subscription}
+                onChange={() => {
+                  subscribeToggle();
+                }}
+                value="subscribed"
+                ariaLabel="subscribe-checkbox"
+                testId="subscribe-checkbox"
+              >
+                I want to subscribe and receive notifications
+              </GoACheckbox>
+              {isApplicationsFetched === true && applications.length === 0 && renderNoItem('application')}
+              <ApplicationList>
+                {applications.map((app) => (
+                  <Application key={app.appKey} {...app} />
+                ))}
+              </ApplicationList>
+            </section>
           </Tab>
           <Tab label="Webhook" data-testid="status-webhook">
-            <p>The webhooks are listed here</p>
-            <p>
+            <section>
+              <p>The webhooks are listed here</p>
+              <p>
+                <GoAButton
+                  testId="add-application"
+                  onClick={() => {
+                    dispatch(
+                      UpdateModalState({
+                        type: AddEditStatusWebhookType,
+                        isOpen: true,
+                        id: null,
+                      })
+                    );
+                  }}
+                  type="primary"
+                >
+                  Add webhook
+                </GoAButton>
+              </p>
+
+              <WebhookListTable />
+            </section>
+          </Tab>
+          <Tab label="Notices" data-testid="status-notices">
+            <section>
+              <NoticeModal
+                isOpen={showAddNoticeModal}
+                title="Add notice"
+                onCancel={() => {
+                  setShowAddNoticeModal(false);
+                }}
+                onSave={() => {
+                  setShowAddNoticeModal(false);
+                }}
+              />
+
+              <p>
+                This service allows for posting of application notices. This allows you to communicate with your
+                customers about upcoming maintenance windows or other events
+              </p>
               <GoAButton
-                testId="add-application"
+                testId="add-notice"
                 onClick={() => {
-                  dispatch(
-                    UpdateModalState({
-                      type: AddEditStatusWebhookType,
-                      isOpen: true,
-                      id: null,
-                    })
-                  );
+                  setShowAddNoticeModal(true);
                 }}
                 type="primary"
               >
-                Add webhook
+                Add notice
               </GoAButton>
-            </p>
-
-            <WebhookListTable />
-          </Tab>
-          <Tab label="Notices" data-testid="status-notices">
-            <NoticeModal
-              isOpen={showAddNoticeModal}
-              title="Add notice"
-              onCancel={() => {
-                setShowAddNoticeModal(false);
-              }}
-              onSave={() => {
-                setShowAddNoticeModal(false);
-              }}
-            />
-
-            <p>
-              This service allows for posting of application notices. This allows you to communicate with your customers
-              about upcoming maintenance windows or other events
-            </p>
-            <GoAButton
-              testId="add-notice"
-              onClick={() => {
-                setShowAddNoticeModal(true);
-              }}
-              type="primary"
-            >
-              Add notice
-            </GoAButton>
-            <NoticeList />
+              <NoticeList />
+            </section>
           </Tab>
         </Tabs>
         <ApplicationFormModal

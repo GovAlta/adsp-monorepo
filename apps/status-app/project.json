@@ -27,8 +27,7 @@
         "styles": ["apps/status-app/src/styles.scss"],
         "scripts": [],
         "webpackConfig": "apps/status-app/webpack.config.js",
-        "babelUpwardRootMode": true,
-        "isolatedConfig": true
+        "babelUpwardRootMode": true
       },
       "configurations": {
         "production": {

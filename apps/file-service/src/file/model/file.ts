@@ -160,7 +160,7 @@ export class FileEntity implements File {
     return await this.repository.delete(this);
   }
 
-  async readFile(user: User): Promise<Readable> {
+  async readFile(user: User, start?: number, end?: number): Promise<Readable> {
     if (!this.canAccess(user)) {
       throw new UnauthorizedError('User not authorized to access file.');
     }
@@ -173,7 +173,7 @@ export class FileEntity implements File {
       throw new InvalidOperationError('Cannot access infected file.');
     }
 
-    const stream = await this.storageProvider.readFile(this);
+    const stream = await this.storageProvider.readFile(this, start || 0, end || this.size - 1);
     this.lastAccessed = new Date();
     await this.repository.save(this, { lastAccessed: this.lastAccessed });
 

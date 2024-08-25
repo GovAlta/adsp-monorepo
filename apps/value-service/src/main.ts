@@ -17,7 +17,7 @@ import {
   ValueWrittenDefinition,
 } from './values';
 import { createRepositories } from './timescale';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { AjvValueValidationService } from './ajv';
 import type { User } from '@abgov/adsp-service-sdk';
 
@@ -34,12 +34,14 @@ const initializeApp = async () => {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
 
+  const serviceId = AdspId.parse(environment.CLIENT_ID);
+
   const repositories = await createRepositories({ ...environment, logger });
 
   const { coreStrategy, tenantStrategy, tenantHandler, configurationHandler, eventService, healthCheck, traceHandler } =
     await initializePlatform(
       {
-        serviceId: AdspId.parse(environment.CLIENT_ID),
+        serviceId,
         displayName: 'Value service',
         description: 'Service for time-series values.',
         roles: [
@@ -88,6 +90,17 @@ const initializeApp = async () => {
         ],
         useLongConfigurationCacheTTL: true,
         enableConfigurationInvalidation: true,
+        serviceConfigurations: [
+          {
+            serviceId: adspId`urn:ads:platform:cache-service`,
+            configuration: {
+              targets: {
+                [`${serviceId}`]: {},
+                [`${serviceId}:v1`]: {},
+              },
+            },
+          },
+        ],
       },
       { logger }
     );

@@ -208,6 +208,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(definition?.dataSchema || {}, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
+  const [activeIndex] = useState<number>(0);
 
   const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
@@ -440,8 +441,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-
-  const [activeIndex] = useState<number>(0);
 
   useEffect(() => {
     if (spinner && Object.keys(definitions).length > 0) {
@@ -997,14 +996,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Data" data-testid="data-view">
                 {data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}
               </Tab>
-              {definition?.submissionPdfTemplate && (
+              {definition?.submissionPdfTemplate ? (
                 <Tab
                   label={<PreviewTop title="PDF Preview" form={definition} data={data} currentTab={currentTab} />}
                   data-testid="data-view"
                 >
                   <PDFPreviewTemplateCore formName={definition.name} />
                 </Tab>
-              )}
+              ) : null}
             </Tabs>
           </FormPreviewContainer>
         </FlexRow>

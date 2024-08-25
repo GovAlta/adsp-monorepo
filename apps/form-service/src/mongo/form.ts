@@ -118,7 +118,7 @@ export class MongoFormRepository implements FormRepository {
       id: entity.id,
       formDraftUrl: entity.formDraftUrl,
       anonymousApplicant: entity.anonymousApplicant,
-      definitionId: entity.definition.id,
+      definitionId: entity.definition?.id,
       // NOTE: This is only set on insert (create).
       // The UUID is necessary due to backwards compatibility with a unique index on tenant, definition, and applicant IDs.
       // Setting form ID makes the unique context effectively tenant, definition, form IDs.

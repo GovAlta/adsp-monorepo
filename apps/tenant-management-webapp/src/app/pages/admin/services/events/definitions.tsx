@@ -43,7 +43,7 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
   }
 
   return (
-    <>
+    <section>
       <PageIndicator />
       {!indicator.show && definitions && (
         <div>
@@ -98,7 +98,7 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
           reset();
         }}
       />
-    </>
+    </section>
   );
 };
 
