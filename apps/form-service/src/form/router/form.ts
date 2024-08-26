@@ -6,6 +6,7 @@ import {
   startBenchmark,
   UnauthorizedUserError,
   GoAError,
+  TenantService,
 } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
@@ -95,22 +96,35 @@ async function getDefinitionFromConfiguration(req: Request, definitionId: string
   return definition;
 }
 
-export const getFormDefinition: RequestHandler = async (req, res, next) => {
-  try {
-    const user = req.user;
-    const { definitionId } = req.params;
+export function getFormDefinition(tenantService: TenantService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const { definitionId } = req.params;
 
-    const definition = await getDefinitionFromConfiguration(req, definitionId);
+      // This endpoint allows anonymous requests and needs to support resolving tenant context via a query param in that case.
+      if (!req.tenant) {
+        const { tenantId: tenantIdValue } = req.query;
+        const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : null;
+        req.tenant = tenantId ? await tenantService.getTenant(tenantId) : null;
+      }
 
-    if (!definition.canAccessDefinition(user)) {
-      throw new UnauthorizedUserError('access definition', user);
+      if (!req.tenant) {
+        throw new InvalidOperationError('Cannot determine tenant context of request.');
+      }
+
+      const definition = await getDefinitionFromConfiguration(req, definitionId);
+
+      if (!definition.canAccessDefinition(user)) {
+        throw new UnauthorizedUserError('access definition', user);
+      }
+
+      res.send(mapFormDefinition(definition));
+    } catch (err) {
+      next(err);
     }
-
-    res.send(mapFormDefinition(definition));
-  } catch (err) {
-    next(err);
-  }
-};
+  };
+}
 
 export function findForms(apiId: AdspId, repository: FormRepository): RequestHandler {
   return async (req, res, next) => {
@@ -481,6 +495,7 @@ interface FormRouterProps {
   apiId: AdspId;
   repository: FormRepository;
   eventService: EventService;
+  tenantService: TenantService;
   notificationService: NotificationService;
   queueTaskService: QueueTaskService;
   fileService: FileService;
@@ -493,6 +508,7 @@ export function createFormRouter({
   apiId,
   repository,
   eventService,
+  tenantService,
   notificationService,
   queueTaskService,
   fileService,
@@ -506,7 +522,7 @@ export function createFormRouter({
   router.get(
     '/definitions/:definitionId',
     createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
-    getFormDefinition
+    getFormDefinition(tenantService)
   );
 
   router.get(
