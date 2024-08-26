@@ -118,6 +118,13 @@ describe('form router', () => {
     generateFormPdf: jest.fn(),
   };
 
+  const tenantServiceMock = {
+    getTenants: jest.fn(),
+    getTenant: jest.fn(),
+    getTenantByName: jest.fn(),
+    getTenantByRealm: jest.fn(),
+  };
+
   const formInfo = {
     id: 'test-form',
     formDraftUrl: 'https://my-form/test-form',
@@ -183,6 +190,7 @@ describe('form router', () => {
     eventServiceMock.send.mockReset();
     commentServiceMock.createSupportTopic.mockClear();
     pdfServiceMock.generateFormPdf.mockClear();
+    tenantServiceMock.getTenant.mockClear();
   });
 
   it('can create router', () => {
@@ -196,6 +204,7 @@ describe('form router', () => {
       commentService: commentServiceMock,
       submissionRepository: repositoryMock,
       pdfService: pdfServiceMock,
+      tenantService: tenantServiceMock,
     });
     expect(router).toBeTruthy();
   });
@@ -221,6 +230,11 @@ describe('form router', () => {
   });
 
   describe('getFormDefinition', () => {
+    it('can create handler', () => {
+      const handler = getFormDefinition(tenantServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
     it('can get definition from namespace', async () => {
       const user = {
         tenantId,
@@ -232,12 +246,14 @@ describe('form router', () => {
         params: { definitionId: 'test' },
         getServiceConfiguration: jest.fn(),
         getConfiguration: jest.fn(),
+        tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      await getFormDefinition(req as unknown as Request, res as unknown as Response, next);
+      const handler = getFormDefinition(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test');
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'test-form-definition' }));
@@ -254,12 +270,14 @@ describe('form router', () => {
         params: { definitionId: 'test' },
         getServiceConfiguration: jest.fn(),
         getConfiguration: jest.fn(),
+        tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      await getFormDefinition(req as unknown as Request, res as unknown as Response, next);
+      const handler = getFormDefinition(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalled();
       expect(res.send).not.toHaveBeenCalled();
@@ -277,16 +295,75 @@ describe('form router', () => {
         params: { definitionId: 'test-2' },
         getServiceConfiguration: jest.fn(),
         getConfiguration: jest.fn(),
+        tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([]);
-      await getFormDefinition(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      const handler = getFormDefinition(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalled();
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can get definition for anonymous user', async () => {
+      const req = {
+        params: { definitionId: 'test' },
+        getServiceConfiguration: jest.fn(),
+        getConfiguration: jest.fn(),
+        query: { tenantId: tenantId.toString() },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const definition = new FormDefinitionEntity(validationService, tenantId, {
+        id: 'test',
+        name: 'test-form-definition',
+        description: null,
+        formDraftUrlTemplate: 'https://my-form/{{ id }}',
+        anonymousApply: true,
+        applicantRoles: ['test-applicant'],
+        assessorRoles: ['test-assessor'],
+        submissionRecords: false,
+        submissionPdfTemplate: '',
+        supportTopic: true,
+        clerkRoles: [],
+        dataSchema: null,
+        dispositionStates: [{ id: 'rejectedStatus', name: 'rejected', description: 'err' }],
+        queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
+      });
+
+      tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
+      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      const handler = getFormDefinition(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test');
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'test-form-definition' }));
+    });
+
+    it('can call next with unauthorized user for definition not allowing anonymous apply', async () => {
+      const req = {
+        params: { definitionId: 'test' },
+        getServiceConfiguration: jest.fn(),
+        getConfiguration: jest.fn(),
+        query: { tenantId: tenantId.toString() },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
+      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      const handler = getFormDefinition(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test');
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 
