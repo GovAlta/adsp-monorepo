@@ -1,4 +1,4 @@
-import { AdspId, EventService, adspId, TokenProvider, ServiceDirectory } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, adspId } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { FileService } from '../file';
@@ -8,6 +8,7 @@ import { FormSubmissionRepository, Repositories } from './repository';
 import { createFormRouter } from './router';
 import { QueueTaskService } from '../task';
 import { CommentService } from './comment';
+import { PdfService } from './pdf';
 
 export * from './roles';
 export * from './comment';
@@ -28,8 +29,7 @@ interface FormMiddlewareProps extends Repositories {
   commentService: CommentService;
   queueTaskService: QueueTaskService;
   formSubmissionRepository: FormSubmissionRepository;
-  directory: ServiceDirectory;
-  tokenProvider: TokenProvider;
+  pdfService: PdfService;
 }
 
 export const applyFormMiddleware = (
@@ -44,8 +44,7 @@ export const applyFormMiddleware = (
     commentService,
     queueTaskService,
     formSubmissionRepository: submissionRepository,
-    directory,
-    tokenProvider,
+    pdfService,
   }: FormMiddlewareProps
 ): Application => {
   const apiId = adspId`${serviceId}:v1`;
@@ -60,8 +59,7 @@ export const applyFormMiddleware = (
     fileService,
     commentService,
     submissionRepository,
-    directory,
-    tokenProvider,
+    pdfService,
   });
   app.use('/form/v1', router);
 
