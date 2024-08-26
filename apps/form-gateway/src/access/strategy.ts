@@ -23,9 +23,9 @@ export class FormStrategy extends Strategy {
     try {
       const { code } = req.query;
       if (code) {
-        const formApiId = await this.directory.getServiceUrl(FORM_API_ID);
+        const formApiUrl = await this.directory.getServiceUrl(FORM_API_ID);
         const { formId } = req.params;
-        const formAccessUrl = new URL(`v1/forms/${formId}/data`, formApiId);
+        const formAccessUrl = new URL(`v1/forms/${formId}/data`, formApiUrl);
 
         const token = await this.tokenProvider.getAccessToken();
         const { data } = await axios.get<{ data: Record<string, unknown>; files: Record<string, string> }>(
