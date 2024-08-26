@@ -30,9 +30,9 @@ class PdfServiceImpl implements PdfService {
 
       const pdfGenerateBody = {
         operation: 'generate',
-        templateId: form.submissionPdfTemplate,
+        templateId: form.definition.submissionPdfTemplate,
         data: formDefinitions,
-        filename: `${form.submissionPdfTemplate}-${form.definition.id}.pdf`,
+        filename: `${form.definition.submissionPdfTemplate}-${form.definition.id}.pdf`,
         recordId: recordId,
       };
 

@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Subscriber } from '../../notification';
-import { FormDefinition, Disposition } from './definition';
+import { FormDefinition } from './definition';
 
 export enum FormStatus {
   Draft = 'draft',
@@ -21,10 +21,6 @@ export interface Form {
   createdBy: { id: string; name: string };
   locked: Date;
   submitted: Date;
-  dispositionStates?: Array<Disposition>;
-  submissionRecords?: boolean;
-  submissionPdfTemplate?: string;
-  supportTopic?: boolean;
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;

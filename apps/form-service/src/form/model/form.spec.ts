@@ -582,8 +582,23 @@ describe('FormEntity', () => {
     });
 
     it('can submit form with task', async () => {
+      const definition = new FormDefinitionEntity(validationService, tenantId, {
+        id: 'test',
+        name: 'test-form-definition',
+        formDraftUrlTemplate: 'https://my-form/{{ id }}',
+        description: null,
+        anonymousApply: true,
+        submissionRecords: true,
+        submissionPdfTemplate: '',
+        supportTopic: false,
+        applicantRoles: ['test-applicant'],
+        assessorRoles: ['test-assessor'],
+        clerkRoles: ['test-clerk'],
+        dataSchema: null,
+        securityClassification: 'protected b',
+        queueTaskToProcess: { queueNameSpace: 'test-queue-namespace', queueName: 'test-queue' } as QueueTaskToProcess,
+      });
       const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
-      entity.submissionRecords = true;
 
       const [submitted] = await entity.submit(
         { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
