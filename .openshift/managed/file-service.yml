@@ -374,7 +374,7 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 250m
+                  cpu: 500m
                   memory: 5Gi
                 requests:
                   cpu: 20m
@@ -513,7 +513,7 @@ objects:
               resources:
                 limits:
                   cpu: 100m
-                  memory: 200Mi
+                  memory: 1Gi
                 requests:
                   cpu: 20m
                   memory: 50Mi

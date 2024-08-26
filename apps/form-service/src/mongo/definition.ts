@@ -1,25 +1,18 @@
-import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { FormDefinitionEntity, FormDefinitionRepository } from '../form';
+import { Logger } from 'winston';
 
 export class ConfigurationFormDefinitionRepository implements FormDefinitionRepository {
-  constructor(
-    private serviceId: AdspId,
-    private tokenProvider: TokenProvider,
-    private configurationService: ConfigurationService
-  ) {}
+  constructor(private logger: Logger, private configurationService: ConfigurationService) {}
 
   async getDefinition(tenantId: AdspId, id: string): Promise<FormDefinitionEntity> {
-    let [definition] = await this.configurationService.getServiceConfiguration<FormDefinitionEntity>(id, tenantId);
+    const [definition] = await this.configurationService.getServiceConfiguration<FormDefinitionEntity>(id, tenantId);
 
-    // TODO: Remove after configuration is transitioned to form-service namespace.
     if (!definition) {
-      const token = await this.tokenProvider.getAccessToken();
-      const [configuration] = await this.configurationService.getConfiguration<Record<string, FormDefinitionEntity>>(
-        this.serviceId,
-        token,
-        tenantId
-      );
-      definition = configuration[id];
+      this.logger.warn(`Definition with ID '${id}' could not be found.`, {
+        context: 'FormDefinitionRepository',
+        tenant: tenantId?.toString(),
+      });
     }
 
     return definition;

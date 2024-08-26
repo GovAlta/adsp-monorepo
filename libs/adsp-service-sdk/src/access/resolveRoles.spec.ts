@@ -10,7 +10,14 @@ describe('resolveRoles', () => {
       },
     });
 
-    expect(roles).toEqual(expect.arrayContaining(['realm-role', 'aud-client-role', 'other-service:other-client-role']));
+    expect(roles).toEqual(
+      expect.arrayContaining([
+        'realm-role',
+        'aud-client-role',
+        'test-service:aud-client-role',
+        'other-service:other-client-role',
+      ])
+    );
   });
 
   it('can handle missing realm_access', () => {
@@ -21,7 +28,9 @@ describe('resolveRoles', () => {
       },
     });
 
-    expect(roles).toEqual(expect.arrayContaining(['aud-client-role', 'other-service:other-client-role']));
+    expect(roles).toEqual(
+      expect.arrayContaining(['aud-client-role', 'test-service:aud-client-role', 'other-service:other-client-role'])
+    );
   });
 
   it('can handle missing resource_access', () => {

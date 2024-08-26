@@ -141,22 +141,6 @@ describe('Mongo: FileEntity', () => {
   });
 
   it('save a file with a partial', async () => {
-    const data = await createMockData<FileEntity>(repo, [
-      {
-        tenantId,
-        id: '1',
-        recordId: '1',
-        filename: 'bob.jpg',
-        size: 44545454,
-        createdBy: { id: '4d662274-9b23-4e2e-b058-50c3a4062609', name: 'QA-Dev DIO' },
-        created: new Date('2021-04-19T19:26:30.667+00:00'),
-        lastAccessed: new Date('2021-04-19T19:26:30.667+00:00'),
-        scanned: false,
-        deleted: false,
-        type: entity,
-      },
-    ]);
-
     const fileEntity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), null, {
       tenantId,
       id: 'file-1',

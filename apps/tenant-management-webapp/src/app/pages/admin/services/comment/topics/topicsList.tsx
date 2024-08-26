@@ -100,7 +100,7 @@ export const TopicsList = (): JSX.Element => {
   };
 
   return (
-    <Topics>
+    <section>
       {!indicator.show &&
         Object.keys(topicTypes).length === 0 &&
         Object.keys(coreTopicTypes).length === 0 &&
@@ -206,6 +206,6 @@ export const TopicsList = (): JSX.Element => {
           onSave={handleSave}
         />
       )}
-    </Topics>
+    </section>
   );
 };
