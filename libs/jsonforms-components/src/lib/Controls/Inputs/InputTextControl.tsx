@@ -21,27 +21,33 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const hereApiKey = uischema?.options?.hereApiKey;
 
   useEffect(() => {
     if (data && data.length > 2) {
       const fetchSuggestions = async () => {
         try {
-          const response = await axios.get(uischema['options']?.source, {
-            params: { address: data },
-            withCredentials: true, // Ensure credentials are sent
+          const response = await axios.get('https://autosuggest.search.hereapi.com/v1/autosuggest', {
+            params: {
+              apiKey: hereApiKey,
+              in: 'bbox:-141.00275,41.6765556,-52.3231981,83.3362128',
+              q: data,
+              limit: 5,
+            },
           });
-          setSuggestions(response.data.suggestions);
+
+          setSuggestions(response.data.items);
         } catch (error) {
-          console.error('Error fetching address suggestions:', error);
+          console.error('Error fetching address suggestions from HERE API:', error);
         }
       };
       fetchSuggestions();
     } else {
       setSuggestions([]);
     }
-  }, [data, uischema]);
+  }, [data, hereApiKey]);
 
   return (
     <div>
@@ -88,8 +94,8 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       {suggestions.length > 0 && (
         <ul>
           {suggestions.map((suggestion, index) => (
-            <li key={index} onClick={() => {}}>
-              {suggestion}
+            <li key={index} onClick={() => console.log('Selected:', suggestion)}>
+              {suggestion?.title}
             </li>
           ))}
         </ul>

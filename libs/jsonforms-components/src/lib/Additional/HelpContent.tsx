@@ -7,6 +7,7 @@ import { ControlProps, ControlElement } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Visible } from '../util';
 import { RenderLink } from './LinkControl';
+import AddressAutocomplete from './AddressAutocompleteWidget';
 
 interface OptionProps {
   ariaLabel?: string;
@@ -17,6 +18,7 @@ interface OptionProps {
   height?: string;
   width?: string;
   link?: string;
+  autocomplete?: boolean;
 }
 
 interface CustomControlElement extends ControlElement {
@@ -86,6 +88,8 @@ export const HelpContentComponent = ({
           {uischema?.elements && uischema?.elements.length > 0 && uischema.options?.variant !== 'details' && (
             <HelpContents elements={uischema.elements} isParent={false} />
           )}
+
+          {uischema.options?.autocomplete && <AddressAutocomplete />}
         </div>
       </HelpContentDiv>
     </Visible>

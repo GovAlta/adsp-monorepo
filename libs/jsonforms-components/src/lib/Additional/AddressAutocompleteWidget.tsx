@@ -1,58 +1,130 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { GoAInput, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components-new';
 
-interface AddressAutocompleteWidgetProps {
-  value: string;
-  onChange: (value: string) => void;
-  uiSchema: any;
+interface Address {
+  address1: string;
+  address2?: string;
+  postalCode: string;
+  city: string;
+  province: string;
 }
+const defaultAddress = {
+  address1: '',
+  address2: '',
+  postalCode: '',
+  city: '',
+  province: '',
+};
 
-export const AddressAutocompleteWidget: React.FC<AddressAutocompleteWidgetProps> = ({ value, onChange, uiSchema }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+const AddressAutocomplete: React.FC = () => {
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [address, setAddress] = useState<Address>();
 
   useEffect(() => {
-    if (window.google && inputRef.current) {
-      const autocompleteInstance = new window.google.maps.places.Autocomplete(inputRef.current!, {
-        types: ['address'],
-        componentRestrictions: { country: 'ca' }, // Restrict to Canada
-      });
-
-      autocompleteInstance.addListener('place_changed', () => {
-        const place = autocompleteInstance.getPlace();
-        if (place && place.address_components) {
-          const address1 = place.address_components.find((comp) => comp.types.includes('route'))?.long_name || '';
-          const address2 =
-            place.address_components.find((comp) => comp.types.includes('sublocality_level_1'))?.long_name || '';
-          const postalCode =
-            place.address_components.find((comp) => comp.types.includes('postal_code'))?.long_name || '';
-          const city = place.address_components.find((comp) => comp.types.includes('locality'))?.long_name || '';
-          const province =
-            place.address_components.find((comp) => comp.types.includes('administrative_area_level_1'))?.long_name ||
-            '';
-
-          onChange({
-            address1,
-            address2,
-            postalCode,
-            city,
-            province,
+    setAddress(defaultAddress);
+    if (query.length > 2) {
+      const fetchSuggestions = async () => {
+        try {
+          const response = await axios.get('https://autosuggest.search.hereapi.com/v1/autosuggest', {
+            params: {
+              apiKey: 'Ec1tC4wxvqElg6v1m1YWvhZlTifDb3bZM7rJ-t9J4Ig',
+              in: 'bbox:-141.00275,41.6765556,-52.3231981,83.3362128',
+              q: query,
+              limit: 5,
+            },
           });
+          setSuggestions(response.data.items);
+        } catch (error) {
+          console.error('Error fetching address suggestions:', error);
         }
-      });
+      };
 
-      setAutocomplete(autocompleteInstance);
+      fetchSuggestions();
     }
-  }, []);
+  }, [query]);
+
+  const handleSelect = (suggestion: any) => {
+    if (suggestion?.address?.label) {
+      const address = suggestion.address.label.split(',');
+      const address1 = address[0] || '';
+      const address2 = suggestion.address?.street || '';
+
+      const city = address[1].trim();
+      let province = '',
+        postalCode = '';
+
+      if (address[2] && address[2].trim().split(' ').length > 1) {
+        province = address[2].split(' ')[1].trim();
+        postalCode = address[2].split(' ')[2] + ' ' + address[2].split(' ')[3];
+      }
+
+      setAddress({ address1, address2, postalCode, city, province });
+    }
+    setSuggestions([]);
+  };
 
   return (
     <div>
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Enter address 1"
-      />
+      <GoAFormItem label="">
+        <GoAInput
+          type="text"
+          value={query}
+          name="address1"
+          onChange={(name, value) => setQuery(value)}
+          placeholder="Enter address 1"
+        />
+        {suggestions.length > 0 && (
+          <ul>
+            {suggestions.map((suggestion, index) => (
+              <li key={index} onClick={() => handleSelect(suggestion)}>
+                {suggestion.title}
+              </li>
+            ))}
+          </ul>
+        )}
+      </GoAFormItem>
+      <div>
+        <br />
+        <GoAInput
+          type="text"
+          name="address2"
+          value={address?.address2 as string}
+          placeholder="Address 2"
+          readonly={true}
+          onChange={() => {}}
+        />
+        <br />
+        <GoAInput
+          type="text"
+          name="postalCode"
+          value={address?.postalCode as string}
+          placeholder="Postal Code"
+          readonly={true}
+          onChange={() => {}}
+        />
+        <br />
+        <GoAInput
+          type="text"
+          name="city"
+          value={address?.city as string}
+          placeholder="City"
+          readonly={true}
+          onChange={() => {}}
+        />
+        <br />
+        <GoAInput
+          type="text"
+          name="province"
+          value={address?.province as string}
+          placeholder="Province"
+          readonly={true}
+          onChange={() => {}}
+        />
+      </div>
     </div>
   );
 };
+
+export default AddressAutocomplete;
