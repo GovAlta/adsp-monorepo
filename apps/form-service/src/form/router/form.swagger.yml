@@ -152,7 +152,7 @@ components:
           type: string
           format: date-time
         disposition:
-          $ref: '#/components/schemas/FormDisposition'
+          $ref: "#/components/schemas/FormDisposition"
     SendCodeOperation:
       type: object
       properties:
@@ -197,7 +197,7 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/FormDefinition'
+                $ref: "#/components/schemas/FormDefinition"
 /form/v1/definitions/{definitionId}:
   get:
     tags:
@@ -216,7 +216,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormDefinition'
+              $ref: "#/components/schemas/FormDefinition"
 
 /form/v1/forms:
   get:
@@ -271,7 +271,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Form'
+                    $ref: "#/components/schemas/Form"
                 page:
                   type: object
                   properties:
@@ -312,6 +312,15 @@ components:
                         address:
                           type: string
                       required: [channel, address]
+              data:
+                type: object
+              files:
+                type: object
+                additionalProperties:
+                  type: string
+                  format: uri
+              submit:
+                type: boolean
             required: [definitionId]
     responses:
       200:
@@ -319,7 +328,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Form'
+              $ref: "#/components/schemas/Form"
 
 /form/v1/forms/{formId}:
   parameters:
@@ -339,7 +348,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Form'
+              $ref: "#/components/schemas/Form"
   post:
     tags:
       - Form
@@ -350,26 +359,26 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/UnlockFormOperation'
-              - $ref: '#/components/schemas/SubmitFormOperation'
-              - $ref: '#/components/schemas/ArchiveFormOperation'
-              - $ref: '#/components/schemas/SendCodeOperation'
-              - $ref: '#/components/schemas/SetToDraftOperation'
+              - $ref: "#/components/schemas/UnlockFormOperation"
+              - $ref: "#/components/schemas/SubmitFormOperation"
+              - $ref: "#/components/schemas/ArchiveFormOperation"
+              - $ref: "#/components/schemas/SendCodeOperation"
+              - $ref: "#/components/schemas/SetToDraftOperation"
             discriminator:
               propertyName: operation
               mapping:
-                unlock: '#/components/schemas/UnlockFormOperation'
-                submit: '#/components/schemas/SubmitFormOperation'
-                archive: '#/components/schemas/ArchiveFormOperation'
-                send-code: '#/components/schemas/SendCodeOperation'
-                to-draft: '#/components/schemas/SetToDraftOperation'
+                unlock: "#/components/schemas/UnlockFormOperation"
+                submit: "#/components/schemas/SubmitFormOperation"
+                archive: "#/components/schemas/ArchiveFormOperation"
+                send-code: "#/components/schemas/SendCodeOperation"
+                to-draft: "#/components/schemas/SetToDraftOperation"
     responses:
       200:
         description: Successfully executed operation.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Form'
+              $ref: "#/components/schemas/Form"
   delete:
     tags:
       - Form
@@ -410,7 +419,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormData'
+              $ref: "#/components/schemas/FormData"
   put:
     tags:
       - Form
@@ -435,7 +444,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormData'
+              $ref: "#/components/schemas/FormData"
 /form/v1/forms/{formId}/submissions/{submissionId}:
   parameters:
     - name: formId
@@ -460,7 +469,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormSubmission'
+              $ref: "#/components/schemas/FormSubmission"
   post:
     tags:
       - Form Submission
@@ -471,7 +480,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormSubmission'
+              $ref: "#/components/schemas/FormSubmission"
     requestBody:
       required: true
       content:
@@ -541,4 +550,4 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormSubmission'
+              $ref: "#/components/schemas/FormSubmission"

@@ -10,6 +10,7 @@ import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { Disposition, Form, FormStatus, SecurityClassificationType } from '../types';
 import { FormSubmissionEntity } from './formSubmission';
+import { PdfService } from '../pdf';
 
 // Any form created by user with the intake app role is treated as anonymous.
 function isAnonymousApplicant(user: User, applicant?: Subscriber): boolean {
@@ -251,7 +252,8 @@ export class FormEntity implements Form {
   async submit(
     user: User,
     queueTaskService: QueueTaskService,
-    submissionRepository: FormSubmissionRepository
+    submissionRepository: FormSubmissionRepository,
+    pdfService: PdfService,
   ): Promise<[FormEntity, FormSubmissionEntity]> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
@@ -283,6 +285,10 @@ export class FormEntity implements Form {
       if (saved.definition?.queueTaskToProcess?.queueNameSpace && saved.definition?.queueTaskToProcess?.queueName) {
         queueTaskService.createTask(saved, submission);
       }
+    }
+
+    if (this.submissionPdfTemplate.length > 0) {
+      pdfService.generateFormPdf(this, submission);
     }
 
     return [saved, submission];
