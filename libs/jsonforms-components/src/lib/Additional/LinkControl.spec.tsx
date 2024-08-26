@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor, queryByText } from '@testing-library/react';
+import { render, waitFor, queryByText, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { RenderLink, OptionProps } from './LinkControl';
 
@@ -19,6 +19,12 @@ describe('LinkSelect component', () => {
       const props = { ...staticProps, link: undefined, help: 'Alberta Farm' };
       const component = render(<RenderLink {...props} />);
       expect(component.getByText('Alberta Farm')).toBeInTheDocument();
+    });
+
+    it('renders a mailto link to display email icon', () => {
+      const props = { ...staticProps, link: 'mailto:test@test.com', help: 'Alberta Farm' };
+      const component = render(<RenderLink {...props} />);
+      expect(component.getByTitle('Email')).toBeInTheDocument();
     });
 
     it('renders invalid extension if extension ends with exe', async () => {
