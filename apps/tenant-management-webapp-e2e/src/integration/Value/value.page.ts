@@ -84,6 +84,12 @@ class valuePage {
       `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/parent::tr/following-sibling::tr//*[@data-testid="value-schema-details"]`
     );
   }
+
+  valueDefinitionsCoreDefinitionNamespace(namespace) {
+    return cy.xpath(
+      `//h2[text()="Core definitions"]/following-sibling::div//div[@class="group-name" and text()="${namespace}"]`
+    );
+  }
 }
 
 export default valuePage;

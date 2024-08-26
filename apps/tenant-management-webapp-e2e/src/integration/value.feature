@@ -6,7 +6,7 @@ Feature: Value
     When the user selects the "Value" menu item
     Then the user views the "Value service" overview content "The value service provides"
 
-  @TEST_CS-3340 @TEST_CS-3387 @TEST_CS-3434 @REQ_CS-250 @REQ_CS-2099 @REQ_CS-3434 @regression
+  @TEST_CS-3340 @TEST_CS-3387 @3489 @TEST_CS-3434 @REQ_CS-250 @REQ_CS-2899 @REQ_CS-3465 @REQ_CS-3434 @regression
   Scenario: As a tenant admin, I can add, edit and delete value definitions
     Given a tenant admin user is on value overview page
     # Add value definition
@@ -55,6 +55,19 @@ Feature: Value
     Then the user views delete "value definition" confirmation modal for "addEditDeleteValueDef"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the value definition of "autotest", "addEditDeleteValueDef", "autotest desc modified"
+
+  @TEST_CS-3387 @REQ_CS-2899 @regression
+  Scenario: As a tenant admin, I can see core value definitions
+    Given a tenant admin user is on value overview page
+    # Validate no duplicate name as core definition name is allowed
+    When the user clicks Add definition button on value service overview page
+    Then the user views Add value definition modal
+    When the user enters "comment-service", "service-metrics", "Low level metrics of the service.", "N/A" in value definition modal
+    And the user clicks Save button in value definition modal
+    Then the user views a validation error of duplicate value name
+    When the user clicks Cancel button in value definition modal
+    # Validate core value definitions heading
+    Then the user views "cache-service" namespace under Core definitions heading
     # Validate buttons for core value definitions
     And the user "should not view" "edit" button of the core value definition of "calendar-service", "service-metrics", "Low level metrics of the service."
     And the user "should not view" "delete" button of the core value definition of "form-service", "service-metrics", "Low level metrics of the service."

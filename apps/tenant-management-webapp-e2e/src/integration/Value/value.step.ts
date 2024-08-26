@@ -245,3 +245,7 @@ Then(
     }
   }
 );
+
+Then('the user views {string} namespace under Core definitions heading', function (coreNamespace) {
+  valueObj.valueDefinitionsCoreDefinitionNamespace(coreNamespace).should('exist');
+});
