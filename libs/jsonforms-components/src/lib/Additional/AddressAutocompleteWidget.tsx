@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { GoAInput, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components-new';
+import { GoAInput, GoAFormItem } from '@abgov/react-components-new';
 
 interface Address {
   address1: string;
@@ -21,6 +21,7 @@ const AddressAutocomplete: React.FC = () => {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [address, setAddress] = useState<Address>();
+  const [autocomplete, setAutocomplete] = useState<boolean>(false);
 
   useEffect(() => {
     setAddress(defaultAddress);
@@ -57,20 +58,26 @@ const AddressAutocomplete: React.FC = () => {
 
       if (address[2] && address[2].trim().split(' ').length > 1) {
         province = address[2].split(' ')[1].trim();
-        postalCode = address[2].split(' ')[2] + ' ' + address[2].split(' ')[3];
+        if (address[2].split(' ').length === 3) {
+          postalCode = address[2].split(' ')[2];
+        }
+        if (address[2].split(' ').length === 4) {
+          postalCode = address[2].split(' ')[2] + ' ' + address[2].split(' ')[3];
+        }
       }
 
       setAddress({ address1, address2, postalCode, city, province });
+      setAutocomplete(true);
     }
     setSuggestions([]);
   };
 
   return (
     <div>
-      <GoAFormItem label="">
+      <GoAFormItem label="Address 1">
         <GoAInput
           type="text"
-          value={query}
+          value={autocomplete ? (address?.address1 as string) : query}
           name="address1"
           onChange={(name, value) => setQuery(value)}
           placeholder="Enter address 1"
@@ -87,41 +94,49 @@ const AddressAutocomplete: React.FC = () => {
       </GoAFormItem>
       <div>
         <br />
-        <GoAInput
-          type="text"
-          name="address2"
-          value={address?.address2 as string}
-          placeholder="Address 2"
-          readonly={true}
-          onChange={() => {}}
-        />
+        <GoAFormItem label="Address 2">
+          <GoAInput
+            type="text"
+            name="address2"
+            value={address?.address2 as string}
+            placeholder="Address 2"
+            readonly={true}
+            onChange={() => {}}
+          />
+        </GoAFormItem>
         <br />
-        <GoAInput
-          type="text"
-          name="postalCode"
-          value={address?.postalCode as string}
-          placeholder="Postal Code"
-          readonly={true}
-          onChange={() => {}}
-        />
+        <GoAFormItem label="postalCode">
+          <GoAInput
+            type="text"
+            name="postalCode"
+            value={address?.postalCode as string}
+            placeholder="Postal Code"
+            readonly={true}
+            onChange={() => {}}
+          />
+        </GoAFormItem>
         <br />
-        <GoAInput
-          type="text"
-          name="city"
-          value={address?.city as string}
-          placeholder="City"
-          readonly={true}
-          onChange={() => {}}
-        />
+        <GoAFormItem label="City">
+          <GoAInput
+            type="text"
+            name="city"
+            value={address?.city as string}
+            placeholder="City"
+            readonly={true}
+            onChange={() => {}}
+          />
+        </GoAFormItem>
         <br />
-        <GoAInput
-          type="text"
-          name="province"
-          value={address?.province as string}
-          placeholder="Province"
-          readonly={true}
-          onChange={() => {}}
-        />
+        <GoAFormItem label="Province">
+          <GoAInput
+            type="text"
+            name="province"
+            value={address?.province as string}
+            placeholder="Province"
+            readonly={true}
+            onChange={() => {}}
+          />
+        </GoAFormItem>
       </div>
     </div>
   );
