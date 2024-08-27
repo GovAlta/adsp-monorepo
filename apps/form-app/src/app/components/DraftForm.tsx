@@ -36,6 +36,7 @@ interface DraftFormProps {
   canSubmit: boolean;
   showSubmit: boolean;
   saving: boolean;
+  submitting: boolean;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
 }
@@ -53,7 +54,7 @@ export const populateDropdown = (schema, enumerators) => {
   return newSchema as JsonSchema;
 };
 
-const JsonFormsWrapper = ({ definition, data, onChange }) => {
+const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
 
   return (
@@ -91,6 +92,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   canSubmit,
   showSubmit,
   saving,
+  submitting,
   onChange,
   onSubmit,
 }) => {
@@ -162,7 +164,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             deleteFile: deleteFormFile,
           }}
         >
-          <JsonFormsWrapper definition={definition} data={data} onChange={onChange} />
+          <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting}/>
         </ContextProvider>
         <GoAButtonGroup alignment="end">
           {showSubmit && (

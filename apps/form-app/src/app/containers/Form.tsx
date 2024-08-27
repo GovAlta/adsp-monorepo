@@ -78,6 +78,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   canSubmit={canSubmit}
                   showSubmit={showSubmit}
                   saving={busy.saving}
+                  submitting={busy.submitting}
                   onChange={({ data, errors }) => {
                     if (
                       errors[0]?.message === 'should be equal to one of the allowed values' &&
