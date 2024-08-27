@@ -6,6 +6,9 @@ import {
   RegisterData,
   JsonFormRegisterDispatch,
   ADD_REGISTER_DATA_ACTION,
+  ADD_NO_ANONYMOUS_ACTION,
+  ADD_REGISTER_DATA_ERROR,
+  ADD_DATALIST_ACTION,
   RegisterDataType,
 } from './actions';
 import { fetchRegister } from './util';
@@ -14,6 +17,7 @@ interface JsonFormsRegisterContextProps {
   registerDispatch: JsonFormRegisterDispatch;
   fetchRegisterByUrl: (registerConfig: RegisterConfig) => Promise<void>;
   selectRegisterData: (registerConfig: RegisterConfig) => RegisterDataType;
+  fetchErrors: (registerConfig: RegisterConfig) => string;
   isProvided: boolean;
 }
 
@@ -21,7 +25,7 @@ export const JsonFormsRegisterContext = createContext<JsonFormsRegisterContextPr
 
 interface JsonFormsRegisterProviderProps {
   children: ReactNode;
-  defaultRegisters: RegisterConfig[] | RegisterData | undefined;
+  defaultRegisters: { registerData: RegisterData; dataList: string[]; nonAnonymous: string[] } | undefined;
 }
 
 export const JsonFormRegisterProvider = ({
@@ -29,7 +33,12 @@ export const JsonFormRegisterProvider = ({
   defaultRegisters,
 }: JsonFormsRegisterProviderProps): JSX.Element => {
   const registerCtx = useContext(JsonFormsRegisterContext);
-  const [registers, dispatch] = useReducer(registerReducer, []);
+  const [registers, dispatch] = useReducer(registerReducer, {
+    registerData: [],
+    nonAnonymous: [],
+    nonExistent: [],
+    errors: {},
+  });
 
   const context = useMemo(() => {
     return {
@@ -37,24 +46,67 @@ export const JsonFormRegisterProvider = ({
       registerDispatch: dispatch,
       selectRegisterData: (criteria: RegisterConfig): RegisterDataType => {
         if (criteria?.url) {
-          return registers?.find((r) => r.url === criteria.url)?.data || [];
+          return registers.registerData?.find((r) => r.url === criteria.url)?.data || [];
         }
 
         if (criteria?.urn) {
-          return registers?.find((r) => r.urn === criteria.urn)?.data || [];
+          return registers.registerData?.find((r) => r.urn === criteria.urn)?.data || [];
         }
 
         return [];
       },
+      fetchErrors: (criteria: RegisterConfig): string => {
+        if (criteria?.url) {
+          const matchFound = registers?.registerData.some((listItem) => {
+            if (listItem?.url && criteria?.url?.toString().includes(listItem?.url)) {
+              return true;
+            }
+            return false;
+          });
+          return matchFound ? '' : `${registers.errors[criteria?.url]?.message || ''}`;
+        } else if (criteria?.urn) {
+          if (registers?.nonExistent) {
+            const matchFound = registers?.nonExistent.some((listItem) => {
+              if (criteria?.urn?.toString().includes(listItem)) {
+                return true;
+              }
+              return false;
+            });
+            if (!matchFound) {
+              return 'The element does not exist';
+            }
+          }
+          if (registers?.nonAnonymous) {
+            const matchFound = registers?.nonAnonymous.some((nonAnon) => {
+              if (criteria?.urn?.toString().includes(nonAnon)) {
+                return true;
+              }
+              return false;
+            });
+            return matchFound ? 'The element does not allow anonymous reading' : '';
+          }
+        }
+        return '';
+      },
       fetchRegisterByUrl: async (registerConfig: RegisterConfig) => {
         // Prevent re-freshing remote data
-        if (registers?.find((r) => r.url === registerConfig?.url)) {
+        if (registers.registerData?.find((r) => r.url === registerConfig?.url)) {
           return;
         }
         const data = await fetchRegister(registerConfig);
         // TODO: check the data type
-        if (data) {
+        if (Array.isArray(data)) {
           dispatch({ type: ADD_REGISTER_DATA_ACTION, payload: { ...registerConfig, data } });
+        } else {
+          const url = registerConfig.url || 'error';
+          const errors = { [url]: { message: data || '', url: url } };
+
+          if (JSON.stringify(registers.errors[url]) !== JSON.stringify(errors[url])) {
+            dispatch({
+              type: ADD_REGISTER_DATA_ERROR,
+              payload: errors,
+            });
+          }
         }
       },
     };
@@ -62,19 +114,25 @@ export const JsonFormRegisterProvider = ({
 
   useEffect(() => {
     if (defaultRegisters) {
-      defaultRegisters?.forEach((register) => {
+      defaultRegisters?.registerData?.forEach((register) => {
         if ((register as unknown as RegisterConfigData)?.data !== undefined) {
           // Register comes with data from remote
           dispatch({ type: ADD_REGISTER_DATA_ACTION, payload: { ...register } });
         } else {
           (async () => {
             const data = await fetchRegister(register);
-            if (data) {
+            if (Array.isArray(data)) {
               dispatch({ type: ADD_REGISTER_DATA_ACTION, payload: { ...register, data } });
             }
           })();
         }
       });
+      if (defaultRegisters?.nonAnonymous?.length > 0) {
+        dispatch({ type: ADD_NO_ANONYMOUS_ACTION, payload: { nonAnonymous: defaultRegisters?.nonAnonymous } });
+      }
+      if (defaultRegisters?.dataList?.length > 0) {
+        dispatch({ type: ADD_DATALIST_ACTION, payload: { nonExistent: defaultRegisters?.dataList } });
+      }
     }
   }, [dispatch, defaultRegisters]);
   /* The client might use the context outside of the Jsonform to provide custom register data */

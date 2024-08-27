@@ -34,6 +34,7 @@ const defaultState: ConfigurationDefinitionState = {
   configurationRevisions: {},
   serviceList: [],
   registers: [],
+  nonAnonymous: [],
 };
 
 export default function (
@@ -200,6 +201,9 @@ export default function (
 
     case FETCH_REGISTER_DATA_SUCCESS_ACTION: {
       state.registers = action.payload;
+      state.nonAnonymous = action.anonymousRead;
+      state.dataList = action.dataList;
+
       return {
         ...state,
       };
