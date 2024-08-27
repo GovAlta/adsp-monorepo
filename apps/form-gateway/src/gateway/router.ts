@@ -171,7 +171,7 @@ export function createGatewayRouter({
 
   router.post(
     '/forms',
-    verifyCaptcha(logger, RECAPTCHA_SECRET, 0.8),
+    verifyCaptcha(logger, RECAPTCHA_SECRET, 0.7),
     createValidationHandler(
       body('tenant').isString().isLength({ min: 1, max: 50 }),
       body('definitionId').isString().isLength({ min: 1, max: 50 }),

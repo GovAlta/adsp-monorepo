@@ -5,7 +5,7 @@ import { createGatewayRouter } from './router';
 
 export * from './roles';
 
-const FORM_API_ID = adspId`urn:ads:platform:configuration-service:v2`;
+const FORM_API_ID = adspId`urn:ads:platform:form-service:v1`;
 const FILE_API_ID = adspId`urn:ads:platform:file-service:v1`;
 
 interface MiddlewareOptions {
