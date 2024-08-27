@@ -72,7 +72,3 @@ Feature: Value
     And the user "should not view" "edit" button of the core value definition of "calendar-service", "service-metrics", "Low level metrics of the service."
     And the user "should not view" "delete" button of the core value definition of "form-service", "service-metrics", "Low level metrics of the service."
     And the user "views" "eye" button of the core value definition of "pdf-service", "service-metrics", "Low level metrics of the service."
-
-
-
-
