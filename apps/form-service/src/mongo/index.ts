@@ -1,4 +1,4 @@
-import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { ConfigurationService } from '@abgov/adsp-service-sdk';
 import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../form';
@@ -13,9 +13,7 @@ interface MongoRepositoryProps {
   MONGO_USER: string;
   MONGO_PASSWORD: string;
   MONGO_TLS: boolean;
-  serviceId: AdspId;
   logger: Logger;
-  tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
   notificationService: NotificationService;
 }
@@ -26,9 +24,7 @@ export const createRepositories = ({
   MONGO_USER,
   MONGO_PASSWORD,
   MONGO_TLS,
-  serviceId,
   logger,
-  tokenProvider,
   configurationService,
   notificationService,
 }: MongoRepositoryProps): Promise<Repositories> =>
@@ -44,11 +40,7 @@ export const createRepositories = ({
         if (err) {
           reject(err);
         } else {
-          const definitionRepository = new ConfigurationFormDefinitionRepository(
-            serviceId,
-            tokenProvider,
-            configurationService
-          );
+          const definitionRepository = new ConfigurationFormDefinitionRepository(logger, configurationService);
           const formRepository = new MongoFormRepository(definitionRepository, notificationService);
           const formSubmissionRepository = new MongoFormSubmissionRepository(formRepository);
           resolve({

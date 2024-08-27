@@ -27,8 +27,7 @@
         "styles": ["apps/subscriber-app/src/styles.scss"],
         "scripts": [],
         "webpackConfig": "apps/subscriber-app/webpack.config.js",
-        "babelUpwardRootMode": true,
-        "isolatedConfig": true
+        "babelUpwardRootMode": true
       },
       "configurations": {
         "production": {

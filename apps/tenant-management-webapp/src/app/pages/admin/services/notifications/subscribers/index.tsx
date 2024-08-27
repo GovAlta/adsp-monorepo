@@ -52,19 +52,21 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <CheckSubscriberRoles>
-      <div data-testid="subscribers-list-title">
-        <SubscribersSearchForm
-          onSearch={searchFn2}
-          reset={resetState}
-          searchCriteria={criteriaState}
-          onUpdate={setCriteriaState}
-        />
+    <section>
+      <CheckSubscriberRoles>
+        <div data-testid="subscribers-list-title">
+          <SubscribersSearchForm
+            onSearch={searchFn2}
+            reset={resetState}
+            searchCriteria={criteriaState}
+            onUpdate={setCriteriaState}
+          />
 
-        <SubscriberList searchCriteria={criteriaState} />
-        {indicator.show === false && <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />}
-        {indicator.show && <PageIndicator />}
-      </div>
-    </CheckSubscriberRoles>
+          <SubscriberList searchCriteria={criteriaState} />
+          {indicator.show === false && <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />}
+          {indicator.show && <PageIndicator />}
+        </div>
+      </CheckSubscriberRoles>
+    </section>
   );
 };

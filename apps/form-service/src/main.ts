@@ -41,6 +41,7 @@ import { createFileService } from './file';
 import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
 import { isFormDefinition } from './utils';
+import { createPdfService } from './pdf';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -69,6 +70,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantHandler,
     eventService,
     directory,
+    tenantService,
     tokenProvider,
     configurationService,
     configurationHandler,
@@ -201,11 +203,11 @@ const initializeApp = async (): Promise<express.Application> => {
     supportTopicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID,
   });
   const queueTaskService = createQueueTaskService(serviceId, logger, directory, tokenProvider);
+  const pdfService = createPdfService(logger, directory, tokenProvider);
+
   const repositories = await createRepositories({
     ...environment,
-    serviceId,
     logger,
-    tokenProvider,
     configurationService,
     notificationService,
   });
@@ -215,12 +217,12 @@ const initializeApp = async (): Promise<express.Application> => {
     serviceId,
     logger,
     eventService,
+    tenantService,
     notificationService,
     fileService,
     commentService,
     queueTaskService,
-    directory,
-    tokenProvider,
+    pdfService,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));

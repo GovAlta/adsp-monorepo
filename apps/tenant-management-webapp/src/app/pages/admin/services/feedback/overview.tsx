@@ -36,7 +36,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
   }, [dispatch]);
 
   return (
-    <div>
+    <section>
       <FeedbackOverviewSection>
         <p>
           The feedback service provides a backend API and a frontend widget for applications to accept feedback from
@@ -110,6 +110,6 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
         Register site
       </GoAButton>
       <FeedbackMetrics />
-    </div>
+    </section>
   );
 };

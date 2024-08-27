@@ -1,6 +1,6 @@
 import { adspId, AdspId, Channel, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { FormDefinition } from './form';
@@ -67,10 +67,17 @@ class NotificationServiceImpl implements NotificationService {
 
       return subscriber;
     } catch (err) {
-      this.logger.error(`Error encountered getting subscriber from notification service. ${err}`, {
-        ...LOG_CONTEXT,
-        tenant: tenantId?.toString(),
-      });
+      if (isAxiosError(err) && err.status === 404) {
+        this.logger.info(`Notification service returned not found for subscriber ${urn}.`, {
+          ...LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+        });
+      } else {
+        this.logger.error(`Error encountered getting subscriber from notification service. ${err}`, {
+          ...LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+        });
+      }
 
       return null;
     }

@@ -34,6 +34,7 @@ export const DescriptionText = styled.div`
   margin-top: 14px;
 `;
 export const NotificationStyles = styled.div`
+  padding: 1rem 0;
   .gridBoxHeight {
     height: 10.5rem;
   }

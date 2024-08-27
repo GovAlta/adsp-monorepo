@@ -1,6 +1,6 @@
 {
   "/config/*": {
-    "target": "https://form-app-adsp-dev.apps.aro.gov.ab.ca",
+    "target": "https://form.adsp-dev.gov.ab.ca",
     "secure": true,
     "changeOrigin": true
   },

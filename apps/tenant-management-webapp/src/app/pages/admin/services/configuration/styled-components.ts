@@ -95,6 +95,7 @@ export const ErrorStatusText = styled.div`
 `;
 
 export const Exports = styled.div`
+  padding: 1rem 0;
   .flex-row {
     display: flex;
     flex-direction: row;

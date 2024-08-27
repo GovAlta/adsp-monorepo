@@ -1,7 +1,7 @@
 import * as timekeeper from 'timekeeper';
-import { adspId, ConfigurationService, User } from '@abgov/adsp-service-sdk';
+import { adspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
-import { Mock, It } from 'moq.ts';
+import { Mock } from 'moq.ts';
 import { FileRepository } from '../repository';
 
 import { getBeforeLastAccessed } from './deleteOldFiles';
@@ -74,7 +74,7 @@ describe('Delete old files', () => {
   });
 
   const fileServiceMock = {
-    find: jest.fn(async (tenantIdFound, pageSize, after, options): Promise<Results<FileEntity>> => {
+    find: jest.fn(async (tenantIdFound): Promise<Results<FileEntity>> => {
       if (tenantId === tenantIdFound) {
         return { results: [entity], page: { after: 'abc-123', size: 10 } };
       } else {
@@ -115,17 +115,6 @@ describe('Delete old files', () => {
     expect(deleteJob).toBeTruthy();
   });
   it('can be executed', async () => {
-    const user: User = {
-      id: 'user-2',
-      name: 'testy',
-      email: 'test@testco.org',
-      roles: ['test-admin'],
-      tenantId,
-      isCore: false,
-      token: null,
-    };
-    const fileEntityMock = new Mock<FileEntity>();
-
     jest.spyOn(entity, 'markForDeletion').mockResolvedValue(
       new FileEntity(null, null, null, {
         tenantId,
@@ -164,17 +153,6 @@ describe('Delete old files', () => {
     expect(deleteJob).toBeTruthy();
   });
   it('can be executed but ', async () => {
-    const user: User = {
-      id: 'user-2',
-      name: 'testy',
-      email: 'test@testco.org',
-      roles: ['test-admin'],
-      tenantId,
-      isCore: false,
-      token: null,
-    };
-    const fileEntityMock = new Mock<FileEntity>();
-
     jest.spyOn(entity, 'markForDeletion').mockResolvedValue(
       new FileEntity(null, null, null, {
         tenantId,
@@ -213,17 +191,6 @@ describe('Delete old files', () => {
     expect(deleteJob).toBeTruthy();
   });
   it('can be executed but markfordeletion throws an error ', async () => {
-    const user: User = {
-      id: 'user-2',
-      name: 'testy',
-      email: 'test@testco.org',
-      roles: ['test-admin'],
-      tenantId,
-      isCore: false,
-      token: null,
-    };
-    const fileEntityMock = new Mock<FileEntity>();
-
     jest.spyOn(entity, 'markForDeletion').mockRejectedValue(new Error('Mocked error'));
 
     const deleteJob = createDeleteOldFilesJob({

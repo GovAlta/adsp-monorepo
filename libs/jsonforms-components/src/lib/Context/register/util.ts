@@ -34,3 +34,8 @@ export const isValidHref = function (url: string) {
   const mailToPattern = new RegExp(/^(mailto):[^ "]+$/);
   return httpPattern.test(url) || mailToPattern.test(url);
 };
+
+export const isMailToHref = function (url: string) {
+  const mailToPattern = new RegExp(/^(mailto):[^ "]+$/);
+  return mailToPattern.test(url);
+};

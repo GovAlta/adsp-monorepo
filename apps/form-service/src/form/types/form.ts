@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Subscriber } from '../../notification';
-import { FormDefinition, Disposition } from './definition';
+import { FormDefinition } from './definition';
 
 export enum FormStatus {
   Draft = 'draft',
@@ -12,7 +12,7 @@ export enum FormStatus {
 export type SecurityClassificationType = 'protected a' | 'protected b' | 'protected c' | 'public';
 
 export interface Form {
-  definition: FormDefinition;
+  definition?: FormDefinition;
   id: string;
   formDraftUrl: string;
   applicant?: Subscriber;
@@ -21,10 +21,6 @@ export interface Form {
   createdBy: { id: string; name: string };
   locked: Date;
   submitted: Date;
-  dispositionStates?: Array<Disposition>;
-  submissionRecords?: boolean;
-  submissionPdfTemplate?: string;
-  supportTopic?: boolean;
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;

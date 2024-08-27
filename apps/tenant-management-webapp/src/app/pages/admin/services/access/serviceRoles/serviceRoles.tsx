@@ -83,7 +83,7 @@ export const ServiceRoles = (): JSX.Element => {
   const sortedCoreRoles = sortObjectByKeys(coreRoles);
 
   return (
-    <div>
+    <section>
       {newClientId && (
         <ConfirmationModal
           clientId={newClientId}
@@ -165,6 +165,6 @@ export const ServiceRoles = (): JSX.Element => {
         </div>
       )}
       <PageIndicator />
-    </div>
+    </section>
   );
 };

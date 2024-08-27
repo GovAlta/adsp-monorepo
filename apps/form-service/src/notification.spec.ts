@@ -43,6 +43,7 @@ describe('notification', () => {
     axiosMock.get.mockReset();
     axiosMock.post.mockReset();
     axiosMock.delete.mockReset();
+    axiosMock.isAxiosError.mockReset();
     cacheMock.get.mockReset();
   });
 
@@ -101,6 +102,22 @@ describe('notification', () => {
 
         const result = await service.getSubscriber(tenantId, subscriberId);
         expect(result).toBeNull();
+      });
+
+      it('can return null for subscriber not found', async () => {
+        directoryMock.getResourceUrl.mockResolvedValueOnce(subscriberUrl);
+
+        axiosMock.isAxiosError.mockReturnValueOnce(true);
+        axiosMock.get.mockRejectedValueOnce(new Error('oh noes!'));
+
+        const result = await service.getSubscriber(tenantId, subscriberId);
+        expect(result).toBeNull();
+        expect(axiosMock.get).toHaveBeenCalledWith(
+          subscriberUrl.href,
+          expect.objectContaining({
+            params: expect.objectContaining({ tenantId: tenantId.toString() }),
+          })
+        );
       });
 
       it('can get subscriber from cache', async () => {

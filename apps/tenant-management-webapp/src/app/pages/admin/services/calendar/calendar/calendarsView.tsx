@@ -56,7 +56,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   };
 
   return (
-    <>
+    <section>
       <div>
         <GoAButton
           testId="add-calendar-btn"
@@ -89,6 +89,6 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
       {showDeleteConfirmation && (
         <DeleteConfirmationsView calendarName={selectedCalendarName}></DeleteConfirmationsView>
       )}
-    </>
+    </section>
   );
 };

@@ -8,8 +8,9 @@ import { QueueTaskService } from '../../task';
 import { FormDefinitionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { Disposition, Form, FormStatus, SecurityClassificationType } from '../types';
+import { Form, FormStatus, SecurityClassificationType } from '../types';
 import { FormSubmissionEntity } from './formSubmission';
+import { PdfService } from '../pdf';
 
 // Any form created by user with the intake app role is treated as anonymous.
 function isAnonymousApplicant(user: User, applicant?: Subscriber): boolean {
@@ -25,10 +26,6 @@ export class FormEntity implements Form {
   createdBy: { id: string; name: string };
   locked: Date;
   submitted: Date;
-  dispositionStates: Disposition[];
-  submissionRecords: boolean;
-  submissionPdfTemplate: string;
-  supportTopic: boolean;
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;
@@ -55,7 +52,6 @@ export class FormEntity implements Form {
       createdBy: { id: user.id, name: user.name },
       locked: null,
       submitted: null,
-      dispositionStates: definition.dispositionStates,
       lastAccessed: new Date(),
       status: FormStatus.Draft,
       data: {},
@@ -82,10 +78,6 @@ export class FormEntity implements Form {
     this.created = form.created;
     this.createdBy = form.createdBy;
     this.locked = form.locked;
-    this.dispositionStates = form?.dispositionStates || [];
-    this.submissionRecords = definition?.submissionRecords || false;
-    this.submissionPdfTemplate = definition?.submissionPdfTemplate || '';
-    this.supportTopic = definition?.supportTopic || false;
     this.submitted = form.submitted;
     this.lastAccessed = form.lastAccessed;
     this.status = form.status;
@@ -251,7 +243,8 @@ export class FormEntity implements Form {
   async submit(
     user: User,
     queueTaskService: QueueTaskService,
-    submissionRepository: FormSubmissionRepository
+    submissionRepository: FormSubmissionRepository,
+    pdfService: PdfService
   ): Promise<[FormEntity, FormSubmissionEntity]> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
@@ -261,12 +254,10 @@ export class FormEntity implements Form {
       !isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
       !(this.definition?.canApply(user) && user.id === this.createdBy.id)
     ) {
-      throw new UnauthorizedUserError('update form', user);
+      throw new UnauthorizedUserError('submit form', user);
     }
 
-    if (this.data) {
-      this.definition.validateData('form submission', this.data);
-    }
+    this.definition.validateData('form submission', this.data);
 
     this.status = FormStatus.Submitted;
     this.submitted = new Date();
@@ -277,7 +268,7 @@ export class FormEntity implements Form {
     const saved = await this.repository.save(this);
     let submission: FormSubmissionEntity = null;
 
-    if (this.submissionRecords) {
+    if (this.definition.submissionRecords) {
       // If configured to create submission records, create a form submission record
       // We need the submissionId so that it is available for updates/lookups of the submission.
       submission = await FormSubmissionEntity.create(user, submissionRepository, this, uuidv4());
@@ -285,6 +276,10 @@ export class FormEntity implements Form {
       if (saved.definition?.queueTaskToProcess?.queueNameSpace && saved.definition?.queueTaskToProcess?.queueName) {
         queueTaskService.createTask(saved, submission);
       }
+    }
+
+    if (this.definition.submissionPdfTemplate) {
+      pdfService.generateFormPdf(this, submission);
     }
 
     return [saved, submission];

@@ -54,8 +54,7 @@ Here are some out-of-the-box formats that not only render with the correct input
     <td><pre><code>
 {
   "numberOfChildren": {
-    "type": "string",
-    "format": "integer"
+    "type": "integer"
   }
 }
     </code></pre></td>
@@ -78,8 +77,7 @@ Here are some out-of-the-box formats that not only render with the correct input
     <td><pre><code>
 {
   "averageYearlyRainfall": {
-    "type": "string",
-    "format": "number"
+    "type": "number"
   }
 }
     </code></pre></td>

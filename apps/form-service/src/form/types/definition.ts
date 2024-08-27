@@ -11,9 +11,9 @@ export interface FormDefinition {
   dataSchema: Record<string, unknown>;
   uiSchema?: Record<string, unknown>;
   dispositionStates?: Array<Disposition>;
-  submissionRecords: boolean;
-  submissionPdfTemplate: string;
-  supportTopic: boolean;
+  submissionRecords?: boolean;
+  submissionPdfTemplate?: string;
+  supportTopic?: boolean;
   queueTaskToProcess?: QueueTaskToProcess;
   securityClassification?: SecurityClassificationType;
 }

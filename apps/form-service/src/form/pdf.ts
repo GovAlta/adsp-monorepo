@@ -1,3 +1,8 @@
+import { FormEntity, FormSubmissionEntity } from './model';
+
+export interface PdfService {
+  generateFormPdf(form: FormEntity, submission?: FormSubmissionEntity): Promise<string>;
+}
 
 export const SUBMITTED_FORM = 'submitted-form';
 
@@ -31,9 +36,7 @@ const template = `
 
 `;
 
-
-const additionalStyles =
-    `
+const additionalStyles = `
         <style>
         @font-face {
             font-family: 'acumin-pro-semi-condensed';
@@ -215,7 +218,7 @@ const additionalStyles =
         }
     </style>
 
-`
+`;
 
 export const SubmittedFormPdfTemplate = {
   id: SUBMITTED_FORM,
@@ -223,4 +226,4 @@ export const SubmittedFormPdfTemplate = {
   description: 'Template used to generate a PDF when a form is submitted',
   template,
   additionalStyles,
-}
+};

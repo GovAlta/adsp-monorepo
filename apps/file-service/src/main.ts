@@ -6,7 +6,13 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
-import { adspId, AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+} from '@abgov/adsp-service-sdk';
 import { environment, POD_TYPES } from './environments/environment';
 import {
   applyFileMiddleware,
@@ -40,6 +46,8 @@ async function initializeApp(): Promise<express.Application> {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  instrumentAxios(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);

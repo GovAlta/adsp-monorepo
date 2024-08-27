@@ -53,7 +53,7 @@ const FileTypesTableContainer = ({ roles, activeEdit }: FileTypesTableContainerP
   }, []);
 
   return (
-    <>
+    <section>
       {!indicator.show && fileTypes && fileTypes.length === 0 && (
         <NoContentContainer>{renderNoItem('file type')}</NoContentContainer>
       )}
@@ -69,6 +69,6 @@ const FileTypesTableContainer = ({ roles, activeEdit }: FileTypesTableContainerP
           />
         </div>
       )}
-    </>
+    </section>
   );
 };
