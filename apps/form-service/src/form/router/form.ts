@@ -14,7 +14,7 @@ import {
   InvalidOperationError,
   NotFoundError,
 } from '@core-services/core-common';
-import { Request, RequestHandler, Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
 import { FileService } from '../../file';
@@ -78,23 +78,13 @@ export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntit
   };
 }
 
-export const getFormDefinitions: RequestHandler = async (req, res, next) => {
+export const getFormDefinitions: RequestHandler = async (_req, _res, next) => {
   try {
     throw new GoAError('Definitions endpoint no longer supported.', { statusCode: 410 });
   } catch (err) {
     next(err);
   }
 };
-
-async function getDefinitionFromConfiguration(req: Request, definitionId: string): Promise<FormDefinitionEntity> {
-  const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId);
-
-  if (!definition) {
-    throw new NotFoundError('form definition', definitionId);
-  }
-
-  return definition;
-}
 
 export function getFormDefinition(tenantService: TenantService): RequestHandler {
   return async (req, res, next) => {
@@ -113,7 +103,10 @@ export function getFormDefinition(tenantService: TenantService): RequestHandler 
         throw new InvalidOperationError('Cannot determine tenant context of request.');
       }
 
-      const definition = await getDefinitionFromConfiguration(req, definitionId);
+      const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, req.tenant.id);
+      if (!definition) {
+        throw new NotFoundError('form definition', definitionId);
+      }
 
       if (!definition.canAccessDefinition(user)) {
         throw new UnauthorizedUserError('access definition', user);
@@ -214,9 +207,14 @@ export function createForm(
       const user = req.user;
       const { definitionId, applicant: applicantInfo, data, files: fileIds, submit } = req.body;
 
-      const events: DomainEvent[] = [];
-      const definition = await getDefinitionFromConfiguration(req, definitionId);
+      const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId);
+      if (!definition) {
+        throw new NotFoundError('form definition', definitionId);
+      }
+
       let form = await definition.createForm(user, repository, notificationService, applicantInfo);
+
+      const events: DomainEvent[] = [];
       events.push(formCreated(apiId, user, form));
 
       // If data or files is set, then update the form.

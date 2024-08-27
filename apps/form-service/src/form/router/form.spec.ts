@@ -255,7 +255,7 @@ describe('form router', () => {
       const handler = getFormDefinition(tenantServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test');
+      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'test-form-definition' }));
     });
 
@@ -342,7 +342,7 @@ describe('form router', () => {
       const handler = getFormDefinition(tenantServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test');
+      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'test-form-definition' }));
     });
 
@@ -361,7 +361,7 @@ describe('form router', () => {
       const handler = getFormDefinition(tenantServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test');
+      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
