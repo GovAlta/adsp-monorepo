@@ -1,14 +1,12 @@
 import { FunctionComponent, useEffect } from 'react';
-import { recaptchaScriptLoaded } from '@store/config/actions';
-import { useDispatch } from 'react-redux';
 
 interface RecaptchaProps {
   siteKey: string;
+  onLoad?: () => void;
 }
 
-export const Recaptcha: FunctionComponent<RecaptchaProps> = ({ siteKey }) => {
+export const Recaptcha: FunctionComponent<RecaptchaProps> = ({ siteKey, onLoad }) => {
   const elementId = 'recaptcha-script';
-  const dispatch = useDispatch();
 
   useEffect(() => {
     const element = document.getElementById(elementId);
@@ -17,19 +15,13 @@ export const Recaptcha: FunctionComponent<RecaptchaProps> = ({ siteKey }) => {
       script.type = 'text/javascript';
       script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
       script.id = elementId;
-      script.onload = () => {
-        dispatch(recaptchaScriptLoaded());
-      };
+      if (onLoad) {
+        script.onload = () => onLoad();
+      }
 
       document.body.appendChild(script);
     }
-    return () => {
-      const element = document.getElementById(elementId);
-      if (element) {
-        element.remove();
-      }
-    };
-  }, [siteKey, dispatch]);
+  });
 
   return null;
 };

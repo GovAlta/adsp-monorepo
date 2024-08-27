@@ -1,20 +1,21 @@
 import React from 'react';
 import styled from 'styled-components';
 import GoaLogo from '../assets/goa-logo.svg';
-import { Footer } from '@core-services/app-common';
+import { Footer, Recaptcha } from '@core-services/app-common';
 import { NotificationBanner } from './notificationBanner';
 import Header from '@components/AppHeader';
-import Recaptcha from './components/Recaptcha';
 import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import PublicSubscriptions from '@pages/public/Subscriptions';
 import Login from '@pages/public/Login';
 import LogoutRedirect from '@pages/public/LogoutRedirect';
 import LandingPage from '@pages/public/Landing';
+import { recaptchaScriptLoaded } from '@store/config/actions';
 
 export function PublicApp(): JSX.Element {
   const recaptchaKey = useSelector((state: RootState) => state.config?.recaptchaKey);
+  const dispatch = useDispatch();
 
   return (
     <PublicCss>
@@ -28,7 +29,7 @@ export function PublicApp(): JSX.Element {
         <Route path=":subscriberId" element={<PublicSubscriptions />} />
       </Routes>
       <Footer logoSrc={GoaLogo} />
-      {recaptchaKey && <Recaptcha siteKey={recaptchaKey} />}
+      {recaptchaKey && <Recaptcha siteKey={recaptchaKey} onLoad={() => dispatch(recaptchaScriptLoaded())} />}
     </PublicCss>
   );
 }

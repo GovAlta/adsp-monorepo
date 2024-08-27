@@ -1,14 +1,14 @@
+import { RegisterData } from '@abgov/jsonforms-components';
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
+import * as _ from 'lodash';
 import { debounce } from 'lodash';
 import { AppState } from './store';
-import { getAccessToken } from './user.slice';
 import { hashData } from './util';
+import { getAccessToken } from './user.slice';
 import { loadTopic, selectTopic } from './comment.slice';
 import { loadFileMetadata } from './file.slice';
-import { RegisterData } from '@abgov/jsonforms-components';
-import * as _ from 'lodash';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -20,6 +20,7 @@ export interface FormDefinition {
   applicantRoles: string[];
   clerkRoles: string[];
   registerData?: RegisterData;
+  anonymousApply: boolean;
 }
 
 export interface Form {
@@ -108,11 +109,17 @@ export const loadDefinition = createAsyncThunk(
       const cacheServiceUrl = config.directory[CACHE_SERVICE_ID];
 
       const tenantId = user.tenant.id;
-      const token = await getAccessToken();
+      const headers: Record<string, string> = {};
+      if (user.user) {
+        const token = await getAccessToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const { data } = await axios.get<FormDefinition>(
         new URL(`/form/v1/definitions/${definitionId}`, formServiceUrl).href,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers,
+          params: { tenantId: tenantId.toString() },
         }
       );
 
@@ -168,6 +175,11 @@ export const findUserForm = createAsyncThunk(
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
+
+      // If there is no user context, then there is no existing form to find.
+      if (!user.user) {
+        return { form: null, data: null, files: null, digest: null };
+      }
 
       let token = await getAccessToken();
       const {
@@ -310,10 +322,13 @@ export const updateForm = createAsyncThunk(
     }: { data?: Record<string, unknown>; files?: Record<string, string>; errors?: ValidationError[] },
     { getState, dispatch }
   ) => {
-    const { form } = getState() as AppState;
+    const { form, user } = getState() as AppState;
 
-    dispatch(formActions.setSaving(true));
-    dispatch(saveForm(form.form.id));
+    // Dispatch saving the draft if there is a logged in user.
+    if (user.user) {
+      dispatch(formActions.setSaving(true));
+      dispatch(saveForm(form.form.id));
+    }
 
     return { data, files, errors };
   }
@@ -379,6 +394,40 @@ export const submitForm = createAsyncThunk(
         { operation: 'submit' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const submitAnonymousForm = createAsyncThunk(
+  'form/submit-anonymous-form',
+  async (_: void, { getState, rejectWithValue }) => {
+    try {
+      const { config, user, form } = getState() as AppState;
+
+      let token: string;
+      const grecaptcha = window['grecaptcha'];
+      if (grecaptcha?.execute) {
+        token = await grecaptcha.execute(config.environment.recaptchaKey, { action: 'submit_form' });
+      }
+
+      const { data } = await axios.post<SerializedForm>(`/api/gateway/v1/forms`, {
+        token,
+        tenant: user.tenant.name,
+        definitionId: form.selected,
+        data: form.data,
+        files: form.files,
+      });
 
       return data;
     } catch (err) {
@@ -510,6 +559,16 @@ export const formSlice = createSlice({
         state.form = payload;
       })
       .addCase(submitForm.rejected, (state) => {
+        state.busy.submitting = false;
+      })
+      .addCase(submitAnonymousForm.pending, (state) => {
+        state.busy.submitting = true;
+      })
+      .addCase(submitAnonymousForm.fulfilled, (state, { payload }) => {
+        state.busy.submitting = false;
+        state.form = payload;
+      })
+      .addCase(submitAnonymousForm.rejected, (state) => {
         state.busy.submitting = false;
       });
   },
