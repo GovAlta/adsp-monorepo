@@ -205,11 +205,11 @@ When('the user clicks {string} button for the site of {string}, {string}', funct
   findSite(siteUrl, isAnonymous).then((rowNumber) => {
     switch (button) {
       case 'Edit':
-        feedbackObj.feebackSitesEditButton(rowNumber).shadow().find('button').click({ force: true });
+        feedbackObj.feedbackSitesEditButton(rowNumber).shadow().find('button').click({ force: true });
         cy.wait(2000);
         break;
       case 'Delete':
-        feedbackObj.feebackSitesDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+        feedbackObj.feedbackSitesDeleteButton(rowNumber).shadow().find('button').click({ force: true });
         cy.wait(2000);
         break;
       default:
@@ -292,3 +292,119 @@ Then(
     });
   }
 );
+
+When('the user clicks the Feedback badge', function () {
+  feedbackObj.feedbackBadge().click();
+});
+
+Then('the user {string} Give feedback start modal', function (viewOrNot) {
+  switch (viewOrNot) {
+    case 'views':
+      feedbackObj.feedbackStartModal().should('exist');
+      break;
+    case 'should not view':
+      feedbackObj.feedbackStartModal().should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+When('the user clicks close icon on Give feedback start modal', function () {
+  feedbackObj.feedbackStartModalCloseBtn().click();
+});
+
+When('the user clicks Start button in Give feedback start modal', function () {
+  feedbackObj.feedbackStartModalStartBtn().click();
+});
+
+Then('the user views 5 emoji ratings in Give feedback main modal', function () {
+  feedbackObj.feedbackMainModalRatingVeryDifficult().should('be.visible');
+  feedbackObj.feedbackMainModalRatingDifficult().should('be.visible');
+  feedbackObj.feedbackMainModalRatingVeryNeutral().should('be.visible');
+  feedbackObj.feedbackMainModalRatingEasy().should('be.visible');
+  feedbackObj.feedbackMainModalRatingVeryEasy().should('be.visible');
+});
+
+Then('the user views optional comments text field', function () {
+  feedbackObj.feedbackMainModalAdditionalCommentsLabel().should('be.visible');
+  feedbackObj
+    .feedbackMainModalAdditionalCommentsLabelRequiredOrOptional()
+    .invoke('text')
+    .should('contains', 'optional');
+  feedbackObj.feedbackMainModalAdditionalCommentsTextField().should('be.visible');
+});
+
+Then('the user views a required technical issues area', function () {
+  feedbackObj.feedbackMainModalTechnicalIssuesLabel().should('be.visible');
+  feedbackObj.feedbackMainModalTechnicalIssuesLabelRequiredOrOptional().invoke('text').should('contains', 'required');
+  feedbackObj.feedbackMainModalTechnicalIssuesRadios().should('be.visible');
+});
+
+When(
+  'the user enters {string}, {string}, {string}, {string} in Give feedback main modal',
+  function (rating, comments, haveIssues, detail) {
+    feedbackObj.feedbackMainModalRating(rating).click();
+    if (comments !== 'N/A') {
+      feedbackObj.feedbackMainModalAdditionalCommentsTextField().type(comments);
+    }
+    switch (haveIssues.toLowerCase()) {
+      case 'yes':
+        feedbackObj.feedbackMainModalTechnicalIssuesYesRadio().click();
+        if (detail !== 'N/A') {
+          feedbackObj.feedbackMainModalTechnicalIssuesTextField().type(detail);
+        }
+        break;
+      case 'no':
+        feedbackObj.feedbackMainModalTechnicalIssuesNoRadio().click();
+        break;
+      default:
+        expect(haveIssues.toLowerCase()).to.be.oneOf(['yes', 'no']);
+    }
+  }
+);
+
+When('the user clicks Cancel button in Give feedback main modal', function () {
+  feedbackObj.feedbackMainModalCancelButton().click();
+  cy.wait(1000);
+});
+
+When('the user clicks Submit button in Give feedback main modal', function () {
+  feedbackObj.feedbackMainModalSubmitButton().click();
+  cy.wait(1000);
+});
+
+Then('the user {string} Give feedback main modal', function (viewOrNot) {
+  switch (viewOrNot) {
+    case 'views':
+      feedbackObj.feedbackMainModal().should('exist');
+      break;
+    case 'should not view':
+      feedbackObj.feedbackMainModal().should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+Then('the user views success message for submitting a feedback', function () {
+  feedbackObj.feedbackMainModalSuccessMessage().invoke('text').should('contain', 'Success');
+});
+
+When('the user clicks Close button in Give feedback modal', function () {
+  feedbackObj.feedbackMainModalSuccessMessageCloseBtn().click();
+  cy.wait(1000);
+});
+
+Then('the user {string} the Feedback badge', function (viewOrNot) {
+  switch (viewOrNot) {
+    case 'views':
+      feedbackObj.feedbackBadge().should('be.visible');
+      break;
+    case 'should not view':
+      feedbackObj.feedbackBadge().should('not.be.visible');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});

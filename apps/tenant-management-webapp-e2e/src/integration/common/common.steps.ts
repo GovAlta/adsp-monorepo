@@ -262,3 +262,8 @@ When('the user clicks {string} button on unsaved changes modal', function (butto
   }
   cy.wait(1000);
 });
+
+When('the user re-load the page and wait {string} seconds', function (numberOfSeconds) {
+  cy.reload();
+  cy.wait(Number(numberOfSeconds));
+});

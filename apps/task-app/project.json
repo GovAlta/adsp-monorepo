@@ -31,7 +31,6 @@
         "styles": [],
         "scripts": [],
         "babelUpwardRootMode": true,
-        "isolatedConfig": true,
         "webpackConfig": "apps/task-app/webpack.config.js"
       },
       "configurations": {

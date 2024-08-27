@@ -10,4 +10,5 @@ export const environment = {
     url: 'https://access.adsp-dev.gov.ab.ca',
     client_id: 'urn:ads:platform:form-app',
   },
+  recaptchaKey: ''
 };

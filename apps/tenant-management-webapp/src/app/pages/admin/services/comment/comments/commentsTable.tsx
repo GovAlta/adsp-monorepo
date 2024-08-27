@@ -95,7 +95,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
   // eslint-disable-next-line
   useEffect(() => {}, [elementIndicator]);
   return (
-    <>
+    <section>
       <HeaderFont>
         <h3>Comments list</h3>
         <GoAButton size="compact" type="secondary" testId="add-comment" onClick={addNewComment}>
@@ -175,6 +175,6 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
           onSave={handleSave}
         />
       )}
-    </>
+    </section>
   );
 };

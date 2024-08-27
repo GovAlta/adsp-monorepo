@@ -78,6 +78,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   canSubmit={canSubmit}
                   showSubmit={showSubmit}
                   saving={busy.saving}
+                  submitting={busy.submitting}
                   onChange={({ data, errors }) => {
                     if (
                       errors[0]?.message === 'should be equal to one of the allowed values' &&
@@ -161,18 +162,6 @@ export const Form = styled(FormComponent)`
 
   &[data-show='true'] .commentsPane {
     display: block;
-  }
-
-  .savingIndicator {
-    display: flex;
-    flex-direction: row-reverse;
-    opacity: 0;
-    transition: opacity 50ms;
-
-    &[data-saving='true'] {
-      opacity: 1;
-      transition-duration: 1500ms;
-    }
   }
 
   & > :last-child {

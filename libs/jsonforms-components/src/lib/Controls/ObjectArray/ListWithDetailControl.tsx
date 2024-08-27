@@ -416,8 +416,9 @@ const ObjectArrayList = ({
         <FlexTabs style={{ height: paddedHeight }}>
           {range(data).map((index: number) => {
             const childPath = Paths.compose(path, `${index}`);
-            const name = `${path} ${index + 1}`;
-
+            const name = appliedUiSchemaOptions?.itemLabel
+              ? `${appliedUiSchemaOptions?.itemLabel} ${index + 1}`
+              : `${path} ${index + 1}`;
             return (
               <LeftTab
                 key={childPath}

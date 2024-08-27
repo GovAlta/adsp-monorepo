@@ -20,14 +20,8 @@ export const updateFormDefinitionApi = async (token: string, serviceUrl: string,
 };
 
 export const deleteFormDefinitionApi = async (token: string, serviceUrl: string, definitionId: string) => {
-  const { data } = await axios.patch<{ latest: { configuration: Record<string, FormDefinition> } }>(
-    new URL('configuration/v2/configuration/platform/form-service', serviceUrl).href,
-    { operation: 'DELETE', property: definitionId },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-
   // Delete from new namespace based configuration.
-  await axios.delete<{ latest: { configuration: Record<string, FormDefinition> } }>(
+  const { data } = await axios.delete<{ latest: { configuration: Record<string, FormDefinition> } }>(
     new URL(`configuration/v2/configuration/form-service/${definitionId}`, serviceUrl).href,
     { headers: { Authorization: `Bearer ${token}` } }
   );

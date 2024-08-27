@@ -1,12 +1,11 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   AppDispatch,
   configInitializedSelector,
-  definitionSelector,
   formSelector,
   initializeTenant,
   loginUser,
@@ -15,7 +14,6 @@ import {
   userSelector,
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
-import { AuthorizeUser } from './AuthorizeUser';
 import { FormDefinition } from './FormDefinition';
 
 const AccountActionsSpan = styled.span`
@@ -32,7 +30,6 @@ export const FormTenant = () => {
   const dispatch = useDispatch<AppDispatch>();
   const tenant = useSelector(tenantSelector);
   const userForm = useSelector(formSelector);
-  const definition = useSelector(definitionSelector);
 
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
@@ -43,18 +40,13 @@ export const FormTenant = () => {
     }
   }, [configInitialized, tenantName, dispatch]);
 
-  const hasRoles = () => {
-    const mergedFormRoles = [...(definition?.applicantRoles || []), ...(definition?.applicantRoles || [])];
-    return !mergedFormRoles?.length || mergedFormRoles.find((r) => user.roles?.includes(r));
-  };
-
   return (
     <React.Fragment>
       <GoAMicrositeHeader type="alpha" />
       <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
         {userInitialized && (
           <AccountActionsSpan>
-            {user && hasRoles() ? (
+            {user ? (
               <>
                 <span className="username">{user?.name}</span>
                 <GoAButton
@@ -91,7 +83,7 @@ export const FormTenant = () => {
       </GoAAppHeader>
       <FeedbackNotification />
       <main>
-        <AuthorizeUser>
+        {userInitialized && (
           <section>
             <Routes>
               <Route path={`/:definitionId/*`} element={<FormDefinition />} />
@@ -99,7 +91,7 @@ export const FormTenant = () => {
               <Route path="*" element={<Navigate to={`/${tenantName}`} replace />} />
             </Routes>
           </section>
-        </AuthorizeUser>
+        )}
       </main>
     </React.Fragment>
   );

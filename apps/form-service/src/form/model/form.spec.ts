@@ -59,12 +59,17 @@ describe('FormEntity', () => {
     delete: jest.fn(),
   };
 
+  const pdfServiceMock = {
+    generateFormPdf: jest.fn(() => Promise.resolve('123')),
+  };
+
   beforeEach(() => {
     repositoryMock.save.mockClear();
     repositoryMock.delete.mockClear();
     notificationMock.sendCode.mockReset();
     notificationMock.verifyCode.mockReset();
     validationService.validate.mockReset();
+    pdfServiceMock.generateFormPdf.mockReset();
   });
 
   it('it can be created', () => {
@@ -462,6 +467,17 @@ describe('FormEntity', () => {
         UnauthorizedUserError
       );
     });
+
+    it('can throw unauthorized user for missing definition', async () => {
+      // Missing definition means that no user will pass authorization check for updating form.
+      const data = {};
+      const files = {};
+      const entity = new FormEntity(repositoryMock, tenantId, null, subscriber, formInfo);
+      await expect(
+        entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files)
+      ).rejects.toThrow(UnauthorizedUserError);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+    });
   });
 
   describe('lock', () => {
@@ -556,7 +572,8 @@ describe('FormEntity', () => {
       const [submitted] = await entity.submit(
         { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        pdfServiceMock
       );
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
@@ -565,13 +582,29 @@ describe('FormEntity', () => {
     });
 
     it('can submit form with task', async () => {
+      const definition = new FormDefinitionEntity(validationService, tenantId, {
+        id: 'test',
+        name: 'test-form-definition',
+        formDraftUrlTemplate: 'https://my-form/{{ id }}',
+        description: null,
+        anonymousApply: true,
+        submissionRecords: true,
+        submissionPdfTemplate: '',
+        supportTopic: false,
+        applicantRoles: ['test-applicant'],
+        assessorRoles: ['test-assessor'],
+        clerkRoles: ['test-clerk'],
+        dataSchema: null,
+        securityClassification: 'protected b',
+        queueTaskToProcess: { queueNameSpace: 'test-queue-namespace', queueName: 'test-queue' } as QueueTaskToProcess,
+      });
       const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
-      entity.submissionRecords = true;
 
       const [submitted] = await entity.submit(
         { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        pdfServiceMock
       );
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
@@ -585,7 +618,8 @@ describe('FormEntity', () => {
         entity.submit(
           { tenantId, id: 'tester-2', roles: ['test-applicant'] } as User,
           queueTaskServiceMock,
-          repositoryMock
+          repositoryMock,
+          pdfServiceMock
         )
       ).rejects.toThrow(UnauthorizedUserError);
     });
@@ -595,7 +629,8 @@ describe('FormEntity', () => {
       const [submitted] = await entity.submit(
         { tenantId, id: 'tester-2', roles: ['test-clerk'] } as User,
         queueTaskServiceMock,
-        repositoryMock
+        repositoryMock,
+        pdfServiceMock
       );
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
@@ -606,7 +641,12 @@ describe('FormEntity', () => {
     it('can throw for user without applicant role', async () => {
       const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
       await expect(
-        entity.submit({ tenantId, id: 'tester', roles: [] } as User, queueTaskServiceMock, repositoryMock)
+        entity.submit(
+          { tenantId, id: 'tester', roles: [] } as User,
+          queueTaskServiceMock,
+          repositoryMock,
+          pdfServiceMock
+        )
       ).rejects.toThrow(UnauthorizedUserError);
     });
 
@@ -619,9 +659,72 @@ describe('FormEntity', () => {
         entity.submit(
           { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
           queueTaskServiceMock,
-          repositoryMock
+          repositoryMock,
+          pdfServiceMock
         )
       ).rejects.toThrow(InvalidOperationError);
+    });
+
+    it('can throw unauthorized user for missing definition', async () => {
+      // Missing definition means that no user will pass authorization check for submitting form.
+      const entity = new FormEntity(repositoryMock, tenantId, null, subscriber, formInfo);
+      await expect(
+        entity.submit(
+          { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+          queueTaskServiceMock,
+          repositoryMock,
+          pdfServiceMock
+        )
+      ).rejects.toThrow(UnauthorizedUserError);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('can submit form and generate PDF', async () => {
+      const entity = new FormEntity(
+        repositoryMock,
+        tenantId,
+        new FormDefinitionEntity(validationService, tenantId, {
+          id: 'test',
+          name: 'test-form-definition',
+          formDraftUrlTemplate: 'https://my-form/{{ id }}',
+          description: null,
+          anonymousApply: true,
+          submissionRecords: false,
+          submissionPdfTemplate: 'some test template',
+          supportTopic: false,
+          applicantRoles: ['test-applicant'],
+          assessorRoles: ['test-assessor'],
+          clerkRoles: ['test-clerk'],
+          dataSchema: null,
+          securityClassification: 'protected b',
+          queueTaskToProcess: { queueNameSpace: 'test-queue-namespace', queueName: 'test-queue' } as QueueTaskToProcess,
+        }),
+        subscriber,
+        {
+          id: 'test-form',
+          formDraftUrl: 'https://my-form/test-form',
+          anonymousApplicant: false,
+          created: new Date(),
+          createdBy: { id: 'tester', name: 'tester' },
+          status: FormStatus.Draft,
+          locked: null,
+          submitted: null,
+          lastAccessed: new Date(),
+          data: {},
+          files: {},
+        }
+      );
+      const [submitted] = await entity.submit(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        queueTaskServiceMock,
+        repositoryMock,
+        pdfServiceMock
+      );
+      expect(submitted.status).toBe(FormStatus.Submitted);
+      expect(submitted.submitted).toBeTruthy();
+      expect(submitted.hash).toBeTruthy();
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+      expect(pdfServiceMock.generateFormPdf).toHaveBeenCalledWith(entity, null);
     });
   });
 

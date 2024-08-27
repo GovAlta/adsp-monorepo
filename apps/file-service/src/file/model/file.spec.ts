@@ -354,10 +354,25 @@ describe('File Entity', () => {
     it('can read file', (done) => {
       const start = new Date();
       typeMock.setup((m) => m.canAccessFile(user)).returns(true);
-      storageProviderMock.setup((m) => m.readFile(entity)).returns(Promise.resolve(contentMock.object()));
+      storageProviderMock
+        .setup((m) => m.readFile(entity, 0, entity.size - 1))
+        .returns(Promise.resolve(contentMock.object()));
       repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).returns(Promise.resolve(entity));
 
       entity.readFile(user).then((result) => {
+        expect(result).toBe(contentMock.object());
+        expect(entity.lastAccessed >= start).toBeTruthy();
+        done();
+      });
+    });
+
+    it('can read file with range', (done) => {
+      const start = new Date();
+      typeMock.setup((m) => m.canAccessFile(user)).returns(true);
+      storageProviderMock.setup((m) => m.readFile(entity, 12, 100)).returns(Promise.resolve(contentMock.object()));
+      repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).returns(Promise.resolve(entity));
+
+      entity.readFile(user, 12, 100).then((result) => {
         expect(result).toBe(contentMock.object());
         expect(entity.lastAccessed >= start).toBeTruthy();
         done();

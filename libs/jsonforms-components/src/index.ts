@@ -143,6 +143,7 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
     renderer: GoAHorizontalReviewLayout,
   },
   { tester: GoAlVerticalLayoutTester, renderer: GoAVerticalLayout },
+  { tester: GoAGroupLayoutTester, renderer: GoAGroupControl },
   { tester: HelpContentTester, renderer: HelpReviewContent },
 ];
 

@@ -10,13 +10,15 @@ import {
   selectedDefinition,
   Form as FormObject,
   userFormSelector,
+  tenantSelector,
 } from '../state';
-import { Form } from './Form';
-import { LoadingIndicator } from '../components/LoadingIndicator';
+import { AnonymousForm } from './AnonymousForm';
 import { AuthorizeUser } from './AuthorizeUser';
-import { StartApplication } from '../components/StartApplication';
-import { ContinueApplication } from '../components/ContinueApplication';
+import { Form } from './Form';
 import { AutoCreateApplication } from '../components/AutoCreateApplication';
+import { ContinueApplication } from '../components/ContinueApplication';
+import { LoadingIndicator } from '../components/LoadingIndicator';
+import { StartApplication } from '../components/StartApplication';
 
 interface FormDefinitionStartProps {
   definitionId: string;
@@ -35,6 +37,12 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
   useEffect(() => {
     dispatch(findUserForm(definitionId));
   }, [dispatch, definitionId]);
+
+  useEffect(() => {
+    if (definition?.anonymousApply) {
+      navigate('draft');
+    }
+  }, [navigate, definition]);
 
   return (
     <>
@@ -67,13 +75,17 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
 export const FormDefinition: FunctionComponent = () => {
   const { definitionId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
+  const tenant = useSelector(tenantSelector);
 
   useEffect(() => {
-    dispatch(selectedDefinition(definitionId));
-  }, [dispatch, definitionId]);
+    if (tenant) {
+      dispatch(selectedDefinition(definitionId));
+    }
+  }, [dispatch, definitionId, tenant]);
 
   return (
     <Routes>
+      <Route path="/draft" element={<AnonymousForm />} />
       <Route path="/:formId" element={<Form />} />
       <Route path="/" element={<FormDefinitionStart definitionId={definitionId} />} />
       <Route path="*" element={<Navigate to={`/${definitionId}`} replace />} />

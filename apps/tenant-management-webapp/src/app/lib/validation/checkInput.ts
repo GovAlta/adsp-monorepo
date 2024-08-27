@@ -78,7 +78,7 @@ export const validationPattern = {
   upperKebabCase: { pattern: new RegExp(/^[A-Z0-9-]+$/), onFailureMessage: 'Allowed characters are: A-Z, 0-9, -' },
   validURL: { pattern: new RegExp(/^(http|https):\/\/[^ "]+$/), onFailureMessage: 'Please enter a valid URL' },
   validURLOnlyDomain: {
-    pattern: new RegExp(/^((http|https)?:\/\/(?:www\.)?[a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+)$/),
+    pattern: new RegExp(/^((http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})([^/\s]*)?$/),
     onFailureMessage: 'Please enter a valid URL',
   },
   validEmail: {

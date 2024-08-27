@@ -13,9 +13,10 @@ interface ValueDefinitionProps {
   definition: ValueDefinition;
   readonly?: boolean;
   onDelete: (definition: ValueDefinition) => void;
+  onEdit: (definition: ValueDefinition) => void;
 }
 
-export const ValueComponent: FunctionComponent<ValueDefinitionProps> = ({ definition, onDelete }) => {
+export const ValueComponent: FunctionComponent<ValueDefinitionProps> = ({ definition, onDelete, onEdit }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -35,6 +36,9 @@ export const ValueComponent: FunctionComponent<ValueDefinitionProps> = ({ defini
               onClick={() => setShowDetails(!showDetails)}
               testId="toggle-details-visibility"
             />
+            {!definition.isCore && (
+              <GoAContextMenuIcon type="create" title="Edit" onClick={() => onEdit(definition)} testId="edit-details" />
+            )}
             {!definition.isCore && (
               <GoAContextMenuIcon
                 type="trash"
@@ -62,9 +66,14 @@ export const ValueComponent: FunctionComponent<ValueDefinitionProps> = ({ defini
 interface ValueDefinitionsComponentProps {
   definitions: ValueDefinition[];
   onDelete: (def: ValueDefinition) => void;
+  onEdit: (def: ValueDefinition) => void;
 }
 
-export const ValueDefinitionsList: FunctionComponent<ValueDefinitionsComponentProps> = ({ definitions, onDelete }) => {
+export const ValueDefinitionsList: FunctionComponent<ValueDefinitionsComponentProps> = ({
+  definitions,
+  onDelete,
+  onEdit,
+}) => {
   const groupedDefinitions = definitions.reduce((acc, def) => {
     acc[def.namespace] = acc[def.namespace] || [];
     acc[def.namespace].push(def);
@@ -104,6 +113,7 @@ export const ValueDefinitionsList: FunctionComponent<ValueDefinitionsComponentPr
                   <ValueComponent
                     key={`${definition.namespace}:${definition.name}:${Math.random()}`}
                     definition={definition}
+                    onEdit={onEdit}
                     onDelete={onDelete}
                   />
                 ))}

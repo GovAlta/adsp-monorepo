@@ -9,9 +9,7 @@ export const Buttons = styled.div`
 `;
 
 export const NotificationBorder = styled.div`
-  border: 1px solid #666666;
   margin: 3px;
-  border-radius: 3px;
 `;
 
 export const EventBorder = styled.div`
@@ -36,6 +34,7 @@ export const DescriptionText = styled.div`
   margin-top: 14px;
 `;
 export const NotificationStyles = styled.div`
+  padding: 1rem 0;
   .gridBoxHeight {
     height: 10.5rem;
   }

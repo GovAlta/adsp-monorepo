@@ -142,7 +142,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     showScriptEditForm ? (document.body.style.overflow = 'hidden') : (document.body.style.overflow = 'unset');
   }, [showScriptEditForm]);
   return (
-    <>
+    <section>
       <div>
         <GoAButton
           testId="add-script-btn"
@@ -207,6 +207,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           </ModalContent>
         </Modal>
       )}
-    </>
+    </section>
   );
 };

@@ -77,8 +77,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   }, [pdfTemplates]);
 
   return (
-    <div>
-      <br />
+    <section>
       <GoAButton
         testId="add-template"
         onClick={() => {
@@ -133,6 +132,6 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
           dispatch(deletePdfTemplate(currentTemplate));
         }}
       />
-    </div>
+    </section>
   );
 };

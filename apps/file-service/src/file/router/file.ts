@@ -22,7 +22,7 @@ import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
-import { DirectoryServiceRoles, FileCriteria, ServiceUserRoles } from '../types';
+import { DirectoryServiceRoles, FileCriteria } from '../types';
 import validator from 'validator';
 import { mapFile, mapFileType } from '../mapper';
 import { FileTypeEntity } from '../model';
@@ -173,6 +173,15 @@ function encodeRFC5987(value: string) {
     .replace(/%(?:7C|60|5E)/g, unescape);
 }
 
+type Range = {
+  type: string;
+} & [
+  {
+    start: number;
+    end: number;
+  }
+];
+
 export function downloadFile(logger: Logger): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -185,13 +194,31 @@ export function downloadFile(logger: Logger): RequestHandler {
         throw new InvalidOperationError('File scan pending.');
       }
 
-      const stream = await fileEntity.readFile(user);
+      let fileStart: number,
+        fileEnd: number,
+        length = fileEntity.size;
+      const range = req.range(fileEntity.size, { combine: true }) as unknown as Range;
+      if (Array.isArray(range) && range.length === 1 && range.type === 'bytes') {
+        fileStart = range[0].start;
+        fileEnd = range[0].end;
+        length = fileEnd - fileStart + 1;
+      } else if (range) {
+        throw new InvalidOperationError('Specified range value is not supported.');
+      }
+
+      const stream = await fileEntity.readFile(user, fileStart, fileEnd);
 
       end();
 
-      res.status(200);
+      if (length === fileEntity.size) {
+        res.status(200);
+      } else {
+        res.status(206);
+        res.setHeader('Content-Range', `bytes ${fileStart || ''}-${fileEnd || ''}/${fileEntity.size}`);
+      }
       res.setHeader('Content-Type', validateMimeType(fileEntity.mimeType));
-      res.setHeader('Content-Length', fileEntity.size);
+      res.setHeader('Content-Length', length);
+      res.setHeader('Accept-Ranges', 'bytes');
 
       if (embed === 'true') {
         res.setHeader('Cache-Control', fileEntity.type.anonymousRead ? 'public' : 'no-store');
@@ -202,7 +229,6 @@ export function downloadFile(logger: Logger): RequestHandler {
       }
 
       if (isSupportedVideoType(fileEntity.mimeType)) {
-        res.setHeader('Accept-Ranges', 'bytes');
         res.setHeader('Connection', 'keep-alive');
       }
 

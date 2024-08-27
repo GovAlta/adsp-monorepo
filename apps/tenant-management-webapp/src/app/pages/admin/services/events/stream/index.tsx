@@ -39,7 +39,7 @@ export const EventStreams = (): JSX.Element => {
   useEffect(() => {}, [tenantStreams]);
 
   return (
-    <>
+    <section>
       <PageIndicator />
       {!indicator.show && (
         <>
@@ -114,6 +114,6 @@ export const EventStreams = (): JSX.Element => {
           />
         </>
       )}
-    </>
+    </section>
   );
 };

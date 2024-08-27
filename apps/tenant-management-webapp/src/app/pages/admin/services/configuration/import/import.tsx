@@ -132,7 +132,7 @@ export const ConfigurationImport: FunctionComponent = () => {
   }, [imports, dispatch]);
 
   return (
-    <Import>
+    <section>
       {
         <div>
           <NoPaddingH2>Import</NoPaddingH2>
@@ -201,6 +201,6 @@ export const ConfigurationImport: FunctionComponent = () => {
         onCancel={onImportCancel}
         onConfirm={onImportConfirm}
       />
-    </Import>
+    </section>
   );
 };

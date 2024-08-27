@@ -1,4 +1,4 @@
-import { AdspId, ServiceMetricsValueDefinition, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceMetricsValueDefinition, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -25,6 +25,8 @@ const initializeApp = async (): Promise<express.Application> => {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
 
+  instrumentAxios(logger);
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
 
@@ -36,33 +38,47 @@ const initializeApp = async (): Promise<express.Application> => {
       })
     : null;
 
-  const { directory, healthCheck, metricsHandler, tenantHandler, tenantStrategy, tokenProvider, traceHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Form gateway',
-        description: 'Gateway to provide anonymous and session access to some form functionality.',
-        roles: [
-          {
-            role: ServiceRoles.Applicant,
-            description: 'Applicant role that allows users to complete form applications via the gateway.',
-          },
-        ],
-        values: [ServiceMetricsValueDefinition],
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-      },
-      { logger }
-    );
+  const {
+    directory,
+    healthCheck,
+    metricsHandler,
+    tenantHandler,
+    tenantService,
+    tenantStrategy,
+    tokenProvider,
+    traceHandler,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Form gateway',
+      description: 'Gateway to provide anonymous and session access to some form functionality.',
+      roles: [
+        {
+          role: ServiceRoles.Applicant,
+          description: 'Applicant role that allows users to complete form applications via the gateway.',
+        },
+      ],
+      values: [ServiceMetricsValueDefinition],
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger }
+  );
 
   configurePassport(app, passport, { sessionSecret: environment.SESSION_SECRET, redisClient, tenantStrategy });
 
   app.use(metricsHandler);
   app.use(traceHandler);
 
-  app.use('/gateway', passport.authenticate(['tenant', 'session'], { session: false }), tenantHandler);
-  await applyGatewayMiddleware(app, { logger, directory, tokenProvider });
+  app.use('/gateway', passport.authenticate(['tenant', 'session', 'anonymous'], { session: false }), tenantHandler);
+  await applyGatewayMiddleware(app, {
+    logger,
+    directory,
+    tokenProvider,
+    tenantService,
+    RECAPTCHA_SECRET: environment.RECAPTCHA_SECRET,
+  });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();

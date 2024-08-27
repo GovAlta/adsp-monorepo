@@ -58,19 +58,17 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
   }, [editSite]);
 
   return (
-    <>
-      <ButtonPadding>
-        <GoAButton
-          testId="add-site"
-          onClick={() => {
-            setSelectedSite(defaultFeedbackSite);
-            setIsEdit(false);
-            setEditSite(true);
-          }}
-        >
-          Register site
-        </GoAButton>
-      </ButtonPadding>
+    <section>
+      <GoAButton
+        testId="add-site"
+        onClick={() => {
+          setSelectedSite(defaultFeedbackSite);
+          setIsEdit(false);
+          setEditSite(true);
+        }}
+      >
+        Register site
+      </GoAButton>
 
       <PageIndicator />
       {!indicator.show && sites && (
@@ -109,7 +107,7 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
           deleteSite={handleDelete}
         />
       )}
-    </>
+    </section>
   );
 };
 
