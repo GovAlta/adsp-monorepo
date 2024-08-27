@@ -67,7 +67,8 @@ export class FormDefinitionEntity implements FormDefinition {
       this.tenantId,
       this.anonymousApply
         ? [FormServiceRoles.IntakeApp, ...this.applicantRoles, ...this.clerkRoles]
-        : [...this.applicantRoles, ...this.clerkRoles]
+        : [...this.applicantRoles, ...this.clerkRoles],
+        true
     );
   }
 

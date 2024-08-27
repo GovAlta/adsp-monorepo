@@ -254,7 +254,7 @@ export class FormEntity implements Form {
       !isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
       !(this.definition?.canApply(user) && user.id === this.createdBy.id)
     ) {
-      throw new UnauthorizedUserError('update form', user);
+      throw new UnauthorizedUserError('submit form', user);
     }
 
     this.definition.validateData('form submission', this.data);
