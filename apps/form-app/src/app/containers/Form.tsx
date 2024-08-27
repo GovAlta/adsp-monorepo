@@ -163,18 +163,6 @@ export const Form = styled(FormComponent)`
     display: block;
   }
 
-  .savingIndicator {
-    display: flex;
-    flex-direction: row-reverse;
-    opacity: 0;
-    transition: opacity 50ms;
-
-    &[data-saving='true'] {
-      opacity: 1;
-      transition-duration: 1500ms;
-    }
-  }
-
   & > :last-child {
     z-index: 3;
     position: absolute;

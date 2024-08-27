@@ -8,9 +8,11 @@ import {
 } from '@abgov/jsonforms-components';
 import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
-import { UISchemaElement, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
+import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useContext } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import styled from 'styled-components';
 import {
   AppDispatch,
   Form,
@@ -23,7 +25,6 @@ import {
   metaDataSelector,
   uploadFile,
 } from '../state';
-import { useDispatch, useSelector } from 'react-redux';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -70,6 +71,18 @@ const JsonFormsWrapper = ({ definition, data, onChange }) => {
     </JsonFormRegisterProvider>
   );
 };
+
+const SavingIndicator = styled.div`
+  display: flex;
+  flex-direction: row-reverse;
+  opacity: 0;
+  transition: opacity 50ms;
+
+  &[data-saving='true'] {
+    opacity: 1;
+    transition-duration: 1500ms;
+  }
+`;
 
 export const DraftForm: FunctionComponent<DraftFormProps> = ({
   definition,
@@ -135,9 +148,9 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     <Grid>
       <GridItem md={1} />
       <GridItem md={10}>
-        <div className="savingIndicator" data-saving={saving}>
+        <SavingIndicator data-saving={saving}>
           <GoABadge type="information" content="Saving..." />
-        </div>
+        </SavingIndicator>
         <ContextProvider
           submit={{
             submitForm: onSubmitFunction,
