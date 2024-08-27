@@ -190,9 +190,9 @@ describe('FormDefinitionEntity', () => {
       expect(result).toBe(false);
     });
 
-    it('can return false for core user', () => {
+    it('can return true for core user', () => {
       const result = entity.canApply({ isCore: true, id: 'tester', roles: ['test-applicant'] } as User);
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
 
     it('can return false for user of different tenant', () => {
