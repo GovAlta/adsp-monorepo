@@ -61,7 +61,7 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
     <JsonFormRegisterProvider defaultRegisters={definition?.registerData || []}>
       <JsonForms
         ajv={createDefaultAjv()}
-        readonly={false}
+        readonly={readonly}
         schema={populateDropdown(definition.dataSchema, enumerators)}
         uischema={definition.uiSchema}
         data={data}
