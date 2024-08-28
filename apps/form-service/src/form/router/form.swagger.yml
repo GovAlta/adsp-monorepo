@@ -36,6 +36,8 @@ components:
               type: string
             description:
               type: string
+        generatesPdf:
+          type: boolean
     Form:
       type: object
       properties:

@@ -15,6 +15,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity) {
     dataSchema: entity.dataSchema,
     uiSchema: entity.uiSchema,
     dispositionStates: entity.dispositionStates,
+    generatesPdf: !!entity.submissionPdfTemplate
   };
 }
 

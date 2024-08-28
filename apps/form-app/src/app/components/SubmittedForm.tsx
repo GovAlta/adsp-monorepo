@@ -71,7 +71,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
   };
 
   useEffect(() => {
-    if (pdfFileExists === null && form?.urn) {
+    if (definition.generatesPdf && pdfFileExists === null && form?.urn) {
       dispatch(checkPdfFile(form.urn));
     }
 
@@ -86,7 +86,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     }, 10000);
 
     return () => clearInterval(intervalId);
-  }, [dispatch, form, pdfFile, pdfFileExists]);
+  }, [dispatch, definition, form, pdfFile, pdfFileExists]);
 
   const metadata = useSelector(metaDataSelector);
 

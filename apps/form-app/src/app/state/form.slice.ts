@@ -21,6 +21,7 @@ export interface FormDefinition {
   clerkRoles: string[];
   registerData?: RegisterData;
   anonymousApply: boolean;
+  generatesPdf?: boolean;
 }
 
 export interface Form {
@@ -328,8 +329,8 @@ export const updateForm = createAsyncThunk(
   ) => {
     const { form, user } = getState() as AppState;
 
-    // Dispatch saving the draft if there is a logged in user.
-    if (user.user) {
+    // Dispatch saving the draft if there is a logged in user with a draft form.
+    if (user.user && form.form?.id) {
       dispatch(formActions.setSaving(true));
       dispatch(saveForm(form.form.id));
     }
