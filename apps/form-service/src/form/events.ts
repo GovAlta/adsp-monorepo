@@ -1,6 +1,8 @@
-import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, DomainEventDefinition, Stream, User } from '@abgov/adsp-service-sdk';
 import { FormEntity, FormSubmissionEntity } from './model';
 import { FormResponse, mapForm } from './mapper';
+import { SUBMITTED_FORM } from './pdf';
+import { FormServiceRoles } from './roles';
 
 export const FORM_CREATED = 'form-created';
 export const FORM_DELETED = 'form-deleted';
@@ -371,3 +373,49 @@ export function submissionDispositioned(
     },
   };
 }
+
+export const SubmittedFormPdfUpdatesStream: Stream = {
+  id: 'submitted-form-pdf-updates',
+  name: 'Submitted form PDF generation updates',
+  description: 'Provides update events for submitted form PDF generation.',
+  subscriberRoles: [
+    `urn:ads:platform:form-service:${FormServiceRoles.Applicant}`,
+    `urn:ads:platform:form-service:${FormServiceRoles.IntakeApp}`,
+  ],
+  publicSubscribe: false,
+  events: [
+    {
+      namespace: 'pdf-service',
+      name: 'pdf-generation-queued',
+      criteria: {
+        context: { templateId: SUBMITTED_FORM },
+      },
+      map: {
+        jobId: 'jobId',
+        templateId: 'templateId',
+      },
+    },
+    {
+      namespace: 'pdf-service',
+      name: 'pdf-generated',
+      criteria: {
+        context: { templateId: SUBMITTED_FORM },
+      },
+      map: {
+        jobId: 'jobId',
+        templateId: 'templateId',
+      },
+    },
+    {
+      namespace: 'pdf-service',
+      name: 'pdf-generation-failed',
+      criteria: {
+        context: { templateId: SUBMITTED_FORM },
+      },
+      map: {
+        jobId: 'jobId',
+        templateId: 'templateId',
+      },
+    },
+  ],
+};
