@@ -245,7 +245,7 @@ components:
             schema:
               type: object
               properties:
-                anonymousApplicant:
+                anonymousApplicantEquals:
                   type: boolean
                 definitionIdEquals:
                   type: string
@@ -259,6 +259,8 @@ components:
                   type: string
                   format: date-time
                 createdByIdEquals:
+                  type: string
+                hashEquals:
                   type: string
     responses:
       200:
