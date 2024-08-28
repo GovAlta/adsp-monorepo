@@ -22,7 +22,7 @@ export const AnonymousForm: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const recaptchaKey = useSelector((state: AppState) => state.config.environment.recaptchaKey);
-  const definition = useSelector(definitionSelector);
+  const { definition, initialized } = useSelector(definitionSelector);
   const form = useSelector(formSelector);
   const data = useSelector(dataSelector);
   const files = useSelector(filesSelector);

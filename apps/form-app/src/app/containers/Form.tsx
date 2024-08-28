@@ -45,7 +45,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const { formId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
 
-  const definition = useSelector(definitionSelector);
+  const { definition } = useSelector(definitionSelector);
   const form = useSelector(formSelector);
   const data = useSelector(dataSelector);
   const files = useSelector(filesSelector);

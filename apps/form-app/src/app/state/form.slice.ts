@@ -158,10 +158,14 @@ export const loadDefinition = createAsyncThunk(
       return data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        return rejectWithValue({
-          status: err.response?.status,
-          message: err.response?.data?.errorMessage || err.message,
-        });
+        // 403 indicates the user isn't logged in and the form doesn't allow anonymous applicants.
+        // Return null instead of showing an error in the notification banner.
+        return err.response.status === 403
+          ? null
+          : rejectWithValue({
+              status: err.response?.status,
+              message: err.response?.data?.errorMessage || err.message,
+            });
       } else {
         throw err;
       }
@@ -580,13 +584,16 @@ export const formActions = formSlice.actions;
 export const definitionSelector = createSelector(
   (state: AppState) => state.form.definitions,
   (state: AppState) => state.form.selected,
-  (definitions, selected) => (selected ? definitions[selected] : null)
+  (definitions, selected) => ({
+    definition: selected ? definitions[selected] : null,
+    initialized: definitions[selected] !== undefined,
+  })
 );
 
 export const formSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.form.form,
-  (definition, form) =>
+  ({ definition }, form) =>
     definition && definition?.id === form?.definition.id
       ? { ...form, created: new Date(form.created), submitted: form.submitted ? new Date(form.submitted) : null }
       : null
@@ -604,18 +611,18 @@ export const filesSelector = (state: AppState) => state.form.files;
 export const isApplicantSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.user.user,
-  (definition, user) => !!(user && definition?.applicantRoles.find((r) => user.roles.includes(r)))
+  ({ definition }, user) => !!(user && definition?.applicantRoles.find((r) => user.roles.includes(r)))
 );
 
 export const isClerkSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.user.user,
-  (definition, user) => !!(user && definition?.clerkRoles.find((r) => user.roles.includes(r)))
+  ({ definition }, user) => !!(user && definition?.clerkRoles.find((r) => user.roles.includes(r)))
 );
 
 export const busySelector = (state: AppState) => state.form.busy;
 
-export const showSubmitSelector = createSelector(definitionSelector, (definition) => {
+export const showSubmitSelector = createSelector(definitionSelector, ({ definition }) => {
   // Stepper variant of the categorization includes a Submit button on the review step, so don't show submit outside form.
   return definition?.uiSchema?.type !== 'Categorization' || definition?.uiSchema?.options?.variant !== 'stepper';
 });
