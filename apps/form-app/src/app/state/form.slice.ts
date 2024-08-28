@@ -21,6 +21,7 @@ export interface FormDefinition {
   clerkRoles: string[];
   registerData?: RegisterData;
   anonymousApply: boolean;
+  generatesPdf?: boolean;
 }
 
 export interface Form {
@@ -328,8 +329,8 @@ export const updateForm = createAsyncThunk(
   ) => {
     const { form, user } = getState() as AppState;
 
-    // Dispatch saving the draft if there is a logged in user.
-    if (user.user) {
+    // Dispatch saving the draft if there is a logged in user with a draft form.
+    if (user.user && form.form?.id) {
       dispatch(formActions.setSaving(true));
       dispatch(saveForm(form.form.id));
     }
@@ -491,9 +492,9 @@ export const formSlice = createSlice({
       .addCase(loadDefinition.pending, (state) => {
         state.busy.loading = true;
       })
-      .addCase(loadDefinition.fulfilled, (state, { payload }) => {
+      .addCase(loadDefinition.fulfilled, (state, { payload, meta }) => {
         state.busy.loading = false;
-        state.definitions[payload.id] = payload;
+        state.definitions[meta.arg] = payload;
 
         //Check form definition id case sensitivity, and use the definition id in the payload object,
         //instead of using the value in querystring because if the case is not the same
