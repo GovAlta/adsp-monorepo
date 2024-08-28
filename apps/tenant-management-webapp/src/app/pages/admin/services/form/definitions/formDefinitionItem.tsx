@@ -54,7 +54,12 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
               testId="form-definition-edit"
               title="Edit"
               type="create"
-              onClick={() => navigate(`edit/${formDefinition.id}`)}
+              onClick={() =>
+                navigate({
+                  pathname: `edit/${formDefinition.id}`,
+                  search: '?headless=true',
+                })
+              }
             />
             <GoAContextMenuIcon
               testId={`form-definition-delete`}
