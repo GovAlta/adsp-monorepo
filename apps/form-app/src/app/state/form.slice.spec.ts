@@ -40,6 +40,7 @@ const definitionsToTest: FormState = {
       uiSchema: { type: 'Categorization' },
       applicantRoles: ['Admin'],
       clerkRoles: [],
+      anonymousApply: false,
     },
   },
   selected: null,
@@ -73,6 +74,7 @@ const loadedFormDefinition: FormDefinition = {
   uiSchema: { type: 'Categorization' },
   applicantRoles: ['Admin'],
   clerkRoles: [],
+  anonymousApply: false,
 };
 const payload = {
   form: {
@@ -104,7 +106,11 @@ describe('form slice unit tests', () => {
     });
 
     it('can fulfilled load form definition with data', () => {
-      const action = { type: loadDefinition.fulfilled, payload: 'TEST' };
+      const action = {
+        type: loadDefinition.fulfilled,
+        payload: loadedFormDefinition,
+        meta: { arg: loadedFormDefinition.id },
+      };
       const definition = formReducer(definitionsToTest, action);
       expect(definition.definitions.TEST.id).toEqual(loadedFormDefinition.id);
     });
