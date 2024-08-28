@@ -275,6 +275,7 @@ const ServiceStatusPage = (): JSX.Element => {
                 Please contact <a href={`mailto: ${contactEmail}`}>{contactEmail}</a> for additional information, or to
                 report issues, or for any other inquiries regarding service statuses.
               </div>
+              <br />
               <div>
                 {!applications ? (
                   <GoASkeleton type="paragraph" />

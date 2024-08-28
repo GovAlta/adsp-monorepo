@@ -62,9 +62,8 @@ export const ServiceStatusesCss = styled.div`
   }
 `;
 export const GoAFormActionOverwrite = styled.div`
-  .goa-form-actions {
-    margin-top: 0px !important;
-  }
+  margin-top: var(--goa-space-m);
+  margin-bottom: var(--goa-space-m);
 `;
 
 export const AllApplications = styled.div`
