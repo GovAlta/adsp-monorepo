@@ -391,8 +391,9 @@ export const SubmittedFormPdfUpdatesStream: Stream = {
         context: { templateId: SUBMITTED_FORM },
       },
       map: {
-        jobId: 'jobId',
-        templateId: 'templateId',
+        timestamp: 'timestamp',
+        jobId: 'payload.jobId',
+        templateId: 'payload.templateId',
       },
     },
     {
@@ -402,8 +403,10 @@ export const SubmittedFormPdfUpdatesStream: Stream = {
         context: { templateId: SUBMITTED_FORM },
       },
       map: {
-        jobId: 'jobId',
-        templateId: 'templateId',
+        timestamp: 'timestamp',
+        jobId: 'payload.jobId',
+        templateId: 'payload.templateId',
+        file: 'payload.file',
       },
     },
     {
@@ -413,8 +416,9 @@ export const SubmittedFormPdfUpdatesStream: Stream = {
         context: { templateId: SUBMITTED_FORM },
       },
       map: {
-        jobId: 'jobId',
-        templateId: 'templateId',
+        timestamp: 'timestamp',
+        jobId: 'payload.jobId',
+        templateId: 'payload.templateId',
       },
     },
   ],
