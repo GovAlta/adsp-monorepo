@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useState } from 'react';
+import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -10,13 +10,15 @@ import {
   selectedDefinition,
   Form as FormObject,
   userFormSelector,
+  tenantSelector,
 } from '../state';
-import { Form } from './Form';
-import { LoadingIndicator } from '../components/LoadingIndicator';
+import { AnonymousForm } from './AnonymousForm';
 import { AuthorizeUser } from './AuthorizeUser';
-import { StartApplication } from '../components/StartApplication';
-import { ContinueApplication } from '../components/ContinueApplication';
+import { Form } from './Form';
 import { AutoCreateApplication } from '../components/AutoCreateApplication';
+import { ContinueApplication } from '../components/ContinueApplication';
+import { LoadingIndicator } from '../components/LoadingIndicator';
+import { StartApplication } from '../components/StartApplication';
 
 interface FormDefinitionStartProps {
   definitionId: string;
@@ -26,9 +28,9 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const location = useLocation();
-  const definition = useSelector(definitionSelector);
+  const { definition, initialized: definitionInitialized } = useSelector(definitionSelector);
   const busy = useSelector(busySelector);
-  const { form, initialized } = useSelector(userFormSelector);
+  const { form, initialized: formInitialized } = useSelector(userFormSelector);
   const urlParams = new URLSearchParams(location.search);
   const AUTO_CREATE_PARAM = 'autoCreate';
 
@@ -38,28 +40,31 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
 
   return (
     <>
-      <LoadingIndicator isLoading={!initialized} />
-      {initialized && definition && (
-        <AuthorizeUser roles={[...definition.applicantRoles, ...definition.clerkRoles]}>
-          {!form && !urlParams.has(AUTO_CREATE_PARAM) ? (
-            <StartApplication
-              definition={definition}
-              canStart={!busy.creating}
-              onStart={async () => {
-                const { payload } = await dispatch(createForm(definitionId));
-                const form = payload as FormObject;
-                if (form?.id) {
-                  navigate(`${form.id}`);
-                }
-              }}
-            />
-          ) : urlParams.has(AUTO_CREATE_PARAM) && !form?.id ? (
-            <AutoCreateApplication form={form} />
-          ) : (
-            <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
-          )}
-        </AuthorizeUser>
-      )}
+      <LoadingIndicator isLoading={!formInitialized || !definitionInitialized} />
+      {definitionInitialized &&
+        (definition?.anonymousApply ? (
+          <Navigate to="draft" />
+        ) : (
+          <AuthorizeUser roles={[...(definition?.applicantRoles || []), ...(definition?.clerkRoles || [])]}>
+            {formInitialized && form?.id ? (
+              <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
+            ) : urlParams.has(AUTO_CREATE_PARAM) ? (
+              <AutoCreateApplication form={form} />
+            ) : (
+              <StartApplication
+                definition={definition}
+                canStart={!busy.creating}
+                onStart={async () => {
+                  const { payload } = await dispatch(createForm(definitionId));
+                  const form = payload as FormObject;
+                  if (form?.id) {
+                    navigate(`${form.id}`);
+                  }
+                }}
+              />
+            )}
+          </AuthorizeUser>
+        ))}
     </>
   );
 };
@@ -67,14 +72,25 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
 export const FormDefinition: FunctionComponent = () => {
   const { definitionId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
+  const tenant = useSelector(tenantSelector);
 
   useEffect(() => {
-    dispatch(selectedDefinition(definitionId));
-  }, [dispatch, definitionId]);
+    if (tenant) {
+      dispatch(selectedDefinition(definitionId));
+    }
+  }, [dispatch, definitionId, tenant]);
 
   return (
     <Routes>
-      <Route path="/:formId" element={<Form />} />
+      <Route path="/draft" element={<AnonymousForm />} />
+      <Route
+        path="/:formId"
+        element={
+          <AuthorizeUser>
+            <Form />
+          </AuthorizeUser>
+        }
+      />
       <Route path="/" element={<FormDefinitionStart definitionId={definitionId} />} />
       <Route path="*" element={<Navigate to={`/${definitionId}`} replace />} />
     </Routes>

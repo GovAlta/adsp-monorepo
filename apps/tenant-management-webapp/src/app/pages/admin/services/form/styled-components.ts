@@ -81,7 +81,7 @@ export const Edit = styled.div`
 `;
 
 export const ConfigFormWrapper = styled.div`
-  margin-top: 2rem;
+  margin-top: var(--goa-space-m);
   font-size: 16px;
   color: #333333;
   padding-left: 3px;
@@ -158,6 +158,10 @@ export const FormEditor = styled.div`
   .info-circle {
     margin: 5px 0 0 5px;
   }
+`;
+
+export const ReviewPageTabWrapper = styled.div`
+  padding-top: var(--goa-space-m);
 `;
 
 export const FormEditorTitle = styled.div`

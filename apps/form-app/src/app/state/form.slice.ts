@@ -1,14 +1,14 @@
+import { RegisterData } from '@abgov/jsonforms-components';
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
+import * as _ from 'lodash';
 import { debounce } from 'lodash';
 import { AppState } from './store';
-import { getAccessToken } from './user.slice';
 import { hashData } from './util';
+import { getAccessToken } from './user.slice';
 import { loadTopic, selectTopic } from './comment.slice';
 import { loadFileMetadata } from './file.slice';
-import { RegisterData } from '@abgov/jsonforms-components';
-import * as _ from 'lodash';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -20,6 +20,8 @@ export interface FormDefinition {
   applicantRoles: string[];
   clerkRoles: string[];
   registerData?: RegisterData;
+  anonymousApply: boolean;
+  generatesPdf?: boolean;
 }
 
 export interface Form {
@@ -108,11 +110,17 @@ export const loadDefinition = createAsyncThunk(
       const cacheServiceUrl = config.directory[CACHE_SERVICE_ID];
 
       const tenantId = user.tenant.id;
-      const token = await getAccessToken();
+      const headers: Record<string, string> = {};
+      if (user.user) {
+        const token = await getAccessToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const { data } = await axios.get<FormDefinition>(
         new URL(`/form/v1/definitions/${definitionId}`, formServiceUrl).href,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers,
+          params: { tenantId: tenantId.toString() },
         }
       );
 
@@ -151,10 +159,14 @@ export const loadDefinition = createAsyncThunk(
       return data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        return rejectWithValue({
-          status: err.response?.status,
-          message: err.response?.data?.errorMessage || err.message,
-        });
+        // 403 indicates the user isn't logged in and the form doesn't allow anonymous applicants.
+        // Return null instead of showing an error in the notification banner.
+        return err.response.status === 403
+          ? null
+          : rejectWithValue({
+              status: err.response?.status,
+              message: err.response?.data?.errorMessage || err.message,
+            });
       } else {
         throw err;
       }
@@ -168,6 +180,11 @@ export const findUserForm = createAsyncThunk(
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
+
+      // If there is no user context, then there is no existing form to find.
+      if (!user.user) {
+        return { form: null, data: null, files: null, digest: null };
+      }
 
       let token = await getAccessToken();
       const {
@@ -310,10 +327,13 @@ export const updateForm = createAsyncThunk(
     }: { data?: Record<string, unknown>; files?: Record<string, string>; errors?: ValidationError[] },
     { getState, dispatch }
   ) => {
-    const { form } = getState() as AppState;
+    const { form, user } = getState() as AppState;
 
-    dispatch(formActions.setSaving(true));
-    dispatch(saveForm(form.form.id));
+    // Dispatch saving the draft if there is a logged in user with a draft form.
+    if (user.user && form.form?.id) {
+      dispatch(formActions.setSaving(true));
+      dispatch(saveForm(form.form.id));
+    }
 
     return { data, files, errors };
   }
@@ -394,6 +414,40 @@ export const submitForm = createAsyncThunk(
   }
 );
 
+export const submitAnonymousForm = createAsyncThunk(
+  'form/submit-anonymous-form',
+  async (_: void, { getState, rejectWithValue }) => {
+    try {
+      const { config, user, form } = getState() as AppState;
+
+      let token: string;
+      const grecaptcha = window['grecaptcha'];
+      if (grecaptcha?.execute) {
+        token = await grecaptcha.execute(config.environment.recaptchaKey, { action: 'submit_form' });
+      }
+
+      const { data } = await axios.post<SerializedForm>(`/api/gateway/v1/forms`, {
+        token,
+        tenant: user.tenant.name,
+        definitionId: form.selected,
+        data: form.data,
+        files: form.files,
+      });
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 const initialFormState: FormState = {
   definitions: {},
   selected: null,
@@ -438,9 +492,9 @@ export const formSlice = createSlice({
       .addCase(loadDefinition.pending, (state) => {
         state.busy.loading = true;
       })
-      .addCase(loadDefinition.fulfilled, (state, { payload }) => {
+      .addCase(loadDefinition.fulfilled, (state, { payload, meta }) => {
         state.busy.loading = false;
-        state.definitions[payload.id] = payload;
+        state.definitions[meta.arg] = payload;
 
         //Check form definition id case sensitivity, and use the definition id in the payload object,
         //instead of using the value in querystring because if the case is not the same
@@ -511,6 +565,16 @@ export const formSlice = createSlice({
       })
       .addCase(submitForm.rejected, (state) => {
         state.busy.submitting = false;
+      })
+      .addCase(submitAnonymousForm.pending, (state) => {
+        state.busy.submitting = true;
+      })
+      .addCase(submitAnonymousForm.fulfilled, (state, { payload }) => {
+        state.busy.submitting = false;
+        state.form = payload;
+      })
+      .addCase(submitAnonymousForm.rejected, (state) => {
+        state.busy.submitting = false;
       });
   },
 });
@@ -521,13 +585,16 @@ export const formActions = formSlice.actions;
 export const definitionSelector = createSelector(
   (state: AppState) => state.form.definitions,
   (state: AppState) => state.form.selected,
-  (definitions, selected) => (selected ? definitions[selected] : null)
+  (definitions, selected) => ({
+    definition: selected ? definitions[selected] : null,
+    initialized: definitions[selected] !== undefined,
+  })
 );
 
 export const formSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.form.form,
-  (definition, form) =>
+  ({ definition }, form) =>
     definition && definition?.id === form?.definition.id
       ? { ...form, created: new Date(form.created), submitted: form.submitted ? new Date(form.submitted) : null }
       : null
@@ -545,18 +612,18 @@ export const filesSelector = (state: AppState) => state.form.files;
 export const isApplicantSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.user.user,
-  (definition, user) => !!(user && definition?.applicantRoles.find((r) => user.roles.includes(r)))
+  ({ definition }, user) => !!(user && definition?.applicantRoles.find((r) => user.roles.includes(r)))
 );
 
 export const isClerkSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.user.user,
-  (definition, user) => !!(user && definition?.clerkRoles.find((r) => user.roles.includes(r)))
+  ({ definition }, user) => !!(user && definition?.clerkRoles.find((r) => user.roles.includes(r)))
 );
 
 export const busySelector = (state: AppState) => state.form.busy;
 
-export const showSubmitSelector = createSelector(definitionSelector, (definition) => {
+export const showSubmitSelector = createSelector(definitionSelector, ({ definition }) => {
   // Stepper variant of the categorization includes a Submit button on the review step, so don't show submit outside form.
   return definition?.uiSchema?.type !== 'Categorization' || definition?.uiSchema?.options?.variant !== 'stepper';
 });

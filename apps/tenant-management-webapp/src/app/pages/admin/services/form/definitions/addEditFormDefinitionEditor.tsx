@@ -29,6 +29,7 @@ import {
   FormPreviewScrollPane,
   SubmissionConfigurationPadding,
   GoACheckboxPad,
+  ReviewPageTabWrapper,
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 
@@ -232,7 +233,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
-  const EditorHeight = calcHeight - 520;
+  const EditorHeight = calcHeight - 420;
   const [editorErrors, setEditorErrors] = useState({
     uiSchema: null,
     dataSchemaJSON: null,
@@ -556,89 +557,93 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
             <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
               <Tab label="Data schema" data-testid="form-editor-data-schema-tab" isTightContent={true}>
-                <GoAFormItem
-                  error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
-                  label=""
-                >
-                  <EditorPadding>
-                    <MonacoEditor
-                      data-testid="form-data-schema"
-                      height={EditorHeight}
-                      value={tempDataSchema}
-                      onChange={(value) => {
-                        const jsonSchemaValidResult = JSONSchemaValidator(value);
-                        setTempDataSchema(value);
+                <ReviewPageTabWrapper>
+                  <GoAFormItem
+                    error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
+                    label=""
+                  >
+                    <EditorPadding>
+                      <MonacoEditor
+                        data-testid="form-data-schema"
+                        height={EditorHeight}
+                        value={tempDataSchema}
+                        onChange={(value) => {
+                          const jsonSchemaValidResult = JSONSchemaValidator(value);
+                          setTempDataSchema(value);
 
-                        if (jsonSchemaValidResult === '') {
+                          if (jsonSchemaValidResult === '') {
+                            setEditorErrors({
+                              ...editorErrors,
+                              dataSchemaJSONSchema: null,
+                            });
+                          } else {
+                            setEditorErrors({
+                              ...editorErrors,
+                              dataSchemaJSONSchema: jsonSchemaValidResult,
+                            });
+                          }
+                        }}
+                        onValidate={(makers) => {
+                          if (makers.length === 0) {
+                            setEditorErrors({
+                              ...editorErrors,
+                              dataSchemaJSON: null,
+                            });
+                            return;
+                          }
                           setEditorErrors({
                             ...editorErrors,
-                            dataSchemaJSONSchema: null,
+                            dataSchemaJSON: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                           });
-                        } else {
-                          setEditorErrors({
-                            ...editorErrors,
-                            dataSchemaJSONSchema: jsonSchemaValidResult,
-                          });
-                        }
-                      }}
-                      onValidate={(makers) => {
-                        if (makers.length === 0) {
-                          setEditorErrors({
-                            ...editorErrors,
-                            dataSchemaJSON: null,
-                          });
-                          return;
-                        }
-                        setEditorErrors({
-                          ...editorErrors,
-                          dataSchemaJSON: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                        });
-                      }}
-                      language="json"
-                      options={{
-                        automaticLayout: true,
-                        scrollBeyondLastLine: false,
-                        tabSize: 2,
-                        minimap: { enabled: false },
-                      }}
-                    />
-                  </EditorPadding>
-                </GoAFormItem>
+                        }}
+                        language="json"
+                        options={{
+                          automaticLayout: true,
+                          scrollBeyondLastLine: false,
+                          tabSize: 2,
+                          minimap: { enabled: false },
+                        }}
+                      />
+                    </EditorPadding>
+                  </GoAFormItem>
+                </ReviewPageTabWrapper>
               </Tab>
               <Tab label="UI schema" data-testid="form-editor-ui-schema-tab" isTightContent={true}>
-                <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
-                  <EditorPadding>
-                    <MonacoEditor
-                      data-testid="form-ui-schema"
-                      height={EditorHeight}
-                      value={tempUiSchema}
-                      {...formEditorJsonConfig}
-                      onValidate={(makers) => {
-                        if (makers.length === 0) {
+                <ReviewPageTabWrapper>
+                  <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
+                    <EditorPadding>
+                      <MonacoEditor
+                        data-testid="form-ui-schema"
+                        height={EditorHeight}
+                        value={tempUiSchema}
+                        {...formEditorJsonConfig}
+                        onValidate={(makers) => {
+                          if (makers.length === 0) {
+                            setEditorErrors({
+                              ...editorErrors,
+                              uiSchema: null,
+                            });
+                            return;
+                          }
                           setEditorErrors({
                             ...editorErrors,
-                            uiSchema: null,
+                            uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                           });
-                          return;
-                        }
-                        setEditorErrors({
-                          ...editorErrors,
-                          uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                        });
-                      }}
-                      onChange={(value) => {
-                        setTempUiSchema(value);
-                      }}
-                      language="json"
-                      options={{
-                        automaticLayout: true,
-                        scrollBeyondLastLine: false,
-                        tabSize: 2,
-                        minimap: { enabled: false },
-                      }}
-                    />
-                  </EditorPadding>
-                </GoAFormItem>
+                        }}
+                        onChange={(value) => {
+                          setTempUiSchema(value);
+                        }}
+                        language="json"
+                        options={{
+                          automaticLayout: true,
+                          scrollBeyondLastLine: false,
+                          tabSize: 2,
+                          minimap: { enabled: false },
+                        }}
+                      />
+                    </EditorPadding>
+                  </GoAFormItem>
+                </ReviewPageTabWrapper>
               </Tab>
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
                 <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
@@ -995,7 +1000,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </FormPreviewScrollPane>
               </Tab>
               <Tab label="Data" data-testid="data-view">
-                {data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}
+                <ReviewPageTabWrapper>{data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}</ReviewPageTabWrapper>
               </Tab>
               {definition?.submissionPdfTemplate ? (
                 <Tab

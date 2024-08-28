@@ -128,25 +128,35 @@ export const downloadFormPdf = createAsyncThunk('file/download-form-pdf', async 
   }
 });
 
-export const checkPdfFile = createAsyncThunk('file/check-pdf-file', async (id: string, { rejectWithValue }) => {
-  try {
-    const token = await getAccessToken();
-    const { data } = await axios.get(`/api/gateway/v1/file/v1/file?criteria={"recordIdContains": "${id}"}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+export const checkPdfFile = createAsyncThunk(
+  'file/check-pdf-file',
+  async (id: string, { getState, rejectWithValue }) => {
+    try {
+      const { user } = getState() as AppState;
+      if (user.user) {
+        const token = await getAccessToken();
+        const { data } = await axios.get(`/api/gateway/v1/file/v1/file?criteria={"recordIdContains": "${id}"}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-    return { data };
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      return rejectWithValue({
-        status: err.response?.status,
-        message: err.response?.data?.errorMessage || err.message,
-      });
-    } else {
-      throw err;
+        return { data };
+      } else {
+        // TODO: Implement PDF feature for anonymous applications.
+        // If the application is anonymous and no logged in user, then skip the file request.
+        return {};
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
     }
   }
-});
+);
 
 export const uploadFile = createAsyncThunk(
   'file/upload-file',
@@ -229,7 +239,7 @@ export const deleteFile = createAsyncThunk(
 interface FileState {
   files: Record<string, string>;
   pdfFile: string;
-  pdfFileExists: boolean;
+  pdfFileExists?: boolean;
   metadata: Record<string, FileMetadata>;
   upload: { name: string; progress: number };
   busy: {
@@ -303,7 +313,7 @@ const fileSlice = createSlice({
         state.busy.download[meta.arg] = true;
       })
       .addCase(checkPdfFile.fulfilled, (state, { meta, payload: { data } }) => {
-        state.pdfFileExists = !!data.fileId;
+        state.pdfFileExists = !!data?.fileId;
         state.busy.download[meta.arg] = false;
       })
       .addCase(checkPdfFile.rejected, (state, { meta }) => {

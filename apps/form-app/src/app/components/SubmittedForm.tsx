@@ -1,5 +1,5 @@
-import { ContextProviderClass, GoARenderers, ContextProviderFactory } from '@abgov/jsonforms-components';
-import { JsonSchema, UISchemaElement } from '@jsonforms/core';
+import { GoARenderers, ContextProviderFactory } from '@abgov/jsonforms-components';
+import { UISchemaElement } from '@jsonforms/core';
 import { AppState } from '../state';
 import { GoACallout } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
@@ -51,6 +51,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
   const dispatch = useDispatch<AppDispatch>();
   const pdfFile = useSelector((state: AppState) => pdfFileSelector(state));
   const pdfFileExists = useSelector((state: AppState) => checkPdfFileSelector(state));
+
   const downloadFormFile = async (file) => {
     const fileData = await dispatch(downloadFile(file.urn)).unwrap();
     const element = document.createElement('a');
@@ -59,6 +60,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     document.body.appendChild(element);
     element.click();
   };
+
   const downloadPDFFile = async (file) => {
     const fileData = await dispatch(downloadFormPdf(file)).unwrap();
     const element = document.createElement('a');
@@ -69,7 +71,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
   };
 
   useEffect(() => {
-    if (pdfFileExists === null && form?.urn) {
+    if (definition.generatesPdf && pdfFileExists === null && form?.urn) {
       dispatch(checkPdfFile(form.urn));
     }
 
@@ -84,7 +86,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     }, 10000);
 
     return () => clearInterval(intervalId);
-  }, [dispatch, form, pdfFile, pdfFileExists]);
+  }, [dispatch, definition, form, pdfFile, pdfFileExists]);
 
   const metadata = useSelector(metaDataSelector);
 
