@@ -96,15 +96,19 @@ describe('router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
-      //TO DO: Thang Lam - fix test. There is an issue with how multiple Axios get calls are made
+      //TO DO: Fix unit tests that require mocking multiple Axios calls
       //expect(next).not.toHaveBeenCalledWith(expect.any(Error));
     });
 
     it('can find files', async () => {
       const req = {
-        query: {},
         tenant: { id: 'test-tenant-id' },
-        criteria: `{ "recordIdContains" : "urn:ads:platform:form-service:v1:/forms/3026d2a1-58c1-43ae-81af-38657b53f157" }`,
+        user: { ...testUser, roles: [FormServiceRoles.Applicant] },
+        query: {
+          criteria: JSON.stringify({
+            recordIdContains: 'urn:ads:platform:form-service:v1:/forms/3026d2a1-58c1-43ae-81af-38657b53f157',
+          }),
+        },
       };
 
       const res = {
@@ -114,14 +118,18 @@ describe('router', () => {
       };
       const next = jest.fn();
 
-      const formResult = {
+      const formResult: SimpleFormResponse = {
         formDefinitionId: 'test-id',
         id: 'test-uuid',
         status: FormStatus.Submitted,
         submitted: new Date(),
       };
 
-      axios.get = mockedAxios.get.mockResolvedValue({ data: formResult });
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+
+      mockedAxios.get.mockResolvedValue({
+        data: formResult,
+      });
 
       mockedAxios.get.mockResolvedValue({
         data: {
@@ -133,19 +141,26 @@ describe('router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
-      //TO DO: Thang Lam - fix test. There is an issue with how multiple Axios get calls are made
-      // expect(mockedAxios.get).toHaveBeenCalled();
-      // expect(res.send).toHaveBeenCalledWith({ fileId: 'test-file-id' });
+      expect(mockedAxios.get).toHaveBeenCalled();
+      //TO DO: Fix unit tests that require mocking multiple Axios calls
+      //expect(res.send).toHaveBeenCalled();
     });
 
     it('should handle errors', async () => {
       const req = {
-        query: {},
         tenant: { id: 'test-tenant-id' },
+        user: { ...testUser, roles: [FormServiceRoles.Applicant] },
+        query: {
+          criteria: JSON.stringify({
+            recordIdContains: 'urn:ads:platform:form-service:v1:/forms/3026d2a1-58c1-43ae-81af-38657b53f157',
+          }),
+        },
       };
+
       const res = {
         status: jest.fn().mockReturnThis(),
         send: jest.fn(),
+        sendStatus: jest.fn(),
       };
       const next = jest.fn();
       const error = new Error('test error');

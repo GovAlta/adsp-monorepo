@@ -1,4 +1,3 @@
-import * as express from 'express';
 import { AdspId, TenantService, TokenProvider, getContextTrace } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
@@ -60,6 +59,7 @@ async function getSimpleFormResponse(
 
   //formId is contained in the last item of the split array
   const formId = obj.recordIdContains ? obj.recordIdContains.split('/').at(-1) : '';
+
   const targetPath = `${formApiUrl.toString()}form/v1/forms/${formId}`;
   try {
     const { data } = await axios.get(targetPath, {
@@ -67,16 +67,16 @@ async function getSimpleFormResponse(
       params: { tenantId: tenantId.toString() },
     });
 
-    const dataResult = data ? data : null;
+    const dataResult = data
+      ? {
+          formDefinitionId: data.definition?.id ?? null,
+          id: data.id ?? null,
+          status: data.status ?? null,
+          submitted: data.submitted ?? null,
+        }
+      : null;
 
-    if (dataResult !== null) {
-      return {
-        formDefinitionId: dataResult.definition?.id ?? null,
-        id: dataResult.id ?? null,
-        status: dataResult.status ?? null,
-        submitted: dataResult.submitted ?? null,
-      };
-    }
+    return dataResult;
   } catch (err) {
     return null;
   }
@@ -108,7 +108,9 @@ export function canAccessFile(formResult: SimpleFormResponse, roles: string[], c
   return (
     formResult?.status === FormStatus.Submitted &&
     formResult?.submitted !== null &&
-    roles.find((role) => role.includes(ServiceRoles.Applicant))
+    //Need to check the form gateway roles and form service roles, depending where the request was made.
+    //Whether it was from the form app or directly through the form gateway the roles might be different.
+    roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant))
   );
 }
 
@@ -119,13 +121,11 @@ export function findFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: TokenP
       const { criteria }: { criteria?: string } = req.query;
 
       const formResult = await getSimpleFormResponse(formApiUrl, criteria, req.tenant.id, tokenProvider);
-
       if (!canAccessFile(formResult, user.roles, criteria)) {
-        res.sendStatus(401);
-      } else {
-        const fileId = await getFile(fileApiUrl, tokenProvider, criteria, req.tenant?.id);
-        res.send({ fileId: fileId });
+        throw new UnauthorizedError('User not authorized to find file.');
       }
+      const fileId = await getFile(fileApiUrl, tokenProvider, criteria, req.tenant?.id);
+      res.send({ fileId: fileId });
     } catch (err) {
       next(err);
     }
@@ -142,7 +142,7 @@ export function downloadFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: To
       const formResult = await getSimpleFormResponse(formApiUrl, criteria, req.tenant.id, tokenProvider);
 
       if (!canAccessFile(formResult, user.roles, criteria)) {
-        res.sendStatus(401);
+        throw new UnauthorizedError('User not authorized to download file.');
       }
 
       const fileId = await getFile(fileApiUrl, tokenProvider, criteria, req.tenant?.id);
