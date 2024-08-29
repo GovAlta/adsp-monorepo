@@ -1,6 +1,6 @@
 import { AjvValidationService } from '@core-services/core-common';
 import { Logger } from 'winston';
-import * as standard from './standard.schema.json';
+import * as standard from './standard.v1.schema.json';
 
 describe('standard.schema', () => {
   const logger = {
