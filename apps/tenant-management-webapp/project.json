@@ -25,6 +25,11 @@
             "glob": "silent-check-sso.html",
             "input": "apps/tenant-management-webapp/src/",
             "output": "./"
+          },
+          {
+            "glob": "standard.schema.json",
+            "input": "apps/form-service/src",
+            "output": "./"
           }
         ],
         "scripts": [],
