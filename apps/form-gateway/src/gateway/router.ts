@@ -1,3 +1,4 @@
+import * as express from 'express';
 import { AdspId, TenantService, TokenProvider, getContextTrace } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
@@ -10,6 +11,8 @@ import { RequestHandler, Router } from 'express';
 import * as proxy from 'express-http-proxy';
 import { body } from 'express-validator';
 import { Logger } from 'winston';
+import { ServiceRoles, FormServiceRoles } from './roles';
+import { FormStatus, SimpleFormResponse } from './types';
 
 interface SiteVerifyResponse {
   success: boolean;
@@ -45,6 +48,40 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
   };
 }
 
+async function getSimpleFormResponse(
+  formApiUrl: URL,
+  criteria: string,
+  tenantId: AdspId,
+  tokenProvider: TokenProvider
+): Promise<SimpleFormResponse> {
+  const token = await tokenProvider.getAccessToken();
+
+  const obj = JSON.parse(criteria);
+
+  //formId is contained in the last item of the split array
+  const formId = obj.recordIdContains ? obj.recordIdContains.split('/').at(-1) : '';
+  const targetPath = `${formApiUrl.toString()}form/v1/forms/${formId}`;
+  try {
+    const { data } = await axios.get(targetPath, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId: tenantId.toString() },
+    });
+
+    const dataResult = data ? data : null;
+
+    if (dataResult !== null) {
+      return {
+        formDefinitionId: dataResult.definition?.id ?? null,
+        id: dataResult.id ?? null,
+        status: dataResult.status ?? null,
+        submitted: dataResult.submitted ?? null,
+      };
+    }
+  } catch (err) {
+    return null;
+  }
+}
+
 async function getFile(
   fileApiUrl: URL,
   tokenProvider: TokenProvider,
@@ -52,8 +89,10 @@ async function getFile(
   tenantId: AdspId
 ): Promise<string> {
   const token = await tokenProvider.getAccessToken();
+
   const encodedCriteria = encodeURIComponent(criteria);
   const targetPath = fileApiUrl.toString() + '/files' + `?criteria=${encodedCriteria}` + `&tenantId=${tenantId}`;
+
   const result = await axios.get(targetPath, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -62,23 +101,50 @@ async function getFile(
   return fileId;
 }
 
-export function findFile(fileApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
+export function canAccessFile(formResult: SimpleFormResponse, roles: string[], criteria: string) {
+  if (criteria === '{}') return false;
+  if (formResult === null) return false;
+
+  return (
+    formResult?.status === FormStatus.Submitted &&
+    formResult?.submitted !== null &&
+    roles.find((role) => role.includes(ServiceRoles.Applicant))
+  );
+}
+
+export function findFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
+      const { user } = req;
       const { criteria }: { criteria?: string } = req.query;
-      const fileId = await getFile(fileApiUrl, tokenProvider, criteria, req.tenant?.id);
-      res.send({ fileId: fileId });
+
+      const formResult = await getSimpleFormResponse(formApiUrl, criteria, req.tenant.id, tokenProvider);
+
+      if (!canAccessFile(formResult, user.roles, criteria)) {
+        res.sendStatus(401);
+      } else {
+        const fileId = await getFile(fileApiUrl, tokenProvider, criteria, req.tenant?.id);
+        res.send({ fileId: fileId });
+      }
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function downloadFile(fileApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
+export function downloadFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
       const token = await tokenProvider.getAccessToken();
+      const { user } = req;
+
       const { criteria }: { criteria?: string } = req.query;
+      const formResult = await getSimpleFormResponse(formApiUrl, criteria, req.tenant.id, tokenProvider);
+
+      if (!canAccessFile(formResult, user.roles, criteria)) {
+        res.sendStatus(401);
+      }
+
       const fileId = await getFile(fileApiUrl, tokenProvider, criteria, req.tenant?.id);
       const downloadPath = fileApiUrl.toString() + `/files/${fileId}/download` + `?unsafe=true`;
 
@@ -166,8 +232,8 @@ export function createGatewayRouter({
 }: RouterOptions): Router {
   const router = Router();
 
-  router.get('/file/v1/download', assertAuthenticatedHandler, downloadFile(fileApiUrl, tokenProvider));
-  router.get('/file/v1/file', assertAuthenticatedHandler, findFile(fileApiUrl, tokenProvider));
+  router.get('/file/v1/download', assertAuthenticatedHandler, downloadFile(fileApiUrl, formApiUrl, tokenProvider));
+  router.get('/file/v1/file', assertAuthenticatedHandler, findFile(fileApiUrl, formApiUrl, tokenProvider));
 
   router.post(
     '/forms',
