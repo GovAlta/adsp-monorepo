@@ -27,7 +27,7 @@
             "output": "./"
           },
           {
-            "glob": "standard.schema.json",
+            "glob": "standard.*.schema.json",
             "input": "apps/form-service/src",
             "output": "./"
           }
