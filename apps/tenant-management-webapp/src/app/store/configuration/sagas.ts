@@ -211,7 +211,6 @@ export function* fetchRegisterData(): SagaIterator {
       (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
     );
 
-    const tenantName: string = yield select((state: RootState) => state.tenant.name);
     const tenantId: AdspId = yield select((state: RootState) => state.tenant.id);
 
     const tenantConfigDefinition = yield select(
@@ -238,7 +237,33 @@ export function* fetchRegisterData(): SagaIterator {
         // eslint-disable-next-line
         .map(([name, config]) => name) || [];
 
+    const dataListObject = tenantConfigs
+      // eslint-disable-next-line
+      .filter(([name, config]) => {
+        // eslint-disable-next-line
+        const _c = config as any;
+        return (
+          _c?.configurationSchema?.type === 'array' &&
+          (_c?.configurationSchema?.items?.type === 'string' ||
+            (_c?.configurationSchema?.items?.type === 'object' &&
+              _c?.configurationSchema?.items?.properties?.label?.type === 'string' &&
+              _c?.configurationSchema?.items?.properties?.value?.type === 'string'))
+        );
+      });
+
     const registerData: RegisterConfigData[] = [];
+
+    const dataList = dataListObject.map(([name, config]) => name.replace(':', '/')) || [];
+
+    const anonymousRead =
+      dataListObject
+        .filter(([name, config]) => {
+          // eslint-disable-next-line
+          const _c = config as any;
+
+          return _c.anonymousRead !== true;
+        })
+        .map(([name, config]) => name.replace(':', '/')) || [];
 
     for (const registerConfig of registerConfigs) {
       try {
@@ -253,7 +278,7 @@ export function* fetchRegisterData(): SagaIterator {
           });
         }
 
-        yield put(getRegisterDataSuccessAction(registerData));
+        yield put(getRegisterDataSuccessAction(registerData, dataList, anonymousRead));
       } catch (error) {
         console.warn(`Error in fetching the register data from service: ${registerConfig}`);
       }

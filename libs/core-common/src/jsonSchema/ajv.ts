@@ -1,3 +1,4 @@
+import { standardJsonSchema } from '@abgov/data-exchange-standard';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import * as schemaMigration from 'json-schema-migrate';
@@ -12,6 +13,8 @@ export class AjvValidationService implements ValidationService {
   constructor(private logger: Logger) {
     this.ajv.addFormat('file-urn', /^urn:ads:platform:file-service:v[0-9]:\/files\/[a-zA-Z0-9.-]*$/);
     addFormats(this.ajv);
+
+    this.ajv.addSchema(standardJsonSchema);
   }
 
   setSchema(schemaKey: string, schema: Record<string, unknown>): void {

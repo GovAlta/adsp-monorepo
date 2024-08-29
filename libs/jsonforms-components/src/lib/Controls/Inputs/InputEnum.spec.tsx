@@ -101,7 +101,13 @@ describe('EnumSelect component', () => {
         handleChange: handleChangeMock,
       };
       const component = render(
-        <JsonFormRegisterProvider defaultRegisters={[{ url: 'mock-test', data: ['item1'] }]}>
+        <JsonFormRegisterProvider
+          defaultRegisters={{
+            registerData: [{ url: 'mock-test', urn: 'mock-urn', data: ['item'] }],
+            dataList: ['abc'],
+            nonAnonymous: ['def'],
+          }}
+        >
           <EnumSelect {...props} />)
         </JsonFormRegisterProvider>
       );
