@@ -6,13 +6,25 @@ import '@testing-library/jest-dom';
 import { fetchRegister } from './util';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+
+import { act } from 'react-dom/test-utils';
 const mockHost = 'http://mock-api.com';
 
 const TestComponent = (): JSX.Element => {
   const context = useContext(JsonFormsRegisterContext);
   useEffect(() => {
-    context?.selectRegisterData(`${mockHost}/mock-test`);
-    context?.fetchRegisterByUrl(`${mockHost}/mock-test`);
+    context?.selectRegisterData({ url: `${mockHost}/mock-test` });
+    context?.fetchRegisterByUrl({ url: `${mockHost}/mock-test` });
+    context?.fetchErrors({ url: `${mockHost}/mock-test` });
+  }, [context]);
+  return <div data-testid={'mock-test'}></div>;
+};
+const TestUrn = (): JSX.Element => {
+  const context = useContext(JsonFormsRegisterContext);
+  useEffect(() => {
+    context?.selectRegisterData({ urn: 'urn-test-item-one' });
+    context?.fetchRegisterByUrl({ urn: 'urn-test-item-one' });
+    context?.fetchErrors({ urn: 'urn-test-item-one' });
   }, [context]);
   return <div data-testid={'mock-test'}></div>;
 };
@@ -31,22 +43,38 @@ describe('Jsonforms register context', () => {
   });
 
   it('can create context with default data', async () => {
-    render(
-      <JsonFormRegisterProvider
-        defaultRegisters={[{ url: `${mockHost}/mock-url-1`, urn: 'mock-urn', data: ['item'] }]}
-        children={<TestComponent />}
-      />
-    );
+    await act(() => {
+      render(
+        <JsonFormRegisterProvider
+          defaultRegisters={{
+            registerData: [{ url: `${mockHost}/mock-url-1`, urn: 'mock-urn', data: ['item'] }],
+            dataList: ['abc'],
+            nonAnonymous: ['def'],
+          }}
+          children={<TestComponent />}
+        />
+      );
+    });
+
+    const axiosMock = new MockAdapter(axios);
+    axiosMock.onGet(`${mockHost}/mock-test`).reply(200, ['item1', 'item2']);
+
     expect(screen.getByTestId('mock-test')).toBeTruthy();
   });
 
   it('can create context with existing default data', async () => {
-    render(
-      <JsonFormRegisterProvider
-        defaultRegisters={[{ url: `${mockHost}/mock-test`, urn: 'mock-urn', data: ['item'] }]}
-        children={<TestComponent />}
-      />
-    );
+    await act(() => {
+      render(
+        <JsonFormRegisterProvider
+          defaultRegisters={{
+            registerData: [{ url: `${mockHost}/mock-test`, urn: 'mock-urn', data: ['item'] }],
+            dataList: ['abc'],
+            nonAnonymous: ['def'],
+          }}
+          children={<TestComponent />}
+        />
+      );
+    });
 
     const axiosMock = new MockAdapter(axios);
     axiosMock.onGet(`${mockHost}/mock-test`).reply(200, ['item1', 'item2']);
@@ -57,7 +85,11 @@ describe('Jsonforms register context', () => {
   it('can create context with existing default register config', async () => {
     render(
       <JsonFormRegisterProvider
-        defaultRegisters={[{ url: `${mockHost}/mock-test`, urn: 'mock-urn' }]}
+        defaultRegisters={{
+          registerData: [{ url: `${mockHost}/mock-test`, urn: 'mock-urn', data: ['item'] }],
+          dataList: ['abc'],
+          nonAnonymous: ['def'],
+        }}
         children={<TestComponent />}
       />
     );
@@ -79,7 +111,7 @@ describe('Jsonforms register context', () => {
     const axiosMock = new MockAdapter(axios);
     axiosMock.onGet(config.url).reply(200, deepObject);
 
-    const fetchedData = await fetchRegister(config);
+    const fetchedData = (await fetchRegister(config)) || [];
     expect(fetchedData[0]).toBe('item1');
   });
 
@@ -108,7 +140,7 @@ describe('Jsonforms register context', () => {
     const axiosMock = new MockAdapter(axios);
     axiosMock.onGet(config.url).reply(200, deepObject);
 
-    const fetchedData = await fetchRegister(config);
+    const fetchedData = (await fetchRegister(config)) || [];
     expect(fetchedData[0]).toBe('item1');
   });
 
@@ -116,5 +148,98 @@ describe('Jsonforms register context', () => {
     const config: RegisterConfig = { token: 'mock-token' };
     const fetchedData = await fetchRegister(config);
     expect(fetchedData).toBe(undefined);
+  });
+
+  it('can create context with urn only', async () => {
+    render(
+      <JsonFormRegisterProvider
+        defaultRegisters={{
+          registerData: [{ urn: 'mock-urn', data: ['item'] }],
+          dataList: ['abc'],
+          nonAnonymous: ['def'],
+        }}
+        children={<TestUrn />}
+      />
+    );
+
+    const axiosMock = new MockAdapter(axios);
+    axiosMock.onGet(`${mockHost}/mock-test`).reply(200, ['item1', 'item2']);
+
+    expect(screen.getByTestId('mock-test')).toBeTruthy();
+  });
+  it('can create context with urn only and data matches', async () => {
+    render(
+      <JsonFormRegisterProvider
+        defaultRegisters={{
+          registerData: [],
+          dataList: ['item-one'],
+          nonAnonymous: ['def'],
+        }}
+        children={<TestUrn />}
+      />
+    );
+
+    expect(screen.getByTestId('mock-test')).toBeTruthy();
+  });
+  it('can create context with urn only and data does not match', async () => {
+    render(
+      <JsonFormRegisterProvider
+        defaultRegisters={{
+          registerData: [],
+          dataList: ['item-two'],
+          nonAnonymous: ['def'],
+        }}
+        children={<TestUrn />}
+      />
+    );
+
+    expect(screen.getByTestId('mock-test')).toBeTruthy();
+  });
+
+  it('can create context with urn only tries to use anonymous urn', async () => {
+    render(
+      <JsonFormRegisterProvider
+        defaultRegisters={{
+          registerData: [],
+          dataList: ['item-one'],
+          nonAnonymous: ['item-one'],
+        }}
+        children={<TestUrn />}
+      />
+    );
+
+    expect(screen.getByTestId('mock-test')).toBeTruthy();
+  });
+
+  it('can create context with urn only is not in anonymous list', async () => {
+    render(
+      <JsonFormRegisterProvider
+        defaultRegisters={{
+          registerData: [],
+          dataList: ['item-one'],
+          nonAnonymous: ['item-two'],
+        }}
+        children={<TestUrn />}
+      />
+    );
+
+    expect(screen.getByTestId('mock-test')).toBeTruthy();
+  });
+
+  it('can create context starting with an error', async () => {
+    await act(() => {
+      render(
+        <JsonFormRegisterProvider
+          defaultRegisters={{
+            registerData: [{ errors: { anError: { message: 'error here', url: 'http://test.test' } } }],
+            dataList: ['item-one'],
+            nonAnonymous: ['item-two'],
+          }}
+          children={<TestUrn />}
+        />
+      );
+    });
+
+    expect(screen.getByTestId('mock-test')).toBeTruthy();
   });
 });

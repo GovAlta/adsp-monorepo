@@ -512,37 +512,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     setCurrentTab(tab);
   };
 
-  const validateDefinitionRegisters = () => {
-    const registers = getDataRegisters(JSON.parse(tempUiSchema), 'urn');
-    const registersLength = registers.length;
-    const selectDefinitionRegistersLength = selectDefinitionRegisters.length;
-
-    if (selectDefinitionRegisters.length > 0 && registersLength > 0) {
-      let isValidRegister = false;
-      for (let reg = 0; reg < selectDefinitionRegistersLength; reg++) {
-        for (let registersIndex = 0; registersIndex < registers.length; registersIndex++) {
-          if (selectDefinitionRegisters[reg].urn === registers[registersIndex]) {
-            isValidRegister = true;
-            break;
-          }
-        }
-      }
-      if (!isValidRegister) {
-        dispatch(
-          ErrorNotification({
-            message: 'Data register not available or unauthorized',
-          })
-        );
-      }
-    } else if (selectDefinitionRegistersLength === 0 && registersLength > 0) {
-      dispatch(
-        ErrorNotification({
-          message: 'Data register not available or unauthorized',
-        })
-      );
-    }
-  };
-
   return (
     <FormEditor>
       {spinner ? (
@@ -920,8 +889,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           return;
                         }
                       }
-
-                      validateDefinitionRegisters();
 
                       setCustomIndicator(true);
 

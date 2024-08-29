@@ -22,7 +22,9 @@ export const fetchRegister = async (props: RegisterConfig) => {
 
       return responseData;
     } catch (err) {
+      const error = err as { message: string };
       console.warn(`Error in fetch enum register data from remote: ${err}`);
+      return error.message;
     }
   }
 

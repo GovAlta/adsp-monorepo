@@ -5,7 +5,7 @@ import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
-import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { RegisterDataType } from '../../Context/register';
 
@@ -28,8 +28,11 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   let registerData: RegisterDataType = [];
+  let error = '';
+
   if (registerConfig) {
     registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
+    error = registerCtx?.fetchErrors(registerConfig) || '';
   }
 
   const autocompletion = props.uischema?.options?.autocomplete === true;
@@ -69,26 +72,28 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   }, [registerCtx, registerConfig]);
 
   return (
-    <GoADropdown
-      name={`${label}`}
-      value={data}
-      disabled={!enabled}
-      relative={true}
-      filterable={autocompletion}
-      key={`${id}-jsonform-key`}
-      testId={`${id || label}-jsonform`}
-      {...appliedUiSchemaOptions}
-      onChange={(name, value) => {
-        handleChange(path, value);
-      }}
-      {...uischema?.options?.componentProps}
-    >
-      {mergedOptions?.map((item) => {
-        return (
-          <GoADropdownItem key={`json-form-dropdown-${item.value}`} value={`${item.value}`} label={`${item.label}`} />
-        );
-      })}
-    </GoADropdown>
+    <GoAFormItem error={error} label="">
+      <GoADropdown
+        name={`${label}`}
+        value={data}
+        disabled={!enabled}
+        relative={true}
+        filterable={autocompletion}
+        key={`${id}-jsonform-key`}
+        testId={`${id || label}-jsonform`}
+        {...appliedUiSchemaOptions}
+        onChange={(name, value) => {
+          handleChange(path, value);
+        }}
+        {...uischema?.options?.componentProps}
+      >
+        {mergedOptions?.map((item) => {
+          return (
+            <GoADropdownItem key={`json-form-dropdown-${item.value}`} value={`${item.value}`} label={`${item.label}`} />
+          );
+        })}
+      </GoADropdown>
+    </GoAFormItem>
   );
 };
 

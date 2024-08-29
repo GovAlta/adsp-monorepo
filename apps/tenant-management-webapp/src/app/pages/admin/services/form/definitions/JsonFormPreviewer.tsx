@@ -10,6 +10,7 @@ import FallbackRender from './FallbackRenderer';
 import { useDebounce } from '@lib/useDebounce';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectRegisterData } from '@store/configuration/selectors';
+import { RootState } from '@store/index';
 interface JSONFormPreviewerProps {
   schema: string;
   data: unknown;
@@ -31,6 +32,8 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
   const [display, setDisplay] = React.useState<boolean>(true);
   const dispatch = useDispatch();
   const registerData = useSelector(selectRegisterData);
+  const nonAnonymous = useSelector((state: RootState) => state.configuration?.nonAnonymous);
+  const dataList = useSelector((state: RootState) => state.configuration?.dataList);
 
   useEffect(() => {
     if (!parsedUiSchema.hasError()) {
@@ -81,7 +84,9 @@ export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element =>
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
       {display && (
-        <JsonFormRegisterProvider defaultRegisters={registerData || undefined}>
+        <JsonFormRegisterProvider
+          defaultRegisters={{ registerData: registerData, dataList: dataList, nonAnonymous: nonAnonymous } || undefined}
+        >
           <JsonForms
             ajv={ajv}
             renderers={GoARenderers}
