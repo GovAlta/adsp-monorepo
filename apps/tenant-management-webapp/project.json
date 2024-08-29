@@ -28,7 +28,7 @@
           },
           {
             "glob": "standard.*.schema.json",
-            "input": "apps/form-service/src",
+            "input": "libs/data-exchange-standard/src",
             "output": "./"
           }
         ],
