@@ -62,18 +62,17 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     const docs: RevisionAggregateDoc<C>[] = await this.revisionModel.aggregate(pipeline).skip(skip).limit(top).exec();
 
     return {
-      results: docs.map(
-        ({ _id, ...result }) =>
-          new ConfigurationEntity<C>(
-            _id.namespace,
-            _id.name,
-            this.logger,
-            this,
-            this.validationService,
-            result,
-            criteria.tenantIdEquals
-          )
-      ),
+      results: docs.map(({ _id, ...result }) => {
+        return new ConfigurationEntity<C>(
+          _id.namespace,
+          _id.name,
+          this.logger,
+          this,
+          this.validationService,
+          this.fromDoc(result),
+          criteria.tenantIdEquals
+        );
+      }),
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
@@ -195,12 +194,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         )
         .exec((err, res) => (err ? reject(err) : resolve(res as ConfigurationRevisionDoc<C>)));
     });
-    return {
-      revision: doc.revision,
-      lastUpdated: doc.lastUpdated,
-      created: doc.created,
-      configuration: doc.configuration,
-    };
+    return this.fromDoc(doc);
   }
 
   async getActiveRevision<C>(namespace: string, name: string, tenantId?: AdspId): Promise<ConfigurationRevision<C>> {
@@ -269,7 +263,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     return this.fromDoc(doc);
   }
 
-  private fromDoc<C>(doc: ConfigurationRevisionDoc): ConfigurationRevision<C> {
+  private fromDoc<C>(doc: Omit<ConfigurationRevisionDoc, 'tenant' | 'namespace' | 'name'>): ConfigurationRevision<C> {
     return doc
       ? {
           revision: doc.revision,
