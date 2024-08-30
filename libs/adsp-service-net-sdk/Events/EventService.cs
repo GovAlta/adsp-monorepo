@@ -16,7 +16,7 @@ internal sealed class EventService : IEventService, IDisposable
   private readonly IServiceDirectory _serviceDirectory;
   private readonly ITokenProvider _tokenProvider;
   private readonly string _namespace;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
 
   public EventService(
     ILogger<EventService> logger,

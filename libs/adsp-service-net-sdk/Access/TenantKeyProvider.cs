@@ -13,9 +13,9 @@ internal sealed class TenantKeyProvider : ITenantKeyProvider, IDisposable
   private readonly ILogger<TenantKeyProvider> _logger;
   private readonly IMemoryCache _cache;
   private readonly IIssuerCache _issuerCache;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
 
-  public TenantKeyProvider(ILogger<TenantKeyProvider> logger, IMemoryCache cache, IIssuerCache issuerCache, IOptions<AdspOptions> options, RestClient? client = null)
+  public TenantKeyProvider(ILogger<TenantKeyProvider> logger, IMemoryCache cache, IIssuerCache issuerCache, IOptions<AdspOptions> options, IRestClient? client = null)
   {
     if (options.Value.AccessServiceUrl == null)
     {

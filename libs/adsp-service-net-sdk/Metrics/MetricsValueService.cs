@@ -16,7 +16,7 @@ internal sealed class MetricsValueService : IMetricsValueService
   private readonly IServiceDirectory _directory;
   private readonly ITokenProvider _tokenProvider;
   private readonly AdspId _serviceId;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
 
   private readonly object _bufferLock = new();
   private readonly IList<MetricsValue> _buffer = new List<MetricsValue>();
