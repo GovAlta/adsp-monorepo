@@ -528,8 +528,9 @@ export const PRE = styled.div`
 
 export const FormPreviewScrollPane = styled.div`
   overflow-y: auto;
-  height: 70vh;
-  padding: 0.25rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  height: calc(100vh - 192px);
 `;
 export const Anchor = styled.div`
   color: #0070c4;
