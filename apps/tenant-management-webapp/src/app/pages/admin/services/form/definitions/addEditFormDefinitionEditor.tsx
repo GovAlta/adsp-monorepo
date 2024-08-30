@@ -90,8 +90,6 @@ const FORM_APPLICANT_ID = `form-applicant`;
 const FORM_APPLICANT_SERVICE_ID = `${FORM_SERVICE_ID.toString()}:${FORM_APPLICANT_ID}`;
 const isUseMiniMap = window.screen.availWidth >= 1920;
 
-console.log(window.screen.availWidth);
-
 interface ClientElement {
   roleNames: string[];
   clientId: string;
