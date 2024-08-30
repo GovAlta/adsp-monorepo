@@ -16,7 +16,7 @@ internal sealed class ServiceRegistrar : IServiceRegistrar, IDisposable
   private readonly ILogger<ServiceRegistrar> _logger;
   private readonly IServiceDirectory _serviceDirectory;
   private readonly ITokenProvider _tokenProvider;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
   private readonly AsyncPolicy _retryPolicy;
   private readonly AdspId _serviceId;
   private readonly Dictionary<string, DomainEventDefinition> _eventDefinitions = new();

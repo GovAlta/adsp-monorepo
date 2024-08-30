@@ -17,7 +17,7 @@ internal sealed class TenantService : ITenantService, IDisposable
   private readonly IMemoryCache _cache;
   private readonly IServiceDirectory _serviceDirectory;
   private readonly ITokenProvider _tokenProvider;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
   public TenantService(
@@ -25,7 +25,7 @@ internal sealed class TenantService : ITenantService, IDisposable
     IMemoryCache cache,
     IServiceDirectory serviceDirectory,
     ITokenProvider tokenProvider,
-    RestClient? client = null
+    IRestClient? client = null
   )
   {
     _logger = logger;

@@ -19,7 +19,7 @@ public class TenantServiceTests
     var cache = Mock.Of<IMemoryCache>();
     var serviceDirectory = Mock.Of<IServiceDirectory>();
     var tokenProvider = Mock.Of<ITokenProvider>();
-    var client = Mock.Of<RestClient>();
+    var client = Mock.Of<IRestClient>();
 
     using var middleware = new TenantService(logger, cache, serviceDirectory, tokenProvider, client);
     middleware.Should().NotBeNull();

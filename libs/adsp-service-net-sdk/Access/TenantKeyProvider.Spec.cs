@@ -67,7 +67,7 @@ public class TenantKeyProviderTests
   }
 
   [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2000:Dispose objects before losing scope", Justification = "Http client here will be disposed in TenantProvider Dispose function.")]
-  private static RestClient CreateFakeHttpClient(string realm)
+  private static IRestClient CreateFakeHttpClient(string realm)
   {
     var host = "https://fake-host.com";
     var metadataPath = $"auth/realms/{realm}/.well-known/openid-configuration";
