@@ -22,6 +22,11 @@ export class FormSubmissionEntity implements FormSubmission {
   hash: string;
   securityClassification?: SecurityClassificationType;
 
+  get formSubmissionUrn() {
+    const urn = `urn:ads:platform:form-service:v1:/forms/${this.formId}${this.id ? `/submissions/${this.id}` : ''}`;
+    return urn;
+  }
+
   static async create(
     user: User,
     repository: FormSubmissionRepository,

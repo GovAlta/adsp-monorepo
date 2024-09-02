@@ -11,13 +11,7 @@ import * as proxy from 'express-http-proxy';
 import { body } from 'express-validator';
 import { Logger } from 'winston';
 import { ServiceRoles, FormServiceRoles } from './roles';
-import { FormStatus, SimpleFormResponse } from './types';
-
-interface SiteVerifyResponse {
-  success: boolean;
-  score: number;
-  action: string;
-}
+import { FormStatus, FormResponse, SiteVerifyResponse } from './types';
 
 export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_THRESHOLD = 0.5): RequestHandler {
   return async (req, _res, next) => {
@@ -47,34 +41,52 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
   };
 }
 
-async function getSimpleFormResponse(
+async function getFormResponse(
   formApiUrl: URL,
-  criteria: string,
+  formUrn: string,
   tenantId: AdspId,
   tokenProvider: TokenProvider
-): Promise<SimpleFormResponse> {
+): Promise<FormResponse> {
   const token = await tokenProvider.getAccessToken();
+  let formId = '';
+  let submissionId = '';
 
-  const obj = JSON.parse(criteria);
+  //eg. urn format when no submission or submission urn provided: urn:ads:platform:form-service:v1:/forms/${formId}
+  //eg. urn format with submission: urn:ads:platform:form-service:v1:/forms/${formId}/submissions/${submissionId}
+  if (formUrn.includes('/submissions')) {
+    formId = formUrn.split('/')?.at(2) ?? '';
+    submissionId = formUrn.split('/')?.at(-1) ?? '';
+  } else {
+    formId = formUrn.split('/')?.at(-1) ?? '';
+  }
+  const formResourceUrl = new URL(`form/v1/forms/${formId}`, formApiUrl);
+  formResourceUrl.searchParams.set('tenantId', tenantId.toString());
 
-  //formId is contained in the last item of the split array
-  const formId = obj.recordIdContains ? obj.recordIdContains.split('/').at(-1) : '';
-
-  const targetPath = `${formApiUrl.toString()}form/v1/forms/${formId}`;
   try {
-    const { data } = await axios.get(targetPath, {
+    const { data } = await axios.get(formResourceUrl.href, {
       headers: { Authorization: `Bearer ${token}` },
-      params: { tenantId: tenantId.toString() },
     });
 
-    const dataResult = data
+    let dataResult = data
       ? {
           formDefinitionId: data.definition?.id ?? null,
           id: data.id ?? null,
           status: data.status ?? null,
           submitted: data.submitted ?? null,
+          createdBy: {
+            ...data.createdBy,
+          },
+          submission: {
+            ...data.submission,
+          },
         }
       : null;
+
+    // When the form does have a submission ensure the submission id is correct
+    // with the passed in submissionId.  Otherwise we will reject it.
+    if (data.submission && submissionId !== '' && data.submission?.id !== submissionId) {
+      dataResult = null;
+    }
 
     return dataResult;
   } catch (err) {
@@ -85,15 +97,17 @@ async function getSimpleFormResponse(
 async function getFile(
   fileApiUrl: URL,
   tokenProvider: TokenProvider,
-  criteria: string,
+  formUrn: string,
   tenantId: AdspId
 ): Promise<string> {
   const token = await tokenProvider.getAccessToken();
 
-  const encodedCriteria = encodeURIComponent(criteria);
-  const targetPath = fileApiUrl.toString() + '/files' + `?criteria=${encodedCriteria}` + `&tenantId=${tenantId}`;
+  const criteria = `{ "recordIdContains" : "${formUrn}", "top" : "1" }`;
+  const fileResourceUrl = new URL(`v1/files`, fileApiUrl);
+  fileResourceUrl.searchParams.set('criteria', `${criteria}`);
+  fileResourceUrl.searchParams.set('tenantId', tenantId.toString());
 
-  const result = await axios.get(targetPath, {
+  const result = await axios.get(fileResourceUrl.href, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -101,16 +115,17 @@ async function getFile(
   return fileId;
 }
 
-export function canAccessFile(formResult: SimpleFormResponse, roles: string[], criteria: string) {
-  if (criteria === '{}') return false;
+export function canAccessFile(formResult: FormResponse, user: Express.User) {
   if (formResult === null) return false;
 
   return (
     formResult?.status === FormStatus.Submitted &&
-    formResult?.submitted !== null &&
+    formResult.submitted !== null &&
+    formResult?.submission?.id !== null &&
     //Need to check the form gateway roles and form service roles, depending where the request was made.
     //Whether it was from the form app or directly through the form gateway the roles might be different.
-    roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant))
+    user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)) &&
+    user.id === formResult?.createdBy.id
   );
 }
 
@@ -118,13 +133,14 @@ export function findFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: TokenP
   return async (req, res, next) => {
     try {
       const { user } = req;
-      const { criteria }: { criteria?: string } = req.query;
+      const { formUrn }: { formUrn?: string } = req.query;
 
-      const formResult = await getSimpleFormResponse(formApiUrl, criteria, req.tenant.id, tokenProvider);
-      if (!canAccessFile(formResult, user.roles, criteria)) {
+      const formResult = await getFormResponse(formApiUrl, formUrn, req.tenant.id, tokenProvider);
+
+      if (!canAccessFile(formResult, user)) {
         throw new UnauthorizedError('User not authorized to find file.');
       }
-      const fileId = await getFile(fileApiUrl, tokenProvider, criteria, req.tenant?.id);
+      const fileId = await getFile(fileApiUrl, tokenProvider, formUrn, req.tenant?.id);
       res.send({ fileId: fileId });
     } catch (err) {
       next(err);
@@ -138,14 +154,15 @@ export function downloadFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: To
       const token = await tokenProvider.getAccessToken();
       const { user } = req;
 
-      const { criteria }: { criteria?: string } = req.query;
-      const formResult = await getSimpleFormResponse(formApiUrl, criteria, req.tenant.id, tokenProvider);
+      const { formUrn }: { formUrn?: string } = req.query;
 
-      if (!canAccessFile(formResult, user.roles, criteria)) {
+      const formResult = await getFormResponse(formApiUrl, formUrn, req.tenant.id, tokenProvider);
+
+      if (!canAccessFile(formResult, user)) {
         throw new UnauthorizedError('User not authorized to download file.');
       }
 
-      const fileId = await getFile(fileApiUrl, tokenProvider, criteria, req.tenant?.id);
+      const fileId = await getFile(fileApiUrl, tokenProvider, formUrn, req.tenant?.id);
       const downloadPath = fileApiUrl.toString() + `/files/${fileId}/download` + `?unsafe=true`;
 
       return proxy(new URL('', fileApiUrl).href, {

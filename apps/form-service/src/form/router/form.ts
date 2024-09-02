@@ -30,11 +30,11 @@ import {
   formUnlocked,
   submissionDispositioned,
 } from '../events';
-import { mapForm, mapFormDefinition } from '../mapper';
+import { mapForm, mapFormDefinition, mapFormWithFormSubmission } from '../mapper';
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { Form, FormCriteria, FormSubmission, FormSubmissionCriteria } from '../types';
+import { Form, FormCriteria, FormStatus, FormSubmission, FormSubmissionCriteria } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -75,6 +75,31 @@ export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntit
     updated: entity.updated,
     updatedBy: { id: entity.updatedBy.id, name: entity.updatedBy.name },
     hash: entity.hash,
+  };
+}
+
+export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSubmissionRepository): RequestHandler {
+  return async (req, res, next) => {
+    const form: FormEntity = req[FORM];
+    try {
+      if (form.status === FormStatus.Submitted && form.submitted !== null) {
+        const criteria = {
+          tenantIdEquals: req.tenant?.id,
+          formIdEquals: form.id,
+        };
+        const { results } = await submissionRepository.find({
+          ...criteria,
+        });
+
+        const submission = results.length > 0 ? results.at(0) : null;
+
+        res.send(mapFormWithFormSubmission(apiId, form, submission));
+      } else {
+        res.send(mapForm(apiId, form));
+      }
+    } catch (err) {
+      next(err);
+    }
   };
 }
 
@@ -213,7 +238,7 @@ export function createForm(
       }
 
       let form = await definition.createForm(user, repository, notificationService, applicantInfo);
-
+      let formSubmission: FormSubmissionEntity = null;
       const events: DomainEvent[] = [];
       events.push(formCreated(apiId, user, form));
 
@@ -230,10 +255,12 @@ export function createForm(
       if (submit === true) {
         const [submittedForm, submission] = await form.submit(user, queueTaskService, submissionRepository, pdfService);
         form = submittedForm;
-
+        formSubmission = submission;
         events.push(formSubmitted(apiId, user, form, submission));
       }
-      const result = mapForm(apiId, form);
+
+      const result = formSubmission?.id ? mapFormWithFormSubmission(apiId, form, formSubmission) : mapForm(apiId, form);
+
       res.send(result);
 
       for (const event of events) {
@@ -391,6 +418,7 @@ export function formOperation(
       const request: FormOperations = req.body;
 
       let result: FormEntity = null;
+      let formSubmissionResult: FormSubmissionEntity = null;
       let event: DomainEvent = null;
 
       switch (request.operation) {
@@ -411,7 +439,7 @@ export function formOperation(
             pdfService
           );
           result = submittedForm;
-
+          formSubmissionResult = submission;
           event = formSubmitted(apiId, user, result, submission);
           break;
         }
@@ -431,7 +459,11 @@ export function formOperation(
 
       end();
 
-      res.send(mapForm(apiId, result));
+      const mappedResult = formSubmissionResult
+        ? mapFormWithFormSubmission(apiId, result, formSubmissionResult)
+        : mapForm(apiId, result);
+
+      res.send(mappedResult);
       if (event) {
         eventService.send(event);
       }
@@ -566,7 +598,7 @@ export function createFormRouter({
     assertAuthenticatedHandler,
     createValidationHandler(param('formId').isUUID()),
     getForm(repository),
-    (req, res) => res.send(mapForm(apiId, req[FORM]))
+    mapFormForSubmission(apiId, submissionRepository)
   );
   router.post(
     '/forms/:formId',

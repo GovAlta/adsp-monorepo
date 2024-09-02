@@ -3,7 +3,7 @@ import * as proxy from 'express-http-proxy';
 import axios from 'axios';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
-import { downloadFile, createGatewayRouter, findFile, submitSimpleForm, canAccessFile } from './router';
+import { downloadFile, createGatewayRouter, findFile, submitSimpleForm } from './router';
 import { NotFoundError } from '@core-services/core-common';
 import { FormServiceRoles } from './roles';
 import { FormStatus, SimpleFormResponse } from './types';
@@ -84,6 +84,14 @@ describe('router', () => {
         id: 'test-uuid',
         status: FormStatus.Submitted,
         submitted: new Date(),
+        createdBy: {
+          id: '124',
+          name: 'testid',
+        },
+        submission: {
+          id: 'form-submission-id',
+          urn: 'urn:ads:platform:form-service:v1:/forms/123/submissions/abc-123',
+        },
       };
 
       const getSimpleFormResponseMock = jest.fn();
@@ -123,6 +131,14 @@ describe('router', () => {
         id: 'test-uuid',
         status: FormStatus.Submitted,
         submitted: new Date(),
+        createdBy: {
+          id: '124',
+          name: 'testid',
+        },
+        submission: {
+          id: 'form-submission-id',
+          urn: 'urn:ads:platform:form-service:v1:/forms/123/submissions/abc-123',
+        },
       };
 
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
