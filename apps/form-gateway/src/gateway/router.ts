@@ -59,9 +59,10 @@ async function getFormResponse(
   } else {
     formId = formUrn.split('/')?.at(-1) ?? '';
   }
+  const formResourceUrl = new URL(`form/v1/forms/${formId}`, formApiUrl);
 
   try {
-    const { data } = await axios.get(new URL(`form/v1/forms/${formId}`, formApiUrl).href, {
+    const { data } = await axios.get(formResourceUrl.href, {
       headers: { Authorization: `Bearer ${token}` },
       params: { tenantId: tenantId.toString() },
     });
