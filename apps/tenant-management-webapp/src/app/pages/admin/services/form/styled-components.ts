@@ -354,7 +354,6 @@ export const RolesTabBody = styled.div`
   display: flex;
   border-radius: 3px;
   min-height: 65px;
-  margin-bottom: 1rem;
 `;
 
 export const EditTemplateActions = styled.div`
@@ -368,7 +367,7 @@ export const EditTemplateActions = styled.div`
 export const PreviewContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 85%;
+  height: calc(100vh - 188px);
   margin-right: 3rem;
 `;
 
