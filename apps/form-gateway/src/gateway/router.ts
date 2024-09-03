@@ -2,17 +2,17 @@ import { AdspId, TenantService, TokenProvider, getContextTrace } from '@abgov/ad
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
+  InvalidOperationError,
   NotFoundError,
   UnauthorizedError,
 } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
 import * as proxy from 'express-http-proxy';
-import { body } from 'express-validator';
+import { body, query } from 'express-validator';
 import { Logger } from 'winston';
 import { ServiceRoles, FormServiceRoles } from './roles';
 import { FormStatus, FormResponse, SiteVerifyResponse } from './types';
-
 export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_THRESHOLD = 0.5): RequestHandler {
   return async (req, _res, next) => {
     if (!RECAPTCHA_SECRET) {
@@ -59,6 +59,7 @@ async function getFormResponse(
   } else {
     formId = formUrn.split('/')?.at(-1) ?? '';
   }
+
   const formResourceUrl = new URL(`form/v1/forms/${formId}`, formApiUrl);
 
   try {
@@ -249,8 +250,26 @@ export function createGatewayRouter({
 }: RouterOptions): Router {
   const router = Router();
 
-  router.get('/file/v1/download', assertAuthenticatedHandler, downloadFile(fileApiUrl, formApiUrl, tokenProvider));
-  router.get('/file/v1/file', assertAuthenticatedHandler, findFile(fileApiUrl, formApiUrl, tokenProvider));
+  router.get(
+    '/file/v1/download',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      query('formUrn').custom(async (value: string) => {
+        validateFormUrn(value);
+      })
+    ),
+    downloadFile(fileApiUrl, formApiUrl, tokenProvider)
+  );
+  router.get(
+    '/file/v1/file',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      query('formUrn').custom(async (value: string) => {
+        validateFormUrn(value);
+      })
+    ),
+    findFile(fileApiUrl, formApiUrl, tokenProvider)
+  );
 
   router.post(
     '/forms',
@@ -266,3 +285,12 @@ export function createGatewayRouter({
 
   return router;
 }
+
+export const validateFormUrn = (formUrn: string) => {
+  if (formUrn === undefined || formUrn === '') {
+    throw new InvalidOperationError('Invalid formUrn.');
+  }
+  if (!formUrn.includes('/forms/') || !formUrn.includes('urn:ads:platform:form-service')) {
+    throw new InvalidOperationError('Invalid formUrn.');
+  }
+};
