@@ -58,15 +58,12 @@ async function getFormResponse(
 
   //eg. urn format when no submission or submission urn provided: urn:ads:platform:form-service:v1:/forms/${formId}
   //eg. urn format with submission: urn:ads:platform:form-service:v1:/forms/${formId}/submissions/${submissionId}
+
   if (typeof formUrn === 'string' && formUrn.includes('/submissions')) {
     formId = formUrn.split('/')?.at(2) ?? '';
     submissionId = formUrn.split('/')?.at(-1) ?? '';
   } else {
     formId = formUrn.split('/')?.at(-1) ?? '';
-  }
-
-  if (formId !== '' && !isUUID(formId)) {
-    formId = '';
   }
 
   const formResourceUrl = new URL(`form/v1/forms/${formId}`, formApiUrl);
@@ -144,6 +141,7 @@ export function findFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: TokenP
     try {
       const { user } = req;
       const { formUrn }: { formUrn?: string } = req.query;
+      validateFormUrn(formUrn);
 
       const formResult = await getFormResponse(formApiUrl, formUrn, req.tenant.id, tokenProvider);
 
@@ -165,7 +163,7 @@ export function downloadFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: To
       const { user } = req;
 
       const { formUrn }: { formUrn?: string } = req.query;
-
+      validateFormUrn(formUrn);
       const formResult = await getFormResponse(formApiUrl, formUrn, req.tenant.id, tokenProvider);
 
       if (!canAccessFile(formResult, user)) {
