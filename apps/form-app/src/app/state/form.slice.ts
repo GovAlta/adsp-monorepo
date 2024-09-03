@@ -208,7 +208,6 @@ export const findUserForm = createAsyncThunk(
         files = null,
         digest = null;
       if (form) {
-        console.log('form', form);
         token = await getAccessToken();
         const { data: formData } = await axios.get<FormDataResponse>(
           new URL(`/form/v1/forms/${form.id}/data`, formServiceUrl).href,
