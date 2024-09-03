@@ -298,10 +298,13 @@ export function createGatewayRouter({
 }
 
 export const validateFormUrn = (formUrn: string) => {
-  if (formUrn === undefined || formUrn === '') {
+  if (formUrn === undefined || (formUrn === '' && typeof formUrn === 'string')) {
     throw new InvalidOperationError('Invalid formUrn.');
   }
-  if (!formUrn.includes('/forms/') || !formUrn.includes('urn:ads:platform:form-service')) {
+  if (
+    (typeof formUrn === 'string' && !formUrn.includes('/forms/')) ||
+    (typeof formUrn === 'string' && !formUrn.includes('urn:ads:platform:form-service'))
+  ) {
     throw new InvalidOperationError('Invalid formUrn.');
   }
 };
