@@ -41,6 +41,11 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
   };
 }
 
+export const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const isUUID = (id: string) => {
+  return uuidRegex.test(id);
+};
+
 async function getFormResponse(
   formApiUrl: URL,
   formUrn: string,
@@ -58,6 +63,10 @@ async function getFormResponse(
     submissionId = formUrn.split('/')?.at(-1) ?? '';
   } else {
     formId = formUrn.split('/')?.at(-1) ?? '';
+  }
+
+  if (formId !== '' && !isUUID(formId)) {
+    formId = '';
   }
 
   const formResourceUrl = new URL(`form/v1/forms/${formId}`, formApiUrl);
@@ -254,9 +263,11 @@ export function createGatewayRouter({
     '/file/v1/download',
     assertAuthenticatedHandler,
     createValidationHandler(
-      query('formUrn').custom(async (value: string) => {
-        validateFormUrn(value);
-      })
+      query('formUrn')
+        .isString()
+        .custom(async (value: string) => {
+          validateFormUrn(value);
+        })
     ),
     downloadFile(fileApiUrl, formApiUrl, tokenProvider)
   );
@@ -264,9 +275,11 @@ export function createGatewayRouter({
     '/file/v1/file',
     assertAuthenticatedHandler,
     createValidationHandler(
-      query('formUrn').custom(async (value: string) => {
-        validateFormUrn(value);
-      })
+      query('formUrn')
+        .isString()
+        .custom(async (value: string) => {
+          validateFormUrn(value);
+        })
     ),
     findFile(fileApiUrl, formApiUrl, tokenProvider)
   );
