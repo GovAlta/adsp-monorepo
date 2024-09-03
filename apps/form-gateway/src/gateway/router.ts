@@ -141,7 +141,6 @@ export function findFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: TokenP
     try {
       const { user } = req;
       const { formUrn }: { formUrn?: string } = req.query;
-      validateFormUrn(formUrn);
 
       const formResult = await getFormResponse(formApiUrl, formUrn, req.tenant.id, tokenProvider);
 
@@ -163,7 +162,6 @@ export function downloadFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: To
       const { user } = req;
 
       const { formUrn }: { formUrn?: string } = req.query;
-      validateFormUrn(formUrn);
       const formResult = await getFormResponse(formApiUrl, formUrn, req.tenant.id, tokenProvider);
 
       if (!canAccessFile(formResult, user)) {
