@@ -53,18 +53,17 @@ async function getFormResponse(
 
   //eg. urn format when no submission or submission urn provided: urn:ads:platform:form-service:v1:/forms/${formId}
   //eg. urn format with submission: urn:ads:platform:form-service:v1:/forms/${formId}/submissions/${submissionId}
-  if (formUrn.includes('/submissions')) {
+  if (typeof formUrn === 'string' && formUrn.includes('/submissions')) {
     formId = formUrn.split('/')?.at(2) ?? '';
     submissionId = formUrn.split('/')?.at(-1) ?? '';
   } else {
     formId = formUrn.split('/')?.at(-1) ?? '';
   }
-  const formResourceUrl = new URL(`form/v1/forms/${formId}`, formApiUrl);
-  formResourceUrl.searchParams.set('tenantId', tenantId.toString());
 
   try {
-    const { data } = await axios.get(formResourceUrl.href, {
+    const { data } = await axios.get(new URL(`form/v1/forms/${formId}`, formApiUrl).href, {
       headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId: tenantId.toString() },
     });
 
     let dataResult = data
@@ -103,12 +102,12 @@ async function getFile(
   const token = await tokenProvider.getAccessToken();
 
   const criteria = `{ "recordIdContains" : "${formUrn}", "top" : "1" }`;
-  const fileResourceUrl = new URL(`v1/files`, fileApiUrl);
-  fileResourceUrl.searchParams.set('criteria', `${criteria}`);
-  fileResourceUrl.searchParams.set('tenantId', tenantId.toString());
-
-  const result = await axios.get(fileResourceUrl.href, {
+  const result = await axios.get(new URL(`v1/files`, fileApiUrl).href, {
     headers: { Authorization: `Bearer ${token}` },
+    params: {
+      criteria: criteria,
+      tenantId: tenantId.toString(),
+    },
   });
 
   const fileId = result.data.results[0]?.id;
