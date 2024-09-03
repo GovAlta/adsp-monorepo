@@ -38,7 +38,6 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
     dispatch(findUserForm(definitionId));
   }, [dispatch, definitionId]);
 
-  console.log('formInitialized', { form, formInitialized });
   return (
     <>
       <LoadingIndicator isLoading={!formInitialized || !definitionInitialized} />
