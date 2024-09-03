@@ -38,6 +38,7 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
     dispatch(findUserForm(definitionId));
   }, [dispatch, definitionId]);
 
+  console.log('formInitialized', { form, formInitialized });
   return (
     <>
       <LoadingIndicator isLoading={!formInitialized || !definitionInitialized} />
@@ -48,7 +49,7 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
           <AuthorizeUser roles={[...(definition?.applicantRoles || []), ...(definition?.clerkRoles || [])]}>
             {formInitialized && form?.id ? (
               <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
-            ) : urlParams.has(AUTO_CREATE_PARAM) ? (
+            ) : urlParams.has(AUTO_CREATE_PARAM) && formInitialized ? (
               <AutoCreateApplication form={form} />
             ) : (
               <StartApplication
