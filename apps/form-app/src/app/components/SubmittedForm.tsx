@@ -72,12 +72,12 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
 
   useEffect(() => {
     if (definition.generatesPdf && pdfFileExists === null && form?.urn) {
-      dispatch(checkPdfFile(form.urn));
+      dispatch(checkPdfFile(form.submission?.id ? form.submission.urn : form?.urn));
     }
 
     const intervalId = setInterval(() => {
       if (!pdfFileExists) {
-        dispatch(checkPdfFile(form.urn));
+        dispatch(checkPdfFile(form.submission?.id ? form.submission.urn : form?.urn));
       }
     }, 1000);
 
@@ -96,7 +96,12 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
       <GridItem md={10}>
         <GoACallout type="success" heading="We're processing your application">
           Your application was received on {moment(form.submitted).format('MMMM D, YYYY')} and we're working on it.
-          {pdfFileExists && <DownloadLink link={() => downloadPDFFile(form?.urn)} text="Download PDF copy" />}
+          {pdfFileExists && (
+            <DownloadLink
+              link={() => downloadPDFFile(form.submission?.id ? form.submission.urn : form?.urn)}
+              text="Download PDF copy"
+            />
+          )}
         </GoACallout>
         <Heading>The submitted form for your reference</Heading>
         <ContextProvider
