@@ -306,7 +306,7 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   } else {
     const sk = yield call(connect, pushServiceUrl, token, 'pdf-generation-updates', tenant?.name);
     const socketChannel = yield call(createSocketChannel, sk);
-    yield put({ socketChannel: sk, type: SOCKET_CHANNEL });
+    yield put({ socketChannel: true, type: SOCKET_CHANNEL });
 
     try {
       const currentEvents = [];

@@ -76,7 +76,7 @@ export interface AddToStreamAction {
 export interface SocketChannelAction {
   type: typeof SOCKET_CHANNEL;
   // eslint-disable-next-line
-  socketChannel: any;
+  socketChannel: boolean;
 }
 
 export interface GeneratePdfAction {
