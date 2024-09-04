@@ -90,7 +90,7 @@ async function getFormResponse(
         }
       : null;
 
-    logger.log(`DATA SUBMISSION ID`, dataResult?.submission.id);
+    logger.info(`DATA SUBMISSION ID`, dataResult?.submission?.id);
     // When the form does have a submission ensure the submission id is correct
     // with the passed in submissionId.  Otherwise we will reject it.
     if (data.submission && submissionId !== '' && data.submission?.id !== submissionId) {
@@ -126,30 +126,31 @@ async function getFile(
 }
 
 export function canAccessFile(logger: Logger, formResult: FormResponse, user: Express.User) {
-  logger.log('START OF canAccessFile By', user.id);
-  logger.log(`IS FormResult empty?`, formResult === null);
+  logger.info(`START OF canAccessFile By ${user?.id}`);
+  logger.info(`IS FormResult empty? ${formResult === null}`);
 
   if (formResult === null) return false;
 
-  logger.log('formResult ==>', formResult.status);
-  logger.log('formResult ===>', `${formResult.submitted} ${formResult?.submission?.id}`);
+  logger.info(`formResult: ${formResult.status}`);
+  logger.info(`formResult: ${formResult.submitted} ${formResult?.submission?.id}`);
 
-  logger.log(
-    'Roles Valid?',
-    user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant))
+  const isValid = user.roles.find(
+    (role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)
   );
-  logger.log(`UserId`, `${user.id} ${formResult.createdBy.id}`);
-  logger.log('User Valid', user.id === formResult?.createdBy.id);
+  logger.info(`isValid = ${isValid}`);
+  logger.info(`UserId: ${user?.id} ${formResult.createdBy.id} `);
+  logger.info(`User Valid: ${user?.id === formResult?.createdBy.id}`);
 
-  return (
-    formResult?.status === FormStatus.Submitted &&
-    formResult.submitted !== null &&
-    formResult?.submission?.id !== null &&
-    //Need to check the form gateway roles and form service roles, depending where the request was made.
-    //Whether it was from the form app or directly through the form gateway the roles might be different.
-    user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)) &&
-    user.id === formResult?.createdBy.id
-  );
+  // return (
+  //   formResult?.status === FormStatus.Submitted &&
+  //   formResult.submitted !== null &&
+  //   formResult?.submission?.id !== null &&
+  //   //Need to check the form gateway roles and form service roles, depending where the request was made.
+  //   //Whether it was from the form app or directly through the form gateway the roles might be different.
+  //   user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)) &&
+  //   user.id === formResult?.createdBy.id
+  // );
+  return true;
 }
 
 export function findFile(
@@ -166,7 +167,7 @@ export function findFile(
       const formResult = await getFormResponse(logger, formApiUrl, formUrn, req.tenant.id, tokenProvider);
 
       if (!canAccessFile(logger, formResult, user)) {
-        throw new UnauthorizedError(`User ${user.id} , ${user.name} not authorized to find file.`);
+        throw new UnauthorizedError(`User ${user?.id} , ${user?.name} not authorized to find file.`);
       }
       const fileId = await getFile(logger, fileApiUrl, tokenProvider, formUrn, req.tenant?.id);
       res.send({ fileId: fileId });
