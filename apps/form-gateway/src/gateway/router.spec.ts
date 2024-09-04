@@ -99,7 +99,7 @@ describe('router', () => {
 
       getSimpleFormResponseMock.mockResolvedValueOnce(formResult);
       canAccessFileMock.mockReturnValue(true);
-      const handler = await downloadFile(fileApiUrl, formApiUrl, tokenProviderMock);
+      const handler = await downloadFile(loggerMock, fileApiUrl, formApiUrl, tokenProviderMock);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -153,7 +153,7 @@ describe('router', () => {
         },
       });
 
-      const handler = findFile(fileApiUrl, formApiUrl, tokenProviderMock);
+      const handler = findFile(loggerMock, fileApiUrl, formApiUrl, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
@@ -182,7 +182,7 @@ describe('router', () => {
       const error = new Error('test error');
       tokenProviderMock.getAccessToken.mockRejectedValue(error);
 
-      const handler = downloadFile(fileApiUrl, formApiUrl, tokenProviderMock);
+      const handler = downloadFile(loggerMock, fileApiUrl, formApiUrl, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(error);

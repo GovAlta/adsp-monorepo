@@ -47,6 +47,7 @@ export const isUUID = (id: string) => {
 };
 
 async function getFormResponse(
+  logger: Logger,
   formApiUrl: URL,
   formUrn: string,
   tenantId: AdspId,
@@ -89,6 +90,7 @@ async function getFormResponse(
         }
       : null;
 
+    logger.log(`DATA SUBMISSION ID`, dataResult?.submission.id);
     // When the form does have a submission ensure the submission id is correct
     // with the passed in submissionId.  Otherwise we will reject it.
     if (data.submission && submissionId !== '' && data.submission?.id !== submissionId) {
@@ -102,6 +104,7 @@ async function getFormResponse(
 }
 
 async function getFile(
+  logger: Logger,
   fileApiUrl: URL,
   tokenProvider: TokenProvider,
   formUrn: string,
@@ -122,41 +125,50 @@ async function getFile(
   return fileId;
 }
 
-export function canAccessFile(formResult: FormResponse, user: Express.User) {
+export function canAccessFile(logger: Logger, formResult: FormResponse, user: Express.User) {
+  logger.log('START OF canAccessFile By', user.id);
+  logger.log(`IS FormResult empty?`, formResult === null);
+
   if (formResult === null) return false;
 
-  console.log('formResult ==>', formResult.status);
-  console.log('formResult ===>', `${formResult.submitted} ${formResult.submission.id}`);
+  logger.log('formResult ==>', formResult.status);
+  logger.log('formResult ===>', `${formResult.submitted} ${formResult?.submission?.id}`);
 
-  console.log(
+  logger.log(
     'Roles Valid?',
     user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant))
   );
-  console.log(`UserId`, `${user.id} ${formResult.createdBy.id}`);
-  console.log('User Valid', user.id === formResult?.createdBy.id);
+  logger.log(`UserId`, `${user.id} ${formResult.createdBy.id}`);
+  logger.log('User Valid', user.id === formResult?.createdBy.id);
 
   return (
-    formResult?.status === FormStatus.Submitted && formResult.submitted !== null && formResult?.submission?.id !== null
-    //&&
+    formResult?.status === FormStatus.Submitted &&
+    formResult.submitted !== null &&
+    formResult?.submission?.id !== null &&
     //Need to check the form gateway roles and form service roles, depending where the request was made.
     //Whether it was from the form app or directly through the form gateway the roles might be different.
-    // user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)) &&
-    // user.id === formResult?.createdBy.id
+    user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)) &&
+    user.id === formResult?.createdBy.id
   );
 }
 
-export function findFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
+export function findFile(
+  logger: Logger,
+  fileApiUrl: URL,
+  formApiUrl: URL,
+  tokenProvider: TokenProvider
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const { user } = req;
       const { formUrn }: { formUrn?: string } = req.query;
 
-      const formResult = await getFormResponse(formApiUrl, formUrn, req.tenant.id, tokenProvider);
+      const formResult = await getFormResponse(logger, formApiUrl, formUrn, req.tenant.id, tokenProvider);
 
-      if (!canAccessFile(formResult, user)) {
-        throw new UnauthorizedError('User not authorized to find file.');
+      if (!canAccessFile(logger, formResult, user)) {
+        throw new UnauthorizedError(`User ${user.id} , ${user.name} not authorized to find file.`);
       }
-      const fileId = await getFile(fileApiUrl, tokenProvider, formUrn, req.tenant?.id);
+      const fileId = await getFile(logger, fileApiUrl, tokenProvider, formUrn, req.tenant?.id);
       res.send({ fileId: fileId });
     } catch (err) {
       next(err);
@@ -164,20 +176,25 @@ export function findFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: TokenP
   };
 }
 
-export function downloadFile(fileApiUrl: URL, formApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
+export function downloadFile(
+  logger: Logger,
+  fileApiUrl: URL,
+  formApiUrl: URL,
+  tokenProvider: TokenProvider
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const token = await tokenProvider.getAccessToken();
       const { user } = req;
 
       const { formUrn }: { formUrn?: string } = req.query;
-      const formResult = await getFormResponse(formApiUrl, formUrn, req.tenant.id, tokenProvider);
+      const formResult = await getFormResponse(logger, formApiUrl, formUrn, req.tenant.id, tokenProvider);
 
-      if (!canAccessFile(formResult, user)) {
+      if (!canAccessFile(logger, formResult, user)) {
         throw new UnauthorizedError('User not authorized to download file.');
       }
 
-      const fileId = await getFile(fileApiUrl, tokenProvider, formUrn, req.tenant?.id);
+      const fileId = await getFile(logger, fileApiUrl, tokenProvider, formUrn, req.tenant?.id);
       const downloadPath = fileApiUrl.toString() + `/files/${fileId}/download` + `?unsafe=true`;
 
       return proxy(new URL('', fileApiUrl).href, {
@@ -274,7 +291,7 @@ export function createGatewayRouter({
           validateFormUrn(value);
         })
     ),
-    downloadFile(fileApiUrl, formApiUrl, tokenProvider)
+    downloadFile(logger, fileApiUrl, formApiUrl, tokenProvider)
   );
   router.get(
     '/file/v1/file',
@@ -286,7 +303,7 @@ export function createGatewayRouter({
           validateFormUrn(value);
         })
     ),
-    findFile(fileApiUrl, formApiUrl, tokenProvider)
+    findFile(logger, fileApiUrl, formApiUrl, tokenProvider)
   );
 
   router.post(
