@@ -161,7 +161,7 @@ export const AddEditFormDefinition = ({
                 if (isEdit) {
                   onClose();
                 } else {
-                  navigate(`edit/${definition.id}`);
+                  navigate(`edit/${definition.id}?headless=true`);
                 }
               }
             }}
