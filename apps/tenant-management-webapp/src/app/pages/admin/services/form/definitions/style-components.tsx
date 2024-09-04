@@ -49,3 +49,7 @@ export const LoadMoreWrapper = styled.div`
 export const H3 = styled.h3`
   margin-top: 2rem !important;
 `;
+
+export const BorderBottom = styled.div`
+  border-bottom: 1px solid #ccc;
+`;

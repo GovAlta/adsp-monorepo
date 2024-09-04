@@ -152,7 +152,13 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
       const user = req.user;
       const { top: topValue, after, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
-      const criteria: FormCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      let criteria: FormCriteria = {};
+
+      try {
+        criteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      } catch (error) {
+        throw new InvalidOperationError('Bad form criteria');
+      }
 
       if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin, true)) {
         // If user is not a form service admin, then limit search to only forms created by the user.

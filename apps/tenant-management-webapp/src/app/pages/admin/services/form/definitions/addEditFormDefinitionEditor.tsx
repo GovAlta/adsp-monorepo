@@ -63,7 +63,7 @@ import { AddEditDispositionModal } from './addEditDispositionModal';
 
 import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 
-import { RowFlex, QueueTaskDropdown, H3 } from './style-components';
+import { RowFlex, QueueTaskDropdown, H3, BorderBottom } from './style-components';
 import { getTaskQueues } from '@store/task/action';
 import {
   UploadFileService,
@@ -80,7 +80,6 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { FormFormItem } from '../styled-components';
 import { adspId } from '@lib/adspId';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
-import { ErrorNotification } from '@store/notifications/actions';
 import { SecurityClassification } from '@store/common/models';
 
 export const ContextProvider = ContextProviderFactory();
@@ -619,248 +618,251 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </GoAFormItem>
               </Tab>
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
-                <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
-                  <ScrollPane>
-                    {elements.map((e, key) => {
-                      return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-                    })}
-                    {fetchKeycloakRolesState === ActionState.inProcess && (
-                      <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-                    )}
-                  </ScrollPane>
-                </RolesTabBody>
+                <BorderBottom>
+                  <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight }}>
+                    <ScrollPane>
+                      {elements.map((e, key) => {
+                        return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+                      })}
+                      {fetchKeycloakRolesState === ActionState.inProcess && (
+                        <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+                      )}
+                    </ScrollPane>
+                  </RolesTabBody>
+                </BorderBottom>
               </Tab>
               <Tab label="Lifecycle" data-testid="lifecycle" isTightContent={true}>
-                <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
-                  <H3>Application</H3>
-                  <div>
-                    <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
-                      <FormFormItem>
-                        <GoAInput
-                          name="form-url-id"
-                          value={definition?.formDraftUrlTemplate}
-                          testId="form-url-id"
-                          disabled={true}
-                          width="100%"
-                          onChange={null}
+                <BorderBottom>
+                  <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
+                    <H3>Application</H3>
+                    <div>
+                      <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
+                        <FormFormItem>
+                          <GoAInput
+                            name="form-url-id"
+                            value={definition?.formDraftUrlTemplate}
+                            testId="form-url-id"
+                            disabled={true}
+                            width="100%"
+                            onChange={null}
+                          />
+                        </FormFormItem>
+                      </GoAFormItem>
+                      <FlexRow>
+                        <GoACheckboxPad>
+                          <GoACheckbox
+                            name="support-topic"
+                            key="support-topic"
+                            checked={definition.supportTopic}
+                            testId="support-topic"
+                            onChange={() => {
+                              const topic = definition.supportTopic ? false : true;
+                              setDefinition({ ...definition, supportTopic: topic });
+                            }}
+                            text="Create support topic"
+                          />
+                        </GoACheckboxPad>
+                        <InfoCircleWithInlineHelp
+                          text={
+                            definition.supportTopic
+                              ? 'Forms of this type will create a comment topic used for supporting applicants. Applicants will be able to read and write comments to the topic to interact with staff.'
+                              : 'Forms of this type will not create a comment topic used for supporting applicants.'
+                          }
+                          width="280"
                         />
-                      </FormFormItem>
-                    </GoAFormItem>
-                    <FlexRow>
-                      <GoACheckboxPad>
-                        <GoACheckbox
-                          name="support-topic"
-                          key="support-topic"
-                          checked={definition.supportTopic}
-                          testId="support-topic"
-                          onChange={() => {
-                            const topic = definition.supportTopic ? false : true;
-                            setDefinition({ ...definition, supportTopic: topic });
-                          }}
-                          text="Create support topic"
-                        />
-                      </GoACheckboxPad>
-                      <InfoCircleWithInlineHelp
-                        text={
-                          definition.supportTopic
-                            ? 'Forms of this type will create a comment topic used for supporting applicants. Applicants will be able to read and write comments to the topic to interact with staff.'
-                            : 'Forms of this type will not create a comment topic used for supporting applicants.'
-                        }
-                        width="280"
-                      />
-                    </FlexRow>
-                  </div>
-
-                  <div>
-                    <GoAFormItem error={''} label="Security classification">
-                      {/* The style below is to fix an UI component bug */}
-                      <div style={{ paddingLeft: '3px' }}>
-                        <GoADropdown
-                          name="securityClassifications"
-                          width="25rem"
-                          value={definition?.securityClassification || ''}
-                          relative={true}
-                          onChange={(name: string, value: SecurityClassification) => {
-                            definition.securityClassification = value;
-                            setDefinition({ ...definition });
-                          }}
-                        >
-                          <GoADropdownItem value={SecurityClassification.Public} label="Public" />
-                          <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
-                          <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
-                          <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
-                        </GoADropdown>
-                      </div>
-                    </GoAFormItem>
-                  </div>
-                  <h3>Submission</h3>
-                  <FlexRow>
-                    <SubmissionRecordsBox>
-                      <GoACheckbox
-                        name="generate-pdf-on-submit"
-                        key="generate-pdf-on-submit"
-                        checked={definition.submissionPdfTemplate ? true : false}
-                        testId="generate-pdf-on-submit"
-                        onChange={() => {
-                          const records = definition.submissionPdfTemplate ? '' : 'submitted-form';
-                          setDefinition({ ...definition, submissionPdfTemplate: records });
-                        }}
-                        text="Create PDF on submit"
-                      />
-                    </SubmissionRecordsBox>
-                    <InfoCircleWithInlineHelp
-                      text={
-                        definition.submissionPdfTemplate
-                          ? 'Forms of this type will generate a PDF on submission '
-                          : 'Forms of this type will not generate a PDF on submission'
-                      }
-                      width="180"
-                    />
-                  </FlexRow>
-                  <FlexRow>
-                    <SubmissionRecordsBox>
-                      <GoACheckbox
-                        name="submission-records"
-                        key="submission-records"
-                        checked={definition.submissionRecords}
-                        testId="submission-records"
-                        onChange={() => {
-                          const records = definition.submissionRecords ? false : true;
-                          setDefinition({ ...definition, submissionRecords: records });
-                        }}
-                        text="Create submission records on submit"
-                      />
-                    </SubmissionRecordsBox>
-                    <InfoCircleWithInlineHelp
-                      text={
-                        definition.submissionRecords
-                          ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
-                          : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
-                      }
-                    />
-                  </FlexRow>
-                  <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
-                    <SubmissionConfigurationPadding>
-                      <InfoCircleWithInlineHelp
-                        initialLabelValue={definition.submissionRecords}
-                        label="Task queue to process &nbsp;"
-                        text={
-                          getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
-                            ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
-                            : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
-                        }
-                      />
-
-                      <QueueTaskDropdown>
-                        {queueTasks && Object.keys(queueTasks).length > 0 && (
+                      </FlexRow>
+                    </div>
+                    <div>
+                      <GoAFormItem error={''} label="Security classification">
+                        {/* The style below is to fix an UI component bug */}
+                        <div style={{ paddingLeft: '3px' }}>
                           <GoADropdown
-                            data-test-id="form-submission-select-queue-task-dropdown"
-                            name="queueTasks"
-                            disabled={!definition.submissionRecords}
-                            value={[getQueueTaskToProcessValue()]}
+                            name="securityClassifications"
+                            width="25rem"
+                            value={definition?.securityClassification || ''}
                             relative={true}
-                            onChange={(name, queueTask: string) => {
-                              const separatedQueueTask = queueTask.split(':');
-                              if (separatedQueueTask.length > 1) {
-                                setDefinition({
-                                  ...definition,
-                                  queueTaskToProcess: {
-                                    queueNameSpace: separatedQueueTask[0],
-                                    queueName: separatedQueueTask[1],
-                                  },
-                                });
-                              } else {
-                                setDefinition({
-                                  ...definition,
-                                  queueTaskToProcess: {
-                                    queueNameSpace: '',
-                                    queueName: '',
-                                  },
-                                });
-                              }
+                            onChange={(name: string, value: SecurityClassification) => {
+                              definition.securityClassification = value;
+                              setDefinition({ ...definition });
                             }}
                           >
-                            <GoADropdownItem
-                              data-testId={`task-Queue-ToCreate-DropDown`}
-                              key={`No-Task-Created`}
-                              value={NO_TASK_CREATED_OPTION}
-                              label={NO_TASK_CREATED_OPTION}
-                            />
-                            {queueTasks &&
-                              Object.keys(queueTasks)
-                                .sort()
-                                .map((item) => (
-                                  <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
-                                ))}
+                            <GoADropdownItem value={SecurityClassification.Public} label="Public" />
+                            <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                            <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                            <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
                           </GoADropdown>
-                        )}
-                      </QueueTaskDropdown>
-                      <RowFlex>
-                        <h3>Disposition states</h3>
-                        <div>
-                          {definition.submissionRecords ? (
-                            <InfoCircleWithInlineHelp
-                              text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                              width={450}
-                            />
-                          ) : (
-                            <FakeButton />
-                          )}
                         </div>
-                        <RightAlign>
-                          {definition.submissionRecords ? (
-                            <GoAButton
-                              type="secondary"
-                              testId="Add state"
+                      </GoAFormItem>
+                    </div>
+                    <h3>Submission</h3>
+                    <FlexRow>
+                      <SubmissionRecordsBox>
+                        <GoACheckbox
+                          name="generate-pdf-on-submit"
+                          key="generate-pdf-on-submit"
+                          checked={definition.submissionPdfTemplate ? true : false}
+                          testId="generate-pdf-on-submit"
+                          onChange={() => {
+                            const records = definition.submissionPdfTemplate ? '' : 'submitted-form';
+                            setDefinition({ ...definition, submissionPdfTemplate: records });
+                          }}
+                          text="Create PDF on submit"
+                        />
+                      </SubmissionRecordsBox>
+                      <InfoCircleWithInlineHelp
+                        text={
+                          definition.submissionPdfTemplate
+                            ? 'Forms of this type will generate a PDF on submission '
+                            : 'Forms of this type will not generate a PDF on submission'
+                        }
+                        width="180"
+                      />
+                    </FlexRow>
+                    <FlexRow>
+                      <SubmissionRecordsBox>
+                        <GoACheckbox
+                          name="submission-records"
+                          key="submission-records"
+                          checked={definition.submissionRecords}
+                          testId="submission-records"
+                          onChange={() => {
+                            const records = definition.submissionRecords ? false : true;
+                            setDefinition({ ...definition, submissionRecords: records });
+                          }}
+                          text="Create submission records on submit"
+                        />
+                      </SubmissionRecordsBox>
+                      <InfoCircleWithInlineHelp
+                        text={
+                          definition.submissionRecords
+                            ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
+                            : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
+                        }
+                      />
+                    </FlexRow>
+                    <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
+                      <SubmissionConfigurationPadding>
+                        <InfoCircleWithInlineHelp
+                          initialLabelValue={definition.submissionRecords}
+                          label="Task queue to process &nbsp;"
+                          text={
+                            getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                              ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                              : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                          }
+                        />
+
+                        <QueueTaskDropdown>
+                          {queueTasks && Object.keys(queueTasks).length > 0 && (
+                            <GoADropdown
+                              data-test-id="form-submission-select-queue-task-dropdown"
+                              name="queueTasks"
                               disabled={!definition.submissionRecords}
-                              onClick={() => {
-                                setNewDisposition(true);
-                                setSelectedEditModalIndex(null);
+                              value={[getQueueTaskToProcessValue()]}
+                              relative={true}
+                              onChange={(name, queueTask: string) => {
+                                const separatedQueueTask = queueTask.split(':');
+                                if (separatedQueueTask.length > 1) {
+                                  setDefinition({
+                                    ...definition,
+                                    queueTaskToProcess: {
+                                      queueNameSpace: separatedQueueTask[0],
+                                      queueName: separatedQueueTask[1],
+                                    },
+                                  });
+                                } else {
+                                  setDefinition({
+                                    ...definition,
+                                    queueTaskToProcess: {
+                                      queueNameSpace: '',
+                                      queueName: '',
+                                    },
+                                  });
+                                }
                               }}
                             >
-                              Add state
-                            </GoAButton>
-                          ) : (
-                            <FakeButton />
+                              <GoADropdownItem
+                                data-testId={`task-Queue-ToCreate-DropDown`}
+                                key={`No-Task-Created`}
+                                value={NO_TASK_CREATED_OPTION}
+                                label={NO_TASK_CREATED_OPTION}
+                              />
+                              {queueTasks &&
+                                Object.keys(queueTasks)
+                                  .sort()
+                                  .map((item) => (
+                                    <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
+                                  ))}
+                            </GoADropdown>
                           )}
-                        </RightAlign>
-                      </RowFlex>
+                        </QueueTaskDropdown>
+                        <RowFlex>
+                          <h3>Disposition states</h3>
+                          <div>
+                            {definition.submissionRecords ? (
+                              <InfoCircleWithInlineHelp
+                                text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                                width={450}
+                              />
+                            ) : (
+                              <FakeButton />
+                            )}
+                          </div>
+                          <RightAlign>
+                            {definition.submissionRecords ? (
+                              <GoAButton
+                                type="secondary"
+                                testId="Add state"
+                                disabled={!definition.submissionRecords}
+                                onClick={() => {
+                                  setNewDisposition(true);
+                                  setSelectedEditModalIndex(null);
+                                }}
+                              >
+                                Add state
+                              </GoAButton>
+                            ) : (
+                              <FakeButton />
+                            )}
+                          </RightAlign>
+                        </RowFlex>
 
-                      <div
-                        style={{
-                          overflowY: 'auto',
-                          zIndex: 0,
-                        }}
-                      >
-                        {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
-                          'No disposition states'
-                        ) : (
-                          <DataTable>
-                            <thead>
-                              <tr>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th>Order</th>
-                                <th>Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {definition && (
-                                <DispositionItems
-                                  openModalFunction={openModalFunction}
-                                  updateDispositions={updateDispositionFunction}
-                                  openDeleteModalFunction={openDeleteModalFunction}
-                                  dispositions={definition.dispositionStates}
-                                  submissionRecords={definition.submissionRecords}
-                                />
-                              )}
-                            </tbody>
-                          </DataTable>
-                        )}
-                      </div>
-                    </SubmissionConfigurationPadding>
+                        <div
+                          style={{
+                            overflowY: 'auto',
+                            zIndex: 0,
+                          }}
+                        >
+                          {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
+                            'No disposition states'
+                          ) : (
+                            <DataTable>
+                              <thead>
+                                <tr>
+                                  <th>Name</th>
+                                  <th>Description</th>
+                                  <th>Order</th>
+                                  <th>Action</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {definition && (
+                                  <DispositionItems
+                                    openModalFunction={openModalFunction}
+                                    updateDispositions={updateDispositionFunction}
+                                    openDeleteModalFunction={openDeleteModalFunction}
+                                    dispositions={definition.dispositionStates}
+                                    submissionRecords={definition.submissionRecords}
+                                  />
+                                )}
+                              </tbody>
+                            </DataTable>
+                          )}
+                        </div>
+                      </SubmissionConfigurationPadding>
+                    </div>
                   </div>
-                </div>
+                </BorderBottom>
               </Tab>
             </Tabs>
 

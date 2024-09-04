@@ -123,7 +123,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
         {!indicator?.show && !hasError && blobUrl && (
           <div>
             <div>
-              <object type="application/pdf" data={blobUrl} height={windowSize - 200} style={{ width: '100%' }}>
+              <object type="application/pdf" data={blobUrl} height={windowSize - 192} style={{ width: '100%' }}>
                 <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
               </object>
             </div>
