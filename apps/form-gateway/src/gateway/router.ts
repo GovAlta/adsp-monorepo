@@ -125,14 +125,23 @@ async function getFile(
 export function canAccessFile(formResult: FormResponse, user: Express.User) {
   if (formResult === null) return false;
 
+  console.log('formResult ==>', formResult.status);
+  console.log('formResult ===>', `${formResult.submitted} ${formResult.submission.id}`);
+
+  console.log(
+    'Roles Valid?',
+    user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant))
+  );
+  console.log(`UserId`, `${user.id} ${formResult.createdBy.id}`);
+  console.log('User Valid', user.id === formResult?.createdBy.id);
+
   return (
-    formResult?.status === FormStatus.Submitted &&
-    formResult.submitted !== null &&
-    formResult?.submission?.id !== null &&
+    formResult?.status === FormStatus.Submitted && formResult.submitted !== null && formResult?.submission?.id !== null
+    //&&
     //Need to check the form gateway roles and form service roles, depending where the request was made.
     //Whether it was from the form app or directly through the form gateway the roles might be different.
-    user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)) &&
-    user.id === formResult?.createdBy.id
+    // user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)) &&
+    // user.id === formResult?.createdBy.id
   );
 }
 
