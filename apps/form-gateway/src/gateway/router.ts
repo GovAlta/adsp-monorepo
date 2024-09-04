@@ -57,16 +57,24 @@ async function getFormResponse(
   let formId = '';
   let submissionId = '';
 
+  logger.info(`START getResponse ${formUrn}`);
   //eg. urn format when no submission or submission urn provided: urn:ads:platform:form-service:v1:/forms/${formId}
   //eg. urn format with submission: urn:ads:platform:form-service:v1:/forms/${formId}/submissions/${submissionId}
-
   if (typeof formUrn === 'string' && formUrn.includes('/submissions')) {
     formId = formUrn.split('/')?.at(2) ?? '';
     submissionId = formUrn.split('/')?.at(-1) ?? '';
   } else {
     formId = formUrn.split('/')?.at(-1) ?? '';
   }
+  logger.info(`AFTER getResponse parsing of ${formUrn}`);
 
+  if (formId !== '') {
+    logger.info(`getFormResponse FormId = ${formId}`);
+  }
+
+  if (submissionId !== '') {
+    logger.info(`getFormResponse SubmissionId = ${submissionId}`);
+  }
   const formResourceUrl = new URL(`form/v1/forms/${formId}`, formApiUrl);
 
   try {
@@ -75,6 +83,7 @@ async function getFormResponse(
       params: { tenantId: tenantId.toString() },
     });
 
+    logger.info(`getReponse After AXIOS CALL: ${data ? data.id : ''}`);
     let dataResult = data
       ? {
           formDefinitionId: data.definition?.id ?? null,
@@ -90,6 +99,7 @@ async function getFormResponse(
         }
       : null;
 
+    logger.info(`getResponse getData`);
     logger.info(`DATA SUBMISSION ID`, dataResult?.submission.id);
     // When the form does have a submission ensure the submission id is correct
     // with the passed in submissionId.  Otherwise we will reject it.
@@ -99,6 +109,7 @@ async function getFormResponse(
 
     return dataResult;
   } catch (err) {
+    logger.error(`getFormResponse ${err.toString()}`);
     return null;
   }
 }
@@ -129,7 +140,7 @@ export function canAccessFile(logger: Logger, formResult: FormResponse, user: Ex
   logger.info(`START OF canAccessFile By ${user?.id}`);
   logger.info(`IS FormResult empty? ${formResult === null}`);
 
-  //if (formResult === null) return false;
+  if (formResult === null) return false;
 
   logger.info(`formResult: ${formResult.status}`);
   logger.info(`formResult: ${formResult.submitted} ${formResult?.submission?.id}`);
@@ -141,16 +152,15 @@ export function canAccessFile(logger: Logger, formResult: FormResponse, user: Ex
   logger.info(`UserId: ${user?.id} ${formResult.createdBy.id} `);
   logger.info(`User Valid: ${user?.id === formResult?.createdBy.id}`);
 
-  // return (
-  //   formResult?.status === FormStatus.Submitted &&
-  //   formResult.submitted !== null &&
-  //   formResult?.submission?.id !== null &&
-  //   //Need to check the form gateway roles and form service roles, depending where the request was made.
-  //   //Whether it was from the form app or directly through the form gateway the roles might be different.
-  //   user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)) &&
-  //   user.id === formResult?.createdBy.id
-  // );
-  return true;
+  return (
+    formResult?.status === FormStatus.Submitted &&
+    formResult.submitted !== null &&
+    formResult?.submission?.id !== null &&
+    //Need to check the form gateway roles and form service roles, depending where the request was made.
+    //Whether it was from the form app or directly through the form gateway the roles might be different.
+    user.roles.find((role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)) &&
+    user.id === formResult?.createdBy.id
+  );
 }
 
 export function findFile(
