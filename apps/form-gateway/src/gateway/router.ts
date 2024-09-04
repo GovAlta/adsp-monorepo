@@ -129,7 +129,7 @@ export function canAccessFile(logger: Logger, formResult: FormResponse, user: Ex
   logger.info(`START OF canAccessFile By ${user?.id}`);
   logger.info(`IS FormResult empty? ${formResult === null}`);
 
-  if (formResult === null) return false;
+  //if (formResult === null) return false;
 
   logger.info(`formResult: ${formResult.status}`);
   logger.info(`formResult: ${formResult.submitted} ${formResult?.submission?.id}`);
