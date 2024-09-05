@@ -72,7 +72,7 @@ export const TaskTenant = () => {
   const navigate = useNavigate();
 
   const feedback = useSelector(feedbackSelector);
-  console.log('TaskTenant');
+
   useEffect(() => {
     if (feedback?.message.includes('not found')) {
       navigate(`/overview`);

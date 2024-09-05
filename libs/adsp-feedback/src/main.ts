@@ -469,7 +469,6 @@ class AdspFeedback implements AdspFeedbackApi {
   }
 
   public initialize({ apiUrl, tenant, name, email, getAccessToken, getContext }: FeedbackOptions) {
-    console.log('initial');
     if (apiUrl && typeof apiUrl === 'string') {
       this.apiUrl = new URL(apiUrl);
     }
@@ -557,6 +556,7 @@ class AdspFeedback implements AdspFeedbackApi {
             cursor: pointer;
             border-radius: 0 0.25rem 0.25rem 0;
             transform: rotate(-180deg);
+            display: block;
           }
           .adsp-fb .adsp-fb-badge:hover {
             border-color: #004f84;
@@ -1053,7 +1053,11 @@ class AdspFeedback implements AdspFeedbackApi {
               cursor: pointer;
             }
           }
-
+          @media screen and (max-width: 624px) {
+            .adsp-fb .adsp-fb-badge {
+              display: none;
+            }
+          }
           @media screen and (max-height: 800px) {
             .adsp-fb .adsp-fb-form-container {
               top: 16px;
