@@ -77,6 +77,8 @@ async function getFormResponse(
   }
   const formResourceUrl = new URL(`form/v1/forms/${formId}`, formApiUrl);
 
+  logger.info(`formResourceUrl ${formResourceUrl}`);
+
   try {
     const { data } = await axios.get(formResourceUrl.href, {
       headers: { Authorization: `Bearer ${token}` },
