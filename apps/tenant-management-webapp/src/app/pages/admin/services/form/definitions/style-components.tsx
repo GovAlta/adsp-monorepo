@@ -53,3 +53,7 @@ export const H3 = styled.h3`
 export const BorderBottom = styled.div`
   border-bottom: 1px solid #ccc;
 `;
+
+export const FormPreviewSpacer = styled.div`
+  margin-top: var(--goa-space-m);
+`

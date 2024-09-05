@@ -8,6 +8,7 @@ import { schemaErrorSelector } from '@store/form/selectors';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useSelector } from 'react-redux';
 import FallbackRender from './FallbackRenderer';
+import { FormPreviewSpacer } from './style-components';
 
 interface JSONFormPreviewerProps {
   data: unknown;
@@ -25,6 +26,8 @@ export const JSONFormPreviewer = ({ data, onChange }: JSONFormPreviewerProps): J
 
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
+      {/* // This is a blank spacer div since web components can be problematic to apply styles to. */}
+      <FormPreviewSpacer />
       {error && (
         <GoACallout type="important" size="medium" testId="form-preview-error-callout" heading={error}>
           You will see the last valid preview until the schema errors are fixed.
