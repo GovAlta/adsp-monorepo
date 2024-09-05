@@ -94,12 +94,13 @@ export const HelpContentComponent = ({
 
 const HelpContents = ({ elements, isParent = false }: { elements: CustomControlElement[]; isParent?: boolean }) => (
   <div>
-    {elements?.map((element: any) => {
+    {elements?.map((element: any, index) => {
       return (
         <HelpContentComponent
           uischema={element}
           label={element.label}
           errors={''}
+          key={`${element.label}-help-content-${index}`}
           data={undefined}
           enabled={false}
           visible={true}
