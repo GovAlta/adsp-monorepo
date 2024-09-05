@@ -67,7 +67,6 @@ async function getFormResponse(
   }
 
   const formResourceUrl = new URL(`v1/forms/${formId}`, formApiUrl);
-
   try {
     const { data } = await axios.get(formResourceUrl.href, {
       headers: { Authorization: `Bearer ${token}` },
@@ -126,6 +125,7 @@ async function getFile(
 
 export function canAccessFile(logger: Logger, formResult: FormResponse, user: Express.User) {
   if (formResult === null) return false;
+
   return (
     formResult?.status === FormStatus.Submitted &&
     formResult?.submitted !== null &&
@@ -151,7 +151,7 @@ export function findFile(
       const formResult = await getFormResponse(logger, formApiUrl, formUrn, req.tenant.id, tokenProvider);
 
       if (!canAccessFile(logger, formResult, user)) {
-        throw new UnauthorizedError(`User ${user?.id} , ${user?.name} not authorized to find file.`);
+        throw new UnauthorizedError(`User not authorized to find file.`);
       }
       const fileId = await getFile(logger, fileApiUrl, tokenProvider, formUrn, req.tenant?.id);
       res.send({ fileId: fileId });
