@@ -84,13 +84,12 @@ components:
           format: date-time
         submission:
           type: object
-          description: submission for the form, if form is submitted.
+          description: submission for the form if form is submitted.
           properties:
             id:
               type: string
             urn:
               type: string
-
     FormData:
       type: object
       properties:
