@@ -1,3 +1,4 @@
+import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { SecurityClassification } from '@store/common/models';
 
 export interface FormDefinition {
@@ -36,7 +37,7 @@ export const defaultFormDefinition: FormDefinition = {
   description: '',
   dataSchema: {},
   uiSchema: {},
-  applicantRoles: [],
+  applicantRoles: ['urn:ads:platform:form-service:form-applicant'],
   clerkRoles: [],
   assessorRoles: [],
   formDraftUrlTemplate: '',
@@ -50,6 +51,18 @@ export const defaultFormDefinition: FormDefinition = {
 };
 
 export interface FormState {
-  definitions: FormDefinition[];
+  definitions: Record<string, FormDefinition>;
   nextEntries: string;
+  editor: {
+    selectedId: string;
+    loading: boolean;
+    original: FormDefinition;
+    modified: Omit<FormDefinition, 'dataSchema' | 'uiSchema'>;
+    dataSchemaDraft: string;
+    uiSchemaDraft: string;
+    dataSchema: JsonSchema;
+    uiSchema: UISchemaElement;
+    dataSchemaError?: string;
+    uiSchemaError?: string;
+  };
 }

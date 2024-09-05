@@ -1,5 +1,5 @@
 import type { EventDefinition } from '@store/event/models';
-import { languages, editor, Position } from 'monaco-editor';
+import { editor, languages, Position } from 'monaco-editor';
 import { Monaco } from '@monaco-editor/react';
 
 export interface EditorSuggestion {
@@ -277,7 +277,7 @@ export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco, path?: string): EditorSuggestion[] => {
+export const convertDataSchemaToSuggestion = (schema: any, path?: string): EditorSuggestion[] => {
   const suggestions = [];
   if (schema.properties) {
     for (const property in schema.properties) {
@@ -289,15 +289,15 @@ export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco, path?
       ) {
         suggestions.push({
           label: currentPath,
-          kind: monaco.languages.CompletionItemKind.Property,
+          kind: languages.CompletionItemKind.Property,
           insertText: currentPath,
           detail: 'Property',
-          children: convertDataSchemaToSuggestion(schema.properties[property], monaco, `/properties/${property}`),
+          children: convertDataSchemaToSuggestion(schema.properties[property], `/properties/${property}`),
         });
       } else {
         suggestions.push({
           label: currentPath,
-          kind: monaco.languages.CompletionItemKind.Property,
+          kind: languages.CompletionItemKind.Property,
           insertText: currentPath,
           detail: 'Property',
         });

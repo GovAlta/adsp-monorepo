@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor, queryByTestId } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import { AddEditFormDefinitionEditor, onSaveDispositionForModal } from './addEditFormDefinitionEditor';
 import { Disposition, FormDefinition } from '@store/form/model';
 import { Provider } from 'react-redux';
@@ -112,6 +112,7 @@ describe('Test AddEditFormDefinitionEditor', () => {
     submissionRecords: true,
     supportTopic: false,
     queueTaskToProcess: { queueName: 'test-queue', queueNameSpace: 'queue-namespace' },
+    submissionPdfTemplate: null,
   };
 
   it('can save new disposition state', () => {

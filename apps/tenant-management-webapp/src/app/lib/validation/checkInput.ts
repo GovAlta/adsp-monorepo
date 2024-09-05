@@ -22,16 +22,16 @@
  *      of forbidden words.
  *
  */
-import Ajv from 'ajv';
+import { standardV1JsonSchema } from '@abgov/data-exchange-standard';
+import { createDefaultAjv } from '@abgov/jsonforms-components';
 import * as schemaMigration from 'json-schema-migrate';
-import addFormats from 'ajv-formats';
 
 export interface ValidInput {
   pattern: RegExp;
   onFailureMessage: string;
 }
 
-export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
+export const ajv = createDefaultAjv(standardV1JsonSchema);
 
 ajv.addKeyword({
   keyword: 'isNotEmpty',
@@ -42,8 +42,6 @@ ajv.addKeyword({
   errors: true,
 });
 
-ajv.addFormat('file-urn', /^urn:[a-zA-Z0-9.-]+(:[a-zA-Z0-9.-]+)*$/);
-addFormats(ajv);
 /**
  * Given a list of validators and name of the input field, report on its cleanliness
  */
@@ -186,13 +184,12 @@ const nonAction: ValidationAction = { onFailure: () => {} };
 
 // eslint-disable-next-line
 export const jsonSchemaCheck = (schema: Record<string, unknown>, value: unknown): boolean | PromiseLike<any> => {
-  const ajv = new Ajv();
   const draft4SchemaId = 'http://json-schema.org/draft-04/schema#';
   if (schema?.$schema === draft4SchemaId) {
     schemaMigration.draft7(schema);
   }
-  ajv.compile(schema);
-  return ajv.validate(schema, value);
+  const validate = ajv.compile(schema);
+  return validate(value);
 };
 
 const capitalize = (word) => (!word ? word : word[0].toUpperCase() + word.substr(1).toLowerCase());

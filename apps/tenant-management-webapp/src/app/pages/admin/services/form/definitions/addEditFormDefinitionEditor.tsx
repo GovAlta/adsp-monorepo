@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
@@ -9,7 +9,6 @@ import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
-import { useDebounce } from '@lib/useDebounce';
 
 import {
   TextLoadingIndicator,
@@ -33,15 +32,19 @@ import {
 } from '../styled-components';
 import { ConfigServiceRole } from '@store/access/models';
 
-import { updateFormDefinition } from '@store/form/action';
+import {
+  setDraftDataSchema,
+  setDraftUISchema,
+  updateFormDefinition,
+  updateEditorFormDefinition,
+  closeEditor,
+} from '@store/form/action';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
-import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useNavigate } from 'react-router-dom';
-import { useSecureParams } from '@lib/useSecureParams';
 import {
   GoAButtonGroup,
   GoAButton,
@@ -55,7 +58,7 @@ import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { PageIndicator } from '@components/Indicator';
-import { isValidJSONSchemaCheck, ajv } from '@lib/validation/checkInput';
+import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 import DataTable from '@components/DataTable';
 import { DispositionItems } from './dispositionItems';
 import { DeleteModal } from '@components/DeleteModal';
@@ -74,20 +77,19 @@ import {
 } from '@store/file/actions';
 import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
-import { hasSchemaErrors, parseDataSchema, parseUiSchema, getDataRegisters } from './schemaUtils';
 import { CustomLoader } from '@components/CustomLoader';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { FormFormItem } from '../styled-components';
 import { adspId } from '@lib/adspId';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { SecurityClassification } from '@store/common/models';
+import { isFormUpdatedSelector, modifiedDefinitionSelector, schemaErrorSelector } from '@store/form/selectors';
 
 export const ContextProvider = ContextProviderFactory();
 
-const FORM_SERVICE_ID = adspId`urn:ads:platform:form-service`;
-const FORM_APPLICANT_ID = `form-applicant`;
-const FORM_APPLICANT_SERVICE_ID = `${FORM_SERVICE_ID.toString()}:${FORM_APPLICANT_ID}`;
 const isUseMiniMap = window.screen.availWidth >= 1920;
+
+console.log(window.screen.availWidth);
 
 interface ClientElement {
   roleNames: string[];
@@ -118,33 +120,6 @@ const isRoleUpdated = (prevRoles: string[], nextRoles: string[], validateRole: s
   }
 
   return false;
-};
-
-const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
-  const tempPrev = parseUiSchema<FormDefinition>(JSON.stringify(prev)).get();
-  const tempNext = parseUiSchema<FormDefinition>(JSON.stringify(next)).get();
-  const isUpdated =
-    JSON.stringify(tempPrev?.applicantRoles) !== JSON.stringify(tempNext?.applicantRoles) ||
-    JSON.stringify(tempPrev?.assessorRoles) !== JSON.stringify(tempNext?.assessorRoles) ||
-    JSON.stringify(tempPrev?.clerkRoles) !== JSON.stringify(tempNext?.clerkRoles) ||
-    JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
-    JSON.stringify(tempPrev?.dispositionStates) !== JSON.stringify(tempNext?.dispositionStates) ||
-    JSON.stringify(tempPrev?.supportTopic) !== JSON.stringify(tempNext?.supportTopic) ||
-    JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema) ||
-    JSON.stringify(tempPrev?.submissionRecords) !== JSON.stringify(tempNext?.submissionRecords) ||
-    JSON.stringify(tempPrev?.submissionPdfTemplate) !== JSON.stringify(tempNext?.submissionPdfTemplate) ||
-    JSON.stringify(tempPrev?.queueTaskToProcess) !== JSON.stringify(tempNext?.queueTaskToProcess) ||
-    JSON.stringify(tempPrev?.securityClassification) !== JSON.stringify(tempNext?.securityClassification);
-
-  return isUpdated;
-};
-
-const ensureRolesAreUniqueWithNoDuplicates = (definition: FormDefinition) => {
-  definition.applicantRoles = [...new Set(definition.applicantRoles)];
-  definition.clerkRoles = [...new Set(definition.clerkRoles)];
-  definition.assessorRoles = [...new Set(definition.assessorRoles)];
-
-  return definition;
 };
 
 export const formEditorJsonConfig = {
@@ -201,31 +176,29 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const monaco = useMonaco();
-  const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
-  const initialSchema = parseUiSchema<FormDefinition>(JSON.stringify(defaultFormDefinition)).get();
-  const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(initialSchema);
 
-  const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
-  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(definition?.dataSchema || {}, null, 2));
-  const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
-  const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
+  const definition = useSelector(modifiedDefinitionSelector);
+  const setDefinition = (update: Partial<FormDefinition>) => dispatch(updateEditorFormDefinition(update));
+  const showSpinner = useSelector((state: RootState) => state.form.editor.loading);
+
+  const tempUiSchema = useSelector((state: RootState) => state.form.editor.uiSchemaDraft);
+  const tempDataSchema = useSelector((state: RootState) => state.form.editor.dataSchemaDraft);
+  const schemaError = useSelector(schemaErrorSelector);
+
+  const dataSchema = useSelector((state: RootState) => state.form.editor.dataSchema) as Record<string, unknown>;
+  const uiSchema = useSelector((state: RootState) => state.form.editor.uiSchema) as unknown as Record<string, unknown>;
+
+  const isFormUpdated = useSelector(isFormUpdatedSelector);
+
   const [activeIndex] = useState<number>(0);
-
   const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
+
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
   const [customIndicator, setCustomIndicator] = useState<boolean>(false);
-  const [error, setError] = useState('');
-  const [spinner, setSpinner] = useState<boolean>(false);
-  const id = useSecureParams('id');
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [currentTab, setCurrentTab] = useState(0);
-
-  const debouncedRenderUISchema = useDebounce(tempUiSchema, 1000);
-  const debouncedRenderDataSchema = useDebounce(tempDataSchema, 1000);
-
-  const isEdit = !!id;
 
   const latestNotification = useSelector(
     (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
@@ -258,8 +231,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           let suggestions = [];
 
           try {
-            const parsedSchema = parseDataSchema(tempDataSchema);
-            const dataSchemaSuggestion = convertDataSchemaToSuggestion(parsedSchema.get(), monaco);
+            const dataSchemaSuggestion = convertDataSchemaToSuggestion(dataSchema);
             suggestions = formatEditorSuggestions(dataSchemaSuggestion);
           } catch (e) {
             console.debug(`Error in JSON editor autocompletion: ${e.message}`);
@@ -274,11 +246,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         provider.dispose();
       };
     }
-  }, [monaco, tempDataSchema]);
+  }, [monaco, dataSchema]);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
-
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getTaskQueues());
   }, [dispatch]);
@@ -289,15 +260,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     { type: 'assessorRoles', name: 'Assessor roles' },
   ];
 
-  const formDefinitions = useSelector((state: RootState) => state?.form?.definitions || []);
-
   const selectServiceKeycloakRoles = createSelector(
     (state: RootState) => state.serviceRoles,
     (serviceRoles) => {
       return serviceRoles?.keycloak || {};
     }
   );
-  const selectDefinitionRegisters = useSelector((state: RootState) => state?.configuration?.registers || []);
   const queueTasks = useSelector((state: RootState) => {
     if (state.task && state.task.queues) {
       const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
@@ -313,51 +281,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       close();
     }
   }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (id && formDefinitions[id]) {
-      const tempFormDefinition = formDefinitions[id] as FormDefinition;
-      if (hasSchemaErrors(tempFormDefinition.dataSchema) || hasSchemaErrors(tempFormDefinition?.uiSchema)) {
-        return;
-      }
-      if (Object.keys(tempFormDefinition.uiSchema || {}).length > 0) {
-        setTempUiSchema(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
-        setTempUiSchemaBounced(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
-      }
-      if (Object.keys(tempFormDefinition.dataSchema || {}).length > 0) {
-        setTempDataSchema(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
-        setDataSchemaBounced(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
-      }
-      setInitialDefinition(parseUiSchema<FormDefinition>(JSON.stringify(formDefinitions[id])).get());
-      setDefinition(formDefinitions[id]);
-      setCustomIndicator(false);
-    }
-  }, [formDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    try {
-      if (tempUiSchema !== '{}') {
-        JSON.parse(tempUiSchema);
-        setTempUiSchemaBounced(tempUiSchema);
-        setError('');
-        setCustomIndicator(false);
-      }
-    } catch {
-      setTempUiSchemaBounced('{}');
-    }
-  }, [debouncedRenderUISchema]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    try {
-      if (tempDataSchema !== '{}') {
-        JSON.parse(tempDataSchema);
-        setDataSchemaBounced(tempDataSchema);
-        setError('');
-      }
-    } catch (e) {
-      setDataSchemaBounced('{}');
-    }
-  }, [debouncedRenderDataSchema]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
 
@@ -384,17 +307,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         roleSelectFunc={(roles, type) => {
           if (type === applicantRoles.name) {
             setDefinition({
-              ...definition,
               applicantRoles: [...new Set(roles)],
             });
           } else if (type === clerkRoles.name) {
             setDefinition({
-              ...definition,
               clerkRoles: [...new Set(roles)],
             });
           } else {
             setDefinition({
-              ...definition,
               assessorRoles: [...new Set(roles)],
             });
           }
@@ -443,28 +363,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     return state?.session?.indicator;
   });
 
-  useEffect(() => {
-    if (spinner && Object.keys(definitions).length > 0) {
-      if (validators['duplicate'].check(definition.id)) {
-        setSpinner(false);
-        return;
-      }
-
-      setSpinner(false);
-    }
-  }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const openModalFunction = (disposition) => {
     const currentDispositions = definition.dispositionStates;
     const dispIndex = currentDispositions.findIndex((disp) => disp.id === disposition.id);
     setSelectedEditModalIndex(dispIndex);
   };
 
-  const updateDispositionFunction = (dispositions) => {
-    const tempDefinition = { ...definition };
-    tempDefinition.dispositionStates = dispositions;
-
-    setDefinition(parseUiSchema<FormDefinition>(JSON.stringify(tempDefinition)).get());
+  const updateDispositionFunction = (dispositionStates) => {
+    setDefinition({ dispositionStates });
   };
 
   const openDeleteModalFunction = (disposition) => {
@@ -472,9 +378,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     const dispIndex = currentDispositions.findIndex((disp) => disp.id === disposition.id);
     setSelectedDeleteDispositionIndex(dispIndex);
   };
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   const { errors, validators } = useValidators(
     'name',
@@ -514,7 +417,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   return (
     <FormEditor>
-      {spinner ? (
+      {showSpinner ? (
         <PageIndicator />
       ) : (
         <FlexRow>
@@ -537,7 +440,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       value={tempDataSchema}
                       onChange={(value) => {
                         const jsonSchemaValidResult = JSONSchemaValidator(value);
-                        setTempDataSchema(value);
+                        dispatch(setDraftDataSchema(value));
 
                         if (jsonSchemaValidResult === '') {
                           setEditorErrors({
@@ -601,7 +504,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         });
                       }}
                       onChange={(value) => {
-                        setTempUiSchema(value);
+                        dispatch(setDraftUISchema(value));
                       }}
                       language="json"
                       options={{
@@ -619,7 +522,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               </Tab>
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
                 <BorderBottom>
-                  <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight }}>
+                  <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
                     <ScrollPane>
                       {elements.map((e, key) => {
                         return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
@@ -656,8 +559,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             checked={definition.supportTopic}
                             testId="support-topic"
                             onChange={() => {
-                              const topic = definition.supportTopic ? false : true;
-                              setDefinition({ ...definition, supportTopic: topic });
+                              const supportTopic = definition.supportTopic ? false : true;
+                              setDefinition({ supportTopic });
                             }}
                             text="Create support topic"
                           />
@@ -682,8 +585,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             value={definition?.securityClassification || ''}
                             relative={true}
                             onChange={(name: string, value: SecurityClassification) => {
-                              definition.securityClassification = value;
-                              setDefinition({ ...definition });
+                              setDefinition({ securityClassification: value });
                             }}
                           >
                             <GoADropdownItem value={SecurityClassification.Public} label="Public" />
@@ -704,7 +606,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           testId="generate-pdf-on-submit"
                           onChange={() => {
                             const records = definition.submissionPdfTemplate ? '' : 'submitted-form';
-                            setDefinition({ ...definition, submissionPdfTemplate: records });
+                            setDefinition({ submissionPdfTemplate: records });
                           }}
                           text="Create PDF on submit"
                         />
@@ -727,7 +629,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           testId="submission-records"
                           onChange={() => {
                             const records = definition.submissionRecords ? false : true;
-                            setDefinition({ ...definition, submissionRecords: records });
+                            setDefinition({ submissionRecords: records });
                           }}
                           text="Create submission records on submit"
                         />
@@ -764,7 +666,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                                 const separatedQueueTask = queueTask.split(':');
                                 if (separatedQueueTask.length > 1) {
                                   setDefinition({
-                                    ...definition,
                                     queueTaskToProcess: {
                                       queueNameSpace: separatedQueueTask[0],
                                       queueName: separatedQueueTask[1],
@@ -772,7 +673,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                                   });
                                 } else {
                                   setDefinition({
-                                    ...definition,
                                     queueTaskToProcess: {
                                       queueNameSpace: '',
                                       queueName: '',
@@ -872,49 +772,22 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   type="primary"
                   testId="definition-form-save"
                   disabled={
-                    !isFormUpdated(initialDefinition, {
-                      ...definition,
-                      uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
-                      dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
-                    }) ||
+                    !isFormUpdated ||
                     !definition.name ||
                     validators.haveErrors() ||
                     editorErrors.dataSchemaJSON !== null ||
                     editorErrors.dataSchemaJSONSchema !== null ||
                     editorErrors.uiSchema !== null
                   }
-                  onClick={async () => {
-                    if (indicator.show === true) {
-                      setSpinner(true);
-                    } else {
-                      if (!isEdit) {
-                        const validations = {
-                          duplicate: definition.name,
-                        };
-                        if (!validators.checkAll(validations)) {
-                          return;
-                        }
-                      }
-
+                  onClick={() => {
+                    if (indicator.show !== true) {
                       setCustomIndicator(true);
 
-                      if (
-                        !doesRoleExistForClientInKeyCloak(FORM_SERVICE_ID.toString(), FORM_APPLICANT_ID, elements) &&
-                        isRoleUpdated(
-                          initialDefinition.applicantRoles,
-                          definition.applicantRoles,
-                          FORM_APPLICANT_SERVICE_ID
-                        )
-                      ) {
-                        definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
-                      }
-
-                      ensureRolesAreUniqueWithNoDuplicates(definition);
-                      await dispatch(
+                      dispatch(
                         updateFormDefinition({
                           ...definition,
-                          uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
-                          dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
+                          uiSchema,
+                          dataSchema,
                         })
                       );
                     }
@@ -926,19 +799,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   testId="form-editor-cancel"
                   type="secondary"
                   onClick={() => {
-                    if (
-                      isFormUpdated(initialDefinition, {
-                        ...definition,
-                        uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
-                        dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
-                      })
-                    ) {
+                    if (isFormUpdated) {
                       setSaveModal({ visible: true, closeEditor: false });
                     } else {
                       validators.clear();
 
                       close();
                     }
+
+                    dispatch(closeEditor());
                   }}
                 >
                   Back
@@ -959,10 +828,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       deleteFile: deleteFile,
                     }}
                   >
-                    <GoAFormItem error={error} label="">
+                    <GoAFormItem error={schemaError} label="">
                       <JSONFormPreviewer
-                        uischema={tempUiSchema}
-                        schema={tempDataSchema}
                         onChange={({ data }) => {
                           setData(data);
                         }}
@@ -993,26 +860,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           close();
         }}
         onSave={() => {
-          if (!isEdit) {
-            const validations = {
-              duplicate: definition.name,
-            };
-            if (!validators.checkAll(validations)) {
-              return;
-            }
-          }
-
-          setSpinner(true);
           dispatch(updateFormDefinition(definition));
           setSaveModal({ visible: false, closeEditor: true });
         }}
-        saveDisable={
-          !isFormUpdated(initialDefinition, {
-            ...definition,
-            uiSchema: parseUiSchema<Record<string, unknown>>(UiSchemaBounced).get(),
-            dataSchema: parseDataSchema<Record<string, unknown>>(dataSchemaBounced).get(),
-          })
-        }
+        saveDisable={!isFormUpdated}
         onCancel={() => {
           setSaveModal({ visible: false, closeEditor: false });
         }}
@@ -1035,10 +886,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           </div>
         }
         onDelete={() => {
-          const tempDefinition = { ...definition };
-          delete tempDefinition.dispositionStates[selectedDeleteDispositionIndex];
-          tempDefinition.dispositionStates = tempDefinition.dispositionStates.filter((s) => s !== null);
-          setDefinition(tempDefinition);
+          const dispositionStates = [...(definition.dispositionStates || [])];
+          delete dispositionStates[selectedDeleteDispositionIndex];
+          setDefinition({ dispositionStates });
           setSelectedDeleteDispositionIndex(null);
         }}
       />
