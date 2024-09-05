@@ -64,8 +64,10 @@ describe('ScriptEditor Component', () => {
         },
       ],
     },
-
     session: SESSION_INIT,
+    form: {
+      editor: {},
+    },
   });
   test('Save button does not route', async () => {
     const { queryByTestId } = render(
