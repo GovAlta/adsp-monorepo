@@ -2,6 +2,7 @@ import { selectDirectoryByServiceName } from '@store/directory/selectors';
 import { RootState } from '@store/index';
 import { toKebabName } from '@lib/kebabName';
 import { createSelector } from 'reselect';
+import { defaultFormDefinition } from './model';
 
 const PUBLIC_FORM_APP = 'form-app';
 export const selectFormAppHost = createSelector(
@@ -44,14 +45,16 @@ export const modifiedDefinitionSelector = createSelector(
   })
 );
 
+// NOTE: This assumes top level properties is always the same list.
+const orderedKeys = Object.keys(defaultFormDefinition).sort();
 export const isFormUpdatedSelector = createSelector(
   (state: RootState) => state.form.editor.original,
   (state: RootState) => state.form.editor.modified,
   (state: RootState) => state.form.editor.dataSchema,
   (state: RootState) => state.form.editor.uiSchema,
   (original, modified, dataSchema, uiSchema) => {
-    const originalDigest = JSON.stringify(original);
-    const modifiedDigest = JSON.stringify({ ...modified, dataSchema, uiSchema });
+    const originalDigest = JSON.stringify(original, orderedKeys);
+    const modifiedDigest = JSON.stringify({ ...modified, dataSchema, uiSchema }, orderedKeys);
     return originalDigest !== modifiedDigest;
   }
 );

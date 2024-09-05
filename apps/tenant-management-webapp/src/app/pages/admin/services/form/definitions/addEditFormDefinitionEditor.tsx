@@ -80,7 +80,6 @@ import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { CustomLoader } from '@components/CustomLoader';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { FormFormItem } from '../styled-components';
-import { adspId } from '@lib/adspId';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { SecurityClassification } from '@store/common/models';
 import { isFormUpdatedSelector, modifiedDefinitionSelector, schemaErrorSelector } from '@store/form/selectors';
@@ -97,30 +96,6 @@ interface ClientElement {
   //eslint-disable-next-line
   currentElements: any;
 }
-
-const doesRoleExistForClientInKeyCloak = (clientId: string, roleName: string, clientElements: ClientElement[]) => {
-  const client = clientElements.find((client) => client.clientId === clientId);
-
-  if (client && client.roleNames.filter((clientRoleName) => clientRoleName === roleName).length > 0) {
-    return true;
-  }
-  return false;
-};
-
-const isRoleUpdated = (prevRoles: string[], nextRoles: string[], validateRole: string = null): boolean => {
-  const prevRolesCount = prevRoles.filter((role) => role === validateRole).length;
-  const nextRolesCount = nextRoles.filter((role) => role === validateRole).length;
-
-  if (prevRolesCount === 1 && nextRolesCount === 0) {
-    return false;
-  }
-
-  if (prevRolesCount === 0 && nextRolesCount === 1) {
-    return true;
-  }
-
-  return false;
-};
 
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
