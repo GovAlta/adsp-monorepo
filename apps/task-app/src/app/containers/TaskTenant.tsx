@@ -18,6 +18,7 @@ import {
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
 import { AuthorizeUser } from './AuthorizeUser';
+import { useFeedbackLinkHandler } from '../util/feedbackUtils';
 
 const TaskQueue = lazy(() => import('./TaskQueue'));
 const TaskQueues = lazy(() => import('./TaskQueues'));
@@ -66,12 +67,12 @@ export const TaskTenant = () => {
 
   const tenant = useSelector(tenantSelector);
   const extensions = useSelector(extensionsSelector);
-
+  useFeedbackLinkHandler();
   useScripts(...extensions);
   const navigate = useNavigate();
 
   const feedback = useSelector(feedbackSelector);
-
+  console.log('TaskTenant');
   useEffect(() => {
     if (feedback?.message.includes('not found')) {
       navigate(`/overview`);
@@ -89,7 +90,7 @@ export const TaskTenant = () => {
 
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" />
+      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Task management`}>
         {userInitialized && (
           <span>

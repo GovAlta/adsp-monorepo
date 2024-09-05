@@ -5,7 +5,14 @@ import { FormTenant } from './containers/FormTenant';
 import { Landing } from './components/Landing';
 import { Login } from './components/Login';
 import styles from './app.module.scss';
-
+declare global {
+  interface Window {
+    adspFeedback: {
+      initialize: (options: { tenant: string }) => void;
+      openFeedbackForm: () => void;
+    };
+  }
+}
 export function App() {
   return (
     <div className={styles.app}>

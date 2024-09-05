@@ -79,6 +79,7 @@ class AdspFeedback implements AdspFeedbackApi {
       }
     }
   }
+
   private openStartForm() {
     this.startRef?.value?.setAttribute('data-show', 'true');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
@@ -463,7 +464,12 @@ class AdspFeedback implements AdspFeedbackApi {
     }
   };
 
+  public openFeedbackForm() {
+    this.openStartForm();
+  }
+
   public initialize({ apiUrl, tenant, name, email, getAccessToken, getContext }: FeedbackOptions) {
+    console.log('initial');
     if (apiUrl && typeof apiUrl === 'string') {
       this.apiUrl = new URL(apiUrl);
     }
@@ -540,7 +546,7 @@ class AdspFeedback implements AdspFeedbackApi {
             display: none;
           }
           .adsp-fb .adsp-fb-badge {
-            z-index: 1;
+            z-index: 1000;
             background: #0081a2;
             color: #ffffff;
             position: fixed;

@@ -7,6 +7,15 @@ import { AuthCallback } from './components/AuthCallback';
 import { Landing } from './components/Landing';
 import Login from './pages/public/Login';
 
+declare global {
+  interface Window {
+    adspFeedback: {
+      initialize: (options: { tenant: string }) => void;
+      openFeedbackForm: () => void;
+    };
+  }
+}
+
 export function App() {
   return (
     <div className={styles.app}>
