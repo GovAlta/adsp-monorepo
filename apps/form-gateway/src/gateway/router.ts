@@ -57,7 +57,6 @@ async function getFormResponse(
   let formId = '';
   let submissionId = '';
 
-  logger.info(`START getResponse ${formUrn}`);
   //eg. urn format when no submission or submission urn provided: urn:ads:platform:form-service:v1:/forms/${formId}
   //eg. urn format with submission: urn:ads:platform:form-service:v1:/forms/${formId}/submissions/${submissionId}
   if (typeof formUrn === 'string' && formUrn.includes('/submissions')) {
@@ -66,18 +65,8 @@ async function getFormResponse(
   } else {
     formId = formUrn.split('/')?.at(-1) ?? '';
   }
-  logger.info(`AFTER getResponse parsing of ${formUrn}`);
 
-  if (formId !== '') {
-    logger.info(`getFormResponse FormId = ${formId}`);
-  }
-
-  if (submissionId !== '') {
-    logger.info(`getFormResponse SubmissionId = ${submissionId}`);
-  }
-  const formResourceUrl = new URL(`form/v1/forms/${formId}`, formApiUrl);
-
-  logger.info(`formResourceUrl ${formResourceUrl}`);
+  const formResourceUrl = new URL(`v1/forms/${formId}`, formApiUrl);
 
   try {
     const { data } = await axios.get(formResourceUrl.href, {
@@ -85,7 +74,6 @@ async function getFormResponse(
       params: { tenantId: tenantId.toString() },
     });
 
-    logger.info(`getReponse After AXIOS CALL: ${data ? data.id : ''}`);
     let dataResult = data
       ? {
           formDefinitionId: data.definition?.id ?? null,
@@ -101,8 +89,6 @@ async function getFormResponse(
         }
       : null;
 
-    logger.info(`getResponse getData`);
-    logger.info(`DATA SUBMISSION ID`, dataResult?.submission.id);
     // When the form does have a submission ensure the submission id is correct
     // with the passed in submissionId.  Otherwise we will reject it.
     if (data.submission && submissionId !== '' && data.submission?.id !== submissionId) {
@@ -111,7 +97,7 @@ async function getFormResponse(
 
     return dataResult;
   } catch (err) {
-    logger.error(`getFormResponse ${err.toString()}`);
+    logger.error(`Error trying to retrieve form (ID: ${formId}) Submission (ID: ${submissionId}): ${err.toString()}`);
     return null;
   }
 }
@@ -139,19 +125,6 @@ async function getFile(
 }
 
 export function canAccessFile(logger: Logger, formResult: FormResponse, user: Express.User) {
-  logger.info(`START OF canAccessFile By ${user?.id}`);
-  logger.info(`IS FormResult empty? ${formResult === null}`);
-
-  logger.info(`formResult: ${formResult?.status}`);
-  logger.info(`formResult: ${formResult?.submitted} ${formResult?.submission?.id}`);
-
-  const isValid = user.roles.find(
-    (role) => role.includes(FormServiceRoles.Applicant) || role.includes(ServiceRoles.Applicant)
-  );
-  logger.info(`isValid = ${isValid}`);
-  logger.info(`UserId: ${user?.id} ${formResult?.createdBy?.id} `);
-  logger.info(`User Valid: ${user?.id === formResult?.createdBy?.id}`);
-
   if (formResult === null) return false;
   return (
     formResult?.status === FormStatus.Submitted &&
