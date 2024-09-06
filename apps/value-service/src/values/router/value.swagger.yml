@@ -40,7 +40,7 @@ components:
         values:
           type: array
           items:
-            $ref: "#/components/schemas/MetricIntervalValue"
+            $ref: '#/components/schemas/MetricIntervalValue'
 
 /value/v1/{namespace}/values:
   get:
@@ -54,8 +54,18 @@ components:
         required: true
         schema:
           type: string
+      - name: names
+        in: query
+        description: Filter by these comma-separated list of names.
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
     responses:
-      "200":
+      '200':
         description: Values successfully read.
         content:
           application/json:
@@ -66,7 +76,7 @@ components:
                 additionalProperties:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Value"
+                    $ref: '#/components/schemas/Value'
 /value/v1/{namespace}/values/{name}:
   parameters:
     - name: namespace
@@ -153,7 +163,7 @@ components:
                 additionalProperties:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Value"
+                    $ref: '#/components/schemas/Value'
   post:
     tags:
       - Value
@@ -164,12 +174,12 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/Value"
+              - $ref: '#/components/schemas/Value'
               - type: object
               - type: array
                 items:
                   oneOf:
-                    - $ref: "#/components/schemas/Value"
+                    - $ref: '#/components/schemas/Value'
                     - type: object
     responses:
       200:
@@ -178,10 +188,10 @@ components:
           application/json:
             schema:
               oneOf:
-                - $ref: "#/components/schemas/Value"
+                - $ref: '#/components/schemas/Value'
                 - type: array
                   items:
-                    $ref: "#/components/schemas/Value"
+                    $ref: '#/components/schemas/Value'
 /value/v1/{namespace}/values/{name}/count:
   parameters:
     - name: namespace
@@ -325,7 +335,7 @@ components:
                     size:
                       type: number
               additionalProperties:
-                $ref: "#/components/schemas/Metric"
+                $ref: '#/components/schemas/Metric'
 /value/v1/{namespace}/values/{name}/metrics/{metric}:
   get:
     tags:
@@ -396,8 +406,8 @@ components:
           application/json:
             schema:
               allOf:
-                - $ref: "#/components/schemas/Metric"
-                - type: "object"
+                - $ref: '#/components/schemas/Metric'
+                - type: 'object'
                   properties:
                     page:
                       type: object

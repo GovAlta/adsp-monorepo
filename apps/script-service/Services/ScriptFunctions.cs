@@ -12,10 +12,10 @@ internal class ScriptFunctions : IScriptFunctions
   private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;
   private readonly Func<Task<string>> _getToken;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
 
 
-  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, RestClient? client = null)
+  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, IRestClient? client = null)
   {
     _tenantId = tenantId;
     _directory = directory;

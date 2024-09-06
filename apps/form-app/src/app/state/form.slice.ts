@@ -31,6 +31,10 @@ export interface Form {
   status: 'draft' | 'locked' | 'submitted' | 'archived';
   created: Date;
   submitted?: Date;
+  submission?: {
+    id: string;
+    urn: string;
+  };
 }
 
 interface FormDataResponse {

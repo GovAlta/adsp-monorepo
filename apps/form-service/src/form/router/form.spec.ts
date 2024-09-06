@@ -12,6 +12,7 @@ import {
   findFormSubmissions,
   getFormDefinitions,
   getFormSubmission,
+  mapFormForSubmission,
   updateFormSubmissionDisposition,
   validateCriteria,
 } from './form';
@@ -135,6 +136,21 @@ describe('form router', () => {
     dispositionStates: [{ id: 'failed', name: 'failed', description: 'the form has indeterminate errors' }],
     locked: null,
     submitted: null,
+    lastAccessed: new Date(),
+    data: {},
+    files: {},
+  };
+
+  const submittedFormInfo = {
+    id: 'test-form',
+    formDraftUrl: 'https://my-form/test-form',
+    anonymousApplicant: false,
+    created: new Date(),
+    createdBy: { id: 'tester', name: 'tester' },
+    status: FormStatus.Submitted,
+    dispositionStates: [{ id: 'failed', name: 'failed', description: 'the form has indeterminate errors' }],
+    locked: null,
+    submitted: new Date(),
     lastAccessed: new Date(),
     data: {},
     files: {},
@@ -308,6 +324,21 @@ describe('form router', () => {
       expect(req.getServiceConfiguration).toHaveBeenCalled();
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('cannot determine missing tenant info', async () => {
+      const req = {
+        params: { definitionId: 'test' },
+        getServiceConfiguration: jest.fn(),
+        getConfiguration: jest.fn(),
+        tenant: null,
+        query: { tenantId: tenantId.toString() },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getFormDefinition(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
 
     it('can get definition for anonymous user', async () => {
@@ -669,6 +700,54 @@ describe('form router', () => {
       expect(next).toBeCalledWith();
     });
 
+    it('can get form with submission data', async () => {
+      const formEntity = new FormEntity(repositoryMock, tenantId, definition, subscriber, submittedFormInfo);
+
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        tenant: { id: tenantId },
+        params: { formId: 'test-form' },
+        form: formEntity,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const page = {};
+      repositoryMock.get.mockResolvedValueOnce(formEntity);
+      formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
+      const handler = mapFormForSubmission(apiId, formSubmissionMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalled();
+    });
+
+    it('can get form with no submission', async () => {
+      const formEntity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
+
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        tenant: { id: tenantId },
+        params: { formId: 'test-form' },
+        form: formEntity,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      repositoryMock.get.mockResolvedValueOnce(formEntity);
+
+      const handler = mapFormForSubmission(apiId, formSubmissionMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalled();
+    });
     it('can call next with not found', async () => {
       const user = {
         tenantId,

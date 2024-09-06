@@ -36,6 +36,9 @@
       ],
       "@core-services/app-common": [
         "../../../libs/app-common/src/index.ts"
+      ],
+      "@abgov/data-exchange-standard": [
+        "../../../libs/data-exchange-standard/src/index.ts"
       ]
     }
   },

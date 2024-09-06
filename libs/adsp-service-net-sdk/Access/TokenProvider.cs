@@ -13,11 +13,11 @@ internal sealed class TokenProvider : ITokenProvider, IDisposable
 
   private readonly ILogger<TokenProvider> _logger;
   private readonly Uri _authUrl;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
   private readonly string _clientId;
   private readonly string _clientSecret;
 
-  public TokenProvider(ILogger<TokenProvider> logger, IOptions<AdspOptions> options, RestClient? client = null)
+  public TokenProvider(ILogger<TokenProvider> logger, IOptions<AdspOptions> options, IRestClient? client = null)
   {
     if (options.Value.AccessServiceUrl == null)
     {

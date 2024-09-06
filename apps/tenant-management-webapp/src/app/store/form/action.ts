@@ -1,3 +1,4 @@
+import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { FormDefinition } from './model';
 
 export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
@@ -11,6 +12,21 @@ export const DELETE_FORM_DEFINITION_ACTION = 'form/DELETE_FORM_DEFINITION_ACTION
 export const DELETE_FORM_DEFINITION_SUCCESS_ACTION = 'form/DELETE_FORM_DEFINITION_SUCCESS_ACTION';
 export const DELETE_FORM_BY_ID_ACTION = 'form/DELETE_FORM_BY_ID_ACTION';
 
+export const OPEN_EDITOR_FOR_DEFINITION_ACTION = 'form/OPEN_EDITOR_FOR_DEFINITION_ACTION';
+export const OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION = 'form/OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION';
+export const OPEN_EDITOR_FOR_DEFINITION_FAILED_ACTION = 'form/OPEN_EDITOR_FOR_DEFINITION_FAILED_ACTION';
+
+export const UPDATE_EDITOR_FORM_DEFINITION_ACTION = 'form/UPDATE_EDITOR_FORM_DEFINITION_ACTION';
+
+export const SET_DRAFT_DATA_SCHEMA_ACTION = 'form/SET_DRAFT_DATA_SCHEMA_ACTION';
+export const SET_DRAFT_UI_SCHEMA_ACTION = 'form/SET_DRAFT_UI_SCHEMA_ACTION';
+
+export const PROCESS_DATA_SCHEMA_SUCCESS_ACTION = 'form/PROCESS_DATA_SCHEMA_SUCCESS_ACTION';
+export const PROCESS_UI_SCHEMA_SUCCESS_ACTION = 'form/PROCESS_UI_SCHEMA_SUCCESS_ACTION';
+
+export const PROCESS_DATA_SCHEMA_FAILED_ACTION = 'form/PROCESS_DATA_SCHEMA_FAILED_ACTION';
+export const PROCESS_UI_SCHEMA_FAILED_ACTION = 'form/PROCESS_UI_SCHEMA_FAILED_ACTION';
+
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
 }
@@ -21,7 +37,7 @@ export interface FetchFormDefinitionsAction {
 
 export interface FetchFormDefinitionsSuccessAction {
   type: typeof FETCH_FORM_DEFINITIONS_SUCCESS_ACTION;
-  payload: FormDefinition[];
+  payload: Record<string, FormDefinition>;
   next: string;
   after: string;
 }
@@ -34,7 +50,7 @@ export interface UpdateFormDefinitionsAction {
 
 export interface UpdateFormDefinitionsSuccessAction {
   type: typeof UPDATE_FORM_DEFINITION_SUCCESS_ACTION;
-  payload: FormDefinition[];
+  payload: FormDefinition;
 }
 
 export interface DeleteFormDefinitionAction {
@@ -44,12 +60,64 @@ export interface DeleteFormDefinitionAction {
 
 export interface DeleteFormDefinitionSuccessAction {
   type: typeof DELETE_FORM_DEFINITION_SUCCESS_ACTION;
-  payload: FormDefinition[];
+  payload: FormDefinition;
 }
 
 export interface DeleteFormByIDAction {
   type: typeof DELETE_FORM_BY_ID_ACTION;
   id: string;
+}
+
+export interface OpenEditorForDefinitionAction {
+  type: typeof OPEN_EDITOR_FOR_DEFINITION_ACTION;
+  id: string;
+  newDefinition?: FormDefinition;
+}
+
+export interface OpenEditorForDefinitionSuccessAction {
+  type: typeof OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION;
+  definition: FormDefinition;
+  isNew: boolean;
+}
+
+export interface OpenEditorForDefinitionFailedAction {
+  type: typeof OPEN_EDITOR_FOR_DEFINITION_FAILED_ACTION;
+  id: string;
+}
+
+export interface UpdateEditorFormDefinitionAction {
+  type: typeof UPDATE_EDITOR_FORM_DEFINITION_ACTION;
+  update: Partial<Omit<FormDefinition, 'dataSchema' | 'uiSchema'>>;
+}
+
+export interface SetDraftDataSchemaAction {
+  type: typeof SET_DRAFT_DATA_SCHEMA_ACTION;
+  draft: string;
+}
+
+export interface SetDraftUISchemaAction {
+  type: typeof SET_DRAFT_UI_SCHEMA_ACTION;
+  draft: string;
+}
+
+export interface ProcessDataSchemaSuccessAction {
+  type: typeof PROCESS_DATA_SCHEMA_SUCCESS_ACTION;
+  schema: JsonSchema;
+}
+
+export interface ProcessUISchemaSuccessAction {
+  type: typeof PROCESS_UI_SCHEMA_SUCCESS_ACTION;
+  schema: UISchemaElement;
+}
+
+export interface ProcessDataSchemaFailedAction {
+  type: typeof PROCESS_DATA_SCHEMA_FAILED_ACTION;
+  error: string;
+}
+
+export interface ProcessUISchemaFailedAction {
+  type: typeof PROCESS_UI_SCHEMA_FAILED_ACTION;
+  error: string;
 }
 
 export type FormActionTypes =
@@ -60,7 +128,17 @@ export type FormActionTypes =
   | DeleteFormDefinitionSuccessAction
   | UpdateFormDefinitionsAction
   | DeleteFormByIDAction
-  | UpdateFormDefinitionsSuccessAction;
+  | UpdateFormDefinitionsSuccessAction
+  | OpenEditorForDefinitionAction
+  | OpenEditorForDefinitionSuccessAction
+  | OpenEditorForDefinitionFailedAction
+  | SetDraftDataSchemaAction
+  | SetDraftUISchemaAction
+  | ProcessDataSchemaSuccessAction
+  | ProcessUISchemaSuccessAction
+  | ProcessDataSchemaFailedAction
+  | ProcessUISchemaFailedAction
+  | UpdateEditorFormDefinitionAction;
 
 export const clearFormDefinitions = (): ClearFormDefinitions => ({
   type: CLEAR_FORM_DEFINITIONS_ACTION,
@@ -72,7 +150,7 @@ export const updateFormDefinition = (definition: FormDefinition, options?: strin
   options,
 });
 
-export const updateFormDefinitionSuccess = (definition: FormDefinition[]): UpdateFormDefinitionsSuccessAction => ({
+export const updateFormDefinitionSuccess = (definition: FormDefinition): UpdateFormDefinitionsSuccessAction => ({
   type: UPDATE_FORM_DEFINITION_SUCCESS_ACTION,
   payload: definition,
 });
@@ -82,9 +160,9 @@ export const deleteFormDefinition = (definition: FormDefinition): DeleteFormDefi
   definition,
 });
 
-export const deleteFormDefinitionSuccess = (definitions: FormDefinition[]): DeleteFormDefinitionSuccessAction => ({
+export const deleteFormDefinitionSuccess = (definition: FormDefinition): DeleteFormDefinitionSuccessAction => ({
   type: DELETE_FORM_DEFINITION_SUCCESS_ACTION,
-  payload: definitions,
+  payload: definition,
 });
 
 export const getFormDefinitions = (next?: string): FetchFormDefinitionsAction => ({
@@ -93,7 +171,7 @@ export const getFormDefinitions = (next?: string): FetchFormDefinitionsAction =>
 });
 
 export const getFormDefinitionsSuccess = (
-  results: FormDefinition[],
+  results: Record<string, FormDefinition>,
   next: string,
   after: string
 ): FetchFormDefinitionsSuccessAction => ({
@@ -106,4 +184,61 @@ export const getFormDefinitionsSuccess = (
 export const deleteFormById = (id: string): DeleteFormByIDAction => ({
   type: DELETE_FORM_BY_ID_ACTION,
   id,
+});
+
+export const openEditorForDefinition = (id: string, newDefinition?: FormDefinition): OpenEditorForDefinitionAction => ({
+  type: OPEN_EDITOR_FOR_DEFINITION_ACTION,
+  id,
+  newDefinition,
+});
+
+export const openEditorForDefinitionSuccess = (
+  definition: FormDefinition,
+  isNew: boolean
+): OpenEditorForDefinitionSuccessAction => ({
+  type: OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION,
+  definition,
+  isNew,
+});
+
+export const openEditorForDefinitionFailed = (id: string): OpenEditorForDefinitionFailedAction => ({
+  type: OPEN_EDITOR_FOR_DEFINITION_FAILED_ACTION,
+  id,
+});
+
+export const updateEditorFormDefinition = (
+  update: Partial<Omit<FormDefinition, 'dataSchema' | 'uiSchema'>>
+): UpdateEditorFormDefinitionAction => ({
+  type: UPDATE_EDITOR_FORM_DEFINITION_ACTION,
+  update,
+});
+
+export const setDraftDataSchema = (draft: string): SetDraftDataSchemaAction => ({
+  type: SET_DRAFT_DATA_SCHEMA_ACTION,
+  draft,
+});
+
+export const setDraftUISchema = (draft: string): SetDraftUISchemaAction => ({
+  type: SET_DRAFT_UI_SCHEMA_ACTION,
+  draft,
+});
+
+export const processedDataSchema = (schema: JsonSchema): ProcessDataSchemaSuccessAction => ({
+  type: PROCESS_DATA_SCHEMA_SUCCESS_ACTION,
+  schema,
+});
+
+export const processedUISchema = (schema: UISchemaElement): ProcessUISchemaSuccessAction => ({
+  type: PROCESS_UI_SCHEMA_SUCCESS_ACTION,
+  schema,
+});
+
+export const processDataSchemaFailed = (error: string): ProcessDataSchemaFailedAction => ({
+  type: PROCESS_DATA_SCHEMA_FAILED_ACTION,
+  error,
+});
+
+export const processUISchemaFailed = (error: string): ProcessUISchemaFailedAction => ({
+  type: PROCESS_UI_SCHEMA_FAILED_ACTION,
+  error,
 });
