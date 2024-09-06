@@ -2,7 +2,6 @@ import { selectDirectoryByServiceName } from '@store/directory/selectors';
 import { RootState } from '@store/index';
 import { toKebabName } from '@lib/kebabName';
 import { createSelector } from 'reselect';
-import { defaultFormDefinition } from './model';
 
 const PUBLIC_FORM_APP = 'form-app';
 export const selectFormAppHost = createSelector(
