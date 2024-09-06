@@ -25,6 +25,7 @@ import { REALM_ROLE_KEY } from '@store/sharedSelectors/roles';
 export interface SelectedRoles {
   title: string;
   selectedRoles: string[];
+  disabled?: boolean;
 }
 interface ClientRoleTableProps {
   roles: string[];
@@ -34,6 +35,7 @@ interface ClientRoleTableProps {
   anonymousRead?: boolean;
   clientId?: string;
   nameColumnWidth?: number;
+  disabled?: boolean;
 }
 
 function capitalizeFirstLetter(string) {
@@ -94,7 +96,9 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                         key={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         checked={checkedRole.selectedRoles?.includes(compositeRole)}
                         testId={`${service}-${checkedRole?.title}-role-checkbox-${compositeRole}`}
-                        disabled={props.anonymousRead && checkedRole.title === 'read'}
+                        disabled={
+                          (props.anonymousRead && checkedRole.title === 'read') || checkedRole?.disabled === true
+                        }
                         ariaLabel={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         onChange={() => {
                           if (checkedRole.selectedRoles?.includes(compositeRole)) {
