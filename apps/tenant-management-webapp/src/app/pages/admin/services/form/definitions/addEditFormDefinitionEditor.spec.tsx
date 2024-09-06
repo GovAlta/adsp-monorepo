@@ -68,6 +68,7 @@ describe('ScriptEditor Component', () => {
     form: {
       editor: {},
     },
+    serviceRoles: {},
   });
   test('Save button does not route', async () => {
     const { queryByTestId } = render(

@@ -27,8 +27,6 @@ export const PROCESS_UI_SCHEMA_SUCCESS_ACTION = 'form/PROCESS_UI_SCHEMA_SUCCESS_
 export const PROCESS_DATA_SCHEMA_FAILED_ACTION = 'form/PROCESS_DATA_SCHEMA_FAILED_ACTION';
 export const PROCESS_UI_SCHEMA_FAILED_ACTION = 'form/PROCESS_UI_SCHEMA_FAILED_ACTION';
 
-export const CLOSE_EDITOR_ACTION = 'form/CLOSE_EDITOR_ACTION';
-
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
 }
@@ -73,11 +71,13 @@ export interface DeleteFormByIDAction {
 export interface OpenEditorForDefinitionAction {
   type: typeof OPEN_EDITOR_FOR_DEFINITION_ACTION;
   id: string;
+  newDefinition?: FormDefinition;
 }
 
 export interface OpenEditorForDefinitionSuccessAction {
   type: typeof OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION;
   definition: FormDefinition;
+  isNew: boolean;
 }
 
 export interface OpenEditorForDefinitionFailedAction {
@@ -120,10 +120,6 @@ export interface ProcessUISchemaFailedAction {
   error: string;
 }
 
-export interface CloseEditorAction {
-  type: typeof CLOSE_EDITOR_ACTION;
-}
-
 export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
@@ -142,8 +138,7 @@ export type FormActionTypes =
   | ProcessUISchemaSuccessAction
   | ProcessDataSchemaFailedAction
   | ProcessUISchemaFailedAction
-  | UpdateEditorFormDefinitionAction
-  | CloseEditorAction;
+  | UpdateEditorFormDefinitionAction;
 
 export const clearFormDefinitions = (): ClearFormDefinitions => ({
   type: CLEAR_FORM_DEFINITIONS_ACTION,
@@ -191,14 +186,19 @@ export const deleteFormById = (id: string): DeleteFormByIDAction => ({
   id,
 });
 
-export const openEditorForDefinition = (id: string): OpenEditorForDefinitionAction => ({
+export const openEditorForDefinition = (id: string, newDefinition?: FormDefinition): OpenEditorForDefinitionAction => ({
   type: OPEN_EDITOR_FOR_DEFINITION_ACTION,
   id,
+  newDefinition,
 });
 
-export const openEditorForDefinitionSuccess = (definition: FormDefinition): OpenEditorForDefinitionSuccessAction => ({
+export const openEditorForDefinitionSuccess = (
+  definition: FormDefinition,
+  isNew: boolean
+): OpenEditorForDefinitionSuccessAction => ({
   type: OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION,
   definition,
+  isNew,
 });
 
 export const openEditorForDefinitionFailed = (id: string): OpenEditorForDefinitionFailedAction => ({
@@ -241,8 +241,4 @@ export const processDataSchemaFailed = (error: string): ProcessDataSchemaFailedA
 export const processUISchemaFailed = (error: string): ProcessUISchemaFailedAction => ({
   type: PROCESS_UI_SCHEMA_FAILED_ACTION,
   error,
-});
-
-export const closeEditor = (): CloseEditorAction => ({
-  type: CLOSE_EDITOR_ACTION,
 });

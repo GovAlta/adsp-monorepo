@@ -47,7 +47,7 @@ export const defaultFormDefinition: FormDefinition = {
   submissionPdfTemplate: 'submitted-form',
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
-  securityClassification: null,
+  securityClassification: SecurityClassification.ProtectedB,
 };
 
 export interface FormState {

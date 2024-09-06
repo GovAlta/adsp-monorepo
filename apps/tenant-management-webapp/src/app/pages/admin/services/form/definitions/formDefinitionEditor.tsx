@@ -15,6 +15,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch();
   useEffect(() => {
+    // This is to handle deep linking to the editor for a specific definition.
     if (id !== selectedId) {
       dispatch(openEditorForDefinition(id));
     }
@@ -28,7 +29,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
 
           <HideTablet>
             <FormTemplateEditorContainer>
-              <AddEditFormDefinitionEditor />
+              <AddEditFormDefinitionEditor key={id} />
             </FormTemplateEditorContainer>
           </HideTablet>
         </OuterFormTemplateEditorContainer>

@@ -11,7 +11,6 @@ import {
 } from '@lib/validation/checkInput';
 import { FormFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
-import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { uischema } from './categorization-stepper-nav-buttons';
@@ -71,7 +70,6 @@ export const AddEditFormDefinition = ({
   open,
   onSave,
 }: AddEditFormDefinitionProps): JSX.Element => {
-  const navigate = useNavigate();
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
   const [multiForm, setMultiForm] = useState<boolean>(false);
   const [spinner, setSpinner] = useState<boolean>(false);
@@ -158,11 +156,6 @@ export const AddEditFormDefinition = ({
                   definition.formDraftUrlTemplate = defaultFormUrl;
                 }
                 onSave(definition);
-                if (isEdit) {
-                  onClose();
-                } else {
-                  navigate(`edit/${definition.id}?headless=true`);
-                }
               }
             }}
           >

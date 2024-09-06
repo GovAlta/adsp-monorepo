@@ -1,15 +1,53 @@
-import { useState, useEffect } from 'react';
+import { ContextProviderFactory } from '@abgov/jsonforms-components';
+import {
+  GoAButtonGroup,
+  GoAButton,
+  GoAFormItem,
+  GoACheckbox,
+  GoADropdownItem,
+  GoADropdown,
+  GoAInput,
+} from '@abgov/react-components-new';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
-import { ContextProviderFactory } from '@abgov/jsonforms-components';
-import { Disposition, FormDefinition } from '@store/form/model';
-import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
-import { ActionState } from '@store/session/models';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
-
+import { Tab, Tabs } from '@components/Tabs';
+import { PageIndicator } from '@components/Indicator';
+import DataTable from '@components/DataTable';
+import { DeleteModal } from '@components/DeleteModal';
+import { CustomLoader } from '@components/CustomLoader';
+import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
+import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
+import { useValidators } from '@lib/validation/useValidators';
+import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
+import useWindowDimensions from '@lib/useWindowDimensions';
+import { RootState } from '@store/index';
+import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
+import { rolesSelector } from '@store/access/selectors';
+import { SecurityClassification } from '@store/common/models';
+import { getConfigurationDefinitions } from '@store/configuration/action';
+import {
+  UploadFileService,
+  DownloadFileService,
+  DeleteFileService,
+  FetchFileTypeService,
+  ClearNewFileList,
+} from '@store/file/actions';
+import {
+  setDraftDataSchema,
+  setDraftUISchema,
+  updateFormDefinition,
+  updateEditorFormDefinition,
+} from '@store/form/action';
+import { Disposition, FormDefinition } from '@store/form/model';
+import { isFormUpdatedSelector, modifiedDefinitionSelector, schemaErrorSelector } from '@store/form/selectors';
+import { ActionState } from '@store/session/models';
+import { FetchRealmRoles } from '@store/tenant/actions';
+import { getTaskQueues } from '@store/task/action';
 import {
   TextLoadingIndicator,
   FlexRow,
@@ -19,6 +57,7 @@ import {
   FinalButtonPadding,
   FormEditorTitle,
   FormEditor,
+  FormFormItem,
   ScrollPane,
   RolesTabBody,
   RightAlign,
@@ -30,72 +69,19 @@ import {
   GoACheckboxPad,
   ReviewPageTabWrapper,
 } from '../styled-components';
-import { ConfigServiceRole } from '@store/access/models';
-
-import {
-  setDraftDataSchema,
-  setDraftUISchema,
-  updateFormDefinition,
-  updateEditorFormDefinition,
-  closeEditor,
-} from '@store/form/action';
-import { createSelector } from 'reselect';
-import { RootState } from '@store/index';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchKeycloakServiceRoles } from '@store/access/actions';
-import { FormConfigDefinition } from './formConfigDefinition';
-import { useNavigate } from 'react-router-dom';
-import {
-  GoAButtonGroup,
-  GoAButton,
-  GoAFormItem,
-  GoACheckbox,
-  GoADropdownItem,
-  GoADropdown,
-  GoAInput,
-} from '@abgov/react-components-new';
-import useWindowDimensions from '@lib/useWindowDimensions';
-import { FetchRealmRoles } from '@store/tenant/actions';
-import { Tab, Tabs } from '@components/Tabs';
-import { PageIndicator } from '@components/Indicator';
-import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
-import DataTable from '@components/DataTable';
-import { DispositionItems } from './dispositionItems';
-import { DeleteModal } from '@components/DeleteModal';
 import { AddEditDispositionModal } from './addEditDispositionModal';
-
+import { DispositionItems } from './dispositionItems';
+import { FormConfigDefinition } from './formConfigDefinition';
 import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
-
-import { RowFlex, QueueTaskDropdown, H3, BorderBottom } from './style-components';
-import { getTaskQueues } from '@store/task/action';
-import {
-  UploadFileService,
-  DownloadFileService,
-  DeleteFileService,
-  FetchFileTypeService,
-  ClearNewFileList,
-} from '@store/file/actions';
-import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
-import { CustomLoader } from '@components/CustomLoader';
-import { getConfigurationDefinitions } from '@store/configuration/action';
-import { FormFormItem } from '../styled-components';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
-import { SecurityClassification } from '@store/common/models';
-import { isFormUpdatedSelector, modifiedDefinitionSelector, schemaErrorSelector } from '@store/form/selectors';
+import { RowFlex, QueueTaskDropdown, H3, BorderBottom } from './style-components';
 
 export const ContextProvider = ContextProviderFactory();
 
 const isUseMiniMap = window.screen.availWidth >= 1920;
 
 console.log(window.screen.availWidth);
-
-interface ClientElement {
-  roleNames: string[];
-  clientId: string;
-  //eslint-disable-next-line
-  currentElements: any;
-}
 
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
@@ -125,6 +111,40 @@ export const onSaveDispositionForModal = (
   return [definition, null];
 };
 
+const types = [
+  { type: 'applicantRoles', name: 'Applicant roles' },
+  { type: 'clerkRoles', name: 'Clerk roles' },
+  { type: 'assessorRoles', name: 'Assessor roles' },
+];
+const applicantRoles = types[0];
+const clerkRoles = types[1];
+
+interface ClientRoleProps {
+  roleNames: string[];
+  clientId: string;
+  anonymousRead: boolean;
+  onUpdateRoles: (roles: string[], type: string) => void;
+  configuration: Record<string, string[]>;
+}
+
+const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdateRoles }: ClientRoleProps) => {
+  return (
+    <ClientRoleTable
+      roles={roleNames}
+      clientId={clientId}
+      anonymousRead={anonymousRead}
+      roleSelectFunc={onUpdateRoles}
+      nameColumnWidth={40}
+      service="FileType"
+      checkedRoles={[
+        { title: types[0].name, selectedRoles: configuration[types[0].type] },
+        { title: types[1].name, selectedRoles: configuration[types[1].type] },
+        { title: types[2].name, selectedRoles: configuration[types[2].type] },
+      ]}
+    />
+  );
+};
+
 const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
@@ -135,6 +155,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(getTaskQueues());
     dispatch(getConfigurationDefinitions());
     dispatch(FetchFileTypeService());
   }, [dispatch]);
@@ -166,18 +189,27 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const isFormUpdated = useSelector(isFormUpdatedSelector);
 
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
+  const queueTasks = useSelector((state: RootState) => state.task?.queues || {});
+
+  const isLoadingRoles = useSelector(
+    (state: RootState) => state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] === ActionState.inProcess
+  );
+  const roles = useSelector(rolesSelector);
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
   const [activeIndex] = useState<number>(0);
   const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
 
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
-  const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
+  const [saveModal, setSaveModal] = useState({ visible: false });
   const [currentTab, setCurrentTab] = useState(0);
-
-  const latestNotification = useSelector(
-    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
-  );
 
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
@@ -223,120 +255,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   }, [monaco, dataSchema]);
 
-  useEffect(() => {
-    dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
-    dispatch(getTaskQueues());
-  }, [dispatch]);
-
-  const types = [
-    { type: 'applicantRoles', name: 'Applicant roles' },
-    { type: 'clerkRoles', name: 'Clerk roles' },
-    { type: 'assessorRoles', name: 'Assessor roles' },
-  ];
-
-  const selectServiceKeycloakRoles = createSelector(
-    (state: RootState) => state.serviceRoles,
-    (serviceRoles) => {
-      return serviceRoles?.keycloak || {};
-    }
-  );
-  const queueTasks = useSelector((state: RootState) => {
-    if (state.task && state.task.queues) {
-      const values = Object.entries(state?.task?.queues).reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
-        tempObj[taskDefinitionId] = taskDefinitionData;
-        return tempObj;
-      }, {});
-      return values;
-    }
-  });
-
-  useEffect(() => {
-    if (saveModal.closeEditor) {
-      close();
-    }
-  }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const navigate = useNavigate();
-
   const close = () => {
     dispatch(ClearNewFileList());
     navigate('..?definitions=true', { state: { isNavigatedFromEdit: true } });
   };
-
-  const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
-    fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
-  }));
-  //eslint-disable-next-line
-  useEffect(() => {}, [fetchKeycloakRolesState]);
-
-  const ClientRole = ({ roleNames, clientId }) => {
-    const applicantRoles = types[0];
-    const clerkRoles = types[1];
-
-    return (
-      <ClientRoleTable
-        roles={roleNames}
-        clientId={clientId}
-        anonymousRead={definition.anonymousApply}
-        roleSelectFunc={(roles, type) => {
-          if (type === applicantRoles.name) {
-            setDefinition({
-              applicantRoles: [...new Set(roles)],
-            });
-          } else if (type === clerkRoles.name) {
-            setDefinition({
-              clerkRoles: [...new Set(roles)],
-            });
-          } else {
-            setDefinition({
-              assessorRoles: [...new Set(roles)],
-            });
-          }
-        }}
-        nameColumnWidth={40}
-        service="FileType"
-        checkedRoles={[
-          { title: types[0].name, selectedRoles: definition[types[0].type] },
-          { title: types[1].name, selectedRoles: definition[types[1].type] },
-          { title: types[2].name, selectedRoles: definition[types[2].type] },
-        ]}
-      />
-    );
-  };
-
-  const roles = useSelector((state: RootState) => state.tenant.realmRoles) || [];
-
-  const roleNames = roles.map((role) => {
-    return role.name;
-  });
-
-  const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
-  let elements: ClientElement[] = [{ roleNames: roleNames, clientId: '', currentElements: null }];
-
-  const clientElements: ClientElement[] =
-    Object.entries(keycloakClientRoles).length > 0 &&
-    Object.entries(keycloakClientRoles)
-      .filter(([clientId, config]) => {
-        return (config as ConfigServiceRole).roles.length > 0;
-      })
-      .map(([clientId, config]) => {
-        const roles = (config as ConfigServiceRole).roles;
-        const roleNames = roles.map((role) => {
-          return role.role;
-        });
-        return { roleNames: roleNames, clientId: clientId, currentElements: null };
-      });
-  elements = elements.concat(clientElements);
-
-  const definitions = useSelector((state: RootState) => {
-    return state?.form?.definitions;
-  });
-  const definitionIds = definitions ? Object.keys(definitions) : [];
-
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
 
   const openModalFunction = (disposition) => {
     const currentDispositions = definition.dispositionStates;
@@ -361,7 +284,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
@@ -386,6 +308,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
     return { id: '', name: '', description: '' } as Disposition;
   };
+
   const saveCurrentTab = (tab: number) => {
     setCurrentTab(tab);
   };
@@ -499,12 +422,37 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 <BorderBottom>
                   <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
                     <ScrollPane>
-                      {elements.map((e, key) => {
-                        return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+                      {roles.map((e, key) => {
+                        return (
+                          <ClientRole
+                            roleNames={e.roleNames}
+                            key={key}
+                            clientId={e.clientId}
+                            anonymousRead={definition.anonymousApply}
+                            configuration={{
+                              applicantRoles: definition.applicantRoles,
+                              clerkRoles: definition.clerkRoles,
+                              assessorRoles: definition.assessorRoles,
+                            }}
+                            onUpdateRoles={(roles, type) => {
+                              if (type === applicantRoles.name) {
+                                setDefinition({
+                                  applicantRoles: [...new Set(roles)],
+                                });
+                              } else if (type === clerkRoles.name) {
+                                setDefinition({
+                                  clerkRoles: [...new Set(roles)],
+                                });
+                              } else {
+                                setDefinition({
+                                  assessorRoles: [...new Set(roles)],
+                                });
+                              }
+                            }}
+                          />
+                        );
                       })}
-                      {fetchKeycloakRolesState === ActionState.inProcess && (
-                        <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-                      )}
+                      {isLoadingRoles && <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>}
                     </ScrollPane>
                   </RolesTabBody>
                 </BorderBottom>
@@ -773,14 +721,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   type="secondary"
                   onClick={() => {
                     if (isFormUpdated) {
-                      setSaveModal({ visible: true, closeEditor: false });
+                      setSaveModal({ visible: true });
                     } else {
                       validators.clear();
 
                       close();
                     }
-
-                    dispatch(closeEditor());
                   }}
                 >
                   Back
@@ -834,11 +780,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         }}
         onSave={() => {
           dispatch(updateFormDefinition(definition));
-          setSaveModal({ visible: false, closeEditor: true });
+          setSaveModal({ visible: false });
+          close();
         }}
         saveDisable={!isFormUpdated}
         onCancel={() => {
-          setSaveModal({ visible: false, closeEditor: false });
+          setSaveModal({ visible: false });
         }}
       />
       <DeleteModal

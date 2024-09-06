@@ -16,7 +16,6 @@ import {
   PROCESS_DATA_SCHEMA_FAILED_ACTION,
   PROCESS_UI_SCHEMA_FAILED_ACTION,
   UPDATE_EDITOR_FORM_DEFINITION_ACTION,
-  CLOSE_EDITOR_ACTION,
   OPEN_EDITOR_FOR_DEFINITION_FAILED_ACTION,
 } from './action';
 
@@ -202,14 +201,6 @@ export default function (state: FormState = defaultState, action: FormActionType
         editor: {
           ...state.editor,
           uiSchemaError: action.error,
-        },
-      };
-
-    case CLOSE_EDITOR_ACTION:
-      return {
-        ...state,
-        editor: {
-          ...defaultState.editor,
         },
       };
 

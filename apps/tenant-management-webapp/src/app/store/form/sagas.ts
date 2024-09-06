@@ -93,7 +93,7 @@ export function* updateFormDefinition({ definition }: UpdateFormDefinitionsActio
 
       // If the saved form definition is currently selected for editing, then update the editor state.
       if (definition.id && definition.id === editorSelectedId) {
-        yield put(openEditorForDefinitionSuccess(latest.configuration));
+        yield put(openEditorForDefinitionSuccess(latest.configuration, false));
       }
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -130,14 +130,16 @@ export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction
   }
 }
 
-export function* openEditorForDefinition({ id }: OpenEditorForDefinitionAction): SagaIterator {
+export function* openEditorForDefinition({ id, newDefinition }: OpenEditorForDefinitionAction): SagaIterator {
   try {
     if (!id) {
       throw new Error('Cannot open editor without form definition ID.');
     }
 
+    // newDefinitions is set if editor is opened immediately for a new form definition.
+    // Use it as a fallback value, since the new definition may or may not have already been created and set on the state.
     const definitions: Record<string, FormDefinition> = yield select((state: RootState) => state.form.definitions);
-    let definition = definitions[id];
+    let definition = definitions[id] || newDefinition;
 
     if (!definition) {
       const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
@@ -152,7 +154,7 @@ export function* openEditorForDefinition({ id }: OpenEditorForDefinitionAction):
       }
     }
 
-    yield put(openEditorForDefinitionSuccess(definition));
+    yield put(openEditorForDefinitionSuccess(definition, !!newDefinition));
   } catch (error) {
     yield put(openEditorForDefinitionFailed(id));
     yield put(ErrorNotification({ error }));
