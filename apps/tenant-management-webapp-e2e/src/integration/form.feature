@@ -27,21 +27,21 @@ Feature: Form
     Then the user views form definition editor for "autotest-formDef", "autotest desc"
     When the user clicks "Roles" tab in form definition editor
     And the user enters "auto-test-role1" as applicant roles, "auto-test-role2" as clerk roles, "empty" as assessor roles
-    And the user clicks Save button on form definition editor
-    And the user clicks Back button on form definition editor
+    And the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
     Then the user "views" the form definition of "autotest-formDef", "autotest desc"
     # Edit and back
     When the user clicks "Edit" button for the form definition of "autotest-formDef", "autotest desc"
     Then the user views form definition editor for "autotest-formDef", "autotest desc"
     When the user clicks "Roles" tab in form definition editor
     And the user enters "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles
-    And the user clicks Back button on form definition editor
+    And the user clicks Back button in form definition editor
     And the user clicks "Don't save" button on unsaved changes modal
     And the user clicks "Edit" button for the form definition of "autotest-formDef", "autotest desc"
     Then the user views form definition editor for "autotest-formDef", "autotest desc"
     When the user clicks "Roles" tab in form definition editor
     Then the user views "auto-test-role1" as applicant roles, "auto-test-role2" as clerk roles, "empty" as assessor roles in roles tab
-    And the user clicks Back button on form definition editor
+    And the user clicks Back button in form definition editor
     # Edit and save
     When the user clicks "Edit" button for the form definition of "autotest-formDef", "autotest desc"
     Then the user views form definition editor for "autotest-formDef", "autotest desc"
@@ -51,13 +51,13 @@ Feature: Form
     And the user clicks Save button in Edit definition modal
     And the user clicks "Roles" tab in form definition editor
     And the user enters "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles
-    And the user clicks Save button on form definition editor
-    And the user clicks Back button on form definition editor
+    And the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
     Then the user "views" the form definition of "autotest-formDef-edited", "autotest desc edited"
     When the user clicks "Edit" button for the form definition of "autotest-formDef-edited", "autotest desc edited"
     And the user clicks "Roles" tab in form definition editor
     Then the user views "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles in roles tab
-    And the user clicks Back button on form definition editor
+    And the user clicks Back button in form definition editor
     # Delete
     When the user clicks "Delete" button for the form definition of "autotest-formDef-edited", "autotest desc edited"
     Then the user views delete "form definition" confirmation modal for "autotest-formDef"
@@ -76,7 +76,7 @@ Feature: Form
     When the user clicks Cancel button in Add form definition modal
     Then the user views form definitions page
     And no critical or serious accessibility issues on "form definitions page"
-  ## Cypress crashes on accessibility test on form definition editor.
+  ## Cypress crashes on accessibility test in form definition editor.
   # When the user clicks "Edit" button for the form definition of "autotest-formDefAccessibility", "DO NOT DELETE"
   # Then the user views form definition editor for "autotest-formDefAccessibility", "DO NOT DELETE"
   # And no critical or serious accessibility issues on "form definition editor page"
@@ -128,8 +128,8 @@ Feature: Form
     When the user clicks "arrow down" for the disposition state of "Approved", "The application is approved"
     Then the user views the disposition state of "Approved", "The application is approved" being row "3"
     # Edit states
-    When the user clicks Save button on form definition editor
-    And the user clicks Back button on form definition editor
+    When the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
     And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
     When the user clicks "Lifecycle" tab in form definition editor
     And the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
@@ -143,8 +143,8 @@ Feature: Form
     And the user clicks Save button in disposition state modal
     Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
     # Delete states
-    When the user clicks Save button on form definition editor
-    And the user clicks Back button on form definition editor
+    When the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
     And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
     When the user clicks "Lifecycle" tab in form definition editor
     And the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
@@ -163,8 +163,8 @@ Feature: Form
     Then the user views delete "disposition state" confirmation modal for "Rejected"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the disposition state of "Rejected", "The application is rejected"
-    When the user clicks Save button on form definition editor
-    And the user clicks Back button on form definition editor
+    When the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
     And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
     And the user clicks "Lifecycle" tab in form definition editor
     Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
@@ -212,5 +212,38 @@ Feature: Form
     Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
     When the user clicks "Lifecycle" tab in form definition editor
     And the user selects "No task created" in task queue to process dropdown
-    And the user clicks Save button on form definition editor
-    And the user clicks Back button on form definition editor
+    And the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
+
+  @TEST_CS-3356 @REQ_CS-3381 @regression
+  Scenario: As a tenant admin, I can set the classification on a form definition and view the updated classification in event log
+    Given a tenant admin user is on form definitions page
+    # Add a form definition
+    When the user clicks Add definition button on form definitions page
+    Then the user views Add form definition modal
+    When the user enters "autotest-securityClassification", "autotest desc" in Add form definition modal
+    And the user clicks Save button in Add form definition modal
+    # Lifecycle validation for security classification
+    Then the user views form definition editor for "autotest-securityClassification", "autotest desc"
+    When the user clicks "Lifecycle" tab in form definition editor
+    Then the user views Security classification dropdown after Form template URL under Application
+    And the user views the security classification dropdown has the default value of "Protected B" from the options of "Public", "Protected A", "Protected B", "Protected C"
+    When the user selects "Protected C" from the security classification dropdown in form definition editor
+    And the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
+    When the user clicks "Edit" button for the form definition of "autotest-securityClassification", "autotest desc"
+    And the user clicks "Lifecycle" tab in form definition editor
+    Then the user views "Protected C" in security classification dropdown in form definition editor
+    When the user clicks Back button in form definition editor
+    # Event log validation for security classification
+    And the user selects the "Event log" menu item
+    And the user searches with "configuration-service:configuration-updated", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    And the user clicks Show details button for the latest event of "configuration-updated" for "configuration-service"
+    Then the user views the event details for the configuration-updated event to have "Protected C" as the securityClassification value
+    # Delete the created form definition
+    When the user selects the "Form" menu item
+    And the user selects "Definitions" tab for "Form"
+    And the user clicks "Delete" button for the form definition of "autotest-securityClassification", "autotest desc"
+    Then the user views delete "form definition" confirmation modal for "autotest-securityClassification"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the form definition of "autotest-securityClassification", "autotest desc"

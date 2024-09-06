@@ -127,3 +127,9 @@ Feature: Configuration-service
     # Load more
     When the user clicks Load more button on configuration service revisions page
     Then the user views more than ten revision records
+
+  @TEST_CS-3439 @REQ_CS-3381 @regression
+  Scenario: As a tenant admin, I can validate the configuration schema for form service to have securityClassification property
+    Given a tenant admin user is on configuration definitions page
+    When the user clicks "eye" button for the configuration definition of "form-service", "Definitions of forms with configuration of roles allowed to submit and assess." under "form-service"
+    Then the user views "form-service" configuration schema to include property for the securityClassification
