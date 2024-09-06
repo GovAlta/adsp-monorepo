@@ -165,7 +165,11 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete application"
-        content={`Delete the ${app.name} service status checks?`}
+        content={
+          <div>
+            Are you sure you wish to delete <b>{app.name}</b> ?
+          </div>
+        }
         onCancel={cancelDelete}
         onDelete={doDelete}
       />

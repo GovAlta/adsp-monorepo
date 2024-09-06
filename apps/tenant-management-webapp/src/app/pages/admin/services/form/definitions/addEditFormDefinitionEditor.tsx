@@ -1026,11 +1026,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         content={
           <div>
             <div>
-              Are you sure you wish to delete{' '}
-              {`${
-                definition?.dispositionStates &&
-                JSON.stringify(definition.dispositionStates[selectedDeleteDispositionIndex]?.name)
-              }`}
+              Are you sure you wish to delete
+              <b>
+                {definition?.dispositionStates &&
+                  JSON.stringify(definition.dispositionStates[selectedDeleteDispositionIndex]?.name)}
+              </b>{' '}
+              ?
             </div>
           </div>
         }

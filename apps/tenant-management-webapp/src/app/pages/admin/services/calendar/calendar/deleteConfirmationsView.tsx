@@ -37,7 +37,11 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
         onCancel={() => {
           setShowDeleteConfirmation(false);
         }}
-        content={<div>Delete {calendarName}?</div>}
+        content={
+          <div>
+            Are you sure you wish to delete <b> {calendarName}</b> ?
+          </div>
+        }
         onDelete={() => {
           setShowDeleteConfirmation(false);
           dispatch(DeleteCalendar(calendarName));

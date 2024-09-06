@@ -152,7 +152,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
           title="Delete PDF file"
           content={
             <div>
-              Are you sure you wish to delete <b>{showDeleteConfirmation?.filename}?</b>
+              Are you sure you wish to delete <b>{showDeleteConfirmation?.filename}</b> ?
             </div>
           }
           onCancel={() => setShowDeleteConfirmation(null)}

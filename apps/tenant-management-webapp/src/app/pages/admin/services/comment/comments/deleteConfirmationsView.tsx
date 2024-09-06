@@ -38,7 +38,8 @@ export const DeleteConfirmationsView = ({
             Are you sure you wish to delete{' '}
             <CommentWrapper>{`${
               selectedComment.title.length > 32 ? selectedComment.title.substring(0, 32) + '...' : selectedComment.title
-            }?`}</CommentWrapper>
+            }`}</CommentWrapper>{' '}
+            ?
           </div>
         }
         onCancel={() => {

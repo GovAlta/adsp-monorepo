@@ -166,9 +166,9 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
 
   const deleteContentElement = () => {
     return (
-      <>
-        Are you sure you wish to delete <b>{selectedTriggerEvent.name}? </b>
-      </>
+      <div>
+        Are you sure you wish to delete <b>{selectedTriggerEvent.name}</b> ?
+      </div>
     );
   };
 
