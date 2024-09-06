@@ -1,3 +1,4 @@
+import { standardV1JsonSchema } from '@abgov/data-exchange-standard';
 import {
   GoARenderers,
   createDefaultAjv,
@@ -60,7 +61,7 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   return (
     <JsonFormRegisterProvider defaultRegisters={definition?.registerData || []}>
       <JsonForms
-        ajv={createDefaultAjv()}
+        ajv={createDefaultAjv(standardV1JsonSchema)}
         readonly={readonly}
         schema={populateDropdown(definition.dataSchema, enumerators)}
         uischema={definition.uiSchema}
@@ -164,7 +165,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             deleteFile: deleteFormFile,
           }}
         >
-          <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting}/>
+          <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
         </ContextProvider>
         <GoAButtonGroup alignment="end">
           {showSubmit && (

@@ -22,10 +22,13 @@ export const SET_DRAFT_DATA_SCHEMA_ACTION = 'form/SET_DRAFT_DATA_SCHEMA_ACTION';
 export const SET_DRAFT_UI_SCHEMA_ACTION = 'form/SET_DRAFT_UI_SCHEMA_ACTION';
 
 export const PROCESS_DATA_SCHEMA_SUCCESS_ACTION = 'form/PROCESS_DATA_SCHEMA_SUCCESS_ACTION';
-export const PROCESS_UI_SCHEMA_SUCCESS_ACTION = 'form/PROCESS_UI_SCHEMA_SUCCESS_ACTION';
-
 export const PROCESS_DATA_SCHEMA_FAILED_ACTION = 'form/PROCESS_DATA_SCHEMA_FAILED_ACTION';
+
+export const PROCESS_UI_SCHEMA_SUCCESS_ACTION = 'form/PROCESS_UI_SCHEMA_SUCCESS_ACTION';
 export const PROCESS_UI_SCHEMA_FAILED_ACTION = 'form/PROCESS_UI_SCHEMA_FAILED_ACTION';
+
+export const RESOLVE_DATA_SCHEMA_SUCCESS_ACTION = 'form/RESOLVE_DATA_SCHEMA_SUCCESS_ACTION';
+export const RESOLVE_DATA_SCHEMA_FAILED_ACTION = 'form/RESOLVE_DATA_SCHEMA_FAILED_ACTION';
 
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
@@ -105,18 +108,28 @@ export interface ProcessDataSchemaSuccessAction {
   schema: JsonSchema;
 }
 
-export interface ProcessUISchemaSuccessAction {
-  type: typeof PROCESS_UI_SCHEMA_SUCCESS_ACTION;
-  schema: UISchemaElement;
-}
-
 export interface ProcessDataSchemaFailedAction {
   type: typeof PROCESS_DATA_SCHEMA_FAILED_ACTION;
   error: string;
 }
 
+export interface ProcessUISchemaSuccessAction {
+  type: typeof PROCESS_UI_SCHEMA_SUCCESS_ACTION;
+  schema: UISchemaElement;
+}
+
 export interface ProcessUISchemaFailedAction {
   type: typeof PROCESS_UI_SCHEMA_FAILED_ACTION;
+  error: string;
+}
+
+export interface ResolveDataSchemaSuccessAction {
+  type: typeof RESOLVE_DATA_SCHEMA_SUCCESS_ACTION;
+  schema: JsonSchema;
+}
+
+export interface ResolveDataSchemaFailedAction {
+  type: typeof RESOLVE_DATA_SCHEMA_FAILED_ACTION;
   error: string;
 }
 
@@ -138,7 +151,9 @@ export type FormActionTypes =
   | ProcessUISchemaSuccessAction
   | ProcessDataSchemaFailedAction
   | ProcessUISchemaFailedAction
-  | UpdateEditorFormDefinitionAction;
+  | UpdateEditorFormDefinitionAction
+  | ResolveDataSchemaSuccessAction
+  | ResolveDataSchemaFailedAction;
 
 export const clearFormDefinitions = (): ClearFormDefinitions => ({
   type: CLEAR_FORM_DEFINITIONS_ACTION,
@@ -228,17 +243,27 @@ export const processedDataSchema = (schema: JsonSchema): ProcessDataSchemaSucces
   schema,
 });
 
-export const processedUISchema = (schema: UISchemaElement): ProcessUISchemaSuccessAction => ({
-  type: PROCESS_UI_SCHEMA_SUCCESS_ACTION,
-  schema,
-});
-
 export const processDataSchemaFailed = (error: string): ProcessDataSchemaFailedAction => ({
   type: PROCESS_DATA_SCHEMA_FAILED_ACTION,
   error,
 });
 
+export const processedUISchema = (schema: UISchemaElement): ProcessUISchemaSuccessAction => ({
+  type: PROCESS_UI_SCHEMA_SUCCESS_ACTION,
+  schema,
+});
+
 export const processUISchemaFailed = (error: string): ProcessUISchemaFailedAction => ({
   type: PROCESS_UI_SCHEMA_FAILED_ACTION,
+  error,
+});
+
+export const resolvedDataSchema = (schema: JsonSchema): ResolveDataSchemaSuccessAction => ({
+  type: RESOLVE_DATA_SCHEMA_SUCCESS_ACTION,
+  schema,
+});
+
+export const resolveDataSchemaFailed = (error: string): ResolveDataSchemaFailedAction => ({
+  type: RESOLVE_DATA_SCHEMA_FAILED_ACTION,
   error,
 });

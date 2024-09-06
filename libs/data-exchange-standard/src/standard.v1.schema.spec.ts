@@ -16,7 +16,7 @@ describe('standard.schema.v1', () => {
         $schema: 'http://json-schema.org/draft-07/schema#',
         type: 'object',
         properties: {
-          address: { $ref: 'https:/adsp.alberta.ca/standard.v1.schema.json#postalAddress' },
+          address: { $ref: 'https://adsp.alberta.ca/standard.v1.schema.json#/properties/postalAddress' },
         },
       },
       'form'

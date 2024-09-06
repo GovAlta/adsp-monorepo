@@ -1,3 +1,7 @@
+const { ProvidePlugin } = require('webpack');
+
+// Node polyfills needed for @apidevtools/json-schema-ref-parser
+
 module.exports = (config) => {
   return {
     ...config,
@@ -6,6 +10,11 @@ module.exports = (config) => {
       alias: {
         ...config.resolve.alias,
         handlebars: 'handlebars/dist/handlebars.min.js',
+      },
+      fallback: {
+        ...config.resolve.fallback,
+        path: require.resolve('path-browserify'),
+        fs: require.resolve('browserify-fs'),
       },
     },
     module: {
@@ -18,5 +27,11 @@ module.exports = (config) => {
         },
       ],
     },
+    plugins: [
+      ...config.plugins,
+      new ProvidePlugin({
+        Buffer: ['buffer', 'Buffer'],
+      }),
+    ],
   };
 };

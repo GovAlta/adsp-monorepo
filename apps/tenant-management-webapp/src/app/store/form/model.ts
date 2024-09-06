@@ -65,5 +65,6 @@ export interface FormState {
     uiSchema: UISchemaElement;
     dataSchemaError?: string;
     uiSchemaError?: string;
+    resolvedDataSchema: JsonSchema;
   };
 }
