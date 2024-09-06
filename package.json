@@ -281,7 +281,7 @@
     "typescript": "5.4.5",
     "underscore": "^1.13.6",
     "url-loader": "^4.1.1",
-    "webpack": "5.90.3",
+    "webpack": "5.94.0",
     "yaml": "^1.10.0"
   },
   "overrides": {
