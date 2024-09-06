@@ -55,5 +55,5 @@ export const BorderBottom = styled.div`
 `;
 
 export const FormPreviewSpacer = styled.div`
-  margin-top: var(--goa-space-m);
+  margin-top: var(--goa-space-l);
 `

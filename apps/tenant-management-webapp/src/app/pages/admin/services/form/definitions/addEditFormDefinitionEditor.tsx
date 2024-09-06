@@ -154,7 +154,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const definition = useSelector(modifiedDefinitionSelector);
   const setDefinition = (update: Partial<FormDefinition>) => dispatch(updateEditorFormDefinition(update));
-  const showSpinner = useSelector((state: RootState) => state.form.editor.loading);
+  const isLoading = useSelector((state: RootState) => state.form.editor.loading);
+  const isSaving = useSelector((state: RootState) => state.form.editor.saving);
 
   const tempUiSchema = useSelector((state: RootState) => state.form.editor.uiSchemaDraft);
   const tempDataSchema = useSelector((state: RootState) => state.form.editor.dataSchemaDraft);
@@ -171,7 +172,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
 
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
-  const [customIndicator, setCustomIndicator] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [currentTab, setCurrentTab] = useState(0);
 
@@ -261,7 +261,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const close = () => {
     dispatch(ClearNewFileList());
-    navigate('/admin/services/form?definitions=true', { state: { isNavigatedFromEdit: true } });
+    navigate('..?definitions=true', { state: { isNavigatedFromEdit: true } });
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
@@ -392,11 +392,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   return (
     <FormEditor>
-      {showSpinner ? (
+      {isLoading ? (
         <PageIndicator />
       ) : (
         <FlexRow>
-          {customIndicator && <CustomLoader />}
+          {isSaving && <CustomLoader />}
           <NameDescriptionDataSchema>
             <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
             <hr className="hr-resize" />
@@ -756,8 +756,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   }
                   onClick={() => {
                     if (indicator.show !== true) {
-                      setCustomIndicator(true);
-
                       dispatch(
                         updateFormDefinition({
                           ...definition,

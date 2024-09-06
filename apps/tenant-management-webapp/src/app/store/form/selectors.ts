@@ -45,16 +45,19 @@ export const modifiedDefinitionSelector = createSelector(
   })
 );
 
-// NOTE: This assumes top level properties is always the same list.
-const orderedKeys = Object.keys(defaultFormDefinition).sort();
+function digestConfiguration(configuration: object): string {
+  return JSON.stringify(
+    Object.keys(configuration || {})
+      .sort()
+      .reduce((values, key) => ({ ...values, [key]: configuration[key] }), {})
+  );
+}
 export const isFormUpdatedSelector = createSelector(
   (state: RootState) => state.form.editor.original,
-  (state: RootState) => state.form.editor.modified,
-  (state: RootState) => state.form.editor.dataSchema,
-  (state: RootState) => state.form.editor.uiSchema,
-  (original, modified, dataSchema, uiSchema) => {
-    const originalDigest = JSON.stringify(original, orderedKeys);
-    const modifiedDigest = JSON.stringify({ ...modified, dataSchema, uiSchema }, orderedKeys);
+  modifiedDefinitionSelector,
+  (original, modified) => {
+    const originalDigest = digestConfiguration(original);
+    const modifiedDigest = digestConfiguration(modified);
     return originalDigest !== modifiedDigest;
   }
 );

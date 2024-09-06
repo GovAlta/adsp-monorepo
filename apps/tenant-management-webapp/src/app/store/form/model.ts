@@ -56,6 +56,7 @@ export interface FormState {
   editor: {
     selectedId: string;
     loading: boolean;
+    saving: boolean;
     original: FormDefinition;
     modified: Omit<FormDefinition, 'dataSchema' | 'uiSchema'>;
     dataSchemaDraft: string;

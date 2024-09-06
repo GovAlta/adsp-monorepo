@@ -1,6 +1,7 @@
 import { UISchemaElement } from '@jsonforms/core';
 import {
   FETCH_FORM_DEFINITIONS_SUCCESS_ACTION,
+  UPDATE_FORM_DEFINITION_ACTION,
   UPDATE_FORM_DEFINITION_SUCCESS_ACTION,
   DELETE_FORM_DEFINITION_SUCCESS_ACTION,
   FormActionTypes,
@@ -27,12 +28,13 @@ export const defaultState: FormState = {
   editor: {
     selectedId: null,
     loading: false,
+    saving: false,
     original: null,
     modified: null,
     dataSchemaDraft: '',
     uiSchemaDraft: '',
-    dataSchema: null,
-    uiSchema: null,
+    dataSchema: {},
+    uiSchema: {} as UISchemaElement,
   },
 };
 
@@ -55,12 +57,25 @@ export default function (state: FormState = defaultState, action: FormActionType
         nextEntries: action.next,
       };
 
+    case UPDATE_FORM_DEFINITION_ACTION:
+      return {
+        ...state,
+        editor: {
+          ...state.editor,
+          saving: state.editor.selectedId === action.definition.id ? true : state.editor.saving,
+        },
+      };
+
     case UPDATE_FORM_DEFINITION_SUCCESS_ACTION:
       return {
         ...state,
         definitions: {
           ...state.definitions,
           [action.payload.id]: action.payload,
+        },
+        editor: {
+          ...state.editor,
+          saving: state.editor.selectedId === action.payload.id ? false : state.editor.saving,
         },
       };
 
@@ -102,6 +117,7 @@ export default function (state: FormState = defaultState, action: FormActionType
         editor: {
           selectedId: action.definition.id,
           loading: false,
+          saving: false,
           original: action.definition,
           modified: definition,
           dataSchema: dataSchema || {},

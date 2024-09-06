@@ -8,7 +8,6 @@ export const FormRouter = () => {
     <Routes>
       <Route path="/" element={<Form />} />
       <Route path="/edit/:id" element={<FormDefinitionEditor />} />
-      <Route path="/new" element={<FormDefinitionEditor />} />
     </Routes>
   );
 };
