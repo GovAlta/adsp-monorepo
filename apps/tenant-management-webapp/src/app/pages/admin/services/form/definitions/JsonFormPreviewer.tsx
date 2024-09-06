@@ -16,7 +16,8 @@ interface JSONFormPreviewerProps {
 }
 
 export const JSONFormPreviewer = ({ data, onChange }: JSONFormPreviewerProps): JSX.Element => {
-  const dataSchema = useSelector((state: RootState) => state.form.editor.dataSchema);
+  // Resolved data schema (with refs inlined) is used with JsonForms since it doesn't handle remote refs.
+  const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema);
   const uiSchema = useSelector((state: RootState) => state.form.editor.uiSchema);
   const error = useSelector(schemaErrorSelector);
 

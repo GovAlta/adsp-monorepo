@@ -18,6 +18,7 @@
         "project": "libs/jsonforms-components/package.json",
         "entryFile": "libs/jsonforms-components/src/index.ts",
         "external": [
+          "@apidevtools/json-schema-ref-parser",
           "@abgov/react-components-new",
           "@jsonforms/core",
           "@jsonforms/react",

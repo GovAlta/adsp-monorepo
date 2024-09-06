@@ -184,9 +184,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const tempDataSchema = useSelector((state: RootState) => state.form.editor.dataSchemaDraft);
   const schemaError = useSelector(schemaErrorSelector);
 
-  const dataSchema = useSelector((state: RootState) => state.form.editor.dataSchema) as Record<string, unknown>;
-  const uiSchema = useSelector((state: RootState) => state.form.editor.uiSchema) as unknown as Record<string, unknown>;
-
   const isFormUpdated = useSelector(isFormUpdatedSelector);
 
   const latestNotification = useSelector(
@@ -224,6 +221,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dispatch(DeleteFileService(file?.id));
   };
 
+  // Resolved data schema (with refs inlined) is used to generate suggestions.
+  const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema) as Record<string, unknown>;
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('json', {
@@ -704,13 +703,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   }
                   onClick={() => {
                     if (indicator.show !== true) {
-                      dispatch(
-                        updateFormDefinition({
-                          ...definition,
-                          uiSchema,
-                          dataSchema,
-                        })
-                      );
+                      dispatch(updateFormDefinition(definition));
                     }
                   }}
                 >

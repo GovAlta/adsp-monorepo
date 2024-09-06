@@ -17,6 +17,8 @@ import {
   PROCESS_UI_SCHEMA_FAILED_ACTION,
   UPDATE_EDITOR_FORM_DEFINITION_ACTION,
   OPEN_EDITOR_FOR_DEFINITION_FAILED_ACTION,
+  RESOLVE_DATA_SCHEMA_SUCCESS_ACTION,
+  RESOLVE_DATA_SCHEMA_FAILED_ACTION,
 } from './action';
 
 import { FormState } from './model';
@@ -34,6 +36,7 @@ export const defaultState: FormState = {
     uiSchemaDraft: '',
     dataSchema: {},
     uiSchema: {} as UISchemaElement,
+    resolvedDataSchema: {},
   },
 };
 
@@ -119,10 +122,11 @@ export default function (state: FormState = defaultState, action: FormActionType
           saving: false,
           original: action.definition,
           modified: definition,
-          dataSchema: dataSchema || {},
-          uiSchema: uiSchema as unknown as UISchemaElement,
+          dataSchema: defaultState.editor.dataSchema,
+          uiSchema: defaultState.editor.uiSchema,
           dataSchemaDraft: JSON.stringify(dataSchema, null, 2),
           uiSchemaDraft: JSON.stringify(uiSchema, null, 2),
+          resolvedDataSchema: defaultState.editor.resolvedDataSchema,
         },
       };
     }
@@ -133,6 +137,8 @@ export default function (state: FormState = defaultState, action: FormActionType
         editor: {
           ...defaultState.editor,
           loading: false,
+          // Set the selectedId to prevent further attempts.
+          selectedId: action.id,
         },
       };
 
@@ -201,6 +207,25 @@ export default function (state: FormState = defaultState, action: FormActionType
         editor: {
           ...state.editor,
           uiSchemaError: action.error,
+        },
+      };
+
+    case RESOLVE_DATA_SCHEMA_SUCCESS_ACTION:
+      return {
+        ...state,
+        editor: {
+          ...state.editor,
+          resolvedDataSchema: action.schema,
+          dataSchemaError: null,
+        },
+      };
+
+    case RESOLVE_DATA_SCHEMA_FAILED_ACTION:
+      return {
+        ...state,
+        editor: {
+          ...state.editor,
+          dataSchemaError: action.error,
         },
       };
 

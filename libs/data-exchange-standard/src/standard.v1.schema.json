@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https:/adsp.alberta.ca/standard.v1.schema.json",
+  "$id": "https://adsp.alberta.ca/standard.v1.schema.json",
   "title": "Government of Alberta data exchange standard",
   "description": "JSON schema for Government of Alberta data exchange standard.",
   "$defs": {
@@ -14,7 +14,6 @@
   "type": "object",
   "properties": {
     "postalAddress": {
-      "$id": "#postalAddress",
       "description": "Address line contains the primary address number, predirectional information, street name, suffix, postdirectional information, secondary address identifier and/or secondary address.The address line can contain information for a civic, rural, or postal box address.",
       "type": "object",
       "properties": {
