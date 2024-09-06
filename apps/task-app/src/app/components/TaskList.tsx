@@ -51,39 +51,41 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
           </GoADropdown>
         </GoAFormItem>
       </div>
-      <GoATable mt="l" width="76%">
-        <colgroup>
-          <col style={{ width: 80 }} />
-          <col style={{ width: 80 }} />
-          <col style={{ width: 200 }} />
-          <col style={{ width: 80 }} />
-          <col style={{ width: 80 }} />
-          <col style={{ width: 170 }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Priority</th>
-            <th>Age</th>
-            <th>Task</th>
-            <th>Status</th>
-            <th>Assigned</th>
-            <th style={{ textAlign: 'center' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.map((task) => (
-            <TaskListItem
-              key={task.id}
-              task={task}
-              user={user}
-              onSelect={onSelect}
-              onAssign={onAssign}
-              onSetPriority={onSetPriority}
-              onOpen={onOpen}
-            />
-          ))}
-        </tbody>
-      </GoATable>
+      <div>
+        <GoATable mt="l" width="76%">
+          <colgroup>
+            <col style={{ width: 80 }} />
+            <col style={{ width: 80 }} />
+            <col style={{ width: 200 }} />
+            <col style={{ width: 80 }} />
+            <col style={{ width: 80 }} />
+            <col style={{ width: 170 }} />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Age</th>
+              <th>Task</th>
+              <th>Status</th>
+              <th>Assigned</th>
+              <th style={{ textAlign: 'center' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map((task) => (
+              <TaskListItem
+                key={task.id}
+                task={task}
+                user={user}
+                onSelect={onSelect}
+                onAssign={onAssign}
+                onSetPriority={onSetPriority}
+                onOpen={onOpen}
+              />
+            ))}
+          </tbody>
+        </GoATable>
+      </div>
     </div>
   );
 };
@@ -92,7 +94,7 @@ export const TaskList = styled(TaskListComponent)`
   z-index: 0;
   flex: 1;
   overflow: hidden;
-  display: flex;
+  display: contents;
   flex-direction: column;
 
   > div:first-child {
