@@ -3,10 +3,11 @@ import { FormDefinition } from '@store/form/model';
 import { OverflowWrap, EntryDetail } from '../styled-components';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { selectFormAppLink } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
+import { openEditorForDefinition } from '@store/form/action';
 interface PdfTemplateItemProps {
   formDefinition: FormDefinition;
   onDelete?: (FormDefinition) => void;
@@ -19,6 +20,7 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
       ? formDefinition.description?.substring(0, 80) + '...'
       : formDefinition.description;
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const formLink = useSelector((state: RootState) => selectFormAppLink(state, formDefinition?.id));
 
@@ -54,12 +56,13 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
               testId="form-definition-edit"
               title="Edit"
               type="create"
-              onClick={() =>
+              onClick={() => {
+                dispatch(openEditorForDefinition(formDefinition.id));
                 navigate({
                   pathname: `edit/${formDefinition.id}`,
                   search: '?headless=true',
-                })
-              }
+                });
+              }}
             />
             <GoAContextMenuIcon
               testId={`form-definition-delete`}
