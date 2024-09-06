@@ -10,5 +10,11 @@ export function renamePrefixProperties(value: unknown, prefix: string, replace: 
     }, {});
   }
 
+  if (value && Array.isArray(value)) {
+    value?.forEach((e, index) => {
+      value[index] = renamePrefixProperties(value[index], prefix, replace);
+    });
+  }
+
   return value;
 }

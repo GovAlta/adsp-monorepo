@@ -12,11 +12,13 @@
     "module": "esnext",
     "typeRoots": ["node_modules/@types"],
     "lib": ["es2017", "dom"],
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@abgov/adsp-service-sdk": ["libs/adsp-service-sdk/src/index.ts"],
+      "@abgov/data-exchange-standard": ["libs/data-exchange-standard/src/index.ts"],
       "@abgov/jsonforms-components": ["libs/jsonforms-components/src/index.ts"],
       "@core-services/app-common": ["libs/app-common/src/index.ts"],
       "@core-services/core-common": ["libs/core-common/src/index.ts"],

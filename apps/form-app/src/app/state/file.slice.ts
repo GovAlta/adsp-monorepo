@@ -96,16 +96,13 @@ export const downloadFile = createAsyncThunk(
   }
 );
 
-export const downloadFormPdf = createAsyncThunk('file/download-form-pdf', async (id: string, { rejectWithValue }) => {
+export const downloadFormPdf = createAsyncThunk('file/download-form-pdf', async (urn: string, { rejectWithValue }) => {
   try {
     const token = await getAccessToken();
-    const { data, headers } = await axios.get(
-      `/api/gateway/v1/file/v1/download?criteria={"recordIdContains": "${id}"}`,
-      {
-        responseType: 'blob',
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const { data, headers } = await axios.get(`/api/gateway/v1/file/v1/download?formUrn=${urn}`, {
+      responseType: 'blob',
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const mimeType = headers['content-type']?.toString();
 
     const file = await new Promise<string>((resolve, reject) => {
@@ -130,12 +127,12 @@ export const downloadFormPdf = createAsyncThunk('file/download-form-pdf', async 
 
 export const checkPdfFile = createAsyncThunk(
   'file/check-pdf-file',
-  async (id: string, { getState, rejectWithValue }) => {
+  async (urn: string, { getState, rejectWithValue }) => {
     try {
       const { user } = getState() as AppState;
       if (user.user) {
         const token = await getAccessToken();
-        const { data } = await axios.get(`/api/gateway/v1/file/v1/file?criteria={"recordIdContains": "${id}"}`, {
+        const { data } = await axios.get(`/api/gateway/v1/file/v1/file?formUrn=${urn}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

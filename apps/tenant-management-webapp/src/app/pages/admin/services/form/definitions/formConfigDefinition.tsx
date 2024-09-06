@@ -88,6 +88,7 @@ export const FormConfigDefinition = ({ definition }: PDFConfigFormProps) => {
           initialValue={definition}
           onSave={(definition) => {
             dispatch(updateFormDefinition(definition));
+            setOpenEditFormTemplate(false);
           }}
         />
       )}

@@ -1,105 +1,54 @@
-import React, { useEffect } from 'react';
+import { GoARenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
+import { GoACallout } from '@abgov/react-components-new';
 import { ajv } from '@lib/validation/checkInput';
 import { JsonForms } from '@jsonforms/react';
-import { ErrorBoundary } from 'react-error-boundary';
-import { GoARenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
-import { parseDataSchema, parseUiSchema } from './schemaUtils';
-import { JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { uiSchemaWrapper } from './schemaWrappers';
-import FallbackRender from './FallbackRenderer';
-import { useDebounce } from '@lib/useDebounce';
-import { useDispatch, useSelector } from 'react-redux';
-import { selectRegisterData } from '@store/configuration/selectors';
 import { RootState } from '@store/index';
+import { selectRegisterData } from '@store/configuration/selectors';
+import { schemaErrorSelector } from '@store/form/selectors';
+import { ErrorBoundary } from 'react-error-boundary';
+import { useSelector } from 'react-redux';
+import FallbackRender from './FallbackRenderer';
+import { FormPreviewSpacer } from './style-components';
+
 interface JSONFormPreviewerProps {
-  schema: string;
   data: unknown;
-  uischema: string;
-  onChange: (data) => void;
+  onChange: ({ data }: { data: unknown }) => void;
 }
 
-export const JSONFormPreviewer = (props: JSONFormPreviewerProps): JSX.Element => {
-  const { schema, uischema, data, onChange } = props;
-  const [lastGoodUiSchema, setLastGoodUiSchema] = React.useState<UISchemaElement>();
-  const [lastGoodSchema, setLastGoodSchema] = React.useState<JsonSchema>({});
-  const [dataSchemaError, setDataSchemaError] = React.useState<string>();
-  const [uiSchemaError, setUiSchemaError] = React.useState<string>();
-  const [isWrapped, setIsWrapped] = React.useState(false);
-  const parsedUiSchema = parseUiSchema<UISchemaElement>(uischema);
-  const parsedDataSchema = parseDataSchema<UISchemaElement>(schema);
+export const JSONFormPreviewer = ({ data, onChange }: JSONFormPreviewerProps): JSX.Element => {
+  // Resolved data schema (with refs inlined) is used with JsonForms since it doesn't handle remote refs.
+  const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema);
+  const uiSchema = useSelector((state: RootState) => state.form.editor.uiSchema);
+  const error = useSelector(schemaErrorSelector);
 
-  const debouncedUiSchema = useDebounce(uischema, 100);
-  const [display, setDisplay] = React.useState<boolean>(true);
-  const dispatch = useDispatch();
   const registerData = useSelector(selectRegisterData);
   const nonAnonymous = useSelector((state: RootState) => state.configuration?.nonAnonymous);
   const dataList = useSelector((state: RootState) => state.configuration?.dataList);
 
-  useEffect(() => {
-    if (!parsedUiSchema.hasError()) {
-      if (uiSchemaError) {
-        setUiSchemaError(undefined);
-      }
-      setLastGoodUiSchema(parsedUiSchema.get());
-    } else if (!uiSchemaError) {
-      setUiSchemaError(parsedUiSchema.error());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uischema]);
-
-  useEffect(() => {
-    setDisplay(false);
-  }, [debouncedUiSchema]);
-
-  useEffect(() => {
-    if (!display) {
-      setDisplay(true);
-    }
-  }, [display]);
-
-  useEffect(() => {
-    if (!parsedDataSchema.hasError()) {
-      setLastGoodSchema(parsedDataSchema.get());
-      if (dataSchemaError) {
-        setDataSchemaError(undefined);
-      }
-    } else {
-      setDataSchemaError(parsedDataSchema.error());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema]);
-
-  useEffect(() => {
-    const hasError = dataSchemaError || uiSchemaError;
-    if (hasError && !isWrapped) {
-      setIsWrapped(true);
-      setLastGoodUiSchema(uiSchemaWrapper(lastGoodUiSchema, hasError));
-    } else if (!hasError && isWrapped) {
-      setLastGoodUiSchema(parsedUiSchema.get());
-      setIsWrapped(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataSchemaError, uiSchemaError]);
-
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
-      {display && (
-        <JsonFormRegisterProvider
-          defaultRegisters={{ registerData: registerData, dataList: dataList, nonAnonymous: nonAnonymous } || undefined}
-        >
-          <JsonForms
-            ajv={ajv}
-            renderers={GoARenderers}
-            cells={GoACells}
-            onChange={onChange}
-            data={data}
-            validationMode={'ValidateAndShow'}
-            //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
-            schema={{ ...lastGoodSchema }}
-            uischema={{ ...lastGoodUiSchema }}
-          />
-        </JsonFormRegisterProvider>
+      {/* // This is a blank spacer div since web components can be problematic to apply styles to. */}
+      <FormPreviewSpacer />
+      {error && (
+        <GoACallout type="important" size="medium" testId="form-preview-error-callout" heading={error}>
+          You will see the last valid preview until the schema errors are fixed.
+        </GoACallout>
       )}
+      <JsonFormRegisterProvider
+        defaultRegisters={{ registerData: registerData, dataList: dataList, nonAnonymous: nonAnonymous }}
+      >
+        <JsonForms
+          ajv={ajv}
+          renderers={GoARenderers}
+          cells={GoACells}
+          onChange={onChange}
+          data={data}
+          validationMode={'ValidateAndShow'}
+          //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
+          schema={{ ...dataSchema }}
+          uischema={{ ...uiSchema }}
+        />
+      </JsonFormRegisterProvider>
     </ErrorBoundary>
   );
 };

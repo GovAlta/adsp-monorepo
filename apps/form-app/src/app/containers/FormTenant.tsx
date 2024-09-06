@@ -15,6 +15,7 @@ import {
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
 import { FormDefinition } from './FormDefinition';
+import { useFeedbackLinkHandler } from '../util/feedbackUtils';
 
 const AccountActionsSpan = styled.span`
   .username {
@@ -39,10 +40,11 @@ export const FormTenant = () => {
       dispatch(initializeTenant(tenantName));
     }
   }, [configInitialized, tenantName, dispatch]);
+  useFeedbackLinkHandler();
 
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" />
+      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
         {userInitialized && (
           <AccountActionsSpan>
