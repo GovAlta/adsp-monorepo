@@ -210,6 +210,7 @@
     "@types/traceparent": "^1.0.1",
     "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "7.6.0",
+    "ajv-errors": "^3.0.0",
     "artillery": "^2.0.16",
     "axe-core": "^4.8.2",
     "axe-html-reporter": "^2.2.2",
@@ -281,7 +282,7 @@
     "typescript": "5.4.5",
     "underscore": "^1.13.6",
     "url-loader": "^4.1.1",
-    "webpack": "5.90.3",
+    "webpack": "^5.94.0",
     "yaml": "^1.10.0"
   },
   "overrides": {

@@ -1,4 +1,4 @@
-import { standardV1JsonSchema } from '@abgov/data-exchange-standard';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
@@ -215,7 +215,7 @@ export function* parseUISchemaDraft({ draft }: SetDraftUISchemaAction): SagaIter
 export function* resolveDataSchema({ schema }: ProcessDataSchemaSuccessAction) {
   // JSON Forms doesn't handle remote $ref, so resolve to inline schema.
   // However, this is not the version we want to save.
-  const [resolvedSchema, error] = yield call(tryResolveRefs, schema, standardV1JsonSchema);
+  const [resolvedSchema, error] = yield call(tryResolveRefs, schema, standardV1JsonSchema, commonV1JsonSchema);
   if (error) {
     yield put(resolveDataSchemaFailed(`${error}`));
   } else {

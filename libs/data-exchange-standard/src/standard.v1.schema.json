@@ -7,7 +7,7 @@
     "personName": {
       "$comment": "The name (first, middle, last, preferred, other, etc.) of a person.",
       "type": "string",
-      "pattern": "^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}\\p{L}$"
+      "pattern": "^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$"
     },
     "postalAddress": {
       "$comment": "Address line contains the primary address number, predirectional information, street name, suffix, postdirectional information, secondary address identifier and/or secondary address.The address line can contain information for a civic, rural, or postal box address.",

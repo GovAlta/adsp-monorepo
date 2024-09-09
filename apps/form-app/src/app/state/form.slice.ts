@@ -1,4 +1,4 @@
-import { standardV1JsonSchema } from '@abgov/data-exchange-standard';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { RegisterData, tryResolveRefs } from '@abgov/jsonforms-components';
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
@@ -131,7 +131,7 @@ export const loadDefinition = createAsyncThunk(
 
       if (data.dataSchema) {
         // Try to resolve refs since Json forms doesn't handle remote refs.
-        const [resolved, error] = await tryResolveRefs(data.dataSchema, standardV1JsonSchema);
+        const [resolved, error] = await tryResolveRefs(data.dataSchema, standardV1JsonSchema, commonV1JsonSchema);
         if (!error) {
           data.dataSchema = resolved;
         }
