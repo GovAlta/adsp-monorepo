@@ -16,7 +16,7 @@ describe('standard.schema.v1', () => {
         $schema: 'http://json-schema.org/draft-07/schema#',
         type: 'object',
         properties: {
-          address: { $ref: 'https://adsp.alberta.ca/standard.v1.schema.json#/properties/postalAddress' },
+          address: { $ref: 'https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress' },
         },
       },
       'form'
@@ -24,7 +24,7 @@ describe('standard.schema.v1', () => {
 
     let result = ajv.validate('form', {
       address: {
-        address1: '123 fake st.',
+        addressLine1: '123 fake st.',
         subdivisionCode: 'AB',
         postalCode: 'T1A 4L1',
         country: 'CA',

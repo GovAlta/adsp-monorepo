@@ -2,6 +2,15 @@ import type { $RefParser } from '@apidevtools/json-schema-ref-parser';
 import { JsonSchema, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import _ from 'lodash';
 
+function addSchemaWithHttpUrlId(schemas: Record<string, JsonSchema>, schema: JsonSchema) {
+  const id = (schema as JsonSchema7).$id || (schema as JsonSchema4).id;
+  if (id && /^https?:\/\//.test(id)) {
+    schemas[id] = schema;
+  }
+
+  return schemas;
+}
+
 let dereference: $RefParser['dereference'];
 export async function resolveRefs(schema: JsonSchema, ...refSchemas: JsonSchema[]): Promise<JsonSchema> {
   if (!dereference) {
@@ -12,18 +21,11 @@ export async function resolveRefs(schema: JsonSchema, ...refSchemas: JsonSchema[
     }
   }
 
-  const available = refSchemas.reduce((schemas, refSchema) => {
-    const id = (refSchema as JsonSchema7).$id || (refSchema as JsonSchema4).id;
-    if (id) {
-      schemas[id] = refSchema;
-    }
-    return schemas;
-  }, {} as Record<string, JsonSchema>);
+  const available = refSchemas.reduce(addSchemaWithHttpUrlId, {} as Record<string, JsonSchema>);
 
-  // Clone since dereference will in place modify the input schema.
-  const source = _.cloneDeep(schema);
-  const result = await dereference(source, {
+  const result = await dereference(schema, {
     continueOnError: false,
+    mutateInputSchema: false,
     resolve: {
       http: false,
       file: false,

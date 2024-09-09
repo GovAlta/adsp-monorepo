@@ -71,10 +71,10 @@ describe('resolveRefs', () => {
         type: 'object',
         properties: {
           commonTest: {
-            $ref: '#/$defs/internal',
+            $ref: '#/definitions/internal',
           },
         },
-        $defs: {
+        definitions: {
           internal: {
             type: 'string',
           },
