@@ -237,5 +237,17 @@ class FormPage {
   definitionsPage() {
     return cy.xpath('//div[@data-testid="form-templates"]');
   }
+
+  definitionsEditorLifecycleApplicationItems() {
+    return cy.xpath('//h3[text()="Application"]/following-sibling::div/goa-form-item');
+  }
+
+  definitionsEditorLifecycleSecurityClassificationDropdown() {
+    return cy.xpath('//goa-dropdown[@name="securityClassifications"]');
+  }
+
+  definitionsEditorLifecycleSecurityClassificationDropdownItems() {
+    return cy.xpath('//goa-dropdown[@name="securityClassifications"]/goa-dropdown-item');
+  }
 }
 export default FormPage;

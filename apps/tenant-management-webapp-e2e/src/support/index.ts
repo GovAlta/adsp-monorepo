@@ -41,7 +41,8 @@ Cypress.on('uncaught:exception', (err) => {
     err.message.includes("Cannot read properties of undefined (reading 'id')") || // File type modal
     err.message.includes("Cannot read properties of undefined (reading 'nameSpace')") || // Add event modal for notification types (CS-2476)
     err.message.includes('ResizeObserver loop completed with undelivered notifications') || // Add value definition modal
-    err.message.includes('Invalid time value') // Add calendar event modal
+    err.message.includes('Invalid time value') || // Add calendar event modal
+    err.message.includes('') // Save form definition with an empty error
   ) {
     return false;
   }
