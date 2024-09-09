@@ -103,7 +103,11 @@ export const EventStreams = (): JSX.Element => {
           <DeleteModal
             isOpen={showDeleteStream}
             title="Delete stream"
-            content={`Delete ${selectedStream.name}?`}
+            content={
+              <div>
+                Are you sure you wish to delete <b> {selectedStream.name}</b> ?
+              </div>
+            }
             onCancel={() => {
               setShowDeleteStream(false);
             }}

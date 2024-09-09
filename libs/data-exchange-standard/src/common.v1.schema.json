@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://adsp.alberta.ca/common.v1.schema.json",
+  "title": "Government of Alberta common definitions",
+  "description": "JSON schema for Government of Alberta common definitions.",
+  "definitions": {
+    "personFullName": {
+      "$comment": "The full name of a person including first, middle, and last names.",
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
+        },
+        "middleName": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
+        },
+        "lastName": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
+        }
+      },
+      "required": [
+        "firstName",
+        "lastName"
+      ]
+    }
+  }
+}

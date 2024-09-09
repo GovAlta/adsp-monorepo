@@ -20,9 +20,9 @@ export const WebhookDeleteModal = (): JSX.Element => {
             dispatch(ResetModalState());
           }}
           content={
-            <p>
-              Are you sure you wish to delete #<b>{`${webhook?.name}?`}</b>
-            </p>
+            <div>
+              Are you sure you wish to delete <b>{webhook?.name}</b> ?
+            </div>
           }
           onDelete={() => {
             dispatch(DeleteWebhookService(webhook));

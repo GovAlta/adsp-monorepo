@@ -123,7 +123,11 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
         title="Delete PDF template"
         content={
           <div>
-            Delete <b>{`${currentTemplate?.name} (ID: ${currentTemplate?.id})?`}</b>
+            Are you sure you wish to delete{' '}
+            <b>
+              {currentTemplate?.name} ID: {currentTemplate?.id}
+            </b>{' '}
+            ?
           </div>
         }
         onCancel={() => setShowDeleteConfirmation(false)}

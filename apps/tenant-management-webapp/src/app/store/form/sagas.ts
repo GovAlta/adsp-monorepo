@@ -1,3 +1,5 @@
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
+import { tryResolveRefs } from '@abgov/jsonforms-components';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
@@ -24,6 +26,12 @@ import {
   processDataSchemaFailed,
   processUISchemaFailed,
   openEditorForDefinitionFailed,
+  ProcessDataSchemaSuccessAction,
+  resolveDataSchemaFailed,
+  resolvedDataSchema,
+  PROCESS_DATA_SCHEMA_SUCCESS_ACTION,
+  OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION,
+  OpenEditorForDefinitionSuccessAction,
 } from './action';
 
 import { getAccessToken } from '@store/tenant/sagas';
@@ -35,7 +43,7 @@ import {
 } from './api';
 import { FormDefinition } from './model';
 import { ajv } from '@lib/validation/checkInput';
-import { JsonSchema } from '@jsonforms/core';
+import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -161,6 +169,15 @@ export function* openEditorForDefinition({ id, newDefinition }: OpenEditorForDef
   }
 }
 
+export function* initializeDefinitionSchemas({ definition }: OpenEditorForDefinitionSuccessAction): SagaIterator {
+  if (definition.dataSchema) {
+    yield put(processedDataSchema(definition.dataSchema));
+  }
+  if (definition.uiSchema) {
+    yield put(processedUISchema(definition.uiSchema as unknown as UISchemaElement));
+  }
+}
+
 const hasProperties = (schema: JsonSchema): boolean => {
   return (
     (typeof schema === 'object' && Object.keys(schema).length === 0) ||
@@ -176,6 +193,7 @@ export function* parseDataSchemaDraft({ draft }: SetDraftDataSchemaAction): Saga
     if (Object.keys(parsedSchema).length > 0 && !hasProperties(parsedSchema)) {
       throw new Error('Data schema must have "properties"');
     }
+
     yield put(processedDataSchema(parsedSchema));
   } catch (err) {
     // failed parsing.
@@ -194,11 +212,24 @@ export function* parseUISchemaDraft({ draft }: SetDraftUISchemaAction): SagaIter
   }
 }
 
+export function* resolveDataSchema({ schema }: ProcessDataSchemaSuccessAction) {
+  // JSON Forms doesn't handle remote $ref, so resolve to inline schema.
+  // However, this is not the version we want to save.
+  const [resolvedSchema, error] = yield call(tryResolveRefs, schema, standardV1JsonSchema, commonV1JsonSchema);
+  if (error) {
+    yield put(resolveDataSchemaFailed(`${error}`));
+  } else {
+    yield put(resolvedDataSchema(resolvedSchema));
+  }
+}
+
 export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
   yield takeEvery(UPDATE_FORM_DEFINITION_ACTION, updateFormDefinition);
   yield takeEvery(DELETE_FORM_DEFINITION_ACTION, deleteFormDefinition);
   yield takeEvery(OPEN_EDITOR_FOR_DEFINITION_ACTION, openEditorForDefinition);
+  yield takeLatest(OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION, initializeDefinitionSchemas);
   yield takeLatest(SET_DRAFT_DATA_SCHEMA_ACTION, parseDataSchemaDraft);
   yield takeLatest(SET_DRAFT_UI_SCHEMA_ACTION, parseUISchemaDraft);
+  yield takeLatest(PROCESS_DATA_SCHEMA_SUCCESS_ACTION, resolveDataSchema);
 }

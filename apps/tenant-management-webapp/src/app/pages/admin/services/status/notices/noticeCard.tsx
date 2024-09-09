@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Notice } from '@store/notice/models';
 import styled from 'styled-components';
 import { GoABadge } from '@abgov/react-components-new';
-import SettingIcon from '@assets/icons/setting-filled.svg';
 import { DraftDropdownMenu, PublishedDropdownMenu } from './noticeCardMenu';
 import { IconContext } from '@components/icons/IconContext';
 import { useSelector } from 'react-redux';
@@ -11,6 +10,7 @@ import { deleteNotice } from '@store/notice/actions';
 import { useDispatch } from 'react-redux';
 import { DeleteModal } from '@components/DeleteModal';
 import { FormatTimeWithDateAt } from '@lib/timeUtil';
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 
 const NoticeCardContainer = styled.div`
   border-radius: 0.25rem;
@@ -30,9 +30,10 @@ const NoticeCardContainer = styled.div`
 `;
 const HeaderContainer = styled.div`
   padding-bottom: 0.5rem;
-  img {
-    float: right;
-  }
+`;
+
+const Settings = styled.div`
+  float: right;
 `;
 const CardContent = styled.div`
   padding-top: 0.5rem;
@@ -107,16 +108,14 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             />
           )}
           {props.mode !== 'archived' && (
-            <img
-              className="goa-icon"
-              src={SettingIcon}
-              width="30"
-              alt="notice-card-setting"
-              data-testid="notice-card-gear-button"
-              onClick={() => {
-                clickMenuFn(notice.id, false);
-              }}
-            />
+            <Settings>
+              <GoAContextMenuIcon
+                testId="notice-card-gear-button"
+                title="Settings"
+                type="settings"
+                onClick={() => clickMenuFn(notice.id, false)}
+              />
+            </Settings>
           )}
           {props.isOrphaned && (
             <OrphanedBadge>
@@ -216,7 +215,11 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete notice"
-        content={`Delete ${props.notice.message} ?`}
+        content={
+          <div>
+            Are you sure you wish to delete <b>{props.notice.message}</b> ?
+          </div>
+        }
         onCancel={() => setShowDeleteConfirmation(false)}
         onDelete={() => {
           setShowDeleteConfirmation(false);

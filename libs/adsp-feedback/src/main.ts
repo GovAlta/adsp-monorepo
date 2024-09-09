@@ -79,6 +79,7 @@ class AdspFeedback implements AdspFeedbackApi {
       }
     }
   }
+
   private openStartForm() {
     this.startRef?.value?.setAttribute('data-show', 'true');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
@@ -463,6 +464,10 @@ class AdspFeedback implements AdspFeedbackApi {
     }
   };
 
+  public openFeedbackForm() {
+    this.openStartForm();
+  }
+
   public initialize({ apiUrl, tenant, name, email, getAccessToken, getContext }: FeedbackOptions) {
     if (apiUrl && typeof apiUrl === 'string') {
       this.apiUrl = new URL(apiUrl);
@@ -540,7 +545,7 @@ class AdspFeedback implements AdspFeedbackApi {
             display: none;
           }
           .adsp-fb .adsp-fb-badge {
-            z-index: 1;
+            z-index: 1000;
             background: #0081a2;
             color: #ffffff;
             position: fixed;
@@ -551,6 +556,7 @@ class AdspFeedback implements AdspFeedbackApi {
             cursor: pointer;
             border-radius: 0 0.25rem 0.25rem 0;
             transform: rotate(-180deg);
+            display: block;
           }
           .adsp-fb .adsp-fb-badge:hover {
             border-color: #004f84;
@@ -1047,7 +1053,11 @@ class AdspFeedback implements AdspFeedbackApi {
               cursor: pointer;
             }
           }
-
+          @media screen and (max-width: 624px) {
+            .adsp-fb .adsp-fb-badge {
+              display: none;
+            }
+          }
           @media screen and (max-height: 800px) {
             .adsp-fb .adsp-fb-form-container {
               top: 16px;

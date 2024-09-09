@@ -1,4 +1,5 @@
-import { RegisterData } from '@abgov/jsonforms-components';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
+import { RegisterData, tryResolveRefs } from '@abgov/jsonforms-components';
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
@@ -127,6 +128,14 @@ export const loadDefinition = createAsyncThunk(
           params: { tenantId: tenantId.toString() },
         }
       );
+
+      if (data.dataSchema) {
+        // Try to resolve refs since Json forms doesn't handle remote refs.
+        const [resolved, error] = await tryResolveRefs(data.dataSchema, standardV1JsonSchema, commonV1JsonSchema);
+        if (!error) {
+          data.dataSchema = resolved;
+        }
+      }
 
       const registerUrns = extraRegisterUrns(data?.uiSchema);
       const registerData = [];
