@@ -81,8 +81,6 @@ export const ContextProvider = ContextProviderFactory();
 
 const isUseMiniMap = window.screen.availWidth >= 1920;
 
-console.log(window.screen.availWidth);
-
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
   options: {
@@ -135,9 +133,9 @@ const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdat
       anonymousRead={anonymousRead}
       roleSelectFunc={onUpdateRoles}
       nameColumnWidth={40}
-      service="FileType"
+      service="FormService"
       checkedRoles={[
-        { title: types[0].name, selectedRoles: configuration[types[0].type] },
+        { title: types[0].name, selectedRoles: configuration[types[0].type], disabled: anonymousRead },
         { title: types[1].name, selectedRoles: configuration[types[1].type] },
         { title: types[2].name, selectedRoles: configuration[types[2].type] },
       ]}
@@ -473,6 +471,28 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           />
                         </FormFormItem>
                       </GoAFormItem>
+                      <FlexRow>
+                        <GoACheckboxPad>
+                          <GoACheckbox
+                            name="form-definition-anonymous-apply"
+                            key="form-definition-anonymous-apply-checkbox"
+                            checked={definition.anonymousApply === true}
+                            onChange={(name, checked) => {
+                              setDefinition({ anonymousApply: checked });
+                            }}
+                            text={'Allow anonymous application'}
+                          />
+                        </GoACheckboxPad>
+                        <InfoCircleWithInlineHelp
+                          text={
+                            definition.anonymousApply
+                              ? 'Forms of this type will allow anonymous user to apply.'
+                              : 'Forms of this type will allow not anonymous user to apply.'
+                          }
+                          width="280"
+                        />
+                      </FlexRow>
+
                       <FlexRow>
                         <GoACheckboxPad>
                           <GoACheckbox
