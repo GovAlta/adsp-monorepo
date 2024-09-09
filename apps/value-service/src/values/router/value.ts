@@ -39,12 +39,24 @@ export const readValues: RequestHandler = async (req, res, next) => {
       ? (req.query.names as string).split(',').map((name) => name.trim())
       : Object.keys(entity.definitions);
 
-    const results: { name: string; value: Value }[] = await Promise.all(
-      names.map(async (name) => ({
-        name,
-        value: (await entity.definitions[name].readValues(user, user.tenantId, 1)).results[0],
-      }))
+    let results: { name: string; value: Value }[] = await Promise.all(
+      names.map(async (name) => {
+        const result = entity.definitions[name] && (await entity.definitions[name].readValues(user, user.tenantId, 1));
+        if (!result) return null;
+        return {
+          name,
+          value: result && result.results[0],
+        };
+      })
     );
+
+    results = results.filter((name) => {
+      return name !== null;
+    });
+
+    if (results.length === 0) {
+      throw new NotFoundError('names within namespace', namespace);
+    }
 
     res.send({
       [namespace]: results.reduce((v, c) => ({ ...v, [c.name]: mapValue(c.value) }), {}),

@@ -160,7 +160,11 @@ const FileList = (): JSX.Element => {
         <DeleteModal
           isOpen={showDeleteConfirmation}
           title="Delete file"
-          content={`Delete file ${selectedFile?.filename} ?`}
+          content={
+            <div>
+              Are you sure you wish to delete <b> {selectedFile?.filename}</b> ?
+            </div>
+          }
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);

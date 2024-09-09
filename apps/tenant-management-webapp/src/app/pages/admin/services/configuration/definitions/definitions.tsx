@@ -142,7 +142,11 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete configuration definition"
-        content={`Delete ${selectedDefinitionName}?`}
+        content={
+          <div>
+            Are you sure you wish to delete <b> {selectedDefinitionName}</b> ?
+          </div>
+        }
         onCancel={() => setShowDeleteConfirmation(false)}
         onDelete={() => {
           setShowDeleteConfirmation(false);

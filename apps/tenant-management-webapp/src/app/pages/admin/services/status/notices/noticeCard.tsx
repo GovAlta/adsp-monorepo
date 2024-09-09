@@ -215,7 +215,11 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete notice"
-        content={`Delete ${props.notice.message} ?`}
+        content={
+          <div>
+            Are you sure you wish to delete <b>{props.notice.message}</b> ?
+          </div>
+        }
         onCancel={() => setShowDeleteConfirmation(false)}
         onDelete={() => {
           setShowDeleteConfirmation(false);
