@@ -459,17 +459,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 <BorderBottom>
                   <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
                     <H3>Application</H3>
-                    <GoACheckboxPad>
-                      <GoACheckbox
-                        name="form-definition-anonymous-apply"
-                        key="form-definition-anonymous-apply-checkbox"
-                        checked={definition.anonymousApply === true}
-                        onChange={(name, checked) => {
-                          setDefinition({ anonymousApply: checked });
-                        }}
-                        text={'Allow anonymous application'}
-                      />
-                    </GoACheckboxPad>
                     <div>
                       <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
                         <FormFormItem>
@@ -483,6 +472,28 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           />
                         </FormFormItem>
                       </GoAFormItem>
+                      <FlexRow>
+                        <GoACheckboxPad>
+                          <GoACheckbox
+                            name="form-definition-anonymous-apply"
+                            key="form-definition-anonymous-apply-checkbox"
+                            checked={definition.anonymousApply === true}
+                            onChange={(name, checked) => {
+                              setDefinition({ anonymousApply: checked });
+                            }}
+                            text={'Allow anonymous application'}
+                          />
+                        </GoACheckboxPad>
+                        <InfoCircleWithInlineHelp
+                          text={
+                            definition.anonymousApply
+                              ? 'Forms of this type will allow anonymous user to apply.'
+                              : 'Forms of this type will allow not anonymous user to apply.'
+                          }
+                          width="280"
+                        />
+                      </FlexRow>
+
                       <FlexRow>
                         <GoACheckboxPad>
                           <GoACheckbox
