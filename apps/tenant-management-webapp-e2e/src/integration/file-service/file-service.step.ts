@@ -966,7 +966,7 @@ Then('the user views {string} selected as default security classification', func
     .should('eq', defaultClassification.toLowerCase());
 });
 
-Then('the user views {string} in security classification dropdown', function (dropdownOptions) {
+Then('the user views {string} in security classification dropdown in file type editor', function (dropdownOptions) {
   const options = dropdownOptions.split(',');
   fileServiceObj.fileTypeClassificationDropdownItems().then((elements) => {
     expect(elements.length).to.eq(options.length);

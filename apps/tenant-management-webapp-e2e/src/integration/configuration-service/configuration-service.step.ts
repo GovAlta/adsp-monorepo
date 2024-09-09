@@ -55,6 +55,17 @@ Given('a tenant admin user is on configuration overview page', function () {
   commonlib.tenantAdminMenuItem('Configuration', 4000);
 });
 
+Given('a tenant admin user is on configuration definitions page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Configuration', 4000);
+  commonObj.serviceTab('Configuration', 'Definitions').click();
+});
+
 When('the user clicks Add definition button on configuration overview page', function () {
   configurationObj.addConfigurationDefinitionBtn().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
@@ -558,3 +569,16 @@ Then('the user views {string} in payload schema in configuration definition moda
       expect(jsonSchemaInEdit.replace(/[0-9]/g, '')).to.eq(schema.replace(/ /g, '').replace(/\*/g, ''));
     });
 });
+
+Then(
+  'the user views {string} configuration schema to include property for the securityClassification',
+  function (definitionName) {
+    configurationObj
+      .configurationSchemaDetails(definitionName)
+      .invoke('text')
+      .should(
+        'contains',
+        '"securityClassification": {\n      "type": "string",\n      "enum": [\n        "public",\n        "protected a",\n        "protected b",\n        "protected c"\n      ],\n      "default": "protected a"\n    }'
+      );
+  }
+);
