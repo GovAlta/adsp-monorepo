@@ -18,27 +18,6 @@ jest.mock('@jsonforms/core', () => ({
   isVisible: jest.fn(() => true), // Mocking isVisible to always return true
   isEnabled: jest.fn(() => true), // Mocking isVisible to always return true
 }));
-jest.mock('ajv', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
-    compile: jest.fn((schema) => {
-      return jest.fn((data) => {
-        return true;
-      });
-    }),
-    validate: jest.fn(),
-    addSchema: jest.fn(),
-    addFormat: jest.fn(),
-  })),
-  compile: jest.fn((schema) => {
-    return jest.fn((data) => {
-      return true;
-    });
-  }),
-  validate: jest.fn(), // Mock the validate method for non-default export
-  addSchema: jest.fn(), // Mock any other methods you may need for non-default export
-  addFormat: jest.fn(), // Mock any other methods you may need for non-default export
-}));
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {
   // eslint-disable-next-line

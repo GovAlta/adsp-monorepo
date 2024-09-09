@@ -43,6 +43,7 @@
     "@keycloak/keycloak-admin-client": "^19.0.3",
     "@socket.io/redis-adapter": "^8.3.0",
     "ajv": "^8.6.1",
+    "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
     "amqp-connection-manager": "^3.7.0",
     "amqplib": "^0.8.0",
@@ -281,7 +282,7 @@
     "typescript": "5.4.5",
     "underscore": "^1.13.6",
     "url-loader": "^4.1.1",
-    "webpack": "5.90.3",
+    "webpack": "^5.94.0",
     "yaml": "^1.10.0"
   },
   "overrides": {

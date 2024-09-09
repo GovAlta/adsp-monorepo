@@ -1,4 +1,4 @@
-import { standardV1JsonSchema } from '@abgov/data-exchange-standard';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import {
   GoARenderers,
   createDefaultAjv,
@@ -61,7 +61,7 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   return (
     <JsonFormRegisterProvider defaultRegisters={definition?.registerData || []}>
       <JsonForms
-        ajv={createDefaultAjv(standardV1JsonSchema)}
+        ajv={createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema)}
         readonly={readonly}
         schema={populateDropdown(definition.dataSchema, enumerators)}
         uischema={definition.uiSchema}

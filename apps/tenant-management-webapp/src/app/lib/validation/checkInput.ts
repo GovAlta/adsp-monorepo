@@ -22,7 +22,7 @@
  *      of forbidden words.
  *
  */
-import { standardV1JsonSchema } from '@abgov/data-exchange-standard';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { createDefaultAjv } from '@abgov/jsonforms-components';
 import * as schemaMigration from 'json-schema-migrate';
 
@@ -31,7 +31,7 @@ export interface ValidInput {
   onFailureMessage: string;
 }
 
-export const ajv = createDefaultAjv(standardV1JsonSchema);
+export const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
 ajv.addKeyword({
   keyword: 'isNotEmpty',

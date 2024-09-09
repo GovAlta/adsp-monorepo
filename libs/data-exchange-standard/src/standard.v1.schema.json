@@ -3,65 +3,112 @@
   "$id": "https://adsp.alberta.ca/standard.v1.schema.json",
   "title": "Government of Alberta data exchange standard",
   "description": "JSON schema for Government of Alberta data exchange standard.",
-  "$defs": {
-    "addressLine": {
+  "definitions": {
+    "personName": {
+      "$comment": "The name (first, middle, last, preferred, other, etc.) of a person.",
       "type": "string",
-      "description": "A portion of an individual's mailing address which identifies a specific location within a municipality.",
-      "minLength": 1,
-      "maxLength": 60
-    }
-  },
-  "type": "object",
-  "properties": {
+      "pattern": "^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$"
+    },
     "postalAddress": {
-      "description": "Address line contains the primary address number, predirectional information, street name, suffix, postdirectional information, secondary address identifier and/or secondary address.The address line can contain information for a civic, rural, or postal box address.",
+      "$comment": "Address line contains the primary address number, predirectional information, street name, suffix, postdirectional information, secondary address identifier and/or secondary address.The address line can contain information for a civic, rural, or postal box address.",
       "type": "object",
       "properties": {
         "addressLine1": {
-          "$ref": "#/$defs/addressLine"
+          "description": "Building number and street, or PO box",
+          "allOf": [
+            {
+              "$ref": "#/definitions/postalAddress/definitions/addressLine"
+            }
+          ]
         },
         "addressLine2": {
-          "$ref": "#/$defs/addressLine"
+          "description": "Apartment or unit number",
+          "allOf": [
+            {
+              "$ref": "#/definitions/postalAddress/definitions/addressLine"
+            }
+          ]
         },
         "addressLine3": {
-          "$ref": "#/$defs/addressLine"
+          "$ref": "#/definitions/postalAddress/definitions/addressLine"
         },
         "addressLine4": {
-          "$ref": "#/$defs/addressLine"
+          "$ref": "#/definitions/postalAddress/definitions/addressLine"
         },
         "addressLine5": {
-          "$ref": "#/$defs/addressLine"
+          "$ref": "#/definitions/postalAddress/definitions/addressLine"
         },
         "addressLine6": {
-          "$ref": "#/$defs/addressLine"
+          "$ref": "#/definitions/postalAddress/definitions/addressLine"
         },
         "municipality": {
           "type": "string",
-          "description": "The name of a city, town, hamlet, or village."
+          "$comment": "The name of a city, town, hamlet, or village."
         },
         "subdivisionCode": {
           "type": "string",
-          "description": "A three-letter code identifying the applicable province, state, or territory.",
+          "$comment": "A three-letter code identifying the applicable province, state, or territory.",
           "pattern": "^[A-Z]{2,3}$"
         },
         "postalCode": {
-          "type": "string",
-          "description": "A code assigned to one or more addresses, required for the mechanized processing of mail.",
-          "pattern": "^[a-zA-Z0-9- ]{1,20}$"
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalCode"
         },
         "country": {
           "type": "string",
-          "description": "The international standard two-letter country code.",
+          "$comment": "The international standard two-letter country code.",
           "minLength": 2,
           "maxLength": 2
         }
       },
       "required": [
-        "address1",
+        "addressLine1",
         "subdivisionCode",
         "postalCode",
         "country"
-      ]
+      ],
+      "definitions": {
+        "addressLine": {
+          "type": "string",
+          "$comment": "A portion of an individual's mailing address which identifies a specific location within a municipality.",
+          "minLength": 1,
+          "maxLength": 60
+        }
+      }
+    },
+    "postalCode": {
+      "$comment": "A series of letters and/or numbers used as part of a postal address to expedite the processing of machine-sorted mail.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/postalCode/definitions/canadaPostalCode"
+        },
+        {
+          "$ref": "#/definitions/postalCode/definitions/usPostalCodeFiveDigit"
+        },
+        {
+          "$ref": "#/definitions/postalCode/definitions/usPostalCodeNineDigit"
+        },
+        {
+          "$ref": "#/definitions/postalCode/definitions/internationalPostalCode"
+        }
+      ],
+      "definitions": {
+        "canadaPostalCode": {
+          "type": "string",
+          "pattern": "^[A-Z][0-9][A-Z] [0-9][A-Z][0-9]$"
+        },
+        "usPostalCodeFiveDigit": {
+          "type": "string",
+          "pattern": "^[0-9]{5}-[0-9]{4}$"
+        },
+        "usPostalCodeNineDigit": {
+          "type": "string",
+          "pattern": "^[0-9]{5}$"
+        },
+        "internationalPostalCode": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9- ]{0,15}$"
+        }
+      }
     }
   }
 }
