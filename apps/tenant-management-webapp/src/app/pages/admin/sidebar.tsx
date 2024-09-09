@@ -10,6 +10,7 @@ import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actio
 import { getIdpHint } from '@lib/keycloak';
 
 import { serviceVariables } from '../../../featureFlag';
+import { GoASideMenu, GoASideMenuGroup, GoASideMenuHeading } from '@abgov/react-components-new';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';
@@ -44,40 +45,44 @@ const Sidebar = ({ type }: SidebarProps) => {
 
   return (
     <Links>
-      {authenticated && (
-        <>
-          <div style={{ paddingBottom: '1rem' }}>
-            <Title>{tenantName}</Title>
-          </div>
-          <NavLink
-            to="/admin"
-            end
-            className={({ isActive }) => (isActive ? 'current' : '')}
-            title="Dashboard"
-            data-testid="menu-dashboard"
-          >
-            <span>Dashboard</span>
-          </NavLink>
-          {hasAdminRole && (
-            <>
-              <NavLink
-                to="event-log"
-                className={({ isActive }) => (isActive ? 'current' : '')}
-                title="Event log"
-                data-testid="menu-eventLog"
-              >
-                <span>Event log</span>
-              </NavLink>
-              <NavLink
-                to="service-metrics"
-                className={({ isActive }) => (isActive ? 'current' : '')}
-                title="Service metrics"
-                data-testid="menu-service-metrics"
-              >
-                <span>Service metrics</span>
-              </NavLink>
-              <Title>Services</Title>
-              {serviceVariables(config.featureFlags).map((service, index) => (
+      <GoASideMenu>
+        {authenticated && (
+          <>
+            <GoASideMenuHeading>
+              <Title>{tenantName}</Title>
+            </GoASideMenuHeading>
+            <NavLink
+              to="/admin"
+              end
+              className={({ isActive }) => (isActive ? 'current' : '')}
+              title="Dashboard"
+              data-testid="menu-dashboard"
+            >
+              <span>Dashboard</span>
+            </NavLink>
+            {hasAdminRole && (
+              <>
+                <NavLink
+                  to="event-log"
+                  className={({ isActive }) => (isActive ? 'current' : '')}
+                  title="Event log"
+                  data-testid="menu-eventLog"
+                >
+                  <span>Event log</span>
+                </NavLink>
+                <NavLink
+                  to="service-metrics"
+                  className={({ isActive }) => (isActive ? 'current' : '')}
+                  title="Service metrics"
+                  data-testid="menu-service-metrics"
+                >
+                  <span>Service metrics</span>
+                </NavLink>
+              </>
+            )}
+            <GoASideMenuHeading>Services</GoASideMenuHeading>
+            {hasAdminRole &&
+              serviceVariables(config.featureFlags).map((service, index) => (
                 <NavLink
                   key={index}
                   to={service.link}
@@ -89,24 +94,9 @@ const Sidebar = ({ type }: SidebarProps) => {
                   {service.beta && betaBadge()}
                 </NavLink>
               ))}
-            </>
-          )}
-        </>
-      )}
-
-      {type === 'mobile' && (
-        <SignOutLink>
-          <hr />
-          <LogoutWrapper>
-            <img src={LogoutIcon} width="16" alt="Access" />
-            {authenticated ? (
-              <span onClick={() => dispatch(TenantLogout())}>Sign out</span>
-            ) : (
-              <span onClick={() => dispatch(TenantAdminLogin(getIdpHint()))}>Sign In</span>
-            )}
-          </LogoutWrapper>
-        </SignOutLink>
-      )}
+          </>
+        )}
+      </GoASideMenu>
     </Links>
   );
 };
@@ -128,25 +118,16 @@ const BetaBadgeStyle = styled.span`
   height: 20px;
 `;
 const Links = styled.div`
-  padding: 0.5rem;
   a {
-    color: #000;
     display: flex;
     align-items: center;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
-    border-radius: 10px;
-    overflow-x: hidden;
-    white-space: nowrap;
-    transition: background-color 100ms;
-    text-decoration: none;
 
     &:first-of-type {
       margin-top: 0;
     }
 
     &:hover {
-      background: #dcdcdc;
+      background: #cedfee;
     }
     &:focus {
       box-shadow: 0 0 1px rgba(0, 0, 0, 0.8);
@@ -176,12 +157,7 @@ const Links = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: var(--fs-base);
-  font-weight: var(--fw-bold);
   text-transform: capitalize;
-  padding: 0 0.5rem;
-  white-space: nowrap;
-  display: none;
   @media (min-width: 768px) {
     display: block;
   }
