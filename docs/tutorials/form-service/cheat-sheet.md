@@ -592,16 +592,23 @@ _Repeating Items_ are useful when you need to capture multiple instances of simi
 {
   "type": "object",
   "properties": {
-    "people": {
+    "Users": {
       "type": "array",
       "items": {
         "type": "object",
+        "title": "Users",
         "properties": {
-          "firstName": {
+          "firstname": {
             "type": "string"
           },
-          "lastName": {
+          "lastname": {
             "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number"
           }
         }
       }
@@ -612,18 +619,38 @@ _Repeating Items_ are useful when you need to capture multiple instances of simi
     <td><pre><code>
 {
   "type": "ListWithDetail",
-  "scope": "#/properties/people",
+  "scope": "#/properties/Users",
   "options": {
+    "addButtonType" : "secondary",
+    "addButtonPosition" : "left",
+    "addButtonText" : "Add Users" ,
     "detail": {
-      "type": "HorizontalLayout",
+      "type": "VerticalLayout",
       "elements": [
         {
-          "type": "Control",
-          "scope": "#/properties/firstName"
+          "type": "HorizontalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/firstname",
+              "label": "First Name"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/lastname",
+              "label": "Last Name"
+            }
+          ]
         },
         {
           "type": "Control",
-          "scope": "#/properties/lastName"
+          "scope": "#/properties/age",
+          "label": "Age"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/email",
+          "label": "Email"
         }
       ]
     }
