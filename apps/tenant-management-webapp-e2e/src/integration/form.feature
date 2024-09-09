@@ -231,7 +231,7 @@ Feature: Form
     When the user selects "Protected C" from the security classification dropdown in form definition editor
     And the user clicks Save button in form definition editor
     And the user clicks Back button in form definition editor
-    When the user clicks "Edit" button for the form definition of "autotest-securityClassification", "autotest desc"
+    And the user clicks "Edit" button for the form definition of "autotest-securityClassification", "autotest desc"
     And the user clicks "Lifecycle" tab in form definition editor
     Then the user views "Protected C" in security classification dropdown in form definition editor
     When the user clicks Back button in form definition editor
