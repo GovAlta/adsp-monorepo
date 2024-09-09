@@ -31,7 +31,8 @@
         "styles": [],
         "scripts": [],
         "babelUpwardRootMode": true,
-        "webpackConfig": "apps/task-app/webpack.config.js"
+        "webpackConfig": "apps/task-app/webpack.config.js",
+        "externalDependencies": ["@apidevtools/json-schema-ref-parser"]
       },
       "configurations": {
         "development": {

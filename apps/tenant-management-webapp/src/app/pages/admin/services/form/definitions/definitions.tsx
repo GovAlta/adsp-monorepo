@@ -3,7 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { GoAButton, GoACircularProgress } from '@abgov/react-components-new';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getFormDefinitions, updateFormDefinition, deleteFormDefinition } from '@store/form/action';
+import {
+  getFormDefinitions,
+  updateFormDefinition,
+  deleteFormDefinition,
+  openEditorForDefinition,
+} from '@store/form/action';
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
@@ -12,18 +17,17 @@ import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { fetchDirectory } from '@store/directory/actions';
-import { SecurityClassification } from '@store/common/models';
 import { LoadMoreWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
   isNavigatedFromEdit?: boolean;
 }
-const FORM_APPLICANT_SERVICE_ID = `urn:ads:platform:form-service:form-applicant`;
 
 export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
+  const navigate = useNavigate();
   const location = useLocation();
   const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
 
@@ -76,10 +80,6 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     dispatch(getFormDefinitions(next));
   };
 
-  const reset = () => {
-    setOpenAddFormDefinition(false);
-  };
-
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, [formDefinitions]);
@@ -87,10 +87,6 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     document.body.style.overflow = 'unset';
   }, []);
 
-  const doesNotContainFormRolesToAdd = (role: string, applicantFormRoles: string[]) => {
-    if (applicantFormRoles.length === 0) return false;
-    return applicantFormRoles.filter((roleToCheck) => roleToCheck === role).length === 0;
-  };
   const deleteAction = () => {
     dispatch(deleteFormDefinition(currentDefinition));
   };
@@ -112,23 +108,23 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
       >
         Add definition
       </GoAButton>
-      {openAddFormDefinition && (
-        <AddEditFormDefinition
-          open={openAddFormDefinition}
-          isEdit={false}
-          onClose={reset}
-          initialValue={defaultFormDefinition}
-          onSave={(definition) => {
-            if (!doesNotContainFormRolesToAdd(FORM_APPLICANT_SERVICE_ID, definition.applicantRoles)) {
-              definition.applicantRoles.push(FORM_APPLICANT_SERVICE_ID);
-            }
-
-            definition.securityClassification = SecurityClassification.ProtectedB;
-
-            dispatch(updateFormDefinition(definition));
-          }}
-        />
-      )}
+      <AddEditFormDefinition
+        open={openAddFormDefinition}
+        isEdit={false}
+        onClose={() => {
+          setOpenAddFormDefinition(false);
+        }}
+        initialValue={defaultFormDefinition}
+        onSave={(definition) => {
+          setOpenAddFormDefinition(false);
+          navigate({
+            pathname: `edit/${definition.id}`,
+            search: '?headless=true',
+          });
+          dispatch(updateFormDefinition(definition));
+          dispatch(openEditorForDefinition(definition.id, definition));
+        }}
+      />
 
       {!indicator.show && !formDefinitions && renderNoItem('form templates')}
       {/* {indicator.show && <PageIndicator />} */}
@@ -161,7 +157,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         title="Delete form definition"
         content={
           <div>
-            Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
+            Are you sure you wish to delete <b>{currentDefinition?.name}</b> ?
           </div>
         }
         onCancel={() => setShowDeleteConfirmation(false)}

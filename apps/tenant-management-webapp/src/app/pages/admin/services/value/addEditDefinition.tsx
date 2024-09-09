@@ -7,7 +7,6 @@ import {
   GoAModal,
   GoAFormItem,
   GoATextArea,
-  GoACheckbox,
   GoASpacer,
 } from '@abgov/react-components-new';
 import { ValueDefinition } from '@store/value/models';
@@ -23,7 +22,6 @@ import {
   badCharsCheck,
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
-import { defaultValueDefinition } from '@store/value/models';
 
 interface AddEditValueDefinitionProps {
   onSave: (definition: ValueDefinition) => void;
@@ -188,6 +186,7 @@ export const AddEditValueDefinition = ({
           <Editor
             data-testid="value-schema"
             height={200}
+            width="99%"
             value={payloadSchema}
             onChange={(value) => {
               validators.remove('payloadSchema');

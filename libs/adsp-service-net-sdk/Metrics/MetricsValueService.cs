@@ -16,7 +16,7 @@ internal sealed class MetricsValueService : IMetricsValueService
   private readonly IServiceDirectory _directory;
   private readonly ITokenProvider _tokenProvider;
   private readonly AdspId _serviceId;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
 
   private readonly object _bufferLock = new();
   private readonly IList<MetricsValue> _buffer = new List<MetricsValue>();
@@ -117,7 +117,7 @@ internal sealed class MetricsValueService : IMetricsValueService
         request.AddHeader("Authorization", $"Bearer {token}");
         request.AddParameter("tenantId", tenantMetrics.Key.ToString(), ParameterType.QueryString);
         request.AddBody(tenantMetrics.ToArray());
-        request.Timeout = 30000;
+        request.Timeout = TimeSpan.FromSeconds(30);
 
         await _client.PostAsync(request);
 

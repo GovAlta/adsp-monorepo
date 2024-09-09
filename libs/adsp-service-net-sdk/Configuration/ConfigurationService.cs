@@ -14,7 +14,7 @@ internal sealed class ConfigurationService : IConfigurationService, IDisposable
   private readonly IServiceDirectory _serviceDirectory;
   private readonly ITokenProvider _tokenProvider;
   private readonly Func<object?, object?, object?>? _combine;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
 
   public ConfigurationService(
     ILogger<ConfigurationService> logger,

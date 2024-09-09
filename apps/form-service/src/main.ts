@@ -34,6 +34,7 @@ import {
   GeneratedSupportingDocFileType,
   SUBMITTED_FORM,
   SubmittedFormPdfTemplate,
+  SubmittedFormPdfUpdatesStream,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -120,6 +121,7 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusSetToDraftDefinition,
         SubmissionDispositionedDefinition,
       ],
+      eventStreams: [SubmittedFormPdfUpdatesStream],
       notifications: [FormStatusNotificationType],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [

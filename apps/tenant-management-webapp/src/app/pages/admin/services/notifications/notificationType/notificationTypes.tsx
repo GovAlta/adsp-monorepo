@@ -672,7 +672,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete notification type"
-        content={`Delete ${selectedType?.name}?`}
+        content={
+          <div>
+            Are you sure you wish to delete <b> {selectedType?.name}</b> ?
+          </div>
+        }
         onCancel={() => {
           setShowDeleteConfirmation(false);
           setSelectedType(emptyNotificationType);
@@ -690,9 +694,17 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         isOpen={showEventDeleteConfirmation}
         title={coreEvent ? 'Reset email template' : 'Delete event'}
         content={
-          coreEvent
-            ? 'Delete custom email template modifications'
-            : `Delete ${selectedEvent?.namespace}:${selectedEvent?.name}`
+          coreEvent ? (
+            'Delete custom email template modifications'
+          ) : (
+            <div>
+              Are you sure you wish to delete{' '}
+              <b>
+                {selectedEvent?.namespace}:{selectedEvent?.name}
+              </b>{' '}
+              ?
+            </div>
+          )
         }
         onCancel={() => {
           setShowEventDeleteConfirmation(false);

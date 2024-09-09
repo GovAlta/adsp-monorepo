@@ -12,7 +12,8 @@ import { Form, FormStatus, SecurityClassificationType } from '../types';
 import { FormSubmissionEntity } from './formSubmission';
 import { PdfService } from '../pdf';
 
-// Any form created by user with the intake app role is treated as anonymous.
+// NOTE: True if form has an applicant and was not created by the applicant user (i.e. created by an intake application under a service account)
+// Not True if the form does not include applicant at all, which is the case for 'simple' forms where form is directly submitted.
 function isAnonymousApplicant(user: User, applicant?: Subscriber): boolean {
   return !!(user?.roles.includes(FormServiceRoles.IntakeApp) && applicant && applicant.userId !== user.id);
 }

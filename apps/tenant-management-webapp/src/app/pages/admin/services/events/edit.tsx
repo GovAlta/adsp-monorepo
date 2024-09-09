@@ -172,6 +172,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               validators.remove('payloadSchema');
               setPayloadSchema(value);
             }}
+            width="99%"
             language="json"
             options={{
               automaticLayout: true,

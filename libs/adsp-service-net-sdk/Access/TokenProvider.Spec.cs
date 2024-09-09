@@ -24,7 +24,7 @@ public class TokenProviderTests
           ClientSecret = "test secret"
         }
       );
-    var client = Mock.Of<RestClient>();
+    var client = Mock.Of<IRestClient>();
 
     using var provider = new TokenProvider(logger, options.Object, client);
     provider.Should().NotBeNull();
@@ -44,7 +44,7 @@ public class TokenProviderTests
           ClientSecret = "test secret"
         }
       );
-    var client = Mock.Of<RestClient>();
+    var client = Mock.Of<IRestClient>();
 
     var create = () => new TokenProvider(logger, options.Object, client);
     create.Should().Throw<ArgumentException>();
@@ -64,7 +64,7 @@ public class TokenProviderTests
           ClientSecret = "test secret"
         }
       );
-    var client = Mock.Of<RestClient>();
+    var client = Mock.Of<IRestClient>();
 
     var create = () => new TokenProvider(logger, options.Object, client);
     create.Should().Throw<ArgumentException>();
@@ -84,7 +84,7 @@ public class TokenProviderTests
           ServiceId = AdspId.Parse("urn:ads:test:test-service")
         }
       );
-    var client = Mock.Of<RestClient>();
+    var client = Mock.Of<IRestClient>();
 
     var create = () => new TokenProvider(logger, options.Object, client);
     create.Should().Throw<ArgumentException>();

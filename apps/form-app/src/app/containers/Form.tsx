@@ -45,7 +45,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const { formId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
 
-  const definition = useSelector(definitionSelector);
+  const { definition } = useSelector(definitionSelector);
   const form = useSelector(formSelector);
   const data = useSelector(dataSelector);
   const files = useSelector(filesSelector);
@@ -132,7 +132,6 @@ export const Form = styled(FormComponent)`
   }
 
   > :first-child {
-    overflow: auto;
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 70%;

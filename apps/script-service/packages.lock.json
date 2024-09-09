@@ -387,8 +387,8 @@
       },
       "RestSharp": {
         "type": "Transitive",
-        "resolved": "108.0.1",
-        "contentHash": "XKwuwWq7A4dxZ8l9QkS2+ePLJ9ImmLaJSeFO6H2kpII4Us4n1NRs4w3c//8H2BYpL1XqBE8nmsd9aNCVBwXmOA=="
+        "resolved": "112.0.0",
+        "contentHash": "vezxJ6DLk0eDx+rmXwVHQvJ3elZCJfnLd8neRrkA+IvTs9falf2CEAolsjI1YKkkHTOvG13xWTnHK7gU0zgaaw=="
       },
       "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
         "type": "Transitive",
@@ -1389,7 +1389,7 @@
           "Polly": "[7.2.3, )",
           "RabbitMQ.Client": "[6.4.0, )",
           "ReportGenerator": "[5.1.9, )",
-          "RestSharp": "[108.0.1, )",
+          "RestSharp": "[112.0.0, )",
           "RichardSzalay.MockHttp": "[6.0.0, )",
           "SocketIOClient": "[3.0.6, )",
           "xunit": "[2.4.1, )"

@@ -171,6 +171,8 @@ export interface FetchRegisterDataAction {
 export interface FetchRegisterDataSuccessAction {
   type: typeof FETCH_REGISTER_DATA_SUCCESS_ACTION;
   payload: RegisterData;
+  dataList: string[];
+  anonymousRead: string[];
 }
 
 export type ConfigurationDefinitionActionTypes =
@@ -368,9 +370,15 @@ export const getReplaceConfigurationErrorSuccessAction = (
   payload: replacedConfiguration,
 });
 
-export const getRegisterDataSuccessAction = (registerData: RegisterData): FetchRegisterDataSuccessAction => ({
+export const getRegisterDataSuccessAction = (
+  registerData: RegisterData,
+  dataList: string[],
+  anonymousRead: string[]
+): FetchRegisterDataSuccessAction => ({
   type: FETCH_REGISTER_DATA_SUCCESS_ACTION,
   payload: registerData,
+  dataList: dataList,
+  anonymousRead: anonymousRead,
 });
 
 export const getRegisterDataAction = (): FetchRegisterDataAction => ({

@@ -8,6 +8,20 @@ export const fetchFormDefinitionsApi = async (token: string, url: string): Promi
   return res.data;
 };
 
+export const fetchFormDefinitionApi = async (
+  token: string,
+  serviceUrl: string,
+  definitionId: string
+): Promise<FormDefinition> => {
+  const { data } = await axios.get<FormDefinition>(
+    new URL(`configuration/v2/configuration/form-service/${definitionId}/latest`, serviceUrl).href,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return data?.id ? data : null;
+};
+
 export const updateFormDefinitionApi = async (token: string, serviceUrl: string, definition: FormDefinition) => {
   // Save to new namespace based configuration.
   const { data } = await axios.patch<{ latest: { configuration: Record<string, FormDefinition> } }>(

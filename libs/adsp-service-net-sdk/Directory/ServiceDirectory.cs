@@ -11,10 +11,10 @@ internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
 {
   private readonly ILogger<ServiceDirectory> _logger;
   private readonly IMemoryCache _cache;
-  private readonly RestClient _client;
+  private readonly IRestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
-  public ServiceDirectory(ILogger<ServiceDirectory> logger, IMemoryCache cache, IOptions<AdspOptions> options, RestClient? client = null
+  public ServiceDirectory(ILogger<ServiceDirectory> logger, IMemoryCache cache, IOptions<AdspOptions> options, IRestClient? client = null
 )
   {
     if (options.Value.DirectoryUrl == null)

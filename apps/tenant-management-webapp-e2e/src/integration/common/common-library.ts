@@ -71,6 +71,9 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Feedback':
       menuItemTestid = 'menu-feedback';
       break;
+    case 'Value':
+      menuItemTestid = 'menu-value';
+      break;
     default:
       expect(menuItem).to.be.oneOf([
         'File',
@@ -90,6 +93,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Form',
         'Comment',
         'feedback',
+        'value',
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();

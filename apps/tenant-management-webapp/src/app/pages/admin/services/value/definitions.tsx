@@ -119,7 +119,11 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete value definition"
-        content={`Delete ${selectedDefinition?.name}?`}
+        content={
+          <div>
+            Are you sure you wish to delete <b>{selectedDefinition?.name}</b> ?
+          </div>
+        }
         onCancel={() => setShowDeleteConfirmation(false)}
         onDelete={() => {
           setShowDeleteConfirmation(false);

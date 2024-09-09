@@ -81,7 +81,7 @@ export const Edit = styled.div`
 `;
 
 export const ConfigFormWrapper = styled.div`
-  margin-top: 2rem;
+  margin-top: var(--goa-space-m);
   font-size: 16px;
   color: #333333;
   padding-left: 3px;
@@ -158,6 +158,10 @@ export const FormEditor = styled.div`
   .info-circle {
     margin: 5px 0 0 5px;
   }
+`;
+
+export const ReviewPageTabWrapper = styled.div`
+  padding-top: var(--goa-space-m);
 `;
 
 export const FormEditorTitle = styled.div`
@@ -350,7 +354,6 @@ export const RolesTabBody = styled.div`
   display: flex;
   border-radius: 3px;
   min-height: 65px;
-  margin-bottom: 1rem;
 `;
 
 export const EditTemplateActions = styled.div`
@@ -364,7 +367,7 @@ export const EditTemplateActions = styled.div`
 export const PreviewContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 85%;
+  height: calc(100vh - 188px);
   margin-right: 3rem;
 `;
 
@@ -524,8 +527,9 @@ export const PRE = styled.div`
 
 export const FormPreviewScrollPane = styled.div`
   overflow-y: auto;
-  height: 70vh;
-  padding: 0.25rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  height: calc(100vh - 192px);
 `;
 export const Anchor = styled.div`
   color: #0070c4;

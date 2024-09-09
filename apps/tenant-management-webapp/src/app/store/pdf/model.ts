@@ -113,7 +113,7 @@ export interface PdfState {
   files: Record<string, Blob>;
   currentFile: Blob;
   currentId: string;
-  socketChannel: SocketChannel;
+  socketChannel: boolean;
   tempTemplate: PdfTemplate;
   openEditor: string;
 }

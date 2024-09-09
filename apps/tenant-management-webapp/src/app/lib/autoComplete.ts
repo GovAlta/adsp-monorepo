@@ -1,5 +1,5 @@
 import type { EventDefinition } from '@store/event/models';
-import { languages, editor, Position } from 'monaco-editor';
+import type { languages, editor, Position } from 'monaco-editor';
 import { Monaco } from '@monaco-editor/react';
 
 export interface EditorSuggestion {
@@ -9,7 +9,7 @@ export interface EditorSuggestion {
 }
 const MAX_LINE_LENGTH = 10000;
 
-const createSuggestion = (instance: Monaco, suggestion: EditorSuggestion, hasBracket: boolean, hasParent = false) => {
+const createSuggestion = (suggestion: EditorSuggestion, hasBracket: boolean, hasParent = false) => {
   const showSuggest = suggestion.children?.length;
   let insertBrackets = false;
 
@@ -33,7 +33,8 @@ const createSuggestion = (instance: Monaco, suggestion: EditorSuggestion, hasBra
 
   return {
     label: suggestion.label,
-    kind: instance.languages.CompletionItemKind.Variable,
+    // This cast is necessary since languages is imported as types only. Using regular import requires jest transform configuration.
+    kind: 4 as languages.CompletionItemKind.Variable,
     insertText,
     ...(showSuggest
       ? {
@@ -128,7 +129,7 @@ export const buildSuggestions = (
     }
   }
 
-  return results.map((s) => createSuggestion(instance, s, hasBracket, hasParent)) as languages.CompletionItem[];
+  return results.map((s) => createSuggestion(s, hasBracket, hasParent)) as languages.CompletionItem[];
 };
 // eslint-disable-next-line
 export const convertToSuggestion = (event: EventDefinition, hasAddress: boolean) => {
@@ -277,7 +278,7 @@ export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco, path?: string): EditorSuggestion[] => {
+export const convertDataSchemaToSuggestion = (schema: any, path?: string): EditorSuggestion[] => {
   const suggestions = [];
   if (schema.properties) {
     for (const property in schema.properties) {
@@ -289,15 +290,17 @@ export const convertDataSchemaToSuggestion = (schema: any, monaco: Monaco, path?
       ) {
         suggestions.push({
           label: currentPath,
-          kind: monaco.languages.CompletionItemKind.Property,
+          // This cast is necessary since languages is imported as types only. Using regular import requires jest transform configuration.
+          kind: 9 as languages.CompletionItemKind.Property,
           insertText: currentPath,
           detail: 'Property',
-          children: convertDataSchemaToSuggestion(schema.properties[property], monaco, `/properties/${property}`),
+          children: convertDataSchemaToSuggestion(schema.properties[property], `/properties/${property}`),
         });
       } else {
         suggestions.push({
           label: currentPath,
-          kind: monaco.languages.CompletionItemKind.Property,
+          // This cast is necessary since languages is imported as types only. Using regular import requires jest transform configuration.
+          kind: 9 as languages.CompletionItemKind.Property,
           insertText: currentPath,
           detail: 'Property',
         });
