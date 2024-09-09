@@ -603,12 +603,6 @@ _Repeating Items_ are useful when you need to capture multiple instances of simi
           },
           "lastname": {
             "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "age": {
-            "type": "number"
           }
         }
       }
@@ -621,9 +615,6 @@ _Repeating Items_ are useful when you need to capture multiple instances of simi
   "type": "ListWithDetail",
   "scope": "#/properties/Users",
   "options": {
-    "addButtonType" : "secondary",
-    "addButtonPosition" : "left",
-    "addButtonText" : "Add Users" ,
     "detail": {
       "type": "VerticalLayout",
       "elements": [
@@ -641,16 +632,6 @@ _Repeating Items_ are useful when you need to capture multiple instances of simi
               "label": "Last Name"
             }
           ]
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/age",
-          "label": "Age"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/email",
-          "label": "Email"
         }
       ]
     }
