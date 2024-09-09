@@ -223,7 +223,7 @@ Feature: Form
     Then the user views Add form definition modal
     When the user enters "autotest-securityClassification", "autotest desc" in Add form definition modal
     And the user clicks Save button in Add form definition modal
-    # Lifecycle validation for security classification
+    # Lifecycle page validation for security classification
     Then the user views form definition editor for "autotest-securityClassification", "autotest desc"
     When the user clicks "Lifecycle" tab in form definition editor
     Then the user views Security classification dropdown after Form template URL under Application
@@ -235,7 +235,7 @@ Feature: Form
     And the user clicks "Lifecycle" tab in form definition editor
     Then the user views "Protected C" in security classification dropdown in form definition editor
     When the user clicks Back button in form definition editor
-    # Event log validation for security classification
+    # Configuration updated event log validation for security classification
     And the user selects the "Event log" menu item
     And the user searches with "configuration-service:configuration-updated", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     And the user clicks Show details button for the latest event of "configuration-updated" for "configuration-service"
