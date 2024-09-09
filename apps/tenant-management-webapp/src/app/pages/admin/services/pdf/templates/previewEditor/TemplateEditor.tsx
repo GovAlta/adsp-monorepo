@@ -332,7 +332,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete PDF file"
-        content={<div>Are you sure you wish to delete all files?</div>}
+        content={<div>Are you sure you wish to delete all files ?</div>}
         onCancel={() => setShowDeleteConfirmation(false)}
         onDelete={() => {
           setShowDeleteConfirmation(false);

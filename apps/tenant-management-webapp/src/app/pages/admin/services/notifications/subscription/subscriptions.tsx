@@ -76,7 +76,11 @@ export const Subscriptions: FunctionComponent = () => {
         <DeleteModal
           isOpen={showDeleteConfirmation}
           title="Delete subscription"
-          content={`Delete subscription ${selectedSubscription?.channels[emailIndex]?.address}?`}
+          content={
+            <div>
+              Are you sure you wish to delete <b>{selectedSubscription?.channels[emailIndex]?.address}</b> ?
+            </div>
+          }
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);

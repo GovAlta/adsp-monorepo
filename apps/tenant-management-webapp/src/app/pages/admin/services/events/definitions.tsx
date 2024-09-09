@@ -80,7 +80,11 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete event definition"
-        content={`Delete ${selectedDefinition?.name}?`}
+        content={
+          <div>
+            Are you sure you wish to delete <b> {selectedDefinition?.name}</b> ?
+          </div>
+        }
         onCancel={() => setShowDeleteConfirmation(false)}
         onDelete={() => {
           setShowDeleteConfirmation(false);

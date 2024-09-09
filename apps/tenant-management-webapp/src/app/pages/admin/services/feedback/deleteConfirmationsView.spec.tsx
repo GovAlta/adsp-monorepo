@@ -35,7 +35,7 @@ describe('DeleteConfirmationsView', () => {
     expect(screen.getByText('Delete registered site')).toBeInTheDocument();
     const { getByText } = within(screen.getByTestId('deleteMsg'));
     const customTextMatcher = (content, element) => {
-      const hasText = (node) => node.textContent === 'Are you sure you wish to delete https://test.com?';
+      const hasText = (node) => node.textContent === 'Are you sure you wish to delete https://test.com ?';
       const elementHasText = hasText(element);
       const childrenDontHaveText = Array.from(element.children).every((child) => !hasText(child));
       return elementHasText && childrenDontHaveText;

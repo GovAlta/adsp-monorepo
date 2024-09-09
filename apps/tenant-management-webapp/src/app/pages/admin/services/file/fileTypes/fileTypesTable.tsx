@@ -223,14 +223,9 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
         title="Delete file type"
         isOpen={deleteId && hasFile === false}
         content={
-          <>
-            <p>
-              Delete the file type <b>{`${deleteFileType?.name}`}</b> cannot be undone.
-            </p>
-            <p>
-              <b>Are you sure you want to continue?</b>
-            </p>
-          </>
+          <div>
+            Are you sure you wish to delete <b> {deleteFileType?.name}</b> ?
+          </div>
         }
         onCancel={() => {
           setDeleteId(null);
