@@ -27,7 +27,7 @@
             "output": "./"
           },
           {
-            "glob": "standard.*.schema.json",
+            "glob": "*.schema.json",
             "input": "libs/data-exchange-standard/src",
             "output": "./"
           }
