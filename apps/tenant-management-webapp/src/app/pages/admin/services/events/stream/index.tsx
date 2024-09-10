@@ -105,7 +105,7 @@ export const EventStreams = (): JSX.Element => {
             title="Delete stream"
             content={
               <div>
-                Are you sure you wish to delete <b> {selectedStream.name}</b> ?
+                Are you sure you wish to delete <b> {selectedStream.name}</b>?
               </div>
             }
             onCancel={() => {

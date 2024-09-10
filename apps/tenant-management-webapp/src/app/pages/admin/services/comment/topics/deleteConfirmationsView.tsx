@@ -30,7 +30,7 @@ export const DeleteConfirmationsView = ({ topic, selectedType, onCancel, onDelet
         content={
           <div>
             <div>
-              Are you sure you wish to delete <b>{topic.name}</b> ?
+              Are you sure you wish to delete <b>{topic.name}</b>?
               <br />
               <TopicDelete>
                 *Please note that all associated comments with <b>{`${topic.name}`}</b> will be deleted as well.
