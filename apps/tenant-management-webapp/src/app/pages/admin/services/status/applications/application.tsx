@@ -167,7 +167,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         title="Delete application"
         content={
           <div>
-            Are you sure you wish to delete <b>{app.name}</b> ?
+            Are you sure you wish to delete <b>{app.name}</b>?
           </div>
         }
         onCancel={cancelDelete}

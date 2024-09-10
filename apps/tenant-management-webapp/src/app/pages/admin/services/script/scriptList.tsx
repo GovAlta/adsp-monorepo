@@ -99,7 +99,7 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
         }}
         content={
           <div>
-            Are you sure you wish to delete <b>{selectedDeleteScript?.name}</b> ?
+            Are you sure you wish to delete <b>{selectedDeleteScript?.name}</b>?
           </div>
         }
         onDelete={() => {
