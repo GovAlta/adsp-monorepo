@@ -21,6 +21,80 @@
       "required": [
         "firstName",
         "lastName"
+      ],
+      "errorMessage": "Include period (.) if providing your initial"
+    },
+    "albertaPostalAddress": {
+      "type": "object",
+      "properties": {
+        "addressLine1": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/addressLine1"
+        },
+        "addressLine2": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/addressLine2"
+        },
+        "municipality": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/municipality"
+        },
+        "subdivisionCode": {
+          "const": "AB"
+        },
+        "postalCode": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalCode/definitions/canadaPostalCode"
+        },
+        "country": {
+          "const": "CA"
+        }
+      },
+      "required": [
+        "addressLine1",
+        "municipality",
+        "postalCode"
+      ]
+    },
+    "canadaPostalAddress": {
+      "type": "object",
+      "properties": {
+        "addressLine1": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/addressLine1"
+        },
+        "addressLine2": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/addressLine2"
+        },
+        "municipality": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/municipality"
+        },
+        "subdivisionCode": {
+          "title": "Province or territory",
+          "description": "Two letter code for province or territory",
+          "enum": [
+            "AB",
+            "BC",
+            "MB",
+            "NB",
+            "NL",
+            "NT",
+            "NS",
+            "NU",
+            "ON",
+            "PE",
+            "QC",
+            "SK",
+            "YT"
+          ]
+        },
+        "postalCode": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalCode/definitions/canadaPostalCode"
+        },
+        "country": {
+          "const": "CA"
+        }
+      },
+      "required": [
+        "addressLine1",
+        "municipality",
+        "subdivisionCode",
+        "postalCode"
       ]
     }
   }

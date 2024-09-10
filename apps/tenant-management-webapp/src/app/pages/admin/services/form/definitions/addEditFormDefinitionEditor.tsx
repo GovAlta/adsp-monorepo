@@ -20,7 +20,7 @@ import { PageIndicator } from '@components/Indicator';
 import DataTable from '@components/DataTable';
 import { DeleteModal } from '@components/DeleteModal';
 import { CustomLoader } from '@components/CustomLoader';
-import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
+import { FormCompletionItemProvider } from '@lib/autoComplete';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
@@ -223,30 +223,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema) as Record<string, unknown>;
   useEffect(() => {
     if (monaco) {
-      const provider = monaco.languages.registerCompletionItemProvider('json', {
-        triggerCharacters: ['/', '#', '"'],
-        provideCompletionItems: (model, position) => {
-          const textUntilPosition = model.getValueInRange({
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: position.lineNumber,
-            endColumn: position.column,
-          });
-          let suggestions = [];
+      const provider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormCompletionItemProvider(dataSchema)
+      );
 
-          try {
-            const dataSchemaSuggestion = convertDataSchemaToSuggestion(dataSchema);
-            suggestions = formatEditorSuggestions(dataSchemaSuggestion);
-          } catch (e) {
-            console.debug(`Error in JSON editor autocompletion: ${e.message}`);
-          }
-
-          return {
-            suggestions,
-          } as languages.ProviderResult<languages.CompletionList>;
-        },
-      });
-      return function cleanup() {
+      return function () {
         provider.dispose();
       };
     }
