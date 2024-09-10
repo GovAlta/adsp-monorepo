@@ -814,7 +814,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <b>
                 {definition?.dispositionStates &&
                   JSON.stringify(definition.dispositionStates[selectedDeleteDispositionIndex]?.name)}
-              </b>{' '}
+              </b>
               ?
             </div>
           </div>

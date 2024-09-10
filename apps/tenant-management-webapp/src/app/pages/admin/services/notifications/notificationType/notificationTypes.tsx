@@ -674,7 +674,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         title="Delete notification type"
         content={
           <div>
-            Are you sure you wish to delete <b> {selectedType?.name}</b> ?
+            Are you sure you wish to delete <b> {selectedType?.name}</b>?
           </div>
         }
         onCancel={() => {
@@ -701,7 +701,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               Are you sure you wish to delete{' '}
               <b>
                 {selectedEvent?.namespace}:{selectedEvent?.name}
-              </b>{' '}
+              </b>
               ?
             </div>
           )

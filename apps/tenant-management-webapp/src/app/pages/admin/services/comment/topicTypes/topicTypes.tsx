@@ -125,7 +125,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
         title="Delete topic type"
         content={
           <div>
-            Are you sure you wish to delete <b>{currentDefinition?.name}</b> ?
+            Are you sure you wish to delete <b>{currentDefinition?.name}</b>?
           </div>
         }
         onCancel={() => setShowDeleteConfirmation(false)}
