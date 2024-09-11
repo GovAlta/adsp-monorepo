@@ -19,9 +19,8 @@ import {
   TextLoadingIndicator,
 } from '../styled-components';
 
-import { InfoCircleWithInlineHelpForFile } from './infoCircleWithInlineHelpForFile';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoACallout, GoACircularProgress, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
+import { GoAButton, GoACallout, GoADropdown, GoADropdownItem, GoAIcon, GoATooltip } from '@abgov/react-components-new';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
@@ -268,7 +267,9 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
 
               <GoAFormItem label="">
                 <RetentionPolicyLabel>Retention policy</RetentionPolicyLabel>
-                <InfoCircleWithInlineHelpForFile text="The untouched files within the file type will be deleted after the retention period provided." />
+                <GoATooltip content="The untouched files within the file type will be deleted after the retention period provided.">
+                  <GoAIcon type="information-circle"></GoAIcon>
+                </GoATooltip>
                 <RetentionPolicyWrapper>
                   <GoACheckbox
                     name="retentionActive"

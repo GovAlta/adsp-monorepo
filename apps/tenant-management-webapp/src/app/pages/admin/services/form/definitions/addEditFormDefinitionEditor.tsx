@@ -7,6 +7,8 @@ import {
   GoADropdownItem,
   GoADropdown,
   GoAInput,
+  GoATooltip,
+  GoAIcon,
 } from '@abgov/react-components-new';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
@@ -483,14 +485,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             text={'Allow anonymous application'}
                           />
                         </GoACheckboxPad>
-                        <InfoCircleWithInlineHelp
-                          text={
+                        <GoATooltip
+                          content={
                             definition.anonymousApply
                               ? 'Forms of this type will allow anonymous user to apply.'
                               : 'Forms of this type will allow not anonymous user to apply.'
                           }
-                          width="280"
-                        />
+                          position="top"
+                        >
+                          <GoAIcon type="information-circle"></GoAIcon>
+                        </GoATooltip>
                       </FlexRow>
 
                       <FlexRow>
@@ -507,14 +511,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             text="Create support topic"
                           />
                         </GoACheckboxPad>
-                        <InfoCircleWithInlineHelp
-                          text={
+                        <GoATooltip
+                          content={
                             definition.supportTopic
                               ? 'Forms of this type will create a comment topic used for supporting applicants. Applicants will be able to read and write comments to the topic to interact with staff.'
                               : 'Forms of this type will not create a comment topic used for supporting applicants.'
                           }
-                          width="280"
-                        />
+                          position="top"
+                        >
+                          <GoAIcon type="information-circle"></GoAIcon>
+                        </GoATooltip>
                       </FlexRow>
                     </div>
                     <div>
@@ -553,14 +559,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           text="Create PDF on submit"
                         />
                       </SubmissionRecordsBox>
-                      <InfoCircleWithInlineHelp
-                        text={
+                      <GoATooltip
+                        content={
                           definition.submissionPdfTemplate
                             ? 'Forms of this type will generate a PDF on submission '
                             : 'Forms of this type will not generate a PDF on submission'
                         }
-                        width="180"
-                      />
+                        position="top"
+                      >
+                        <GoAIcon type="information-circle"></GoAIcon>
+                      </GoATooltip>
                     </FlexRow>
                     <FlexRow>
                       <SubmissionRecordsBox>
@@ -576,13 +584,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           text="Create submission records on submit"
                         />
                       </SubmissionRecordsBox>
-                      <InfoCircleWithInlineHelp
-                        text={
+                      <GoATooltip
+                        content={
                           definition.submissionRecords
                             ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
                             : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
                         }
-                      />
+                        position="top"
+                      >
+                        <GoAIcon type="information-circle"></GoAIcon>
+                      </GoATooltip>
                     </FlexRow>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                       <SubmissionConfigurationPadding>
@@ -595,7 +606,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                               : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
                           }
                         />
-
                         <QueueTaskDropdown>
                           {queueTasks && Object.keys(queueTasks).length > 0 && (
                             <GoADropdown
@@ -642,10 +652,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           <h3>Disposition states</h3>
                           <div>
                             {definition.submissionRecords ? (
-                              <InfoCircleWithInlineHelp
-                                text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                                width={450}
-                              />
+                              <GoATooltip
+                                content="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                                position="top"
+                              >
+                                <GoAIcon type="information-circle"></GoAIcon>
+                              </GoATooltip>
                             ) : (
                               <FakeButton />
                             )}
