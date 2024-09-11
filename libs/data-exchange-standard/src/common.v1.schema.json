@@ -22,7 +22,13 @@
         "firstName",
         "lastName"
       ],
-      "errorMessage": "Include period (.) if providing your initial"
+      "errorMessage": {
+        "properties": {
+          "firstName": "Include period (.) if providing your initial",
+          "middleName": "Include period (.) if providing your initial",
+          "lastName": "Include period (.) if providing your initial"
+        }
+      }
     },
     "albertaPostalAddress": {
       "type": "object",
@@ -50,7 +56,12 @@
         "addressLine1",
         "municipality",
         "postalCode"
-      ]
+      ],
+      "errorMessage": {
+        "properties": {
+          "postalCode": "Must be in 0A0 A0A capital letters and numbers format"
+        }
+      }
     },
     "canadaPostalAddress": {
       "type": "object",
@@ -95,7 +106,12 @@
         "municipality",
         "subdivisionCode",
         "postalCode"
-      ]
+      ],
+      "errorMessage": {
+        "properties": {
+          "postalCode": "Must be in 0A0 A0A capital letters and numbers format"
+        }
+      }
     }
   }
 }
