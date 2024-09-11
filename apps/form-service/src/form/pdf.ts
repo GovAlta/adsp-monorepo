@@ -175,6 +175,21 @@ const additionalStyles = `
             flex-basis: calc(50% - 0.5rem);
         }
 
+        .header {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .list-item {
+            border: 1px solid #dcdcdc;
+            border-radius: 0.25rem;
+            display: flex;
+            flex: 0 1 100%;
+            flex-basis: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
         .review-item-title {
             font-size: 1.5rem;
             line-height: 25px;
