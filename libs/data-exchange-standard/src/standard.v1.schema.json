@@ -94,18 +94,25 @@
       "definitions": {
         "canadaPostalCode": {
           "type": "string",
+          "title": "Postal code",
+          "description": "A0A 0A0",
           "pattern": "^[A-Z][0-9][A-Z] [0-9][A-Z][0-9]$"
-        },
-        "usPostalCodeFiveDigit": {
-          "type": "string",
-          "pattern": "^[0-9]{5}-[0-9]{4}$"
         },
         "usPostalCodeNineDigit": {
           "type": "string",
+          "title": "Zip code",
+          "description": "00000-0000",
+          "pattern": "^[0-9]{5}-[0-9]{4}$"
+        },
+        "usPostalCodeFiveDigit": {
+          "type": "string",
+          "title": "Zip code",
+          "description": "00000",
           "pattern": "^[0-9]{5}$"
         },
         "internationalPostalCode": {
           "type": "string",
+          "title": "Postal code",
           "pattern": "^[a-zA-Z0-9- ]{0,15}$"
         }
       }

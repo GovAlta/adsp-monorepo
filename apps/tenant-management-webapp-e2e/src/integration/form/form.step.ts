@@ -228,7 +228,7 @@ When(
   }
 );
 
-Then('the user clicks Save button on form definition editor', function () {
+Then('the user clicks Save button in form definition editor', function () {
   formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
   cy.wait(8000);
 });
@@ -320,7 +320,7 @@ When(
   }
 );
 
-When('the user clicks Back button on form definition editor', function () {
+When('the user clicks Back button in form definition editor', function () {
   formObj.editorBackButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
@@ -909,4 +909,56 @@ When('the user saves the changes if any and go back out of form definition edito
   });
   formObj.editorBackButton().shadow().find('button').click({ force: true });
   cy.wait(1000);
+});
+
+Then('the user views Security classification dropdown after Form template URL under Application', function () {
+  formObj.definitionsEditorLifecycleApplicationItems().then((elements) => {
+    let formTemplateURLItemIndex, securityClassificationItemIndex;
+    for (let i = 0; i < elements.length; i++) {
+      if (elements[i].getAttribute('label') == 'Form template URL') {
+        formTemplateURLItemIndex = i;
+      } else if (elements[i].getAttribute('label') == 'Security classification') {
+        securityClassificationItemIndex = i;
+      }
+    }
+    expect(formTemplateURLItemIndex).to.be.lt(securityClassificationItemIndex);
+  });
+});
+
+Then(
+  'the user views the security classification dropdown has the default value of {string} from the options of {string}, {string}, {string}, {string}',
+  function () {
+    formObj
+      .definitionsEditorLifecycleSecurityClassificationDropdown()
+      .invoke('attr', 'value')
+      .should('eq', 'protected b');
+    formObj.definitionsEditorLifecycleSecurityClassificationDropdownItems().then((elements) => {
+      expect(elements.length).to.eq(4);
+      expect(elements[0].getAttribute('value')).to.eq('public');
+      expect(elements[1].getAttribute('value')).to.eq('protected a');
+      expect(elements[2].getAttribute('value')).to.eq('protected b');
+      expect(elements[3].getAttribute('value')).to.eq('protected c');
+    });
+  }
+);
+
+When(
+  'the user selects {string} from the security classification dropdown in form definition editor',
+  function (classification) {
+    formObj.definitionsEditorLifecycleSecurityClassificationDropdown().shadow().find('input').click({ force: true });
+    formObj
+      .definitionsEditorLifecycleSecurityClassificationDropdown()
+      .shadow()
+      .find('li')
+      .contains(classification)
+      .click({ force: true });
+    cy.wait(1000);
+  }
+);
+
+Then('the user views {string} in security classification dropdown in form definition editor', function (dropdownItem) {
+  formObj
+    .definitionsEditorLifecycleSecurityClassificationDropdown()
+    .invoke('attr', 'value')
+    .should('eq', dropdownItem.toLowerCase());
 });

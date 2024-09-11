@@ -162,7 +162,7 @@ const FileList = (): JSX.Element => {
           title="Delete file"
           content={
             <div>
-              Are you sure you wish to delete <b> {selectedFile?.filename}</b> ?
+              Are you sure you wish to delete <b> {selectedFile?.filename}</b>?
             </div>
           }
           onCancel={() => setShowDeleteConfirmation(false)}

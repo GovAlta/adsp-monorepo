@@ -110,7 +110,7 @@ Feature: File service
     And the user clicks Save button on Add file type modal
     Then the user views file type page of "autotest-addEditDelete"
     And the user views "Protected A" selected as default security classification
-    And the user views "Public, Protected A, Protected B, Protected C" in security classification dropdown
+    And the user views "Public, Protected A, Protected B, Protected C" in security classification dropdown in file type editor
     When the user enters "Protected B", "public", "auto-test-role1", "30" on file type page
     And the user clicks Save button on file type page
     And the user clicks Back button on file type page

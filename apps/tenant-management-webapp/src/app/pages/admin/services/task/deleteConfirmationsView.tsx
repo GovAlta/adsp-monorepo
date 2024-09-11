@@ -43,7 +43,7 @@ export const DeleteConfirmationsView: FunctionComponent<taskTableProps> = ({ que
         isOpen={showDeleteConfirmation}
         content={
           <div>
-            Are you sure you wish to delete <b>{queue.name}</b> ?
+            Are you sure you wish to delete <b>{queue.name}</b>?
           </div>
         }
         onCancel={() => setShowDeleteConfirmation(false)}

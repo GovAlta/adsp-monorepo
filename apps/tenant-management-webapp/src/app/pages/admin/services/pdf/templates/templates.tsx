@@ -126,7 +126,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
             Are you sure you wish to delete{' '}
             <b>
               {currentTemplate?.name} ID: {currentTemplate?.id}
-            </b>{' '}
+            </b>
             ?
           </div>
         }
