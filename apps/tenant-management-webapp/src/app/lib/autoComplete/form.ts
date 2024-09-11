@@ -6,10 +6,10 @@ export class FormCompletionItemProvider implements languages.CompletionItemProvi
   private scopeSuggestions: EditorSuggestion[];
   private refSuggestions: EditorSuggestion[];
   constructor(dataSchema: Record<string, unknown>) {
-    this.scopeSuggestions = this.convertDataSchemaToSuggestion(dataSchema, '#');
+    this.scopeSuggestions = this.convertDataSchemaToSuggestion(true, dataSchema, '#');
     this.refSuggestions = [
-      ...this.convertDataSchemaToSuggestion(standardV1JsonSchema, `${standardV1JsonSchema.$id}#`, 'standard.v1#'),
-      ...this.convertDataSchemaToSuggestion(commonV1JsonSchema, `${commonV1JsonSchema.$id}#`, 'common.v1#'),
+      ...this.convertDataSchemaToSuggestion(false, standardV1JsonSchema, `${standardV1JsonSchema.$id}#`, 'standard.v1#'),
+      ...this.convertDataSchemaToSuggestion(false, commonV1JsonSchema, `${commonV1JsonSchema.$id}#`, 'common.v1#'),
     ];
   }
 
@@ -81,6 +81,7 @@ export class FormCompletionItemProvider implements languages.CompletionItemProvi
   }
 
   private convertDataSchemaToSuggestion(
+    recurse: boolean,
     schema: Record<string, unknown>,
     path: string,
     labelPath?: string
@@ -98,8 +99,9 @@ export class FormCompletionItemProvider implements languages.CompletionItemProvi
         });
 
         // Resolve children if current property is an object.
-        if (typeof schema.properties[property] === 'object') {
+        if (recurse && typeof schema.properties[property] === 'object') {
           const children = this.convertDataSchemaToSuggestion(
+            recurse,
             schema.properties[property],
             currentPath,
             currentLabelPath
@@ -121,8 +123,9 @@ export class FormCompletionItemProvider implements languages.CompletionItemProvi
         });
 
         // Resolve children if current definition is an object.
-        if (typeof schema.definitions[definition] === 'object') {
+        if (recurse && typeof schema.definitions[definition] === 'object') {
           const children = this.convertDataSchemaToSuggestion(
+            recurse,
             schema.definitions[definition],
             currentPath,
             currentLabelPath
@@ -147,7 +150,7 @@ export class FormCompletionItemProvider implements languages.CompletionItemProvi
         // Filter text is used when completion is triggered and there is a partial word.
         // In the json language model, the double quotes are part of the word pattern, so the word of a value is like "#/properties...
         // Include the leading quote so that the filter text will match in case completion is triggered against an existing scope.
-        filterText: '"' + path,
+        filterText: `"${path}/`,
       });
     }
 
