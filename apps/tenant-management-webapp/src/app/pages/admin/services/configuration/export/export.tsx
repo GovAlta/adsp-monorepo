@@ -20,7 +20,7 @@ import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { NoPaddingH2 } from '@components/AppHeader';
 
-import { GoAButton, GoACheckbox, GoAChip, GoAContainer } from '@abgov/react-components-new';
+import { GoAButton, GoACheckbox, GoAChip, GoAContainer, GoAIcon, GoATooltip } from '@abgov/react-components-new';
 
 function getTextWidth(text) {
   const canvas = document.createElement('canvas');
@@ -176,44 +176,13 @@ export const ConfigurationExport: FunctionComponent = () => {
                                 text={name}
                               />
                             </div>
-                            <div
-                              onClick={() => {
-                                toggleInfo(toServiceKey(namespace, name));
-                              }}
-                            >
+                            <div>
                               {desc && (
-                                <div className="info-circle-padding">
-                                  <InfoCircle />
-                                  <div className="triangle-width">
-                                    {infoView[toServiceKey(namespace, name)] && (
-                                      <div className="bubble-helper">
-                                        <div className="triangle">
-                                          <Triangle />
-                                        </div>
-                                        <Rectangle />
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
+                                <GoATooltip content={desc} position="top">
+                                  <GoAIcon type="information-circle" />
+                                </GoATooltip>
                               )}
                             </div>
-                          </div>
-                          <div>
-                            {infoView[toServiceKey(namespace, name)] && (
-                              <div className="full-width">
-                                <div className="overflow-wrap bubble-border">
-                                  {desc}
-                                  <div
-                                    className="small-close-button"
-                                    onClick={() => {
-                                      toggleInfo(toServiceKey(namespace, name));
-                                    }}
-                                  >
-                                    <SmallClose />
-                                  </div>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
