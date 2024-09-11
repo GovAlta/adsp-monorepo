@@ -167,6 +167,15 @@ class HandlebarsTemplateService implements TemplateService {
     handlebars.registerHelper('isControlAndHasScope', function (element) {
       return element.type === 'Control' && element.scope;
     });
+    handlebars.registerHelper('isListWithDetailAndHasScope', function (element) {
+      return element.type === 'ListWithDetail' && element.scope && element.options;
+    });
+
+    handlebars.registerHelper('scopeName', function (scope) {
+      const scopeName = scope.replace('#/properties/', '');
+      const firstCap = scopeName.charAt(0).toUpperCase() + scopeName.substring(1);
+      return firstCap;
+    });
 
     handlebars.registerHelper('withEach', function (context, data, requiredFields, options) {
       let ret = '';
@@ -178,6 +187,33 @@ class HandlebarsTemplateService implements TemplateService {
 
       for (let i = 0, j = context.length; i < j; i++) {
         const extendedContext = Object.assign({}, context[i], { params: { data, requiredFields } });
+        ret = ret + options.fn(extendedContext);
+      }
+
+      return ret;
+    });
+
+    handlebars.registerHelper('firstDetail', function (context, data, requiredFields, scope, options) {
+      const scopeName = scope.replace('#/properties/', '');
+      if (!options) {
+        options = { ...requiredFields };
+        requiredFields = null;
+      }
+      const extendedContext = Object.assign({}, context[0], { params: { requiredFields, data: data[scopeName] } });
+      const ret = '' + options.fn(extendedContext);
+      return ret;
+    });
+
+    handlebars.registerHelper('withEachData', function (context, requiredFields, element, options) {
+      let ret = '';
+
+      if (!options) {
+        options = { ...requiredFields };
+        requiredFields = null;
+      }
+
+      for (let i = 0, j = context.length; i < j; i++) {
+        const extendedContext = Object.assign({}, context[i], { params: { requiredFields, element } });
         ret = ret + options.fn(extendedContext);
       }
 
