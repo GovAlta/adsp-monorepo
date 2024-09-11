@@ -267,7 +267,10 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
 
               <GoAFormItem label="">
                 <RetentionPolicyLabel>Retention policy</RetentionPolicyLabel>
-                <GoATooltip content="The untouched files within the file type will be deleted after the retention period provided.">
+                <GoATooltip
+                  content="The untouched files within the file type will be deleted after the retention period provided."
+                  position="right"
+                >
                   <GoAIcon type="information-circle"></GoAIcon>
                 </GoATooltip>
                 <RetentionPolicyWrapper>
