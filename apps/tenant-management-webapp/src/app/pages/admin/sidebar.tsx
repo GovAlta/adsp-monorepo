@@ -77,9 +77,9 @@ const Sidebar = ({ type }: SidebarProps) => {
                   >
                     <span>Service metrics</span>
                   </NavLink>
+                  <GoASideMenuHeading>Services</GoASideMenuHeading>
                 </>
               )}
-              <GoASideMenuHeading>Services</GoASideMenuHeading>
               {hasAdminRole &&
                 serviceVariables(config.featureFlags).map((service, index) => (
                   <NavLink
