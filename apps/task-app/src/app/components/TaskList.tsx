@@ -52,14 +52,14 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
         </GoAFormItem>
       </div>
       <div>
-        <GoATable mt="l" width="76%">
+        <GoATable mt="l" width="100%">
           <colgroup>
             <col style={{ width: 80 }} />
             <col style={{ width: 80 }} />
             <col style={{ width: 200 }} />
             <col style={{ width: 80 }} />
             <col style={{ width: 80 }} />
-            <col style={{ width: 170 }} />
+            <col style={{ width: 200 }} />
           </colgroup>
           <thead>
             <tr>

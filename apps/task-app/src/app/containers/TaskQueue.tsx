@@ -131,8 +131,7 @@ const TaskQueue = styled(TaskQueueComponent)`
   position: absolute;
   top: 0;
   bottom: 0;
-  left: var(--goa-space-3xl);
-  right: var(--goa-space-3xl);
+  margin-left: 15%;
 `;
 
 export default TaskQueue;
