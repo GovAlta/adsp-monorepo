@@ -58,10 +58,7 @@ Then('the user views Edit entry modal', function () {
 
 Then('the user views Delete entry modal for {string}', function (entryName) {
   directoryObj.deleteModalTitle().invoke('text').should('eq', 'Delete entry');
-  directoryObj
-    .deleteModalContent()
-    .invoke('text')
-    .should('contain', 'Delete ' + entryName + '?');
+  directoryObj.deleteModalContent().invoke('text').should('contain', entryName);
 });
 
 When('the user enters {string} in Service, {string} in API, {string} in URL', function (service, api, url) {

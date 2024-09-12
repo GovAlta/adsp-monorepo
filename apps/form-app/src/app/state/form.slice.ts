@@ -497,8 +497,8 @@ export const formSlice = createSlice({
         if (state.form && state.form.definition.id !== meta.arg) {
           state.userForm = null;
           state.form = null;
-          state.data = null;
-          state.files = null;
+          state.data = {};
+          state.files = {};
           state.saved = null;
         }
       })
@@ -538,8 +538,8 @@ export const formSlice = createSlice({
       .addCase(loadForm.fulfilled, (state, { payload }) => {
         state.busy.loading = false;
         state.form = payload.form;
-        state.data = payload.data;
-        state.files = payload.files;
+        state.data = payload.data || {};
+        state.files = payload.files || {};
         state.saved = payload.digest;
       })
       .addCase(loadForm.rejected, (state) => {
@@ -554,8 +554,8 @@ export const formSlice = createSlice({
         // This isn't very clear, but empty string is indicating no result found.
         state.userForm = payload.form?.id || '';
         state.form = payload.form;
-        state.data = payload.data;
-        state.files = payload.files;
+        state.data = payload.data || {};
+        state.files = payload.files || {};
         state.saved = payload.digest;
       })
       .addCase(findUserForm.rejected, (state) => {
