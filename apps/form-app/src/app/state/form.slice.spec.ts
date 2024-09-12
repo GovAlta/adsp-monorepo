@@ -164,8 +164,8 @@ describe('form slice unit tests', () => {
       const definition = formReducer(clonedDefinitionToTest, action);
       expect(definition.definitions.TEST.id).not.toEqual(meta.args);
       expect(definition.form).toBeNull();
-      expect(definition.data).toBeNull();
-      expect(definition.files).toBeNull();
+      expect(Object.getOwnPropertyNames(definition.data)).toEqual(expect.arrayContaining([]));
+      expect(Object.getOwnPropertyNames(definition.files)).toEqual(expect.arrayContaining([]));
     });
 
     it('can return pending for selecting form definition', () => {
