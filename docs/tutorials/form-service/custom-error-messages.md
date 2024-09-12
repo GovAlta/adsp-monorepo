@@ -8,11 +8,11 @@ nav_exclude: false
 
 ### Custom Error Messages
 
-To modify the standard default messages that Ajv provides for the error messages such pattern, minLength, maxLength etc to a more user friendly and descriptive error message we will need to modify the data schema in the form definition.
+To modify the standard default messages that Ajv provides for the error messages such pattern, minLength, maxLength etc to a more user friendly and descriptive error message you will need to modify the data schema in the form definition.
 
-There is a couple approaches you can take to customizing the error messages and it involves modifying the data schema
+There are a couple approaches you can take to customizing the error messages and they involve modifying the data schema.
 
-The first approach is to add in a `errorMessage` keyword in the JSON data schema and map each keyword that input field is validating against inside the `errorMessage` as show below.
+The first approach is to add an `errorMessage` object to the JSON data schema describing the input field. Then map each constraint on the input field to an error message inside the object, as follows:
 
 ```
 {
@@ -33,9 +33,11 @@ The first approach is to add in a `errorMessage` keyword in the JSON data schema
   }
 ```
 
-If you want to mix and match to either use your own custom error messages or use the default error message provided by Ajv you can exclude the keyword to use the default error message as show below.
+If you don't want to override AJV's default error message for some of the constraints, simply leave it out of the errorMessage object.
 
 In below example only the `pattern` keyword will have a custom error message and the `minLength` and `maxLength` will have the standard Ajv error message.
+
+In the example below, only the `pattern` constraint will have a custom error message, while `minLength` and `maxLength` will have the standard Ajv error message.
 
 ```
 {
@@ -75,10 +77,10 @@ For example:
 
 ```
 
-This will display `default error message for first Name` for the pattern, minLength, maxLength keyword instead of using the standard Ajv error messsages for each keyword.
+This will display `default error message for first Name` for the pattern, minLength, maxLength keyword instead of using the standard Ajv error messsages for each constraints.
 
 Furthermore, customizing error messages doesnt limit keywords to `pattern`, `maxLength`, `minLength`.
-Any standard JSON schema keywords that can be used in a input field such as `type`, `format` for dates can have its own custom error messages.
+Any standard JSON schema keyword that can be used to constraint an input field, such as type or format can have its own custom error messages.
 
 The exception to this is the **required field validation** for a input field is not customizable.
 The current error message will be shown as `{fieldName} is required` when a input field is required for data entry.
