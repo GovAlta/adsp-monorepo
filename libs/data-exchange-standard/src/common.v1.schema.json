@@ -21,7 +21,186 @@
       "required": [
         "firstName",
         "lastName"
-      ]
+      ],
+      "errorMessage": {
+        "properties": {
+          "firstName": "Include period (.) if providing your initial",
+          "middleName": "Include period (.) if providing your initial",
+          "lastName": "Include period (.) if providing your initial"
+        }
+      }
+    },
+    "personFullNameAndDob": {
+      "$comment": "Person full name and date of birth.",
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
+        },
+        "middleName": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
+        },
+        "lastName": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": [
+        "firstName",
+        "lastName",
+        "dateOfBirth"
+      ],
+      "errorMessage": {
+        "properties": {
+          "firstName": "Include period (.) if providing your initial",
+          "middleName": "Include period (.) if providing your initial",
+          "lastName": "Include period (.) if providing your initial"
+        }
+      }
+    },
+    "personDependent": {
+      "$comment": "Dependent of a person of a specific type.",
+      "title": "Dependent",
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
+        },
+        "middleName": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
+        },
+        "lastName": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date"
+        },
+        "dependentType": {
+          "$ref": "#/definitions/personDependent/definitions/craDependentType"
+        }
+      },
+      "required": [
+        "firstName",
+        "lastName",
+        "dateOfBirth",
+        "dependentType"
+      ],
+      "errorMessage": {
+        "properties": {
+          "firstName": "Include period (.) if providing your initial",
+          "middleName": "Include period (.) if providing your initial",
+          "lastName": "Include period (.) if providing your initial"
+        }
+      },
+      "definitions": {
+        "craDependentType": {
+          "type": "string",
+          "enum": [
+            "Parent or grandparent",
+            "Child, grandchild, brother, or sister under 18 years of age",
+            "Child, grandchild, brother, or sister 18 years of age or older with an impairment in physical or mental functions"
+          ]
+        }
+      }
+    },
+    "personDependents": {
+      "$comment": "Dependents of a person.",
+      "title": "Dependents",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/personDependent"
+      }
+    },
+    "postalAddressAlberta": {
+      "$comment": "Postal address in Alberta.",
+      "title": "Alberta postal address",
+      "type": "object",
+      "properties": {
+        "addressLine1": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/addressLine1"
+        },
+        "addressLine2": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/addressLine2"
+        },
+        "municipality": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/municipality"
+        },
+        "subdivisionCode": {
+          "const": "AB"
+        },
+        "postalCode": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalCode/definitions/canadaPostalCode"
+        },
+        "country": {
+          "const": "CA"
+        }
+      },
+      "required": [
+        "addressLine1",
+        "municipality",
+        "postalCode"
+      ],
+      "errorMessage": {
+        "properties": {
+          "postalCode": "Must be in 0A0 A0A capital letters and numbers format"
+        }
+      }
+    },
+    "postalAddressCanada": {
+      "$comment": "Postal address in Canada.",
+      "title": "Canadian postal address",
+      "type": "object",
+      "properties": {
+        "addressLine1": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/addressLine1"
+        },
+        "addressLine2": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/addressLine2"
+        },
+        "municipality": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalAddress/properties/municipality"
+        },
+        "subdivisionCode": {
+          "title": "Province or territory",
+          "description": "Two letter code for province or territory",
+          "enum": [
+            "AB",
+            "BC",
+            "MB",
+            "NB",
+            "NL",
+            "NT",
+            "NS",
+            "NU",
+            "ON",
+            "PE",
+            "QC",
+            "SK",
+            "YT"
+          ]
+        },
+        "postalCode": {
+          "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalCode/definitions/canadaPostalCode"
+        },
+        "country": {
+          "const": "CA"
+        }
+      },
+      "required": [
+        "addressLine1",
+        "municipality",
+        "subdivisionCode",
+        "postalCode"
+      ],
+      "errorMessage": {
+        "properties": {
+          "postalCode": "Must be in 0A0 A0A capital letters and numbers format"
+        }
+      }
     }
   }
 }
