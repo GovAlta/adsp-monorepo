@@ -128,7 +128,7 @@ const Dashboard = (): JSX.Element => {
             <DashboardMinWidth>
               {tenantName && (
                 <>
-                  <h1 data-testid="dashboard-title">{tenantName} dashboard</h1>
+                  <h1 data-testid="dashboard-title">Dashboard</h1>
                   {elementRefs.current.map(
                     (ref, index) =>
                       0 === index % 2 && (
