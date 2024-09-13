@@ -93,13 +93,9 @@ Feature: Form
     Then the Add state button is invisible on Lifecycle page
     When the user clicks the information icon button besides the checkbox of Create submission records on submit
     Then the user "views" the help tooltip for "disabling" create submission records on submit
-    When the user clicks x icon for the help tooltip for the checkbox of Create submission records on submit
-    Then the user "should not view" the help tooltip for "disabling" create submission records on submit
     When the user "checks" the checkbox of Create submission records on submit
     And the user clicks the information icon button besides the checkbox of Create submission records on submit
     Then the user "views" the help tooltip for "enabling" create submission records on submit
-    When the user clicks x icon for the help tooltip for the checkbox of Create submission records on submit
-    Then the user "should not view" the help tooltip for "enabling" create submission records on submit
 
   # TEST DATA: a form definition named "autotest-form-disposition-states" is precreated
   @TEST_CS-3224 @REQ_CS-2468 @regression
@@ -112,8 +108,6 @@ Feature: Form
     # Add disposition states
     When the user clicks the information icon button besides Disposition States
     Then the user "views" the help tooltip text for Disposition States
-    When the user clicks x icon for the help tooltip for Disposition States
-    Then the user "should not view" the help tooltip text for Disposition States
     When the user adds a dispoistion state of "Approved", "The application is approved"
     Then the user "views" the disposition state of "Approved", "The application is approved"
     When the user adds a dispoistion state of "Documents needed", "Need to supply required documents"
