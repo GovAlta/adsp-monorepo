@@ -1,9 +1,4 @@
-import {
-  AdspId,
-  ConfigurationService,
-  EventService,
-  TokenProvider,
-} from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { pdfGenerated, pdfGenerationFailed } from '../events';
@@ -37,7 +32,8 @@ export function createGenerateJob({
     retryOnError: boolean,
     done: (err?: Error) => void
   ): Promise<void> => {
-    logger.info(`Starting generation of PDF (ID: ${jobId}) file: ${filename}...`, {
+    const pdfFilename = filename = filename.replace(/\.[^/.]+$/, "") + ".pdf";
+    logger.info(`Starting generation of PDF (ID: ${jobId}) file: ${pdfFilename}...`, {
       context,
       tenant: tenantIdValue,
     });
@@ -64,11 +60,11 @@ export function createGenerateJob({
         tenant: tenantId?.toString(),
       });
 
-      const result = await fileService.upload(tenantId, fileType, recordId, filename, pdf);
+      const result = await fileService.upload(tenantId, fileType, recordId, pdfFilename, pdf);
 
       eventService.send(pdfGenerated(tenantId, jobId, templateId, result, requestedBy));
 
-      logger.info(`Generated PDF (ID: ${jobId}) file ${filename} and uploaded to file service at: ${result.urn}`, {
+      logger.info(`Generated PDF (ID: ${jobId}) file ${pdfFilename} and uploaded to file service at: ${result.urn}`, {
         context,
         tenant: tenantId?.toString(),
       });
