@@ -350,15 +350,15 @@ Then(
                 bearer: Cypress.env('autotest-admin-token'),
               },
             }).then(function (response2) {
-              // Only count non-service users
-              let counter = 0;
-              for (let i = 0; i < response2.body.length; i++) {
-                const userData = response2.body[i];
-                if (!userData.username.includes('service-account')) {
-                  counter = counter + 1;
-                }
-              }
-              roleUserNumApi[response.body[arrayIndex].name] = counter;
+              // // Only count non-service users
+              // let counter = 0;
+              // for (let i = 0; i < response2.body.length; i++) {
+              //   const userData = response2.body[i];
+              //   if (!userData.username.includes('service-account')) {
+              //     counter = counter + 1;
+              //   }
+              // }
+              roleUserNumApi[response.body[arrayIndex].name] = response2.body.length;
             });
           }
         }
