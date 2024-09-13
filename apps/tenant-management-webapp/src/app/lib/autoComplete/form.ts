@@ -88,27 +88,29 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
 }
 
 export class FormUISchemaElementCompletionItemProvider implements languages.CompletionItemProvider {
-  public triggerCharacters = [',', '[', '{'];
+  static layoutUIelements: EditorSuggestion[];
+  static {
+    const elements = [
+      { type: 'Categorization', options: { variant: 'stepper', elements: [] } },
+      { type: 'Category', label: 'Step label', elements: [] },
+      { type: 'Group', label: 'Group label', elements: [] },
+      { type: 'VerticalLayout', elements: [] },
+      { type: 'HorizontalLayout', elements: [] },
+      { type: 'HelpContent', label: 'Help label', options: { help: 'Provide help content here.' }, elements: [] },
+    ];
+
+    FormUISchemaElementCompletionItemProvider.layoutUIelements = elements.map((element) => ({
+      label: element.type,
+      insertText: JSON.stringify(element, null, 2),
+    }));
+  }
+
+  public triggerCharacters = [',', '[', '{', ' '];
   private suggestions: EditorSuggestion[];
 
   constructor(dataSchema: Record<string, unknown>) {
     this.suggestions = [
-      {
-        label: 'Categorization',
-        insertText: '{ "type": "Categorization", "elements": [] },',
-      },
-      {
-        label: 'Group',
-        insertText: '{ "type": "Categorization", "elements": [] },',
-      },
-      {
-        label: 'VerticalLayout',
-        insertText: '{ "type": "VerticalLayout", "elements": [] },',
-      },
-      {
-        label: 'HorizontalLayout',
-        insertText: '{ "type": "HorizontalLayout", "elements": [] },',
-      },
+      ...FormUISchemaElementCompletionItemProvider.layoutUIelements,
       ...this.convertDataSchemaToSuggestion(dataSchema, '#'),
     ];
   }
@@ -128,9 +130,11 @@ export class FormUISchemaElementCompletionItemProvider implements languages.Comp
       null,
       false
     );
+    // Get the next instance of ", {, or ] to determine if we're in an array.
+    const next = model.findNextMatch('"|\\{|\\]', position, true, false, null, true);
 
     const suggestions: languages.CompletionItem[] = [];
-    if (result) {
+    if (result && next?.matches?.[0] !== '"') {
       const line = model.getValueInRange({
         startLineNumber: position.lineNumber,
         endLineNumber: position.lineNumber,
@@ -149,7 +153,11 @@ export class FormUISchemaElementCompletionItemProvider implements languages.Comp
               startColumn: position.column - (peerStart?.length || parentStart?.length || 0),
               endColumn: position.column,
             },
-            this.suggestions
+            this.suggestions.map(({ insertText, ...suggestion }) => ({
+              ...suggestion,
+              // Add trailing comma if the next is a peer object.
+              insertText: next?.matches?.[0] === '{' ? insertText + ',' : insertText,
+            }))
           )
         );
       }
@@ -167,19 +175,41 @@ export class FormUISchemaElementCompletionItemProvider implements languages.Comp
   ): EditorSuggestion[] {
     const suggestions: EditorSuggestion[] = [];
     if (typeof schema?.properties === 'object') {
-      for (const property in schema.properties) {
-        const currentPath = `${path}/properties/${property}`;
-        const currentLabelPath = `${labelPath || path}/p.../${property}`;
+      for (const propertyName in schema.properties) {
+        const currentPath = `${path}/properties/${propertyName}`;
+        const currentLabelPath = `${labelPath || path}/p.../${propertyName}`;
 
-        switch (schema.properties[property]?.type) {
+        const property = schema.properties[propertyName];
+        switch (property?.type) {
           case 'boolean':
+            suggestions.push({
+              label: `Control:"${currentLabelPath}"`,
+              insertText: `{ "type": "Control", "scope": "${currentPath}", "options": { "radio": false } }`,
+              path,
+            });
+            break;
+          case 'string': {
+            if (property.enum || property.format) {
+              suggestions.push({
+                label: `Control:"${currentLabelPath}"`,
+                insertText: `{ "type": "Control", "scope": "${currentPath}" }`,
+                path,
+              });
+            } else {
+              suggestions.push({
+                label: `Control:"${currentLabelPath}"`,
+                insertText: `{ "type": "Control", "scope": "${currentPath}", "options": { "multi": false } }`,
+                path,
+              });
+            }
+            break;
+          }
           case 'number':
           case 'integer':
-          case 'string':
           case 'array':
             suggestions.push({
               label: `Control:"${currentLabelPath}"`,
-              insertText: `{ "type": "Control", "scope": "${currentPath}" },`,
+              insertText: `{ "type": "Control", "scope": "${currentPath}" }`,
               path,
             });
             break;
@@ -189,9 +219,9 @@ export class FormUISchemaElementCompletionItemProvider implements languages.Comp
         }
 
         // Resolve children if current property is an object.
-        if (typeof schema.properties[property] === 'object') {
+        if (typeof schema.properties[propertyName] === 'object') {
           const children = this.convertDataSchemaToSuggestion(
-            schema.properties[property],
+            schema.properties[propertyName],
             currentPath,
             currentLabelPath
           );
