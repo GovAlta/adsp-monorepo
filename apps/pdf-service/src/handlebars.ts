@@ -168,7 +168,13 @@ class HandlebarsTemplateService implements TemplateService {
       return element.type === 'Control' && element.scope;
     });
     handlebars.registerHelper('isListWithDetailAndHasScope', function (element) {
-      return element.type === 'ListWithDetail' && element.scope && element.options;
+      return element.type === 'ListWithDetail' && element.scope;
+    });
+    handlebars.registerHelper('hasOptionElements', function (element) {
+      return element.options && element.options.detail.elements;
+    });
+    handlebars.registerHelper('hasElements', function (element) {
+      return element.elements;
     });
 
     handlebars.registerHelper('scopeName', function (scope) {
@@ -193,27 +199,33 @@ class HandlebarsTemplateService implements TemplateService {
       return ret;
     });
 
-    handlebars.registerHelper('firstDetail', function (context, data, requiredFields, scope, options) {
-      const scopeName = scope.replace('#/properties/', '');
-      if (!options) {
-        options = { ...requiredFields };
-        requiredFields = null;
-      }
-      const extendedContext = Object.assign({}, context[0], { params: { requiredFields, data: data[scopeName] } });
-      const ret = '' + options.fn(extendedContext);
-      return ret;
-    });
-
-    handlebars.registerHelper('withEachData', function (context, requiredFields, element, options) {
+    handlebars.registerHelper('eachDetail', function (context, data, requiredFields, options) {
       let ret = '';
-
       if (!options) {
         options = { ...requiredFields };
         requiredFields = null;
       }
 
       for (let i = 0, j = context.length; i < j; i++) {
-        const extendedContext = Object.assign({}, context[i], { params: { requiredFields, element } });
+        const extendedContext = Object.assign({}, context[i], { params: { requiredFields, data } });
+        ret = ret + options.fn(extendedContext);
+      }
+      return ret;
+    });
+
+    handlebars.registerHelper('withEachData', function (context, scope, requiredFields, element, options) {
+      let ret = '';
+      const scopeName = scope.replace('#/properties/', '');
+
+      if (!options) {
+        options = { ...requiredFields };
+        requiredFields = null;
+      }
+
+      const dataArray = context[scopeName];
+
+      for (let i = 0, j = dataArray.length; i < j; i++) {
+        const extendedContext = Object.assign({}, dataArray[i], { params: { requiredFields, element } });
         ret = ret + options.fn(extendedContext);
       }
 
@@ -235,6 +247,9 @@ class HandlebarsTemplateService implements TemplateService {
     });
     handlebars.registerHelper('isControl', function (element) {
       return element.type === 'Control';
+    });
+    handlebars.registerHelper('hasTypeControlOrList', function (element) {
+      return element.type === 'Control' || element.type === 'ListWithDetail';
     });
 
     handlebars.registerHelper('hasElements', function (element) {
