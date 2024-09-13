@@ -520,29 +520,39 @@ Then(
       case 'views':
         if (enableOrDisable == 'enabling') {
           formObj
-            .definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox()
-            .invoke('text')
+            .definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle()
+            .shadow()
+            .find('[class^=tooltiptext]')
+            .invoke('attr', 'style')
+            .should('contains', 'visibility: visible');
+          formObj
+            .definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle()
+            .invoke('attr', 'content')
             .should('contain', 'Forms of this type will create submission records');
         } else if (enableOrDisable !== 'enabling') {
           formObj
-            .definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox()
-            .invoke('text')
+            .definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle()
+            .shadow()
+            .find('[class^=tooltiptext]')
+            .invoke('attr', 'style')
+            .should('contains', 'visibility: visible');
+          formObj
+            .definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle()
+            .invoke('attr', 'content')
             .should('contain', 'Forms of this type will not create a submission record when submitted');
         }
         break;
       case 'should not view':
-        formObj.definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox().should('not.exist');
+        formObj
+          .definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle()
+          .shadow()
+          .find('[class^=tooltiptext]')
+          .invoke('attr', 'style')
+          .should('contains', 'visibility: hidden');
         break;
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
     }
-  }
-);
-
-When(
-  'the user clicks x icon for the help tooltip for the checkbox of Create submission records on submit',
-  function () {
-    formObj.definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBoxCloseBtn().click();
   }
 );
 
@@ -593,12 +603,23 @@ Then('the user {string} the help tooltip text for Disposition States', function 
   switch (viewOrNot) {
     case 'views':
       formObj
-        .definitionEditorSubmissionConfigDispositionStatesInfoBox()
-        .invoke('text')
+        .definitionEditorSubmissionConfigDispositionStatesInfoCircle()
+        .shadow()
+        .find('[class^=tooltiptext]')
+        .invoke('attr', 'style')
+        .should('contains', 'visibility: visible');
+      formObj
+        .definitionEditorSubmissionConfigDispositionStatesInfoCircle()
+        .invoke('attr', 'content')
         .should('contain', 'Disposition states represent possible decisions applied to submissions by program staff');
       break;
     case 'should not view':
-      formObj.definitionEditorSubmissionConfigDispositionStatesInfoBox().should('not.exist');
+      formObj
+        .definitionEditorSubmissionConfigDispositionStatesInfoCircle()
+        .shadow()
+        .find('[class^=tooltiptext]')
+        .invoke('attr', 'style')
+        .should('contains', 'visibility: hidden');
       break;
     default:
       expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
