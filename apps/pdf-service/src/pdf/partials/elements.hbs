@@ -12,13 +12,24 @@
     <div class="header">
         <strong>{{ scopeName element.scope}}</strong>
     </div>
-    {{#firstDetail element.options.detail.elements data requiredFields element.scope }}
-        {{#withEachData params.data params.requiredFields this}}
-            <div class="list-item">
-              {{> elements element=params.element data=this requiredFields=params.requiredFields styles=styles }}
-            </div>
-        {{/withEachData}}
-    {{/firstDetail}}
+    {{#withEachData data element.scope requiredFields element}}
+        <div class="list-item-basic">
+            {{#if (hasOptionElements params.element)}}
+                    {{#eachDetail params.element.options.detail.elements this params.requiredFields }}
+                        <div class="list-item-borderless">
+                            {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
+                        </div>
+                    {{/eachDetail}}
+            {{/if}}
+            {{#if (hasElements params.element)}}
+                {{#eachDetail params.element.elements this params.requiredFields }}
+                    <div class="list-item-borderless">
+                        {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
+                    </div>
+                {{/eachDetail}}
+            {{/if}}
+        </div>
+    {{/withEachData}}
 {{else if (hasElements element) }}
     {{#withEach element.elements data requiredFields }}
         {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}

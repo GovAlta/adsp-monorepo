@@ -8,6 +8,7 @@ import { WithOptionLabel } from '../../util';
 import { GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { RegisterDataType } from '../../Context/register';
+import { callout } from '../../Additional/GoACalloutControl';
 
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 
@@ -72,28 +73,36 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   }, [registerCtx, registerConfig]);
 
   return (
-    <GoAFormItem error={error} label="">
-      <GoADropdown
-        name={`${label}`}
-        value={data}
-        disabled={!enabled}
-        relative={true}
-        filterable={autocompletion}
-        key={`${id}-jsonform-key`}
-        testId={`${id || label}-jsonform`}
-        {...appliedUiSchemaOptions}
-        onChange={(name, value) => {
-          handleChange(path, value);
-        }}
-        {...uischema?.options?.componentProps}
-      >
-        {mergedOptions?.map((item) => {
-          return (
-            <GoADropdownItem key={`json-form-dropdown-${item.value}`} value={`${item.value}`} label={`${item.label}`} />
-          );
-        })}
-      </GoADropdown>
-    </GoAFormItem>
+    <div>
+      {error.length > 0 ? (
+        callout({ message: error })
+      ) : (
+        <GoADropdown
+          name={`${label}`}
+          value={data}
+          disabled={!enabled}
+          relative={true}
+          filterable={autocompletion}
+          key={`${id}-jsonform-key`}
+          testId={`${id || label}-jsonform`}
+          {...appliedUiSchemaOptions}
+          onChange={(name, value) => {
+            handleChange(path, value);
+          }}
+          {...uischema?.options?.componentProps}
+        >
+          {mergedOptions?.map((item) => {
+            return (
+              <GoADropdownItem
+                key={`json-form-dropdown-${item.value}`}
+                value={`${item.value}`}
+                label={`${item.label}`}
+              />
+            );
+          })}
+        </GoADropdown>
+      )}
+    </div>
   );
 };
 
