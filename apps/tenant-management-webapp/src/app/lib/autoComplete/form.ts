@@ -131,7 +131,7 @@ export class FormUISchemaElementCompletionItemProvider implements languages.Comp
       false
     );
     // Get the next instance of ", {, or ] to determine if we're in an array.
-    const next = model.findNextMatch('"|\\{|\\]', position, true, false, null, true);
+    const next = model.findNextMatch('"|\\{|\\]|,', position, true, false, null, true);
 
     const suggestions: languages.CompletionItem[] = [];
     if (result && next?.matches?.[0] !== '"') {
