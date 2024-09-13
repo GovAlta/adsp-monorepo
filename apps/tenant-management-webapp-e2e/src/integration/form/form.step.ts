@@ -556,13 +556,6 @@ Then(
   }
 );
 
-// When(
-//   'the user clicks x icon for the help tooltip for the checkbox of Create submission records on submit',
-//   function () {
-//     formObj.definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBoxCloseBtn().click();
-//   }
-// );
-
 When('the user {string} the checkbox of Create submission records on submit', function (checksOrUnchecks) {
   switch (checksOrUnchecks) {
     case 'checks':
