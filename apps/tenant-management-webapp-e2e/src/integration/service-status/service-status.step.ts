@@ -209,7 +209,9 @@ When(
       statusObj
         .noticeCardGearButton(index)
         .scrollIntoView()
-        .click()
+        .shadow()
+        .find('button')
+        .click({ force: true })
         .then(() => {
           switch (menu.toLowerCase()) {
             case 'edit':
