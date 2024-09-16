@@ -106,7 +106,7 @@ export function subscribeStatus(
       );
       const { data: subscription } = await axios.post(
         subscriptionUrl.href,
-        { criteria: { description: `Change subscriptions for ${tenant.name}.`, correlationId: id } },
+        { criteria: { description: `Change subscriptions for ${tenant.name}.`, correlationId: null } },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
