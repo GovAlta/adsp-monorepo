@@ -90,3 +90,95 @@ export abstract class JsonPropertyValueCompletionItemProvider implements languag
     return completionItems;
   }
 }
+
+export type PeerContextType = 'property' | 'array' | 'unknown';
+export abstract class JsonObjectCompletionItemProvider implements languages.CompletionItemProvider {
+  protected constructor(protected lineExpression: RegExp, protected suggestions: EditorSuggestion[]) {}
+
+  protected abstract shouldProvideItems(
+    model: editor.ITextModel,
+    position: Position,
+    nextIndicates: PeerContextType
+  ): boolean;
+
+  provideCompletionItems(
+    model: editor.ITextModel,
+    position: Position,
+    _context: languages.CompletionContext,
+    _token: CancellationToken
+  ): languages.ProviderResult<languages.CompletionList> {
+    // Get the next instance of ", {, }, or , to try to determine if we're in an array.
+    const next = model.findNextMatch(',?\\s*("|\\{|\\}|\\])', position, true, false, null, true);
+    let nextIndicates: PeerContextType;
+    switch (next?.matches?.[1]) {
+      // If next is a " or }, then that suggests next is a property or end of object and we're defining a property.
+      case '"':
+      case '}':
+        nextIndicates = 'property';
+        break;
+      // If next is a { or ], then that suggests next is a peer object or end of array and we're defining an object in an array.
+      case '{':
+      case ']':
+        nextIndicates = 'array';
+        break;
+      default:
+        nextIndicates = 'unknown';
+        break;
+    }
+
+    const suggestions: languages.CompletionItem[] = [];
+    if (this.shouldProvideItems(model, position, nextIndicates)) {
+      const line = model.getValueInRange({
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: 1,
+        endColumn: position.column,
+      });
+
+      // Expect line with either a closing peer object, or start of elements array.
+      const [match, peerStart, parentStart] = line.match(this.lineExpression) || [];
+      if (match) {
+        suggestions.push(
+          ...this.mapSuggestions(
+            {
+              startLineNumber: position.lineNumber,
+              endLineNumber: position.lineNumber,
+              startColumn: position.column - (peerStart?.length || parentStart?.length || 0),
+              endColumn: position.column,
+            },
+            this.suggestions,
+            // Add trailing comma if next is a start of a peer object or property.
+            next?.matches?.[0].startsWith(',') !== true && (next.matches?.[1] === '{' || next.matches?.[1] === '"')
+          )
+        );
+      }
+    }
+
+    return {
+      suggestions,
+    };
+  }
+
+  private mapSuggestions(
+    range: IRange,
+    suggestions: EditorSuggestion[],
+    addTrailingComma: boolean
+  ): languages.CompletionItem[] {
+    const completionItems: languages.CompletionItem[] = [];
+    for (const { label, insertText } of suggestions) {
+      completionItems.push({
+        label,
+        kind: 27 as languages.CompletionItemKind,
+        insertText: addTrailingComma ? insertText + ',' : insertText,
+        range,
+        filterText: '',
+        command: {
+          id: 'editor.action.formatDocument',
+          title: 'Format Document',
+        },
+      });
+    }
+
+    return completionItems;
+  }
+}
