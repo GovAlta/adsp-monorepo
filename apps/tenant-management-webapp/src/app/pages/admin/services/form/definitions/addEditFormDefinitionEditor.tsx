@@ -21,7 +21,11 @@ import { PageIndicator } from '@components/Indicator';
 import DataTable from '@components/DataTable';
 import { DeleteModal } from '@components/DeleteModal';
 import { CustomLoader } from '@components/CustomLoader';
-import { FormPropertyValueCompletionItemProvider, FormUISchemaElementCompletionItemProvider } from '@lib/autoComplete';
+import {
+  FormDataSchemaElementCompletionItemProvider,
+  FormPropertyValueCompletionItemProvider,
+  FormUISchemaElementCompletionItemProvider,
+} from '@lib/autoComplete';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
@@ -229,14 +233,20 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         new FormPropertyValueCompletionItemProvider(dataSchema)
       );
 
-      const elementProvider = monaco.languages.registerCompletionItemProvider(
+      const uiElementProvider = monaco.languages.registerCompletionItemProvider(
         'json',
         new FormUISchemaElementCompletionItemProvider(dataSchema)
       );
 
+      const dataElementProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormDataSchemaElementCompletionItemProvider()
+      );
+
       return function () {
         valueProvider.dispose();
-        elementProvider.dispose();
+        uiElementProvider.dispose();
+        dataElementProvider.dispose();
       };
     }
   }, [monaco, dataSchema]);

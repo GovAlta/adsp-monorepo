@@ -244,7 +244,15 @@
       "description": "000-00000 0000000",
       "type": "string",
       "pattern": "^[02-35-8]\\d{2}-\\d{5} [\\d -]{6,14}$",
-      "errorMessage": "Must be: [3 digit institution #]-[5 digit branch #] [typically 7 or 12 digit account #]"
+      "errorMessage": "Must be [3 digit institution #]-[5 digit branch #] [account # often 7 or 12 digits]"
+    },
+    "socialInsuranceNumber": {
+      "$comment": "Canadian social insurance number.",
+      "title": "Social insurance number",
+      "description": "000 000 000",
+      "type": "string",
+      "pattern": "^\\d{3} \\d{3} \\d{3}$",
+      "errorMessage": "Must be three groups of three digits."
     }
   }
 }
