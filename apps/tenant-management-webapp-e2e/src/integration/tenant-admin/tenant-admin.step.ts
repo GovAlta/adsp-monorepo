@@ -350,15 +350,15 @@ Then(
                 bearer: Cypress.env('autotest-admin-token'),
               },
             }).then(function (response2) {
-              // Only count non-service users
-              let counter = 0;
-              for (let i = 0; i < response2.body.length; i++) {
-                const userData = response2.body[i];
-                if (!userData.username.includes('service-account')) {
-                  counter = counter + 1;
-                }
-              }
-              roleUserNumApi[response.body[arrayIndex].name] = counter;
+              // // Only count non-service users
+              // let counter = 0;
+              // for (let i = 0; i < response2.body.length; i++) {
+              //   const userData = response2.body[i];
+              //   if (!userData.username.includes('service-account')) {
+              //     counter = counter + 1;
+              //   }
+              // }
+              roleUserNumApi[response.body[arrayIndex].name] = response2.body.length;
             });
           }
         }
@@ -1244,3 +1244,20 @@ Then('the user can access the log in page with the corresponding tenant id showi
 Then('the user is redirected to the tenant management landing page', function () {
   welcomPageObj.welcomePageTitle().should('contain.text', 'The Alberta Digital Service Platform (ADSP)');
 });
+
+Then(
+  'the user views the event details for the configuration-updated event to have {string} as the securityClassification value',
+  function (securityClassification) {
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        expect(eventDetails).to.contain(
+          '"securityClassification": ' + '"' + securityClassification.toLowerCase() + '"'
+        );
+      });
+  }
+);

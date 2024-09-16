@@ -1,19 +1,37 @@
-
-
 {{#if (isControlAndHasScope element) }}
     <div class="grid-item">
         <strong>
             {{ label element }}{{#if (isRequiredField requiredFields element )}}
-                *
+            *
             {{/if}}
             :
         </strong>
         {{ value element data }}
     </div>
-
+{{else if (isListWithDetailAndHasScope element) }}
+    <div class="header">
+        <strong>{{ scopeName element.scope}}</strong>
+    </div>
+    {{#withEachData data element.scope requiredFields element}}
+        <div class="list-item-basic">
+            {{#if (hasOptionElements params.element)}}
+                    {{#eachDetail params.element.options.detail.elements this params.requiredFields }}
+                        <div class="list-item-borderless">
+                            {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
+                        </div>
+                    {{/eachDetail}}
+            {{/if}}
+            {{#if (hasElements params.element)}}
+                {{#eachDetail params.element.elements this params.requiredFields }}
+                    <div class="list-item-borderless">
+                        {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
+                    </div>
+                {{/eachDetail}}
+            {{/if}}
+        </div>
+    {{/withEachData}}
 {{else if (hasElements element) }}
     {{#withEach element.elements data requiredFields }}
         {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
     {{/withEach}}
-
 {{/if}}

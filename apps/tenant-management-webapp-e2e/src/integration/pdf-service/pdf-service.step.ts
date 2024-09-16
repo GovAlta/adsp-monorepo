@@ -88,7 +88,7 @@ Then('the user views Delete PDF template modal for {string}', function (template
   pdfServiceObj
     .pdfTemplateDeleteConfirmationModalContent()
     .invoke('text')
-    .should('contain', 'Delete ' + templateName);
+    .should('contain', 'delete ' + templateName);
 });
 
 When('the user clicks Confirm button in Delete PDF Template modal', function () {

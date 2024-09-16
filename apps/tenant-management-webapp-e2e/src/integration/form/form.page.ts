@@ -123,19 +123,7 @@ class FormPage {
 
   definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle() {
     return cy.xpath(
-      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]'
-    );
-  }
-
-  definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox() {
-    return cy.xpath(
-      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-text"]'
-    );
-  }
-
-  definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBoxCloseBtn() {
-    return cy.xpath(
-      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-close-button"]'
+      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::goa-tooltip'
     );
   }
 
@@ -144,15 +132,7 @@ class FormPage {
   }
 
   definitionEditorSubmissionConfigDispositionStatesInfoCircle() {
-    return cy.xpath(
-      '//*[@data-testid="lifecycle"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="info-circle"]'
-    );
-  }
-
-  definitionEditorSubmissionConfigDispositionStatesInfoBox() {
-    return cy.xpath(
-      '//*[@data-testid="lifecycle"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="small-text"]'
-    );
+    return cy.xpath('//*[@data-testid="lifecycle"]//h3[text()="Disposition states"]/following-sibling::*//goa-tooltip');
   }
 
   definitionEditorSubmissionConfigDispositionStatesInfoBoxCloseBtn() {
@@ -236,6 +216,18 @@ class FormPage {
 
   definitionsPage() {
     return cy.xpath('//div[@data-testid="form-templates"]');
+  }
+
+  definitionsEditorLifecycleApplicationItems() {
+    return cy.xpath('//h3[text()="Application"]/following-sibling::div/goa-form-item');
+  }
+
+  definitionsEditorLifecycleSecurityClassificationDropdown() {
+    return cy.xpath('//goa-dropdown[@name="securityClassifications"]');
+  }
+
+  definitionsEditorLifecycleSecurityClassificationDropdownItems() {
+    return cy.xpath('//goa-dropdown[@name="securityClassifications"]/goa-dropdown-item');
   }
 }
 export default FormPage;

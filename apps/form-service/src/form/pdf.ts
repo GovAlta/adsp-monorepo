@@ -30,6 +30,11 @@ const template = `
           </div>
         {{/if}}
       {{/each}}
+     {{#if (hasTypeControlOrList data.content.config.uiSchema )}}
+          <div class="review-item-basic">
+            {{> elements element=data.content.config.uiSchema data=@root.data.content.data requiredFields=(requiredField @root.content.config.dataSchema) }}
+          </div>
+     {{/if}}
     </div>
   </div>
 </body>
@@ -173,6 +178,26 @@ const additionalStyles = `
             margin-bottom: 1rem;
             flex: 0 1 100%;
             flex-basis: calc(50% - 0.5rem);
+        }
+
+        .header {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .list-item-borderless {
+            display: flex;
+            flex: 0 1 100%;
+            flex-basis: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .list-item-basic {
+            border: 1px solid #dcdcdc;
+            border-radius: 0.25rem;
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
         }
 
         .review-item-title {

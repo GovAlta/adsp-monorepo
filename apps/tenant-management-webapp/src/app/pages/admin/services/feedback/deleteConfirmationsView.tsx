@@ -18,7 +18,7 @@ export const DeleteConfirmationsView = ({ site, onCancel, deleteSite }: siteDele
           <div>
             <DeleteGap>
               <div data-testid="deleteMsg">
-                Are you sure you wish to delete <b>{site.url}</b> ?
+                Are you sure you wish to delete <b>{site.url}</b>?
               </div>
             </DeleteGap>
             <small>* Please note that deleting this site will prevent receiving future feedback</small>

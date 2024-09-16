@@ -7,9 +7,10 @@ import {
   GoADropdownItem,
   GoADropdown,
   GoAInput,
+  GoATooltip,
+  GoAIcon,
 } from '@abgov/react-components-new';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
-import { languages } from 'monaco-editor';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -20,7 +21,11 @@ import { PageIndicator } from '@components/Indicator';
 import DataTable from '@components/DataTable';
 import { DeleteModal } from '@components/DeleteModal';
 import { CustomLoader } from '@components/CustomLoader';
-import { convertDataSchemaToSuggestion, formatEditorSuggestions } from '@lib/autoComplete';
+import {
+  FormDataSchemaElementCompletionItemProvider,
+  FormPropertyValueCompletionItemProvider,
+  FormUISchemaElementCompletionItemProvider,
+} from '@lib/autoComplete';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
@@ -223,31 +228,25 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema) as Record<string, unknown>;
   useEffect(() => {
     if (monaco) {
-      const provider = monaco.languages.registerCompletionItemProvider('json', {
-        triggerCharacters: ['/', '#', '"'],
-        provideCompletionItems: (model, position) => {
-          const textUntilPosition = model.getValueInRange({
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: position.lineNumber,
-            endColumn: position.column,
-          });
-          let suggestions = [];
+      const valueProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormPropertyValueCompletionItemProvider(dataSchema)
+      );
 
-          try {
-            const dataSchemaSuggestion = convertDataSchemaToSuggestion(dataSchema);
-            suggestions = formatEditorSuggestions(dataSchemaSuggestion);
-          } catch (e) {
-            console.debug(`Error in JSON editor autocompletion: ${e.message}`);
-          }
+      const uiElementProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormUISchemaElementCompletionItemProvider(dataSchema)
+      );
 
-          return {
-            suggestions,
-          } as languages.ProviderResult<languages.CompletionList>;
-        },
-      });
-      return function cleanup() {
-        provider.dispose();
+      const dataElementProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormDataSchemaElementCompletionItemProvider()
+      );
+
+      return function () {
+        valueProvider.dispose();
+        uiElementProvider.dispose();
+        dataElementProvider.dispose();
       };
     }
   }, [monaco, dataSchema]);
@@ -483,14 +482,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             text={'Allow anonymous application'}
                           />
                         </GoACheckboxPad>
-                        <InfoCircleWithInlineHelp
-                          text={
+                        <GoATooltip
+                          content={
                             definition.anonymousApply
                               ? 'Forms of this type will allow anonymous user to apply.'
                               : 'Forms of this type will allow not anonymous user to apply.'
                           }
-                          width="280"
-                        />
+                          position="top"
+                        >
+                          <GoAIcon type="information-circle"></GoAIcon>
+                        </GoATooltip>
                       </FlexRow>
 
                       <FlexRow>
@@ -507,14 +508,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             text="Create support topic"
                           />
                         </GoACheckboxPad>
-                        <InfoCircleWithInlineHelp
-                          text={
+                        <GoATooltip
+                          content={
                             definition.supportTopic
                               ? 'Forms of this type will create a comment topic used for supporting applicants. Applicants will be able to read and write comments to the topic to interact with staff.'
                               : 'Forms of this type will not create a comment topic used for supporting applicants.'
                           }
-                          width="280"
-                        />
+                          position="top"
+                        >
+                          <GoAIcon type="information-circle"></GoAIcon>
+                        </GoATooltip>
                       </FlexRow>
                     </div>
                     <div>
@@ -553,14 +556,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           text="Create PDF on submit"
                         />
                       </SubmissionRecordsBox>
-                      <InfoCircleWithInlineHelp
-                        text={
+                      <GoATooltip
+                        content={
                           definition.submissionPdfTemplate
                             ? 'Forms of this type will generate a PDF on submission '
                             : 'Forms of this type will not generate a PDF on submission'
                         }
-                        width="180"
-                      />
+                        position="top"
+                      >
+                        <GoAIcon type="information-circle"></GoAIcon>
+                      </GoATooltip>
                     </FlexRow>
                     <FlexRow>
                       <SubmissionRecordsBox>
@@ -576,13 +581,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           text="Create submission records on submit"
                         />
                       </SubmissionRecordsBox>
-                      <InfoCircleWithInlineHelp
-                        text={
+                      <GoATooltip
+                        content={
                           definition.submissionRecords
                             ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
                             : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
                         }
-                      />
+                        position="top"
+                      >
+                        <GoAIcon type="information-circle"></GoAIcon>
+                      </GoATooltip>
                     </FlexRow>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                       <SubmissionConfigurationPadding>
@@ -595,7 +603,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                               : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
                           }
                         />
-
                         <QueueTaskDropdown>
                           {queueTasks && Object.keys(queueTasks).length > 0 && (
                             <GoADropdown
@@ -642,10 +649,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           <h3>Disposition states</h3>
                           <div>
                             {definition.submissionRecords ? (
-                              <InfoCircleWithInlineHelp
-                                text="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                                width={450}
-                              />
+                              <GoATooltip
+                                content="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                                position="top"
+                              >
+                                <GoAIcon type="information-circle"></GoAIcon>
+                              </GoATooltip>
                             ) : (
                               <FakeButton />
                             )}
@@ -814,7 +823,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <b>
                 {definition?.dispositionStates &&
                   JSON.stringify(definition.dispositionStates[selectedDeleteDispositionIndex]?.name)}
-              </b>{' '}
+              </b>
               ?
             </div>
           </div>

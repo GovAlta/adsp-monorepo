@@ -21,7 +21,7 @@ export const WebhookDeleteModal = (): JSX.Element => {
           }}
           content={
             <div>
-              Are you sure you wish to delete <b>{webhook?.name}</b> ?
+              Are you sure you wish to delete <b>{webhook?.name}</b>?
             </div>
           }
           onDelete={() => {

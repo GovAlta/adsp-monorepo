@@ -36,7 +36,7 @@ class TenantAdminPage {
   }
 
   tenantName() {
-    return cy.xpath('//nav[contains(@class, "sc")]//a[@title="Dashboard"]//preceding-sibling::div');
+    return cy.xpath('//goa-side-menu/parent::div/preceding-sibling::div');
   }
 
   releaseContactInfo() {

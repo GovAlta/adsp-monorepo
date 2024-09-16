@@ -39,7 +39,7 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
         }}
         content={
           <div>
-            Are you sure you wish to delete <b> {calendarName}</b> ?
+            Are you sure you wish to delete <b> {calendarName}</b>?
           </div>
         }
         onDelete={() => {

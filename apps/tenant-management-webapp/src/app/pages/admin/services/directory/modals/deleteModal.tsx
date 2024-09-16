@@ -24,7 +24,7 @@ export const DirectoryDeleteModal = (): JSX.Element => {
       isOpen={directory !== undefined && modal.isOpen === true}
       content={
         <div>
-          Are you sure you wish to delete <b> {content}</b> ?
+          Are you sure you wish to delete <b> {content}</b>?
         </div>
       }
       onCancel={() => {

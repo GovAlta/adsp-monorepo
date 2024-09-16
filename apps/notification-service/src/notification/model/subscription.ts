@@ -41,8 +41,8 @@ export class SubscriptionEntity implements Subscription {
     const eventCorrelationId = event.correlationId?.substring(event.correlationId?.lastIndexOf('/') + 1);
 
     return (
-      (!criteria.correlationId || criteria.correlationId === eventCorrelationId) &&
-      !Object.entries(criteria.context || {}).find(([key, value]) => (value !== event.context?.[key]))
+      (!criteria?.correlationId || criteria.correlationId === eventCorrelationId) &&
+      !Object.entries(criteria.context || {}).find(([key, value]) => value !== event.context?.[key])
     );
   }
 
