@@ -10,6 +10,7 @@ import { createClient } from 'redis';
 import { environment } from './environments/environment';
 import { ServiceRoles, applyGatewayMiddleware } from './gateway';
 import { configurePassport } from './access';
+import { createAddressRouter } from './address';
 
 const logger = createLogger('form-gateway', environment.LOG_LEVEL);
 
@@ -97,6 +98,11 @@ const initializeApp = async (): Promise<express.Application> => {
       },
     });
   });
+  const addressRouter = createAddressRouter({
+    environment,
+    logger,
+  });
+  app.use('/gateway/v1/address/v1', addressRouter);
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
