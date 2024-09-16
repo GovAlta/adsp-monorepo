@@ -379,7 +379,7 @@ export const applicationStatusChange = (
   name: 'application-status-changed',
   timestamp: new Date(),
   tenantId: user.tenantId,
-  correlationId: user.tenantId.resource,
+  correlationId: app.appKey,
   context: {
     applicationId: app.appKey,
     applicationName: app.name,
@@ -417,7 +417,7 @@ export const applicationNoticePublished = (notice: NoticeApplicationEntity, user
     const appId = notice.tennantServRef && JSON.parse(notice.tennantServRef)[0]?.id;
     event.correlationId = appId;
     event.payload['application'] = {
-      id: user.tenantId.resource,
+      id: appId,
       name: notice.tennantServRef && JSON.parse(notice.tennantServRef)[0]?.name,
       description: '',
     };
