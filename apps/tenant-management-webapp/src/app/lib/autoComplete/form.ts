@@ -1,16 +1,12 @@
 import { commonV1JsonSchema, standardV1JsonSchema } from '@abgov/data-exchange-standard';
-import type { CancellationToken, editor, IRange, languages, Position } from 'monaco-editor';
+import type { editor, Position } from 'monaco-editor';
 import type { EditorSuggestion } from './autoComplete';
-import { JsonPropertyValueCompletionItemProvider } from './json';
+import { JsonObjectCompletionItemProvider, JsonPropertyValueCompletionItemProvider, PeerContextType } from './json';
 
 export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCompletionItemProvider {
-  constructor(dataSchema: Record<string, unknown>) {
-    const scopeSuggestions = FormPropertyValueCompletionItemProvider.convertDataSchemaToSuggestion(
-      true,
-      dataSchema,
-      '#'
-    );
-    const refSuggestions = [
+  private static standardValues: EditorSuggestion[];
+  static {
+    FormPropertyValueCompletionItemProvider.standardValues = [
       ...FormPropertyValueCompletionItemProvider.convertDataSchemaToSuggestion(
         false,
         standardV1JsonSchema,
@@ -24,8 +20,16 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
         'common.v1#'
       ),
     ];
+  }
 
-    super({ scope: scopeSuggestions, '\\$ref': refSuggestions });
+  constructor(dataSchema: Record<string, unknown>) {
+    const scopeSuggestions = FormPropertyValueCompletionItemProvider.convertDataSchemaToSuggestion(
+      true,
+      dataSchema,
+      '#'
+    );
+
+    super({ scope: scopeSuggestions, '\\$ref': FormPropertyValueCompletionItemProvider.standardValues });
   }
 
   private static convertDataSchemaToSuggestion(
@@ -87,8 +91,8 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
   }
 }
 
-export class FormUISchemaElementCompletionItemProvider implements languages.CompletionItemProvider {
-  static layoutUIelements: EditorSuggestion[];
+export class FormUISchemaElementCompletionItemProvider extends JsonObjectCompletionItemProvider {
+  private static layoutUIelements: EditorSuggestion[];
   static {
     const elements = [
       { type: 'Categorization', options: { variant: 'stepper', elements: [] } },
@@ -106,21 +110,19 @@ export class FormUISchemaElementCompletionItemProvider implements languages.Comp
   }
 
   public triggerCharacters = [',', '[', '{', ' '];
-  private suggestions: EditorSuggestion[];
 
   constructor(dataSchema: Record<string, unknown>) {
-    this.suggestions = [
+    super(/^\s*(?:}, ?({?)|"elements": ?\[({?))$/, [
       ...FormUISchemaElementCompletionItemProvider.layoutUIelements,
-      ...this.convertDataSchemaToSuggestion(dataSchema, '#'),
-    ];
+      ...FormUISchemaElementCompletionItemProvider.convertDataSchemaToSuggestion(dataSchema, '#'),
+    ]);
   }
 
-  provideCompletionItems(
+  protected override shouldProvideItems(
     model: editor.ITextModel,
     position: Position,
-    _context: languages.CompletionContext,
-    _token: CancellationToken
-  ): languages.ProviderResult<languages.CompletionList> {
+    nextIndicates: PeerContextType
+  ): boolean {
     // Find UI schema types to determine if we're in a UI schema (completion provider is global for monaco instances)
     const result = model.findPreviousMatch(
       '("VerticalLayout|HorizontalLayout|Group|Categorization")',
@@ -130,45 +132,11 @@ export class FormUISchemaElementCompletionItemProvider implements languages.Comp
       null,
       false
     );
-    // Get the next instance of ", {, or ] to determine if we're in an array.
-    const next = model.findNextMatch('"|\\{|\\]|,', position, true, false, null, true);
 
-    const suggestions: languages.CompletionItem[] = [];
-    if (result && next?.matches?.[0] !== '"') {
-      const line = model.getValueInRange({
-        startLineNumber: position.lineNumber,
-        endLineNumber: position.lineNumber,
-        startColumn: 1,
-        endColumn: position.column,
-      });
-
-      // Expect line with either a closing peer object, or start of elements array.
-      const [match, peerStart, parentStart] = line.match(/^\s*(?:}, ?({?)|"elements": ?\[({?))$/) || [];
-      if (match) {
-        suggestions.push(
-          ...this.mapSuggestions(
-            {
-              startLineNumber: position.lineNumber,
-              endLineNumber: position.lineNumber,
-              startColumn: position.column - (peerStart?.length || parentStart?.length || 0),
-              endColumn: position.column,
-            },
-            this.suggestions.map(({ insertText, ...suggestion }) => ({
-              ...suggestion,
-              // Add trailing comma if the next is a peer object.
-              insertText: next?.matches?.[0] === '{' ? insertText + ',' : insertText,
-            }))
-          )
-        );
-      }
-    }
-
-    return {
-      suggestions,
-    };
+    return result && nextIndicates === 'array';
   }
 
-  private convertDataSchemaToSuggestion(
+  private static convertDataSchemaToSuggestion(
     schema: Record<string, unknown>,
     path: string,
     labelPath?: string
@@ -189,7 +157,7 @@ export class FormUISchemaElementCompletionItemProvider implements languages.Comp
             });
             break;
           case 'string': {
-            if (property.enum || property.format) {
+            if (property.enum || property.format || property.pattern) {
               suggestions.push({
                 label: `Control:"${currentLabelPath}"`,
                 insertText: `{ "type": "Control", "scope": "${currentPath}" }`,
@@ -232,23 +200,68 @@ export class FormUISchemaElementCompletionItemProvider implements languages.Comp
 
     return suggestions;
   }
+}
 
-  private mapSuggestions(range: IRange, suggestions: EditorSuggestion[]): languages.CompletionItem[] {
-    const completionItems: languages.CompletionItem[] = [];
-    for (const { label, insertText } of suggestions) {
-      completionItems.push({
-        label,
-        kind: 27 as languages.CompletionItemKind,
-        insertText,
-        range,
-        filterText: '',
-        command: {
-          id: 'editor.action.formatDocument',
-          title: 'Format Document',
-        },
-      });
+export class FormDataSchemaElementCompletionItemProvider extends JsonObjectCompletionItemProvider {
+  private static standardElements: EditorSuggestion[];
+  static {
+    FormDataSchemaElementCompletionItemProvider.standardElements = [
+      ...FormDataSchemaElementCompletionItemProvider.convertDataSchemaToSuggestion(
+        standardV1JsonSchema,
+        `${standardV1JsonSchema.$id}#`,
+        'standard.v1#'
+      ),
+      ...FormDataSchemaElementCompletionItemProvider.convertDataSchemaToSuggestion(
+        commonV1JsonSchema,
+        `${commonV1JsonSchema.$id}#`,
+        'common.v1#'
+      ),
+    ];
+  }
+
+  public triggerCharacters = [':', '{', ' '];
+
+  constructor() {
+    super(/^\s*(?:"[a-zA-Z0-9_-]{1,100}": ?({?))$/, FormDataSchemaElementCompletionItemProvider.standardElements);
+  }
+
+  protected override shouldProvideItems(
+    model: editor.ITextModel,
+    position: Position,
+    nextIndicates: PeerContextType
+  ): boolean {
+    // Find data schema types to determine if we're in a data schema (completion provider is global for monaco instances)
+    const result = model.findPreviousMatch(
+      '("object|boolean|number|integer|string")',
+      position,
+      true,
+      true,
+      null,
+      false
+    );
+
+    return result && nextIndicates === 'property';
+  }
+
+  private static convertDataSchemaToSuggestion(
+    schema: Record<string, unknown>,
+    path: string,
+    labelPath?: string
+  ): EditorSuggestion[] {
+    const suggestions: EditorSuggestion[] = [];
+    if (typeof schema?.definitions === 'object') {
+      for (const definition in schema.definitions) {
+        const currentPath = `${path}/definitions/${definition}`;
+        const currentLabelPath = `${labelPath || path}/d.../${definition}`;
+
+        suggestions.push({
+          label: `Ref:"${currentLabelPath}"`,
+          insertText: `{ "$ref": "${currentPath}" }`,
+          path,
+        });
+      }
     }
 
-    return completionItems;
+    return suggestions;
   }
 }
