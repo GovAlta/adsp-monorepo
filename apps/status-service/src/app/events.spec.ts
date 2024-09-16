@@ -56,7 +56,7 @@ describe(' application notices published definition', () => {
     token: null,
   };
 
-  const emptyApplication = { description: '', id: '/tenants/6195674753ee940013a53b03', name: '' };
+  const emptyApplication = { description: '', id: '', name: '' };
   it('Validate schema', async () => {
     const validator = new AjvValidationService(logger);
     const testEntity = await NoticeApplicationEntity.create(testUser, repositoryMock, testNotice);
