@@ -1,6 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Model, model } from 'mongoose';
+import { Logger } from 'winston';
 import { FormCriteria, FormEntity, FormRepository } from '../form';
 import { FormDefinitionRepository } from '../form';
 import { NotificationService } from '../notification';
@@ -11,10 +12,16 @@ export class MongoFormRepository implements FormRepository {
   private model: Model<Document & FormDoc>;
 
   constructor(
+    private logger: Logger,
     private definitionRepository: FormDefinitionRepository,
     private notificationService: NotificationService
   ) {
     this.model = model<Document & FormDoc>('form', formSchema);
+    this.model.on('index', (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    });
   }
 
   find(top: number, after: string, criteria: FormCriteria): Promise<Results<FormEntity>> {

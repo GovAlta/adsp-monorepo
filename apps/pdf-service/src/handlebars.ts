@@ -176,6 +176,46 @@ class HandlebarsTemplateService implements TemplateService {
     handlebars.registerHelper('hasElements', function (element) {
       return element.elements;
     });
+    handlebars.registerHelper('isArray', function (element, data) {
+      if (data !== undefined) {
+        const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let currentValue: any = data;
+
+        for (const key of pathArray) {
+          if (currentValue[key] === undefined) {
+            return '';
+          }
+          currentValue = currentValue[key];
+        }
+
+        return Array.isArray(currentValue);
+      } else {
+        return false;
+      }
+    });
+
+    handlebars.registerHelper('grabDataArray', function (context, element, requiredFields, options) {
+      let ret = '';
+      if (!options) {
+        options = { ...requiredFields };
+        requiredFields = null;
+      }
+
+      const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let currentValue: any = context;
+      for (const key of pathArray) {
+        if (currentValue[key] === undefined) {
+          return '';
+        }
+        currentValue = currentValue[key];
+      }
+      const extendedContext = Object.assign({}, currentValue, { params: { requiredFields, element } });
+      ret = ret + options.fn(extendedContext);
+      return ret;
+    });
 
     handlebars.registerHelper('scopeName', function (scope) {
       const scopeName = scope.replace('#/properties/', '');
@@ -228,6 +268,46 @@ class HandlebarsTemplateService implements TemplateService {
         const extendedContext = Object.assign({}, dataArray[i], { params: { requiredFields, element } });
         ret = ret + options.fn(extendedContext);
       }
+
+      return ret;
+    });
+
+    handlebars.registerHelper(
+      'withEachDataWithItems',
+      function (context, scope, requiredFields, element, dataSchema, options) {
+        let ret = '';
+        const scopeName = scope.replace('#/properties/', '');
+
+        if (!options) {
+          options = { ...requiredFields };
+          requiredFields = null;
+        }
+
+        const items = dataSchema?.properties[scopeName].items?.properties;
+        const dataArray = context[scopeName];
+
+        for (let i = 0, j = dataArray.length; i < j; i++) {
+          const extendedContext = Object.assign({}, dataArray[i], { params: { requiredFields, element, items } });
+          ret = ret + options.fn(extendedContext);
+        }
+
+        return ret;
+      }
+    );
+
+    handlebars.registerHelper('forEachItem', function (context, data, requiredFields, options) {
+      let ret = '';
+
+      Object.keys(context).forEach(function (key) {
+        const element = {
+          type: 'Control',
+          scope: key,
+          label: key,
+        };
+
+        const extendedContext = Object.assign({}, element, { params: { requiredFields, data, element } });
+        ret = ret + options.fn(extendedContext);
+      });
 
       return ret;
     });

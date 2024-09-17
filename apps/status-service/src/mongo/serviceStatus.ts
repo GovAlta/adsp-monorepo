@@ -1,13 +1,19 @@
 import { Doc } from '@core-services/core-common';
 import { Model, model, Document } from 'mongoose';
+import { Logger } from 'winston';
 import { ServiceStatusApplication, ServiceStatusApplicationFilter, ServiceStatusApplicationEntity } from '../app';
 import { ServiceStatusRepository } from '../app/repository/serviceStatus';
 import { serviceStatusApplicationSchema } from './schema';
 
 export default class MongoServiceStatusRepository implements ServiceStatusRepository {
   model: Model<ServiceStatusApplication & Document>;
-  constructor() {
+  constructor(private logger: Logger) {
     this.model = model<ServiceStatusApplication & Document>('ServiceStatus', serviceStatusApplicationSchema);
+    this.model.on('index', (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    });
   }
 
   async findEnabledApplications(tenantId: string): Promise<ServiceStatusApplicationEntity[]> {

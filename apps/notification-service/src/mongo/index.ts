@@ -29,13 +29,14 @@ export const createRepositories = ({
       {
         user: MONGO_USER,
         pass: MONGO_PASSWORD,
+        autoIndex: true,
       },
       (err) => {
         if (err) {
           reject(err);
         } else {
           resolve({
-            subscriptionRepository: new MongoSubscriptionRepository(),
+            subscriptionRepository: new MongoSubscriptionRepository(logger),
             botRepository: new MongoBotRepository(logger),
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
             // Possible that express js module doesn't actually export anything for ConnectionStates and

@@ -1,6 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
 import { Document, model, Model, PipelineStage, Types } from 'mongoose';
+import { Logger } from 'winston';
 import {
   NotificationConfiguration,
   NotificationTypeEntity,
@@ -17,9 +18,17 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
   private subscriberModel: Model<Document & SubscriberDoc>;
   private subscriptionModel: Model<Document & SubscriptionDoc>;
 
-  constructor() {
+  constructor(private logger: Logger) {
     this.subscriberModel = model<Document & SubscriberDoc>('subscriber', subscriberSchema);
     this.subscriptionModel = model<Document & SubscriptionDoc>('subscription', subscriptionSchema);
+
+    const handleIndexError = (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    };
+    this.subscriberModel.on('index', handleIndexError);
+    this.subscriptionModel.on('index', handleIndexError);
   }
 
   async getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
