@@ -62,7 +62,7 @@
     "dashify": "^2.0.0",
     "dayjs": "^1.10.7",
     "detect-file-type": "^0.2.8",
-    "dompurify": "^2.3.4",
+    "dompurify": "^2.5.4",
     "dotenv": "10.0.0",
     "envalid": "^7.1.0",
     "export-from-json": "^1.7.4",
