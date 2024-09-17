@@ -85,4 +85,4 @@ Any standard JSON schema keyword that can be used to constraint an input field, 
 The exception to this is the **required field validation** for a input field is not customizable.
 The current error message will be shown as `{fieldName} is required` when a input field is required for data entry.
 
-Please visit [Ajv errors](https://ajv.js.org/packages/ajv-errors.html) website to look at using different variations to customize your error messages.
+Please visit [Ajv errors website](https://ajv.js.org/packages/ajv-errors.html) for more information on customizing error messages.
