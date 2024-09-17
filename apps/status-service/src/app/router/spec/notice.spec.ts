@@ -119,6 +119,9 @@ describe('Notice service', () => {
     startDate: '2022-04-07T16:00:00.000',
     endDate: '2022-04-07T20:00:00.000Z',
     isAllApplications: true,
+    update: jest.fn((_user, update) => Promise.resolve(update)),
+    delete: jest.fn(),
+    canAccessById: jest.fn(() => true),
   };
 
   const findApplicationsResponseMock = {
@@ -213,7 +216,7 @@ describe('Notice service', () => {
     });
 
     it('Can get notice by id', async () => {
-      noticeRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      noticeRepositoryMock.get.mockResolvedValueOnce(statusNoticeMock);
       const handler = getNoticeById(loggerMock, noticeRepositoryMock);
       const reqMock = {
         user: { tenantId, id: 'test', roles: ['status-admin'] },
@@ -227,14 +230,14 @@ describe('Notice service', () => {
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          _id: applicationsMock[1]._id,
+          message: statusNoticeMock.message,
         })
       );
     });
   });
   describe('Can delete notice', () => {
     it('Can delete notice', async () => {
-      noticeRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      noticeRepositoryMock.get.mockResolvedValueOnce(statusNoticeMock);
 
       const handler = deleteNotice(loggerMock, noticeRepositoryMock);
       const reqMock = {
@@ -246,7 +249,7 @@ describe('Notice service', () => {
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          _id: applicationsMock[1]._id,
+          message: statusNoticeMock.message,
         })
       );
     });
@@ -254,7 +257,7 @@ describe('Notice service', () => {
 
   describe('Can update notice', () => {
     it('Can update notice', async () => {
-      noticeRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      noticeRepositoryMock.get.mockResolvedValueOnce(statusNoticeMock);
 
       const handler = updateNotice(loggerMock, eventServiceMock, noticeRepositoryMock);
       const reqMock = {
@@ -269,7 +272,11 @@ describe('Notice service', () => {
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: 'updated-app',
+          message: updateNoticePayloadMock.message,
+          tennantServRef: updateNoticePayloadMock.tennantServRef,
+          startDate: updateNoticePayloadMock.startDate,
+          endDate: updateNoticePayloadMock.endDate,
+          isAllApplications: updateNoticePayloadMock.isAllApplications,
         })
       );
     });
