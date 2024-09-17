@@ -308,7 +308,6 @@ export function getForm(repository: FormRepository): RequestHandler {
       end();
       next();
     } catch (err) {
-      console.log('getForm error', err);
       next(err);
     }
   };
