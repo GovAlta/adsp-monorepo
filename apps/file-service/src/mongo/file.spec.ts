@@ -1,11 +1,11 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { createMockData } from '@core-services/core-common/mongo';
 import { connect, disconnect, model } from 'mongoose';
+import { Mock } from 'moq.ts';
+import { Logger } from 'winston';
 import { MongoFileRepository } from './file';
-
 import { FileRepository } from '../file';
 import { FileType, FileCriteria, FileTypeEntity, FileEntity, FileStorageProvider, FileTypeRepository } from '../file';
-import { Mock } from 'moq.ts';
 
 describe('Mongo: FileEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -18,6 +18,13 @@ describe('Mongo: FileEntity', () => {
     readRoles: ['test-admin'],
   };
 
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+
   const storageProviderMock = new Mock<FileStorageProvider>();
   const typeRepository = new Mock<FileTypeRepository>();
   let repositoryMock: Mock<FileRepository> = null;
@@ -25,7 +32,7 @@ describe('Mongo: FileEntity', () => {
   const entity = new FileTypeEntity(type);
   typeRepository.setup((m) => m.getTypes(tenantId)).returns(Promise.resolve({ [type.id]: new FileTypeEntity(type) }));
   typeRepository.setup((m) => m.getType(tenantId, 'test')).returns(Promise.resolve(entity));
-  const repo = new MongoFileRepository(storageProviderMock.object(), typeRepository.object());
+  const repo = new MongoFileRepository(logger, storageProviderMock.object(), typeRepository.object());
 
   const criteria: FileCriteria = {
     deleted: false,

@@ -37,13 +37,14 @@ export const createRepositories = ({
       {
         user: MONGO_USER,
         pass: MONGO_PASSWORD,
+        autoIndex: true,
       },
       (err) => {
         if (err) {
           reject(err);
         } else {
           const typeRepository = new ConfigurationFileTypeRepository(serviceId, tokenProvider, configurationService);
-          const fileRepository = new MongoFileRepository(storageProvider, typeRepository);
+          const fileRepository = new MongoFileRepository(logger, storageProvider, typeRepository);
           resolve({
             fileRepository,
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
