@@ -23,6 +23,14 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
   constructor(private logger: Logger, private validationService: ValidationService) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
     this.activeRevisionModel = model<ActiveRevisionDoc>('activeRevision', activeRevisionSchema);
+
+    const handleIndexError = (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    };
+    this.revisionModel.on('index', handleIndexError);
+    this.activeRevisionModel.on('index', handleIndexError);
   }
 
   async find<C>(
