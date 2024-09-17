@@ -7,7 +7,7 @@ import {
 } from '@core-services/core-common';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { ApplicationConfiguration } from '../model';
+import { ApplicationConfiguration, EndpointStatusEntryEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
@@ -27,6 +27,20 @@ export interface ServiceStatusRouterProps {
   directory: ServiceDirectory;
   serviceId: AdspId;
   configurationService: ConfigurationService;
+}
+
+function mapEndpointStatusEntry(entity: EndpointStatusEntryEntity) {
+  return entity
+    ? {
+        ok: entity.ok,
+        timestamp: entity.timestamp,
+        responseTime: entity.responseTime,
+        status: entity.status,
+        applicationId: entity.applicationId,
+        url: entity.url,
+        appKey: entity.applicationId,
+      }
+    : null;
 }
 
 export const getApplications = (logger: Logger, applicationRepo: ApplicationRepo): RequestHandler => {
@@ -277,15 +291,7 @@ export const getApplicationEntries =
       }
 
       const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(app.url, app.appKey, top);
-      res.send(
-        entries.map((e) => {
-          return {
-            ...e,
-            url: app.url,
-            appKey: appKey,
-          };
-        })
-      );
+      res.send(entries.map(mapEndpointStatusEntry));
     } catch (err) {
       logger.error(`Failed to get application: ${err.message}`);
       next(err);
