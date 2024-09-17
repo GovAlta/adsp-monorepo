@@ -286,15 +286,21 @@ export function deleteTypeSubscriptionCriteria(
       const { criteria: criteriaValue } = req.query;
       const criteria: SubscriptionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
 
-      let result = false;
+      let result = false,
+        deletedSubscription = false;
       const subscription = await repository.getSubscription(type, subscriber);
       if (subscription) {
-        result = await subscription.deleteCriteria(user, criteria);
+        [result, deletedSubscription] = await subscription.deleteCriteria(user, criteria);
       }
 
       res.send({ deleted: result });
       if (result) {
-        eventService.send(subscriptionSet(type, subscription.subscriber, subscription, user));
+        // If the subscription was deleted (because all criteria are gone), then signal the appropriate event.
+        if (deletedSubscription) {
+          eventService.send(subscriptionDeleted(type, subscription.subscriber, user));
+        } else {
+          eventService.send(subscriptionSet(type, subscription.subscriber, subscription, user));
+        }
       }
     } catch (err) {
       next(err);

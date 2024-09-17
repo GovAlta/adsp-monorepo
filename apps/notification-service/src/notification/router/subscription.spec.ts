@@ -840,6 +840,59 @@ describe('subscription router', () => {
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-set' }));
     });
 
+    it('can delete subscription criteria and remove subscription', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: {
+          criteria: JSON.stringify({ correlationId: 'test' }),
+        },
+        params: { subscriber: 'subscriber' },
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+      const subscription = new SubscriptionEntity(
+        repositoryMock,
+        {
+          tenantId,
+          typeId: 'test',
+          subscriberId: 'subscriber',
+          criteria: [{ correlationId: 'test' }],
+        },
+        req.notificationType,
+        subscriber
+      );
+
+      repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
+      repositoryMock.deleteSubscriptions.mockResolvedValueOnce(true);
+
+      const handler = deleteTypeSubscriptionCriteria(repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.deleteSubscriptions).toHaveBeenCalledWith(
+        subscription.tenantId,
+        notificationType.id,
+        subscriber.id
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'subscription-deleted' }));
+    });
+
     it('can call next with error', async () => {
       const req = {
         tenant: {
