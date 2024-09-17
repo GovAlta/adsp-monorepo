@@ -1,9 +1,15 @@
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
+import { Logger } from 'winston';
 import { TenantEntity } from '../tenant';
 import { MongoTenantRepository } from './tenant';
 
 describe('Mongo: Tenant', () => {
-  const repo = new MongoTenantRepository();
+  const logger: Logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+  const repo = new MongoTenantRepository(logger);
 
   beforeEach(async () => {
     await connect();

@@ -1,16 +1,23 @@
 // This import adds type definitions for req.User
 import '@abgov/adsp-service-sdk';
 import { connect, connection, model } from 'mongoose';
+import { Logger } from 'winston';
 import { MongoServiceStatusRepository } from './serviceStatus';
 import { ServiceStatusApplicationEntity } from '../app';
 
 describe('Service status mongo repository', () => {
+  const logger: Logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+
   let repo: MongoServiceStatusRepository;
   let mongoose: typeof import('mongoose');
 
   beforeEach(async () => {
     mongoose = await connect(process.env.MONGO_URL);
-    repo = new MongoServiceStatusRepository();
+    repo = new MongoServiceStatusRepository(logger);
     await model('ServiceStatus').deleteMany({});
   });
 

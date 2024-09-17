@@ -179,7 +179,7 @@ export function createPdfRouter({
       body('operation').isIn(['generate']),
       body('templateId').isString().isLength({ min: 1, max: 50 }),
       body('data').optional().isObject(),
-      body('filename').isString().isLength({ min: 1, max: 50 }),
+      body('filename').isString().isLength({ min: 1, max: 60 }),
       body('fileType').optional().isString().isLength({ min: 1, max: 50 }),
       body('recordId').optional().isString()
     ),

@@ -28,7 +28,7 @@ export const revisionSchema = new Schema({
     required: true,
   },
 });
-revisionSchema.index({ namespace: 1, name: 1, tenant: 1, revision: 1 }, { unique: true });
+revisionSchema.index({ namespace: 1, name: 1, tenant: 1, revision: 1 });
 
 export const activeRevisionSchema = new Schema({
   namespace: {
@@ -54,4 +54,4 @@ export const activeRevisionSchema = new Schema({
   },
 });
 
-activeRevisionSchema.index({ namespace: 1, name: 1, tenant: 1 }, { unique: true });
+activeRevisionSchema.index({ namespace: 1, name: 1, tenant: 1 });

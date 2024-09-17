@@ -1,5 +1,6 @@
 import { Doc } from '@core-services/core-common';
 import { Model, model, Document } from 'mongoose';
+import { Logger } from 'winston';
 import { EndpointStatusEntry, EndpointStatusEntryRepositoryOptions } from '../app';
 import { EndpointStatusEntryEntity } from '../app/model/endpointStatusEntry';
 import { EndpointStatusEntryRepository } from '../app/repository/endpointStatusEntry';
@@ -12,8 +13,13 @@ export const defaultStatusEntryOptions: EndpointStatusEntryRepositoryOptions = {
 
 export default class MongoEndpointStatusEntryRepository implements EndpointStatusEntryRepository {
   model: Model<EndpointStatusEntry & Document>;
-  constructor(private opts: EndpointStatusEntryRepositoryOptions = defaultStatusEntryOptions) {
+  constructor(private logger: Logger, private opts: EndpointStatusEntryRepositoryOptions = defaultStatusEntryOptions) {
     this.model = model<EndpointStatusEntry & Document>('EndpointStatusEntry', endpointStatusEntrySchema);
+    this.model.on('index', (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    });
   }
   async get(_id: string): Promise<EndpointStatusEntryEntity> {
     throw new Error('not implemented');

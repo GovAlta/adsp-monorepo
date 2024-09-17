@@ -1,6 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Doc, decodeAfter, encodeNext, Results } from '@core-services/core-common';
 import { Document, Model, model, PipelineStage, Types } from 'mongoose';
+import { Logger } from 'winston';
 import { DirectoryEntity, DirectoryRepository } from '../directory';
 import { Criteria, Directory, Resource, Tag, TagCriteria } from '../directory/types';
 import { directorySchema, resourceSchema, resourceTagSchema, tagSchema } from './schema';
@@ -12,11 +13,21 @@ export class MongoDirectoryRepository implements DirectoryRepository {
   private resourceModel: Model<ResourceDoc>;
   private resourceTagModel: Model<Document>;
 
-  constructor() {
+  constructor(private logger: Logger) {
     this.directoryModel = model('directories', directorySchema);
     this.tagModel = model<TagDoc>('tag', tagSchema, 'directoryTags');
     this.resourceModel = model<ResourceDoc>('resource', resourceSchema, 'directoryResources');
     this.resourceTagModel = model<Document>('resourceTag', resourceTagSchema, 'taggedResources');
+
+    const handleIndexError = (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    };
+    this.directoryModel.on('index', handleIndexError);
+    this.tagModel.on('index', handleIndexError);
+    this.resourceModel.on('index', handleIndexError);
+    this.resourceTagModel.on('index', handleIndexError);
   }
 
   find(top: number, after: string, criteria: Criteria): Promise<Results<DirectoryEntity>> {

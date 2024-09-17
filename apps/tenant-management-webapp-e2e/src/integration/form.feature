@@ -9,6 +9,50 @@ Feature: Form
     And the user views the link of See the code for "form-service"
     And the user views the link of "Get support" under Support
 
+  # TEST DATA: a form definition named "autotest-submission-task" is precreated
+  # TEST DATA: a task queue named autotest:testSubmissionQueue is precreated
+  @TEST_CS-2780 @REQ_CS-2570 @regression
+  Scenario: As a tenant admin, I can configure if and what task is created for processing a form submission record
+    Given all existing tasks in "testSubmissionQueue" if any have been deleted
+    And a tenant admin user is on form definitions page
+    When the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
+    Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
+    When the user clicks "Lifecycle" tab in form definition editor
+    # Verify help content for No task created option
+    And the user "checks" the checkbox of Create submission records on submit
+    And the user selects "No task created" in task queue to process dropdown
+    And the user clicks the information icon button besides task queue to process dropdown
+    Then the user "views" the help tooltip for "disabling" task queue to process dropdown
+    When the user clicks x icon for the help tooltip for task queue to process dropdown
+    Then the user "should not view" the help tooltip for "disabling" task queue to process dropdown
+    # Select a task and verify help content for a task queue is selected
+    When the user selects "autotest:testSubmissionQueue" in task queue to process dropdown
+    And the user clicks the information icon button besides task queue to process dropdown
+    Then the user "views" the help tooltip for "enabling" task queue to process dropdown
+    When the user clicks x icon for the help tooltip for task queue to process dropdown
+    Then the user "should not view" the help tooltip for "enabling" task queue to process dropdown
+    When the user saves the changes if any and go back out of form definition editor
+    # Submit a form
+    Given the user deletes any existing form from "Auto Test" for "autotest-submission-task"
+    When the user is logged in to see "autotest-submission-task" application
+    Then the user views a from draft of "autotest-submission-task"
+    When the user enters "Joe" in a text field labelled "First name"
+    And the user clicks submit button in the form
+    # Verify a task is created for form submission
+    Given a tenant admin user is on task service overview page
+    When the user selects "Tasks" tab for "Task"
+    And the user selects "autotest:testSubmissionQueue" in Select a queue dropdown
+    Then the user "views" the task of "Process form submission", "autotest-submission-task" on tasks page
+    # Set task queue to No task created for the form
+    When the user selects the "Form" menu item
+    And the user selects "Definitions" tab for "Form"
+    And the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
+    Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
+    When the user clicks "Lifecycle" tab in form definition editor
+    And the user selects "No task created" in task queue to process dropdown
+    And the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
+
   @TEST_CS-2366 @TEST_CS-2356 @TEST_CS-2332 @TEST_CS-2406 @REQ_CS-1848 @REQ_CS-2170 @REQ_CS-2169 @REQ_CS-2254 @regression
   Scenario: As a tenant admin, I can add, edit and delete a form definition
     Given a tenant admin user is on form service overview page
@@ -93,13 +137,9 @@ Feature: Form
     Then the Add state button is invisible on Lifecycle page
     When the user clicks the information icon button besides the checkbox of Create submission records on submit
     Then the user "views" the help tooltip for "disabling" create submission records on submit
-    When the user clicks x icon for the help tooltip for the checkbox of Create submission records on submit
-    Then the user "should not view" the help tooltip for "disabling" create submission records on submit
     When the user "checks" the checkbox of Create submission records on submit
     And the user clicks the information icon button besides the checkbox of Create submission records on submit
     Then the user "views" the help tooltip for "enabling" create submission records on submit
-    When the user clicks x icon for the help tooltip for the checkbox of Create submission records on submit
-    Then the user "should not view" the help tooltip for "enabling" create submission records on submit
 
   # TEST DATA: a form definition named "autotest-form-disposition-states" is precreated
   @TEST_CS-3224 @REQ_CS-2468 @regression
@@ -112,8 +152,6 @@ Feature: Form
     # Add disposition states
     When the user clicks the information icon button besides Disposition States
     Then the user "views" the help tooltip text for Disposition States
-    When the user clicks x icon for the help tooltip for Disposition States
-    Then the user "should not view" the help tooltip text for Disposition States
     When the user adds a dispoistion state of "Approved", "The application is approved"
     Then the user "views" the disposition state of "Approved", "The application is approved"
     When the user adds a dispoistion state of "Documents needed", "Need to supply required documents"
@@ -170,50 +208,6 @@ Feature: Form
     Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
     And the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
     And the user "should not view" the disposition state of "Rejected", "The application is rejected"
-
-  # TEST DATA: a form definition named "autotest-submission-task" is precreated
-  # TEST DATA: a task queue named autotest:testSubmissionQueue is precreated
-  @TEST_CS-2780 @REQ_CS-2570 @regression
-  Scenario: As a tenant admin, I can configure if and what task is created for processing a form submission record
-    Given all existing tasks in "testSubmissionQueue" if any have been deleted
-    And a tenant admin user is on form definitions page
-    When the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
-    Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
-    When the user clicks "Lifecycle" tab in form definition editor
-    # Verify help content for No task created option
-    And the user "checks" the checkbox of Create submission records on submit
-    And the user selects "No task created" in task queue to process dropdown
-    And the user clicks the information icon button besides task queue to process dropdown
-    Then the user "views" the help tooltip for "disabling" task queue to process dropdown
-    When the user clicks x icon for the help tooltip for task queue to process dropdown
-    Then the user "should not view" the help tooltip for "disabling" task queue to process dropdown
-    # Select a task and verify help content for a task queue is selected
-    When the user selects "autotest:testSubmissionQueue" in task queue to process dropdown
-    And the user clicks the information icon button besides task queue to process dropdown
-    Then the user "views" the help tooltip for "enabling" task queue to process dropdown
-    When the user clicks x icon for the help tooltip for task queue to process dropdown
-    Then the user "should not view" the help tooltip for "enabling" task queue to process dropdown
-    When the user saves the changes if any and go back out of form definition editor
-    # Submit a form
-    Given the user deletes any existing form from "Auto Test" for "autotest-submission-task"
-    When the user is logged in to see "autotest-submission-task" application
-    Then the user views a from draft of "autotest-submission-task"
-    When the user enters "Joe" in a text field labelled "First name"
-    And the user clicks submit button in the form
-    # Verify a task is created for form submission
-    Given a tenant admin user is on task service overview page
-    When the user selects "Tasks" tab for "Task"
-    And the user selects "autotest:testSubmissionQueue" in Select a queue dropdown
-    Then the user "views" the task of "Process form submission", "autotest-submission-task" on tasks page
-    # Set task queue to No task created for the form
-    When the user selects the "Form" menu item
-    And the user selects "Definitions" tab for "Form"
-    And the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
-    Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
-    When the user clicks "Lifecycle" tab in form definition editor
-    And the user selects "No task created" in task queue to process dropdown
-    And the user clicks Save button in form definition editor
-    And the user clicks Back button in form definition editor
 
   @TEST_CS-3356 @REQ_CS-3381 @regression
   Scenario: As a tenant admin, I can set the classification on a form definition and view the updated classification in event log

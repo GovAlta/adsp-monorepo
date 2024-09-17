@@ -22,7 +22,7 @@ const Sidebar = ({ type }: SidebarProps) => {
 
   const { tenantName, authenticated, realm, hasAdminRole, config } = useSelector((state: RootState) => {
     return {
-      tenantName: state.tenant.name,
+      tenantName: state.tenant.name.replace(/[-_]/g, ' '),
       config: state.config,
       authenticated: state.session.authenticated,
       realm: state.session.realm,
@@ -44,60 +44,60 @@ const Sidebar = ({ type }: SidebarProps) => {
   }, [realm, authenticated, dispatch]);
 
   return (
-    <Links>
-      <GoASideMenu>
-        {authenticated && (
-          <>
-            <GoASideMenuHeading>
-              <Title>{tenantName}</Title>
-            </GoASideMenuHeading>
-            <NavLink
-              to="/admin"
-              end
-              className={({ isActive }) => (isActive ? 'current' : '')}
-              title="Dashboard"
-              data-testid="menu-dashboard"
-            >
-              <span>Dashboard</span>
-            </NavLink>
-            {hasAdminRole && (
-              <>
-                <NavLink
-                  to="event-log"
-                  className={({ isActive }) => (isActive ? 'current' : '')}
-                  title="Event log"
-                  data-testid="menu-eventLog"
-                >
-                  <span>Event log</span>
-                </NavLink>
-                <NavLink
-                  to="service-metrics"
-                  className={({ isActive }) => (isActive ? 'current' : '')}
-                  title="Service metrics"
-                  data-testid="menu-service-metrics"
-                >
-                  <span>Service metrics</span>
-                </NavLink>
-              </>
-            )}
-            <GoASideMenuHeading>Services</GoASideMenuHeading>
-            {hasAdminRole &&
-              serviceVariables(config.featureFlags).map((service, index) => (
-                <NavLink
-                  key={index}
-                  to={service.link}
-                  className={({ isActive }) => (isActive ? 'current' : '')}
-                  title={service.name}
-                  data-testid={`menu-${service.name.toLowerCase()}`}
-                >
-                  <span>{service.name}</span>
-                  {service.beta && betaBadge()}
-                </NavLink>
-              ))}
-          </>
-        )}
-      </GoASideMenu>
-    </Links>
+    <>
+      <Title>{tenantName}</Title>
+      <Links>
+        <GoASideMenu>
+          {authenticated && (
+            <>
+              <NavLink
+                to="/admin"
+                end
+                className={({ isActive }) => (isActive ? 'current' : '')}
+                title="Dashboard"
+                data-testid="menu-dashboard"
+              >
+                <span>Dashboard</span>
+              </NavLink>
+              {hasAdminRole && (
+                <>
+                  <NavLink
+                    to="event-log"
+                    className={({ isActive }) => (isActive ? 'current' : '')}
+                    title="Event log"
+                    data-testid="menu-eventLog"
+                  >
+                    <span>Event log</span>
+                  </NavLink>
+                  <NavLink
+                    to="service-metrics"
+                    className={({ isActive }) => (isActive ? 'current' : '')}
+                    title="Service metrics"
+                    data-testid="menu-service-metrics"
+                  >
+                    <span>Service metrics</span>
+                  </NavLink>
+                  <GoASideMenuHeading>Services</GoASideMenuHeading>
+                </>
+              )}
+              {hasAdminRole &&
+                serviceVariables(config.featureFlags).map((service, index) => (
+                  <NavLink
+                    key={index}
+                    to={service.link}
+                    className={({ isActive }) => (isActive ? 'current' : '')}
+                    title={service.name}
+                    data-testid={`menu-${service.name.toLowerCase()}`}
+                  >
+                    <span>{service.name}</span>
+                    {service.beta && betaBadge()}
+                  </NavLink>
+                ))}
+            </>
+          )}
+        </GoASideMenu>
+      </Links>
+    </>
   );
 };
 
@@ -157,7 +157,13 @@ const Links = styled.div`
 `;
 
 const Title = styled.div`
-  text-transform: capitalize;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-bold);
+  padding: 0 0 0.5rem;
+  display: none;
+  &::first-letter {
+    text-transform: capitalize;
+  }
   @media (min-width: 768px) {
     display: block;
   }

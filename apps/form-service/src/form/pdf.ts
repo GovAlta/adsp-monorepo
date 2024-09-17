@@ -15,7 +15,7 @@ const template = `
       {{#each data.content.config.uiSchema.elements }}
         {{#if (isControl this)}}
           <div class="review-item-basic">
-            {{> elements element=this data=@root.data.content.data requiredFields=(requiredField @root.content.config.dataSchema) }}
+            {{> elements element=this data=@root.data.content.data dataSchema=@root.data.content.config.dataSchema requiredFields=(requiredField @root.data.content.config.dataSchema) }}
           </div>
         {{else}}
           <div class="review-item-section">
@@ -23,13 +23,20 @@ const template = `
               <div class="review-item-title">{{this.label}}</div>
             </div>
             <div class="grid">
-            {{#each this.elements }}
-              {{> elements element=this data=@root.data.content.data requiredFields=(requiredField @root.content.config.dataSchema) styles=@root.content.styles }}
-            {{/each}}
+                {{#each this.elements }}
+                    <div class="grid-padding">
+                        {{> elements element=this data=@root.data.content.data dataSchema=@root.data.content.config.dataSchema requiredFields=(requiredField @root.data.content.config.dataSchema) styles=@root.content.styles }}
+                     </div>
+                {{/each}}
             </div>
           </div>
         {{/if}}
       {{/each}}
+     {{#if (hasTypeControlOrList data.content.config.uiSchema )}}
+          <div class="review-item-basic">
+            {{> elements element=data.content.config.uiSchema data=@root.data.content.data dataSchema=@root.data.content.config.dataSchema requiredFields=(requiredField @root.data.content.config.dataSchema) }}
+          </div>
+     {{/if}}
     </div>
   </div>
 </body>
@@ -167,12 +174,15 @@ const additionalStyles = `
 
         .content {
             padding: 0 1em;
+            box-sizing: border-box;
         }
 
         .grid-item {
+            flex: 1 1 calc(45% - 1rem);
+            margin: 0 2em 0 0;
+        }
+        .grid-padding {
             margin-bottom: 1rem;
-            flex: 0 1 100%;
-            flex-basis: calc(50% - 0.5rem);
         }
 
         .header {
@@ -180,14 +190,22 @@ const additionalStyles = `
             margin-bottom: 1rem;
         }
 
-        .list-item {
+        .list-item-borderless {
+            flex: 1 1 calc(45% - 1rem);
+            margin: 0;
+        }
+        .list-item-borderless-bottom-padding {
+            flex: 1 1 calc(45% - 1rem);
+            margin-bottom: 1rem;
+        }
+        .list-item-basic {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
             border: 1px solid #dcdcdc;
             border-radius: 0.25rem;
-            display: flex;
-            flex: 0 1 100%;
-            flex-basis: 100%;
             padding: 0.75rem;
-            margin-bottom: 1rem;
+            margin: 0 0 1em 0;
         }
 
         .review-item-title {

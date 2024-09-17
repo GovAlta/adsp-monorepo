@@ -168,7 +168,53 @@ class HandlebarsTemplateService implements TemplateService {
       return element.type === 'Control' && element.scope;
     });
     handlebars.registerHelper('isListWithDetailAndHasScope', function (element) {
-      return element.type === 'ListWithDetail' && element.scope && element.options;
+      return element.type === 'ListWithDetail' && element.scope;
+    });
+    handlebars.registerHelper('hasOptionElements', function (element) {
+      return element.options && element.options.detail.elements;
+    });
+    handlebars.registerHelper('hasElements', function (element) {
+      return element.elements;
+    });
+    handlebars.registerHelper('isArray', function (element, data) {
+      if (data !== undefined) {
+        const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let currentValue: any = data;
+
+        for (const key of pathArray) {
+          if (currentValue[key] === undefined) {
+            return '';
+          }
+          currentValue = currentValue[key];
+        }
+
+        return Array.isArray(currentValue);
+      } else {
+        return false;
+      }
+    });
+
+    handlebars.registerHelper('grabDataArray', function (context, element, requiredFields, options) {
+      let ret = '';
+      if (!options) {
+        options = { ...requiredFields };
+        requiredFields = null;
+      }
+
+      const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let currentValue: any = context;
+      for (const key of pathArray) {
+        if (currentValue[key] === undefined) {
+          return '';
+        }
+        currentValue = currentValue[key];
+      }
+      const extendedContext = Object.assign({}, currentValue, { params: { requiredFields, element } });
+      ret = ret + options.fn(extendedContext);
+      return ret;
     });
 
     handlebars.registerHelper('scopeName', function (scope) {
@@ -193,29 +239,75 @@ class HandlebarsTemplateService implements TemplateService {
       return ret;
     });
 
-    handlebars.registerHelper('firstDetail', function (context, data, requiredFields, scope, options) {
-      const scopeName = scope.replace('#/properties/', '');
-      if (!options) {
-        options = { ...requiredFields };
-        requiredFields = null;
-      }
-      const extendedContext = Object.assign({}, context[0], { params: { requiredFields, data: data[scopeName] } });
-      const ret = '' + options.fn(extendedContext);
-      return ret;
-    });
-
-    handlebars.registerHelper('withEachData', function (context, requiredFields, element, options) {
+    handlebars.registerHelper('eachDetail', function (context, data, requiredFields, options) {
       let ret = '';
-
       if (!options) {
         options = { ...requiredFields };
         requiredFields = null;
       }
 
       for (let i = 0, j = context.length; i < j; i++) {
-        const extendedContext = Object.assign({}, context[i], { params: { requiredFields, element } });
+        const extendedContext = Object.assign({}, context[i], { params: { requiredFields, data } });
         ret = ret + options.fn(extendedContext);
       }
+      return ret;
+    });
+
+    handlebars.registerHelper('withEachData', function (context, scope, requiredFields, element, options) {
+      let ret = '';
+      const scopeName = scope.replace('#/properties/', '');
+
+      if (!options) {
+        options = { ...requiredFields };
+        requiredFields = null;
+      }
+
+      const dataArray = context[scopeName];
+
+      for (let i = 0, j = dataArray.length; i < j; i++) {
+        const extendedContext = Object.assign({}, dataArray[i], { params: { requiredFields, element } });
+        ret = ret + options.fn(extendedContext);
+      }
+
+      return ret;
+    });
+
+    handlebars.registerHelper(
+      'withEachDataWithItems',
+      function (context, scope, requiredFields, element, dataSchema, options) {
+        let ret = '';
+        const scopeName = scope.replace('#/properties/', '');
+
+        if (!options) {
+          options = { ...requiredFields };
+          requiredFields = null;
+        }
+
+        const items = dataSchema?.properties[scopeName].items?.properties;
+        const dataArray = context[scopeName];
+
+        for (let i = 0, j = dataArray.length; i < j; i++) {
+          const extendedContext = Object.assign({}, dataArray[i], { params: { requiredFields, element, items } });
+          ret = ret + options.fn(extendedContext);
+        }
+
+        return ret;
+      }
+    );
+
+    handlebars.registerHelper('forEachItem', function (context, data, requiredFields, options) {
+      let ret = '';
+
+      Object.keys(context).forEach(function (key) {
+        const element = {
+          type: 'Control',
+          scope: key,
+          label: key,
+        };
+
+        const extendedContext = Object.assign({}, element, { params: { requiredFields, data, element } });
+        ret = ret + options.fn(extendedContext);
+      });
 
       return ret;
     });
@@ -235,6 +327,9 @@ class HandlebarsTemplateService implements TemplateService {
     });
     handlebars.registerHelper('isControl', function (element) {
       return element.type === 'Control';
+    });
+    handlebars.registerHelper('hasTypeControlOrList', function (element) {
+      return element.type === 'Control' || element.type === 'ListWithDetail';
     });
 
     handlebars.registerHelper('hasElements', function (element) {

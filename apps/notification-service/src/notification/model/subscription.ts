@@ -41,8 +41,8 @@ export class SubscriptionEntity implements Subscription {
     const eventCorrelationId = event.correlationId?.substring(event.correlationId?.lastIndexOf('/') + 1);
 
     return (
-      (!criteria.correlationId || criteria.correlationId === eventCorrelationId) &&
-      !Object.entries(criteria.context || {}).find(([key, value]) => (value !== event.context?.[key]))
+      (!criteria?.correlationId || criteria.correlationId === eventCorrelationId) &&
+      !Object.entries(criteria.context || {}).find(([key, value]) => value !== event.context?.[key])
     );
   }
 
@@ -121,7 +121,7 @@ export class SubscriptionEntity implements Subscription {
     return this.repository.saveSubscription(this);
   }
 
-  async deleteCriteria(user: User, toDelete: SubscriptionCriteria): Promise<boolean> {
+  async deleteCriteria(user: User, toDelete: SubscriptionCriteria): Promise<[boolean, boolean]> {
     if (!this.type.canSubscribe(user, this.subscriber)) {
       throw new UnauthorizedUserError('update subscription', user);
     }
@@ -145,15 +145,16 @@ export class SubscriptionEntity implements Subscription {
       }
     });
 
+    let subscriptionDeleted = false;
     if (hasUpdate) {
       if (keep.length === 0) {
         // Delete the subscription entirely if no criteria objects remain.
-        await this.repository.deleteSubscriptions(this.tenantId, this.typeId, this.subscriberId);
+        subscriptionDeleted = await this.repository.deleteSubscriptions(this.tenantId, this.typeId, this.subscriberId);
       } else {
-        await this.updateCriteria(user, keep);
+        this.criteria = (await this.updateCriteria(user, keep)).criteria;
       }
     }
 
-    return hasUpdate;
+    return [hasUpdate, subscriptionDeleted];
   }
 }

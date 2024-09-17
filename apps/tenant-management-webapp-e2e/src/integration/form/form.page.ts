@@ -123,19 +123,7 @@ class FormPage {
 
   definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle() {
     return cy.xpath(
-      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]'
-    );
-  }
-
-  definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBox() {
-    return cy.xpath(
-      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-text"]'
-    );
-  }
-
-  definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoBoxCloseBtn() {
-    return cy.xpath(
-      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::div[@class="info-circle"]//*[@class="small-close-button"]'
+      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::goa-tooltip'
     );
   }
 
@@ -144,15 +132,7 @@ class FormPage {
   }
 
   definitionEditorSubmissionConfigDispositionStatesInfoCircle() {
-    return cy.xpath(
-      '//*[@data-testid="lifecycle"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="info-circle"]'
-    );
-  }
-
-  definitionEditorSubmissionConfigDispositionStatesInfoBox() {
-    return cy.xpath(
-      '//*[@data-testid="lifecycle"]//h3[text()="Disposition states"]/following-sibling::*//*[@class="small-text"]'
-    );
+    return cy.xpath('//*[@data-testid="lifecycle"]//h3[text()="Disposition states"]/following-sibling::*//goa-tooltip');
   }
 
   definitionEditorSubmissionConfigDispositionStatesInfoBoxCloseBtn() {

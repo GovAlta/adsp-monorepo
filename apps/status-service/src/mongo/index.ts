@@ -28,11 +28,12 @@ export const createRepositories = async ({
   await connect(mongoConnectionString, {
     user: MONGO_USER,
     pass: MONGO_PASSWORD,
+    autoIndex: true,
   });
 
-  const serviceStatusRepository = new MongoServiceStatusRepository();
-  const noticeRepository = new MongoNoticeRepository();
-  const endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository();
+  const serviceStatusRepository = new MongoServiceStatusRepository(logger);
+  const noticeRepository = new MongoNoticeRepository(logger);
+  const endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository(logger);
 
   return Promise.resolve({
     serviceStatusRepository: serviceStatusRepository,

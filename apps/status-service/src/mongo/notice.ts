@@ -1,5 +1,6 @@
 import { Doc, Results } from '@core-services/core-common';
 import { Model, model, Document } from 'mongoose';
+import { Logger } from 'winston';
 import { NoticeApplication } from '../app/types/index';
 import { NoticeApplicationEntity } from '../app/model/notice';
 import { NoticeRepository } from '../app/repository/notice';
@@ -7,8 +8,13 @@ import { noticeApplicationSchema } from './schema';
 
 export default class MongoNoticeRepository implements NoticeRepository {
   model: Model<NoticeApplication & Document>;
-  constructor() {
+  constructor(private logger: Logger) {
     this.model = model<NoticeApplication & Document>('Notice', noticeApplicationSchema);
+    this.model.on('index', (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    });
   }
 
   async get(id: string, tenantId: string): Promise<NoticeApplicationEntity> {

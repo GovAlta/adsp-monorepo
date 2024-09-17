@@ -11,7 +11,6 @@ import {
   GoAIcon,
 } from '@abgov/react-components-new';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
-import { languages } from 'monaco-editor';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -22,7 +21,11 @@ import { PageIndicator } from '@components/Indicator';
 import DataTable from '@components/DataTable';
 import { DeleteModal } from '@components/DeleteModal';
 import { CustomLoader } from '@components/CustomLoader';
-import { FormCompletionItemProvider } from '@lib/autoComplete';
+import {
+  FormDataSchemaElementCompletionItemProvider,
+  FormPropertyValueCompletionItemProvider,
+  FormUISchemaElementCompletionItemProvider,
+} from '@lib/autoComplete';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
@@ -225,13 +228,25 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema) as Record<string, unknown>;
   useEffect(() => {
     if (monaco) {
-      const provider = monaco.languages.registerCompletionItemProvider(
+      const valueProvider = monaco.languages.registerCompletionItemProvider(
         'json',
-        new FormCompletionItemProvider(dataSchema)
+        new FormPropertyValueCompletionItemProvider(dataSchema)
+      );
+
+      const uiElementProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormUISchemaElementCompletionItemProvider(dataSchema)
+      );
+
+      const dataElementProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormDataSchemaElementCompletionItemProvider()
       );
 
       return function () {
-        provider.dispose();
+        valueProvider.dispose();
+        uiElementProvider.dispose();
+        dataElementProvider.dispose();
       };
     }
   }, [monaco, dataSchema]);

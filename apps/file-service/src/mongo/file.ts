@@ -1,6 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results, decodeAfter, encodeNext } from '@core-services/core-common';
 import { Model, model } from 'mongoose';
+import { Logger } from 'winston';
 import {
   FileRepository,
   FileCriteria,
@@ -29,8 +30,17 @@ interface QueryProps {
 export class MongoFileRepository implements FileRepository {
   private model: Model<FileDoc>;
 
-  constructor(private storageProvider: FileStorageProvider, private typeRepository: FileTypeRepository) {
+  constructor(
+    private logger: Logger,
+    private storageProvider: FileStorageProvider,
+    private typeRepository: FileTypeRepository
+  ) {
     this.model = model<FileDoc>('file', fileSchema);
+    this.model.on('index', (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    });
   }
 
   async find(tenantId: AdspId, top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>> {
