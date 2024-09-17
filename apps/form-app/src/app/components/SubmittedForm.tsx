@@ -72,7 +72,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
 
   useEffect(() => {
     if (definition.generatesPdf) {
-      if (definition.generatesPdf && pdfFileExists === null && form?.urn) {
+      if (pdfFileExists === null && form?.urn) {
         dispatch(checkPdfFile(form.submission?.id ? form.submission.urn : form?.urn));
       }
     }
