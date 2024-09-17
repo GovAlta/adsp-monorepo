@@ -30,6 +30,7 @@ export const createRepositories = ({
       {
         user: MONGO_USER,
         pass: MONGO_PASSWORD,
+        autoIndex: true,
       },
       (err) => {
         if (err) {

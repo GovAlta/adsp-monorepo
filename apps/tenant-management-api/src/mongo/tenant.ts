@@ -1,15 +1,21 @@
-import { TenantRepository } from '../tenant/repository';
-import { TenantEntity, Tenant } from '../tenant/models';
 import { Doc, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Document, Model, model, Types } from 'mongoose';
-import { tenantSchema } from './schema';
+import { Logger } from 'winston';
+import { TenantEntity, Tenant } from '../tenant/models';
+import { TenantRepository } from '../tenant/repository';
 import { TenantCriteria } from '../tenant/types';
+import { tenantSchema } from './schema';
 
 export class MongoTenantRepository implements TenantRepository {
   private tenantModel: Model<Doc<Tenant> & Document>;
 
-  constructor() {
+  constructor(private logger: Logger) {
     this.tenantModel = model<Doc<Tenant> & Document>('tenant', tenantSchema);
+    this.tenantModel.on('index', (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    });
   }
 
   async save(tenant: TenantEntity): Promise<TenantEntity> {

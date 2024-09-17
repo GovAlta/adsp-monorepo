@@ -14,7 +14,7 @@ module.exports = (config) => {
       fallback: {
         ...config.resolve.fallback,
         path: require.resolve('path-browserify'),
-        fs: require.resolve('browserify-fs'),
+        fs: false,
       },
     },
     module: {
