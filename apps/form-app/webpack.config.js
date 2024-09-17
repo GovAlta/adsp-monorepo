@@ -32,7 +32,7 @@ module.exports = composePlugins(withNx(), withReact(), (config) => {
   config.resolve.fallback = {
     ...config.resolve.fallback,
     path: require.resolve('path-browserify'),
-    fs: require.resolve('browserify-fs'),
+    fs: false,
   };
   config.plugins.push(
     new ProvidePlugin({
