@@ -361,11 +361,15 @@ export const getActiveRevision =
       res.send(result);
 
       if (user) {
-        logger.info(`Active revision ${revision} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
-          tenant: configuration.tenantId?.toString(),
-          context: 'configuration-router',
-          user: `${user.name} (ID: ${user.id})`,
-        });
+        logger.info(
+          `Active revision ${revision || `fallback to latest ${result.revision}`} ` +
+            `retrieved by ${user.name} (ID: ${user.id}).`,
+          {
+            tenant: configuration.tenantId?.toString(),
+            context: 'configuration-router',
+            user: `${user.name} (ID: ${user.id})`,
+          }
+        );
       } else {
         //If this an anonymous user, just log the tenant as there will be no user context information
         logger.info(`Active revision ${revision} for ${configuration.tenantId?.toString()}.`, {

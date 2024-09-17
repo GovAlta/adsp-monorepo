@@ -35,14 +35,15 @@ export const createRepositories = ({
       {
         user: MONGO_USER,
         pass: MONGO_PASSWORD,
+        autoIndex: true,
       },
       (err) => {
         if (err) {
           reject(err);
         } else {
           const definitionRepository = new ConfigurationFormDefinitionRepository(logger, configurationService);
-          const formRepository = new MongoFormRepository(definitionRepository, notificationService);
-          const formSubmissionRepository = new MongoFormSubmissionRepository(formRepository);
+          const formRepository = new MongoFormRepository(logger, definitionRepository, notificationService);
+          const formSubmissionRepository = new MongoFormSubmissionRepository(logger, formRepository);
           resolve({
             formRepository,
             formSubmissionRepository,

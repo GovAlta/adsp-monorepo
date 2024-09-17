@@ -1,6 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, OptionalResults } from '@core-services/core-common';
 import { Model, model } from 'mongoose';
+import { Logger } from 'winston';
 import { FormRepository, FormSubmissionCriteria, FormSubmissionEntity, FormSubmissionRepository } from '../form';
 import { formSubmissionSchema } from './schema';
 import { FormSubmissionDoc } from './types';
@@ -8,8 +9,13 @@ import { FormSubmissionDoc } from './types';
 export class MongoFormSubmissionRepository implements FormSubmissionRepository {
   private submissionModel: Model<Document & FormSubmissionDoc>;
 
-  constructor(private formRepository: FormRepository) {
+  constructor(private logger: Logger, private formRepository: FormRepository) {
     this.submissionModel = model<Document & FormSubmissionDoc>('formSubmission', formSubmissionSchema);
+    this.submissionModel.on('index', (err: unknown) => {
+      if (err) {
+        this.logger.error(`Error encountered ensuring index: ${err}`);
+      }
+    });
   }
 
   find(criteria: FormSubmissionCriteria): Promise<OptionalResults<FormSubmissionEntity>> {

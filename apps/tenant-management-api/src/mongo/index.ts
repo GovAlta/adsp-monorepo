@@ -34,13 +34,14 @@ export const createRepositories = ({
       {
         user: MONGO_USER,
         pass: MONGO_PASSWORD,
+        autoIndex: true,
       },
       (err) => {
         if (err) {
           reject(err);
         } else {
           resolve({
-            tenantRepository: new MongoTenantRepository(),
+            tenantRepository: new MongoTenantRepository(logger),
             isConnected: () => connection.readyState === ConnectionStates.connected,
           });
 
