@@ -91,9 +91,11 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
           ...criteria,
         });
 
-        const submission = results.length > 0 ? results.at(0) : null;
-
-        res.send(mapFormWithFormSubmission(apiId, form, submission));
+        if (results.length > 0) {
+          res.send(mapFormWithFormSubmission(apiId, form, results.at(0)));
+        } else {
+          res.send(mapForm(apiId, form));
+        }
       } else {
         res.send(mapForm(apiId, form));
       }
