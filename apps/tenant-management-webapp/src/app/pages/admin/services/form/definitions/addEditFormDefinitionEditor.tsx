@@ -830,7 +830,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         }
         onDelete={() => {
           const dispositionStates = [...(definition.dispositionStates || [])];
-          delete dispositionStates[selectedDeleteDispositionIndex];
+          dispositionStates.splice(selectedDeleteDispositionIndex, 1);
           setDefinition({ dispositionStates });
           setSelectedDeleteDispositionIndex(null);
         }}
