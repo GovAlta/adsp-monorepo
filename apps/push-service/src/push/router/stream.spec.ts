@@ -286,6 +286,7 @@ describe('stream router', () => {
 
       req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         req.query.tenant,
@@ -310,6 +311,7 @@ describe('stream router', () => {
       });
       req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         req.query.tenant,
@@ -337,6 +339,7 @@ describe('stream router', () => {
       const next = jest.fn();
 
       await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         null,
@@ -360,6 +363,7 @@ describe('stream router', () => {
 
       req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         null,
@@ -384,6 +388,7 @@ describe('stream router', () => {
 
       req.getConfiguration.mockResolvedValueOnce({});
       await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         req.query.tenant,

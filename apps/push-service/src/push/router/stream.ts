@@ -65,6 +65,7 @@ export function mapStreamItem(item: StreamItem): Record<string, unknown> {
 
 const STREAM_KEY = 'stream';
 export const getStream = async (
+  logger: Logger,
   tenantService: TenantService,
   req: Request,
   tenant: string,
@@ -78,6 +79,12 @@ export const getStream = async (
     if (!tenantId && !user?.isCore) {
       throw new InvalidOperationError('No tenant specified for request.');
     }
+
+    logger.debug(`Getting stream '${stream}'...`, {
+      ...LOG_CONTEXT,
+      tenant: tenantId?.toString(),
+      user: user ? `${user.name} (ID: ${user.id})` : null,
+    });
 
     const entities = await req.getConfiguration<Record<string, StreamEntity>, Record<string, StreamEntity>>(tenantId);
     const entity = entities[stream];
@@ -136,6 +143,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
         {
           ...LOG_CONTEXT,
           tenant: entity.tenantId?.toString(),
+          user: user ? `${user.name} (ID: ${user.id})` : null,
         }
       );
 
@@ -144,6 +152,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
         logger.info(`Client disconnected from stream '${entity.name}' on server side event.`, {
           ...LOG_CONTEXT,
           tenant: entity.tenantId?.toString(),
+          user: user ? `${user.name} (ID: ${user.id})` : null,
         });
       });
       res.on('error', (err) => {
@@ -151,6 +160,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
         logger.info(`Client disconnected from stream '${entity.name}' on server side event. ${err}`, {
           ...LOG_CONTEXT,
           tenant: entity.tenantId?.toString(),
+          user: user ? `${user.name} (ID: ${user.id})` : null,
         });
       });
     } catch (err) {
@@ -180,6 +190,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
         {
           ...LOG_CONTEXT,
           tenant: entity.tenantId?.toString(),
+          user: user ? `${user.name} (ID: ${user.id})` : null,
         }
       );
 
@@ -188,6 +199,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
         logger.info(`Client disconnected from stream '${entity.name}' on socket.io with ID ${socket.id}.`, {
           ...LOG_CONTEXT,
           tenant: entity.tenantId?.toString(),
+          user: user ? `${user.name} (ID: ${user.id})` : null,
         });
       });
     } catch (err) {
@@ -274,7 +286,7 @@ export const createStreamRouter = (
   streamRouter.get('/streams', getStreams);
   streamRouter.get(
     '/streams/:stream',
-    (req, _res, next) => getStream(tenantService, req, req.query.tenant as string, req.params.stream, next),
+    (req, _res, next) => getStream(logger, tenantService, req, req.query.tenant as string, req.params.stream, next),
     subscribeBySse(logger, events)
   );
 
@@ -285,9 +297,7 @@ export const createStreamRouter = (
       const user = req.user;
       req.query = socket.handshake.query;
 
-      logger.info(`Tenant name for stream connection: ${tenant}`);
-
-      getStream(tenantService, req, tenant, req.query.stream as string, (err?: unknown) => {
+      getStream(logger, tenantService, req, tenant, req.query.stream as string, (err?: unknown) => {
         if (!err && !(req[STREAM_KEY] as StreamEntity).canSubscribe(user)) {
           next(new UnauthorizedUserError('connect stream', user));
         } else {
