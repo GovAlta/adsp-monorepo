@@ -21,6 +21,25 @@ interface NoticeFilter {
   tenantId?: string;
 }
 
+function mapNotice(entity: NoticeApplicationEntity) {
+  return entity
+    ? {
+        id: entity.id,
+        message: entity.message,
+        startDate: entity.startDate,
+        endDate: entity.endDate,
+        // temporary to facilitate a rename from active to published
+        mode: entity.mode === 'active' ? 'published' : entity.mode,
+        created: entity.created,
+        tenantId: entity.tenantId?.toString(),
+        isAllApplications: entity.isAllApplications,
+        tenantName: entity.tenantName,
+        tennantServRef:
+          typeof entity.tennantServRef === 'string' ? JSON.parse(entity.tennantServRef) : entity.tennantServRef,
+      }
+    : null;
+}
+
 export const getNotices =
   (logger: Logger, tenantService: TenantService, noticeRepository: NoticeRepository): RequestHandler =>
   async (req, res, next) => {
@@ -60,12 +79,7 @@ export const getNotices =
       );
       res.json({
         page: notices.page,
-        results: notices.results.map((result) => ({
-          ...result,
-          // temporary to facilitate a rename from active to published
-          mode: result.mode === 'active' ? 'published' : result.mode,
-          tennantServRef: JSON.parse(result.tennantServRef),
-        })),
+        results: notices.results.map(mapNotice),
       });
     } catch (err) {
       const errMessage = `Error getting notices: ${err.message}`;
@@ -88,10 +102,7 @@ export const getNoticeById =
       }
 
       if (notice.canAccessById(user, notice)) {
-        res.json({
-          ...notice,
-          tennantServRef: JSON.parse(notice.tennantServRef),
-        });
+        res.json(mapNotice(notice));
       } else {
         throw new UnauthorizedError('User not authorized to get subscribers');
       }
@@ -116,10 +127,7 @@ export const deleteNotice =
       }
 
       notice.delete(user);
-      res.json({
-        ...notice,
-        tennantServRef: JSON.parse(notice.tennantServRef),
-      });
+      res.json(mapNotice(notice));
     } catch (err) {
       const errMessage = `Error deleting notice: ${err.message}`;
       logger.error(errMessage);
@@ -149,10 +157,7 @@ export const createNotice =
         tenantId: user.tenantId.toString(),
       });
 
-      res.status(201).json({
-        ...notice,
-        tennantServRef: JSON.parse(notice.tennantServRef),
-      });
+      res.status(201).json(mapNotice(notice));
     } catch (err) {
       const errMessage = `Error creating notice: ${err.message}`;
       logger.error(errMessage);
@@ -190,10 +195,7 @@ export const updateNotice =
         eventService.send(applicationNoticePublished(notice, user));
       }
 
-      res.json({
-        ...updatedNotice,
-        tennantServRef: JSON.parse(updatedNotice.tennantServRef),
-      });
+      res.json(mapNotice(updatedNotice));
     } catch (err) {
       const errMessage = `Error updating notice: ${err.message}`;
       logger.error(errMessage);

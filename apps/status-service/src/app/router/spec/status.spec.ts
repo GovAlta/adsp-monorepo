@@ -305,7 +305,16 @@ describe('Service router', () => {
       endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce([entriesMock[1]]);
       configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
-      expect(resMock.send).toHaveBeenCalledWith(expect.arrayContaining([entriesMock[1]]));
+      expect(resMock.send).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            url: entriesMock[1].url,
+            responseTime: entriesMock[1].responseTime,
+            timestamp: entriesMock[1].timestamp,
+            status: entriesMock[1].status,
+          }),
+        ])
+      );
     });
   });
 

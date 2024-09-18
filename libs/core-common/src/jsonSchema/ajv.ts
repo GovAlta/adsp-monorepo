@@ -12,8 +12,6 @@ export class AjvValidationService implements ValidationService {
   protected ajvErrors: string[] = [];
 
   constructor(private logger: Logger) {
-    addErrors(this.ajv);
-
     this.ajv.addFormat('file-urn', /^urn:ads:platform:file-service:v[0-9]:\/files\/[a-zA-Z0-9.-]*$/);
     addFormats(this.ajv);
 
