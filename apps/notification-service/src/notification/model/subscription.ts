@@ -38,10 +38,8 @@ export class SubscriptionEntity implements Subscription {
   }
 
   private evaluateCriteria(event: DomainEvent | SubscriptionCriteria, criteria: SubscriptionCriteria): boolean {
-    const eventCorrelationId = event.correlationId?.substring(event.correlationId?.lastIndexOf('/') + 1);
-
     return (
-      (!criteria?.correlationId || criteria.correlationId === eventCorrelationId) &&
+      (!criteria?.correlationId || criteria.correlationId === event.correlationId) &&
       !Object.entries(criteria.context || {}).find(([key, value]) => value !== event.context?.[key])
     );
   }
