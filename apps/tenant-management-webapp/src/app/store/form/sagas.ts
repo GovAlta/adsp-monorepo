@@ -53,7 +53,7 @@ export function* fetchFormDefinitions(payload): SagaIterator {
   const next = payload.next ?? '';
   if (configBaseUrl && token) {
     try {
-      const url = `${configBaseUrl}/configuration/v2/configuration/form-service?top=10&after=${next}`;
+      const url = `${configBaseUrl}/configuration/v2/configuration/form-service?top=50&after=${next}`;
       const { results, page } = yield call(fetchFormDefinitionsApi, token, url);
 
       const definitions = results.reduce((acc, def) => {
