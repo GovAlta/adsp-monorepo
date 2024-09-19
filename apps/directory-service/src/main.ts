@@ -8,7 +8,7 @@ import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
 import {
@@ -59,6 +59,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantService,
     tokenProvider,
     configurationService,
+    clearCached,
     metricsHandler,
     tenantHandler,
     traceHandler,
@@ -104,6 +105,7 @@ const initializeApp = async (): Promise<express.Application> => {
           core,
           tenantId
         ),
+      useLongConfigurationCacheTTL: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -117,6 +119,18 @@ const initializeApp = async (): Promise<express.Application> => {
       directory,
     }
   );
+
+  // This update connection is per instance (when horizontally scaled) rather than
+  // a shared work queue like the regular event queue (for logging, etc.)
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
+  });
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);

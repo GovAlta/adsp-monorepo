@@ -422,7 +422,7 @@ export function accessForm(logger: Logger, notificationService: NotificationServ
       end();
       res.send(mapFormData(result));
 
-      logger.info(`Accessed form with ID: ${form.id}) (definition ID: ${form.definition.id}) data.`, {
+      logger.info(`Accessed form with ID: ${form.id} (definition ID: ${form.definition.id}) data.`, {
         context: 'FormRouter',
         tenantId: form.tenantId.toString,
         user: user ? `${user.name} (ID: ${user.id})` : null,
