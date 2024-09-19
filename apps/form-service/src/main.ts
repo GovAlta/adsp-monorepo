@@ -196,7 +196,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler
   );
 
-  const notificationService = createNotificationService(logger, directory, tokenProvider);
+  const notificationService = createNotificationService(adspId`${serviceId}:v1`, logger, directory, tokenProvider);
   const fileService = createFileService(logger, directory, tokenProvider);
   const commentService = await createCommentService({
     logger,
