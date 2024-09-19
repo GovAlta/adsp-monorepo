@@ -1053,11 +1053,6 @@ class AdspFeedback implements AdspFeedbackApi {
               cursor: pointer;
             }
           }
-          @media screen and (max-width: 624px) {
-            .adsp-fb .adsp-fb-badge {
-              display: none;
-            }
-          }
           @media screen and (max-height: 800px) {
             .adsp-fb .adsp-fb-form-container {
               top: 16px;
