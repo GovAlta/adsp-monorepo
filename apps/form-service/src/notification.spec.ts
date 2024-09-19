@@ -10,6 +10,7 @@ jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('notification', () => {
+  const apiId = adspId`urn:ads:platform:form-service:v1`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const loggerMock = {
     debug: jest.fn(),
@@ -49,6 +50,7 @@ describe('notification', () => {
 
   it('can create service', () => {
     const service = createNotificationService(
+      apiId,
       loggerMock,
       directoryMock,
       tokenProviderMock,
@@ -59,6 +61,7 @@ describe('notification', () => {
 
   describe('NotificationService', () => {
     const service = createNotificationService(
+      apiId,
       loggerMock,
       directoryMock,
       tokenProviderMock,
@@ -154,6 +157,13 @@ describe('notification', () => {
         const result = await service.subscribe(tenantId, definition, 'form-1', subscriber);
 
         expect(result).toBe(subscriber);
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://notification-service/notification/v1/types/form-status-updates/subscriptions',
+          expect.objectContaining({
+            criteria: expect.objectContaining({ correlationId: `${apiId}:/forms/form-1` }),
+          }),
+          expect.any(Object)
+        );
       });
 
       it('can throw for error', async () => {
@@ -177,6 +187,14 @@ describe('notification', () => {
 
         const deleted = await service.unsubscribe(tenantId, subscriberId, 'test');
         expect(deleted).toBeTruthy();
+        expect(axios.delete).toHaveBeenCalledWith(
+          'https://notification-service/notification/v1/types/form-status-updates/subscriptions/test/criteria',
+          expect.objectContaining({
+            params: expect.objectContaining({
+              criteria: JSON.stringify({ correlationId: `${apiId}:/forms/test` }),
+            }),
+          })
+        );
       });
 
       it('can return false for error', async () => {

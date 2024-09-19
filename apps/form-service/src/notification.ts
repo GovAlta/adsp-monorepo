@@ -31,6 +31,7 @@ class NotificationServiceImpl implements NotificationService {
   private notificationApiId = adspId`urn:ads:platform:notification-service:v1`;
 
   constructor(
+    private apiId: AdspId,
     private logger: Logger,
     private directory: ServiceDirectory,
     private tokenProvider: TokenProvider,
@@ -96,7 +97,13 @@ class NotificationServiceImpl implements NotificationService {
       const token = await this.tokenProvider.getAccessToken();
       const { data } = await axios.post<{ subscriber: Subscriber }>(
         subscriptionUrl.href,
-        { ...subscriber, criteria: { description: `Updates on ${definition.name}.`, correlationId: formId } },
+        {
+          ...subscriber,
+          criteria: {
+            description: `Updates on ${definition.name}.`,
+            correlationId: `${this.apiId}:/forms/${formId}`,
+          },
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId.toString() },
@@ -129,7 +136,9 @@ class NotificationServiceImpl implements NotificationService {
           headers: { Authorization: `Bearer ${token}` },
           params: {
             tenantId: tenantId.toString(),
-            criteria: JSON.stringify({ correlationId: formId }),
+            criteria: JSON.stringify({
+              correlationId: `${this.apiId}:/forms/${formId}`,
+            }),
           },
         });
         deleted = data.deleted;
@@ -221,10 +230,11 @@ class NotificationServiceImpl implements NotificationService {
 }
 
 export function createNotificationService(
+  apiId: AdspId,
   logger: Logger,
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   subscriberCache = new NodeCache({ stdTTL: 3600, useClones: false })
 ): NotificationService {
-  return new NotificationServiceImpl(logger, directory, tokenProvider, subscriberCache);
+  return new NotificationServiceImpl(apiId, logger, directory, tokenProvider, subscriberCache);
 }
