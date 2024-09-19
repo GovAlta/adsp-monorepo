@@ -367,16 +367,10 @@ class AdspFeedback implements AdspFeedbackApi {
   private renderRating = (rating: any, index: number) => {
     return html`
       <div class="rating-div">
-        <img
-          src="${rating.svgDefault}"
-          @mouseover="${() => this.updateHover(index, true)}"
-          @mouseout="${() => this.updateHover(index, false)}"
-          @click="${() => this.selectRating(index)}"
-          @keydown=${(event: KeyboardEvent) => this.handleKeyHowEasy(event, index)}
-          class="rating"
-          alt="${rating.label}"
-          tabindex="0"
-        />
+        <img src="${rating.svgDefault}" @mouseover="${() => this.updateHover(index, true)}"
+        @mouseout="${() => this.updateHover(index, false)}" @click="${() => this.selectRating(index)}"
+        @keydown=${(event: KeyboardEvent) => this.handleKeyHowEasy(event, index)} class="rating" alt="${rating.label}"
+        tabindex="0" aria-labeling = "Rating for "+ "${rating.label}" />
         <span class="tooltip-text">${rating.label}</span>
         <p
           class="ratingText"
@@ -930,7 +924,7 @@ class AdspFeedback implements AdspFeedbackApi {
             cursor: pointer;
           }
           .errorText {
-            color: #dcdcdc;
+            color: #333333;
             font-size: 18px;
           }
           .successButton {
@@ -1076,6 +1070,7 @@ class AdspFeedback implements AdspFeedbackApi {
                 data-show="true"
                 @click=${this.openStartForm}
                 @keydown=${this.handleKeyOpenStartForm}
+                aria-label="Feedback badge"
               >
                 <span>Feedback</span>
               </div>
@@ -1094,6 +1089,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       @click="${this.closeFeedbackForm}"
                       @keydown=${this.handleKeyExit}
                       alt="close feedback"
+                      aria-label="Close feedback image"
                     />
                   </div>
                   <hr class="styled-hr styled-hr-top" />
@@ -1110,6 +1106,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         @click=${this.closeStartForm}
                         type="button"
                         tabindex="0"
+                        aria-label="Start feedback button"
                       >
                         Start
                       </button>
@@ -1129,6 +1126,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       @click="${this.closeFeedbackForm}"
                       @keydown=${this.handleKeyFeedbackExit}
                       alt="close feedback"
+                      aria-label="Close feedback image"
                     />
                   </div>
                   <hr class="styled-hr styled-hr-top" />
@@ -1142,7 +1140,12 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                       <div class="adsp-fb-form-comment">
                         <label><b>Do you have any additional comments?</b> <span>(optional)</span></label>
-                        <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
+                        <textarea
+                          id="comment"
+                          ${ref(this.commentRef)}
+                          placeholder=""
+                          aria-label="Comments textarea"
+                        ></textarea>
                         <span class="help-text"
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
@@ -1167,6 +1170,7 @@ class AdspFeedback implements AdspFeedbackApi {
                               value="Yes"
                               class="radio"
                               ${ref(this.radio1Ref)}
+                              aria-label="Yes"
                             />
                             <label for="yes" class="radio-label"> Yes </label>
                           </div>
@@ -1179,6 +1183,7 @@ class AdspFeedback implements AdspFeedbackApi {
                               value="No"
                               class="radio"
                               ${ref(this.radio2Ref)}
+                              aria-label="No"
                             />
 
                             <label for="no" class="radio-label"> No </label>
@@ -1195,6 +1200,7 @@ class AdspFeedback implements AdspFeedbackApi {
                             ${ref(this.technicalCommentRef)}
                             id="technicalComment"
                             @input=${this.technicalCommentRefOnChange}
+                            aria-label="Technical comments textarea"
                           ></textarea>
                           <span class="help-text"
                             >Do not include personal information like SIN, password, addresses, etc.</span
@@ -1213,6 +1219,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         class="adsp-fb-form-secondary"
                         type="button"
                         tabindex="0"
+                        aria-label="Close feedback button"
                       >
                         Cancel
                       </button>
@@ -1223,6 +1230,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         type="button"
                         disabled
                         tabindex="0"
+                        aria-label="Submit feedback button"
                       >
                         Submit
                       </button>
@@ -1245,6 +1253,7 @@ class AdspFeedback implements AdspFeedbackApi {
                           class="adsp-fb-form-primary"
                           type="button"
                           tabindex="0"
+                          aria-label="Close feedback success button"
                         >
                           Close
                         </button>
@@ -1256,7 +1265,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                       <div class="errorText">Error 500</div>
                       <div>
-                        <img src=${blueUnderLineSvg} width="50px" />
+                        <img src=${blueUnderLineSvg} width="50px" alt="Blue Line" />
                         <div>
                           <h3>We are experiencing a problem</h3>
                           <p class="p-error">
@@ -1270,6 +1279,7 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="feedback-close-error"
                               type="button"
                               tabindex="0"
+                              aria-label="Close feedback error button"
                             >
                               Close
                             </button>
