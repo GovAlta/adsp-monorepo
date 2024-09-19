@@ -54,6 +54,7 @@ export const applyFormMiddleware = (
 
   const router = createFormRouter({
     apiId,
+    logger,
     repository,
     eventService,
     tenantService,
