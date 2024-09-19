@@ -35,8 +35,15 @@ export const defaultFormDefinition: FormDefinition = {
   id: '',
   name: '',
   description: '',
-  dataSchema: {},
-  uiSchema: {},
+  dataSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+  uiSchema: {
+    type: 'VerticalLayout',
+    elements: [],
+  },
   applicantRoles: ['urn:ads:platform:form-service:form-applicant'],
   clerkRoles: [],
   assessorRoles: [],
