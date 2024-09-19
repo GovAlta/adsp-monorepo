@@ -436,6 +436,178 @@ describe('NotificationTypeEntity', () => {
       expect(notification.message).toBe(message);
     });
 
+    it('can generate notifications with title and subtitle', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const tenant = { id: tenantId, name: 'test', realm: 'test' };
+      const entity = new NotificationTypeEntity(
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          subscriberRoles: [],
+          channels: [Channel.email],
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+              templates: {
+                [Channel.email]: {
+                  subject: '',
+                  body: '',
+                  title: 'My notification',
+                  subtitle: 'Update about the notification',
+                },
+              },
+            },
+          ],
+        },
+        tenantId
+      );
+
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+        tenantId,
+        addressAs: 'Tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'test@testco.org',
+            verified: false,
+          },
+        ],
+      });
+
+      const subscription = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
+        entity,
+        subscriber
+      );
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
+
+      const message = {
+        subject: 'test',
+        body: 'test content',
+      };
+      templateServiceMock.generateMessage.mockReturnValueOnce(message);
+
+      const event: DomainEvent = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: {},
+        traceparent: '123',
+      };
+      const [notification] = await entity.generateNotifications(
+        logger,
+        templateServiceMock,
+        subscriberAppUrl,
+        repositoryMock as unknown as SubscriptionRepository,
+        configurationMock as NotificationConfiguration,
+        event,
+        {
+          tenant,
+        }
+      );
+      expect(templateServiceMock.generateMessage).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          title: 'My notification',
+          subtitle: 'Update about the notification',
+        })
+      );
+      expect(notification.to).toBe('test@testco.org');
+      expect(notification.channel).toBe(Channel.email);
+      expect(notification.message).toBe(message);
+    });
+
+    it('can generate notifications with title and subtitle on other channel', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const tenant = { id: tenantId, name: 'test', realm: 'test' };
+      const entity = new NotificationTypeEntity(
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          subscriberRoles: [],
+          channels: [Channel.sms],
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+              templates: {
+                [Channel.sms]: {
+                  subject: '',
+                  body: '',
+                  title: 'My notification',
+                  subtitle: 'Update about the notification',
+                },
+              },
+            },
+          ],
+        },
+        tenantId
+      );
+
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+        tenantId,
+        addressAs: 'Tester',
+        channels: [
+          {
+            channel: Channel.sms,
+            address: '123456789',
+            verified: false,
+          },
+        ],
+      });
+
+      const subscription = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
+        entity,
+        subscriber
+      );
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
+
+      const message = {
+        subject: 'test',
+        body: 'test content',
+      };
+      templateServiceMock.generateMessage.mockReturnValueOnce(message);
+
+      const event: DomainEvent = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: {},
+        traceparent: '123',
+      };
+      const [notification] = await entity.generateNotifications(
+        logger,
+        templateServiceMock,
+        subscriberAppUrl,
+        repositoryMock as unknown as SubscriptionRepository,
+        configurationMock as NotificationConfiguration,
+        event,
+        {
+          tenant,
+        }
+      );
+      expect(templateServiceMock.generateMessage).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          title: 'My notification',
+          subtitle: 'Update about the notification',
+        })
+      );
+      expect(notification.to).toBe('123456789');
+      expect(notification.channel).toBe(Channel.sms);
+      expect(notification.message).toBe(message);
+    });
+
     it('can return no notification for no channel match', async () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
       const tenant = { id: tenantId, name: 'test', realm: 'test' };

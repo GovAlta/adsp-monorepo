@@ -33,10 +33,7 @@ export const subscriberSchema = new Schema({
     required: true,
   },
 });
-subscriberSchema.index(
-  { tenantId: 1, userId: 1 },
-  { unique: true, partialFilterExpression: { userId: { $exists: true } } }
-);
+subscriberSchema.index({ tenantId: 1, userId: 1 });
 
 export const subscriptionSchema = new Schema(
   {
@@ -58,7 +55,7 @@ export const subscriptionSchema = new Schema(
   { _id: false }
 );
 
-subscriptionSchema.index({ tenantId: 1, typeId: 1, subscriberId: 1 }, { unique: true });
+subscriptionSchema.index({ tenantId: 1, typeId: 1, subscriberId: 1 });
 
 export const botSchema = new Schema(
   {
@@ -75,4 +72,4 @@ export const botSchema = new Schema(
   }
 );
 
-botSchema.index({ channelId: 1, tenantId: 1, conversationId: 1 }, { unique: true });
+botSchema.index({ channelId: 1, tenantId: 1, conversationId: 1 });
