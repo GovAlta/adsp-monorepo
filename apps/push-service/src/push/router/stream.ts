@@ -112,7 +112,11 @@ export const getStreams: RequestHandler = async (req, res, next) => {
 
   const entities = await req.getConfiguration<Record<string, StreamEntity>, Record<string, StreamEntity>>(tenantId);
 
-  res.send(Object.values(entities).reduce((streams, stream) => ({ ...streams, [stream.id]: mapStream(stream) }), {}));
+  res.send(
+    Object.values(entities)
+      .filter((stream) => stream.canSubscribe(user))
+      .reduce((streams, stream) => ({ ...streams, [stream.id]: mapStream(stream) }), {})
+  );
 };
 
 export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>): RequestHandler {

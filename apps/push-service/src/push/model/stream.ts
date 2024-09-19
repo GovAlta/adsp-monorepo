@@ -95,7 +95,7 @@ export class StreamEntity implements Stream {
       : !!(user?.isCore && hasRequiredRole(user, [PushServiceRoles.StreamListener, ...this.subscriberRoles]));
   }
 
-  getEvents(user: User, criteria?: EventCriteria): Observable<StreamItem> {
+  getEvents(user?: User, criteria?: EventCriteria): Observable<StreamItem> {
     if (!this.canSubscribe(user)) {
       throw new UnauthorizedUserError('access stream', user);
     }
@@ -108,7 +108,7 @@ export class StreamEntity implements Stream {
       filter((o) => {
         const isMatch = this.isMatch(o, criteria);
         this.logger.debug(
-          `Filtering event ${o.namespace}:${o.name} for subscriber ${user.name} (ID: ${user.id})` +
+          `Filtering event ${o.namespace}:${o.name} for subscriber ${user?.name} (ID: ${user?.id})` +
             ` on stream ${this.name} (ID: ${this.id}) with result: ${isMatch}`,
           { context: 'StreamEntity', tenant: this.tenantId?.toString() }
         );
