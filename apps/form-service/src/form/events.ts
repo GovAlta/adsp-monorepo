@@ -17,8 +17,8 @@ export const SUBMISSION_DISPOSITIONED = 'submission-dispositioned';
 const userInfoSchema = {
   type: 'object',
   properties: {
-    id: { type: 'string' },
-    name: { type: 'string' },
+    id: { type: 'string', examples: ['1c0fa56b-f818-4cc7-9254-7513aecb5d9f'] },
+    name: { type: 'string', examples: ['A.N.Other'] },
   },
 };
 
@@ -28,8 +28,8 @@ export const formSchema = {
     definition: {
       type: 'object',
       properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
+        id: { type: 'string', examples: ['adsp-support-request'] },
+        name: { type: 'string', examples: ['ADSP Support request'] },
       },
     },
     id: { type: 'string' },
