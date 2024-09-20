@@ -395,3 +395,21 @@ Feature: Notifications
     Then no critical or serious accessibility issues on "notification subscriptions page"
     When the user selects "Subscribers" tab for "Notification"
     Then no critical or serious accessibility issues on "notification subscribers page"
+
+  @TEST_CS-3364 @REQ_CS-3331 @regression
+  Scenario: As a tenant admin, I can configure the from email of notifications, so subscribers receive notifications from a known email
+    Given a tenant admin user is on notification overview page
+    When the user clicks Edit button for email information
+    Then the user "views" Edit email information modal
+    And the user views help content of "Email must be a real email with a inbox"
+    When the user enters "adsp.t.gov.ab.ca" in the email field in Edit email information modal
+    And clicks Save button in Edit email information modal
+    Then the user views "You must enter a valid email" in the Edit email information modal
+    When the user clicks Cancel button in the Edit email information modal
+    Then the user "should not view" Edit email information modal
+    And the user "should not view" the email address of "adsp.t.gov.ab.ca" under From email
+    When the user clicks Edit button for email information
+    Then the user "views" Edit email information modal
+    When the user enters "adsp.t@gov.ab.ca" in the email field in Edit email information modal
+    And clicks Save button in Edit email information modal
+    Then the user "views" the email address of "adsp.t@gov.ab.ca" under From email
