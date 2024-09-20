@@ -46,6 +46,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   ];
 
   enumerators.addFormContextData('countries', countries);
+  const user = enumerators?.getFormContextData('user');
+
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
 
@@ -102,7 +104,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     return () => clearTimeout(timeoutId);
   }, [handleChange, fileList, propertyId]);
 
-  const readOnly = uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true;
+  const readOnly =
+    uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true || user === null;
   const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? '';
   const accept = uischema?.options?.componentProps?.accept ?? '';
 

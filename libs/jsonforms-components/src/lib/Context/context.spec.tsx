@@ -169,12 +169,12 @@ describe('contextProvider', () => {
       return (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         <div key="0">
-          {animals && animals().animals.map((a: { name: string }, index: string) => <div key={index}>{a.name}</div>)}
+          {animals && animals().map((a: { name: string }, index: string) => <div key={index}>{a.name}</div>)}
         </div>
       );
     };
     const component = render(
-      <ContextProvider data={[{ animals }]}>
+      <ContextProvider data={{ animals }}>
         <div>
           <DataComponent />
         </div>
