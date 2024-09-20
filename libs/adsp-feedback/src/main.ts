@@ -367,10 +367,17 @@ class AdspFeedback implements AdspFeedbackApi {
   private renderRating = (rating: any, index: number) => {
     return html`
       <div class="rating-div">
-        <img src="${rating.svgDefault}" @mouseover="${() => this.updateHover(index, true)}"
-        @mouseout="${() => this.updateHover(index, false)}" @click="${() => this.selectRating(index)}"
-        @keydown=${(event: KeyboardEvent) => this.handleKeyHowEasy(event, index)} class="rating" alt="${rating.label}"
-        tabindex="0" aria-labeling = "Rating for "+ "${rating.label}" />
+        <img
+          src="${rating.svgDefault}"
+          @mouseover="${() => this.updateHover(index, true)}"
+          @mouseout="${() => this.updateHover(index, false)}"
+          @click="${() => this.selectRating(index)}"
+          @keydown=${(event: KeyboardEvent) => this.handleKeyHowEasy(event, index)}
+          class="rating"
+          alt="${rating.label}"
+          tabindex="0"
+          aria-label="${rating.label}"
+        />
         <span class="tooltip-text">${rating.label}</span>
         <p
           class="ratingText"
@@ -971,8 +978,15 @@ class AdspFeedback implements AdspFeedbackApi {
           .p-content {
             line-height: 28px;
           }
-          @media screen and (max-width: 768px) {
+          @media screen and (max-width: 767px) {
             .adsp-fb div.adsp-fb-form-container {
+            }
+            .adsp-fb .adsp-fb-badge {
+              top: auto;
+              bottom: 12vh;
+              font-size: 12px;
+              padding: 12px 0;
+              line-height: 1.5rem;
             }
           }
           @media screen and (max-width: 640px) {
