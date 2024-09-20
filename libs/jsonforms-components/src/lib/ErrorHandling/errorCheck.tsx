@@ -79,5 +79,5 @@ export const isEmptyElements = (schema: object): boolean => {
 };
 
 export const hasVariant = (schema: UISchemaElement): boolean => {
-  return 'options' in schema && schema.options !== undefined && schema.options !== null && 'variant' in schema.options;
+  return 'options' in schema && schema.options !== undefined && schema.options !== null;
 };

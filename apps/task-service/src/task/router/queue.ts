@@ -13,16 +13,14 @@ import { checkSchema, param, query } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import { DateTime } from 'luxon';
 import { Logger } from 'winston';
-import { updateTask } from '.';
+import { CommentService } from '../comment';
 import { TaskCancelledDefinition, TaskCompletedDefinition, TaskCreatedDefinition, taskCreated } from '../events';
-import { QueueEntity } from '../model/queue';
-import { TaskEntity } from '../model/task';
+import { mapTask } from '../mapper';
+import { TaskEntity, QueueEntity } from '../model';
 import { TaskRepository } from '../repository';
 import { Queue, TaskPriority, TaskServiceConfiguration, TaskStatus } from '../types';
-import { getTask, taskOperation, TASK_KEY } from './task';
+import { getTask, taskOperation, TASK_KEY, updateTask } from './task';
 import { UserInformation } from './types';
-import { CommentService } from '../comment';
-import { mapTask } from '../mapper';
 
 interface QueueRouterProps {
   apiId: AdspId;
@@ -295,20 +293,26 @@ export const getQueuedTasks =
     }
   };
 
-export const createTask =
-  (
-    apiId: AdspId,
-    repository: TaskRepository,
-    eventService: EventService,
-    commentService: CommentService
-  ): RequestHandler =>
-  async (req, res, next) => {
+export function createTask(
+  apiId: AdspId,
+  logger: Logger,
+  repository: TaskRepository,
+  eventService: EventService,
+  commentService: CommentService
+): RequestHandler {
+  return async (req, res, next) => {
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
       const { priority, ...task } = req.body;
 
       const queue: QueueEntity = req[QUEUE_KEY];
+
+      logger.debug(`Creating task in queue ${queue.namespace}:${queue.name}...`, {
+        context: 'TaskRouter',
+        tenantId: tenantId.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
 
       const entity = await TaskEntity.create(user, repository, queue, {
         tenantId,
@@ -321,10 +325,17 @@ export const createTask =
 
       eventService.send(taskCreated(apiId, user, entity));
       commentService.createTopic(entity, result.urn);
+
+      logger.info(`Created task (ID: ${entity.id}) in queue ${queue.namespace}:${queue.name}.`, {
+        context: 'TaskRouter',
+        tenantId: tenantId.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
     } catch (err) {
       next(err);
     }
   };
+}
 
 interface ClientRepresentation {
   id: string;
@@ -336,7 +347,9 @@ export const getRoleUsers =
   async (req, res, next) => {
     try {
       const user = req.user;
-      const realm = req.tenant?.realm;
+      const tenant = req.tenant;
+
+      const realm = tenant?.realm;
       if (!realm) {
         throw new UnauthorizedUserError('get queue users', user);
       }
@@ -394,7 +407,11 @@ export const getRoleUsers =
         } catch (err) {
           if (axios.isAxiosError(err)) {
             if (err.response?.status === HttpStatusCodes.NOT_FOUND) {
-              logger.warn(`Role '${role}' not found.`);
+              logger.warn(`Role '${role}' not found.`, {
+                context: 'TaskRouter',
+                tenantId: tenant.id.toString(),
+                user: `${user.name} (ID: ${user.id})`,
+              });
             } else if (err.response?.status === HttpStatusCodes.FORBIDDEN) {
               throw new UnauthorizedUserError('get role users', user);
             }
@@ -484,7 +501,7 @@ export function createQueueRouter({
       )
     ),
     getQueue,
-    createTask(apiId, repository, eventService, commentService)
+    createTask(apiId, logger, repository, eventService, commentService)
   );
   router.get(
     '/queues/:namespace/:name/tasks/:id',
@@ -509,7 +526,7 @@ export function createQueueRouter({
     ),
     getTask(repository),
     verifyQueuedTask,
-    updateTask(apiId, eventService)
+    updateTask(apiId, logger, eventService)
   );
   router.post(
     '/queues/:namespace/:name/tasks/:id',
@@ -536,7 +553,7 @@ export function createQueueRouter({
     ),
     getTask(repository),
     verifyQueuedTask,
-    taskOperation(apiId, eventService)
+    taskOperation(apiId, logger, eventService)
   );
 
   router.get(
