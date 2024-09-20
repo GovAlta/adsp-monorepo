@@ -96,9 +96,8 @@ export const getTask =
     }
   };
 
-export const updateTask =
-  (apiId: AdspId, eventService: EventService): RequestHandler =>
-  async (req, res, next) => {
+export function updateTask(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
     try {
       const user = req.user;
       const update: Update<Task> = {
@@ -109,18 +108,30 @@ export const updateTask =
       };
       const task: TaskEntity = req[TASK_KEY];
 
+      logger.debug(`Updating task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}...`, {
+        context: 'TaskRouter',
+        tenantId: task.tenantId.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+
       const updated = await task.update(user, update);
       res.send(mapTask(apiId, updated));
 
       eventService.send(taskUpdated(apiId, user, updated, update));
+
+      logger.info(`Updated task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}.`, {
+        context: 'TaskRouter',
+        tenantId: task.tenantId.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
     } catch (err) {
       next(err);
     }
   };
+}
 
-export const taskOperation =
-  (apiId: AdspId, eventService: EventService): RequestHandler =>
-  async (req, res, next) => {
+export function taskOperation(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
     try {
       const user = req.user;
       const request: TaskOperations = req.body;
@@ -128,6 +139,15 @@ export const taskOperation =
 
       let result: TaskEntity = null;
       let event: DomainEvent = null;
+
+      logger.debug(
+        `Performing operation ${request.operation} on task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}...`,
+        {
+          context: 'TaskRouter',
+          tenantId: task.tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        }
+      );
 
       switch (request.operation) {
         case OPERATION_START:
@@ -161,17 +181,32 @@ export const taskOperation =
       res.send(mapTask(apiId, result));
 
       eventService.send(event);
+
+      logger.info(
+        `Performed operation ${request.operation} on task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}.`,
+        {
+          context: 'TaskRouter',
+          tenantId: task.tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        }
+      );
     } catch (err) {
       next(err);
     }
   };
+}
 
-export const deleteTask =
-  (apiId: AdspId, eventService: EventService): RequestHandler =>
-  async (req, res, next) => {
+export function deleteTask(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
     try {
       const user = req.user;
       const task: TaskEntity = req[TASK_KEY];
+
+      logger.debug(`Deleting task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}...`, {
+        context: 'TaskRouter',
+        tenantId: task.tenantId.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
 
       const deleted = await task.delete(user);
 
@@ -179,13 +214,23 @@ export const deleteTask =
       if (deleted) {
         eventService.send(taskDeleted(apiId, user, task));
       }
+
+      logger.info(
+        `Deleted task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name} with result ${deleted}.`,
+        {
+          context: 'TaskRouter',
+          tenantId: task.tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        }
+      );
     } catch (err) {
       next(err);
     }
   };
+}
 
 export function createTaskRouter({
-  logger: _logger,
+  logger,
   apiId,
   taskRepository: repository,
   eventService,
@@ -228,12 +273,12 @@ export function createTaskRouter({
       )
     ),
     getTask(repository),
-    updateTask(apiId, eventService)
+    updateTask(apiId, logger, eventService)
   );
 
-  router.post('/tasks/:id', validateIdHandler, getTask(repository), taskOperation(apiId, eventService));
+  router.post('/tasks/:id', validateIdHandler, getTask(repository), taskOperation(apiId, logger, eventService));
 
-  router.delete('/tasks/:id', validateIdHandler, getTask(repository), deleteTask(apiId, eventService));
+  router.delete('/tasks/:id', validateIdHandler, getTask(repository), deleteTask(apiId, logger, eventService));
 
   return router;
 }
