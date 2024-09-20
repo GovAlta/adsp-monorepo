@@ -74,3 +74,13 @@ The _data.event.payload_ prefix tells the notification service that this particu
 ### Text Messages
 
 Unlike email, you cannot format text messages. You can, however, customize text messages with Handlebars, just as you would with the email templates.
+
+## Security
+
+As with most ADSP products, the _Notification Service_ security is based on keycloak roles. In particular, subscribers can only be added to a non-public Notification Type\_ if they have the correct roles. You can specify which roles a subscriber must have when creating the Notification Type, i.e.
+
+![](/adsp-monorepo/assets/notification-service/roles.png){: width="300" }
+
+Subscriptions can also be public, requiring no roles, for anonymous users. Just check the "Make notification public" box when creating the notification type. Anyone, then, can be a subscriber.
+
+Note: when using the direct notifications, where only an email address is needed, the notification type is always public.
