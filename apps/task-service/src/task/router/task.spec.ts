@@ -365,10 +365,10 @@ describe('task', () => {
   });
 
   describe('updateTask', () => {
-    const handler = updateTask(apiId, eventServiceMock);
+    const handler = updateTask(apiId, loggerMock, eventServiceMock);
 
     it('can create request handler', () => {
-      const result = updateTask(apiId, eventServiceMock);
+      const result = updateTask(apiId, loggerMock, eventServiceMock);
       expect(result).toBeTruthy();
     });
 
@@ -405,10 +405,10 @@ describe('task', () => {
   });
 
   describe('taskOperation', () => {
-    const handler = taskOperation(apiId, eventServiceMock);
+    const handler = taskOperation(apiId, loggerMock, eventServiceMock);
 
     it('can create request handler', () => {
-      const result = taskOperation(apiId, eventServiceMock);
+      const result = taskOperation(apiId, loggerMock, eventServiceMock);
       expect(result).toBeTruthy();
     });
 
@@ -542,10 +542,10 @@ describe('task', () => {
   });
 
   describe('deleteTask', () => {
-    const handler = deleteTask(apiId, eventServiceMock);
+    const handler = deleteTask(apiId, loggerMock, eventServiceMock);
 
     it('can create request handler', () => {
-      const result = deleteTask(apiId, eventServiceMock);
+      const result = deleteTask(apiId, loggerMock, eventServiceMock);
       expect(result).toBeTruthy();
     });
 
