@@ -51,6 +51,10 @@ Click on the "Select an event" button to bring up the modal:
 
 Select an event from the dropdown list and press next. You will be brought to the notification editor where you will be prompted to enter the message that is sent when the notification is triggered. Depending on which _Notification Channels_ you selected when creating the _Notification Type_, you will be presented with one or more tabs for creating messages.
 
+### Choose Notification Method
+
+Notifications can be sent either to [Subscribers, or directly to an email address](/adsp-monorepo/tutorials/notification-service/subscribers.html).
+
 ### Add Notification Messages
 
 In this example, we've chosen to add an Email message:
