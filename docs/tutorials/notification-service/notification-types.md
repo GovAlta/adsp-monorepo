@@ -77,7 +77,7 @@ Unlike email, you cannot format text messages. You can, however, customize text 
 
 ## Security
 
-As with most ADSP products, the _Notification Service_ security is based on keycloak roles. In particular, subscribers can only be added to a non-public Notification Type\_ if they have the correct roles. You can specify which roles a subscriber must have when creating the Notification Type, i.e.
+As with most ADSP products, the _Notification Service_ security is based on keycloak roles. In particular, subscribers can only be added to a non-public _Notification Type_ if they have the correct roles. You can specify which roles a subscriber must have when creating the Notification Type, i.e.
 
 ![](/adsp-monorepo/assets/notification-service/roles.png){: width="300" }
 
