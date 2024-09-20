@@ -141,6 +141,31 @@ describe('SubscriptionEntity', () => {
       expect(send).toBe(true);
     });
 
+    it('can return true for correlation criteria using URN', () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: {
+            correlationId: adspId`urn:ads:platform:form-service:v1:/forms/123`.toString(),
+          },
+          subscriberId: 'test',
+        },
+        type
+      );
+
+      const send = entity.shouldSend({
+        tenantId,
+        name: 'test-started',
+        timestamp: new Date(),
+        correlationId: adspId`urn:ads:platform:form-service:v1:/forms/123`.toString(),
+        payload: {},
+      });
+
+      expect(send).toBe(true);
+    });
+
     it('can return true for array correlation criteria matched', () => {
       const entity = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
@@ -442,8 +467,9 @@ describe('SubscriptionEntity', () => {
       const criteria = {
         correlationId: 'test2',
       };
-      const result = await entity.deleteCriteria(user, criteria);
+      const [result, deletedSubscription] = await entity.deleteCriteria(user, criteria);
       expect(result).toBe(true);
+      expect(deletedSubscription).toBe(false);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(entity);
       expect(entity.criteria).toMatchObject(
         expect.arrayContaining([expect.objectContaining({ context: expect.objectContaining({ test1: 1 }) })])
@@ -466,8 +492,9 @@ describe('SubscriptionEntity', () => {
       const criteria = {
         correlationId: 'test2',
       };
-      const result = await entity.deleteCriteria(user, criteria);
+      const [result, deletedSubscription] = await entity.deleteCriteria(user, criteria);
       expect(result).toBe(true);
+      expect(deletedSubscription).toBe(true);
       expect(repositoryMock.saveSubscription).not.toHaveBeenCalled();
       expect(repositoryMock.deleteSubscriptions).toHaveBeenCalledWith(tenantId, 'test', 'test');
     });
@@ -488,8 +515,9 @@ describe('SubscriptionEntity', () => {
       const criteria = {
         correlationId: 'test',
       };
-      const result = await entity.deleteCriteria(user, criteria);
+      const [result, deletedSubscription] = await entity.deleteCriteria(user, criteria);
       expect(result).toBe(false);
+      expect(deletedSubscription).toBe(false);
       expect(repositoryMock.saveSubscription).not.toHaveBeenCalled();
       expect(repositoryMock.deleteSubscriptions).not.toHaveBeenCalled();
     });

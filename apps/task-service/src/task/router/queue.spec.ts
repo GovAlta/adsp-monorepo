@@ -440,10 +440,10 @@ describe('queue', () => {
   });
 
   describe('createTask', () => {
-    const handler = createTask(apiId, repositoryMock, eventServiceMock, commentServiceMock);
+    const handler = createTask(apiId, loggerMock, repositoryMock, eventServiceMock, commentServiceMock);
 
     it('can create handler', () => {
-      const result = createTask(apiId, repositoryMock, eventServiceMock, commentServiceMock);
+      const result = createTask(apiId, loggerMock, repositoryMock, eventServiceMock, commentServiceMock);
       expect(result).toBeTruthy();
     });
 
@@ -588,7 +588,7 @@ describe('queue', () => {
     it('can handle axios not found error', async () => {
       const req = {
         user: { tenantId, id: 'user-1', roles: ['test-worker'], token: { bearer: 'test' } },
-        tenant: { realm: 'test' },
+        tenant: { realm: 'test', id: tenantId },
         queue,
       };
       const res = {

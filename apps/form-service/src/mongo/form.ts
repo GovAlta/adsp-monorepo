@@ -94,15 +94,10 @@ export class MongoFormRepository implements FormRepository {
   async save(entity: FormEntity): Promise<FormEntity> {
     try {
       const updateDoc = this.toDoc(entity);
-      const { data, files, status, lastAccessed, locked, submitted, hash, anonymousApplicant, ...insertDoc } =
-        updateDoc;
-
+      const { data, files, status, lastAccessed, locked, submitted, hash, ...insertDoc } = updateDoc;
       const doc = await this.model.findOneAndUpdate(
         { tenantId: entity.tenantId.toString(), id: entity.id },
-        {
-          $setOnInsert: insertDoc,
-          $set: { data, files, status, lastAccessed, locked, submitted, hash, anonymousApplicant },
-        },
+        { $setOnInsert: insertDoc, $set: { data, files, status, lastAccessed, locked, submitted, hash } },
         { upsert: true, new: true, lean: true }
       );
 

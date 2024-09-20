@@ -18,5 +18,5 @@ const categoriesAreValid = (uischema: UISchemaElement): boolean => {
 
 export const CategorizationRendererTester: RankedTester = rankWith(
   2,
-  and(uiTypeIs('Categorization'), categoriesAreValid, optionIs('variant', 'stepper'))
+  and(uiTypeIs('Categorization'), categoriesAreValid)
 );

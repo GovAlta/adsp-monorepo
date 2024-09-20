@@ -43,7 +43,7 @@ interface DraftFormProps {
   onSubmit: (form: Form) => void;
 }
 
-export const dataWrapper = (schema, enumerators, user) => {
+export const populateDropdown = (schema, enumerators) => {
   const newSchema = JSON.parse(JSON.stringify(schema));
 
   Object.keys(newSchema.properties || {}).forEach((propertyName) => {
@@ -53,12 +53,10 @@ export const dataWrapper = (schema, enumerators, user) => {
     }
   });
 
-  newSchema.user = user;
-
   return newSchema as JsonSchema;
 };
 
-const JsonFormsWrapper = ({ definition, data, onChange, readonly, user }) => {
+const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
 
   return (
@@ -66,7 +64,7 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly, user }) => {
       <JsonForms
         ajv={createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema)}
         readonly={readonly}
-        schema={dataWrapper(definition.dataSchema, enumerators, user)}
+        schema={populateDropdown(definition.dataSchema, enumerators)}
         uischema={definition.uiSchema}
         data={data}
         validationMode="ValidateAndShow"
@@ -100,16 +98,15 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   onChange,
   onSubmit,
 }) => {
+  const onSubmitFunction = () => {
+    onSubmit(form);
+  };
   const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
 
   const dispatch = useDispatch<AppDispatch>();
   const files = useSelector(filesSelector);
   const metadata = useSelector(metaDataSelector);
   const user = useSelector(userSelector);
-
-  const onSubmitFunction = () => {
-    onSubmit({ ...form, user: user.user });
-  };
 
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
@@ -169,14 +166,9 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             downloadFile: downloadFormFile,
             deleteFile: deleteFormFile,
           }}
+          data={{ user: user?.user }}
         >
-          <JsonFormsWrapper
-            definition={definition}
-            data={data}
-            onChange={onChange}
-            readonly={submitting}
-            user={user?.user}
-          />
+          <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
         </ContextProvider>
         <GoAButtonGroup alignment="end">
           {showSubmit && (

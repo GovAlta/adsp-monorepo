@@ -46,6 +46,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   ];
 
   enumerators.addFormContextData('countries', countries);
+  const user = enumerators?.getFormContextData('user');
+
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
 
@@ -54,8 +56,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const propertyId = i18nKeyPrefix as string;
 
   const variant = uischema?.options?.variant || 'button';
-
-  const userObject = props.rootSchema as unknown as { user: unknown };
 
   const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
 
@@ -105,9 +105,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   }, [handleChange, fileList, propertyId]);
 
   const readOnly =
-    uischema?.options?.componentProps?.readOnly === true ||
-    props?.isStepperReview === true ||
-    userObject?.user === null;
+    uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true || user === null;
   const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? '';
   const accept = uischema?.options?.componentProps?.accept ?? '';
 
