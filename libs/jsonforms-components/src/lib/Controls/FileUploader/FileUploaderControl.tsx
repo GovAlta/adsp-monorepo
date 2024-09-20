@@ -55,6 +55,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   const variant = uischema?.options?.variant || 'button';
 
+  const userObject = props.rootSchema as unknown as { user: unknown };
+
   const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
 
   function uploadFile(file: File) {
@@ -102,7 +104,10 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     return () => clearTimeout(timeoutId);
   }, [handleChange, fileList, propertyId]);
 
-  const readOnly = uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true;
+  const readOnly =
+    uischema?.options?.componentProps?.readOnly === true ||
+    props?.isStepperReview === true ||
+    userObject?.user === null;
   const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? '';
   const accept = uischema?.options?.componentProps?.accept ?? '';
 

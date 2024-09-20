@@ -26,6 +26,7 @@ import {
   metaDataSelector,
   uploadFile,
 } from '../state';
+import { userSelector } from '../state';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -42,7 +43,7 @@ interface DraftFormProps {
   onSubmit: (form: Form) => void;
 }
 
-export const populateDropdown = (schema, enumerators) => {
+export const dataWrapper = (schema, enumerators, user) => {
   const newSchema = JSON.parse(JSON.stringify(schema));
 
   Object.keys(newSchema.properties || {}).forEach((propertyName) => {
@@ -52,18 +53,20 @@ export const populateDropdown = (schema, enumerators) => {
     }
   });
 
+  newSchema.user = user;
+
   return newSchema as JsonSchema;
 };
 
-const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
+const JsonFormsWrapper = ({ definition, data, onChange, readonly, user }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
 
   return (
-    <JsonFormRegisterProvider defaultRegisters={definition?.registerData || []}>
+    <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
         ajv={createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema)}
         readonly={readonly}
-        schema={populateDropdown(definition.dataSchema, enumerators)}
+        schema={dataWrapper(definition.dataSchema, enumerators, user)}
         uischema={definition.uiSchema}
         data={data}
         validationMode="ValidateAndShow"
@@ -97,14 +100,16 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   onChange,
   onSubmit,
 }) => {
-  const onSubmitFunction = () => {
-    onSubmit(form);
-  };
   const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
 
   const dispatch = useDispatch<AppDispatch>();
   const files = useSelector(filesSelector);
   const metadata = useSelector(metaDataSelector);
+  const user = useSelector(userSelector);
+
+  const onSubmitFunction = () => {
+    onSubmit({ ...form, user: user.user });
+  };
 
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
@@ -165,7 +170,13 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             deleteFile: deleteFormFile,
           }}
         >
-          <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
+          <JsonFormsWrapper
+            definition={definition}
+            data={data}
+            onChange={onChange}
+            readonly={submitting}
+            user={user?.user}
+          />
         </ContextProvider>
         <GoAButtonGroup alignment="end">
           {showSubmit && (

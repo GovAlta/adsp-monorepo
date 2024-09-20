@@ -245,7 +245,8 @@ export class FormEntity implements Form {
     user: User,
     queueTaskService: QueueTaskService,
     submissionRepository: FormSubmissionRepository,
-    pdfService: PdfService
+    pdfService: PdfService,
+    anonymous?: boolean
   ): Promise<[FormEntity, FormSubmissionEntity]> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
@@ -259,6 +260,7 @@ export class FormEntity implements Form {
     }
 
     this.definition.validateData('form submission', this.data);
+    this.anonymousApplicant = anonymous;
 
     this.status = FormStatus.Submitted;
     this.submitted = new Date();

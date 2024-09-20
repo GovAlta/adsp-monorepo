@@ -21,6 +21,8 @@ export interface FormDefinition {
   applicantRoles: string[];
   clerkRoles: string[];
   registerData?: RegisterData;
+  dataList: string[];
+  nonAnonymous: string[];
   anonymousApply: boolean;
   generatesPdf?: boolean;
 }
@@ -36,6 +38,7 @@ export interface Form {
     id: string;
     urn: string;
   };
+  user?: unknown;
 }
 
 interface FormDataResponse {
@@ -445,6 +448,7 @@ export const submitAnonymousForm = createAsyncThunk(
         definitionId: form.selected,
         data: form.data,
         files: form.files,
+        anonymous: !user?.user,
       });
 
       return data;

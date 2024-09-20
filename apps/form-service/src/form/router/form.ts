@@ -236,7 +236,7 @@ export function createForm(
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const { definitionId, applicant: applicantInfo, data, files: fileIds, submit } = req.body;
+      const { definitionId, applicant: applicantInfo, data, files: fileIds, submit, anonymous } = req.body;
 
       const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId);
       if (!definition) {
@@ -259,7 +259,13 @@ export function createForm(
 
       // If submit is true, then immediately submit the form.
       if (submit === true) {
-        const [submittedForm, submission] = await form.submit(user, queueTaskService, submissionRepository, pdfService);
+        const [submittedForm, submission] = await form.submit(
+          user,
+          queueTaskService,
+          submissionRepository,
+          pdfService,
+          anonymous
+        );
         form = submittedForm;
         formSubmission = submission;
         events.push(formSubmitted(apiId, user, form, submission));
@@ -585,7 +591,8 @@ export function createFormRouter({
       body('applicant.channels').optional().isArray(),
       body('data').optional().isObject(),
       body('files').optional().isObject(),
-      body('submit').optional().isBoolean()
+      body('submit').optional().isBoolean(),
+      body('anonymous').optional().isBoolean()
     ),
     createForm(
       apiId,
