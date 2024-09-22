@@ -241,3 +241,22 @@ Feature: Form
     Then the user views delete "form definition" confirmation modal for "autotest-securityClassification"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the form definition of "autotest-securityClassification", "autotest desc"
+
+  @TEST_CS-3358 @REQ_CS-3306 @regression
+  Scenario: As a tenant admin, I can use a default form applicant role included by the form app, so my users can apply
+    Given a tenant admin user is on form definitions page
+    # Add a form definition
+    When the user clicks Add definition button on form definitions page
+    Then the user views Add form definition modal
+    When the user enters "autotest-defaultApplicantRole", "autotest desc" in Add form definition modal
+    And the user clicks Save button in Add form definition modal
+    # Validate default applicant role is selected
+    Then the user views form definition editor for "autotest-defaultApplicantRole", "autotest desc"
+    When the user clicks "Roles" tab in form definition editor
+    Then the user views "form-applicant" as applicant role under "urn:ads:platform:form-service" is "checked"
+    # Delete the form definition
+    When the user clicks Back button in form definition editor
+    And the user clicks "Delete" button for the form definition of "autotest-defaultApplicantRole", "autotest desc"
+    Then the user views delete "form definition" confirmation modal for "autotest-defaultApplicantRole"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the form definition of "autotest-defaultApplicantRole", "autotest desc"
