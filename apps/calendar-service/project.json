@@ -21,7 +21,6 @@
         "webpackConfig": "apps/calendar-service/webpack.config.js",
         "target": "node",
         "compiler": "tsc",
-        "isolatedConfig": true,
         "babelUpwardRootMode": true
       },
       "configurations": {
