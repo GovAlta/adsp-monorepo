@@ -9,8 +9,8 @@ import { GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-componen
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { RegisterDataType } from '../../Context/register';
 import { callout } from '../../Additional/GoACalloutControl';
-
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
+import { Dropdown, Item } from '../../Components/Dropdowns';
 
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 
@@ -54,6 +54,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
         }
       }),
     ];
+
     const hasNonEmptyOptions = newOptions.some((option) => option.value !== '');
 
     if (!hasNonEmptyOptions && newOptions.length === 1 && newOptions[0].value === '') {
@@ -72,35 +73,22 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     }
   }, [registerCtx, registerConfig]);
 
+  console.log(mergedOptions);
+
   return (
     <div>
       {error.length > 0 ? (
         callout({ message: error })
       ) : (
-        <GoADropdown
-          name={`${label}`}
-          value={data}
-          disabled={!enabled}
-          relative={true}
-          filterable={autocompletion}
-          key={`${id}-jsonform-key`}
-          testId={`${id || label}-jsonform`}
-          {...appliedUiSchemaOptions}
-          onChange={(name, value) => {
+        <Dropdown
+          items={mergedOptions as unknown as Item[]}
+          selected={data}
+          label={'test'}
+          onChange={(value: string) => {
             handleChange(path, value);
+            return;
           }}
-          {...uischema?.options?.componentProps}
-        >
-          {mergedOptions?.map((item) => {
-            return (
-              <GoADropdownItem
-                key={`json-form-dropdown-${item.value}`}
-                value={`${item.value}`}
-                label={`${item.label}`}
-              />
-            );
-          })}
-        </GoADropdown>
+        />
       )}
     </div>
   );
