@@ -90,7 +90,7 @@ export const TaskTenant = () => {
 
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" />
+      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Task management`}>
         {userInitialized && (
           <span>

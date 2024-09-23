@@ -7,7 +7,7 @@ export const Landing: FunctionComponent = () => {
   useFeedbackLinkHandler();
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" />
+      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoAAppHeader url="/" heading="Alberta Digital Service Platform - Task management" />
       <Band title="Task management">Work on tasks in queues.</Band>
       <main>

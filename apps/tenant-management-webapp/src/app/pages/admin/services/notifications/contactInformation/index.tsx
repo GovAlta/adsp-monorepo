@@ -83,7 +83,13 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         </p>
 
         <Grid>
-          <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>
+          <GridItem
+            data-testid="contact-email"
+            className="word-break contact-border"
+            md={8}
+            vSpacing={1}
+            hSpacing={0.5}
+          >
             <h4>Contact email</h4>
             {isFetchLoading && <TextGoASkeleton key="email" />}
             {!isFetchLoading && contact?.contactEmail}
