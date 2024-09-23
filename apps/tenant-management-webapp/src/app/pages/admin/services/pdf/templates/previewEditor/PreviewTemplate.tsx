@@ -133,11 +133,6 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
               </PdfViewer>
             )}
           </section>
-          {!indicator?.show && !hasError && blobUrl && (
-            <EditTemplateActions>
-              <hr className="styled-hr styled-hr-bottom" />
-            </EditTemplateActions>
-          )}
         </PreviewWrapper>
         {!indicator?.show && hasError && (
           <GoACallout type="emergency" heading="Error in PDF generation">

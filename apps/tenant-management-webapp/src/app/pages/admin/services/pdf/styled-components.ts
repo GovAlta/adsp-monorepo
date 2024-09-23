@@ -128,7 +128,6 @@ export const TemplateEditorContainerPdf = styled.div`
     height: 1px;
     background-color: #ccc;
     margin: 0;
-    width: 100vw;
   }
 
   .title {
