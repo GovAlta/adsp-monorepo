@@ -130,8 +130,8 @@ export class ContextProviderClass {
 
     if (props.data) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      props.data?.forEach((item: any) => {
-        this.enumValues.set(Object.keys(item)[0], () => item);
+      Object.keys(props.data).forEach((item: any) => {
+        this.enumValues.set(item, () => props.data[item]);
       });
     }
 
@@ -160,8 +160,6 @@ export class ContextProviderClass {
    * Grabs data stored under a given key
    *
    */
-  // FIXME give some clue as to what data is being fetched.
-  // e.g.is it getFormContextData?
   getFormContextData = (key: string) => {
     const dataFunction = this.baseEnumerator.data.get(key);
     return dataFunction && dataFunction();
