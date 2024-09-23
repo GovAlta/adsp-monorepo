@@ -22,6 +22,10 @@ components:
       properties:
         id:
           type: number
+        recordId:
+          type: string
+        context:
+          type: object
         name:
           type: string
         description:
@@ -53,6 +57,10 @@ components:
     CalendarEventCriteria:
       type: object
       properties:
+        recordId:
+          type: string
+        context:
+          type: object
         isPublic:
           type: boolean
         startsAfter:
@@ -229,6 +237,10 @@ components:
           schema:
             type: object
             properties:
+              recordId:
+                type: string
+              context:
+                type: object
               name:
                 type: string
               description:
@@ -299,6 +311,8 @@ components:
           schema:
             type: object
             properties:
+              context:
+                type: object
               name:
                 type: string
               description:

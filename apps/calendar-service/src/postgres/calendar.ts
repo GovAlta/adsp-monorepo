@@ -34,6 +34,8 @@ export class PostgresCalendarRepository implements CalendarRepository {
     return record
       ? new CalendarEventEntity(this, calendar, {
           id: record.id,
+          recordId: record.record_id,
+          context: record.context,
           name: record.name,
           description: record.description,
           isPublic: record.is_public,
@@ -112,9 +114,13 @@ export class PostgresCalendarRepository implements CalendarRepository {
     // to determine whether there is next page, we need to query one more.
     const topChecked = top + 1;
 
-    let query = this.knex<EventRecord>('calendar_events AS e');
-    query = query.select('e.*').distinctOn('e.id').offset(skip).limit(topChecked);
-    query = query.where('e.tenant', '=', calendar.tenantId.toString()).andWhere('e.calendar', '=', calendar.name);
+    let query = this.knex<EventRecord>('calendar_events AS e')
+      .select('e.*')
+      .distinctOn('e.id')
+      .offset(skip)
+      .limit(topChecked)
+      .where('e.tenant', '=', calendar.tenantId.toString())
+      .andWhere('e.calendar', '=', calendar.name);
 
     if (criteria) {
       const queryCriteria: Record<string, unknown> = {};
@@ -123,7 +129,15 @@ export class PostgresCalendarRepository implements CalendarRepository {
         queryCriteria.is_public = criteria.isPublic;
       }
 
+      if (criteria.recordId) {
+        queryCriteria.record_id = criteria.recordId;
+      }
+
       query = query.andWhere(queryCriteria);
+
+      if (criteria.context) {
+        query.whereRaw(`context @> ?::jsonb`, [JSON.stringify(criteria.context)]);
+      }
 
       if (criteria.startsAfter && criteria.endsBefore) {
         // Where e.start_date is greater than startsAfterDate and time is greater or equal.

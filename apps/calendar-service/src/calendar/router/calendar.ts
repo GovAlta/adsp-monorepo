@@ -33,6 +33,8 @@ function mapCalendar(entity: CalendarEntity) {
 function mapCalendarEvent(entity: CalendarEventEntity) {
   const dto = {
     id: entity.id,
+    recordId: entity.recordId,
+    context: entity.context,
     name: entity.name,
     description: entity.description,
     start: entity.start,
@@ -376,6 +378,8 @@ export const createCalendarRouter = ({
         description: { optional: true, isString: true },
         isPublic: { optional: true, isBoolean: true },
         isAllDay: { optional: true, isBoolean: true },
+        recordId: { optional: true, isString: true },
+        context: { optional: true, isObject: true },
       },
       ['body']
     )
