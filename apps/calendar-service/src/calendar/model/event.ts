@@ -7,6 +7,8 @@ import { Attendee, CalendarEvent } from '../types';
 
 export class CalendarEventEntity implements CalendarEvent {
   id: number;
+  recordId: string;
+  context: Record<string, boolean | string | number>;
   name: string;
   description: string;
   start: DateTime;
@@ -20,6 +22,8 @@ export class CalendarEventEntity implements CalendarEvent {
     public calendar: CalendarEntity,
     event: CalendarEvent | New<CalendarEvent>
   ) {
+    this.recordId = event.recordId;
+    this.context = event.context;
     this.name = event.name;
     this.description = event.description;
     this.start = event.start;
@@ -40,6 +44,10 @@ export class CalendarEventEntity implements CalendarEvent {
   update(user: User, update: Update<CalendarEvent>): Promise<CalendarEventEntity> {
     if (!this.calendar.canUpdateEvent(user)) {
       throw new UnauthorizedUserError('update calendar event', user);
+    }
+
+    if (update.context) {
+      this.context = update.context;
     }
 
     if (update.name) {
