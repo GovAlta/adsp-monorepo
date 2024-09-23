@@ -60,7 +60,7 @@ function mapEventAttendee(attendee: Attendee) {
 
 export const getCalendars: RequestHandler = async (req, res, next) => {
   try {
-    const [calendars] = await req.getConfiguration<CalendarServiceConfiguration>();
+    const calendars = await req.getConfiguration<CalendarServiceConfiguration, CalendarServiceConfiguration>();
 
     const results = Object.entries(calendars || {}).map(([_k, calender]) => mapCalendar(calender));
     res.send(results);
@@ -83,7 +83,9 @@ export function getCalendar(tenantService: TenantService): RequestHandler {
       }
 
       const tenantId = req.tenant?.id;
-      const [calendars] = await req.getConfiguration<CalendarServiceConfiguration>(tenantId);
+      const calendars = await req.getConfiguration<CalendarServiceConfiguration, CalendarServiceConfiguration>(
+        tenantId
+      );
 
       const calendar = calendars?.[name];
       if (!calendar) {
