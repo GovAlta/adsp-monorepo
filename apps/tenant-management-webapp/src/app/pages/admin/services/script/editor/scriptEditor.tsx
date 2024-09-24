@@ -327,66 +327,67 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     <EditModalStyle>
       {customIndicator && <CustomLoader />}
       <ScriptEditorContainer>
-        <ScriptEditorTitle>Script editor</ScriptEditorTitle>
-        <hr className="hr-resize" />
-        <TombStone selectedScript={selectedScript} onSave={onSave} />
-        <div style={{ paddingLeft: '4px' }}>
-          <GoACheckbox
-            checked={isServiceAccountChecked()}
-            name="script-use-service-account-checkbox"
-            testId="script-use-service-account-checkbox"
-            disabled={isServiceAccountDisabled()}
-            text="Use service account"
-            onChange={() => {
-              setScript({
-                ...script,
-                useServiceAccount: !script.useServiceAccount,
-              });
-            }}
-            ariaLabel={`script-use-service-account-checkbox`}
-          />
+        <div>
+          <ScriptEditorTitle>Script editor</ScriptEditorTitle>
+          <hr className="hr-resize" />
+          <TombStone selectedScript={selectedScript} onSave={onSave} />
+          <div style={{ paddingLeft: '4px' }}>
+            <GoACheckbox
+              checked={isServiceAccountChecked()}
+              name="script-use-service-account-checkbox"
+              testId="script-use-service-account-checkbox"
+              disabled={isServiceAccountDisabled()}
+              text="Use service account"
+              onChange={() => {
+                setScript({
+                  ...script,
+                  useServiceAccount: !script.useServiceAccount,
+                });
+              }}
+              ariaLabel={`script-use-service-account-checkbox`}
+            />
+          </div>
+          <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
+            <Tab label="Lua script" data-testid="script-editor-tab">
+              <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>
+                <MonacoEditor
+                  language={'lua'}
+                  value={scriptStr}
+                  {...scriptEditorConfig}
+                  onChange={(value) => {
+                    onScriptChange(value);
+                  }}
+                />
+              </MonacoDivBody>
+            </Tab>
+            <Tab label="Roles" data-testid="script-roles-tab">
+              <MonacoDivTabBody data-testid="roles-editor-body">
+                <ScrollPane>
+                  {Array.isArray(roles)
+                    ? roles.map((r) => {
+                        return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
+                      })
+                    : null}
+                  {fetchKeycloakRolesState === ActionState.inProcess && (
+                    <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+                  )}
+                </ScrollPane>
+              </MonacoDivTabBody>
+            </Tab>
+            <Tab label="Trigger events" data-testid="script-trigger-events-tab">
+              <MonacoDivTabBody data-testid="trigger-events-body">
+                <ScriptEditorEventsTab
+                  script={selectedScript}
+                  eventNames={orderedEventNames}
+                  onEditorSave={(script) => {
+                    setScript(script);
+                    saveAndReset(script);
+                  }}
+                />
+              </MonacoDivTabBody>
+            </Tab>
+          </Tabs>
         </div>
-        <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
-          <Tab label="Lua script" data-testid="script-editor-tab">
-            <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>
-              <MonacoEditor
-                language={'lua'}
-                value={scriptStr}
-                {...scriptEditorConfig}
-                onChange={(value) => {
-                  onScriptChange(value);
-                }}
-              />
-            </MonacoDivBody>
-          </Tab>
-          <Tab label="Roles" data-testid="script-roles-tab">
-            <MonacoDivTabBody data-testid="roles-editor-body">
-              <ScrollPane>
-                {Array.isArray(roles)
-                  ? roles.map((r) => {
-                      return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
-                    })
-                  : null}
-                {fetchKeycloakRolesState === ActionState.inProcess && (
-                  <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-                )}
-              </ScrollPane>
-            </MonacoDivTabBody>
-          </Tab>
-          <Tab label="Trigger events" data-testid="script-trigger-events-tab">
-            <MonacoDivTabBody data-testid="trigger-events-body">
-              <ScriptEditorEventsTab
-                script={selectedScript}
-                eventNames={orderedEventNames}
-                onEditorSave={(script) => {
-                  setScript(script);
-                  saveAndReset(script);
-                }}
-              />
-            </MonacoDivTabBody>
-          </Tab>
-        </Tabs>
-
         <EditScriptActions>
           <div>
             <GoAButton

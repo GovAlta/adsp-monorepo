@@ -82,20 +82,24 @@ export const EditScriptActions = styled.div`
   gap: 1rem;
   padding-top: var(--goa-space-l);
   border-top: 1px solid #adadad;
+  box-shadow: -2px -3px 3px rgba(0, 0, 0, 0.1);
 `;
 export const MonacoDivTabBody = styled.div`
   display: flex;
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
-  height: calc(72vh - 310px);
+  height: calc(72vh - 200px);
   margin-bottom: 1rem;
   flex-direction: column;
 `;
 export const ScriptEditorContainer = styled.div`
   width: 50%;
-  padding-right: 1rem;
+  padding-right: 1.5rem;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   &:hover {
     overflow: auto;
   }
@@ -119,7 +123,8 @@ export const ScriptEditorContainer = styled.div`
 export const EditModalStyle = styled.div`
   width: 100%;
   display: flex;
-  padding-top: var(--goa-space-xl);
+  padding-top: var(--goa-space-l);
+  padding-bottom: var(--goa-space-xl);
   .half-width {
     width: 50%;
     display: flex;
@@ -167,6 +172,22 @@ export const EditModalStyle = styled.div`
   .hr-resize {
     margin-top: var(--goa-space-s);
   }
+  .styled-hr {
+    border: none;
+    height: 1px;
+    background-color: #ccc;
+    margin: 0;
+  }
+
+  /* Top-facing shadow */
+  .styled-hr-top {
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Bottom-facing shadow */
+  .styled-hr-bottom {
+    box-shadow: -2px -3px 3px rgba(0, 0, 0, 0.1);
+  }
 `;
 
 export const SpinnerPadding = styled.div`
@@ -180,7 +201,7 @@ export const ScriptPane = styled.div`
 
   white-space: pre-wrap;
 
-  padding-left: 24px;
+  padding-left: 1.5rem;
   padding-right: 24px;
   margin-bottom: 1rem;
   overflow: hidden;
@@ -274,7 +295,7 @@ export const ResponseTableStyles = styled.div`
 `;
 
 export const TombStoneWrapper = styled.div`
-  margin-top: var(--goa-space-xl);
+  margin-top: var(--goa-space-m);
   font-size: var(--goa-font-size-3);
   color: var(--goa-color-text-default);
   border-radius: var(--goa-borderRadius-m);
@@ -499,7 +520,7 @@ export const OuterNotificationTemplateEditorContainer = styled.div`
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  margin-top: 90px;
+  margin-top: 0px;
 `;
 
 export const Anchor = styled.div`
