@@ -1187,3 +1187,66 @@ Then(
     }
   }
 );
+
+When('the user clicks Edit button for email information', function () {
+  notificationsObj.notificationOverviewEmailInformationEditIcon().shadow().find('button').click({ force: true });
+});
+
+Then('the user {string} Edit email information modal', function (viewOrNot) {
+  switch (viewOrNot) {
+    case 'views':
+      notificationsObj.notificationOverviewEmailInformationModal().should('exist');
+      break;
+    case 'should not view':
+      notificationsObj.notificationOverviewEmailInformationModal().should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+Then('the user views help content of {string}', function (helpText) {
+  notificationsObj
+    .notificationOverviewEmailInformationModalEmailFormItem()
+    .invoke('attr', 'helptext')
+    .should('contains', helpText);
+});
+
+When('the user enters {string} in the email field in Edit email information modal', function (email) {
+  notificationsObj
+    .notificationOverviewEmailInformationModalEmailField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(email, { delay: 200, force: true });
+});
+
+When('clicks Save button in Edit email information modal', function () {
+  notificationsObj.notificationOverviewEmailInformationModalSaveBtn().shadow().find('button').click({ force: true });
+});
+
+Then('the user views {string} in the Edit email information modal', function (errorMsg) {
+  notificationsObj
+    .notificationOverviewEmailInformationModalEmailFormItem()
+    .shadow()
+    .find('.error-msg')
+    .invoke('text')
+    .should('contain', errorMsg);
+});
+
+When('the user clicks Cancel button in the Edit email information modal', function () {
+  notificationsObj.notificationOverviewEmailInformationModalCancelBtn().shadow().find('button').click({ force: true });
+});
+
+Then('the user {string} the email address of {string} under From email', function (viewOrNot, email) {
+  switch (viewOrNot) {
+    case 'views':
+      notificationsObj.notificationOverviewEmailInformationFromEmail().invoke('text').should('contain', email);
+      break;
+    case 'should not view':
+      notificationsObj.notificationOverviewEmailInformationFromEmail().invoke('text').should('not.contain', email);
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
