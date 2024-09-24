@@ -12,7 +12,7 @@ export class CalendarEventEntity implements CalendarEvent {
   name: string;
   description: string;
   start: DateTime;
-  end: DateTime;
+  end?: DateTime;
   isPublic: boolean;
   isAllDay: boolean;
   attendees: Attendee[];

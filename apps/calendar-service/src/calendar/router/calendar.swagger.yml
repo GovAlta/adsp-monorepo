@@ -69,6 +69,9 @@ components:
         endsBefore:
           type: string
           format: date-time
+        activeOn:
+          type: string
+          format: date-time
         attendeeCriteria:
           type: object
           properties:
