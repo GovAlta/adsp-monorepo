@@ -383,8 +383,8 @@ export const createCalendarRouter = ({
         description: { optional: true, isString: true },
         isPublic: { optional: true, isBoolean: true },
         isAllDay: { optional: true, isBoolean: true },
-        recordId: { optional: true, isString: true },
-        context: { optional: true, isObject: true },
+        recordId: { optional: { options: { nullable: true } }, isString: true },
+        context: { optional: { options: { nullable: true } }, isObject: true },
       },
       ['body']
     )

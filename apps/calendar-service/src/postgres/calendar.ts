@@ -165,8 +165,8 @@ export class PostgresCalendarRepository implements CalendarRepository {
 
       if (criteria.activeOn) {
         // Where date and time is between start and end.
-        const activeOnDate = toDateId(criteria.endsBefore);
-        const activeOnTime = toTimeId(criteria.endsBefore);
+        const activeOnDate = toDateId(criteria.activeOn);
+        const activeOnTime = toTimeId(criteria.activeOn);
 
         query = query.andWhere((query) =>
           query
