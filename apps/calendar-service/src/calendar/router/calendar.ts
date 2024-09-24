@@ -167,6 +167,9 @@ export const getCalendarEvents: RequestHandler = async (req, res, next) => {
     if (criteria?.endsBefore) {
       criteria.endsBefore = DateTime.fromISO(criteria.endsBefore);
     }
+    if (criteria?.activeOn) {
+      criteria.activeOn = DateTime.fromISO(criteria.activeOn);
+    }
 
     const result = await calendar.getEvents(user, top, after as string, criteria);
     res.send({
