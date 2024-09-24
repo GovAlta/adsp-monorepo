@@ -50,7 +50,8 @@ export const MonacoDiv = styled.div`
   padding: 0.15rem 0.15rem;
 `;
 export const MonacoDivBody = styled.div`
-  display: flex;
+  height: calc(72vh - 260px);
+
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
@@ -86,10 +87,11 @@ export const EditScriptActions = styled.div`
 `;
 export const MonacoDivTabBody = styled.div`
   display: flex;
+  overflow: hidden;
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
-  height: calc(72vh - 200px);
+  height: calc(72vh - 260px);
   margin-bottom: 1rem;
   flex-direction: column;
 `;
@@ -123,6 +125,7 @@ export const ScriptEditorContainer = styled.div`
 export const EditModalStyle = styled.div`
   width: 100%;
   display: flex;
+  height: 100%;
   padding-top: var(--goa-space-l);
   padding-bottom: var(--goa-space-xl);
   .half-width {

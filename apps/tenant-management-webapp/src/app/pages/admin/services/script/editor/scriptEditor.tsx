@@ -309,7 +309,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     return result;
   };
 
-  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '310px';
+  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '260px';
 
   const isServiceAccountDisabled = () => {
     if (script.triggerEvents?.length > 0) return true;
