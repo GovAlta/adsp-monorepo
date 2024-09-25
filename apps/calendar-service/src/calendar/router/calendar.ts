@@ -415,19 +415,7 @@ export const createCalendarRouter = ({
   router.get(
     '/calendars/:name/events',
     validateNameHandler,
-    createValidationHandler(
-      query('criteria').optional().isObject(),
-      query('criteria.recordId').optional().isString(),
-      query('criteria.context').optional().isObject(),
-      query('criteria.isPublic').optional().isBoolean(),
-      query('criteria.startsAfter').optional().isISO8601(),
-      query('criteria.endsBefore').optional().isISO8601(),
-      query('criteria.activeOn').optional().isISO8601(),
-      query('criteria.attendeeCriteria').optional().isObject(),
-      query('criteria.attendeeCriteria.nameEquals').optional().isString(),
-      query('criteria.attendeeCriteria.emailEquals').optional().isEmail(),
-      query('criteria.orderBy').optional().isIn(['id', 'start'])
-    ),
+    createValidationHandler(query('criteria').optional().isJSON()),
     getCalendar(tenantService),
     getCalendarEvents
   );
