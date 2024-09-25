@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GoAInput } from '@abgov/react-components-new';
 import styled from 'styled-components';
 
@@ -88,8 +88,12 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(selected);
   const trailingIcon = isOpen ? 'chevron-up' : 'chevron-down';
-  const [items, setItems] = useState<Item[]>(props.items);
+  const [items, setItems] = useState(props.items);
   const [inputText, setInputText] = useState<string>(selected);
+
+  useEffect(() => {
+    setItems(props.items);
+  }, [props.items.length]);
 
   return (
     <div data-testid={id}>

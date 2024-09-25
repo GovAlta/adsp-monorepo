@@ -34,8 +34,6 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
     error = registerCtx?.fetchErrors(registerConfig) || '';
   }
-  console.log('xxxxxxxx');
-
   const autocompletion = props.uischema?.options?.autocomplete === true;
 
   const mergedOptions = useMemo(() => {

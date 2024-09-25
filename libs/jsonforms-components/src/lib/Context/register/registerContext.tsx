@@ -25,7 +25,7 @@ export const JsonFormsRegisterContext = createContext<JsonFormsRegisterContextPr
 
 interface JsonFormsRegisterProviderProps {
   children: ReactNode;
-  defaultRegisters: { registerData: RegisterData; dataList: string[]; nonAnonymous?: string[] } | undefined;
+  defaultRegisters: { registerData: RegisterData; dataList?: string[]; nonAnonymous?: string[] } | undefined;
 }
 
 export const JsonFormRegisterProvider = ({
@@ -45,7 +45,6 @@ export const JsonFormRegisterProvider = ({
       isProvided: true,
       registerDispatch: dispatch,
       selectRegisterData: (criteria: RegisterConfig): RegisterDataType => {
-        console.log(registers.registerData);
         if (criteria?.url) {
           console.log(registers.registerData?.find((r) => r.url === criteria.url)?.data);
           return registers.registerData?.find((r) => r.url === criteria.url)?.data || [];
@@ -67,14 +66,15 @@ export const JsonFormRegisterProvider = ({
           });
           return matchFound ? '' : `${registers.errors[criteria?.url]?.message || ''}`;
         } else if (criteria?.urn) {
-          if (registers?.nonExistent) {
+          if (registers?.nonExistent.length > 0) {
             const matchFound = registers?.nonExistent.some((listItem) => {
               if (criteria?.urn?.toString().includes(listItem)) {
                 return true;
               }
               return false;
             });
-            if (!matchFound) {
+
+            if (matchFound === false) {
               return 'The element does not exist';
             }
           }

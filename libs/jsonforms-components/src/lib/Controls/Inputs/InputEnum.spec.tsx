@@ -118,8 +118,6 @@ describe('EnumSelect component', () => {
                 data: ['item'],
               },
             ],
-            dataList: ['abc'],
-            nonAnonymous: ['mock-urn'],
           }}
         >
           <EnumSelect {...props} />)
@@ -128,7 +126,7 @@ describe('EnumSelect component', () => {
 
       const dropdownInput = component.getByTestId('jsonforms-Enum-dropdown-input');
       fireEvent.click(dropdownInput);
-      const dropdownOption = screen.getByTestId('jsonforms-Enum-dropdown-item-label-option');
+      const dropdownOption = screen.getByTestId('jsonforms-Enum-dropdown-item-option');
       fireEvent.click(dropdownOption);
 
       expect(handleChangeMock.mock.lastCall).toEqual(['', 'item']);
