@@ -148,7 +148,7 @@ describe('Test AddEditFormDefinitionEditor', () => {
       name: 'new pending',
       description: 'new pending data state',
     };
-    const currentIndex = definition.dispositionStates.findIndex((y) => (y.id = updateDispositionState.id));
+    const currentIndex = definition.dispositionStates.findIndex((y) => (y.id === updateDispositionState.id));
     const [updatedDefinition, index] = onSaveDispositionForModal(
       false,
       updateDispositionState,
@@ -176,7 +176,7 @@ describe('Test AddEditFormDefinitionEditor', () => {
     );
     const updatedIndex = updatedDefinition.dispositionStates.findIndex((y) => y.name === updateDispositionState1.name);
 
-    expect(updatedDefinition && updatedIndex < 0).toBe(true);
+    expect(updatedIndex).toBeGreaterThan(-1);
     expect(index).toBeNull();
   });
 });

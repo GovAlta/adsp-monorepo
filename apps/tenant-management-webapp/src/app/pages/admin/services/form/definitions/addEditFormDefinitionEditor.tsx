@@ -96,21 +96,22 @@ export const formEditorJsonConfig = {
 };
 
 export const onSaveDispositionForModal = (
-  isNewDisposition: boolean,
+  newDisposition: boolean,
   currentDisposition: Disposition,
   definition: FormDefinition,
-  selectedEditModalIndex: number | null
+  selectedEditModalIndex: number | null,
 ): [FormDefinition, number | null] => {
-  if (isNewDisposition) {
-    const currentDispositionStates = [...definition.dispositionStates] || [];
+  const currentDispositionStates = [...definition.dispositionStates] || [];
+  if (newDisposition) {
     if (currentDisposition) {
       currentDispositionStates.push(currentDisposition);
       definition.dispositionStates = currentDispositionStates;
     }
-  } else {
-    definition.dispositionStates[selectedEditModalIndex] = currentDisposition;
+  }else{
+    currentDispositionStates.splice(selectedEditModalIndex,1);
+    currentDispositionStates.push(currentDisposition);
+    definition.dispositionStates = currentDispositionStates;
   }
-
   return [definition, null];
 };
 
