@@ -25,7 +25,7 @@ export const JsonFormsRegisterContext = createContext<JsonFormsRegisterContextPr
 
 interface JsonFormsRegisterProviderProps {
   children: ReactNode;
-  defaultRegisters: { registerData: RegisterData; dataList: string[]; nonAnonymous: string[] } | undefined;
+  defaultRegisters: { registerData: RegisterData; dataList: string[]; nonAnonymous?: string[] } | undefined;
 }
 
 export const JsonFormRegisterProvider = ({
@@ -45,7 +45,9 @@ export const JsonFormRegisterProvider = ({
       isProvided: true,
       registerDispatch: dispatch,
       selectRegisterData: (criteria: RegisterConfig): RegisterDataType => {
+        console.log(registers.registerData);
         if (criteria?.url) {
+          console.log(registers.registerData?.find((r) => r.url === criteria.url)?.data);
           return registers.registerData?.find((r) => r.url === criteria.url)?.data || [];
         }
 

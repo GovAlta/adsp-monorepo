@@ -13,6 +13,8 @@ interface DropdownProps {
   selected: string;
   optionListMaxHeight?: string;
   onChange: (value: string) => void;
+  isAutocompletion?: boolean;
+  id?: string;
 }
 
 interface GoADropdownTextboxProps {
@@ -37,8 +39,13 @@ const GoADropdownTextbox = styled.div<GoADropdownTextboxProps>`
   box-shadow: ${(p) => (p.isOpen ? `0 0 0 3px #feba35` : '')};
 `;
 
-const GoADropdownListContainerWrapper = styled.div`
+interface GoADropdownListContainerWrapperProps {
+  isOpen: boolean;
+}
+
+const GoADropdownListContainerWrapper = styled.div<GoADropdownListContainerWrapperProps>`
   position: relative;
+  display: ${(p) => !p?.isOpen && 'none'};
 `;
 
 interface GoADropdownListContainerProps {
@@ -68,6 +75,7 @@ const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
   text-overflow: ellipsis;
   color: ${(p) => (p.isSelected ? 'white' : 'var(--goa-color-greyscale-black)')} !important;
   border: 1px solid #f1f1f1;
+  z-index: 1001;
   background: ${(p) => (p.isSelected ? 'var(--goa-color-interactive-default)' : '#fff')};
   &:hover {
     background-color: ${(p) => (p.isSelected ? 'var(--goa-color-interactive-default)' : '#f1f1f1')};
@@ -76,40 +84,58 @@ const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
 `;
 
 export const Dropdown = (props: DropdownProps): JSX.Element => {
-  const { items, label, selected, onChange, optionListMaxHeight } = props;
+  const { label, selected, onChange, optionListMaxHeight, isAutocompletion, id } = props;
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(selected);
+  const trailingIcon = isOpen ? 'chevron-up' : 'chevron-down';
+  const [items, setItems] = useState<Item[]>(props.items);
+  const [inputText, setInputText] = useState<string>(selected);
 
   return (
-    <>
-      <GoADropdownTextbox
-        isOpen={isOpen}
-        onClick={() => {
+    <div data-testid={id}>
+      <GoAInput
+        name={`dropdown-${label}`}
+        width="100%"
+        value={inputText}
+        testId={`${id}-input`}
+        id={`${id}-input`}
+        readonly={!isAutocompletion}
+        onChange={(name, value) => {
+          if (isAutocompletion) {
+            setIsOpen(true);
+            const selectedItems = props.items.filter((item) => {
+              return item.label.includes(value);
+            });
+            setItems(selectedItems);
+          }
+        }}
+        trailingIcon={trailingIcon}
+        onFocus={() => {
           setIsOpen(!isOpen);
         }}
-      >
-        {selected || ''}
-      </GoADropdownTextbox>
-      {isOpen && (
-        <GoADropdownListContainerWrapper>
-          <GoADropdownListContainer optionListMaxHeight={optionListMaxHeight}>
-            {items.map((item) => {
-              return (
-                <GoADropdownListOption isSelected={item.value === selected}>
-                  <div
-                    onClick={() => {
-                      onChange(item.value);
-                      setIsOpen(false);
-                    }}
-                  >
-                    {item.label}
-                  </div>
-                </GoADropdownListOption>
-              );
-            })}
-          </GoADropdownListContainer>
-        </GoADropdownListContainerWrapper>
-      )}
-    </>
+      />
+      <GoADropdownListContainerWrapper isOpen={isOpen}>
+        <GoADropdownListContainer optionListMaxHeight={optionListMaxHeight}>
+          {items.map((item) => {
+            return (
+              <GoADropdownListOption isSelected={item.value === selected}>
+                <div
+                  data-testid={`${id}-${item.label}-option`}
+                  key={`jsonforms-dropdown-${label}-${item.value}`}
+                  onClick={() => {
+                    onChange(item.value);
+                    setSelectedOption(item.value);
+                    setInputText(item.value);
+                    setIsOpen(false);
+                  }}
+                >
+                  {item.label}
+                </div>
+              </GoADropdownListOption>
+            );
+          })}
+        </GoADropdownListContainer>
+      </GoADropdownListContainerWrapper>
+    </div>
   );
 };

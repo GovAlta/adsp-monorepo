@@ -5,12 +5,11 @@ import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
-import { GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components-new';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { RegisterDataType } from '../../Context/register';
 import { callout } from '../../Additional/GoACalloutControl';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
-import { Dropdown, Item } from '../../Components/Dropdowns';
+import { Dropdown, Item } from '../../Components/Dropdown';
 
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 
@@ -35,24 +34,23 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
     error = registerCtx?.fetchErrors(registerConfig) || '';
   }
+  console.log('xxxxxxxx');
 
   const autocompletion = props.uischema?.options?.autocomplete === true;
-
-  const appliedUiSchemaOptions = merge({}, config, props.uischema.options);
 
   const mergedOptions = useMemo(() => {
     const newOptions = [
       ...(options || []),
-      ...registerData.map((d) => {
+      ...(registerData?.map((d) => {
         if (typeof d === 'string') {
           return {
             value: d,
             label: d,
           };
         } else {
-          return { ...d };
+          return { label: d?.key, value: d?.value };
         }
-      }),
+      }) || []),
     ];
 
     const hasNonEmptyOptions = newOptions.some((option) => option.value !== '');
@@ -73,8 +71,6 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     }
   }, [registerCtx, registerConfig]);
 
-  console.log(mergedOptions);
-
   return (
     <div>
       {error.length > 0 ? (
@@ -83,10 +79,11 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
         <Dropdown
           items={mergedOptions as unknown as Item[]}
           selected={data}
-          label={'test'}
+          id={`jsonforms-${label}-dropdown`}
+          label={label}
+          isAutocompletion={autocompletion}
           onChange={(value: string) => {
             handleChange(path, value);
-            return;
           }}
         />
       )}

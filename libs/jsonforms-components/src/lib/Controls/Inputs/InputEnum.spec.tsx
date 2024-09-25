@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { EnumSelect, enumControl } from './InputEnum';
 import { ControlElement, ControlProps, EnumCellProps, OwnPropsOfEnum, WithClassname } from '@jsonforms/core';
@@ -20,6 +20,16 @@ describe('EnumSelect component', () => {
   const staticProps: EnumSelectProp = {
     uischema: dropDownUiSchema,
     schema: { enum: ['Option1', 'Option2', 'Option3'] },
+    options: [
+      {
+        value: 'option1-value',
+        label: 'option1-label',
+      },
+      {
+        value: 'option2-value',
+        label: 'option2-label',
+      },
+    ],
     rootSchema: {},
     handleChange: jest.fn(),
     enabled: true,
@@ -58,7 +68,7 @@ describe('EnumSelect component', () => {
     it('renders EnumSelect component', () => {
       const props = { ...staticProps };
       const component = render(<EnumSelect {...props} />);
-      expect(component.getByTestId('enum-jsonform')).toBeInTheDocument();
+      expect(component.getByTestId('jsonforms-Enum-dropdown')).toBeTruthy();
     });
   });
 
@@ -66,14 +76,12 @@ describe('EnumSelect component', () => {
     it('triggers onChange event', () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
       const component = render(<EnumSelect {...props} />);
-      const dropdown = component.getByTestId('enum-jsonform');
-      fireEvent(
-        dropdown,
-        new CustomEvent('_change', {
-          detail: { name: 'Enum', value: 'Option2' },
-        })
-      );
-      expect(handleChangeMock.mock.lastCall).toEqual(['', 'Option2']);
+      const dropdown = component.getByTestId('jsonforms-Enum-dropdown');
+      const dropdownInput = component.getByTestId('jsonforms-Enum-dropdown-input');
+      fireEvent.click(dropdownInput);
+      const dropdownOption = screen.getByTestId('jsonforms-Enum-dropdown-option1-label-option');
+      fireEvent.click(dropdownOption);
+      expect(handleChangeMock.mock.lastCall).toEqual(['', 'option1-value']);
     });
   });
 
@@ -91,35 +99,39 @@ describe('EnumSelect component', () => {
           <EnumSelect {...props} />)
         </JsonFormRegisterProvider>
       );
-      expect(component.getByTestId('enum-jsonform')).toBeInTheDocument();
+      expect(component.getByTestId('jsonforms-Enum-dropdown')).toBeInTheDocument();
     });
 
     it('render Enum control with jsonform register context with default value', () => {
       const props = {
         ...staticProps,
-        uischema: { ...dropDownUiSchema, options: { register: { url: 'mock-test' } } },
+        uischema: { ...dropDownUiSchema, options: { register: { urn: 'mock-urn' } } },
         handleChange: handleChangeMock,
       };
       const component = render(
         <JsonFormRegisterProvider
           defaultRegisters={{
-            registerData: [{ url: 'mock-test', urn: 'mock-urn', data: ['item'] }],
+            registerData: [
+              {
+                url: 'http://mock-api.com/mock-test',
+                urn: 'mock-urn',
+                data: ['item'],
+              },
+            ],
             dataList: ['abc'],
-            nonAnonymous: ['def'],
+            nonAnonymous: ['mock-urn'],
           }}
         >
           <EnumSelect {...props} />)
         </JsonFormRegisterProvider>
       );
 
-      const dropdown = component.getByTestId('enum-jsonform');
-      fireEvent(
-        dropdown,
-        new CustomEvent('_change', {
-          detail: { name: 'item1', value: 'item1' },
-        })
-      );
-      expect(handleChangeMock.mock.lastCall).toEqual(['', 'item1']);
+      const dropdownInput = component.getByTestId('jsonforms-Enum-dropdown-input');
+      fireEvent.click(dropdownInput);
+      const dropdownOption = screen.getByTestId('jsonforms-Enum-dropdown-item-label-option');
+      fireEvent.click(dropdownOption);
+
+      expect(handleChangeMock.mock.lastCall).toEqual(['', 'item']);
     });
   });
 });
