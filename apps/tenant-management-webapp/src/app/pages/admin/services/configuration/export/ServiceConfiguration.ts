@@ -58,18 +58,21 @@ export const toDownloadFormat = (exports: Record<Service, ConfigurationExportTyp
 
 // return a map of namespace => names
 const toNamespaces = (revisions: ServiceSchemas): Record<Service, string[]> => {
-  return Object.keys(revisions.configuration)
-    .sort()
-    .reduce((nsMap: Record<Service, string[]>, key: Service) => {
-      const nameSpace = toNamespace(key);
-      const name = toServiceName(key);
-      if (nsMap[nameSpace]) {
-        nsMap[nameSpace].push(name);
-      } else {
-        nsMap[nameSpace] = [name];
-      }
-      return nsMap;
-    }, {});
+  return (
+    revisions.configuration &&
+    Object.keys(revisions.configuration)
+      .sort()
+      .reduce((nsMap: Record<Service, string[]>, key: Service) => {
+        const nameSpace = toNamespace(key);
+        const name = toServiceName(key);
+        if (nsMap[nameSpace]) {
+          nsMap[nameSpace].push(name);
+        } else {
+          nsMap[nameSpace] = [name];
+        }
+        return nsMap;
+      }, {})
+  );
 };
 
 // return a map of namespace:name to {schema, revision}
