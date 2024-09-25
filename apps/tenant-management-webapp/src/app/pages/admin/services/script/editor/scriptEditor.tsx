@@ -11,6 +11,7 @@ import {
   TextLoadingIndicator,
   MonacoDivTabBody,
   ScriptEditorTitle,
+  MonacoDivTriggerEventsBody,
 } from '../styled-components';
 import { TombStone } from './tombstone';
 
@@ -309,7 +310,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     return result;
   };
 
-  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '260px';
+  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '466px';
 
   const isServiceAccountDisabled = () => {
     if (script.triggerEvents?.length > 0) return true;
@@ -349,7 +350,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           </div>
           <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
             <Tab label="Lua script" data-testid="script-editor-tab">
-              <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>
+              <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(100vh - ${getStyles})` }}>
                 <MonacoEditor
                   language={'lua'}
                   value={scriptStr}
@@ -361,7 +362,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               </MonacoDivBody>
             </Tab>
             <Tab label="Roles" data-testid="script-roles-tab">
-              <MonacoDivTabBody data-testid="roles-editor-body">
+              <MonacoDivTabBody data-testid="roles-editor-body" style={{ height: `calc(100vh - ${getStyles})` }}>
                 <ScrollPane>
                   {Array.isArray(roles)
                     ? roles.map((r) => {
@@ -375,7 +376,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               </MonacoDivTabBody>
             </Tab>
             <Tab label="Trigger events" data-testid="script-trigger-events-tab">
-              <MonacoDivTabBody data-testid="trigger-events-body">
+              <MonacoDivTriggerEventsBody
+                data-testid="trigger-events-body"
+                style={{ height: `calc(100vh - ${getStyles})` }}
+              >
                 <ScriptEditorEventsTab
                   script={selectedScript}
                   eventNames={orderedEventNames}
@@ -384,7 +388,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                     saveAndReset(script);
                   }}
                 />
-              </MonacoDivTabBody>
+              </MonacoDivTriggerEventsBody>
             </Tab>
           </Tabs>
         </div>

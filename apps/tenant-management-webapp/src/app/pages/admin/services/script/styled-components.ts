@@ -91,7 +91,15 @@ export const MonacoDivTabBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
-  height: calc(72vh - 260px);
+  margin-bottom: 1rem;
+  flex-direction: column;
+`;
+export const MonacoDivTriggerEventsBody = styled.div`
+  display: flex;
+  overflow: hidden;
+  border-radius: 3px;
+  padding: 0.15rem 0.15rem;
+  min-height: 65px;
   margin-bottom: 1rem;
   flex-direction: column;
 `;
