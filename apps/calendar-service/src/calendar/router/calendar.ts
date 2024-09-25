@@ -1,7 +1,7 @@
 import { AdspId, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
-import { checkSchema, param } from 'express-validator';
+import { checkSchema, param, query } from 'express-validator';
 import { ICalCalendar } from 'ical-generator';
 import { DateTime } from 'luxon';
 import { Logger } from 'winston';
@@ -412,7 +412,25 @@ export const createCalendarRouter = ({
     exportCalendar(serviceId, directory)
   );
 
-  router.get('/calendars/:name/events', validateNameHandler, getCalendar(tenantService), getCalendarEvents);
+  router.get(
+    '/calendars/:name/events',
+    validateNameHandler,
+    createValidationHandler(
+      query('criteria').optional().isObject(),
+      query('criteria.recordId').optional().isString(),
+      query('criteria.context').optional().isObject(),
+      query('criteria.isPublic').optional().isBoolean(),
+      query('criteria.startsAfter').optional().isISO8601(),
+      query('criteria.endsBefore').optional().isISO8601(),
+      query('criteria.activeOn').optional().isISO8601(),
+      query('criteria.attendeeCriteria').optional().isObject(),
+      query('criteria.attendeeCriteria.nameEquals').optional().isString(),
+      query('criteria.attendeeCriteria.emailEquals').optional().isEmail(),
+      query('criteria.orderBy').optional().isIn(['id', 'start'])
+    ),
+    getCalendar(tenantService),
+    getCalendarEvents
+  );
   router.post(
     '/calendars/:name/events',
     validateNameHandler,
