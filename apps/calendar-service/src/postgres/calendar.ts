@@ -209,7 +209,13 @@ export class PostgresCalendarRepository implements CalendarRepository {
       }
     }
 
-    const rows = await query.orderBy('e.id', 'asc');
+    if (criteria?.orderBy === 'start') {
+      query = query.orderBy('e.start_date', 'asc').orderBy('e.start_time', 'asc');
+    } else {
+      query = query.orderBy('e.id', 'asc');
+    }
+
+    const rows = await query;
 
     return {
       results: rows.map((r) => this.mapEventRecord(calendar, r)).slice(0, top),

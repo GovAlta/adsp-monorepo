@@ -79,6 +79,9 @@ components:
               type: string
             emailEquals:
               type: string
+        orderBy:
+          type: string
+          enum: [id, start]
 
 /calendar/v1/calendars:
   get:

@@ -33,4 +33,5 @@ export interface CalendarEventCriteria {
   endsBefore?: DateTime;
   activeOn?: DateTime;
   attendeeCriteria?: AttendeeCriteria;
+  orderBy?: 'id' | 'start';
 }
