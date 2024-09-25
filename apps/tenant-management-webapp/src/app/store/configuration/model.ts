@@ -1,5 +1,12 @@
 import { RegisterData } from '@abgov/jsonforms-components';
 
+export const allNames = 'all names';
+
+export interface UrlData {
+  url?: string;
+  namespace?: boolean;
+}
+
 export interface ConfigurationDefinition {
   configurationSchema: Record<string, SchemaType>;
   description: string;

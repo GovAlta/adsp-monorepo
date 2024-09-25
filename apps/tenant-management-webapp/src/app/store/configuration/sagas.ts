@@ -48,21 +48,7 @@ import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getAccessToken } from '@store/tenant/sagas';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
 import { AdspId } from '@lib/adspId';
-
-/**
- * Filter out namespace level configuration since it's not currently handled by the admin app.
- *
- * @param {Record<string, unknown>} configuration
- * @returns
- */
-function filterNamespaceConfiguration(configuration: Record<string, unknown>) {
-  return Object.entries(configuration || {}).reduce((config, [key, value]) => {
-    if (key.includes(':')) {
-      config[key] = value;
-    }
-    return config;
-  }, {} as Record<string, unknown>);
-}
+import { UrlData } from './model';
 
 export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
@@ -118,6 +104,29 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
   }
 }
 
+async function fetchConfigurationNamespace(urlData: UrlData, token: string) {
+  let next = '';
+
+  const configurations = [];
+  let hasMoreData = true;
+
+  while (hasMoreData) {
+    let url = `${urlData.url}?top=10&after=${next}`;
+    const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+
+    configurations.push(...data.results);
+
+    if (data.page?.next) {
+      url = `/configuration/form-service?top=100&after=${data.page.next}`;
+    } else {
+      hasMoreData = false;
+    }
+    next = data.page?.next;
+  }
+
+  return configurations;
+}
+
 export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIterator {
   yield put(
     UpdateIndicator({
@@ -131,25 +140,38 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
   );
 
   const token: string = yield call(getAccessToken);
-  const urls = getFetchUrls(action.services, configBaseUrl);
-  if (configBaseUrl && token && urls.length > 0) {
+
+  const urlsData = getFetchUrls(action.services, configBaseUrl);
+  if (configBaseUrl && token && urlsData.length > 0) {
     try {
       const configs = yield all(
-        urls.map((url) => call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } }))
+        urlsData.map((urlData) => {
+          if (urlData.namespace) {
+            return call(fetchConfigurationNamespace, urlData, token);
+          } else {
+            return call(axios.get, urlData.url, { headers: { Authorization: `Bearer ${token}` } });
+          }
+        })
       );
+
       const { coreConfigDefinitions, tenantConfigDefinitions } = yield select(
         (state: RootState) => state.configuration
       );
       const definitions = { ...tenantConfigDefinitions?.configuration, ...coreConfigDefinitions?.configuration };
       yield put(
         getConfigurationsSuccess(
-          configs.map((c) => {
-            const key = `${c.data.namespace}:${c.data.name}`;
-            if (definitions[key] && definitions[key]?.configurationSchema?.description) {
-              c.data['description'] = definitions[key]?.configurationSchema?.description;
-            }
-            return c.data;
-          })
+          configs
+            .map((c) => {
+              if (Array.isArray(c)) {
+                return c;
+              }
+              const key = `${c.data.namespace}:${c.data.name}`;
+              if (definitions[key] && definitions[key]?.configurationSchema?.description) {
+                c.data['description'] = definitions[key]?.configurationSchema?.description;
+              }
+              return c.data;
+            })
+            .flat()
         )
       );
       yield put(
@@ -306,10 +328,17 @@ export function* fetchConfigurationActiveRevision(action: FetchConfigurationActi
   }
 }
 const getFetchUrls = (services: ServiceId[], configBaseUrl: string) => {
-  const results: string[] = [];
+  const results: UrlData[] = [];
   for (const service of services) {
-    const url = `${configBaseUrl}/configuration/v2/configuration/${service.namespace}/${service.service}`;
-    results.push(url);
+    let url = '';
+    const namespaceOnly = !service.service;
+
+    if (namespaceOnly) {
+      url = `${configBaseUrl}/configuration/v2/configuration/${service.namespace}`;
+    } else {
+      url = `${configBaseUrl}/configuration/v2/configuration/${service.namespace}/${service.service}`;
+    }
+    results.push({ url: url, namespace: namespaceOnly });
   }
   return results;
 };
@@ -429,8 +458,15 @@ let replaceErrorConfiguration = [];
 
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const coreConfig: Record<string, unknown> = yield select(
+    (state: RootState) => state.configuration.coreConfigDefinitions.configuration
+  );
   const token: string = yield call(getAccessToken);
-  const service = `${action.configuration.namespace}:${action.configuration.name}`;
+  let service = `${action.configuration.namespace}:${action.configuration.name}`;
+
+  if (Object.keys(coreConfig).includes(action.configuration.namespace)) {
+    service = `${action.configuration.namespace}`;
+  }
   if (baseUrl && token) {
     if (action.configuration.configuration) {
       try {
@@ -441,15 +477,15 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
         // Get Json schema from configuration definition
         let definition;
         if (action.configuration.namespace === 'platform') {
-          const coreConfig = yield select(
-            (state: RootState) => state.configuration.coreConfigDefinitions.configuration
-          );
           definition = coreConfig[service];
         } else {
           const tenantConfig: string = yield select(
-            (state: RootState) => state.configuration.tenantConfigDefinitions.configuration
+            (state: RootState) => state.configuration.tenantConfigDefinitions.configuration || {}
           );
           definition = tenantConfig[service];
+          if (!definition) {
+            definition = coreConfig[service];
+          }
         }
         // Check if configuration item following definition
         const jsonSchemaValidation = jsonSchemaCheck(
