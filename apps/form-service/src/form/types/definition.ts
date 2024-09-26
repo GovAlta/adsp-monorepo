@@ -16,6 +16,7 @@ export interface FormDefinition {
   supportTopic?: boolean;
   queueTaskToProcess?: QueueTaskToProcess;
   securityClassification?: SecurityClassificationType;
+  scheduledIntakes?: boolean;
 }
 
 export interface QueueTaskToProcess {

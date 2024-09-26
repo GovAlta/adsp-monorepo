@@ -116,7 +116,7 @@ export class PostgresCalendarRepository implements CalendarRepository {
 
     let query = this.knex<EventRecord>('calendar_events AS e')
       .select('e.*')
-      .distinctOn('e.id')
+      .distinct()
       .offset(skip)
       .limit(topChecked)
       .where('e.tenant', '=', calendar.tenantId.toString())

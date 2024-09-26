@@ -5,4 +5,5 @@ export enum FormServiceRoles {
   Support = 'form-support',
   FileUploader = 'form-file-uploader',
   FileReader = 'form-file-reader',
+  Tester = 'form-tester',
 }

@@ -35,6 +35,8 @@ import {
   SUBMITTED_FORM,
   SubmittedFormPdfTemplate,
   SubmittedFormPdfUpdatesStream,
+  INTAKE_CALENDAR_NAME,
+  SUPPORT_COMMENT_TOPIC_TYPE_ID,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -43,6 +45,7 @@ import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
 import { isFormDefinition } from './utils';
 import { createPdfService } from './pdf';
+import { createCalendarService } from './calendar';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -57,8 +60,6 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
-
-  const SUPPORT_COMMENT_TOPIC_TYPE_ID = 'form-questions';
 
   instrumentAxios(logger);
 
@@ -109,6 +110,10 @@ const initializeApp = async (): Promise<express.Application> => {
           role: FormServiceRoles.FileUploader,
           description: 'File uploader role that allows applicants to upload supporting documents for the form.',
         },
+        {
+          role: FormServiceRoles.Tester,
+          description: 'Tester role for form service that allows access to forms without open intakes.',
+        },
       ],
       fileTypes: [GeneratedSupportingDocFileType],
       events: [
@@ -142,6 +147,18 @@ const initializeApp = async (): Promise<express.Application> => {
           serviceId: adspId`urn:ads:platform:pdf-service`,
           configuration: {
             [SUBMITTED_FORM]: SubmittedFormPdfTemplate,
+          },
+        },
+        {
+          serviceId: adspId`urn:ads:platform:calendar-service`,
+          configuration: {
+            [INTAKE_CALENDAR_NAME]: {
+              name: INTAKE_CALENDAR_NAME,
+              displayName: 'Form intake',
+              description: 'Calendar of scheduled form intakes.',
+              readRoles: [`urn:ads:platform:tenant-service:platform-service`],
+              writeRoles: [`${serviceId}:${FormServiceRoles.Admin}`],
+            },
           },
         },
       ],
@@ -198,14 +215,10 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const notificationService = createNotificationService(adspId`${serviceId}:v1`, logger, directory, tokenProvider);
   const fileService = createFileService(logger, directory, tokenProvider);
-  const commentService = await createCommentService({
-    logger,
-    directory,
-    tokenProvider,
-    supportTopicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID,
-  });
+  const commentService = await createCommentService(logger, directory, tokenProvider, SUPPORT_COMMENT_TOPIC_TYPE_ID);
   const queueTaskService = createQueueTaskService(serviceId, logger, directory, tokenProvider);
   const pdfService = createPdfService(logger, directory, tokenProvider);
+  const calendarService = await createCalendarService(logger, directory, tokenProvider, INTAKE_CALENDAR_NAME);
 
   const repositories = await createRepositories({
     ...environment,
@@ -225,6 +238,7 @@ const initializeApp = async (): Promise<express.Application> => {
     commentService,
     queueTaskService,
     pdfService,
+    calendarService,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
