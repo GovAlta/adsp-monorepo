@@ -25,6 +25,7 @@ export class FormDefinitionEntity implements FormDefinition {
   uiSchema: Record<string, unknown>;
   queueTaskToProcess?: QueueTaskToProcess;
   securityClassification?: SecurityClassificationType;
+  scheduledIntakes: boolean;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
@@ -47,6 +48,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.uiSchema = definition.uiSchema || {};
     this.validationService.setSchema(`${this.tenantId.resource}:${this.id}`, this.dataSchema);
     this.securityClassification = definition?.securityClassification;
+    this.scheduledIntakes = definition?.scheduledIntakes || false;
   }
 
   public canAccessDefinition(user: User): boolean {
@@ -68,7 +70,7 @@ export class FormDefinitionEntity implements FormDefinition {
       this.anonymousApply
         ? [FormServiceRoles.IntakeApp, ...this.applicantRoles, ...this.clerkRoles]
         : [...this.applicantRoles, ...this.clerkRoles],
-        true
+      true
     );
   }
 
