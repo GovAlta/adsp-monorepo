@@ -56,7 +56,7 @@ const isEmptyNumber = (schema: JsonSchema, data: unknown): boolean => {
   );
 };
 
-const validateSinWithLuhn = (input: number): boolean => {
+export const validateSinWithLuhn = (input: number): boolean => {
   const cardNumber = input.toString();
   const digits = cardNumber.replace(/\D/g, '').split('').map(Number);
   let sum = 0;
