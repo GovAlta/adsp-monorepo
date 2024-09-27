@@ -48,7 +48,7 @@ import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getAccessToken } from '@store/tenant/sagas';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
 import { AdspId } from '@lib/adspId';
-import { UrlData } from './model';
+import { toServiceKey } from '@pages/admin/services/configuration/export/ServiceConfiguration';
 
 export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
@@ -104,24 +104,19 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
   }
 }
 
-async function fetchConfigurationNamespace(urlData: UrlData, token: string) {
-  let next = '';
-
+async function fetchNameSpaceConfiguration(service: ServiceId, token: string, fetchUrl: string) {
   const configurations = [];
   let hasMoreData = true;
+  let url = `${fetchUrl}`;
 
   while (hasMoreData) {
-    let url = `${urlData.url}?top=10&after=${next}`;
     const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-
     configurations.push(...data.results);
-
     if (data.page?.next) {
-      url = `/configuration/form-service?top=100&after=${data.page.next}`;
+      url = `${fetchUrl}&after=${data.page.next}`;
     } else {
       hasMoreData = false;
     }
-    next = data.page?.next;
   }
 
   return configurations;
@@ -141,15 +136,20 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
 
   const token: string = yield call(getAccessToken);
 
-  const urlsData = getFetchUrls(action.services, configBaseUrl);
-  if (configBaseUrl && token && urlsData.length > 0) {
+  if (configBaseUrl && token && action.services.length > 0) {
     try {
       const configs = yield all(
-        urlsData.map((urlData) => {
-          if (urlData.namespace) {
-            return call(fetchConfigurationNamespace, urlData, token);
+        action.services.map((service) => {
+          const namespaceOnly = !service.service;
+          let fetchUrl = `${configBaseUrl}/configuration/v2/configuration/${service.namespace}`;
+          if (namespaceOnly) {
+            fetchUrl = fetchUrl + '?top=10';
+
+            return call(fetchNameSpaceConfiguration, service, token, fetchUrl);
           } else {
-            return call(axios.get, urlData.url, { headers: { Authorization: `Bearer ${token}` } });
+            fetchUrl = fetchUrl + `/${service.service}`;
+
+            return call(axios.get, fetchUrl, { headers: { Authorization: `Bearer ${token}` } });
           }
         })
       );
@@ -165,7 +165,7 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
               if (Array.isArray(c)) {
                 return c;
               }
-              const key = `${c.data.namespace}:${c.data.name}`;
+              const key = toServiceKey(c.data.namespace, c.data.name);
               if (definitions[key] && definitions[key]?.configurationSchema?.description) {
                 c.data['description'] = definitions[key]?.configurationSchema?.description;
               }
@@ -327,21 +327,6 @@ export function* fetchConfigurationActiveRevision(action: FetchConfigurationActi
     }
   }
 }
-const getFetchUrls = (services: ServiceId[], configBaseUrl: string) => {
-  const results: UrlData[] = [];
-  for (const service of services) {
-    let url = '';
-    const namespaceOnly = !service.service;
-
-    if (namespaceOnly) {
-      url = `${configBaseUrl}/configuration/v2/configuration/${service.namespace}`;
-    } else {
-      url = `${configBaseUrl}/configuration/v2/configuration/${service.namespace}/${service.service}`;
-    }
-    results.push({ url: url, namespace: namespaceOnly });
-  }
-  return results;
-};
 
 export function* updateConfigurationDefinition({
   definition,
