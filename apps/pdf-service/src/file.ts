@@ -23,7 +23,7 @@ class PlatformFileService implements FileService {
     } catch (err) {
       this.logger.debug(
         `File service find file type failed with error. ${
-          axios.isAxiosError(err) ? JSON.stringify(err.toJSON(), null, 2) : err
+          axios.isAxiosError(err) ? err.response?.data?.errorMessage || err.message : err
         }`,
         {
           context: 'PlatformFileService',
@@ -58,9 +58,14 @@ class PlatformFileService implements FileService {
 
       return data;
     } catch (err) {
-      this.logger.warn(`Upload to file service failed with error. ${axios.isAxiosError(err) ? err.toJSON() : err}`, {
-        context: 'PlatformFileService',
-      });
+      this.logger.warn(
+        `Upload to file service failed with error. ${
+          axios.isAxiosError(err) ? err.response?.data?.errorMessage || err.message : err
+        }`,
+        {
+          context: 'PlatformFileService',
+        }
+      );
       throw err;
     }
   }
