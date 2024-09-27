@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -48,11 +44,10 @@ objects:
     kind: Secret
     metadata:
       labels:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: cache-service-redis${NAME_SUFFIX}
+      name: cache-service-redis
     stringData:
       database-password: ${REDIS_PASSWORD}
   - apiVersion: v1
@@ -61,14 +56,13 @@ objects:
       annotations:
         template.openshift.io/expose-uri: redis://{.spec.clusterIP}:{.spec.ports[?(.name=="redis")].port}
       labels:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: cache-service-redis${NAME_SUFFIX}
+      name: cache-service-redis
     spec:
       ports:
         - name: redis
@@ -77,7 +71,7 @@ objects:
           protocol: TCP
           targetPort: 6379
       selector:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -89,18 +83,17 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: cache-service-redis${NAME_SUFFIX}
+      name: cache-service-redis
     spec:
       replicas: 1
       selector:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: database
       strategy:
         type: Recreate
@@ -114,7 +107,7 @@ objects:
       template:
         metadata:
           labels:
-            app: cache-service${NAME_SUFFIX}
+            app: cache-service
             component: database
         spec:
           containers:
@@ -124,7 +117,7 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: cache-service-redis${NAME_SUFFIX}
+                      name: cache-service-redis
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -206,19 +199,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: cache-service${NAME_SUFFIX}
+      name: cache-service
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: api
       strategy:
         type: Rolling
@@ -237,7 +229,7 @@ objects:
       template:
         metadata:
           labels:
-            app: cache-service${NAME_SUFFIX}
+            app: cache-service
             component: api
         spec:
           containers:
@@ -257,7 +249,7 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: cache-service-redis${NAME_SUFFIX}
+                      name: cache-service-redis
               imagePullPolicy: IfNotPresent
               name: cache-service
               ports:
@@ -312,14 +304,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: cache-service${NAME_SUFFIX}
+      name: cache-service
     spec:
       ports:
         - name: http
@@ -327,7 +318,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -335,14 +326,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: cache-service${NAME_SUFFIX}
+        app: cache-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: cache-service${NAME_SUFFIX}
+      name: cache-service
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -351,6 +341,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: cache-service${NAME_SUFFIX}
+        name: cache-service
         weight: 100
       wildcardPolicy: None

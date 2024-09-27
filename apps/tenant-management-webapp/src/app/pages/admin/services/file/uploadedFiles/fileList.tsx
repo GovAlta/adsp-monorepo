@@ -11,9 +11,11 @@ import {
   GoADropdownItem,
   GoADropdown,
   GoAButton,
-  GoAInput,
+  GoAFileUploadInput,
+  GoAFileUploadCard,
   GoAFormItem,
   GoAButtonGroup,
+  GoAInput,
 } from '@abgov/react-components-new';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import DataTable from '@components/DataTable';
@@ -29,19 +31,25 @@ import { LoadMoreWrapper } from '@components/styled-components';
 import { NoPaddingH2 } from '@components/AppHeader';
 
 const FileList = (): JSX.Element => {
-  const [selectedFile, setSelectFile] = useState<FileItem>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFileForDeletion, setSelectedFileForDeletion] = useState<FileItem | null>(null);
   const [uploadFileType, setUploadFileType] = useState<string>('');
   const [filterFileType, setFilterFileType] = useState<string>('');
   const [resetFilter, setResetFilter] = useState<string>('visible');
   const [searchName, setSearchName] = useState<string>('');
   const dispatch = useDispatch();
-  const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
   const next = useSelector((state: RootState) => state.fileService.nextEntries);
   const isLoading = useSelector((state: RootState) => state.fileService.isLoading);
   const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [progress, setProgress] = useState<Record<string, number>>({});
+
+  interface Criteria {
+    filenameContains?: string;
+    typeEquals?: string;
+  }
 
   const criteria: Criteria = {};
   if (searchName.length > 0) {
@@ -59,22 +67,33 @@ const FileList = (): JSX.Element => {
     return dropdownFileTypes;
   };
 
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
   const isUploadingFile = useSelector(selectActionStateStart(UPLOAD_FILE));
   const hasUploadingFileCompleted = useSelector(selectActionStateCompleted(UPLOAD_FILE));
 
   const onUploadSubmit = () => {
+    if (!selectedFile || !uploadFileType) return;
     const fileInfo = { file: selectedFile, type: uploadFileType };
     dispatch(UploadFileService(fileInfo));
-    setSelectFile(null);
-    fileName.current.value = '';
+    setSelectedFile(null);
   };
 
-  const onChange = (event) => {
-    setSelectFile(event.target.files[0]);
+  const uploadFile = (file: File) => {
+    setSelectedFile(file);
+    setProgress({ [file.name]: 0 });
+
+    const reader = new FileReader();
+    reader.onloadstart = () => {
+      setProgress({ [file.name]: 20 });
+    };
+    reader.onload = () => {
+      setProgress({ [file.name]: 100 });
+    };
+    reader.readAsText(file);
+  };
+
+  const deleteFile = () => {
+    setSelectedFile(null);
+    setProgress({});
   };
 
   const onNext = () => {
@@ -84,9 +103,18 @@ const FileList = (): JSX.Element => {
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
+
   const onDeleteFile = (file) => {
-    setSelectFile(file);
+    setSelectedFileForDeletion(file);
     setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeleteFile = () => {
+    if (selectedFileForDeletion) {
+      dispatch(DeleteFileService(selectedFileForDeletion.id));
+      setShowDeleteConfirmation(false);
+      setSelectedFileForDeletion(null);
+    }
   };
 
   useEffect(() => {
@@ -94,23 +122,9 @@ const FileList = (): JSX.Element => {
     dispatch(FetchFileTypeService());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (resetFilter === 'switch') {
-      setResetFilter('visible');
-    }
-  }, [resetFilter]);
-
-  interface Criteria {
-    filenameContains?: string;
-    typeEquals?: string;
-  }
-
   const getFilteredFiles = () => {
     dispatch(FetchFilesService(null, criteria));
   };
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator, isUploadingFile, hasUploadingFileCompleted]);
 
   const renderFileTable = () => {
     return (
@@ -162,50 +176,34 @@ const FileList = (): JSX.Element => {
           title="Delete file"
           content={
             <div>
-              Are you sure you wish to delete <b> {selectedFile?.filename}</b>?
+              Are you sure you wish to delete <b>{selectedFileForDeletion?.filename}</b>?
             </div>
           }
           onCancel={() => setShowDeleteConfirmation(false)}
-          onDelete={() => {
-            setShowDeleteConfirmation(false);
-            dispatch(DeleteFileService(selectedFile?.id));
-          }}
+          onDelete={confirmDeleteFile}
         />
       </FileTableStyles>
     );
   };
+
   return (
     <FileTable>
       <NoPaddingH2>Please upload a file</NoPaddingH2>
-      <>
-        <input
-          id="file-uploads"
-          name="inputFile"
-          type="file"
-          onChange={onChange}
-          aria-label="file upload"
-          ref={fileName}
-          data-testid="import-input"
-          style={{ display: 'none' }}
-          onClick={(event: React.MouseEvent<HTMLInputElement, MouseEvent>) => {
-            const element = event.target as HTMLInputElement;
-            element.value = '';
-          }}
-        />
-        <div className="row-flex">
-          <button className="choose-button" data-testid="file-input-button" onClick={() => fileName.current.click()}>
-            {' Choose a file'}
-          </button>
 
-          <div className="margin-left">
-            {fileName?.current?.value
-              ? fileName.current.value.split('\\').pop()
-              : hasUploadingFileCompleted || isUploadingFile
-              ? 'Please choose another file'
-              : 'No file was chosen'}
-          </div>
-        </div>
-      </>
+      <GoAFormItem label="Upload a file">
+        <GoAFileUploadInput onSelectFile={uploadFile} variant="button" maxFileSize="100MB" />
+        {selectedFile && (
+          <GoAFileUploadCard
+            data-testid="import-input"
+            filename={selectedFile.name}
+            type={selectedFile.type}
+            size={selectedFile.size}
+            progress={progress[selectedFile.name]}
+            onDelete={deleteFile}
+            onCancel={deleteFile}
+          />
+        )}
+      </GoAFormItem>
       <FileTypeDropdown>
         <GoAFormItem label="Select a file type">
           <GoADropdown
@@ -213,9 +211,7 @@ const FileList = (): JSX.Element => {
             value={uploadFileType}
             width="100%"
             testId="file-type-name-dropdown-1"
-            onChange={(name, values: string | string[]) => {
-              setUploadFileType(values.toString());
-            }}
+            onChange={(name, values: string | string[]) => setUploadFileType(values.toString())}
           >
             {getFileTypesValues().map((item, key) => (
               <GoADropdownItem label={item.name} value={item.id} key={key} testId={item.id} />
@@ -252,9 +248,7 @@ const FileList = (): JSX.Element => {
               value={filterFileType}
               width="100%"
               testId="file-type-name-dropdown-2"
-              onChange={(name, value: string | string[]) => {
-                setFilterFileType(value.toString());
-              }}
+              onChange={(name, value: string | string[]) => setFilterFileType(value.toString())}
             >
               {getFileTypesValues().map((item, key) => (
                 <GoADropdownItem label={item.name} value={item.id} key={key} testId={item.id} />
@@ -280,9 +274,9 @@ const FileList = (): JSX.Element => {
         </GoAButtonGroup>
       </div>
       <br />
-      {!indicator.show && !fileList && renderNoItem('file')}
-      {!indicator.show && fileList?.length > 0 && renderFileTable()}
-      {indicator.show && <PageIndicator />}
+      {!isLoading && !fileList?.length && renderNoItem('file')}
+      {!isLoading && fileList?.length > 0 && renderFileTable()}
+      {isLoading && <PageIndicator />}
       {next && (
         <LoadMoreWrapper>
           <GoAButton type="tertiary" disabled={isLoading} onClick={onNext}>

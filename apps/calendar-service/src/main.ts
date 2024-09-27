@@ -71,8 +71,12 @@ const initializeApp = async (): Promise<express.Application> => {
         description: 'Calendars including configuration of the roles allowed to read or modify events in the calendar',
         schema: configurationSchema,
       },
-      configurationConverter: (config: CalendarServiceConfiguration, tenantId) =>
-        Object.entries(config).reduce(
+      combineConfiguration: (
+        tenant: CalendarServiceConfiguration,
+        core: CalendarServiceConfiguration,
+        tenantId?: AdspId
+      ) =>
+        Object.entries({ ...tenant, ...core }).reduce(
           (entities, [key, value]) => ({
             ...entities,
             [key]: new CalendarEntity(repositories.calendarRepository, tenantId, value),

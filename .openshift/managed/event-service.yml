@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -109,6 +105,8 @@ objects:
         queue_master_locator = min-masters
         ## Disk space
         disk_free_limit.absolute = 1.5GB
+        ## Memory
+        vm_memory_high_watermark.relative = 0.8
       enabled_plugins: |
         [rabbitmq_management,rabbitmq_peer_discovery_k8s,rabbitmq_shovel,rabbitmq_shovel_management].
   - apiVersion: v1
@@ -319,24 +317,23 @@ objects:
             type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
-  # primary pipline as well as branch deployment.
+  # primary pipeline as well as branch deployment.
   - apiVersion: v1
     kind: DeploymentConfig
     metadata:
       labels:
-        app: event-service${NAME_SUFFIX}
+        app: event-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: event-service${NAME_SUFFIX}
+      name: event-service
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: event-service${NAME_SUFFIX}
+        app: event-service
         component: api
       strategy:
         type: Rolling
@@ -355,13 +352,15 @@ objects:
       template:
         metadata:
           labels:
-            app: event-service${NAME_SUFFIX}
+            app: event-service
             component: api
         spec:
           containers:
             - envFrom:
                 - configMapRef:
                     name: event-service
+                - configMapRef:
+                    name: directory-overrides
                 - secretRef:
                     name: event-service
               env:
@@ -420,14 +419,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: event-service${NAME_SUFFIX}
+        app: event-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: event-service${NAME_SUFFIX}
+      name: event-service
     spec:
       ports:
         - name: http
@@ -435,7 +433,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: event-service${NAME_SUFFIX}
+        app: event-service
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -443,14 +441,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: event-service${NAME_SUFFIX}
+        app: event-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: event-service${NAME_SUFFIX}
+      name: event-service
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -459,6 +456,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: event-service${NAME_SUFFIX}
+        name: event-service
         weight: 100
       wildcardPolicy: None

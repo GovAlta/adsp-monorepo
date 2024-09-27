@@ -5,7 +5,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -40,6 +40,8 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  instrumentAxios(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);

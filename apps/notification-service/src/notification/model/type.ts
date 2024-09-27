@@ -264,7 +264,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     templateService: TemplateService,
     _subscriberAppUrl: URL,
     _subscriptionRepository: SubscriptionRepository,
-    _configuration: NotificationConfiguration,
+    configuration: NotificationConfiguration,
     event: DomainEvent,
     messageContext: Record<string, unknown>
   ): Promise<Notification[]> {
@@ -286,6 +286,8 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         event,
       };
 
+      const template = eventNotification.templates[channel];
+
       notifications.push({
         tenantId: event.tenantId.toString(),
         type: {
@@ -300,9 +302,14 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         correlationId: event.correlationId,
         context: event.context,
         to: address,
+        from: configuration.email?.fromEmail,
         channel,
         message: templateService.generateMessage(
-          this.getTemplate(channel, eventNotification.templates[channel], context),
+          this.getTemplate(channel, template, {
+            ...context,
+            title: template?.title,
+            subtitle: template?.subtitle,
+          }),
           context
         ),
       });

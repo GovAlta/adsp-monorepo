@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -65,28 +61,26 @@ objects:
         template.openshift.io/expose-password: "{.data['database-password']}"
         template.openshift.io/expose-username: "{.data['database-user']}"
       labels:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: form-service-mongodb${NAME_SUFFIX}
+      name: form-service-mongodb
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
       database-name: configurationDb
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
-      database-uri: mongodb://form-service-mongodb${NAME_SUFFIX}:27017
-      database-tls: 'false'
+      database-uri: mongodb://form-service-mongodb:27017
+      database-tls: "false"
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
       labels:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: form-service-mongodb${NAME_SUFFIX}
+      name: form-service-mongodb
     spec:
       storageClassName: azure-disk
       accessModes:
@@ -100,14 +94,13 @@ objects:
       annotations:
         template.openshift.io/expose-uri: mongodb://{.spec.clusterIP}:{.spec.ports[?(.name=="mongo")].port}
       labels:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-service-mongodb${NAME_SUFFIX}
+      name: form-service-mongodb
     spec:
       ports:
         - name: mongo
@@ -116,7 +109,7 @@ objects:
           protocol: TCP
           targetPort: 27017
       selector:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -128,25 +121,24 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-service-mongodb${NAME_SUFFIX}
+      name: form-service-mongodb
     spec:
       replicas: 1
       selector:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: database
       strategy:
         type: Recreate
       template:
         metadata:
           labels:
-            app: form-service${NAME_SUFFIX}
+            app: form-service
             component: database
         spec:
           containers:
@@ -156,22 +148,22 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: form-service-mongodb${NAME_SUFFIX}
+                      name: form-service-mongodb
                 - name: MONGODB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: form-service-mongodb${NAME_SUFFIX}
+                      name: form-service-mongodb
                 - name: MONGODB_ADMIN_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-admin-password
-                      name: form-service-mongodb${NAME_SUFFIX}
+                      name: form-service-mongodb
                 - name: MONGODB_DATABASE
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: form-service-mongodb${NAME_SUFFIX}
+                      name: form-service-mongodb
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -212,7 +204,7 @@ objects:
           volumes:
             - name: form-service-data
               persistentVolumeClaim:
-                claimName: form-service-mongodb${NAME_SUFFIX}
+                claimName: form-service-mongodb
       triggers:
         - imageChangeParams:
             automatic: true
@@ -251,19 +243,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-service${NAME_SUFFIX}
+      name: form-service
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: api
       strategy:
         type: Rolling
@@ -282,7 +273,7 @@ objects:
       template:
         metadata:
           labels:
-            app: form-service${NAME_SUFFIX}
+            app: form-service
             component: api
         spec:
           containers:
@@ -300,27 +291,27 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: form-service-mongodb${NAME_SUFFIX}
+                      name: form-service-mongodb
                 - name: MONGO_URI
                   valueFrom:
                     secretKeyRef:
                       key: database-uri
-                      name: form-service-mongodb${NAME_SUFFIX}
+                      name: form-service-mongodb
                 - name: MONGO_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: form-service-mongodb${NAME_SUFFIX}
+                      name: form-service-mongodb
                 - name: MONGO_DB
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: form-service-mongodb${NAME_SUFFIX}
+                      name: form-service-mongodb
                 - name: MONGO_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: form-service-mongodb${NAME_SUFFIX}
+                      name: form-service-mongodb
               imagePullPolicy: IfNotPresent
               name: form-service
               ports:
@@ -375,14 +366,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-service${NAME_SUFFIX}
+      name: form-service
     spec:
       ports:
         - name: http
@@ -390,7 +380,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -398,14 +388,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: form-service${NAME_SUFFIX}
+        app: form-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-service${NAME_SUFFIX}
+      name: form-service
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -414,6 +403,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: form-service${NAME_SUFFIX}
+        name: form-service
         weight: 100
       wildcardPolicy: None

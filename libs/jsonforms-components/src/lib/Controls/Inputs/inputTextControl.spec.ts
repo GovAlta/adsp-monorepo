@@ -4,6 +4,8 @@ import '@testing-library/jest-dom';
 import { GoAInputTextProps, GoAInputText, GoATextControl } from './InputTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 
+import { validateSinWithLuhn } from '../../util/stringUtils';
+
 describe('Input Text Control tests', () => {
   const textBoxUiSchema: ControlElement = {
     type: 'Control',
@@ -72,6 +74,16 @@ describe('Input Text Control tests', () => {
       expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
       expect(handleChangeMock.mock.calls.length).toBe(1);
+    });
+  });
+
+  describe('Luhn validation function tests', () => {
+    it('should return true for valid SIN Number', () => {
+      expect(validateSinWithLuhn(Number('046454286'))).toBe(true);
+    });
+
+    it('should return false for invalid SIN Number', () => {
+      expect(validateSinWithLuhn(Number('123456879'))).toBe(false);
     });
   });
 });
