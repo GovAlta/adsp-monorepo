@@ -40,4 +40,42 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
   {
     return null;
   }
+
+  public override FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
+  {
+    var formSubmission = new FormSubmissionResult
+    {
+      Id = submissionId,
+      FormId = formId,
+
+      Data = new Dictionary<string, object?>
+            {
+                { "firstName", "Bob" },
+                { "lastName", "Bing" },
+                { "email", "Bob@bob.com" }
+            },
+      Files = new Dictionary<string, string?>
+            {
+                { "resume", "urn:ads:platform:file-service:v1:/files/resume" },
+                { "cover", "urn:ads:platform:file-service:v1:/files/cover" }
+            },
+      FormDefinitionId = "job-application",
+      Disposition = new FormDisposition
+      {
+        Id = "1234",
+        Status = "rejected",
+        Reason = "not good enough",
+        Date = DateTime.Now,
+        SecurityClassification = SecurityClassificationType.ProtectedA
+      },
+      CreatedBy = new Platform.User
+      {
+        Id = "Bob1234",
+        Name = "Bob Bing"
+      }
+
+    };
+    return formSubmission;
+  }
+
 }

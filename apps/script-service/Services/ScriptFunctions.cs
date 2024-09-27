@@ -87,6 +87,20 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
+  public virtual FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
+  {
+    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
+    var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
+
+    var token = _getToken().Result;
+    var request = new RestRequest(requestUrl, Method.Get);
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
+
+    var result = _client.GetAsync<FormSubmissionResult>(request).Result;
+    return result;
+  }
+
   public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
   {
     var eventServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.EventServiceId).Result;
