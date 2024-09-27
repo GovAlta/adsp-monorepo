@@ -243,7 +243,7 @@ Feature: Form
     Then the user "should not view" the form definition of "autotest-securityClassification", "autotest desc"
 
   @TEST_CS-3358 @REQ_CS-3306 @regression
-  Scenario: As a tenant admin, I can use a default form applicant role included by the form app, so my users can apply
+  Scenario: As a tenant admin, I can see form-applicant as default applicant role for new form definitions
     Given a tenant admin user is on form definitions page
     # Add a form definition
     When the user clicks Add definition button on form definitions page
