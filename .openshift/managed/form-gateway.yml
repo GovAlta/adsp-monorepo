@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -48,11 +44,10 @@ objects:
     kind: Secret
     metadata:
       labels:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: form-gateway-redis${NAME_SUFFIX}
+      name: form-gateway-redis
     stringData:
       database-password: ${REDIS_PASSWORD}
   - apiVersion: v1
@@ -61,14 +56,13 @@ objects:
       annotations:
         template.openshift.io/expose-uri: redis://{.spec.clusterIP}:{.spec.ports[?(.name=="redis")].port}
       labels:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-gateway-redis${NAME_SUFFIX}
+      name: form-gateway-redis
     spec:
       ports:
         - name: redis
@@ -77,7 +71,7 @@ objects:
           protocol: TCP
           targetPort: 6379
       selector:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -89,18 +83,17 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-gateway-redis${NAME_SUFFIX}
+      name: form-gateway-redis
     spec:
       replicas: 1
       selector:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: database
       strategy:
         type: Recreate
@@ -114,7 +107,7 @@ objects:
       template:
         metadata:
           labels:
-            app: form-gateway${NAME_SUFFIX}
+            app: form-gateway
             component: database
         spec:
           containers:
@@ -124,7 +117,7 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: form-gateway-redis${NAME_SUFFIX}
+                      name: form-gateway-redis
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -207,19 +200,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-gateway${NAME_SUFFIX}
+      name: form-gateway
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: api
       strategy:
         type: Rolling
@@ -238,7 +230,7 @@ objects:
       template:
         metadata:
           labels:
-            app: form-gateway${NAME_SUFFIX}
+            app: form-gateway
             component: api
         spec:
           containers:
@@ -258,7 +250,7 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: form-gateway-redis${NAME_SUFFIX}
+                      name: form-gateway-redis
               imagePullPolicy: IfNotPresent
               name: form-gateway
               ports:
@@ -293,14 +285,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-gateway${NAME_SUFFIX}
+      name: form-gateway
     spec:
       ports:
         - name: http
@@ -308,7 +299,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -316,14 +307,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: form-gateway${NAME_SUFFIX}
+        app: form-gateway
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: form-gateway${NAME_SUFFIX}
+      name: form-gateway
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -332,6 +322,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: form-gateway${NAME_SUFFIX}
+        name: form-gateway
         weight: 100
       wildcardPolicy: None
