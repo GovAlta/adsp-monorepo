@@ -32,6 +32,7 @@ describe('file', () => {
     tokenProviderMock.getAccessToken.mockReset();
     axiosMock.post.mockReset();
     axiosMock.get.mockReset();
+    axiosMock.isAxiosError.mockReset();
   });
 
   it('can create file service', () => {
@@ -66,6 +67,21 @@ describe('file', () => {
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       axiosMock.get.mockRejectedValueOnce(new Error('oh noes!'));
+      const exists = await service.typeExists(tenantId, 'my-test-type');
+      expect(exists).toBe(false);
+    });
+
+    it('can return false for axios error', async () => {
+      const service = createFileService({
+        logger: loggerMock,
+        tokenProvider: tokenProviderMock,
+        directory: directoryMock,
+      });
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      axiosMock.get.mockRejectedValueOnce(new Error('oh noes!'));
+      axiosMock.isAxiosError.mockReturnValueOnce(true);
+
       const exists = await service.typeExists(tenantId, 'my-test-type');
       expect(exists).toBe(false);
     });
@@ -104,6 +120,24 @@ describe('file', () => {
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       axiosMock.post.mockRejectedValueOnce(new Error('oh noes!'));
+
+      await expect(
+        service.upload(tenantId, GENERATED_PDF, 'my-domain-record-1', 'test.pdf', content)
+      ).rejects.toThrowError();
+    });
+
+    it('can handle upload axios error', async () => {
+      const service = createFileService({
+        logger: loggerMock,
+        tokenProvider: tokenProviderMock,
+        directory: directoryMock,
+      });
+
+      const content = Buffer.from([]);
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      axiosMock.post.mockRejectedValueOnce(new Error('oh noes!'));
+      axiosMock.isAxiosError.mockReturnValueOnce(true);
 
       await expect(
         service.upload(tenantId, GENERATED_PDF, 'my-domain-record-1', 'test.pdf', content)
