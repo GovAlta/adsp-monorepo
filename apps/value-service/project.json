@@ -23,7 +23,6 @@
         ],
         "target": "node",
         "compiler": "tsc",
-        "isolatedConfig": true,
         "babelUpwardRootMode": true
       },
       "configurations": {

@@ -31,7 +31,6 @@ import { FileSystemStorageProvider } from './storage/file-system';
 import { createScanService } from './scan';
 import { AzureBlobStorageProvider } from './storage';
 import { createFileQueueService } from './amqp';
-import { ScanService } from './file';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 

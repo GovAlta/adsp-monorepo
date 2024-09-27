@@ -165,7 +165,7 @@ objects:
               - redis
             from:
               kind: ImageStreamTag
-              name: 'redis:5-el8'
+              name: "redis:5-el8"
               namespace: openshift
             lastTriggeredImage: ""
           type: ImageChange

@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -58,28 +54,26 @@ objects:
     kind: Secret
     metadata:
       labels:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: calendar-service-postgres${NAME_SUFFIX}
+      name: calendar-service-postgres
     stringData:
-      database-host: calendar-service-postgres${NAME_SUFFIX}
+      database-host: calendar-service-postgres
       database-port: "5432"
       database-name: ${DATABASE_NAME}
       database-password: ${DATABASE_PASSWORD}
       database-user: ${DATABASE_USER}
-      database-tls: 'false'
+      database-tls: "false"
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
       labels:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: calendar-service-postgres${NAME_SUFFIX}
+      name: calendar-service-postgres
     spec:
       storageClassName: azure-disk
       accessModes:
@@ -91,14 +85,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: calendar-service-postgres${NAME_SUFFIX}
+      name: calendar-service-postgres
     spec:
       ports:
         - name: postgresql
@@ -106,7 +99,7 @@ objects:
           protocol: TCP
           targetPort: 5432
       selector:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -116,25 +109,24 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: calendar-service-postgres${NAME_SUFFIX}
+      name: calendar-service-postgres
     spec:
       replicas: 1
       selector:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: database
       strategy:
         type: Recreate
       template:
         metadata:
           labels:
-            app: calendar-service${NAME_SUFFIX}
+            app: calendar-service
             component: database
         spec:
           containers:
@@ -144,17 +136,17 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: calendar-service-postgres${NAME_SUFFIX}
+                      name: calendar-service-postgres
                 - name: POSTGRESQL_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: calendar-service-postgres${NAME_SUFFIX}
+                      name: calendar-service-postgres
                 - name: POSTGRESQL_DATABASE
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: calendar-service-postgres${NAME_SUFFIX}
+                      name: calendar-service-postgres
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -187,13 +179,13 @@ objects:
               terminationMessagePath: /dev/termination-log
               volumeMounts:
                 - mountPath: /var/lib/pgsql/data
-                  name: calendar-service-postgres${NAME_SUFFIX}-data
+                  name: calendar-service-postgres-data
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           volumes:
             - name: calendar-service-postgres-data
               persistentVolumeClaim:
-                claimName: calendar-service-postgres${NAME_SUFFIX}
+                claimName: calendar-service-postgres
       triggers:
         - imageChangeParams:
             automatic: true
@@ -233,19 +225,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: calendar-service${NAME_SUFFIX}
+      name: calendar-service
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: api
       strategy:
         type: Rolling
@@ -264,7 +255,7 @@ objects:
       template:
         metadata:
           labels:
-            app: calendar-service${NAME_SUFFIX}
+            app: calendar-service
             component: api
         spec:
           containers:
@@ -282,32 +273,32 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-host
-                      name: calendar-service-postgres${NAME_SUFFIX}
+                      name: calendar-service-postgres
                 - name: DB_PORT
                   valueFrom:
                     secretKeyRef:
                       key: database-port
-                      name: calendar-service-postgres${NAME_SUFFIX}
+                      name: calendar-service-postgres
                 - name: DB_USER
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: calendar-service-postgres${NAME_SUFFIX}
+                      name: calendar-service-postgres
                 - name: DB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: calendar-service-postgres${NAME_SUFFIX}
+                      name: calendar-service-postgres
                 - name: DB_NAME
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: calendar-service-postgres${NAME_SUFFIX}
+                      name: calendar-service-postgres
                 - name: DB_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: task-service-postgres${NAME_SUFFIX}
+                      name: task-service-postgres
               imagePullPolicy: IfNotPresent
               name: calendar-service
               ports:
@@ -362,14 +353,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: calendar-service${NAME_SUFFIX}
+      name: calendar-service
     spec:
       ports:
         - name: http
@@ -377,7 +367,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -385,14 +375,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: calendar-service${NAME_SUFFIX}
+        app: calendar-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: calendar-service${NAME_SUFFIX}
+      name: calendar-service
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -401,6 +390,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: calendar-service${NAME_SUFFIX}
+        name: calendar-service
         weight: 100
       wildcardPolicy: None

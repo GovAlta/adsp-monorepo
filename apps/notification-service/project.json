@@ -16,7 +16,6 @@
         "assets": ["apps/notification-service/src/assets"],
         "target": "node",
         "compiler": "tsc",
-        "isolatedConfig": true,
         "babelUpwardRootMode": true
       },
       "configurations": {
