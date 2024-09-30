@@ -157,7 +157,7 @@ const initializeApp = async (): Promise<express.Application> => {
               displayName: 'Form intake',
               description: 'Calendar of scheduled form intakes.',
               readRoles: [`urn:ads:platform:tenant-service:platform-service`],
-              writeRoles: [`${serviceId}:${FormServiceRoles.Admin}`],
+              updateRoles: [`${serviceId}:${FormServiceRoles.Admin}`],
             },
           },
         },
@@ -169,13 +169,13 @@ const initializeApp = async (): Promise<express.Application> => {
       },
       configurationConverter: (config: Record<string, FormDefinition> | FormDefinition, tenantId) => {
         if (isFormDefinition(config)) {
-          return new FormDefinitionEntity(validationService, tenantId, config);
+          return new FormDefinitionEntity(validationService, calendarService, tenantId, config);
         } else {
           // For backwards compatibility, handle conversion of form definitions configured in a single document.
           return Object.entries(config).reduce(
             (defs, [id, def]) => ({
               ...defs,
-              [id]: new FormDefinitionEntity(validationService, tenantId, def),
+              [id]: new FormDefinitionEntity(validationService, calendarService, tenantId, def),
             }),
             {} as Record<string, FormDefinitionEntity>
           );
