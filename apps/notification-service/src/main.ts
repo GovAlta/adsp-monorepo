@@ -147,6 +147,7 @@ async function initializeApp() {
     ...environment,
     queue: 'notification-send',
     logger,
+    consumerOptions: { priority: environment.AMQP_CONSUMER_PRIORITY },
   });
 
   const configurationSync = await createAmqpConfigUpdateService({

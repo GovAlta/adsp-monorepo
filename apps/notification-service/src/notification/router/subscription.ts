@@ -100,7 +100,7 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
       const criteria = {
         typeIdEquals: type.id,
         subscriberCriteria: subscriberCriteriaValue ? JSON.parse(subscriberCriteriaValue as string) : null,
-        subscriptionMatch: subscriberCriteriaValue ? JSON.parse(subscriptionMatchValue as string) : null,
+        subscriptionMatch: subscriptionMatchValue ? JSON.parse(subscriptionMatchValue as string) : null,
       };
 
       const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
