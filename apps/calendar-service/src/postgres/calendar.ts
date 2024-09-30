@@ -257,6 +257,8 @@ export class PostgresCalendarRepository implements CalendarRepository {
           tenant,
           id: entity.id,
           calendar: entity.calendar.name,
+          record_id: entity.recordId,
+          context: entity.context,
           name: entity.name,
           description: entity.description,
           is_public: entity.isPublic,
