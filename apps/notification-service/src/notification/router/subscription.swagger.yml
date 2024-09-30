@@ -245,6 +245,18 @@ components:
               type: string
             email:
               type: string
+      - name: subscriptionMatch
+        description: Criteria for the subscription criteria.
+        in: query
+        required: false
+        schema:
+          type: object
+          properties:
+            correlationId:
+              type: string
+            context:
+              type: object
+              additionalProperties: true
     responses:
       200:
         description: Subscriptions successfully retrieved.

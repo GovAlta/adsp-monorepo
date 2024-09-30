@@ -85,6 +85,38 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       query.subscriberId = new Types.ObjectId(criteria.subscriberIdEquals);
     }
 
+    if (criteria.subscriptionMatch) {
+      // Subscription criteria match happens if either:
+      // 1. the subscription specifies a property value that equals the value of the associated property in the event; or
+      // 2. the subscription does not specify a criteria (i.e. the subscription applies across all values of the property.)
+      const criteriaQuery: Record<string, unknown> = {};
+
+      if (criteria.subscriptionMatch.correlationId) {
+        criteriaQuery.correlationId = {
+          $in: [null, criteria.subscriptionMatch.correlationId],
+        };
+      }
+
+      if (criteria.subscriptionMatch.context) {
+        criteriaQuery.context = {
+          $or: [
+            null,
+            Object.entries(criteria.subscriptionMatch.context).reduce((ctx, [key, value]) => {
+              // Allow falsy values other than undefined and null.
+              if (value !== undefined && value !== null) {
+                ctx[key] = { $in: [null, value] };
+              }
+              return ctx;
+            }, {}),
+          ],
+        };
+      }
+
+      query.criteria = {
+        $or: [criteriaQuery, { $elemMatch: criteriaQuery }],
+      };
+    }
+
     const pipeline: PipelineStage[] = [
       { $match: query },
       {

@@ -85,7 +85,12 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
       const user = req.user;
       const tenantId = req.tenant.id;
       const type: NotificationTypeEntity = req[TYPE_KEY];
-      const { top: topValue, after, subscriberCriteria: subscriberCriteriaValue } = req.query;
+      const {
+        top: topValue,
+        after,
+        subscriberCriteria: subscriberCriteriaValue,
+        subscriptionMatch: subscriptionMatchValue,
+      } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
@@ -95,6 +100,7 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
       const criteria = {
         typeIdEquals: type.id,
         subscriberCriteria: subscriberCriteriaValue ? JSON.parse(subscriberCriteriaValue as string) : null,
+        subscriptionMatch: subscriberCriteriaValue ? JSON.parse(subscriptionMatchValue as string) : null,
       };
 
       const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
@@ -651,7 +657,9 @@ export const createSubscriptionRouter = ({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
+      query('subscriberCriteria').optional().isJSON(),
+      query('subscriptionMatch').optional().isJSON()
     ),
     getNotificationType,
     getTypeSubscriptions(apiId, subscriptionRepository)
