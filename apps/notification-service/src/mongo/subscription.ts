@@ -93,26 +93,26 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
 
       if (criteria.subscriptionMatch.correlationId) {
         criteriaQuery.correlationId = {
-          $or: [{ $type: 10 }, criteria.subscriptionMatch.correlationId],
+          $in: [null, criteria.subscriptionMatch.correlationId],
         };
       }
 
       if (criteria.subscriptionMatch.context) {
-        criteriaQuery.context = {
-          $or: [
-            { $type: 10 },
-            Object.entries(criteria.subscriptionMatch.context).reduce((ctx, [key, value]) => {
+        criteriaQuery.$or = [
+          { context: null },
+          {
+            context: Object.entries(criteria.subscriptionMatch.context).reduce((ctx, [key, value]) => {
               // Allow falsy values other than undefined and null.
               if (value !== undefined && value !== null) {
-                ctx[key] = { $or: [null, value] };
+                ctx[key] = { $in: [null, value] };
               }
               return ctx;
             }, {}),
-          ],
-        };
+          },
+        ];
       }
 
-      query.criteria = { $elemMatch: criteriaQuery };
+      query.$or = [{ criteria: criteriaQuery }, { criteria: { $elemMatch: criteriaQuery } }];
     }
 
     const pipeline: PipelineStage[] = [

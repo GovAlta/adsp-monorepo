@@ -16,13 +16,15 @@
         "assets": ["apps/notification-service/src/assets"],
         "target": "node",
         "compiler": "tsc",
-        "babelUpwardRootMode": true
+        "babelUpwardRootMode": true,
+        "sourceMap": true
       },
       "configurations": {
         "production": {
           "optimization": true,
           "extractLicenses": true,
           "inspect": false,
+          "sourceMap": false,
           "fileReplacements": []
         }
       },
