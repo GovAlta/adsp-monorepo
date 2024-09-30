@@ -3,6 +3,7 @@ import { ValidationService } from '@core-services/core-common';
 import { compile } from 'handlebars';
 import { v4 as uuidv4 } from 'uuid';
 import { NotificationService, Subscriber } from '../../notification';
+import { CalendarService } from '../calendar';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { FormDefinition, Disposition, QueueTaskToProcess, SecurityClassificationType } from '../types';
@@ -29,7 +30,12 @@ export class FormDefinitionEntity implements FormDefinition {
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
-  constructor(private validationService: ValidationService, public tenantId: AdspId, definition: FormDefinition) {
+  constructor(
+    private validationService: ValidationService,
+    private calendarService: CalendarService,
+    public tenantId: AdspId,
+    definition: FormDefinition
+  ) {
     this.id = definition.id;
     this.name = definition.name;
     this.description = definition.description;
@@ -63,7 +69,15 @@ export class FormDefinitionEntity implements FormDefinition {
     );
   }
 
-  public canApply(user: User): boolean {
+  public async canApply(user: User): Promise<boolean> {
+    // If this form definition requires scheduled intakes, and there is no current intake, then return false.
+    if (this.scheduledIntakes && !isAllowedUser(user, this.tenantId, FormServiceRoles.Tester, true)) {
+      const intake = await this.calendarService.getScheduledIntake(this);
+      if (!intake || intake.isUpcoming) {
+        return false;
+      }
+    }
+
     return isAllowedUser(
       user,
       this.tenantId,
@@ -91,7 +105,7 @@ export class FormDefinitionEntity implements FormDefinition {
     notificationService: NotificationService,
     applicantInfo?: Omit<Subscriber, 'urn'>
   ): Promise<FormEntity> {
-    if (!this.canApply(user)) {
+    if (!(await this.canApply(user))) {
       throw new UnauthorizedUserError('create form', user);
     }
 

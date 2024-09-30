@@ -31,6 +31,10 @@ describe('comment', () => {
     setSchema: jest.fn(),
   };
 
+  const calendarService = {
+    getScheduledIntake: jest.fn(),
+  };
+
   const repositoryMock = {
     find: jest.fn(),
     get: jest.fn(),
@@ -39,7 +43,7 @@ describe('comment', () => {
     getByFormIdAndSubmissionId: jest.fn(),
   };
 
-  const definition = new FormDefinitionEntity(validationService, tenantId, {
+  const definition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     description: null,

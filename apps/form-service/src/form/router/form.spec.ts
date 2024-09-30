@@ -38,7 +38,11 @@ describe('form router', () => {
     setSchema: jest.fn(),
   };
 
-  const definition = new FormDefinitionEntity(validationService, tenantId, {
+  const calendarService = {
+    getScheduledIntake: jest.fn(),
+  };
+
+  const definition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     description: null,
@@ -54,7 +58,7 @@ describe('form router', () => {
     dispositionStates: [{ id: 'rejectedStatus', name: 'rejected', description: 'err' }],
     queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
   });
-  const definitionWithPdfTemplate = new FormDefinitionEntity(validationService, tenantId, {
+  const definitionWithPdfTemplate = new FormDefinitionEntity(validationService, calendarService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     description: null,
@@ -367,7 +371,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const definition = new FormDefinitionEntity(validationService, tenantId, {
+      const definition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
         id: 'test',
         name: 'test-form-definition',
         description: null,
@@ -855,7 +859,10 @@ describe('form router', () => {
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([
-        new FormDefinitionEntity(validationService, tenantId, { ...definition, submissionRecords: true }),
+        new FormDefinitionEntity(validationService, calendarService, tenantId, {
+          ...definition,
+          submissionRecords: true,
+        }),
       ]);
       notificationServiceMock.subscribe.mockResolvedValueOnce(subscriber);
       formSubmissionMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
@@ -1289,7 +1296,10 @@ describe('form router', () => {
         form: new FormEntity(
           repositoryMock,
           tenantId,
-          new FormDefinitionEntity(validationService, tenantId, { ...definition, submissionRecords: true }),
+          new FormDefinitionEntity(validationService, calendarService, tenantId, {
+            ...definition,
+            submissionRecords: true,
+          }),
           subscriber,
           formInfo
         ),

@@ -11,7 +11,12 @@ describe('FormEntity', () => {
     validate: jest.fn(),
     setSchema: jest.fn(),
   };
-  const definition = new FormDefinitionEntity(validationService, tenantId, {
+
+  const calendarService = {
+    getScheduledIntake: jest.fn(),
+  };
+
+  const definition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     formDraftUrlTemplate: 'https://my-form/{{ id }}',
@@ -70,6 +75,7 @@ describe('FormEntity', () => {
     notificationMock.verifyCode.mockReset();
     validationService.validate.mockReset();
     pdfServiceMock.generateFormPdf.mockReset();
+    calendarService.getScheduledIntake.mockReset();
   });
 
   it('it can be created', () => {
@@ -582,7 +588,7 @@ describe('FormEntity', () => {
     });
 
     it('can submit form with task', async () => {
-      const definition = new FormDefinitionEntity(validationService, tenantId, {
+      const definition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
         id: 'test',
         name: 'test-form-definition',
         formDraftUrlTemplate: 'https://my-form/{{ id }}',
@@ -683,7 +689,7 @@ describe('FormEntity', () => {
       const entity = new FormEntity(
         repositoryMock,
         tenantId,
-        new FormDefinitionEntity(validationService, tenantId, {
+        new FormDefinitionEntity(validationService, calendarService, tenantId, {
           id: 'test',
           name: 'test-form-definition',
           formDraftUrlTemplate: 'https://my-form/{{ id }}',
