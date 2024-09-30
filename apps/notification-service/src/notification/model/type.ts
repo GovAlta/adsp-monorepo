@@ -110,6 +110,14 @@ export class NotificationTypeEntity implements NotificationType {
         after,
         {
           typeIdEquals: this.id,
+          // Include event correlationId and context to filter out subscriptions with criteria that don't match.
+          // NOTE: This means that the effective evaluation of whether a subscription results in a notification is based on:
+          // 1. the repository query for retrieving subscriptions; and
+          // 2. the shouldSend() method of the subscription entity.
+          subscriptionMatch: {
+            correlationId: event.correlationId,
+            context: event.context,
+          },
         }
       );
 
