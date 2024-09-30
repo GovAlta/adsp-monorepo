@@ -92,7 +92,8 @@ export class NotificationTypeEntity implements NotificationType {
 
     // Page through all subscriptions and generate notifications.
     let after: string = null;
-    let pageNumber = 1;
+    let pageNumber = 1,
+      count = 0;
     do {
       logger.debug(
         `Processing page ${pageNumber} of subscriptions of type ${this.id} for event ${event.namespace}:${event.name}...`,
@@ -130,7 +131,13 @@ export class NotificationTypeEntity implements NotificationType {
       }
       after = page.next;
       pageNumber++;
+      count += page.size;
     } while (after);
+
+    logger.debug(`Processed ${count} subscriptions of type ${this.id} for event ${event.namespace}:${event.name}.`, {
+      context: 'NotificationType',
+      tenant: event.tenantId?.toString(),
+    });
 
     return notifications;
   }
