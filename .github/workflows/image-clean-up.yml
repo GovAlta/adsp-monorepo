@@ -16,9 +16,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
       - run: npm ci
       - shell: bash
-        run: echo "AFFECTED_APPS=$(npx nx show projects --affected --type=app --all | tr "\n" " ")" >> $GITHUB_ENV
+        run: echo "AFFECTED_APPS=$(npx nx show projects --affected --type=app --base origin/main --all | tr "\n" " ")" >> $GITHUB_ENV
       - name: Delete ADSP containers older than a week
         uses: snok/container-retention-policy@v2
         with:
