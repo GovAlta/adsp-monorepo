@@ -138,6 +138,24 @@ describe('CalendarEntity', () => {
 
       expect(result).toBeFalsy();
     });
+
+    it('can return true for core reader', () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, {
+        name: 'test',
+        displayName: 'Test',
+        description: 'test',
+        updateRoles: ['test-updater'],
+        readRoles: ['test-reader'],
+      });
+
+      const result = entity.canAccessPrivateEvent({
+        isCore: true,
+        id: 'test',
+        roles: ['test-reader'],
+      } as User);
+
+      expect(result).toBeTruthy();
+    });
   });
 
   describe('canUpdateEvent', () => {

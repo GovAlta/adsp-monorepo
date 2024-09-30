@@ -21,7 +21,7 @@ export class CalendarEntity implements Calendar {
   }
 
   canAccessPrivateEvent(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, [CalendarServiceRoles.Admin, ...this.readRoles, ...this.updateRoles]);
+    return isAllowedUser(user, this.tenantId, [CalendarServiceRoles.Admin, ...this.readRoles, ...this.updateRoles], true);
   }
 
   getEvents(
