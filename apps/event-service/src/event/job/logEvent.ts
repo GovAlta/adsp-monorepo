@@ -138,7 +138,7 @@ export const createLogEventJob =
       });
       done();
     } catch (err) {
-      logger.error(`Error encountered trying to log event ${namespace}:${name}. ${err}`, {
+      logger.warn(`Error encountered trying to log event ${namespace}:${name}. ${err}`, {
         context: 'EventLog',
         tenantId: tenantId.toString(),
       });

@@ -79,7 +79,7 @@ export function tagOperation(
       logger.debug(`Performing tag operation '${tagRequest.operation}'...`, {
         context: 'ResourceRouter',
         tenantId: tenantId?.toString,
-        user: { id: user.id, name: user.name },
+        user: `${user.name} (ID: ${user.id})`,
       });
 
       if (!isAllowedUser(user, tenantId, ServiceRoles.ResourceTagger)) {
@@ -167,7 +167,7 @@ export function tagOperation(
         {
           context: 'ResourceRouter',
           tenantId: tenantId?.toString,
-          user: { id: user.id, name: user.name },
+          user: `${user.name} (ID: ${user.id})`,
         }
       );
 
