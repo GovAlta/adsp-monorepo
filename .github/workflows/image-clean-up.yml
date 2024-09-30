@@ -10,8 +10,6 @@ jobs:
   clean-ghcr:
     name: Delete old unused container images
     runs-on: ubuntu-latest
-    env:
-      AFFECTED_APPS: ''
     steps:
       - uses: actions/checkout@v4
         with:
