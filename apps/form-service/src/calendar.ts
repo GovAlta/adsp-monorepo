@@ -39,10 +39,10 @@ class CalendarServiceImpl implements CalendarService {
         } = await axios.get<{ results: IntakeResponse[] }>(requestUrl.href, {
           headers: { Authorization: `Bearer ${token}` },
           params: {
+            top: 1,
             criteria: JSON.stringify({
               recordId,
-              activeOn: new Date(),
-              top: 1,
+              activeOn: new Date().toISOString(),
               orderBy: 'start',
             }),
             tenantId: definition.tenantId.toString(),
@@ -63,10 +63,10 @@ class CalendarServiceImpl implements CalendarService {
           } = await axios.get<{ results: IntakeResponse[] }>(requestUrl.href, {
             headers: { Authorization: `Bearer ${token}` },
             params: {
+              top: 1,
               criteria: JSON.stringify({
                 recordId,
-                startsAfter: new Date(),
-                top: 1,
+                startsAfter: new Date().toISOString(),
                 orderBy: 'start',
               }),
               tenantId: definition.tenantId.toString(),
@@ -81,7 +81,7 @@ class CalendarServiceImpl implements CalendarService {
         this.calendarEventCache.set<Intake>(`${definition.tenantId.resource}-${definition.id}`, intake || null);
 
         this.logger.info(
-          `Retrieved scheduled intake for definition ${definition.id} with result ${
+          `Retrieved scheduled intake for definition ${definition.id} (${recordId}) with result ${
             intake ? `${intake.start} to ${intake.end} (upcoming: ${intake.isUpcoming})` : 'none'
           }.`,
           {
