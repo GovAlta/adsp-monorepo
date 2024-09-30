@@ -8,6 +8,7 @@ interface IScriptFunctions
   string? GeneratePdf(string templateId, string filename, object values);
   IDictionary<string, object?>? GetConfiguration(string @namespace, string name);
   FormDataResult? GetFormData(string formId);
+  FormSubmissionResult? GetFormSubmission(string formId, string submissionId);
   string? CreateTask(
     string queueNamespace, string queueName, string name,
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
