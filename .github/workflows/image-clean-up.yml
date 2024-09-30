@@ -20,11 +20,11 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - shell: bash
-        run: echo "AFFECTED_APPS=$(npx nx show projects --affected --type=app --base origin/main --all | tr "\n" " ")" >> $GITHUB_ENV
+        run: echo "ALL_APPS=$(npx nx show projects --type=app | tr "\n" " ")" >> $GITHUB_ENV
       - name: Delete ADSP containers older than a week
         uses: snok/container-retention-policy@v2
         with:
-          image-names: ${{ env.AFFECTED_APPS }}
+          image-names: ${{ env.ALL_APPS }}
           cut-off: 1 week ago UTC
           account-type: org
           org-name: GovAlta
