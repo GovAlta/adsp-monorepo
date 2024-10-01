@@ -63,8 +63,6 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     return newOptions.filter((option) => option.value !== '');
   }, [registerData, options]);
 
-  console.log(mergedOptions);
-
   useEffect(() => {
     if (registerConfig) {
       registerCtx?.fetchRegisterByUrl(registerConfig);

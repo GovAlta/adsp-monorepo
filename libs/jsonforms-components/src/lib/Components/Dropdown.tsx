@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { GoAInput } from '@abgov/react-components-new';
 import styled from 'styled-components';
 import { isEqual } from 'lodash';
@@ -91,10 +91,12 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const trailingIcon = isOpen ? 'chevron-up' : 'chevron-down';
   const [items, setItems] = useState(props.items);
   const [inputText, setInputText] = useState<string>(selected);
+  const prevCountRef = useRef(props.items);
 
   useEffect(() => {
     setItems(props.items);
-  }, [isEqual(props.items, items)]);
+    prevCountRef.current = props.items;
+  }, [isEqual(props.items, prevCountRef.current)]);
 
   return (
     <div data-testid={id}>
@@ -110,11 +112,11 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         readonly={!isAutocompletion}
         onChange={(name, value) => {
           if (isAutocompletion) {
-            setIsOpen(true);
             const selectedItems = props.items.filter((item) => {
               return item.label.includes(value);
             });
             setItems(selectedItems);
+            setIsOpen(true);
           }
         }}
         trailingIcon={trailingIcon}
@@ -133,7 +135,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
                   onClick={() => {
                     onChange(item.value);
                     setSelectedOption(item.value);
-                    setInputText(item.value);
+                    setInputText(item.label);
                     setIsOpen(false);
                   }}
                 >
