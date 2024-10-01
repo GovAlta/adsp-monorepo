@@ -17,7 +17,10 @@ jobs:
   affected:
     runs-on: ubuntu-22.04
     outputs:
-      affected_apps: ${{ github.event.inputs.APPS || steps.get-affected.outputs.affected_apps }}
+      affected_apps: ${{ steps.set_outputs.outputs.affected_apps }}
+      affected_apps_array: ${{ steps.set_outputs.outputs.affected_apps_array }}
+    env:
+      AFFECTED_APPS: ''
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,9 +39,14 @@ jobs:
         with:
           last-successful-event: workflow_dispatch
       - name: Get affected apps
-        id: get-affected
         shell: bash
-        run: echo "affected_apps=$(npx nx show projects --affected --type=app --base=${{ steps.last_successful_commit.outputs.base }} | tr "\n" " ")" >> $GITHUB_OUTPUT
+        run: echo "AFFECTED_APPS=$(npx nx show projects --affected --type=app --base=${{ steps.last_successful_commit.outputs.base }} | tr "\n" " ")" >> $GITHUB_ENV
+      - name: Set outputs for downstream
+        id: set_outputs
+        shell: bash
+        run: |
+          echo "affected_apps=${{ github.event.inputs.APPS || env.AFFECTED_APPS }}" >> $GITHUB_OUTPUT
+          echo "affected_apps_array=$(echo ${{ github.event.inputs.APPS || env.AFFECTED_APPS }} | sed -e "s/ /\",\"/g" -e "s/^/[\"/" -e "s/$/\"]/")" >> $GITHUB_OUTPUT
 
   stagingRegression:
     runs-on: ubuntu-22.04
@@ -75,8 +83,11 @@ jobs:
   deployProduction:
     runs-on: ubuntu-22.04
     needs: [affected, stagingRegression]
-    env:
-      AFFECTED_APPS: ${{ needs.affected.outputs.affected_apps }}
+    strategy:
+      fail-fast: true
+      max-parallel: 2
+      matrix:
+        app: ${{ fromJson(needs.affected.outputs.affected_apps_array) }}
     environment:
       name: Production
     steps:
@@ -89,26 +100,16 @@ jobs:
           namespace: adsp-build
           insecure_skip_tls_verify: true
       - name: Tag Production
-        run: |
-          for app in $AFFECTED_APPS
-          do
-            oc tag $app:uat $app:prod --reference-policy='local'
-          done
+        run: oc tag ${{ matrix.app }}:uat ${{ matrix.app }}:prod --reference-policy='local'
       - run: oc project adsp-prod
       - name: Apply Manifests
         run: |
-          for app in $AFFECTED_APPS
-          do
-            oc process -f .openshift/managed/$app.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-prod -p DEPLOY_TAG=prod > $app.prod.json
-            oc apply -f $app.prod.json -l apply-prod=true,component!=database
-          done
+          oc process -f .openshift/managed/${{ matrix.app }}.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-prod -p DEPLOY_TAG=prod > ${{ matrix.app }}.prod.json
+          oc apply -f ${{ matrix.app }}.prod.json -l apply-prod=true,component!=database
       - name: Deploy Production
         run: |
-          for app in $AFFECTED_APPS
-          do
-            oc rollout latest dc/$app
-            oc rollout status dc/$app
-          done
+          oc rollout latest dc/${{ matrix.app }}
+          oc rollout status dc/${{ matrix.app }}
 
   smokeTestProd:
     runs-on: ubuntu-22.04
