@@ -12,6 +12,7 @@ interface ClamScan {
   }>;
 }
 
+const CLAM_FILE_MAX_SIZE = 500 * 1e6;
 export const createClamScan = ({ host, port }: ScanProps): ScanService => {
   const user = { id: 'clam-scan-service', isCore: true, roles: [ServiceUserRoles.Admin] } as User;
 
@@ -26,6 +27,10 @@ export const createClamScan = ({ host, port }: ScanProps): ScanService => {
 
   const service: ScanService = {
     scan: async (file: FileEntity) => {
+      if (file.size > CLAM_FILE_MAX_SIZE) {
+        throw new Error(`File of size ${file.size / 1000}kb is too large for clam scan.`);
+      }
+
       const clamscan = await scanPromise;
       const stream = await file.readFile(user);
       const scan = await clamscan.scanStream(stream);
