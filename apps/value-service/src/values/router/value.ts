@@ -255,10 +255,14 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
     try {
       const user = req.user;
       const { namespace, name } = req.params;
-
-      logger.debug(`Processing write value ${namespace}:${name}...`);
-
       const tenantId: AdspId = req['tenantId'];
+
+      logger.debug(`Processing write value ${namespace}:${name}...`, {
+        context: 'value-router',
+        tenantId: tenantId?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+
       const [namespaces] = await req.getConfiguration<Record<string, NamespaceEntity>>(tenantId);
 
       const results = [];
@@ -297,12 +301,6 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
           if (definition?.sendWriteEvent) {
             eventService.send(valueWritten(req.user, namespace, name, result));
           }
-
-          logger.info(`Value ${namespace}:${name} written by user ${user.name} (ID: ${user.id}).`, {
-            context: 'value-router',
-            tenantId: tenantId?.toString(),
-            user: `${user.name} (ID: ${user.id})`,
-          });
         } catch (err) {
           logger.warn(`Error encountered writing value ${namespace}:${name}.`, {
             context: 'value-router',
@@ -311,6 +309,15 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
           });
         }
       }
+
+      logger.info(
+        `${results.length} of ${valuesToWrite.length} requested values for ${namespace}:${name} written by user ${user.name} (ID: ${user.id}).`,
+        {
+          context: 'value-router',
+          tenantId: tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        }
+      );
 
       // Return an array if the original write is an array.
       if (Array.isArray(req.body)) {
