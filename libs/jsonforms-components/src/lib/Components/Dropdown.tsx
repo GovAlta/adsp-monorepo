@@ -99,6 +99,9 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   return (
     <div data-testid={id}>
       <GoAInput
+        onTrailingIconClick={() => {
+          setIsOpen(!isOpen);
+        }}
         name={`dropdown-${label}`}
         width="100%"
         value={inputText}
