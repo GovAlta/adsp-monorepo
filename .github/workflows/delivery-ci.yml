@@ -150,9 +150,17 @@ jobs:
           cy-password-2: ${{ secrets.CY_PASSWORD2 }}
           cy-password-3: ${{ secrets.CY_PASSWORD3 }}
 
-  deployStaging:
+  deployStagingApproval:
     runs-on: ubuntu-22.04
     needs: [build, devSmokeTest]
+    environment:
+      name: Staging-gate
+    steps:
+      - run: echo "Staging deployment approved"
+
+  deployStaging:
+    runs-on: ubuntu-22.04
+    needs: [build, deployStagingApproval]
     strategy:
       fail-fast: true
       max-parallel: 2
