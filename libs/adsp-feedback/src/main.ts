@@ -463,6 +463,9 @@ class AdspFeedback implements AdspFeedbackApi {
     if (this.radio2Ref.value && this.radio2Ref.value.checked === true) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     }
+    if (this.radio2Ref.value?.checked === false && this.radio1Ref.value?.checked === true) {
+      this.sendButtonRef.value?.removeAttribute('disabled');
+    }
   };
 
   public openFeedbackForm() {
