@@ -112,7 +112,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
         ];
       }
 
-      query.$or = [{ criteria: criteriaQuery }, { criteria: { $elemMatch: criteriaQuery } }];
+      query.$or = [{ criteria: null }, { criteria: criteriaQuery }, { criteria: { $elemMatch: criteriaQuery } }];
     }
 
     const pipeline: PipelineStage[] = [
@@ -340,9 +340,9 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       typeId: entity.typeId,
       subscriberId: entity.subscriberId,
       criteria: entity.criteria?.map((criteria) => ({
-        description: criteria?.description || null,
-        correlationId: criteria?.correlationId || null,
-        context: criteria?.context || null,
+        description: criteria?.description,
+        correlationId: criteria?.correlationId,
+        context: criteria?.context,
       })),
     };
   }
