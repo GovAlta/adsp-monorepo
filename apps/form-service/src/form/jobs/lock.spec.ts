@@ -1,6 +1,7 @@
 import { adspId, Channel } from '@abgov/adsp-service-sdk';
 import { ValidationService } from '@core-services/core-common';
 import { Logger } from 'winston';
+import { CalendarService } from '../calendar';
 import { FormDefinitionEntity, FormEntity } from '../model';
 import { FormStatus } from '../types';
 import { createLockJob } from './lock';
@@ -40,6 +41,10 @@ describe('lock', () => {
     setSchema: jest.fn(),
   };
 
+  const calendarService: CalendarService = {
+    getScheduledIntake: jest.fn(),
+  };
+
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
   const subscriber = {
     id: 'test',
@@ -57,7 +62,7 @@ describe('lock', () => {
   const form = new FormEntity(
     repositoryMock,
     tenantId,
-    new FormDefinitionEntity(validationService, tenantId, {
+    new FormDefinitionEntity(validationService, calendarService, tenantId, {
       id: 'my-test-form',
       name: 'My test form',
       description: null,

@@ -238,13 +238,29 @@ components:
         description: Criteria for the subscriber of the subscription.
         in: query
         required: false
-        schema:
-          type: object
-          properties:
-            name:
-              type: string
-            email:
-              type: string
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+      - name: subscriptionMatch
+        description: Criteria for the subscription criteria.
+        in: query
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                correlationId:
+                  type: string
+                context:
+                  type: object
+                  additionalProperties: true
     responses:
       200:
         description: Subscriptions successfully retrieved.

@@ -15,7 +15,6 @@
         "main": "apps/token-handler/src/main.ts",
         "tsConfig": "apps/token-handler/tsconfig.app.json",
         "assets": [],
-        "isolatedConfig": true,
         "webpackConfig": "apps/token-handler/webpack.config.js"
       },
       "configurations": {

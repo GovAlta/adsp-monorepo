@@ -1,4 +1,5 @@
 import { connect } from 'amqp-connection-manager';
+import type { Options } from 'amqplib';
 import { Logger } from 'winston';
 import type { WorkQueueService } from '../work';
 import { AmqpConfigurationUpdateSubscriberService, ConfigurationUpdate } from './configuration';
@@ -11,6 +12,7 @@ interface AmqpServiceProps {
   AMQP_USER: string;
   AMQP_PASSWORD: string;
   logger: Logger;
+  consumerOptions?: Options.Consume
 }
 
 export const createAmqpEventService = async ({
@@ -19,6 +21,7 @@ export const createAmqpEventService = async ({
   AMQP_USER,
   AMQP_PASSWORD,
   logger,
+  consumerOptions
 }: AmqpServiceProps): Promise<AmqpEventSubscriberService> => {
   const connection = connect({
     heartbeat: 160,
@@ -27,7 +30,7 @@ export const createAmqpEventService = async ({
     password: AMQP_PASSWORD,
   });
 
-  const service = new AmqpEventSubscriberService(queue, logger, connection);
+  const service = new AmqpEventSubscriberService(queue, logger, connection, consumerOptions);
   await service.connect();
 
   logger.info(`Connected to RabbitMQ as event service at: ${AMQP_HOST}`);
@@ -40,6 +43,7 @@ export const createAmqpQueueService = async <T>({
   AMQP_USER,
   AMQP_PASSWORD,
   logger,
+  consumerOptions
 }: AmqpServiceProps): Promise<WorkQueueService<T>> => {
   const connection = connect({
     heartbeat: 160,
@@ -48,7 +52,7 @@ export const createAmqpQueueService = async <T>({
     password: AMQP_PASSWORD,
   });
 
-  const service = new AmqpWorkQueueService<T>(queue, logger, connection);
+  const service = new AmqpWorkQueueService<T>(queue, logger, connection, consumerOptions);
   await service.connect();
 
   logger.info(`Connected to RabbitMQ as work queue at: ${AMQP_HOST}`);

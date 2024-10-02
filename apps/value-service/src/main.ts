@@ -17,7 +17,7 @@ import {
   ValueWrittenDefinition,
 } from './values';
 import { createRepositories } from './timescale';
-import { adspId, AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
 import { AjvValueValidationService } from './ajv';
 import type { User } from '@abgov/adsp-service-sdk';
 
@@ -33,6 +33,8 @@ const initializeApp = async () => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  instrumentAxios(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
 

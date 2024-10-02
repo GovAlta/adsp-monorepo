@@ -9,6 +9,7 @@ import { createFormRouter } from './router';
 import { QueueTaskService } from '../task';
 import { CommentService } from './comment';
 import { PdfService } from './pdf';
+import { CalendarService } from './calendar';
 
 export * from './roles';
 export * from './comment';
@@ -19,6 +20,7 @@ export * from './repository';
 export * from './events';
 export * from './notifications';
 export * from './pdf';
+export * from './calendar';
 
 interface FormMiddlewareProps extends Repositories {
   serviceId: AdspId;
@@ -31,6 +33,7 @@ interface FormMiddlewareProps extends Repositories {
   queueTaskService: QueueTaskService;
   formSubmissionRepository: FormSubmissionRepository;
   pdfService: PdfService;
+  calendarService: CalendarService;
 }
 
 export const applyFormMiddleware = (
@@ -47,6 +50,7 @@ export const applyFormMiddleware = (
     queueTaskService,
     formSubmissionRepository: submissionRepository,
     pdfService,
+    calendarService,
   }: FormMiddlewareProps
 ): Application => {
   const apiId = adspId`${serviceId}:v1`;
@@ -64,6 +68,7 @@ export const applyFormMiddleware = (
     commentService,
     submissionRepository,
     pdfService,
+    calendarService,
   });
   app.use('/form/v1', router);
 

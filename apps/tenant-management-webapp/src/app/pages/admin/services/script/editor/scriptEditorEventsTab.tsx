@@ -106,7 +106,7 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
           {!triggerEvents && renderNoItem('script event trigger')}
 
           <div>
-            <DataTable style={{ height: '100%' }} data-testid="script-editor-trigger-events-table">
+            <DataTable data-testid="script-editor-trigger-events-table">
               <thead data-testid="script-editor-trigger-events-table-header">
                 <tr>
                   <th id="name" data-testid="script-editor-trigger-events-table-header-name">

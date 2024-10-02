@@ -1,4 +1,4 @@
-import { AdspId, initializePlatform, ServiceMetricsValueDefinition, User } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition, User } from '@abgov/adsp-service-sdk';
 import {
   createLogger,
   createAmqpEventService,
@@ -48,6 +48,8 @@ async function initializeApp() {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  instrumentAxios(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const {
@@ -147,6 +149,7 @@ async function initializeApp() {
     ...environment,
     queue: 'notification-send',
     logger,
+    consumerOptions: { priority: environment.AMQP_CONSUMER_PRIORITY },
   });
 
   const configurationSync = await createAmqpConfigUpdateService({

@@ -35,7 +35,7 @@ import { mapForm, mapFormDefinition, mapFormWithFormSubmission } from '../mapper
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { Form, FormCriteria, FormStatus, FormSubmission, FormSubmissionCriteria } from '../types';
+import { Form, FormCriteria, FormStatus, FormSubmission, FormSubmissionCriteria, Intake } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -45,6 +45,7 @@ import {
   SET_TO_DRAFT_FORM_OPERATION,
 } from './types';
 import { PdfService } from '../pdf';
+import { CalendarService } from '../calendar';
 
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
@@ -114,7 +115,7 @@ export const getFormDefinitions: RequestHandler = async (_req, _res, next) => {
   }
 };
 
-export function getFormDefinition(tenantService: TenantService): RequestHandler {
+export function getFormDefinition(tenantService: TenantService, calendarService: CalendarService): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -140,7 +141,12 @@ export function getFormDefinition(tenantService: TenantService): RequestHandler 
         throw new UnauthorizedUserError('access definition', user);
       }
 
-      res.send(mapFormDefinition(definition));
+      let intake: Intake;
+      if (definition.scheduledIntakes) {
+        intake = await calendarService.getScheduledIntake(definition);
+      }
+
+      res.send(mapFormDefinition(definition, intake));
     } catch (err) {
       next(err);
     }
@@ -633,6 +639,7 @@ interface FormRouterProps {
   commentService: CommentService;
   submissionRepository: FormSubmissionRepository;
   pdfService: PdfService;
+  calendarService: CalendarService;
 }
 
 export function createFormRouter({
@@ -647,6 +654,7 @@ export function createFormRouter({
   commentService,
   submissionRepository,
   pdfService,
+  calendarService,
 }: FormRouterProps): Router {
   const router = Router();
 
@@ -654,7 +662,7 @@ export function createFormRouter({
   router.get(
     '/definitions/:definitionId',
     createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
-    getFormDefinition(tenantService)
+    getFormDefinition(tenantService, calendarService)
   );
 
   router.get(

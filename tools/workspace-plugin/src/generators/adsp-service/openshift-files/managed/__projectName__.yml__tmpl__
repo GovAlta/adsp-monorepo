@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -64,19 +60,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: <%= projectName %>${NAME_SUFFIX}
+        app: <%= projectName %>
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: <%= projectName %>${NAME_SUFFIX}
+      name: <%= projectName %>
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: <%= projectName %>${NAME_SUFFIX}
+        app: <%= projectName %>
         component: api
       strategy:
         type: Rolling
@@ -95,7 +90,7 @@ objects:
       template:
         metadata:
           labels:
-            app: <%= projectName %>${NAME_SUFFIX}
+            app: <%= projectName %>
             component: api
         spec:
           containers:
@@ -141,14 +136,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: <%= projectName %>${NAME_SUFFIX}
+        app: <%= projectName %>
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: <%= projectName %>${NAME_SUFFIX}
+      name: <%= projectName %>
     spec:
       ports:
         - name: http
@@ -156,7 +150,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: <%= projectName %>${NAME_SUFFIX}
+        app: <%= projectName %>
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -164,14 +158,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: <%= projectName %>${NAME_SUFFIX}
+        app: <%= projectName %>
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: <%= projectName %>${NAME_SUFFIX}
+      name: <%= projectName %>
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -180,6 +173,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: <%= projectName %>${NAME_SUFFIX}
+        name: <%= projectName %>
         weight: 100
       wildcardPolicy: None

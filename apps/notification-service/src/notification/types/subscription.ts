@@ -20,4 +20,5 @@ export interface SubscriptionSearchCriteria {
   typeIdEquals?: string;
   subscriberIdEquals?: string;
   subscriberCriteria?: SubscriberCriteria;
+  subscriptionMatch?: Omit<SubscriptionCriteria, 'description'>;
 }

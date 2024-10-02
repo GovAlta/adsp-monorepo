@@ -10,12 +10,14 @@ exports[`calendar router addEventAttendee can add attendee 1`] = `
 
 exports[`calendar router createCalendarEvent can create event 1`] = `
 {
+  "context": undefined,
   "description": "Test 1 2 3",
   "end": null,
   "id": undefined,
   "isAllDay": false,
   "isPublic": false,
   "name": "test",
+  "recordId": undefined,
   "start": Any<DateTime>,
 }
 `;
@@ -79,12 +81,14 @@ exports[`calendar router getEventAttendees can get attendees 1`] = `[]`;
 
 exports[`calendar router retrieveCalendarEvent can retrieve event 1`] = `
 {
+  "context": undefined,
   "description": "Test 1 2 3",
   "end": Any<DateTime>,
   "id": 12,
   "isAllDay": false,
   "isPublic": false,
   "name": "test",
+  "recordId": undefined,
   "start": Any<DateTime>,
 }
 `;
@@ -99,12 +103,14 @@ exports[`calendar router setEventAttendee can set attendee 1`] = `
 
 exports[`calendar router updateCalendarEvent can update event 1`] = `
 {
+  "context": undefined,
   "description": "Test 1 2 3",
   "end": Any<DateTime>,
   "id": 12,
   "isAllDay": false,
   "isPublic": false,
   "name": "test 2",
+  "recordId": undefined,
   "start": Any<DateTime>,
 }
 `;

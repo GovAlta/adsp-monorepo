@@ -13,7 +13,11 @@ describe('FormSubmission', () => {
     setSchema: jest.fn(),
   };
 
-  const aDefinition = new FormDefinitionEntity(validationService, tenantId, {
+  const calendarService = {
+    getScheduledIntake: jest.fn(),
+  };
+
+  const aDefinition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     description: null,

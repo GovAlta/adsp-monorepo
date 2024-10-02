@@ -9,6 +9,9 @@ import {
   PreviewTopStyleWrapper,
   PreviewContainer,
   PDFTitle,
+  PreviewWrapper,
+  EditTemplateActions,
+  PdfViewer,
 } from '../../styled-components';
 
 import { RootState } from '@store/index';
@@ -114,21 +117,23 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
 
     return (
       <>
-        <PreviewTop title={channelTitle} iconDisable={!blobUrl} />
-        {indicator?.show && (
-          <SpinnerPadding>
-            <PageIndicator />
-          </SpinnerPadding>
-        )}
-        {!indicator?.show && !hasError && blobUrl && (
-          <div>
-            <div>
-              <object type="application/pdf" data={blobUrl} height={windowSize - 192} style={{ width: '100%' }}>
-                <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
-              </object>
-            </div>
-          </div>
-        )}
+        <PreviewWrapper>
+          <section>
+            <PreviewTop title={channelTitle} iconDisable={!blobUrl} />
+            {indicator?.show && (
+              <SpinnerPadding>
+                <PageIndicator />
+              </SpinnerPadding>
+            )}
+            {!indicator?.show && !hasError && blobUrl && (
+              <PdfViewer>
+                <object type="application/pdf" data={blobUrl} height={windowSize - 202} style={{ width: '100%' }}>
+                  <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
+                </object>
+              </PdfViewer>
+            )}
+          </section>
+        </PreviewWrapper>
         {!indicator?.show && hasError && (
           <GoACallout type="emergency" heading="Error in PDF generation">
             {pdfGenerationError}
@@ -170,7 +175,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
             }}
           />
         </PreviewTopStyle>
-        <hr className="hr-resize" />
+        <hr />
       </PreviewTopStyleWrapper>
     );
   };

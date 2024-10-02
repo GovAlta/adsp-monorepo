@@ -15,7 +15,6 @@
         "target": "node",
         "compiler": "tsc",
         "webpackConfig": "apps/api-docs-app/webpack.config.js",
-        "isolatedConfig": true,
         "babelUpwardRootMode": true
       },
       "configurations": {

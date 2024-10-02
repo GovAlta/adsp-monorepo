@@ -12,7 +12,7 @@ const ApplicationDefinition = {
       type: ['string', 'null'],
       examples: ['This service allows for easy monitoring of application downtime.'],
     },
-    url: { type: ['string', 'null'] },
+    url: { type: ['string', 'null'], examples: ['https://status.adsp.alberta.ca'] },
     monitorOnly: { type: ['boolean', 'null'] },
   },
 };

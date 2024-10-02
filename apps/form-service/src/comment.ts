@@ -24,9 +24,7 @@ class CommentServiceImpl implements CommentService {
           typeId: this.supportTopicTypeId,
           resourceId: urn,
           name: `Form (${form.id})`,
-          description: `Topic created by form service for support questions related to form ${
-            form.definition?.name || ''
-          } (ID: ${form.id}).`,
+          description: `Topic created by form service for support questions related to form ${form.definition.name} (ID: ${form.id}).`,
           // The user that created the form is either the applicant or the intake application.
           commenters: [form.createdBy.id],
         },
@@ -46,20 +44,13 @@ class CommentServiceImpl implements CommentService {
   }
 }
 
-interface CommentServiceProps {
-  logger: Logger;
-  directory: ServiceDirectory;
-  tokenProvider: TokenProvider;
-  supportTopicTypeId: string;
-}
-
 const commentServiceId = adspId`urn:ads:platform:comment-service`;
-export async function createCommentService({
-  logger,
-  directory,
-  tokenProvider,
-  supportTopicTypeId,
-}: CommentServiceProps): Promise<CommentService> {
+export async function createCommentService(
+  logger: Logger,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  supportTopicTypeId: string
+): Promise<CommentService> {
   const commentServiceUrl = await directory.getServiceUrl(commentServiceId);
   return new CommentServiceImpl(logger, tokenProvider, commentServiceUrl, supportTopicTypeId);
 }

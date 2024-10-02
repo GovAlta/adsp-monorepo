@@ -31,7 +31,6 @@ import { FileSystemStorageProvider } from './storage/file-system';
 import { createScanService } from './scan';
 import { AzureBlobStorageProvider } from './storage';
 import { createFileQueueService } from './amqp';
-import { ScanService } from './file';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -162,14 +161,10 @@ async function initializeApp(): Promise<express.Application> {
     storageProvider,
   });
 
-  let scanService: ScanService = null;
-
-  if (environment.POD_TYPE !== 'file-service-job') {
-    scanService = createScanService(environment.AV_PROVIDER, {
-      host: environment.AV_HOST,
-      port: environment.AV_PORT,
-    });
-  }
+  const scanService = createScanService(environment.AV_PROVIDER, {
+    host: environment.AV_HOST,
+    port: environment.AV_PORT,
+  });
 
   const queueService = await createFileQueueService({ ...environment, logger });
 
