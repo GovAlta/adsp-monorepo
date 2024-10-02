@@ -214,7 +214,12 @@ export function downloadFile(logger: Logger): RequestHandler {
         res.status(200);
       } else {
         res.status(206);
-        res.setHeader('Content-Range', `bytes ${fileStart || ''}-${fileEnd || ''}/${fileEntity.size}`);
+        res.setHeader(
+          'Content-Range',
+          `bytes ${typeof fileStart !== 'number' ? '' : fileStart}-${typeof fileEnd !== 'number' ? '' : fileEnd}/${
+            fileEntity.size
+          }`
+        );
       }
       res.setHeader('Content-Type', validateMimeType(fileEntity.mimeType));
       res.setHeader('Content-Length', length);
