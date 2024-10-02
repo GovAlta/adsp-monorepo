@@ -90,29 +90,27 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       // 1. the subscription specifies a property value that equals the value of the associated property in the event; or
       // 2. the subscription does not specify a criteria (i.e. the subscription applies across all values of the property.)
       const criteriaQuery: Record<string, unknown> = {};
+      // This is to support old subscriptions where the criteria is stored as a sub document not in an array.
+      const backCompatQuery: Record<string, unknown> = {};
 
       if (criteria.subscriptionMatch.correlationId) {
         criteriaQuery.correlationId = {
           $in: [null, criteria.subscriptionMatch.correlationId],
         };
+        backCompatQuery['criteria.correlationId'] = criteriaQuery.correlationId;
       }
 
       if (criteria.subscriptionMatch.context) {
-        criteriaQuery.$or = [
-          { context: null },
-          {
-            context: Object.entries(criteria.subscriptionMatch.context).reduce((ctx, [key, value]) => {
-              // Allow falsy values other than undefined and null.
-              if (value !== undefined && value !== null) {
-                ctx[key] = { $in: [null, value] };
-              }
-              return ctx;
-            }, {}),
-          },
-        ];
+        Object.entries(criteria.subscriptionMatch.context).forEach(([key, value]) => {
+          // Allow falsy values other than undefined and null.
+          if (value !== undefined && value !== null) {
+            criteriaQuery[`context.${key}`] = { $in: [null, value] };
+            backCompatQuery[`criteria.context.${key}`] = { $in: [null, value] };
+          }
+        });
       }
 
-      query.$or = [{ criteria: null }, { criteria: criteriaQuery }, { criteria: { $elemMatch: criteriaQuery } }];
+      query.$or = [{ criteria: null }, { criteria: { $elemMatch: criteriaQuery } }, backCompatQuery];
     }
 
     const pipeline: PipelineStage[] = [
