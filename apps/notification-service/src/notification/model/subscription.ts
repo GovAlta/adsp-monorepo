@@ -95,6 +95,9 @@ export class SubscriptionEntity implements Subscription {
       }
 
       this.criteria = criteria;
+    } else if (this.isEmptyCriteria(criteria)) {
+      // Set empty criteria.
+      this.criteria = [{}];
     } else {
       // Add the criteria. This means the subscription will send for events that meet the new criteria as well as other
       // pre-existing criteria. e.g. this is used in forms where a subscriber can be subscribed to notifications on multiple

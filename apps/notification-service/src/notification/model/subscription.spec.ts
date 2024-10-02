@@ -373,6 +373,29 @@ describe('SubscriptionEntity', () => {
       expect(updated.criteria).toMatchObject(expect.arrayContaining([expect.any(Object), criteria]));
     });
 
+    it('can updated criteria with empty criteria', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: null,
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const criteria = {
+        correlationId: 'test',
+        context: {
+          value: 'test',
+        },
+      };
+      const updated = await entity.updateCriteria(user, null);
+      expect(updated.criteria).toMatchObject(expect.arrayContaining([expect.any(Object)]));
+    });
+
     it('can throw for additive update to empty criteria', async () => {
       const entity = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
