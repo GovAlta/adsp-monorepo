@@ -22,7 +22,7 @@ export function createCacheJobs({ logger, configurationService, queueService }: 
       invalidateJob(item);
 
       // Default done call to Ack events not matching any job.
-      logger.debug(`Processed event '${item.namespace}:${item.name}' with no associated job.`, {
+      logger.debug(`Processed event '${item.namespace}:${item.name}'.`, {
         context: 'CacheJobs',
         tenant: item.tenantId?.toString(),
       });
