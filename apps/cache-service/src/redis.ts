@@ -1,8 +1,9 @@
 import { RedisClient } from 'redis';
+import { Logger } from 'winston';
 import { CachedResponse, CacheProvider } from './cache';
 
 class RedisCacheProvider implements CacheProvider {
-  constructor(private client: RedisClient) {}
+  constructor(private logger: Logger, private client: RedisClient) {}
 
   isConnected(): boolean {
     return this.client.connected;
@@ -22,14 +23,56 @@ class RedisCacheProvider implements CacheProvider {
     return this.fromCachedValue(cached);
   }
 
-  async set(key: string, ttl: number, value: CachedResponse) {
+  async set(key: string, invalidateKey: string, ttl: number, value: CachedResponse): Promise<void> {
     const cached = this.toCachedValue(value);
     await new Promise((resolve, reject) => {
-      this.client.setex(key, ttl, cached, function (err, result) {
+      this.client
+        .multi()
+        .setex(key, ttl, cached)
+        .sadd(invalidateKey, key)
+        .expire(invalidateKey, ttl)
+        .exec((err: unknown, result: [string, number, number]) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+
+            const [set, add, expire] = result;
+            this.logger.debug(`Cache set with results for setex: ${set}, sadd: ${add}, and expire: ${expire}.`, {
+              context: 'RedisCacheProvider',
+            });
+          }
+        });
+    });
+  }
+
+  async del(invalidateKey: string): Promise<boolean> {
+    return await new Promise((resolve, reject) => {
+      this.client.smembers(invalidateKey, (err, results) => {
         if (err) {
           reject(err);
+        } else if (!results?.length) {
+          resolve(false);
         } else {
-          resolve(result);
+          this.client
+            .multi()
+            .del(results)
+            .srem(invalidateKey, results)
+            .exec((err: unknown, results: [number, number]) => {
+              if (err) {
+                reject(err);
+              } else {
+                const [deleted, removed] = results;
+                resolve(!!(deleted || removed));
+
+                this.logger.debug(
+                  `Cache invalidation deleted ${deleted} entries and removed ${removed} members from set.`,
+                  {
+                    context: 'RedisCacheProvider',
+                  }
+                );
+              }
+            });
         }
       });
     });
@@ -57,9 +100,10 @@ class RedisCacheProvider implements CacheProvider {
 }
 
 interface RedisCacheProviderProps {
+  logger: Logger;
   client: RedisClient;
 }
 
-export function createRedisCacheProvider({ client }: RedisCacheProviderProps): RedisCacheProvider {
-  return new RedisCacheProvider(client);
+export function createRedisCacheProvider({ logger, client }: RedisCacheProviderProps): RedisCacheProvider {
+  return new RedisCacheProvider(logger, client);
 }

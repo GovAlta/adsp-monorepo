@@ -1,8 +1,15 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 
+export interface InvalidationEvent {
+  namespace: string;
+  name: string;
+  resourceIdPath: string;
+}
+
 export interface Target {
   serviceId: AdspId;
-  ttl: number;
+  ttl?: number;
+  invalidationEvents?: InvalidationEvent[];
 }
 
 export interface CachedResponse {
