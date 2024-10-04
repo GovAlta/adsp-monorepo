@@ -37,7 +37,6 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
   public override IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null)
   {
     return null;
-
   }
 
   public override string? CreateTask(
