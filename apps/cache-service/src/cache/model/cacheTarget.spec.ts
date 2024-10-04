@@ -149,6 +149,66 @@ describe('CacheTarget', () => {
       );
     });
 
+    it('can send response on cache error', async () => {
+      const req = {
+        method: 'GET',
+        headers: {},
+        path: '',
+        query: {
+          flag: 'true',
+        },
+        baseUrl: '/cache/v1',
+        originalUrl: '/cache/v1/cache/urn:ads:platform:test-service:v1/test-resource',
+        pipe: jest.fn(),
+      };
+      const res = {
+        status: jest.fn(() => res),
+        header: jest.fn(() => res),
+        send: jest.fn(() => res),
+      };
+
+      providerMock.get.mockRejectedValueOnce(new Error('oh noes!'));
+
+      const targetUrl = new URL('https://test-service/test/v1');
+      directoryMock.getServiceUrl.mockResolvedValueOnce(targetUrl);
+
+      const content = Buffer.from('test string content', 'utf-8');
+      const upstreamReq = {};
+      const upstreamRes = {
+        statusCode: 200,
+        headers: { 'content-type': 'application/json' },
+        on: jest.fn((event, cb) => {
+          if (event === 'end') {
+            setTimeout(cb);
+          } else if (event === 'data') {
+            setTimeout(() => cb(content));
+          }
+        }),
+        pipe: jest.fn(),
+      };
+      httpsMock.request.mockImplementationOnce((_url, _opt, cb) => {
+        cb(upstreamRes as unknown as IncomingMessage);
+        return upstreamReq as unknown as ClientRequest;
+      });
+
+      await target.get(req as unknown as Request, res as unknown as Response);
+      expect(https.request).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.header).toHaveBeenCalledWith(expect.objectContaining({ 'Content-Type': 'application/json' }));
+      expect(upstreamRes.pipe).toHaveBeenCalledWith(res);
+
+      expect(providerMock.set).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(String),
+        target.ttl,
+        expect.objectContaining({
+          status: 200,
+          headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+          content: expect.any(Buffer),
+        })
+      );
+    });
+
     it('can send response with cache miss for user', async () => {
       const req = {
         method: 'GET',
