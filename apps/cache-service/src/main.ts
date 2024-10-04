@@ -45,6 +45,9 @@ const initializeApp = async (): Promise<express.Application> => {
     port: environment.REDIS_PORT,
     password: environment.REDIS_PASSWORD,
   });
+  redisClient.on('error', (err) => {
+    logger.error(`Redis client encountered error: ${err}`);
+  });
 
   const cacheProvider = createRedisCacheProvider({ logger, client: redisClient });
 
@@ -97,7 +100,8 @@ const initializeApp = async (): Promise<express.Application> => {
           configuration: {
             targets: {
               [accessApiId.toString()]: {
-                ttl: 8 * 60 * 60,
+                // TTL of 0 for no expiry.
+                ttl: 0,
               },
             },
           },

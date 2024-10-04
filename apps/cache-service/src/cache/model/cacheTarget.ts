@@ -39,7 +39,7 @@ export class CacheTarget implements Target {
     target: Target
   ) {
     this.serviceId = target.serviceId;
-    this.ttl = target.ttl || DEFAULT_TTL;
+    this.ttl = typeof target.ttl === 'number' ? target.ttl : DEFAULT_TTL;
     this.invalidationEvents = target.invalidationEvents || [];
   }
 

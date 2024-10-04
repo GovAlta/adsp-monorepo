@@ -155,9 +155,9 @@ objects:
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           volumes:
-            - emptyDir:
-                medium: ""
-              name: cache-service-redis-data
+            - name: cache-service-redis-data
+              persistentVolumeClaim:
+                claimName: cache-service-redis
       triggers:
         - imageChangeParams:
             automatic: true

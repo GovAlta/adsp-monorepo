@@ -42,6 +42,9 @@ const initializeApp = async (): Promise<express.Application> => {
     port: environment.REDIS_PORT,
     password: environment.REDIS_PASSWORD,
   });
+  redisClient.on('error', (err) => {
+    logger.error(`Redis client encountered error: ${err}`);
+  });
 
   const repository = createRedisRepository({
     logger,

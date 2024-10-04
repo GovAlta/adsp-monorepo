@@ -14,6 +14,7 @@ describe('redis', () => {
   const client = {
     connected: true,
     get: jest.fn(),
+    set: jest.fn(),
     setex: jest.fn(),
     sadd: jest.fn(),
     smembers: jest.fn(),
@@ -27,10 +28,12 @@ describe('redis', () => {
   beforeEach(() => {
     client.get.mockClear();
     client.multi.mockClear();
+    client.set.mockClear();
     client.setex.mockClear();
     client.sadd.mockClear();
     client.smembers.mockClear();
     client.srem.mockClear();
+    client.expire.mockClear();
     client.del.mockClear();
     client.exec.mockClear();
   });
@@ -143,6 +146,28 @@ describe('redis', () => {
         expect(client.setex).toHaveBeenCalledWith(
           'test',
           300,
+          JSON.stringify({ ...response, content: response.content.toString('base64') })
+        );
+        expect(client.sadd).toHaveBeenCalledWith('test-set', 'test');
+        expect(client.exec).toHaveBeenCalledWith(expect.any(Function));
+      });
+
+      it('can set to cache with no ttl', async () => {
+        const response = {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          content: Buffer.from('This is some string content', 'utf-8'),
+        };
+        client.set.mockImplementationOnce((_key, _value) => client);
+        client.sadd.mockImplementationOnce((_key, _member) => client);
+        client.exec.mockImplementationOnce((cb) => cb(null, ['OK', 1, 1]));
+
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
+        await provider.set('test', 'test-set', 0, response);
+        expect(client.setex).not.toHaveBeenCalled();
+        expect(client.expire).not.toHaveBeenCalled();
+        expect(client.set).toHaveBeenCalledWith(
+          'test',
           JSON.stringify({ ...response, content: response.content.toString('base64') })
         );
         expect(client.sadd).toHaveBeenCalledWith('test-set', 'test');
