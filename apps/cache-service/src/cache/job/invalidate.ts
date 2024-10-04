@@ -17,6 +17,14 @@ export function createInvalidateJob({ logger, configurationService }: Invalidate
       >(null, event.tenantId);
 
       const targets = configuration.getTargets();
+      logger.debug(
+        `Processing event '${event.namespace}:${event.name}' for cache invalidation on ${targets?.length} targets... `,
+        {
+          context: 'InvalidateJob',
+          tenant: event.tenantId.toString(),
+        }
+      );
+
       for (const target of targets) {
         await target.processEvent(event);
       }

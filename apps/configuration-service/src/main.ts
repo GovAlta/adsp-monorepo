@@ -83,8 +83,36 @@ const initializeApp = async (): Promise<express.Application> => {
             serviceId: adspId`urn:ads:platform:cache-service`,
             configuration: {
               targets: {
-                [`${serviceId}`]: { ttl: 15 * 60 },
-                [`${serviceId}:v2`]: { ttl: 15 * 60 },
+                [`${serviceId}`]: {
+                  ttl: 8 * 60 * 60,
+                  invalidationEvents: [
+                    {
+                      namespace: serviceId.service,
+                      name: ConfigurationDeletedDefinition.name,
+                      resourceIdPath: 'urn',
+                    },
+                    {
+                      namespace: serviceId.service,
+                      name: ConfigurationUpdatedDefinition.name,
+                      resourceIdPath: 'urn',
+                    },
+                  ],
+                },
+                [`${serviceId}:v2`]: {
+                  ttl: 8 * 60 * 60,
+                  invalidationEvents: [
+                    {
+                      namespace: serviceId.service,
+                      name: ConfigurationDeletedDefinition.name,
+                      resourceIdPath: 'urn',
+                    },
+                    {
+                      namespace: serviceId.service,
+                      name: ConfigurationUpdatedDefinition.name,
+                      resourceIdPath: 'urn',
+                    },
+                  ],
+                },
               },
             },
           },
