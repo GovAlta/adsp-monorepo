@@ -26,23 +26,27 @@ class RedisCacheProvider implements CacheProvider {
   async set(key: string, invalidateKey: string, ttl: number, value: CachedResponse): Promise<void> {
     const cached = this.toCachedValue(value);
     await new Promise((resolve, reject) => {
-      this.client
-        .multi()
-        .setex(key, ttl, cached)
-        .sadd(invalidateKey, key)
-        .expire(invalidateKey, ttl)
-        .exec((err: unknown, result: [string, number, number]) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(result);
+      let transaction = this.client.multi().sadd(invalidateKey, key);
 
-            const [set, add, expire] = result;
-            this.logger.debug(`Cache set with results for setex: ${set}, sadd: ${add}, and expire: ${expire}.`, {
-              context: 'RedisCacheProvider',
-            });
-          }
-        });
+      if (ttl > 0) {
+        // Set the TTL if the value is greater than 0;
+        transaction = transaction.setex(key, ttl, cached).expire(invalidateKey, ttl);
+      } else {
+        transaction = transaction.set(key, cached);
+      }
+
+      transaction.exec((err: unknown, result: [string, number, number]) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+
+          const [set, add, expire] = result;
+          this.logger.debug(`Cache set with results for setex: ${set}, sadd: ${add}, and expire: ${expire}.`, {
+            context: 'RedisCacheProvider',
+          });
+        }
+      });
     });
   }
 

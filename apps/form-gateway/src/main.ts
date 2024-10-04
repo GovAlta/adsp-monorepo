@@ -38,6 +38,11 @@ const initializeApp = async (): Promise<express.Application> => {
         password: environment.REDIS_PASSWORD,
       })
     : null;
+  if (redisClient) {
+    redisClient.on('error', (err) => {
+      logger.error(`Redis client encountered error: ${err}`);
+    });
+  }
 
   const {
     directory,
