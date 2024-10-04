@@ -1,29 +1,50 @@
 import { RedisClient } from 'redis';
+import { Logger } from 'winston';
 import { createRedisCacheProvider } from './redis';
 import { CachedResponse } from './cache';
 
 describe('redis', () => {
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+
   const client = {
     connected: true,
     get: jest.fn(),
     setex: jest.fn(),
+    sadd: jest.fn(),
+    smembers: jest.fn(),
+    srem: jest.fn(),
+    expire: jest.fn(),
+    multi: jest.fn(() => client),
+    del: jest.fn(),
+    exec: jest.fn(),
   };
 
   beforeEach(() => {
-    client.get.mockReset();
-    client.setex.mockReset();
+    client.get.mockClear();
+    client.multi.mockClear();
+    client.setex.mockClear();
+    client.sadd.mockClear();
+    client.smembers.mockClear();
+    client.srem.mockClear();
+    client.del.mockClear();
+    client.exec.mockClear();
   });
 
   describe('createRedisCacheProvider', () => {
     it('can create redis cache provider', () => {
-      const provider = createRedisCacheProvider({ client: client as unknown as RedisClient });
+      const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
       expect(provider).toBeTruthy();
     });
   });
 
   describe('RedisCacheProvider', () => {
     it('can get isConnected', () => {
-      const provider = createRedisCacheProvider({ client: client as unknown as RedisClient });
+      const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
       expect(provider.isConnected()).toBe(true);
     });
 
@@ -34,9 +55,9 @@ describe('redis', () => {
           headers: { 'Content-Type': 'application/json' },
           content: Buffer.from('This is some string content', 'utf-8').toString('base64'),
         });
-        client.get.mockImplementation((key, cb) => cb(null, result));
+        client.get.mockImplementationOnce((key, cb) => cb(null, result));
 
-        const provider = createRedisCacheProvider({ client: client as unknown as RedisClient });
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
         const response = await provider.get('test');
         expect(response).toBeTruthy();
         expect(response.status).toBe(200);
@@ -48,9 +69,9 @@ describe('redis', () => {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         });
-        client.get.mockImplementation((key, cb) => cb(null, result));
+        client.get.mockImplementationOnce((_key, cb) => cb(null, result));
 
-        const provider = createRedisCacheProvider({ client: client as unknown as RedisClient });
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
         const response = await provider.get('test');
         expect(response).toBeTruthy();
         expect(response.status).toBe(200);
@@ -58,56 +79,37 @@ describe('redis', () => {
       });
 
       it('can get from cache and handle no cache entry', async () => {
-        client.get.mockImplementation((key, cb) => cb(null));
+        client.get.mockImplementationOnce((_key, cb) => cb(null));
 
-        const provider = createRedisCacheProvider({ client: client as unknown as RedisClient });
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
         const response = await provider.get('test');
         expect(response).toBeFalsy();
       });
 
       it('can get and throw error', async () => {
         const err = new Error('Oh noes!');
-        client.get.mockImplementation((_key, cb) => cb(err));
+        client.get.mockImplementationOnce((_key, cb) => cb(err));
 
-        const provider = createRedisCacheProvider({ client: client as unknown as RedisClient });
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
         await expect(provider.get('test')).rejects.toThrow(Error);
       });
     });
 
     describe('set', () => {
-      it('can set to cache', async () => {
-        const response = {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-          content: Buffer.from('This is some string content', 'utf-8'),
-        };
-        client.setex.mockImplementation((_key, _ttl, _value, cb) => cb(null, 'success'));
-
-        const provider = createRedisCacheProvider({ client: client as unknown as RedisClient });
-        await provider.set('test', 300, response);
-        expect(client.setex).toHaveBeenCalledWith(
-          'test',
-          300,
-          JSON.stringify({ ...response, content: response.content.toString('base64') }),
-          expect.any(Function)
-        );
-      });
-
       it('can set to cache with no content', async () => {
         const response = {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         };
-        client.setex.mockImplementation((_key, _ttl, _value, cb) => cb(null, 'success'));
+        client.setex.mockImplementationOnce((_key, _ttl, _value) => client);
+        client.sadd.mockImplementationOnce((_key, _member) => client);
+        client.expire.mockImplementationOnce((_key, _ttl) => client);
+        client.exec.mockImplementationOnce((cb) => cb(null, ['OK', 1, 1]));
 
-        const provider = createRedisCacheProvider({ client: client as unknown as RedisClient });
-        await provider.set('test', 300, response as unknown as CachedResponse);
-        expect(client.setex).toHaveBeenCalledWith(
-          'test',
-          300,
-          JSON.stringify({ ...response, content: undefined }),
-          expect.any(Function)
-        );
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
+        await provider.set('test', 'test-set', 300, response as unknown as CachedResponse);
+        expect(client.setex).toHaveBeenCalledWith('test', 300, JSON.stringify({ ...response, content: undefined }));
+        expect(client.exec).toHaveBeenCalledWith(expect.any(Function));
       });
 
       it('can set and throw error', async () => {
@@ -116,10 +118,81 @@ describe('redis', () => {
           headers: { 'Content-Type': 'application/json' },
           content: Buffer.from('This is some string content', 'utf-8'),
         };
-        client.setex.mockImplementation((_key, _ttl, _value, cb) => cb(new Error('Oh noes!')));
+        client.setex.mockImplementationOnce((_key, _ttl, _value) => client);
+        client.sadd.mockImplementationOnce((_key, _member) => client);
+        client.expire.mockImplementationOnce((_key, _ttl) => client);
+        client.exec.mockImplementationOnce((cb) => cb(new Error('Oh noes!')));
 
-        const provider = createRedisCacheProvider({ client: client as unknown as RedisClient });
-        await expect(provider.set('test', 300, response)).rejects.toThrow(Error);
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
+        await expect(provider.set('test', 'test-set', 300, response)).rejects.toThrow(Error);
+      });
+
+      it('can set to cache with set key', async () => {
+        const response = {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          content: Buffer.from('This is some string content', 'utf-8'),
+        };
+        client.setex.mockImplementationOnce((_key, _ttl, _value) => client);
+        client.sadd.mockImplementationOnce((_key, _member) => client);
+        client.expire.mockImplementationOnce((_key, _ttl) => client);
+        client.exec.mockImplementationOnce((cb) => cb(null, ['OK', 1, 1]));
+
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
+        await provider.set('test', 'test-set', 300, response);
+        expect(client.setex).toHaveBeenCalledWith(
+          'test',
+          300,
+          JSON.stringify({ ...response, content: response.content.toString('base64') })
+        );
+        expect(client.sadd).toHaveBeenCalledWith('test-set', 'test');
+        expect(client.exec).toHaveBeenCalledWith(expect.any(Function));
+      });
+    });
+
+    describe('del', () => {
+      it('can del to invalidate with set key', async () => {
+        const set = ['test-1', 'test-2', 'test-3'];
+        client.smembers.mockImplementationOnce((_key, cb) => cb(null, set));
+        client.del.mockImplementationOnce((_key) => client);
+        client.srem.mockImplementationOnce((_key, _members) => client);
+        client.exec.mockImplementationOnce((cb) => cb(null, [set.length, set.length]));
+
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
+        const result = await provider.del('test-set');
+        expect(result).toBe(true);
+        expect(client.smembers).toHaveBeenCalledWith('test-set', expect.any(Function));
+        expect(client.del).toHaveBeenCalledWith(set);
+        expect(client.srem).toHaveBeenCalledWith('test-set', set);
+        expect(client.exec).toHaveBeenCalledWith(expect.any(Function));
+      });
+
+      it('can del to invalidate with set key and return false for empty set', async () => {
+        const set = [];
+        client.smembers.mockImplementationOnce((_key, cb) => cb(null, set));
+
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
+        const result = await provider.del('test-set');
+        expect(result).toBe(false);
+        expect(client.smembers).toHaveBeenCalledWith('test-set', expect.any(Function));
+      });
+
+      it('can del with set key and throw error on smember error', async () => {
+        client.smembers.mockImplementationOnce((_key, cb) => cb(new Error('Oh noes!')));
+
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
+        await expect(provider.del('test-set')).rejects.toThrow(Error);
+      });
+
+      it('can del with set key and throw error on exec error', async () => {
+        const set = ['test-1', 'test-2', 'test-3'];
+        client.smembers.mockImplementationOnce((_key, cb) => cb(null, set));
+        client.del.mockImplementationOnce((_key) => client);
+        client.srem.mockImplementationOnce((_key, _members) => client);
+        client.exec.mockImplementationOnce((cb) => cb(new Error('oh noes!')));
+
+        const provider = createRedisCacheProvider({ logger, client: client as unknown as RedisClient });
+        await expect(provider.del('test-set')).rejects.toThrow(Error);
       });
     });
   });

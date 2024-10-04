@@ -20,6 +20,8 @@ import {
 } from './cache';
 import { createRedisCacheProvider } from './redis';
 import { createAnonymousTenantHandler } from './tenant';
+import { createCacheQueueService } from './amqp';
+import { accessApiId } from './cache/model';
 
 const logger = createLogger('cache-service', environment.LOG_LEVEL);
 
@@ -44,10 +46,11 @@ const initializeApp = async (): Promise<express.Application> => {
     password: environment.REDIS_PASSWORD,
   });
 
-  const cacheProvider = createRedisCacheProvider({ client: redisClient });
+  const cacheProvider = createRedisCacheProvider({ logger, client: redisClient });
 
   const {
     configurationHandler,
+    configurationService,
     coreStrategy,
     directory,
     tenantHandler,
@@ -73,7 +76,14 @@ const initializeApp = async (): Promise<express.Application> => {
         description: 'Upstream targets for cache read through requests.',
       },
       combineConfiguration: function (config: ConfigurationValue, coreConfig: ConfigurationValue, tenantId: AdspId) {
-        return new CacheServiceConfiguration(logger, directory, cacheProvider, { ...config, ...coreConfig }, tenantId);
+        return new CacheServiceConfiguration(
+          logger,
+          directory,
+          tenantService,
+          cacheProvider,
+          { ...config, ...coreConfig },
+          tenantId
+        );
       },
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
@@ -81,6 +91,18 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      serviceConfigurations: [
+        {
+          serviceId,
+          configuration: {
+            targets: {
+              [accessApiId.toString()]: {
+                ttl: 8 * 60 * 60,
+              },
+            },
+          },
+        },
+      ],
     },
     { logger }
   );
@@ -100,6 +122,8 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(passport.initialize());
   app.use(traceHandler);
 
+  const queueService = await createCacheQueueService({ logger, ...environment });
+
   const anonymousTenantHandler = createAnonymousTenantHandler(tenantService);
   app.use(
     '/cache',
@@ -110,7 +134,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler
   );
 
-  applyCacheMiddleware(app);
+  applyCacheMiddleware(app, { logger, configurationService, queueService });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

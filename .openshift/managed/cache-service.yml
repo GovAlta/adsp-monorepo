@@ -144,7 +144,7 @@ objects:
                   memory: 100Mi
                 limits:
                   cpu: 200m
-                  memory: 1Gi
+                  memory: 4Gi
               securityContext:
                 capabilities: {}
                 privileged: false
