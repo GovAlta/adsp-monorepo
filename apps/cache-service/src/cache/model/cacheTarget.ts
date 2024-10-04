@@ -21,7 +21,7 @@ import { ServiceRoles } from '../roles';
 import { CachedResponse, InvalidationEvent, Target } from '../types';
 
 const DEFAULT_TTL = 15 * 60;
-const MAX_CACHED_CONTENT_LENGTH = 500 * 1024;
+const MAX_CACHED_CONTENT_LENGTH = 1024 * 1024;
 const MAPPED_HEADERS = ['Content-Type', 'Content-Encoding', 'Content-Length', 'Cache-Control', 'Content-Disposition'];
 const ADSP_CACHE_HEADER = 'adsp-cache-status';
 const TRACE_PARENT_HEADER = 'traceparent';
@@ -63,7 +63,17 @@ export class CacheTarget implements Target {
     }
 
     const [key, invalidateKey] = await this.getCacheKey(path, query, user);
-    const cached = await this.provider.get(key);
+    let cached;
+    try {
+      cached = await this.provider.get(key);
+    } catch (err) {
+      this.logger.warn(`Error encountered retrieving value from cache: ${err}`, err, {
+        context: 'CacheTarget',
+        tenant: this.tenantId.toString(),
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
+    }
+
     if (cached) {
       res
         .status(cached.status)
