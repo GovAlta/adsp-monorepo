@@ -1,5 +1,6 @@
 
 using Adsp.Platform.ScriptService.Services.Platform;
+using Microsoft.Extensions.FileProviders;
 using NLua;
 namespace Adsp.Platform.ScriptService.Services;
 interface IScriptFunctions
@@ -17,4 +18,7 @@ interface IScriptFunctions
   object? HttpGet(string url);
 
   DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason);
+
+  IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null);
+
 }

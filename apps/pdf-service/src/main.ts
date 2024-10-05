@@ -139,7 +139,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler
   );
 
-  const { repository, ...repositories } = createJobRepository(environment);
+  const { repository, ...repositories } = createJobRepository({ logger, ...environment });
   const queueService = await createPdfQueueService({ logger, ...environment });
   applyPdfMiddleware(app, {
     logger,

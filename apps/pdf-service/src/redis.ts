@@ -1,6 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { createClient, RedisClient } from 'redis';
 import { v4 as uuid } from 'uuid';
+import { Logger } from 'winston';
 import { FileResult, PdfJob, PdfJobRepository, PdfJobStatus } from './pdf';
 
 const EXPIRY_SECONDS = 60 * 60 * 24;
@@ -43,16 +44,20 @@ export class RedisJobRepository implements PdfJobRepository {
 }
 
 interface RedisProps {
+  logger: Logger;
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_PASSWORD: string;
 }
 
-export function createJobRepository({ REDIS_HOST, REDIS_PORT, REDIS_PASSWORD }: RedisProps): {
+export function createJobRepository({ REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, logger }: RedisProps): {
   repository: PdfJobRepository;
   isConnected: () => boolean;
 } {
   const credentials = REDIS_PASSWORD ? `:${REDIS_PASSWORD}@` : '';
   const client = createClient(`redis://${credentials}${REDIS_HOST}:${REDIS_PORT}/0`);
+  client.on('error', (err) => {
+    logger.error(`Redis client encountered error: ${err}`);
+  });
   return { repository: new RedisJobRepository(client), isConnected: () => client.connected };
 }

@@ -144,7 +144,7 @@ objects:
                   memory: 100Mi
                 limits:
                   cpu: 200m
-                  memory: 1Gi
+                  memory: 4Gi
               securityContext:
                 capabilities: {}
                 privileged: false
@@ -155,9 +155,9 @@ objects:
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           volumes:
-            - emptyDir:
-                medium: ""
-              name: cache-service-redis-data
+            - name: cache-service-redis-data
+              persistentVolumeClaim:
+                claimName: cache-service-redis
       triggers:
         - imageChangeParams:
             automatic: true

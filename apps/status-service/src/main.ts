@@ -10,7 +10,7 @@ import { environment, POD_TYPES } from './environments/environment';
 import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles } from './app';
 import * as cors from 'cors';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { configurationSchema } from './mongo/schema';
 import {
@@ -39,6 +39,8 @@ app.use(cors());
 app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
+
+instrumentAxios(logger);
 
 (async () => {
   const createRepoJob = createRepositories({ ...environment, logger });

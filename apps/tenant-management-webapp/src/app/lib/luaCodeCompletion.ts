@@ -28,6 +28,10 @@ export const functionSuggestion = [
     label: 'adsp.DispositionFormSubmission',
     insertText: 'adsp.DispositionFormSubmission',
   },
+  {
+    label: 'adsp.ReadValue',
+    insertText: 'adsp.ReadValue',
+  },
 ];
 
 export const functionSignature = [
@@ -160,6 +164,27 @@ export const functionSignature = [
       {
         label: 'reason',
         documentation: 'A string representing reason the form is to be set to this disposition state.',
+      },
+    ],
+  },
+  {
+    label: 'adsp.ReadValue(string namespace, string name, string top, string after)',
+    parameters: [
+      {
+        label: 'namespace',
+        documentation: 'Namespace of the value to lookup',
+      },
+      {
+        label: 'name',
+        documentation: 'Name of the value to lookup.',
+      },
+      {
+        label: 'top',
+        documentation: 'The number of records to look up',
+      },
+      {
+        label: 'after',
+        documentation: 'The records to to look up after.',
       },
     ],
   },

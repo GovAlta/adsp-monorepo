@@ -312,6 +312,7 @@ export const patchConfigurationRevision =
         if (updated.tenantId) {
           eventService.send(
             configurationUpdated(
+              apiId,
               user,
               updated.tenantId,
               updated.namespace,
