@@ -88,5 +88,9 @@ class Common {
   cancelButtonUnsavedChangesModal() {
     return cy.xpath('//goa-button[@data-testid="form-cancel-modal"]');
   }
+
+  loadMoreButton() {
+    return cy.xpath('//goa-button[text()="Load more"]');
+  }
 }
 export default Common;
