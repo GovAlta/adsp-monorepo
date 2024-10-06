@@ -1,7 +1,6 @@
+import { retry } from '@abgov/adsp-service-sdk';
 import { connect } from 'amqp-connection-manager';
 import { Logger } from 'winston';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const retry = require('promise-retry');
 import { AmqpDomainEventService } from './service';
 
 interface AmqpEventServiceProps {
@@ -13,8 +12,8 @@ interface AmqpEventServiceProps {
 }
 
 export const createEventService = async (props: AmqpEventServiceProps): Promise<AmqpDomainEventService> => {
-  const service = await retry(async (next, count) => {
-    props.logger.debug(`Try ${count}: connecting to RabbitMQ - ${props.amqpHost}...`, {
+  const service = await retry.execute(async ({ attempt }) => {
+    props.logger.debug(`Try ${attempt}: connecting to RabbitMQ - ${props.amqpHost}...`, {
       context: 'AmqpDomainEventService',
     });
 
@@ -26,8 +25,8 @@ export const createEventService = async (props: AmqpEventServiceProps): Promise<
 
       return service;
     } catch (err) {
-      props.logger.debug(`Try ${count} failed with error. ${err}`, { context: 'createEventService' });
-      next(err);
+      props.logger.debug(`Try ${attempt} failed with error. ${err}`, { context: 'createEventService' });
+      throw err;
     }
   });
 

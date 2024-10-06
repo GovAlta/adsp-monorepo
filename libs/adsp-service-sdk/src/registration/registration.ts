@@ -1,11 +1,9 @@
 import axios from 'axios';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const retry = require('promise-retry');
 import { Logger } from 'winston';
 import { ServiceRegistrar, ServiceRegistration, ServiceRole } from './index';
 import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
-import { AdspId, adspId } from '../utils';
+import { AdspId, adspId, retry } from '../utils';
 
 export class ServiceRegistrarImpl implements ServiceRegistrar {
   private readonly LOG_CONTEXT = { context: 'ServiceRegistration' };
@@ -163,12 +161,12 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
     const serviceUrl = await this.directory.getServiceUrl(configurationServiceId);
 
     try {
-      await retry(async (next, count) => {
+      await retry.execute(async ({ attempt }) => {
         try {
-          await this.#tryUpdateConfiguration(serviceUrl, count, serviceId, update);
+          await this.#tryUpdateConfiguration(serviceUrl, attempt, serviceId, update);
         } catch (err) {
-          this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
-          next(err);
+          this.logger.debug(`Try ${attempt} failed with error. ${err}`, this.LOG_CONTEXT);
+          throw err;
         }
       });
 

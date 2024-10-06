@@ -1,6 +1,6 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState, useRef } from 'react';
 import { RootState } from '@store/index';
-import { GoAButton, GoAFormItem, GoAFileUploadInput, GoAFileUploadCard } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getConfigurationDefinitions,
@@ -12,7 +12,7 @@ import {
 import { ConfigDefinition } from '@store/configuration/model';
 import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/validation/checkInput';
-import { ErrorStatusText } from '../styled-components';
+import { ErrorStatusText, Import } from '../styled-components';
 import JobList from './jobList';
 import { NoPaddingH2 } from '@components/AppHeader';
 
@@ -29,114 +29,95 @@ const exportSchema = {
 export const ConfigurationImport: FunctionComponent = () => {
   const imports = useSelector((state: RootState) => state.configuration.imports);
 
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [progressList, setProgressList] = useState<Record<string, number>>({});
-  const [selectedImportFile, setSelectedImportFile] = useState<string>('');
+  const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
+
+  const [selectedImportFile, setSelectedImportFile] = useState('');
   const [openImportModal, setOpenImportModal] = useState(false);
   const [jobsInUse, setJobsInUse] = useState(false);
-  const [importNameList, setImportNameList] = useState<string[]>([]);
-  const [importConfigJson, setImportConfigJson] = useState<ConfigDefinition | null>(null);
+  const [importNameList, setImportNameList] = useState([]);
+  const [importConfigJson, setImportConfigJson] = useState<ConfigDefinition>(null);
+
   const [errorsStatus, setErrorsStatus] = useState<string>('');
   const dispatch = useDispatch();
 
   const onUploadSubmit = () => {
     setErrorsStatus('');
+    //Open a modal to list impact configuration
     const jsonValidationFormat = isValidJSONCheck()(selectedImportFile);
+
     if (jsonValidationFormat !== '') {
       setErrorsStatus('Invalid Json format! please check!');
       setSelectedImportFile('');
       return;
     }
-
     const jsonSchemaValidation = jsonSchemaCheck(exportSchema, selectedImportFile);
     if (!jsonSchemaValidation) {
-      setErrorsStatus('The json file does not match the Configuration schema');
+      setErrorsStatus('The json file not match Configuration schema');
       setSelectedImportFile('');
       return;
     }
-
-    const configList: string[] = [];
+    const configList = [];
     const importConfig: ConfigDefinition = JSON.parse(selectedImportFile);
     const configKeys = Object.keys(importConfig);
 
-    for (const config of configKeys) {
-      const configItems = Object.keys(importConfig[config]);
-      if (configItems.length > 0) {
-        for (const item of configItems) {
-          if (importConfig[config][item]?.configuration) {
-            configList.push(`${config}: ${item}`);
+    for (const config in configKeys) {
+      const configItems = Object.keys(importConfig[configKeys[config]]);
+      if (configItems && configItems.length > 0) {
+        for (const item in configItems) {
+          if (
+            importConfig[configKeys[config]][configItems[item]] !== null &&
+            importConfig[configKeys[config]][configItems[item]].configuration
+          ) {
+            configList.push(`${configKeys[config]}: ${configItems[item]}`);
           }
         }
       }
     }
-
     if (configList.length === 0) {
-      setErrorsStatus('The json file does not match the Configuration schema');
+      setErrorsStatus('The json file not match Configuration schema');
       return;
     }
-
     dispatch(resetReplaceConfigurationListAction());
     setImportConfigJson(importConfig);
     setImportNameList(configList);
     setOpenImportModal(true);
   };
 
-  const uploadFile = (file: File) => {
-    const reader = new FileReader();
-    setUploadedFile(null);
-    setProgressList({});
-    setProgressList({ [file.name]: 0 });
-    reader.onloadstart = () => {
-      setProgressList({ [file.name]: 20 });
-    };
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      const result = e.target?.result as string;
-      if (result) {
-        setSelectedImportFile(result);
-      }
-      setErrorsStatus('');
-      setProgressList({ [file.name]: 100 });
-    };
-    reader.onerror = () => {
-      setErrorsStatus('Error reading file');
-      setProgressList({ [file.name]: 0 });
-    };
+  const onImportChange = (e) => {
+    const fileReader = new FileReader();
+    fileReader.readAsText(e.target.files[0], 'UTF-8');
+    fileReader.onload = (e) => {
+      const inputJson = e.target.result.toString();
 
-    reader.readAsText(file);
-    setUploadedFile(file);
-  };
-
-  const deleteFile = () => {
-    setUploadedFile(null);
-    setProgressList({});
+      setSelectedImportFile(inputJson);
+    };
     setErrorsStatus('');
+    setImportNameList([]);
+    dispatch(resetReplaceConfigurationListAction());
   };
-
   const onImportCancel = () => {
     setOpenImportModal(false);
   };
-
   const onImportConfirm = () => {
     setOpenImportModal(false);
     setSelectedImportFile('');
     setJobsInUse(true);
+
     dispatch(resetImportsListAction());
 
-    if (importConfigJson) {
-      for (const config in importConfigJson) {
-        for (const name in importConfigJson[config]) {
-          if (importConfigJson[config][name]?.configuration) {
-            dispatch(
-              replaceConfigurationDataAction(
-                {
-                  namespace: config,
-                  name: name,
-                  configuration: importConfigJson[config][name].configuration,
-                },
-                true
-              )
-            );
-          }
+    for (const config in importConfigJson) {
+      for (const name in importConfigJson[config]) {
+        if (importConfigJson[config][name] !== null && importConfigJson[config][name].configuration) {
+          dispatch(
+            replaceConfigurationDataAction(
+              {
+                namespace: config,
+                name: name,
+                configuration: importConfigJson[config][name].configuration,
+              },
+              true
+            )
+          );
         }
       }
     }
@@ -152,60 +133,74 @@ export const ConfigurationImport: FunctionComponent = () => {
 
   return (
     <section>
-      <div>
-        <NoPaddingH2>Import</NoPaddingH2>
-        <p className="pb3">
-          As a tenant admin, you can import configuration from a JSON file, so that you can apply previously exported
-          configuration.
-        </p>
+      {
+        <div>
+          <NoPaddingH2>Import</NoPaddingH2>
+          <p className="pb3">
+            As a tenant admin, you can import configuration from JSON file, so that you can apply previously exported
+            configuration.
+          </p>
 
-        <GoAFormItem label="Upload a file">
-          <GoAFileUploadInput
-            onSelectFile={uploadFile}
-            variant="button"
-            maxFileSize="100MB"
-            data-testid="import-input"
-          />
-          {uploadedFile && (
-            <GoAFileUploadCard
-              key={uploadedFile.name}
-              filename={uploadedFile.name}
-              type={uploadedFile.type}
-              size={uploadedFile.size}
-              progress={progressList[uploadedFile.name]}
-              onDelete={deleteFile}
-              onCancel={deleteFile}
-              data-testid="import-input-button"
-            />
+          <GoAFormItem label="">
+            <input
+              id="file-uploads"
+              name="inputJsonFile"
+              type="file"
+              onChange={onImportChange}
+              aria-label="file import"
+              ref={fileName}
+              accept="application/JSON"
+              data-testid="import-input"
+              style={{ display: 'none' }}
+              onClick={(event: React.MouseEvent<HTMLInputElement, MouseEvent>) => {
+                const element = event.target as HTMLInputElement;
+                element.value = '';
+              }}
+            />{' '}
+          </GoAFormItem>
+          <p>
+            <div className="row-flex">
+              <button
+                className="choose-button"
+                data-testid="import-input-button"
+                onClick={() => fileName.current.click()}
+              >
+                {' Choose a file'}
+              </button>
+
+              <div className="margin-left">
+                {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
+              </div>
+            </div>
+          </p>
+
+          <GoAButton
+            type="primary"
+            onClick={onUploadSubmit}
+            disabled={selectedImportFile.length === 0}
+            testId="import-input-button"
+          >
+            Import
+          </GoAButton>
+          <br />
+          {errorsStatus && (
+            <ErrorStatusText>
+              {errorsStatus}
+              <br />
+            </ErrorStatusText>
           )}
-        </GoAFormItem>
+          <section>{jobsInUse && <JobList />}</section>
 
-        <GoAButton
-          type="primary"
-          onClick={onUploadSubmit}
-          disabled={selectedImportFile.length === 0}
-          testId="import-input-button"
-        >
-          Import
-        </GoAButton>
-        <br />
-        {errorsStatus && (
-          <ErrorStatusText>
-            {errorsStatus}
-            <br />
-          </ErrorStatusText>
-        )}
+          <br />
+        </div>
+      }
 
-        <section>{jobsInUse && <JobList />}</section>
-        <br />
-
-        <ImportModal
-          isOpen={openImportModal}
-          importArray={importNameList}
-          onCancel={onImportCancel}
-          onConfirm={onImportConfirm}
-        />
-      </div>
+      <ImportModal
+        isOpen={openImportModal}
+        importArray={importNameList}
+        onCancel={onImportCancel}
+        onConfirm={onImportConfirm}
+      />
     </section>
   );
 };

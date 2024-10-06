@@ -1,11 +1,9 @@
 import axios from 'axios';
 import * as NodeCache from 'node-cache';
 import type { Logger } from 'winston';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const retry = require('promise-retry');
 import type { TokenProvider } from '../access';
 import type { ServiceDirectory } from '../directory';
-import { AdspId, LimitToOne, adspId, assertAdspId } from '../utils';
+import { AdspId, LimitToOne, adspId, assertAdspId, retry } from '../utils';
 
 export interface Tenant {
   id: AdspId;
@@ -91,12 +89,12 @@ export class TenantServiceImpl implements TenantService {
     const tenantsUrl = new URL('v2/tenants', tenantServiceUrl);
 
     try {
-      const tenants: Tenant[] = await retry(async (next, count) => {
+      const tenants: Tenant[] = await retry.execute(async ({ attempt }) => {
         try {
-          return await this.#tryRetrieveTenants(tenantsUrl, count, criteria);
+          return await this.#tryRetrieveTenants(tenantsUrl, attempt, criteria);
         } catch (err) {
-          this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
-          next(err);
+          this.logger.debug(`Try ${attempt} failed with error. ${err}`, this.LOG_CONTEXT);
+          throw err;
         }
       });
 

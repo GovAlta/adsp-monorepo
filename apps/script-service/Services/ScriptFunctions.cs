@@ -183,4 +183,25 @@ internal class ScriptFunctions : IScriptFunctions
     var result = _client.PostAsync<TaskCreationResult>(request).Result;
     return result?.Id;
   }
+
+  public virtual IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null)
+  {
+    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
+    var requestUrl = new Uri(servicesUrl, $"/value/v1/{@namespace}/values/{name}");
+    var token = _getToken().Result;
+
+    var request = new RestRequest(requestUrl, Method.Get);
+    request.AddQueryParameter("top", top);
+    request.AddQueryParameter("after", after);
+
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
+
+    // Using generic IDictionary because the value service will return different key values and we
+    // can't have specific json property names in our own class.
+    var result = _client.GetAsync<IDictionary<string, object>>(request).Result;
+
+    return result;
+
+  }
 }

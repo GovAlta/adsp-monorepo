@@ -1,7 +1,8 @@
-import { adspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
+import { adspId, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { CacheServiceConfiguration } from './configuration';
 import { CacheProvider } from '../cacheProvider';
+import { AccessCacheTarget, CacheTarget } from '../model';
 
 describe('CacheServiceConfiguration', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -20,12 +21,18 @@ describe('CacheServiceConfiguration', () => {
   const providerMock = {
     get: jest.fn(),
     set: jest.fn(),
+    del: jest.fn(),
+  };
+
+  const tenantServiceMock = {
+    getTenant: jest.fn(() => Promise.resolve({ id: tenantId, realm: 'test' })),
   };
 
   it('can be created', () => {
     const configuration = new CacheServiceConfiguration(
       logger,
       directoryMock as unknown as ServiceDirectory,
+      tenantServiceMock as unknown as TenantService,
       providerMock as CacheProvider,
       { targets: {} },
       tenantId
@@ -38,6 +45,7 @@ describe('CacheServiceConfiguration', () => {
     const configuration = new CacheServiceConfiguration(
       logger,
       directoryMock as unknown as ServiceDirectory,
+      tenantServiceMock as unknown as TenantService,
       providerMock as CacheProvider,
       {
         targets: {
@@ -56,6 +64,7 @@ describe('CacheServiceConfiguration', () => {
     const configuration = new CacheServiceConfiguration(
       logger,
       directoryMock as unknown as ServiceDirectory,
+      tenantServiceMock as unknown as TenantService,
       providerMock as CacheProvider,
       null,
       tenantId
@@ -68,6 +77,7 @@ describe('CacheServiceConfiguration', () => {
     const configuration = new CacheServiceConfiguration(
       logger,
       directoryMock as unknown as ServiceDirectory,
+      tenantServiceMock as unknown as TenantService,
       providerMock as CacheProvider,
       {
         targets: {
@@ -93,6 +103,7 @@ describe('CacheServiceConfiguration', () => {
     const configuration = new CacheServiceConfiguration(
       logger,
       directoryMock as unknown as ServiceDirectory,
+      tenantServiceMock as unknown as TenantService,
       providerMock as CacheProvider,
       {
         targets: {
@@ -105,5 +116,49 @@ describe('CacheServiceConfiguration', () => {
     const target = configuration.getTarget('urn:ads:platform:file-service');
     expect(target).toBeTruthy();
     expect(target.ttl).toBe(15 * 60);
+  });
+
+  it('can get targets', () => {
+    const configuration = new CacheServiceConfiguration(
+      logger,
+      directoryMock as unknown as ServiceDirectory,
+      tenantServiceMock as unknown as TenantService,
+      providerMock as CacheProvider,
+      {
+        targets: {
+          'urn:ads:platform:file-service': {
+            ttl: 300,
+          },
+          'urn:ads:platform:pdf-service': {},
+        },
+      },
+      tenantId
+    );
+
+    const targets = configuration.getTargets();
+    expect(targets.length).toBe(2);
+    expect(targets).toEqual(expect.arrayContaining([expect.any(CacheTarget), expect.any(CacheTarget)]));
+  });
+
+  it('can get access target', () => {
+    const configuration = new CacheServiceConfiguration(
+      logger,
+      directoryMock as unknown as ServiceDirectory,
+      tenantServiceMock as unknown as TenantService,
+      providerMock as CacheProvider,
+      {
+        targets: {
+          'urn:ads:platform:file-service': {
+            ttl: 300,
+          },
+          'urn:ads:platform:access-service:v1': {},
+        },
+      },
+      tenantId
+    );
+
+    const target = configuration.getTarget('urn:ads:platform:access-service:v1');
+    expect(target).toBeTruthy();
+    expect(target).toEqual(expect.any(AccessCacheTarget));
   });
 });

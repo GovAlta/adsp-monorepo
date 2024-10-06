@@ -95,8 +95,26 @@ async function initializeApp(): Promise<express.Application> {
           serviceId: adspId`urn:ads:platform:cache-service`,
           configuration: {
             targets: {
-              [`${serviceId}`]: { ttl: 60 * 60 },
-              [`${serviceId}:v1`]: { ttl: 60 * 60 },
+              [`${serviceId}`]: {
+                ttl: 8 * 60 * 60,
+                invalidationEvents: [
+                  {
+                    namespace: serviceId.service,
+                    name: FileDeletedDefinition.name,
+                    resourceIdPath: 'file.urn',
+                  },
+                ],
+              },
+              [`${serviceId}:v1`]: {
+                ttl: 8 * 60 * 60,
+                invalidationEvents: [
+                  {
+                    namespace: serviceId.service,
+                    name: FileDeletedDefinition.name,
+                    resourceIdPath: 'file.urn',
+                  },
+                ],
+              },
             },
           },
         },

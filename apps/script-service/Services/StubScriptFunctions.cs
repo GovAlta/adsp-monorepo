@@ -33,6 +33,12 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return "simulated success";
   }
 
+
+  public override IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null)
+  {
+    return null;
+  }
+
   public override string? CreateTask(
     string queueNamespace, string queueName, string name,
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
