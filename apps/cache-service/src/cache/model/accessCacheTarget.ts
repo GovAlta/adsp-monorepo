@@ -72,8 +72,9 @@ export class AccessCacheTarget extends CacheTarget {
           tenant: this.tenantId.toString(),
         });
 
-        const { resourceType, resourcePath } = event.payload;
-        if (resourcePath) {
+        const { resourceType, resourcePath: upstreamResourcePath } = event.payload;
+        if (upstreamResourcePath) {
+          const resourcePath = path.join(this.basePath, upstreamResourcePath);
           this.logger.debug(
             `Invalidating cache entry for path '${resourcePath}' on admin event ${namespace}:${name}...`,
             {
@@ -82,7 +83,7 @@ export class AccessCacheTarget extends CacheTarget {
             }
           );
 
-          const [_key, invalidateKey] = await this.getCacheKey(path.join(this.basePath, resourcePath));
+          const [_key, invalidateKey] = await this.getCacheKey(resourcePath);
           const deleted = await this.provider.del(invalidateKey);
 
           let collectionResource;
