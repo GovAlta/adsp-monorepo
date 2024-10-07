@@ -174,6 +174,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                   type.addressPath = null;
                 }
                 onSave(type);
+                setAddressPathChanged(false);
               }}
             >
               Save
@@ -344,7 +345,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 width="60%"
                 onChange={(_, value) => {
                   setType({ ...type, addressPath: value });
-                  setAddressPathChanged(true);
+                  if (value !== initialValue?.addressPath) {
+                    setAddressPathChanged(true);
+                  }
                 }}
               />
             </GoAFormItem>
