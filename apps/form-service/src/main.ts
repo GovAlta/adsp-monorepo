@@ -32,7 +32,6 @@ import {
   FormStatusSetToDraftDefinition,
   SubmissionDispositionedDefinition,
   GeneratedSupportingDocFileType,
-  GeneratedAnonymousSupportingDocFileType,
   SUBMITTED_FORM,
   SubmittedFormPdfTemplate,
   SubmittedFormPdfUpdatesStream,
@@ -116,7 +115,7 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Tester role for form service that allows access to forms without open intakes.',
         },
       ],
-      fileTypes: [GeneratedSupportingDocFileType, GeneratedAnonymousSupportingDocFileType],
+      fileTypes: [GeneratedSupportingDocFileType],
       events: [
         FormCreatedDefinition,
         FormDeletedDefinition,
