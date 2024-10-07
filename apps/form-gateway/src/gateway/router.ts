@@ -24,7 +24,11 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
           `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
         );
 
-        if (!data.success || !['submit_form'].includes(data.action) || data.score < SCORE_THRESHOLD) {
+        if (
+          !data.success ||
+          !['submit_form', 'submit_form_supporting_doc'].includes(data.action) ||
+          data.score < SCORE_THRESHOLD
+        ) {
           logger.warn(
             `Captcha verification failed for form gateway with result '${data.success}' on action '${data.action}' with score ${data.score}.`,
             { context: 'GatewayRouter' }
@@ -201,6 +205,34 @@ export function downloadFile(
   };
 }
 
+export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const fileResourceUrl = new URL(`/file/v1/files`, fileApiUrl);
+
+      const token = await tokenProvider.getAccessToken();
+
+      logger.debug(`Submitting form supporting document from anonymous user`, {
+        context: 'GatewayRouter',
+      });
+
+      const { data: responseData } = await axios.post<{ id: string }>(
+        fileResourceUrl.href,
+        { ...req.body },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      res.send(responseData);
+      logger.debug(`Submitted form supporting document from anonymous user`, {
+        context: 'GatewayRouter',
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function submitSimpleForm(
   logger: Logger,
   formApiUrl: URL,
@@ -278,6 +310,7 @@ export function createGatewayRouter({
     ),
     downloadFile(logger, fileApiUrl, formApiUrl, tokenProvider)
   );
+
   router.get(
     '/file/v1/file',
     assertAuthenticatedHandler,
@@ -289,6 +322,12 @@ export function createGatewayRouter({
         })
     ),
     findFile(logger, fileApiUrl, formApiUrl, tokenProvider)
+  );
+
+  router.post(
+    '/files',
+    verifyCaptcha(logger, RECAPTCHA_SECRET, 0.7),
+    uploadAnonymousFile(logger, fileApiUrl, tokenProvider)
   );
 
   router.post(
