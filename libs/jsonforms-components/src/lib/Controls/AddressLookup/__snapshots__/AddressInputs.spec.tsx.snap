@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AddressInputs matches snapshot 1`] = `
+<DocumentFragment>
+  <goa-form-item
+    label=""
+  >
+    <goa-input
+      arialabel="address-form-address2"
+      data-testid="address-form-address2"
+      handletrailingiconclick="false"
+      name="addressLine2"
+      placeholder="Unit number, suite, apartment"
+      value="Apt 4"
+      variant="goa"
+      width="100%"
+    />
+  </goa-form-item>
+  <goa-grid
+    gap="m"
+    minchildwidth="35ch"
+  >
+    <goa-form-item
+      label="City"
+    >
+      <goa-input
+        arialabel="address-form-city"
+        data-testid="address-form-city"
+        handletrailingiconclick="false"
+        name="city"
+        value="Edmonton"
+        variant="goa"
+      />
+    </goa-form-item>
+    <goa-form-item
+      label="Postal Code"
+    >
+      <goa-input
+        arialabel="address-form-postal-code"
+        data-testid="address-form-postal-code"
+        handletrailingiconclick="false"
+        name="postalCode"
+        value="T5T 1V4"
+        variant="goa"
+      />
+    </goa-form-item>
+    <goa-form-item
+      label="Province"
+    >
+      <goa-input
+        arialabel="address-form-province"
+        data-testid="address-form-province"
+        disabled="true"
+        handletrailingiconclick="false"
+        name="province"
+        value="AB"
+        variant="goa"
+      />
+    </goa-form-item>
+    <goa-form-item
+      label="Country"
+    >
+      <goa-input
+        arialabel="address-form-country"
+        data-testid="address-form-country"
+        disabled="true"
+        handletrailingiconclick="false"
+        name="country"
+        value="CAN"
+        variant="goa"
+      />
+    </goa-form-item>
+  </goa-grid>
+</DocumentFragment>
+`;

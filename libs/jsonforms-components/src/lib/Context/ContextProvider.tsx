@@ -16,6 +16,7 @@ export interface enumerators {
   getFormContextData: (key: string) => Record<string, any>;
   getAllFormContextData: () => AllData;
   isFormSubmitted: boolean;
+  formUrl: string;
 }
 
 interface FileManagement {
@@ -38,6 +39,7 @@ type Props = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  formUrl?: string | null | undefined;
 };
 
 export class ContextProviderClass {
@@ -66,6 +68,7 @@ export class ContextProviderClass {
     getFormContextData: (key: string) => Record<string, any> | undefined;
     getAllFormContextData: () => AllData;
     isFormSubmitted?: boolean;
+    formUrl: string | null | undefined;
   };
 
   addFormContextData = (key: string, data: Record<string, unknown> | unknown[]) => {
@@ -104,6 +107,7 @@ export class ContextProviderClass {
       addFormContextData: this.addFormContextData,
       getFormContextData: this.getFormContextData,
       getAllFormContextData: this.getAllFormContextData,
+      formUrl: this.getFormUrl(),
     };
 
     this.selfProps = {};
@@ -138,6 +142,9 @@ export class ContextProviderClass {
     if (!props.children) {
       return null;
     }
+    if (props.formUrl) {
+      this.baseEnumerator.formUrl = props.formUrl;
+    }
     this.baseEnumerator.isFormSubmitted = props.isFormSubmitted ?? false;
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
   };
@@ -145,7 +152,9 @@ export class ContextProviderClass {
   getContextProvider = () => {
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
   };
-
+  getFormUrl = () => {
+    return this.selfProps?.formUrl;
+  };
   getAxiosInterceptorConfig = (axios: AxiosStatic): [number, AxiosStatic] => {
     const requestId = axios.interceptors.request.use((req) => {
       if (req.data === undefined) {

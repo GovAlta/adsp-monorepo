@@ -212,6 +212,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+  const formServiceApiUrl = useSelector((state: RootState) => state.config?.serviceUrls?.formServiceApiUrl);
 
   const [activeIndex] = useState<number>(0);
   const [data, setData] = useState<unknown>();
@@ -792,6 +793,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       downloadFile: downloadFile,
                       deleteFile: deleteFile,
                     }}
+                    formUrl={formServiceApiUrl}
                   >
                     <GoAFormItem error={schemaError} label="">
                       <JSONFormPreviewer
