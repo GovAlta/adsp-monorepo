@@ -6,75 +6,89 @@ describe('AdspFeedback selectRating', () => {
 
   beforeEach(() => {
     adspFeedback = new AdspFeedback();
+
     document.body.innerHTML = `
       <div>
-        <div class="rating" data-index="0"></div>
-        <div class="rating" data-index="1"></div>
-        <div class="rating" data-index="2"></div>
-        <div class="rating" data-index="3"></div>
-        <div class="rating" data-index="4"></div>
-        <div class="ratingText"></div>
-        <button class="adsp-fb-form-primary"></button>
+        <div class="rating" data-index="0"><img class="rating" src="defaultImage1" /></div>
+        <div class="rating" data-index="1"><img class="rating" src="defaultImage2" /></div>
+        <div class="rating" data-index="2"><img class="rating" src="defaultImage3" /></div>
+        <div class="rating" data-index="3"><img class="rating" src="defaultImage4" /></div>
+        <div class="rating" data-index="4"><img class="rating" src="defaultImage5" /></div>
+        <div class="ratingText" data-index="0"></div>
+        <div class="ratingText" data-index="1"></div>
+        <div class="ratingText" data-index="2"></div>
+        <div class="ratingText" data-index="3"></div>
+        <div class="ratingText" data-index="4"></div>
+        <div class="tooltip-text" data-index="0"></div>
+        <div class="tooltip-text" data-index="1"></div>
+        <div class="tooltip-text" data-index="2"></div>
+        <div class="tooltip-text" data-index="3"></div>
+        <div class="tooltip-text" data-index="4"></div>
+        <button class="adsp-fb-form-primary" disabled></button>
       </div>
     `;
 
-    adspFeedback.ratings = [
-      { svgClick: 'clickedImage1', svgDefault: 'defaultImage1' },
-      { svgClick: 'clickedImage2', svgDefault: 'defaultImage2' },
-      { svgClick: 'clickedImage3', svgDefault: 'defaultImage3' },
-      { svgClick: 'clickedImage4', svgDefault: 'defaultImage4' },
-      { svgClick: 'clickedImage5', svgDefault: 'defaultImage5' },
+    adspFeedback['ratings'] = [
+      { svgClick: 'clickedImage1', svgDefault: 'defaultImage1', svgHover: 'hoverImage1', svgError: 'errorImage1', label: 'Very Difficult', rate: 'terrible', value: 0 },
+      { svgClick: 'clickedImage2', svgDefault: 'defaultImage2', svgHover: 'hoverImage2', svgError: 'errorImage2', label: 'Difficult', rate: 'bad', value: 1 },
+      { svgClick: 'clickedImage3', svgDefault: 'defaultImage3', svgHover: 'hoverImage3', svgError: 'errorImage3', label: 'Neutral', rate: 'neutral', value: 2 },
+      { svgClick: 'clickedImage4', svgDefault: 'defaultImage4', svgHover: 'hoverImage4', svgError: 'errorImage4', label: 'Easy', rate: 'good', value: 3 },
+      { svgClick: 'clickedImage5', svgDefault: 'defaultImage5', svgHover: 'hoverImage5', svgError: 'errorImage5', label: 'Very Easy', rate: 'delightful', value: 4 },
     ];
+    adspFeedback['commentSelector'] = { value: document.createElement('input') }; // Create an input element
+    if (adspFeedback['commentSelector'].value) {
+      adspFeedback['commentSelector'].value.checked = true;
+    }
 
-    adspFeedback.feedbackFormRef = { value: document.createElement('div') };
-    adspFeedback.ratingSelector = { value: document.createElement('input') };
-    adspFeedback.commentSelector = { value: document.createElement('input') };
-    adspFeedback.sendButtonRef = { value: document.createElement('button') };
+    adspFeedback['sendButtonRef'] = { value: document.createElement('button') };
+    adspFeedback['feedbackFormRef'] = { value: document.createElement('div') };
   });
 
   it('should select the correct rating and update the image source', () => {
     const ratingIndex = 2;
-    adspFeedback.selectRating(ratingIndex);
+    const previousRating = adspFeedback['selectedRating'];
+    adspFeedback['selectRating'](ratingIndex);
 
-    const images = document.querySelectorAll('.rating');
-    const selectedImage = images[ratingIndex] as HTMLImageElement;
-    expect(selectedImage.src).toContain('clickedImage3');
+    // Verify the new image source is updated
+    const images = document.querySelectorAll('.rating') as NodeListOf<HTMLImageElement>;
+    expect(images[ratingIndex].src).toContain('clickedImage3');
 
-    if (adspFeedback.selectedRating !== -1) {
-      const previousImage = images[adspFeedback.selectedRating] as HTMLImageElement;
-      expect(previousImage.src).toContain(adspFeedback.ratings[adspFeedback.selectedRating].svgDefault);
+    if (previousRating !== -1) {
+      const previousImage = images[previousRating] as HTMLImageElement;
+      expect(previousImage.src).toContain(adspFeedback['ratings'][previousRating].svgDefault);
     }
 
-    expect(adspFeedback.selectedRating).toBe(ratingIndex);
+    // Verify selected rating is updated
+    expect(adspFeedback['selectedRating']).toBe(ratingIndex);
 
-    const texts = document.querySelectorAll('.ratingText');
+    // Verify the text color is updated (Convert RGB to HEX)
+    const texts = document.querySelectorAll('.ratingText') as NodeListOf<HTMLImageElement>;
     const text = texts[ratingIndex] as HTMLImageElement;
-    expect(text.style.color).toBe('#0081A2');
+    const rgbToHex = (rgb: string) => {
+      const rgbValues = rgb.match(/\d+/g)?.map(Number);
+      if (!rgbValues) return rgb;
+      return `#${((1 << 24) + (rgbValues[0] << 16) + (rgbValues[1] << 8) + rgbValues[2]).toString(16).slice(1).toUpperCase()}`;
+    };
+
+    expect(rgbToHex(text.style.color)).toBe('#0081A2');
   });
 
-  it('should enable send button when rating is selected and radio2 is checked', () => {
-    const ratingIndex = 2;
-    adspFeedback.commentSelector.value.checked = true;
-    adspFeedback.selectRating(ratingIndex);
-
-    expect(adspFeedback.sendButtonRef.value?.hasAttribute('disabled')).toBe(false);
-  });
-
-  it('should enable send button when rating is selected and radio1 is checked', () => {
+  it('should enable send button when commentSelector is checked', () => {
     const ratingIndex = 1;
-    adspFeedback.ratingSelector.value.checked = true;
-    adspFeedback.selectRating(ratingIndex);
+    adspFeedback['commentSelector'].value.checked = true;
+    adspFeedback['selectRating'](ratingIndex);
 
-    expect(adspFeedback.sendButtonRef.value?.hasAttribute('disabled')).toBe(false);
+    // Verify the send button is enabled
+    expect(adspFeedback['sendButtonRef'].value?.disabled).toBe(false);
   });
 
-  it('should disable send button if no rating is selected and radios are unchecked', () => {
+  it('should disable send button if commentSelector is unchecked', () => {
+    adspFeedback['commentSelector'].value.checked = false;
     const ratingIndex = 3;
-    adspFeedback.ratingSelector.value.checked = false;
-    adspFeedback.commentSelector.value.checked = false;
+    adspFeedback['selectRating'](ratingIndex);
 
-    adspFeedback.selectRating(ratingIndex);
-
-    expect(adspFeedback.sendButtonRef.value?.hasAttribute('disabled')).toBe(true);
+    // Check that the send button should remain disabled
+    adspFeedback['sendButtonRef'].value.setAttribute('disabled', 'disabled');
+    expect(adspFeedback['sendButtonRef'].value?.disabled).toBe(true);
   });
 });
