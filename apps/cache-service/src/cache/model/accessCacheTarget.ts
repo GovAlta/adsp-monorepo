@@ -21,7 +21,6 @@ export class AccessCacheTarget extends CacheTarget {
   }
 
   private basePath: string;
-  private setKeyExpressions: RegExp[] = [];
 
   constructor(
     logger: Logger,
@@ -75,33 +74,50 @@ export class AccessCacheTarget extends CacheTarget {
 
         const { resourceType, resourcePath } = event.payload;
         if (resourcePath) {
+          this.logger.debug(
+            `Invalidating cache entry for path '${resourcePath}' on admin event ${namespace}:${name}...`,
+            {
+              context: 'AccessCacheTarget',
+              tenant: this.tenantId.toString(),
+            }
+          );
+
           const [_key, invalidateKey] = await this.getCacheKey(path.join(this.basePath, resourcePath));
           const deleted = await this.provider.del(invalidateKey);
 
-          let collectionResourcePath;
+          let collectionResource;
           switch (resourceType) {
             case 'CLIENT':
-              collectionResourcePath = 'clients';
+              collectionResource = 'clients';
               break;
             case 'GROUP':
-              collectionResourcePath = 'groups';
+              collectionResource = 'groups';
               break;
             case 'REALM_ROLE':
-              collectionResourcePath = 'roles';
+              collectionResource = 'roles';
               break;
             case 'CLIENT_ROLE':
-              collectionResourcePath = 'clients';
+              collectionResource = 'clients';
               break;
             case 'USER':
-              collectionResourcePath = 'users';
+              collectionResource = 'users';
               break;
             default:
               break;
           }
 
           let collectionDeleted = false;
-          if (collectionResourcePath) {
-            const [_key, invalidateKey] = await this.getCacheKey(path.join(this.basePath, collectionResourcePath));
+          if (collectionResource) {
+            const collectionResourcePath = path.join(this.basePath, collectionResource);
+            this.logger.debug(
+              `Invalidating cache entry for collection path '${collectionResourcePath}' on admin event ${namespace}:${name}...`,
+              {
+                context: 'AccessCacheTarget',
+                tenant: this.tenantId.toString(),
+              }
+            );
+
+            const [_key, invalidateKey] = await this.getCacheKey(collectionResourcePath);
             collectionDeleted = await this.provider.del(invalidateKey);
           }
 
@@ -130,11 +146,5 @@ export class AccessCacheTarget extends CacheTarget {
 
   private setBasePath(tenant: Tenant) {
     this.basePath = `/cache/${this.serviceId}/${tenant.realm}/`;
-
-    this.setKeyExpressions.push(
-      new RegExp(`${this.basePath.replace('/', '\\/')}users(?:\\/([a-fA-F0-9-]{36}))?`),
-      new RegExp(`${this.basePath.replace('/', '\\/')}groups(?:\\/([a-fA-F0-9-]{36}))?`),
-      new RegExp(`${this.basePath.replace('/', '\\/')}roles(?:\\/([a-fA-F0-9-]{36}))?`)
-    );
   }
 }
