@@ -30,7 +30,7 @@ For each request, the cache service generically generates a cache key based on t
 The cache user context only includes a subset of values from the request access token including `sub`, `aud`, and roles related claims based on the default roles mapper. This allows cache entries to be reused across different access tokens, different relying party clients `azp`, and if basic profile attributes like name and email change. However, this means that non-RBAC based permission schemes will not generally work correctly with user context cache entries.
 
 ### Cache invalidation
-The cache key is a digest of the context values and cache service does not generally understand the semantic meaning of values (e.g. if an element of the path is a unique identifier of a domain entity). Consequently cache invalidation of specific entries using domain identifiers is not possible. The only supported mechanism for cache invalidation is through time based expiry using a Time to Live (TTL).
+Cache invalidation is supported using a configurable TTL and via invalidation events. The cache key is a digest of the request values and cache service does not generally understand the semantic meaning of values (e.g. if an element of the path is a unique identifier of a domain entity). However, the cache service also includes the cache key in an invalidation context set, which unlike the cache key does not include the query and user context. Domain events that include the URN of an affected resource can be used to invalidate the set associated with that resource path. Note that the resource URN must be resolvable by the [directory](directory-service.md).
 
 ### Client gzip support
 Cache service makes upstream requests with `Accept-Encoding` header value of `gzip` and will cache the response content in its compressed form if the upstream server supports `gzip`. It will not decompress the content for clients, and so it will reject requests where `Accept-Encoding` indicates client does not accept `gzip`.
@@ -39,6 +39,8 @@ Cache service makes upstream requests with `Accept-Encoding` header value of `gz
 ### Target
 Targets are upstream services and APIs that cache service can provide read-through requests to. This configuration is a whitelist that restricts the upstream resources available through the cache service API. Targets are configured as service or API URNs and must be registered in [directory service](directory-service.md), and an associated TTL can be set. Targets are configured in the [configuration service](configuration-service.md) under the `platform:cache-service` namespace and name.
 
+### Access target
+Cache service includes a special target for the [access service](access-service.md) admin API at `urn:ads:platform:access-service:v1`. This target is pre-configured for read-through to the admin API, and includes specific invalidation logic based on admin events. Note invalidation requires that the `adsp-event-listener` must be enabled in the tenant realm so that admin events are signaled via the [event service](event-service.md).
 
 ## Code examples
 ### Download file through cache
