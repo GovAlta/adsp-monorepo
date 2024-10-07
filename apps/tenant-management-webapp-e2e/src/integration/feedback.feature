@@ -92,7 +92,7 @@ Feature: Feedback
     When the user re-load the page and wait "5" seconds
     Then the user "views" the Feedback badge
 
-  # TEST DATA: https://adsp- site should have more than 10 feedback record
+  # TEST DATA: https://adsp- site should have more than 10 feedback records
   @TEST_CS-3210 @REQ_CS-3021 @regression
   Scenario: As a tenant admin, I can see feedback sent regarding my sites, so I can review user experience and how to improve my site
     Given a tenant admin user is on Feedback service Feedback page
