@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 // This is for the Express type declarations;
-import * as _ignored from './index';
+import './index';
 import { adspId } from '../utils';
 import { createConfigurationHandler, createTenantConfigurationHandler } from './configurationHandler';
 

@@ -1,6 +1,9 @@
 import axios from 'axios';
+import { ConstantBackoff, handleAll, retry as retryBuilder } from 'cockatiel';
 import type { Logger } from 'winston';
 import { AdspId, LimitToOne, assertAdspId } from '../utils';
+
+export const retry = retryBuilder(handleAll, { maxAttempts: 1, backoff: new ConstantBackoff(50) });
 
 /**
  * Interface to the token provider for retrieving a service account access token.
@@ -22,6 +25,7 @@ export interface TokenProvider {
 
 export class TokenProviderImpl implements TokenProvider {
   private readonly LOG_CONTEXT = { context: 'TokenProvider' };
+  private readonly TOKEN_URL_OVERRIDE = 'TOKEN_URL';
 
   #token: string;
   #expiry: number;
@@ -34,6 +38,16 @@ export class TokenProviderImpl implements TokenProvider {
     private realm = 'core'
   ) {
     assertAdspId(serviceId, null, 'service');
+
+    const override = process.env[this.TOKEN_URL_OVERRIDE];
+    if (override) {
+      this.accessServiceUrl = new URL(override);
+
+      this.logger.info(
+        `Overrode token url with value from env variable ${this.TOKEN_URL_OVERRIDE}: ${override}`,
+        this.LOG_CONTEXT
+      );
+    }
   }
 
   @LimitToOne()
@@ -42,14 +56,22 @@ export class TokenProviderImpl implements TokenProvider {
     this.logger.debug(`Requesting access token from ${authUrl}...'`, this.LOG_CONTEXT);
 
     try {
-      const { data } = await axios.post<{ access_token: string; expires_in: number }>(
-        authUrl.href,
-        new URLSearchParams({
-          grant_type: 'client_credentials',
-          client_id: this.serviceId.toString(),
-          client_secret: this.clientSecret,
-        })
-      );
+      const data = await retry.execute(async ({ attempt }) => {
+        if (attempt) {
+          this.logger.debug(`Retrying retrieval of access token...`, this.LOG_CONTEXT);
+        }
+
+        const { data } = await axios.post<{ access_token: string; expires_in: number }>(
+          authUrl.href,
+          new URLSearchParams({
+            grant_type: 'client_credentials',
+            client_id: this.serviceId.toString(),
+            client_secret: this.clientSecret,
+          })
+        );
+
+        return data;
+      });
 
       // Store token and expiry (with 60 sec dead-band)
       this.#token = data.access_token;
