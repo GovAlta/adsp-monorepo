@@ -17,6 +17,10 @@ export const functionSuggestion = [
     insertText: 'adsp.GetFormData',
   },
   {
+    label: 'adsp.GetFormSubmission',
+    insertText: 'adsp.GetFormSubmission',
+  },
+  {
     label: 'adsp.SendDomainEvent',
     insertText: 'adsp.SendDomainEvent',
   },
@@ -107,6 +111,19 @@ export const functionSignature = [
       {
         label: 'formId',
         documentation: 'This is the form ID',
+      },
+    ],
+  },
+  {
+    label: 'adsp.GetFormSubmission(string formId, string submissionId)',
+    parameters: [
+      {
+        label: 'formId',
+        documentation: 'Form Id. Unique identifier for the form being queried.',
+      },
+      {
+        label: 'submissionId',
+        documentation: 'Submission Id. Used to identify existing submission being queried.',
       },
     ],
   },
