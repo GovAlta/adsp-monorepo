@@ -86,8 +86,7 @@ interface extractSchema {
  * @returns error message
  */
 export const checkFieldValidity = (props: ControlProps): string => {
-  const { errors: ajvErrors, required, label, uischema, schema } = props;
-  const { data } = props;
+  const { data, errors: ajvErrors, required, label, uischema, schema } = props;
   const labelToUpdate = getLabelText(uischema.scope, label);
   const extraSchema = schema as JsonSchema & extractSchema;
 
