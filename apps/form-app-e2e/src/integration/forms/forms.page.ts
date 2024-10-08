@@ -24,7 +24,7 @@ class FormsPage {
   }
 
   formDropdown(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-dropdown`);
+    return cy.xpath(`//goa-form-item[@label="${label}"]//div[contains(@data-testid, "dropdown")]`);
   }
 
   formNextButton() {
