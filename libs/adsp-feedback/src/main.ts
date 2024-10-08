@@ -52,8 +52,8 @@ class AdspFeedback implements AdspFeedbackApi {
   private technicalCommentDivRef: Ref<HTMLFieldSetElement> = createRef();
   private technicalCommentRef: Ref<HTMLTextAreaElement> = createRef();
   private dimRef: Ref<HTMLTextAreaElement> = createRef();
-  private radio1Ref: Ref<HTMLInputElement> = createRef();
-  private radio2Ref: Ref<HTMLInputElement> = createRef();
+  private ratingSelector: Ref<HTMLInputElement> = createRef();
+  private commentSelector: Ref<HTMLInputElement> = createRef();
   private firstFocusableElement?: HTMLElement;
   private lastFocusableElement?: HTMLElement;
 
@@ -187,8 +187,8 @@ class AdspFeedback implements AdspFeedbackApi {
   private onIssueChange(event: Event) {
     if (event.target instanceof HTMLInputElement && this.feedbackFormRef.value) {
       if (event.target.value.toLowerCase() === 'yes') {
-        if (this.radio1Ref.value) {
-          this.radio1Ref.value.checked = true;
+        if (this.ratingSelector.value) {
+          this.ratingSelector.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
 
@@ -199,8 +199,8 @@ class AdspFeedback implements AdspFeedbackApi {
           this.sendButtonRef.value?.removeAttribute('disabled');
         }
       } else {
-        if (this.radio2Ref.value) {
-          this.radio2Ref.value.checked = true;
+        if (this.commentSelector.value) {
+          this.commentSelector.value.checked = true;
         }
         if (this.selectedRating > -1) {
           this.sendButtonRef.value?.removeAttribute('disabled');
@@ -216,18 +216,18 @@ class AdspFeedback implements AdspFeedbackApi {
 
   handleRadioKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'ArrowRight') {
-      if (this.radio2Ref.value) {
-        if (this.radio2Ref.value.checked === false) {
-          this.radio2Ref.value.focus();
-          this.radio2Ref.value.checked = true;
+      if (this.commentSelector.value) {
+        if (this.commentSelector.value.checked === false) {
+          this.commentSelector.value.focus();
+          this.commentSelector.value.checked = true;
           this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
         }
       }
     } else if (e.key === 'ArrowLeft') {
-      if (this.radio1Ref.value) {
-        if (this.radio1Ref.value.checked === false) {
-          this.radio1Ref.value.focus();
-          this.radio1Ref.value.checked = true;
+      if (this.ratingSelector.value) {
+        if (this.ratingSelector.value.checked === false) {
+          this.ratingSelector.value.focus();
+          this.ratingSelector.value.checked = true;
           this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
         }
       }
@@ -304,11 +304,11 @@ class AdspFeedback implements AdspFeedbackApi {
     if (this.technicalCommentRef?.value) {
       this.technicalCommentRef.value.value = '';
     }
-    if (this.radio1Ref.value) {
-      this.radio1Ref.value.checked = false;
+    if (this.ratingSelector.value) {
+      this.ratingSelector.value.checked = false;
     }
-    if (this.radio2Ref.value) {
-      this.radio2Ref.value.checked = false;
+    if (this.commentSelector.value) {
+      this.commentSelector.value.checked = false;
     }
     if (this.sendButtonRef) {
       this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
@@ -460,7 +460,10 @@ class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
-    if (this.radio2Ref.value && this.radio2Ref.value.checked === true) {
+    if (this.commentSelector.value && this.commentSelector.value.checked === true) {
+      this.sendButtonRef.value?.removeAttribute('disabled');
+    }
+    if (this.commentSelector.value?.checked === false && this.ratingSelector.value?.checked === true) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     }
   };
@@ -1185,7 +1188,7 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="yes"
                               value="Yes"
                               class="radio"
-                              ${ref(this.radio1Ref)}
+                              ${ref(this.ratingSelector)}
                               aria-label="Yes"
                             />
                             <label for="yes" class="radio-label"> Yes </label>
@@ -1198,7 +1201,7 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="no"
                               value="No"
                               class="radio"
-                              ${ref(this.radio2Ref)}
+                              ${ref(this.commentSelector)}
                               aria-label="No"
                             />
 
@@ -1322,4 +1325,4 @@ const adspFeedback = new AdspFeedback();
 // Consuming apps should include non-module script element which will import and set global variable.
 window.adspFeedback = adspFeedback;
 
-export default adspFeedback;
+export default AdspFeedback;
