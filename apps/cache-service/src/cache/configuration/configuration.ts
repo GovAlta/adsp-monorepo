@@ -1,29 +1,36 @@
-import { AdspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { CacheProvider } from '../cacheProvider';
-import { CacheTarget } from '../model';
+import { AccessCacheTarget, CacheTarget } from '../model';
+import { Target } from '../types';
 
 export interface ConfigurationValue {
-  targets: Record<string, { ttl?: number }>;
+  targets: Record<string, Omit<Target, 'serviceId'>>;
 }
-
-const DEFAULT_TTL = 15 * 60;
 
 export class CacheServiceConfiguration {
   private targets: Record<string, CacheTarget>;
   constructor(
     logger: Logger,
     directory: ServiceDirectory,
+    tenantService: TenantService,
     provider: CacheProvider,
     configuration: ConfigurationValue,
     tenantId: AdspId
   ) {
     this.targets = Object.entries(configuration?.targets || {}).reduce((targets, [id, value]) => {
       try {
-        const target = new CacheTarget(logger, directory, provider, tenantId, {
-          serviceId: AdspId.parse(id),
-          ttl: value.ttl || DEFAULT_TTL,
-        });
+        const target = AccessCacheTarget.isAccessTarget(id)
+          ? new AccessCacheTarget(logger, directory, tenantService, provider, tenantId, {
+              serviceId: AdspId.parse(id),
+              ttl: value.ttl,
+              invalidationEvents: value.invalidationEvents,
+            })
+          : new CacheTarget(logger, directory, provider, tenantId, {
+              serviceId: AdspId.parse(id),
+              ttl: value.ttl,
+              invalidationEvents: value.invalidationEvents,
+            });
 
         targets[id] = target;
       } catch (err) {
@@ -41,5 +48,9 @@ export class CacheServiceConfiguration {
     const target = this.targets[id];
 
     return target;
+  }
+
+  getTargets(): CacheTarget[] {
+    return Object.values(this.targets);
   }
 }

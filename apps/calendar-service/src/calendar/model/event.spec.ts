@@ -106,6 +106,34 @@ describe('CalendarEventEntity', () => {
       expect(result).toMatchObject(update);
     });
 
+    it('can update event context', async () => {
+      const event = new CalendarEventEntity(repositoryMock, calendar, {
+        name: 'test',
+        description: 'testing 1 2 3',
+        isPublic: false,
+        isAllDay: false,
+        start: DateTime.now(),
+        end: null,
+      });
+
+      const update = {
+        context: {
+          test: 'value',
+        },
+      };
+
+      const result = await event.update(
+        {
+          tenantId,
+          id: 'test',
+          roles: ['test-updater'],
+        } as User,
+        update
+      );
+
+      expect(result).toEqual(expect.objectContaining({ context: update.context }));
+    });
+
     it('can throw for unauthorized user', () => {
       const event = new CalendarEventEntity(repositoryMock, calendar, {
         name: 'test',

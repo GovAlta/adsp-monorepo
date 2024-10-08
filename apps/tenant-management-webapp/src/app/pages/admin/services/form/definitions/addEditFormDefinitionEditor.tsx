@@ -73,6 +73,7 @@ import {
   SubmissionConfigurationPadding,
   GoACheckboxPad,
   ReviewPageTabWrapper,
+  AddToggleButtonPadding,
 } from '../styled-components';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
@@ -96,21 +97,22 @@ export const formEditorJsonConfig = {
 };
 
 export const onSaveDispositionForModal = (
-  isNewDisposition: boolean,
+  newDisposition: boolean,
   currentDisposition: Disposition,
   definition: FormDefinition,
   selectedEditModalIndex: number | null
 ): [FormDefinition, number | null] => {
-  if (isNewDisposition) {
-    const currentDispositionStates = [...definition.dispositionStates] || [];
+  const currentDispositionStates = [...definition.dispositionStates] || [];
+  if (newDisposition) {
     if (currentDisposition) {
       currentDispositionStates.push(currentDisposition);
       definition.dispositionStates = currentDispositionStates;
     }
   } else {
-    definition.dispositionStates[selectedEditModalIndex] = currentDisposition;
+    currentDispositionStates.splice(selectedEditModalIndex, 1);
+    currentDispositionStates.push(currentDisposition);
+    definition.dispositionStates = currentDispositionStates;
   }
-
   return [definition, null];
 };
 
@@ -128,9 +130,17 @@ interface ClientRoleProps {
   anonymousRead: boolean;
   onUpdateRoles: (roles: string[], type: string) => void;
   configuration: Record<string, string[]>;
+  showSelectedRoles?: boolean;
 }
 
-const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdateRoles }: ClientRoleProps) => {
+const ClientRole = ({
+  roleNames,
+  clientId,
+  anonymousRead,
+  configuration,
+  onUpdateRoles,
+  showSelectedRoles,
+}: ClientRoleProps) => {
   return (
     <ClientRoleTable
       roles={roleNames}
@@ -144,6 +154,7 @@ const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdat
         { title: types[1].name, selectedRoles: configuration[types[1].type] },
         { title: types[2].name, selectedRoles: configuration[types[2].type] },
       ]}
+      showSelectedRoles={showSelectedRoles}
     />
   );
 };
@@ -201,6 +212,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+  const formServiceApiUrl = useSelector((state: RootState) => state.config?.serviceUrls?.formServiceApiUrl);
 
   const [activeIndex] = useState<number>(0);
   const [data, setData] = useState<unknown>();
@@ -210,6 +222,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false });
   const [currentTab, setCurrentTab] = useState(0);
+
+  const [showSelectedRoles, setShowSelectedRoles] = useState(false);
 
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
@@ -416,7 +430,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               </Tab>
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
                 <BorderBottom>
-                  <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
+                  <AddToggleButtonPadding>
+                    <GoAButtonGroup alignment="start">
+                      <GoACheckbox
+                        name="showSelectedRoles"
+                        text="Show selected roles"
+                        checked={showSelectedRoles}
+                        onChange={() => setShowSelectedRoles((prev) => !prev)}
+                      />
+                    </GoAButtonGroup>
+                  </AddToggleButtonPadding>
+                  <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 56 }}>
                     <ScrollPane>
                       {roles.map((e, key) => {
                         return (
@@ -431,20 +455,21 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                               assessorRoles: definition.assessorRoles,
                             }}
                             onUpdateRoles={(roles, type) => {
-                              if (type === applicantRoles.name) {
+                              if (type === applicantRoles.name && !showSelectedRoles) {
                                 setDefinition({
                                   applicantRoles: [...new Set(roles)],
                                 });
-                              } else if (type === clerkRoles.name) {
+                              } else if (type === clerkRoles.name && !showSelectedRoles) {
                                 setDefinition({
                                   clerkRoles: [...new Set(roles)],
                                 });
-                              } else {
+                              } else if (!showSelectedRoles) {
                                 setDefinition({
                                   assessorRoles: [...new Set(roles)],
                                 });
                               }
                             }}
+                            showSelectedRoles={showSelectedRoles}
                           />
                         );
                       })}
@@ -768,6 +793,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       downloadFile: downloadFile,
                       deleteFile: deleteFile,
                     }}
+                    formUrl={formServiceApiUrl}
                   >
                     <GoAFormItem error={schemaError} label="">
                       <JSONFormPreviewer

@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ''
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -34,7 +30,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ''
+    value: ""
   - name: DATABASE_NAME
     displayName: "Database Name"
     description: "Name of the database accessed."
@@ -58,18 +54,17 @@ objects:
     kind: Secret
     metadata:
       labels:
-        app: comment-service${NAME_SUFFIX}
+        app: comment-service
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: comment-service-postgres${NAME_SUFFIX}
+      name: comment-service-postgres
     stringData:
-      database-host: comment-service-postgres${NAME_SUFFIX}
+      database-host: comment-service-postgres
       database-port: "5432"
       database-name: ${DATABASE_NAME}
       database-password: ${DATABASE_PASSWORD}
       database-user: ${DATABASE_USER}
-      database-tls: 'false'
+      database-tls: "false"
   # Service Objects
 
   # ImageStream is here for reference.
@@ -80,7 +75,7 @@ objects:
       labels:
         app: comment-service
         component: api
-        apply-infra: 'true'
+        apply-infra: "true"
       name: comment-service
       namespace: ${INFRA_NAMESPACE}
     spec:
@@ -98,19 +93,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: comment-service${NAME_SUFFIX}
+        app: comment-service
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: comment-service${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: comment-service
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: comment-service${NAME_SUFFIX}
+        app: comment-service
         component: api
       strategy:
         type: Rolling
@@ -129,7 +123,7 @@ objects:
       template:
         metadata:
           labels:
-            app: comment-service${NAME_SUFFIX}
+            app: comment-service
             component: api
         spec:
           containers:
@@ -142,37 +136,37 @@ objects:
                     name: comment-service
               env:
                 - name: PORT
-                  value: '3333'
+                  value: "3333"
                 - name: DB_HOST
                   valueFrom:
                     secretKeyRef:
                       key: database-host
-                      name: comment-service-postgres${NAME_SUFFIX}
+                      name: comment-service-postgres
                 - name: DB_PORT
                   valueFrom:
                     secretKeyRef:
                       key: database-port
-                      name: comment-service-postgres${NAME_SUFFIX}
+                      name: comment-service-postgres
                 - name: DB_USER
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: comment-service-postgres${NAME_SUFFIX}
+                      name: comment-service-postgres
                 - name: DB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: comment-service-postgres${NAME_SUFFIX}
+                      name: comment-service-postgres
                 - name: DB_NAME
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: comment-service-postgres${NAME_SUFFIX}
+                      name: comment-service-postgres
                 - name: DB_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: comment-service-postgres${NAME_SUFFIX}
+                      name: comment-service-postgres
               imagePullPolicy: IfNotPresent
               name: comment-service
               ports:
@@ -227,14 +221,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: comment-service${NAME_SUFFIX}
+        app: comment-service
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: comment-service${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: comment-service
     spec:
       ports:
         - name: http
@@ -242,7 +235,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: comment-service${NAME_SUFFIX}
+        app: comment-service
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -250,14 +243,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: comment-service${NAME_SUFFIX}
+        app: comment-service
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: comment-service${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: comment-service
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -266,6 +258,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: comment-service${NAME_SUFFIX}
+        name: comment-service
         weight: 100
       wildcardPolicy: None

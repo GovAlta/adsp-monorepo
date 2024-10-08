@@ -93,8 +93,11 @@ jobs:
   deployDev:
     runs-on: ubuntu-22.04
     needs: [build, buildContainers]
-    env:
-      AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
+    strategy:
+      fail-fast: true
+      max-parallel: 2
+      matrix:
+        app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
     environment:
       name: Dev
     steps:
@@ -108,26 +111,17 @@ jobs:
           insecure_skip_tls_verify: true
       - name: Tag Dev
         run: |
-          for app in $AFFECTED_APPS
-          do
-            oc import-image ghcr.io/govalta/$app:latest --reference-policy='local' --confirm
-            oc tag $app:latest $app:dev --reference-policy='local'
-          done
+          oc import-image ghcr.io/govalta/${{ matrix.app }}:latest --reference-policy='local' --confirm
+          oc tag ${{ matrix.app }}:latest ${{ matrix.app }}:dev --reference-policy='local'
       - run: oc project adsp-dev
       - name: Apply Manifests
         run: |
-          for app in $AFFECTED_APPS
-          do
-            oc process -f .openshift/managed/$app.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-dev -p DEPLOY_TAG=dev > $app.dev.json
-            oc apply -f $app.dev.json -l apply-dev=true,component!=database
-          done
+          oc process -f .openshift/managed/${{ matrix.app }}.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-dev -p DEPLOY_TAG=dev > ${{ matrix.app }}.dev.json
+          oc apply -f ${{ matrix.app }}.dev.json -l apply-dev=true,component!=database
       - name: Deploy Dev
         run: |
-          for app in $AFFECTED_APPS
-          do
-            oc rollout latest dc/$app
-            oc rollout status dc/$app
-          done
+          oc rollout latest dc/${{ matrix.app }}
+          oc rollout status dc/${{ matrix.app }}
 
   devSmokeTest:
     runs-on: ubuntu-22.04
@@ -156,11 +150,22 @@ jobs:
           cy-password-2: ${{ secrets.CY_PASSWORD2 }}
           cy-password-3: ${{ secrets.CY_PASSWORD3 }}
 
-  deployStaging:
+  deployStagingApproval:
     runs-on: ubuntu-22.04
     needs: [build, devSmokeTest]
-    env:
-      AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
+    environment:
+      name: Staging-gate
+    steps:
+      - run: echo "Staging deployment approved"
+
+  deployStaging:
+    runs-on: ubuntu-22.04
+    needs: [build, deployStagingApproval]
+    strategy:
+      fail-fast: true
+      max-parallel: 2
+      matrix:
+        app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
     environment:
       name: Staging
     steps:
@@ -173,26 +178,16 @@ jobs:
           namespace: adsp-build
           insecure_skip_tls_verify: true
       - name: Tag Staging
-        run: |
-          for app in $AFFECTED_APPS
-          do
-            oc tag $app:dev $app:uat --reference-policy='local'
-          done
+        run: oc tag ${{ matrix.app }}:dev ${{ matrix.app }}:uat --reference-policy='local'
       - run: oc project adsp-uat
       - name: Apply Manifests
         run: |
-          for app in $AFFECTED_APPS
-          do
-            oc process -f .openshift/managed/$app.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-uat -p DEPLOY_TAG=uat > $app.uat.json
-            oc apply -f $app.uat.json -l apply-staging=true,component!=database
-          done
+          oc process -f .openshift/managed/${{ matrix.app }}.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-uat -p DEPLOY_TAG=uat > ${{ matrix.app }}.uat.json
+          oc apply -f ${{ matrix.app }}.uat.json -l apply-staging=true,component!=database
       - name: Deploy Staging
         run: |
-          for app in $AFFECTED_APPS
-          do
-            oc rollout latest dc/$app
-            oc rollout status dc/$app
-          done
+          oc rollout latest dc/${{ matrix.app }}
+          oc rollout status dc/${{ matrix.app }}
 
   stagingSmokeTest:
     runs-on: ubuntu-22.04

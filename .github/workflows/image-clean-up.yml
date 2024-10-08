@@ -2,7 +2,7 @@ name: Image Clean Up
 
 on:
   schedule:
-    - cron: "15 7 * * *"
+    - cron: '15 7 * * *'
 
   workflow_dispatch:
 
@@ -11,10 +11,20 @@ jobs:
     name: Delete old unused container images
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - shell: bash
+        run: echo "ALL_APPS=$(npx nx show projects --type=app | tr "\n" ", ")" >> $GITHUB_ENV
       - name: Delete ADSP containers older than a week
         uses: snok/container-retention-policy@v2
         with:
-          image-names: tenant-management-webapp, tenant-management-api, file-service, notification-service, status-app, subscriber-app, push-service, status-service, calendar-service, event-service, task-service, configuration-service, value-service, api-docs-app, verify-service, form-service, script-service, pdf-service, subscriber-gateway, directory-service
+          image-names: ${{ env.ALL_APPS }}
           cut-off: 1 week ago UTC
           account-type: org
           org-name: GovAlta

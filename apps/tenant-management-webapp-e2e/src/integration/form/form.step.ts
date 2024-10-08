@@ -984,3 +984,26 @@ Then('the user views {string} in security classification dropdown in form defini
     .invoke('attr', 'value')
     .should('eq', dropdownItem.toLowerCase());
 });
+
+Then(
+  'the user views {string} as applicant role under {string} is {string}',
+  function (applicantRole, service, checkedOrNot) {
+    formObj
+      .definitionsEditorApplicantRole(service, applicantRole)
+      .shadow()
+      .find('.goa-checkbox-container')
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        switch (checkedOrNot) {
+          case 'checked':
+            expect(classAttr).to.contain('selected');
+            break;
+          case 'not checked':
+            expect(classAttr).to.not.contain('selected');
+            break;
+          default:
+            expect(checkedOrNot).to.be.oneOf(['checked', 'not checked']);
+        }
+      });
+  }
+);

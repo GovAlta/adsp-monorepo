@@ -37,7 +37,12 @@ describe('form router', () => {
     validate: jest.fn(),
     setSchema: jest.fn(),
   };
-  const definition = new FormDefinitionEntity(validationService, tenantId, {
+
+  const calendarService = {
+    getScheduledIntake: jest.fn(),
+  };
+
+  const definition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     description: null,
@@ -53,7 +58,7 @@ describe('form router', () => {
     dispositionStates: [{ id: 'rejectedStatus', name: 'rejected', description: 'err' }],
     queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
   });
-  const definitionWithPdfTemplate = new FormDefinitionEntity(validationService, tenantId, {
+  const definitionWithPdfTemplate = new FormDefinitionEntity(validationService, calendarService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     description: null,
@@ -133,6 +138,10 @@ describe('form router', () => {
     getTenant: jest.fn(),
     getTenantByName: jest.fn(),
     getTenantByRealm: jest.fn(),
+  };
+
+  const calendarServiceMock = {
+    getScheduledIntake: jest.fn(),
   };
 
   const formInfo = {
@@ -231,6 +240,7 @@ describe('form router', () => {
       submissionRepository: repositoryMock,
       pdfService: pdfServiceMock,
       tenantService: tenantServiceMock,
+      calendarService: calendarServiceMock,
     });
     expect(router).toBeTruthy();
   });
@@ -257,7 +267,7 @@ describe('form router', () => {
 
   describe('getFormDefinition', () => {
     it('can create handler', () => {
-      const handler = getFormDefinition(tenantServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -278,7 +288,7 @@ describe('form router', () => {
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      const handler = getFormDefinition(tenantServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
@@ -302,7 +312,7 @@ describe('form router', () => {
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      const handler = getFormDefinition(tenantServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalled();
@@ -328,7 +338,7 @@ describe('form router', () => {
 
       req.getServiceConfiguration.mockResolvedValueOnce([]);
       expect(res.send).not.toHaveBeenCalled();
-      const handler = getFormDefinition(tenantServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalled();
@@ -346,7 +356,7 @@ describe('form router', () => {
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
-      const handler = getFormDefinition(tenantServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
@@ -361,7 +371,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const definition = new FormDefinitionEntity(validationService, tenantId, {
+      const definition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
         id: 'test',
         name: 'test-form-definition',
         description: null,
@@ -380,7 +390,7 @@ describe('form router', () => {
 
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      const handler = getFormDefinition(tenantServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
@@ -399,7 +409,7 @@ describe('form router', () => {
 
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      const handler = getFormDefinition(tenantServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
@@ -849,7 +859,10 @@ describe('form router', () => {
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([
-        new FormDefinitionEntity(validationService, tenantId, { ...definition, submissionRecords: true }),
+        new FormDefinitionEntity(validationService, calendarService, tenantId, {
+          ...definition,
+          submissionRecords: true,
+        }),
       ]);
       notificationServiceMock.subscribe.mockResolvedValueOnce(subscriber);
       formSubmissionMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
@@ -1283,7 +1296,10 @@ describe('form router', () => {
         form: new FormEntity(
           repositoryMock,
           tenantId,
-          new FormDefinitionEntity(validationService, tenantId, { ...definition, submissionRecords: true }),
+          new FormDefinitionEntity(validationService, calendarService, tenantId, {
+            ...definition,
+            submissionRecords: true,
+          }),
           subscriber,
           formInfo
         ),

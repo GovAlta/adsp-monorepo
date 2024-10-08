@@ -125,6 +125,7 @@ export const ActiveRevisionSetDefinition: DomainEventDefinition = {
 };
 
 export const configurationUpdated = (
+  apiId: AdspId,
   updatedBy: User,
   tenantId: AdspId,
   namespace: string,
@@ -151,6 +152,7 @@ export const configurationUpdated = (
       name: updatedBy.name,
       id: updatedBy.id,
     },
+    urn: `${apiId}:/configuration/${namespace}/${name}`,
   },
 });
 

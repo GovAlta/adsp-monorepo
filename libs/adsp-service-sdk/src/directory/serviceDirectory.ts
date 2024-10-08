@@ -1,9 +1,7 @@
 import axios from 'axios';
 import * as NodeCache from 'node-cache';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const retry = require('promise-retry');
 import type { Logger } from 'winston';
-import { adspId, AdspId, assertAdspId, LimitToOne } from '../utils';
+import { adspId, AdspId, assertAdspId, LimitToOne, retry } from '../utils';
 
 interface DirectoryEntry {
   urn: string;
@@ -88,12 +86,12 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     const url = new URL(`/directory/v2/namespaces/${namespace}/entries`, this.directoryUrl);
 
     try {
-      const results = await retry(async (next, count) => {
+      const results = await retry.execute(async ({ attempt }) => {
         try {
-          return await this.#tryRetrieveDirectory(url, count);
+          return await this.#tryRetrieveDirectory(url, attempt);
         } catch (err) {
-          this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
-          next(err);
+          this.logger.debug(`Try ${attempt} failed with error. ${err}`, this.LOG_CONTEXT);
+          throw err;
         }
       });
       results.forEach(({ urn, serviceUrl }) => {

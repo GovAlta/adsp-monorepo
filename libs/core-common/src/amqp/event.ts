@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { AmqpConnectionManager } from 'amqp-connection-manager';
-import { ConfirmChannel, ConsumeMessage } from 'amqplib';
+import { ConfirmChannel, ConsumeMessage, Options } from 'amqplib';
 import type { Logger } from 'winston';
 import type { DomainEvent, DomainEventSubscriberService } from '../event';
 import { AmqpWorkQueueService } from './work';
@@ -9,8 +9,8 @@ export class AmqpEventSubscriberService
   extends AmqpWorkQueueService<DomainEvent>
   implements DomainEventSubscriberService
 {
-  constructor(queue: string, logger: Logger, connection: AmqpConnectionManager) {
-    super(queue, logger, connection);
+  constructor(queue: string, logger: Logger, connection: AmqpConnectionManager, consumerOptions: Options.Consume = {}) {
+    super(queue, logger, connection, consumerOptions);
   }
 
   protected convertMessage(msg: ConsumeMessage): DomainEvent {

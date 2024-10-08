@@ -24,10 +24,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ''
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -39,7 +35,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ''
+    value: ""
 objects:
   # ImageStream is here for reference.
   # There is a single ImageStream created in the infra project.
@@ -49,7 +45,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: app
-        apply-infra: 'true'
+        apply-infra: "true"
       name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
@@ -67,18 +63,17 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: app
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: ${APP_NAME}${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: ${APP_NAME}
     spec:
       replicas: 3
       selector:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: app
       strategy:
         type: Rolling
@@ -97,13 +92,13 @@ objects:
       template:
         metadata:
           labels:
-            app: ${APP_NAME}${NAME_SUFFIX}
+            app: ${APP_NAME}
             component: app
         spec:
           containers:
             - env:
                 - name: PORT
-                  value: '8080'
+                  value: "8080"
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               ports:
@@ -141,34 +136,32 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: app
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: ${APP_NAME}${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: ${APP_NAME}
     spec:
       ports:
         - name: http
           port: 8080
           targetPort: 8080
       selector:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: app
   - apiVersion: v1
     kind: Route
     metadata:
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: app
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: ${APP_NAME}${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: ${APP_NAME}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -177,6 +170,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: ${APP_NAME}${NAME_SUFFIX}
+        name: ${APP_NAME}
         weight: 100
       wildcardPolicy: None

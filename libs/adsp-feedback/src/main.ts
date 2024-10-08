@@ -836,10 +836,12 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             visibility: visible;
+            transition: visibility 0s 0.1s;
           }
 
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-error {
             visibility: visible;
+            transition: visibility 0s 0.1s;
           }
           .radios {
             margin-top: 16px;

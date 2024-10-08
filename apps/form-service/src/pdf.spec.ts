@@ -30,6 +30,10 @@ describe('pdf', () => {
     setSchema: jest.fn(),
   };
 
+  const calendarService = {
+    getScheduledIntake: jest.fn(),
+  };
+
   const repositoryMock = {
     find: jest.fn(),
     get: jest.fn(),
@@ -47,7 +51,7 @@ describe('pdf', () => {
     dispositionSubmission: jest.fn(),
   };
 
-  const definition = new FormDefinitionEntity(validationService, tenantId, {
+  const definition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     formDraftUrlTemplate: 'https://my-form/{{ id }}',

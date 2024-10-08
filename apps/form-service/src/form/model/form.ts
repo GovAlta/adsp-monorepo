@@ -41,7 +41,7 @@ export class FormEntity implements Form {
     formDraftUrl: string,
     applicant?: Subscriber
   ): Promise<FormEntity> {
-    if (!definition.canApply(user)) {
+    if (!(await definition.canApply(user))) {
       throw new UnauthorizedUserError('create form', user);
     }
 
@@ -175,7 +175,7 @@ export class FormEntity implements Form {
 
     if (
       !isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
-      !(this.definition?.canApply(user) && user.id === this.createdBy.id)
+      !((await this.definition?.canApply(user)) && user.id === this.createdBy.id)
     ) {
       throw new UnauthorizedUserError('update form', user);
     }
@@ -253,7 +253,7 @@ export class FormEntity implements Form {
 
     if (
       !isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
-      !(this.definition?.canApply(user) && user.id === this.createdBy.id)
+      !((await this.definition?.canApply(user)) && user.id === this.createdBy.id)
     ) {
       throw new UnauthorizedUserError('submit form', user);
     }

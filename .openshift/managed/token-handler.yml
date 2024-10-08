@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -48,11 +44,10 @@ objects:
     kind: Secret
     metadata:
       labels:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: token-handler-redis${NAME_SUFFIX}
+      name: token-handler-redis
     stringData:
       database-password: ${REDIS_PASSWORD}
   - apiVersion: v1
@@ -61,14 +56,13 @@ objects:
       annotations:
         template.openshift.io/expose-uri: redis://{.spec.clusterIP}:{.spec.ports[?(.name=="redis")].port}
       labels:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: token-handler-redis${NAME_SUFFIX}
+      name: token-handler-redis
     spec:
       ports:
         - name: redis
@@ -77,7 +71,7 @@ objects:
           protocol: TCP
           targetPort: 6379
       selector:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -89,18 +83,17 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: token-handler-redis${NAME_SUFFIX}
+      name: token-handler-redis
     spec:
       replicas: 1
       selector:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: database
       strategy:
         type: Recreate
@@ -114,7 +107,7 @@ objects:
       template:
         metadata:
           labels:
-            app: token-handler${NAME_SUFFIX}
+            app: token-handler
             component: database
         spec:
           containers:
@@ -124,7 +117,7 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: token-handler-redis${NAME_SUFFIX}
+                      name: token-handler-redis
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -207,19 +200,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: token-handler${NAME_SUFFIX}
+      name: token-handler
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: api
       strategy:
         type: Rolling
@@ -238,7 +230,7 @@ objects:
       template:
         metadata:
           labels:
-            app: token-handler${NAME_SUFFIX}
+            app: token-handler
             component: api
         spec:
           containers:
@@ -256,7 +248,7 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: token-handler-redis${NAME_SUFFIX}
+                      name: token-handler-redis
               imagePullPolicy: IfNotPresent
               name: token-handler
               ports:
@@ -291,14 +283,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: token-handler${NAME_SUFFIX}
+      name: token-handler
     spec:
       ports:
         - name: http
@@ -306,7 +297,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -314,14 +305,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: token-handler${NAME_SUFFIX}
+        app: token-handler
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: token-handler${NAME_SUFFIX}
+      name: token-handler
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -330,6 +320,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: token-handler${NAME_SUFFIX}
+        name: token-handler
         weight: 100
       wildcardPolicy: None

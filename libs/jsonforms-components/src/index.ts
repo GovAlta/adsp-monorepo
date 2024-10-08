@@ -36,6 +36,8 @@ import {
   GoABooleanRadioControlTester,
   GoABooleanRadioControl,
   GoInputBaseReviewControl,
+  AddressLookUpControl,
+  AddressLookUpTester,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -53,6 +55,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { HelpContent, HelpContentTester, HelpReviewContent } from './lib/Additional';
 import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAErrorControl';
 import GoACalloutControl, { GoACalloutControlTester } from './lib/Additional/GoACalloutControl';
+import { GoAGroupReviewControl, GoAGroupReviewLayoutTester } from './lib/layouts/GroupReviewControl';
 
 export * from './lib/Context';
 export * from './lib/common';
@@ -143,7 +146,7 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
     renderer: GoAHorizontalReviewLayout,
   },
   { tester: GoAlVerticalLayoutTester, renderer: GoAVerticalLayout },
-  { tester: GoAGroupLayoutTester, renderer: GoAGroupControl },
+  { tester: GoAGroupReviewLayoutTester, renderer: GoAGroupReviewControl },
   { tester: HelpContentTester, renderer: HelpReviewContent },
 ];
 
@@ -156,6 +159,7 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseRenderers,
   { tester: CategorizationRendererTester, renderer: FormStepperControl },
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
+  { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
 ];
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];

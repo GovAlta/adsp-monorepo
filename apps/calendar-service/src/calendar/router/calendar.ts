@@ -1,7 +1,7 @@
 import { AdspId, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
-import { checkSchema, param } from 'express-validator';
+import { checkSchema, param, query } from 'express-validator';
 import { ICalCalendar } from 'ical-generator';
 import { DateTime } from 'luxon';
 import { Logger } from 'winston';
@@ -33,6 +33,8 @@ function mapCalendar(entity: CalendarEntity) {
 function mapCalendarEvent(entity: CalendarEventEntity) {
   const dto = {
     id: entity.id,
+    recordId: entity.recordId,
+    context: entity.context,
     name: entity.name,
     description: entity.description,
     start: entity.start,
@@ -58,7 +60,7 @@ function mapEventAttendee(attendee: Attendee) {
 
 export const getCalendars: RequestHandler = async (req, res, next) => {
   try {
-    const [calendars] = await req.getConfiguration<CalendarServiceConfiguration>();
+    const calendars = await req.getConfiguration<CalendarServiceConfiguration, CalendarServiceConfiguration>();
 
     const results = Object.entries(calendars || {}).map(([_k, calender]) => mapCalendar(calender));
     res.send(results);
@@ -81,7 +83,9 @@ export function getCalendar(tenantService: TenantService): RequestHandler {
       }
 
       const tenantId = req.tenant?.id;
-      const [calendars] = await req.getConfiguration<CalendarServiceConfiguration>(tenantId);
+      const calendars = await req.getConfiguration<CalendarServiceConfiguration, CalendarServiceConfiguration>(
+        tenantId
+      );
 
       const calendar = calendars?.[name];
       if (!calendar) {
@@ -162,6 +166,9 @@ export const getCalendarEvents: RequestHandler = async (req, res, next) => {
     }
     if (criteria?.endsBefore) {
       criteria.endsBefore = DateTime.fromISO(criteria.endsBefore);
+    }
+    if (criteria?.activeOn) {
+      criteria.activeOn = DateTime.fromISO(criteria.activeOn);
     }
 
     const result = await calendar.getEvents(user, top, after as string, criteria);
@@ -376,6 +383,8 @@ export const createCalendarRouter = ({
         description: { optional: true, isString: true },
         isPublic: { optional: true, isBoolean: true },
         isAllDay: { optional: true, isBoolean: true },
+        recordId: { optional: { options: { nullable: true } }, isString: true },
+        context: { optional: { options: { nullable: true } }, isObject: true },
       },
       ['body']
     )
@@ -403,7 +412,13 @@ export const createCalendarRouter = ({
     exportCalendar(serviceId, directory)
   );
 
-  router.get('/calendars/:name/events', validateNameHandler, getCalendar(tenantService), getCalendarEvents);
+  router.get(
+    '/calendars/:name/events',
+    validateNameHandler,
+    createValidationHandler(query('criteria').optional().isJSON()),
+    getCalendar(tenantService),
+    getCalendarEvents
+  );
   router.post(
     '/calendars/:name/events',
     validateNameHandler,
