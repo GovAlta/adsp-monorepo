@@ -1325,4 +1325,4 @@ const adspFeedback = new AdspFeedback();
 // Consuming apps should include non-module script element which will import and set global variable.
 window.adspFeedback = adspFeedback;
 
-export default AdspFeedback;
+export default adspFeedback;
