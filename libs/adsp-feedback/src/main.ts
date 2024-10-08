@@ -32,7 +32,7 @@ import veryEasySvgError from './assets/Very_Easy-Error.svg';
 import veryEasySvgHover from './assets/Very_Easy-Hover.svg';
 import veryEasySvgClick from './assets/Very_Easy-Click.svg';
 
-class AdspFeedback implements AdspFeedbackApi {
+export class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
   private apiUrl?: URL;
   private name?: string;
@@ -1325,4 +1325,4 @@ const adspFeedback = new AdspFeedback();
 // Consuming apps should include non-module script element which will import and set global variable.
 window.adspFeedback = adspFeedback;
 
-export default AdspFeedback;
+export default adspFeedback;
