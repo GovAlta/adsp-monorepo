@@ -17,6 +17,7 @@ import {
 import { RequestHandler, Router } from 'express';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
+import { Logger } from 'winston';
 import { FileService } from '../../file';
 import { NotificationService } from '../../notification';
 import { QueueTaskService } from '../../task';
@@ -34,7 +35,7 @@ import { mapForm, mapFormDefinition, mapFormWithFormSubmission } from '../mapper
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { Form, FormCriteria, FormStatus, FormSubmission, FormSubmissionCriteria } from '../types';
+import { Form, FormCriteria, FormStatus, FormSubmission, FormSubmissionCriteria, Intake } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -44,6 +45,7 @@ import {
   SET_TO_DRAFT_FORM_OPERATION,
 } from './types';
 import { PdfService } from '../pdf';
+import { CalendarService } from '../calendar';
 
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
@@ -91,9 +93,11 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
           ...criteria,
         });
 
-        const submission = results.length > 0 ? results.at(0) : null;
-
-        res.send(mapFormWithFormSubmission(apiId, form, submission));
+        if (results.length > 0) {
+          res.send(mapFormWithFormSubmission(apiId, form, results.at(0)));
+        } else {
+          res.send(mapForm(apiId, form));
+        }
       } else {
         res.send(mapForm(apiId, form));
       }
@@ -111,7 +115,7 @@ export const getFormDefinitions: RequestHandler = async (_req, _res, next) => {
   }
 };
 
-export function getFormDefinition(tenantService: TenantService): RequestHandler {
+export function getFormDefinition(tenantService: TenantService, calendarService: CalendarService): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -137,7 +141,12 @@ export function getFormDefinition(tenantService: TenantService): RequestHandler 
         throw new UnauthorizedUserError('access definition', user);
       }
 
-      res.send(mapFormDefinition(definition));
+      let intake: Intake;
+      if (definition.scheduledIntakes) {
+        intake = await calendarService.getScheduledIntake(definition);
+      }
+
+      res.send(mapFormDefinition(definition, intake));
     } catch (err) {
       next(err);
     }
@@ -223,6 +232,7 @@ export function findFormSubmissions(
 
 export function createForm(
   apiId: AdspId,
+  logger: Logger,
   repository: FormRepository,
   submissionRepository: FormSubmissionRepository,
   eventService: EventService,
@@ -236,7 +246,14 @@ export function createForm(
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
+      const tenantId = req.tenant?.id;
       const { definitionId, applicant: applicantInfo, data, files: fileIds, submit } = req.body;
+
+      logger.debug(`Creating form of definition '${definitionId}'...`, {
+        context: 'FormRouter',
+        tenantId: tenantId?.toString,
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
 
       const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId);
       if (!definition) {
@@ -276,6 +293,12 @@ export function createForm(
       if (definition.supportTopic) {
         commentService.createSupportTopic(form, result.urn);
       }
+
+      logger.info(`Created form (ID: ${form.id}) of definition '${definitionId}'${submit ? ' and submitted' : ''}.`, {
+        context: 'FormRouter',
+        tenant: tenantId?.toString,
+        user: `${user.name} (ID: ${user.id})`,
+      });
 
       end();
     } catch (err) {
@@ -337,35 +360,53 @@ export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmi
 
 export function updateFormSubmissionDisposition(
   apiId: AdspId,
+  logger: Logger,
   eventService: EventService,
-  repository: FormRepository,
   submissionRepository: FormSubmissionRepository
 ): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
       const user = req.user;
+      const tenantId = req.tenant?.id;
       const { formId, submissionId } = req.params;
       const { dispositionStatus, dispositionReason } = req.body;
 
-      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
+      logger.debug(
+        `Updating disposition of form submission with ID: ${submissionId} (form ID: ${formId}) to '${dispositionStatus}'...`,
+        {
+          context: 'FormRouter',
+          tenantId: tenantId?.toString,
+          user: user ? `${user.name} (ID: ${user.id})` : null,
+        }
+      );
+
+      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(tenantId, submissionId, formId);
       if (!formSubmission) {
         throw new NotFoundError('Form submission', submissionId);
       }
 
       const updated = await formSubmission.dispositionSubmission(user, dispositionStatus, dispositionReason);
-      const form = await repository.get(req.tenant.id, formId);
       end();
 
       res.send(mapFormSubmissionData(apiId, updated));
-      eventService.send(submissionDispositioned(apiId, user, form, updated));
+      eventService.send(submissionDispositioned(apiId, user, updated.form, updated));
+
+      logger.info(
+        `Updated disposition of form submission with ID: ${submissionId} (form ID: ${formId}) to '${dispositionStatus}'.`,
+        {
+          context: 'FormRouter',
+          tenantId: tenantId?.toString,
+          user: `${user.name} (ID: ${user.id})`,
+        }
+      );
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function accessForm(notificationService: NotificationService): RequestHandler {
+export function accessForm(logger: Logger, notificationService: NotificationService): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -374,40 +415,68 @@ export function accessForm(notificationService: NotificationService): RequestHan
       const { code } = req.query;
       const form: FormEntity = req[FORM];
 
+      logger.debug(`Accessing form with ID: ${form.id} (definition ID: ${form.definition?.id}) data...`, {
+        context: 'FormRouter',
+        tenantId: form.tenantId.toString,
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
+
       const result = await (code
         ? form.accessByCode(user, notificationService, code as string)
         : form.accessByUser(user));
 
       end();
       res.send(mapFormData(result));
+
+      logger.info(`Accessed form with ID: ${form.id} (definition ID: ${form.definition.id}) data.`, {
+        context: 'FormRouter',
+        tenantId: form.tenantId.toString,
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
     } catch (err) {
       next(err);
     }
   };
 }
 
-export const updateFormData: RequestHandler = async (req, res, next) => {
-  try {
-    const end = startBenchmark(req, 'operation-handler-time');
+export function updateFormData(logger: Logger): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
 
-    const user = req.user;
-    const form: FormEntity = req[FORM];
-    const { data, files: fileIds } = req.body;
-    const files: Record<string, AdspId> = fileIds
-      ? Object.entries(fileIds).reduce((ids, [k, v]) => ({ ...ids, [k]: AdspId.parse(v as string) }), {})
-      : null;
+      const user = req.user;
+      const form: FormEntity = req[FORM];
+      const { data, files: fileIds } = req.body;
 
-    const result = await form.update(user, data, files);
+      logger.debug(`Updating form with ID: ${form.id} (definition ID: ${form.definition?.id}) data...`, {
+        context: 'FormRouter',
+        tenantId: form.tenantId.toString,
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
 
-    end();
-    res.send(mapFormData(result));
-  } catch (err) {
-    next(err);
-  }
-};
+      const files: Record<string, AdspId> = fileIds
+        ? Object.entries(fileIds).reduce((ids, [k, v]) => ({ ...ids, [k]: AdspId.parse(v as string) }), {})
+        : null;
+
+      const result = await form.update(user, data, files);
+
+      end();
+      res.send(mapFormData(result));
+
+      logger.info(`Updated form with ID: ${form.id} (definition ID: ${form.definition.id}) data.`, {
+        context: 'FormRouter',
+        tenantId: form.tenantId.toString,
+        user: `${user.name} (ID: ${user.id})`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export function formOperation(
   apiId: AdspId,
+  logger: Logger,
   eventService: EventService,
   notificationService: NotificationService,
   queueTaskService: QueueTaskService,
@@ -422,6 +491,15 @@ export function formOperation(
 
       const form: FormEntity = req[FORM];
       const request: FormOperations = req.body;
+
+      logger.debug(
+        `Performing operation ${request.operation} on form with ID: ${form.id} (definition ID: ${form.definition?.id})...`,
+        {
+          context: 'FormRouter',
+          tenantId: form.tenantId.toString,
+          user: user ? `${user.name} (ID: ${user.id})` : null,
+        }
+      );
 
       let result: FormEntity = null;
       let formSubmissionResult: FormSubmissionEntity = null;
@@ -473,6 +551,15 @@ export function formOperation(
       if (event) {
         eventService.send(event);
       }
+
+      logger.info(
+        `Performed operation ${request.operation} on form with ID: ${form.id} (definition ID: ${form.definition.id}).`,
+        {
+          context: 'FormRouter',
+          tenantId: form.tenantId.toString,
+          user: `${user.name} (ID: ${user.id})`,
+        }
+      );
     } catch (err) {
       next(err);
     }
@@ -481,6 +568,7 @@ export function formOperation(
 
 export function deleteForm(
   apiId: AdspId,
+  logger: Logger,
   eventService: EventService,
   fileService: FileService,
   notificationService: NotificationService
@@ -492,11 +580,23 @@ export function deleteForm(
       const user = req.user;
       const form: FormEntity = req[FORM];
 
+      logger.debug(`Deleting form with ID: ${form.id} (definition ID: ${form.definition?.id})...`, {
+        context: 'FormRouter',
+        tenantId: form.tenantId.toString,
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
+
       const deleted = await form.delete(user, fileService, notificationService);
 
       end();
       res.send({ deleted });
       eventService.send(formDeleted(apiId, user, form));
+
+      logger.info(`Deleted form with ID: ${form.id} (definition ID: ${form.definition?.id}).`, {
+        context: 'FormRouter',
+        tenantId: form.tenantId.toString,
+        user: `${user.name} (ID: ${user.id})`,
+      });
     } catch (err) {
       next(err);
     }
@@ -529,6 +629,7 @@ export const validateCriteria = (value: string) => {
 
 interface FormRouterProps {
   apiId: AdspId;
+  logger: Logger;
   repository: FormRepository;
   eventService: EventService;
   tenantService: TenantService;
@@ -538,10 +639,12 @@ interface FormRouterProps {
   commentService: CommentService;
   submissionRepository: FormSubmissionRepository;
   pdfService: PdfService;
+  calendarService: CalendarService;
 }
 
 export function createFormRouter({
   apiId,
+  logger,
   repository,
   eventService,
   tenantService,
@@ -551,6 +654,7 @@ export function createFormRouter({
   commentService,
   submissionRepository,
   pdfService,
+  calendarService,
 }: FormRouterProps): Router {
   const router = Router();
 
@@ -558,7 +662,7 @@ export function createFormRouter({
   router.get(
     '/definitions/:definitionId',
     createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
-    getFormDefinition(tenantService)
+    getFormDefinition(tenantService, calendarService)
   );
 
   router.get(
@@ -589,6 +693,7 @@ export function createFormRouter({
     ),
     createForm(
       apiId,
+      logger,
       repository,
       submissionRepository,
       eventService,
@@ -620,14 +725,14 @@ export function createFormRouter({
       ])
     ),
     getForm(repository),
-    formOperation(apiId, eventService, notificationService, queueTaskService, submissionRepository, pdfService)
+    formOperation(apiId, logger, eventService, notificationService, queueTaskService, submissionRepository, pdfService)
   );
   router.delete(
     '/forms/:formId',
     assertAuthenticatedHandler,
     createValidationHandler(param('formId').isUUID()),
     getForm(repository),
-    deleteForm(apiId, eventService, fileService, notificationService)
+    deleteForm(apiId, logger, eventService, fileService, notificationService)
   );
 
   router.get(
@@ -638,7 +743,7 @@ export function createFormRouter({
       query('code').optional().isString().isLength({ min: 1, max: 10 })
     ),
     getForm(repository),
-    accessForm(notificationService)
+    accessForm(logger, notificationService)
   );
   router.put(
     '/forms/:formId/data',
@@ -649,7 +754,7 @@ export function createFormRouter({
       body('files').optional({ nullable: true }).isObject()
     ),
     getForm(repository),
-    updateFormData
+    updateFormData(logger)
   );
 
   router.get(
@@ -681,7 +786,7 @@ export function createFormRouter({
       body('dispositionStatus').isString().isLength({ min: 1 }),
       body('dispositionReason').isString().isLength({ min: 1 })
     ),
-    updateFormSubmissionDisposition(apiId, eventService, repository, submissionRepository)
+    updateFormSubmissionDisposition(apiId, logger, eventService, submissionRepository)
   );
 
   return router;

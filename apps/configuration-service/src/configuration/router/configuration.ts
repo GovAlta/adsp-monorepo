@@ -312,6 +312,7 @@ export const patchConfigurationRevision =
         if (updated.tenantId) {
           eventService.send(
             configurationUpdated(
+              apiId,
               user,
               updated.tenantId,
               updated.namespace,
@@ -362,7 +363,7 @@ export const getActiveRevision =
 
       if (user) {
         logger.info(
-          `Active revision ${revision || `fallback to latest ${result.revision}`} ` +
+          `Active revision ${typeof revision === 'number' ? revision : `fallback to latest ${result?.revision}`} ` +
             `retrieved by ${user.name} (ID: ${user.id}).`,
           {
             tenant: configuration.tenantId?.toString(),
@@ -372,7 +373,7 @@ export const getActiveRevision =
         );
       } else {
         //If this an anonymous user, just log the tenant as there will be no user context information
-        logger.info(`Active revision ${revision} for ${configuration.tenantId?.toString()}.`, {
+        logger.info(`Active revision ${revision} for ${configuration.tenantId?.toString()} retrieved.`, {
           tenant: configuration.tenantId?.toString(),
           context: 'configuration-router',
         });

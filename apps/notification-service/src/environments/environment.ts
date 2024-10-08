@@ -20,6 +20,7 @@ export const environment = envalid.cleanEnv(
     AMQP_HOST: envalid.str({ default: 'localhost' }),
     AMQP_USER: envalid.str({ default: 'guest' }),
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),
+    AMQP_CONSUMER_PRIORITY: envalid.num({ default: 0 }),
     SMTP_HOST: envalid.str({ default: 'smtp.mailtrap.io' }),
     SMTP_PORT: envalid.num({ default: 587 }),
     SMTP_USER: envalid.str({ default: '' }),

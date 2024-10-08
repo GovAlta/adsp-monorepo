@@ -172,8 +172,8 @@ export const ScrollPane = styled.div`
 `;
 export const FileTypeModalContent = styled.div`
   background: var(--goa-color-greyscale-white);
-  margin-top: -23px;
-  padding-top: 23px;
+  margin-top: -24px;
+  padding-top: 24px;
 `;
 
 export const FileTypesEditorTitle = styled.div`

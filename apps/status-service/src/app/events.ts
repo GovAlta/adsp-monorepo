@@ -6,10 +6,13 @@ import { Webhooks } from './model';
 const ApplicationDefinition = {
   type: 'object',
   properties: {
-    id: { type: 'string' },
-    name: { type: ['string', 'null'] },
-    description: { type: ['string', 'null'] },
-    url: { type: ['string', 'null'] },
+    id: { type: 'string', examples: ['status-service'] },
+    name: { type: ['string', 'null'], examples: ['Status service'] },
+    description: {
+      type: ['string', 'null'],
+      examples: ['This service allows for easy monitoring of application downtime.'],
+    },
+    url: { type: ['string', 'null'], examples: ['https://status.adsp.alberta.ca'] },
     monitorOnly: { type: ['boolean', 'null'] },
   },
 };
@@ -114,22 +117,25 @@ export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
         properties: {
           description: {
             type: ['string', 'null'],
+            examples: ['Status service will be taking a maintenance holiday.'],
           },
           startTimestamp: {
             type: 'string',
             format: 'date-time',
+            examples: ['2024-02-05T05:00:00Z'],
           },
           endTimestamp: {
             type: 'string',
             format: 'date-time',
+            examples: ['2024-02-05T07:00:00Z'],
           },
         },
       },
       postedBy: {
         type: 'object',
         properties: {
-          userId: { type: 'string' },
-          userName: { type: 'string' },
+          userId: { type: 'string', examples: ['1c0fa56b-f818-4cc7-9254-7513aecb5d9f'] },
+          userName: { type: 'string', examples: ['A.N.Other'] },
         },
       },
     },

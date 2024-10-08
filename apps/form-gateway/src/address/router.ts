@@ -95,15 +95,13 @@ export function findAddress({ environment, logger }): RequestHandler {
     const token = await getValidToken(environment, logger);
 
     try {
-      const { country, languagePreference, maxSuggestions, searchTerm } = req.body;
-      const lastId = req.query.lastId ? req.query.lastId.toString() : '';
-
+      const { country, languagePreference, lastId, maxSuggestions, searchTerm } = req.query;
       const params = new URLSearchParams({
-        country: country,
-        languagePreference: languagePreference,
-        lastId: lastId.toString(),
-        maxSuggestions: maxSuggestions,
-        searchTerm: searchTerm,
+        country: country ? country.toString() : 'CAN',
+        languagePreference: languagePreference ? languagePreference.toString() : 'en',
+        lastId: lastId ? lastId.toString() : '',
+        maxSuggestions: maxSuggestions ? maxSuggestions.toString() : `${5}`,
+        searchTerm: searchTerm ? searchTerm.toString() : '',
       });
 
       const { data } = await axios.get<AddressResponse>(`${address_url}find?${params.toString()}`, {

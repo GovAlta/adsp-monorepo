@@ -1,4 +1,4 @@
-import { ConfirmChannel, ConsumeMessage } from 'amqplib';
+import { ConfirmChannel, ConsumeMessage, Options } from 'amqplib';
 import { Logger } from 'winston';
 import { Observable, Subscriber } from 'rxjs';
 import { WorkItem, WorkQueueService } from '../work';
@@ -9,7 +9,12 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
   connected = false;
   channel: ChannelWrapper = null;
 
-  constructor(protected queue: string, protected logger: Logger, protected connection: AmqpConnectionManager) {}
+  constructor(
+    protected queue: string,
+    protected logger: Logger,
+    protected connection: AmqpConnectionManager,
+    protected consumerOptions: Options.Consume = {}
+  ) {}
 
   isConnected(): boolean {
     return this.connected;
@@ -107,7 +112,7 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
           channel.nack(msg, false, false);
         }
       },
-      { prefetch: 1 }
+      { ...this.consumerOptions, prefetch: 1 }
     );
   };
 

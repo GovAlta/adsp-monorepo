@@ -8,6 +8,18 @@ export const configurationSchema = {
           type: 'object',
           properties: {
             ttl: { type: 'number' },
+            invalidationEvents: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  namespace: { type: 'string' },
+                  name: { type: 'string' },
+                  resourceIdPath: { type: 'string' },
+                },
+                required: ['namespace', 'name', 'resourceIdPath'],
+              },
+            },
           },
           required: [],
         },

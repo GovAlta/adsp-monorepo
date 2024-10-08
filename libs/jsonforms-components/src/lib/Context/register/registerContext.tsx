@@ -65,7 +65,7 @@ export const JsonFormRegisterProvider = ({
           });
           return matchFound ? '' : `${registers.errors[criteria?.url]?.message || ''}`;
         } else if (criteria?.urn) {
-          if (registers?.nonExistent) {
+          if (registers?.nonExistent?.length > 0) {
             const matchFound = registers?.nonExistent.some((listItem) => {
               if (criteria?.urn?.toString().includes(listItem)) {
                 return true;

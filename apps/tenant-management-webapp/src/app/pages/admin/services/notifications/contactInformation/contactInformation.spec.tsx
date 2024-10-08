@@ -98,7 +98,7 @@ describe('NotificationTypes Page', () => {
         <ContactInformation />
       </Provider>
     );
-    const email = queryByTestId('email');
+    const email = queryByTestId('contact-email');
     const supportInstructions = queryByTestId('support-instructions');
     const phone = queryByTestId('phone');
     expect(email.textContent).toContain('jonathan.weyermandn@gov.ab.ca');

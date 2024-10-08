@@ -1,6 +1,6 @@
 import { adspId, Channel, User } from '@abgov/adsp-service-sdk';
 import { FormServiceRoles } from '../roles';
-import { QueueTaskToProcess } from '../types';
+import { Intake, QueueTaskToProcess } from '../types';
 import { FormDefinitionEntity } from './definition';
 
 describe('FormDefinitionEntity', () => {
@@ -10,12 +10,17 @@ describe('FormDefinitionEntity', () => {
     setSchema: jest.fn(),
   };
 
+  const calendarService = {
+    getScheduledIntake: jest.fn(),
+  };
+
   beforeEach(() => {
     validationService.setSchema.mockClear();
+    calendarService.getScheduledIntake.mockClear();
   });
 
   it('can be created', () => {
-    const entity = new FormDefinitionEntity(validationService, tenantId, {
+    const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
       id: 'test',
       name: 'test-form-definition',
       description: null,
@@ -35,7 +40,7 @@ describe('FormDefinitionEntity', () => {
   });
 
   it('can be created with null roles', () => {
-    const entity = new FormDefinitionEntity(validationService, tenantId, {
+    const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
       id: 'test',
       name: 'test-form-definition',
       description: null,
@@ -54,7 +59,7 @@ describe('FormDefinitionEntity', () => {
   });
 
   describe('canAccessDefinition', () => {
-    const entity = new FormDefinitionEntity(validationService, tenantId, {
+    const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
       id: 'test',
       name: 'test-form-definition',
       description: null,
@@ -113,7 +118,7 @@ describe('FormDefinitionEntity', () => {
     });
 
     it('can return true for anonymous apply form', () => {
-      const entity = new FormDefinitionEntity(validationService, tenantId, {
+      const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
         id: 'test',
         name: 'test-form-definition',
         description: null,
@@ -135,7 +140,7 @@ describe('FormDefinitionEntity', () => {
   });
 
   describe('canApply', () => {
-    const entity = new FormDefinitionEntity(validationService, tenantId, {
+    const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
       id: 'test',
       name: 'test-form-definition',
       description: null,
@@ -151,18 +156,35 @@ describe('FormDefinitionEntity', () => {
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
-    it('can return true for user with applicant role', () => {
-      const result = entity.canApply({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+    const scheduled = new FormDefinitionEntity(validationService, calendarService, tenantId, {
+      id: 'test',
+      name: 'test-form-definition',
+      description: null,
+      formDraftUrlTemplate: 'https://my-form/{{ id }}',
+      anonymousApply: false,
+      applicantRoles: ['test-applicant'],
+      assessorRoles: ['test-assessor'],
+      clerkRoles: [],
+      dataSchema: null,
+      submissionRecords: false,
+      submissionPdfTemplate: '',
+      supportTopic: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
+      scheduledIntakes: true,
+    });
+
+    it('can return true for user with applicant role', async () => {
+      const result = await entity.canApply({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
       expect(result).toBe(true);
     });
 
-    it('can return false for user without applicant role', () => {
-      const result = entity.canApply({ tenantId, id: 'tester', roles: [] } as User);
+    it('can return false for user without applicant role', async () => {
+      const result = await entity.canApply({ tenantId, id: 'tester', roles: [] } as User);
       expect(result).toBe(false);
     });
 
-    it('can return true for intake app for anonymous apply definition', () => {
-      const anonymousApplyEntity = new FormDefinitionEntity(validationService, tenantId, {
+    it('can return true for intake app for anonymous apply definition', async () => {
+      const anonymousApplyEntity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
         id: 'test',
         name: 'test-form-definition',
         description: null,
@@ -177,7 +199,7 @@ describe('FormDefinitionEntity', () => {
         supportTopic: false,
         queueTaskToProcess: {} as QueueTaskToProcess,
       });
-      const result = anonymousApplyEntity.canApply({
+      const result = await anonymousApplyEntity.canApply({
         tenantId,
         id: 'tester',
         roles: [FormServiceRoles.IntakeApp],
@@ -185,28 +207,56 @@ describe('FormDefinitionEntity', () => {
       expect(result).toBe(true);
     });
 
-    it('can return false for intake app for none anonymous apply definition', () => {
-      const result = entity.canApply({ tenantId, id: 'tester', roles: [FormServiceRoles.IntakeApp] } as User);
+    it('can return false for intake app for none anonymous apply definition', async () => {
+      const result = await entity.canApply({ tenantId, id: 'tester', roles: [FormServiceRoles.IntakeApp] } as User);
       expect(result).toBe(false);
     });
 
-    it('can return true for core user', () => {
-      const result = entity.canApply({ isCore: true, id: 'tester', roles: ['test-applicant'] } as User);
+    it('can return true for core user', async () => {
+      const result = await entity.canApply({ isCore: true, id: 'tester', roles: ['test-applicant'] } as User);
       expect(result).toBe(true);
     });
 
-    it('can return false for user of different tenant', () => {
-      const result = entity.canApply({
+    it('can return false for user of different tenant', async () => {
+      const result = await entity.canApply({
         tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test2`,
         id: 'tester',
         roles: ['test-applicant'],
       } as User);
       expect(result).toBe(false);
     });
+
+    it('can return false for scheduled intake form without scheduled intake', async () => {
+      calendarService.getScheduledIntake.mockResolvedValueOnce(null);
+      const result = await scheduled.canApply({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result).toBe(false);
+    });
+
+    it('can return true for scheduled intake form without scheduled intake for testers', async () => {
+      const result = await scheduled.canApply({ tenantId, id: 'tester', roles: [FormServiceRoles.Tester, 'test-applicant'] } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return false for scheduled intake form without scheduled intake for testers without applicant role', async () => {
+      const result = await scheduled.canApply({ tenantId, id: 'tester', roles: [FormServiceRoles.Tester] } as User);
+      expect(result).toBe(false);
+    });
+
+    it('can return true for scheduled intake form with scheduled intake', async () => {
+      calendarService.getScheduledIntake.mockResolvedValueOnce({ start: new Date(), isUpcoming: false } as Intake);
+      const result = await scheduled.canApply({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return false for scheduled intake form with upcoming scheduled intake', async () => {
+      calendarService.getScheduledIntake.mockResolvedValueOnce({ start: new Date(), isUpcoming: true } as Intake);
+      const result = await scheduled.canApply({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result).toBe(false);
+    });
   });
 
   describe('validateDate', () => {
-    const entity = new FormDefinitionEntity(validationService, tenantId, {
+    const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
       id: 'test',
       name: 'test-form-definition',
       description: null,
@@ -264,7 +314,7 @@ describe('FormDefinitionEntity', () => {
       channels: [{ channel: Channel.email, address: 'test@test.co' }],
     };
 
-    const entity = new FormDefinitionEntity(validationService, tenantId, {
+    const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
       id: 'test',
       name: 'test-form-definition',
       description: null,

@@ -31,7 +31,6 @@ import { FileSystemStorageProvider } from './storage/file-system';
 import { createScanService } from './scan';
 import { AzureBlobStorageProvider } from './storage';
 import { createFileQueueService } from './amqp';
-import { ScanService } from './file';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -96,8 +95,26 @@ async function initializeApp(): Promise<express.Application> {
           serviceId: adspId`urn:ads:platform:cache-service`,
           configuration: {
             targets: {
-              [`${serviceId}`]: { ttl: 60 * 60 },
-              [`${serviceId}:v1`]: { ttl: 60 * 60 },
+              [`${serviceId}`]: {
+                ttl: 8 * 60 * 60,
+                invalidationEvents: [
+                  {
+                    namespace: serviceId.service,
+                    name: FileDeletedDefinition.name,
+                    resourceIdPath: 'file.urn',
+                  },
+                ],
+              },
+              [`${serviceId}:v1`]: {
+                ttl: 8 * 60 * 60,
+                invalidationEvents: [
+                  {
+                    namespace: serviceId.service,
+                    name: FileDeletedDefinition.name,
+                    resourceIdPath: 'file.urn',
+                  },
+                ],
+              },
             },
           },
         },
@@ -162,14 +179,10 @@ async function initializeApp(): Promise<express.Application> {
     storageProvider,
   });
 
-  let scanService: ScanService = null;
-
-  if (environment.POD_TYPE !== 'file-service-job') {
-    scanService = createScanService(environment.AV_PROVIDER, {
-      host: environment.AV_HOST,
-      port: environment.AV_PORT,
-    });
-  }
+  const scanService = createScanService(environment.AV_PROVIDER, {
+    host: environment.AV_HOST,
+    port: environment.AV_PORT,
+  });
 
   const queueService = await createFileQueueService({ ...environment, logger });
 

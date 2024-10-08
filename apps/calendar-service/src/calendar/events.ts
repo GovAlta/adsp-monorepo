@@ -1,6 +1,6 @@
 import { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { Update } from '@core-services/core-common';
-import { CalendarEventEntity } from './model';
+import { CalendarEntity, CalendarEventEntity } from './model';
 import { Attendee, CalendarEvent } from './types';
 
 const userSchema = {
@@ -35,6 +35,12 @@ const eventSchema = {
   properties: {
     id: {
       type: 'number',
+    },
+    recordId: {
+      type: ['string', 'null'],
+    },
+    context: {
+      type: ['object', 'null'],
     },
     name: {
       type: 'string',
@@ -127,29 +133,40 @@ export const CalendarEventDeletedDefinition: DomainEventDefinition = {
   },
 };
 
+function mapCalendar(entity: CalendarEntity) {
+  return {
+    name: entity.name,
+    displayName: entity.displayName,
+    description: entity.description,
+  };
+}
+
+function mapCalendarEvent(entity: CalendarEventEntity) {
+  return {
+    id: entity.id,
+    recordId: entity.recordId,
+    context: entity.context,
+    name: entity.name,
+    description: entity.description,
+    start: entity.start,
+    end: entity.end,
+    isPublic: entity.isPublic,
+    isAllDay: entity.isAllDay,
+  };
+}
+
 export const calendarEventCreated = (user: User, entity: CalendarEventEntity): DomainEvent => ({
   tenantId: entity.calendar.tenantId,
   name: CalendarEventCreatedDefinition.name,
   timestamp: new Date(),
   context: {
+    ...(entity.context || {}),
     calendar: entity.calendar.name,
   },
-  correlationId: `calendar-${entity.calendar.name}`,
+  correlationId: entity.recordId || `calendar-${entity.calendar.name}`,
   payload: {
-    calendar: {
-      name: entity.calendar.name,
-      displayName: entity.calendar.displayName,
-      description: entity.calendar.description,
-    },
-    event: {
-      id: entity.id,
-      name: entity.name,
-      description: entity.description,
-      start: entity.start,
-      end: entity.end,
-      isPublic: entity.isPublic,
-      isAllDay: entity.isAllDay,
-    },
+    calendar: mapCalendar(entity.calendar),
+    event: mapCalendarEvent(entity),
     createdBy: {
       id: user.id,
       name: user.name,
@@ -166,25 +183,14 @@ export const calendarEventUpdated = (
   name: CalendarEventUpdatedDefinition.name,
   timestamp: new Date(),
   context: {
+    ...(entity.context || {}),
     calendar: entity.calendar.name,
   },
-  correlationId: `calendar-${entity.calendar.name}`,
+  correlationId: entity.recordId || `calendar-${entity.calendar.name}`,
   payload: {
-    calendar: {
-      name: entity.calendar.name,
-      displayName: entity.calendar.displayName,
-      description: entity.calendar.description,
-    },
+    calendar: mapCalendar(entity.calendar),
     update,
-    event: {
-      id: entity.id,
-      name: entity.name,
-      description: entity.description,
-      start: entity.start,
-      end: entity.end,
-      isPublic: entity.isPublic,
-      isAllDay: entity.isAllDay,
-    },
+    event: mapCalendarEvent(entity),
     updatedBy: {
       id: user.id,
       name: user.name,
@@ -197,24 +203,13 @@ export const calendarEventDeleted = (user: User, entity: CalendarEventEntity): D
   name: CalendarEventDeletedDefinition.name,
   timestamp: new Date(),
   context: {
+    ...(entity.context || {}),
     calendar: entity.calendar.name,
   },
-  correlationId: `calendar-${entity.calendar.name}`,
+  correlationId: entity.recordId || `calendar-${entity.calendar.name}`,
   payload: {
-    calendar: {
-      name: entity.calendar.name,
-      displayName: entity.calendar.displayName,
-      description: entity.calendar.description,
-    },
-    event: {
-      id: entity.id,
-      name: entity.name,
-      description: entity.description,
-      start: entity.start,
-      end: entity.end,
-      isPublic: entity.isPublic,
-      isAllDay: entity.isAllDay,
-    },
+    calendar: mapCalendar(entity.calendar),
+    event: mapCalendarEvent(entity),
     deletedBy: {
       id: user.id,
       name: user.name,

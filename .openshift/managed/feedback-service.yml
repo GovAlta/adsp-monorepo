@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ''
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -34,7 +30,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ''
+    value: ""
 objects:
   # Service Objects
 
@@ -46,7 +42,7 @@ objects:
       labels:
         app: feedback-service
         component: api
-        apply-infra: 'true'
+        apply-infra: "true"
       name: feedback-service
       namespace: ${INFRA_NAMESPACE}
     spec:
@@ -64,19 +60,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: feedback-service${NAME_SUFFIX}
+        app: feedback-service
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: feedback-service${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: feedback-service
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: feedback-service${NAME_SUFFIX}
+        app: feedback-service
         component: api
       strategy:
         type: Rolling
@@ -95,7 +90,7 @@ objects:
       template:
         metadata:
           labels:
-            app: feedback-service${NAME_SUFFIX}
+            app: feedback-service
             component: api
         spec:
           containers:
@@ -108,7 +103,7 @@ objects:
                     name: feedback-service
               env:
                 - name: PORT
-                  value: '3333'
+                  value: "3333"
               imagePullPolicy: IfNotPresent
               name: feedback-service
               ports:
@@ -163,14 +158,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: feedback-service${NAME_SUFFIX}
+        app: feedback-service
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: feedback-service${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: feedback-service
     spec:
       ports:
         - name: http
@@ -178,7 +172,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: feedback-service${NAME_SUFFIX}
+        app: feedback-service
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -186,14 +180,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: feedback-service${NAME_SUFFIX}
+        app: feedback-service
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: feedback-service${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: feedback-service
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -202,6 +195,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: feedback-service${NAME_SUFFIX}
+        name: feedback-service
         weight: 100
       wildcardPolicy: None

@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ''
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -34,7 +30,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ''
+    value: ""
   - description: Username for MongoDB user that will be used for accessing the database.
     displayName: MongoDB Connection Username
     from: user[A-Z0-9]{3}
@@ -43,13 +39,13 @@ parameters:
     required: true
   - description: Password for the MongoDB connection user.
     displayName: MongoDB Connection Password
-    from: '[a-zA-Z0-9]{16}'
+    from: "[a-zA-Z0-9]{16}"
     generate: expression
     name: MONGODB_PASSWORD
     required: true
   - description: Password for the database admin user.
     displayName: MongoDB Admin Password
-    from: '[a-zA-Z0-9]{16}'
+    from: "[a-zA-Z0-9]{16}"
     generate: expression
     name: MONGODB_ADMIN_PASSWORD
     required: true
@@ -65,28 +61,26 @@ objects:
         template.openshift.io/expose-password: "{.data['database-password']}"
         template.openshift.io/expose-username: "{.data['database-user']}"
       labels:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: database
-        apply-init: 'true'
-        apply-branch: 'true'
-      name: file-service-mongodb${NAME_SUFFIX}
+        apply-init: "true"
+      name: file-service-mongodb
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
       database-name: fileDb
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
-      database-uri: mongodb://file-service-mongodb${NAME_SUFFIX}:27017
-      database-tls: 'false'
+      database-uri: mongodb://file-service-mongodb:27017
+      database-tls: "false"
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
       labels:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: database
-        apply-init: 'true'
-        apply-branch: 'true'
-      name: file-service-mongodb${NAME_SUFFIX}
+        apply-init: "true"
+      name: file-service-mongodb
     spec:
       storageClassName: azure-disk
       accessModes:
@@ -100,14 +94,10 @@ objects:
       annotations:
         template.openshift.io/expose-uri: mongodb://{.spec.clusterIP}:{.spec.ports[?(.name=="mongo")].port}
       labels:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: database
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: file-service-mongodb${NAME_SUFFIX}
+        apply-init: "true"
+      name: file-service-mongodb
     spec:
       ports:
         - name: mongo
@@ -116,7 +106,7 @@ objects:
           protocol: TCP
           targetPort: 27017
       selector:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -126,27 +116,23 @@ objects:
     kind: DeploymentConfig
     metadata:
       annotations:
-        template.alpha.openshift.io/wait-for-ready: 'true'
+        template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: database
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: file-service-mongodb${NAME_SUFFIX}
+        apply-init: "true"
+      name: file-service-mongodb
     spec:
       replicas: 1
       selector:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: database
       strategy:
         type: Recreate
       template:
         metadata:
           labels:
-            app: file-service${NAME_SUFFIX}
+            app: file-service
             component: database
         spec:
           containers:
@@ -156,28 +142,28 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGODB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGODB_ADMIN_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-admin-password
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGODB_DATABASE
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGO_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: file-service-mongodb${NAME_SUFFIX}
-              image: ' '
+                      name: file-service-mongodb
+              image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 initialDelaySeconds: 30
@@ -217,7 +203,7 @@ objects:
           volumes:
             - name: file-service-data
               persistentVolumeClaim:
-                claimName: file-service-mongodb${NAME_SUFFIX}
+                claimName: file-service-mongodb
       triggers:
         - imageChangeParams:
             automatic: true
@@ -237,7 +223,7 @@ objects:
       labels:
         app: file-service
         component: av
-        apply-infra: 'true'
+        apply-infra: "true"
       name: file-av-scanner
       namespace: ${INFRA_NAMESPACE}
 
@@ -246,7 +232,7 @@ objects:
     labels:
       app: file-service
       component: av
-      apply-infra: 'true'
+      apply-infra: "true"
     metadata:
       name: file-av-scanner
       namespace: ${INFRA_NAMESPACE}
@@ -254,7 +240,7 @@ objects:
       output:
         to:
           kind: ImageStreamTag
-          name: 'file-av-scanner:latest'
+          name: "file-av-scanner:latest"
       resources:
         limits:
           cpu: 200m
@@ -269,7 +255,7 @@ objects:
       source:
         type: Git
         git:
-          uri: 'git@github.com:GovAlta/adsp-monorepo.git'
+          uri: "git@github.com:GovAlta/adsp-monorepo.git"
           ref: main
         contextDir: apps/file-service/av-scanner
         sourceSecret:
@@ -284,7 +270,7 @@ objects:
       labels:
         app: file-service
         component: av
-        apply-init: 'true'
+        apply-init: "true"
       name: file-av-db
     spec:
       storageClassName: azure-disk
@@ -300,10 +286,10 @@ objects:
       name: file-av-scanner
       labels:
         app: file-service
-        apply-dev: 'true'
-        apply-prod: 'true'
-        apply-staging: 'true'
-        apply-test: 'true'
+        apply-dev: "true"
+        apply-prod: "true"
+        apply-staging: "true"
+        apply-test: "true"
         component: av
     spec:
       ports:
@@ -316,46 +302,35 @@ objects:
         component: av
       type: ClusterIP
 
-  - apiVersion: v1
-    kind: DeploymentConfig
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: file-av-scanner
       labels:
         app: file-service
         component: av
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "file-av-scanner:latest",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image"
+            }
+          ]
     spec:
-      strategy:
-        type: Recreate
-        recreateParams:
-          timeoutSeconds: 600
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
-        activeDeadlineSeconds: 21600
-      triggers:
-        - type: ConfigChange
-        - type: ImageChange
-          imageChangeParams:
-            containerNames:
-              - file-av-scanner
-            from:
-              kind: ImageStreamTag
-              namespace: adsp-build
-              name: 'file-av-scanner:latest'
       replicas: 1
-      revisionHistoryLimit: 10
-      test: false
       selector:
-        app: file-service
-        component: av
+        matchLabels:
+          app: file-service
+          component: av
       template:
         metadata:
           labels:
@@ -368,13 +343,15 @@ objects:
                 claimName: file-av-db
           containers:
             - name: file-av-scanner
+              image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/file-av-scanner@latest
               ports:
                 - name: tcp
                   containerPort: 3310
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 500m
+                  cpu: 1000m
                   memory: 5Gi
                 requests:
                   cpu: 20m
@@ -390,6 +367,13 @@ objects:
           dnsPolicy: ClusterFirst
           securityContext: {}
           schedulerName: default-scheduler
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
 
   # File Service Objects
 
@@ -401,7 +385,7 @@ objects:
       labels:
         app: file-service
         component: api
-        apply-infra: 'true'
+        apply-infra: "true"
       name: file-service
       namespace: ${INFRA_NAMESPACE}
     spec:
@@ -418,11 +402,10 @@ objects:
     kind: PersistentVolumeClaim
     metadata:
       labels:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: api
-        apply-init: 'true'
-        apply-branch: 'true'
-      name: file-service-files${NAME_SUFFIX}
+        apply-init: "true"
+      name: file-service-files
     spec:
       storageClassName: azure-file
       accessModes:
@@ -437,19 +420,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: file-service${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: file-service
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: api
       strategy:
         type: Rolling
@@ -468,7 +450,7 @@ objects:
       template:
         metadata:
           labels:
-            app: file-service${NAME_SUFFIX}
+            app: file-service
             component: api
         spec:
           containers:
@@ -481,29 +463,29 @@ objects:
                     name: file-service
               env:
                 - name: PORT
-                  value: '3333'
+                  value: "3333"
                 - name: FILE_PATH
                   value: /data/files
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGO_URI
                   valueFrom:
                     secretKeyRef:
                       key: database-uri
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGO_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGO_DB
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
               imagePullPolicy: IfNotPresent
               name: file-service
               ports:
@@ -555,46 +537,45 @@ objects:
               namespace: ${INFRA_NAMESPACE}
           type: ImageChange
 
-  - apiVersion: v1
-    kind: DeploymentConfig
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       labels:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: job
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: file-service${NAME_SUFFIX}-job
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: file-service-job
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "file-service:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image"
+            }
+          ]
     spec:
       replicas: 1
-      revisionHistoryLimit: 3
       selector:
-        app: file-service${NAME_SUFFIX}
-        component: job
-      strategy:
-        type: Rolling
-        rollingParams:
-          timeoutSeconds: 600
-          maxUnavailable: 25%
-          maxSurge: 25%
-        activeDeadlineSeconds: 21600
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
+        matchLabels:
+          app: file-service
+          component: job
       template:
         metadata:
           labels:
-            app: file-service${NAME_SUFFIX}
+            app: file-service
             component: job
         spec:
           containers:
-            - envFrom:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/file-service@${DEPLOY_TAG}
+              envFrom:
                 - configMapRef:
                     name: file-service
                 - configMapRef:
@@ -603,38 +584,38 @@ objects:
                     name: file-service
               env:
                 - name: PORT
-                  value: '3333'
+                  value: "3333"
                 - name: FILE_PATH
                   value: /data/files
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGO_URI
                   valueFrom:
                     secretKeyRef:
                       key: database-uri
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGO_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGO_DB
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: MONGO_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: file-service-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb
                 - name: APP_NAME
-                  value: 'file-service-job'
+                  value: "file-service-job"
                 - name: POD_TYPE
-                  value: 'job'
+                  value: "job"
               imagePullPolicy: IfNotPresent
               name: file-service
               ports:
@@ -675,30 +656,25 @@ objects:
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
-      test: false
-      triggers:
-        - imageChangeParams:
-            automatic: true
-            containerNames:
-              - file-service
-            from:
-              kind: ImageStreamTag
-              name: file-service:${DEPLOY_TAG}
-              namespace: ${INFRA_NAMESPACE}
-          type: ImageChange
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
 
   - apiVersion: v1
     kind: Service
     metadata:
       labels:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: file-service${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: file-service
     spec:
       ports:
         - name: http
@@ -706,7 +682,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -714,14 +690,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: file-service${NAME_SUFFIX}
+        app: file-service
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
-      name: file-service${NAME_SUFFIX}
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: file-service
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -730,6 +705,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: file-service${NAME_SUFFIX}
+        name: file-service
         weight: 100
       wildcardPolicy: None

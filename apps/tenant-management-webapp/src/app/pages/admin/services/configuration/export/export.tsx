@@ -14,11 +14,8 @@ import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@stor
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
 import { Exports, ChipWrapper } from '../styled-components';
-import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
-import { ReactComponent as Triangle } from '@assets/icons/triangle.svg';
-import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
-import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { NoPaddingH2 } from '@components/AppHeader';
+import { allNames } from '@store/configuration/model';
 
 import { GoAButton, GoACheckbox, GoAChip, GoAContainer, GoAIcon, GoATooltip } from '@abgov/react-components-new';
 
@@ -51,7 +48,11 @@ export const ConfigurationExport: FunctionComponent = () => {
       Object.keys(sortedConfiguration.namespaces).map((namespace) => {
         //eslint-disable-next-line
         return sortedConfiguration.namespaces[namespace].map((name) => {
-          temp[toServiceKey(namespace, name)] = true;
+          if (!name) {
+            temp[namespace] = true;
+          } else {
+            temp[toServiceKey(namespace, name)] = true;
+          }
           totalExportKeys++;
         });
       });
@@ -109,7 +110,8 @@ export const ConfigurationExport: FunctionComponent = () => {
     if (Object.keys(exportState).length > 0 && Object.keys(exportServices).length > 0) {
       downloadSelectedConfigurations(exportState);
     }
-  }, [exportState, exportServices]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exportState]);
 
   const [scrollPosition, setScrollPosition] = useState(0);
   const [pageHeight, setPageHeight] = useState(500);
@@ -155,11 +157,31 @@ export const ConfigurationExport: FunctionComponent = () => {
                 text="Select all"
               />
               {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
+                const names = sortedConfiguration.namespaces[namespace];
                 return (
                   <React.Fragment key={namespace}>
                     <h3>{namespace}</h3>
+                    <div className="flex-row">
+                      {Array.isArray(names) && !names[0] && (
+                        <GoACheckbox
+                          name={allNames}
+                          key={8}
+                          checked={exportServices[namespace] || false}
+                          onChange={() => {
+                            toggleSelection(namespace);
+                          }}
+                          testId={`${toServiceKey(namespace, allNames)}_id`}
+                          ariaLabel={`${toServiceKey(namespace, allNames)}_id_checkbox`}
+                          text={'all names'}
+                        />
+                      )}
+                    </div>
+
                     {sortedConfiguration.namespaces[namespace].map((name) => {
                       const desc = getDescription(namespace, name);
+                      if (!name) {
+                        return null;
+                      }
                       return (
                         <div key={`${name}-${namespace}`}>
                           <div key={toServiceKey(namespace, name)} className="flex-row">
@@ -226,7 +248,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                                 const acceptableBubbleTextPixelWidth = 93;
 
                                 const numberOfCharacters =
-                                  acceptableBubbleTextPixelWidth / (namePixelWidth / name.length);
+                                  acceptableBubbleTextPixelWidth / (namePixelWidth / name?.length);
                                 const shortName =
                                   namePixelWidth > acceptableBubbleTextPixelWidth
                                     ? name.substring(0, numberOfCharacters) + '...'
@@ -237,7 +259,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                                       <GoAChip
                                         key={exp}
                                         deletable={true}
-                                        content={shortName}
+                                        content={shortName || 'all names'}
                                         onClick={() => toggleSelection(exp)}
                                       />
                                     </ChipWrapper>

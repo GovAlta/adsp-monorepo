@@ -6,19 +6,22 @@ import {
   UnauthorizedUserError,
   User,
 } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { DomainEvent, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+
 import { Request, Response } from 'express';
 import * as hasha from 'hasha';
 import { request as httpRequest } from 'http';
 import { request as httpsRequest } from 'https';
+import * as _ from 'lodash';
 import * as path from 'path';
 import { ParsedQs } from 'qs';
 import { Logger } from 'winston';
 import { CacheProvider } from '../cacheProvider';
 import { ServiceRoles } from '../roles';
-import { CachedResponse, Target } from '../types';
+import { CachedResponse, InvalidationEvent, Target } from '../types';
 
-const MAX_CACHED_CONTENT_LENGTH = 500 * 1024;
+const DEFAULT_TTL = 15 * 60;
+const MAX_CACHED_CONTENT_LENGTH = 1024 * 1024;
 const MAPPED_HEADERS = ['Content-Type', 'Content-Encoding', 'Content-Length', 'Cache-Control', 'Content-Disposition'];
 const ADSP_CACHE_HEADER = 'adsp-cache-status';
 const TRACE_PARENT_HEADER = 'traceparent';
@@ -26,20 +29,22 @@ const TRACE_PARENT_HEADER = 'traceparent';
 export class CacheTarget implements Target {
   serviceId: AdspId;
   ttl: number;
+  invalidationEvents: InvalidationEvent[];
 
   constructor(
-    private logger: Logger,
-    private directory: ServiceDirectory,
-    private provider: CacheProvider,
-    private tenantId: AdspId,
+    protected logger: Logger,
+    protected directory: ServiceDirectory,
+    protected provider: CacheProvider,
+    protected tenantId: AdspId,
     target: Target
   ) {
     this.serviceId = target.serviceId;
-    this.ttl = target.ttl;
+    this.ttl = typeof target.ttl === 'number' ? target.ttl : DEFAULT_TTL;
+    this.invalidationEvents = target.invalidationEvents || [];
   }
 
   async get(req: Request, res: Response) {
-    const { method, headers, tenant, user, path, query } = req;
+    const { method, headers, user, path, query } = req;
     if (method !== 'GET') {
       throw new InvalidOperationError('request is not a GET.');
     }
@@ -51,14 +56,24 @@ export class CacheTarget implements Target {
     }
 
     // Cache entries are per-user but shared for anonymous users.
-    // When request is under a user context, the user needs the cache-reader role.
+    // When request is under a user context, the user needs a read role or the cache-reader role.
     // Anonymous users can make the request, and result from upstream will also be in an anonymous context.
     if (user && !isAllowedUser(user, this.tenantId, ServiceRoles.CacheReader, true)) {
       throw new UnauthorizedUserError('read through cache', user);
     }
 
-    const key = await this.getCacheKey(path, query, user);
-    const cached = await this.provider.get(key);
+    const [key, invalidateKey] = await this.getCacheKey(path, query, user);
+    let cached;
+    try {
+      cached = await this.provider.get(key);
+    } catch (err) {
+      this.logger.warn(`Error encountered retrieving value from cache: ${err}`, err, {
+        context: 'CacheTarget',
+        tenant: this.tenantId.toString(),
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
+    }
+
     if (cached) {
       res
         .status(cached.status)
@@ -67,25 +82,25 @@ export class CacheTarget implements Target {
 
       this.logger.debug(`Cache hit for request to ${path}.`, {
         context: 'CacheTarget',
-        tenant: tenant?.id?.toString(),
+        tenant: this.tenantId.toString(),
         user: user ? `${user.name} (ID: ${user.id})` : null,
       });
     } else {
       this.logger.info(`Cache miss for request to ${path}. Making request to upstream...`, {
         context: 'CacheTarget',
-        tenant: tenant?.id?.toString(),
+        tenant: this.tenantId.toString(),
         user: user ? `${user.name} (ID: ${user.id})` : null,
       });
 
       const response = await this.getUpstream(req, res);
       if (response) {
-        await this.provider.set(key, this.ttl, response);
+        await this.provider.set(key, invalidateKey, this.ttl, response);
 
         this.logger.info(
           `Cached upstream response (status: ${response.status}) for request to ${path} with TTL ${this.ttl}.`,
           {
             context: 'CacheTarget',
-            tenant: tenant?.id?.toString(),
+            tenant: this.tenantId.toString(),
             user: user ? `${user.name} (ID: ${user.id})` : null,
           }
         );
@@ -93,26 +108,36 @@ export class CacheTarget implements Target {
     }
   }
 
-  private async getCacheKey(path: string, query: ParsedQs, user?: User): Promise<string> {
-    return hasha(
-      JSON.stringify({
-        path,
-        query,
-        user: user
-          ? {
-              tenantId: user.tenantId?.toString(),
-              id: user.id,
-              roles: user.roles,
-              aud: user.token.aud,
-              scope: user.token.scope,
-            }
-          : null,
-      })
-    );
+  protected async getCacheKey(path: string, query: ParsedQs = {}, user?: User): Promise<[string, string?]> {
+    return [
+      // Cache key is based on the tenant, request path, query, and user context.
+      hasha(
+        JSON.stringify({
+          tenantId: this.tenantId.toString(),
+          path,
+          query,
+          user: user
+            ? {
+                id: user.id,
+                roles: user.roles,
+                aud: user.token.aud,
+                scope: user.token.scope,
+              }
+            : null,
+        })
+      ),
+      // Invalidation key is based on the tenant, and request path.
+      hasha(
+        JSON.stringify({
+          tenantId: this.tenantId.toString(),
+          path,
+        })
+      ),
+    ];
   }
 
   private async getUpstream(req: Request, res: Response): Promise<CachedResponse> {
-    const { tenant, user, query } = req;
+    const { user, query } = req;
     const trace = getContextTrace();
 
     const upstreamUrl = await this.directory.getServiceUrl(this.serviceId);
@@ -185,7 +210,7 @@ export class CacheTarget implements Target {
                 `Content length ${content.length} outside of limits. Skipping caching of response from: ${requestUrl}`,
                 {
                   context: 'CacheTarget',
-                  tenant: tenant?.id?.toString(),
+                  tenant: this.tenantId.toString(),
                   user: user ? `${user.name} (ID: ${user.id})` : null,
                 }
               );
@@ -215,5 +240,47 @@ export class CacheTarget implements Target {
       }
       return values;
     }, {} as Record<string, string | string[]>);
+  }
+
+  async processEvent({ namespace, name, payload }: DomainEvent): Promise<void> {
+    try {
+      const invalidationEvent = this.invalidationEvents.find(
+        (invalidationEvent) => invalidationEvent.namespace === namespace && invalidationEvent.name == name
+      );
+
+      if (invalidationEvent) {
+        this.logger.debug(`Invalidating cache on event ${namespace}:${name}...`, {
+          context: 'CacheTarget',
+          tenant: this.tenantId.toString(),
+        });
+
+        const resourceIdValue = _.get(payload, invalidationEvent.resourceIdPath) as string;
+        const resourceId = AdspId.parse(resourceIdValue);
+        if (resourceId.type === 'resource') {
+          const upstreamUrl = await this.directory.getServiceUrl(this.serviceId);
+          const resourceUrl = await this.directory.getResourceUrl(resourceId);
+          const relative = path.relative(upstreamUrl.href, resourceUrl.href);
+
+          const cachedPath = path.join(`/cache/${this.serviceId}/`, relative);
+          const [_key, invalidateKey] = await this.getCacheKey(cachedPath);
+
+          const deleted = await this.provider.del(invalidateKey);
+          if (deleted) {
+            this.logger.info(`Invalidated cache entry for path '${path}' on event ${namespace}:${name}.`, {
+              context: 'CacheTarget',
+              tenant: this.tenantId.toString(),
+            });
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Error encountered processing event '${namespace}:${name}' for invalidation in target '${this.serviceId}': ${err}`,
+        {
+          context: 'CacheTarget',
+          tenant: this.tenantId.toString(),
+        }
+      );
+    }
   }
 }

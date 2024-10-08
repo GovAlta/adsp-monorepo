@@ -44,6 +44,11 @@
 
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Moq" Version="4.18.1" />
+    <PackageReference Include="RichardSzalay.MockHttp" Version="6.0.0" />
+  </ItemGroup>
+
   <Target Name="CheckNxModuleBoundaries" BeforeTargets="Build">
 
     <Exec Command="node ../../node_modules/@nx-dotnet/core/src/tasks/check-module-boundaries.js -p script-service" />

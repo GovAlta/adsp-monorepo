@@ -785,6 +785,41 @@ describe('event router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([]));
       expect(next).not.toHaveBeenCalled();
     });
+
+    it('can write value on configuration error', async () => {
+      const req = {
+        tenantId,
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+        body: {},
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockRejectedValueOnce(new Error('oh noes!'));
+
+      const value = {};
+      repositoryMock.writeValue.mockResolvedValueOnce({
+        tenantId,
+        timestamp: new Date(),
+        context: {},
+        correlationId: null,
+        value,
+      });
+
+      const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ value }));
+    });
   });
 
   describe('readMetrics', () => {

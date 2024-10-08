@@ -286,6 +286,7 @@ describe('stream router', () => {
 
       req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         req.query.tenant,
@@ -310,6 +311,35 @@ describe('stream router', () => {
       });
       req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStream(
+        loggerMock,
+        tenantServiceMock as unknown as TenantService,
+        req as unknown as Request,
+        req.query.tenant,
+        req.params.stream,
+        next
+      );
+      expect(req['stream']).toBe(stream);
+      expect(tenantServiceMock.getTenantByName).toHaveBeenCalledWith('test 2');
+      expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
+        'urn:ads:platform:tenant-service:v2:/tenants/test-2'
+      );
+    });
+
+    it('can get stream for tenant with anonymous user', async () => {
+      const req = {
+        tenantId,
+        params: { stream: 'test' },
+        query: { tenant: 'test-2' },
+        getConfiguration: jest.fn(),
+      };
+      const next = jest.fn();
+
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce({
+        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test-2`,
+      });
+      req.getConfiguration.mockResolvedValueOnce({ test: stream });
+      await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         req.query.tenant,
@@ -337,6 +367,31 @@ describe('stream router', () => {
       const next = jest.fn();
 
       await getStream(
+        loggerMock,
+        tenantServiceMock as unknown as TenantService,
+        req as unknown as Request,
+        null,
+        req.params.stream,
+        next
+      );
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('can call next with error for anonymous user and no tenant context', async () => {
+      const req = {
+        tenantId,
+        params: { stream: 'test' },
+        query: {},
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         null,
@@ -360,6 +415,7 @@ describe('stream router', () => {
 
       req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         null,
@@ -384,6 +440,7 @@ describe('stream router', () => {
 
       req.getConfiguration.mockResolvedValueOnce({});
       await getStream(
+        loggerMock,
         tenantServiceMock as unknown as TenantService,
         req as unknown as Request,
         req.query.tenant,
@@ -399,7 +456,7 @@ describe('stream router', () => {
     it('can get streams', async () => {
       const req = {
         tenantId,
-        user: { tenantId, id: 'tester', roles: [] } as User,
+        user: { tenantId, id: 'tester', roles: ['test-subscriber'] } as User,
         params: {},
         query: { tenant: null },
         getConfiguration: jest.fn(),
@@ -409,7 +466,22 @@ describe('stream router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce({ test: stream });
+      req.getConfiguration.mockResolvedValueOnce({
+        test: stream,
+        other: new StreamEntity(loggerMock, tenantId, {
+          id: 'other',
+          name: 'Test Stream',
+          description: null,
+          subscriberRoles: ['not-test-subscriber'],
+          publicSubscribe: false,
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+            },
+          ],
+        }),
+      });
       await getStreams(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ test: expect.objectContaining({ id: 'test' }) }));
     });
@@ -417,7 +489,7 @@ describe('stream router', () => {
     it('can get streams for tenant', async () => {
       const req = {
         tenantId,
-        user: { tenantId, id: 'tester', roles: [] } as User,
+        user: { tenantId, id: 'tester', roles: ['test-subscriber'] } as User,
         params: {},
         query: { tenant: 'test-2' },
         getConfiguration: jest.fn(),
@@ -435,10 +507,64 @@ describe('stream router', () => {
       );
     });
 
+    it('can get streams for tenant with anonymous user', async () => {
+      const req = {
+        tenantId,
+        params: {},
+        query: { tenant: 'test-2' },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({
+        test: stream,
+        other: new StreamEntity(loggerMock, tenantId, {
+          id: 'other',
+          name: 'Test Stream',
+          description: null,
+          subscriberRoles: [],
+          publicSubscribe: true,
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+            },
+          ],
+        }),
+      });
+      await getStreams(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ other: expect.objectContaining({ id: 'other' }) })
+      );
+      expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
+        'urn:ads:platform:tenant-service:v2:/tenants/test-2'
+      );
+    });
+
     it('can call next with error for no tenant context', async () => {
       const req = {
         tenantId,
         user: { isCore: true, id: 'tester', roles: [] } as User,
+        params: { stream: 'test' },
+        query: {},
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      await getStreams(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('can call next with error for no tenant and no user', async () => {
+      const req = {
+        tenantId,
         params: { stream: 'test' },
         query: {},
         getConfiguration: jest.fn(),
@@ -496,6 +622,132 @@ describe('stream router', () => {
       );
       handler(req as unknown as Request, res as unknown as Response, next);
     });
+
+    it('can subscribe anonymously', (done) => {
+      const req = {
+        tenantId,
+        params: { stream: 'test' },
+        query: {},
+        stream: new StreamEntity(loggerMock, tenantId, {
+          id: 'other',
+          name: 'Test Stream',
+          description: null,
+          subscriberRoles: [],
+          publicSubscribe: true,
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+            },
+          ],
+        }),
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+        set: jest.fn(),
+        on: jest.fn(),
+        write: jest.fn((value) => {
+          expect(value).toBeTruthy();
+          done();
+        }),
+        flush: jest.fn(),
+        flushHeaders: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = subscribeBySse(
+        loggerMock,
+        of({
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          timestamp: new Date(),
+          correlationId: '321',
+          payload: {},
+          traceparent: '123',
+        })
+      );
+      handler(req as unknown as Request, res as unknown as Response, next);
+    });
+
+    it('can subscribe with criteria', (done) => {
+      const req = {
+        tenantId,
+        user: { isCore: true, id: 'tester', roles: ['test-subscriber'] } as User,
+        params: { stream: 'test' },
+        query: { criteria: JSON.stringify({ correlationId: '321' }) },
+        stream,
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+        set: jest.fn(),
+        on: jest.fn(),
+        write: jest.fn((value) => {
+          expect(value).toBeTruthy();
+          done();
+        }),
+        flush: jest.fn(),
+        flushHeaders: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = subscribeBySse(
+        loggerMock,
+        of({
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          timestamp: new Date(),
+          correlationId: '321',
+          payload: {},
+          traceparent: '123',
+        })
+      );
+      handler(req as unknown as Request, res as unknown as Response, next);
+    });
+
+    it('can call next with error', (done) => {
+      const req = {
+        tenantId,
+        user: { isCore: true, id: 'tester', roles: ['test-subscriber'] } as User,
+        params: { stream: 'test' },
+        query: {},
+        stream,
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+        set: jest.fn(),
+        on: jest.fn(),
+        write: jest.fn((value) => {
+          expect(value).toBeTruthy();
+          done();
+        }),
+        flush: jest.fn(),
+        flushHeaders: jest.fn(),
+      };
+      const next = jest.fn(() => done());
+
+      res.set.mockImplementationOnce(() => {
+        throw new Error('oh noes!');
+      });
+      const handler = subscribeBySse(
+        loggerMock,
+        of({
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          timestamp: new Date(),
+          correlationId: '321',
+          payload: {},
+          traceparent: '123',
+        })
+      );
+      handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+    });
   });
 
   describe('onIoConnection', () => {
@@ -522,6 +774,124 @@ describe('stream router', () => {
           done();
         }),
         disconnect: jest.fn(),
+      };
+
+      const listener = onIoConnection(
+        loggerMock,
+        of({
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          timestamp: new Date(),
+          correlationId: '321',
+          payload: {},
+          traceparent: '123',
+        })
+      );
+      listener(socket as unknown as Socket);
+    });
+
+    it('can handle anonymous connect', (done) => {
+      const req = {
+        tenantId,
+        params: { stream: 'test' },
+        query: {},
+        stream: new StreamEntity(loggerMock, tenantId, {
+          id: 'other',
+          name: 'Test Stream',
+          description: null,
+          subscriberRoles: [],
+          publicSubscribe: true,
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+            },
+          ],
+        }),
+        getConfiguration: jest.fn(),
+      };
+
+      const socket = {
+        request: req,
+        emit: jest.fn((name, value) => {
+          expect(name).toBe('test-service:test-started');
+          expect(value).toBeTruthy();
+          done();
+        }),
+        disconnect: jest.fn(),
+      };
+
+      const listener = onIoConnection(
+        loggerMock,
+        of({
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          timestamp: new Date(),
+          correlationId: '321',
+          payload: {},
+          traceparent: '123',
+        })
+      );
+      listener(socket as unknown as Socket);
+    });
+
+    it('can handle connect with criteria', (done) => {
+      const req = {
+        tenantId,
+        user: { isCore: true, id: 'tester', roles: ['test-subscriber'] } as User,
+        params: { stream: 'test' },
+        query: {
+          criteria: JSON.stringify({ correlationId: '321' }),
+        },
+        stream,
+        getConfiguration: jest.fn(),
+      };
+
+      const socket = {
+        request: req,
+        emit: jest.fn((name, value) => {
+          expect(name).toBe('test-service:test-started');
+          expect(value).toBeTruthy();
+          done();
+        }),
+        disconnect: jest.fn(),
+      };
+
+      const listener = onIoConnection(
+        loggerMock,
+        of({
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          timestamp: new Date(),
+          correlationId: '321',
+          payload: {},
+          traceparent: '123',
+        })
+      );
+      listener(socket as unknown as Socket);
+    });
+
+    it('can handle disconnect', (done) => {
+      const req = {
+        tenantId,
+        user: { isCore: true, id: 'tester', roles: ['test-subscriber'] } as User,
+        params: { stream: 'test' },
+        query: {},
+        stream,
+        getConfiguration: jest.fn(),
+      };
+
+      const socket = {
+        request: req,
+        emit: jest.fn(),
+        disconnect: jest.fn(),
+        on: jest.fn((_, cb) => {
+          cb();
+          done();
+        }),
       };
 
       const listener = onIoConnection(

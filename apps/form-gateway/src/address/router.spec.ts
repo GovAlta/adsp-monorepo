@@ -100,13 +100,11 @@ describe('findAddress', () => {
 
   beforeEach(() => {
     mockRequest = {
-      body: {
+      query: {
         country: 'CAN',
         languagePreference: 'en',
         maxSuggestions: '5',
         searchTerm: '7000 113 Street',
-      },
-      query: {
         lastId: 'CA|CP',
       },
     };

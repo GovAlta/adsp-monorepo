@@ -7,18 +7,20 @@ interface StreamPayloadTableItemProps {
   stream: Record<string, any>;
 }
 
-export const StreamPayloadTableItem = ({ stream }: StreamPayloadTableItemProps): JSX.Element => {
+export const StreamPayloadTableItem = ({
+  stream: { timestamp, namespace, name, ...stream },
+}: StreamPayloadTableItemProps): JSX.Element => {
   const [showDetails, setShowDetails] = useState(false);
   return (
     <>
       <tr>
         <td headers="timestamp">
           <span>
-            {new Date(stream.timestamp).toLocaleDateString()} {new Date(stream.timestamp).toLocaleTimeString()}
+            {new Date(timestamp).toLocaleDateString()} {new Date(timestamp).toLocaleTimeString()}
           </span>
         </td>
-        <td headers="namespace">{stream.namespace}</td>
-        <td headers="name">{stream.name}</td>
+        <td headers="namespace">{namespace}</td>
+        <td headers="name">{name}</td>
         <td headers="action">
           <GoAContextMenu>
             <GoAContextMenuIcon
@@ -33,7 +35,7 @@ export const StreamPayloadTableItem = ({ stream }: StreamPayloadTableItemProps):
       {showDetails && (
         <tr>
           <NoPaddingTd colSpan={5}>
-            <EntryDetail data-testid={`stream-details`}>{JSON.stringify(stream.payload, null, 2)}</EntryDetail>
+            <EntryDetail data-testid={`stream-details`}>{JSON.stringify(stream, null, 2)}</EntryDetail>
           </NoPaddingTd>
         </tr>
       )}

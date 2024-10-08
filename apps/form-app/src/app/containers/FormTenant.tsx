@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import {
   AppDispatch,
   configInitializedSelector,
+  definitionSelector,
   formSelector,
   initializeTenant,
   loginUser,
@@ -31,6 +32,7 @@ export const FormTenant = () => {
   const dispatch = useDispatch<AppDispatch>();
   const tenant = useSelector(tenantSelector);
   const userForm = useSelector(formSelector);
+  const { definition } = useSelector(definitionSelector);
 
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
@@ -44,9 +46,9 @@ export const FormTenant = () => {
 
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" />
+      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
-        {userInitialized && (
+        {userInitialized && !definition?.anonymousApply && (
           <AccountActionsSpan>
             {user ? (
               <>

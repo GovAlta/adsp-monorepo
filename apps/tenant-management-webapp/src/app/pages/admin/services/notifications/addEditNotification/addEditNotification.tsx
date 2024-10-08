@@ -63,9 +63,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   const typeNames = typeObjects.map((type: NotificationItem) => type.name);
   const checkForEmail = characterCheck(validationPattern.validEmail);
   const [isNotifyAddress, setIsNotifyAddress] = useState(false);
+  const [addressPathChanged, setAddressPathChanged] = useState(false);
 
   useEffect(() => {
     setType(JSON.parse(JSON.stringify(initialValue)));
+    setAddressPathChanged(false);
   }, [initialValue]);
 
   useEffect(() => {
@@ -143,13 +145,14 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 setType(initialValue);
                 validators.clear();
                 setIsNotifyAddress(false);
+                setAddressPathChanged(false);
                 onCancel();
               }}
             >
               Cancel
             </GoAButton>
             <GoAButton
-              disabled={validators.haveErrors() || areObjectsEqual(type, initialValue)}
+              disabled={!addressPathChanged && (validators.haveErrors() || areObjectsEqual(type, initialValue))}
               type="primary"
               testId="form-save"
               onClick={() => {
@@ -171,6 +174,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                   type.addressPath = null;
                 }
                 onSave(type);
+                setAddressPathChanged(false);
               }}
             >
               Save
@@ -340,7 +344,10 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 aria-label="input-path-address"
                 width="60%"
                 onChange={(_, value) => {
-                  type.addressPath = value;
+                  setType({ ...type, addressPath: value });
+                  if (value !== initialValue?.addressPath) {
+                    setAddressPathChanged(true);
+                  }
                 }}
               />
             </GoAFormItem>

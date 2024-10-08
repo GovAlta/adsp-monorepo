@@ -18,6 +18,12 @@ export const environment = envalid.cleanEnv(
     RECAPTCHA_SECRET: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3346 }),
+    ADDRESS_TOKEN_CLIENT_ID: envalid.str({ default: '' }),
+    ADDRESS_TOKEN_URL: envalid.str({
+      default: '',
+    }),
+    ADDRESS_TOKEN_CLIENT_SECRET: envalid.str({ default: '' }),
+    ADDRESS_URL: envalid.str({ default: '' }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {

@@ -38,6 +38,11 @@ const initializeApp = async (): Promise<express.Application> => {
         password: environment.REDIS_PASSWORD,
       })
     : null;
+  if (redisClient) {
+    redisClient.on('error', (err) => {
+      logger.error(`Redis client encountered error: ${err}`);
+    });
+  }
 
   const {
     directory,
@@ -95,6 +100,7 @@ const initializeApp = async (): Promise<express.Application> => {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },
         api: { href: new URL('/gateway/v1', rootUrl).href },
+        address: { href: new URL('/gateway/v1/address', rootUrl).href },
       },
     });
   });

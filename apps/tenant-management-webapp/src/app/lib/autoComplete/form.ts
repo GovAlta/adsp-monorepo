@@ -95,12 +95,12 @@ export class FormUISchemaElementCompletionItemProvider extends JsonObjectComplet
   private static layoutUIelements: EditorSuggestion[];
   static {
     const elements = [
-      { type: 'Categorization', options: { variant: 'stepper', elements: [] } },
+      { type: 'Categorization', options: { variant: 'stepper' }, elements: [] },
       { type: 'Category', label: 'Step label', elements: [] },
       { type: 'Group', label: 'Group label', elements: [] },
       { type: 'VerticalLayout', elements: [] },
       { type: 'HorizontalLayout', elements: [] },
-      { type: 'HelpContent', label: 'Help label', options: { help: 'Provide help content here.' }, elements: [] },
+      { type: 'HelpContent', label: 'Help label', options: { help: 'Provide help content here.' } },
     ];
 
     FormUISchemaElementCompletionItemProvider.layoutUIelements = elements.map((element) => ({

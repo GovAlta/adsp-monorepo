@@ -69,7 +69,7 @@ export const EmailInformation: FunctionComponent = () => {
         </p>
 
         <Grid>
-          <GridItem data-testid="email" className="word-break contact-border" md={12} vSpacing={1} hSpacing={0.5}>
+          <GridItem data-testid="from-email" className="word-break contact-border" md={12} vSpacing={1} hSpacing={0.5}>
             <h4>From email</h4>
             {fromEmail?.fromEmail}
           </GridItem>

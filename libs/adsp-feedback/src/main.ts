@@ -32,7 +32,7 @@ import veryEasySvgError from './assets/Very_Easy-Error.svg';
 import veryEasySvgHover from './assets/Very_Easy-Hover.svg';
 import veryEasySvgClick from './assets/Very_Easy-Click.svg';
 
-class AdspFeedback implements AdspFeedbackApi {
+export class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
   private apiUrl?: URL;
   private name?: string;
@@ -52,8 +52,8 @@ class AdspFeedback implements AdspFeedbackApi {
   private technicalCommentDivRef: Ref<HTMLFieldSetElement> = createRef();
   private technicalCommentRef: Ref<HTMLTextAreaElement> = createRef();
   private dimRef: Ref<HTMLTextAreaElement> = createRef();
-  private radio1Ref: Ref<HTMLInputElement> = createRef();
-  private radio2Ref: Ref<HTMLInputElement> = createRef();
+  private ratingSelector: Ref<HTMLInputElement> = createRef();
+  private commentSelector: Ref<HTMLInputElement> = createRef();
   private firstFocusableElement?: HTMLElement;
   private lastFocusableElement?: HTMLElement;
 
@@ -187,8 +187,8 @@ class AdspFeedback implements AdspFeedbackApi {
   private onIssueChange(event: Event) {
     if (event.target instanceof HTMLInputElement && this.feedbackFormRef.value) {
       if (event.target.value.toLowerCase() === 'yes') {
-        if (this.radio1Ref.value) {
-          this.radio1Ref.value.checked = true;
+        if (this.ratingSelector.value) {
+          this.ratingSelector.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
 
@@ -199,8 +199,8 @@ class AdspFeedback implements AdspFeedbackApi {
           this.sendButtonRef.value?.removeAttribute('disabled');
         }
       } else {
-        if (this.radio2Ref.value) {
-          this.radio2Ref.value.checked = true;
+        if (this.commentSelector.value) {
+          this.commentSelector.value.checked = true;
         }
         if (this.selectedRating > -1) {
           this.sendButtonRef.value?.removeAttribute('disabled');
@@ -216,18 +216,18 @@ class AdspFeedback implements AdspFeedbackApi {
 
   handleRadioKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'ArrowRight') {
-      if (this.radio2Ref.value) {
-        if (this.radio2Ref.value.checked === false) {
-          this.radio2Ref.value.focus();
-          this.radio2Ref.value.checked = true;
+      if (this.commentSelector.value) {
+        if (this.commentSelector.value.checked === false) {
+          this.commentSelector.value.focus();
+          this.commentSelector.value.checked = true;
           this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
         }
       }
     } else if (e.key === 'ArrowLeft') {
-      if (this.radio1Ref.value) {
-        if (this.radio1Ref.value.checked === false) {
-          this.radio1Ref.value.focus();
-          this.radio1Ref.value.checked = true;
+      if (this.ratingSelector.value) {
+        if (this.ratingSelector.value.checked === false) {
+          this.ratingSelector.value.focus();
+          this.ratingSelector.value.checked = true;
           this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
         }
       }
@@ -304,11 +304,11 @@ class AdspFeedback implements AdspFeedbackApi {
     if (this.technicalCommentRef?.value) {
       this.technicalCommentRef.value.value = '';
     }
-    if (this.radio1Ref.value) {
-      this.radio1Ref.value.checked = false;
+    if (this.ratingSelector.value) {
+      this.ratingSelector.value.checked = false;
     }
-    if (this.radio2Ref.value) {
-      this.radio2Ref.value.checked = false;
+    if (this.commentSelector.value) {
+      this.commentSelector.value.checked = false;
     }
     if (this.sendButtonRef) {
       this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
@@ -376,6 +376,7 @@ class AdspFeedback implements AdspFeedbackApi {
           class="rating"
           alt="${rating.label}"
           tabindex="0"
+          aria-label="${rating.label}"
         />
         <span class="tooltip-text">${rating.label}</span>
         <p
@@ -459,7 +460,10 @@ class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
-    if (this.radio2Ref.value && this.radio2Ref.value.checked === true) {
+    if (this.commentSelector.value && this.commentSelector.value.checked === true) {
+      this.sendButtonRef.value?.removeAttribute('disabled');
+    }
+    if (this.commentSelector.value?.checked === false && this.ratingSelector.value?.checked === true) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     }
   };
@@ -835,10 +839,12 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             visibility: visible;
+            transition: visibility 0s 0.1s;
           }
 
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-error {
             visibility: visible;
+            transition: visibility 0s 0.1s;
           }
           .radios {
             margin-top: 16px;
@@ -930,7 +936,7 @@ class AdspFeedback implements AdspFeedbackApi {
             cursor: pointer;
           }
           .errorText {
-            color: #dcdcdc;
+            color: #333333;
             font-size: 18px;
           }
           .successButton {
@@ -977,8 +983,15 @@ class AdspFeedback implements AdspFeedbackApi {
           .p-content {
             line-height: 28px;
           }
-          @media screen and (max-width: 768px) {
+          @media screen and (max-width: 767px) {
             .adsp-fb div.adsp-fb-form-container {
+            }
+            .adsp-fb .adsp-fb-badge {
+              top: auto;
+              bottom: 12vh;
+              font-size: 12px;
+              padding: 12px 0;
+              line-height: 1.5rem;
             }
           }
           @media screen and (max-width: 640px) {
@@ -1053,11 +1066,6 @@ class AdspFeedback implements AdspFeedbackApi {
               cursor: pointer;
             }
           }
-          @media screen and (max-width: 624px) {
-            .adsp-fb .adsp-fb-badge {
-              display: none;
-            }
-          }
           @media screen and (max-height: 800px) {
             .adsp-fb .adsp-fb-form-container {
               top: 16px;
@@ -1081,6 +1089,7 @@ class AdspFeedback implements AdspFeedbackApi {
                 data-show="true"
                 @click=${this.openStartForm}
                 @keydown=${this.handleKeyOpenStartForm}
+                aria-label="Feedback badge"
               >
                 <span>Feedback</span>
               </div>
@@ -1099,6 +1108,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       @click="${this.closeFeedbackForm}"
                       @keydown=${this.handleKeyExit}
                       alt="close feedback"
+                      aria-label="Close feedback image"
                     />
                   </div>
                   <hr class="styled-hr styled-hr-top" />
@@ -1115,6 +1125,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         @click=${this.closeStartForm}
                         type="button"
                         tabindex="0"
+                        aria-label="Start feedback button"
                       >
                         Start
                       </button>
@@ -1134,6 +1145,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       @click="${this.closeFeedbackForm}"
                       @keydown=${this.handleKeyFeedbackExit}
                       alt="close feedback"
+                      aria-label="Close feedback image"
                     />
                   </div>
                   <hr class="styled-hr styled-hr-top" />
@@ -1147,7 +1159,12 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                       <div class="adsp-fb-form-comment">
                         <label><b>Do you have any additional comments?</b> <span>(optional)</span></label>
-                        <textarea id="comment" ${ref(this.commentRef)} placeholder=""></textarea>
+                        <textarea
+                          id="comment"
+                          ${ref(this.commentRef)}
+                          placeholder=""
+                          aria-label="Comments textarea"
+                        ></textarea>
                         <span class="help-text"
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
@@ -1171,7 +1188,8 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="yes"
                               value="Yes"
                               class="radio"
-                              ${ref(this.radio1Ref)}
+                              ${ref(this.ratingSelector)}
+                              aria-label="Yes"
                             />
                             <label for="yes" class="radio-label"> Yes </label>
                           </div>
@@ -1183,7 +1201,8 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="no"
                               value="No"
                               class="radio"
-                              ${ref(this.radio2Ref)}
+                              ${ref(this.commentSelector)}
+                              aria-label="No"
                             />
 
                             <label for="no" class="radio-label"> No </label>
@@ -1200,6 +1219,7 @@ class AdspFeedback implements AdspFeedbackApi {
                             ${ref(this.technicalCommentRef)}
                             id="technicalComment"
                             @input=${this.technicalCommentRefOnChange}
+                            aria-label="Technical comments textarea"
                           ></textarea>
                           <span class="help-text"
                             >Do not include personal information like SIN, password, addresses, etc.</span
@@ -1218,6 +1238,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         class="adsp-fb-form-secondary"
                         type="button"
                         tabindex="0"
+                        aria-label="Close feedback button"
                       >
                         Cancel
                       </button>
@@ -1228,6 +1249,7 @@ class AdspFeedback implements AdspFeedbackApi {
                         type="button"
                         disabled
                         tabindex="0"
+                        aria-label="Submit feedback button"
                       >
                         Submit
                       </button>
@@ -1250,6 +1272,7 @@ class AdspFeedback implements AdspFeedbackApi {
                           class="adsp-fb-form-primary"
                           type="button"
                           tabindex="0"
+                          aria-label="Close feedback success button"
                         >
                           Close
                         </button>
@@ -1261,7 +1284,7 @@ class AdspFeedback implements AdspFeedbackApi {
                       </div>
                       <div class="errorText">Error 500</div>
                       <div>
-                        <img src=${blueUnderLineSvg} width="50px" />
+                        <img src=${blueUnderLineSvg} width="50px" alt="Blue Line" />
                         <div>
                           <h3>We are experiencing a problem</h3>
                           <p class="p-error">
@@ -1275,6 +1298,7 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="feedback-close-error"
                               type="button"
                               tabindex="0"
+                              aria-label="Close feedback error button"
                             >
                               Close
                             </button>

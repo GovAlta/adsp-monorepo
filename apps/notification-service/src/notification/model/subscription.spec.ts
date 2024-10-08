@@ -141,6 +141,31 @@ describe('SubscriptionEntity', () => {
       expect(send).toBe(true);
     });
 
+    it('can return true for correlation criteria using URN', () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: {
+            correlationId: adspId`urn:ads:platform:form-service:v1:/forms/123`.toString(),
+          },
+          subscriberId: 'test',
+        },
+        type
+      );
+
+      const send = entity.shouldSend({
+        tenantId,
+        name: 'test-started',
+        timestamp: new Date(),
+        correlationId: adspId`urn:ads:platform:form-service:v1:/forms/123`.toString(),
+        payload: {},
+      });
+
+      expect(send).toBe(true);
+    });
+
     it('can return true for array correlation criteria matched', () => {
       const entity = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
@@ -346,6 +371,29 @@ describe('SubscriptionEntity', () => {
       };
       const updated = await entity.updateCriteria(user, criteria);
       expect(updated.criteria).toMatchObject(expect.arrayContaining([expect.any(Object), criteria]));
+    });
+
+    it('can updated criteria with empty criteria', async () => {
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: null,
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const criteria = {
+        correlationId: 'test',
+        context: {
+          value: 'test',
+        },
+      };
+      const updated = await entity.updateCriteria(user, null);
+      expect(updated.criteria).toMatchObject(expect.arrayContaining([expect.any(Object)]));
     });
 
     it('can throw for additive update to empty criteria', async () => {

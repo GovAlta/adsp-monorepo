@@ -26,6 +26,7 @@ import {
   metaDataSelector,
   uploadFile,
 } from '../state';
+import { userSelector } from '../state';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -59,7 +60,7 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
 
   return (
-    <JsonFormRegisterProvider defaultRegisters={definition?.registerData || []}>
+    <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
         ajv={createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema)}
         readonly={readonly}
@@ -105,6 +106,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const files = useSelector(filesSelector);
   const metadata = useSelector(metaDataSelector);
+  const user = useSelector(userSelector);
 
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
@@ -164,6 +166,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             downloadFile: downloadFormFile,
             deleteFile: deleteFormFile,
           }}
+          data={{ user: user?.user }}
         >
           <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
         </ContextProvider>

@@ -3,10 +3,12 @@ import { DateTime } from 'luxon';
 
 export interface CalendarEvent {
   id: number;
+  recordId?: string;
+  context?: Record<string, boolean | string | number>;
   name: string;
   description: string;
   start: DateTime;
-  end: DateTime;
+  end?: DateTime;
   isPublic: boolean;
   isAllDay: boolean;
 }
@@ -24,8 +26,12 @@ export interface AttendeeCriteria {
 
 export interface CalendarEventCriteria {
   tenant?: AdspId;
+  recordId?: string;
+  context?: Record<string, boolean | string | number>;
   isPublic?: boolean;
   startsAfter?: DateTime;
   endsBefore?: DateTime;
+  activeOn?: DateTime;
   attendeeCriteria?: AttendeeCriteria;
+  orderBy?: 'id' | 'start';
 }
