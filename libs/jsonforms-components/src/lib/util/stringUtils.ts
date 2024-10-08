@@ -44,10 +44,10 @@ export const getLabelText = (scope: string, label: string): string => {
 const areAllUppercase = (label: string): boolean => {
   return /^[^a-z]*$/.test(label);
 };
-const isEmptyBoolean = (schema: JsonSchema, data: unknown): boolean => {
+export const isEmptyBoolean = (schema: JsonSchema, data: unknown): boolean => {
   return schema.type !== undefined && schema.type === 'boolean' && (data === null || data === undefined);
 };
-const isEmptyNumber = (schema: JsonSchema, data: unknown): boolean => {
+export const isEmptyNumber = (schema: JsonSchema, data: unknown): boolean => {
   return (
     data === '' ||
     data === undefined ||
@@ -86,12 +86,15 @@ interface extractSchema {
  * @returns error message
  */
 export const checkFieldValidity = (props: ControlProps): string => {
-  const { data, errors: ajvErrors, required, label, uischema, schema } = props;
+  const { errors: ajvErrors, required, label, uischema, schema } = props;
+  const { data } = props;
   const labelToUpdate = getLabelText(uischema.scope, label);
   const extraSchema = schema as JsonSchema & extractSchema;
 
   if (extraSchema && data && extraSchema?.title === 'Social insurance number') {
-    if (!validateSinWithLuhn(data)) {
+    if (data.length === 11 && !validateSinWithLuhn(data)) {
+      return 'Please enter valid SIN';
+    } else if (data.length < 11) {
       return extraSchema.errorMessage;
     }
   }
