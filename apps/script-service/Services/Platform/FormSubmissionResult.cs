@@ -18,12 +18,12 @@ namespace Adsp.Platform.ScriptService.Services.Platform
 
     [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
     [JsonPropertyName("formData")]
-    [JsonConverter(typeof(DictionaryJsonConverter))]
-    public IDictionary<string, object?>? Data { get; set; }
+    //    [JsonConverter(typeof(DictionaryJsonConverter))]
+    public Dictionary<string, object?>? Data { get; set; }
 
     [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
     [JsonPropertyName("formFiles")]
-    public IDictionary<string, string?>? Files { get; set; }
+    public Dictionary<string, string?>? Files { get; set; }
 
     [JsonPropertyName("createdBy")]
     public User? CreatedBy { get; set; }
