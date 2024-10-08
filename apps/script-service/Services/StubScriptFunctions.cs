@@ -60,7 +60,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
                 { "lastName", "Bing" },
                 { "email", "Bob@bob.com" }
             },
-      Files = new Dictionary<string, string?>
+      Files = new Dictionary<string, object?>
             {
                 { "resume", "urn:ads:platform:file-service:v1:/files/resume" },
                 { "cover", "urn:ads:platform:file-service:v1:/files/cover" }

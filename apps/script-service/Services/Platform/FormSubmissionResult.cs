@@ -18,10 +18,11 @@ namespace Adsp.Platform.ScriptService.Services.Platform
 
     [JsonPropertyName("formData")]
     [JsonConverter(typeof(DictionaryJsonConverter))]
-    public IDictionary<string, object?>? Data { get; set; }
+    public IDictionary<string, object?>? Data { get; set; } = new Dictionary<string, object?>();
 
     [JsonPropertyName("formFiles")]
-    public IDictionary<string, string?>? Files { get; set; }
+    [JsonConverter(typeof(DictionaryJsonConverter))]
+    public IDictionary<string, object?>? Files { get; set; } = new Dictionary<string, object?>();
 
     [JsonPropertyName("createdBy")]
     public User? CreatedBy { get; set; }
@@ -57,6 +58,7 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     public DateTime? Date { get; set; }
 
     [JsonPropertyName("securityClassification")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public SecurityClassificationType? SecurityClassification { get; set; }
 
   }
@@ -70,8 +72,7 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     public string? Name { get; set; }
   }
 
-  [JsonConverter(typeof(JsonStringEnumConverter))]
-  internal enum SecurityClassificationType
+  public enum SecurityClassificationType
   {
     [JsonPropertyName("protected a")]
     ProtectedA,
