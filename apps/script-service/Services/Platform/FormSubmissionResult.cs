@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Adsp.Sdk.Util;
+using Newtonsoft.Json.Linq;
 
 namespace Adsp.Platform.ScriptService.Services.Platform
 {
