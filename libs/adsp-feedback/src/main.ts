@@ -32,7 +32,7 @@ import veryEasySvgError from './assets/Very_Easy-Error.svg';
 import veryEasySvgHover from './assets/Very_Easy-Hover.svg';
 import veryEasySvgClick from './assets/Very_Easy-Click.svg';
 
-class AdspFeedback implements AdspFeedbackApi {
+export class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
   private apiUrl?: URL;
   private name?: string;

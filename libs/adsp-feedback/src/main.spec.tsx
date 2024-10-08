@@ -1,5 +1,5 @@
 import { screen, render } from '@testing-library/react';
-import AdspFeedback from './main';
+import { AdspFeedback } from './main';
 
 describe('AdspFeedback selectRating', () => {
   let adspFeedback: AdspFeedback;
@@ -29,11 +29,51 @@ describe('AdspFeedback selectRating', () => {
     `;
 
     adspFeedback['ratings'] = [
-      { svgClick: 'clickedImage1', svgDefault: 'defaultImage1', svgHover: 'hoverImage1', svgError: 'errorImage1', label: 'Very Difficult', rate: 'terrible', value: 0 },
-      { svgClick: 'clickedImage2', svgDefault: 'defaultImage2', svgHover: 'hoverImage2', svgError: 'errorImage2', label: 'Difficult', rate: 'bad', value: 1 },
-      { svgClick: 'clickedImage3', svgDefault: 'defaultImage3', svgHover: 'hoverImage3', svgError: 'errorImage3', label: 'Neutral', rate: 'neutral', value: 2 },
-      { svgClick: 'clickedImage4', svgDefault: 'defaultImage4', svgHover: 'hoverImage4', svgError: 'errorImage4', label: 'Easy', rate: 'good', value: 3 },
-      { svgClick: 'clickedImage5', svgDefault: 'defaultImage5', svgHover: 'hoverImage5', svgError: 'errorImage5', label: 'Very Easy', rate: 'delightful', value: 4 },
+      {
+        svgClick: 'clickedImage1',
+        svgDefault: 'defaultImage1',
+        svgHover: 'hoverImage1',
+        svgError: 'errorImage1',
+        label: 'Very Difficult',
+        rate: 'terrible',
+        value: 0,
+      },
+      {
+        svgClick: 'clickedImage2',
+        svgDefault: 'defaultImage2',
+        svgHover: 'hoverImage2',
+        svgError: 'errorImage2',
+        label: 'Difficult',
+        rate: 'bad',
+        value: 1,
+      },
+      {
+        svgClick: 'clickedImage3',
+        svgDefault: 'defaultImage3',
+        svgHover: 'hoverImage3',
+        svgError: 'errorImage3',
+        label: 'Neutral',
+        rate: 'neutral',
+        value: 2,
+      },
+      {
+        svgClick: 'clickedImage4',
+        svgDefault: 'defaultImage4',
+        svgHover: 'hoverImage4',
+        svgError: 'errorImage4',
+        label: 'Easy',
+        rate: 'good',
+        value: 3,
+      },
+      {
+        svgClick: 'clickedImage5',
+        svgDefault: 'defaultImage5',
+        svgHover: 'hoverImage5',
+        svgError: 'errorImage5',
+        label: 'Very Easy',
+        rate: 'delightful',
+        value: 4,
+      },
     ];
     adspFeedback['commentSelector'] = { value: document.createElement('input') }; // Create an input element
     if (adspFeedback['commentSelector'].value) {
@@ -67,7 +107,10 @@ describe('AdspFeedback selectRating', () => {
     const rgbToHex = (rgb: string) => {
       const rgbValues = rgb.match(/\d+/g)?.map(Number);
       if (!rgbValues) return rgb;
-      return `#${((1 << 24) + (rgbValues[0] << 16) + (rgbValues[1] << 8) + rgbValues[2]).toString(16).slice(1).toUpperCase()}`;
+      return `#${((1 << 24) + (rgbValues[0] << 16) + (rgbValues[1] << 8) + rgbValues[2])
+        .toString(16)
+        .slice(1)
+        .toUpperCase()}`;
     };
 
     expect(rgbToHex(text.style.color)).toBe('#0081A2');
