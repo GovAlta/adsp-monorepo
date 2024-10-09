@@ -143,7 +143,7 @@ describe('Input Text Control tests', () => {
     });
 
     it('should enter valid SIN', () => {
-      expect(checkFieldValidity(invalidSinProps)).toBe('Please enter valid SIN');
+      expect(checkFieldValidity(invalidSinProps)).toBe('Social insurance number is invalid');
     });
     it('should return true for valid SIN Number', () => {
       expect(validateSinWithLuhn(Number('046454286'))).toBe(true);

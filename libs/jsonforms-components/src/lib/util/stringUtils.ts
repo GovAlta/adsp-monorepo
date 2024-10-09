@@ -92,7 +92,7 @@ export const checkFieldValidity = (props: ControlProps): string => {
 
   if (extraSchema && data && extraSchema?.title === 'Social insurance number') {
     if (data.length === 11 && !validateSinWithLuhn(data)) {
-      return 'Please enter valid SIN';
+      return 'Social insurance number is invalid';
     } else if (data.length < 11) {
       return extraSchema.errorMessage;
     }
