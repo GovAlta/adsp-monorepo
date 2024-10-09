@@ -42,6 +42,7 @@ describe('ResourceType', () => {
 
   beforeEach(() => {
     axiosMock.get.mockClear();
+    axiosMock.isAxiosError.mockClear();
     directoryMock.getResourceUrl.mockClear();
     repositoryMock.deleteResource.mockClear();
   });
@@ -188,6 +189,30 @@ describe('ResourceType', () => {
       });
 
       await expect(type.resolve(null)).rejects.toThrow(Error);
+    });
+    it('can delete not found resource', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+      });
+
+      const resourceUrl = new URL('https://test-service.com/test/v1/tests/123');
+      directoryMock.getResourceUrl.mockResolvedValueOnce(resourceUrl);
+
+      const urn = adspId`urn:ads:platform:test-service:v1:/tests/123`;
+
+      const error = new Error('oh noes!');
+      error['response'] = { status: 404 };
+      axiosMock.get.mockRejectedValueOnce(error);
+      axiosMock.isAxiosError.mockReturnValueOnce(true);
+
+      repositoryMock.deleteResource.mockResolvedValueOnce(true);
+
+      const result = await type.resolve({ tenantId, urn });
+      expect(result).toBeUndefined();
+      expect(repositoryMock.deleteResource).toHaveBeenCalledWith(expect.objectContaining({ tenantId, urn }));
     });
   });
 

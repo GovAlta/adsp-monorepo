@@ -5,6 +5,7 @@ const ENTRY_UPDATED = 'entry-updated';
 const ENTRY_DELETED = 'entry-deleted';
 export const TAGGED_RESOURCE = 'tagged-resource';
 const UNTAGGED_RESOURCE = 'untagged-resource';
+const RESOURCE_RESOLUTION_FAILED = 'resource-resolution-failed';
 
 export const EntryUpdatedDefinition: DomainEventDefinition = {
   name: ENTRY_UPDATED,
@@ -131,6 +132,24 @@ export const UntaggedResourceDefinition: DomainEventDefinition = {
   },
 };
 
+export const ResourceResolutionFailedDefinition: DomainEventDefinition = {
+  name: RESOURCE_RESOLUTION_FAILED,
+  description: 'Signalled when a resource associated with a resource type could not be resolved.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      resource: {
+        type: 'object',
+        properties: {
+          urn: { type: 'string' },
+        },
+      },
+      type: { type: ['string', 'null'] },
+      error: { type: 'string' },
+    },
+  },
+};
+
 export const entryUpdated = (
   updatedBy: User,
   namespace: string,
@@ -233,6 +252,24 @@ export const untaggedResource = (resource: Resource, tag: Tag, updatedBy: User):
       id: updatedBy.id,
       name: updatedBy.name,
     },
+  },
+});
+
+export const resourceResolutionFailed = (resource: Resource, type: string, error: string): DomainEvent => ({
+  name: RESOURCE_RESOLUTION_FAILED,
+  timestamp: new Date(),
+  tenantId: resource.tenantId,
+  correlationId: type,
+  context: {
+    resources: resource.urn.toString(),
+    type,
+  },
+  payload: {
+    resource: {
+      urn: resource.urn.toString(),
+    },
+    type,
+    error,
   },
 });
 
