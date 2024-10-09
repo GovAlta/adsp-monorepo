@@ -23,11 +23,20 @@ export function createResolveJob({ logger, configurationService }: ResolveJobPro
         });
 
         const result = await type.resolve({ tenantId, urn });
-
-        logger.info(`Resolved resource ${urn} to name '${result.name}' and description '${result.description}'.`, {
-          context: 'ResolveJob',
-          tenant: tenantId.toString(),
-        });
+        if (result) {
+          logger.info(`Resolved resource ${urn} to name '${result.name}' and description '${result.description}'.`, {
+            context: 'ResolveJob',
+            tenant: tenantId.toString(),
+          });
+        } else {
+          logger.info(
+            `Resource ${urn} could not be found on associated API during resolve and was deleted for consistency.`,
+            {
+              context: 'ResolveJob',
+              tenant: tenantId.toString(),
+            }
+          );
+        }
       } else {
         logger.info(`Resource ${urn} did not match any type and will not be resolved.`, {
           context: 'ResolveJob',
