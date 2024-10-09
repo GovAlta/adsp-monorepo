@@ -76,4 +76,47 @@ describe('mapSuggestionToAddress', () => {
     const result = mapSuggestionToAddress(suggestion);
     expect(result).toEqual(expectedAddress);
   });
+  it('should map the suggestion to address when suite information is present', () => {
+    const suggestion: Suggestion = {
+      Id: 'CA|CP|A|10010614',
+      Text: 'Suite-636 20 St S',
+      Highlight: '1-3',
+      Cursor: 0,
+      Description: 'Calgary, AB, T3H 2V4',
+      Next: 'Retrieve',
+    };
+
+    const expectedAddress: Address = {
+      addressLine1: '20 St S',
+      addressLine2: 'Suite-636',
+      city: 'Calgary',
+      province: 'AB',
+      postalCode: 'T3H 2V4',
+      country: 'CAN',
+    };
+
+    expect(mapSuggestionToAddress(suggestion)).toEqual(expectedAddress);
+  });
+
+  it('should handle different suite notations (Apt, Unit, #)', () => {
+    const suggestion: Suggestion = {
+      Id: 'CA|CP|A|10010614',
+      Text: 'Apt-456 100 Main St',
+      Highlight: '1-3',
+      Cursor: 0,
+      Description: 'Lethbridge, AB, T1K 3M4',
+      Next: 'Retrieve',
+    };
+
+    const expectedAddress: Address = {
+      addressLine1: '100 Main St',
+      addressLine2: 'Apt-456',
+      city: 'Lethbridge',
+      province: 'AB',
+      postalCode: 'T1K 3M4',
+      country: 'CAN',
+    };
+
+    expect(mapSuggestionToAddress(suggestion)).toEqual(expectedAddress);
+  });
 });

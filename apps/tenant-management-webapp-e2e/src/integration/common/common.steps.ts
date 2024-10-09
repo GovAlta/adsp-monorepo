@@ -267,3 +267,8 @@ When('the user re-load the page and wait {string} seconds', function (numberOfSe
   cy.reload();
   cy.wait(Number(numberOfSeconds));
 });
+
+When('the user clicks Load more button on the page', function () {
+  commonObj.loadMoreButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
