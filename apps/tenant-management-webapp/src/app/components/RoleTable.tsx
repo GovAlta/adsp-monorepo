@@ -137,7 +137,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                               setCheckedRoles(checkedRoles);
                               props.roleSelectFunc(newRoles, checkedRole.title);
                             }
-                            props.showSelectedRoles ? setRolesChanged(true) : setRolesChanged(false);
+                            props.showSelectedRoles && setRolesChanged(true);
                           }}
                         />
                       </td>
