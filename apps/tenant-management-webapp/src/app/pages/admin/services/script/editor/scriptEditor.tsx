@@ -310,7 +310,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     return result;
   };
 
-  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '466px';
+  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '399px';
 
   const isServiceAccountDisabled = () => {
     if (script.triggerEvents?.length > 0) return true;
@@ -330,7 +330,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
       <ScriptEditorContainer>
         <div>
           <ScriptEditorTitle>Script editor</ScriptEditorTitle>
-          <hr className="hr-resize" />
+
+          <hr className="hr-only-line" />
           <TombStone selectedScript={selectedScript} onSave={onSave} />
           <div style={{ paddingLeft: '4px' }}>
             <GoACheckbox
