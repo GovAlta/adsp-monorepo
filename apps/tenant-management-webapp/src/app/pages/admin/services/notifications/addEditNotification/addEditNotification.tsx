@@ -64,6 +64,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   const checkForEmail = characterCheck(validationPattern.validEmail);
   const [isNotifyAddress, setIsNotifyAddress] = useState(false);
   const [addressPathChanged, setAddressPathChanged] = useState(false);
+  const [, setForceRender] = useState(false);
 
   useEffect(() => {
     setType(JSON.parse(JSON.stringify(initialValue)));
@@ -75,6 +76,12 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
       (type?.address && type.address.length > 0) || (type?.addressPath && type.addressPath.length > 0)
     );
   }, [type]);
+
+  useEffect(() => {
+    if (addressPathChanged) {
+      setForceRender((prev) => !prev);
+    }
+  }, [addressPathChanged]);
 
   const roleNames = realmRoles
     ? realmRoles.map((role) => {
