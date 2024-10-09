@@ -455,15 +455,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                               assessorRoles: definition.assessorRoles,
                             }}
                             onUpdateRoles={(roles, type) => {
-                              if (type === applicantRoles.name && !showSelectedRoles) {
+                              if (type === applicantRoles.name) {
                                 setDefinition({
                                   applicantRoles: [...new Set(roles)],
                                 });
-                              } else if (type === clerkRoles.name && !showSelectedRoles) {
+                              } else if (type === clerkRoles.name) {
                                 setDefinition({
                                   clerkRoles: [...new Set(roles)],
                                 });
-                              } else if (!showSelectedRoles) {
+                              } else {
                                 setDefinition({
                                   assessorRoles: [...new Set(roles)],
                                 });
