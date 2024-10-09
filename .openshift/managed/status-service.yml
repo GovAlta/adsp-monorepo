@@ -383,8 +383,9 @@ objects:
       replicas: 1
       revisionHistoryLimit: 3
       selector:
-        app: ${APP_NAME}
-        component: job
+        matchLabels:
+          app: ${APP_NAME}
+          component: job
       template:
         metadata:
           labels:
