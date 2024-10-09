@@ -31,11 +31,7 @@ internal sealed class Program
 
     // Add services to the container.
     builder.Services.AddLogging();
-    builder.Services.AddControllers()
-      .AddJsonOptions(options =>
-      {
-        options.JsonSerializerOptions.Converters.Add(new DictionaryJsonConverter());
-      });
+    builder.Services.AddControllers();
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services.AddEndpointsApiExplorer();
