@@ -1,6 +1,5 @@
 import type { DomainEvent, DomainEventDefinition, User, Stream } from '@abgov/adsp-service-sdk';
 import { Resource, Tag } from './types';
-import { ResourceType } from './model';
 
 const ENTRY_UPDATED = 'entry-updated';
 const ENTRY_DELETED = 'entry-deleted';
