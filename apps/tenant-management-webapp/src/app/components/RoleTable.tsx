@@ -58,13 +58,16 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   };
 
   useEffect(() => {
+    if (!props.showSelectedRoles) {
+      setRolesChanged(false);
+    }
     if (props.showSelectedRoles && !rolesChanged) {
       const selectedOnlyRoles = props.roles.filter((role) => {
         const selectedRole = props.clientId ? `${props.clientId}:${role}` : role;
         return checkedRoles.find((checkedRole) => checkedRole.selectedRoles.includes(selectedRole));
       });
       setFilteredRoles(selectedOnlyRoles);
-    } else if (rolesChanged) {
+    } else if (props.showSelectedRoles && rolesChanged) {
       setFilteredRoles(filteredRoles);
     } else {
       setFilteredRoles(props.roles);
@@ -134,7 +137,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                               setCheckedRoles(checkedRoles);
                               props.roleSelectFunc(newRoles, checkedRole.title);
                             }
-                            props.showSelectedRoles && setRolesChanged(true);
+                            props.showSelectedRoles ? setRolesChanged(true) : setRolesChanged(false);
                           }}
                         />
                       </td>
