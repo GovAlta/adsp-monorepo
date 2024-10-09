@@ -216,17 +216,16 @@ export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvid
         context: 'GatewayRouter',
       });
 
-      const { data: responseData } = await axios.post<{ id: string }>(
-        fileResourceUrl.href,
-        { ...req.body },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      res.send(responseData);
-      logger.debug(`Submitted form supporting document from anonymous user`, {
-        context: 'GatewayRouter',
-      });
+      return proxy(fileResourceUrl.href, {
+        async proxyReqOptDecorator(opts) {
+          opts.headers.Authorization = `Bearer ${token}`;
+          const trace = getContextTrace();
+          if (trace) {
+            opts.headers['traceparent'] = trace.toString();
+          }
+          return opts;
+        },
+      })(req, res, next);
     } catch (err) {
       next(err);
     }
