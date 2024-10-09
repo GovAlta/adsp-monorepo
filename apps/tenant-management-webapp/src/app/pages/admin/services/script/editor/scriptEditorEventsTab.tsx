@@ -178,6 +178,7 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
+            size="compact"
             testId="script-add-trigger-event-button"
             onClick={() => {
               setSelectedTriggerEvent(defaultTriggerEvent);

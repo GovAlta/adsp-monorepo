@@ -54,6 +54,7 @@ export interface FormState {
   form: SerializedForm;
   data: Record<string, unknown>;
   files: Record<string, string>;
+  config: Record<string, string>;
   errors: ValidationError[];
   saved: string;
   busy: {
@@ -468,6 +469,7 @@ const initialFormState: FormState = {
   form: null,
   data: {},
   files: {},
+  config: {},
   errors: [],
   saved: null,
   busy: {
@@ -621,6 +623,7 @@ export const userFormSelector = createSelector(
 
 export const dataSelector = (state: AppState) => state.form.data;
 export const filesSelector = (state: AppState) => state.form.files;
+export const configSelector = (state: AppState) => state.form.config;
 
 export const isApplicantSelector = createSelector(
   definitionSelector,

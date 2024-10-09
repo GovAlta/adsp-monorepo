@@ -70,6 +70,13 @@ const Main = styled.main`
     margin: 2rem 0;
   }
 
+  .hr-only-line {
+    border-width: 0;
+    border-top: 1px solid #ccc;
+    margin: 0;
+    padding: 0;
+  }
+
   // prevent too much bottom space when a header immediately follows an <hr>
   hr + h1,
   hr + h2,

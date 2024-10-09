@@ -25,11 +25,23 @@ export const fetchAddressSuggestions = async (
 export const filterAlbertaAddresses = (suggestions: Suggestion[]): Suggestion[] => {
   return suggestions.filter((suggestion) => suggestion.Description.includes('AB'));
 };
+export const filterSuggestionsWithoutAddressCount = (suggestions: Suggestion[]): Suggestion[] => {
+  return suggestions.filter((suggestion) => {
+    return !suggestion.Description.trim().endsWith('Addresses');
+  });
+};
 
 export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
-  const textParts = suggestion.Text.split(',');
-  const addressLine1 = textParts.length > 1 ? textParts[1].trim() : textParts[0].trim();
-  const addressLine2 = textParts.length > 1 ? textParts[0].trim() : '';
+  let addressLine1, addressLine2;
+  const suiteMatch = suggestion.Text.match(/(Suite|Apt|Unit|#)+/i);
+  const textParts = suggestion.Text.split(' ');
+  if (suiteMatch) {
+    addressLine1 = suggestion.Text.replace(textParts[0], '').trim();
+    addressLine2 = textParts[0].trim();
+  } else {
+    addressLine2 = '';
+    addressLine1 = suggestion.Text.trim();
+  }
 
   const descriptionParts = suggestion.Description.split(',');
   const city = descriptionParts[0].trim();

@@ -26,7 +26,7 @@ import {
   metaDataSelector,
   uploadFile,
 } from '../state';
-import { userSelector } from '../state';
+import { userSelector, configSelector } from '../state';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -58,7 +58,6 @@ export const populateDropdown = (schema, enumerators) => {
 
 const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
-
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
@@ -107,7 +106,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const files = useSelector(filesSelector);
   const metadata = useSelector(metaDataSelector);
   const user = useSelector(userSelector);
-
+  const config = useSelector(configSelector);
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
   };
@@ -167,6 +166,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             deleteFile: deleteFormFile,
           }}
           data={{ user: user?.user }}
+          formUrl="https://form.adsp-uat.alberta.ca"
         >
           <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
         </ContextProvider>

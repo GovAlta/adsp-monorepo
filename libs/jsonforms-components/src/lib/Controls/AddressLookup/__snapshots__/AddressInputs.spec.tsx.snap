@@ -16,9 +16,10 @@ exports[`AddressInputs matches snapshot 1`] = `
       width="100%"
     />
   </goa-form-item>
+  <br />
   <goa-grid
-    gap="m"
-    minchildwidth="35ch"
+    gap="s"
+    minchildwidth="0ch"
   >
     <goa-form-item
       label="City"
@@ -30,6 +31,7 @@ exports[`AddressInputs matches snapshot 1`] = `
         name="city"
         value="Edmonton"
         variant="goa"
+        width="100%"
       />
     </goa-form-item>
     <goa-form-item
@@ -40,35 +42,37 @@ exports[`AddressInputs matches snapshot 1`] = `
         data-testid="address-form-postal-code"
         handletrailingiconclick="false"
         name="postalCode"
+        placeholder="A0A 0A0"
         value="T5T 1V4"
         variant="goa"
+        width="100%"
       />
     </goa-form-item>
+  </goa-grid>
+  <br />
+  <goa-grid
+    gap="s"
+    minchildwidth="0"
+  >
     <goa-form-item
       label="Province"
     >
-      <goa-input
-        arialabel="address-form-province"
+      <div
+        class="sc-gswNZR bilEPL"
         data-testid="address-form-province"
-        disabled="true"
-        handletrailingiconclick="false"
-        name="province"
-        value="AB"
-        variant="goa"
-      />
+      >
+        Alberta
+      </div>
     </goa-form-item>
     <goa-form-item
       label="Country"
     >
-      <goa-input
-        arialabel="address-form-country"
+      <div
+        class="sc-gswNZR bilEPL"
         data-testid="address-form-country"
-        disabled="true"
-        handletrailingiconclick="false"
-        name="country"
-        value="CAN"
-        variant="goa"
-      />
+      >
+        Canada
+      </div>
     </goa-form-item>
   </goa-grid>
 </DocumentFragment>
