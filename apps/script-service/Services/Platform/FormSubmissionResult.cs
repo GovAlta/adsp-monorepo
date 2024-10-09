@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using Adsp.Sdk.Util;
 
 namespace Adsp.Platform.ScriptService.Services.Platform
 {
@@ -18,10 +17,12 @@ namespace Adsp.Platform.ScriptService.Services.Platform
 
     [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
     [JsonPropertyName("formData")]
+    [JsonConverter(typeof(DictionaryJsonConverter))]
     public Dictionary<string, object?>? Data { get; set; } = new Dictionary<string, object?>();
 
     [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
     [JsonPropertyName("formFiles")]
+    [JsonConverter(typeof(DictionaryJsonConverter))]
     public Dictionary<string, object?>? Files { get; set; } = new Dictionary<string, object?>();
 
     [JsonPropertyName("createdBy")]
