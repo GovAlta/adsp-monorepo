@@ -24,6 +24,7 @@ import {
   EntryUpdatesStream,
   TaggedResourceDefinition,
   UntaggedResourceDefinition,
+  ResourceResolutionFailedDefinition,
 } from './directory';
 import { createDirectoryQueueService } from './amqp';
 
@@ -89,7 +90,13 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Resource resolver used by the directory. Resource APIs should give read access to the role.',
         },
       ],
-      events: [EntryUpdatedDefinition, EntryDeletedDefinition, TaggedResourceDefinition, UntaggedResourceDefinition],
+      events: [
+        EntryUpdatedDefinition,
+        EntryDeletedDefinition,
+        TaggedResourceDefinition,
+        UntaggedResourceDefinition,
+        ResourceResolutionFailedDefinition,
+      ],
       configuration: {
         description: 'Resource types for resolving browse name and description for tagged resources.',
         schema: configurationSchema,
