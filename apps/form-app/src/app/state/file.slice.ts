@@ -158,7 +158,7 @@ export const checkPdfFile = createAsyncThunk(
 export const uploadAnonymousFile = createAsyncThunk(
   'file/upload-anonymous-file',
   async (
-    { typeId, file, recordId }: { typeId: string; file: File; recordId: string; propertyId: string },
+    { typeId, file }: { typeId: string; file: File; recordId: string; propertyId: string },
     { dispatch, getState, rejectWithValue }
   ) => {
     try {
@@ -172,11 +172,11 @@ export const uploadAnonymousFile = createAsyncThunk(
 
       const formData = new FormData();
       formData.append('type', typeId);
-      formData.append('recordId', recordId);
       formData.append('file', file);
-      formData.append('token', token);
+      formData.append('filename', file.name);
 
       const { data: metadata } = await axios.post<FileMetadata>(`/api/gateway/v1/files`, formData, {
+        headers: { token },
         onUploadProgress: ({ loaded, total }: AxiosProgressEvent) => {
           const progress = Math.floor((loaded * 100) / total);
           dispatch(fileActions.setUploadProgress({ name: file.name, progress }));
