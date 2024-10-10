@@ -19,7 +19,7 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
       next();
     } else {
       try {
-        const { token } = req.body;
+        const token = req.body?.token || req.headers?.token;
         const { data } = await axios.post<SiteVerifyResponse>(
           `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
         );
