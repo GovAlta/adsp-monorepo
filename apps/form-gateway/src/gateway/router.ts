@@ -208,7 +208,7 @@ export function downloadFile(
 export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
-      const fileResourceUrl = new URL(`/file/v1/files`, fileApiUrl);
+      const fileResourceUrl = new URL(`v1/files`, fileApiUrl);
 
       const token = await tokenProvider.getAccessToken();
 
