@@ -11,11 +11,9 @@ internal sealed class ValueCreateRequest
 {
 
   [JsonPropertyName("namespace")]
-  [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
   public string? Namespace { get; set; }
 
   [JsonPropertyName("name")]
-  [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
   public string? Name { get; set; }
 
   [JsonPropertyName("timestamp")]
@@ -28,6 +26,7 @@ internal sealed class ValueCreateRequest
   public IDictionary<string, object?>? Context { get; set; }
 
   [JsonPropertyName("value")]
+
   public IDictionary<string, object?>? Value { get; set; }
 
 }
