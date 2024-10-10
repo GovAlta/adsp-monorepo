@@ -1,4 +1,9 @@
-import { fetchAddressSuggestions, filterAlbertaAddresses, mapSuggestionToAddress } from './utils';
+import {
+  fetchAddressSuggestions,
+  filterAlbertaAddresses,
+  mapSuggestionToAddress,
+  filterSuggestionsWithoutAddressCount,
+} from './utils';
 import axios from 'axios';
 import { Suggestion, Address } from './types';
 jest.mock('axios');
@@ -118,5 +123,108 @@ describe('mapSuggestionToAddress', () => {
     };
 
     expect(mapSuggestionToAddress(suggestion)).toEqual(expectedAddress);
+  });
+});
+
+describe('filterSuggestionsWithoutAddressCount', () => {
+  it('should filter out suggestions where Description ends with "Addresses"', () => {
+    const suggestions = [
+      {
+        Id: '1',
+        Text: '123 Main St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Toronto, ON, M5V 3K2',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '2',
+        Text: '456 Another St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Haliburton, ON, K0M 1S0 - 9 Addresses',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '3',
+        Text: '789 Some Place',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Mississauga, ON, L5B 1H7',
+        Next: 'Retrieve',
+      },
+    ];
+
+    const filteredSuggestions = filterSuggestionsWithoutAddressCount(suggestions);
+
+    expect(filteredSuggestions).toHaveLength(2);
+    expect(filteredSuggestions).toEqual([
+      {
+        Id: '1',
+        Text: '123 Main St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Toronto, ON, M5V 3K2',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '3',
+        Text: '789 Some Place',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Mississauga, ON, L5B 1H7',
+        Next: 'Retrieve',
+      },
+    ]);
+  });
+
+  it('should return all suggestions if none of them end with "Addresses"', () => {
+    const suggestions = [
+      {
+        Id: '1',
+        Text: '123 Main St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Toronto, ON, M5V 3K2',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '2',
+        Text: '456 Another St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Haliburton, ON, K0M 1S0',
+        Next: 'Retrieve',
+      },
+    ];
+
+    const filteredSuggestions = filterSuggestionsWithoutAddressCount(suggestions);
+
+    expect(filteredSuggestions).toHaveLength(2);
+  });
+
+  it('should return an empty array if all suggestions end with "Addresses"', () => {
+    const suggestions = [
+      {
+        Id: '1',
+        Text: '123 Main St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Toronto, ON, M5V 3K2 - 3 Addresses',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '2',
+        Text: '456 Another St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Haliburton, ON, K0M 1S0 - 9 Addresses',
+        Next: 'Retrieve',
+      },
+    ];
+
+    const filteredSuggestions = filterSuggestionsWithoutAddressCount(suggestions);
+
+    expect(filteredSuggestions).toHaveLength(0);
   });
 });

@@ -58,7 +58,6 @@ export const populateDropdown = (schema, enumerators) => {
 
 const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
-  console.log('enumerators', enumerators);
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
