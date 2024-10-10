@@ -174,9 +174,9 @@ export const uploadAnonymousFile = createAsyncThunk(
       formData.append('type', typeId);
       formData.append('recordId', recordId);
       formData.append('file', file);
+      formData.append('token', token);
 
       const { data: metadata } = await axios.post<FileMetadata>(`/api/gateway/v1/files`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
         onUploadProgress: ({ loaded, total }: AxiosProgressEvent) => {
           const progress = Math.floor((loaded * 100) / total);
           dispatch(fileActions.setUploadProgress({ name: file.name, progress }));
