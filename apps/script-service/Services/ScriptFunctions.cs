@@ -1,11 +1,9 @@
 using Adsp.Platform.ScriptService.Services.Platform;
-using Newtonsoft;
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using Adsp.Sdk.Events;
 using NLua;
 using RestSharp;
-using Newtonsoft.Json;
 
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions : IScriptFunctions
