@@ -21,4 +21,8 @@ interface IScriptFunctions
 
   IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null);
 
+  IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value);
+
+
+
 }

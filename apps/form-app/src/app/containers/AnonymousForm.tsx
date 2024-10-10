@@ -48,6 +48,7 @@ export const AnonymousForm: FunctionComponent = () => {
                   canSubmit={canSubmit}
                   showSubmit={showSubmit}
                   saving={busy.saving}
+                  anonymousApply={definition?.anonymousApply}
                   submitting={busy.submitting}
                   onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
                     dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));

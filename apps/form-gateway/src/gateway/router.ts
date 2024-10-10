@@ -19,12 +19,16 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
       next();
     } else {
       try {
-        const { token } = req.body;
+        const token = req.body?.token || req.headers?.token;
         const { data } = await axios.post<SiteVerifyResponse>(
           `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
         );
 
-        if (!data.success || !['submit_form'].includes(data.action) || data.score < SCORE_THRESHOLD) {
+        if (
+          !data.success ||
+          !['submit_form', 'submit_form_supporting_doc'].includes(data.action) ||
+          data.score < SCORE_THRESHOLD
+        ) {
           logger.warn(
             `Captcha verification failed for form gateway with result '${data.success}' on action '${data.action}' with score ${data.score}.`,
             { context: 'GatewayRouter' }
@@ -201,6 +205,33 @@ export function downloadFile(
   };
 }
 
+export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const fileResourceUrl = new URL(`v1/files`, fileApiUrl);
+
+      const token = await tokenProvider.getAccessToken();
+
+      logger.debug(`Submitting form supporting document from anonymous user`, {
+        context: 'GatewayRouter',
+      });
+
+      return proxy(fileResourceUrl.href, {
+        async proxyReqOptDecorator(opts) {
+          opts.headers.Authorization = `Bearer ${token}`;
+          const trace = getContextTrace();
+          if (trace) {
+            opts.headers['traceparent'] = trace.toString();
+          }
+          return opts;
+        },
+      })(req, res, next);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function submitSimpleForm(
   logger: Logger,
   formApiUrl: URL,
@@ -278,6 +309,7 @@ export function createGatewayRouter({
     ),
     downloadFile(logger, fileApiUrl, formApiUrl, tokenProvider)
   );
+
   router.get(
     '/file/v1/file',
     assertAuthenticatedHandler,
@@ -289,6 +321,12 @@ export function createGatewayRouter({
         })
     ),
     findFile(logger, fileApiUrl, formApiUrl, tokenProvider)
+  );
+
+  router.post(
+    '/files',
+    verifyCaptcha(logger, RECAPTCHA_SECRET, 0.7),
+    uploadAnonymousFile(logger, fileApiUrl, tokenProvider)
   );
 
   router.post(

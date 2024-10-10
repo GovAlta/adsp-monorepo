@@ -155,6 +155,56 @@ export const checkPdfFile = createAsyncThunk(
   }
 );
 
+export const uploadAnonymousFile = createAsyncThunk(
+  'file/upload-anonymous-file',
+  async (
+    { typeId, file }: { typeId: string; file: File; recordId: string; propertyId: string },
+    { dispatch, getState, rejectWithValue }
+  ) => {
+    try {
+      const { config } = getState() as AppState;
+
+      let token: string;
+      const grecaptcha = window['grecaptcha'];
+      if (grecaptcha?.execute) {
+        token = await grecaptcha.execute(config.environment.recaptchaKey, { action: 'submit_form_supporting_doc' });
+      }
+
+      const formData = new FormData();
+      formData.append('type', typeId);
+      formData.append('file', file);
+      formData.append('filename', file.name);
+
+      const { data: metadata } = await axios.post<FileMetadata>(`/api/gateway/v1/files`, formData, {
+        headers: { token },
+        onUploadProgress: ({ loaded, total }: AxiosProgressEvent) => {
+          const progress = Math.floor((loaded * 100) / total);
+          dispatch(fileActions.setUploadProgress({ name: file.name, progress }));
+        },
+      });
+
+      // Keep the file in data URL form in the state, so we don't need to download again.
+      const fileDataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+      });
+
+      return { metadata, file: fileDataUrl };
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const uploadFile = createAsyncThunk(
   'file/upload-file',
   async (
@@ -326,6 +376,18 @@ const fileSlice = createSlice({
         state.metadata[meta.arg.propertyId] = payload.metadata;
       })
       .addCase(uploadFile.rejected, (state) => {
+        state.busy.uploading = false;
+      })
+      .addCase(uploadAnonymousFile.pending, (state, { meta }) => {
+        state.busy.uploading = true;
+        state.upload = { name: meta.arg.file.name, progress: 0 };
+      })
+      .addCase(uploadAnonymousFile.fulfilled, (state, { meta, payload }) => {
+        state.busy.uploading = false;
+        state.files[payload.metadata.urn] = payload.file;
+        state.metadata[meta.arg.propertyId] = payload.metadata;
+      })
+      .addCase(uploadAnonymousFile.rejected, (state) => {
         state.busy.uploading = false;
       })
       .addCase(deleteFile.fulfilled, (state, { meta }) => {
