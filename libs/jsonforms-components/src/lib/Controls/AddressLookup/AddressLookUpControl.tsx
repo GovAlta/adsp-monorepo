@@ -6,7 +6,12 @@ import { AddressInputs } from './AddressInputs';
 import { GoAFormItem, GoAInput, GoASkeleton } from '@abgov/react-components-new';
 import { Address, Suggestion } from './types';
 
-import { fetchAddressSuggestions, filterAlbertaAddresses, mapSuggestionToAddress } from './utils';
+import {
+  fetchAddressSuggestions,
+  filterAlbertaAddresses,
+  mapSuggestionToAddress,
+  filterSuggestionsWithoutAddressCount,
+} from './utils';
 import { SearchBox } from './styled-components';
 
 type AddressLookUpProps = ControlProps;
@@ -19,10 +24,10 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const formCtx = useContext(JsonFormContext);
   const formHost = formCtx?.formUrl;
   const formUrl = `${formHost}/${ADDRESS_PATH}`;
-  const autocompletion = uischema?.options?.autocomplete === true;
+  const autocompletion = uischema?.options?.autocomplete ? uischema?.options?.autocomplete === true : true;
   const [open, setOpen] = useState(false);
 
-  const label = typeof uischema?.label === 'string' ? uischema.label : '';
+  const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : schema?.title;
   const defaultAddress = {
     addressLine1: '',
     addressLine2: '',
@@ -52,7 +57,8 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       if (searchTerm.length > 2) {
         setLoading(true);
         setOpen(true);
-        const suggestions = await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress);
+        const response = await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress);
+        const suggestions = filterSuggestionsWithoutAddressCount(response);
         if (isAlbertaAddress) {
           setSuggestions(filterAlbertaAddresses(suggestions));
         } else {
