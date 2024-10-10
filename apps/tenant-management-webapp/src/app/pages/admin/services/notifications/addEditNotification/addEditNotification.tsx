@@ -118,6 +118,35 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     );
   };
 
+  const handleSave = async () => {
+    const validations = {
+      name: type.name,
+    };
+    if (!isEdit) {
+      validations['duplicated'] = type.name;
+    }
+
+    if (!type.channels.includes('email')) {
+      type.channels = ['email', ...type.channels];
+    }
+
+    if (!validators.checkAll(validations)) {
+      return;
+    }
+
+    if (!isNotifyAddress) {
+      type.address = null;
+      type.addressPath = null;
+    }
+
+    try {
+      await onSave(type);
+      setAddressPathChanged(false);
+    } catch (error) {
+      console.error('Save failed', error);
+    }
+  };
+
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -155,26 +184,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               disabled={!addressPathChanged && (validators.haveErrors() || areObjectsEqual(type, initialValue))}
               type="primary"
               testId="form-save"
-              onClick={() => {
-                const validations = {
-                  name: type.name,
-                };
-                if (!isEdit) {
-                  validations['duplicated'] = type.name;
-                }
-                if (!type.channels.includes('email')) {
-                  // Must include email as first channel
-                  type.channels = ['email', ...type.channels];
-                }
-                if (!validators.checkAll(validations)) {
-                  return;
-                }
-                if (!isNotifyAddress) {
-                  type.address = null;
-                  type.addressPath = null;
-                }
-                onSave(type);
-              }}
+              onClick={handleSave}
             >
               Save
             </GoAButton>
@@ -344,7 +354,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 width="60%"
                 onChange={(_, value) => {
                   setType({ ...type, addressPath: value });
-                  setAddressPathChanged(true);
+                  if (value !== initialValue?.addressPath) {
+                    setAddressPathChanged(true);
+                  }
                 }}
               />
             </GoAFormItem>

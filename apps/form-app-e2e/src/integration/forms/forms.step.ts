@@ -87,8 +87,8 @@ When('the user enters {string} in a date picker labelled {string}', function (da
 });
 
 When('the user enters {string} in a dropdown labelled {string}', function (value, label) {
-  formsObj.formDropdown(label).shadow().find('input').click({ force: true });
-  formsObj.formDropdown(label).shadow().find('li').contains(value).click({ force: true });
+  formsObj.formDropdown(label).find('goa-input').click({ force: true });
+  formsObj.formDropdown(label).find('div').contains(value).click({ force: true });
 });
 
 When('the user clicks Next button in the form', function () {

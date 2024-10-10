@@ -69,12 +69,20 @@ export class ResourceType {
 
       return await this.repository.saveResource({ ...resource, name, description, type: this.type });
     } catch (err) {
-      this.logger.warn(`Error encountered resolving resource ${resource.urn}: ${err}`, {
-        context: 'ResourceType',
-        tenant: resource.tenantId?.toString(),
-      });
+      if (axios.isAxiosError(err) && err.response?.status === 404) {
+        // If there's a 404, then the resource doesn't exist. This can happen if the resource was deleted before being resolved.
+        // Delete the missing resource for consistency.
+        await this.repository.deleteResource(resource);
+        // undefined is returned.
+        return;
+      } else {
+        this.logger.warn(`Error encountered resolving resource ${resource.urn}: ${err}`, {
+          context: 'ResourceType',
+          tenant: resource.tenantId?.toString(),
+        });
 
-      throw err;
+        throw err;
+      }
     }
   }
 

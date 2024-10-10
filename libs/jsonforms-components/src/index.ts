@@ -36,6 +36,8 @@ import {
   GoABooleanRadioControlTester,
   GoABooleanRadioControl,
   GoInputBaseReviewControl,
+  AddressLookUpControl,
+  AddressLookUpTester,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -157,6 +159,7 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseRenderers,
   { tester: CategorizationRendererTester, renderer: FormStepperControl },
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
+  { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
 ];
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];

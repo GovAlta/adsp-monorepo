@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using RichardSzalay.MockHttp;
 using Moq;
 using Xunit;
-using Newtonsoft.Json;
+using System.Text.Json;
 using Adsp.Sdk;
 using Adsp.Platform.ScriptService.Services.Platform;
 
@@ -15,6 +15,22 @@ namespace Adsp.Platform.ScriptService.Services;
 
 public class ScriptFunctionsTests
 {
+  [Fact]
+  public void canSerializeFormSubmissionResult()
+  {
+    var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
+    var FormId = "my-form";
+    var SubmissionId = "my-submission";
+    var endpoint = $"/form/v1/forms/{FormId}/submissions/{SubmissionId}";
+    var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
+    var ServiceDirectory = TestUtil.GetServiceUrl(FormServiceId);
+    var StubFunctions = new StubScriptFunctions(Tenant, ServiceDirectory, TestUtil.GetMockToken());
+    var submission = StubFunctions.GetFormSubmission(FormId, SubmissionId);
+
+    var jsonSubmission = JsonSerializer.Serialize(submission);
+    Assert.NotNull(jsonSubmission);
+  }
+
   [Fact]
   public void ReturnsValidFormSubmission()
   {

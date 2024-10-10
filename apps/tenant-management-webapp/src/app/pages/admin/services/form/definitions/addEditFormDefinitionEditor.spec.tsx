@@ -73,8 +73,7 @@ describe('ScriptEditor Component', () => {
   test('Save button does not route', async () => {
     const { queryByTestId } = render(
       <Provider store={store}>
-        {' '}
-        <AddEditFormDefinitionEditor />{' '}
+        <AddEditFormDefinitionEditor />
       </Provider>
     );
     const saveButton = queryByTestId('definition-form-save');
@@ -148,7 +147,7 @@ describe('Test AddEditFormDefinitionEditor', () => {
       name: 'new pending',
       description: 'new pending data state',
     };
-    const currentIndex = definition.dispositionStates.findIndex((y) => (y.id === updateDispositionState.id));
+    const currentIndex = definition.dispositionStates.findIndex((y) => y.id === updateDispositionState.id);
     const [updatedDefinition, index] = onSaveDispositionForModal(
       false,
       updateDispositionState,

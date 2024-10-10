@@ -1,11 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using Adsp.Sdk.Util;
 
 namespace Adsp.Platform.ScriptService.Services.Platform
 {
   [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
-  internal sealed class FormSubmissionResult
+  public sealed class FormSubmissionResult
   {
     [JsonPropertyName("id")]
     public string? Id { get; set; }
@@ -16,12 +15,15 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     [JsonPropertyName("formId")]
     public string? FormId { get; set; }
 
+    [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
     [JsonPropertyName("formData")]
     [JsonConverter(typeof(DictionaryJsonConverter))]
-    public IDictionary<string, object?>? Data { get; set; }
+    public Dictionary<string, object?>? Data { get; set; } = new Dictionary<string, object?>();
 
+    [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
     [JsonPropertyName("formFiles")]
-    public IDictionary<string, string?>? Files { get; set; }
+    [JsonConverter(typeof(DictionaryJsonConverter))]
+    public Dictionary<string, object?>? Files { get; set; } = new Dictionary<string, object?>();
 
     [JsonPropertyName("createdBy")]
     public User? CreatedBy { get; set; }
@@ -42,7 +44,7 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     public FormDisposition? SubmissionStatus { get; set; }
   }
 
-  internal sealed class FormDisposition
+  public sealed class FormDisposition
   {
     [JsonPropertyName("id")]
     public string? Id { get; set; }
@@ -57,11 +59,12 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     public DateTime? Date { get; set; }
 
     [JsonPropertyName("securityClassification")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public SecurityClassificationType? SecurityClassification { get; set; }
 
   }
 
-  internal sealed class User
+  public sealed class User
   {
     [JsonPropertyName("id")]
     public string? Id { get; set; }
@@ -70,8 +73,7 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     public string? Name { get; set; }
   }
 
-  [JsonConverter(typeof(JsonStringEnumConverter))]
-  internal enum SecurityClassificationType
+  public enum SecurityClassificationType
   {
     [JsonPropertyName("protected a")]
     ProtectedA,

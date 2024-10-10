@@ -212,6 +212,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+  const formServiceApiUrl = useSelector((state: RootState) => state.config?.serviceUrls?.formServiceApiUrl);
 
   const [activeIndex] = useState<number>(0);
   const [data, setData] = useState<unknown>();
@@ -454,15 +455,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                               assessorRoles: definition.assessorRoles,
                             }}
                             onUpdateRoles={(roles, type) => {
-                              if (type === applicantRoles.name && !showSelectedRoles) {
+                              if (type === applicantRoles.name) {
                                 setDefinition({
                                   applicantRoles: [...new Set(roles)],
                                 });
-                              } else if (type === clerkRoles.name && !showSelectedRoles) {
+                              } else if (type === clerkRoles.name) {
                                 setDefinition({
                                   clerkRoles: [...new Set(roles)],
                                 });
-                              } else if (!showSelectedRoles) {
+                              } else {
                                 setDefinition({
                                   assessorRoles: [...new Set(roles)],
                                 });
@@ -792,6 +793,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       downloadFile: downloadFile,
                       deleteFile: deleteFile,
                     }}
+                    formUrl={formServiceApiUrl}
                   >
                     <GoAFormItem error={schemaError} label="">
                       <JSONFormPreviewer
