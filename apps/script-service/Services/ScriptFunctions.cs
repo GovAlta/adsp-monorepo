@@ -1,5 +1,4 @@
 using Adsp.Platform.ScriptService.Services.Platform;
-
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using Adsp.Sdk.Events;
@@ -204,4 +203,72 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
 
   }
+
+  public virtual IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)
+  {
+    const string CONTEXT_KEY = "context";
+    const string VALUE_KEY = "value";
+    const string CORRELATION_ID_KEY = "correlationId";
+
+    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
+    var requestUrl = new Uri(servicesUrl, $"/value/v1/{@namespace}/values/{name}");
+    var token = _getToken().Result;
+
+    var valueRequest = new ValueCreateRequest()
+    {
+      Namespace = @namespace,
+      Name = name,
+      Timestamp = DateTime.Now,
+      Value = null,
+      Context = null
+    };
+
+
+    if (value.GetType() == typeof(LuaTable))
+    {
+      var table = ((LuaTable)value);
+      var dataValue = table.ToDictionary();
+
+      if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
+      {
+        valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
+      }
+      if (dataValue.ContainsKey(CONTEXT_KEY) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
+      {
+        valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?> ?? new Dictionary<string, object?>();
+      }
+
+      valueRequest.CorrelationId = dataValue[CORRELATION_ID_KEY].ToString();
+    }
+    else if (value is IDictionary<string, object> dictionary)
+    {
+      var dataValue = value as IDictionary<string, object>;
+      if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
+      {
+        valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
+      }
+      if (dataValue.ContainsKey(CONTEXT_KEY) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
+      {
+        valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?>;
+      }
+
+      valueRequest.CorrelationId = dataValue[CORRELATION_ID_KEY]?.ToString();
+    }
+    else
+    {
+      throw new ArgumentException("value is not a recognized type.");
+    }
+
+    var request = new RestRequest(requestUrl, Method.Post);
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
+    request.AddJsonBody(valueRequest);
+
+    // Using generic IDictionary because the value service will return different key values and we
+    // can't have specific json property names in our own class.
+    var result = _client.PostAsync<IDictionary<string, object?>?>(request).Result;
+
+    return result;
+  }
+
 }
