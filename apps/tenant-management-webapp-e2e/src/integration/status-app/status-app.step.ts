@@ -47,7 +47,7 @@ Then('the user views the status of {string} being the first unused status', func
     .invoke('text')
     .then((text) => {
       cy.task('getNewAppStatus').then((appStatus) => {
-        expect(text.toLowerCase()).to.equal(appStatus);
+        expect(text.toLowerCase().replace(' ', '-')).to.equal(appStatus);
       });
     });
 });
