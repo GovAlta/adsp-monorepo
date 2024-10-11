@@ -223,11 +223,15 @@ internal class ScriptFunctions : IScriptFunctions
       Context = null
     };
 
-
     if (value.GetType() == typeof(LuaTable))
     {
       var table = ((LuaTable)value);
       var dataValue = table.ToDictionary();
+
+      if (!dataValue.ContainsKey(VALUE_KEY))
+      {
+        throw new ArgumentException("value is required.");
+      }
 
       if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
       {
@@ -243,6 +247,12 @@ internal class ScriptFunctions : IScriptFunctions
     else if (value is IDictionary<string, object> dictionary)
     {
       var dataValue = value as IDictionary<string, object>;
+
+      if (!dataValue.ContainsKey(VALUE_KEY))
+      {
+        throw new ArgumentException("value is required.");
+      }
+
       if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
       {
         valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
