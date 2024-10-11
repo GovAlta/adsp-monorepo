@@ -367,7 +367,7 @@ class NotificationsPage {
   }
 
   contactInformationEmail() {
-    return cy.get('[data-testid="email"]');
+    return cy.get('[data-testid="contact-email"]');
   }
 
   contactInformationPhone() {
