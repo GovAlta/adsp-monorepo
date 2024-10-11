@@ -1,64 +1,52 @@
-using System.Collections;
+using System;
+using System.Collections.Generic;
+using System.Xml;
+using System.Xml.Schema;
 using System.Xml.Serialization;
-using System.Diagnostics.CodeAnalysis;
-using System.Collections.ObjectModel;
 
 namespace Adsp.Platform.ScriptService.Services;
-
 [XmlRoot("Dictionary")]
-[SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
-public class SerializableDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
+public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IXmlSerializable
 {
-  [XmlArray("Items")]
-  [XmlArrayItem("Item")]
-  public Collection<KeyValuePair<TKey, TValue>> Items { get; set; }
+  public XmlSchema GetSchema() => null;
 
-  public SerializableDictionary()
+  // Custom XML read logic
+  public void ReadXml(XmlReader reader)
   {
-    Items = new Collection<KeyValuePair<TKey, TValue>>();
-  }
+    if (reader == null || reader.IsEmptyElement) return;
 
-  // Implicit conversion to Dictionary<TKey, TValue>
-  public IDictionary<TKey, TValue> ToDictionary()
-  {
-    Dictionary<TKey, TValue> dict = new Dictionary<TKey, TValue>();
-    foreach (var kvp in Items)
+    reader.Read(); // Move past the <Dictionary> tag
+    while (reader.NodeType != XmlNodeType.EndElement)
     {
-      dict[kvp.Key] = kvp.Value;
+      reader.ReadStartElement("Item");
+
+      TKey key = (TKey)new XmlSerializer(typeof(TKey)).Deserialize(reader);
+      TValue value = (TValue)new XmlSerializer(typeof(TValue)).Deserialize(reader);
+
+      this.Add(key, value);
+      reader.ReadEndElement(); // End of <Item>
     }
-    return dict;
+    reader.ReadEndElement(); // End of <Dictionary>
   }
 
-  // Implicit conversion from Dictionary<TKey, TValue>
-  public void FromDictionary(IDictionary<TKey, TValue> dictionary)
+  // Custom XML write logic
+  public void WriteXml(XmlWriter writer)
   {
-    if (dictionary != null)
-    {
-      Items = new Collection<KeyValuePair<TKey, TValue>>();
-      foreach (var kvp in dictionary)
+    if (writer != null) foreach (var key in Keys)
       {
-        Items.Add(kvp);
+        writer.WriteStartElement("Item");
+
+        // Serialize the Key
+        writer.WriteStartElement("Key");
+        new XmlSerializer(typeof(TKey)).Serialize(writer, key);
+        writer.WriteEndElement(); // End of <Key>
+
+        // Serialize the Value
+        writer.WriteStartElement("Value");
+        new XmlSerializer(typeof(TValue)).Serialize(writer, this[key]);
+        writer.WriteEndElement(); // End of <Value>
+
+        writer.WriteEndElement(); // End of <Item>
       }
-    }
-  }
-
-  public void Add(TKey key, TValue value)
-  {
-    Items.Add(new KeyValuePair<TKey, TValue>(key, value));
-  }
-
-  public void Add(KeyValuePair<TKey, TValue> item)
-  {
-    Items.Add(item);
-  }
-
-  IEnumerator IEnumerable.GetEnumerator()
-  {
-    return this.GetEnumerator();
-  }
-
-  public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
-  {
-    return this.Items.GetEnumerator();
   }
 }

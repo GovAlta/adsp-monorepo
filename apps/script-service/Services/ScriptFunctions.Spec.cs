@@ -7,10 +7,12 @@ using Microsoft.Extensions.Options;
 using RichardSzalay.MockHttp;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 using System.Text.Json;
 using System.Xml.Serialization;
 using Adsp.Sdk;
 using Adsp.Platform.ScriptService.Services.Platform;
+using System.Diagnostics;
 
 namespace Adsp.Platform.ScriptService.Services;
 
@@ -33,6 +35,7 @@ public class ScriptFunctionsTests
   }
 
   [Fact]
+  [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1303:Do not pass literals as localized parameters", Justification = "Console.WriteLine used for debugging in unit test")]
   public void canXmlSerializeFormSubmissionResult()
   {
     var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
@@ -48,7 +51,8 @@ public class ScriptFunctionsTests
     using var writer = new StringWriter();
     serializer.Serialize(writer, submission);
     var actual = writer.ToString();
-    Assert.NotNull(actual);
+
+    Assert.NotEmpty(actual);
   }
 
   [Fact]

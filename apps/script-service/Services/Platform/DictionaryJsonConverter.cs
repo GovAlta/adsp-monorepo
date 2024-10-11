@@ -26,8 +26,7 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     {
       if (value != null)
       {
-        var dictionary = value.ToDictionary();
-        JsonSerializer.Serialize(writer, dictionary, options);
+        JsonSerializer.Serialize(writer, value, options);
       }
     }
   }
