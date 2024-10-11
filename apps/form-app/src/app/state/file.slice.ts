@@ -162,7 +162,8 @@ export const uploadAnonymousFile = createAsyncThunk(
     { dispatch, getState, rejectWithValue }
   ) => {
     try {
-      const { config } = getState() as AppState;
+      const { config, user } = getState() as AppState;
+      const tenantId = user.tenant.id;
 
       let token: string;
       const grecaptcha = window['grecaptcha'];
@@ -177,6 +178,7 @@ export const uploadAnonymousFile = createAsyncThunk(
 
       const { data: metadata } = await axios.post<FileMetadata>(`/api/gateway/v1/files`, formData, {
         headers: { token },
+        params: { tenant: tenantId },
         onUploadProgress: ({ loaded, total }: AxiosProgressEvent) => {
           const progress = Math.floor((loaded * 100) / total);
           dispatch(fileActions.setUploadProgress({ name: file.name, progress }));

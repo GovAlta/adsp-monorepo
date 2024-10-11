@@ -226,8 +226,13 @@ export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvid
           return opts;
         },
         parseReqBody: false,
-        proxyReqPathResolver() {
-          return fileResourceUrl;
+        proxyReqPathResolver(req) {
+          const tenantId = req.query?.tenant;
+          logger.debug(`Redirecting form supporting document request from anonymous user`, {
+            context: 'GatewayRouter',
+            tenant: tenantId,
+          });
+          return `fileResourceUrl?tenant=${tenantId}`;
         },
       })(req, res, next);
     } catch (err) {
