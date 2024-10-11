@@ -130,14 +130,14 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
     tester: MultiLineTextControlTester,
     renderer: GoInputBaseReviewControl,
   },
-  {
-    tester: GoAArrayControlTester,
-    renderer: GoAArrayControlReviewRenderer,
-  },
-  {
-    tester: GoAListWithDetailsTester,
-    renderer: GoAArrayControlReviewRenderer,
-  },
+  // {
+  //   tester: GoAArrayControlTester,
+  //   renderer: GoAArrayControlReviewRenderer,
+  // },
+  // {
+  //   tester: GoAListWithDetailsTester,
+  //   renderer: GoAArrayControlReviewRenderer,
+  // },
   {
     tester: GoAHorizontalLayoutTester,
     renderer: GoAHorizontalReviewLayout,

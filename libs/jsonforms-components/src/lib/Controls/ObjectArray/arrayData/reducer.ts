@@ -1,0 +1,50 @@
+import {
+  ObjectArrayActions,
+  ADD_DATA_ACTION,
+  INCREMENT_ACTION,
+  DECREASE_ACTION,
+  RegisterDataResponse,
+  Categories,
+  AddData,
+} from './actions';
+export function objectListReducer(state: { categories: Categories }, action: ObjectArrayActions): RegisterDataResponse {
+  switch (action.type) {
+    case ADD_DATA_ACTION: {
+      //ok so we're assuming we're already getting the updated category data
+      const { categories } = state;
+      const { name, category } = action.payload as AddData;
+      const newCategories = Object.assign({}, categories);
+      newCategories[name].data = category;
+      return { ...state, categories: newCategories };
+    }
+    case INCREMENT_ACTION: {
+      const { categories } = state;
+      const name = action.payload as string;
+
+      console.log(JSON.stringify(name) + '<>name');
+
+      const newCategories = Object.assign({}, categories);
+
+      // Assuming you want to increment the count of a category:
+      if (newCategories[name]) {
+        const updatedCategory = {
+          ...categories[name],
+          count: (categories[name].count || 0) + 1,
+        };
+        return { ...state, categories: { ...categories, [name]: updatedCategory } };
+      } else {
+        newCategories[name] = { count: 1, data: {} };
+      }
+
+      return { ...state, categories: newCategories };
+    }
+    case DECREASE_ACTION: {
+      const { categories } = state;
+      // registerData.push(action.payload);
+
+      return { ...state };
+    }
+    default:
+      return state;
+  }
+}

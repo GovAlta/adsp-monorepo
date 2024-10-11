@@ -32,6 +32,17 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
   const buttonPosition = uischema?.options?.addButtonPosition || 'left';
   const arrayLabel = getLabelText(uischema.scope, label);
 
+  // console.log(JSON.stringify(schema) + '<-schema');
+  // console.log(JSON.stringify(rootSchema) + '<-rootSchema');
+  // console.log(JSON.stringify(createDefaultValue(schema, rootSchema)) + '<-createDefaultValue(schema, rootSchema)');
+
+  const addItemY = (a, b): any => {
+    // console.log(JSON.stringify(a) + '<--aaaaaaaaaaaaaaaaaaaaaa');
+    // console.log(JSON.stringify(b) + '<--bbbbbbbbbbbbbbb');
+
+    return () => addItem(a, b);
+  };
+
   return (
     <>
       {/* Note: Paul 2024-01-05: need to add the GoATooltip after the upgrade of the ui components */}
@@ -41,10 +52,10 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
           disabled={!enabled}
           testId={`object-array-toolbar-${label}`}
           aria-label={translations.addAriaLabel}
-          onClick={addItem(path, createDefaultValue(schema, rootSchema))}
+          onClick={addItemY(path, createDefaultValue(schema, rootSchema))}
           type={uischema.options?.addButtonType ?? 'primary'}
         >
-          {uischema?.options?.addButtonText || capitalizeFirstLetter(`Add ${arrayLabel}`)}
+          hh{uischema?.options?.addButtonText || capitalizeFirstLetter(`Add ${arrayLabel}`)}hh
         </GoAButton>
       </div>
       {/* </GoATooltip> */}
