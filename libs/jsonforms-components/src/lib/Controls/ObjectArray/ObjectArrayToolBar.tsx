@@ -18,8 +18,6 @@ export interface ObjectArrayToolbarProps {
 }
 
 const ObjectArrayToolBar = React.memo(function TableToolbar({
-  numColumns,
-  errors,
   label,
   path,
   addItem,
@@ -35,7 +33,6 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
   return (
     <>
       {/* Note: Paul 2024-01-05: need to add the GoATooltip after the upgrade of the ui components */}
-      {/* <GoATooltip content={translations.addTooltip}> */}
       <div style={{ textAlign: buttonPosition }}>
         <GoAButton
           disabled={!enabled}

@@ -223,7 +223,7 @@ class HandlebarsTemplateService implements TemplateService {
       return firstCap;
     });
 
-    handlebars.registerHelper('withEach', function (context, data, requiredFields, options) {
+    handlebars.registerHelper('withEach', function (context, data, requiredFields, dataSchema, options) {
       let ret = '';
 
       if (!options) {
@@ -232,7 +232,7 @@ class HandlebarsTemplateService implements TemplateService {
       }
 
       for (let i = 0, j = context.length; i < j; i++) {
-        const extendedContext = Object.assign({}, context[i], { params: { data, requiredFields } });
+        const extendedContext = Object.assign({}, context[i], { params: { data, requiredFields, dataSchema } });
         ret = ret + options.fn(extendedContext);
       }
 
@@ -274,7 +274,7 @@ class HandlebarsTemplateService implements TemplateService {
 
     handlebars.registerHelper(
       'withEachDataWithItems',
-      function (context, scope, requiredFields, element, dataSchema, options) {
+      function (context, scope, requiredFields, element, dataSchema, dataSchemaAgain, options) {
         let ret = '';
         const scopeName = scope.replace('#/properties/', '');
 
@@ -283,11 +283,14 @@ class HandlebarsTemplateService implements TemplateService {
           requiredFields = null;
         }
 
-        const items = dataSchema?.properties[scopeName].items?.properties;
+        const validDataSchema = dataSchema || dataSchemaAgain;
+        const items = validDataSchema?.properties[scopeName].items?.properties;
         const dataArray = context[scopeName];
 
         for (let i = 0, j = dataArray.length; i < j; i++) {
-          const extendedContext = Object.assign({}, dataArray[i], { params: { requiredFields, element, items } });
+          const extendedContext = Object.assign({}, dataArray[i], {
+            params: { requiredFields, element, items: items || [] },
+          });
           ret = ret + options.fn(extendedContext);
         }
 
