@@ -175,6 +175,7 @@ export const uploadAnonymousFile = createAsyncThunk(
       formData.append('type', typeId);
       formData.append('file', file);
       formData.append('filename', file.name);
+      formData.append('tenantId', tenantId);
 
       const { data: metadata } = await axios.post<FileMetadata>(`/api/gateway/v1/files`, formData, {
         headers: { token },
