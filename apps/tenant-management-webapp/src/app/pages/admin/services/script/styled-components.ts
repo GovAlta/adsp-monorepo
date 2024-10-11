@@ -52,11 +52,12 @@ export const MonacoDiv = styled.div`
 export const MonacoDivBody = styled.div`
   height: calc(72vh - 260px);
 
-  border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
-  margin-bottom: 1rem;
+  section {
+    padding-bottom: 0.5rem;
+  }
 `;
 export const TestInputDivBody = styled.div`
   display: flex;
@@ -84,6 +85,7 @@ export const EditScriptActions = styled.div`
   padding-top: var(--goa-space-l);
   border-top: 1px solid #adadad;
   box-shadow: -2px -3px 3px rgba(0, 0, 0, 0.1);
+  margin: 0 0 var(--goa-space-xl) 0;
 `;
 export const MonacoDivTabBody = styled.div`
   display: flex;
@@ -91,7 +93,6 @@ export const MonacoDivTabBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
-  margin-bottom: 1rem;
   flex-direction: column;
 `;
 export const MonacoDivTriggerEventsBody = styled.div`
@@ -100,7 +101,6 @@ export const MonacoDivTriggerEventsBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
-  margin-bottom: 1rem;
   flex-direction: column;
 `;
 export const ScriptEditorContainer = styled.div`
@@ -134,8 +134,7 @@ export const EditModalStyle = styled.div`
   width: 100%;
   display: flex;
   height: 100%;
-  padding-top: var(--goa-space-l);
-  padding-bottom: var(--goa-space-xl);
+  padding-top: var(--goa-space-xs);
   .half-width {
     width: 50%;
     display: flex;
@@ -181,7 +180,8 @@ export const EditModalStyle = styled.div`
   }
 
   .hr-resize {
-    margin-top: var(--goa-space-s);
+    margin-bottom: var(--goa-space-m);
+    margin-top: 0;
   }
   .styled-hr {
     border: none;
@@ -222,7 +222,7 @@ export const ReplacePadding = styled.div`
   padding: 12px 11px 11px 11px;
 `;
 export const ResponseTableStyles = styled.div`
-  height: calc(87vh - 310px);
+  height: calc(85vh - 315px);
   table-layout: fixed;
   word-wrap: break-word;
   overflow: auto;
@@ -378,6 +378,8 @@ export const ScriptEditorTitle = styled.div`
   font-size: var(--fs-xl);
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
+  font-family: var(--goa-font-family-sans);
+  margin-bottom: var(--goa-space-s);
 `;
 
 export const Edit = styled.div`
@@ -443,7 +445,9 @@ export const Tooltip = styled.div`
 `;
 
 export const AddTriggerButtonPadding = styled.div`
-  padding-bottom: var(--goa-space-l);
+  // padding-bottom: var(--goa-space-l);
+  margin-top: 48px;
+  text-align: end;
 `;
 
 export const ScriptEventTriggerListDefinition = styled.div`

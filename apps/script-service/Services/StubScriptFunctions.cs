@@ -39,6 +39,11 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
+  public override IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)
+  {
+    return null;
+  }
+
   public override string? CreateTask(
     string queueNamespace, string queueName, string name,
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
@@ -54,13 +59,13 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
       Id = submissionId,
       FormId = formId,
 
-      Data = new Dictionary<string, object?>
+      Data = new SerializableDictionary<string, object?>
             {
                 { "firstName", "Bob" },
                 { "lastName", "Bing" },
                 { "email", "Bob@bob.com" }
             },
-      Files = new Dictionary<string, object?>
+      Files = new SerializableDictionary<string, object?>
             {
                 { "resume", "urn:ads:platform:file-service:v1:/files/resume" },
                 { "cover", "urn:ads:platform:file-service:v1:/files/cover" }

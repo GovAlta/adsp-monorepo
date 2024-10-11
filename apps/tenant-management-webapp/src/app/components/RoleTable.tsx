@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GoACheckbox, GoATable } from '@abgov/react-components-new';
 import { MarginAdjustment, PaddingRem } from './styled-components';
 import { useSelector } from 'react-redux';
@@ -50,17 +50,30 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
     };
   });
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
+  const [rolesChanged, setRolesChanged] = useState(false);
+  const [filteredRoles, setFilteredRoles] = useState<string[]>([]);
   const service = props.service;
   const nameColumnStyle = {
     width: props?.nameColumnWidth ? `${props.nameColumnWidth}%` : '',
   };
 
-  const filteredRoles = props.showSelectedRoles
-    ? props.roles.filter((role) => {
+  useEffect(() => {
+    if (!props.showSelectedRoles) {
+      setRolesChanged(false);
+    }
+    if (props.showSelectedRoles && !rolesChanged) {
+      const selectedOnlyRoles = props.roles.filter((role) => {
         const selectedRole = props.clientId ? `${props.clientId}:${role}` : role;
         return checkedRoles.find((checkedRole) => checkedRole.selectedRoles.includes(selectedRole));
-      })
-    : props.roles;
+      });
+      setFilteredRoles(selectedOnlyRoles);
+    } else if (props.showSelectedRoles && rolesChanged) {
+      setFilteredRoles(filteredRoles);
+    } else {
+      setFilteredRoles(props.roles);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.showSelectedRoles]);
 
   const getClientId = () => {
     return props.clientId && props.clientId !== REALM_ROLE_KEY ? <PaddingRem>{props.clientId}</PaddingRem> : tenantName;
@@ -124,6 +137,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                               setCheckedRoles(checkedRoles);
                               props.roleSelectFunc(newRoles, checkedRole.title);
                             }
+                            props.showSelectedRoles && setRolesChanged(true);
                           }}
                         />
                       </td>

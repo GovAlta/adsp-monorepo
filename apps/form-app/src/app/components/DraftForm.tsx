@@ -25,8 +25,9 @@ import {
   formActions,
   metaDataSelector,
   uploadFile,
+  uploadAnonymousFile,
 } from '../state';
-import { userSelector } from '../state';
+import { userSelector, configSelector } from '../state';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -39,6 +40,7 @@ interface DraftFormProps {
   showSubmit: boolean;
   saving: boolean;
   submitting: boolean;
+  anonymousApply?: boolean;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
 }
@@ -58,7 +60,6 @@ export const populateDropdown = (schema, enumerators) => {
 
 const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
-
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
@@ -95,6 +96,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   showSubmit,
   saving,
   submitting,
+  anonymousApply,
   onChange,
   onSubmit,
 }) => {
@@ -107,7 +109,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const files = useSelector(filesSelector);
   const metadata = useSelector(metaDataSelector);
   const user = useSelector(userSelector);
-
+  const config = useSelector(configSelector);
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
   };
@@ -122,9 +124,15 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
       dispatch(deleteFile({ urn, propertyId }));
     }
 
-    const fileMetaData = (
-      await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId })).unwrap()
-    ).metadata;
+    const fileMetaData =
+      anonymousApply === true
+        ? (
+            await dispatch(
+              uploadAnonymousFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form?.urn, file, propertyId })
+            ).unwrap()
+          ).metadata
+        : (await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId })).unwrap())
+            .metadata;
 
     clonedFiles[propertyId] = fileMetaData.urn;
     dispatch(formActions.updateFormFiles(clonedFiles));
@@ -143,7 +151,10 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     const clonedFiles = { ...files };
     const propertyId = getKeyByValue(clonedFiles, file.urn);
 
-    await dispatch(deleteFile({ urn: file.urn, propertyId }));
+    if (anonymousApply !== true) {
+      await dispatch(deleteFile({ urn: file.urn, propertyId }));
+    }
+
     delete clonedFiles[propertyId];
 
     dispatch(formActions.updateFormFiles(clonedFiles));
@@ -166,7 +177,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             downloadFile: downloadFormFile,
             deleteFile: deleteFormFile,
           }}
-          data={{ user: user?.user }}
+          formUrl="https://form.adsp-uat.alberta.ca"
         >
           <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
         </ContextProvider>

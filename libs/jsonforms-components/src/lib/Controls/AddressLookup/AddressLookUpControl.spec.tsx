@@ -4,35 +4,59 @@ import { AddressLookUpControl } from './AddressLookUpControl';
 import { fetchAddressSuggestions } from './utils';
 import { JsonFormContext } from '../../Context';
 import { Suggestion } from './types';
-jest.mock('./utils');
 
+jest.mock('./utils', () => ({
+  fetchAddressSuggestions: jest.fn(),
+  filterAlbertaAddresses: jest.fn(),
+  mapSuggestionToAddress: jest.fn(),
+  filterSuggestionsWithoutAddressCount: jest.fn(),
+}));
+const mockHandleChange = jest.fn();
+const formUrl = 'http://mock-form-url.com';
+const mockFormContext = {
+  formUrl,
+};
 describe('AddressLookUpControl', () => {
-  const defaultProps = {
-    id: 'addressLookup',
-    rootSchema: {},
-    data: {},
-    path: 'address',
-    scope: '#/properties/mailingAddressAlberta',
-    label: 'Mailing Address',
-    enabled: true,
-    required: false,
-    visible: true,
-    uischema: {
-      type: 'Control',
-      scope: '#/properties/mailingAddressAlberta',
-    },
-    errors: {},
-    schema: {
-      properties: {
-        mailingAddress: {
-          properties: {
-            subdivisionCode: { const: 'AB' },
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const renderComponent = (overrides = {}) => {
+    const defaultProps = {
+      data: {
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        province: '',
+        postalCode: '',
+        country: 'CAN',
+      },
+      path: 'address',
+      schema: {
+        properties: {
+          subdivisionCode: {
+            const: 'AB',
           },
         },
       },
-    },
-    handleChange: jest.fn(),
+      uischema: {
+        options: {
+          autocomplete: true,
+        },
+        label: 'Address Lookup',
+      },
+      handleChange: mockHandleChange,
+    };
+
+    const props = { ...defaultProps, ...overrides };
+
+    return render(
+      <JsonFormContext.Provider value={mockFormContext}>
+        <AddressLookUpControl {...props} />
+      </JsonFormContext.Provider>
+    );
   };
+
   const mockSuggestions: Suggestion[] = [
     {
       Id: '1',
@@ -52,20 +76,20 @@ describe('AddressLookUpControl', () => {
     },
   ];
 
-  const mockContext = {
-    formUrl: 'http://mock-form-url',
-  };
   afterEach(() => {
     jest.clearAllMocks();
   });
 
+  it('should render the input fields with empty values', () => {
+    renderComponent();
+    const input = screen.getByPlaceholderText('Start typing the first line of your address');
+    expect((input as HTMLInputElement).value).toBe('');
+  });
+
   it('renders inputs and suggestions', async () => {
     (fetchAddressSuggestions as jest.Mock).mockResolvedValueOnce(mockSuggestions);
-    render(
-      <JsonFormContext.Provider value={mockContext}>
-        <AddressLookUpControl {...defaultProps} />
-      </JsonFormContext.Provider>
-    );
+
+    renderComponent();
     const inputField = screen.getByTestId('address-form-address1');
 
     fireEvent.change(inputField, { target: { value: '123' } });
@@ -80,8 +104,7 @@ describe('AddressLookUpControl', () => {
   });
 
   it('displays no suggestions for less than 3 characters', async () => {
-    render(<AddressLookUpControl {...defaultProps} />);
-
+    renderComponent();
     const input = screen.getByPlaceholderText('Start typing the first line of your address');
     fireEvent.change(input, { target: { value: 'Ma' } });
 

@@ -91,3 +91,16 @@ Feature: Feedback
     And the user "should not view" the Feedback badge
     When the user re-load the page and wait "5" seconds
     Then the user "views" the Feedback badge
+
+  # TEST DATA: https://adsp- site should have more than 10 feedback records
+  @TEST_CS-3210 @REQ_CS-3021 @regression
+  Scenario: As a tenant admin, I can see feedback sent regarding my sites, so I can review user experience and how to improve my site
+    Given a tenant admin user is on Feedback service Feedback page
+    Then the user views site URLs from sites page in Registered sites dropdown
+    When the user selects the adsp site in Registered sites dropdown
+    Then the user views a feedback list with Submitted on, View, Rating, Action
+    And the user views a feedback list of 10 ordered from most recent to oldest
+    When the user clicks Load more button on the page
+    Then the user views more than 10 feedback records on feedback page
+    When the user clicks toggle details icon on the latest feedback
+    Then the user views feedback details with timestamp, rating, comments, technical issues

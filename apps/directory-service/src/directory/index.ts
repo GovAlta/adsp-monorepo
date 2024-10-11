@@ -58,7 +58,7 @@ export const applyDirectoryMiddleware = (
   app.use('/directory/v2', directoryRouter);
   app.use('/resource/v1', assertAuthenticatedHandler, resourceRouter);
 
-  createDirectoryJobs({ serviceId, logger, configurationService, queueService });
+  createDirectoryJobs({ serviceId, logger, configurationService, eventService, queueService });
 
   return app;
 };

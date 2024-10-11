@@ -21,6 +21,7 @@ const initialState: FormState = {
   form: null,
   data: {},
   files: {},
+  config: {},
   errors: [],
   saved: null,
   busy: {
@@ -56,6 +57,7 @@ const definitionsToTest: FormState = {
     status: 'draft',
   },
   data: {},
+  config: {},
   files: {},
   errors: [],
   saved: null,
@@ -88,6 +90,7 @@ const payload = {
     status: 'draft',
   },
   files: {},
+  config: {},
   data: { firstName: 'Test' },
   digest: '',
   id: 'TEST',

@@ -1,10 +1,13 @@
 import styled from 'styled-components';
 
-export const AddressSearch = styled.div`
+export const SearchBox = styled.div`
+  position: relative;
+
   .suggestions {
+    width: 100%;
+    margin-top: 3px;
     border-top-width: 0;
     list-style: none;
-    margin-top: 0;
     max-height: 15.5rem;
     width: 100%;
     position: absolute;
@@ -27,4 +30,11 @@ export const AddressSearch = styled.div`
     cursor: pointer;
     font-weight: var(--fw-bold);
   }
+`;
+
+export const LabelDiv = styled.div`
+  font-size: var(--fs-sl);
+  font-weight: var(--fw-bold);
+  padding-left: 0.4rem;
+  padding-bottom: 0.5rem;
 `;
