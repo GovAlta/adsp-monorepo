@@ -1,8 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Adsp.Platform.ScriptService.Services;
 [XmlRoot("Dictionary")]
@@ -10,23 +9,31 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IX
 {
   public XmlSchema GetSchema() => null;
 
-  // Custom XML read logic
   public void ReadXml(XmlReader reader)
   {
     if (reader == null || reader.IsEmptyElement) return;
 
-    reader.Read(); // Move past the <Dictionary> tag
-    while (reader.NodeType != XmlNodeType.EndElement)
+    XmlReaderSettings settings = new XmlReaderSettings
     {
-      reader.ReadStartElement("Item");
+      DtdProcessing = DtdProcessing.Parse,
+      XmlResolver = null
+    };
+#pragma warning disable CA2000
+    XmlReader customReader = XmlReader.Create(reader, settings);
+#pragma warning restore CA2000
 
-      TKey key = (TKey)new XmlSerializer(typeof(TKey)).Deserialize(reader);
-      TValue value = (TValue)new XmlSerializer(typeof(TValue)).Deserialize(reader);
+    customReader.Read(); // Move past the <Dictionary> tag
+    while (customReader.NodeType != XmlNodeType.EndElement)
+    {
+      customReader.ReadStartElement("Item");
+
+      TKey key = (TKey)new XmlSerializer(typeof(TKey)).Deserialize(customReader);
+      TValue value = (TValue)new XmlSerializer(typeof(TValue)).Deserialize(customReader);
 
       this.Add(key, value);
-      reader.ReadEndElement(); // End of <Item>
+      reader.ReadEndElement();
     }
-    reader.ReadEndElement(); // End of <Dictionary>
+    reader.ReadEndElement();
   }
 
   // Custom XML write logic
@@ -36,17 +43,16 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IX
       {
         writer.WriteStartElement("Item");
 
-        // Serialize the Key
         writer.WriteStartElement("Key");
         new XmlSerializer(typeof(TKey)).Serialize(writer, key);
-        writer.WriteEndElement(); // End of <Key>
+        writer.WriteEndElement();
 
         // Serialize the Value
         writer.WriteStartElement("Value");
         new XmlSerializer(typeof(TValue)).Serialize(writer, this[key]);
-        writer.WriteEndElement(); // End of <Value>
+        writer.WriteEndElement();
 
-        writer.WriteEndElement(); // End of <Item>
+        writer.WriteEndElement();
       }
   }
 }
