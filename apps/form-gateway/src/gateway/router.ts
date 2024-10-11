@@ -225,6 +225,7 @@ export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvid
           }
           return opts;
         },
+        parseReqBody: false,
         proxyReqPathResolver() {
           return fileResourceUrl;
         },
