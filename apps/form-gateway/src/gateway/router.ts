@@ -208,7 +208,7 @@ export function downloadFile(
 export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
-      const fileResourceUrl = new URL(`v1/files`, fileApiUrl);
+      const fileResourceUrl = fileApiUrl.toString() + '/files';
 
       const token = await tokenProvider.getAccessToken();
 
@@ -216,7 +216,7 @@ export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvid
         context: 'GatewayRouter',
       });
 
-      return proxy(fileResourceUrl.href, {
+      return proxy(new URL('', fileApiUrl).href, {
         async proxyReqOptDecorator(opts) {
           opts.headers.Authorization = `Bearer ${token}`;
           const trace = getContextTrace();
@@ -224,6 +224,9 @@ export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvid
             opts.headers['traceparent'] = trace.toString();
           }
           return opts;
+        },
+        proxyReqPathResolver() {
+          return fileResourceUrl;
         },
       })(req, res, next);
     } catch (err) {
