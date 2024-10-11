@@ -1,7 +1,7 @@
 import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
-import React from 'react';
+import React, { useState, useReducer, useEffect, useCallback } from 'react';
 import {
   ArrayLayoutProps,
   ControlElement,
@@ -12,22 +12,50 @@ import {
   ArrayTranslations,
   UISchemaElement,
   Layout,
+  ControlProps,
 } from '@jsonforms/core';
-
-import { WithDeleteDialogSupport } from './DeleteDialog';
+import { DeleteDialog } from './DeleteDialog';
+import { WithBasicDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid, GoAIconButton, GoAContainer } from '@abgov/react-components-new';
-import { ToolBarHeader, ObjectArrayTitle, TextCenter } from './styled-components';
+import { GoAGrid, GoAIconButton, GoAContainer, GoATable, GoAInput } from '@abgov/react-components-new';
+import { ToolBarHeader, ObjectArrayTitle, TextCenter, NonEmptyCellStyle } from './styled-components';
 import { Visible } from '../../util';
 import { GoAReviewRenderers } from '../../../index';
+import {
+  objectListReducer,
+  INCREMENT_ACTION,
+  ADD_DATA_ACTION,
+  SET_DATA_ACTION,
+  DELETE_ACTION,
+  initialState,
+  StateData,
+  Categories,
+} from './arrayData';
 
 interface ArrayLayoutExtProps {
   isStepperReview?: boolean;
 }
+interface DataProperty {
+  type: string;
+  format?: string;
+  maxLength?: number;
+}
+interface DataObject {
+  [key: string]: DataProperty;
+}
 
-export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport & ArrayLayoutExtProps;
+interface Items {
+  type: string;
+  properties: DataObject;
+}
+interface HandleChangeProps {
+  // eslint-disable-next-line
+  handleChange(path: string, value: any): void;
+}
+
+export type ObjectArrayControlProps = ArrayLayoutProps & ArrayLayoutExtProps & ControlProps;
 
 // eslint-disable-next-line
 const extractScopesFromUISchema = (uischema: any): string[] => {
@@ -55,13 +83,17 @@ const extractScopesFromUISchema = (uischema: any): string[] => {
 };
 
 const GenerateRows = (
-  Cell: React.ComponentType<OwnPropsOfNonEmptyCell>,
+  Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
   schema: JsonSchema,
   rowPath: string,
   enabled: boolean,
+  openDeleteDialog: (rowIndex: number) => void,
+  handleChange: (path: string, value: string) => void,
   cells?: JsonFormsCellRendererRegistryEntry[],
   uischema?: ControlElement,
-  isInReview?: boolean
+  isInReview?: boolean,
+  count?: number,
+  data?: StateData
 ) => {
   if (schema.type === 'object') {
     const props = {
@@ -71,18 +103,27 @@ const GenerateRows = (
       cells,
       uischema,
       isInReview,
+      openDeleteDialog,
+      data,
+      handleChange,
     };
-    return <Cell {...props} />;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <Cell {...props} count={count || 0} />d
+      </div>
+    );
   } else {
-    // primitives
     const props = {
       schema,
       rowPath,
       cellPath: rowPath,
       enabled,
       isInReview,
+      openDeleteDialog,
+      handleChange,
+      data,
     };
-    return <Cell key={rowPath} {...props} />;
+    return <Cell key={rowPath} {...props} count={count || 0} />;
   }
 };
 
@@ -121,10 +162,18 @@ interface OwnPropsOfNonEmptyCell {
   cells?: JsonFormsCellRendererRegistryEntry[];
   uischema?: ControlElement;
   isInReview?: boolean;
+  data?: StateData;
+  count?: number;
+  handleChange(path: string, value: string): void;
 }
+
+interface OwnPropsOfNonEmptyCellWithDialog extends OwnPropsOfNonEmptyCell {
+  openDeleteDialog: (rowIndex: number) => void;
+}
+
 const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOfNonEmptyCell): NonEmptyCellProps => {
-  const path = ownProps.rowPath + (ownProps.schema.type === 'object' ? '.' + ownProps.propName : '');
   const errors = '';
+
   return {
     uischema: ownProps.uischema,
     rowPath: ownProps.rowPath,
@@ -134,6 +183,7 @@ const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOf
     enabled: ownProps.enabled,
     cells: ownProps.cells || ctx.cells,
     renderers: ownProps.renderers || ctx.renderers,
+    handleChange: ownProps.handleChange,
   };
 };
 
@@ -149,10 +199,28 @@ interface NonEmptyRowComponentProps {
   isValid: boolean;
   uischema?: ControlElement | Layout;
   isInReview?: boolean;
+  count?: number;
+  data: StateData | undefined;
+  handleChange(path: string, value: string): void;
+  openDeleteDialog(rowIndex: number): void;
 }
 
-export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(props: NonEmptyRowComponentProps) {
-  const { schema, errors, enabled, renderers, cells, rowPath, isValid, uischema, isInReview } = props;
+export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
+  props: NonEmptyRowComponentProps & HandleChangeProps
+) {
+  const {
+    schema,
+    enabled,
+    renderers,
+    cells,
+    rowPath,
+    uischema,
+    isInReview,
+    data,
+    count,
+    openDeleteDialog,
+    handleChange,
+  } = props;
   const propNames = getValidColumnProps(schema);
   const propScopes = (uischema as ControlElement)?.scope
     ? propNames.map((name) => {
@@ -172,7 +240,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
    * @returns layout type
    */
   const getFirstLayoutType = () => {
-    let defaultType = 'VerticalLayout';
+    let defaultType = 'HorizontalLayout';
 
     if (uischema?.options?.defaultType) return uischema?.options?.defaultType;
 
@@ -199,8 +267,12 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
     }),
   };
 
+  const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
+
+  const title = rowPath.split('.')[0];
+
   return (
-    <>
+    <NonEmptyCellStyle>
       {
         // eslint-disable-next-line
         (uischema as Layout)?.elements?.map((element: UISchemaElement) => {
@@ -218,26 +290,93 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
           );
         })
       }
-      {uiSchemaElementsForNotDefined?.elements?.length > 0 && (
-        <JsonFormsDispatch
-          schema={schema}
-          uischema={uiSchemaElementsForNotDefined}
-          path={rowPath}
-          enabled={enabled}
-          renderers={isInReview ? GoAReviewRenderers : renderers}
-          cells={cells}
-        />
+      {Object.keys(properties).length > 0 && (
+        <GoATable width="100%">
+          <thead>
+            <tr key={0}>
+              {Object.keys(properties).map((key, index) => {
+                return (
+                  <th key={index}>
+                    <p>{key}</p>
+                  </th>
+                );
+              })}
+              {isInReview !== true && (
+                <th>
+                  <p>Actions</p>
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {range(count || 0).map((num, i) => {
+              return (
+                <tr key={i}>
+                  {Object.keys(properties).map((element, ix) => {
+                    const dataObject = properties[element];
+                    const schemaName = element;
+
+                    return (
+                      <td key={ix}>
+                        {isInReview ? (
+                          <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
+                            {data && data[num] ? (data[num][element] as unknown as string) : ''}
+                          </div>
+                        ) : (
+                          <div>
+                            <GoAInput
+                              type={dataObject.type === 'number' ? 'number' : 'text'}
+                              id={schemaName}
+                              name={schemaName}
+                              value={data && data[num] ? (data[num][element] as unknown as string) : ''}
+                              testId={`#/properties/${schemaName}-input-${i}`}
+                              onChange={(name: string, value: string) => {
+                                handleChange(title, { [num]: { [name]: value } });
+                              }}
+                              aria-label={schemaName}
+                              width="100%"
+                            />
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td>
+                    {isInReview !== true && (
+                      <GoAIconButton
+                        icon="trash"
+                        aria-label={`remove-element-${num}`}
+                        onClick={() => openDeleteDialog(num)}
+                      ></GoAIconButton>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </GoATable>
       )}
-    </>
+    </NonEmptyCellStyle>
   );
 });
 
-const NonEmptyCell = (ownProps: OwnPropsOfNonEmptyCell) => {
+const NonEmptyCell = (ownProps: OwnPropsOfNonEmptyCellWithDialog) => {
+  const data = ownProps.data || {};
   const ctx = useJsonForms();
-  const emptyCellProps = ctxToNonEmptyCellProps(ctx, ownProps);
+  const emptyCellProps = ctxToNonEmptyCellProps(ctx, { ...ownProps, data });
   const isValid = isEmpty(emptyCellProps.errors);
 
-  return <NonEmptyCellComponent {...emptyCellProps} isInReview={ownProps?.isInReview} isValid={isValid} />;
+  return (
+    <NonEmptyCellComponent
+      {...emptyCellProps}
+      handleChange={ownProps?.handleChange}
+      isInReview={ownProps?.isInReview}
+      isValid={isValid}
+      openDeleteDialog={ownProps?.openDeleteDialog}
+      data={data}
+      count={ownProps?.count}
+    />
+  );
 };
 
 interface NonEmptyRowProps {
@@ -251,42 +390,52 @@ interface NonEmptyRowProps {
   translations: ArrayTranslations;
   uischema: ControlElement;
   isInReview?: boolean;
+  data?: StateData;
+  count: number;
 }
 
 const NonEmptyRowComponent = ({
   childPath,
   schema,
-  rowIndex,
   openDeleteDialog,
   enabled,
   cells,
-  path,
-  translations,
   uischema,
   isInReview,
-}: NonEmptyRowProps & WithDeleteDialogSupport) => {
+  data,
+  count,
+  handleChange,
+}: NonEmptyRowProps & WithBasicDeleteDialogSupport & HandleChangeProps) => {
   return (
     <div key={childPath}>
       {enabled ? (
         <GoAContainer>
-          {isInReview !== true && (
-            <GoAGrid minChildWidth="30ch">
-              <GoAIconButton
-                icon="trash"
-                aria-label={translations.removeAriaLabel}
-                onClick={() => openDeleteDialog(childPath, rowIndex)}
-              ></GoAIconButton>
-            </GoAGrid>
-          )}
-          {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema, isInReview)}
+          <div>
+            <div>
+              {GenerateRows(
+                NonEmptyCell,
+                schema,
+                childPath,
+                enabled,
+                openDeleteDialog,
+                handleChange,
+                cells,
+                uischema,
+                isInReview,
+                count,
+                data
+              )}
+            </div>
+          </div>
         </GoAContainer>
       ) : null}
     </div>
   );
 };
+
 export const NonEmptyList = React.memo(NonEmptyRowComponent);
 interface TableRowsProp {
-  data: number;
+  data: StateData;
   path: string;
   schema: JsonSchema;
   uischema: ControlElement;
@@ -295,7 +444,10 @@ interface TableRowsProp {
   enabled: boolean;
   cells?: JsonFormsCellRendererRegistryEntry[];
   translations: ArrayTranslations;
+  count: number;
   isInReview?: boolean;
+  // eslint-disable-next-line
+  handleChange: (path: string, value: any) => void;
 }
 
 const ObjectArrayList = ({
@@ -308,106 +460,197 @@ const ObjectArrayList = ({
   enabled,
   cells,
   translations,
+  count,
   isInReview,
-}: TableRowsProp & WithDeleteDialogSupport) => {
-  const isEmptyList = data === 0;
+  handleChange,
+}: TableRowsProp & WithBasicDeleteDialogSupport) => {
+  const isEmptyList = count === 0;
 
   if (isEmptyList) {
     return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
   }
-
   const appliedUiSchemaOptions = merge({}, config, uischema.options);
+  const childPath = Paths.compose(path, `${0}`);
 
   return (
-    <>
-      {range(data).map((index: number) => {
-        const childPath = Paths.compose(path, `${index}`);
-
-        return (
-          <NonEmptyList
-            key={childPath}
-            childPath={childPath}
-            rowIndex={index}
-            schema={schema}
-            openDeleteDialog={openDeleteDialog}
-            showSortButtons={appliedUiSchemaOptions.showSortButtons || appliedUiSchemaOptions.showArrayTableSortButtons}
-            enabled={enabled}
-            cells={cells}
-            path={path}
-            uischema={uischema}
-            translations={translations}
-            isInReview={isInReview}
-          />
-        );
-      })}
-    </>
+    <NonEmptyList
+      key={0}
+      childPath={childPath}
+      rowIndex={0}
+      schema={schema}
+      openDeleteDialog={openDeleteDialog}
+      showSortButtons={appliedUiSchemaOptions.showSortButtons || appliedUiSchemaOptions.showArrayTableSortButtons}
+      enabled={enabled}
+      handleChange={handleChange}
+      cells={cells}
+      path={path}
+      uischema={uischema}
+      translations={translations}
+      isInReview={isInReview}
+      count={count}
+      data={data}
+    />
   );
 };
+
 // eslint-disable-next-line
-export class ObjectArrayControl extends React.Component<ObjectArrayControlProps, any> {
+export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element => {
+  const [registers, dispatch] = useReducer(objectListReducer, initialState);
+  const [open, setOpen] = useState(false);
+  const [rowData, setRowData] = useState<number>(0);
+
+  const {
+    label,
+    path,
+    schema,
+    rootSchema,
+    uischema,
+    errors,
+    visible,
+    enabled,
+    cells,
+    translations,
+    data,
+    config,
+    isStepperReview,
+    handleChange,
+    removeItems,
+    ...additionalProps
+  } = props;
+
+  const openDeleteDialog = useCallback(
+    (rowIndex: number, name: string) => {
+      setOpen(true);
+      setRowData(rowIndex);
+    },
+    [setOpen, setRowData]
+  );
+  const deleteCancel = useCallback(() => setOpen(false), [setOpen]);
+
+  const deleteConfirm = () => {
+    if (deleteItem && path) {
+      deleteItem(path, rowData);
+    }
+
+    setOpen(false);
+  };
+
+  //  eslint-disable-next-line
+  const addItem = (path: string, value: any) => {
+    dispatch({ type: INCREMENT_ACTION, payload: path });
+    return () => props.addItem(path, value);
+  };
+
   // eslint-disable-next-line
-  addItem = (path: string, value: any) => this.props.addItem(path, value);
-  render() {
-    const {
-      label,
-      path,
-      schema,
-      rootSchema,
-      uischema,
-      errors,
-      openDeleteDialog,
-      visible,
-      enabled,
-      cells,
-      translations,
-      data,
-      config,
-      isStepperReview,
-      ...additionalProps
-    } = this.props;
+  const deleteItem = (path: string, value: any) => {
+    const categories = registers.categories;
+    const currentCategory = categories[path];
+    const newCategoryData = {} as StateData;
+    if (currentCategory?.data) {
+      delete currentCategory.data[value];
+      Object.keys(currentCategory.data).forEach((key, index) => {
+        newCategoryData[index] = currentCategory.data[key];
+      });
+      currentCategory.data = newCategoryData;
+    }
 
-    const controlElement = uischema as ControlElement;
+    if (currentCategory?.count > 0) currentCategory.count--;
+    const handleChangeData = Object.keys(newCategoryData).map((key) => {
+      return newCategoryData[key];
+    });
+
+    props.handleChange(path, handleChangeData);
+    dispatch({ type: DELETE_ACTION, payload: { name: path, category: currentCategory } });
+  };
+
+  const handleChangeWithData = (name: string, value: StateData) => {
+    const categories = registers.categories;
+    const currentCategory = categories[name].data;
+    const newData: StateData = {};
+    const allKeys = Object.keys(value).concat(Object.keys(currentCategory));
+    const allKeysUnique = allKeys.filter((a, b) => allKeys.indexOf(a) === b);
+    Object.keys(allKeysUnique).forEach((num) => {
+      if (!newData[num]) {
+        newData[num] = {};
+      }
+      currentCategory[num] &&
+        Object.keys(currentCategory[num]).forEach((name) => {
+          newData[num][name] = currentCategory[num][name];
+        });
+      value[num] &&
+        Object.keys(value[num]).forEach((name) => {
+          newData[num][name] = value[num][name] || (currentCategory[num] && currentCategory[num][name]);
+        });
+    });
+    const handleChangeData = Object.keys(newData).map((key) => {
+      return newData[key];
+    });
+    props.handleChange(name, handleChangeData);
+    dispatch({ type: ADD_DATA_ACTION, payload: { name, category: newData } });
+  };
+
+  useEffect(() => {
     // eslint-disable-next-line
-    const listTitle = label || uischema.options?.title;
+    const updatedData = Object.fromEntries((data || []).map((item, index) => [index, item]));
+    const count = Object.keys(updatedData).length;
+    const dispatchData = { [path]: { count: count, data: updatedData } } as Categories;
+    if (Object.keys(updatedData).length > 0) {
+      dispatch({
+        type: SET_DATA_ACTION,
+        payload: dispatchData,
+      });
+    }
+  }, []);
+  const title = path.split('.')[0];
+  const controlElement = uischema as ControlElement;
+  // eslint-disable-next-line
+  const listTitle = label || uischema.options?.title;
+  const isInReview = isStepperReview === true;
 
-    const isInReview = isStepperReview === true;
-
-    return (
-      <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
-        <ToolBarHeader>
-          {isInReview && listTitle && <b>{listTitle}</b>}
-          {!isInReview && listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
-          {!isInReview && (
-            <ObjectArrayToolBar
-              errors={errors}
-              label={label}
-              addItem={this.addItem}
-              numColumns={0}
-              path={path}
-              uischema={controlElement}
-              schema={schema}
-              rootSchema={rootSchema}
-              enabled={enabled}
-              translations={translations}
-            />
-          )}
-        </ToolBarHeader>
-        <div>
-          <ObjectArrayList
+  return (
+    <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
+      <ToolBarHeader>
+        {isInReview && listTitle && <b>{listTitle}</b>}
+        {!isInReview && listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
+        {!isInReview && (
+          <ObjectArrayToolBar
+            errors={errors}
+            label={label}
+            addItem={(a, b) => () => addItem(a, b)}
+            numColumns={0}
             path={path}
+            uischema={controlElement}
             schema={schema}
-            uischema={uischema}
+            rootSchema={rootSchema}
             enabled={enabled}
-            openDeleteDialog={openDeleteDialog}
             translations={translations}
-            data={data}
-            cells={cells}
-            config={config}
-            isInReview={isInReview}
-            {...additionalProps}
           />
-        </div>
-      </Visible>
-    );
-  }
-}
+        )}
+      </ToolBarHeader>
+      <div>
+        <ObjectArrayList
+          path={path}
+          schema={schema}
+          uischema={uischema}
+          enabled={enabled}
+          openDeleteDialog={openDeleteDialog}
+          translations={translations}
+          count={registers.categories[title]?.count || Object.keys(data || []).length}
+          data={data || registers.categories[title]?.data}
+          cells={cells}
+          config={config}
+          isInReview={isInReview}
+          handleChange={handleChangeWithData}
+          {...additionalProps}
+        />
+        <DeleteDialog
+          open={open}
+          onCancel={deleteCancel}
+          onConfirm={deleteConfirm}
+          title={'Remove item'}
+          message={'Are you sure you wish to remove the selected item'}
+        />
+      </div>
+    </Visible>
+  );
+};
