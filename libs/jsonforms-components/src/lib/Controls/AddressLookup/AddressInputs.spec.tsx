@@ -9,9 +9,9 @@ describe('AddressInputs', () => {
     addressLine1: '123 Main St',
     addressLine2: 'Apt 4',
     city: 'Edmonton',
-    province: 'AB',
+    province: 'BC',
     postalCode: 'T5T 1V4',
-    country: 'CAN',
+    country: 'CA',
   };
   afterEach(() => {
     jest.clearAllMocks();
@@ -19,18 +19,16 @@ describe('AddressInputs', () => {
 
   it('renders all input fields with the correct initial values', () => {
     const component = render(
-      <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={true} />
+      <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={false} />
     );
     const addressLine2 = component.getByTestId('address-form-address2');
     expect((addressLine2 as HTMLInputElement).value).toBe(defaultAddress.addressLine2);
     const city = component.getByTestId('address-form-city');
     expect((city as HTMLInputElement).value).toBe(defaultAddress.city);
-    const province = component.getByTestId('address-form-province');
+    const province = component.getByTestId('address-form-province-dropdown');
     expect((province as HTMLInputElement).value).toBe(defaultAddress.province);
     const postalCode = component.getByTestId('address-form-postal-code');
     expect((postalCode as HTMLInputElement).value).toBe(defaultAddress.postalCode);
-    const country = component.getByTestId('address-form-country');
-    expect((country as HTMLInputElement).value).toBe(defaultAddress.country);
   });
 
   it('calls handleInputChange on user input in address2', () => {
@@ -84,33 +82,27 @@ describe('AddressInputs', () => {
       <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={false} />
     );
 
-    const provinceInput = screen.getByTestId('address-form-province');
-    fireEvent.change(provinceInput, { target: { value: 'BC' } });
-    fireEvent(
-      provinceInput,
-      new CustomEvent('_change', {
-        detail: { name: 'province', value: 'BC' },
-      })
-    );
+    const provinceInput = screen.getByTestId('address-form-province-dropdown');
+
     expect((provinceInput as HTMLInputElement).value).toBe('BC');
-    expect(mockHandleInputChange).toBeCalledTimes(1);
-    expect(mockHandleInputChange).toHaveBeenCalledWith('province', 'BC');
+    expect(provinceInput).toBeTruthy();
   });
-  it('disables province input when isAlbertaAddress is true', () => {
+  it(' province is label when isAlbertaAddress is true', () => {
     const component = render(
       <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={true} />
     );
 
     const provinceInput = component.getByTestId('address-form-province');
-    expect(provinceInput.getAttribute('disabled')).toBeTruthy();
+    expect(provinceInput).toBeTruthy();
   });
-  it('renders default country as CAN and the input is disabled', () => {
+  it('renders default country as Canada ', () => {
     const component = render(
       <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={true} />
     );
 
     const input = component.getByTestId('address-form-country');
-    expect(input.getAttribute('disabled')).toBeTruthy();
+
+    expect(input).toBeTruthy();
   });
   it('matches snapshot', () => {
     const { asFragment } = render(

@@ -7,7 +7,7 @@ import { JsonForms } from '@jsonforms/react';
 import moment from 'moment';
 import { FunctionComponent, useEffect } from 'react';
 import styled from 'styled-components';
-import { Form, FormDefinition, metaDataSelector, AppDispatch, downloadFile, downloadFormPdf } from '../state';
+import { Form, FormDefinition, metaDataSelector, AppDispatch, downloadFile, downloadFormPdf, store } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import { pdfFileSelector, checkPdfFileSelector, checkPdfFile } from '../state';
 import { DownloadLink } from '../containers/DownloadLink';
@@ -53,10 +53,18 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
   const pdfFileExists = useSelector((state: AppState) => checkPdfFileSelector(state));
 
   const downloadFormFile = async (file) => {
-    const fileData = await dispatch(downloadFile(file.urn)).unwrap();
     const element = document.createElement('a');
-    element.href = URL.createObjectURL(new Blob([fileData.data]));
-    element.download = fileData.metadata.filename;
+
+    const localFileCache = (store.getState() as AppState).file?.files[file.urn];
+
+    if (!localFileCache) {
+      const fileData = await dispatch(downloadFile(file.urn)).unwrap();
+      element.href = URL.createObjectURL(new Blob([fileData.data]));
+      element.download = fileData.metadata.filename;
+    } else {
+      element.href = localFileCache;
+      element.download = file.filename;
+    }
     document.body.appendChild(element);
     element.click();
   };

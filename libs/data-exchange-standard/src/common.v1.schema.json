@@ -146,7 +146,7 @@
       ],
       "errorMessage": {
         "properties": {
-          "postalCode": "Must be in 0A0 A0A capital letters and numbers format"
+          "postalCode": "Must be in A0A 0A0 capital letters and numbers format"
         }
       }
     },
@@ -198,7 +198,7 @@
       ],
       "errorMessage": {
         "properties": {
-          "postalCode": "Must be in 0A0 A0A capital letters and numbers format"
+          "postalCode": "Must be in A0A 0A0 capital letters and numbers format"
         }
       }
     },

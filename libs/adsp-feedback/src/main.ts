@@ -407,8 +407,7 @@ export class AdspFeedback implements AdspFeedbackApi {
 
     const tooltips = document.querySelectorAll('.tooltip-text');
     const tooltip = tooltips[index] as HTMLImageElement;
-    tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
-    tooltip.style.opacity = isHovering ? '1' : '0';
+    tooltip.style.display = isHovering ? 'block' : 'none';
     if (index === 0) {
       tooltip.style.marginLeft = '35px';
       tooltip.classList.add('modified');
@@ -643,7 +642,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             }
 
             span.tooltip-text {
-              visibility: hidden;
+              display: none;
               margin-left: 25px;
               background-color: #666666;
               color: #fff;
@@ -653,8 +652,6 @@ export class AdspFeedback implements AdspFeedbackApi {
               margin-top: 53px;
               position: absolute;
               transform: translateX(-50%);
-              opacity: 0;
-              transition: opacity 0.3s;
               white-space: nowrap;
             }
           }

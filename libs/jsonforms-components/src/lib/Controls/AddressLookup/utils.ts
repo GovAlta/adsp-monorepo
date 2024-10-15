@@ -25,6 +25,11 @@ export const fetchAddressSuggestions = async (
 export const filterAlbertaAddresses = (suggestions: Suggestion[]): Suggestion[] => {
   return suggestions.filter((suggestion) => suggestion.Description.includes('AB'));
 };
+export const filterSuggestionsWithoutAddressCount = (suggestions: Suggestion[]): Suggestion[] => {
+  return suggestions.filter((suggestion) => {
+    return !suggestion.Description.trim().endsWith('Addresses');
+  });
+};
 
 export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
   let addressLine1, addressLine2;
@@ -50,6 +55,11 @@ export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
     city,
     province,
     postalCode,
-    country: 'CAN',
+    country: 'CA',
   };
+};
+
+export const validatePostalCode = (values: string): boolean => {
+  const postalCodeRegex = /^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/;
+  return postalCodeRegex.test(values);
 };

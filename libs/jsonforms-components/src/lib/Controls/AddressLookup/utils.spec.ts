@@ -1,4 +1,10 @@
-import { fetchAddressSuggestions, filterAlbertaAddresses, mapSuggestionToAddress } from './utils';
+import {
+  fetchAddressSuggestions,
+  filterAlbertaAddresses,
+  mapSuggestionToAddress,
+  filterSuggestionsWithoutAddressCount,
+  validatePostalCode,
+} from './utils';
 import axios from 'axios';
 import { Suggestion, Address } from './types';
 jest.mock('axios');
@@ -70,7 +76,7 @@ describe('mapSuggestionToAddress', () => {
       city: 'Edmonton',
       province: 'AB',
       postalCode: 'T5J 2N9',
-      country: 'CAN',
+      country: 'CA',
     };
 
     const result = mapSuggestionToAddress(suggestion);
@@ -92,7 +98,7 @@ describe('mapSuggestionToAddress', () => {
       city: 'Calgary',
       province: 'AB',
       postalCode: 'T3H 2V4',
-      country: 'CAN',
+      country: 'CA',
     };
 
     expect(mapSuggestionToAddress(suggestion)).toEqual(expectedAddress);
@@ -114,9 +120,141 @@ describe('mapSuggestionToAddress', () => {
       city: 'Lethbridge',
       province: 'AB',
       postalCode: 'T1K 3M4',
-      country: 'CAN',
+      country: 'CA',
     };
 
     expect(mapSuggestionToAddress(suggestion)).toEqual(expectedAddress);
+  });
+});
+
+describe('filterSuggestionsWithoutAddressCount', () => {
+  it('should filter out suggestions where Description ends with "Addresses"', () => {
+    const suggestions = [
+      {
+        Id: '1',
+        Text: '123 Main St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Toronto, ON, M5V 3K2',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '2',
+        Text: '456 Another St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Haliburton, ON, K0M 1S0 - 9 Addresses',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '3',
+        Text: '789 Some Place',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Mississauga, ON, L5B 1H7',
+        Next: 'Retrieve',
+      },
+    ];
+
+    const filteredSuggestions = filterSuggestionsWithoutAddressCount(suggestions);
+
+    expect(filteredSuggestions).toHaveLength(2);
+    expect(filteredSuggestions).toEqual([
+      {
+        Id: '1',
+        Text: '123 Main St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Toronto, ON, M5V 3K2',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '3',
+        Text: '789 Some Place',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Mississauga, ON, L5B 1H7',
+        Next: 'Retrieve',
+      },
+    ]);
+  });
+
+  it('should return all suggestions if none of them end with "Addresses"', () => {
+    const suggestions = [
+      {
+        Id: '1',
+        Text: '123 Main St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Toronto, ON, M5V 3K2',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '2',
+        Text: '456 Another St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Haliburton, ON, K0M 1S0',
+        Next: 'Retrieve',
+      },
+    ];
+
+    const filteredSuggestions = filterSuggestionsWithoutAddressCount(suggestions);
+
+    expect(filteredSuggestions).toHaveLength(2);
+  });
+
+  it('should return an empty array if all suggestions end with "Addresses"', () => {
+    const suggestions = [
+      {
+        Id: '1',
+        Text: '123 Main St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Toronto, ON, M5V 3K2 - 3 Addresses',
+        Next: 'Retrieve',
+      },
+      {
+        Id: '2',
+        Text: '456 Another St',
+        Highlight: '1-3',
+        Cursor: 0,
+        Description: 'Haliburton, ON, K0M 1S0 - 9 Addresses',
+        Next: 'Retrieve',
+      },
+    ];
+
+    const filteredSuggestions = filterSuggestionsWithoutAddressCount(suggestions);
+
+    expect(filteredSuggestions).toHaveLength(0);
+  });
+  describe('validatePostalCode', () => {
+    it('returns true for a valid postal code (K1A 0B1)', () => {
+      expect(validatePostalCode('K1A 0B1')).toBe(true);
+    });
+
+    it('returns true for a valid postal code (X9X 9X9)', () => {
+      expect(validatePostalCode('X9X 9X9')).toBe(true);
+    });
+
+    it('returns false for missing space (A1A1A1)', () => {
+      expect(validatePostalCode('A1A1A1')).toBe(false);
+    });
+
+    it('returns false for incorrect format with no letters (123 456)', () => {
+      expect(validatePostalCode('123 456')).toBe(false);
+    });
+
+    it('returns false for incorrect format with special characters (A1A-1A1)', () => {
+      expect(validatePostalCode('A1A-1A1')).toBe(false);
+    });
+
+    it('returns false for input with too many characters (A1A 1A12)', () => {
+      expect(validatePostalCode('A1A 1A12')).toBe(false);
+    });
+
+    it('returns false for empty string', () => {
+      expect(validatePostalCode('')).toBe(false);
+    });
   });
 });

@@ -36,6 +36,10 @@ export const functionSuggestion = [
     label: 'adsp.ReadValue',
     insertText: 'adsp.ReadValue',
   },
+  {
+    label: 'adsp.WriteValue',
+    insertText: 'adsp.WriteValue',
+  },
 ];
 
 export const functionSignature = [
@@ -189,11 +193,11 @@ export const functionSignature = [
     parameters: [
       {
         label: 'namespace',
-        documentation: 'Namespace of the value to lookup',
+        documentation: 'Namespace of the value to look up.',
       },
       {
         label: 'name',
-        documentation: 'Name of the value to lookup.',
+        documentation: 'Name of the value to look up.',
       },
       {
         label: 'top',
@@ -202,6 +206,23 @@ export const functionSignature = [
       {
         label: 'after',
         documentation: 'The records to to look up after.',
+      },
+    ],
+  },
+  {
+    label: 'adsp.WriteValue(string namespace, string name, object value)',
+    parameters: [
+      {
+        label: 'namespace',
+        documentation: 'Namespace of the value.',
+      },
+      {
+        label: 'name',
+        documentation: 'Name of the value.',
+      },
+      {
+        label: 'value',
+        documentation: 'A key value object to save.',
       },
     ],
   },

@@ -31,3 +31,9 @@ export const SearchBox = styled.div`
     font-weight: var(--fw-bold);
   }
 `;
+
+export const LabelDiv = styled.div`
+  font-size: var(--fs-sl);
+  font-weight: var(--fw-bold);
+  padding-bottom: 0.5rem;
+`;
