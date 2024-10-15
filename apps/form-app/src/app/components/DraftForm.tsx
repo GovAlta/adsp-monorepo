@@ -143,12 +143,14 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const downloadFormFile = async (file) => {
     const element = document.createElement('a');
 
-    if (anonymousApply !== true) {
+    const localFileCache = (store.getState() as AppState).file?.files[file.urn];
+
+    if (!localFileCache) {
       const fileData = await dispatch(downloadFile(file.urn)).unwrap();
       element.href = URL.createObjectURL(new Blob([fileData.data]));
       element.download = fileData.metadata.filename;
     } else {
-      element.href = (store.getState() as AppState).file?.files[file.urn];
+      element.href = localFileCache;
       element.download = file.filename;
     }
     document.body.appendChild(element);
