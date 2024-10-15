@@ -1,14 +1,14 @@
 Feature: Form app
 
-  # @smoke-test
-  # Scenario: As a grant applicant, I can submit an application
-  #   When a user goes to form app overview site
-  #   Then the user views the overview page of form app
+  @smoke-test
+  Scenario: As a grant applicant, I can submit an application
+    When a user goes to form app overview site
+    Then the user views the overview page of form app
 
-  # @accessibility @regression
-  # Scenario: As a user, I can see the form app overview page without any critical and serious accessibility issues
-  #   When a user goes to form app overview site
-  #   Then no critical or serious accessibility issues on "form app overview" page
+  @accessibility @regression
+  Scenario: As a user, I can see the form app overview page without any critical and serious accessibility issues
+    When a user goes to form app overview site
+    Then no critical or serious accessibility issues on "form app overview" page
 
   @TEST_CS-3110 @regression
   Scenario: As an authenticated user, I can log in to submit an application
