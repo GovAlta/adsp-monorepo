@@ -55,6 +55,11 @@ export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
     city,
     province,
     postalCode,
-    country: 'CAN',
+    country: 'CA',
   };
+};
+
+export const validatePostalCode = (values: string): boolean => {
+  const postalCodeRegex = /^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/;
+  return postalCodeRegex.test(values);
 };

@@ -3,6 +3,7 @@ import {
   filterAlbertaAddresses,
   mapSuggestionToAddress,
   filterSuggestionsWithoutAddressCount,
+  validatePostalCode,
 } from './utils';
 import axios from 'axios';
 import { Suggestion, Address } from './types';
@@ -75,7 +76,7 @@ describe('mapSuggestionToAddress', () => {
       city: 'Edmonton',
       province: 'AB',
       postalCode: 'T5J 2N9',
-      country: 'CAN',
+      country: 'CA',
     };
 
     const result = mapSuggestionToAddress(suggestion);
@@ -97,7 +98,7 @@ describe('mapSuggestionToAddress', () => {
       city: 'Calgary',
       province: 'AB',
       postalCode: 'T3H 2V4',
-      country: 'CAN',
+      country: 'CA',
     };
 
     expect(mapSuggestionToAddress(suggestion)).toEqual(expectedAddress);
@@ -119,7 +120,7 @@ describe('mapSuggestionToAddress', () => {
       city: 'Lethbridge',
       province: 'AB',
       postalCode: 'T1K 3M4',
-      country: 'CAN',
+      country: 'CA',
     };
 
     expect(mapSuggestionToAddress(suggestion)).toEqual(expectedAddress);
@@ -226,5 +227,34 @@ describe('filterSuggestionsWithoutAddressCount', () => {
     const filteredSuggestions = filterSuggestionsWithoutAddressCount(suggestions);
 
     expect(filteredSuggestions).toHaveLength(0);
+  });
+  describe('validatePostalCode', () => {
+    it('returns true for a valid postal code (K1A 0B1)', () => {
+      expect(validatePostalCode('K1A 0B1')).toBe(true);
+    });
+
+    it('returns true for a valid postal code (X9X 9X9)', () => {
+      expect(validatePostalCode('X9X 9X9')).toBe(true);
+    });
+
+    it('returns false for missing space (A1A1A1)', () => {
+      expect(validatePostalCode('A1A1A1')).toBe(false);
+    });
+
+    it('returns false for incorrect format with no letters (123 456)', () => {
+      expect(validatePostalCode('123 456')).toBe(false);
+    });
+
+    it('returns false for incorrect format with special characters (A1A-1A1)', () => {
+      expect(validatePostalCode('A1A-1A1')).toBe(false);
+    });
+
+    it('returns false for input with too many characters (A1A 1A12)', () => {
+      expect(validatePostalCode('A1A 1A12')).toBe(false);
+    });
+
+    it('returns false for empty string', () => {
+      expect(validatePostalCode('')).toBe(false);
+    });
   });
 });

@@ -2,16 +2,19 @@ import React from 'react';
 import { Address } from './types';
 import { GoAFormItem, GoAInput, GoAGrid, GoADropdownItem, GoADropdown } from '@abgov/react-components-new';
 import { LabelDiv } from './styled-components';
+
 interface AddressInputsProps {
   address: Address;
   handleInputChange: (field: string, value: string) => void;
   isAlbertaAddress?: boolean;
+  postalCodeErrorMsg?: string;
 }
 
 export const AddressInputs: React.FC<AddressInputsProps> = ({
   address,
   handleInputChange,
   isAlbertaAddress,
+  postalCodeErrorMsg,
 }: AddressInputsProps): JSX.Element => {
   const provinces = [
     { value: 'AB', label: 'Alberta' },
@@ -28,6 +31,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
     { value: 'SK', label: 'Saskatchewan' },
     { value: 'YT', label: 'Yukon' },
   ];
+
   return (
     <>
       <GoAFormItem label="">
@@ -53,7 +57,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             width="100%"
           />
         </GoAFormItem>
-        <GoAFormItem label="Postal Code">
+        <GoAFormItem label="Postal Code" error={postalCodeErrorMsg}>
           <GoAInput
             name="postalCode"
             testId="address-form-postal-code"
@@ -62,6 +66,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             value={address?.postalCode || ''}
             onChange={(name, value) => handleInputChange(name, value)}
             width="100%"
+            maxLength={7}
           />
         </GoAFormItem>
       </GoAGrid>

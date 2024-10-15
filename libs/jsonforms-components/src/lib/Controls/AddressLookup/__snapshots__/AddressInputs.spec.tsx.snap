@@ -41,6 +41,7 @@ exports[`AddressInputs matches snapshot 1`] = `
         arialabel="address-form-postal-code"
         data-testid="address-form-postal-code"
         handletrailingiconclick="false"
+        maxlength="7"
         name="postalCode"
         placeholder="A0A 0A0"
         value="T5T 1V4"
@@ -58,7 +59,7 @@ exports[`AddressInputs matches snapshot 1`] = `
       label="Province"
     >
       <div
-        class="sc-gswNZR bilEPL"
+        class="sc-gswNZR honsqf"
         data-testid="address-form-province"
       >
         Alberta
@@ -68,7 +69,7 @@ exports[`AddressInputs matches snapshot 1`] = `
       label="Country"
     >
       <div
-        class="sc-gswNZR bilEPL"
+        class="sc-gswNZR honsqf"
         data-testid="address-form-country"
       >
         Canada
