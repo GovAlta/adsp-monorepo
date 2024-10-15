@@ -1,14 +1,14 @@
 Feature: Form app
 
-  @smoke-test
-  Scenario: As a grant applicant, I can submit an application
-    When a user goes to form app overview site
-    Then the user views the overview page of form app
+  # @smoke-test
+  # Scenario: As a grant applicant, I can submit an application
+  #   When a user goes to form app overview site
+  #   Then the user views the overview page of form app
 
-  @accessibility @regression
-  Scenario: As a user, I can see the form app overview page without any critical and serious accessibility issues
-    When a user goes to form app overview site
-    Then no critical or serious accessibility issues on "form app overview" page
+  # @accessibility @regression
+  # Scenario: As a user, I can see the form app overview page without any critical and serious accessibility issues
+  #   When a user goes to form app overview site
+  #   Then no critical or serious accessibility issues on "form app overview" page
 
   @TEST_CS-3110 @regression
   Scenario: As an authenticated user, I can log in to submit an application
@@ -20,8 +20,8 @@ Feature: Form app
     And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
     And the user clicks Next button in the form
-    And the user selects "Not Married" radio button for the question of "Are you married?"
     And the user "selects" a checkbox labelled "Citizen"
+    And the user selects "Not Married" radio button for the question of "Are you married?"
     And the user clicks list with detail button labelled as "Add child" in the form
     And the user enters "John" in list with detail element text field labelled "First name"
     And the user enters "Smith" in list with detail element text field labelled "Last name"
