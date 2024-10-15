@@ -17,6 +17,7 @@ import {
   onChangeForDateControl,
   onChangeForDateTimeControl,
   onChangeForNumericControl,
+  onChangeForInputControl,
 } from '../../util/inputControlUtils';
 
 const theDate = {
@@ -182,6 +183,17 @@ describe('input control tests', () => {
         name: 'test',
         value: 'value',
         key: ' z',
+        controlProps: newProps as ControlProps,
+      });
+      expect(newProps.handleChange).toBeCalled();
+    });
+
+    it('can change data when input have change event', () => {
+      const newProps = { ...props, handleChange: handleChangeMock };
+
+      onChangeForInputControl({
+        name: 'test',
+        value: 'value',
         controlProps: newProps as ControlProps,
       });
       expect(newProps.handleChange).toBeCalled();

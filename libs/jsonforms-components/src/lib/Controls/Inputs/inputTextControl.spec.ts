@@ -1,10 +1,10 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { GoAInputTextProps, GoAInputText, GoATextControl } from './InputTextControl';
+import { GoAInputTextProps, GoAInputText, GoATextControl, formatSin } from './InputTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 
-import { validateSinWithLuhn, checkFieldValidity, isEmptyBoolean, isValidDate } from '../../util/stringUtils';
+import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util/stringUtils';
 
 describe('Input Text Control tests', () => {
   const textBoxUiSchema: ControlElement = {
@@ -151,6 +151,44 @@ describe('Input Text Control tests', () => {
 
     it('should return false for invalid SIN Number', () => {
       expect(validateSinWithLuhn(Number('123456879'))).toBe(false);
+    });
+  });
+
+  describe('formatSin', () => {
+    it('formats a valid SIN number correctly', () => {
+      const input = '123456789';
+      const expected = '123 456 789';
+      expect(formatSin(input)).toBe(expected);
+    });
+
+    it('handles input with existing spaces correctly', () => {
+      const input = '123 456 789';
+      const expected = '123 456 789';
+      expect(formatSin(input)).toBe(expected);
+    });
+
+    it('removes non-numeric characters and formats correctly', () => {
+      const input = 'abc123456def';
+      const expected = '123 456';
+      expect(formatSin(input)).toBe(expected);
+    });
+
+    it('truncates input longer than 9 digits', () => {
+      const input = '123456789012345';
+      const expected = '123 456 789';
+      expect(formatSin(input)).toBe(expected);
+    });
+
+    it('formats input with fewer than 9 digits', () => {
+      const input = '12345';
+      const expected = '123 45';
+      expect(formatSin(input)).toBe(expected);
+    });
+
+    it('returns an empty string for empty input', () => {
+      const input = '';
+      const expected = '';
+      expect(formatSin(input)).toBe(expected);
     });
   });
 });

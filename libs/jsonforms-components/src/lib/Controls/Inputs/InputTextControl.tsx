@@ -5,11 +5,10 @@ import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForTextControl, onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
-import { useState } from 'react';
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
-const formatSin = (value: string) => {
+export const formatSin = (value: string) => {
   const inputVal = value.replace(/ /g, '');
   let inputNumbersOnly = inputVal.replace(/\D/g, '');
 
