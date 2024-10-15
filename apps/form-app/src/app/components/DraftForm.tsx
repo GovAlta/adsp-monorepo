@@ -26,8 +26,10 @@ import {
   metaDataSelector,
   uploadFile,
   uploadAnonymousFile,
+  AppState,
+  store,
 } from '../state';
-import { userSelector, configSelector } from '../state';
+import { userSelector, configSelector, fileDataUrlSelector } from '../state';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -121,7 +123,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     if (clonedFiles[propertyId]) {
       const urn = files[propertyId];
       delete clonedFiles[propertyId];
-      dispatch(deleteFile({ urn, propertyId }));
+      dispatch(deleteFile({ urn, propertyId, anonymousApply }));
     }
 
     const fileMetaData =
@@ -139,10 +141,16 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   const downloadFormFile = async (file) => {
-    const fileData = await dispatch(downloadFile(file.urn)).unwrap();
     const element = document.createElement('a');
-    element.href = URL.createObjectURL(new Blob([fileData.data]));
-    element.download = fileData.metadata.filename;
+
+    if (anonymousApply !== true) {
+      const fileData = await dispatch(downloadFile(file.urn)).unwrap();
+      element.href = URL.createObjectURL(new Blob([fileData.data]));
+      element.download = fileData.metadata.filename;
+    } else {
+      element.href = (store.getState() as AppState).file?.files[file.urn];
+      element.download = file.filename;
+    }
     document.body.appendChild(element);
     element.click();
   };
@@ -150,13 +158,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const deleteFormFile = async (file) => {
     const clonedFiles = { ...files };
     const propertyId = getKeyByValue(clonedFiles, file.urn);
-
-    if (anonymousApply !== true) {
-      await dispatch(deleteFile({ urn: file.urn, propertyId }));
-    }
-
+    await dispatch(deleteFile({ urn: file.urn, propertyId, anonymousApply }));
     delete clonedFiles[propertyId];
-
     dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
