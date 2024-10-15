@@ -260,10 +260,16 @@ export const uploadFile = createAsyncThunk(
 
 export const deleteFile = createAsyncThunk(
   'file/delete-file',
-  async ({ urn }: { urn: string; propertyId: string }, { getState, rejectWithValue }) => {
+  async (
+    { urn, anonymousApply }: { urn: string; propertyId: string; anonymousApply: boolean },
+    { getState, rejectWithValue }
+  ) => {
     try {
-      const { config } = getState() as AppState;
+      const { config, file } = getState() as AppState;
       const fileServiceUrl = config.directory[FILE_SERVICE_ID];
+      if (anonymousApply === true) {
+        return file.metadata[urn];
+      }
 
       const token = await getAccessToken();
 

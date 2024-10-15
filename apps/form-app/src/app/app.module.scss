@@ -24,3 +24,10 @@ main {
   display: flex;
   flex-direction: column;
 }
+
+h1,
+h2,
+h3,
+h4 {
+  margin-bottom: var(--goa-space-m);
+}

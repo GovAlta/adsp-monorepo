@@ -232,7 +232,7 @@ export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvid
             context: 'GatewayRouter',
             tenant: tenantId,
           });
-          return `${fileResourceUrl}?tenant=${tenantId}`;
+          return `${fileResourceUrl}?tenantId=${tenantId}`;
         },
       })(req, res, next);
     } catch (err) {
