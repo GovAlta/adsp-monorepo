@@ -72,7 +72,7 @@ export const HelpContentComponent = ({
         <div className={marginClass}>
           {label && showLabel && (!uischema.options?.variant || uischema.options?.variant === 'hyperlink') && (
             <div className={labelClass} data-testid={label}>
-              {label} Test
+              {label}
               <br />
             </div>
           )}
