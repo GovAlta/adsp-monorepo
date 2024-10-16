@@ -69,7 +69,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   const renderHelp = () => {
-    return <HelpContentComponent {...props} isParent={true} />;
+    return <HelpContentComponent {...props} isParent={true} showLabel={false} />;
   };
 
   useEffect(() => {

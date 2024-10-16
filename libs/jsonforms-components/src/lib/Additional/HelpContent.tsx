@@ -24,6 +24,11 @@ interface CustomControlElement extends ControlElement {
   elements?: CustomControlElement[]; // Assuming elements is an array of similar objects
 }
 
+interface ExtraHelpContentProps {
+  isParent?: boolean;
+  showLabel?: boolean;
+}
+
 interface CustomControlProps extends ControlProps {
   uischema: CustomControlElement;
 }
@@ -34,8 +39,9 @@ const HelpContentReviewComponent = (): JSX.Element => {
 
 export const HelpContentComponent = ({
   isParent = true,
+  showLabel = true,
   ...props
-}: CustomControlProps & { isParent?: boolean }): JSX.Element => {
+}: CustomControlProps & ExtraHelpContentProps): JSX.Element => {
   const labelClass = isParent ? 'parent-label' : 'child-label';
   const marginClass = isParent ? 'parent-margin' : 'child-margin';
   // eslint-disable-next-line
@@ -64,9 +70,9 @@ export const HelpContentComponent = ({
     <Visible visible={visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
         <div className={marginClass}>
-          {label && (!uischema.options?.variant || uischema.options?.variant === 'hyperlink') && (
+          {label && showLabel && (!uischema.options?.variant || uischema.options?.variant === 'hyperlink') && (
             <div className={labelClass} data-testid={label}>
-              {label}
+              {label} Test
               <br />
             </div>
           )}
