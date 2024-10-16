@@ -14,6 +14,7 @@ import {
   validatePostalCode,
 } from './utils';
 import { SearchBox } from './styled-components';
+import { HelpContentComponent } from '../../Additional';
 
 type AddressLookUpProps = ControlProps;
 
@@ -21,6 +22,7 @@ const ADDRESS_PATH = 'api/gateway/v1/address/v1/find';
 
 export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => {
   const { data, path, schema, handleChange, uischema } = props;
+
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
   const formCtx = useContext(JsonFormContext);
   const formHost = formCtx?.formUrl;
@@ -66,6 +68,10 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     updateFormData(newAddress);
   };
 
+  const renderHelp = () => {
+    return <HelpContentComponent {...props} isParent={true} showLabel={false} />;
+  };
+
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (searchTerm.length > 2) {
@@ -101,6 +107,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
   return (
     <div>
+      {renderHelp()}
       <GoAFormItem label={label}>
         <SearchBox>
           <GoAInput
