@@ -365,6 +365,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderRating = (rating: any, index: number) => {
+    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     return html`
       <div class="rating-div">
         <img
@@ -378,15 +379,18 @@ export class AdspFeedback implements AdspFeedbackApi {
           tabindex="0"
           aria-label="${rating.label}"
         />
-        <span class="tooltip-text">${rating.label}</span>
-        <p
-          class="ratingText"
-          @mouseover="${() => this.updateHover(index, true)}"
-          @mouseout="${() => this.updateHover(index, false)}"
-          @click="${() => this.selectRating(index)}"
-        >
-          ${rating.label}
-        </p>
+        ${isSmallScreen
+          ? html`
+              <p
+                class="ratingText"
+                @mouseover="${() => this.updateHover(index, true)}"
+                @mouseout="${() => this.updateHover(index, false)}"
+                @click="${() => this.selectRating(index)}"
+              >
+                ${rating.label}
+              </p>
+            `
+          : html`<span class="tooltip-text">${rating.label}</span>`}
       </div>
     `;
   };
@@ -394,23 +398,26 @@ export class AdspFeedback implements AdspFeedbackApi {
     const rating = this.ratings[index];
     const images = document.querySelectorAll('.rating');
     const image = images[index] as HTMLImageElement;
+    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     image.src =
       isHovering && this.selectedRating !== index
         ? rating.svgHover
         : this.selectedRating === index
         ? rating.svgClick
         : rating.svgDefault;
-
-    const texts = document.querySelectorAll('.ratingText');
-    const text = texts[index] as HTMLImageElement;
-    text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
-
-    const tooltips = document.querySelectorAll('.tooltip-text');
-    const tooltip = tooltips[index] as HTMLImageElement;
-    tooltip.style.display = isHovering ? 'block' : 'none';
-    if (index === 0) {
-      tooltip.style.marginLeft = '35px';
-      tooltip.classList.add('modified');
+    if (isSmallScreen) {
+      const texts = document.querySelectorAll('.ratingText');
+      const text = texts[index] as HTMLImageElement;
+      text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+    } else {
+      const tooltips = document.querySelectorAll('.tooltip-text');
+      const tooltip = tooltips[index] as HTMLImageElement;
+      tooltip.style.visibility = isHovering && !isSmallScreen ? 'visible' : 'hidden';
+      tooltip.style.opacity = isHovering && !isSmallScreen ? '1' : '0';
+      if (index === 0) {
+        tooltip.style.marginLeft = '35px';
+        tooltip.classList.add('modified');
+      }
     }
   };
 
@@ -642,7 +649,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             }
 
             span.tooltip-text {
-              display: none;
+              visibility: hidden;
               margin-left: 25px;
               background-color: #666666;
               color: #fff;
@@ -653,6 +660,8 @@ export class AdspFeedback implements AdspFeedbackApi {
               position: absolute;
               transform: translateX(-50%);
               white-space: nowrap;
+              opacity: 0;
+              -webkit-transition: opacity 0.3s;
             }
           }
 
@@ -1055,7 +1064,8 @@ export class AdspFeedback implements AdspFeedbackApi {
                 color: #004f84;
               }
               > div > span {
-                display: none;
+                visibility: hidden;
+                opacity: 0;
               }
             }
             .ratingText {
