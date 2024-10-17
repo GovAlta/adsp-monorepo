@@ -244,7 +244,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
 };
 
 export const SubscriptionList = styled(SubscriptionsListComponent)`
-  display: flex-inline-table;
+  display: table;
   & .group-name {
     text-transform: capitalize;
     font-size: var(--fs-lg);

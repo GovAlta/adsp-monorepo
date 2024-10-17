@@ -1,9 +1,11 @@
 import { SagaIterator } from '@redux-saga/core';
-import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
-import { RootState } from '../index';
-import { put, select, call, all, takeEvery } from 'redux-saga/effects';
+import { fetchServiceMetrics } from '@store/common';
 import { ErrorNotification } from '@store/notifications/actions';
+import { getAccessToken } from '@store/tenant/sagas';
+import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
+import { put, select, call, all, takeEvery, takeLatest } from 'redux-saga/effects';
 import axios from 'axios';
+import { RootState } from '../index';
 import {
   UpdateCommentTopicTypesAction,
   getCommentTopicTypesSuccess,
@@ -30,10 +32,9 @@ import {
   deleteCommentSuccess,
   AddTopicRequestAction,
   getCommentTopicTypes,
+  FETCH_COMMENT_METRICS,
+  fetchCommentMetricsSucceeded,
 } from './action';
-
-import { getAccessToken } from '@store/tenant/sagas';
-import { UpdateCommentConfig, DeleteCommentConfig } from './model';
 import {
   updateCommentTopicTypesApi,
   deleteCommentTopicTypesApi,
@@ -45,6 +46,7 @@ import {
   fetchCommentsApi,
   updateCommentApi,
 } from './api';
+import { UpdateCommentConfig, DeleteCommentConfig } from './model';
 
 export function* fetchCommentTopicTypes(): SagaIterator {
   yield put(
@@ -265,6 +267,20 @@ function* deleteCommentSaga(action): SagaIterator {
   }
 }
 
+export function* fetchCommentMetrics(): SagaIterator {
+  yield* fetchServiceMetrics('comment-service', function* (metrics) {
+    const topicsMetric = 'comment-service:topic-created:count';
+    const commentsMetric = 'comment-service:comment-created:count';
+
+    yield put(
+      fetchCommentMetricsSucceeded({
+        topicsCreated: parseInt(metrics[topicsMetric]?.values[0]?.sum || '0', 10),
+        commentsCreated: parseInt(metrics[commentsMetric]?.values[0]?.sum || '0', 10),
+      })
+    );
+  });
+}
+
 export function* watchCommentSagas(): Generator {
   yield takeEvery(FETCH_COMMENT_TOPIC_TYPES_ACTION, fetchCommentTopicTypes);
   yield takeEvery(UPDATE_COMMENT_TOPIC_TYPE_ACTION, updateCommentTopicTypes);
@@ -278,4 +294,5 @@ export function* watchCommentSagas(): Generator {
   // yield takeEvery(FETCH_COMMENTS, addCommentSaga);
   yield takeEvery(DELETE_COMMENT_TOPIC_ACTION, deleteTopicSaga);
   yield takeEvery(DELETE_COMMENT, deleteCommentSaga);
+  yield takeLatest(FETCH_COMMENT_METRICS, fetchCommentMetrics);
 }

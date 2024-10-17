@@ -96,6 +96,7 @@ export interface CommentState {
   comments: Comment[];
   nextEntries: string;
   nextCommentEntries: string;
+  metrics: CommentMetrics;
 }
 
 export interface UpdateCommentConfig {
@@ -106,4 +107,9 @@ export interface UpdateCommentConfig {
 export interface DeleteCommentConfig {
   operation: string;
   property: string;
+}
+
+export interface CommentMetrics {
+  topicsCreated?: number;
+  commentsCreated?: number;
 }

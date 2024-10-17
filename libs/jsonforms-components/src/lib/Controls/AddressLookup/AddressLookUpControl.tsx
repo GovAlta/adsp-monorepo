@@ -14,6 +14,7 @@ import {
   validatePostalCode,
 } from './utils';
 import { SearchBox } from './styled-components';
+import { HelpContentComponent } from '../../Additional';
 
 type AddressLookUpProps = ControlProps;
 
@@ -21,6 +22,7 @@ const ADDRESS_PATH = 'api/gateway/v1/address/v1/find';
 
 export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => {
   const { data, path, schema, handleChange, uischema } = props;
+
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
   const formCtx = useContext(JsonFormContext);
   const formHost = formCtx?.formUrl;
@@ -49,21 +51,31 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   const handleInputChange = (field: string, value: string) => {
+    let newAddress;
     if (field === 'postalCode') {
       const validatePc = validatePostalCode(value);
 
-      if (!validatePc && value.length >= 5) {
+      if (!validatePc && value.length >= 4) {
         const postalCodeErrorMessage = (schema as { errorMessage?: { properties?: { postalCode?: string } } })
           .errorMessage?.properties?.postalCode;
         setPostalCodeErrorMsg(postalCodeErrorMessage ?? '');
       } else {
         setPostalCodeErrorMsg('');
       }
+      if (value.length >= 4 && value.indexOf(' ') === -1) {
+        value = value.slice(0, 3) + ' ' + value.slice(3);
+      }
+      newAddress = { ...address, [field]: value.toUpperCase() };
+    } else {
+      newAddress = { ...address, [field]: value };
     }
-    const newAddress = { ...address, [field]: value };
 
     setAddress(newAddress);
     updateFormData(newAddress);
+  };
+
+  const renderHelp = () => {
+    return <HelpContentComponent {...props} isParent={true} showLabel={false} />;
   };
 
   useEffect(() => {
@@ -101,6 +113,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
   return (
     <div>
+      {renderHelp()}
       <GoAFormItem label={label}>
         <SearchBox>
           <GoAInput
