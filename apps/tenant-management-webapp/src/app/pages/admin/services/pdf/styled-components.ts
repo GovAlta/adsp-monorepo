@@ -192,8 +192,8 @@ export const EditTemplateActions = styled.div`
   flex-direction: column;
   justify-content: left;
   gap: var(--goa-space-m);
+  padding-left: var(--goa-space-2xs);
   margin: 0 0 var(--goa-space-xl) 0;
-  //  padding-top: var(--goa-space-m);
 `;
 
 // preview template components

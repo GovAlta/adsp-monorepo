@@ -83,6 +83,7 @@ export const EditScriptActions = styled.div`
   justify-content: left;
   gap: 1rem;
   padding-top: var(--goa-space-l);
+  padding-left: var(--goa-space-2xs);
   border-top: 1px solid #adadad;
   box-shadow: -2px -3px 3px rgba(0, 0, 0, 0.1);
   margin: 0 0 var(--goa-space-xl) 0;
