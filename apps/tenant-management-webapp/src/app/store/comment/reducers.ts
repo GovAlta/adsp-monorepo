@@ -10,6 +10,7 @@ import {
   DELETE_COMMENT_COMMENTS_SUCCESS,
   CommentActionTypes,
   UPDATE_COMMENT_COMMENTS_SUCCESS,
+  FETCH_COMMENT_METRICS_SUCCEEDED,
 } from './action';
 
 import { CommentState } from './model';
@@ -28,6 +29,7 @@ export const defaultState: CommentState = {
   comments: [],
   nextEntries: null,
   nextCommentEntries: null,
+  metrics: {},
 };
 
 export default function (state: CommentState = defaultState, action: CommentActionTypes): CommentState {
@@ -97,14 +99,14 @@ export default function (state: CommentState = defaultState, action: CommentActi
 
     case DELETE_COMMENT_TOPIC_SUCCESS: {
       const newTopicList = [...state.topics];
-      const index = newTopicList.findIndex((comment) =>  comment.id === action.payload);
+      const index = newTopicList.findIndex((comment) => comment.id === action.payload);
 
       if (index !== -1) {
         newTopicList.splice(index, 1);
       }
       return {
         ...state,
-        topics: newTopicList
+        topics: newTopicList,
       };
     }
     case DELETE_COMMENT_COMMENTS_SUCCESS:
@@ -114,7 +116,11 @@ export default function (state: CommentState = defaultState, action: CommentActi
         ...state,
         comments: filteredComments,
       };
-
+    case FETCH_COMMENT_METRICS_SUCCEEDED:
+      return {
+        ...state,
+        metrics: action.payload,
+      };
     default:
       return state;
   }

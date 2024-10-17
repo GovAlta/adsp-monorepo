@@ -19,8 +19,8 @@ import {
 } from './actions';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
-import moment from 'moment';
 import { getAccessToken } from '@store/tenant/sagas';
+import { fetchServiceMetrics } from '@store/common';
 
 export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): SagaIterator {
   yield put(
@@ -253,39 +253,19 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
   }
 }
 
-interface MetricResponse {
-  values: { sum: string }[];
-}
-
 export function* fetchEventMetrics(): SagaIterator {
-  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield call(getAccessToken);
+  const metric = 'total:count';
+  yield* fetchServiceMetrics(metric, function* (metrics) {
+    const data = metrics[metric];
+    const sum = data?.values.reduce((s, v) => parseInt(v.sum) + s, 0) || 0;
 
-  if (baseUrl && token) {
-    try {
-      const criteria = JSON.stringify({
-        intervalMax: moment().toISOString(),
-        intervalMin: moment().startOf('week').toISOString(),
-      });
-
-      const { data }: { data: MetricResponse } = yield call(
-        axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics/total:count?interval=daily&criteria=${criteria}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const sum = data.values.reduce((s, v) => parseInt(v.sum) + s, 0) || 0;
-
-      yield put(
-        fetchEventMetricsSucceeded({
-          totalEvents: sum,
-          avgPerDay: data.values.length ? sum / data.values.length : 0,
-        })
-      );
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
-    }
-  }
+    yield put(
+      fetchEventMetricsSucceeded({
+        totalEvents: sum,
+        avgPerDay: data?.values.length ? sum / data?.values.length : 0,
+      })
+    );
+  });
 }
 
 export function* watchEventSagas(): Generator {

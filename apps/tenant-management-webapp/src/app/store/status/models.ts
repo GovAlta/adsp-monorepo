@@ -110,10 +110,6 @@ export interface EndpointStatusEntry {
   status: number | string;
 }
 
-export interface MetricResponse {
-  values: { sum: string; max: string }[];
-}
-
 export const defaultHook: Webhooks = {
   id: '',
   name: '',

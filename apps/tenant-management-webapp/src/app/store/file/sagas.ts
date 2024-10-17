@@ -1,8 +1,13 @@
-import { put, select, call, all, takeEvery } from 'redux-saga/effects';
-import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
-import FormData from 'form-data';
+import { fetchServiceMetrics } from '@store/common';
+import { ErrorNotification } from '@store/notifications/actions';
 import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
+import { getAccessToken } from '@store/tenant/sagas';
+import axios from 'axios';
+import moment from 'moment';
+import FormData from 'form-data';
+import { put, select, call, all, takeEvery } from 'redux-saga/effects';
+import { RootState } from '../index';
 import {
   FetchFilesSuccessService,
   FetchFileSuccessService,
@@ -36,13 +41,8 @@ import {
   CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
   UploadFileFailureService,
 } from './actions';
-
 import { FileApi } from './api';
-import { RootState } from '../index';
-import axios from 'axios';
 import { FileTypeItem } from './models';
-import moment from 'moment';
-import { getAccessToken } from '@store/tenant/sagas';
 
 export function* checkFileTypeHasFileSaga(action: CheckFileTypeHasFileAction): SagaIterator {
   try {
@@ -344,42 +344,20 @@ export function* fetchFileTypeHasFile(action: FetchFileTypeHasFileAction): SagaI
   }
 }
 
-interface MetricResponse {
-  values: { sum: string; avg: string }[];
-}
-
 export function* fetchFileMetrics(): SagaIterator {
-  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield call(getAccessToken);
+  yield* fetchServiceMetrics('file-service', function* (metrics) {
+    const uploadedMetric = 'file-service:file-uploaded:count';
+    const lifetimeMetric = 'file-service:file-lifetime:duration';
 
-  if (baseUrl && token) {
-    try {
-      const criteria = JSON.stringify({
-        intervalMax: moment().toISOString(),
-        intervalMin: moment().subtract(7, 'day').toISOString(),
-        metricLike: 'file-service',
-      });
-
-      const { data: metrics }: { data: Record<string, MetricResponse> } = yield call(
-        axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const uploadedMetric = 'file-service:file-uploaded:count';
-      const lifetimeMetric = 'file-service:file-lifetime:duration';
-      yield put(
-        FetchFileMetricsSucceeded({
-          filesUploaded: parseInt(metrics[uploadedMetric]?.values[0]?.sum || '0', 10),
-          fileLifetime: metrics[lifetimeMetric]?.values[0]
-            ? moment.duration(parseInt(metrics[lifetimeMetric]?.values[0].avg, 10), 'seconds').asDays()
-            : null,
-        })
-      );
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
-    }
-  }
+    yield put(
+      FetchFileMetricsSucceeded({
+        filesUploaded: parseInt(metrics[uploadedMetric]?.values[0]?.sum || '0', 10),
+        fileLifetime: metrics[lifetimeMetric]?.values[0]
+          ? moment.duration(parseInt(metrics[lifetimeMetric]?.values[0].avg, 10), 'seconds').asDays()
+          : null,
+      })
+    );
+  });
 }
 
 export function* watchFileSagas(): Generator {

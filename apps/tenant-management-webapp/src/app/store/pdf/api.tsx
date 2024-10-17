@@ -1,10 +1,6 @@
 import axios from 'axios';
 import { PdfTemplate, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
 
-interface MetricResponse {
-  values: { sum: string; avg: string }[];
-}
-
 export const fetchPdfTemplatesApi = async (token: string, url: string): Promise<Record<string, PdfTemplate>> => {
   const res = await axios.get(url, {
     headers: { Authorization: `Bearer ${token}` },
@@ -34,10 +30,5 @@ export const generatePdfApi = async (token: string, url: string, body: UpdatePdf
 
 export const createPdfJobApi = async (token: string, url: string, body: CreatePdfConfig) => {
   const res = await axios.post(url, body, { headers: { Authorization: `Bearer ${token}` } });
-  return res.data;
-};
-
-export const fetchPdfMetricsApi = async (token: string, url: string): Promise<Record<string, MetricResponse>> => {
-  const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
   return res.data;
 };
