@@ -213,7 +213,7 @@ Then('the number of users from admin page should equal to the number of users fr
 });
 
 Then('the user views the number of users in top 5 roles in its tenant realm', function () {
-  cy.wait(2000); // Wait for the stats to display
+  cy.wait(4000); // Wait for the stats to display
   const userNum = new Array(5);
   // Verify roles table headers
   tenantAdminObj

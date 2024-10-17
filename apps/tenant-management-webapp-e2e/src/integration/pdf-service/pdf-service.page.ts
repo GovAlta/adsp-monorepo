@@ -169,7 +169,7 @@ class PDFServicePage {
   }
 
   pdfTemplateEditorScreenBackButton() {
-    return cy.xpath('//goa-form-item//*[@data-testid="template-form-close"]');
+    return cy.xpath('//*[@data-testid="template-form-close"]');
   }
 
   pdfTemplateEditorScreenSaveButton() {
