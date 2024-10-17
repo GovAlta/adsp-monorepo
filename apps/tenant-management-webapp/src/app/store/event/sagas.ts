@@ -255,17 +255,21 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
 
 export function* fetchEventMetrics(): SagaIterator {
   const metric = 'total:count';
-  yield* fetchServiceMetrics(metric, function* (metrics) {
-    const data = metrics[metric];
-    const sum = data?.values.reduce((s, v) => parseInt(v.sum) + s, 0) || 0;
+  yield* fetchServiceMetrics(
+    metric,
+    function* (metrics) {
+      const data = metrics[metric];
+      const sum = data?.values.reduce((s, v) => parseInt(v.sum) + s, 0) || 0;
 
-    yield put(
-      fetchEventMetricsSucceeded({
-        totalEvents: sum,
-        avgPerDay: data?.values.length ? sum / data?.values.length : 0,
-      })
-    );
-  });
+      yield put(
+        fetchEventMetricsSucceeded({
+          totalEvents: sum,
+          avgPerDay: data?.values.length ? sum / data?.values.length : 0,
+        })
+      );
+    },
+    'daily'
+  );
 }
 
 export function* watchEventSagas(): Generator {
