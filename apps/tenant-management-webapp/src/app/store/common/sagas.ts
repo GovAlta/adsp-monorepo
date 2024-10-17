@@ -6,12 +6,13 @@ import moment from 'moment';
 import { RootState } from '../index';
 
 interface MetricResponse {
-  values: { sum: string; avg: string, max: string }[];
+  values: { sum: string; avg: string; max: string }[];
 }
 
 export function* fetchServiceMetrics(
   metricLike: string,
-  done: (metrics: Record<string, MetricResponse>) => Generator<Effect>
+  done: (metrics: Record<string, MetricResponse>) => Generator<Effect>,
+  interval: 'hourly' | 'daily' | 'weekly' = 'weekly'
 ) {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
@@ -20,14 +21,20 @@ export function* fetchServiceMetrics(
     try {
       const criteria = JSON.stringify({
         intervalMax: moment().toISOString(),
-        intervalMin: moment().subtract(7, 'day').toISOString(),
+        intervalMin: moment().startOf('week').toISOString(),
         metricLike,
       });
 
       const { data: metrics }: { data: Record<string, MetricResponse> } = yield call(
         axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${baseUrl}/value/v1/event-service/values/event/metrics`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            interval,
+            criteria,
+          },
+        }
       );
 
       yield* done(metrics);
