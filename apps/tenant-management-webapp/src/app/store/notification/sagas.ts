@@ -26,6 +26,7 @@ import { EventItem } from './models';
 import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
 
 import { getAccessToken } from '@store/tenant/sagas';
+import { fetchServiceMetrics } from '@store/common';
 
 export function* fetchNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -281,44 +282,22 @@ export function* updateEmailInformation({ payload }: UpdateEmailInformationActio
   }
 }
 
-interface MetricResponse {
-  values: { sum: string; avg: string }[];
-}
-
 export function* fetchNotificationMetrics(): SagaIterator {
-  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield call(getAccessToken);
+  yield* fetchServiceMetrics('notification-service', function* (metrics) {
+    const sentMetric = 'notification-service:notification-sent:count';
+    const failedMetric = 'notification-service:notification-send-failed:count';
+    const sendDurationMetric = 'notification-service:notification-send:duration';
 
-  if (baseUrl && token) {
-    try {
-      const criteria = JSON.stringify({
-        intervalMax: moment().toISOString(),
-        intervalMin: moment().subtract(7, 'day').toISOString(),
-        metricLike: 'notification-service',
-      });
-
-      const { data: metrics }: { data: Record<string, MetricResponse> } = yield call(
-        axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const sentMetric = 'notification-service:notification-sent:count';
-      const failedMetric = 'notification-service:notification-send-failed:count';
-      const sendDurationMetric = 'notification-service:notification-send:duration';
-      yield put(
-        FetchNotificationMetricsSucceeded({
-          notificationsSent: parseInt(metrics[sentMetric]?.values[0]?.sum || '0'),
-          notificationsFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
-          sendDuration: metrics[sendDurationMetric]?.values[0]
-            ? parseInt(metrics[sendDurationMetric]?.values[0].avg)
-            : null,
-        })
-      );
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
-    }
-  }
+    yield put(
+      FetchNotificationMetricsSucceeded({
+        notificationsSent: parseInt(metrics[sentMetric]?.values[0]?.sum || '0'),
+        notificationsFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
+        sendDuration: metrics[sendDurationMetric]?.values[0]
+          ? parseInt(metrics[sendDurationMetric]?.values[0].avg)
+          : null,
+      })
+    );
+  });
 }
 
 export function* watchNotificationSagas(): Generator {

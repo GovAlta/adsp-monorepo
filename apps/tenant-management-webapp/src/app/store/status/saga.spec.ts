@@ -1,7 +1,7 @@
+import axios from 'axios';
 import { expectSaga } from 'redux-saga-test-plan';
-import { fetchStatusMetrics } from './sagas';
-import { fetchStatusMetricsApi } from './api';
 import { FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION, FETCH_STATUS_METRICS_SUCCESS_ACTION } from './actions';
+import { fetchStatusMetrics } from './sagas';
 
 const storeState = {
   config: {
@@ -52,8 +52,8 @@ it('Can run fetch metrics', () => {
     .withState(storeState)
     .provide({
       call(effect, next) {
-        if (effect.fn === fetchStatusMetricsApi) {
-          return mockMetrics;
+        if (effect.fn === axios.get) {
+          return { data: mockMetrics };
         }
         return next();
       },

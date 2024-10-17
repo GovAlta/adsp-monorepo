@@ -11,7 +11,7 @@ describe('AddressInputs', () => {
     city: 'Edmonton',
     province: 'BC',
     postalCode: 'T5T 1V4',
-    country: 'CAN',
+    country: 'CA',
   };
   afterEach(() => {
     jest.clearAllMocks();
@@ -95,7 +95,7 @@ describe('AddressInputs', () => {
     const provinceInput = component.getByTestId('address-form-province');
     expect(provinceInput).toBeTruthy();
   });
-  it('renders default country as CAN ', () => {
+  it('renders default country as Canada ', () => {
     const component = render(
       <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={true} />
     );

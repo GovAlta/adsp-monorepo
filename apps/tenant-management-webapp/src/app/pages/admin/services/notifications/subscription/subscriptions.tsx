@@ -35,8 +35,6 @@ export const Subscriptions: FunctionComponent = () => {
       dispatch(GetAllTypeSubscriptions({}));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  //eslint-disable-next-line
-  useEffect(() => {}, [loadingState]);
 
   const searchFn = ({ email, name, sms }: SubscriberSearchCriteria) => {
     dispatch(GetAllTypeSubscriptions({ email, name, sms }));

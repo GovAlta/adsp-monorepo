@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import addAuthTokenInterceptor from './authTokenInterceptor';
-import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks, ApplicationWebhooks } from './models';
+import { EndpointStatusEntry, ApplicationStatus, Webhooks, ApplicationWebhooks } from './models';
 
 export class StatusApi {
   private http: AxiosInstance;
@@ -49,12 +49,6 @@ export class StatusApi {
     return res.data;
   }
 }
-
-// Paul: 2023-Jan-03, we start to use simple function for Apis.
-export const fetchStatusMetricsApi = async (url: string, token: string): Promise<Record<string, MetricResponse>> => {
-  const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-  return res.data;
-};
 
 export class WebhookApi {
   private http: AxiosInstance;
