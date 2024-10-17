@@ -531,7 +531,7 @@ When('the user clicks {string} button in Add topic modal', function (button) {
   switch (button.toLowerCase()) {
     case 'save':
       commentObj.addTopicModalSaveBtn().shadow().find('button').click({ force: true });
-      cy.wait(2000);
+      cy.wait(4000);
       break;
     case 'cancel':
       commentObj.addTopicModalCancelBtn().shadow().find('button').click({ force: true });
