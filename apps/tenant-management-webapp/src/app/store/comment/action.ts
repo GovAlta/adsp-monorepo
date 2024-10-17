@@ -1,4 +1,4 @@
-import { CommentTopicTypes, TopicItem, Comment } from './model';
+import { CommentTopicTypes, TopicItem, Comment, CommentMetrics } from './model';
 
 export const FETCH_COMMENT_TOPIC_TYPES_ACTION = 'comment/FETCH_COMMENT_TOPIC_TYPES_ACTION';
 export const FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION = 'comment/FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION';
@@ -27,6 +27,9 @@ export const FETCH_COMMENT_TOPIC_COMMENTS = 'comment/FETCH_COMMENT_TOPIC_COMMENT
 export const FETCH_COMMENT_TOPIC_COMMENTS_SUCCESS = 'comment/FETCH_COMMENT_TOPIC_COMMENTS_SUCCESS';
 export const FETCH_COMMENT_TOPIC_COMMENTS_FAILURE = 'comment/FETCH_COMMENT_TOPIC_COMMENTS_FAILURE';
 export const DELETE_COMMENT = 'comment/DELETE_COMMENT';
+
+export const FETCH_COMMENT_METRICS = 'comment-service/metrics/fetch';
+export const FETCH_COMMENT_METRICS_SUCCEEDED = 'comment-service/metrics/fetch/success';
 
 export interface FetchCommentTopicTypesAction {
   type: typeof FETCH_COMMENT_TOPIC_TYPES_ACTION;
@@ -154,6 +157,15 @@ export interface DeleteCommentSuccessAction {
   payload: DeletePayload;
 }
 
+export interface FetchCommentMetricsAction {
+  type: typeof FETCH_COMMENT_METRICS;
+}
+
+export interface FetchCommentMetricsSucceededAction {
+  type: typeof FETCH_COMMENT_METRICS_SUCCEEDED;
+  payload: CommentMetrics;
+}
+
 export type CommentActionTypes =
   | FetchCommentTopicTypesSuccessAction
   | FetchCommentTopicTypesAction
@@ -172,7 +184,9 @@ export type CommentActionTypes =
   | UpdateCommentSuccessAction
   | FetchCommentSuccessAction
   | DeleteTopicSuccessAction
-  | DeleteCommentSuccessAction;
+  | DeleteCommentSuccessAction
+  | FetchCommentMetricsAction
+  | FetchCommentMetricsSucceededAction;
 
 export const updateCommentTopicType = (
   topicType: CommentTopicTypes,
@@ -302,4 +316,13 @@ export const fetchCommentSuccess = (comment: Comment[], after: string, next: str
 export const deleteCommentSuccess = ({ comment, topicId }): DeleteCommentSuccessAction => ({
   type: DELETE_COMMENT_COMMENTS_SUCCESS,
   payload: { topicId, comment },
+});
+
+export const fetchCommentMetrics = (): FetchCommentMetricsAction => ({
+  type: FETCH_COMMENT_METRICS,
+});
+
+export const fetchCommentMetricsSucceeded = (metrics: CommentMetrics): FetchCommentMetricsSucceededAction => ({
+  type: FETCH_COMMENT_METRICS_SUCCEEDED,
+  payload: metrics,
 });

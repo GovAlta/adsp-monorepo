@@ -1,7 +1,10 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
 import { OverviewLayout } from '@components/Overview';
+import { fetchCommentMetrics } from '@store/comment/action';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { CommentMetrics } from './metrics';
 
 interface CommentOverviewProps {
   setOpenAddTopicTypes: (val: boolean) => void;
@@ -12,6 +15,11 @@ export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOp
     setOpenAddTopicTypes(false);
     navigate('/admin/services/comment');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(fetchCommentMetrics());
+  }, [dispatch]);
 
   const navigate = useNavigate();
   const description =
@@ -31,6 +39,7 @@ export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOp
           Add topic type
         </GoAButton>
       }
+      extra={<CommentMetrics />}
     />
   );
 };

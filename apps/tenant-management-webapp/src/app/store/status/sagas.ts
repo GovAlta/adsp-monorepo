@@ -1,7 +1,13 @@
-import { put, select, call, fork, take } from 'redux-saga/effects';
+import { SagaIterator } from '@redux-saga/core';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
-import { StatusApi, fetchStatusMetricsApi, WebhookApi } from './api';
+import { fetchServiceMetrics } from '@store/common';
+import { ConfigState } from '@store/config/models';
+import { ResetModalState, UpdateLoadingState, UpdateIndicator } from '@store/session/actions';
+import { getAccessToken } from '@store/tenant/sagas';
+import axios from 'axios';
+import { put, select, call, fork } from 'redux-saga/effects';
+import { StatusApi, WebhookApi } from './api';
 import {
   SaveApplicationAction,
   saveApplicationSuccess,
@@ -13,7 +19,6 @@ import {
   fetchServiceStatusAppHealthSuccess,
   fetchServiceStatusAppHealth,
   fetchStatusMetricsSucceeded,
-  FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION,
   FETCH_STATUS_CONFIGURATION,
   UpdateStatusContactInformationAction,
   FetchStatusConfigurationService,
@@ -28,17 +33,8 @@ import {
   SaveWebhookSuccess,
   TestWebhookAction,
 } from './actions';
-import { ResetModalState } from '@store/session/actions';
-import { ConfigState } from '@store/config/models';
-import { UpdateIndicator } from '@store/session/actions';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
-import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks, ApplicationWebhooks } from './models';
-import { SagaIterator } from '@redux-saga/core';
-import moment from 'moment';
-import axios from 'axios';
-import { getAccessToken } from '@store/tenant/sagas';
-
-import { UpdateLoadingState } from '@store/session/actions';
+import { EndpointStatusEntry, ApplicationStatus, Webhooks, ApplicationWebhooks } from './models';
 
 export function* fetchServiceStatusAppHealthEffect(api: StatusApi, application: ApplicationStatus): SagaIterator {
   try {
@@ -312,62 +308,43 @@ interface MetricValue {
 }
 
 export function* fetchStatusMetrics(): SagaIterator {
-  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield call(getAccessToken);
+  const apps = (yield select((state: RootState) => state.serviceStatus.applications)).reduce(
+    (apps, app: ApplicationStatus) => ({ ...apps, [app.appKey]: app }),
+    {} as Record<string, ApplicationStatus>
+  );
 
-  yield take(FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION);
+  yield* fetchServiceMetrics('status-service', function* (metrics) {
+    const unhealthyMetric = 'status-service:application-unhealthy:count';
 
-  if (baseUrl && token) {
-    try {
-      const apps: Record<string, ApplicationStatus> = (yield select(
-        (state: RootState) => state.serviceStatus.applications
-      )).reduce(
-        (apps: Record<string, ApplicationStatus>, app: ApplicationStatus) => ({ ...apps, [app.appKey]: app }),
-        {}
-      );
-      const criteria = JSON.stringify({
-        intervalMax: moment().toISOString(),
-        intervalMin: moment().subtract(7, 'day').toISOString(),
-        metricLike: 'status-service',
-      });
-
-      const unhealthyMetric = 'status-service:application-unhealthy:count';
-      const url = `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`;
-
-      const metrics = (yield call(fetchStatusMetricsApi, url, token)) as Record<string, MetricResponse>;
-
-      const downtimeDurations: MetricValue[] = [];
-      Object.entries(metrics).forEach(([metric, durationMetric]) => {
-        if (metric.endsWith('downtime:duration')) {
-          const appId = metric.split(':')[1];
-          const app = apps[appId]?.name;
-          if (app) {
-            downtimeDurations.push({
-              app,
-              sum: parseInt(durationMetric.values[0]?.sum || '0'),
-              max: parseInt(durationMetric.values[0]?.max || '0'),
-            });
-          }
+    const downtimeDurations: MetricValue[] = [];
+    Object.entries(metrics).forEach(([metric, durationMetric]) => {
+      if (metric.endsWith('downtime:duration')) {
+        const appId = metric.split(':')[1];
+        const app = apps[appId]?.name;
+        if (app) {
+          downtimeDurations.push({
+            app,
+            sum: parseInt(durationMetric.values[0]?.sum || '0'),
+            max: parseInt(durationMetric.values[0]?.max || '0'),
+          });
         }
-      });
+      }
+    });
 
-      const maxDuration = downtimeDurations.reduce((max, duration) => Math.max(duration.max, max), 0);
-      const totalDuration = downtimeDurations.reduce((total, duration) => total + duration.sum, 0);
-      const unhealthyApp = downtimeDurations.sort((a, b) => b.sum - a.sum)[0];
-      const parsedMetrics = {
-        unhealthyCount: parseInt(metrics[unhealthyMetric]?.values[0]?.sum || '0'),
-        maxUnhealthyDuration: maxDuration / 60,
-        totalUnhealthyDuration: totalDuration / 60,
-        leastHealthyApp: unhealthyApp?.sum
-          ? { name: unhealthyApp.app, totalUnhealthyDuration: unhealthyApp.sum / 60 }
-          : null,
-      };
+    const maxDuration = downtimeDurations.reduce((max, duration) => Math.max(duration.max, max), 0);
+    const totalDuration = downtimeDurations.reduce((total, duration) => total + duration.sum, 0);
+    const unhealthyApp = downtimeDurations.sort((a, b) => b.sum - a.sum)[0];
+    const parsedMetrics = {
+      unhealthyCount: parseInt(metrics[unhealthyMetric]?.values[0]?.sum || '0'),
+      maxUnhealthyDuration: maxDuration / 60,
+      totalUnhealthyDuration: totalDuration / 60,
+      leastHealthyApp: unhealthyApp?.sum
+        ? { name: unhealthyApp.app, totalUnhealthyDuration: unhealthyApp.sum / 60 }
+        : null,
+    };
 
-      yield put(fetchStatusMetricsSucceeded(parsedMetrics));
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
-    }
-  }
+    yield put(fetchStatusMetricsSucceeded(parsedMetrics));
+  });
 }
 
 export function* updateStatusContactInformation({ payload }: UpdateStatusContactInformationAction): SagaIterator {

@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateElementIndicator, UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
@@ -49,8 +48,8 @@ import {
   deletePdfFileApi,
   generatePdfApi,
   createPdfJobApi,
-  fetchPdfMetricsApi,
 } from './api';
+import { fetchServiceMetrics } from '@store/common';
 
 export function* fetchPdfTemplates(): SagaIterator {
   yield put(
@@ -375,36 +374,20 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
 }
 
 export function* fetchPdfMetrics(): SagaIterator {
-  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield call(getAccessToken);
-
-  if (baseUrl && token) {
-    try {
-      const criteria = JSON.stringify({
-        intervalMax: moment().toISOString(),
-        intervalMin: moment().subtract(7, 'day').toISOString(),
-        metricLike: 'pdf-service',
-      });
-
-      const url = `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`;
-      const metrics = yield call(fetchPdfMetricsApi, token, url);
-
-      const generatedMetric = 'pdf-service:pdf-generated:count';
-      const failedMetric = 'pdf-service:pdf-generation-failed:count';
-      const durationMetric = 'pdf-service:pdf-generation:duration';
-      yield put(
-        fetchPdfMetricsSucceeded({
-          pdfGenerated: parseInt(metrics[generatedMetric]?.values[0]?.sum || '0'),
-          pdfFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
-          generationDuration: metrics[durationMetric]?.values[0]
-            ? parseInt(metrics[durationMetric]?.values[0].avg)
-            : null,
-        })
-      );
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
-    }
-  }
+  yield* fetchServiceMetrics('pdf-service', function* (metrics) {
+    const generatedMetric = 'pdf-service:pdf-generated:count';
+    const failedMetric = 'pdf-service:pdf-generation-failed:count';
+    const durationMetric = 'pdf-service:pdf-generation:duration';
+    yield put(
+      fetchPdfMetricsSucceeded({
+        pdfGenerated: parseInt(metrics[generatedMetric]?.values[0]?.sum || '0'),
+        pdfFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
+        generationDuration: metrics[durationMetric]?.values[0]
+          ? parseInt(metrics[durationMetric]?.values[0].avg)
+          : null,
+      })
+    );
+  });
 }
 
 export function* watchPdfSagas(): Generator {
