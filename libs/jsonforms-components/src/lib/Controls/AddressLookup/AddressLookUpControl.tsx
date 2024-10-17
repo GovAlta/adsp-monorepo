@@ -51,18 +51,24 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   const handleInputChange = (field: string, value: string) => {
+    let newAddress;
     if (field === 'postalCode') {
       const validatePc = validatePostalCode(value);
 
-      if (!validatePc && value.length >= 5) {
+      if (!validatePc && value.length >= 4) {
         const postalCodeErrorMessage = (schema as { errorMessage?: { properties?: { postalCode?: string } } })
           .errorMessage?.properties?.postalCode;
         setPostalCodeErrorMsg(postalCodeErrorMessage ?? '');
       } else {
         setPostalCodeErrorMsg('');
       }
+      if (value.length >= 4 && value.indexOf(' ') === -1) {
+        value = value.slice(0, 3) + ' ' + value.slice(3);
+      }
+      newAddress = { ...address, [field]: value.toUpperCase() };
+    } else {
+      newAddress = { ...address, [field]: value };
     }
-    const newAddress = { ...address, [field]: value };
 
     setAddress(newAddress);
     updateFormData(newAddress);
