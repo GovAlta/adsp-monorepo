@@ -15,7 +15,7 @@ const cucumber = require('cypress-cucumber-preprocessor').default;
 const browserify = require('@cypress/browserify-preprocessor');
 const resolve = require('resolve');
 const clipboardy = require('clipboardy');
-import { createHtmlReport } from 'axe-html-reporter';
+const { createHtmlReport } = require('axe-html-reporter');
 
 module.exports = (on, config) => {
   const options = {
