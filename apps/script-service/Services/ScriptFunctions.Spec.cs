@@ -12,6 +12,7 @@ using Adsp.Sdk;
 using Adsp.Platform.ScriptService.Services.Platform;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using System.Xml.Serialization;
 
 namespace Adsp.Platform.ScriptService.Services;
 
@@ -33,7 +34,6 @@ public class ScriptFunctionsTests
   }
 
   // [Fact]
-  // [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1303:Do not pass literals as localized parameters", Justification = "Console.WriteLine used for debugging in unit test")]
   // public void canXmlSerializeFormSubmissionResult()
   // {
   //   var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
@@ -47,7 +47,7 @@ public class ScriptFunctionsTests
 
   //   var serializer = new XmlSerializer(submission.GetType());
   //   using var writer = new StringWriter();
-  //   serializer.Serialize(writer, submission.ToLuaTable());
+  //   serializer.Serialize(writer, submission);
   //   var actual = writer.ToString();
 
   //   Assert.NotEmpty(actual);

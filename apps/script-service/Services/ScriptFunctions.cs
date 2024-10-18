@@ -5,8 +5,6 @@ using Adsp.Sdk.Events;
 using Newtonsoft.Json;
 using NLua;
 using RestSharp;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions : IScriptFunctions

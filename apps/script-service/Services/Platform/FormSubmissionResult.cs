@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Xml.Serialization;
 using Newtonsoft.Json;
 
 namespace Adsp.Platform.ScriptService.Services.Platform;
@@ -10,8 +11,10 @@ public sealed class FormSubmissionResult
   public string? FormDefinitionId { get; set; }
   public string? FormId { get; set; }
   [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
+  [XmlElement("formData")]
   public IDictionary<string, object?>? Data { get; set; } = new Dictionary<string, object?>();
   [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
+  [XmlElement("formFiles")]
   public IDictionary<string, object?>? Files { get; set; } = new Dictionary<string, object?>();
   public User? CreatedBy { get; set; }
   public User? UpdatedBy { get; set; }
