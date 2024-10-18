@@ -2,6 +2,7 @@ using Adsp.Platform.ScriptService.Services.Platform;
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using Adsp.Sdk.Events;
+using Newtonsoft.Json;
 using NLua;
 using RestSharp;
 using System.Text.Json;
@@ -88,7 +89,7 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
-  public virtual FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
+  public virtual IDictionary<string, object?>? GetFormSubmission(string formId, string submissionId)
   {
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
@@ -99,7 +100,10 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddHeader("Authorization", $"Bearer {token}");
 
     var submission = _client.GetAsync<string>(request).Result;
-    return submission != null ? JsonSerializer.Deserialize<FormSubmissionResult>(submission) : null;
+    var result = submission != null ? JsonConvert.DeserializeObject<IDictionary<string, object?>>(submission) : null;
+    var fix = result != null ? DictionaryToJson.Fix(result) : null;
+
+    return fix;
   }
 
   public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
