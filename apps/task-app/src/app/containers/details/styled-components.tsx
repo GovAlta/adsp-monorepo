@@ -39,7 +39,7 @@ export const ReviewContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items:center;
-  padding-top: 24px !important;
+  padding-top: var(--goa-space-l)!important;
   height: 100%;
   width:100%;
 `;
