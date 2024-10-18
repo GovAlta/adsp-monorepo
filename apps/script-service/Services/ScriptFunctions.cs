@@ -4,6 +4,8 @@ using Adsp.Sdk;
 using Adsp.Sdk.Events;
 using NLua;
 using RestSharp;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions : IScriptFunctions
@@ -96,8 +98,8 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var result = _client.GetAsync<FormSubmissionResult>(request).Result;
-    return result;
+    var submission = _client.GetAsync<string>(request).Result;
+    return submission != null ? JsonSerializer.Deserialize<FormSubmissionResult>(submission) : null;
   }
 
   public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)

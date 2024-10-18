@@ -66,7 +66,8 @@ public class ScriptFunctionsTests
     var ServiceDirectory = TestUtil.GetServiceUrl(FormServiceId);
     var StubFunctions = new StubScriptFunctions(Tenant, ServiceDirectory, TestUtil.GetMockToken());
 
-    var Expected = StubFunctions.GetFormSubmission(FormId, SubmissionId);
+    var submission = StubFunctions.GetFormSubmission(FormId, SubmissionId);
+    var Expected = JsonSerializer.Serialize(submission);
     using var RestClient = TestUtil.GetRestClient<FormSubmissionResult>(FormServiceId, endpoint, Expected);
     var ScriptFunctions = new ScriptFunctions(FormServiceId, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), RestClient);
     var Actual = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);

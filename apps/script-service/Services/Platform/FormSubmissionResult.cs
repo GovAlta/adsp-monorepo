@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using System.Xml.Serialization;
 
 namespace Adsp.Platform.ScriptService.Services.Platform;
 
@@ -17,13 +16,11 @@ public sealed class FormSubmissionResult
   public string? FormId { get; set; }
 
   [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
-  [XmlElement("formData")]
   [JsonPropertyName("formData")]
   [JsonConverter(typeof(DictionaryJsonConverter))]
   public SerializableDictionary<string, object?>? Data { get; set; } = new SerializableDictionary<string, object?>();
 
   [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
-  [XmlElement("formFiles")]
   [JsonPropertyName("formFiles")]
   [JsonConverter(typeof(DictionaryJsonConverter))]
   public SerializableDictionary<string, object?>? Files { get; set; } = new SerializableDictionary<string, object?>();
