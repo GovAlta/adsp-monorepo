@@ -63,3 +63,20 @@ export const validatePostalCode = (values: string): boolean => {
   const postalCodeRegex = /^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/;
   return postalCodeRegex.test(values);
 };
+
+export const handlePostalCodeValidation = (
+  validatePc: boolean,
+  message: string,
+  value: string,
+  errors: Record<string, string>
+) => {
+  const newErrors = { ...errors };
+
+  if (!validatePc && value.length >= 4) {
+    newErrors['postalCode'] = message;
+  } else {
+    delete newErrors['postalCode'];
+  }
+
+  return newErrors;
+};

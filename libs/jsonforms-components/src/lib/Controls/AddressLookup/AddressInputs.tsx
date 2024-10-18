@@ -7,14 +7,17 @@ interface AddressInputsProps {
   address: Address;
   handleInputChange: (field: string, value: string) => void;
   isAlbertaAddress?: boolean;
-  postalCodeErrorMsg?: string;
+  // eslint-disable-next-line
+  errors?: any;
+  handleOnBlur: (field: string) => void;
 }
 
 export const AddressInputs: React.FC<AddressInputsProps> = ({
   address,
   handleInputChange,
   isAlbertaAddress,
-  postalCodeErrorMsg,
+  errors,
+  handleOnBlur,
 }: AddressInputsProps): JSX.Element => {
   const provinces = [
     { value: 'AB', label: 'Alberta' },
@@ -47,17 +50,18 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
       </GoAFormItem>
       <br />
       <GoAGrid minChildWidth="0ch" gap="s">
-        <GoAFormItem label="City">
+        <GoAFormItem label="City" error={errors?.['municipality'] ?? ''}>
           <GoAInput
             name="city"
             testId="address-form-city"
             ariaLabel={'address-form-city'}
             value={address?.city || ''}
             onChange={(name, value) => handleInputChange(name, value)}
+            onBlur={(name, value) => handleOnBlur('municipality')}
             width="100%"
           />
         </GoAFormItem>
-        <GoAFormItem label="Postal Code" error={postalCodeErrorMsg}>
+        <GoAFormItem label="Postal Code" error={errors?.['postalCode'] ?? ''}>
           <GoAInput
             name="postalCode"
             testId="address-form-postal-code"
@@ -65,6 +69,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             placeholder="A0A 0A0"
             value={address?.postalCode || ''}
             onChange={(name, value) => handleInputChange(name, value)}
+            onBlur={(name, value) => handleOnBlur(name)}
             width="100%"
             maxLength={7}
           />

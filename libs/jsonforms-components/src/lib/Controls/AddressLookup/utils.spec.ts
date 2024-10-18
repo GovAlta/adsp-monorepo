@@ -4,6 +4,7 @@ import {
   mapSuggestionToAddress,
   filterSuggestionsWithoutAddressCount,
   validatePostalCode,
+  handlePostalCodeValidation,
 } from './utils';
 import axios from 'axios';
 import { Suggestion, Address } from './types';
@@ -255,6 +256,68 @@ describe('filterSuggestionsWithoutAddressCount', () => {
 
     it('returns false for empty string', () => {
       expect(validatePostalCode('')).toBe(false);
+    });
+  });
+
+  describe('handlePostalCodeValidation', () => {
+    it('should set postal code error when postal code is invalid and value length >= 4', () => {
+      const validatePc = false;
+      const message = 'Invalid postal code';
+      const value = '1234';
+      const errors = {};
+
+      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+
+      expect(updatedErrors).toEqual({ postalCode: 'Invalid postal code' });
+    });
+
+    it('should not set postal code error when value length is less than 4', () => {
+      const validatePc = false;
+      const message = 'Invalid postal code';
+      const value = '123';
+      const errors = {};
+
+      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+
+      expect(updatedErrors).toEqual({});
+    });
+
+    it('should remove postal code error when postal code is valid', () => {
+      const validatePc = true;
+      const message = 'Invalid postal code';
+      const value = '1234';
+      const errors = { postalCode: 'Invalid postal code' };
+
+      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+
+      expect(updatedErrors).toEqual({});
+    });
+
+    it('should not modify other errors when setting postal code error', () => {
+      const validatePc = false;
+      const message = 'Invalid postal code';
+      const value = '1234';
+      const errors = { city: 'City is required' };
+
+      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+
+      expect(updatedErrors).toEqual({
+        city: 'City is required',
+        postalCode: 'Invalid postal code',
+      });
+    });
+
+    it('should not modify other errors when removing postal code error', () => {
+      const validatePc = true;
+      const message = 'Invalid postal code';
+      const value = '1234';
+      const errors = { city: 'City is required', postalCode: 'Invalid postal code' };
+
+      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+
+      expect(updatedErrors).toEqual({
+        city: 'City is required',
+      });
     });
   });
 });
