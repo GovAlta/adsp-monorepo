@@ -52,20 +52,20 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
-  public override FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
+  public override IDictionary<string, object?>? GetFormSubmission(string formId, string submissionId)
   {
     var formSubmission = new FormSubmissionResult
     {
       Id = submissionId,
       FormId = formId,
 
-      Data = new SerializableDictionary<string, object?>
+      Data = new Dictionary<string, object?>
             {
                 { "firstName", "Bob" },
                 { "lastName", "Bing" },
                 { "email", "Bob@bob.com" }
             },
-      Files = new SerializableDictionary<string, object?>
+      Files = new Dictionary<string, object?>
             {
                 { "resume", "urn:ads:platform:file-service:v1:/files/resume" },
                 { "cover", "urn:ads:platform:file-service:v1:/files/cover" }
@@ -86,7 +86,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
       }
 
     };
-    return formSubmission;
+    return formSubmission.ToDictionary();
   }
 
 }
