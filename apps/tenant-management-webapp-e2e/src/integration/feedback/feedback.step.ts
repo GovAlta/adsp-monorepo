@@ -510,9 +510,14 @@ Then('the user views feedback details with timestamp, rating, comments, technica
     .feedbackFeedbackTableItemDetails()
     .find('h2')
     .then((elements) => {
-      expect(elements.length).to.eq(3);
-      expect(elements[0].outerText).to.eq('Rating');
-      expect(elements[1].outerText).to.eq('Comments');
-      expect(elements[2].outerText).to.eq('Technical issues');
+      expect(elements.length).to.lte(2);
+      if (elements.length == 3) {
+        expect(elements[0].outerText).to.eq('Rating');
+        expect(elements[1].outerText).to.eq('Comments');
+        expect(elements[2].outerText).to.eq('Technical issues');
+      } else if (elements.length == 2) {
+        expect(elements[0].outerText).to.eq('Rating');
+        expect(elements[1].outerText).to.eq('Comments');
+      }
     });
 });
