@@ -45,10 +45,6 @@ runs:
         install-command: npm ci
         command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headed --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.config.js"
     - if: ${{ always() }}
-      shell: bash
-      run: |
-        node apps/${{ inputs.app }}-e2e/src/support/multiple-cucumber-html-reporter.js
-    - if: ${{ always() }}
       name: Upload Cypress Results
       uses: actions/upload-artifact@v4
       with:
