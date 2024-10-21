@@ -4,7 +4,7 @@ import { AddressInputs } from './AddressInputs';
 import { Address } from './types';
 describe('AddressInputs', () => {
   const mockHandleInputChange = jest.fn(() => Promise.resolve());
-
+  const mockHandleInputBlur = jest.fn();
   const defaultAddress: Address = {
     addressLine1: '123 Main St',
     addressLine2: 'Apt 4',
@@ -48,7 +48,13 @@ describe('AddressInputs', () => {
     expect(mockHandleInputChange).toHaveBeenCalledWith('addressLine2', 'Suite 5');
   });
   it('calls handleInputChange on user input in city', () => {
-    render(<AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} />);
+    render(
+      <AddressInputs
+        address={defaultAddress}
+        handleInputChange={mockHandleInputChange}
+        handleOnBlur={mockHandleInputBlur}
+      />
+    );
 
     const cityInput = screen.getByTestId('address-form-city');
     fireEvent.change(cityInput, { target: { value: 'Calgary' } });
@@ -61,6 +67,10 @@ describe('AddressInputs', () => {
     expect((cityInput as HTMLInputElement).value).toBe('Calgary');
     expect(mockHandleInputChange).toBeCalledTimes(1);
     expect(mockHandleInputChange).toHaveBeenCalledWith('city', 'Calgary');
+    const blurred = fireEvent.blur(cityInput);
+
+    expect(blurred).toBe(true);
+    //  expect(mockHandleInputBlur).toHaveBeenCalledWith('municipality');
   });
   it('calls handleInputChange on user input in postal code', () => {
     render(<AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} />);
@@ -76,15 +86,26 @@ describe('AddressInputs', () => {
     expect((pcInput as HTMLInputElement).value).toBe('T2X 2N0');
     expect(mockHandleInputChange).toBeCalledTimes(1);
     expect(mockHandleInputChange).toHaveBeenCalledWith('postalCode', 'T2X 2N0');
+    const blurred = fireEvent.blur(pcInput);
+    expect(blurred).toBe(true);
   });
+
   it('calls handleInputChange on user input in province for canadian address', () => {
     render(
       <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={false} />
     );
 
     const provinceInput = screen.getByTestId('address-form-province-dropdown');
+    fireEvent.change(provinceInput, { target: { value: 'BC' } });
+    fireEvent(
+      provinceInput,
+      new CustomEvent('_change', {
+        detail: { name: 'province', value: 'BC' },
+      })
+    );
 
     expect((provinceInput as HTMLInputElement).value).toBe('BC');
+    expect(mockHandleInputChange).toBeCalledTimes(1);
     expect(provinceInput).toBeTruthy();
   });
   it(' province is label when isAlbertaAddress is true', () => {

@@ -22,6 +22,7 @@ exports[`AddressInputs matches snapshot 1`] = `
     minchildwidth="0ch"
   >
     <goa-form-item
+      error=""
       label="City"
     >
       <goa-input
@@ -35,6 +36,7 @@ exports[`AddressInputs matches snapshot 1`] = `
       />
     </goa-form-item>
     <goa-form-item
+      error=""
       label="Postal Code"
     >
       <goa-input

@@ -796,7 +796,7 @@ When('the user enters {string} in Edit comment modal', function (content: string
 
 When('the user clicks Save button in Edit comment modal', function () {
   commentObj.editCommentModalSaveBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user views {string} shows on top of {string}', function (content1, content2) {

@@ -98,7 +98,7 @@ Then('the keycloak admin link can open tenant admin portal in a new tab', functi
 });
 
 Then('the user views the number of users in its tenant realm', function () {
-  cy.wait(4000); //Wait for stats to show up
+  tenantAdminObj.userCount().contains('-', { timeout: 30000 }).should('not.exist'); // Wait for - to disappear for user count
   // Verify user count is present
   tenantAdminObj
     .userCount()
@@ -213,7 +213,7 @@ Then('the number of users from admin page should equal to the number of users fr
 });
 
 Then('the user views the number of users in top 5 roles in its tenant realm', function () {
-  cy.wait(4000); // Wait for the stats to display
+  tenantAdminObj.userCount().contains('-', { timeout: 30000 }).should('not.exist'); // Wait for - to disappear for user count
   const userNum = new Array(5);
   // Verify roles table headers
   tenantAdminObj
