@@ -1,12 +1,11 @@
 /* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-var-requires */
 const path = require('path');
-const stepDefinitionsPath = path.resolve(process.cwd(), './src/integration');
 const outputFolder = path.resolve(process.cwd(), '../../dist/cypress/apps/subscriber-app-e2e/cucumber-json');
 
 module.exports = {
   nonGlobalStepDefinitions: true,
-  stepDefinitions: stepDefinitionsPath,
+  stepDefinitions: [path.resolve(process.cwd(), './src/integration/[filepath]/*.step.ts')],
   cucumberJson: {
     generate: true,
     outputFolder: outputFolder,

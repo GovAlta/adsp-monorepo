@@ -1,4 +1,4 @@
-import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import common from './common.page';
 import commonlib from './common-library';
 import { injectAxe } from '../../support/app.po';
@@ -14,12 +14,12 @@ When('the user enters credentials and clicks login button', function () {
   cy.wait(8000); // Wait all the redirects to settle down
 });
 
-When('the user enters {string} and {string}, and clicks login button', function (username, password) {
+When('the user enters {string} and {string}, and clicks login button', function (username: string, password: string) {
   let user = '';
   let pwd = '';
   // Get user name
   const envUsername = username.match(/(?<={).+(?=})/g);
-  if (envUsername == '') {
+  if (!envUsername) {
     user = username;
   } else {
     user = Cypress.env(String(envUsername));
@@ -27,7 +27,7 @@ When('the user enters {string} and {string}, and clicks login button', function 
 
   // Get password
   const envPassword = password.match(/(?<={).+(?=})/g);
-  if (envPassword == '') {
+  if (!envPassword) {
     pwd = password;
   } else {
     pwd = Cypress.env(String(envPassword));
@@ -215,7 +215,7 @@ When('the user clicks Cancel button in delete confirmation modal', function () {
   cy.wait(4000); // Wait for the record to be removed from the page
 });
 
-When('the user waits {string} seconds', function (seconds) {
+When('the user waits {string} seconds', function (seconds: number) {
   expect(isNaN(seconds)).to.be.false; // Verify the pass in seconds is a number
   expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hang the test execution
   cy.wait(Number(seconds) * 1000); // Wait N seconds

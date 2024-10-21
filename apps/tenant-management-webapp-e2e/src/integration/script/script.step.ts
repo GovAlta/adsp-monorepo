@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import commonlib from '../common/common-library';
 import ScriptPage from './script.page';
 
@@ -23,7 +23,7 @@ Then('the user views Add script modal', function () {
   scriptObj.addScriptModalTitle().invoke('text').should('eq', 'Add script');
 });
 
-When('the user enters {string} in name field in script modal', function (name) {
+When('the user enters {string} in name field in script modal', function (name: string) {
   scriptObj.addScriptModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
 });
 
@@ -38,7 +38,7 @@ Then('the user views the error message of {string} on namespace in script modal'
 
 When(
   'the user enters {string}, {string}, {string}, {string} in Add script modal',
-  function (name, desc, useServiceAcct, role) {
+  function (name: string, desc: string, useServiceAcct, role: string) {
     cy.viewport(1920, 1080);
     scriptObj.addScriptModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
     scriptObj.addScriptModalDescriptionField().shadow().find('textarea').type(desc, { force: true });
@@ -158,7 +158,7 @@ function findScript(name, desc) {
   });
 }
 
-When('the user clicks {string} button for the script of {string}, {string}', function (button, name, desc) {
+When('the user clicks {string} button for the script of {string}, {string}', function (button: string, name, desc) {
   findScript(name, desc).then((rowNumber) => {
     expect(rowNumber).to.be.greaterThan(0, 'Script of ' + name + ', ' + desc + ' has row #' + rowNumber);
     cy.wait(1000); // Wait for buttons to show up
@@ -180,12 +180,15 @@ Then('the user views Edit script modal', function () {
   scriptObj.editScriptModal().should('be.visible');
 });
 
-When('the user enters {string} as name {string} as description in Edit script modal', function (name, description) {
-  scriptObj.editScriptModalNameField().shadow().find('input').clear().type(name, { delay: 200, force: true });
-  scriptObj.editScriptModalDescriptionField().shadow().find('textarea').clear().type(description, { force: true });
-});
+When(
+  'the user enters {string} as name {string} as description in Edit script modal',
+  function (name: string, description: string) {
+    scriptObj.editScriptModalNameField().shadow().find('input').clear().type(name, { delay: 200, force: true });
+    scriptObj.editScriptModalDescriptionField().shadow().find('textarea').clear().type(description, { force: true });
+  }
+);
 
-When('the user enters {string} as lua script', function (script) {
+When('the user enters {string} as lua script', function (script: string) {
   scriptObj
     .editScriptModalLuaScriptEditor()
     .click({ force: true })
@@ -213,7 +216,7 @@ When('the user selects {string} tab in script editor', function (tabName) {
     });
 });
 
-When('the user enters {string} for roles in script editor', function (role) {
+When('the user enters {string} for roles in script editor', function (role: string) {
   // Unselect all existing roles
   //Looks like checkboxes can't handle fast clicking to uncheck multiple checkboxes and seems only the last checked checkboxes are unchecked.
   //Didn't find a way to add a delay between clicks. Use 3 loops to make sure missed checked checkboxes are unchecked.
