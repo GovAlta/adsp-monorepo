@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import commonlib from '../common/common-library';
 import CalendarPage from './calendar.page';
 
@@ -41,7 +41,7 @@ Then('the user views Calendar tab table header on calendars page', function () {
   calendarObj.calendarTableHeader().should('be.visible');
 });
 
-When('the user enters {string} in name field in calendar modal', function (name) {
+When('the user enters {string} in name field in calendar modal', function (name: string) {
   calendarObj.addCalendarModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
 });
 
@@ -56,7 +56,7 @@ Then('the user views the error message of {string} on namespace in calendar moda
 
 When(
   'the user enters {string}, {string}, {string}, {string} in Add calendar modal',
-  function (name, desc, readRole, modifyRole) {
+  function (name: string, desc: string, readRole: string, modifyRole: string) {
     cy.viewport(1920, 1080);
     calendarObj.addCalendarModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
     calendarObj.addCalendarModalDescriptionField().shadow().find('textarea').clear().type(desc, { force: true });
@@ -197,7 +197,7 @@ function findCalendar(name, desc) {
   });
 }
 
-When('the user clicks {string} button for the calendar of {string}, {string}', function (button, name, desc) {
+When('the user clicks {string} button for the calendar of {string}, {string}', function (button: string, name, desc) {
   findCalendar(name, desc).then((rowNumber) => {
     expect(rowNumber).to.be.greaterThan(0, 'Script of ' + name + ', ' + desc + ' has row #' + rowNumber);
     cy.wait(1000); // Wait for buttons to show up
@@ -221,7 +221,7 @@ Then('the user views Edit calendar modal', function () {
 
 When(
   'the user enters {string} as description and selects {string}, {string} as roles in Edit calendar modal',
-  function (description, readRole, modifyRole) {
+  function (description: string, readRole: string, modifyRole: string) {
     calendarObj
       .editCalendarModalDescriptionField()
       .shadow()
@@ -335,7 +335,7 @@ When('the user clicks Save button in Edit calendar modal', function () {
   cy.wait(2000); // Wait for the save operation
 });
 
-When('the user selects {string} in Select a calendar on Events page', function (calendarName) {
+When('the user selects {string} in Select a calendar on Events page', function (calendarName: string) {
   calendarObj.eventsSelectACalendarDropdown().shadow().find('input').click({ force: true });
   calendarObj.eventsSelectACalendarDropdown().shadow().find('li').contains(calendarName).click({ force: true });
   cy.wait(2000);
@@ -353,7 +353,7 @@ Then('the user views Edit calendar event modal', function () {
   calendarObj.eventsCalendarEventModalHeading().invoke('text').should('eq', 'Edit calendar event');
 });
 
-When('the user enters {string} in name field in Add calendar event modal', function (name) {
+When('the user enters {string} in name field in Add calendar event modal', function (name: string) {
   calendarObj
     .eventsCalendarEventModalNameTextField()
     .shadow()
@@ -373,7 +373,16 @@ Then('the user views the error message of {string} on name in Add calendar event
 
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string} in calendar event modal',
-  function (name, desc, isPublic, isAllDay, startDate, startTime, endDate, endTime) {
+  function (
+    name: string,
+    desc: string,
+    isPublic: string,
+    isAllDay: string,
+    startDate: string,
+    startTime: string,
+    endDate: string,
+    endTime: string
+  ) {
     calendarObj
       .eventsCalendarEventModalNameTextField()
       .shadow()
@@ -530,7 +539,7 @@ When('the user clicks Cancel button in calendar event modal', function () {
 
 Then(
   'the user {string} the event of {string}, {string}, {string}',
-  function (viewOrNot, name, startDateTime, endDateTime) {
+  function (viewOrNot, name, startDateTime: string, endDateTime: string) {
     const todayDate = new Date().toISOString().slice(0, 10);
     const startDateTimeWithoutToday = startDateTime.replace('Today', todayDate);
     const endDateTimeWithoutToday = endDateTime.replace('Today', todayDate);
@@ -625,7 +634,7 @@ function findEvent(eventName, startDateTime, endDateTime) {
 
 When(
   'the user clicks {string} icon of {string}, {string}, {string}',
-  function (iconName, name, startDateTime, endDateTime) {
+  function (iconName, name, startDateTime: string, endDateTime: string) {
     const todayDate = new Date().toISOString().slice(0, 10);
     const startDateTimeWithoutToday = startDateTime.replace('Today', todayDate);
     const endDateTimeWithoutToday = endDateTime.replace('Today', todayDate);

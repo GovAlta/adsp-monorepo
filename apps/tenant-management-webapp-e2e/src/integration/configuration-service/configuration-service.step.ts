@@ -1,4 +1,4 @@
-import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import ConfigurationServicePage from './configuration-service.page';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
@@ -75,7 +75,7 @@ Then('the user views Add configuration definition modal', function () {
   configurationObj.configurationDefinitionModalTitle().invoke('text').should('eq', 'Add definition');
 });
 
-When('the user enters {string} in namespace field in configuration definition modal', function (namespace) {
+When('the user enters {string} in namespace field in configuration definition modal', function (namespace: string) {
   configurationObj
     .addConfigurationDefinitionModalNamespaceField()
     .shadow()
@@ -84,7 +84,7 @@ When('the user enters {string} in namespace field in configuration definition mo
     .type(namespace, { delay: 50, force: true });
 });
 
-When('the user enters {string} in name field in configuration definition modal', function (name) {
+When('the user enters {string} in name field in configuration definition modal', function (name: string) {
   configurationObj
     .addConfigurationDefinitionModalNameField()
     .shadow()
@@ -116,7 +116,7 @@ Then('the user views the error message of {string} on name in configuration defi
 
 When(
   'the user enters {string} in namespace and {string} in name, {string} in description in configuration definition modal',
-  function (namespace, name, desc) {
+  function (namespace: string, name: string, desc: string) {
     configurationObj
       .addConfigurationDefinitionModalNamespaceField()
       .shadow()
@@ -166,7 +166,7 @@ Then(
 
 When(
   'the user clicks {string} button for the configuration definition of {string}, {string} under {string}',
-  function (buttonName, name, desc, namespace) {
+  function (buttonName: string, name, desc, namespace) {
     switch (buttonName.toLowerCase()) {
       case 'edit':
         configurationObj
@@ -216,7 +216,7 @@ Then('the user views disabled namespace and name fields in configuration definit
   configurationObj.addConfigurationDefinitionModalNameField().shadow().find('input').should('be.disabled');
 });
 
-When('the user enters {string} in description in configuration definition modal', function (desc) {
+When('the user enters {string} in description in configuration definition modal', function (desc: string) {
   configurationObj
     .addConfigurationDefinitionModalDescField()
     .shadow()
@@ -226,7 +226,7 @@ When('the user enters {string} in description in configuration definition modal'
 });
 
 //Asterisk inside payload will be replaced to a random number to introduce some randomness to the test data
-When('the user enters {string} in payload schema in configuration definition modal', function (payload) {
+When('the user enters {string} in payload schema in configuration definition modal', function (payload: string) {
   cy.wait(1000); // Wait for the schema field to be editable
   // Replace * inside the payload to a random number
   const payloadWithoutAsterisk = payload.replace(/\*/g, randomNumber.toString()); // replace * to a random number
@@ -305,7 +305,7 @@ Given('a tenant admin user is on configuration revisions page', function () {
   cy.wait(3000);
 });
 
-When('the user selects {string} from select definition dropdown', function (definition) {
+When('the user selects {string} from select definition dropdown', function (definition: string) {
   configurationObj.selectDefinitionDropdown().shadow().find('input').click({ force: true });
   configurationObj.selectDefinitionDropdown().shadow().find('li').contains(definition).click({ force: true });
   cy.wait(1000);
@@ -458,7 +458,7 @@ When('the user clicks Save button in Edit revision modal', function () {
 });
 
 //Asterisk inside payload will be replaced to a random number to introduce some randomness to the test data
-Then('the user views {string} for the latest revision', function (jsonText) {
+Then('the user views {string} for the latest revision', function (jsonText: string) {
   // Replace * inside the json text to a random number
   const jsonTextWithoutAsterisk = jsonText.replace(/\*/g, randomNumber.toString()); // replace * to a random number
 
@@ -562,7 +562,7 @@ Then('the user views more than ten revision records', function () {
   configurationObj.revisionTableRevisionRows().should('have.length.above', 10);
 });
 
-Then('the user views {string} in payload schema in configuration definition modal', function (schema) {
+Then('the user views {string} in payload schema in configuration definition modal', function (schema: string) {
   let jsonSchemaInEdit = '';
   configurationObj
     .revisionTableEditRevisionModalPayloadEditorRows()

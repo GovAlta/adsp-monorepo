@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import value from './value.page';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
@@ -48,7 +48,7 @@ When('the user clicks Add definition button on value definitions page', function
 
 Then(
   'the user enters {string}, {string}, {string}, {string} in value definition modal',
-  function (namespace, name, desc, schema) {
+  function (namespace: string, name: string, desc: string, schema: string) {
     // cy.viewport(1920, 1080);
     if (namespace !== 'N/A') {
       valueObj
@@ -143,7 +143,7 @@ Then('the user views a validation error of duplicate value name', function () {
 
 When(
   'the user clicks {string} button of the value definition of {string}, {string}, {string}',
-  function (buttonName, namespace, name, desc) {
+  function (buttonName: string, namespace, name, desc) {
     switch (buttonName.toLowerCase()) {
       case 'edit':
         valueObj
@@ -202,7 +202,7 @@ Then(
 
 Then(
   'the user {string} {string} button of the core value definition of {string}, {string}, {string}',
-  function (viewOrNot, buttonName, namespace, name, desc) {
+  function (viewOrNot, buttonName: string, namespace, name, desc) {
     switch (buttonName.toLowerCase()) {
       case 'edit':
         switch (viewOrNot) {

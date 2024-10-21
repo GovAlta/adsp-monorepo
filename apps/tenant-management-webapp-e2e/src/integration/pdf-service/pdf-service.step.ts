@@ -1,4 +1,4 @@
-import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import PDFServicePage from './pdf-service.page';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
@@ -40,16 +40,24 @@ Then('the user views Add template modal', function () {
   pdfServiceObj.pdfAddTemplateModalHeading().invoke('text').should('eq', 'Add template');
 });
 
-When('the user enters {string} as name, {string} as description in pdf template modal', function (name, description) {
-  pdfServiceObj.pdfAddTemplateModalName().shadow().find('.input--goa').clear().type(name, { delay: 100, force: true });
-  pdfServiceObj
-    .pdfAddTemplateModalDescription()
-    .shadow()
-    .find('textarea')
-    .invoke('removeAttr', 'disabled')
-    .clear()
-    .type(description, { delay: 200, force: true });
-});
+When(
+  'the user enters {string} as name, {string} as description in pdf template modal',
+  function (name: string, description: string) {
+    pdfServiceObj
+      .pdfAddTemplateModalName()
+      .shadow()
+      .find('.input--goa')
+      .clear()
+      .type(name, { delay: 100, force: true });
+    pdfServiceObj
+      .pdfAddTemplateModalDescription()
+      .shadow()
+      .find('textarea')
+      .invoke('removeAttr', 'disabled')
+      .clear()
+      .type(description, { delay: 200, force: true });
+  }
+);
 
 Then('the user clicks Save button in Add or Edit template modal', function () {
   pdfServiceObj.pdfAddTemplateModalSaveBtn().shadow().find('button').click({ force: true });
@@ -114,7 +122,7 @@ Then(
 
 When(
   'the user clicks {string} icon of {string}, {string} and {string} on PDF templates page',
-  function (iconType, name, templateId, description) {
+  function (iconType: string, name, templateId, description) {
     switch (iconType.toLowerCase()) {
       case 'edit':
         cy.viewport(1441, 901);
@@ -160,7 +168,7 @@ When('the user clicks Save button in PDF template modal', function () {
   cy.wait(2000);
 });
 
-When('the user clicks the {string} tab in PDF template editor and view content', function (tab) {
+When('the user clicks the {string} tab in PDF template editor and view content', function (tab: string) {
   cy.viewport(1441, 901);
   cy.wait(1000);
   switch (tab.toLowerCase()) {
@@ -241,7 +249,7 @@ When('the user clicks the {string} tab in PDF template editor and view content',
 
 When(
   'the user enters {string} as name and {string} as description in PDF template modal',
-  function (name, description) {
+  function (name: string, description: string) {
     pdfServiceObj
       .pdfAddTemplateModalName()
       .shadow()

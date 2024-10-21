@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import fd = require('form-data');
 // NOTE: import from dist since browserify/tsify preprocessors don't seem to handle resolving axios module properly.
 import axios from 'axios/dist/browser/axios.cjs';
@@ -91,7 +91,7 @@ Then('the user can get the URL with {string}', function (fileResourceURL) {
 
 When(
   'a developer of a GoA digital service sends a file upload request with {string}, {string}, {string} and {string}',
-  function (reqEndPoint, fileTypeName, fileName, recordId) {
+  function (reqEndPoint, fileTypeName, fileName: string, recordId) {
     // Get type id
     let typeId;
     const allTypesRequestURL = Cypress.env('fileApi') + '/file/v1/types';
@@ -207,10 +207,10 @@ function getFileId(fileName, fileTypeName, recordId, token) {
 
 When(
   'a developer of a GoA digital service sends a file download request with {string}, {string}, {string}, {string}, {string} and {string}',
-  function (reqEndPoint, reqType, fileTypeName, fileName, recordId, anonymous) {
+  function (reqEndPoint: string, reqType: string, fileTypeName, fileName, recordId, anonymous) {
     // Get file Id and use the file id to download the file
     getFileId(fileName, fileTypeName, recordId, Cypress.env('autotest-admin-token')).then(function (fileId) {
-      const downloadEndPoint = reqEndPoint.replace('<fileid>', fileId);
+      const downloadEndPoint = reqEndPoint.replace('<fileid>', fileId as string);
       const fileDownloadRequestURL = Cypress.env('fileApi') + downloadEndPoint;
       // Download the file using file id with or without user token
       if (anonymous == 'AnonymousFalse') {
@@ -247,9 +247,9 @@ Then('{string} is returned for the file upload request', function (statusCode) {
 
 When(
   'a developer of a GoA digital service sends a file metadata request with {string}, {string}, {string}, {string} and {string}',
-  function (reqEndPoint, reqType, fileTypeName, fileName, recordId) {
+  function (reqEndPoint: string, reqType: string, fileTypeName, fileName, recordId) {
     getFileId(fileName, fileTypeName, recordId, Cypress.env('autotest-admin-token')).then(function (fileId) {
-      const fileMetadataEndPoint = reqEndPoint.replace('<fileid>', fileId);
+      const fileMetadataEndPoint = reqEndPoint.replace('<fileid>', fileId as string);
       const fileDownloadRequestURL = Cypress.env('fileApi') + fileMetadataEndPoint;
       // Get file metadata using file id
       cy.request({
@@ -330,9 +330,9 @@ When('the user disables file service', function () {
   cy.wait(1000);
 });
 
-Then('{string} file service tabs are {string}', function (tabStrings, visibility) {
+Then('{string} file service tabs are {string}', function (tabStrings: string, visibility) {
   const tabArray = tabStrings.split(',');
-  cy.log(tabArray);
+  cy.log(tabStrings);
   switch (visibility) {
     case 'visible':
       fileServiceObj.fileServiceTabs().each((element, index) => {
@@ -351,7 +351,7 @@ Then('{string} file service tabs are {string}', function (tabStrings, visibility
   }
 });
 
-When('user goes to {string} tab', function (tabText) {
+When('user goes to {string} tab', function (tabText: string) {
   fileServiceObj.fileServiceTab(tabText).click();
   cy.wait(2000);
 });
@@ -370,7 +370,7 @@ Then('the user views Add file type modal', function () {
   fileServiceObj.addFileTypeModalTitle().invoke('text').should('contains', 'Add file type');
 });
 
-When('the user enters {string} on Add file type modal', function (name) {
+When('the user enters {string} on Add file type modal', function (name: string) {
   fileServiceObj
     .addFileTypeModalNameField()
     .shadow()
@@ -381,7 +381,7 @@ When('the user enters {string} on Add file type modal', function (name) {
 
 When(
   'the user enters {string}, {string}, {string}, {string} on file type page',
-  function (classification, readRole, updateRole, retention) {
+  function (classification: string, readRole: string, updateRole: string, retention: string) {
     cy.viewport(1920, 1080);
     cy.wait(4000); //Wait for the client roles in the modal to show up
 
@@ -905,7 +905,7 @@ Then('the user views uploaded files page', function () {
   fileServiceObj.uploadedFilesPageTitle().should('exist');
 });
 
-When('the user searches {string} on Uploaded files page', function (fileName) {
+When('the user searches {string} on Uploaded files page', function (fileName: string) {
   fileServiceObj
     .uploadedFilesSearchFileName()
     .shadow()
@@ -922,12 +922,12 @@ When('the user clicks download button for {string}', function (fileName) {
 
 When(
   'a developer user sends a file last access request with {string}, {string}, {string}',
-  function (endPoint, lastAccessAfter, lastAccessBefore) {
+  function (endPoint, lastAccessAfter: string, lastAccessBefore: string) {
     if (lastAccessAfter.match(/Now[+|-][0-9]+mins/g)) {
-      lastAccessAfter = commonlib.nowPlusMinusMinutes(lastAccessAfter);
+      lastAccessAfter = commonlib.nowPlusMinusMinutes(lastAccessAfter) as string;
     }
     if (lastAccessBefore.match(/Now[+|-][0-9]+mins/g)) {
-      lastAccessBefore = commonlib.nowPlusMinusMinutes(lastAccessBefore);
+      lastAccessBefore = commonlib.nowPlusMinusMinutes(lastAccessBefore) as string;
     }
     const requestURL =
       Cypress.env('fileApi') +
@@ -959,36 +959,42 @@ Then(
   }
 );
 
-Then('the user views {string} selected as default security classification', function (defaultClassification) {
+Then('the user views {string} selected as default security classification', function (defaultClassification: string) {
   fileServiceObj
     .fileTypeClassificationDropdown()
     .invoke('attr', 'value')
     .should('eq', defaultClassification.toLowerCase());
 });
 
-Then('the user views {string} in security classification dropdown in file type editor', function (dropdownOptions) {
-  const options = dropdownOptions.split(',');
-  fileServiceObj.fileTypeClassificationDropdownItems().then((elements) => {
-    expect(elements.length).to.eq(options.length);
-    for (let i = 0; i < options.length; i++) {
-      expect(elements[i].getAttribute('value')).to.contain(options[i].trim().toLowerCase());
-    }
-  });
-});
+Then(
+  'the user views {string} in security classification dropdown in file type editor',
+  function (dropdownOptions: string) {
+    const options = dropdownOptions.split(',');
+    fileServiceObj.fileTypeClassificationDropdownItems().then((elements) => {
+      expect(elements.length).to.eq(options.length);
+      for (let i = 0; i < options.length; i++) {
+        expect(elements[i].getAttribute('value')).to.contain(options[i].trim().toLowerCase());
+      }
+    });
+  }
+);
 
-When('the user selects {string} in Filter file type dropdown on uploaded files page', function (dropdownItemName) {
-  fileServiceObj
-    .uploadedFilesFilterFileTypeDropdown()
-    .shadow()
-    .find('li')
-    .contains(dropdownItemName)
-    .click({ force: true });
-  cy.wait(1000);
-});
+When(
+  'the user selects {string} in Filter file type dropdown on uploaded files page',
+  function (dropdownItemName: string) {
+    fileServiceObj
+      .uploadedFilesFilterFileTypeDropdown()
+      .shadow()
+      .find('li')
+      .contains(dropdownItemName)
+      .click({ force: true });
+    cy.wait(1000);
+  }
+);
 
 When(
   'the user searches file types with {string} as file name and {string} as file type on Uploaded files page',
-  function (fileName, fileType) {
+  function (fileName: string, fileType: string) {
     // Enter file name if it's not N/A
     if (fileName !== 'N/A') {
       fileServiceObj

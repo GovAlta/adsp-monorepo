@@ -1,4 +1,4 @@
-import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import DirectoryServicePage from './directory-service.page';
 import Common from '../common/common.page';
 import commonlib from '../common/common-library';
@@ -11,10 +11,10 @@ Then('the user views the aside item {string} with the aside item link {string}',
   directoryObj.directoryAsideItems(asideItem, asideLink).should('have.attr', 'href');
 });
 
-Then('the user views the service entry of {string} and {string}', function (directoryName, fileUrl) {
+Then('the user views the service entry of {string} and {string}', function (directoryName: string, fileUrl: string) {
   let url = '';
   const envFileApi = fileUrl.match(/(?<={).+(?=})/g);
-  if (envFileApi == '') {
+  if (!envFileApi) {
     url = fileUrl;
   } else {
     url = Cypress.env(String(envFileApi));
@@ -61,17 +61,20 @@ Then('the user views Delete entry modal for {string}', function (entryName) {
   directoryObj.deleteModalContent().invoke('text').should('contain', entryName);
 });
 
-When('the user enters {string} in Service, {string} in API, {string} in URL', function (service, api, url) {
-  directoryObj.entryModalServiceField().shadow().find('input').clear().type(service, { delay: 200, force: true });
-  if (api.toLowerCase() == 'empty') {
-    directoryObj.entryModalApiField().shadow().find('input').clear();
-  } else {
-    directoryObj.entryModalApiField().shadow().find('input').clear().type(api, { delay: 50, force: true });
+When(
+  'the user enters {string} in Service, {string} in API, {string} in URL',
+  function (service: string, api: string, url: string) {
+    directoryObj.entryModalServiceField().shadow().find('input').clear().type(service, { delay: 200, force: true });
+    if (api.toLowerCase() == 'empty') {
+      directoryObj.entryModalApiField().shadow().find('input').clear();
+    } else {
+      directoryObj.entryModalApiField().shadow().find('input').clear().type(api, { delay: 50, force: true });
+    }
+    directoryObj.entryModalUrlField().shadow().find('input').clear().type(url, { delay: 50, force: true });
   }
-  directoryObj.entryModalUrlField().shadow().find('input').clear().type(url, { delay: 50, force: true });
-});
+);
 
-When('the user modifies URL field {string}', function (url) {
+When('the user modifies URL field {string}', function (url: string) {
   directoryObj
     .entryModalUrlField()
     .shadow()
@@ -93,7 +96,7 @@ When('the user clicks Cancel button in Entry modal', function () {
 Then(
   'the user {string} the entry of {string} in Service, {string} in API, {string} in URL',
 
-  function (viewOrNot, entryName, api, url) {
+  function (viewOrNot, entryName, api: string, url) {
     switch (viewOrNot) {
       case 'views':
         if (api.toLowerCase() == 'empty') {
@@ -132,23 +135,29 @@ Then('the user views the error message {string} for {string} field', function (e
   }
 });
 
-When('the user clicks Edit icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
-  if (api.toLowerCase() == 'empty') {
-    directoryObj.entryNameUrlEditIcon(entryName, url).shadow().find('button').click({ force: true });
-  } else {
-    directoryObj.entryNameApiUrlEditIcon(entryName, api, url).shadow().find('button').click({ force: true });
+When(
+  'the user clicks Edit icon of {string}, {string}, {string} on entries page',
+  function (entryName, api: string, url) {
+    if (api.toLowerCase() == 'empty') {
+      directoryObj.entryNameUrlEditIcon(entryName, url).shadow().find('button').click({ force: true });
+    } else {
+      directoryObj.entryNameApiUrlEditIcon(entryName, api, url).shadow().find('button').click({ force: true });
+    }
+    cy.wait(2000);
   }
-  cy.wait(2000);
-});
+);
 
-When('the user clicks Delete icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
-  if (api.toLowerCase() == 'empty') {
-    directoryObj.entryNameUrlDeleteIcon(entryName, url).shadow().find('button').click({ force: true });
-  } else {
-    directoryObj.entryNameApiUrlDeleteIcon(entryName, api, url).shadow().find('button').click({ force: true });
+When(
+  'the user clicks Delete icon of {string}, {string}, {string} on entries page',
+  function (entryName, api: string, url) {
+    if (api.toLowerCase() == 'empty') {
+      directoryObj.entryNameUrlDeleteIcon(entryName, url).shadow().find('button').click({ force: true });
+    } else {
+      directoryObj.entryNameApiUrlDeleteIcon(entryName, api, url).shadow().find('button').click({ force: true });
+    }
+    cy.wait(2000);
   }
-  cy.wait(2000);
-});
+);
 
 When('the user clicks Delete button in Entry modal', function () {
   directoryObj.deleteModalDeleteBtn().shadow().find('button').scrollIntoView().click({ force: true });

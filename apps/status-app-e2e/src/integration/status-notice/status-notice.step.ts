@@ -1,4 +1,4 @@
-import { Given, Then, And } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 import ServiceStatusPage from './status-notice.page';
 const statusNoticeObj = new ServiceStatusPage();
 import { injectAxe } from '../../support/app.po';
@@ -26,7 +26,7 @@ Then('the user views the correct header and release version', function () {
   });
 });
 
-Then('the user views service statuses for {string}', function (serviceList) {
+Then('the user views service statuses for {string}', function (serviceList: string) {
   const services = serviceList.split(',');
   services.forEach((serviceName) => {
     // Check each service has its status
@@ -61,7 +61,7 @@ Then('no critical or serious accessibility issues on public service status page'
   });
 });
 
-And('the user views the timezone information', function () {
+Then('the user views the timezone information', function () {
   statusNoticeObj
     .timezoneInfo()
     .invoke('text')
@@ -70,7 +70,7 @@ And('the user views the timezone information', function () {
     });
 });
 
-And('the user {string} the all services notice of {string}', function (viewOrNot, noticeMessage) {
+Then('the user {string} the all services notice of {string}', function (viewOrNot, noticeMessage) {
   switch (viewOrNot) {
     case 'views':
       statusNoticeObj.allApplicationNoticeMessage(noticeMessage).should('exist');

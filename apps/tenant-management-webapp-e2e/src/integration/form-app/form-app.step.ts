@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import FormAppPage from './form-app.page';
 
 const formAppObj = new FormAppPage();
@@ -67,7 +67,7 @@ Then('the user views a from draft of {string}', function (formDefinition) {
   });
 });
 
-When('the user enters {string} in a text field labelled {string}', function (text, label) {
+When('the user enters {string} in a text field labelled {string}', function (text: string, label) {
   formAppObj.formTextField(label).shadow().find('input').clear().type(text, { force: true, delay: 200 });
 });
 

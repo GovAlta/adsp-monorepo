@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import commonlib from '../common/common-library';
 import TaskPage from './task.page';
 import common from '../common/common.page';
@@ -39,7 +39,7 @@ When('the user clicks Add queue button on Queues page', function () {
   taskObj.addQueueBtn().shadow().find('button').click({ force: true });
 });
 
-When('the user enters {string}, {string} in Add queue modal', function (namespace, name) {
+When('the user enters {string}, {string} in Add queue modal', function (namespace: string, name: string) {
   taskObj.namespaceTextField().shadow().find('input').clear().type(namespace, { force: true, delay: 200 });
   taskObj.nameTextField().shadow().find('input').clear().type(name, { force: true, delay: 200 });
 });
@@ -60,79 +60,82 @@ Then('the user views Queue page for {string}, {string}', function (namespace, na
   taskObj.queueNameValue().should('have.text', name);
 });
 
-When('the user enters {string} as Assigner roles and {string} as Worker roles', function (assignerRole, workerRole) {
-  //Unselect all checkboxes
-  taskObj
-    .queuePageCheckboxesTables()
-    .find('goa-checkbox')
-    .shadow()
-    .find('.goa-checkbox-container')
-    .then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].getAttribute('class')?.includes('--selected')) {
-          elements[i].click();
-        }
-      }
-    });
-
-  //Select assigner roles
-  if (assignerRole.toLowerCase() != 'empty') {
-    const assignerRoles = assignerRole.split(',');
-    for (let i = 0; i < assignerRoles.length; i++) {
-      taskObj
-        .queuePageCheckboxesTables()
-        .find('goa-checkbox[data-testid="Queue-Assigner roles-role-checkbox-' + assignerRoles[i].trim() + '"]')
-        .shadow()
-        .find('.goa-checkbox-container')
-        .click({ force: true });
-      cy.wait(1000); // Wait the checkbox status to change before proceeding
-    }
-  }
-
-  //Select worker roles
-  if (workerRole.toLowerCase() != 'empty') {
-    const workerRoles = workerRole.split(',');
-    for (let i = 0; i < workerRoles.length; i++) {
-      if (workerRoles[i].includes(':')) {
-        const clientRoleStringArray = workerRoles[i].split(':');
-        let clientName = '';
-        for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
-          if (j !== clientRoleStringArray.length - 2) {
-            clientName = clientName + clientRoleStringArray[j].trim() + ':';
-          } else {
-            clientName = clientName + clientRoleStringArray[j];
+When(
+  'the user enters {string} as Assigner roles and {string} as Worker roles',
+  function (assignerRole: string, workerRole: string) {
+    //Unselect all checkboxes
+    taskObj
+      .queuePageCheckboxesTables()
+      .find('goa-checkbox')
+      .shadow()
+      .find('.goa-checkbox-container')
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].getAttribute('class')?.includes('--selected')) {
+            elements[i].click();
           }
         }
-        const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+      });
+
+    //Select assigner roles
+    if (assignerRole.toLowerCase() != 'empty') {
+      const assignerRoles = assignerRole.split(',');
+      for (let i = 0; i < assignerRoles.length; i++) {
         taskObj
-          .queuePageClientRolesTable(clientName)
-          .find('.role-name')
-          .contains(roleName)
-          .next()
-          .next()
-          .find('goa-checkbox')
+          .queuePageCheckboxesTables()
+          .find('goa-checkbox[data-testid="Queue-Assigner roles-role-checkbox-' + assignerRoles[i].trim() + '"]')
           .shadow()
           .find('.goa-checkbox-container')
-          .scrollIntoView()
-          .click({ force: true });
-        cy.wait(1000); // Wait the checkbox status to change before proceeding
-      } else {
-        taskObj
-          .queuePageRolesTable()
-          .find('.role-name')
-          .contains(workerRoles[i].trim())
-          .next()
-          .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('.goa-checkbox-container')
-          .scrollIntoView()
           .click({ force: true });
         cy.wait(1000); // Wait the checkbox status to change before proceeding
       }
     }
+
+    //Select worker roles
+    if (workerRole.toLowerCase() != 'empty') {
+      const workerRoles = workerRole.split(',');
+      for (let i = 0; i < workerRoles.length; i++) {
+        if (workerRoles[i].includes(':')) {
+          const clientRoleStringArray = workerRoles[i].split(':');
+          let clientName = '';
+          for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+            if (j !== clientRoleStringArray.length - 2) {
+              clientName = clientName + clientRoleStringArray[j].trim() + ':';
+            } else {
+              clientName = clientName + clientRoleStringArray[j];
+            }
+          }
+          const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+          taskObj
+            .queuePageClientRolesTable(clientName)
+            .find('.role-name')
+            .contains(roleName)
+            .next()
+            .next()
+            .find('goa-checkbox')
+            .shadow()
+            .find('.goa-checkbox-container')
+            .scrollIntoView()
+            .click({ force: true });
+          cy.wait(1000); // Wait the checkbox status to change before proceeding
+        } else {
+          taskObj
+            .queuePageRolesTable()
+            .find('.role-name')
+            .contains(workerRoles[i].trim())
+            .next()
+            .next()
+            .find('goa-checkbox')
+            .shadow()
+            .find('.goa-checkbox-container')
+            .scrollIntoView()
+            .click({ force: true });
+          cy.wait(1000); // Wait the checkbox status to change before proceeding
+        }
+      }
+    }
   }
-});
+);
 
 Then('the user clicks Save button on Queue page', function () {
   taskObj.queuePageSaveButton().shadow().find('button').click({ force: true });
@@ -218,7 +221,7 @@ When('the user clicks Back button on Queue page', function () {
   taskObj.queuePageBackButton().shadow().find('button').click({ force: true });
 });
 
-When('the user selects {string} in Select a queue dropdown', function (dropdownItem) {
+When('the user selects {string} in Select a queue dropdown', function (dropdownItem: string) {
   taskObj
     .tasksSelectAQueueDropdown()
     .invoke('attr', 'value')

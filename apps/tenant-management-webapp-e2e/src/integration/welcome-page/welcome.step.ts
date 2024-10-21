@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 import WelcomPage from './welcome.page';
 import common from '../common/common.page';
@@ -74,7 +74,7 @@ Then('the user views create tenant page', function () {
 
 When(
   'the user enters {string} as tenant name, clicks create tenant button and waits {string} seconds',
-  function (tenantName, seconds) {
+  function (tenantName: string, seconds: number) {
     expect(isNaN(seconds)).to.be.false; // Verify the pass in seconds is a number
     expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hange the test execution
     welcomPageObj.tenantNameField().shadow().find('input').clear().type(tenantName, { delay: 50, force: true });
