@@ -132,5 +132,4 @@ public class ScriptFunctionsTests
     writer.Flush();
     return System.Text.Encoding.UTF8.GetString(memoryStream.ToArray());
   }
-
 }

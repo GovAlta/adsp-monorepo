@@ -21,14 +21,14 @@ declare namespace Cypress {
 // Use POST request to get a token from keycloak and store in cypress environment variable for future api calls
 Cypress.Commands.add('postToken', () => {
   const clientId = Cypress.env('client-id');
-  const clientSecret = Cypress.env('client-secret');
+  const clientSecret = Cypress.env('clientSecret');
   const grantType = 'password';
   const username = Cypress.env('email');
   const password = Cypress.env('password');
   const coreApiClientId = Cypress.env('core-api-client-id');
-  const coreApiClientSecret = Cypress.env('core-api-client-secret');
+  const coreApiClientSecret = Cypress.env('coreApiClientSecret');
   const coreApiUsername = Cypress.env('core-api-user');
-  const coreApiPassword = Cypress.env('core-api-user-password');
+  const coreApiPassword = Cypress.env('coreApiUserPassword');
   const realm = Cypress.env('realm');
   // Get autotest realm admin token
   cy.request({

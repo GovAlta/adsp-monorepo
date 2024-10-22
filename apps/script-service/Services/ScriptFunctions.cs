@@ -2,6 +2,7 @@ using Adsp.Platform.ScriptService.Services.Platform;
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using Adsp.Sdk.Events;
+using Newtonsoft.Json;
 using NLua;
 using RestSharp;
 using System.Text.Json;

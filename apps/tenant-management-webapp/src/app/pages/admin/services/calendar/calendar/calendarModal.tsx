@@ -30,13 +30,6 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   const dispatch = useDispatch();
   const roles = useSelector(selectRoleList);
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [roles]);
-  useEffect(() => {
-    setCalendar(initialValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
@@ -181,11 +174,9 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
           onChange={(name, value) => {}}
         />
       </GoAFormItem>
-      {roles &&
-        roles.map((r) => {
-          return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
-        })}
-      {Object.entries(roles)?.length === 0 && <TextGoASkeleton />}
+      {roles?.length !== 0 &&
+        roles.map((r) => <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />)}
+      {roles?.length === 0 && <TextGoASkeleton />}
     </GoAModal>
   );
 };

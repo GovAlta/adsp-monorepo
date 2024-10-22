@@ -23,6 +23,4 @@ interface IScriptFunctions
 
   IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value);
 
-
-
 }

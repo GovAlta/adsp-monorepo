@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import events from './events.page';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
@@ -13,22 +13,6 @@ Then('the user views events overview page', function () {
 Then('the user views an event definition of {string} under {string}', function (eventName, eventNamespace) {
   eventsObj.event(eventNamespace, eventName).should('exist');
 });
-
-Then(
-  'the user {string} an event definition of {string} and {string} under {string}',
-  function (viewOrNot, eventName, eventDesc, eventNamespace) {
-    switch (viewOrNot) {
-      case 'views':
-        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('exist');
-        break;
-      case 'should not view':
-        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('not.exist');
-        break;
-      default:
-        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-    }
-  }
-);
 
 When(
   'the user clicks {string} details button for the definition of {string} under {string}',
@@ -62,36 +46,8 @@ Then(
   }
 );
 
-When('the user clicks Add definition button on event definitions page', function () {
-  eventsObj.addDefinitionButton().shadow().find('button').click({ force: true });
-  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
-});
-
-Then('the user views Add definition dialog', function () {
-  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Add definition');
-});
-
 Then('the user views Edit definition dialog', function () {
   eventsObj.definitionModalTitle().invoke('text').should('eq', 'Edit definition');
-});
-
-When(
-  'the user enters {string} in Namespace, {string} in Name, {string} in Description',
-  function (namespace, name, desc) {
-    eventsObj
-      .definitionModalNamespaceField()
-      .shadow()
-      .find('input')
-      .clear()
-      .type(namespace, { delay: 100, force: true });
-    eventsObj.definitionModalNameField().shadow().find('input').clear().type(name, { delay: 50, force: true });
-    eventsObj.definitionModalDescriptionField().shadow().find('textarea').type(desc);
-  }
-);
-
-When('the user clicks Save button on Definition modal', function () {
-  eventsObj.definitionModalSaveButton().shadow().find('button').click({ force: true });
-  cy.wait(2000);
 });
 
 Then('the user views disabled Save button on Definition modal', function () {
@@ -122,7 +78,7 @@ When(
   }
 );
 
-When('the user enters {string} in Description', function (desc) {
+When('the user enters {string} in Description', function (desc: string) {
   eventsObj.definitionModalDescriptionField().shadow().find('textarea').clear().type(desc, { force: true });
 });
 
@@ -166,7 +122,7 @@ Then('the user exits the add definition dialog', function () {
   eventsObj.definitionModal().should('not.exist');
 });
 
-Then('the user only views show button for event definitions of {string}', function (servicesString) {
+Then('the user only views show button for event definitions of {string}', function (servicesString: string) {
   const services = servicesString.split(',');
   for (let i = 0; i < services.length; i++) {
     cy.log(services[i].trim());
@@ -218,7 +174,7 @@ Then('the user views Add stream modal', function () {
 //User can use "n/a" as input for event or role in case there is no selection of the event or role
 When(
   'the user enters {string}, {string}, {string}, {string} in Add stream modal',
-  function (name, description, event, role) {
+  function (name: string, description: string, event: string, role: string) {
     cy.wait(4000); // Wait stream modal to show content
     const events = event.split(',');
     eventsObj.streamModalNameInput().shadow().find('input').clear().type(name, { delay: 100, force: true });
@@ -372,7 +328,7 @@ Then('the user {string} the stream of {string}, {string}', function (viewOrNot, 
 
 Then(
   'the user views the stream details of {string}, {string}, {string}, {string}',
-  function (streamName, description, event, role) {
+  function (streamName, description, event: string, role: string) {
     eventsObj.streamDetails(streamName).should('contain', streamName);
     eventsObj.streamDetails(streamName).should('contain', description);
     if (role == 'public') eventsObj.streamDetails(streamName).should('contain', '"publicSubscribe": true');
@@ -429,109 +385,112 @@ Then('the user views Edit stream modal', function () {
 });
 
 //User can use "n/a" as input for event or role in case there is no selection of the event or role
-Then('the user enters {string}, {string}, {string} in Edit stream modal', function (description, event, role) {
-  eventsObj.streamModalDescriptionInput().shadow().find('textarea').clear().type(description, { force: true });
-  if (event == 'n/a') {
-    eventsObj.streamModalEventDropdown().should('exist');
-  } else {
-    const events = event.split(',');
-    eventsObj.streamModalEventDropdown().click();
-    eventsObj
-      .streamModalEventDropdownItems()
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].className.includes('goa-dropdown0-option--selected')) {
-            elements[i].click();
+Then(
+  'the user enters {string}, {string}, {string} in Edit stream modal',
+  function (description: string, event: string, role: string) {
+    eventsObj.streamModalDescriptionInput().shadow().find('textarea').clear().type(description, { force: true });
+    if (event == 'n/a') {
+      eventsObj.streamModalEventDropdown().should('exist');
+    } else {
+      const events = event.split(',');
+      eventsObj.streamModalEventDropdown().click();
+      eventsObj
+        .streamModalEventDropdownItems()
+        .then((elements) => {
+          for (let i = 0; i < elements.length; i++) {
+            if (elements[i].className.includes('goa-dropdown0-option--selected')) {
+              elements[i].click();
+            }
           }
-        }
-      })
-      .then(() => {
-        for (let i = 0; i < events.length; i++) {
-          eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
-        }
-      });
-  }
-  if (role == 'public') {
-    eventsObj
-      .streamModalPublicCheckbox()
-      .shadow()
-      .find('.goa-checkbox-container')
-      .invoke('attr', 'class')
-      .then((classAttr) => {
-        if (classAttr?.includes('--selected')) {
-          cy.log('Make stream public is already checked off.');
-        } else {
-          eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
-        }
-      });
-  } else if (role == 'n/a') {
-    eventsObj.streamModalRolesCheckboxes().should('exist');
-  } else {
-    eventsObj
-      .streamModalPublicCheckbox()
-      .shadow()
-      .find('.goa-checkbox-container')
-      .invoke('attr', 'class')
-      .then((classAttr) => {
-        if (classAttr?.includes('--selected')) {
-          eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
-        }
-      });
-    cy.wait(1000);
-    // Unselect all roles
-    eventsObj
-      .streamModalRolesTables()
-      .find('goa-checkbox')
-      .shadow()
-      .find('.goa-checkbox-container')
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-            elements[i].click();
+        })
+        .then(() => {
+          for (let i = 0; i < events.length; i++) {
+            eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
           }
-        }
-      });
-    // Select roles or client roles
-    const roles = role.split(',');
-    for (let i = 0; i < roles.length; i++) {
-      if (roles[i].includes(':')) {
-        const clientRoleStringArray = roles[i].split(':');
-        let clientName = '';
-        for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
-          if (j !== clientRoleStringArray.length - 2) {
-            clientName = clientName + clientRoleStringArray[j].trim() + ':';
+        });
+    }
+    if (role == 'public') {
+      eventsObj
+        .streamModalPublicCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (classAttr?.includes('--selected')) {
+            cy.log('Make stream public is already checked off.');
           } else {
-            clientName = clientName + clientRoleStringArray[j];
+            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
           }
+        });
+    } else if (role == 'n/a') {
+      eventsObj.streamModalRolesCheckboxes().should('exist');
+    } else {
+      eventsObj
+        .streamModalPublicCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (classAttr?.includes('--selected')) {
+            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
+          }
+        });
+      cy.wait(1000);
+      // Unselect all roles
+      eventsObj
+        .streamModalRolesTables()
+        .find('goa-checkbox')
+        .shadow()
+        .find('.goa-checkbox-container')
+        .then((elements) => {
+          for (let i = 0; i < elements.length; i++) {
+            if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+              elements[i].click();
+            }
+          }
+        });
+      // Select roles or client roles
+      const roles = role.split(',');
+      for (let i = 0; i < roles.length; i++) {
+        if (roles[i].includes(':')) {
+          const clientRoleStringArray = roles[i].split(':');
+          let clientName = '';
+          for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+            if (j !== clientRoleStringArray.length - 2) {
+              clientName = clientName + clientRoleStringArray[j].trim() + ':';
+            } else {
+              clientName = clientName + clientRoleStringArray[j];
+            }
+          }
+          const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+          eventsObj
+            .streamModalClientRolesTable(clientName)
+            .find('.role-name')
+            .contains(roleName)
+            .next()
+            .find('goa-checkbox')
+            .shadow()
+            .find('.goa-checkbox-container')
+            .scrollIntoView()
+            .click({ force: true });
+        } else {
+          eventsObj
+            .streamModalRolesTable()
+            .find('.role-name')
+            .contains(roles[i].trim())
+            .next()
+            .find('goa-checkbox')
+            .shadow()
+            .find('.goa-checkbox-container')
+            .scrollIntoView()
+            .click({ force: true });
         }
-        const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
-        eventsObj
-          .streamModalClientRolesTable(clientName)
-          .find('.role-name')
-          .contains(roleName)
-          .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('.goa-checkbox-container')
-          .scrollIntoView()
-          .click({ force: true });
-      } else {
-        eventsObj
-          .streamModalRolesTable()
-          .find('.role-name')
-          .contains(roles[i].trim())
-          .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('.goa-checkbox-container')
-          .scrollIntoView()
-          .click({ force: true });
       }
     }
   }
-});
+);
 
-When('the user removes event chips of {string} in Edit stream modal', function (event) {
+When('the user removes event chips of {string} in Edit stream modal', function (event: string) {
   const eventChip = event.split(',');
   for (let i = 0; i < eventChip.length; i++) {
     eventsObj.streamModalEventChips().shadow().get(`[content="${eventChip}"]`).click();
