@@ -497,29 +497,6 @@ Then('the user should not have regular admin view', function () {
   tenantAdminObj.dashboardServicesMenuCategory().should('not.exist');
 });
 
-When('the user searches with {string}', function (namespaceName: string) {
-  tenantAdminObj.eventLogSearchBox().click();
-  tenantAdminObj.eventLogSearchBox().type(namespaceName);
-  tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
-  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
-  cy.wait(4000);
-});
-
-Then('the user views the events matching the search filter of {string}', function (namespaceName: string) {
-  tenantAdminObj.eventTableBody().each(($row) => {
-    cy.wrap($row).within(() => {
-      cy.get('td').each(($col) => {
-        if ($col.eq(2).text() == namespaceName.split(':')[0]) {
-          expect($col.eq(2).text()).to.equal(namespaceName.split(':')[0]);
-        }
-        if ($col.eq(3).text() == namespaceName.split(':')[1]) {
-          expect($col.eq(3).text()).to.equal(namespaceName.split(':')[1]);
-        }
-      });
-    });
-  });
-});
-
 When('the user clicks Load more button on event log page', function () {
   // count numbers of row in the table before clicking Load more...
   tenantAdminObj
@@ -583,26 +560,6 @@ function timestampUtil(dateTime) {
     );
   }
 }
-
-When('the user searches with {string} as minimum timestamp, {string} as maximum timestamp', function (submin, addmin) {
-  //for example replace "now-+5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
-  expect(submin).to.match(
-    /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
-  );
-  expect(addmin).to.match(
-    /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
-  );
-  const timestampMin = timestampUtil(submin);
-  const timestampMax = timestampUtil(addmin);
-
-  cy.log(timestampMin);
-  cy.log(timestampMax);
-
-  tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
-  tenantAdminObj.eventLogMaxTimeStamp().type(timestampMax);
-  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
-});
 
 Then(
   'the user views the events matching the search filter of {string} as min and {string} as max timestamps',
@@ -764,25 +721,6 @@ Then('the user views the events matching the search filter of {string} as maximu
     });
 });
 
-When(
-  'the user searches with {string}, {string} as minimum timestamp, {string} as maximum timestamp',
-  function (namespaceName: string, submin, addmin) {
-    tenantAdminObj.eventLogSearchBox().click();
-    tenantAdminObj.eventLogSearchBox().type(namespaceName);
-
-    const timestampMin = timestampUtil(submin);
-    const timestampMax = timestampUtil(addmin);
-
-    cy.log(timestampMin);
-    cy.log(timestampMax);
-
-    tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
-    tenantAdminObj.eventLogMaxTimeStamp().type(timestampMax);
-    tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
-    cy.wait(2000);
-  }
-);
-
 Then(
   'the user views the events matching the search filter of {string}, and timestamp value between {string} as min and {string} as max timestamps',
   function (namespaceName: string, minTimestamp, maxTimestamp) {
@@ -920,31 +858,6 @@ Then(
   }
 );
 
-When(
-  'the user clicks Show details button for the latest event of {string} for {string}',
-  function (name: string, namespace: string) {
-    // Verify the first record matches the name and namespace
-    tenantAdminObj
-      .eventTableBody()
-      .children('tr')
-      .first()
-      .within(() => {
-        tenantAdminObj.eventTableNameCells().invoke('text').should('eq', name);
-      });
-    tenantAdminObj
-      .eventTableBody()
-      .children('tr')
-      .first()
-      .within(() => {
-        tenantAdminObj.eventTableNameSpaceCells().invoke('text').should('eq', namespace);
-      });
-
-    // Verify the first toggle details icon is eye icon, not eye-off icon, and then click it
-    tenantAdminObj.eventToggleDetailsIcons().first().invoke('attr', 'icon').should('eq', 'eye');
-    tenantAdminObj.eventToggleDetailsIcons().first().shadow().find('button').click({ force: true });
-  }
-);
-
 // Only one event details is open before calling this step
 Then(
   'the user views the event details with status changing from {string} to {string}',
@@ -977,37 +890,6 @@ Then(
         expect(eventDetails).to.contain('"service": ' + '"' + serviceName + '"');
         expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
         expect(eventDetails).to.contain('"name": ' + '"' + username + '"');
-      });
-  }
-);
-
-Then(
-  'the user views event details of {string}, {string} of application-notice-published for status-service',
-  function (noticeDesc, appName) {
-    const regex_notice_description = '"notice": {(.|\n)*"description": "' + noticeDesc + '"';
-    const regex_notice_endTimestamp = '"notice": {(.|\n)*"endTimestamp": ".+Z"';
-    const regex_notice_startTimestamp = '"notice": {(.|\n)*"startTimestamp": ".+Z"';
-    const regex_postedBy_userId = '"postedBy": {(.|\n)*"userId": ".+"';
-    const regex_postedBy_userName = '"postedBy": {(.|\n)*"userName": ".+"';
-    const regex_application_id = '"application": {(.|\n)*"id": ".+"';
-    const regex_application_name = '"application": {(.|\n)*"name": "' + appName + '"';
-    const regex_application_description = '"application": {(.|\n)*"description": ".*"';
-    tenantAdminObj.eventDetails().then((elements) => {
-      expect(elements.length).to.equal(1);
-    });
-    tenantAdminObj
-      .eventDetails()
-      .invoke('text')
-      .then((eventDetails) => {
-        // Verify all required information showing in event details including notice description and application name.
-        expect(eventDetails).to.match(new RegExp(regex_notice_description));
-        expect(eventDetails).to.match(new RegExp(regex_notice_endTimestamp));
-        expect(eventDetails).to.match(new RegExp(regex_notice_startTimestamp));
-        expect(eventDetails).to.match(new RegExp(regex_postedBy_userId));
-        expect(eventDetails).to.match(new RegExp(regex_postedBy_userName));
-        expect(eventDetails).to.match(new RegExp(regex_application_id));
-        expect(eventDetails).to.match(new RegExp(regex_application_name));
-        expect(eventDetails).to.match(new RegExp(regex_application_description));
       });
   }
 );
@@ -1082,66 +964,6 @@ Then(
   }
 );
 
-Then(
-  'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
-  function (appName, orgStatus, newStatusInput, email) {
-    let isFound = false;
-    let orgStatusValidationString;
-    let newStatusValidationString;
-
-    if (orgStatus != '{original status}') {
-      orgStatusValidationString = orgStatus;
-    } else {
-      cy.task('getOriginalAppStatus').then((appStatus) => {
-        orgStatusValidationString = appStatus;
-      });
-    }
-    if (newStatusInput != '{new status}') {
-      newStatusValidationString = newStatusInput;
-    } else {
-      cy.task('getNewAppStatus').then((appStatus) => {
-        newStatusValidationString = appStatus;
-      });
-    }
-
-    tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
-      //clicking each eye-icon in the list to verify event details
-      cy.wrap($element).scrollIntoView();
-      cy.wrap($element).shadow().find('button').click({ force: true });
-      tenantAdminObj
-        .eventDetails()
-        .invoke('text')
-        .then((eventDetails) => {
-          // Check if event log details contains expected info
-          if (
-            eventDetails.includes('to": "' + email) &&
-            eventDetails.includes(appName + ' status changed to') &&
-            eventDetails.includes(
-              'from <b>' +
-                orgStatusValidationString.toLowerCase() +
-                '</b> to <b>' +
-                newStatusValidationString.toLowerCase() +
-                '</b>'
-            )
-          ) {
-            isFound = true;
-            cy.wrap($element).click({ force: true });
-          } else {
-            //clicking eye icon to close event details
-            cy.wrap($element).scrollIntoView();
-            cy.wrap($element).click({ force: true });
-          }
-          if (isFound == false && $index + 1 == $full_array.length) {
-            expect($index + 1).to.not.eq(
-              $full_array.length,
-              'No matching email found throughout list of event details'
-            );
-          }
-        });
-    });
-  }
-);
-
 Given('an admin user is on event log page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
@@ -1151,52 +973,6 @@ Given('an admin user is on event log page', function () {
   );
   commonlib.tenantAdminMenuItem('Event log', 4000);
 });
-
-When(
-  'the user sends a request to set active revision to {string} for {string} under {string}',
-  function (activeVersion: string, name, namespace) {
-    const requestURL =
-      Cypress.env('configurationServiceApiUrl') + '/configuration/v2/configuration/' + namespace + '/' + name;
-    cy.request({
-      method: 'POST',
-      url: requestURL,
-      auth: {
-        bearer: Cypress.env('autotest-admin-token'),
-      },
-      body: {
-        operation: 'SET-ACTIVE-REVISION',
-        setActiveRevision: parseInt(activeVersion),
-      },
-    }).then(function (response) {
-      responseObj = response;
-    });
-  }
-);
-
-Then(
-  'the user gets a response of active revision for {string} under {string} being {string}',
-  function (name, namespace, activeVersion: string) {
-    expect(responseObj.status).to.eq(200);
-    expect(responseObj.body).to.have.property('namespace').to.contain(namespace);
-    expect(responseObj.body).to.have.property('name').to.contain(name);
-    expect(responseObj.body).to.have.property('active').to.equal(parseInt(activeVersion));
-  }
-);
-
-Then(
-  'the user views event details of {string}, {string}, {string}, {string} of active-revision-set for configuration-service',
-  function (namespace, name, from: string, to: string) {
-    tenantAdminObj
-      .eventDetails()
-      .invoke('text')
-      .then((eventDetails) => {
-        expect(eventDetails).to.contain('"from": ' + parseInt(from));
-        expect(eventDetails).to.contain('"revision": ' + parseInt(to));
-        expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
-        expect(eventDetails).to.contain('"name": ' + '"' + name + '"');
-      });
-  }
-);
 
 When('the user changes the resolution to a low resolution not supported by tenant management app', function () {
   // Use resolution of iPhone 12 Pro for testing
