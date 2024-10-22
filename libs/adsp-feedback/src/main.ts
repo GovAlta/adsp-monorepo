@@ -63,6 +63,7 @@ export class AdspFeedback implements AdspFeedbackApi {
       return Promise.resolve({ site, view: document.location.pathname });
     };
     this.onDimChange(false);
+
     const scriptElement = document.currentScript as HTMLScriptElement;
     if (scriptElement) {
       const scriptUrl = new URL(scriptElement.src);
@@ -90,6 +91,10 @@ export class AdspFeedback implements AdspFeedbackApi {
     document.addEventListener('keydown', this.handleEscapeKey);
     document.body.classList.add('modal-open');
     this.onDimChange(true);
+  }
+  private isSafariBrowser() {
+    const ua = navigator.userAgent;
+    return /Safari/.test(ua) && !/Chrome|Chromium|Android/.test(ua);
   }
   private handleKeyOpenStartForm(event: KeyboardEvent) {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -395,10 +400,10 @@ export class AdspFeedback implements AdspFeedbackApi {
     `;
   };
   private updateHover = (index: number, isHovering: boolean) => {
+    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     const rating = this.ratings[index];
     const images = document.querySelectorAll('.rating');
     const image = images[index] as HTMLImageElement;
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     image.src =
       isHovering && this.selectedRating !== index
         ? rating.svgHover
@@ -422,15 +427,17 @@ export class AdspFeedback implements AdspFeedbackApi {
   };
 
   private clearRating = (index: number) => {
+    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     if (index > -1) {
       const rating = this.ratings[index];
       const images = document.querySelectorAll('.rating');
       const image = images[index] as HTMLImageElement;
       image.src = rating.svgDefault;
-
-      const texts = document.querySelectorAll('.ratingText');
-      const text = texts[index] as HTMLImageElement;
-      text.style.color = '#333333';
+      if (isSmallScreen) {
+        const texts = document.querySelectorAll('.ratingText');
+        const text = texts[index] as HTMLImageElement;
+        text.style.color = '#333333';
+      }
     }
   };
 
@@ -447,6 +454,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   };
 
   private selectRating = (index: number) => {
+    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     this.updateHover(index, false);
     const images = document.querySelectorAll('.rating');
     const ratingNew = this.ratings[index];
@@ -462,10 +470,11 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
     this.selectedRating = index;
     this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-primary') as HTMLElement;
-
-    const texts = document.querySelectorAll('.ratingText');
-    const text = texts[index] as HTMLImageElement;
-    text.style.color = '#0081A2';
+    if (isSmallScreen) {
+      const texts = document.querySelectorAll('.ratingText');
+      const text = texts[index] as HTMLImageElement;
+      text.style.color = '#0081A2';
+    }
     if (this.commentSelector.value && this.commentSelector.value.checked === true) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     }
@@ -659,25 +668,28 @@ export class AdspFeedback implements AdspFeedbackApi {
               margin-top: 53px;
               position: absolute;
               transform: translateX(-50%);
+              -webkit-transform: translateX(-50%);
               white-space: nowrap;
               opacity: 0;
+              z-index: 2;
+              transition: opacity 0.3s;
               -webkit-transition: opacity 0.3s;
             }
-          }
-
-          .adsp-fb .adsp-fb-form-rating .tooltip-text::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: transparent transparent #666666 transparent;
-          }
-
-          .adsp-fb .adsp-fb-form-rating .tooltip-text.modified::before {
-            left: 40%;
+            span.tooltip-text:before {
+              content: '';
+              position: absolute;
+              top: -10px;
+              left: 50%;
+              margin-left: -5px;
+              border-width: 5px;
+              border-style: solid;
+              transform: translateX(-50%);
+              -webkit-transform: translateX(-50%);
+              border-color: transparent transparent #666666 transparent;
+            }
+            span.tooltip-text.modified:before {
+              left: 40%;
+            }
           }
 
           .adsp-fb .adsp-fb-form-comment {
@@ -1041,6 +1053,10 @@ export class AdspFeedback implements AdspFeedbackApi {
             }
             .adsp-fb .adsp-fb-container-heading {
               height: 55px !important;
+            }
+            .adsp-fb .rating-div {
+              flex-direction: row;
+              gap: 6px;
             }
             .adsp-fb .adsp-fb-form-rating {
               flex-direction: column-reverse;

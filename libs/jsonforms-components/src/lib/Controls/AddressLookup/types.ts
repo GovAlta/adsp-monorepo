@@ -1,8 +1,8 @@
 export interface Address {
   addressLine1: string;
-  addressLine2: string;
-  city: string;
-  province: string;
+  addressLine2?: string;
+  municipality: string;
+  subdivisionCode: string;
   postalCode: string;
   country: string;
 }
