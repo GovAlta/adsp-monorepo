@@ -284,10 +284,12 @@
   },
   "overrides": {
     "@nx/devkit": "18.3.5",
+    "got": "11.8.5",
     "jsonpath-plus": "^10.0.0",
     "nx": "18.3.5",
     "react": "^18.2.0",
     "react-dom": "18.2.0",
-    "semantic-release": "^23.0.0"
+    "semantic-release": "^23.0.0",
+    "xml2js": "0.6.2"
   }
 }

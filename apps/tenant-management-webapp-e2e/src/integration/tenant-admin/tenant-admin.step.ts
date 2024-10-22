@@ -23,27 +23,6 @@ Then('the tenant management admin page is displayed', function () {
   tenantAdminObj.dashboardServicesMenuCategory();
 });
 
-Then('the {string} landing page is displayed', function (pageTitle) {
-  let urlPart = 'undefined';
-  switch (pageTitle) {
-    case 'File service':
-      urlPart = '/admin/services/file';
-      break;
-    case 'Status service':
-      urlPart = '/admin/services/status';
-      break;
-    case 'Event log':
-      urlPart = '/admin/event-log';
-      break;
-    default:
-      expect(pageTitle).to.be.oneOf(['File service', 'Status service', 'Event log']);
-  }
-  cy.url().should('include', urlPart);
-  tenantAdminObj.servicePageTitle(pageTitle).then((title) => {
-    expect(title.length).to.be.gt(0); // element exists
-  });
-});
-
 When('the user sends a configuration service request to {string}', function (request) {
   const requestURL = Cypress.env('tenantManagementApi') + request;
   cy.request({

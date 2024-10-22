@@ -14,22 +14,6 @@ Then('the user views an event definition of {string} under {string}', function (
   eventsObj.event(eventNamespace, eventName).should('exist');
 });
 
-Then(
-  'the user {string} an event definition of {string} and {string} under {string}',
-  function (viewOrNot, eventName, eventDesc, eventNamespace) {
-    switch (viewOrNot) {
-      case 'views':
-        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('exist');
-        break;
-      case 'should not view':
-        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('not.exist');
-        break;
-      default:
-        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-    }
-  }
-);
-
 When(
   'the user clicks {string} details button for the definition of {string} under {string}',
   function (showHide, eventName, eventNamespace) {
@@ -62,36 +46,8 @@ Then(
   }
 );
 
-When('the user clicks Add definition button on event definitions page', function () {
-  eventsObj.addDefinitionButton().shadow().find('button').click({ force: true });
-  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
-});
-
-Then('the user views Add definition dialog', function () {
-  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Add definition');
-});
-
 Then('the user views Edit definition dialog', function () {
   eventsObj.definitionModalTitle().invoke('text').should('eq', 'Edit definition');
-});
-
-When(
-  'the user enters {string} in Namespace, {string} in Name, {string} in Description',
-  function (namespace: string, name: string, desc: string) {
-    eventsObj
-      .definitionModalNamespaceField()
-      .shadow()
-      .find('input')
-      .clear()
-      .type(namespace, { delay: 100, force: true });
-    eventsObj.definitionModalNameField().shadow().find('input').clear().type(name, { delay: 50, force: true });
-    eventsObj.definitionModalDescriptionField().shadow().find('textarea').type(desc);
-  }
-);
-
-When('the user clicks Save button on Definition modal', function () {
-  eventsObj.definitionModalSaveButton().shadow().find('button').click({ force: true });
-  cy.wait(2000);
 });
 
 Then('the user views disabled Save button on Definition modal', function () {

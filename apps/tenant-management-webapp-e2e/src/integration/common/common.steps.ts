@@ -3,6 +3,8 @@ import common from './common.page';
 import commonlib from './common-library';
 import { injectAxe } from '../../support/app.po';
 import { htmlReport } from '../../support/axe-html-reporter-util';
+import events from '../events/events.page';
+import tenantAdminPage from '../tenant-admin/tenant-admin.page';
 
 const commonObj = new common();
 let apiDocsLink;
@@ -267,3 +269,70 @@ When('the user clicks Load more button on the page', function () {
   commonObj.loadMoreButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
+
+const tenantAdminObj = new tenantAdminPage();
+Then('the {string} landing page is displayed', function (pageTitle) {
+  let urlPart = 'undefined';
+  switch (pageTitle) {
+    case 'File service':
+      urlPart = '/admin/services/file';
+      break;
+    case 'Status service':
+      urlPart = '/admin/services/status';
+      break;
+    case 'Event log':
+      urlPart = '/admin/event-log';
+      break;
+    default:
+      expect(pageTitle).to.be.oneOf(['File service', 'Status service', 'Event log']);
+  }
+  cy.url().should('include', urlPart);
+  tenantAdminObj.servicePageTitle(pageTitle).then((title) => {
+    expect(title.length).to.be.gt(0); // element exists
+  });
+});
+
+const eventsObj = new events();
+When('the user clicks Add definition button on event definitions page', function () {
+  eventsObj.addDefinitionButton().shadow().find('button').click({ force: true });
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
+});
+
+Then('the user views Add definition dialog', function () {
+  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Add definition');
+});
+
+When(
+  'the user enters {string} in Namespace, {string} in Name, {string} in Description',
+  function (namespace: string, name: string, desc: string) {
+    eventsObj
+      .definitionModalNamespaceField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(namespace, { delay: 100, force: true });
+    eventsObj.definitionModalNameField().shadow().find('input').clear().type(name, { delay: 50, force: true });
+    eventsObj.definitionModalDescriptionField().shadow().find('textarea').type(desc);
+  }
+);
+
+When('the user clicks Save button on Definition modal', function () {
+  eventsObj.definitionModalSaveButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then(
+  'the user {string} an event definition of {string} and {string} under {string}',
+  function (viewOrNot, eventName, eventDesc, eventNamespace) {
+    switch (viewOrNot) {
+      case 'views':
+        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('exist');
+        break;
+      case 'should not view':
+        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
