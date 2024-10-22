@@ -31,6 +31,12 @@ export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
     overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
   }
 `;
+export const NotificationBannerWrapper = styled.div`
+  top: 0;
+  position: fixed;
+  left: 0;
+  right: 0;
+`;
 export const Modal = styled.div<{ open: boolean; isNotificationActive: boolean }>`
   display: ${(props) => (props.open ? `block` : `none`)};
   position: fixed;
@@ -50,8 +56,6 @@ export const MonacoDiv = styled.div`
   padding: 0.15rem 0.15rem;
 `;
 export const MonacoDivBody = styled.div`
-  height: calc(72vh - 260px);
-
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
@@ -106,6 +110,7 @@ export const MonacoDivTriggerEventsBody = styled.div`
 `;
 export const ScriptEditorContainer = styled.div`
   width: 50%;
+
   padding-right: 1.5rem;
   overflow: hidden;
   display: flex;
@@ -446,8 +451,7 @@ export const Tooltip = styled.div`
 `;
 
 export const AddTriggerButtonPadding = styled.div`
-  // padding-bottom: var(--goa-space-l);
-  margin-top: 48px;
+  margin-top: var(--goa-space-m);
   text-align: end;
 `;
 

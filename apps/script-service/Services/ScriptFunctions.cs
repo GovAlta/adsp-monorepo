@@ -4,6 +4,7 @@ using Adsp.Sdk;
 using Adsp.Sdk.Events;
 using NLua;
 using RestSharp;
+using System.Text.Json;
 
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions : IScriptFunctions
@@ -11,14 +12,16 @@ internal class ScriptFunctions : IScriptFunctions
   private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;
   private readonly Func<Task<string>> _getToken;
+  private readonly Lua _lua;
   private readonly IRestClient _client;
 
 
-  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, IRestClient? client = null)
+  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, Lua lua, IRestClient? client = null)
   {
     _tenantId = tenantId;
     _directory = directory;
     _getToken = getToken;
+    _lua = lua;
     _client = client ?? new RestClient(new RestClientOptions { ThrowOnAnyError = true });
   }
 
@@ -86,7 +89,7 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
-  public virtual FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
+  public virtual LuaTable? GetFormSubmission(string formId, string submissionId)
   {
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
@@ -96,7 +99,10 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var result = _client.GetAsync<FormSubmissionResult>(request).Result;
+    var Jsubmission = _client.GetAsync<string>(request).Result;
+    if (Jsubmission == null) return null;
+    var submission = JsonSerializer.Deserialize<FormSubmissionResult?>(Jsubmission);
+    var result = submission?.ToLuaTable(_lua);
     return result;
   }
 

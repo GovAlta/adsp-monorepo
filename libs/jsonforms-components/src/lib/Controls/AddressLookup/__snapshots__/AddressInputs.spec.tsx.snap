@@ -1,0 +1,84 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AddressInputs matches snapshot 1`] = `
+<DocumentFragment>
+  <goa-form-item
+    label=""
+  >
+    <goa-input
+      arialabel="address-form-address2"
+      data-testid="address-form-address2"
+      handletrailingiconclick="false"
+      name="addressLine2"
+      placeholder="Unit number, suite, apartment"
+      value="Apt 4"
+      variant="goa"
+      width="100%"
+    />
+  </goa-form-item>
+  <br />
+  <goa-grid
+    gap="s"
+    minchildwidth="0ch"
+  >
+    <goa-form-item
+      error=""
+      label="City"
+      requirement="optional"
+    >
+      <goa-input
+        arialabel="address-form-city"
+        data-testid="address-form-city"
+        handletrailingiconclick="false"
+        name="municipality"
+        value="Edmonton"
+        variant="goa"
+        width="100%"
+      />
+    </goa-form-item>
+    <goa-form-item
+      error=""
+      label="Postal Code"
+      requirement="optional"
+    >
+      <goa-input
+        arialabel="address-form-postal-code"
+        data-testid="address-form-postal-code"
+        handletrailingiconclick="false"
+        maxlength="7"
+        name="postalCode"
+        placeholder="A0A 0A0"
+        value="T5T 1V4"
+        variant="goa"
+        width="100%"
+      />
+    </goa-form-item>
+  </goa-grid>
+  <br />
+  <goa-grid
+    gap="s"
+    minchildwidth="0"
+  >
+    <goa-form-item
+      label="Province"
+    >
+      <div
+        class="sc-gswNZR honsqf"
+        data-testid="address-form-province"
+      >
+        Alberta
+      </div>
+    </goa-form-item>
+    <goa-form-item
+      label="Country"
+    >
+      <div
+        class="sc-gswNZR honsqf"
+        data-testid="address-form-country"
+      >
+        Canada
+      </div>
+    </goa-form-item>
+  </goa-grid>
+</DocumentFragment>
+`;
