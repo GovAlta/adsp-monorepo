@@ -11,22 +11,36 @@
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
-const cucumber = require('cypress-cucumber-preprocessor').default;
+const { addCucumberPreprocessorPlugin } = require('@badeball/cypress-cucumber-preprocessor');
+const { preprendTransformerToOptions } = require('@badeball/cypress-cucumber-preprocessor/browserify');
 const browserify = require('@cypress/browserify-preprocessor');
 const resolve = require('resolve');
 const clipboardy = require('clipboardy');
-import { createHtmlReport } from 'axe-html-reporter';
+const { createHtmlReport } = require('axe-html-reporter');
 
 let newAppStatus = '';
 let originalAppStatus = '';
 
-module.exports = (on, config) => {
+module.exports = async (on, config) => {
   const options = {
-    ...browserify.defaultOptions,
+    ...preprendTransformerToOptions(config, browserify.defaultOptions),
     typescript: resolve.sync('typescript', { baseDir: config.projectRoot }),
   };
   options.browserifyOptions.plugin.unshift(['tsify']);
-  on('file:preprocessor', cucumber(options));
+
+  // NOTE: This is to address cypress event listener merging:
+  // https://github.com/badeball/cypress-cucumber-preprocessor/blob/master/docs/event-handlers.md
+  let cucumberListeners;
+  const emitter = (event, listeners) => {
+    if (event === 'task') {
+      cucumberListeners = listeners;
+    } else {
+      on(event, listeners);
+    }
+  };
+  await addCucumberPreprocessorPlugin(emitter, config);
+
+  on('file:preprocessor', browserify(options));
   on('before:browser:launch', (browser = {}, launchOptions) => {
     if (browser.name === 'chrome') {
       launchOptions.args.push('--disable-dev-shm-usage');
@@ -34,6 +48,7 @@ module.exports = (on, config) => {
     }
   });
   on('task', {
+    ...cucumberListeners,
     async getClipboard() {
       return clipboardy.read();
     },
@@ -72,4 +87,6 @@ module.exports = (on, config) => {
       return originalAppStatus;
     },
   });
+
+  return config;
 };
