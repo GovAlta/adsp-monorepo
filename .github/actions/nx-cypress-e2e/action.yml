@@ -31,26 +31,19 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - shell: bash
-      run: |
-        sed -i -r \
-          -e "s/\"TAGS\":.+\"\"/\"TAGS\": \"${{ inputs.tags }}\"/" \
-          -e "s/\"core-api-client-secret\":.+\"\"/\"core-api-client-secret\": \"${{ inputs.core-api-client-secret }}\"/" \
-          -e "s/\"core-api-user-password\":.+\"\"/\"core-api-user-password\": \"${{ inputs.core-api-user-password }}\"/" \
-          -e "s/\"client-secret\":.+\"\"/\"client-secret\": \"${{ inputs.api-client-secret }}\"/" \
-          -e "s/\"password\":.+\"\"/\"password\": \"${{ inputs.cy-password }}\"/" \
-          -e "s/\"password2\":.+\"\"/\"password2\": \"${{ inputs.cy-password-2 }}\"/" \
-          -e "s/\"password3\":.+\"\"/\"password3\": \"${{ inputs.cy-password-3 }}\"/" \
-          apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json
     - name: E2E Test
       uses: cypress-io/github-action@v6
+      env:
+        CYPRESS_TAGS: ${{ inputs.tags }}
+        cypress_coreApiClientSecret: ${{ inputs.core-api-client-secret }}
+        cypress_coreApiUserPassword: ${{ inputs.core-api-user-password }}
+        cypress_clientSecret: ${{ inputs.api-client-secret }}
+        cypress_password: ${{ inputs.cy-password }}
+        cypress_password2: ${{ inputs.cy-password-2 }}
+        cypress_password3: ${{ inputs.cy-password-3 }}
       with:
         install-command: npm ci
-        command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headed --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json"
-    - if: ${{ always() }}
-      shell: bash
-      run: |
-        node apps/${{ inputs.app }}-e2e/src/support/multiple-cucumber-html-reporter.js
+        command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headed --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.config.js"
     - if: ${{ always() }}
       name: Upload Cypress Results
       uses: actions/upload-artifact@v4

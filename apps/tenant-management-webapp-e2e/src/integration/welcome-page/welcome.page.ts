@@ -1,4 +1,4 @@
-/// <reference types="cypress-xpath" />
+/// <reference types="@cypress/xpath" />
 class WelcomePage {
   signinButton() {
     return cy.xpath('//*[@data-testid="sign-ing-btn"]');

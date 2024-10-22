@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
 import ServiceStatusPage from './service-status.page';
@@ -46,7 +46,7 @@ Then('the user views Add notice dialog', function () {
 //Date time picker UI isn't finalized and the step uses the default dates without entering any date data
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notice dialog',
-  function (desc, app, startDate, startTime, endDate, endTime) {
+  function (desc: string, app, startDate, startTime: string, endDate, endTime: string) {
     cy.viewport(1920, 1080);
     statusObj.noticeModalDescField().shadow().find('textarea').clear({ force: true }).type(desc, { force: true });
     // Select Application
@@ -125,7 +125,7 @@ When('the user clicks Cancel button in notice modal', function () {
 // Date time picker UI isn't finalized and dates are today only for now
 Then(
   'the user {string} the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
-  function (viewOrNot, mode, desc, app, startDate, startTime, endDate, endTime) {
+  function (viewOrNot, mode, desc, app, startDate: string, startTime, endDate: string, endTime) {
     let startDateTime;
     let endDateTime;
     if (startDate == 'Today' && endDate == 'Today') {
@@ -170,7 +170,7 @@ Then(
 
 When(
   'the user clicks {string} menu for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
-  function (menu, mode, desc, app, startDate, startTime, endDate, endTime) {
+  function (menu: string, mode, desc, app, startDate: string, startTime, endDate: string, endTime) {
     cy.viewport(1920, 1080);
     cy.wait(2000); // Wait for the page to be loaded and stable before operating on menu items
     let startDateTime;
@@ -242,7 +242,7 @@ Then('the user views Edit notice dialog', function () {
   statusObj.noticeModalTitle().invoke('text').should('eq', 'Edit notice');
 });
 
-When('the user selects {string} filter by status radio button', function (filterType) {
+When('the user selects {string} filter by status radio button', function (filterType: string) {
   expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'Active']);
   cy.wait(2000); // To avoid clicking the filter too early
   statusObj
@@ -281,7 +281,7 @@ Then('the user views {string} notices', function (filterType) {
 
 Then(
   'the user should not view {string} for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
-  function (menu, mode, desc, app, startDate, startTime, endDate, endTime) {
+  function (menu, mode, desc, app, startDate: string, startTime, endDate: string, endTime) {
     let startDateTime;
     let endDateTime;
     if (startDate == 'Today' && endDate == 'Today') {
@@ -509,7 +509,7 @@ Then('the user views Add application modal', function () {
 
 When(
   'the user enters {string} as name and {string} as description and {string} as endpoint',
-  function (name, description, endpoint) {
+  function (name: string, description: string, endpoint: string) {
     statusObj.addEditApplicationNameModalField().shadow().find('input').clear().type(name, { delay: 200, force: true });
     statusObj
       .addEditApplicationDescriptionModalField()
@@ -582,20 +582,23 @@ Then(
   }
 );
 
-When('the user enters {string} as name and {string} as description fields', function (appName, description) {
-  statusObj
-    .addEditApplicationNameModalField()
-    .shadow()
-    .find('input')
-    .clear()
-    .type(appName, { delay: 100, force: true });
-  statusObj
-    .addEditApplicationDescriptionModalField()
-    .shadow()
-    .find('textarea')
-    .clear()
-    .type(description, { force: true });
-});
+When(
+  'the user enters {string} as name and {string} as description fields',
+  function (appName: string, description: string) {
+    statusObj
+      .addEditApplicationNameModalField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(appName, { delay: 100, force: true });
+    statusObj
+      .addEditApplicationDescriptionModalField()
+      .shadow()
+      .find('textarea')
+      .clear()
+      .type(description, { force: true });
+  }
+);
 
 When('the user clicks Change status button for {string}', function (appName) {
   statusObj.applicationCardChangeStatusBtn(appName).shadow().find('button').click({ force: true });
@@ -605,7 +608,7 @@ Then('the user views Manual status change modal', function () {
   statusObj.manualStatusChangeModalTitle().invoke('text').should('contain', 'Manual status change');
 });
 
-When('the user selects {string} and clicks Save button', function (statusName) {
+When('the user selects {string} and clicks Save button', function (statusName: string) {
   statusObj
     .manualStatusChangeModalStatusRadioGroup()
     .shadow()
@@ -706,7 +709,7 @@ Then('the user views Edit contact information modal on the status overview page'
   statusObj.editContactInformationModal().invoke('text').should('eq', 'Edit contact information');
 });
 
-When('the user enters {string} in Edit contact information modal', function (email) {
+When('the user enters {string} in Edit contact information modal', function (email: string) {
   statusObj
     .editContactInformationEmail()
     .shadow()

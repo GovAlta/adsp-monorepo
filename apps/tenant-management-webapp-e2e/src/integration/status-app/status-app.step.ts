@@ -1,4 +1,4 @@
-import { Given, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 import StatusAppPage from './status-app.page';
 
 const statusAppObj = new StatusAppPage();
@@ -41,7 +41,7 @@ Then('the user views the timestamp of {string} being updated', function (appName
     });
 });
 
-Then('the user views the status of {string} being the first unused status', function (appName) {
+Then('the user views the status of {string} being the first unused status', function (appName: string) {
   statusAppObj
     .applicationStatus(appName.trim())
     .invoke('text')
@@ -54,7 +54,7 @@ Then('the user views the status of {string} being the first unused status', func
 
 Then(
   'the user {string} {string} application in the status app for {string} tenant',
-  function (viewOrNot, appName, tenantName) {
+  function (viewOrNot, appName: string, tenantName) {
     const urlToTenantLogin = Cypress.env().statusAppUrl + '/' + tenantName;
     cy.visit(urlToTenantLogin);
     cy.wait(3000);
