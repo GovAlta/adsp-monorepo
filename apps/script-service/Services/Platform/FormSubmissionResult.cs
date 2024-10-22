@@ -1,66 +1,71 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Xml.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+using Adsp.Sdk.Util;
 
-namespace Adsp.Platform.ScriptService.Services.Platform;
-
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
-public sealed class FormSubmissionResult
+namespace Adsp.Platform.ScriptService.Services.Platform
 {
-  public string? Id { get; set; }
-  public string? FormDefinitionId { get; set; }
-  public string? FormId { get; set; }
-  [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
-  [XmlElement("formData")]
-  public IDictionary<string, object?>? Data { get; set; } = new Dictionary<string, object?>();
-  [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
-  [XmlElement("formFiles")]
-  public IDictionary<string, object?>? Files { get; set; } = new Dictionary<string, object?>();
-  public User? CreatedBy { get; set; }
-  public User? UpdatedBy { get; set; }
-  public DateTime? Created { get; set; }
-  public DateTime? Updated { get; set; }
-  public FormDisposition? Disposition { get; set; }
-  public FormDisposition? SubmissionStatus { get; set; }
-
-  public IDictionary<string, object?> ToDictionary()
+  [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
+  public sealed class FormSubmissionResult
   {
-    {
-      var json = JsonConvert.SerializeObject(this);
-      var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object?>>(json);
-      var fix = DictionaryToJson.Fix(dictionary);
-      return fix;
-    }
+    [JsonPropertyName("Id")]
+    public string? Id { get; set; }
+    [JsonPropertyName("formDefinitionId")]
+    public string? FormDefinitionId { get; set; }
+    [JsonPropertyName("FormId")]
+    public string? FormId { get; set; }
+
+    [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
+    [JsonPropertyName("FormData")]
+    [JsonConverter(typeof(DictionaryJsonConverter))]
+    public IDictionary<string, object?>? Data { get; set; } = new Dictionary<string, object?>();
+
+    [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
+    [JsonPropertyName("formFiles")]
+    [JsonConverter(typeof(DictionaryJsonConverter))]
+    public IDictionary<string, object?>? Files { get; set; } = new Dictionary<string, object?>();
+
+    [JsonPropertyName("createdBy")]
+    public User? CreatedBy { get; set; }
+    [JsonPropertyName("updatedBy")]
+    public User? UpdatedBy { get; set; }
+    [JsonPropertyName("created")]
+    public DateTime? Created { get; set; }
+    [JsonPropertyName("updated")]
+    public DateTime? Updated { get; set; }
+    [JsonPropertyName("disposition")]
+    public FormDisposition? Disposition { get; set; }
   }
 
-  public static FormSubmissionResult FromDictionary(IDictionary<string, object?> submission)
+
+  public sealed class FormDisposition
   {
-    var json = JsonConvert.SerializeObject(submission);
-    return JsonConvert.DeserializeObject<FormSubmissionResult>(json);
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+    [JsonPropertyName("reason")]
+    public string? Reason { get; set; }
+    [JsonPropertyName("date")]
+    public DateTime? Date { get; set; }
   }
-}
 
-public sealed class FormDisposition
-{
-  public string? Id { get; set; }
-  public string? Status { get; set; }
-  public string? Reason { get; set; }
-  public DateTime? Date { get; set; }
-  public SecurityClassificationType? SecurityClassification { get; set; }
+  public sealed class User
+  {
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
 
-}
+  }
 
-public sealed class User
-{
-  public string? Id { get; set; }
-  public string? Name { get; set; }
-}
-
-public enum SecurityClassificationType
-{
-  ProtectedA,
-  ProtectedB,
-  ProtectedC,
-  Public
+  public enum SecurityClassificationType
+  {
+    [JsonPropertyName("protected a")]
+    ProtectedA,
+    [JsonPropertyName("protected b")]
+    ProtectedB,
+    [JsonPropertyName("protected c")]
+    ProtectedC,
+    [JsonPropertyName("public")]
+    Public
+  }
 }
 
