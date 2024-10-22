@@ -4,6 +4,7 @@ using Adsp.Sdk;
 using Adsp.Sdk.Events;
 using NLua;
 using RestSharp;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Adsp.Platform.ScriptService.Services;
@@ -14,6 +15,8 @@ internal class ScriptFunctions : IScriptFunctions
   private readonly Func<Task<string>> _getToken;
   private readonly Lua _lua;
   private readonly IRestClient _client;
+  public const string FormSubmissionRequestError = "Form submission request failure";
+
 
 
   public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, Lua lua, IRestClient? client = null)
@@ -89,6 +92,7 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
+  [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Specific exceptions are not known and handled centrally.")]
   public virtual LuaTable? GetFormSubmission(string formId, string submissionId)
   {
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
@@ -98,12 +102,18 @@ internal class ScriptFunctions : IScriptFunctions
     var request = new RestRequest(requestUrl, Method.Get);
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
-
-    var Jsubmission = _client.GetAsync<string>(request).Result;
-    if (Jsubmission == null) return null;
-    var submission = JsonSerializer.Deserialize<FormSubmissionResult?>(Jsubmission);
-    var result = submission?.ToLuaTable(_lua);
-    return result;
+    try
+    {
+      var submission = _client.GetAsync<string>(request).Result;
+      if (submission == null) return null;
+      var deserialized = JsonSerializer.Deserialize<FormSubmissionResult?>(submission);
+      return deserialized?.ToLuaTable(_lua);
+    }
+    catch (Exception e)
+    {
+      string message = e.Message;
+      return message.ToLuaTable(FormSubmissionRequestError, _lua);
+    }
   }
 
   public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)

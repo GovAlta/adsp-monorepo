@@ -28,17 +28,17 @@ public class ScriptFunctionsTests
     Id = SubmissionId,
     FormId = FormId,
 
-    // Data = new Dictionary<string, object?>
-    //         {
-    //             { "firstName", "Bob" },
-    //             { "lastName", "Bing" },
-    //             { "email", "Bob@bob.com" }
-    //         },
-    // Files = new Dictionary<string, object?>
-    //         {
-    //             { "resume", "urn:ads:platform:file-service:v1:/files/resume" },
-    //             { "cover", "urn:ads:platform:file-service:v1:/files/cover" }
-    //         },
+    Data = new Dictionary<string, object?>
+            {
+                { "firstName", "Bob" },
+                { "lastName", "Bing" },
+                { "email", "Bob@bob.com" }
+            },
+    Files = new Dictionary<string, object?>
+            {
+                { "resume", "urn:ads:platform:file-service:v1:/files/resume" },
+                { "cover", "urn:ads:platform:file-service:v1:/files/cover" }
+            },
     FormDefinitionId = "job-application",
     Disposition = new FormDisposition
     {
@@ -93,16 +93,17 @@ public class ScriptFunctionsTests
   [Fact]
   public void ReturnsFormSubmissionNotFound()
   {
-    var formServiceId = AdspId.Parse("urn:ads:platform:form-service");
-    var endpoint = $"/form/v1/forms/{FormId}/submissions/invalid-submission-id";
-    var tenant = AdspId.Parse("urn:ads:platform:my-tenant");
-    var serviceDirectory = TestUtil.GetServiceUrl(formServiceId);
+    var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
+    var endpoint = $"/form/v1/forms/{FormId}/submissions/{SubmissionId}";
+    var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
+    var ServiceDirectory = TestUtil.GetServiceUrl(FormServiceId);
+    var expected = SerializeFormSubmissionResult(this.TestData);
     using var lua = new Lua();
-
-    using var restClient = TestUtil.GetRestClient<string>(formServiceId, endpoint, null);
-    var ScriptFunctions = new ScriptFunctions(tenant, TestUtil.GetServiceUrl(formServiceId), TestUtil.GetMockToken(), lua, restClient);
+    using var RestClient = TestUtil.GetRestClient<string>(FormServiceId, endpoint, expected, false);
+    var ScriptFunctions = new ScriptFunctions(FormServiceId, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), lua, RestClient);
     var actual = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);
-    Assert.Null(actual);
+    Assert.NotNull(actual);
+    Assert.Equal("One or more errors occurred. (404 (Not Found))", actual[ScriptFunctions.FormSubmissionRequestError]);
   }
 
   private static void AssertSubmission(LuaTable submission, string SubmissionId, string FormId)
@@ -116,12 +117,12 @@ public class ScriptFunctionsTests
     var Creator = (LuaTable)submission["CreatedBy"];
     Assert.NotNull(Creator);
     Assert.Equal("Bob1234", Creator["Id"]);
-    // var files = (LuaTable)submission["Files"];
-    // Assert.NotNull(files);
-    // Assert.Equal("urn:ads:platform:file-service:v1:/files/resume", files["resume"]);
-    // var Data = (LuaTable)submission["Data"];
-    // Assert.NotNull(Data);
-    // Assert.Equal("Bob", Data["firstName"]);
+    var files = (LuaTable)submission["Files"];
+    Assert.NotNull(files);
+    Assert.Equal("urn:ads:platform:file-service:v1:/files/resume", files["resume"]);
+    var Data = (LuaTable)submission["Data"];
+    Assert.NotNull(Data);
+    Assert.Equal("Bob", Data["firstName"]);
   }
 
   private static string SerializeFormSubmissionResult(FormSubmissionResult submission)
