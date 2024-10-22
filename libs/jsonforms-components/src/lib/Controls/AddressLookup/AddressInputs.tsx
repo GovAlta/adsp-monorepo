@@ -10,6 +10,7 @@ interface AddressInputsProps {
   // eslint-disable-next-line
   errors?: any;
   handleOnBlur: (field: string) => void;
+  requiredFields?: string[];
 }
 
 export const AddressInputs: React.FC<AddressInputsProps> = ({
@@ -18,6 +19,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
   isAlbertaAddress,
   errors,
   handleOnBlur,
+  requiredFields,
 }: AddressInputsProps): JSX.Element => {
   const provinces = [
     { value: 'AB', label: 'Alberta' },
@@ -50,18 +52,26 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
       </GoAFormItem>
       <br />
       <GoAGrid minChildWidth="0ch" gap="s">
-        <GoAFormItem label="City" error={errors?.['municipality'] ?? ''}>
+        <GoAFormItem
+          label="City"
+          error={errors?.['municipality'] ?? ''}
+          requirement={requiredFields?.includes('municipality') ? 'required' : 'optional'}
+        >
           <GoAInput
-            name="city"
+            name="municipality"
             testId="address-form-city"
             ariaLabel={'address-form-city'}
-            value={address?.city || ''}
+            value={address?.municipality || ''}
             onChange={(name, value) => handleInputChange(name, value)}
-            onBlur={(name, value) => handleOnBlur('municipality')}
+            onBlur={(name, value) => handleOnBlur(name)}
             width="100%"
           />
         </GoAFormItem>
-        <GoAFormItem label="Postal Code" error={errors?.['postalCode'] ?? ''}>
+        <GoAFormItem
+          label="Postal Code"
+          error={errors?.['postalCode'] ?? ''}
+          requirement={requiredFields?.includes('postalCode') ? 'required' : 'optional'}
+        >
           <GoAInput
             name="postalCode"
             testId="address-form-postal-code"
@@ -84,7 +94,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
               name="province"
               testId="address-form-province-dropdown"
               ariaLabel={'address-form-province'}
-              value={address?.province || ''}
+              value={address?.subdivisionCode || ''}
               onChange={(value) => handleInputChange('province', value)}
               relative={true}
               width="25ch"
