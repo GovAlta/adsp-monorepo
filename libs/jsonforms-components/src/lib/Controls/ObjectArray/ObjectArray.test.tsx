@@ -2,7 +2,7 @@ import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonForms } from '@jsonforms/react';
 import Ajv from 'ajv';
-import { GoACells, GoARenderers } from '../../../index';
+import { GoACells, GoARenderers, GoABaseReviewRenderers } from '../../../index';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -28,6 +28,9 @@ const dataSchema = {
   message: {
     type: 'string',
     maxLength: 5,
+  },
+  age: {
+    type: 'number',
   },
 };
 
@@ -59,19 +62,31 @@ const getUiSchema = () => {
 const getForm = (formData: object) => {
   return (
     <JsonForms
+      uischema={getUiSchema()}
       data={formData}
       schema={rootSchema}
-      uischema={getUiSchema()}
       ajv={new Ajv({ allErrors: true, verbose: true })}
       renderers={GoARenderers}
       cells={GoACells}
     />
   );
 };
+const getReviewForm = (formData: object) => {
+  return (
+    <JsonForms
+      uischema={getUiSchema()}
+      data={formData}
+      schema={rootSchema}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoABaseReviewRenderers}
+      cells={GoACells}
+    />
+  );
+};
 
 describe('Object Array Renderer', () => {
-  it('can add a new item', () => {
-    const data = { messages: [] };
+  it('can add multiple items', async () => {
+    const data = {};
     const renderer = render(getForm(data));
 
     // Add a message
@@ -82,20 +97,56 @@ describe('Object Array Renderer', () => {
     fireEvent.click(shadowAddBtn!);
 
     // populate Name
-    const name = renderer.getByTestId('#/properties/name-input');
+    const name = renderer.getByTestId('#/properties/name-input-0');
     expect(name).toBeInTheDocument();
-    fireEvent.change(name!, { target: { value: 'Bob' } });
+    fireEvent(
+      name,
+      new CustomEvent('_change', {
+        detail: { value: 'Bob', name: 'name' },
+      })
+    );
     expect(name).toHaveValue('Bob');
 
     // populate Message
-    const message = renderer.getByTestId('#/properties/message-input');
+    const message = renderer.getByTestId('#/properties/message-input-0');
     expect(message).toBeInTheDocument();
     fireEvent.change(message!, { target: { value: 'The rain in Spain' } });
     expect(message).toHaveValue('The rain in Spain');
+
+    // add another button
+    fireEvent.click(shadowAddBtn!);
+
+    const name2 = renderer.getByTestId('#/properties/name-input-1');
+    expect(name2).toBeInTheDocument();
+
+    fireEvent(
+      name2,
+      new CustomEvent('_change', {
+        detail: { value: 'Jim', name: 'name' },
+      })
+    );
+    expect(name2).toHaveValue('Jim');
+  });
+
+  it('read from existing data', () => {
+    const data = { messages: [{ name: 'Bob' }] };
+    const renderer = render(getForm(data));
+
+    const name = renderer.getByTestId('#/properties/name-input-0');
+
+    expect(name).toHaveValue('Bob');
+  });
+  it('read from existing data and display in review', () => {
+    const data = { messages: [{ name: 'Bob' }] };
+    const renderer = render(getReviewForm(data));
+
+    const name = renderer.getByTestId('#/properties/name-input-0-review');
+
+    expect(name).toHaveTextContent('Bob');
   });
 
   it('can open the delete dialog', () => {
-    const data = { messages: [] };
+    const data = { messages: ['42'] };
     const renderer = render(getForm(data));
 
     // Add a message
@@ -155,7 +206,7 @@ describe('Object Array Renderer', () => {
     expect(closedDeleteModal.getAttribute('open')).toBe('false');
 
     // Ensure item still exists
-    const name = renderer.getByTestId('#/properties/name-input');
+    const name = renderer.getByTestId('#/properties/name-input-0');
     expect(name).toBeInTheDocument();
   });
 
@@ -190,7 +241,7 @@ describe('Object Array Renderer', () => {
     expect(closedDeleteModal.getAttribute('open')).toBe('false');
 
     // Ensure item no longer exists
-    const name = renderer.queryByTestId('#/properties/name-input');
+    const name = renderer.queryByTestId('#/properties/name-input-0');
     expect(name).toBeNull();
   });
 });
