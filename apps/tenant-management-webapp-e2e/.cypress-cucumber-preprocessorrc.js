@@ -5,9 +5,8 @@ const path = require('path');
 module.exports = {
   nonGlobalStepDefinitions: false,
   stepDefinitions: [
-    path.resolve(process.cwd(), './src/integration/[filepath]/*.step.ts'),
-    path.resolve(process.cwd(), './src/integration/[filepath]/*.steps.ts'),
-    path.resolve(process.cwd(), './src/integration/common/common.steps.ts'),
+    path.resolve(process.cwd(), './src/integration/**/*.step.ts'),
+    path.resolve(process.cwd(), './src/integration/**/*.steps.ts'),
   ],
   html: {
     enabled: true,

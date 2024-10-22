@@ -200,11 +200,6 @@ When('the user clicks Delete button in delete confirmation modal', function () {
 });
 
 When('the user clicks Cancel button in delete confirmation modal', function () {
-  commonObj.deleteConfirmationModalCancelBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
-});
-
-When('the user clicks Cancel button in delete confirmation modal', function () {
   commonObj
     .deleteConfirmationModalCancelBtn()
     .shadow()
