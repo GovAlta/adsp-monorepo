@@ -175,13 +175,16 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
 
     return false;
   };
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications?.notifications[state.notifications?.notifications?.length - 1]
+  );
+  const Height = latestNotification && !latestNotification.disabled ? 91 : 0;
 
   return (
     <>
-      <TemplateEditorContainerPdf>
+      <TemplateEditorContainerPdf style={{ height: `calc(100vh - ${Height}px)` }}>
         <EditorLHSWrapper>
           <section>
-            <LogoutModal />
             {customIndicator && <CustomLoader />}
             <PDFTitle>PDF / Template Editor</PDFTitle>
             <hr />
@@ -192,8 +195,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                 <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
                   <GoAFormItem error={errors?.header ?? ''} label="">
                     {pdfTemplate && (
-                      <MonacoDivBody style={{ height: monacoHeight }}>
+                      <MonacoDivBody>
                         <MonacoEditor
+                          height={monacoHeight}
                           language={'handlebars'}
                           value={tmpTemplate?.header}
                           data-testid="templateForm-header"
@@ -208,8 +212,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                 </Tab>
                 <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
                   <GoAFormItem error={errors?.body ?? null} label="">
-                    <MonacoDivBody style={{ height: monacoHeight }}>
+                    <MonacoDivBody>
                       <MonacoEditor
+                        height={monacoHeight}
                         language={'handlebars'}
                         value={tmpTemplate?.template}
                         data-testid="templateForm-body"
