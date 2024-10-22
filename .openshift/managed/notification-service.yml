@@ -19,10 +19,6 @@ parameters:
     displayName: Namespace
     value: core-services-dev
     required: true
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -65,28 +61,26 @@ objects:
         template.openshift.io/expose-password: "{.data['database-password']}"
         template.openshift.io/expose-username: "{.data['database-user']}"
       labels:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: notification-service-mongodb${NAME_SUFFIX}
+      name: notification-service-mongodb
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
       database-name: subscriptionDb
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
-      database-uri: mongodb://notification-service-mongodb${NAME_SUFFIX}:27017
-      database-tls: 'false'
+      database-uri: mongodb://notification-service-mongodb:27017
+      database-tls: "false"
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
       labels:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: notification-service-mongodb${NAME_SUFFIX}
+      name: notification-service-mongodb
     spec:
       storageClassName: azure-disk
       accessModes:
@@ -100,14 +94,13 @@ objects:
       annotations:
         template.openshift.io/expose-uri: mongodb://{.spec.clusterIP}:{.spec.ports[?(.name=="mongo")].port}
       labels:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: notification-service-mongodb${NAME_SUFFIX}
+      name: notification-service-mongodb
     spec:
       ports:
         - name: mongo
@@ -116,7 +109,7 @@ objects:
           protocol: TCP
           targetPort: 27017
       selector:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -128,25 +121,24 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: notification-service-mongodb${NAME_SUFFIX}
+      name: notification-service-mongodb
     spec:
       replicas: 1
       selector:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: database
       strategy:
         type: Recreate
       template:
         metadata:
           labels:
-            app: notification-service${NAME_SUFFIX}
+            app: notification-service
             component: database
         spec:
           containers:
@@ -156,22 +148,22 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: notification-service-mongodb${NAME_SUFFIX}
+                      name: notification-service-mongodb
                 - name: MONGODB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: notification-service-mongodb${NAME_SUFFIX}
+                      name: notification-service-mongodb
                 - name: MONGODB_ADMIN_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-admin-password
-                      name: notification-service-mongodb${NAME_SUFFIX}
+                      name: notification-service-mongodb
                 - name: MONGODB_DATABASE
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: notification-service-mongodb${NAME_SUFFIX}
+                      name: notification-service-mongodb
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -212,7 +204,7 @@ objects:
           volumes:
             - name: notification-service-data
               persistentVolumeClaim:
-                claimName: notification-service-mongodb${NAME_SUFFIX}
+                claimName: notification-service-mongodb
       triggers:
         - imageChangeParams:
             automatic: true
@@ -252,19 +244,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: notification-service${NAME_SUFFIX}
+      name: notification-service
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: api
       strategy:
         type: Rolling
@@ -283,7 +274,7 @@ objects:
       template:
         metadata:
           labels:
-            app: notification-service${NAME_SUFFIX}
+            app: notification-service
             component: api
         spec:
           containers:
@@ -301,27 +292,27 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: notification-service-mongodb${NAME_SUFFIX}
+                      name: notification-service-mongodb
                 - name: MONGO_URI
                   valueFrom:
                     secretKeyRef:
                       key: database-uri
-                      name: notification-service-mongodb${NAME_SUFFIX}
+                      name: notification-service-mongodb
                 - name: MONGO_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: notification-service-mongodb${NAME_SUFFIX}
+                      name: notification-service-mongodb
                 - name: MONGO_DB
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: notification-service-mongodb${NAME_SUFFIX}
+                      name: notification-service-mongodb
                 - name: MONGO_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: notification-service-mongodb${NAME_SUFFIX}
+                      name: notification-service-mongodb
                 - name: NODE_EXTRA_CA_CERTS
                   value: /etc/certs/notify.pem
               imagePullPolicy: IfNotPresent
@@ -389,14 +380,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: notification-service${NAME_SUFFIX}
+      name: notification-service
     spec:
       ports:
         - name: http
@@ -404,7 +394,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -412,14 +402,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: notification-service${NAME_SUFFIX}
+        app: notification-service
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: notification-service${NAME_SUFFIX}
+      name: notification-service
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -428,6 +417,143 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: notification-service${NAME_SUFFIX}
+        name: notification-service
         weight: 100
       wildcardPolicy: None
+
+  # Dedicated job pod for notification so there is more work queue consumer capacity.
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: notification-service-job
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "notification-service:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image"
+            }
+          ]
+      labels:
+        app: notification-service
+        component: job
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: notification-service
+          component: job
+      template:
+        metadata:
+          labels:
+            app: notification-service
+            component: job
+        spec:
+          containers:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/notification-service@${DEPLOY_TAG}
+              envFrom:
+                - configMapRef:
+                    name: notification-service
+                - configMapRef:
+                    name: directory-overrides
+                - secretRef:
+                    name: notification-service
+              env:
+                - name: PORT
+                  value: "3333"
+                - name: MONGO_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: notification-service-mongodb
+                - name: MONGO_URI
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-uri
+                      name: notification-service-mongodb
+                - name: MONGO_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: notification-service-mongodb
+                - name: MONGO_DB
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: notification-service-mongodb
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: notification-service-mongodb
+                - name: NODE_EXTRA_CA_CERTS
+                  value: /etc/certs/notify.pem
+                - name: AMQP_CONSUMER_PRIORITY
+                  value: "1"
+              imagePullPolicy: IfNotPresent
+              name: notification-service
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
+              volumeMounts:
+                - name: cert-volume
+                  mountPath: /etc/certs
+                  readOnly: true
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 2
+                timeoutSeconds: 1
+                periodSeconds: 5
+                successThreshold: 1
+                failureThreshold: 20
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 2
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 5
+          volumes:
+            - secret:
+                items:
+                  - key: certificate
+                    path: notify.pem
+                secretName: ab-notify-cert
+              name: cert-volume
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600

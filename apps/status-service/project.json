@@ -13,10 +13,9 @@
         "outputPath": "dist/apps/status-service",
         "main": "apps/status-service/src/main.ts",
         "tsConfig": "apps/status-service/tsconfig.app.json",
-        "assets": ["apps/status-service/src/assets"],
+        "assets": [],
         "target": "node",
         "compiler": "tsc",
-        "isolatedConfig": true,
         "babelUpwardRootMode": true
       },
       "configurations": {

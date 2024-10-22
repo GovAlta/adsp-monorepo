@@ -106,7 +106,7 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
           {!triggerEvents && renderNoItem('script event trigger')}
 
           <div>
-            <DataTable style={{ height: '100%' }} data-testid="script-editor-trigger-events-table">
+            <DataTable data-testid="script-editor-trigger-events-table">
               <thead data-testid="script-editor-trigger-events-table-header">
                 <tr>
                   <th id="name" data-testid="script-editor-trigger-events-table-header-name">
@@ -178,6 +178,7 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
+            size="compact"
             testId="script-add-trigger-event-button"
             onClick={() => {
               setSelectedTriggerEvent(defaultTriggerEvent);

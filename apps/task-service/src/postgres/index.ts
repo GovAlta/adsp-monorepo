@@ -1,7 +1,6 @@
-import { knex as initKnex} from 'knex';
+import { retry } from '@abgov/adsp-service-sdk';
+import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const retry = require('promise-retry');
 import { TaskRepository } from '../task';
 import { PostgresTaskRepository } from './task';
 
@@ -46,15 +45,15 @@ export const createRepositories = async ({
     },
   });
 
-  await retry(async (next, count) => {
-    logger.debug(`Try ${count}: connecting to postgres and running migration...`);
+  await retry.execute(async ({ attempt }) => {
+    logger.debug(`Try ${attempt}: connecting to postgres and running migration...`);
     try {
       await knex.migrate.latest();
 
       logger.info('Database migrations upped to latest.');
     } catch (err) {
-      logger.debug(`Try ${count} failed with error. ${err}`, { context: 'createRepositories' });
-      next(err);
+      logger.debug(`Try ${attempt} failed with error. ${err}`, { context: 'createRepositories' });
+      throw err;
     }
   });
 

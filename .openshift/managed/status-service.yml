@@ -23,10 +23,6 @@ parameters:
     description: The application name of the service.
     displayName: application name
     value: status-service
-  - name: NAME_SUFFIX
-    description: Suffix applied to the names of the objects created.
-    displayName: Name Suffix
-    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -74,28 +70,26 @@ objects:
         template.openshift.io/expose-password: "{.data['database-password']}"
         template.openshift.io/expose-username: "{.data['database-user']}"
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+      name: ${APP_NAME}-mongodb
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
       database-name: ${MONGODB_DB_NAME}
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
-      database-uri: mongodb://${APP_NAME}-mongodb${NAME_SUFFIX}:27017
+      database-uri: mongodb://${APP_NAME}-mongodb:27017
       database-tls: "false"
 
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: database
         apply-init: "true"
-        apply-branch: "true"
-      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+      name: ${APP_NAME}-mongodb
     spec:
       storageClassName: azure-disk
       accessModes:
@@ -109,14 +103,13 @@ objects:
       annotations:
         template.openshift.io/expose-uri: mongodb://{.spec.clusterIP}:{.spec.ports[?(.name=="mongo")].port}
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+      name: ${APP_NAME}-mongodb
     spec:
       ports:
         - name: mongo
@@ -125,7 +118,7 @@ objects:
           protocol: TCP
           targetPort: 27017
       selector:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -138,25 +131,24 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: database
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+      name: ${APP_NAME}-mongodb
     spec:
       replicas: 1
       selector:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: database
       strategy:
         type: Recreate
       template:
         metadata:
           labels:
-            app: ${APP_NAME}${NAME_SUFFIX}
+            app: ${APP_NAME}
             component: database
         spec:
           containers:
@@ -166,22 +158,22 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGODB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGODB_ADMIN_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-admin-password
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGODB_DATABASE
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -222,7 +214,7 @@ objects:
           volumes:
             - name: ${APP_NAME}-data
               persistentVolumeClaim:
-                claimName: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                claimName: ${APP_NAME}-mongodb
       triggers:
         - imageChangeParams:
             automatic: true
@@ -262,19 +254,18 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: ${APP_NAME}${NAME_SUFFIX}
+      name: ${APP_NAME}
     spec:
       replicas: 3
       revisionHistoryLimit: 3
       selector:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: api
       strategy:
         type: Rolling
@@ -293,7 +284,7 @@ objects:
       template:
         metadata:
           labels:
-            app: ${APP_NAME}${NAME_SUFFIX}
+            app: ${APP_NAME}
             component: api
         spec:
           containers:
@@ -309,27 +300,27 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGO_URI
                   valueFrom:
                     secretKeyRef:
                       key: database-uri
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGO_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGO_DB
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGO_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: HA_MODEL
                   value: "true"
                 - name: POD_TYPE
@@ -365,46 +356,46 @@ objects:
               namespace: ${INFRA_NAMESPACE}
           type: ImageChange
 
-  - apiVersion: v1
-    kind: DeploymentConfig
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: job
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: ${APP_NAME}${NAME_SUFFIX}-job
+      name: ${APP_NAME}-job
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image"
+            }
+          ]
     spec:
       replicas: 1
       revisionHistoryLimit: 3
       selector:
-        app: ${APP_NAME}${NAME_SUFFIX}
-        component: job
-      strategy:
-        type: Rolling
-        rollingParams:
-          timeoutSeconds: 600
-          maxUnavailable: 25%
-          maxSurge: 25%
-        activeDeadlineSeconds: 21600
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
+        matchLabels:
+          app: ${APP_NAME}
+          component: job
       template:
         metadata:
           labels:
-            app: ${APP_NAME}${NAME_SUFFIX}
+            app: ${APP_NAME}
             component: job
         spec:
           containers:
-            - envFrom:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              envFrom:
                 - configMapRef:
                     name: ${APP_NAME}
                 - configMapRef:
@@ -416,27 +407,27 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGO_URI
                   valueFrom:
                     secretKeyRef:
                       key: database-uri
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGO_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGO_DB
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: MONGO_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb
                 - name: HA_MODEL
                   value: "true"
                 - name: POD_TYPE
@@ -457,30 +448,24 @@ objects:
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
-      test: false
-      triggers:
-        - imageChangeParams:
-            automatic: true
-            containerNames:
-              - ${APP_NAME}
-            from:
-              kind: ImageStreamTag
-              name: ${APP_NAME}:${DEPLOY_TAG}
-              namespace: ${INFRA_NAMESPACE}
-          type: ImageChange
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      progressDeadlineSeconds: 600
 
   - apiVersion: v1
     kind: Service
     metadata:
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: ${APP_NAME}${NAME_SUFFIX}
+      name: ${APP_NAME}
     spec:
       ports:
         - name: http
@@ -488,7 +473,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -496,14 +481,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
+        app: ${APP_NAME}
         component: api
-        apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: ${APP_NAME}${NAME_SUFFIX}
+      name: ${APP_NAME}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -512,6 +496,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: ${APP_NAME}${NAME_SUFFIX}
+        name: ${APP_NAME}
         weight: 100
       wildcardPolicy: None

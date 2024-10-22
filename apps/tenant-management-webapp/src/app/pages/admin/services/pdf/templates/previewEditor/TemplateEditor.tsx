@@ -162,7 +162,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     }
   }, [monaco, suggestion]);
 
-  const monacoHeight = `calc(100vh - 388px${notifications.length > 0 ? ' - 80px' : ''})`;
+  const monacoHeight = `calc(100vh - 356px${notifications.length > 0 ? ' - 80px' : ''})`;
   const fileHistHeight = `calc(100vh - 428px${notifications.length > 0 ? ' - 80px' : ''})`;
   const pdfList = useSelector((state: RootState) =>
     state.pdf?.jobs?.filter((job) => job.templateId === pdfTemplate.id)
@@ -283,7 +283,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                       <GoAButton
                         type="secondary"
                         testId="pdf-delete-all-files"
-                        size="normal"
+                        size="compact"
                         onClick={() => {
                           setShowDeleteConfirmation(true);
                         }}

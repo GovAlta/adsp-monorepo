@@ -122,7 +122,7 @@ export const FormStatusSubmittedDefinition: DomainEventDefinition = {
   interval: {
     namespace: 'form-service',
     name: FORM_CREATED,
-    metric: ['form-service', 'form-entry'],
+    metric: ['form-service', 'form-entry', 'definitionId'],
   },
 };
 
@@ -177,7 +177,7 @@ export const SubmissionDispositionedDefinition: DomainEventDefinition = {
   interval: {
     namespace: 'form-service',
     name: FORM_SUBMITTED,
-    metric: ['form-service', 'submission-processing'],
+    metric: ['form-service', 'submission-processing', 'definitionId'],
   },
 };
 

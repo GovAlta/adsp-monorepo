@@ -124,11 +124,9 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([
-        {
-          test: calendar,
-        },
-      ]);
+      req.getConfiguration.mockResolvedValueOnce({
+        test: calendar,
+      });
       await getCalendars(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining(calendar)]));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
@@ -143,7 +141,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([]);
+      req.getConfiguration.mockResolvedValueOnce(null);
       await getCalendars(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([]));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
@@ -170,11 +168,9 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([
-        {
-          test: calendar,
-        },
-      ]);
+      req.getConfiguration.mockResolvedValueOnce({
+        test: calendar,
+      });
       const handler = getCalendar(tenantServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req['calendar']).toMatchObject(calendar);
@@ -193,7 +189,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([{}]);
+      req.getConfiguration.mockResolvedValueOnce({});
       const handler = getCalendar(tenantServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
@@ -211,11 +207,9 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([
-        {
-          test: calendar,
-        },
-      ]);
+      req.getConfiguration.mockResolvedValueOnce({
+        test: calendar,
+      });
 
       const requestTenant = adspId`urn:ads:platform:tenant-service:v2:/tenants/test2`;
       tenantServiceMock.getTenantByName.mockResolvedValueOnce({ id: requestTenant });

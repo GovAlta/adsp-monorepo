@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import commonlib from '../common/common-library';
 import FormPage from './form.page';
 import common from '../common/common.page';
@@ -50,7 +50,7 @@ When('the user clicks Add definition button on form definitions page', function 
   formObj.addDefinitionBtn().shadow().find('button').click({ force: true });
 });
 
-When('the user enters {string}, {string} in Add form definition modal', function (name, description) {
+When('the user enters {string}, {string} in Add form definition modal', function (name: string, description: string) {
   cy.viewport(1920, 1080);
   formObj.addDefinitionNameTextField().shadow().find('input').clear().type(name, { force: true, delay: 200 });
   formObj.addDefinitionDescriptionField().shadow().find('textarea').clear().type(description, { force: true });
@@ -74,7 +74,7 @@ Then('the user views form definition editor for {string}, {string}', function (n
 
 When(
   'the user enters {string} as applicant roles, {string} as clerk roles, {string} as assessor roles',
-  function (applicantRole, clerkRole, assessorRole) {
+  function (applicantRole: string, clerkRole: string, assessorRole: string) {
     //Unselect all checkboxes
     //Looks like checkboxes can't handle fast clicking to uncheck multiple checkboxes and seems only the last checked checkboxes are unchecked.
     //Didn't find a way to add a delay between clicks. Use 5 loops to make sure missed checked checkboxes are unchecked.
@@ -349,7 +349,7 @@ Then('the user views Edit definition modal in form definition editor', function 
   formObj.definitionEditorEditDefinitionModalTitle().should('contain.text', 'Edit definition');
 });
 
-When('the user enters {string}, {string} in Edit definition modal', function (name, description) {
+When('the user enters {string}, {string} in Edit definition modal', function (name: string, description: string) {
   formObj
     .definitionEditorEditDefinitionModalNameInput()
     .shadow()
@@ -377,7 +377,7 @@ When('the user clicks Save button in Edit definition modal', function () {
 
 Then(
   'the user views {string} as applicant roles, {string} as clerk roles, {string} as assessor roles in roles tab',
-  function (applicantRole, clerkRole, assessorRole) {
+  function (applicantRole: string, clerkRole: string, assessorRole: string) {
     //check applicant roles
     let applicantRoleMatchCount = 0;
     if (applicantRole.toLowerCase() != 'empty') {
@@ -631,7 +631,7 @@ When('the user clicks x icon for the help tooltip for Disposition States', funct
   formObj.definitionEditorSubmissionConfigDispositionStatesInfoBoxCloseBtn().click();
 });
 
-When('the user adds a dispoistion state of {string}, {string}', function (name, description) {
+When('the user adds a dispoistion state of {string}, {string}', function (name: string, description: string) {
   formObj.definitionEditorSubmissionConfigAddStateBtn().shadow().find('button').click({ force: true });
   formObj
     .definitionEditorSubmissionConfigDispositionStateModalTitle()
@@ -728,7 +728,7 @@ function findDispositionState(name, description) {
 
 When(
   'the user clicks {string} button for the disposition state of {string}, {string}',
-  function (button, name, description) {
+  function (button: string, name, description) {
     findDispositionState(name, description).then((rowNumber) => {
       switch (button.toLowerCase()) {
         case 'edit':
@@ -763,7 +763,7 @@ Then('the user views Edit disposition state modal', function () {
 
 When(
   'the user enters {string} as name and {string} as description in Edit disposition state modal',
-  function (name, description) {
+  function (name: string, description: string) {
     formObj
       .definitionEditorSubmissionConfigDispositionStateModalNameField()
       .shadow()
@@ -794,7 +794,7 @@ When('the user clicks Save button in disposition state modal', function () {
 
 Then(
   'the user should only view {string} icon for the disposition state of {string}, {string}',
-  function (arrowType, name, description) {
+  function (arrowType: string, name, description) {
     findDispositionState(name, description).then((rowNumber) => {
       switch (arrowType.toLowerCase()) {
         case 'arrow up':
@@ -824,7 +824,7 @@ Then(
 
 When(
   'the user clicks {string} for the disposition state of {string}, {string}',
-  function (arrowType, name, description) {
+  function (arrowType: string, name, description) {
     findDispositionState(name, description).then((rowNumber) => {
       switch (arrowType.toLowerCase()) {
         case 'arrow up':
@@ -862,7 +862,7 @@ Then(
   }
 );
 
-When('the user selects {string} in task queue to process dropdown', function (dropdownItem) {
+When('the user selects {string} in task queue to process dropdown', function (dropdownItem: string) {
   formObj
     .definitionEditorSubmissionConfigTaskQueueToProcessDropdown()
     .invoke('attr', 'value')
@@ -966,7 +966,7 @@ Then(
 
 When(
   'the user selects {string} from the security classification dropdown in form definition editor',
-  function (classification) {
+  function (classification: string) {
     formObj.definitionsEditorLifecycleSecurityClassificationDropdown().shadow().find('input').click({ force: true });
     formObj
       .definitionsEditorLifecycleSecurityClassificationDropdown()
@@ -978,9 +978,35 @@ When(
   }
 );
 
-Then('the user views {string} in security classification dropdown in form definition editor', function (dropdownItem) {
-  formObj
-    .definitionsEditorLifecycleSecurityClassificationDropdown()
-    .invoke('attr', 'value')
-    .should('eq', dropdownItem.toLowerCase());
-});
+Then(
+  'the user views {string} in security classification dropdown in form definition editor',
+  function (dropdownItem: string) {
+    formObj
+      .definitionsEditorLifecycleSecurityClassificationDropdown()
+      .invoke('attr', 'value')
+      .should('eq', dropdownItem.toLowerCase());
+  }
+);
+
+Then(
+  'the user views {string} as applicant role under {string} is {string}',
+  function (applicantRole, service, checkedOrNot) {
+    formObj
+      .definitionsEditorApplicantRole(service, applicantRole)
+      .shadow()
+      .find('.goa-checkbox-container')
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        switch (checkedOrNot) {
+          case 'checked':
+            expect(classAttr).to.contain('selected');
+            break;
+          case 'not checked':
+            expect(classAttr).to.not.contain('selected');
+            break;
+          default:
+            expect(checkedOrNot).to.be.oneOf(['checked', 'not checked']);
+        }
+      });
+  }
+);

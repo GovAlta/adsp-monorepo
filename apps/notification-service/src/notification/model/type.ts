@@ -92,7 +92,8 @@ export class NotificationTypeEntity implements NotificationType {
 
     // Page through all subscriptions and generate notifications.
     let after: string = null;
-    let pageNumber = 1;
+    let pageNumber = 1,
+      count = 0;
     do {
       logger.debug(
         `Processing page ${pageNumber} of subscriptions of type ${this.id} for event ${event.namespace}:${event.name}...`,
@@ -109,6 +110,14 @@ export class NotificationTypeEntity implements NotificationType {
         after,
         {
           typeIdEquals: this.id,
+          // Include event correlationId and context to filter out subscriptions with criteria that don't match.
+          // NOTE: This means that the effective evaluation of whether a subscription results in a notification is based on:
+          // 1. the repository query for retrieving subscriptions; and
+          // 2. the shouldSend() method of the subscription entity.
+          subscriptionMatch: {
+            correlationId: event.correlationId,
+            context: event.context,
+          },
         }
       );
 
@@ -130,7 +139,13 @@ export class NotificationTypeEntity implements NotificationType {
       }
       after = page.next;
       pageNumber++;
+      count += page.size;
     } while (after);
+
+    logger.debug(`Processed ${count} subscriptions of type ${this.id} for event ${event.namespace}:${event.name}.`, {
+      context: 'NotificationType',
+      tenant: event.tenantId?.toString(),
+    });
 
     return notifications;
   }

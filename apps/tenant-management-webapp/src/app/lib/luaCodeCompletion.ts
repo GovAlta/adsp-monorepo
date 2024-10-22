@@ -17,6 +17,10 @@ export const functionSuggestion = [
     insertText: 'adsp.GetFormData',
   },
   {
+    label: 'adsp.GetFormSubmission',
+    insertText: 'adsp.GetFormSubmission',
+  },
+  {
     label: 'adsp.SendDomainEvent',
     insertText: 'adsp.SendDomainEvent',
   },
@@ -27,6 +31,14 @@ export const functionSuggestion = [
   {
     label: 'adsp.DispositionFormSubmission',
     insertText: 'adsp.DispositionFormSubmission',
+  },
+  {
+    label: 'adsp.ReadValue',
+    insertText: 'adsp.ReadValue',
+  },
+  {
+    label: 'adsp.WriteValue',
+    insertText: 'adsp.WriteValue',
   },
 ];
 
@@ -107,6 +119,19 @@ export const functionSignature = [
     ],
   },
   {
+    label: 'adsp.GetFormSubmission(string formId, string submissionId)',
+    parameters: [
+      {
+        label: 'formId',
+        documentation: 'Form Id. Unique identifier for the form being queried.',
+      },
+      {
+        label: 'submissionId',
+        documentation: 'Submission Id. Used to identify existing submission being queried.',
+      },
+    ],
+  },
+  {
     label:
       'adsp.SendDomainEvent(string namespace, string name, string? correlationId, string? context = null, string? payload = {})',
     parameters: [
@@ -160,6 +185,44 @@ export const functionSignature = [
       {
         label: 'reason',
         documentation: 'A string representing reason the form is to be set to this disposition state.',
+      },
+    ],
+  },
+  {
+    label: 'adsp.ReadValue(string namespace, string name, string top, string after)',
+    parameters: [
+      {
+        label: 'namespace',
+        documentation: 'Namespace of the value to look up.',
+      },
+      {
+        label: 'name',
+        documentation: 'Name of the value to look up.',
+      },
+      {
+        label: 'top',
+        documentation: 'The number of records to look up',
+      },
+      {
+        label: 'after',
+        documentation: 'The records to to look up after.',
+      },
+    ],
+  },
+  {
+    label: 'adsp.WriteValue(string namespace, string name, object value)',
+    parameters: [
+      {
+        label: 'namespace',
+        documentation: 'Namespace of the value.',
+      },
+      {
+        label: 'name',
+        documentation: 'Name of the value.',
+      },
+      {
+        label: 'value',
+        documentation: 'A key value object to save.',
       },
     ],
   },

@@ -518,6 +518,8 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     ...additionalProps
   } = props;
 
+  const parsedData = data as Record<string, string>[];
+
   const openDeleteDialog = useCallback(
     (rowIndex: number, name: string) => {
       setOpen(true);
@@ -591,9 +593,9 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
 
   useEffect(() => {
     // eslint-disable-next-line
-    const updatedData = Object.fromEntries((data || []).map((item, index) => [index, item]));
+    const updatedData = Object.fromEntries((parsedData || []).map((item, index) => [index, item]));
     const count = Object.keys(updatedData).length;
-    const dispatchData = { [path]: { count: count, data: updatedData } } as Categories;
+    const dispatchData = { [path]: { count: count, data: updatedData } } as unknown as Categories;
     if (Object.keys(updatedData).length > 0) {
       dispatch({
         type: SET_DATA_ACTION,

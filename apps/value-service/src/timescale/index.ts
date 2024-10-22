@@ -1,7 +1,6 @@
+import { retry } from '@abgov/adsp-service-sdk';
 import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const retry = require('promise-retry');
 import { ValuesRepository } from '../values';
 import { TimescaleValuesRepository } from './value';
 
@@ -46,14 +45,14 @@ export const createRepositories = async ({
     },
   });
 
-  await retry(async (next, count) => {
-    logger.debug(`Try ${count}: connecting to timescale and running migration...`);
+  await retry.execute(async ({ attempt }) => {
+    logger.debug(`Try ${attempt}: connecting to timescale and running migration...`);
     try {
       await knex.migrate.latest();
       logger.info('Completed running knex migrations on timescale.');
     } catch (err) {
-      logger.debug(`Try ${count} failed with error. ${err}`, { context: 'createRepositories' });
-      next(err);
+      logger.debug(`Try ${attempt} failed with error. ${err}`, { context: 'createRepositories' });
+      throw err;
     }
   });
 

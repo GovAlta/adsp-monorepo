@@ -2,6 +2,7 @@ using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
+using Adsp.Sdk.Util;
 using Adsp.Sdk.Amqp;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
@@ -31,6 +32,7 @@ internal sealed class Program
     // Add services to the container.
     builder.Services.AddLogging();
     builder.Services.AddControllers();
+
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(

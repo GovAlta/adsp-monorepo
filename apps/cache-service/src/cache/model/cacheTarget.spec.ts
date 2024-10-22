@@ -2,6 +2,7 @@ import { InvalidOperationError, NotFoundError } from '@core-services/core-common
 import { adspId, getContextTrace, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import type { ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { Request, Response } from 'express';
+import * as hasha from 'hasha';
 import { ClientRequest, IncomingMessage } from 'http';
 import * as https from 'https';
 import { Logger } from 'winston';
@@ -29,17 +30,21 @@ describe('CacheTarget', () => {
 
   const directoryMock = {
     getServiceUrl: jest.fn(),
+    getResourceUrl: jest.fn(),
   };
 
   const providerMock = {
     get: jest.fn(),
     set: jest.fn(),
+    del: jest.fn(),
   };
 
   beforeEach(() => {
     directoryMock.getServiceUrl.mockReset();
+    directoryMock.getResourceUrl.mockReset();
     providerMock.get.mockReset();
     providerMock.set.mockReset();
+    providerMock.del.mockReset();
     httpsMock.request.mockReset();
     getContextTraceMock.mockReset();
   });
@@ -134,6 +139,67 @@ describe('CacheTarget', () => {
 
       expect(providerMock.set).toHaveBeenCalledWith(
         expect.any(String),
+        expect.any(String),
+        target.ttl,
+        expect.objectContaining({
+          status: 200,
+          headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+          content: expect.any(Buffer),
+        })
+      );
+    });
+
+    it('can send response on cache error', async () => {
+      const req = {
+        method: 'GET',
+        headers: {},
+        path: '',
+        query: {
+          flag: 'true',
+        },
+        baseUrl: '/cache/v1',
+        originalUrl: '/cache/v1/cache/urn:ads:platform:test-service:v1/test-resource',
+        pipe: jest.fn(),
+      };
+      const res = {
+        status: jest.fn(() => res),
+        header: jest.fn(() => res),
+        send: jest.fn(() => res),
+      };
+
+      providerMock.get.mockRejectedValueOnce(new Error('oh noes!'));
+
+      const targetUrl = new URL('https://test-service/test/v1');
+      directoryMock.getServiceUrl.mockResolvedValueOnce(targetUrl);
+
+      const content = Buffer.from('test string content', 'utf-8');
+      const upstreamReq = {};
+      const upstreamRes = {
+        statusCode: 200,
+        headers: { 'content-type': 'application/json' },
+        on: jest.fn((event, cb) => {
+          if (event === 'end') {
+            setTimeout(cb);
+          } else if (event === 'data') {
+            setTimeout(() => cb(content));
+          }
+        }),
+        pipe: jest.fn(),
+      };
+      httpsMock.request.mockImplementationOnce((_url, _opt, cb) => {
+        cb(upstreamRes as unknown as IncomingMessage);
+        return upstreamReq as unknown as ClientRequest;
+      });
+
+      await target.get(req as unknown as Request, res as unknown as Response);
+      expect(https.request).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.header).toHaveBeenCalledWith(expect.objectContaining({ 'Content-Type': 'application/json' }));
+      expect(upstreamRes.pipe).toHaveBeenCalledWith(res);
+
+      expect(providerMock.set).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(String),
         target.ttl,
         expect.objectContaining({
           status: 200,
@@ -203,6 +269,7 @@ describe('CacheTarget', () => {
 
       expect(providerMock.set).toHaveBeenCalledWith(
         expect.any(String),
+        expect.any(String),
         target.ttl,
         expect.objectContaining({
           status: 200,
@@ -266,6 +333,7 @@ describe('CacheTarget', () => {
       expect(upstreamRes.pipe).toHaveBeenCalledWith(res);
 
       expect(providerMock.set).toHaveBeenCalledWith(
+        expect.any(String),
         expect.any(String),
         target.ttl,
         expect.objectContaining({
@@ -365,7 +433,7 @@ describe('CacheTarget', () => {
       await expect(target.get(req as unknown as Request, res as unknown as Response)).rejects.toThrow(Error);
     });
 
-    it('can send response for user', async () => {
+    it('can send cached response for user', async () => {
       const req = {
         method: 'GET',
         headers: {},
@@ -476,6 +544,113 @@ describe('CacheTarget', () => {
       directoryMock.getServiceUrl.mockResolvedValueOnce(targetUrl);
 
       await expect(target.get(req as Request, res as unknown as Response)).rejects.toThrow(InvalidOperationError);
+    });
+  });
+
+  describe('processEvent', () => {
+    const target = new CacheTarget(logger, directoryMock as unknown as ServiceDirectory, providerMock, tenantId, {
+      serviceId: adspId`urn:ads:platform:test-service:v1`,
+      ttl: 300,
+      invalidationEvents: [
+        {
+          namespace: 'configuration-service',
+          name: 'configuration-updated',
+          resourceIdPath: 'urn',
+        },
+      ],
+    });
+
+    it('can invalidate cache entry', async () => {
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://test-service/test/v1'));
+      directoryMock.getResourceUrl.mockResolvedValueOnce(
+        new URL('https://test-service/test/v1/configuration/form-service/test')
+      );
+      providerMock.del.mockResolvedValueOnce(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'configuration-service',
+        name: 'configuration-updated',
+        payload: {
+          urn: 'urn:ads:platform:test-service:v1:/configuration/form-service/test',
+        },
+        timestamp: new Date(),
+      });
+
+      const invalidateKey = hasha(
+        JSON.stringify({
+          tenantId: tenantId.toString(),
+          path: '/cache/urn:ads:platform:test-service:v1/configuration/form-service/test',
+        })
+      );
+      expect(providerMock.del).toHaveBeenCalledWith(invalidateKey);
+    });
+
+    it('can invalidate cache entry for service target', async () => {
+      const target = new CacheTarget(logger, directoryMock as unknown as ServiceDirectory, providerMock, tenantId, {
+        serviceId: adspId`urn:ads:platform:test-service`,
+        ttl: 300,
+        invalidationEvents: [
+          {
+            namespace: 'configuration-service',
+            name: 'configuration-updated',
+            resourceIdPath: 'urn',
+          },
+        ],
+      });
+
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://test-service'));
+      directoryMock.getResourceUrl.mockResolvedValueOnce(
+        new URL('https://test-service/test/v1/configuration/form-service/test')
+      );
+      providerMock.del.mockResolvedValueOnce(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'configuration-service',
+        name: 'configuration-updated',
+        payload: {
+          urn: 'urn:ads:platform:test-service:v1:/configuration/form-service/test',
+        },
+        timestamp: new Date(),
+      });
+
+      const invalidateKey = hasha(
+        JSON.stringify({
+          tenantId: tenantId.toString(),
+          path: '/cache/urn:ads:platform:test-service/test/v1/configuration/form-service/test',
+        })
+      );
+      expect(providerMock.del).toHaveBeenCalledWith(invalidateKey);
+    });
+
+    it('can skip unrecognized event', async () => {
+      await target.processEvent({
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        payload: {},
+        timestamp: new Date(),
+      });
+
+      expect(providerMock.del).not.toHaveBeenCalled();
+    });
+
+    it('can handle error on processing', async () => {
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://test-service/test/v1'));
+      directoryMock.getResourceUrl.mockResolvedValueOnce(
+        new URL('https://test-service/test/v1/configuration/form-service/test')
+      );
+      providerMock.del.mockRejectedValueOnce(new Error('oh noes!'));
+      await target.processEvent({
+        tenantId,
+        namespace: 'configuration-service',
+        name: 'configuration-updated',
+        payload: {
+          urn: 'urn:ads:platform:configuration-service:v2:/configuration/form-service/test',
+        },
+        timestamp: new Date(),
+      });
+
+      expect(providerMock.del).toHaveBeenCalled();
     });
   });
 });

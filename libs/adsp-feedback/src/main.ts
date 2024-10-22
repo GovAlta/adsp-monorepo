@@ -32,7 +32,7 @@ import veryEasySvgError from './assets/Very_Easy-Error.svg';
 import veryEasySvgHover from './assets/Very_Easy-Hover.svg';
 import veryEasySvgClick from './assets/Very_Easy-Click.svg';
 
-class AdspFeedback implements AdspFeedbackApi {
+export class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
   private apiUrl?: URL;
   private name?: string;
@@ -52,8 +52,8 @@ class AdspFeedback implements AdspFeedbackApi {
   private technicalCommentDivRef: Ref<HTMLFieldSetElement> = createRef();
   private technicalCommentRef: Ref<HTMLTextAreaElement> = createRef();
   private dimRef: Ref<HTMLTextAreaElement> = createRef();
-  private radio1Ref: Ref<HTMLInputElement> = createRef();
-  private radio2Ref: Ref<HTMLInputElement> = createRef();
+  private ratingSelector: Ref<HTMLInputElement> = createRef();
+  private commentSelector: Ref<HTMLInputElement> = createRef();
   private firstFocusableElement?: HTMLElement;
   private lastFocusableElement?: HTMLElement;
 
@@ -187,8 +187,8 @@ class AdspFeedback implements AdspFeedbackApi {
   private onIssueChange(event: Event) {
     if (event.target instanceof HTMLInputElement && this.feedbackFormRef.value) {
       if (event.target.value.toLowerCase() === 'yes') {
-        if (this.radio1Ref.value) {
-          this.radio1Ref.value.checked = true;
+        if (this.ratingSelector.value) {
+          this.ratingSelector.value.checked = true;
         }
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
 
@@ -199,8 +199,8 @@ class AdspFeedback implements AdspFeedbackApi {
           this.sendButtonRef.value?.removeAttribute('disabled');
         }
       } else {
-        if (this.radio2Ref.value) {
-          this.radio2Ref.value.checked = true;
+        if (this.commentSelector.value) {
+          this.commentSelector.value.checked = true;
         }
         if (this.selectedRating > -1) {
           this.sendButtonRef.value?.removeAttribute('disabled');
@@ -216,18 +216,18 @@ class AdspFeedback implements AdspFeedbackApi {
 
   handleRadioKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'ArrowRight') {
-      if (this.radio2Ref.value) {
-        if (this.radio2Ref.value.checked === false) {
-          this.radio2Ref.value.focus();
-          this.radio2Ref.value.checked = true;
+      if (this.commentSelector.value) {
+        if (this.commentSelector.value.checked === false) {
+          this.commentSelector.value.focus();
+          this.commentSelector.value.checked = true;
           this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
         }
       }
     } else if (e.key === 'ArrowLeft') {
-      if (this.radio1Ref.value) {
-        if (this.radio1Ref.value.checked === false) {
-          this.radio1Ref.value.focus();
-          this.radio1Ref.value.checked = true;
+      if (this.ratingSelector.value) {
+        if (this.ratingSelector.value.checked === false) {
+          this.ratingSelector.value.focus();
+          this.ratingSelector.value.checked = true;
           this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
         }
       }
@@ -304,11 +304,11 @@ class AdspFeedback implements AdspFeedbackApi {
     if (this.technicalCommentRef?.value) {
       this.technicalCommentRef.value.value = '';
     }
-    if (this.radio1Ref.value) {
-      this.radio1Ref.value.checked = false;
+    if (this.ratingSelector.value) {
+      this.ratingSelector.value.checked = false;
     }
-    if (this.radio2Ref.value) {
-      this.radio2Ref.value.checked = false;
+    if (this.commentSelector.value) {
+      this.commentSelector.value.checked = false;
     }
     if (this.sendButtonRef) {
       this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
@@ -365,6 +365,7 @@ class AdspFeedback implements AdspFeedbackApi {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderRating = (rating: any, index: number) => {
+    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     return html`
       <div class="rating-div">
         <img
@@ -378,15 +379,18 @@ class AdspFeedback implements AdspFeedbackApi {
           tabindex="0"
           aria-label="${rating.label}"
         />
-        <span class="tooltip-text">${rating.label}</span>
-        <p
-          class="ratingText"
-          @mouseover="${() => this.updateHover(index, true)}"
-          @mouseout="${() => this.updateHover(index, false)}"
-          @click="${() => this.selectRating(index)}"
-        >
-          ${rating.label}
-        </p>
+        ${isSmallScreen
+          ? html`
+              <p
+                class="ratingText"
+                @mouseover="${() => this.updateHover(index, true)}"
+                @mouseout="${() => this.updateHover(index, false)}"
+                @click="${() => this.selectRating(index)}"
+              >
+                ${rating.label}
+              </p>
+            `
+          : html`<span class="tooltip-text">${rating.label}</span>`}
       </div>
     `;
   };
@@ -394,24 +398,26 @@ class AdspFeedback implements AdspFeedbackApi {
     const rating = this.ratings[index];
     const images = document.querySelectorAll('.rating');
     const image = images[index] as HTMLImageElement;
+    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     image.src =
       isHovering && this.selectedRating !== index
         ? rating.svgHover
         : this.selectedRating === index
         ? rating.svgClick
         : rating.svgDefault;
-
-    const texts = document.querySelectorAll('.ratingText');
-    const text = texts[index] as HTMLImageElement;
-    text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
-
-    const tooltips = document.querySelectorAll('.tooltip-text');
-    const tooltip = tooltips[index] as HTMLImageElement;
-    tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
-    tooltip.style.opacity = isHovering ? '1' : '0';
-    if (index === 0) {
-      tooltip.style.marginLeft = '35px';
-      tooltip.classList.add('modified');
+    if (isSmallScreen) {
+      const texts = document.querySelectorAll('.ratingText');
+      const text = texts[index] as HTMLImageElement;
+      text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+    } else {
+      const tooltips = document.querySelectorAll('.tooltip-text');
+      const tooltip = tooltips[index] as HTMLImageElement;
+      tooltip.style.visibility = isHovering && !isSmallScreen ? 'visible' : 'hidden';
+      tooltip.style.opacity = isHovering && !isSmallScreen ? '1' : '0';
+      if (index === 0) {
+        tooltip.style.marginLeft = '35px';
+        tooltip.classList.add('modified');
+      }
     }
   };
 
@@ -460,7 +466,10 @@ class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
-    if (this.radio2Ref.value && this.radio2Ref.value.checked === true) {
+    if (this.commentSelector.value && this.commentSelector.value.checked === true) {
+      this.sendButtonRef.value?.removeAttribute('disabled');
+    }
+    if (this.commentSelector.value?.checked === false && this.ratingSelector.value?.checked === true) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     }
   };
@@ -650,9 +659,9 @@ class AdspFeedback implements AdspFeedbackApi {
               margin-top: 53px;
               position: absolute;
               transform: translateX(-50%);
-              opacity: 0;
-              transition: opacity 0.3s;
               white-space: nowrap;
+              opacity: 0;
+              -webkit-transition: opacity 0.3s;
             }
           }
 
@@ -836,10 +845,12 @@ class AdspFeedback implements AdspFeedbackApi {
           }
           .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
             visibility: visible;
+            transition: visibility 0s 0.1s;
           }
 
           .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-error {
             visibility: visible;
+            transition: visibility 0s 0.1s;
           }
           .radios {
             margin-top: 16px;
@@ -1053,7 +1064,8 @@ class AdspFeedback implements AdspFeedbackApi {
                 color: #004f84;
               }
               > div > span {
-                display: none;
+                visibility: hidden;
+                opacity: 0;
               }
             }
             .ratingText {
@@ -1183,7 +1195,7 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="yes"
                               value="Yes"
                               class="radio"
-                              ${ref(this.radio1Ref)}
+                              ${ref(this.ratingSelector)}
                               aria-label="Yes"
                             />
                             <label for="yes" class="radio-label"> Yes </label>
@@ -1196,7 +1208,7 @@ class AdspFeedback implements AdspFeedbackApi {
                               id="no"
                               value="No"
                               class="radio"
-                              ${ref(this.radio2Ref)}
+                              ${ref(this.commentSelector)}
                               aria-label="No"
                             />
 

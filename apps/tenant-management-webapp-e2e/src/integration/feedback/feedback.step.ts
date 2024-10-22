@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import feedback from './feedback.page';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
@@ -82,7 +82,7 @@ Then('the user views the hint text of {string}', function (hintText) {
   feedbackObj.feedbackSitesRegisterSiteModalHintText(hintText).should('exist');
 });
 
-When('the user enters {string}, {string} in Register site modal', function (siteUrl, isAnonymous) {
+When('the user enters {string}, {string} in Register site modal', function (siteUrl: string, isAnonymous) {
   feedbackObj
     .feedbackSitesSiteModalAnonymousCheckbox()
     .shadow()
@@ -344,7 +344,7 @@ Then('the user views a required technical issues area', function () {
 
 When(
   'the user enters {string}, {string}, {string}, {string} in Give feedback main modal',
-  function (rating, comments, haveIssues, detail) {
+  function (rating, comments: string, haveIssues: string, detail: string) {
     feedbackObj.feedbackMainModalRating(rating).click();
     if (comments !== 'N/A') {
       feedbackObj.feedbackMainModalAdditionalCommentsTextField().type(comments);
@@ -408,4 +408,116 @@ Then('the user {string} the Feedback badge', function (viewOrNot) {
     default:
       expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
   }
+});
+
+Given('a tenant admin user is on Feedback service Feedback page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Feedback', 4000);
+  commonObj.serviceTab('Feedback', 'Feedback').click();
+  cy.wait(4000);
+});
+
+Then('the user views site URLs from sites page in Registered sites dropdown', function () {
+  //Get sites dropdown items
+  const dropdownSiteURLs: string[] = [];
+  const feedbackSitesPageItems: string[] = [];
+  feedbackObj.feedbackFeedbackSitesDropdownItems().then((dropdownItems) => {
+    for (let i = 0; i < dropdownItems.length; i++) {
+      dropdownSiteURLs[i] = dropdownItems[i].getAttribute('label')!;
+      cy.log(dropdownSiteURLs[i]);
+    }
+
+    //Go to sites page to get all sites and compare
+    commonObj.serviceTab('Feedback', 'Sites').click();
+    cy.wait(4000);
+    feedbackObj.feedbackSitesSiteURLs().then((siteURLs) => {
+      expect(dropdownItems.length).to.eq(siteURLs.length);
+      for (let i = 0; i < siteURLs.length; i++) {
+        feedbackSitesPageItems[i] = siteURLs[i].outerText!;
+        cy.log(feedbackSitesPageItems[i]);
+        expect(dropdownSiteURLs[i]).to.eq(feedbackSitesPageItems[i]);
+      }
+    });
+  });
+
+  //Go back to feedback page
+  commonObj.serviceTab('Feedback', 'Feedback').click();
+  cy.wait(4000);
+});
+
+When('the user selects the adsp site in Registered sites dropdown', function () {
+  feedbackObj.feedbackFeedbackSitesDropdown().shadow().find('input').click({ force: true });
+  feedbackObj.feedbackFeedbackSitesDropdown().shadow().find('li').contains('https://adsp-').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views a feedback list with Submitted on, View, Rating, Action', function () {
+  feedbackObj.feedbackFeedbackTableHeaders().then((elements) => {
+    expect(elements[0].outerText).to.eq('Submitted on');
+    expect(elements[1].outerText).to.eq('View');
+    expect(elements[2].outerText).to.eq('Rating');
+    expect(elements[3].outerText).to.eq('Action');
+  });
+});
+
+Then('the user views a feedback list of 10 ordered from most recent to oldest', function () {
+  //Compare submitted on dates in the top 10 records
+  feedbackObj.feedbackFeedbackTableSubmittedOnCells().then((elements) => {
+    expect(elements.length).to.eq(10);
+    let date1, year1, month1, day1, date2, year2, month2, day2;
+    for (let i = 0; i < 9; i++) {
+      // Get later date
+      cy.log(elements[i].outerText);
+      year1 = elements[i].outerText.split(',')[1].trim();
+      month1 = elements[i].outerText.split(',')[0].split(' ')[0].trim();
+      day1 = elements[i].outerText.split(',')[0].split(' ')[1].trim().replace(/\D/g, '');
+      date1 = new Date(month1 + ' ' + day1 + ', ' + year1);
+      cy.log(date1.toLocaleDateString());
+      // Get earlier date
+      cy.log(elements[i + 1].outerText);
+      year2 = elements[i + 1].outerText.split(',')[1].trim();
+      month2 = elements[i + 1].outerText.split(',')[0].split(' ')[0].trim();
+      day2 = elements[i + 1].outerText.split(',')[0].split(' ')[1].trim().replace(/\D/g, '');
+      date2 = new Date(month2 + ' ' + day2 + ', ' + year2);
+      cy.log(date2.toLocaleDateString());
+      // Compare
+      expect(date1 >= date2).to.eq(true);
+      cy.log(date1 + ' >= ' + date2);
+    }
+  });
+});
+
+Then('the user views more than 10 feedback records on feedback page', function () {
+  feedbackObj.feedbackFeedbackTableRows().should('have.length.above', 10);
+});
+
+When('the user clicks toggle details icon on the latest feedback', function () {
+  feedbackObj.feedbackFeedbackTableEyeIcons().first().shadow().find('button').click({ force: true });
+});
+
+Then('the user views feedback details with timestamp, rating, comments, technical issues', function () {
+  feedbackObj
+    .feedbackFeedbackTableItemDetails()
+    .find('p')
+    .invoke('text')
+    .should('match', /Feedback was submitted for [/a-zA-Z']+ on [a-zA-Z]+ [0-9a-zA-Z]+, [0-9]+ [0-9]+:[0-9]+ [A|P]M/g);
+  feedbackObj
+    .feedbackFeedbackTableItemDetails()
+    .find('h2')
+    .then((elements) => {
+      expect(elements.length).to.lte(2);
+      if (elements.length == 3) {
+        expect(elements[0].outerText).to.eq('Rating');
+        expect(elements[1].outerText).to.eq('Comments');
+        expect(elements[2].outerText).to.eq('Technical issues');
+      } else if (elements.length == 2) {
+        expect(elements[0].outerText).to.eq('Rating');
+        expect(elements[1].outerText).to.eq('Comments');
+      }
+    });
 });

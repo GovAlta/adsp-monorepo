@@ -6,6 +6,7 @@ export {
   assertAdspId,
   GoAError,
   LimitToOne,
+  retry,
   toKebabName,
 } from './utils';
 export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole } from './access';

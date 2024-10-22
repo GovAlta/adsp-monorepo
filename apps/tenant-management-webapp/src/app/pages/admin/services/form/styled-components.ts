@@ -230,6 +230,10 @@ export const GoACheckboxPad = styled.div`
 export const FormPermissions = styled.div`
   flex: 4;
 `;
+
+export const AddToggleButtonPadding = styled.div`
+  padding-top: var(--goa-space-m);
+`;
 export const ScrollPane = styled.div`
   overflow-y: scroll;
   width: 100%;

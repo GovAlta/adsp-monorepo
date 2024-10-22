@@ -3,10 +3,11 @@ import * as proxy from 'express-http-proxy';
 import axios from 'axios';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
-import { downloadFile, createGatewayRouter, findFile, submitSimpleForm } from './router';
+import { downloadFile, createGatewayRouter, findFile, submitSimpleForm, uploadAnonymousFile } from './router';
 import { NotFoundError } from '@core-services/core-common';
 import { FormServiceRoles } from './roles';
 import { FormStatus, FormResponse } from './types';
+import FormData = require('form-data');
 
 jest.mock('express-http-proxy');
 jest.mock('axios');
@@ -186,6 +187,29 @@ describe('router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe('uploadAnonymousFile', () => {
+    it('can upload files', async () => {
+      const req = {
+        tenant: { id: 'test-tenant-id' },
+        user: { ...testUser, roles: [FormServiceRoles.IntakeApp] },
+        body: new FormData(),
+      };
+
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        sendStatus: jest.fn(),
+      };
+      const next = jest.fn();
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+
+      const handler = uploadAnonymousFile(loggerMock, fileApiUrl, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
     });
   });
 

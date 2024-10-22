@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EventFilterWrapper } from './styled-components';
 import { GoAGrid, GoAFormItem, GoAInputDate, GoABadge } from '@abgov/react-components-new';
 import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
@@ -17,9 +17,24 @@ const isSearchCriteriaValid = (criteria?: CalendarEventSearchCriteria) => {
 
 export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Element => {
   const criteria = useSelector((state: RootState) => state.calendarService?.eventSearchCriteria);
+  const todayDate = new Date();
+  const futureDate = new Date(todayDate);
+  futureDate.setDate(todayDate.getDate() + 7);
+  criteria.startDate = todayDate.toISOString();
+  criteria.endDate = futureDate.toISOString();
   criteria.calendarName = calenderName;
+
   const dispatch = useDispatch();
   const [showDateError, setShowDateError] = useState<boolean>(false);
+  const [startDateValue, setStartDateValue] = useState(criteria.startDate);
+  const [endDateValue, setEndDateValue] = useState(criteria.endDate);
+
+  useEffect(()=>{
+    if(calenderName !== null){
+      setStartDateValue(criteria.startDate);
+      setEndDateValue(criteria.endDate);
+    }
+  },[calenderName])
 
   return (
     <EventFilterWrapper>
@@ -27,14 +42,16 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
         <GoAFormItem label="Start date">
           <GoAInputDate
             name="calendar-event-filter-start-date"
-            value={calenderName ? criteria.startDate : null}
+            value={calenderName ? startDateValue : null}
             disabled={calenderName === null}
             onChange={(name, value) => {
-              criteria.startDate = new Date(value).toISOString();
               if (!isSearchCriteriaValid(criteria)) {
                 setShowDateError(true);
               } else {
                 setShowDateError(false);
+                criteria.endDate = endDateValue;
+                criteria.startDate = new Date(value).toISOString();
+                setStartDateValue(criteria.startDate);
                 dispatch(UpdateSearchCriteriaAndFetchEvents(criteria));
               }
             }}
@@ -44,14 +61,16 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
         <GoAFormItem label="End date">
           <GoAInputDate
             name="calendar-event-filter-end-date"
-            value={calenderName ? criteria.endDate : null}
+            value={calenderName ? endDateValue : null}
             disabled={calenderName === null}
             onChange={(name, value) => {
-              criteria.endDate = new Date(value).toISOString();
               if (!isSearchCriteriaValid(criteria)) {
                 setShowDateError(true);
               } else {
                 setShowDateError(false);
+                criteria.startDate = startDateValue;
+                criteria.endDate = new Date(value).toISOString();
+                setEndDateValue(criteria.endDate);
                 dispatch(UpdateSearchCriteriaAndFetchEvents(criteria));
               }
             }}

@@ -17,12 +17,21 @@ describe('resolve', () => {
     getServiceConfiguration: jest.fn(),
   };
 
+  const eventServiceMock = {
+    send: jest.fn(),
+  };
+
   beforeEach(() => {
     configurationServiceMock.getServiceConfiguration.mockClear();
+    eventServiceMock.send.mockClear();
   });
 
   it('can create job', () => {
-    const job = createResolveJob({ logger, configurationService: configurationServiceMock });
+    const job = createResolveJob({
+      logger,
+      configurationService: configurationServiceMock,
+      eventService: eventServiceMock,
+    });
     expect(job).toBeTruthy();
   });
 
@@ -42,8 +51,12 @@ describe('resolve', () => {
     });
     configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
-    const job = createResolveJob({ logger, configurationService: configurationServiceMock });
-    await job(tenantId, resourceId, done);
+    const job = createResolveJob({
+      logger,
+      configurationService: configurationServiceMock,
+      eventService: eventServiceMock,
+    });
+    await job(tenantId, resourceId, true, done);
     expect(done).toHaveBeenCalledWith();
   });
 
@@ -55,8 +68,12 @@ describe('resolve', () => {
     getResourceType.mockReturnValueOnce(null);
     configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
-    const job = createResolveJob({ logger, configurationService: configurationServiceMock });
-    await job(tenantId, resourceId, done);
+    const job = createResolveJob({
+      logger,
+      configurationService: configurationServiceMock,
+      eventService: eventServiceMock,
+    });
+    await job(tenantId, resourceId, true, done);
     expect(done).toHaveBeenCalledWith();
   });
 
@@ -73,8 +90,37 @@ describe('resolve', () => {
     type.resolve.mockRejectedValueOnce(new Error('oh noes!'));
     configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
-    const job = createResolveJob({ logger, configurationService: configurationServiceMock });
-    await job(tenantId, resourceId, done);
+    const job = createResolveJob({
+      logger,
+      configurationService: configurationServiceMock,
+      eventService: eventServiceMock,
+    });
+    await job(tenantId, resourceId, true, done);
+    expect(done).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it('can send event on job error with no retry', async () => {
+    const resourceId = adspId`urn:ads:platform:test-service:v1:/tests/123`;
+    const done = jest.fn();
+
+    const getResourceType = jest.fn();
+    const type = {
+      type: 'test',
+      resolve: jest.fn(),
+    };
+    getResourceType.mockReturnValueOnce(type);
+    type.resolve.mockRejectedValueOnce(new Error('oh noes!'));
+    configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
+
+    const job = createResolveJob({
+      logger,
+      configurationService: configurationServiceMock,
+      eventService: eventServiceMock,
+    });
+    await job(tenantId, resourceId, false, done);
+    expect(eventServiceMock.send).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId, name: 'resource-resolution-failed' })
+    );
     expect(done).toHaveBeenCalledWith(expect.any(Error));
   });
 });

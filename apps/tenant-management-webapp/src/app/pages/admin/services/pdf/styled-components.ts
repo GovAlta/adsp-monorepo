@@ -48,7 +48,7 @@ export const PaddingRight = styled.div`
 `;
 
 export const ButtonRight = styled.div`
-  margin-top: 8px;
+  margin-top: 48px;
   text-align: end;
 `;
 
@@ -174,11 +174,17 @@ export const MonacoDiv = styled.div`
 `;
 export const MonacoDivBody = styled.div`
   display: flex;
-  border: 1px solid var(--color-gray-700);
+
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
-  margin-bottom: 1rem;
+
+  .monaco-scrollable-element {
+    margin-top: 1rem !important;
+  }
+  .margin-view-overlays {
+    margin-top: 1rem !important;
+  }
 `;
 
 export const EditTemplateActions = styled.div`
@@ -186,8 +192,8 @@ export const EditTemplateActions = styled.div`
   flex-direction: column;
   justify-content: left;
   gap: var(--goa-space-m);
+  padding-left: var(--goa-space-2xs);
   margin: 0 0 var(--goa-space-xl) 0;
-  padding-top: var(--goa-space-m);
 `;
 
 // preview template components

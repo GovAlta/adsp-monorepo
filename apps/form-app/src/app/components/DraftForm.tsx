@@ -25,8 +25,11 @@ import {
   formActions,
   metaDataSelector,
   uploadFile,
+  uploadAnonymousFile,
+  AppState,
+  store,
 } from '../state';
-import { userSelector } from '../state';
+import { userSelector, configSelector, fileDataUrlSelector } from '../state';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -39,6 +42,7 @@ interface DraftFormProps {
   showSubmit: boolean;
   saving: boolean;
   submitting: boolean;
+  anonymousApply?: boolean;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
 }
@@ -58,7 +62,6 @@ export const populateDropdown = (schema, enumerators) => {
 
 const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
-
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
@@ -95,6 +98,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   showSubmit,
   saving,
   submitting,
+  anonymousApply,
   onChange,
   onSubmit,
 }) => {
@@ -107,7 +111,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const files = useSelector(filesSelector);
   const metadata = useSelector(metaDataSelector);
   const user = useSelector(userSelector);
-
+  const config = useSelector(configSelector);
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
   };
@@ -119,22 +123,36 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     if (clonedFiles[propertyId]) {
       const urn = files[propertyId];
       delete clonedFiles[propertyId];
-      dispatch(deleteFile({ urn, propertyId }));
+      dispatch(deleteFile({ urn, propertyId, anonymousApply }));
     }
 
-    const fileMetaData = (
-      await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId })).unwrap()
-    ).metadata;
+    const fileMetaData =
+      anonymousApply === true
+        ? (
+            await dispatch(
+              uploadAnonymousFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form?.urn, file, propertyId })
+            ).unwrap()
+          ).metadata
+        : (await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId })).unwrap())
+            .metadata;
 
     clonedFiles[propertyId] = fileMetaData.urn;
     dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
   const downloadFormFile = async (file) => {
-    const fileData = await dispatch(downloadFile(file.urn)).unwrap();
     const element = document.createElement('a');
-    element.href = URL.createObjectURL(new Blob([fileData.data]));
-    element.download = fileData.metadata.filename;
+
+    const localFileCache = (store.getState() as AppState).file?.files[file.urn];
+
+    if (!localFileCache) {
+      const fileData = await dispatch(downloadFile(file.urn)).unwrap();
+      element.href = URL.createObjectURL(new Blob([fileData.data]));
+      element.download = fileData.metadata.filename;
+    } else {
+      element.href = localFileCache;
+      element.download = file.filename;
+    }
     document.body.appendChild(element);
     element.click();
   };
@@ -142,10 +160,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const deleteFormFile = async (file) => {
     const clonedFiles = { ...files };
     const propertyId = getKeyByValue(clonedFiles, file.urn);
-
-    await dispatch(deleteFile({ urn: file.urn, propertyId }));
+    await dispatch(deleteFile({ urn: file.urn, propertyId, anonymousApply }));
     delete clonedFiles[propertyId];
-
     dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
@@ -166,7 +182,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             downloadFile: downloadFormFile,
             deleteFile: deleteFormFile,
           }}
-          data={{ user: user?.user }}
+          formUrl="https://form.adsp-uat.alberta.ca"
         >
           <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
         </ContextProvider>

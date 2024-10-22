@@ -367,7 +367,7 @@ class NotificationsPage {
   }
 
   contactInformationEmail() {
-    return cy.get('[data-testid="email"]');
+    return cy.get('[data-testid="contact-email"]');
   }
 
   contactInformationPhone() {
@@ -536,6 +536,42 @@ class NotificationsPage {
 
   subscriptionAppContactSupportPhone() {
     return cy.xpath('//*[@id="contactSupport"]//goa-callout/div[3]');
+  }
+
+  notificationOverviewEmailInformationEditIcon() {
+    return cy.xpath('//goa-icon-button[@data-testid="edit-email-info-edit"]');
+  }
+
+  notificationOverviewEmailInformationModal() {
+    return cy.xpath('//goa-modal[@open="true" and @data-testid="edit-email-information-notification"]');
+  }
+
+  notificationOverviewEmailInformationModalEmailFormItem() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @data-testid="edit-email-information-notification"]//goa-form-item[@label="Email"]'
+    );
+  }
+
+  notificationOverviewEmailInformationModalEmailField() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @data-testid="edit-email-information-notification"]//goa-input[@name="email"]'
+    );
+  }
+
+  notificationOverviewEmailInformationModalSaveBtn() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @data-testid="edit-email-information-notification"]//goa-button[@data-testid="edit-email-form-save"]'
+    );
+  }
+
+  notificationOverviewEmailInformationModalCancelBtn() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @data-testid="edit-email-information-notification"]//goa-button[@data-testid="edit-email-form-cancel"]'
+    );
+  }
+
+  notificationOverviewEmailInformationFromEmail() {
+    return cy.xpath('//h4[text()="From email"]/parent::div');
   }
 }
 export default NotificationsPage;

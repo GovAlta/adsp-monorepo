@@ -63,9 +63,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   const typeNames = typeObjects.map((type: NotificationItem) => type.name);
   const checkForEmail = characterCheck(validationPattern.validEmail);
   const [isNotifyAddress, setIsNotifyAddress] = useState(false);
+  const [addressPathChanged, setAddressPathChanged] = useState(false);
 
   useEffect(() => {
     setType(JSON.parse(JSON.stringify(initialValue)));
+    setAddressPathChanged(false);
   }, [initialValue]);
 
   useEffect(() => {
@@ -116,6 +118,35 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     );
   };
 
+  const handleSave = async () => {
+    const validations = {
+      name: type.name,
+    };
+    if (!isEdit) {
+      validations['duplicated'] = type.name;
+    }
+
+    if (!type.channels.includes('email')) {
+      type.channels = ['email', ...type.channels];
+    }
+
+    if (!validators.checkAll(validations)) {
+      return;
+    }
+
+    if (!isNotifyAddress) {
+      type.address = null;
+      type.addressPath = null;
+    }
+
+    try {
+      await onSave(type);
+      setAddressPathChanged(false);
+    } catch (error) {
+      console.error('Save failed', error);
+    }
+  };
+
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -143,35 +174,17 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 setType(initialValue);
                 validators.clear();
                 setIsNotifyAddress(false);
+                setAddressPathChanged(false);
                 onCancel();
               }}
             >
               Cancel
             </GoAButton>
             <GoAButton
-              disabled={validators.haveErrors() || areObjectsEqual(type, initialValue)}
+              disabled={!addressPathChanged && (validators.haveErrors() || areObjectsEqual(type, initialValue))}
               type="primary"
               testId="form-save"
-              onClick={() => {
-                const validations = {
-                  name: type.name,
-                };
-                if (!isEdit) {
-                  validations['duplicated'] = type.name;
-                }
-                if (!type.channels.includes('email')) {
-                  // Must include email as first channel
-                  type.channels = ['email', ...type.channels];
-                }
-                if (!validators.checkAll(validations)) {
-                  return;
-                }
-                if (!isNotifyAddress) {
-                  type.address = null;
-                  type.addressPath = null;
-                }
-                onSave(type);
-              }}
+              onClick={handleSave}
             >
               Save
             </GoAButton>
@@ -340,7 +353,10 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 aria-label="input-path-address"
                 width="60%"
                 onChange={(_, value) => {
-                  type.addressPath = value;
+                  setType({ ...type, addressPath: value });
+                  if (value !== initialValue?.addressPath) {
+                    setAddressPathChanged(true);
+                  }
                 }}
               />
             </GoAFormItem>

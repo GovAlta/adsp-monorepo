@@ -1,8 +1,8 @@
 using Adsp.Platform.ScriptService.Services.Platform;
-
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using Adsp.Sdk.Events;
+using Newtonsoft.Json;
 using NLua;
 using RestSharp;
 
@@ -87,6 +87,23 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
+  public virtual IDictionary<string, object?>? GetFormSubmission(string formId, string submissionId)
+  {
+    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
+    var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
+
+    var token = _getToken().Result;
+    var request = new RestRequest(requestUrl, Method.Get);
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
+
+    var submission = _client.GetAsync<string>(request).Result;
+    var result = submission != null ? JsonConvert.DeserializeObject<IDictionary<string, object?>>(submission) : null;
+    var fix = result != null ? DictionaryToJson.Fix(result) : null;
+
+    return fix;
+  }
+
   public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
   {
     var eventServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.EventServiceId).Result;
@@ -169,4 +186,103 @@ internal class ScriptFunctions : IScriptFunctions
     var result = _client.PostAsync<TaskCreationResult>(request).Result;
     return result?.Id;
   }
+
+  public virtual IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null)
+  {
+    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
+    var requestUrl = new Uri(servicesUrl, $"/value/v1/{@namespace}/values/{name}");
+    var token = _getToken().Result;
+
+    var request = new RestRequest(requestUrl, Method.Get);
+    request.AddQueryParameter("top", top);
+    request.AddQueryParameter("after", after);
+
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
+
+    // Using generic IDictionary because the value service will return different key values and we
+    // can't have specific json property names in our own class.
+    var result = _client.GetAsync<IDictionary<string, object>>(request).Result;
+
+    return result;
+
+  }
+
+  public virtual IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)
+  {
+    const string CONTEXT_KEY = "context";
+    const string VALUE_KEY = "value";
+    const string CORRELATION_ID_KEY = "correlationId";
+
+    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
+    var requestUrl = new Uri(servicesUrl, $"/value/v1/{@namespace}/values/{name}");
+    var token = _getToken().Result;
+
+    var valueRequest = new ValueCreateRequest()
+    {
+      Namespace = @namespace,
+      Name = name,
+      Timestamp = DateTime.Now,
+      Value = null,
+      Context = null
+    };
+
+    if (value.GetType() == typeof(LuaTable))
+    {
+      var table = ((LuaTable)value);
+      var dataValue = table.ToDictionary();
+
+      if (!dataValue.ContainsKey(VALUE_KEY))
+      {
+        throw new ArgumentException("value is required.");
+      }
+
+      if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
+      {
+        valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
+      }
+      if (dataValue.ContainsKey(CONTEXT_KEY) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
+      {
+        valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?> ?? new Dictionary<string, object?>();
+      }
+
+      valueRequest.CorrelationId = dataValue[CORRELATION_ID_KEY].ToString();
+    }
+    else if (value is IDictionary<string, object> dictionary)
+    {
+      var dataValue = value as IDictionary<string, object>;
+
+      if (!dataValue.ContainsKey(VALUE_KEY))
+      {
+        throw new ArgumentException("value is required.");
+      }
+
+      if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
+      {
+        valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
+      }
+      if (dataValue.ContainsKey(CONTEXT_KEY) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
+      {
+        valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?>;
+      }
+
+      valueRequest.CorrelationId = dataValue[CORRELATION_ID_KEY]?.ToString();
+    }
+    else
+    {
+      throw new ArgumentException("value is not a recognized type.");
+    }
+
+    var request = new RestRequest(requestUrl, Method.Post);
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
+    request.AddJsonBody(valueRequest);
+
+    // Using generic IDictionary because the value service will return different key values and we
+    // can't have specific json property names in our own class.
+    var result = _client.PostAsync<IDictionary<string, object?>?>(request).Result;
+
+    return result;
+  }
+
 }

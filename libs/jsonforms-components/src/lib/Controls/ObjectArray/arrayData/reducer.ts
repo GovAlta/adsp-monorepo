@@ -47,5 +47,7 @@ export function objectListReducer(state: { categories: Categories }, action: Obj
       newCategories[name] = category;
       return { ...state, categories: newCategories };
     }
+    default:
+      return state;
   }
 }

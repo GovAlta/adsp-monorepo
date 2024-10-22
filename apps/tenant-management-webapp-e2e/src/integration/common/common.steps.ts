@@ -1,8 +1,10 @@
-import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import common from './common.page';
 import commonlib from './common-library';
 import { injectAxe } from '../../support/app.po';
 import { htmlReport } from '../../support/axe-html-reporter-util';
+import events from '../events/events.page';
+import tenantAdminPage from '../tenant-admin/tenant-admin.page';
 
 const commonObj = new common();
 let apiDocsLink;
@@ -14,12 +16,12 @@ When('the user enters credentials and clicks login button', function () {
   cy.wait(8000); // Wait all the redirects to settle down
 });
 
-When('the user enters {string} and {string}, and clicks login button', function (username, password) {
+When('the user enters {string} and {string}, and clicks login button', function (username: string, password: string) {
   let user = '';
   let pwd = '';
   // Get user name
   const envUsername = username.match(/(?<={).+(?=})/g);
-  if (envUsername == '') {
+  if (!envUsername) {
     user = username;
   } else {
     user = Cypress.env(String(envUsername));
@@ -27,7 +29,7 @@ When('the user enters {string} and {string}, and clicks login button', function 
 
   // Get password
   const envPassword = password.match(/(?<={).+(?=})/g);
-  if (envPassword == '') {
+  if (!envPassword) {
     pwd = password;
   } else {
     pwd = Cypress.env(String(envPassword));
@@ -200,11 +202,6 @@ When('the user clicks Delete button in delete confirmation modal', function () {
 });
 
 When('the user clicks Cancel button in delete confirmation modal', function () {
-  commonObj.deleteConfirmationModalCancelBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
-});
-
-When('the user clicks Cancel button in delete confirmation modal', function () {
   commonObj
     .deleteConfirmationModalCancelBtn()
     .shadow()
@@ -215,7 +212,7 @@ When('the user clicks Cancel button in delete confirmation modal', function () {
   cy.wait(4000); // Wait for the record to be removed from the page
 });
 
-When('the user waits {string} seconds', function (seconds) {
+When('the user waits {string} seconds', function (seconds: number) {
   expect(isNaN(seconds)).to.be.false; // Verify the pass in seconds is a number
   expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hang the test execution
   cy.wait(Number(seconds) * 1000); // Wait N seconds
@@ -267,3 +264,75 @@ When('the user re-load the page and wait {string} seconds', function (numberOfSe
   cy.reload();
   cy.wait(Number(numberOfSeconds));
 });
+
+When('the user clicks Load more button on the page', function () {
+  commonObj.loadMoreButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+const tenantAdminObj = new tenantAdminPage();
+Then('the {string} landing page is displayed', function (pageTitle) {
+  let urlPart = 'undefined';
+  switch (pageTitle) {
+    case 'File service':
+      urlPart = '/admin/services/file';
+      break;
+    case 'Status service':
+      urlPart = '/admin/services/status';
+      break;
+    case 'Event log':
+      urlPart = '/admin/event-log';
+      break;
+    default:
+      expect(pageTitle).to.be.oneOf(['File service', 'Status service', 'Event log']);
+  }
+  cy.url().should('include', urlPart);
+  tenantAdminObj.servicePageTitle(pageTitle).then((title) => {
+    expect(title.length).to.be.gt(0); // element exists
+  });
+});
+
+const eventsObj = new events();
+When('the user clicks Add definition button on event definitions page', function () {
+  eventsObj.addDefinitionButton().shadow().find('button').click({ force: true });
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
+});
+
+Then('the user views Add definition dialog', function () {
+  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Add definition');
+});
+
+When(
+  'the user enters {string} in Namespace, {string} in Name, {string} in Description',
+  function (namespace: string, name: string, desc: string) {
+    eventsObj
+      .definitionModalNamespaceField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(namespace, { delay: 100, force: true });
+    eventsObj.definitionModalNameField().shadow().find('input').clear().type(name, { delay: 50, force: true });
+    eventsObj.definitionModalDescriptionField().shadow().find('textarea').type(desc);
+  }
+);
+
+When('the user clicks Save button on Definition modal', function () {
+  eventsObj.definitionModalSaveButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then(
+  'the user {string} an event definition of {string} and {string} under {string}',
+  function (viewOrNot, eventName, eventDesc, eventNamespace) {
+    switch (viewOrNot) {
+      case 'views':
+        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('exist');
+        break;
+      case 'should not view':
+        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);

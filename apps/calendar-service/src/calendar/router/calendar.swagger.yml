@@ -22,6 +22,10 @@ components:
       properties:
         id:
           type: number
+        recordId:
+          type: string
+        context:
+          type: object
         name:
           type: string
         description:
@@ -53,12 +57,19 @@ components:
     CalendarEventCriteria:
       type: object
       properties:
+        recordId:
+          type: string
+        context:
+          type: object
         isPublic:
           type: boolean
         startsAfter:
           type: string
           format: date-time
         endsBefore:
+          type: string
+          format: date-time
+        activeOn:
           type: string
           format: date-time
         attendeeCriteria:
@@ -68,6 +79,9 @@ components:
               type: string
             emailEquals:
               type: string
+        orderBy:
+          type: string
+          enum: [id, start]
 
 /calendar/v1/calendars:
   get:
@@ -229,6 +243,10 @@ components:
           schema:
             type: object
             properties:
+              recordId:
+                type: string
+              context:
+                type: object
               name:
                 type: string
               description:
@@ -299,6 +317,8 @@ components:
           schema:
             type: object
             properties:
+              context:
+                type: object
               name:
                 type: string
               description:

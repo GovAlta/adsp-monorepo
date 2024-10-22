@@ -1,4 +1,4 @@
-import { NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { CacheServiceConfiguration } from './configuration';
 
@@ -6,6 +6,11 @@ export function getCacheTargetResource(): RequestHandler {
   return async (req, res, next) => {
     try {
       const { target } = req.params;
+      const tenant = req.tenant;
+
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required to read through cache.');
+      }
 
       const configuration = await req.getServiceConfiguration<CacheServiceConfiguration, CacheServiceConfiguration>();
       const cacheTarget = configuration.getTarget(target);

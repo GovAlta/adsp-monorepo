@@ -170,6 +170,38 @@ class feedbackPage {
   feedbackMainModalSuccessMessageCloseBtn() {
     return cy.xpath('//button[@id="feedback-close-success"]');
   }
+
+  feedbackFeedbackSitesDropdown() {
+    return cy.xpath('//goa-dropdown[@data-testid="sites-dropdown"]');
+  }
+
+  feedbackFeedbackSitesDropdownItems() {
+    return cy.xpath('//goa-dropdown[@data-testid="sites-dropdown"]/goa-dropdown-item');
+  }
+
+  feedbackSitesSiteURLs() {
+    return cy.xpath('//table[@data-testid="feedbacks-sites-table"]/tbody/tr/td[@headers="Site"]');
+  }
+
+  feedbackFeedbackTableRows() {
+    return cy.xpath('//table[@data-testid="feedback-table"]/tbody/tr');
+  }
+
+  feedbackFeedbackTableHeaders() {
+    return cy.xpath('//table[@data-testid="feedback-table"]/thead/tr/th');
+  }
+
+  feedbackFeedbackTableSubmittedOnCells() {
+    return cy.xpath('//table[@data-testid="feedback-table"]/tbody/tr/td[contains(@data-testid, "created-on")]');
+  }
+
+  feedbackFeedbackTableEyeIcons() {
+    return cy.xpath('//table[@data-testid="feedback-table"]/tbody//goa-icon-button[@icon="eye"]');
+  }
+
+  feedbackFeedbackTableItemDetails() {
+    return cy.xpath('//div[@data-testid="moredetails"]');
+  }
 }
 
 export default feedbackPage;

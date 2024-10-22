@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import commonlib from '../common/common-library';
 import CommentPage from './comment.page';
 import common from '../common/common.page';
@@ -39,7 +39,7 @@ When('the user clicks Add topic type button on topic types page', function () {
   commentObj.addTopicTypeBtn().shadow().find('button').click({ force: true });
 });
 
-When('the user enters {string} in Add topic type modal', function (name) {
+When('the user enters {string} in Add topic type modal', function (name: string) {
   commentObj.addTopicTypeNameTextField().shadow().find('input').clear().type(name, { force: true, delay: 200 });
 });
 
@@ -58,11 +58,14 @@ Then('the user views topic type editor for {string}', function (name) {
   commentObj.editorTopicTypeNameValue().should('contain.text', name);
 });
 
-Then('the user views {string} as default selection for security classification', function (defaultClassification) {
-  commentObj.editorClassificationDropdown().invoke('attr', 'value').should('eq', defaultClassification.toLowerCase());
-});
+Then(
+  'the user views {string} as default selection for security classification',
+  function (defaultClassification: string) {
+    commentObj.editorClassificationDropdown().invoke('attr', 'value').should('eq', defaultClassification.toLowerCase());
+  }
+);
 
-Then('the user views {string} in Select a security classification dropdown', function (dropdownOptions) {
+Then('the user views {string} in Select a security classification dropdown', function (dropdownOptions: string) {
   const options = dropdownOptions.split(',');
   commentObj.editorClassificationDropdownItems().then((elements) => {
     expect(elements.length).to.eq(options.length);
@@ -74,7 +77,7 @@ Then('the user views {string} in Select a security classification dropdown', fun
 
 When(
   'the user enters {string} as classification, {string} as admin roles, {string} as commenter roles, {string} as reader roles',
-  function (classification, adminRole, commenterRole, readerRole) {
+  function (classification: string, adminRole: string, commenterRole: string, readerRole: string) {
     cy.wait(1000); // Test failed occassionally due to not finding the classification dropdown. Added a second wait.
     if (classification !== 'skip') {
       commentObj
@@ -350,7 +353,7 @@ Then('the user views Edit topic type modal in topic type editor', function () {
   commentObj.topicTypeEditorEditTopicTypeModalTitle().should('contain.text', 'Edit topic type');
 });
 
-When('the user enters {string} in Edit topic type modal', function (name) {
+When('the user enters {string} in Edit topic type modal', function (name: string) {
   commentObj
     .topicTypeEditorEditTopicTypeModalNameInput()
     .shadow()
@@ -371,7 +374,7 @@ When('the user clicks Save button in Edit topic type modal', function () {
 
 Then(
   'the user views {string} as classification, {string} as admin roles, {string} as commenter roles, {string} as reader roles',
-  function (dataClass, adminRole, commenterRole, readerRole) {
+  function (dataClass: string, adminRole: string, commenterRole: string, readerRole: string) {
     //check data classification
     commentObj.editorClassificationDropdown().invoke('attr', 'value').should('eq', dataClass.toLowerCase());
 
@@ -494,7 +497,7 @@ Then(
   }
 );
 
-When('the user selects {string} in Select a topic type dropdown', function (dropdownItemName) {
+When('the user selects {string} in Select a topic type dropdown', function (dropdownItemName: string) {
   commentObj.selectTopicTypeDropdown().shadow().find('input').click({ force: true });
   commentObj.selectTopicTypeDropdown().shadow().find('li').contains(dropdownItemName).click({ force: true });
   cy.wait(2000);
@@ -515,7 +518,7 @@ Then('the user views Add topic modal', function () {
 
 When(
   'the user enters {string}, {string}, {string} in Add topic modal',
-  function (topicName, topicDesc, topicResourceId) {
+  function (topicName: string, topicDesc: string, topicResourceId: string) {
     commentObj.addTopicModalName().shadow().find('input').clear().type(topicName, { force: true, delay: 200 });
     commentObj.addTopicModalDesc().shadow().find('textarea').clear().type(topicDesc, { force: true, delay: 100 });
     commentObj
@@ -527,11 +530,11 @@ When(
   }
 );
 
-When('the user clicks {string} button in Add topic modal', function (button) {
+When('the user clicks {string} button in Add topic modal', function (button: string) {
   switch (button.toLowerCase()) {
     case 'save':
       commentObj.addTopicModalSaveBtn().shadow().find('button').click({ force: true });
-      cy.wait(2000);
+      cy.wait(4000);
       break;
     case 'cancel':
       commentObj.addTopicModalCancelBtn().shadow().find('button').click({ force: true });
@@ -678,7 +681,7 @@ Then('the user views Add comment modal', function () {
   commentObj.addCommentModalHeading().invoke('text').should('eq', 'Add comment');
 });
 
-When('the user enters {string} as comment', function (comment) {
+When('the user enters {string} as comment', function (comment: string) {
   commentObj
     .addCommentModalComment()
     .shadow()
@@ -687,7 +690,7 @@ When('the user enters {string} as comment', function (comment) {
     .type(comment, { force: true, delay: 200 });
 });
 
-When('the user clicks {string} button in Add comment modal', function (button) {
+When('the user clicks {string} button in Add comment modal', function (button: string) {
   switch (button.toLowerCase()) {
     case 'save':
       commentObj.addCommentModalSaveBtn().shadow().find('button').click({ force: true });
@@ -782,7 +785,7 @@ Then('the user views Edit comment modal', function () {
   commentObj.editCommentModalHeading().invoke('text').should('eq', 'Edit comment');
 });
 
-When('the user enters {string} in Edit comment modal', function (content) {
+When('the user enters {string} in Edit comment modal', function (content: string) {
   commentObj
     .editCommentModalComment()
     .shadow()
@@ -793,7 +796,7 @@ When('the user enters {string} in Edit comment modal', function (content) {
 
 When('the user clicks Save button in Edit comment modal', function () {
   commentObj.editCommentModalSaveBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user views {string} shows on top of {string}', function (content1, content2) {

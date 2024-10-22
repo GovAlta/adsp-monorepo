@@ -40,6 +40,7 @@ export interface ServiceUrls {
   scriptServiceApiUrl?: string;
   taskServiceApiUrl?: string;
   feedbackServiceUrl: string;
+  formServiceApiUrl: string;
 }
 
 export interface FeatureFlags {

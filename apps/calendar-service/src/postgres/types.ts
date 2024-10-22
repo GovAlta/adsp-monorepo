@@ -15,6 +15,8 @@ export interface EventRecord {
   tenant: string;
   calendar: string;
   id: number;
+  record_id: string;
+  context: Record<string, boolean | string | number>
   name: string;
   description: string;
   is_public: boolean;

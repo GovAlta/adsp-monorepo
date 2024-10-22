@@ -8,6 +8,24 @@ import { onBlurForTextControl, onKeyPressForTextControl, onChangeForInputControl
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
+export const formatSin = (value: string) => {
+  const inputVal = value.replace(/ /g, '');
+  let inputNumbersOnly = inputVal.replace(/\D/g, '');
+
+  if (inputNumbersOnly.length > 16) {
+    inputNumbersOnly = inputNumbersOnly.substr(0, 9);
+  }
+
+  const splits = inputNumbersOnly.match(/.{1,3}/g);
+
+  let spacedNumber = '';
+  if (splits) {
+    spacedNumber = splits.join(' ');
+  }
+  const formatVal = spacedNumber.length > 11 ? spacedNumber.slice(0, 11) : spacedNumber;
+  return formatVal;
+};
+
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, schema, label } = props;
 
@@ -15,6 +33,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
 
   const errorsFormInput = checkFieldValidity(props as ControlProps);
+  const isSinField = schema.title === 'Social insurance number';
 
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
@@ -28,6 +47,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       value={data}
       width={'100%'}
       readonly={readOnly}
+      maxLength={isSinField ? 11 : ''}
       placeholder={placeholder}
       {...uischema.options?.componentProps}
       // maxLength={appliedUiSchemaOptions?.maxLength}
@@ -37,9 +57,13 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       // If you use it onChange along with keyPress event it will cause a
       // side effect that causes the validation to render when it shouldn't.
       onChange={(name: string, value: string) => {
+        let formattedValue = value;
+        if (schema && schema.title === 'Social insurance number') {
+          formattedValue = formatSin(value);
+        }
         onChangeForInputControl({
           name,
-          value,
+          value: formattedValue,
           controlProps: props as ControlProps,
         });
       }}
