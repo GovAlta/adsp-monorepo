@@ -8,10 +8,13 @@ namespace Adsp.Platform.ScriptService.Services;
 internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
 {
 
-  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken)
-  : base(tenantId, directory, getToken)
+  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, Lua lua)
+  : base(tenantId, directory, getToken, lua)
   {
+    _lua = lua;
   }
+
+  private readonly Lua _lua;
 
   public override string? GeneratePdf(string templateId, string filename, object values)
   {
@@ -52,7 +55,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
-  public override IDictionary<string, object?>? GetFormSubmission(string formId, string submissionId)
+  public override LuaTable? GetFormSubmission(string formId, string submissionId)
   {
     var formSubmission = new FormSubmissionResult
     {
@@ -73,11 +76,9 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
       FormDefinitionId = "job-application",
       Disposition = new FormDisposition
       {
-        Id = "1234",
         Status = "rejected",
         Reason = "not good enough",
         Date = DateTime.Now,
-        SecurityClassification = SecurityClassificationType.ProtectedA
       },
       CreatedBy = new Platform.User
       {
@@ -86,7 +87,6 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
       }
 
     };
-    return formSubmission.ToDictionary();
+    return formSubmission.ToLuaTable(_lua);
   }
-
 }

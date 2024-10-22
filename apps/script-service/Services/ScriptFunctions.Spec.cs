@@ -11,99 +11,126 @@ using Xunit.Abstractions;
 using Adsp.Sdk;
 using Adsp.Platform.ScriptService.Services.Platform;
 using System.Diagnostics;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.Xml.Serialization;
+using NLua;
 
 namespace Adsp.Platform.ScriptService.Services;
 
+
 public class ScriptFunctionsTests
 {
+
+  private const string FormId = "my-form";
+  private const string SubmissionId = "my-submission";
+  private FormSubmissionResult TestData = new FormSubmissionResult
+  {
+    Id = SubmissionId,
+    FormId = FormId,
+
+    Data = new Dictionary<string, object?>
+            {
+                { "firstName", "Bob" },
+                { "lastName", "Bing" },
+                { "email", "Bob@bob.com" }
+            },
+    Files = new Dictionary<string, object?>
+            {
+                { "resume", "urn:ads:platform:file-service:v1:/files/resume" },
+                { "cover", "urn:ads:platform:file-service:v1:/files/cover" }
+            },
+    FormDefinitionId = "job-application",
+    Disposition = new FormDisposition
+    {
+      Status = "rejected",
+      Reason = "not good enough",
+      Date = DateTime.Now,
+    },
+    CreatedBy = new Platform.User
+    {
+      Id = "Bob1234",
+      Name = "Bob Bing"
+    }
+  };
+
   [Fact]
   public void canSerializeFormSubmissionResult()
   {
-    var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
-    var FormId = "my-form";
-    var SubmissionId = "my-submission";
-    var endpoint = $"/form/v1/forms/{FormId}/submissions/{SubmissionId}";
-    var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
-    var ServiceDirectory = TestUtil.GetServiceUrl(FormServiceId);
-    var StubFunctions = new StubScriptFunctions(Tenant, ServiceDirectory, TestUtil.GetMockToken());
-    var submission = StubFunctions.GetFormSubmission(FormId, SubmissionId);
-    var Actual = FormSubmissionResult.FromDictionary(submission);
-    AssertSubmission(Actual, SubmissionId, FormId);
+    var actual = SerializeFormSubmissionResult(this.TestData);
+    var reconstituted = JsonSerializer.Deserialize<FormSubmissionResult>(actual);
+    Assert.NotNull(reconstituted);
+    Assert.Equal("my-submission", reconstituted.Id);
+    Assert.Equal("my-form", reconstituted.FormId);
+    Assert.Equal("Bob", reconstituted.Data["firstName"]);
+    Assert.Equal("urn:ads:platform:file-service:v1:/files/resume", reconstituted.Files["resume"]);
+    Assert.NotNull(reconstituted.Disposition);
+    Assert.Equal("rejected", reconstituted.Disposition.Status);
   }
 
-  // [Fact]
-  // public void canXmlSerializeFormSubmissionResult()
-  // {
-  //   var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
-  //   var FormId = "my-form";
-  //   var SubmissionId = "my-submission";
-  //   var endpoint = $"/form/v1/forms/{FormId}/submissions/{SubmissionId}";
-  //   var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
-  //   var ServiceDirectory = TestUtil.GetServiceUrl(FormServiceId);
-  //   var StubFunctions = new StubScriptFunctions(Tenant, ServiceDirectory, TestUtil.GetMockToken());
-  //   var submission = StubFunctions.GetFormSubmission(FormId, SubmissionId);
-
-  //   var serializer = new XmlSerializer(submission.GetType());
-  //   using var writer = new StringWriter();
-  //   serializer.Serialize(writer, submission);
-  //   var actual = writer.ToString();
-
-  //   Assert.NotEmpty(actual);
-  // }
+  [Fact]
+  public void canConvertToLuaTable()
+  {
+    using var lua = new Lua();
+    var actual = this.TestData.ToLuaTable(lua);
+    AssertSubmission(actual, SubmissionId, FormId);
+  }
 
   [Fact]
   public void ReturnsValidFormSubmission()
   {
     var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
-    var FormId = "my-form";
-    var SubmissionId = "my-submission";
     var endpoint = $"/form/v1/forms/{FormId}/submissions/{SubmissionId}";
     var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
     var ServiceDirectory = TestUtil.GetServiceUrl(FormServiceId);
-    var StubFunctions = new StubScriptFunctions(Tenant, ServiceDirectory, TestUtil.GetMockToken());
-
-    var testSubmission = StubFunctions.GetFormSubmission(FormId, SubmissionId);
-    var Expected = JsonConvert.SerializeObject(testSubmission);
-    using var RestClient = TestUtil.GetRestClient<string>(FormServiceId, endpoint, Expected);
-    var ScriptFunctions = new ScriptFunctions(FormServiceId, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), RestClient);
-    var submission = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);
-    var Actual = FormSubmissionResult.FromDictionary(submission);
-    AssertSubmission(Actual, SubmissionId, FormId);
+    var expected = SerializeFormSubmissionResult(this.TestData);
+    using var lua = new Lua();
+    using var RestClient = TestUtil.GetRestClient<string>(FormServiceId, endpoint, expected);
+    var ScriptFunctions = new ScriptFunctions(FormServiceId, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), lua, RestClient);
+    var actual = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);
+    AssertSubmission(actual, SubmissionId, FormId);
   }
 
   [Fact]
   public void ReturnsFormSubmissionNotFound()
   {
-    var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
-    var FormId = "my-form";
-    var SubmissionId = "my-submission";
+    var formServiceId = AdspId.Parse("urn:ads:platform:form-service");
     var endpoint = $"/form/v1/forms/{FormId}/submissions/invalid-submission-id";
-    var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
-    var ServiceDirectory = TestUtil.GetServiceUrl(FormServiceId);
-    var StubFunctions = new StubScriptFunctions(Tenant, ServiceDirectory, TestUtil.GetMockToken());
+    var tenant = AdspId.Parse("urn:ads:platform:my-tenant");
+    var serviceDirectory = TestUtil.GetServiceUrl(formServiceId);
+    using var lua = new Lua();
 
-    var testSubmission = StubFunctions.GetFormSubmission(FormId, SubmissionId);
-    var Expected = JsonConvert.SerializeObject(testSubmission);
-    using var RestClient = TestUtil.GetRestClient<string>(FormServiceId, endpoint, Expected);
-    var ScriptFunctions = new ScriptFunctions(Tenant, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), RestClient);
-    var Actual = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);
-    Assert.Null(Actual);
+    using var restClient = TestUtil.GetRestClient<string>(formServiceId, endpoint, null);
+    var ScriptFunctions = new ScriptFunctions(tenant, TestUtil.GetServiceUrl(formServiceId), TestUtil.GetMockToken(), lua, restClient);
+    var actual = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);
+    Assert.Null(actual);
   }
 
-  private void AssertSubmission(FormSubmissionResult submission, string SubmissionId, string FormId)
+  private static void AssertSubmission(LuaTable submission, string SubmissionId, string FormId)
   {
     Assert.NotNull(submission);
-    Assert.Equal(SubmissionId, submission.Id);
-    Assert.Equal(FormId, submission.FormId);
-    Assert.NotNull(submission.Disposition);
-    var SecurityClassification = submission.Disposition.SecurityClassification;
-    Assert.Equal(SecurityClassificationType.ProtectedA, SecurityClassification);
-    var Creator = submission.CreatedBy;
+    Assert.Equal(SubmissionId, submission["Id"]);
+    Assert.Equal(FormId, submission["FormId"]);
+    var Disposition = (LuaTable)submission["Disposition"];
+    Assert.NotNull(Disposition);
+    Assert.Equal("rejected", Disposition["Status"]);
+    var Creator = (LuaTable)submission["CreatedBy"];
     Assert.NotNull(Creator);
-    Assert.Equal("Bob1234", Creator.Id);
-    Assert.NotNull(submission.Data);
-    Assert.Equal("Bob", submission.Data["firstName"]);
+    Assert.Equal("Bob1234", Creator["Id"]);
+    var files = (LuaTable)submission["Files"];
+    Assert.NotNull(files);
+    Assert.Equal("urn:ads:platform:file-service:v1:/files/resume", files["resume"]);
+    var Data = (LuaTable)submission["Data"];
+    Assert.NotNull(Data);
+    Assert.Equal("Bob", Data["firstName"]);
   }
+
+  private static string SerializeFormSubmissionResult(FormSubmissionResult submission)
+  {
+    using var memoryStream = new MemoryStream();
+    using var writer = new Utf8JsonWriter(memoryStream);
+    JsonSerializer.Serialize(writer, submission, typeof(FormSubmissionResult));
+    writer.Flush();
+    return System.Text.Encoding.UTF8.GetString(memoryStream.ToArray());
+  }
+
 }
