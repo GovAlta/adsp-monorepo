@@ -73,6 +73,7 @@ const GoADropdownListContainer = styled.div<GoADropdownListContainerProps>`
   position: absolute;
   line-height: 2rem;
   max-height: ${(p) => p.optionListMaxHeight || '272px'};
+
   &:focus-visible {
     outline-color: var(--goa-color-interactive-default);
   }
@@ -120,7 +121,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const [selectedOption, setSelectedOption] = useState<string>(selected);
   const [items, setItems] = useState(props.items);
   const [inputText, setInputText] = useState<string>(selected);
-  const [tabIndex, setTabIndex] = useState<number>(0);
   const prevCountRef = useRef(props.items);
 
   const trailingIcon = isOpen ? 'chevron-up' : 'chevron-down';
@@ -155,13 +155,34 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   function keyDown(e: KeyboardEvent) {
     if (e.key === ENTER_KEY) {
       setIsOpen(!isOpen);
-    } else if (e.key === ARROW_DOWN_KEY) {
-      setIsOpen(true);
       const val = `jsonforms-dropdown-${label}-${items.at(0)?.value}`;
       const el = document.getElementById(val);
       if (el) {
-        // el.style.outline = 'none';
+        el.style.outline = 'none';
         el.focus();
+      }
+    } else if (e.key === ARROW_UP_KEY) {
+      setIsOpen(true);
+      const val = `jsonforms-dropdown-${label}-${items.at(1)?.value}`;
+      const el = document.getElementById(val);
+      if (el) {
+        el.style.outline = 'none';
+        el.focus();
+      }
+    } else if (e.key === ARROW_DOWN_KEY) {
+      setIsOpen(true);
+      const firstItem = items.at(0);
+      let index = 0;
+      if (firstItem?.label === '' || firstItem?.label.trim() === '') {
+        index = 1;
+      }
+
+      const val = `jsonforms-dropdown-${label}-${items.at(index)?.value}`;
+      const el = document.getElementById(val);
+      if (el) {
+        el.style.outline = 'none';
+        el.focus();
+        e.preventDefault();
       }
     } else if (e.key === ESCAPE_KEY) {
       setIsOpen(false);
@@ -181,7 +202,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       setIsOpen(false);
     }
 
-    const index = items.findIndex((val) => {
+    let index = items.findIndex((val) => {
       return val.label === e.currentTarget.innerText;
     });
 
@@ -191,16 +212,20 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       if (item.label === items.at(-1)?.label) {
         e.preventDefault();
       }
+      if (index === -1 && item.label.trim() === '') {
+        index = 0;
+      }
 
       const val = `jsonforms-dropdown-${label}-${items.at(index + 1)?.value}`;
       const el = document.getElementById(val);
       if (el) {
         el.style.outline = 'none';
         el.focus();
+        e.preventDefault();
       }
     }
     if (e.key === ARROW_UP_KEY) {
-      if (index === 0) {
+      if (index <= 0) {
         e.preventDefault();
         return;
       }
@@ -218,7 +243,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       const el = document.getElementById(val);
       if (el) {
         const nextSibling = el.nextSibling as HTMLElement;
-        nextSibling.focus();
+        //e.preventDefault();
       }
     }
   }
@@ -256,12 +281,12 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         }}
       />
       <GoADropdownListContainerWrapper isOpen={isOpen}>
-        <GoADropdownListContainer optionListMaxHeight={optionListMaxHeight}>
+        <GoADropdownListContainer id="dropDownList" optionListMaxHeight={optionListMaxHeight}>
           {items.map((item) => {
             return (
               <GoADropdownListOption isSelected={item.value === selected}>
                 <div
-                  tabIndex={tabIndex}
+                  tabIndex={0}
                   data-testid={`${id}-${item.label}-option`}
                   id={`jsonforms-dropdown-${label}-${item.value}`}
                   key={`jsonforms-dropdown-${label}-${item.value}`}
