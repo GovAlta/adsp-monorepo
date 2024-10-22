@@ -14,15 +14,15 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     [JsonPropertyName("FormId")]
     public string? FormId { get; set; }
 
-    [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
-    [JsonPropertyName("FormData")]
-    [JsonConverter(typeof(DictionaryJsonConverter))]
-    public IDictionary<string, object?>? Data { get; set; } = new Dictionary<string, object?>();
+    // [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
+    // [JsonPropertyName("FormData")]
+    // [JsonConverter(typeof(DictionaryJsonConverter))]
+    // public IDictionary<string, object?>? Data { get; set; } = new Dictionary<string, object?>();
 
-    [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
-    [JsonPropertyName("formFiles")]
-    [JsonConverter(typeof(DictionaryJsonConverter))]
-    public IDictionary<string, object?>? Files { get; set; } = new Dictionary<string, object?>();
+    // [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
+    // [JsonPropertyName("formFiles")]
+    // [JsonConverter(typeof(DictionaryJsonConverter))]
+    // public IDictionary<string, object?>? Files { get; set; } = new Dictionary<string, object?>();
 
     [JsonPropertyName("createdBy")]
     public User? CreatedBy { get; set; }
