@@ -16,57 +16,79 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const textInput = document.getElementsByName(textInputName)[0] ?? null;
 
   useEffect(() => {
+    setItems(props.items);
+    prevCountRef.current = props.items;
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEqual(props.items, prevCountRef.current)]);
+
+  useEffect(() => {
     if (textInput) {
       textInput.addEventListener('click', inputTextOnClick);
-      textInput.addEventListener('keydown', keyDown, false);
+      textInput.addEventListener('keydown', keyDown);
+      textInput.addEventListener('mouseout', handleTextOnMouseOut);
+      textInput.addEventListener('focusout', handleTextOnFocusOut);
     }
     return () => {
       if (textInput) {
         textInput.removeEventListener('click', inputTextOnClick);
-        textInput.removeEventListener('keydown', keyDown, false);
+        textInput.removeEventListener('keydown', keyDown);
+        textInput.removeEventListener('mouseout', handleTextOnMouseOut);
+        textInput.removeEventListener('focusout', handleTextOnFocusOut);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textInput]);
 
-  function inputTextOnClick(e: MouseEvent) {
-    setIsOpen(!isOpen);
-  }
+  const handleTextOnMouseOut = (e: MouseEvent) => {
+    console.log('e', isOpen);
+  };
 
-  function updateDropDownData(item: Item) {
+  const handleTextOnFocusOut = (e: FocusEvent) => {};
+
+  const inputTextOnClick = (e: MouseEvent) => {
+    setIsOpen(!isOpen);
+  };
+
+  const updateDropDownData = (item: Item) => {
     onChange(item.value);
     setSelectedOption(item.value);
     setInputText(item.label);
     setIsOpen(false);
-  }
+  };
 
-  function keyDown(e: KeyboardEvent) {
+  const keyDown = (e: KeyboardEvent) => {
     if (!isAutocompletion) {
       handleKeyDownWithNoAutoCompletion(e);
     } else {
       //TO DO: Handle auto completion.
     }
-  }
+  };
 
-  function handleKeyDownOnAutoCompletion(e: KeyboardEvent) {}
+  const handleKeyDownOnAutoCompletion = (e: KeyboardEvent) => {};
 
-  function handleKeyDownWithNoAutoCompletion(e: KeyboardEvent) {
+  const setElementFocus = (e: KeyboardEvent, element: HTMLElement | null, preventDefault: boolean) => {
+    if (element) {
+      element.style.outline = 'none';
+      element.focus();
+
+      if (preventDefault) {
+        e.preventDefault();
+      }
+    }
+  };
+
+  const handleKeyDownWithNoAutoCompletion = (e: KeyboardEvent) => {
     if (e.key === ENTER_KEY) {
       setIsOpen(!isOpen);
       const val = `jsonforms-dropdown-${label}-${items.at(0)?.value}`;
       const el = document.getElementById(val);
-      if (el) {
-        el.style.outline = 'none';
-        el.focus();
-      }
+      setElementFocus(e, el, false);
     } else if (e.key === ARROW_UP_KEY) {
       setIsOpen(true);
       const val = `jsonforms-dropdown-${label}-${items.at(1)?.value}`;
       const el = document.getElementById(val);
-      if (el) {
-        el.style.outline = 'none';
-        el.focus();
-      }
+      setElementFocus(e, el, false);
     } else if (e.key === ARROW_DOWN_KEY) {
       setIsOpen(true);
       const firstItem = items.at(0);
@@ -74,22 +96,27 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       if (firstItem?.label === '' || firstItem?.label.trim() === '') {
         index = 1;
       }
-
       const val = `jsonforms-dropdown-${label}-${items.at(index)?.value}`;
-      const el = document.getElementById(val);
+      let el = document.getElementById(val);
+
+      //If we cant find the items it in the items useState object try looking for it in the DOM element
+      if (el === null) {
+        const elements = document.querySelectorAll(`[id=dropDownList-jsonforms-dropdown-${label}]`);
+        const element = elements[0].children[1] as HTMLElement;
+        el = document.getElementById(`jsonforms-dropdown-${label}-${element.innerText}`);
+      }
+
       if (el) {
         el.style.outline = 'none';
         el.focus();
         e.preventDefault();
       }
-    } else if (e.key === ESCAPE_KEY) {
-      setIsOpen(false);
-    } else if (e.key === TAB_KEY) {
+    } else if (e.key === ESCAPE_KEY || e.key === TAB_KEY) {
       setIsOpen(false);
     }
-  }
+  };
 
-  function handDropDownItemOnKeyDown(e: React.KeyboardEvent<HTMLDivElement>, item: Item) {
+  const handDropDownItemOnKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, item: Item) => {
     if (e.key === ENTER_KEY) {
       updateDropDownData(item);
     }
@@ -140,16 +167,10 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         setIsOpen(false);
       }
     }
-  }
-
-  useEffect(() => {
-    setItems(props.items);
-    prevCountRef.current = props.items;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEqual(props.items, prevCountRef.current)]);
+  };
 
   return (
-    <div data-testid={id}>
+    <div data-testid={id} key={id}>
       <GoAInput
         onTrailingIconClick={() => {
           setIsOpen(!isOpen);
@@ -170,15 +191,24 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
           }
         }}
         trailingIcon={trailingIcon}
-        onFocus={() => {
-          setIsOpen(!isOpen);
-        }}
       />
-      <GoADropdownListContainerWrapper isOpen={isOpen}>
-        <GoADropdownListContainer id="dropDownList" optionListMaxHeight={optionListMaxHeight}>
+      <GoADropdownListContainerWrapper
+        isOpen={isOpen}
+        id={`dropDownListContainerWrapper-jsonforms-dropdown-${label}`}
+        key={`dropDownListContainerWrapper-jsonforms-dropdown-${label}`}
+      >
+        <GoADropdownListContainer
+          key={`dropDownList-jsonforms-dropdown-${label}`}
+          id={`dropDownList-jsonforms-dropdown-${label}`}
+          optionListMaxHeight={optionListMaxHeight}
+        >
           {items.map((item) => {
             return (
-              <GoADropdownListOption isSelected={item.value === selected}>
+              <GoADropdownListOption
+                key={`jsonforms-dropdown-option-${label}-${item.value}`}
+                id={`jsonforms-dropdown-option-${label}-${item.value}`}
+                isSelected={item.value === selected}
+              >
                 <div
                   tabIndex={0}
                   data-testid={`${id}-${item.label}-option`}
