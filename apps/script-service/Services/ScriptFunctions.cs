@@ -4,8 +4,6 @@ using Adsp.Sdk;
 using Adsp.Sdk.Events;
 using NLua;
 using RestSharp;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions : IScriptFunctions
@@ -13,18 +11,14 @@ internal class ScriptFunctions : IScriptFunctions
   private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;
   private readonly Func<Task<string>> _getToken;
-  private readonly Lua _lua;
   private readonly IRestClient _client;
-  public const string FormSubmissionRequestError = "FormSubmissionRequestFailure";
 
 
-
-  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, Lua lua, IRestClient? client = null)
+  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, IRestClient? client = null)
   {
     _tenantId = tenantId;
     _directory = directory;
     _getToken = getToken;
-    _lua = lua;
     _client = client ?? new RestClient(new RestClientOptions { ThrowOnAnyError = true });
   }
 
@@ -92,8 +86,7 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
-  [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Specific exceptions are not known and handled centrally.")]
-  public virtual LuaTable? GetFormSubmission(string formId, string submissionId)
+  public virtual FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
   {
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
@@ -102,18 +95,9 @@ internal class ScriptFunctions : IScriptFunctions
     var request = new RestRequest(requestUrl, Method.Get);
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
-    try
-    {
-      var submission = _client.GetAsync<string>(request).Result;
-      if (submission == null) return null;
-      var deserialized = JsonSerializer.Deserialize<FormSubmissionResult?>(submission);
-      return deserialized?.ToLuaTable(_lua);
-    }
-    catch (Exception e)
-    {
-      string message = e.Message;
-      return message.ToLuaTable(FormSubmissionRequestError, _lua);
-    }
+
+    var result = _client.GetAsync<FormSubmissionResult>(request).Result;
+    return result;
   }
 
   public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)

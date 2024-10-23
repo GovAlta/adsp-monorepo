@@ -11,19 +11,17 @@ using NLua.Exceptions;
 namespace Adsp.Platform.ScriptService.Services;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 [SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "WIP: script error handling")]
-internal sealed class LuaScriptService : ILuaScriptService, IDisposable
+internal sealed class LuaScriptService : ILuaScriptService
 {
   private readonly ILogger<LuaScriptService> _logger;
   private readonly IServiceDirectory _directory;
   private readonly IEventService _eventService;
-  private Lua? _lua;
 
   public LuaScriptService(ILogger<LuaScriptService> logger, IServiceDirectory directory, IEventService eventService)
   {
     _logger = logger;
     _directory = directory;
     _eventService = eventService;
-    _lua = new Lua();
   }
   public IEnumerable<object> TestScript(
     IDictionary<string, object?> inputs,
@@ -36,12 +34,13 @@ internal sealed class LuaScriptService : ILuaScriptService, IDisposable
     _logger.LogDebug("Testing script for tenant {TenantId}...", tenantId);
     try
     {
-      _lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken, _lua));
-      _lua["script"] = script;
-      _lua["inputs"] = inputs;
+      using var lua = new Lua();
+      lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken));
+      lua["script"] = script;
+      lua["inputs"] = inputs;
 
-      _lua.State.Encoding = Encoding.UTF8;
-      var outputs = _lua.DoString(@"
+      lua.State.Encoding = Encoding.UTF8;
+      var outputs = lua.DoString(@"
         import = function () end
         local sandbox = require 'scripts/sandbox'
         return sandbox.run(script, { env = { inputs = inputs, adsp = adsp } })
@@ -79,7 +78,7 @@ internal sealed class LuaScriptService : ILuaScriptService, IDisposable
 
       using var lua = new Lua();
       lua.State.Encoding = Encoding.UTF8;
-      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, getToken, lua));
+      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, getToken));
 
       lua["script"] = definition.Script;
       lua["inputs"] = inputs;
@@ -156,10 +155,5 @@ internal sealed class LuaScriptService : ILuaScriptService, IDisposable
       _logger.LogError(e, "Unrecognized error encountered running script {Id}.", definition.Id);
       throw new InternalErrorException("Unrecognized error encountered running script.", e);
     }
-  }
-
-  public void Dispose()
-  {
-    _lua?.Dispose();
   }
 }

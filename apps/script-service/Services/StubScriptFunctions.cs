@@ -8,13 +8,10 @@ namespace Adsp.Platform.ScriptService.Services;
 internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
 {
 
-  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, Lua lua)
-  : base(tenantId, directory, getToken, lua)
+  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken)
+  : base(tenantId, directory, getToken)
   {
-    _lua = lua;
   }
-
-  private readonly Lua _lua;
 
   public override string? GeneratePdf(string templateId, string filename, object values)
   {
@@ -55,7 +52,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
-  public override LuaTable? GetFormSubmission(string formId, string submissionId)
+  public override FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
   {
     var formSubmission = new FormSubmissionResult
     {
@@ -68,7 +65,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
                 { "lastName", "Bing" },
                 { "email", "Bob@bob.com" }
             },
-      Files = new Dictionary<string, object?>
+      Files = new Dictionary<string, string?>
             {
                 { "resume", "urn:ads:platform:file-service:v1:/files/resume" },
                 { "cover", "urn:ads:platform:file-service:v1:/files/cover" }
@@ -76,9 +73,11 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
       FormDefinitionId = "job-application",
       Disposition = new FormDisposition
       {
+        Id = "1234",
         Status = "rejected",
         Reason = "not good enough",
         Date = DateTime.Now,
+        SecurityClassification = SecurityClassificationType.ProtectedA
       },
       CreatedBy = new Platform.User
       {
@@ -87,6 +86,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
       }
 
     };
-    return formSubmission.ToLuaTable(_lua);
+    return formSubmission;
   }
+
 }
