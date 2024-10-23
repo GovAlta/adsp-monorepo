@@ -30,7 +30,7 @@ namespace Adsp.Platform.ScriptService.Services.Platform
 
     public FormDisposition? disposition { get; set; }
 
-    public SecurityClassificationType? securityClassification { get; set; }
+    public string? securityClassification { get; set; }
   }
 
   internal sealed class FormDisposition
@@ -50,18 +50,5 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     public string? id { get; set; }
 
     public string? name { get; set; }
-  }
-
-  [JsonConverter(typeof(JsonStringEnumConverter))]
-  internal enum SecurityClassificationType
-  {
-    [EnumMember(Value = "protected a")]
-    ProtectedA,
-    [EnumMember(Value = "protected b")]
-    ProtectedB,
-    [EnumMember(Value = "protected c")]
-    ProtectedC,
-    [EnumMember(Value = "public")]
-    Public
   }
 }
