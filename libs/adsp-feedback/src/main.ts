@@ -92,10 +92,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     document.body.classList.add('modal-open');
     this.onDimChange(true);
   }
-  private isSafariBrowser() {
-    const ua = navigator.userAgent;
-    return /Safari/.test(ua) && !/Chrome|Chromium|Android/.test(ua);
-  }
+
   private handleKeyOpenStartForm(event: KeyboardEvent) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -649,6 +646,8 @@ export class AdspFeedback implements AdspFeedbackApi {
             width: 98%;
 
             > div > img {
+              width: 46px;
+              height: 46px;
             }
             > div > img:first-child {
               padding-left: 0px;
@@ -881,7 +880,10 @@ export class AdspFeedback implements AdspFeedbackApi {
           }
           .rating {
             cursor: pointer;
+            transform: translateZ(0);
+            will-change: transform, color;
             transition: transform 0.3s ease-in-out color 0.3s ease;
+            transition: -webkit-transform 0.3s ease-in-out, color 0.3s ease;
           }
 
           .title {
