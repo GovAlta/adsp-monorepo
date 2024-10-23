@@ -11,17 +11,19 @@ using NLua.Exceptions;
 namespace Adsp.Platform.ScriptService.Services;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 [SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "WIP: script error handling")]
-internal sealed class LuaScriptService : ILuaScriptService
+internal sealed class LuaScriptService : ILuaScriptService, IDisposable
 {
   private readonly ILogger<LuaScriptService> _logger;
   private readonly IServiceDirectory _directory;
   private readonly IEventService _eventService;
+  private Lua? _lua;
 
   public LuaScriptService(ILogger<LuaScriptService> logger, IServiceDirectory directory, IEventService eventService)
   {
     _logger = logger;
     _directory = directory;
     _eventService = eventService;
+    _lua = new Lua();
   }
   public IEnumerable<object> TestScript(
     IDictionary<string, object?> inputs,
@@ -34,13 +36,12 @@ internal sealed class LuaScriptService : ILuaScriptService
     _logger.LogDebug("Testing script for tenant {TenantId}...", tenantId);
     try
     {
-      using var lua = new Lua();
-      lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken, lua));
-      lua["script"] = script;
-      lua["inputs"] = inputs;
+      _lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken, _lua));
+      _lua["script"] = script;
+      _lua["inputs"] = inputs;
 
-      lua.State.Encoding = Encoding.UTF8;
-      var outputs = lua.DoString(@"
+      _lua.State.Encoding = Encoding.UTF8;
+      var outputs = _lua.DoString(@"
         import = function () end
         local sandbox = require 'scripts/sandbox'
         return sandbox.run(script, { env = { inputs = inputs, adsp = adsp } })
@@ -155,5 +156,10 @@ internal sealed class LuaScriptService : ILuaScriptService
       _logger.LogError(e, "Unrecognized error encountered running script {Id}.", definition.Id);
       throw new InternalErrorException("Unrecognized error encountered running script.", e);
     }
+  }
+
+  public void Dispose()
+  {
+    _lua?.Dispose();
   }
 }
