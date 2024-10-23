@@ -4,6 +4,12 @@ export const DeleteDialogContent = styled.div`
   margin-bottom: var(--goa-space-m);
 `;
 
+export const NonEmptyCellStyle = styled.div`
+  goa-table thead th {
+    background-color: #000:
+  }
+`;
+
 export const ToolBarHeader = styled.div`
   margin-bottom: var(--goa-space-l);
 `;

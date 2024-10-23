@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
 import NotificationsPage from './notifications.page';
@@ -31,7 +31,7 @@ Then('the user views Add notification type modal', function () {
 // Known issue: scrollbar to scroll to a specific role element doesn't work with .scrollIntoView() in Cypress. Only the viewable roles are useable for now.
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notification type modal',
-  function (name, description, role, bot, sms, selfService) {
+  function (name: string, description: string, role: string, bot, sms, selfService) {
     const roles = role.split(',');
     notificationsObj
       .notificationTypeModalNameField()
@@ -224,7 +224,7 @@ Then('the user clicks Cancel button in notification type modal', function () {
 
 Then(
   'the user {string} the notification type card of {string}, {string}, {string}, {string}, {string}',
-  function (viewOrNot, name, desc, roles, publicOrNot, selfService) {
+  function (viewOrNot, name, desc, roles: string, publicOrNot, selfService) {
     roles = roles.replace('public', '');
     if (viewOrNot == 'views') {
       notificationsObj.notificationTypeCardTitle(name).should('exist');
@@ -360,7 +360,7 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
   }
 });
 
-When('the user clicks {string} button for {string} in {string}', function (buttonName, event, cardTitle) {
+When('the user clicks {string} button for {string} in {string}', function (buttonName: string, event, cardTitle) {
   switch (buttonName.toLowerCase()) {
     case 'edit':
       notificationsObj.notificationTypeEventEditButton(cardTitle, event).click();
@@ -444,21 +444,9 @@ Then('Preview event template modal is closed', function () {
   notificationsObj.eventTemplatePreviewModal().should('not.exist');
 });
 
-Given('a tenant admin user is on notification subscriptions page', function () {
-  commonlib.tenantAdminDirectURLLogin(
-    Cypress.config().baseUrl,
-    Cypress.env('realm'),
-    Cypress.env('email'),
-    Cypress.env('password')
-  );
-  commonlib.tenantAdminMenuItem('Notification', 4000);
-  commonObj.serviceTab('Notification', 'Subscriptions').click();
-  cy.wait(4000);
-});
-
 When(
   'the user types {string} in Search subuscriber address as field and {string} in Search subscriber email field',
-  function (addressAs, email) {
+  function (addressAs: string, email: string) {
     notificationsObj
       .searchSubscriberAddressAs()
       .shadow()
@@ -466,32 +454,6 @@ When(
       .clear()
       .type(addressAs, { delay: 100, force: true });
     notificationsObj.searchSubscriberEmail().shadow().find('input').clear().type(email, { delay: 100, force: true });
-  }
-);
-
-When('the user types {string} in Search subscriber email field', function (email) {
-  notificationsObj.searchSubscriberEmail().shadow().find('input').clear().type(email, { delay: 100, force: true });
-});
-
-When('the user clicks Search button on notifications page', function () {
-  notificationsObj.notificationSearchBtn().shadow().find('button').click({ force: true });
-  cy.wait(4000);
-});
-
-//notification type in sentence case, only first letter is upper case
-Then(
-  'the user {string} the subscription of {string}, {string} under {string}',
-  function (viewOrNot, addressAs, email, notificationType) {
-    switch (viewOrNot) {
-      case 'views':
-        notificationsObj.notificationRecord(notificationType, addressAs, email).should('exist');
-        break;
-      case 'should not view':
-        notificationsObj.notificationRecord(notificationType, addressAs, email).should('not.exist');
-        break;
-      default:
-        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-    }
   }
 );
 
@@ -531,7 +493,7 @@ Given('a tenant admin user is on notification subscribers page', function () {
   cy.wait(4000);
 });
 
-When('the user searches subscribers with {string} containing {string}', function (searchField, searchText) {
+When('the user searches subscribers with {string} containing {string}', function (searchField, searchText: string) {
   //Enter search text
   switch (searchField) {
     case 'address as':
@@ -563,7 +525,7 @@ When('the user searches subscribers with {string} containing {string}', function
 
 When(
   'the user searches subscribers with address as containing {string}, email containing {string} and phone number containing {string}',
-  function (addressAs, email, phoneNumber) {
+  function (addressAs: string, email: string, phoneNumber: string) {
     notificationsObj
       .searchSubscriberAddressAs()
       .shadow()
@@ -587,35 +549,38 @@ When(
   }
 );
 
-Then('the user views all the subscribers with {string} containing {string}', function (headerLabel, searchText) {
-  //Find which column to search
-  let columnNumber;
-  notificationsObj
-    .subscriberTableHeader()
-    .get('th')
-    .then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].innerText.toLowerCase() == headerLabel) {
-          columnNumber = i;
-        }
-      }
-    });
-
-  //Search all cells of the column
-  notificationsObj.subscriberTableBody().each((rows) => {
-    cy.wrap(rows).within(() => {
-      cy.get('td').each(($col, index) => {
-        if (index == columnNumber) {
-          expect($col.text().toLowerCase()).to.contain(searchText.toLowerCase());
+Then(
+  'the user views all the subscribers with {string} containing {string}',
+  function (headerLabel, searchText: string) {
+    //Find which column to search
+    let columnNumber;
+    notificationsObj
+      .subscriberTableHeader()
+      .get('th')
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].innerText.toLowerCase() == headerLabel) {
+            columnNumber = i;
+          }
         }
       });
+
+    //Search all cells of the column
+    notificationsObj.subscriberTableBody().each((rows) => {
+      cy.wrap(rows).within(() => {
+        cy.get('td').each(($col, index) => {
+          if (index == columnNumber) {
+            expect($col.text().toLowerCase()).to.contain(searchText.toLowerCase());
+          }
+        });
+      });
     });
-  });
-});
+  }
+);
 
 Then(
   'the user views subscribers with {string} containing {string} and {string} containing {string}',
-  function (headerLabel1, searchText1, headerLabel2, searchText2) {
+  function (headerLabel1, searchText1: string, headerLabel2, searchText2: string) {
     //Find which columns to search
     let columnNumber1;
     let columnNumber2;
@@ -660,7 +625,7 @@ Then(
 
 Then(
   'the user {string} the subscriber of {string}, {string}, {string}',
-  function (viewOrNot, addressAs, email, phoneNumber) {
+  function (viewOrNot, addressAs, email, phoneNumber: string) {
     let phoneNumberInDisplay;
     expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
     if (phoneNumber !== 'EMPTY') {
@@ -721,7 +686,7 @@ Then('the user views Edit contact information modal on notification overview pag
 
 When(
   'the user enters {string}, {string} and {string} in Edit contact information modal',
-  function (email, phone, instructions) {
+  function (email: string, phone: string, instructions: string) {
     // Check phone parameter to match 1111111 format
     // Generate a random number between 1000 and 2000
     const rand_str = String(Math.floor(Math.random() * 1000 + 1000));
@@ -777,15 +742,15 @@ Then('the user clicks Cancel button in Edit contact information modal', function
 
 Then(
   'the user views contact information of {string}, {string} and {string} on notifications page',
-  function (email, phone, instructions) {
+  function (email: string, phone: string, instructions: string) {
     const editedEmail = email.match(/(?<=rnd{)[^{}]+(?=})/g);
-    if (editedEmail == '') {
+    if (!editedEmail) {
       notificationsObj.contactInformationEmail().invoke('text').should('contain', email);
     } else {
       notificationsObj.contactInformationEmail().invoke('text').should('contain', emailInput);
     }
     const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
-    if (editedPhone == '') {
+    if (!editedPhone) {
       notificationsObj
         .contactInformationPhone()
         .invoke('text')
@@ -809,7 +774,7 @@ Then(
         });
     }
     const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
-    if (editedInstructions == '') {
+    if (!editedInstructions) {
       notificationsObj.contactInformationInstructions().invoke('text').should('contain', instructions);
     } else {
       notificationsObj.contactInformationInstructions().invoke('text').should('contain', instructionsInput);
@@ -817,20 +782,23 @@ Then(
   }
 );
 
-When('the user modifies the name to {string} and email to {string} in subscriber modal', function (name, editEmail) {
-  notificationsObj
-    .editSubscriberModalNameField()
-    .shadow()
-    .find('input')
-    .clear()
-    .type(name, { delay: 100, force: true });
-  notificationsObj
-    .editSubscriberModalEmailField()
-    .shadow()
-    .find('input')
-    .clear()
-    .type(editEmail, { delay: 100, force: true });
-});
+When(
+  'the user modifies the name to {string} and email to {string} in subscriber modal',
+  function (name: string, editEmail: string) {
+    notificationsObj
+      .editSubscriberModalNameField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(name, { delay: 100, force: true });
+    notificationsObj
+      .editSubscriberModalEmailField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(editEmail, { delay: 100, force: true });
+  }
+);
 
 When('the user clicks Edit button of {string} and {string} on subscribers page', function (addressAs, email) {
   notificationsObj.subscriberEditIcon(addressAs, email).shadow().find('button').click({ force: true });
@@ -845,7 +813,7 @@ Then('the user clicks Save button in Edit subscriber modal', function () {
   cy.wait(2000);
 });
 
-When('the user enters {string} in Phone number field', function (phoneNumber) {
+When('the user enters {string} in Phone number field', function (phoneNumber: string) {
   expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
   if (phoneNumber !== 'EMPTY') {
     notificationsObj
@@ -946,7 +914,7 @@ When('the user selects {string} tab on the event template', function (tab) {
 
 When(
   'the user enters {string} as subject and {string} as body on {string} template page',
-  function (subjectText, bodyText, channel) {
+  function (subjectText: string, bodyText: string, channel: string) {
     cy.wait(2000); // Wait for the template editor elements to show
     // Use proper casing no matter what cases used by the passed in parameter
     let channelNameInTitle;
@@ -1085,25 +1053,31 @@ Then('the user views the email template preview of {string} as subject and {stri
   });
 });
 
-Then('the user views the SMS template preview of {string} as subject and {string} as body', function (subject, body) {
-  cy.wait(2000); // Wait 2 second for preview to show
-  const subjectWithoutVariables = subject.replace(/{{.+?}}/, '');
-  const bodyWithoutVariables = body.replace(/{{.+?}}/, '');
-  notificationsObj.templateModalPreviewPaneSMSSubject().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
-  notificationsObj.templateModalPreviewPaneSMSSubject().invoke('text').should('contain', subjectWithoutVariables);
-  notificationsObj.templateModalPreviewPaneSMSBody().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
-  notificationsObj.templateModalPreviewPaneSMSBody().invoke('text').should('contain', bodyWithoutVariables);
-});
+Then(
+  'the user views the SMS template preview of {string} as subject and {string} as body',
+  function (subject: string, body: string) {
+    cy.wait(2000); // Wait 2 second for preview to show
+    const subjectWithoutVariables = subject.replace(/{{.+?}}/, '');
+    const bodyWithoutVariables = body.replace(/{{.+?}}/, '');
+    notificationsObj.templateModalPreviewPaneSMSSubject().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
+    notificationsObj.templateModalPreviewPaneSMSSubject().invoke('text').should('contain', subjectWithoutVariables);
+    notificationsObj.templateModalPreviewPaneSMSBody().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
+    notificationsObj.templateModalPreviewPaneSMSBody().invoke('text').should('contain', bodyWithoutVariables);
+  }
+);
 
-Then('the user views the Bot template preview of {string} as subject and {string} as body', function (subject, body) {
-  cy.wait(2000); // Wait 2 second for preview to show
-  const subjectWithoutVariables = subject.replace(/{{.+?}}/, '');
-  const bodyWithoutVariables = body.replace(/{{.+?}}/, '');
-  notificationsObj.templateModalPreviewPaneBotSubject().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
-  notificationsObj.templateModalPreviewPaneBotSubject().invoke('text').should('contain', subjectWithoutVariables);
-  notificationsObj.templateModalPreviewPaneBotBody().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
-  notificationsObj.templateModalPreviewPaneBotBody().invoke('text').should('contain', bodyWithoutVariables);
-});
+Then(
+  'the user views the Bot template preview of {string} as subject and {string} as body',
+  function (subject: string, body: string) {
+    cy.wait(2000); // Wait 2 second for preview to show
+    const subjectWithoutVariables = subject.replace(/{{.+?}}/, '');
+    const bodyWithoutVariables = body.replace(/{{.+?}}/, '');
+    notificationsObj.templateModalPreviewPaneBotSubject().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
+    notificationsObj.templateModalPreviewPaneBotSubject().invoke('text').should('contain', subjectWithoutVariables);
+    notificationsObj.templateModalPreviewPaneBotBody().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
+    notificationsObj.templateModalPreviewPaneBotBody().invoke('text').should('contain', bodyWithoutVariables);
+  }
+);
 
 Then('Event template modal is closed', function () {
   notificationsObj.eventTemplateModal().should('not.exist');
@@ -1143,20 +1117,20 @@ Then('the user {string} GoA header and footer in the email preview', function (v
 
 Then(
   'the user should be able to view {string}, {string} and {string} as contact information in the subscription app',
-  function (email, phone, instructions) {
+  function (email: string, phone: string, instructions: string) {
     // Visit notification page of the realm
     cy.visit(Cypress.env('subscriptionUrl') + '/' + Cypress.env('realm') + '/login?kc_idp_hint=');
     cy.wait(4000); // Wait all the redirects to settle down
 
     // Verify the support info
     const editedEmail = email.match(/(?<=rnd{)[^{}]+(?=})/g);
-    if (editedEmail == '') {
+    if (!editedEmail) {
       notificationsObj.subscriptionAppContactSupportEmail().invoke('text').should('contain', email);
     } else {
       notificationsObj.subscriptionAppContactSupportEmail().invoke('text').should('contain', emailInput);
     }
     const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
-    if (editedPhone == '') {
+    if (!editedPhone) {
       notificationsObj
         .subscriptionAppContactSupportPhone()
         .invoke('text')
@@ -1180,7 +1154,7 @@ Then(
         });
     }
     const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
-    if (editedInstructions == '') {
+    if (!editedInstructions) {
       notificationsObj.subscriptionAppContactSupportsInstructions().invoke('text').should('contain', instructions);
     } else {
       notificationsObj.subscriptionAppContactSupportsInstructions().invoke('text').should('contain', instructionsInput);
@@ -1212,7 +1186,7 @@ Then('the user views help content of {string}', function (helpText) {
     .should('contains', helpText);
 });
 
-When('the user enters {string} in the email field in Edit email information modal', function (email) {
+When('the user enters {string} in the email field in Edit email information modal', function (email: string) {
   notificationsObj
     .notificationOverviewEmailInformationModalEmailField()
     .shadow()

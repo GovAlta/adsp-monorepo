@@ -38,23 +38,27 @@ export const ListWithDetailHeading = styled.h3`
 export const ReviewContainer = styled.div`
   display: flex;
   flex-direction: column;
+  align-items:center;
+  padding-top: var(--goa-space-l)!important;
   height: 100%;
-  padding-top: 0;
+  width:100%;
 `;
 
 export const ReviewContent = styled.div`
   margin-top: var(--goa-space-l);
-  flex-grow: 1;
   overflow-y: auto;
   padding-bottom: 0;
+  max-width:624px;
+  width:100%;
+  margin: 0 auto;
 `;
 
 export const ActionContainer = styled.div`
+  max-width:600px;
   width: 100%;
   flex-shrink: 0;
   background-color: #fff;
   gap: var(--goa-space-s);
-  margin-left: var(--goa-space-s);
 `;
 
 export const ActionControl = styled.div`

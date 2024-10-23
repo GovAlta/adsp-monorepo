@@ -13,6 +13,9 @@ export interface DeleteDialogProps {
 export interface WithDeleteDialogSupport {
   openDeleteDialog(path: string, data: number, name?: string): void;
 }
+export interface WithBasicDeleteDialogSupport {
+  openDeleteDialog(data: number, name?: string): void;
+}
 
 export const DeleteDialog = React.memo(function DeleteDialog({
   open,

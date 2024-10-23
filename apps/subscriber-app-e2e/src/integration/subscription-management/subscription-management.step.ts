@@ -1,4 +1,4 @@
-import { When, Then, And } from 'cypress-cucumber-preprocessor/steps';
+import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import SubscriptionManagementPage from './subscription-management.page';
 import { injectAxe } from '../../support/app.po';
 import { htmlReport } from '../../support/axe-html-reporter-util';
@@ -40,29 +40,32 @@ When('an authenticated user is in the subscriber app', function () {
   cy.wait(4000); // Wait all the redirects to settle down
 });
 
-When('an authenticated user with {string} and {string} is in the subscriber app', function (username, password) {
-  cy.visit('/' + Cypress.env('realm') + '/login?kc_idp_hint=');
-  // Enter user name and password and click log in button
-  subscriptionManagementObj.usernameEmailField().type(username);
-  subscriptionManagementObj.passwordField().type(password);
-  subscriptionManagementObj.loginButton().click();
-  cy.wait(4000); // Wait all the redirects to settle down
-});
+When(
+  'an authenticated user with {string} and {string} is in the subscriber app',
+  function (username: string, password: string) {
+    cy.visit('/' + Cypress.env('realm') + '/login?kc_idp_hint=');
+    // Enter user name and password and click log in button
+    subscriptionManagementObj.usernameEmailField().type(username);
+    subscriptionManagementObj.passwordField().type(password);
+    subscriptionManagementObj.loginButton().click();
+    cy.wait(4000); // Wait all the redirects to settle down
+  }
+);
 
 Then('the user views subscription management page', function () {
   subscriptionManagementObj.serviceName().invoke('text').should('contain', 'Subscription management');
 });
 
-And('the user views the user contact information', function () {
+Then('the user views the user contact information', function () {
   subscriptionManagementObj.contactInformationEmail().invoke('text').should('not.be.null');
 });
 
-And('the user views the subscription of {string} and its description', function (subscriptionName) {
+Then('the user views the subscription of {string} and its description', function (subscriptionName) {
   subscriptionManagementObj.subscriptionName(subscriptionName).should('exist');
   subscriptionManagementObj.subscriptionDesc(subscriptionName).invoke('text').should('not.be.empty');
 });
 
-And('the user views the support link for the subscription of {string}', function (subscriptionName) {
+Then('the user views the support link for the subscription of {string}', function (subscriptionName) {
   subscriptionManagementObj
     .contactSupportToUnsbuscribe(subscriptionName)
     .invoke('attr', 'href')
@@ -74,11 +77,11 @@ When('the user clicks edit contact information button', function () {
   subscriptionManagementObj.editContactInformation().shadow().find('button').click({ force: true });
 });
 
-And('the user clicks Save button in contact information', function () {
+When('the user clicks Save button in contact information', function () {
   subscriptionManagementObj.contactInformationSaveBtn().shadow().find('button').click({ force: true });
 });
 
-And('the user views an error message for the invalid phone number in contact information', function () {
+Then('the user views an error message for the invalid phone number in contact information', function () {
   subscriptionManagementObj
     .phoneNumberFormItemWithError()
     .shadow()
@@ -86,7 +89,7 @@ And('the user views an error message for the invalid phone number in contact inf
     .should('contain', 'Please enter a valid 10 digit phone number');
 });
 
-And('the user removes phone number value in contact information', function () {
+When('the user removes phone number value in contact information', function () {
   subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear({ force: true });
 });
 
@@ -120,7 +123,7 @@ Then('the user views an error messsage for missing email', function () {
 
 When(
   'the user enters {string} as email, {string} as phone number and {string} as preferred channel',
-  function (email, phone, channel) {
+  function (email: string, phone: string, channel) {
     subscriptionManagementObj.emailInput().shadow().find('input').clear().type(email, { delay: 50, force: true });
     if (phone == 'EMPTY') {
       subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear({ force: true });
@@ -140,7 +143,7 @@ When(
   }
 );
 
-And('the user views contact information of {string}, {string} and {string}', function (email, phone, channel) {
+Then('the user views contact information of {string}, {string} and {string}', function (email, phone, channel) {
   subscriptionManagementObj.contactInformationEmail().invoke('text').should('contain', email);
   if (phone == 'EMPTY') {
     subscriptionManagementObj.contactInformationPhoneNumber().invoke('text').should('be.empty');
@@ -150,7 +153,7 @@ And('the user views contact information of {string}, {string} and {string}', fun
   subscriptionManagementObj.preferredNotificationPreferredChannelGroup().invoke('attr', 'value').should('eq', channel);
 });
 
-Then('the user views the checked {string} icon for {string}', function (channel, subscriptionName) {
+Then('the user views the checked {string} icon for {string}', function (channel: string, subscriptionName) {
   switch (channel.toLowerCase()) {
     case 'email':
       subscriptionManagementObj.availableChannel(subscriptionName).get('[data-testid="mail-icon"]').should('exist');
@@ -174,7 +177,7 @@ Then('the user views a notification message of {string}', function (message) {
   subscriptionManagementObj.notificationMessage().invoke('text').should('contain', message);
 });
 
-When('the user access subscriber app login with the tenant name of {string}', function (tenantName) {
+When('the user access subscriber app login with the tenant name of {string}', function (tenantName: string) {
   const urlToTenantLogin = Cypress.config().baseUrl + tenantName + '/login?kc_idp_hint=';
   cy.visit(urlToTenantLogin);
   cy.wait(2000); // Wait all the redirects to settle down

@@ -33,9 +33,16 @@ describe('AddressLookUpControl', () => {
       },
       path: 'address',
       schema: {
+        title: 'Alberta postal address',
         properties: {
           subdivisionCode: {
             const: 'AB',
+          },
+          required: ['addressLine1', 'municipality', 'postalCode'],
+          errorMessage: {
+            properties: {
+              postalCode: 'Must be in 0A0 A0A capital letters and numbers format',
+            },
           },
         },
       },
@@ -75,20 +82,29 @@ describe('AddressLookUpControl', () => {
       Next: '',
     },
   ];
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
-
+  it('should render the component with input fields', () => {
+    renderComponent();
+    const input = screen.getByTestId('address-form-address1');
+    const inputElement = input?.shadowRoot.querySelector('input');
+    expect(inputElement.placeholder).toBe('Start typing the first line of your address, required.');
+  });
   it('should render the input fields with empty values', () => {
     renderComponent();
-    const input = screen.getByPlaceholderText('Start typing the first line of your address');
+
+    const input = screen.getByPlaceholderText('Start typing the first line of your address, required.');
     expect((input as HTMLInputElement).value).toBe('');
   });
 
   it('renders inputs and suggestions', async () => {
     (fetchAddressSuggestions as jest.Mock).mockResolvedValueOnce(mockSuggestions);
-
+    const handleDropdownChange = jest.fn(() => Promise.resolve());
     renderComponent();
     const inputField = screen.getByTestId('address-form-address1');
 
@@ -105,7 +121,7 @@ describe('AddressLookUpControl', () => {
 
   it('displays no suggestions for less than 3 characters', async () => {
     renderComponent();
-    const input = screen.getByPlaceholderText('Start typing the first line of your address');
+    const input = screen.getByPlaceholderText('Start typing the first line of your address, required.');
     fireEvent.change(input, { target: { value: 'Ma' } });
 
     await waitFor(() => expect(screen.queryByRole('listitem')).toBeNull());

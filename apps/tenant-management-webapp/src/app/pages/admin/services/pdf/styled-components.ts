@@ -1,6 +1,13 @@
 import styled from 'styled-components';
 import { PreviewPortal } from './templates/previewPortal';
 
+export const NotificationBannerWrapper = styled.div`
+  top: 0;
+  position: absolute;
+  z-index: 9999999;
+  left: 0;
+  right: 0;
+`;
 export const FileTableStyles = styled.div`
   .flex-horizontal {
     display: flex;
@@ -48,7 +55,7 @@ export const PaddingRight = styled.div`
 `;
 
 export const ButtonRight = styled.div`
-  margin-top: 48px;
+  margin-top: var(--goa-space-m);
   text-align: end;
 `;
 
@@ -147,13 +154,19 @@ export const TemplateEditorContainerPdf = styled.div`
     }
   }
 `;
-export const Modal = styled.div`
+export const Modal = styled.div<{ isNotificationActive: boolean }>`
   display: block;
   position: fixed;
   left: 0;
   z-index: 10000;
   width: 100%;
-  top: 0;
+  top: ${(props) => (props.isNotificationActive ? `93px` : `0px`)};
+`;
+
+export const ModalContent = styled.div`
+  background: var(--goa-color-greyscale-white);
+  margin-top: -24px;
+  padding-top: 24px;
 `;
 
 export const PreviewTemplateContainer = styled.div`
