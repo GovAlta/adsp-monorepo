@@ -35,5 +35,5 @@ export const SearchBox = styled.div`
 export const LabelDiv = styled.div`
   font-size: var(--fs-sl);
   font-weight: var(--fw-bold);
-  padding-bottom: 0.5rem;
+  padding-bottom: 1.5rem;
 `;
