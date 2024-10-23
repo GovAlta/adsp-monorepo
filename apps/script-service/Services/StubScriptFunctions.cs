@@ -8,13 +8,10 @@ namespace Adsp.Platform.ScriptService.Services;
 internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
 {
 
-  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, Lua lua)
-  : base(tenantId, directory, getToken, lua)
+  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken)
+  : base(tenantId, directory, getToken)
   {
-    _lua = lua;
   }
-
-  private readonly Lua _lua;
 
   public override string? GeneratePdf(string templateId, string filename, object values)
   {
@@ -36,12 +33,6 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return "simulated success";
   }
 
-
-  public override IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null)
-  {
-    return null;
-  }
-
   public override IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)
   {
     return null;
@@ -55,38 +46,40 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
-  public override LuaTable? GetFormSubmission(string formId, string submissionId)
+  public override FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
   {
     var formSubmission = new FormSubmissionResult
     {
-      Id = submissionId,
-      FormId = formId,
-
-      Data = new Dictionary<string, object?>
+      id = submissionId,
+      formId = formId,
+      securityClassification = SecurityClassificationType.ProtectedA,
+      formData = new Dictionary<string, object?>
             {
                 { "firstName", "Bob" },
                 { "lastName", "Bing" },
                 { "email", "Bob@bob.com" }
             },
-      Files = new Dictionary<string, object?>
+      formFiles = new Dictionary<string, object?>
             {
                 { "resume", "urn:ads:platform:file-service:v1:/files/resume" },
                 { "cover", "urn:ads:platform:file-service:v1:/files/cover" }
             },
-      FormDefinitionId = "job-application",
-      Disposition = new FormDisposition
+      formDefinitionId = "job-application",
+      disposition = new FormDisposition
       {
-        Status = "rejected",
-        Reason = "not good enough",
-        Date = DateTime.Now,
+        id = "1234",
+        status = "rejected",
+        reason = "not good enough",
+        date = DateTime.Now
       },
-      CreatedBy = new Platform.User
+      createdBy = new Platform.User
       {
-        Id = "Bob1234",
-        Name = "Bob Bing"
+        id = "Bob1234",
+        name = "Bob Bing"
       }
 
     };
-    return formSubmission.ToLuaTable(_lua);
+    return formSubmission;
   }
+
 }

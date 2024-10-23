@@ -7,10 +7,8 @@ namespace Adsp.Platform.ScriptService.Services.Platform;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
 internal sealed class FormDataResult
 {
-  [JsonPropertyName("data")]
   [JsonConverter(typeof(DictionaryJsonConverter))]
-  public IDictionary<string, object?>? Data { get; set; }
+  public IDictionary<string, object?>? data { get; set; }
 
-  [JsonPropertyName("files")]
-  public IDictionary<string, string?>? Files { get; set; }
+  public IDictionary<string, string?>? files { get; set; }
 }
