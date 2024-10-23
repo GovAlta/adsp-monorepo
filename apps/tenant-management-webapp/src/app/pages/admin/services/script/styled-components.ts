@@ -409,7 +409,6 @@ export const Edit = styled.div`
 `;
 export const ScrollPane = styled.div`
   overflow-y: auto;
-  max-height: calc(100vh - 30px);
   width: 100%;
 `;
 
