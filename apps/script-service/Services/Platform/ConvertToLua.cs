@@ -113,4 +113,12 @@ public static class ConvertToLua
     return table;
   }
 
+  public static LuaTable? ToLuaTable(this string str, string name, Lua lua)
+  {
+    if (lua == null) return null;
+    var table = NewLuaTable(name, lua);
+    table[name] = str;
+    return table;
+  }
+
 }
