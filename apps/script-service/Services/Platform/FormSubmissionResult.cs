@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Adsp.Sdk.Util;
 
@@ -21,7 +22,8 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     public IDictionary<string, object?>? Data { get; set; }
 
     [JsonPropertyName("formFiles")]
-    public IDictionary<string, string?>? Files { get; set; }
+    [JsonConverter(typeof(DictionaryJsonConverter))]
+    public IDictionary<string, object?>? Files { get; set; }
 
     [JsonPropertyName("createdBy")]
     public User? CreatedBy { get; set; }
@@ -38,8 +40,8 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     [JsonPropertyName("disposition")]
     public FormDisposition? Disposition { get; set; }
 
-    [JsonPropertyName("submissionStatus")]
-    public FormDisposition? SubmissionStatus { get; set; }
+    [JsonPropertyName("securityClassification")]
+    public SecurityClassificationType? SecurityClassification { get; set; }
   }
 
   internal sealed class FormDisposition
@@ -56,9 +58,6 @@ namespace Adsp.Platform.ScriptService.Services.Platform
     [JsonPropertyName("date")]
     public DateTime? Date { get; set; }
 
-    [JsonPropertyName("securityClassification")]
-    public SecurityClassificationType? SecurityClassification { get; set; }
-
   }
 
   internal sealed class User
@@ -73,16 +72,13 @@ namespace Adsp.Platform.ScriptService.Services.Platform
   [JsonConverter(typeof(JsonStringEnumConverter))]
   internal enum SecurityClassificationType
   {
-    [JsonPropertyName("protected a")]
+    [EnumMember(Value="protected a")]
     ProtectedA,
-
-    [JsonPropertyName("protected b")]
+    [EnumMember(Value="protected b")]
     ProtectedB,
-
-    [JsonPropertyName("protected c")]
+    [EnumMember(Value="protected c")]
     ProtectedC,
-
-    [JsonPropertyName("public")]
+    [EnumMember(Value="public")]
     Public
   }
 }
