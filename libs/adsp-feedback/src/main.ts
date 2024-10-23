@@ -367,7 +367,6 @@ export class AdspFeedback implements AdspFeedbackApi {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderRating = (rating: any, index: number) => {
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     return html`
       <div class="rating-div">
         <img
@@ -381,23 +380,20 @@ export class AdspFeedback implements AdspFeedbackApi {
           tabindex="0"
           aria-label="${rating.label}"
         />
-        ${isSmallScreen
-          ? html`
-              <p
-                class="ratingText"
-                @mouseover="${() => this.updateHover(index, true)}"
-                @mouseout="${() => this.updateHover(index, false)}"
-                @click="${() => this.selectRating(index)}"
-              >
-                ${rating.label}
-              </p>
-            `
-          : html`<span class="tooltip-text">${rating.label}</span>`}
+
+        <p
+          class="ratingText"
+          @mouseover="${() => this.updateHover(index, true)}"
+          @mouseout="${() => this.updateHover(index, false)}"
+          @click="${() => this.selectRating(index)}"
+        >
+          ${rating.label}
+        </p>
+        <span class="tooltip-text">${rating.label}</span>
       </div>
     `;
   };
   private updateHover = (index: number, isHovering: boolean) => {
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     const rating = this.ratings[index];
     const images = document.querySelectorAll('.rating');
     const image = images[index] as HTMLImageElement;
@@ -407,34 +403,31 @@ export class AdspFeedback implements AdspFeedbackApi {
         : this.selectedRating === index
         ? rating.svgClick
         : rating.svgDefault;
-    if (isSmallScreen) {
-      const texts = document.querySelectorAll('.ratingText');
-      const text = texts[index] as HTMLImageElement;
-      text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
-    } else {
-      const tooltips = document.querySelectorAll('.tooltip-text');
-      const tooltip = tooltips[index] as HTMLImageElement;
-      tooltip.style.visibility = isHovering && !isSmallScreen ? 'visible' : 'hidden';
-      tooltip.style.opacity = isHovering && !isSmallScreen ? '1' : '0';
-      if (index === 0) {
-        tooltip.style.marginLeft = '35px';
-        tooltip.classList.add('modified');
-      }
+
+    const texts = document.querySelectorAll('.ratingText');
+    const text = texts[index] as HTMLImageElement;
+    text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+
+    const tooltips = document.querySelectorAll('.tooltip-text');
+    const tooltip = tooltips[index] as HTMLImageElement;
+    tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
+    tooltip.style.opacity = isHovering ? '1' : '0';
+    if (index === 0) {
+      tooltip.style.marginLeft = '35px';
+      tooltip.classList.add('modified');
     }
   };
 
   private clearRating = (index: number) => {
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     if (index > -1) {
       const rating = this.ratings[index];
       const images = document.querySelectorAll('.rating');
       const image = images[index] as HTMLImageElement;
       image.src = rating.svgDefault;
-      if (isSmallScreen) {
-        const texts = document.querySelectorAll('.ratingText');
-        const text = texts[index] as HTMLImageElement;
-        text.style.color = '#333333';
-      }
+
+      const texts = document.querySelectorAll('.ratingText');
+      const text = texts[index] as HTMLImageElement;
+      text.style.color = '#333333';
     }
   };
 
@@ -451,7 +444,6 @@ export class AdspFeedback implements AdspFeedbackApi {
   };
 
   private selectRating = (index: number) => {
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     this.updateHover(index, false);
     const images = document.querySelectorAll('.rating');
     const ratingNew = this.ratings[index];
@@ -467,11 +459,11 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
     this.selectedRating = index;
     this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-primary') as HTMLElement;
-    if (isSmallScreen) {
-      const texts = document.querySelectorAll('.ratingText');
-      const text = texts[index] as HTMLImageElement;
-      text.style.color = '#0081A2';
-    }
+
+    const texts = document.querySelectorAll('.ratingText');
+    const text = texts[index] as HTMLImageElement;
+    text.style.color = '#0081A2';
+
     if (this.commentSelector.value && this.commentSelector.value.checked === true) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     }
@@ -644,7 +636,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             margin-top: 12px;
             justify-content: space-between;
             width: 98%;
-
+            position: relative;
             > div > img {
               width: 46px;
               height: 46px;
