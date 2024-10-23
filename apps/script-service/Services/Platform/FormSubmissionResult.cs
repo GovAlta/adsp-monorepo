@@ -8,77 +8,60 @@ namespace Adsp.Platform.ScriptService.Services.Platform
   [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
   internal sealed class FormSubmissionResult
   {
-    [JsonPropertyName("id")]
-    public string? Id { get; set; }
+    public string? id { get; set; }
 
-    [JsonPropertyName("formDefinitionId")]
-    public string? FormDefinitionId { get; set; }
+    public string? formDefinitionId { get; set; }
 
-    [JsonPropertyName("formId")]
-    public string? FormId { get; set; }
+    public string? formId { get; set; }
 
-    [JsonPropertyName("formData")]
     [JsonConverter(typeof(DictionaryJsonConverter))]
-    public IDictionary<string, object?>? Data { get; set; }
+    public IDictionary<string, object?>? formData { get; set; }
 
-    [JsonPropertyName("formFiles")]
     [JsonConverter(typeof(DictionaryJsonConverter))]
-    public IDictionary<string, object?>? Files { get; set; }
+    public IDictionary<string, object?>? formFiles { get; set; }
 
-    [JsonPropertyName("createdBy")]
-    public User? CreatedBy { get; set; }
+    public User? createdBy { get; set; }
 
-    [JsonPropertyName("updatedBy")]
-    public User? UpdatedBy { get; set; }
+    public User? updatedBy { get; set; }
 
-    [JsonPropertyName("created")]
-    public DateTime? Created { get; set; }
+    public DateTime? created { get; set; }
 
-    [JsonPropertyName("updated")]
-    public DateTime? Updated { get; set; }
+    public DateTime? updated { get; set; }
 
-    [JsonPropertyName("disposition")]
-    public FormDisposition? Disposition { get; set; }
+    public FormDisposition? disposition { get; set; }
 
-    [JsonPropertyName("securityClassification")]
-    public SecurityClassificationType? SecurityClassification { get; set; }
+    public SecurityClassificationType? securityClassification { get; set; }
   }
 
   internal sealed class FormDisposition
   {
-    [JsonPropertyName("id")]
-    public string? Id { get; set; }
+    public string? id { get; set; }
 
-    [JsonPropertyName("status")]
-    public string? Status { get; set; }
+    public string? status { get; set; }
 
-    [JsonPropertyName("reason")]
-    public string? Reason { get; set; }
+    public string? reason { get; set; }
 
-    [JsonPropertyName("date")]
-    public DateTime? Date { get; set; }
+    public DateTime? date { get; set; }
 
   }
 
   internal sealed class User
   {
-    [JsonPropertyName("id")]
-    public string? Id { get; set; }
+    public string? id { get; set; }
 
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
+    public string? name { get; set; }
   }
 
   [JsonConverter(typeof(JsonStringEnumConverter))]
   internal enum SecurityClassificationType
   {
-    [EnumMember(Value="protected a")]
+    [EnumMember(Value = "protected a")]
     ProtectedA,
-    [EnumMember(Value="protected b")]
+    [EnumMember(Value = "protected b")]
     ProtectedB,
-    [EnumMember(Value="protected c")]
+    [EnumMember(Value = "protected c")]
     ProtectedC,
-    [EnumMember(Value="public")]
+    [EnumMember(Value = "public")]
     Public
   }
 }

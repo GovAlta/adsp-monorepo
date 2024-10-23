@@ -30,8 +30,8 @@ public class ScriptFunctionsTests
     using var RestClient = TestUtil.GetRestClient<FormSubmissionResult>(FormServiceId, endpoint, Expected);
     var ScriptFunctions = new ScriptFunctions(FormServiceId, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), RestClient);
     var Actual = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);
-    Assert.Equal(SubmissionId, Actual?.Id);
-    Assert.Equal(FormId, Actual?.FormId);
+    Assert.Equal(SubmissionId, Actual?.id);
+    Assert.Equal(FormId, Actual?.formId);
   }
 
   [Fact]
