@@ -15,7 +15,7 @@ internal class ScriptFunctions : IScriptFunctions
   private readonly Func<Task<string>> _getToken;
   private readonly Lua _lua;
   private readonly IRestClient _client;
-  public const string FormSubmissionRequestError = "Form submission request failure";
+  public const string FormSubmissionRequestError = "FormSubmissionRequestFailure";
 
 
 
