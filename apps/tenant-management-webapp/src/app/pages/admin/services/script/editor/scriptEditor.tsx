@@ -312,13 +312,11 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     }
     return result;
   };
+  const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const isNotificationActive = latestNotification && !latestNotification.disabled;
 
-  const { height } = useWindowDimensions();
-  const calcHeight = latestNotification && !latestNotification.disabled ? height + 81 : height;
-
-  const getStyles = calcHeight - 479;
-
+  const monacoHeight = `calc(100vh - 404px${notifications.length > 0 ? ' - 80px' : ''})`;
+  const Height = latestNotification && !latestNotification.disabled ? 91 : 0;
   const isServiceAccountDisabled = () => {
     if (script.triggerEvents?.length > 0) return true;
 
@@ -362,8 +360,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             </div>
             <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
               <Tab label="Lua script" data-testid="script-editor-tab">
-                <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(100vh - ${getStyles}px)` }}>
+                <MonacoDivBody data-testid="templated-editor-body">
                   <MonacoEditor
+                    height={monacoHeight}
                     language={'lua'}
                     value={scriptStr}
                     {...scriptEditorConfig}
@@ -374,8 +373,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 </MonacoDivBody>
               </Tab>
               <Tab label="Roles" data-testid="script-roles-tab">
-                <MonacoDivTabBody data-testid="roles-editor-body" style={{ height: `calc(100vh - ${getStyles}px)` }}>
-                  <ScrollPane>
+                <MonacoDivTabBody data-testid="roles-editor-body">
+                  <ScrollPane style={{ height: monacoHeight }}>
                     {Array.isArray(roles)
                       ? roles.map((r) => {
                           return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
@@ -388,10 +387,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 </MonacoDivTabBody>
               </Tab>
               <Tab label="Trigger events" data-testid="script-trigger-events-tab">
-                <MonacoDivTriggerEventsBody
-                  data-testid="trigger-events-body"
-                  style={{ height: `calc(100vh - ${getStyles}px)` }}
-                >
+                <MonacoDivTriggerEventsBody data-testid="trigger-events-body" style={{ height: monacoHeight }}>
                   <ScriptEditorEventsTab
                     script={selectedScript}
                     eventNames={orderedEventNames}
