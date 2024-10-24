@@ -168,9 +168,9 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseRenderers,
   { tester: CategorizationRendererTester, renderer: FormStepperControl },
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
-  //{ tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
+  { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
   { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameControl) },
-  // { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobControl) },
+  { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobControl) },
 ];
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];
