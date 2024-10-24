@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { GoAInput } from '@abgov/react-components-new';
+import { GoAInput, GoAInputProps, WCProps } from '@abgov/react-components-new';
 import { isEqual } from 'lodash';
 import { ARROW_DOWN_KEY, ARROW_UP_KEY, DropdownProps, ENTER_KEY, ESCAPE_KEY, Item, TAB_KEY } from './DropDownTypes';
 import { GoADropdownListContainer, GoADropdownListContainerWrapper, GoADropdownListOption } from './styled-components';
@@ -8,10 +8,10 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const { label, selected, onChange, optionListMaxHeight, isAutocompletion, id } = props;
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(selected);
-
   const [items, setItems] = useState(props.items);
   const [inputText, setInputText] = useState<string>(selected);
   const prevCountRef = useRef(props.items);
+
   const trailingIcon = isOpen ? 'chevron-up' : 'chevron-down';
   const textInputName = `dropdown-${label}` || '';
   const textInput = document.getElementsByName(textInputName)[0] ?? null;
@@ -48,6 +48,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   const handleTextOnBlur = (e: FocusEvent) => {
     console.log(`text on blur`);
+
     e.preventDefault();
   };
 
@@ -125,6 +126,16 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const handDropDownItemOnKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, item: Item) => {
     if (e.key === ENTER_KEY) {
       updateDropDownData(item);
+      const inputEl = document.getElementById(`${id}-input`) as GoAInputProps & HTMLElement;
+
+      if (inputEl) {
+        //The 'focused' property is part of the GoAInputProps component that is used to
+        //set focus on the input field.  We need to set it back to false once we set focus on the input field
+        //Doing with just .focus() doesnt work.
+        inputEl.focused = true;
+        inputEl.focus();
+        inputEl.focused = false;
+      }
     }
     if (e.key === ESCAPE_KEY) {
       setIsOpen(false);
