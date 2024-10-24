@@ -1629,7 +1629,7 @@ describe('form router', () => {
       const handler = findSubmissions(apiId, formSubmissionMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(formSubmissionMock.find).toBeCalledWith(100, null, expect.objectContaining({ tenantIdEquals: tenantId }));
+      expect(formSubmissionMock.find).toBeCalledWith(100, undefined, expect.objectContaining({ tenantIdEquals: tenantId }));
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 
@@ -1662,8 +1662,8 @@ describe('form router', () => {
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith(definition.id, tenantId);
       expect(formSubmissionMock.find).toBeCalledWith(
-        100,
-        null,
+        10,
+        'abc-123',
         expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
@@ -1702,7 +1702,7 @@ describe('form router', () => {
       expect(req.getServiceConfiguration).toHaveBeenCalledWith(definition.id, tenantId);
       expect(formSubmissionMock.find).toBeCalledWith(
         100,
-        null,
+        undefined,
         expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
