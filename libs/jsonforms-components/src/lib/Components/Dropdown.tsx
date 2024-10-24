@@ -8,12 +8,15 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const { label, selected, onChange, optionListMaxHeight, isAutocompletion, id } = props;
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(selected);
+
   const [items, setItems] = useState(props.items);
   const [inputText, setInputText] = useState<string>(selected);
   const prevCountRef = useRef(props.items);
   const trailingIcon = isOpen ? 'chevron-up' : 'chevron-down';
   const textInputName = `dropdown-${label}` || '';
   const textInput = document.getElementsByName(textInputName)[0] ?? null;
+
+  const PREFIX = 'jsonforms-dropdown';
 
   useEffect(() => {
     setItems(props.items);
@@ -26,6 +29,8 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     if (textInput) {
       textInput.addEventListener('click', inputTextOnClick);
       textInput.addEventListener('keydown', keyDown);
+      textInput.addEventListener('blur', handleTextOnBlur);
+
       textInput.addEventListener('mouseout', handleTextOnMouseOut);
       textInput.addEventListener('focusout', handleTextOnFocusOut);
     }
@@ -35,14 +40,18 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         textInput.removeEventListener('keydown', keyDown);
         textInput.removeEventListener('mouseout', handleTextOnMouseOut);
         textInput.removeEventListener('focusout', handleTextOnFocusOut);
+        textInput.removeEventListener('blur', handleTextOnBlur);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textInput]);
 
-  const handleTextOnMouseOut = (e: MouseEvent) => {
-    console.log('e', isOpen);
+  const handleTextOnBlur = (e: FocusEvent) => {
+    console.log(`text on blur`);
+    e.preventDefault();
   };
+
+  const handleTextOnMouseOut = (e: MouseEvent) => {};
 
   const handleTextOnFocusOut = (e: FocusEvent) => {};
 
@@ -54,18 +63,15 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     onChange(item.value);
     setSelectedOption(item.value);
     setInputText(item.label);
+
+    if (isAutocompletion) {
+      const selectedItems = props.items.filter((filterItem) => {
+        return filterItem.label === item.label;
+      });
+      setItems(selectedItems);
+    }
     setIsOpen(false);
   };
-
-  const keyDown = (e: KeyboardEvent) => {
-    if (!isAutocompletion) {
-      handleKeyDownWithNoAutoCompletion(e);
-    } else {
-      //TO DO: Handle auto completion.
-    }
-  };
-
-  const handleKeyDownOnAutoCompletion = (e: KeyboardEvent) => {};
 
   const setElementFocus = (e: KeyboardEvent, element: HTMLElement | null, preventDefault: boolean) => {
     if (element) {
@@ -78,39 +84,39 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
   };
 
-  const handleKeyDownWithNoAutoCompletion = (e: KeyboardEvent) => {
+  const keyDown = (e: KeyboardEvent) => {
+    handleKeyDown(e);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === ENTER_KEY) {
       setIsOpen(!isOpen);
-      const val = `jsonforms-dropdown-${label}-${items.at(0)?.value}`;
+      const val = `${PREFIX}-${label}-${items.at(0)?.value}`;
       const el = document.getElementById(val);
       setElementFocus(e, el, false);
     } else if (e.key === ARROW_UP_KEY) {
       setIsOpen(true);
-      const val = `jsonforms-dropdown-${label}-${items.at(1)?.value}`;
+      const val = `${PREFIX}-${label}-${items.at(1)?.value}`;
       const el = document.getElementById(val);
       setElementFocus(e, el, false);
     } else if (e.key === ARROW_DOWN_KEY) {
       setIsOpen(true);
-      const firstItem = items.at(0);
+      const firstItem = props.items.at(0);
+
       let index = 0;
       if (firstItem?.label === '' || firstItem?.label.trim() === '') {
         index = 1;
       }
-      const val = `jsonforms-dropdown-${label}-${items.at(index)?.value}`;
+      const val = `${PREFIX}-${label}-${props.items.at(index)?.value}`;
       let el = document.getElementById(val);
 
-      //If we cant find the items it in the items useState object try looking for it in the DOM element
+      //If we cant find the items in the items useState object try looking for it in the DOM element
       if (el === null) {
-        const elements = document.querySelectorAll(`[id=dropDownList-jsonforms-dropdown-${label}]`);
-        const element = elements[0].children[1] as HTMLElement;
-        el = document.getElementById(`jsonforms-dropdown-${label}-${element.innerText}`);
+        const elements = document.querySelectorAll(`[id=${PREFIX}-dropDownList-${label}]`);
+        const element = elements.item(0).children.item(1) as HTMLElement;
+        el = document.getElementById(`${PREFIX}-${label}-${element.innerText}`);
       }
-
-      if (el) {
-        el.style.outline = 'none';
-        el.focus();
-        e.preventDefault();
-      }
+      setElementFocus(e, el, true);
     } else if (e.key === ESCAPE_KEY || e.key === TAB_KEY) {
       setIsOpen(false);
     }
@@ -138,12 +144,13 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         index = 0;
       }
 
-      const val = `jsonforms-dropdown-${label}-${items.at(index + 1)?.value}`;
+      const val = `${PREFIX}-${label}-${items.at(index + 1)?.value}`;
       const el = document.getElementById(val);
       if (el) {
         el.style.outline = 'none';
         el.focus();
         e.preventDefault();
+        return;
       }
     }
     if (e.key === ARROW_UP_KEY) {
@@ -152,7 +159,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         return;
       }
 
-      const val = `jsonforms-dropdown-${label}-${items.at(index - 1)?.value}`;
+      const val = `${PREFIX}-${label}-${items.at(index - 1)?.value}`;
       const el = document.getElementById(val);
       if (el) {
         el.style.outline = 'none';
@@ -161,7 +168,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
 
     if (e.key === TAB_KEY) {
-      const val = `jsonforms-dropdown-${label}-${items.at(index - 1)?.value}`;
+      const val = `${PREFIX}-${label}-${items.at(index - 1)?.value}`;
       const el = document.getElementById(val);
       if (el) {
         setIsOpen(false);
@@ -194,26 +201,26 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       />
       <GoADropdownListContainerWrapper
         isOpen={isOpen}
-        id={`dropDownListContainerWrapper-jsonforms-dropdown-${label}`}
-        key={`dropDownListContainerWrapper-jsonforms-dropdown-${label}`}
+        id={`${PREFIX}-dropDownListContainerWrapper-${label}`}
+        key={`${PREFIX}-dropDownListContainerWrapper-${label}`}
       >
         <GoADropdownListContainer
-          key={`dropDownList-jsonforms-dropdown-${label}`}
-          id={`dropDownList-jsonforms-dropdown-${label}`}
+          key={`${PREFIX}-dropDownList-${label}`}
+          id={`${PREFIX}-dropDownList-${label}`}
           optionListMaxHeight={optionListMaxHeight}
         >
           {items.map((item) => {
             return (
               <GoADropdownListOption
-                key={`jsonforms-dropdown-option-${label}-${item.value}`}
-                id={`jsonforms-dropdown-option-${label}-${item.value}`}
-                isSelected={item.value === selected}
+                key={`${PREFIX}-option-${label}-${item.value}`}
+                id={`${PREFIX}-option-${label}-${item.value}`}
+                isSelected={item.value === selected || item.value === selectedOption}
               >
                 <div
                   tabIndex={0}
                   data-testid={`${id}-${item.label}-option`}
-                  id={`jsonforms-dropdown-${label}-${item.value}`}
-                  key={`jsonforms-dropdown-${label}-${item.value}`}
+                  id={`${PREFIX}-${label}-${item.value}`}
+                  key={`${PREFIX}-${label}-${item.value}`}
                   onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
                     handDropDownItemOnKeyDown(e, item);
                   }}
@@ -224,7 +231,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
                       currentElement.style.outline = 'none';
                     }
                     if (parentElement) {
-                      if (item.value !== selected) {
+                      if (item.value !== selected && item.value !== selectedOption) {
                         parentElement.style.backgroundColor = 'var(--goa-color-greyscale-100) !important';
                       }
                     }
