@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { NameInputs } from './FullNameInputs';
+import { isFullName } from './FullNameTester';
 
 describe('NameInputs', () => {
   const mockHandleInputChange = jest.fn(() => Promise.resolve());
@@ -121,4 +122,60 @@ describe('NameInputs', () => {
     );
     expect(asFragment()).toMatchSnapshot();
   });
+
+  it('test fullname tester', () => {
+    expect(
+      isFullName(
+        {
+          type: 'Category',
+        },
+        {},
+        {}
+      )
+    ).toBe(false);
+  });
+
+  expect(
+    isFullName(
+      {
+        type: 'Control',
+        scope: '#/properties/personFullName',
+      },
+      {
+        type: 'object',
+        properties: {
+          personFullName: {
+            $comment: 'The full name of a person including first, middle, and last names.',
+            type: 'object',
+            properties: {
+              firstName: {
+                $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
+                type: 'string',
+                pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
+              },
+              middleName: {
+                $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
+                type: 'string',
+                pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
+              },
+              lastName: {
+                $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
+                type: 'string',
+                pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
+              },
+            },
+            required: ['firstName', 'lastName'],
+            errorMessage: {
+              properties: {
+                firstName: 'Include period (.) if providing your initial',
+                middleName: 'Include period (.) if providing your initial',
+                lastName: 'Include period (.) if providing your initial',
+              },
+            },
+          },
+        },
+      },
+      {}
+    )
+  ).toBe(true);
 });
