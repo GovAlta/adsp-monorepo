@@ -39,6 +39,11 @@ import {
   AddressLookUpControl,
   AddressLookUpControlReview,
   AddressLookUpTester,
+  FullNameTester,
+  FullNameControl,
+  FullNameDobControl,
+  FullNameDobTester,
+  FullNameReviewControl,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -57,6 +62,7 @@ import { HelpContent, HelpContentTester, HelpReviewContent } from './lib/Additio
 import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAErrorControl';
 import GoACalloutControl, { GoACalloutControlTester } from './lib/Additional/GoACalloutControl';
 import { GoAGroupReviewControl, GoAGroupReviewLayoutTester } from './lib/layouts/GroupReviewControl';
+// import { FullNameReviewTester } from './lib/Controls/FullName/FullNameReviewTester';
 
 export * from './lib/Context';
 export * from './lib/common';
@@ -154,6 +160,7 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseReviewRenderers,
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploaderReview) },
+  { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameReviewControl) },
   { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControlReview) },
 ];
 
@@ -161,7 +168,9 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseRenderers,
   { tester: CategorizationRendererTester, renderer: FormStepperControl },
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
-  { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
+  //{ tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
+  { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameControl) },
+  // { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobControl) },
 ];
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];
