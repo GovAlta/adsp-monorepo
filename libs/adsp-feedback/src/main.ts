@@ -63,6 +63,7 @@ export class AdspFeedback implements AdspFeedbackApi {
       return Promise.resolve({ site, view: document.location.pathname });
     };
     this.onDimChange(false);
+
     const scriptElement = document.currentScript as HTMLScriptElement;
     if (scriptElement) {
       const scriptUrl = new URL(scriptElement.src);
@@ -91,6 +92,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     document.body.classList.add('modal-open');
     this.onDimChange(true);
   }
+
   private handleKeyOpenStartForm(event: KeyboardEvent) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -365,7 +367,6 @@ export class AdspFeedback implements AdspFeedbackApi {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderRating = (rating: any, index: number) => {
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     return html`
       <div class="rating-div">
         <img
@@ -379,18 +380,16 @@ export class AdspFeedback implements AdspFeedbackApi {
           tabindex="0"
           aria-label="${rating.label}"
         />
-        ${isSmallScreen
-          ? html`
-              <p
-                class="ratingText"
-                @mouseover="${() => this.updateHover(index, true)}"
-                @mouseout="${() => this.updateHover(index, false)}"
-                @click="${() => this.selectRating(index)}"
-              >
-                ${rating.label}
-              </p>
-            `
-          : html`<span class="tooltip-text">${rating.label}</span>`}
+
+        <p
+          class="ratingText"
+          @mouseover="${() => this.updateHover(index, true)}"
+          @mouseout="${() => this.updateHover(index, false)}"
+          @click="${() => this.selectRating(index)}"
+        >
+          ${rating.label}
+        </p>
+        <span class="tooltip-text">${rating.label}</span>
       </div>
     `;
   };
@@ -398,26 +397,24 @@ export class AdspFeedback implements AdspFeedbackApi {
     const rating = this.ratings[index];
     const images = document.querySelectorAll('.rating');
     const image = images[index] as HTMLImageElement;
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     image.src =
       isHovering && this.selectedRating !== index
         ? rating.svgHover
         : this.selectedRating === index
         ? rating.svgClick
         : rating.svgDefault;
-    if (isSmallScreen) {
-      const texts = document.querySelectorAll('.ratingText');
-      const text = texts[index] as HTMLImageElement;
-      text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
-    } else {
-      const tooltips = document.querySelectorAll('.tooltip-text');
-      const tooltip = tooltips[index] as HTMLImageElement;
-      tooltip.style.visibility = isHovering && !isSmallScreen ? 'visible' : 'hidden';
-      tooltip.style.opacity = isHovering && !isSmallScreen ? '1' : '0';
-      if (index === 0) {
-        tooltip.style.marginLeft = '35px';
-        tooltip.classList.add('modified');
-      }
+
+    const texts = document.querySelectorAll('.ratingText');
+    const text = texts[index] as HTMLImageElement;
+    text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+
+    const tooltips = document.querySelectorAll('.tooltip-text');
+    const tooltip = tooltips[index] as HTMLImageElement;
+    tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
+    tooltip.style.opacity = isHovering ? '1' : '0';
+    if (index === 0) {
+      tooltip.style.marginLeft = '35px';
+      tooltip.classList.add('modified');
     }
   };
 
@@ -466,6 +463,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
+
     if (this.commentSelector.value && this.commentSelector.value.checked === true) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     }
@@ -638,8 +636,10 @@ export class AdspFeedback implements AdspFeedbackApi {
             margin-top: 12px;
             justify-content: space-between;
             width: 98%;
-
+            position: relative;
             > div > img {
+              width: 46px;
+              height: 46px;
             }
             > div > img:first-child {
               padding-left: 0px;
@@ -659,25 +659,28 @@ export class AdspFeedback implements AdspFeedbackApi {
               margin-top: 53px;
               position: absolute;
               transform: translateX(-50%);
+              -webkit-transform: translateX(-50%);
               white-space: nowrap;
               opacity: 0;
+              z-index: 2;
+              transition: opacity 0.3s;
               -webkit-transition: opacity 0.3s;
             }
-          }
-
-          .adsp-fb .adsp-fb-form-rating .tooltip-text::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: transparent transparent #666666 transparent;
-          }
-
-          .adsp-fb .adsp-fb-form-rating .tooltip-text.modified::before {
-            left: 40%;
+            span.tooltip-text:before {
+              content: '';
+              position: absolute;
+              top: -10px;
+              left: 50%;
+              margin-left: -5px;
+              border-width: 5px;
+              border-style: solid;
+              transform: translateX(-50%);
+              -webkit-transform: translateX(-50%);
+              border-color: transparent transparent #666666 transparent;
+            }
+            span.tooltip-text.modified:before {
+              left: 40%;
+            }
           }
 
           .adsp-fb .adsp-fb-form-comment {
@@ -869,7 +872,10 @@ export class AdspFeedback implements AdspFeedbackApi {
           }
           .rating {
             cursor: pointer;
+            transform: translateZ(0);
+            will-change: transform, color;
             transition: transform 0.3s ease-in-out color 0.3s ease;
+            transition: -webkit-transform 0.3s ease-in-out, color 0.3s ease;
           }
 
           .title {
@@ -1041,6 +1047,10 @@ export class AdspFeedback implements AdspFeedbackApi {
             }
             .adsp-fb .adsp-fb-container-heading {
               height: 55px !important;
+            }
+            .adsp-fb .rating-div {
+              flex-direction: row;
+              gap: 6px;
             }
             .adsp-fb .adsp-fb-form-rating {
               flex-direction: column-reverse;

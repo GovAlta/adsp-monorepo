@@ -110,6 +110,7 @@ describe('Object List component', () => {
       ...sharedProps,
       isValid: true,
       rowPath: 'comments.0',
+      data: undefined,
       uischema: {
         type: 'VerticalLayout',
         elements: [
@@ -132,7 +133,7 @@ describe('Object List component', () => {
       },
     };
 
-    render(<NonEmptyCellComponent {...props} />);
+    render(<NonEmptyCellComponent openDeleteDialog={() => {}} handleChange={() => {}} {...props} />);
 
     expect(JsonFormsDispatch).toHaveBeenCalledTimes(1);
   });
@@ -142,6 +143,7 @@ describe('Object List component', () => {
       ...sharedProps,
       isValid: true,
       rowPath: 'comments.0',
+      data: undefined,
       uischema: {
         type: 'VerticalLayout',
         elements: [
@@ -159,7 +161,7 @@ describe('Object List component', () => {
       },
     };
 
-    render(<NonEmptyCellComponent {...props} />);
+    render(<NonEmptyCellComponent openDeleteDialog={() => {}} handleChange={() => {}} {...props} />);
 
     expect(JsonFormsDispatch).toHaveBeenCalledTimes(2);
   });

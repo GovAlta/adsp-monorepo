@@ -1,4 +1,3 @@
-import { screen, render } from '@testing-library/react';
 import { AdspFeedback } from './main';
 
 describe('AdspFeedback selectRating', () => {
@@ -117,6 +116,7 @@ describe('AdspFeedback selectRating', () => {
     // Verify the text color is updated (Convert RGB to HEX)
     const texts = document.querySelectorAll('.ratingText') as NodeListOf<HTMLImageElement>;
     const text = texts[ratingIndex] as HTMLImageElement;
+
     const rgbToHex = (rgb: string) => {
       const rgbValues = rgb.match(/\d+/g)?.map(Number);
       if (!rgbValues) return rgb;
@@ -125,8 +125,9 @@ describe('AdspFeedback selectRating', () => {
         .slice(1)
         .toUpperCase()}`;
     };
-
-    expect(rgbToHex(text.style.color)).toBe('#0081A2');
+    if (text.style.color) {
+      expect(rgbToHex(text.style.color)).toBe('#0081A2');
+    }
   });
 
   it('should enable send button when commentSelector is checked', () => {

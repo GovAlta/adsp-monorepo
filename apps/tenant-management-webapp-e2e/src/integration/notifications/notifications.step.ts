@@ -444,18 +444,6 @@ Then('Preview event template modal is closed', function () {
   notificationsObj.eventTemplatePreviewModal().should('not.exist');
 });
 
-Given('a tenant admin user is on notification subscriptions page', function () {
-  commonlib.tenantAdminDirectURLLogin(
-    Cypress.config().baseUrl,
-    Cypress.env('realm'),
-    Cypress.env('email'),
-    Cypress.env('password')
-  );
-  commonlib.tenantAdminMenuItem('Notification', 4000);
-  commonObj.serviceTab('Notification', 'Subscriptions').click();
-  cy.wait(4000);
-});
-
 When(
   'the user types {string} in Search subuscriber address as field and {string} in Search subscriber email field',
   function (addressAs: string, email: string) {
@@ -466,32 +454,6 @@ When(
       .clear()
       .type(addressAs, { delay: 100, force: true });
     notificationsObj.searchSubscriberEmail().shadow().find('input').clear().type(email, { delay: 100, force: true });
-  }
-);
-
-When('the user types {string} in Search subscriber email field', function (email: string) {
-  notificationsObj.searchSubscriberEmail().shadow().find('input').clear().type(email, { delay: 100, force: true });
-});
-
-When('the user clicks Search button on notifications page', function () {
-  notificationsObj.notificationSearchBtn().shadow().find('button').click({ force: true });
-  cy.wait(4000);
-});
-
-//notification type in sentence case, only first letter is upper case
-Then(
-  'the user {string} the subscription of {string}, {string} under {string}',
-  function (viewOrNot, addressAs, email, notificationType) {
-    switch (viewOrNot) {
-      case 'views':
-        notificationsObj.notificationRecord(notificationType, addressAs, email).should('exist');
-        break;
-      case 'should not view':
-        notificationsObj.notificationRecord(notificationType, addressAs, email).should('not.exist');
-        break;
-      default:
-        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-    }
   }
 );
 

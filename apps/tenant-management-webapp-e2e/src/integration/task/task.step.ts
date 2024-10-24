@@ -1,20 +1,9 @@
-import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
-import commonlib from '../common/common-library';
+import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import TaskPage from './task.page';
 import common from '../common/common.page';
 
 const commonObj = new common();
 const taskObj = new TaskPage();
-
-Given('a tenant admin user is on task service overview page', function () {
-  commonlib.tenantAdminDirectURLLogin(
-    Cypress.config().baseUrl,
-    Cypress.env('realm'),
-    Cypress.env('email'),
-    Cypress.env('password')
-  );
-  commonlib.tenantAdminMenuItem('Task', 4000);
-});
 
 When('the user clicks Add queue button on task service overview page', function () {
   commonObj.activeTab().should('have.text', 'Overview');
@@ -219,81 +208,4 @@ When('the user clicks {string} button for the queue of {string}, {string}', func
 
 When('the user clicks Back button on Queue page', function () {
   taskObj.queuePageBackButton().shadow().find('button').click({ force: true });
-});
-
-When('the user selects {string} in Select a queue dropdown', function (dropdownItem: string) {
-  taskObj
-    .tasksSelectAQueueDropdown()
-    .invoke('attr', 'value')
-    .then((dropdownValue) => {
-      if (!dropdownValue?.includes(dropdownItem)) {
-        taskObj.tasksSelectAQueueDropdown().shadow().find('input').click({ force: true });
-        cy.wait(1000);
-        taskObj.tasksSelectAQueueDropdown().shadow().find('li').contains(dropdownItem).click({ force: true });
-        cy.wait(2000);
-      } else {
-        cy.log('Select a queue dropdown item is already selected: ' + dropdownItem);
-      }
-    });
-});
-
-Then('the user {string} the task of {string}, {string} on tasks page', function (viewOrNot, taskName, formName) {
-  switch (viewOrNot) {
-    case 'views':
-      taskObj.tasksTaskRecord(taskName, formName).should('exist');
-      break;
-    case 'should not view':
-      taskObj.tasksTaskRecord(taskName, formName).should('not.exist');
-      break;
-    default:
-      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-  }
-});
-
-Given('all existing tasks in {string} if any have been deleted', function (queue) {
-  const getTasksRequestURL =
-    Cypress.env('taskApi') + '/task/v1/queues/' + Cypress.env('tenantName') + '/' + queue + '/tasks';
-  cy.request({
-    method: 'GET',
-    url: getTasksRequestURL,
-    auth: {
-      bearer: Cypress.env('autotest-admin-token'),
-    },
-  }).then((response) => {
-    cy.log('Number of existing tasks: ' + response.body.results.length);
-    for (let arrayIndex = 0; arrayIndex < response.body.results.length; arrayIndex++) {
-      cy.log(
-        'task #' +
-          String(arrayIndex + 1) +
-          ': ' +
-          response.body.results[arrayIndex].name +
-          '; ' +
-          response.body.results[arrayIndex].id +
-          '; ' +
-          response.body.results[arrayIndex].status
-      );
-      if (response.body.results[arrayIndex].status.includes('Pending')) {
-        const cancelTasksRequestURL =
-          Cypress.env('taskApi') +
-          '/task/v1/queues/' +
-          Cypress.env('tenantName') +
-          '/' +
-          queue +
-          '/tasks/' +
-          response.body.results[arrayIndex].id;
-        cy.request({
-          method: 'POST',
-          url: cancelTasksRequestURL,
-          auth: {
-            bearer: Cypress.env('autotest-admin-token'),
-          },
-          body: {
-            operation: 'cancel',
-          },
-        }).then((response) => {
-          expect(response.status).to.eq(200);
-        });
-      }
-    }
-  });
 });

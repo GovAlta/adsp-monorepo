@@ -93,12 +93,12 @@ describe('AddressLookUpControl', () => {
     renderComponent();
     const input = screen.getByTestId('address-form-address1');
     const inputElement = input?.shadowRoot.querySelector('input');
-    expect(inputElement.placeholder).toBe('Start typing the first line of your address');
+    expect(inputElement.placeholder).toBe('Start typing the first line of your address, required.');
   });
   it('should render the input fields with empty values', () => {
     renderComponent();
 
-    const input = screen.getByPlaceholderText('Start typing the first line of your address');
+    const input = screen.getByPlaceholderText('Start typing the first line of your address, required.');
     expect((input as HTMLInputElement).value).toBe('');
   });
 
@@ -121,7 +121,7 @@ describe('AddressLookUpControl', () => {
 
   it('displays no suggestions for less than 3 characters', async () => {
     renderComponent();
-    const input = screen.getByPlaceholderText('Start typing the first line of your address');
+    const input = screen.getByPlaceholderText('Start typing the first line of your address, required.');
     fireEvent.change(input, { target: { value: 'Ma' } });
 
     await waitFor(() => expect(screen.queryByRole('listitem')).toBeNull());

@@ -5,6 +5,7 @@ import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ScriptsView } from './scriptsView';
 import { SESSION_INIT } from '@store/session/models';
+import { MemoryRouter } from 'react-router-dom';
 describe('Script list Page', () => {
   const mockStore = configureStore([]);
   const store = mockStore({
@@ -45,7 +46,9 @@ describe('Script list Page', () => {
   it('Render script service', () => {
     const { queryByTestId } = render(
       <Provider store={store}>
-        <ScriptsView activeEdit={false} />
+        <MemoryRouter>
+          <ScriptsView activeEdit={false} />
+        </MemoryRouter>
       </Provider>
     );
 
