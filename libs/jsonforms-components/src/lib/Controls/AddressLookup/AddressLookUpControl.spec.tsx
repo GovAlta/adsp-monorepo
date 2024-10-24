@@ -4,6 +4,7 @@ import { AddressLookUpControl } from './AddressLookUpControl';
 import { fetchAddressSuggestions } from './utils';
 import { JsonFormContext } from '../../Context';
 import { Suggestion } from './types';
+import { isAddressLookup } from './AddressLookupTester';
 
 jest.mock('./utils', () => ({
   fetchAddressSuggestions: jest.fn(),
@@ -125,5 +126,177 @@ describe('AddressLookUpControl', () => {
     fireEvent.change(input, { target: { value: 'Ma' } });
 
     await waitFor(() => expect(screen.queryByRole('listitem')).toBeNull());
+  });
+
+  it('can map the control based on address schema', () => {
+    // wrong ui schema type
+    expect(
+      isAddressLookup(
+        {
+          type: 'Category',
+        },
+        {},
+        {}
+      )
+    ).toBe(false);
+
+    // wrong schema type
+    expect(
+      isAddressLookup(
+        {
+          type: 'Control',
+          scope: '#/properties/personFullName',
+        },
+        {
+          type: 'object',
+          properties: {
+            personFullName: {
+              $comment: 'The full name of a person including first, middle, and last names.',
+              type: 'object',
+              properties: {
+                firstName: {
+                  $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
+                  type: 'string',
+                  pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
+                },
+                middleName: {
+                  $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
+                  type: 'string',
+                  pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
+                },
+                lastName: {
+                  $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
+                  type: 'string',
+                  pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
+                },
+              },
+              required: ['firstName', 'lastName'],
+              errorMessage: {
+                properties: {
+                  firstName: 'Include period (.) if providing your initial',
+                  middleName: 'Include period (.) if providing your initial',
+                  lastName: 'Include period (.) if providing your initial',
+                },
+              },
+            },
+          },
+        },
+        {}
+      )
+    ).toBe(false);
+
+    // miss addressLine1
+    expect(
+      isAddressLookup(
+        {
+          type: 'Control',
+          scope: '#/properties/albertaAddress',
+        },
+        {
+          type: 'object',
+          properties: {
+            albertaAddress: {
+              $comment: 'Postal address in Alberta.',
+              title: 'Alberta postal address',
+              type: 'object',
+              properties: {
+                addressLine2: {
+                  description: 'Apartment or unit number',
+                  allOf: [
+                    {
+                      type: 'string',
+                      $comment:
+                        "A portion of an individual's mailing address which identifies a specific location within a municipality.",
+                      minLength: 1,
+                      maxLength: 60,
+                    },
+                  ],
+                },
+                municipality: {
+                  type: 'string',
+                  $comment: 'The name of a city, town, hamlet, or village.',
+                },
+                subdivisionCode: {
+                  const: 'AB',
+                },
+                postalCode: {
+                  type: 'string',
+                  title: 'Postal code',
+                  description: 'A0A 0A0',
+                  pattern: '^$|^[A-Z][0-9][A-Z] [0-9][A-Z][0-9]$',
+                },
+                country: {
+                  const: 'CA',
+                },
+              },
+              required: ['addressLine1', 'municipality', 'postalCode'],
+              errorMessage: {
+                properties: {
+                  postalCode: 'Must be in A0A 0A0 capital letters and numbers format',
+                },
+              },
+            },
+          },
+        },
+        {}
+      )
+    ).toBe(false);
+
+    expect(
+      isAddressLookup(
+        {
+          type: 'Control',
+          scope: '#/properties/albertaAddress',
+        },
+        {
+          type: 'object',
+          properties: {
+            albertaAddress: {
+              $comment: 'Postal address in Alberta.',
+              title: 'Alberta postal address',
+              type: 'object',
+              properties: {
+                addressLine1: 'line1',
+                addressLine2: {
+                  description: 'Apartment or unit number',
+                  allOf: [
+                    {
+                      type: 'string',
+                      $comment:
+                        "A portion of an individual's mailing address which identifies a specific location within a municipality.",
+                      minLength: 1,
+                      maxLength: 60,
+                    },
+                  ],
+                },
+                municipality: {
+                  type: 'string',
+                  $comment: 'The name of a city, town, hamlet, or village.',
+                },
+                subdivisionCode: {
+                  const: 'AB',
+                },
+                postalCode: {
+                  type: 'string',
+                  title: 'Postal code',
+                  description: 'A0A 0A0',
+                  pattern: '^$|^[A-Z][0-9][A-Z] [0-9][A-Z][0-9]$',
+                },
+                country: {
+                  const: 'CA',
+                },
+              },
+              required: ['addressLine1', 'municipality', 'postalCode'],
+              errorMessage: {
+                properties: {
+                  postalCode: 'Must be in A0A 0A0 capital letters and numbers format',
+                },
+              },
+            },
+          },
+        },
+        {}
+      )
+    ).toBe(true);
   });
 });
