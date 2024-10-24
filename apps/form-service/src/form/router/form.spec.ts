@@ -215,6 +215,7 @@ describe('form router', () => {
     formSubmissionMock.get.mockReset();
     formSubmissionMock.save.mockClear();
     formSubmissionMock.delete.mockReset();
+    formSubmissionMock.find.mockClear();
     formSubmissionMock.dispositionSubmission.mockReset();
     formSubmissionMock.getByFormIdAndSubmissionId.mockReset();
     formSubmissionEntityMock.dispositionSubmission.mockReset();
@@ -1628,7 +1629,7 @@ describe('form router', () => {
       const handler = findSubmissions(apiId, formSubmissionMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(formSubmissionMock.find).toBeCalledWith(expect.objectContaining({ tenantIdEquals: tenantId }));
+      expect(formSubmissionMock.find).toBeCalledWith(100, null, expect.objectContaining({ tenantIdEquals: tenantId }));
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 
@@ -1661,6 +1662,8 @@ describe('form router', () => {
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith(definition.id, tenantId);
       expect(formSubmissionMock.find).toBeCalledWith(
+        100,
+        null,
         expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
@@ -1698,6 +1701,8 @@ describe('form router', () => {
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith(definition.id, tenantId);
       expect(formSubmissionMock.find).toBeCalledWith(
+        100,
+        null,
         expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
@@ -1728,7 +1733,7 @@ describe('form router', () => {
       const handler = findSubmissions(apiId, formSubmissionMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(formSubmissionMock.find).toBeCalled();
+      expect(formSubmissionMock.find).not.toBeCalled();
       expect(res.send).not.toBeCalled();
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
@@ -1761,7 +1766,7 @@ describe('form router', () => {
       const handler = findSubmissions(apiId, formSubmissionMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(formSubmissionMock.find).toBeCalled();
+      expect(formSubmissionMock.find).not.toBeCalled();
       expect(res.send).not.toBeCalled();
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
@@ -1802,6 +1807,8 @@ describe('form router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(formSubmissionMock.find).toBeCalledWith(
+        100,
+        undefined,
         expect.objectContaining({ tenantIdEquals: tenantId, formIdEquals: 'test-form' })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
@@ -1899,7 +1906,7 @@ describe('form router', () => {
       const handler = findFormSubmissions(apiId, formSubmissionMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(formSubmissionMock.find).toBeCalled();
+      expect(formSubmissionMock.find).not.toBeCalled();
       expect(res.send).not.toBeCalled();
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
