@@ -113,7 +113,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setErrors({});
   };
   const handleRequiredFieldBlur = (name: string) => {
-    if ((!data?.[name] || data?.[name] === '') && requiredFields.includes(name)) {
+    if ((!data?.[name] || data?.[name] === '') && requiredFields?.includes(name)) {
       const err = { ...errors };
       err[name] = name === 'municipality' ? `city is required` : `${name} is required`;
       setErrors(err);
