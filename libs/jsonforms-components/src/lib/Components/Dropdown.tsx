@@ -76,7 +76,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   const setElementFocus = (e: KeyboardEvent, element: HTMLElement | null, preventDefault: boolean) => {
     if (element) {
-      element.style.outline = 'none';
       element.focus();
 
       if (preventDefault) {
@@ -158,7 +157,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       const val = `${PREFIX}-${label}-${items.at(index + 1)?.value}`;
       const el = document.getElementById(val);
       if (el) {
-        el.style.outline = 'none';
         el.focus();
         e.preventDefault();
         return;
@@ -173,7 +171,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       const val = `${PREFIX}-${label}-${items.at(index - 1)?.value}`;
       const el = document.getElementById(val);
       if (el) {
-        el.style.outline = 'none';
         el.focus();
       }
     }
@@ -229,37 +226,15 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
               >
                 <div
                   tabIndex={0}
+                  className="dropDownListItem"
                   data-testid={`${id}-${item.label}-option`}
                   id={`${PREFIX}-${label}-${item.value}`}
                   key={`${PREFIX}-${label}-${item.value}`}
                   onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
                     handDropDownItemOnKeyDown(e, item);
                   }}
-                  onFocus={(e: React.FocusEvent<HTMLDivElement>) => {
-                    const currentElement = document.getElementById(e.currentTarget.id);
-                    const parentElement = document.getElementById(e.currentTarget.id)?.parentElement;
-                    if (currentElement) {
-                      currentElement.style.outline = 'none';
-                    }
-                    if (parentElement) {
-                      if (item.value !== selected && item.value !== selectedOption) {
-                        parentElement.style.backgroundColor = 'var(--goa-color-greyscale-100) !important';
-                      }
-                    }
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLDivElement>) => {
-                    const currentElement = document.getElementById(e.currentTarget.id);
-                    const parentElement = document.getElementById(e.currentTarget.id)?.parentElement;
-                    if (currentElement) {
-                      currentElement.style.backgroundColor = '';
-                      currentElement.style.outline = 'none';
-                      currentElement.style.color = 'var(--goa-color-interactive-default !important';
-                    }
-
-                    if (parentElement) {
-                      parentElement.style.backgroundColor = '';
-                    }
-                  }}
+                  onFocus={(e: React.FocusEvent<HTMLDivElement>) => {}}
+                  onBlur={(e: React.FocusEvent<HTMLDivElement>) => {}}
                   onClick={() => {
                     updateDropDownData(item);
                   }}

@@ -60,6 +60,12 @@ export const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
   z-index: 1001;
   cursor: pointer;
   background: ${(p) => (p.isSelected ? 'var(--goa-color-interactive-default)' : '#fff')};
+  :has(div:focus) {
+    background-color: ${(p) =>
+      p.isSelected ? 'var(--goa-color-interactive-hover)' : 'var(--goa-color-greyscale-100) !important'};
+    color: ${(p) =>
+      p.isSelected ? 'var(--goa-color-interactive-default)' : 'var(--goa-color-interactive-hover) !important'};
+  }
   &:hover {
     background-color: ${(p) =>
       p.isSelected ? 'var(--goa-color-interactive-hover)' : 'var(--goa-color-greyscale-100) !important'};
@@ -74,11 +80,12 @@ export const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
   }
   &:focus-within {
     caret-color: transparent;
-    color: ${(p) => (p.isSelected ? 'white' : 'var(--goa-color-greyscale-black)')} !important;
+    color: ${(p) => (p.isSelected ? 'white' : 'var(--goa-color-interactive-hover)')} !important;
     background-color: var(--goa-color-interactive-hover) !important;
   }
-  .dropDownClass:focus-visible {
+  .dropDownListItem:focus-visible {
     caret-color: transparent;
+    outline: none !important;
     color: ${(p) => (p.isSelected ? 'white' : 'var(--goa-color-interactive-hover) !important')};
   }
 `;
