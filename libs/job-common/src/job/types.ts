@@ -1,4 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
+import { Readable } from 'stream';
 
 export type JobStatus = 'queued' | 'completed' | 'failed';
 
@@ -16,7 +17,7 @@ export interface FileService {
     fileType: string,
     recordId: string,
     filename: string,
-    content: NodeJS.ReadableStream
+    content: Readable
   ): Promise<FileResult>;
 }
 

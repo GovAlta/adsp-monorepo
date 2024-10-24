@@ -1,6 +1,5 @@
 import * as puppeteer from 'puppeteer';
 import { Readable } from 'stream';
-import { ReadableStream } from 'stream/web';
 import { PdfService, PdfServiceProps } from './pdf';
 
 class PuppeteerPdfService implements PdfService {
@@ -13,23 +12,23 @@ class PuppeteerPdfService implements PdfService {
       await page.setJavaScriptEnabled(false);
       await page.setContent(content, { waitUntil: 'load', timeout: 2 * 60 * 1000 });
 
-      let result: ReadableStream;
+      let result: Buffer;
       if (header || footer) {
         const headerTemplate = !header ? '' : header;
         const footerTemplate = !footer ? '' : footer;
 
-        result = (await page.createPDFStream({
+        result = await page.pdf({
           headerTemplate,
           footerTemplate,
           printBackground: true,
           displayHeaderFooter: true,
           omitBackground: true,
-        })) as ReadableStream;
+        });
       } else {
-        result = (await page.createPDFStream({ printBackground: true, omitBackground: true })) as ReadableStream;
+        result = await page.pdf({ printBackground: true, omitBackground: true });
       }
 
-      return Readable.fromWeb(result);
+      return Readable.from(result);
     } finally {
       if (page) {
         await page.close();
