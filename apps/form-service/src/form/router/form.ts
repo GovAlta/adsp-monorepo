@@ -89,7 +89,7 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
           tenantIdEquals: req.tenant?.id,
           formIdEquals: form.id,
         };
-        const { results } = await submissionRepository.find({
+        const { results } = await submissionRepository.find(100, null, {
           ...criteria,
         });
 
@@ -198,7 +198,9 @@ export function findSubmissions(apiId: AdspId, repository: FormSubmissionReposit
 
       const user = req.user;
       const tenantId = req.tenant.id;
-      const { criteria: criteriaValue } = req.query;
+
+      const { criteria: criteriaValue, top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 100;
       const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       let definition: FormDefinitionEntity;
@@ -210,7 +212,7 @@ export function findSubmissions(apiId: AdspId, repository: FormSubmissionReposit
         throw new UnauthorizedUserError('find submissions', user);
       }
 
-      const { results, page } = await repository.find({
+      const { results, page } = await repository.find(top, after as string, {
         ...criteria,
         tenantIdEquals: tenantId,
       });
@@ -239,7 +241,9 @@ export function findFormSubmissions(
       const user = req.user;
       const tenantId = req.tenant.id;
       const { formId } = req.params;
-      const { criteria: criteriaValue } = req.query;
+
+      const { criteria: criteriaValue, top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 100;
       const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       const formEntity: FormEntity = await formRepository.get(tenantId, formId);
@@ -249,7 +253,7 @@ export function findFormSubmissions(
         throw new UnauthorizedUserError('find form submissions', user);
       }
 
-      const { results, page } = await repository.find({
+      const { results, page } = await repository.find(top, after as string, {
         ...criteria,
         tenantIdEquals: tenantId,
         formIdEquals: formId,
@@ -798,6 +802,8 @@ export function createFormRouter({
     '/submissions',
     assertAuthenticatedHandler,
     createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after').optional().isString(),
       query('criteria')
         .optional()
         .custom(async (value: string) => {
@@ -812,6 +818,8 @@ export function createFormRouter({
     assertAuthenticatedHandler,
     createValidationHandler(
       param('formId').isUUID(),
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after').optional().isString(),
       query('criteria')
         .optional()
         .custom(async (value: string) => {
