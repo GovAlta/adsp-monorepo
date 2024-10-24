@@ -13,7 +13,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const prevCountRef = useRef(props.items);
 
   const trailingIcon = isOpen ? 'chevron-up' : 'chevron-down';
-  const textInputName = `dropdown-${label}` || '';
+  const textInputName = `dropdown-${label}`;
   const textInput = document.getElementsByName(textInputName)[0] ?? null;
 
   const PREFIX = 'jsonforms-dropdown';
@@ -28,33 +28,16 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   useEffect(() => {
     if (textInput) {
       textInput.addEventListener('click', inputTextOnClick);
-      textInput.addEventListener('keydown', keyDown);
-      textInput.addEventListener('blur', handleTextOnBlur);
-
-      textInput.addEventListener('mouseout', handleTextOnMouseOut);
-      textInput.addEventListener('focusout', handleTextOnFocusOut);
+      textInput.addEventListener('keydown', handleKeyDown, false);
     }
     return () => {
       if (textInput) {
         textInput.removeEventListener('click', inputTextOnClick);
-        textInput.removeEventListener('keydown', keyDown);
-        textInput.removeEventListener('mouseout', handleTextOnMouseOut);
-        textInput.removeEventListener('focusout', handleTextOnFocusOut);
-        textInput.removeEventListener('blur', handleTextOnBlur);
+        textInput.removeEventListener('keydown', handleKeyDown);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textInput]);
-
-  const handleTextOnBlur = (e: FocusEvent) => {
-    console.log(`text on blur`);
-
-    e.preventDefault();
-  };
-
-  const handleTextOnMouseOut = (e: MouseEvent) => {};
-
-  const handleTextOnFocusOut = (e: FocusEvent) => {};
 
   const inputTextOnClick = (e: MouseEvent) => {
     setIsOpen(!isOpen);
@@ -74,7 +57,11 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     setIsOpen(false);
   };
 
-  const setElementFocus = (e: KeyboardEvent, element: HTMLElement | null, preventDefault: boolean) => {
+  const setElementFocus = (
+    e: KeyboardEvent | React.KeyboardEvent<HTMLElement>,
+    element: HTMLElement | null,
+    preventDefault: boolean
+  ) => {
     if (element) {
       element.focus();
 
@@ -84,15 +71,10 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
   };
 
-  const keyDown = (e: KeyboardEvent) => {
-    handleKeyDown(e);
-  };
-
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === ENTER_KEY) {
       setIsOpen(!isOpen);
-      const val = `${PREFIX}-${label}-${items.at(0)?.value}`;
-      const el = document.getElementById(val);
+      const el = document.getElementById(`${PREFIX}-${label}-${items.at(0)?.value}`);
       setElementFocus(e, el, false);
     } else if (e.key === ARROW_UP_KEY) {
       setIsOpen(true);
@@ -104,11 +86,10 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       const firstItem = props.items.at(0);
 
       let index = 0;
-      if (firstItem?.label === '' || firstItem?.label.trim() === '') {
+      if (firstItem?.label.trim() === '') {
         index = 1;
       }
-      const val = `${PREFIX}-${label}-${props.items.at(index)?.value}`;
-      let el = document.getElementById(val);
+      let el = document.getElementById(`${PREFIX}-${label}-${props.items.at(index)?.value}`);
 
       //If we cant find the items in the items useState object try looking for it in the DOM element
       if (el === null) {
@@ -128,9 +109,8 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       const inputEl = document.getElementById(`${id}-input`) as GoAInputProps & HTMLElement;
 
       if (inputEl) {
-        //The 'focused' property is part of the GoAInputProps component that is used to
-        //set focus on the input field.  We need to set it back to false once we set focus on the input field
-        //Doing with just .focus() doesnt work.
+        //The 'focused' property is part of the GoAInput component that is used to
+        //set focus on the input field.  We need to set it back to false once we set focus on the input field. Doing with just .focus() doesnt work.
         inputEl.focused = true;
         inputEl.focus();
         inputEl.focused = false;
@@ -141,10 +121,10 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
 
     let index = items.findIndex((val) => {
-      return val.label === e.currentTarget.innerText;
+      return val.label === e.currentTarget.innerHTML;
     });
 
-    //Prevent jumping to the next control or element if
+    //Prevent jumping to the next control/DOM element if
     //we are on the last item in the drop down list
     if (e.key === ARROW_DOWN_KEY) {
       if (item.label === items.at(-1)?.label) {
@@ -154,15 +134,14 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         index = 0;
       }
 
-      const val = `${PREFIX}-${label}-${items.at(index + 1)?.value}`;
-      const el = document.getElementById(val);
+      const el = document.getElementById(`${PREFIX}-${label}-${items.at(index + 1)?.value}`);
       if (el) {
-        el.focus();
-        e.preventDefault();
+        setElementFocus(e, el, true);
         return;
       }
     }
     if (e.key === ARROW_UP_KEY) {
+      console.log('index', index);
       if (index <= 0) {
         e.preventDefault();
         return;
@@ -233,8 +212,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
                   onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
                     handDropDownItemOnKeyDown(e, item);
                   }}
-                  onFocus={(e: React.FocusEvent<HTMLDivElement>) => {}}
-                  onBlur={(e: React.FocusEvent<HTMLDivElement>) => {}}
                   onClick={() => {
                     updateDropDownData(item);
                   }}
