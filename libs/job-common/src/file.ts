@@ -39,7 +39,7 @@ class PlatformFileService implements FileService {
     fileType: string,
     recordId: string,
     filename: string,
-    content: NodeJS.ReadableStream
+    content: Readable
   ): Promise<FileResult> {
     try {
       const formData = new FormData();
