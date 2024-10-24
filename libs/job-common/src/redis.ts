@@ -2,19 +2,19 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { createClient, RedisClient } from 'redis';
 import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
-import { FileResult, PdfJob, PdfJobRepository, PdfJobStatus } from './pdf';
+import { JobRepository, JobState, JobStatus } from './job';
 
 const EXPIRY_SECONDS = 60 * 60 * 24;
-export class RedisJobRepository implements PdfJobRepository {
+export class RedisJobRepository<T> implements JobRepository<T> {
   constructor(private readonly client: RedisClient) {}
 
-  create(tenantId: AdspId): Promise<PdfJob> {
-    const job: PdfJob = { id: uuid(), tenantId, status: 'queued' };
+  create(tenantId: AdspId): Promise<JobState<T>> {
+    const job: JobState<T> = { id: uuid(), tenantId, status: 'queued' };
     return this.set(job.id, job);
   }
 
-  get(jobId: string): Promise<PdfJob> {
-    return new Promise<PdfJob>((resolve, reject) =>
+  get(jobId: string): Promise<JobState<T> | null> {
+    return new Promise<JobState<T> | null>((resolve, reject) =>
       this.client.get(jobId, (err, result) => {
         if (err) {
           reject(err);
@@ -28,14 +28,14 @@ export class RedisJobRepository implements PdfJobRepository {
     );
   }
 
-  async update(jobId: string, status: PdfJobStatus, result?: FileResult): Promise<PdfJob> {
+  async update(jobId: string, status: JobStatus, result?: T): Promise<JobState<T> | null> {
     const job = await this.get(jobId);
 
     return job ? this.set(jobId, { ...job, status, result }) : null;
   }
 
-  private set(key: string, job: PdfJob): Promise<PdfJob> {
-    return new Promise<PdfJob>((resolve, reject) => {
+  private set(key: string, job: JobState<T>): Promise<JobState<T>> {
+    return new Promise<JobState<T>>((resolve, reject) => {
       this.client.setex(key, EXPIRY_SECONDS, JSON.stringify({ ...job, tenantId: `${job.tenantId}` }), (err) =>
         err ? reject(err) : resolve(job)
       );
@@ -50,8 +50,8 @@ interface RedisProps {
   REDIS_PASSWORD: string;
 }
 
-export function createJobRepository({ REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, logger }: RedisProps): {
-  repository: PdfJobRepository;
+export function createJobRepository<T>({ REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, logger }: RedisProps): {
+  repository: JobRepository<T>;
   isConnected: () => boolean;
 } {
   const credentials = REDIS_PASSWORD ? `:${REDIS_PASSWORD}@` : '';
@@ -59,5 +59,5 @@ export function createJobRepository({ REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, lo
   client.on('error', (err) => {
     logger.error(`Redis client encountered error: ${err}`);
   });
-  return { repository: new RedisJobRepository(client), isConnected: () => client.connected };
+  return { repository: new RedisJobRepository<T>(client), isConnected: () => client.connected };
 }

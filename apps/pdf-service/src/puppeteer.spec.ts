@@ -1,4 +1,5 @@
 import * as puppeteer from 'puppeteer';
+import { Readable } from 'stream';
 import { createPdfService } from './puppeteer';
 
 jest.mock('puppeteer');
@@ -39,13 +40,13 @@ describe('puppeteer', () => {
       const pageMock = {
         setJavaScriptEnabled: jest.fn(() => Promise.resolve()),
         setContent: jest.fn(() => Promise.resolve()),
-        pdf: jest.fn(() => Promise.resolve(Buffer.from('result'))),
+        createPDFStream: jest.fn(() => Promise.resolve(Readable.toWeb(Readable.from('result')))),
         close: jest.fn(() => Promise.resolve()),
       };
       browserMock.newPage.mockResolvedValueOnce(pageMock);
       const result = await service.generatePdf(template);
       expect(result).toBeTruthy();
-      expect(pageMock.pdf).toHaveBeenCalled();
+      expect(pageMock.createPDFStream).toHaveBeenCalled();
       expect(pageMock.close).toHaveBeenCalled();
     });
 
@@ -80,13 +81,13 @@ describe('puppeteer', () => {
       const pageMock = {
         setJavaScriptEnabled: jest.fn(() => Promise.resolve()),
         setContent: jest.fn(() => Promise.resolve()),
-        pdf: jest.fn(() => Promise.resolve(Buffer.from('result'))),
+        createPDFStream: jest.fn(() => Promise.resolve(Readable.toWeb(Readable.from('result')))),
         close: jest.fn(() => Promise.resolve()),
       };
       browserMock.newPage.mockResolvedValueOnce(pageMock);
       const result = await service.generatePdf(template);
       expect(result).toBeTruthy();
-      expect(pageMock.pdf).toHaveBeenCalledWith(
+      expect(pageMock.createPDFStream).toHaveBeenCalledWith(
         expect.objectContaining({
           headerTemplate: template.header,
           footerTemplate: template.footer,
@@ -120,13 +121,13 @@ describe('puppeteer', () => {
       const pageMock = {
         setJavaScriptEnabled: jest.fn(() => Promise.resolve()),
         setContent: jest.fn(() => Promise.resolve()),
-        pdf: jest.fn(() => Promise.resolve(Buffer.from('result'))),
+        createPDFStream: jest.fn(() => Promise.resolve(Readable.toWeb(Readable.from('result')))),
         close: jest.fn(() => Promise.resolve()),
       };
       browserMock.newPage.mockResolvedValueOnce(pageMock);
       const result = await service.generatePdf(template);
       expect(result).toBeTruthy();
-      expect(pageMock.pdf).toHaveBeenCalledWith(
+      expect(pageMock.createPDFStream).toHaveBeenCalledWith(
         expect.objectContaining({
           headerTemplate: '',
           footerTemplate: template.footer,

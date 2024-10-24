@@ -1,8 +1,9 @@
 import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import * as FormData from 'form-data';
+import { Readable } from 'stream';
 import { Logger } from 'winston';
-import { FileResult, FileService } from './pdf';
+import { FileResult, FileService } from './job';
 
 class PlatformFileService implements FileService {
   constructor(private logger: Logger, private tokenProvider: TokenProvider, private directory: ServiceDirectory) {}
@@ -38,7 +39,7 @@ class PlatformFileService implements FileService {
     fileType: string,
     recordId: string,
     filename: string,
-    content: Buffer
+    content: NodeJS.ReadableStream
   ): Promise<FileResult> {
     try {
       const formData = new FormData();

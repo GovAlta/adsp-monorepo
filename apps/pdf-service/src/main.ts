@@ -1,3 +1,12 @@
+import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import type { User } from '@abgov/adsp-service-sdk';
+import {
+  createLogger,
+  createErrorHandler,
+  createAmqpConfigUpdateService,
+  createAmqpQueueService,
+} from '@core-services/core-common';
+import { createFileService, createJobRepository, FileResult } from '@core-services/job-common';
 import * as express from 'express';
 import { readFile } from 'fs';
 import { promisify } from 'util';
@@ -5,9 +14,6 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
-import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   applyPdfMiddleware,
@@ -17,15 +23,13 @@ import {
   PdfGenerationFailedDefinition,
   PdfGenerationQueuedDefinition,
   PdfGenerationUpdatesStream,
+  PdfServiceWorkItem,
   PdfTemplate,
   PdfTemplateEntity,
   ServiceRoles,
 } from './pdf';
 import { createTemplateService } from './handlebars';
 import { createPdfService } from './puppeteer';
-import { createFileService } from './file';
-import { createPdfQueueService } from './amqp';
-import { createJobRepository } from './redis';
 
 const logger = createLogger('pdf-service', environment.LOG_LEVEL);
 
@@ -139,8 +143,13 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler
   );
 
-  const { repository, ...repositories } = createJobRepository({ logger, ...environment });
-  const queueService = await createPdfQueueService({ logger, ...environment });
+  const { repository, ...repositories } = createJobRepository<FileResult>({ logger, ...environment });
+  const queueService = await createAmqpQueueService<PdfServiceWorkItem>({
+    logger,
+    queue: 'pdf-service-work',
+    ...environment,
+  });
+
   applyPdfMiddleware(app, {
     logger,
     serviceId,

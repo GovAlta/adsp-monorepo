@@ -1,6 +1,6 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { RedisClient } from 'redis';
-import { FileResult } from './pdf';
+import { FileResult } from './job';
 import { RedisJobRepository } from './redis';
 
 describe('RedisJobRepository', () => {
@@ -45,8 +45,8 @@ describe('RedisJobRepository', () => {
       const job = await repository.get('job1');
       expect(redisClient.get).toHaveBeenCalledWith('job1', expect.any(Function));
       expect(job).toBeTruthy();
-      expect(job.id).toBeTruthy();
-      expect(job.status).toBe('queued');
+      expect(job?.id).toBeTruthy();
+      expect(job?.status).toBe('queued');
     });
 
     it('can reject for redis err', async () => {
@@ -69,8 +69,8 @@ describe('RedisJobRepository', () => {
         expect.any(Function)
       );
       expect(job).toBeTruthy();
-      expect(job.id).toBeTruthy();
-      expect(job.status).toBe('completed');
+      expect(job?.id).toBeTruthy();
+      expect(job?.status).toBe('completed');
     });
 
     it('can return null for not found job', async () => {
