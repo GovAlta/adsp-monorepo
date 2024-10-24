@@ -1,10 +1,10 @@
 import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
+import { FileResult, FileService, JobRepository } from '@core-services/job-common';
+import * as path from 'path';
 import { Logger } from 'winston';
 import { pdfGenerated, pdfGenerationFailed } from '../events';
 import { PdfTemplateEntity } from '../model';
-import { PdfJobRepository } from '../repository';
-import { FileService } from '../types';
 import { PdfServiceWorkItem } from './types';
 
 export interface GenerateJobProps {
@@ -12,7 +12,7 @@ export interface GenerateJobProps {
   serviceId: AdspId;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
-  repository: PdfJobRepository;
+  repository: JobRepository<FileResult>;
   fileService: FileService;
   eventService: EventService;
 }
@@ -32,7 +32,7 @@ export function createGenerateJob({
     retryOnError: boolean,
     done: (err?: Error) => void
   ): Promise<void> => {
-    const pdfFilename = filename = filename.replace(/\.[^/.]+$/, "") + ".pdf";
+    const pdfFilename = path.basename(filename, path.extname(filename)) + '.pdf';
     logger.info(`Starting generation of PDF (ID: ${jobId}) file: ${pdfFilename}...`, {
       context,
       tenant: tenantIdValue,
@@ -55,7 +55,7 @@ export function createGenerateJob({
 
       const pdf = await pdfTemplate.generate({ data });
 
-      logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content with ${pdf.length} bytes...`, {
+      logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content...`, {
         context,
         tenant: tenantId?.toString(),
       });

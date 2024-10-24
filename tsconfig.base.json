@@ -25,6 +25,7 @@
       "@core-services/core-common/mongo": ["libs/core-common/src/mongo/index.ts"],
       "@core-services/notification-shared": ["libs/notification-shared/src/index.ts"],
       "@core-services/stylesheets": ["libs/stylesheets/scss/src/index.ts"],
+      "@core-services/job-common": ["libs/job-common/src/index.ts"],
       "workspace-plugin": ["tools/workspace-plugin/src/index.ts"]
     }
   },
