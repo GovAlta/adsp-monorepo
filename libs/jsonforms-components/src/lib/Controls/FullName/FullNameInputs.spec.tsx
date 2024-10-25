@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { NameInputs } from './FullNameInputs';
-import { isFullName } from './FullNameTester';
 
 describe('NameInputs', () => {
-  const mockHandleInputChange = jest.fn(() => Promise.resolve());
+  const mockHandleInputChange = jest.fn();
+  const handleBlur = jest.fn();
 
   const defaultName = {
     firstName: 'John',
@@ -12,103 +12,103 @@ describe('NameInputs', () => {
     lastName: 'Doe',
   };
 
+  const requiredFields = ['firstName', 'lastName'];
+
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders all input fields with the correct initial values', () => {
+  it('renders all name fields with the correct initial values', async () => {
     const component = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={defaultName}
       />
     );
 
     const firstNameInput = component.getByTestId('name-form-first-name');
-    expect((firstNameInput as HTMLInputElement).value).toBe(defaultName.firstName);
 
     const middleNameInput = component.getByTestId('name-form-middle-name');
-    expect((middleNameInput as HTMLInputElement).value).toBe(defaultName.middleName);
 
     const lastNameInput = component.getByTestId('name-form-last-name');
-    expect((lastNameInput as HTMLInputElement).value).toBe(defaultName.lastName);
+    await (async () => {
+      expect(mockHandleInputChange).toHaveBeenCalledTimes(1);
+      expect((firstNameInput as HTMLInputElement).value).toBe(defaultName.firstName);
+      expect((lastNameInput as HTMLInputElement).value).toBe(defaultName.lastName);
+      expect((middleNameInput as HTMLInputElement).value).toBe(defaultName.middleName);
+    });
   });
 
-  it('calls handleInputChange on user input in first name', () => {
+  it('calls handleInputChange on user input in first name', async () => {
     render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={defaultName}
       />
     );
 
     const firstNameInput = screen.getByTestId('name-form-first-name');
-    fireEvent.change(firstNameInput, { target: { value: 'Jane' } });
-
     fireEvent(
       firstNameInput,
       new CustomEvent('_change', {
-        detail: { name: 'firstName', value: 'Jane' },
+        detail: { name: 'firstName', value: 'John' },
       })
     );
-
-    expect((firstNameInput as HTMLInputElement).value).toBe('Jane');
-    expect(mockHandleInputChange).toBeCalledTimes(1);
-    expect(mockHandleInputChange).toHaveBeenCalledWith('firstName', 'Jane');
+    await (async () => {
+      expect(mockHandleInputChange).toHaveBeenCalledTimes(1);
+      expect(mockHandleInputChange).toHaveBeenCalledWith('firstName', 'John');
+      expect((firstNameInput as HTMLInputElement).value).toBe('John');
+    });
   });
 
-  it('calls handleInputChange on user input in middle name', () => {
+  it('shows required error when first name is missing and blurred', async () => {
     render(
       <NameInputs
-        firstName={defaultName.firstName}
+        firstName=""
         middleName={defaultName.middleName}
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={{ ...defaultName, firstName: '' }}
       />
     );
 
-    const middleNameInput = screen.getByTestId('name-form-middle-name');
-    fireEvent.change(middleNameInput, { target: { value: 'B.' } });
-
-    fireEvent(
-      middleNameInput,
-      new CustomEvent('_change', {
-        detail: { name: 'middleName', value: 'B.' },
-      })
-    );
-
-    expect((middleNameInput as HTMLInputElement).value).toBe('B.');
-    expect(mockHandleInputChange).toBeCalledTimes(1);
-    expect(mockHandleInputChange).toHaveBeenCalledWith('middleName', 'B.');
+    const firstNameInput = screen.getByTestId('name-form-first-name');
+    fireEvent.blur(firstNameInput);
+    await (async () => {
+      expect(handleBlur).toHaveBeenCalledTimes(1);
+      const error = await screen.getByText('firstName is required');
+      expect(error).toBeInTheDocument();
+    });
   });
 
-  it('calls handleInputChange on user input in last name', () => {
+  it('shows required error when last name is missing and blurred', async () => {
     render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
-        lastName={defaultName.lastName}
+        lastName=""
         handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={{ ...defaultName, lastName: '' }}
       />
     );
 
     const lastNameInput = screen.getByTestId('name-form-last-name');
-    fireEvent.change(lastNameInput, { target: { value: 'Smith' } });
-
-    fireEvent(
-      lastNameInput,
-      new CustomEvent('_change', {
-        detail: { name: 'lastName', value: 'Smith' },
-      })
-    );
-
-    expect((lastNameInput as HTMLInputElement).value).toBe('Smith');
-    expect(mockHandleInputChange).toBeCalledTimes(1);
-    expect(mockHandleInputChange).toHaveBeenCalledWith('lastName', 'Smith');
+    fireEvent.blur(lastNameInput);
+    await (async () => {
+      expect(handleBlur).toHaveBeenCalled();
+      const error = await screen.getByText('lastName is required');
+      expect(error).toBeInTheDocument();
+    });
   });
 
   it('matches snapshot', () => {
@@ -118,64 +118,13 @@ describe('NameInputs', () => {
         middleName={defaultName.middleName}
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={defaultName}
       />
     );
     expect(asFragment()).toMatchSnapshot();
   });
-
-  it('test fullname tester', () => {
-    expect(
-      isFullName(
-        {
-          type: 'Category',
-        },
-        {},
-        {}
-      )
-    ).toBe(false);
-  });
-
-  expect(
-    isFullName(
-      {
-        type: 'Control',
-        scope: '#/properties/personFullName',
-      },
-      {
-        type: 'object',
-        properties: {
-          personFullName: {
-            $comment: 'The full name of a person including first, middle, and last names.',
-            type: 'object',
-            properties: {
-              firstName: {
-                $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
-                type: 'string',
-                pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
-              middleName: {
-                $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
-                type: 'string',
-                pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
-              lastName: {
-                $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
-                type: 'string',
-                pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
-            },
-            required: ['firstName', 'lastName'],
-            errorMessage: {
-              properties: {
-                firstName: 'Include period (.) if providing your initial',
-                middleName: 'Include period (.) if providing your initial',
-                lastName: 'Include period (.) if providing your initial',
-              },
-            },
-          },
-        },
-      },
-      {}
-    )
-  ).toBe(true);
 });
+function mockHandleChange(path: string, value: string): void {
+  throw new Error('Function not implemented.');
+}

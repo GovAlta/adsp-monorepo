@@ -3,6 +3,7 @@ import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components-new';
 import { checkFieldValidity } from '../../util/stringUtils';
+import { NameInputs } from './FullNameInputs';
 
 type FullNameProps = ControlProps;
 
@@ -22,23 +23,19 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
   );
 };
 export const FullNameControl = (props: FullNameProps): JSX.Element => {
-  const { data, path, schema, handleChange, uischema } = props;
+  const { data, path, schema, handleChange } = props;
+  const requiredFields = (schema as { required: string[] }).required;
   const defaultName = {
     firstName: '',
     middleName: '',
     lastName: '',
   };
+  const [nameData, setNameData] = useState(data || defaultName);
 
   const updateFormData = (updatedData: string) => {
     handleChange(path, updatedData);
   };
 
-  const [nameData, setNameData] = useState(data || defaultName);
-  const [errMsg, setErrorMsg] = useState('');
-  const errors = (name: string) => {
-    const err = checkFieldValidity(props as ControlProps);
-    setErrorMsg(err);
-  };
   const handleInputChange = (field: string, value: string) => {
     const updatedName = { ...nameData, [field]: value };
     setNameData(updatedName);
@@ -46,55 +43,13 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
   };
 
   return (
-    <GoAGrid minChildWidth="0ch" gap="s">
-      <GoAFormItem
-        label="First Name"
-        requirement={schema?.required?.includes('firstName') ? 'required' : undefined}
-        error={errMsg}
-      >
-        <GoAInput
-          type="text"
-          name="firstName"
-          testId="name-form-first-name"
-          ariaLabel={'name-form-first-name'}
-          value={nameData.firstName || ''}
-          onChange={(name, value) => handleInputChange(name, value)}
-          onKeyPress={(name, value) => errors('firstName')}
-          onBlur={(name, value) => errors('firstName')}
-          width="100%"
-        />
-      </GoAFormItem>
-      <GoAFormItem
-        label="Middle Name (optional)"
-        requirement={schema?.required?.includes('middleName') ? 'required' : undefined}
-      >
-        <GoAInput
-          type="text"
-          name="middleName"
-          testId="name-form-middle-name"
-          ariaLabel={'name-form-middle-name'}
-          value={nameData.middleName || ''}
-          onChange={(name, value) => handleInputChange(name, value)}
-          width="100%"
-        />
-      </GoAFormItem>
-      <GoAFormItem
-        label="Last Name"
-        requirement={schema?.required?.includes('lastName') ? 'required' : undefined}
-        error={errMsg}
-      >
-        <GoAInput
-          type="text"
-          name="lastName"
-          testId="name-form-last-name"
-          ariaLabel={'name-form-last-name'}
-          value={nameData.lastName || ''}
-          onChange={(name, value) => handleInputChange(name, value)}
-          onKeyPress={(name, value) => errors('lastName')}
-          onBlur={(name, value) => errors('lastName')}
-          width="100%"
-        />
-      </GoAFormItem>
-    </GoAGrid>
+    <NameInputs
+      firstName={defaultName.firstName}
+      middleName={defaultName.middleName}
+      lastName={defaultName.lastName}
+      handleInputChange={handleInputChange}
+      data={data}
+      requiredFields={requiredFields}
+    />
   );
 };

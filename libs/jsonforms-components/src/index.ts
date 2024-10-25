@@ -44,6 +44,7 @@ import {
   FullNameDobControl,
   FullNameDobTester,
   FullNameReviewControl,
+  FullNameDobReviewControl,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -161,6 +162,7 @@ export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseReviewRenderers,
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploaderReview) },
   { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameReviewControl) },
+  { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobReviewControl) },
   { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControlReview) },
 ];
 
