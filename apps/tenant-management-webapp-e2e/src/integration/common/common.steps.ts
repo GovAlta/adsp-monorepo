@@ -612,6 +612,42 @@ Then(
   }
 );
 
+Then(
+  'the user views the event details of {string}, {string}, {string}, {string}, {string}',
+  function (serviceName, apiVersion, url, namespace, username) {
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        expect(eventDetails).to.contain('"URL": ' + '"' + url + '"');
+        expect(eventDetails).to.contain('"api": ' + '"' + apiVersion + '"');
+        expect(eventDetails).to.contain('"service": ' + '"' + serviceName + '"');
+        expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
+        expect(eventDetails).to.contain('"name": ' + '"' + username + '"');
+      });
+  }
+);
+
+Then(
+  'the user views the event details for the configuration-updated event to have {string} as the securityClassification value',
+  function (securityClassification: string) {
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        expect(eventDetails).to.contain(
+          '"securityClassification": ' + '"' + securityClassification.toLowerCase() + '"'
+        );
+      });
+  }
+);
+
 // Task steps:
 Given('all existing tasks in {string} if any have been deleted', function (queue) {
   const getTasksRequestURL =
