@@ -2,14 +2,14 @@ import React, { useContext, useEffect, useMemo } from 'react';
 import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
-import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { RegisterDataType } from '../../Context/register';
 import { callout } from '../../Additional/GoACalloutControl';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
-import { Dropdown, Item } from '../../Components/Dropdown';
+import { Dropdown } from '../../Components/Dropdown';
+import { Item } from '../../Components/DropDownTypes';
 
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 
@@ -34,7 +34,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
     error = registerCtx?.fetchErrors(registerConfig) || '';
   }
-  const autocompletion = props.uischema?.options?.autocomplete === true;
+  const autoCompletion = props.uischema?.options?.autoComplete === true;
 
   const mergedOptions = useMemo(() => {
     const newOptions = [
@@ -77,9 +77,10 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
         <Dropdown
           items={mergedOptions as unknown as Item[]}
           selected={data}
+          key={`jsonforms-${label}-dropdown`}
           id={`jsonforms-${label}-dropdown`}
           label={label}
-          isAutocompletion={autocompletion}
+          isAutocompletion={autoCompletion}
           onChange={(value: string) => {
             handleChange(path, value);
           }}
