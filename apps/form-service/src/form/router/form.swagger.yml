@@ -45,6 +45,8 @@ components:
           type: string
         id:
           type: string
+        jobId:
+          type: string
         definition:
           type: object
           properties:
