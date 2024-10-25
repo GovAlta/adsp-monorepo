@@ -526,6 +526,18 @@ components:
         required: true
         schema:
           type: string
+      - name: top
+        description: Number of submissions to return in a page.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: criteria
         description: Criteria for form submissions to retrieve.
         in: query
@@ -563,15 +575,41 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FormSubmission"
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/FormSubmission"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
 
-/submissions:
+/form/v1//submissions:
   get:
     tags:
       - Form Submission
     description: |
       Retrieves submissions matching search criteria.
     parameters:
+      - name: top
+        description: Number of submissions to return in a page.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: criteria
         description: Criteria for form submissions to retrieve.
         in: query
@@ -609,4 +647,18 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FormSubmission"
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/FormSubmission"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number

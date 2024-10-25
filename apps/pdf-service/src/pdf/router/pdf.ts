@@ -1,10 +1,18 @@
-import { AdspId, adspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  adspId,
+  EventService,
+  isAllowedUser,
+  ServiceDirectory,
+  UnauthorizedUserError,
+} from '@abgov/adsp-service-sdk';
 import {
   createValidationHandler,
   InvalidOperationError,
   NotFoundError,
   WorkQueueService,
 } from '@core-services/core-common';
+import { FileResult, FileService, JobRepository, JobState } from '@core-services/job-common';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param } from 'express-validator';
 import { Logger } from 'winston';
@@ -12,15 +20,12 @@ import { pdfGenerationQueued } from '../events';
 import { GENERATED_PDF } from '../fileTypes';
 import { PdfServiceWorkItem } from '../job';
 import { PdfTemplateEntity } from '../model';
-import { PdfJobRepository } from '../repository';
 import { ServiceRoles } from '../roles';
-import { FileService, PdfJob } from '../types';
-import { ServiceDirectory } from '@abgov/adsp-service-sdk';
 
 export interface RouterProps {
   serviceId: AdspId;
   logger: Logger;
-  repository: PdfJobRepository;
+  repository: JobRepository<FileResult>;
   queueService: WorkQueueService<PdfServiceWorkItem>;
   eventService: EventService;
   fileService: FileService;
@@ -36,7 +41,7 @@ function mapPdfTemplate({ id, name, description, template }: PdfTemplateEntity) 
   };
 }
 
-function mapJob(serviceId: AdspId, { id, status, result }: PdfJob) {
+function mapJob(serviceId: AdspId, { id, status, result }: JobState<FileResult>) {
   return {
     urn: `${serviceId}:v1:/jobs/${id}`,
     id,
@@ -78,7 +83,7 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
 
 export function generatePdf(
   serviceId: AdspId,
-  repository: PdfJobRepository,
+  repository: JobRepository<FileResult>,
   eventService: EventService,
   fileService: FileService,
   queueService: WorkQueueService<PdfServiceWorkItem>,
@@ -133,7 +138,7 @@ export function generatePdf(
   };
 }
 
-export function getGeneratedFile(serviceId: AdspId, repository: PdfJobRepository): RequestHandler {
+export function getGeneratedFile(serviceId: AdspId, repository: JobRepository<FileResult>): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;

@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, OptionalResults } from '@core-services/core-common';
+import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Model, model } from 'mongoose';
 import { Logger } from 'winston';
 import { FormRepository, FormSubmissionCriteria, FormSubmissionEntity, FormSubmissionRepository } from '../form';
@@ -18,12 +18,13 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     });
   }
 
-  find(criteria: FormSubmissionCriteria): Promise<OptionalResults<FormSubmissionEntity>> {
+  find(top: number, after: string, criteria: FormSubmissionCriteria): Promise<Results<FormSubmissionEntity>> {
+    // tenantId is a required criteria.
     if (!criteria?.tenantIdEquals) {
       throw new InvalidOperationError('Cannot retrieve submissions without tenant context.');
     }
 
-    // tenantId is a required criteria.
+    const skip = decodeAfter(after);
     const query: Record<string, unknown> = {
       tenantId: criteria.tenantIdEquals.toString(),
     };
@@ -68,12 +69,16 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       this.submissionModel
         .find(query, null, { lean: true })
         .sort({ created: -1 })
+        .skip(skip)
+        .limit(top)
         .exec((err, docs) =>
           err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(criteria.tenantIdEquals, doc))))
         );
     }).then((docs) => ({
       results: docs,
       page: {
+        after,
+        next: encodeNext(docs.length, top, skip),
         size: docs.length,
       },
     }));

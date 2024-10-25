@@ -1,11 +1,10 @@
 import { AdspId, ConfigurationService, EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { WorkQueueService } from '@core-services/core-common';
+import { FileResult, FileService, JobRepository } from '@core-services/job-common';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { createPdfJobs, PdfServiceWorkItem } from './job';
-import { PdfJobRepository } from './repository';
 import { createPdfRouter } from './router';
-import { FileService } from './types';
 
 export * from './configuration';
 export * from './events';
@@ -13,7 +12,6 @@ export * from './fileTypes';
 export * from './roles';
 export * from './types';
 export * from './job';
-export * from './repository';
 export * from './model';
 
 interface MiddlewareProps {
@@ -21,7 +19,7 @@ interface MiddlewareProps {
   serviceId: AdspId;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
-  repository: PdfJobRepository;
+  repository: JobRepository<FileResult>;
   fileService: FileService;
   eventService: EventService;
   queueService: WorkQueueService<PdfServiceWorkItem>;
