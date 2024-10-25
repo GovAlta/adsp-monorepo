@@ -108,9 +108,9 @@ export const MonacoDivTriggerEventsBody = styled.div`
   min-height: 65px;
   flex-direction: column;
 `;
-export const ScriptEditorContainer = styled.div`
+export const ScriptEditorContainer = styled.div<{ isNotificationActive: boolean }>`
   width: 50%;
-
+  height: calc(100vh - ${(props) => (props.isNotificationActive ? `81px` : `0px`)});
   padding-right: 1.5rem;
   overflow: hidden;
   display: flex;
@@ -409,7 +409,6 @@ export const Edit = styled.div`
 `;
 export const ScrollPane = styled.div`
   overflow-y: auto;
-  max-height: calc(100vh - 30px);
   width: 100%;
 `;
 

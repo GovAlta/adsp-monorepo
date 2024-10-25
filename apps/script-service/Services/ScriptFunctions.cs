@@ -4,7 +4,6 @@ using Adsp.Sdk;
 using Adsp.Sdk.Events;
 using NLua;
 using RestSharp;
-using System.Text.Json;
 
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions : IScriptFunctions
@@ -12,21 +11,24 @@ internal class ScriptFunctions : IScriptFunctions
   private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;
   private readonly Func<Task<string>> _getToken;
-  private readonly Lua _lua;
   private readonly IRestClient _client;
 
 
-  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, Lua lua, IRestClient? client = null)
+  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, IRestClient? client = null)
   {
     _tenantId = tenantId;
     _directory = directory;
     _getToken = getToken;
-    _lua = lua;
     _client = client ?? new RestClient(new RestClientOptions { ThrowOnAnyError = true });
   }
 
   public virtual string? GeneratePdf(string templateId, string filename, object values)
   {
+    if (String.IsNullOrEmpty(templateId))
+    {
+      throw new ArgumentException("templateId cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.PdfServiceId).Result;
     var requestUrl = new Uri(servicesUrl, "/pdf/v1/jobs");
 
@@ -62,6 +64,16 @@ internal class ScriptFunctions : IScriptFunctions
 
   public IDictionary<string, object?>? GetConfiguration(string @namespace, string name)
   {
+    if (String.IsNullOrEmpty(@namespace))
+    {
+      throw new ArgumentException("namespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ConfigurationServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/configuration/v2/configuration/{@namespace}/{name}/active");
 
@@ -77,6 +89,11 @@ internal class ScriptFunctions : IScriptFunctions
 
   public FormDataResult? GetFormData(string formId)
   {
+    if (String.IsNullOrEmpty(formId))
+    {
+      throw new ArgumentException("formId cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/data");
 
@@ -89,8 +106,18 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
-  public virtual LuaTable? GetFormSubmission(string formId, string submissionId)
+  public virtual FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
   {
+    if (String.IsNullOrEmpty(formId))
+    {
+      throw new ArgumentException("formId cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(submissionId))
+    {
+      throw new ArgumentException("submissionId cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
 
@@ -99,15 +126,22 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var Jsubmission = _client.GetAsync<string>(request).Result;
-    if (Jsubmission == null) return null;
-    var submission = JsonSerializer.Deserialize<FormSubmissionResult?>(Jsubmission);
-    var result = submission?.ToLuaTable(_lua);
+    var result = _client.GetAsync<FormSubmissionResult>(request).Result;
     return result;
   }
 
   public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
   {
+    if (String.IsNullOrEmpty(@namespace))
+    {
+      throw new ArgumentException("namespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     var eventServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.EventServiceId).Result;
     var requestUrl = new Uri(eventServiceUrl, $"/event/v1/events");
     var token = _getToken().Result;
@@ -133,6 +167,21 @@ internal class ScriptFunctions : IScriptFunctions
 
   public virtual DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
   {
+    if (String.IsNullOrEmpty(formId))
+    {
+      throw new ArgumentException("formId cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(submissionId))
+    {
+      throw new ArgumentException("submissionId cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(dispositionStatus))
+    {
+      throw new ArgumentException("dispositionStatus cannot be null or empty.");
+    }
+
     var formServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(formServiceUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
     var token = _getToken().Result;
@@ -154,6 +203,11 @@ internal class ScriptFunctions : IScriptFunctions
 
   public virtual object? HttpGet(string url)
   {
+    if (String.IsNullOrEmpty(url))
+    {
+      throw new ArgumentException("url cannot be null or empty.");
+    }
+
     var token = _getToken().Result;
     var request = new RestRequest(url, Method.Get);
     request.AddHeader("Authorization", $"Bearer {token}");
@@ -167,6 +221,21 @@ internal class ScriptFunctions : IScriptFunctions
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
   )
   {
+    if (String.IsNullOrEmpty(queueNamespace))
+    {
+      throw new ArgumentException("queueNamespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(queueName))
+    {
+      throw new ArgumentException("queueName cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.TaskServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/task/v1/queues/{queueNamespace}/{queueName}/tasks");
 
@@ -191,6 +260,16 @@ internal class ScriptFunctions : IScriptFunctions
 
   public virtual IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null)
   {
+    if (String.IsNullOrEmpty(@namespace))
+    {
+      throw new ArgumentException("namespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/value/v1/{@namespace}/values/{name}");
     var token = _getToken().Result;
@@ -212,6 +291,16 @@ internal class ScriptFunctions : IScriptFunctions
 
   public virtual IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)
   {
+    if (String.IsNullOrEmpty(@namespace))
+    {
+      throw new ArgumentException("namespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     const string CONTEXT_KEY = "context";
     const string VALUE_KEY = "value";
     const string CORRELATION_ID_KEY = "correlationId";

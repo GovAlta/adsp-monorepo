@@ -1,71 +1,54 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Adsp.Sdk.Util;
 
 namespace Adsp.Platform.ScriptService.Services.Platform
 {
   [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
-  public sealed class FormSubmissionResult
+  internal sealed class FormSubmissionResult
   {
-    [JsonPropertyName("Id")]
-    public string? Id { get; set; }
-    [JsonPropertyName("formDefinitionId")]
-    public string? FormDefinitionId { get; set; }
-    [JsonPropertyName("FormId")]
-    public string? FormId { get; set; }
+    public string? id { get; set; }
 
-    // [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
-    // [JsonPropertyName("FormData")]
-    // [JsonConverter(typeof(DictionaryJsonConverter))]
-    // public IDictionary<string, object?>? Data { get; set; } = new Dictionary<string, object?>();
+    public string? formDefinitionId { get; set; }
 
-    // [SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "Setter is needed to instantiate the object.")]
-    // [JsonPropertyName("formFiles")]
-    // [JsonConverter(typeof(DictionaryJsonConverter))]
-    // public IDictionary<string, object?>? Files { get; set; } = new Dictionary<string, object?>();
+    public string? formId { get; set; }
 
-    [JsonPropertyName("createdBy")]
-    public User? CreatedBy { get; set; }
-    [JsonPropertyName("updatedBy")]
-    public User? UpdatedBy { get; set; }
-    [JsonPropertyName("created")]
-    public DateTime? Created { get; set; }
-    [JsonPropertyName("updated")]
-    public DateTime? Updated { get; set; }
-    [JsonPropertyName("disposition")]
-    public FormDisposition? Disposition { get; set; }
+    [JsonConverter(typeof(DictionaryJsonConverter))]
+    public IDictionary<string, object?>? formData { get; set; }
+
+    [JsonConverter(typeof(DictionaryJsonConverter))]
+    public IDictionary<string, object?>? formFiles { get; set; }
+
+    public User? createdBy { get; set; }
+
+    public User? updatedBy { get; set; }
+
+    public DateTime? created { get; set; }
+
+    public DateTime? updated { get; set; }
+
+    public FormDisposition? disposition { get; set; }
+
+    public string? securityClassification { get; set; }
   }
 
-
-  public sealed class FormDisposition
+  internal sealed class FormDisposition
   {
-    [JsonPropertyName("status")]
-    public string? Status { get; set; }
-    [JsonPropertyName("reason")]
-    public string? Reason { get; set; }
-    [JsonPropertyName("date")]
-    public DateTime? Date { get; set; }
-  }
+    public string? id { get; set; }
 
-  public sealed class User
-  {
-    [JsonPropertyName("id")]
-    public string? Id { get; set; }
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
+    public string? status { get; set; }
+
+    public string? reason { get; set; }
+
+    public DateTime? date { get; set; }
 
   }
 
-  public enum SecurityClassificationType
+  internal sealed class User
   {
-    [JsonPropertyName("protected a")]
-    ProtectedA,
-    [JsonPropertyName("protected b")]
-    ProtectedB,
-    [JsonPropertyName("protected c")]
-    ProtectedC,
-    [JsonPropertyName("public")]
-    Public
+    public string? id { get; set; }
+
+    public string? name { get; set; }
   }
 }
-

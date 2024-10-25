@@ -92,10 +92,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     document.body.classList.add('modal-open');
     this.onDimChange(true);
   }
-  private isSafariBrowser() {
-    const ua = navigator.userAgent;
-    return /Safari/.test(ua) && !/Chrome|Chromium|Android/.test(ua);
-  }
+
   private handleKeyOpenStartForm(event: KeyboardEvent) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -370,7 +367,6 @@ export class AdspFeedback implements AdspFeedbackApi {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderRating = (rating: any, index: number) => {
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     return html`
       <div class="rating-div">
         <img
@@ -384,18 +380,16 @@ export class AdspFeedback implements AdspFeedbackApi {
           tabindex="0"
           aria-label="${rating.label}"
         />
-        ${isSmallScreen
-          ? html`
-              <p
-                class="ratingText"
-                @mouseover="${() => this.updateHover(index, true)}"
-                @mouseout="${() => this.updateHover(index, false)}"
-                @click="${() => this.selectRating(index)}"
-              >
-                ${rating.label}
-              </p>
-            `
-          : html`<span class="tooltip-text">${rating.label}</span>`}
+
+        <p
+          class="ratingText"
+          @mouseover="${() => this.updateHover(index, true)}"
+          @mouseout="${() => this.updateHover(index, false)}"
+          @click="${() => this.selectRating(index)}"
+        >
+          ${rating.label}
+        </p>
+        <span class="tooltip-text">${rating.label}</span>
       </div>
     `;
   };
@@ -410,15 +404,15 @@ export class AdspFeedback implements AdspFeedbackApi {
         : this.selectedRating === index
         ? rating.svgClick
         : rating.svgDefault;
-    if (isSmallScreen) {
-      const texts = document.querySelectorAll('.ratingText');
-      const text = texts[index] as HTMLImageElement;
-      text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
-    } else {
+
+    const texts = document.querySelectorAll('.ratingText');
+    const text = texts[index] as HTMLImageElement;
+    text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+    if (!isSmallScreen) {
       const tooltips = document.querySelectorAll('.tooltip-text');
       const tooltip = tooltips[index] as HTMLImageElement;
-      tooltip.style.visibility = isHovering && !isSmallScreen ? 'visible' : 'hidden';
-      tooltip.style.opacity = isHovering && !isSmallScreen ? '1' : '0';
+      tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
+      tooltip.style.opacity = isHovering ? '1' : '0';
       if (index === 0) {
         tooltip.style.marginLeft = '35px';
         tooltip.classList.add('modified');
@@ -427,17 +421,15 @@ export class AdspFeedback implements AdspFeedbackApi {
   };
 
   private clearRating = (index: number) => {
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     if (index > -1) {
       const rating = this.ratings[index];
       const images = document.querySelectorAll('.rating');
       const image = images[index] as HTMLImageElement;
       image.src = rating.svgDefault;
-      if (isSmallScreen) {
-        const texts = document.querySelectorAll('.ratingText');
-        const text = texts[index] as HTMLImageElement;
-        text.style.color = '#333333';
-      }
+
+      const texts = document.querySelectorAll('.ratingText');
+      const text = texts[index] as HTMLImageElement;
+      text.style.color = '#333333';
     }
   };
 
@@ -454,7 +446,6 @@ export class AdspFeedback implements AdspFeedbackApi {
   };
 
   private selectRating = (index: number) => {
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     this.updateHover(index, false);
     const images = document.querySelectorAll('.rating');
     const ratingNew = this.ratings[index];
@@ -470,11 +461,11 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
     this.selectedRating = index;
     this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-primary') as HTMLElement;
-    if (isSmallScreen) {
-      const texts = document.querySelectorAll('.ratingText');
-      const text = texts[index] as HTMLImageElement;
-      text.style.color = '#0081A2';
-    }
+
+    const texts = document.querySelectorAll('.ratingText');
+    const text = texts[index] as HTMLImageElement;
+    text.style.color = '#0081A2';
+
     if (this.commentSelector.value && this.commentSelector.value.checked === true) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     }
@@ -649,49 +640,49 @@ export class AdspFeedback implements AdspFeedbackApi {
             width: 98%;
 
             > div > img {
+              width: 46px;
+              height: 46px;
             }
             > div > img:first-child {
               padding-left: 0px;
             }
-            > div > p {
-              display: none;
-            }
-
-            span.tooltip-text {
-              visibility: hidden;
-              margin-left: 25px;
-              background-color: #666666;
-              color: #fff;
-              text-align: center;
-              border-radius: 5px;
-              padding: 8px 12px;
-              margin-top: 53px;
-              position: absolute;
-              transform: translateX(-50%);
-              -webkit-transform: translateX(-50%);
-              white-space: nowrap;
-              opacity: 0;
-              z-index: 2;
-              transition: opacity 0.3s;
-              -webkit-transition: opacity 0.3s;
-            }
-            span.tooltip-text:before {
-              content: '';
-              position: absolute;
-              top: -10px;
-              left: 50%;
-              margin-left: -5px;
-              border-width: 5px;
-              border-style: solid;
-              transform: translateX(-50%);
-              -webkit-transform: translateX(-50%);
-              border-color: transparent transparent #666666 transparent;
-            }
-            span.tooltip-text.modified:before {
-              left: 40%;
-            }
           }
-
+          .tooltip-text {
+            visibility: hidden;
+            margin-left: 25px;
+            background-color: #666666;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 8px 12px;
+            margin-top: 53px;
+            position: absolute;
+            transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
+            white-space: nowrap;
+            opacity: 0;
+            z-index: 2;
+            transition: opacity 0.3s;
+            -webkit-transition: opacity 0.3s;
+          }
+          .tooltip-text:before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
+            border-color: transparent transparent #666666 transparent;
+          }
+          .tooltip-text.modified:before {
+            left: 40%;
+          }
+          .ratingText {
+            display: none;
+          }
           .adsp-fb .adsp-fb-form-comment {
             display: flex;
             flex-direction: column;
@@ -881,7 +872,10 @@ export class AdspFeedback implements AdspFeedbackApi {
           }
           .rating {
             cursor: pointer;
+            transform: translateZ(0);
+            will-change: transform, color;
             transition: transform 0.3s ease-in-out color 0.3s ease;
+            transition: -webkit-transform 0.3s ease-in-out, color 0.3s ease;
           }
 
           .title {
@@ -1071,22 +1065,20 @@ export class AdspFeedback implements AdspFeedbackApi {
                 height: 32px;
                 padding-right: 8px;
               }
-              > div > p {
-                margin-bottom: 0px !important;
-                display: block;
-                padding: 0;
-              }
-              > div > p :hover {
-                color: #004f84;
-              }
-              > div > span {
-                visibility: hidden;
-                opacity: 0;
-              }
+            }
+            tooltip-text {
+              visibility: hidden;
+              opacity: 0;
             }
             .ratingText {
               padding-top: 12px;
               cursor: pointer;
+              margin-bottom: 0px !important;
+              display: block;
+              padding: 0;
+            }
+            .ratingText :hover {
+              color: #004f84;
             }
           }
           @media screen and (max-height: 800px) {

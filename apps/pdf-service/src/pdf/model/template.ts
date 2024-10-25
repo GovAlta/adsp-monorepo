@@ -1,4 +1,5 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { Readable } from 'stream';
 import { PdfService, PdfTemplate, TemplateService } from '../types';
 
 export class PdfTemplateEntity implements PdfTemplate {
@@ -56,7 +57,7 @@ export class PdfTemplateEntity implements PdfTemplate {
     }
   }
 
-  generate(context: unknown): Promise<Buffer> {
+  generate(context: unknown): Promise<Readable> {
     this.initializeTemplates();
 
     const content = this.evaluateTemplate(context);

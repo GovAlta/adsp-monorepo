@@ -152,6 +152,9 @@ describe('Input Text Control tests', () => {
     it('should return false for invalid SIN Number', () => {
       expect(validateSinWithLuhn(Number('123456879'))).toBe(false);
     });
+    it('should return 9 digits for invalid SIN Number with more than 16 digits', () => {
+      expect(formatSin('123456879123456789999')).toBe('123 456 879');
+    });
   });
 
   describe('formatSin', () => {

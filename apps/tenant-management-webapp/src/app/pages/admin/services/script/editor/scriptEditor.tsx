@@ -12,6 +12,7 @@ import {
   MonacoDivTabBody,
   ScriptEditorTitle,
   MonacoDivTriggerEventsBody,
+  NotificationBannerWrapper,
 } from '../styled-components';
 import { TombStone } from './tombstone';
 
@@ -42,6 +43,8 @@ import { getEventDefinitions } from '@store/event/actions';
 import { scriptEditorConfig, scriptEditorJsonConfig } from './config';
 import { CustomLoader } from '@components/CustomLoader';
 import { FetchRealmRoles } from '@store/tenant/actions';
+import useWindowDimensions from '@lib/useWindowDimensions';
+import { NotificationBanner } from 'app/notificationBanner';
 export interface ScriptEditorProps {
   name: string;
   description: string;
@@ -309,9 +312,11 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     }
     return result;
   };
+  const notifications = useSelector((state: RootState) => state.notifications.notifications);
+  const isNotificationActive = latestNotification && !latestNotification.disabled;
 
-  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '399px';
-
+  const monacoHeight = `calc(100vh - 404px${notifications.length > 0 ? ' - 80px' : ''})`;
+  const Height = latestNotification && !latestNotification.disabled ? 91 : 0;
   const isServiceAccountDisabled = () => {
     if (script.triggerEvents?.length > 0) return true;
 
@@ -325,207 +330,214 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   };
 
   return (
-    <EditModalStyle>
-      {customIndicator && <CustomLoader />}
-      <ScriptEditorContainer>
-        <div>
-          <ScriptEditorTitle>Script editor</ScriptEditorTitle>
-
-          <hr className="hr-only-line" />
-          <TombStone selectedScript={selectedScript} onSave={onSave} />
-          <div style={{ paddingLeft: '4px' }}>
-            <GoACheckbox
-              checked={isServiceAccountChecked()}
-              name="script-use-service-account-checkbox"
-              testId="script-use-service-account-checkbox"
-              disabled={isServiceAccountDisabled()}
-              text="Use service account"
-              onChange={() => {
-                setScript({
-                  ...script,
-                  useServiceAccount: !script.useServiceAccount,
-                });
-              }}
-              ariaLabel={`script-use-service-account-checkbox`}
-            />
-          </div>
-          <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
-            <Tab label="Lua script" data-testid="script-editor-tab">
-              <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(100vh - ${getStyles})` }}>
-                <MonacoEditor
-                  language={'lua'}
-                  value={scriptStr}
-                  {...scriptEditorConfig}
-                  onChange={(value) => {
-                    onScriptChange(value);
-                  }}
-                />
-              </MonacoDivBody>
-            </Tab>
-            <Tab label="Roles" data-testid="script-roles-tab">
-              <MonacoDivTabBody data-testid="roles-editor-body" style={{ height: `calc(100vh - ${getStyles})` }}>
-                <ScrollPane>
-                  {Array.isArray(roles)
-                    ? roles.map((r) => {
-                        return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
-                      })
-                    : null}
-                  {fetchKeycloakRolesState === ActionState.inProcess && (
-                    <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-                  )}
-                </ScrollPane>
-              </MonacoDivTabBody>
-            </Tab>
-            <Tab label="Trigger events" data-testid="script-trigger-events-tab">
-              <MonacoDivTriggerEventsBody
-                data-testid="trigger-events-body"
-                style={{ height: `calc(100vh - ${getStyles})` }}
-              >
-                <ScriptEditorEventsTab
-                  script={selectedScript}
-                  eventNames={orderedEventNames}
-                  onEditorSave={(script) => {
-                    setScript(script);
-                    saveAndReset(script);
-                  }}
-                />
-              </MonacoDivTriggerEventsBody>
-            </Tab>
-          </Tabs>
-        </div>
-        <EditScriptActions>
+    <>
+      <NotificationBannerWrapper>
+        <NotificationBanner />
+      </NotificationBannerWrapper>
+      <EditModalStyle>
+        {customIndicator && <CustomLoader />}
+        <ScriptEditorContainer isNotificationActive={isNotificationActive}>
           <div>
-            <GoAButton
-              onClick={() => {
-                setCustomIndicator(true);
-                updateScript();
-                saveAndReset(selectedScript);
-                setSaveModal(false);
-              }}
-              testId="template-form-save"
-              type="primary"
-              disabled={Object.keys(errors).length > 0 || !hasChanged()}
-            >
-              Save
-            </GoAButton>
-          </div>
-          <GoAButton
-            onClick={() => {
-              if (hasChanged()) {
-                setSaveModal(true);
-              } else {
-                onEditorCancel();
-                dispatch(ClearScripts());
-              }
-            }}
-            testId="template-form-close"
-            type="secondary"
-          >
-            Back
-          </GoAButton>
-        </EditScriptActions>
-      </ScriptEditorContainer>
-      {/* Form */}
-      <SaveFormModal
-        open={saveModal}
-        onDontSave={() => {
-          resetSavedAction();
-          setSaveModal(false);
-          onEditorCancel();
-          dispatch(ClearScripts());
-        }}
-        saveDisable={Object.keys(errors).length > 0 || !hasChanged()}
-        onSave={() => {
-          updateScript();
-          saveAndReset(selectedScript);
-          setSaveModal(false);
-          onEditorCancel();
-        }}
-        onCancel={() => {
-          setSaveModal(false);
-        }}
-      />
-      <div className="half-width">
-        <ScriptPane>
-          <div className="flex-column">
-            <div className="flex-one">
-              <ScriptEditorTitle>Test input</ScriptEditorTitle>
-              <hr className="hr-resize" />
-              <GoAFormItem error={errors?.['payloadSchema']} label="">
-                <TestInputDivBody data-testid="templated-editor-test">
+            <ScriptEditorTitle>Script editor</ScriptEditorTitle>
+
+            <hr className="hr-only-line" />
+            <TombStone selectedScript={selectedScript} onSave={onSave} />
+            <div style={{ paddingLeft: '4px' }}>
+              <GoACheckbox
+                checked={isServiceAccountChecked()}
+                name="script-use-service-account-checkbox"
+                testId="script-use-service-account-checkbox"
+                disabled={isServiceAccountDisabled()}
+                text="Use service account"
+                onChange={() => {
+                  setScript({
+                    ...script,
+                    useServiceAccount: !script.useServiceAccount,
+                  });
+                }}
+                ariaLabel={`script-use-service-account-checkbox`}
+              />
+            </div>
+            <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
+              <Tab label="Lua script" data-testid="script-editor-tab">
+                <MonacoDivBody data-testid="templated-editor-body">
                   <MonacoEditor
-                    language={'json'}
-                    value={testInput}
-                    {...scriptEditorJsonConfig}
+                    height={monacoHeight}
+                    language={'lua'}
+                    value={scriptStr}
+                    {...scriptEditorConfig}
                     onChange={(value) => {
-                      setTestInput(value);
+                      onScriptChange(value);
                     }}
                   />
-                </TestInputDivBody>
-              </GoAFormItem>
-            </div>
-            <div className="execute-button">
+                </MonacoDivBody>
+              </Tab>
+              <Tab label="Roles" data-testid="script-roles-tab">
+                <MonacoDivTabBody data-testid="roles-editor-body">
+                  <ScrollPane style={{ height: monacoHeight }}>
+                    {Array.isArray(roles)
+                      ? roles.map((r) => {
+                          return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
+                        })
+                      : null}
+                    {fetchKeycloakRolesState === ActionState.inProcess && (
+                      <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+                    )}
+                  </ScrollPane>
+                </MonacoDivTabBody>
+              </Tab>
+              <Tab label="Trigger events" data-testid="script-trigger-events-tab">
+                <MonacoDivTriggerEventsBody data-testid="trigger-events-body" style={{ height: monacoHeight }}>
+                  <ScriptEditorEventsTab
+                    script={selectedScript}
+                    eventNames={orderedEventNames}
+                    onEditorSave={(script) => {
+                      setScript(script);
+                      saveAndReset(script);
+                    }}
+                  />
+                </MonacoDivTriggerEventsBody>
+              </Tab>
+            </Tabs>
+          </div>
+          <EditScriptActions>
+            <div>
               <GoAButton
                 onClick={() => {
-                  const testItem: ScriptItem = {
-                    testInputs: {
-                      inputs: JSON.parse(testInput),
-                    },
-                    script: scriptStr,
-                  };
-                  dispatch(ExecuteScript(testItem));
+                  setCustomIndicator(true);
+                  updateScript();
+                  saveAndReset(selectedScript);
+                  setSaveModal(false);
                 }}
-                disabled={errors?.['payloadSchema'] || loadingIndicator.show}
-                testId="template-form-execute"
-                type="secondary"
+                testId="template-form-save"
+                type="primary"
+                disabled={Object.keys(errors).length > 0 || !hasChanged()}
               >
-                Execute
+                Save
               </GoAButton>
             </div>
+            <GoAButton
+              onClick={() => {
+                if (hasChanged()) {
+                  setSaveModal(true);
+                } else {
+                  onEditorCancel();
+                  dispatch(ClearScripts());
+                }
+              }}
+              testId="template-form-close"
+              type="secondary"
+            >
+              Back
+            </GoAButton>
+          </EditScriptActions>
+        </ScriptEditorContainer>
+        {/* Form */}
+        <SaveFormModal
+          open={saveModal}
+          onDontSave={() => {
+            resetSavedAction();
+            setSaveModal(false);
+            onEditorCancel();
+            dispatch(ClearScripts());
+          }}
+          saveDisable={Object.keys(errors).length > 0 || !hasChanged()}
+          onSave={() => {
+            updateScript();
+            saveAndReset(selectedScript);
+            setSaveModal(false);
+            onEditorCancel();
+          }}
+          onCancel={() => {
+            setSaveModal(false);
+          }}
+        />
+        <div className="half-width">
+          <ScriptPane>
+            <div className="flex-column">
+              <div className="flex-one">
+                <ScriptEditorTitle>Test input</ScriptEditorTitle>
+                <hr className="hr-resize" />
+                <GoAFormItem error={errors?.['payloadSchema']} label="">
+                  <TestInputDivBody data-testid="templated-editor-test">
+                    <MonacoEditor
+                      language={'json'}
+                      value={testInput}
+                      {...scriptEditorJsonConfig}
+                      onChange={(value) => {
+                        setTestInput(value);
+                      }}
+                    />
+                  </TestInputDivBody>
+                </GoAFormItem>
+              </div>
+              <div className="execute-button">
+                <GoAButton
+                  onClick={() => {
+                    const testItem: ScriptItem = {
+                      testInputs: {
+                        inputs: JSON.parse(testInput),
+                      },
+                      script: scriptStr,
+                    };
+                    dispatch(ExecuteScript(testItem));
+                  }}
+                  disabled={errors?.['payloadSchema'] || loadingIndicator.show}
+                  testId="template-form-execute"
+                  type="secondary"
+                >
+                  Execute
+                </GoAButton>
+              </div>
 
-            <ResponseTableStyles>
-              <table id="response-information">
-                <thead>
-                  <tr>
-                    <th data-testid="response-header-result">Result</th>
-                    <th data-testid="response-header-input">Input</th>
-                    <th data-testid="response-header-output">Output</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {loadingIndicator.show && (
+              <ResponseTableStyles>
+                <table id="response-information">
+                  <thead>
                     <tr>
-                      <td colSpan={3}>
-                        <GoASkeleton key={1} type="text" />
-                      </td>
+                      <th data-testid="response-header-result">Result</th>
+                      <th data-testid="response-header-input">Input</th>
+                      <th data-testid="response-header-output">Output</th>
                     </tr>
-                  )}
+                  </thead>
 
-                  {Array.isArray(scriptResponse)
-                    ? scriptResponse.map((response) => (
-                        <tr>
-                          <td data-testid="response-result">
-                            <div className="flex-horizontal">
-                              <div className="mt-1">
-                                {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
+                  <tbody>
+                    {loadingIndicator.show && (
+                      <tr>
+                        <td colSpan={3}>
+                          <GoASkeleton key={1} type="text" />
+                        </td>
+                      </tr>
+                    )}
+
+                    {Array.isArray(scriptResponse)
+                      ? scriptResponse.map((response) => (
+                          <tr>
+                            <td data-testid="response-result">
+                              <div className="flex-horizontal">
+                                <div className="mt-1">
+                                  {!response.hasError ? (
+                                    <CheckmarkCircle size="medium" />
+                                  ) : (
+                                    <CloseCircle size="medium" />
+                                  )}
+                                </div>
+                                <div className="mt-3">{response.hasError ? response.result : 'Success'}</div>
                               </div>
-                              <div className="mt-3">{response.hasError ? response.result : 'Success'}</div>
-                            </div>
-                          </td>
-                          <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
-                          <td data-testid="response-output">
-                            {!response.hasError ? parseTestResult(response.result) : ''}
-                          </td>
-                        </tr>
-                      ))
-                    : null}
-                </tbody>
-              </table>
-            </ResponseTableStyles>
-          </div>
-        </ScriptPane>
-      </div>
-    </EditModalStyle>
+                            </td>
+                            <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
+                            <td data-testid="response-output">
+                              {!response.hasError ? parseTestResult(response.result) : ''}
+                            </td>
+                          </tr>
+                        ))
+                      : null}
+                  </tbody>
+                </table>
+              </ResponseTableStyles>
+            </div>
+          </ScriptPane>
+        </div>
+      </EditModalStyle>
+    </>
   );
 };

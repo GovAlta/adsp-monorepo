@@ -60,6 +60,9 @@ export const formSchema = new Schema(
   { _id: false }
 );
 
+formSchema.index({ tenantId: 1, id: 1 }, { unique: true });
+formSchema.index({ tenantId: 1, definitionId: 1, applicantId: 1 }, { unique: true });
+
 export const createdBy = {
   id: {
     type: String,
@@ -149,5 +152,4 @@ export const formSubmissionSchema = new Schema(
   { _id: false }
 );
 
-formSchema.index({ tenantId: 1, id: 1 }, { unique: true });
-formSchema.index({ tenantId: 1, definitionId: 1, applicantId: 1 }, { unique: true });
+formSubmissionSchema.index({ tenantId: 1, formDefinitionId: 1 });
