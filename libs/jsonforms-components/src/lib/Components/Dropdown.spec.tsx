@@ -23,7 +23,7 @@ describe('Dropdown Component', () => {
         id="jsonforms-dropdown-mock-test"
       />
     );
-    const DropdownComponent = screen.getAllByTestId('jsonforms-dropdown-mock-test');
+    const DropdownComponent = screen.getByTestId('jsonforms-dropdown-mock-test');
     expect(DropdownComponent).toBeTruthy();
   });
 
