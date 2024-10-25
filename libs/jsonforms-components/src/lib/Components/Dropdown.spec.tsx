@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Dropdown } from './Dropdown';
+import exp from 'constants';
 
 describe('Dropdown Component', () => {
   it('render the dropdown component', () => {
@@ -168,6 +169,45 @@ describe('Dropdown Component', () => {
       expect(dd.innerHTML).toBe('label-a');
     });
 
+    it('keypress can trigger a value', () => {
+      const items = [
+        {
+          label: ' ',
+          value: ' ',
+        },
+        {
+          label: 'label-a',
+          value: 'value-a',
+        },
+        {
+          label: 'label-b',
+          value: 'value-b',
+        },
+      ];
+      const component = render(
+        <Dropdown
+          label="mock-test"
+          items={items}
+          selected={items[0].value}
+          onChange={(value) => {}}
+          isAutocompletion={true}
+          id="jsonforms-dropdown-mock-test"
+        />
+      );
+
+      const dd = component.getAllByTestId('jsonforms-dropdown-mock-test-label-b-option')[0];
+      dd.focus();
+
+      fireEvent.keyDown(dd, {
+        key: 'ArrowUp',
+        code: 'ArrowUp',
+        keyCode: 38,
+        charCode: 38,
+      });
+
+      expect(dd.innerHTML).toBe('label-b');
+    });
+
     it('can trigger up with no value', () => {
       const items = [
         {
@@ -194,22 +234,20 @@ describe('Dropdown Component', () => {
         />
       );
 
-      const input = component.getByTestId('jsonforms-dropdown-mock-test-input');
-      input.focus();
-      const dd = component.getAllByTestId('jsonforms-dropdown-mock-test-label-b-option')[0];
-      input.blur();
+      const dd = component.getAllByTestId('jsonforms-dropdown-mock-test- -option')[0];
       dd.focus();
-      console.log('dd', dd.innerHTML);
+
       fireEvent.keyDown(dd, {
-        key: 'ArrowUp',
-        code: 'ArrowUp',
-        keyCode: 38,
-        charCode: 38,
+        key: 'ArrowDown',
+        code: 'ArrowDown',
+        keyCode: 40,
+        charCode: 40,
       });
-      //expect(dd.innerHTML).toBe('label-a');
+
+      expect(dd.innerHTML).toBe(' ');
     });
 
-    it('can press keys for search', () => {
+    it('can press enter key for search', () => {
       const component = render(
         <Dropdown
           label="mock-test"
@@ -221,17 +259,17 @@ describe('Dropdown Component', () => {
         />
       );
 
-      const input = component.getAllByTestId('jsonforms-dropdown-mock-test-input')[0];
-      input.addEventListener('keydown', () => {
-        console.log('keydown event');
-      });
+      const input = component.getByTestId('jsonforms-dropdown-mock-test-input');
+
       input.focus();
-      input.dispatchEvent(
+
+      fireEvent.keyDown(
+        input,
         new KeyboardEvent('keydown', {
-          key: 'Enter',
-          code: 'Enter',
-          keyCode: 13,
-          charCode: 13,
+          key: 'ArrowDown',
+          code: 'ArrowDown',
+          keyCode: 40,
+          charCode: 40,
         })
       );
       fireEvent.keyDown(
@@ -243,7 +281,8 @@ describe('Dropdown Component', () => {
           charCode: 13,
         })
       );
-      fireEvent(input, new CustomEvent('_change', { detail: { name: 'bob', value: 'No' } }));
+      fireEvent(input, new CustomEvent('_change', { detail: { name: 'label-a', value: 'value-a' } }));
+      expect(input.getAttribute('value')).toBe('value-a');
     });
   });
 });

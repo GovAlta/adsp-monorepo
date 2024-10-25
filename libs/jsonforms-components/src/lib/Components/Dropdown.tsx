@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { GoAInput, GoAInputProps, WCProps } from '@abgov/react-components-new';
+import { GoAInput, GoAInputProps } from '@abgov/react-components-new';
 import { isEqual } from 'lodash';
 import { ARROW_DOWN_KEY, ARROW_UP_KEY, DropdownProps, ENTER_KEY, ESCAPE_KEY, Item, TAB_KEY } from './DropDownTypes';
 import { GoADropdownListContainer, GoADropdownListContainerWrapper, GoADropdownListOption } from './styled-components';
@@ -91,7 +91,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       }
       let el = document.getElementById(`${PREFIX}-${label}-${props.items.at(index)?.value}`);
 
-      //If we cant find the items in the items useState object try looking for it in the DOM element
       if (el === null) {
         const elements = document.querySelectorAll(`[id=${PREFIX}-dropDownList-${label}]`);
         const element = elements.item(0).children.item(1) as HTMLElement;
@@ -110,7 +109,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
       if (inputEl) {
         //The 'focused' property is part of the GoAInput component that is used to
-        //set focus on the input field.  We need to set it back to false once we set focus on the input field. Doing with just .focus() doesnt work.
+        //set focus on the input field. We need to set it back to false once we set focus on the input field. Doing with just .focus() doesnt work.
         inputEl.focused = true;
         inputEl.focus();
         inputEl.focused = false;
@@ -121,7 +120,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
 
     let index = items.findIndex((val) => {
-      return val.label === e.currentTarget.innerHTML;
+      return val.label === e.currentTarget.innerText;
     });
 
     //Prevent jumping to the next control/DOM element if
@@ -130,6 +129,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       if (item.label === items.at(-1)?.label) {
         e.preventDefault();
       }
+
       if (index === -1 && item.label.trim() === '') {
         index = 0;
       }
@@ -141,14 +141,12 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       }
     }
     if (e.key === ARROW_UP_KEY) {
-      console.log('index', index);
       if (index <= 0) {
         e.preventDefault();
         return;
       }
 
-      const val = `${PREFIX}-${label}-${items.at(index - 1)?.value}`;
-      const el = document.getElementById(val);
+      const el = document.getElementById(`${PREFIX}-${label}-${items.at(index - 1)?.value}`);
       if (el) {
         el.focus();
       }
@@ -186,6 +184,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         }}
         trailingIcon={trailingIcon}
       />
+
       <GoADropdownListContainerWrapper
         isOpen={isOpen}
         id={`${PREFIX}-dropDownListContainerWrapper-${label}`}
