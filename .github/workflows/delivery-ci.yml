@@ -124,8 +124,9 @@ jobs:
             oc rollout latest dc/${{ matrix.app }}
             oc rollout status dc/${{ matrix.app }}
           elif oc get deployment/${{ matrix.app }} ; then
-            oc rollout resume deployment/${{ matrix.app }}
+            oc set triggers deployment/${{ matrix.app }} --auto
             oc rollout status deployment/${{ matrix.app }}
+            oc set triggers deployment/${{ matrix.app }} --manual
           else
             echo 'No DeploymentConfig or Deployment found for ${{ matrix.app }}.'
           fi
@@ -197,8 +198,9 @@ jobs:
             oc rollout latest dc/${{ matrix.app }}
             oc rollout status dc/${{ matrix.app }}
           elif oc get deployment/${{ matrix.app }} ; then
-            oc rollout resume deployment/${{ matrix.app }}
+            oc set triggers deployment/${{ matrix.app }} --auto
             oc rollout status deployment/${{ matrix.app }}
+            oc set triggers deployment/${{ matrix.app }} --manual
           else
             echo 'No DeploymentConfig or Deployment found for ${{ matrix.app }}.'
           fi
