@@ -195,8 +195,8 @@ objects:
             type: Local
 
   # Deployment (and Service and Route) is created in each environment
-  - apiVersion: apps/v1
-    kind: Deployment
+  - apiVersion: v1
+    kind: DeploymentConfig
     metadata:
       labels:
         app: export-service
@@ -206,25 +206,11 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: export-service
-      annotations:
-        image.openshift.io/triggers: |-
-          [
-            {
-              "from": {
-                "kind": "ImageStreamTag",
-                "name": "export-service:${DEPLOY_TAG}",
-                "namespace": "${INFRA_NAMESPACE}"
-              },
-              "fieldPath": "spec.template.spec.containers[0].image",
-              "paused": true
-            }
-          ]
     spec:
       replicas: 3
       selector:
-        matchLabels:
-          app: export-service
-          component: api
+        app: export-service
+        component: api
       template:
         metadata:
           labels:
@@ -232,9 +218,7 @@ objects:
             component: api
         spec:
           containers:
-            - image: >-
-                image-registry.openshift-image-registry.svc:5000/adsp-build/export-service@${DEPLOY_TAG}
-              envFrom:
+            - envFrom:
                 - configMapRef:
                     name: export-service
                 - configMapRef:
@@ -259,25 +243,48 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 100m
-                  memory: 200Mi
+                  cpu: 300m
+                  memory: 500Mi
                 requests:
-                  cpu: 20m
-                  memory: 50Mi
+                  cpu: 200m
+                  memory: 300Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 2
+                timeoutSeconds: 1
+                periodSeconds: 5
+                successThreshold: 1
+                failureThreshold: 20
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 2
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 5
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
-      strategy:
-        type: RollingUpdate
-        rollingUpdate:
-          maxUnavailable: 25%
-          maxSurge: 25%
-      revisionHistoryLimit: 10
-      progressDeadlineSeconds: 600
+      test: false
+      triggers:
+        - imageChangeParams:
+            containerNames:
+              - export-service
+            from:
+              kind: ImageStreamTag
+              name: export-service:${DEPLOY_TAG}
+              namespace: ${INFRA_NAMESPACE}
+          type: ImageChange
   - apiVersion: v1
     kind: Service
     metadata:
