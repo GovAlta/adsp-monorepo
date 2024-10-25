@@ -149,6 +149,7 @@ const initializeApp = async (): Promise<express.Application> => {
     queue: 'pdf-service-work',
     ...environment,
   });
+  const fileService = createFileService({ logger, tokenProvider, directory });
 
   applyPdfMiddleware(app, {
     logger,
@@ -157,7 +158,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationService,
     repository,
     queueService,
-    fileService: createFileService({ logger, tokenProvider, directory }),
+    fileService,
     eventService,
     directory,
   });
