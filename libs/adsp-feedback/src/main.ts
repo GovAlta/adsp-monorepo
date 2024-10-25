@@ -394,6 +394,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     `;
   };
   private updateHover = (index: number, isHovering: boolean) => {
+    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     const rating = this.ratings[index];
     const images = document.querySelectorAll('.rating');
     const image = images[index] as HTMLImageElement;
@@ -407,14 +408,15 @@ export class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
-
-    const tooltips = document.querySelectorAll('.tooltip-text');
-    const tooltip = tooltips[index] as HTMLImageElement;
-    tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
-    tooltip.style.opacity = isHovering ? '1' : '0';
-    if (index === 0) {
-      tooltip.style.marginLeft = '35px';
-      tooltip.classList.add('modified');
+    if (!isSmallScreen) {
+      const tooltips = document.querySelectorAll('.tooltip-text');
+      const tooltip = tooltips[index] as HTMLImageElement;
+      tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
+      tooltip.style.opacity = isHovering ? '1' : '0';
+      if (index === 0) {
+        tooltip.style.marginLeft = '35px';
+        tooltip.classList.add('modified');
+      }
     }
   };
 
@@ -636,7 +638,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             margin-top: 12px;
             justify-content: space-between;
             width: 98%;
-            position: relative;
+
             > div > img {
               width: 46px;
               height: 46px;
@@ -644,45 +646,43 @@ export class AdspFeedback implements AdspFeedbackApi {
             > div > img:first-child {
               padding-left: 0px;
             }
-            > div > p {
-              display: none;
-            }
-
-            span.tooltip-text {
-              visibility: hidden;
-              margin-left: 25px;
-              background-color: #666666;
-              color: #fff;
-              text-align: center;
-              border-radius: 5px;
-              padding: 8px 12px;
-              margin-top: 53px;
-              position: absolute;
-              transform: translateX(-50%);
-              -webkit-transform: translateX(-50%);
-              white-space: nowrap;
-              opacity: 0;
-              z-index: 2;
-              transition: opacity 0.3s;
-              -webkit-transition: opacity 0.3s;
-            }
-            span.tooltip-text:before {
-              content: '';
-              position: absolute;
-              top: -10px;
-              left: 50%;
-              margin-left: -5px;
-              border-width: 5px;
-              border-style: solid;
-              transform: translateX(-50%);
-              -webkit-transform: translateX(-50%);
-              border-color: transparent transparent #666666 transparent;
-            }
-            span.tooltip-text.modified:before {
-              left: 40%;
-            }
           }
-
+          .tooltip-text {
+            visibility: hidden;
+            margin-left: 25px;
+            background-color: #666666;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 8px 12px;
+            margin-top: 53px;
+            position: absolute;
+            transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
+            white-space: nowrap;
+            opacity: 0;
+            z-index: 2;
+            transition: opacity 0.3s;
+            -webkit-transition: opacity 0.3s;
+          }
+          .tooltip-text:before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
+            border-color: transparent transparent #666666 transparent;
+          }
+          .tooltip-text.modified:before {
+            left: 40%;
+          }
+          .ratingText {
+            display: none;
+          }
           .adsp-fb .adsp-fb-form-comment {
             display: flex;
             flex-direction: column;
@@ -1065,22 +1065,20 @@ export class AdspFeedback implements AdspFeedbackApi {
                 height: 32px;
                 padding-right: 8px;
               }
-              > div > p {
-                margin-bottom: 0px !important;
-                display: block;
-                padding: 0;
-              }
-              > div > p :hover {
-                color: #004f84;
-              }
-              > div > span {
-                visibility: hidden;
-                opacity: 0;
-              }
+            }
+            tooltip-text {
+              visibility: hidden;
+              opacity: 0;
             }
             .ratingText {
               padding-top: 12px;
               cursor: pointer;
+              margin-bottom: 0px !important;
+              display: block;
+              padding: 0;
+            }
+            .ratingText :hover {
+              color: #004f84;
             }
           }
           @media screen and (max-height: 800px) {

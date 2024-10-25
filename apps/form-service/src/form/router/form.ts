@@ -89,7 +89,7 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
           tenantIdEquals: req.tenant?.id,
           formIdEquals: form.id,
         };
-        const { results } = await submissionRepository.find({
+        const { results } = await submissionRepository.find(100, null, {
           ...criteria,
         });
 
@@ -191,6 +191,44 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
   };
 }
 
+export function findSubmissions(apiId: AdspId, repository: FormSubmissionRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
+      const user = req.user;
+      const tenantId = req.tenant.id;
+
+      const { criteria: criteriaValue, top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 100;
+      const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+
+      let definition: FormDefinitionEntity;
+      if (criteria.definitionIdEquals) {
+        [definition] = await req.getServiceConfiguration(criteria.definitionIdEquals, tenantId);
+      }
+
+      if (!isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...(definition?.assessorRoles || [])])) {
+        throw new UnauthorizedUserError('find submissions', user);
+      }
+
+      const { results, page } = await repository.find(top, after as string, {
+        ...criteria,
+        tenantIdEquals: tenantId,
+      });
+
+      res.send({
+        results: results.map((r) => mapFormSubmissionData(apiId, r)),
+        page,
+      });
+
+      end();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function findFormSubmissions(
   apiId: AdspId,
   repository: FormSubmissionRepository,
@@ -203,7 +241,9 @@ export function findFormSubmissions(
       const user = req.user;
       const tenantId = req.tenant.id;
       const { formId } = req.params;
-      const { criteria: criteriaValue } = req.query;
+
+      const { criteria: criteriaValue, top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 100;
       const criteria: FormSubmissionCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       const formEntity: FormEntity = await formRepository.get(tenantId, formId);
@@ -213,17 +253,18 @@ export function findFormSubmissions(
         throw new UnauthorizedUserError('find form submissions', user);
       }
 
-      const { results, page } = await repository.find({
+      const { results, page } = await repository.find(top, after as string, {
         ...criteria,
         tenantIdEquals: tenantId,
         formIdEquals: formId,
       });
 
-      end();
       res.send({
         results: results.map((r) => mapFormSubmissionData(apiId, r)),
         page,
       });
+
+      end();
     } catch (err) {
       next(err);
     }
@@ -758,9 +799,27 @@ export function createFormRouter({
   );
 
   router.get(
+    '/submissions',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after').optional().isString(),
+      query('criteria')
+        .optional()
+        .custom(async (value: string) => {
+          validateCriteria(value);
+        })
+    ),
+    findSubmissions(apiId, submissionRepository)
+  );
+
+  router.get(
     '/forms/:formId/submissions',
     assertAuthenticatedHandler,
     createValidationHandler(
+      param('formId').isUUID(),
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after').optional().isString(),
       query('criteria')
         .optional()
         .custom(async (value: string) => {
