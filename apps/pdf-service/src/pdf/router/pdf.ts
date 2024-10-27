@@ -12,7 +12,7 @@ import {
   NotFoundError,
   WorkQueueService,
 } from '@core-services/core-common';
-import { FileResult, FileService, JobRepository, JobState } from '@core-services/job-common';
+import { FileResult, FileService, JobRepository, mapJob } from '@core-services/job-common';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param } from 'express-validator';
 import { Logger } from 'winston';
@@ -38,15 +38,6 @@ function mapPdfTemplate({ id, name, description, template }: PdfTemplateEntity) 
     name,
     description,
     template,
-  };
-}
-
-function mapJob(serviceId: AdspId, { id, status, result }: JobState<FileResult>) {
-  return {
-    urn: `${serviceId}:v1:/jobs/${id}`,
-    id,
-    status,
-    result: result ? { urn: result.urn, id: result.id, filename: result.filename } : null,
   };
 }
 

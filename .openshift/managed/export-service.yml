@@ -1,0 +1,324 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: export-service
+  annotations:
+    tags: core-services, export-service
+    template.openshift.io/provider-display-name: platform team
+    description: Export service
+labels:
+  application: export-service
+parameters:
+  - name: INFRA_NAMESPACE
+    description: Name of the infrastructure project.
+    displayName: Infra Namespace
+    value: core-services-infra
+    required: true
+  - name: NAMESPACE
+    description: Namespace of the environment.
+    displayName: Namespace
+    value: core-services-dev
+    required: true
+  - name: BUILD_TAG
+    description: Name of the ImageStreamTag to build.
+    displayName: Build Tag
+    value: latest
+  - name: DEPLOY_TAG
+    description: Name of the ImageStreamTag to deploy.
+    displayName: Deploy Tag
+    value: latest
+  - name: ROUTE_HOST
+    description: Host for the route.
+    displayName: Route Host
+    value: ""
+  - description: Password for the Redis connection user.
+    displayName: Redis Connection Password
+    from: "[a-zA-Z0-9]{24}"
+    generate: expression
+    name: REDIS_PASSWORD
+    required: true
+objects:
+  # Redis Objects
+  # NOTE: Secret will generate new values if updated, so this is only for branch deployments.
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: export-service
+        component: database
+        apply-init: "true"
+      name: export-service-redis
+    stringData:
+      database-password: ${REDIS_PASSWORD}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: redis://{.spec.clusterIP}:{.spec.ports[?(.name=="redis")].port}
+      labels:
+        app: export-service
+        component: database
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: export-service-redis
+    spec:
+      ports:
+        - name: redis
+          nodePort: 0
+          port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: export-service
+        component: database
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      labels:
+        app: export-service
+        component: database
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: export-service-redis
+    spec:
+      replicas: 1
+      selector:
+        app: export-service
+        component: database
+      strategy:
+        type: Recreate
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+      template:
+        metadata:
+          labels:
+            app: export-service
+            component: database
+        spec:
+          containers:
+            - capabilities: {}
+              env:
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: export-service-redis
+              image: " "
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                initialDelaySeconds: 60
+                tcpSocket:
+                  port: 6379
+                timeoutSeconds: 30
+              name: redis
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -i
+                    - -c
+                    - test "$(redis-cli -h 127.0.0.1 -a $REDIS_PASSWORD ping)" == "PONG"
+                initialDelaySeconds: 60
+                timeoutSeconds: 1
+              resources:
+                requests:
+                  cpu: 20m
+                  memory: 100Mi
+                limits:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                capabilities: {}
+                privileged: false
+              terminationMessagePath: /dev/termination-log
+              volumeMounts:
+                - mountPath: /var/lib/redis/data
+                  name: export-service-redis-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          volumes:
+            - emptyDir:
+                medium: ""
+              name: export-service-redis-data
+      triggers:
+        - imageChangeParams:
+            automatic: true
+            containerNames:
+              - redis
+            from:
+              kind: ImageStreamTag
+              name: "redis:5-el8"
+              namespace: openshift
+            lastTriggeredImage: ""
+          type: ImageChange
+        - type: ConfigChange
+    status: {}
+
+  # Service Objects
+
+  # ImageStream is here for reference.
+  # There is a single ImageStream created in the infra project.
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      labels:
+        app: export-service
+        component: api
+        apply-infra: "true"
+      name: export-service
+      namespace: ${INFRA_NAMESPACE}
+    spec:
+      tags:
+        - name: ${BUILD_TAG}
+          from:
+            kind: DockerImage
+            name: ghcr.io/govalta/export-service:${BUILD_TAG}
+          referencePolicy:
+            type: Local
+
+  # Deployment (and Service and Route) is created in each environment
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: export-service
+        component: api
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: export-service
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "export-service:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
+            }
+          ]
+    spec:
+      replicas: 3
+      selector:
+        matchLabels:
+          app: export-service
+          component: api
+      template:
+        metadata:
+          labels:
+            app: export-service
+            component: api
+        spec:
+          containers:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/export-service@${DEPLOY_TAG}
+              envFrom:
+                - configMapRef:
+                    name: export-service
+                - configMapRef:
+                    name: directory-overrides
+                - secretRef:
+                    name: export-service
+              env:
+                - name: PORT
+                  value: "3333"
+                - name: REDIS_HOST
+                  value: export-service-redis
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: export-service-redis
+              imagePullPolicy: IfNotPresent
+              name: export-service
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: export-service
+        component: api
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: export-service
+    spec:
+      ports:
+        - name: http
+          port: 3333
+          protocol: TCP
+          targetPort: 3333
+      selector:
+        app: export-service
+        component: api
+      sessionAffinity: None
+      type: ClusterIP
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      labels:
+        app: export-service
+        component: api
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: export-service
+    spec:
+      host: ${ROUTE_HOST}
+      port:
+        targetPort: http
+      tls:
+        termination: edge
+      to:
+        kind: Service
+        name: export-service
+        weight: 100
+      wildcardPolicy: None
