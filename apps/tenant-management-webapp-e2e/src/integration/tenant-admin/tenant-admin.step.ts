@@ -858,23 +858,6 @@ Then(
   }
 );
 
-// Only one event details is open before calling this step
-Then(
-  'the user views the event details with status changing from {string} to {string}',
-  function (oldStatus: string, newStatus: string) {
-    tenantAdminObj.eventDetails().then((elements) => {
-      expect(elements.length).to.equal(1);
-    });
-    tenantAdminObj
-      .eventDetails()
-      .invoke('text')
-      .then((eventDetails) => {
-        expect(eventDetails).to.contain('"originalStatus": ' + '"' + oldStatus.toLowerCase() + '"');
-        expect(eventDetails).to.contain('"newStatus": ' + '"' + newStatus.toLowerCase() + '"');
-      });
-  }
-);
-
 Then(
   'the user views {string}, {string}, {string} under {string}',
   function (roleName, roleDesc, isInAdminRole, serviceName: string) {
