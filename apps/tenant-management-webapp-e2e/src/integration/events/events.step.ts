@@ -54,30 +54,6 @@ Then('the user views disabled Save button on Definition modal', function () {
   eventsObj.definitionModalSaveButton().shadow().find('button').should('be.disabled');
 });
 
-When(
-  'the user clicks {string} button for the definition of {string} and {string} under {string}',
-  function (button, eventName, eventDesc, eventNamespace) {
-    switch (button) {
-      case 'Edit':
-        eventsObj
-          .editDefinitionButton(eventNamespace, eventName, eventDesc)
-          .shadow()
-          .find('button')
-          .click({ force: true });
-        break;
-      case 'Delete':
-        eventsObj
-          .deleteDefinitionButton(eventNamespace, eventName, eventDesc)
-          .shadow()
-          .find('button')
-          .click({ force: true });
-        break;
-      default:
-        expect(button).to.be.oneOf(['Edit', 'Delete']);
-    }
-  }
-);
-
 When('the user enters {string} in Description', function (desc: string) {
   eventsObj.definitionModalDescriptionField().shadow().find('textarea').clear().type(desc, { force: true });
 });
