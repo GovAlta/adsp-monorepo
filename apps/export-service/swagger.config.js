@@ -3,9 +3,14 @@ module.exports = {
   info: {
     title: 'Export service',
     version: '0.0.0',
-    description: '',
+    description: 'Export service provides exports of resources to files using jobs.',
   },
-  tags: [],
+  tags: [
+    {
+      name: 'Export',
+      description: 'APIs for managing export jobs.',
+    },
+  ],
   components: {
     securitySchemes: {
       accessToken: {

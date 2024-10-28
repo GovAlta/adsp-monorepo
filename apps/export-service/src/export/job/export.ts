@@ -2,9 +2,9 @@ import { AdspId, EventService, ServiceDirectory, TokenProvider } from '@abgov/ad
 import { JobRepository, FileResult, FileService } from '@core-services/job-common';
 import axios from 'axios';
 import * as path from 'path';
-import { pipeline, Readable } from 'stream';
+import { Readable } from 'stream';
 import { Logger } from 'winston';
-import { exported, exportFailed } from '../event';
+import { exported, exportFailed } from '../events';
 import { getFormatter } from '../format';
 import { ExportServiceWorkItem } from './types';
 import { isPagedResults, retry } from './util';
@@ -36,6 +36,7 @@ export function createExportJob({
     fileType,
     filename,
     format,
+    formatOptions,
     requestedBy,
   }: ExportServiceWorkItem) => {
     const tenantId = AdspId.parse(tenantIdValue);
@@ -87,9 +88,9 @@ export function createExportJob({
         page += 1;
       } while (after || page > MAX_PAGES);
 
-      const { extension, createTransform } = getFormatter(format);
+      const { extension, applyTransform } = await getFormatter(format);
       const records = Readable.from(results);
-      const content = pipeline(records, createTransform(), (err) => {
+      const content = applyTransform(formatOptions, records, (err) => {
         if (err) {
           logger.warn(`Error encountered in stream pipeline for export job (ID: ${jobId}) of ${result.urn}: ${err}`, {
             context: 'ExportJob',

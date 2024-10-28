@@ -76,6 +76,7 @@
     "express-rate-limit": "^7.1.4",
     "express-session": "^1.17.3",
     "express-validator": "^6.14.0",
+    "flat": "^5.0.2",
     "handlebars": "^4.7.6",
     "hasha": "^5.2.0",
     "helmet": "^3.23.3",

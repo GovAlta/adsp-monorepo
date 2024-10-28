@@ -34,7 +34,7 @@ import {
 import { mapForm, mapFormDefinition, mapFormWithFormSubmission } from '../mapper';
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
-import { FormServiceRoles } from '../roles';
+import { ExportServiceRoles, FormServiceRoles } from '../roles';
 import { Form, FormCriteria, FormStatus, FormSubmission, FormSubmissionCriteria, Intake } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
@@ -208,7 +208,13 @@ export function findSubmissions(apiId: AdspId, repository: FormSubmissionReposit
         [definition] = await req.getServiceConfiguration(criteria.definitionIdEquals, tenantId);
       }
 
-      if (!isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...(definition?.assessorRoles || [])])) {
+      if (
+        !isAllowedUser(user, tenantId, [
+          FormServiceRoles.Admin,
+          ExportServiceRoles.ExportJob,
+          ...(definition?.assessorRoles || []),
+        ])
+      ) {
         throw new UnauthorizedUserError('find submissions', user);
       }
 
@@ -249,7 +255,13 @@ export function findFormSubmissions(
       const formEntity: FormEntity = await formRepository.get(tenantId, formId);
       const definition = formEntity?.definition;
 
-      if (!isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...(definition?.assessorRoles || [])])) {
+      if (
+        !isAllowedUser(user, tenantId, [
+          FormServiceRoles.Admin,
+          ExportServiceRoles.ExportJob,
+          ...(definition?.assessorRoles || []),
+        ])
+      ) {
         throw new UnauthorizedUserError('find form submissions', user);
       }
 
