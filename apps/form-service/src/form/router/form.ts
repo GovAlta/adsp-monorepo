@@ -315,15 +315,28 @@ export function createForm(
         form = await form.update(user, data, files);
       }
 
+      let jId = null;
+
       // If submit is true, then immediately submit the form.
       if (submit === true) {
-        const [submittedForm, submission] = await form.submit(user, queueTaskService, submissionRepository, pdfService);
+        const [submittedForm, submission, jobId] = await form.submit(
+          user,
+          queueTaskService,
+          submissionRepository,
+          pdfService
+        );
+        jId = jobId;
         form = submittedForm;
         formSubmission = submission;
         events.push(formSubmitted(apiId, user, form, submission));
       }
 
-      const result = formSubmission?.id ? mapFormWithFormSubmission(apiId, form, formSubmission) : mapForm(apiId, form);
+      const formWithJobId: FormEntityWithJobId = form;
+      formWithJobId.jobId = jId;
+
+      const result = formSubmission?.id
+        ? mapFormWithFormSubmission(apiId, formWithJobId, formSubmission)
+        : mapForm(apiId, formWithJobId);
 
       res.send(result);
 
@@ -515,6 +528,10 @@ export function updateFormData(logger: Logger): RequestHandler {
   };
 }
 
+export interface FormEntityWithJobId extends FormEntity {
+  jobId?: string;
+}
+
 export function formOperation(
   apiId: AdspId,
   logger: Logger,
@@ -542,7 +559,7 @@ export function formOperation(
         }
       );
 
-      let result: FormEntity = null;
+      let result: FormEntityWithJobId = null;
       let formSubmissionResult: FormSubmissionEntity = null;
       let event: DomainEvent = null;
 
@@ -557,13 +574,14 @@ export function formOperation(
           break;
         }
         case SUBMIT_FORM_OPERATION: {
-          const [submittedForm, submission] = await form.submit(
+          const [submittedForm, submission, jobId] = await form.submit(
             user,
             queueTaskService,
             submissionRepository,
             pdfService
           );
           result = submittedForm;
+          result.jobId = jobId;
           formSubmissionResult = submission;
           event = formSubmitted(apiId, user, result, submission);
           break;
