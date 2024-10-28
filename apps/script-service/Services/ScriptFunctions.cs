@@ -318,12 +318,12 @@ internal class ScriptFunctions : IScriptFunctions
       Context = null
     };
 
-    if (value.GetType() == typeof(LuaTable))
+    if (value?.GetType() == typeof(LuaTable))
     {
       var table = ((LuaTable)value);
       var dataValue = table.ToDictionary();
 
-      if (!dataValue.ContainsKey(VALUE_KEY))
+      if (!dataValue.TryGetValue(VALUE_KEY, out value))
       {
         throw new ArgumentException("value is required.");
       }
@@ -332,7 +332,7 @@ internal class ScriptFunctions : IScriptFunctions
       {
         valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
       }
-      if (dataValue.ContainsKey(CONTEXT_KEY) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
+      if (dataValue.TryGetValue(VALUE_KEY, out value) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
       {
         valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?> ?? new Dictionary<string, object?>();
       }
@@ -343,21 +343,21 @@ internal class ScriptFunctions : IScriptFunctions
     {
       var dataValue = value as IDictionary<string, object>;
 
-      if (!dataValue.ContainsKey(VALUE_KEY))
+      if (dataValue != null && !dataValue.TryGetValue(VALUE_KEY, out value))
       {
         throw new ArgumentException("value is required.");
       }
 
-      if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
+      if (dataValue?[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
       {
         valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
       }
-      if (dataValue.ContainsKey(CONTEXT_KEY) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
+      if (dataValue != null && dataValue.TryGetValue(VALUE_KEY, out value) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
       {
         valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?>;
       }
 
-      valueRequest.CorrelationId = dataValue[CORRELATION_ID_KEY]?.ToString();
+      valueRequest.CorrelationId = dataValue?[CORRELATION_ID_KEY]?.ToString();
     }
     else
     {
