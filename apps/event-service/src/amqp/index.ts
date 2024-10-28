@@ -8,6 +8,7 @@ interface AmqpEventServiceProps {
   amqpUser: string;
   amqpPassword: string;
   amqpUrl?: string;
+  amqpConsumerPriority: number;
   logger: Logger;
 }
 
@@ -20,7 +21,7 @@ export const createEventService = async (props: AmqpEventServiceProps): Promise<
     try {
       const connection = await connect(getConnectionParameters(props));
 
-      const service = new AmqpDomainEventService(props.logger, connection);
+      const service = new AmqpDomainEventService(props.logger, connection, { priority: props.amqpConsumerPriority });
       await service.connect();
 
       return service;

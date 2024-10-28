@@ -1,17 +1,12 @@
-import { stringify } from 'csv-stringify';
+import { csv } from './csv';
+import { json } from './json';
 import { ExportFormatter } from './types';
-import { JsonStringifyTransform } from './json';
 
-const formats: Record<string, ExportFormatter> = {
-  csv: {
-    extension: 'csv',
-    createTransform: () => stringify({ header: true }),
-  },
-  json: {
-    extension: 'json',
-    createTransform: () => new JsonStringifyTransform(),
-  },
-};
-export function getFormatter(format: string): ExportFormatter {
+export function getFormatter(format: string): Promise<ExportFormatter> {
+  const formats = {
+    csv,
+    json,
+  };
+
   return formats[format];
 }

@@ -6,15 +6,18 @@ export const ExportQueuedDefinition: DomainEventDefinition = {
   name: 'export-queued',
   description: '',
   payloadSchema: {
-    jobId: { type: 'string' },
-    resourceId: { type: 'string' },
-    format: { type: 'string' },
-    filename: { type: 'string' },
-    requestedBy: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
+    type: 'object',
+    properties: {
+      jobId: { type: 'string' },
+      resourceId: { type: 'string' },
+      format: { type: 'string' },
+      filename: { type: 'string' },
+      requestedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
       },
     },
   },
@@ -24,22 +27,25 @@ export const ExportCompletedDefinition: DomainEventDefinition = {
   name: 'export-completed',
   description: '',
   payloadSchema: {
-    jobId: { type: 'string' },
-    resourceId: { type: 'string' },
-    format: { type: 'string' },
-    file: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        urn: { type: 'string' },
-        filename: { type: 'string' },
+    type: 'object',
+    properties: {
+      jobId: { type: 'string' },
+      resourceId: { type: 'string' },
+      format: { type: 'string' },
+      file: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          urn: { type: 'string' },
+          filename: { type: 'string' },
+        },
       },
-    },
-    requestedBy: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
+      requestedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
       },
     },
   },
@@ -54,15 +60,19 @@ export const ExportFailedDefinition: DomainEventDefinition = {
   name: 'export-failed',
   description: '',
   payloadSchema: {
-    jobId: { type: 'string' },
-    resourceId: { type: 'string' },
-    format: { type: 'string' },
-    filename: { type: 'string' },
-    requestedBy: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
+    type: 'object',
+    properties: {
+      jobId: { type: 'string' },
+      resourceId: { type: 'string' },
+      format: { type: 'string' },
+      filename: { type: 'string' },
+      error: { type: 'string' },
+      requestedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
       },
     },
   },
@@ -146,7 +156,8 @@ export const exportFailed = (
   jobId: string,
   resourceId: string,
   format: string,
-  filename: string
+  filename: string,
+  error: string,
 ): DomainEvent => ({
   name: ExportFailedDefinition.name,
   tenantId,
@@ -156,6 +167,7 @@ export const exportFailed = (
     resourceId,
     format,
     filename,
+    error,
     requestedBy: {
       id: requestedBy.id,
       name: requestedBy.name,

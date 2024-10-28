@@ -2,13 +2,14 @@ import { getContextTrace } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { AmqpEventSubscriberService, InvalidOperationError } from '@core-services/core-common';
 import { AmqpConnectionManager } from 'amqp-connection-manager';
+import { Options } from 'amqplib';
 import * as dashify from 'dashify';
 import type { Logger } from 'winston';
 import type { DomainEventService } from '../event';
 
 export class AmqpDomainEventService extends AmqpEventSubscriberService implements DomainEventService {
-  constructor(logger: Logger, connection: AmqpConnectionManager) {
-    super('event-log', logger, connection);
+  constructor(logger: Logger, connection: AmqpConnectionManager, consumerOptions: Options.Consume = {}) {
+    super('event-log', logger, connection, consumerOptions);
   }
 
   async send(event: DomainEvent): Promise<void> {

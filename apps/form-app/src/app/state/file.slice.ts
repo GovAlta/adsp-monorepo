@@ -423,11 +423,7 @@ export const fileDataUrlSelector = createSelector(
   (_state: AppState, urn: string) => urn,
   (files, urn) => files[urn]
 );
-export const pdfFileSelector = createSelector(
-  (state: AppState) => state.file.pdfFile,
-  (file) => file
-);
-export const checkPdfFileSelector = createSelector(
+export const checkExistingPdfFile = createSelector(
   (state: AppState) => state.file.pdfFileExists,
   (file) => file
 );
