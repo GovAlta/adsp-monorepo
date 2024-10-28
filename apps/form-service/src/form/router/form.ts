@@ -209,11 +209,8 @@ export function findSubmissions(apiId: AdspId, repository: FormSubmissionReposit
       }
 
       if (
-        !isAllowedUser(user, tenantId, [
-          FormServiceRoles.Admin,
-          ExportServiceRoles.ExportJob,
-          ...(definition?.assessorRoles || []),
-        ])
+        !isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...(definition?.assessorRoles || [])]) &&
+        !isAllowedUser(user, tenantId, ExportServiceRoles.ExportJob, true)
       ) {
         throw new UnauthorizedUserError('find submissions', user);
       }
@@ -256,11 +253,8 @@ export function findFormSubmissions(
       const definition = formEntity?.definition;
 
       if (
-        !isAllowedUser(user, tenantId, [
-          FormServiceRoles.Admin,
-          ExportServiceRoles.ExportJob,
-          ...(definition?.assessorRoles || []),
-        ])
+        !isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ...(definition?.assessorRoles || [])]) &&
+        !isAllowedUser(user, tenantId, ExportServiceRoles.ExportJob, true)
       ) {
         throw new UnauthorizedUserError('find form submissions', user);
       }

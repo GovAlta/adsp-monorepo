@@ -66,6 +66,7 @@ export const ExportFailedDefinition: DomainEventDefinition = {
       resourceId: { type: 'string' },
       format: { type: 'string' },
       filename: { type: 'string' },
+      error: { type: 'string' },
       requestedBy: {
         type: 'object',
         properties: {
@@ -155,7 +156,8 @@ export const exportFailed = (
   jobId: string,
   resourceId: string,
   format: string,
-  filename: string
+  filename: string,
+  error: string,
 ): DomainEvent => ({
   name: ExportFailedDefinition.name,
   tenantId,
@@ -165,6 +167,7 @@ export const exportFailed = (
     resourceId,
     format,
     filename,
+    error,
     requestedBy: {
       id: requestedBy.id,
       name: requestedBy.name,

@@ -48,6 +48,11 @@ export function createExportJob({
       const resourceId = AdspId.parse(resourceIdValue);
       const resourceUrl = await directory.getResourceUrl(resourceId);
 
+      logger.debug(`Export job (ID: ${jobId}) resource URL resolved to: ${resourceUrl}`, {
+        context: 'ExportJob',
+        tenantId: tenantIdValue,
+      });
+
       const results = [];
       let after: string,
         page = 1;
@@ -79,7 +84,7 @@ export function createExportJob({
           results.push(...data.results);
 
           // Get the next cursor for paged results so we can get more pages.
-          after = data?.page?.next;
+          after = data.page.next;
         } else if (Array.isArray(data)) {
           results.push(...data);
         } else {
@@ -126,9 +131,11 @@ export function createExportJob({
     } catch (err) {
       // Handle the error by recording the failure; don't bother retrying in the work queue.
       await repository.update(jobId, 'failed');
-      eventService.send(exportFailed(tenantId, requestedBy, jobId, resourceIdValue, format, filename));
 
-      logger.warn(`Export job (ID: ${jobId}) for resource: ${resourceIdValue} failed with error: ${err}`, {
+      const error = axios.isAxiosError(err) ? err.response?.data?.errorMessage || err.message : err.toString();
+      eventService.send(exportFailed(tenantId, requestedBy, jobId, resourceIdValue, format, filename, error));
+
+      logger.warn(`Export job (ID: ${jobId}) for resource: ${resourceIdValue} failed with error: ${error}`, {
         context: 'ExportJob',
         tenantId: tenantIdValue,
       });
