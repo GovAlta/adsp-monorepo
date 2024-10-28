@@ -479,7 +479,7 @@ objects:
                   cpu: 20m
                   memory: 50Mi
               terminationMessagePath: /dev/termination-log
-              terminationMessagePolicy: event
+              terminationMessagePolicy: File
               readinessProbe:
                 httpGet:
                   path: /
