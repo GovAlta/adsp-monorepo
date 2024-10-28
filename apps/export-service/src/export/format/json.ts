@@ -1,8 +1,9 @@
-import { Transform, TransformCallback, TransformOptions } from 'stream';
+import { pipeline, Transform, TransformCallback, TransformOptions } from 'stream';
+import { ExportFormatter } from './types';
 
-export class JsonStringifyTransform extends Transform {
+class JsonStringifyTransform extends Transform {
   private firstChunk = true;
-  constructor(options?: TransformOptions) {
+  constructor(private pretty?: boolean, options?: TransformOptions) {
     super({ ...options, writableObjectMode: true });
 
     this.on('pipe', () => {
@@ -13,10 +14,10 @@ export class JsonStringifyTransform extends Transform {
 
   override _transform(chunk: unknown, _encoding: BufferEncoding, callback: TransformCallback): void {
     if (this.firstChunk) {
-      this.push(`  ${JSON.stringify(chunk)}`);
+      this.push(`  ${JSON.stringify(chunk, null, this.pretty ? 2 : undefined)}`);
       this.firstChunk = false;
     } else {
-      this.push(`,\n  ${JSON.stringify(chunk)}`);
+      this.push(`,\n  ${JSON.stringify(chunk, null, this.pretty ? 2 : undefined)}`);
     }
     callback();
   }
@@ -27,3 +28,13 @@ export class JsonStringifyTransform extends Transform {
     callback();
   }
 }
+
+interface JsonFormatterOptions {
+  pretty?: boolean;
+}
+
+export const json: ExportFormatter<JsonFormatterOptions> = {
+  extension: 'json',
+  applyTransform: (options, records, callback) =>
+    pipeline(records, new JsonStringifyTransform(options.pretty), callback),
+};

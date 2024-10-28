@@ -4,7 +4,7 @@ import { Logger } from 'winston';
 import { Request, Response } from 'express';
 import { ServiceRoles } from '../roles';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { ExportQueuedDefinition } from '../event';
+import { ExportQueuedDefinition } from '../events';
 import { EXPORT_FILE } from '../fileTypes';
 
 describe('export', () => {

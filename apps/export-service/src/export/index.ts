@@ -6,7 +6,7 @@ import { Logger } from 'winston';
 import { createExportRouter } from './router';
 import { createExportJobs, ExportServiceWorkItem } from './job';
 
-export * from './event';
+export * from './events';
 export * from './fileTypes';
 export { ExportServiceWorkItem } from './job';
 export * from './roles';

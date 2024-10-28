@@ -1,6 +1,6 @@
-import { Transform } from 'stream';
+import { Readable } from 'stream';
 
-export interface ExportFormatter {
+export interface ExportFormatter<T = Record<string, unknown>> {
   extension: string;
-  createTransform: () => Transform;
+  applyTransform: (options: T, records: Readable, cb: (err?: unknown) => void) => Readable;
 }

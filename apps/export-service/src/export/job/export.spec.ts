@@ -2,7 +2,7 @@ import { AdspId, adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
-import { ExportCompletedDefinition, ExportFailedDefinition } from '../event';
+import { ExportCompletedDefinition, ExportFailedDefinition } from '../events';
 import { createExportJob } from './export';
 
 jest.mock('axios');
@@ -78,8 +78,8 @@ describe('export', () => {
     axiosMock.get.mockResolvedValueOnce({
       data: {
         results: [
-          { id: 'test-1', name: 'Test 1' },
-          { id: 'test-2', name: 'Test 2' },
+          { id: 'test-1', name: 'Test 1', extra: { nested: true } },
+          { id: 'test-2', name: 'Test 2', other: { deep: { nested: 'value' } } },
         ],
         page: {},
       },
@@ -115,10 +115,13 @@ describe('export', () => {
       filename: 'exported',
       fileType: 'export',
       format: 'json',
+      formatOptions: {},
     };
     await job(item);
 
-    expect(exported).toBe('[\n  {"id":"test-1","name":"Test 1"},\n  {"id":"test-2","name":"Test 2"}\n]\n');
+    expect(exported).toBe(
+      '[\n  {"id":"test-1","name":"Test 1","extra":{"nested":true}},\n  {"id":"test-2","name":"Test 2","other":{"deep":{"nested":"value"}}}\n]\n'
+    );
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
@@ -146,8 +149,8 @@ describe('export', () => {
     axiosMock.get.mockResolvedValueOnce({
       data: {
         results: [
-          { id: 'test-1', name: 'Test 1' },
-          { id: 'test-2', name: 'Test 2' },
+          { id: 'test-1', name: 'Test 1', extra: { nested: true } },
+          { id: 'test-2', name: 'Test 2', other: { deep: { nested: 'value' } } },
         ],
         page: {},
       },
@@ -183,10 +186,11 @@ describe('export', () => {
       filename: 'exported',
       fileType: 'export',
       format: 'csv',
+      formatOptions: { columns: ['id', 'name', 'extra.nested', 'other.deep.nested'] },
     };
     await job(item);
 
-    expect(exported).toBe('id,name\ntest-1,Test 1\ntest-2,Test 2\n');
+    expect(exported).toBe('id,name,extra.nested,other.deep.nested\ntest-1,Test 1,1,\ntest-2,Test 2,,value\n');
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
@@ -251,6 +255,7 @@ describe('export', () => {
       filename: 'exported',
       fileType: 'export',
       format: 'json',
+      formatOptions: {},
     };
     await job(item);
 
@@ -291,6 +296,7 @@ describe('export', () => {
       filename: 'exported',
       fileType: 'export',
       format: 'json',
+      formatOptions: {},
     };
     await job(item);
 
@@ -356,6 +362,7 @@ describe('export', () => {
       filename: 'exported',
       fileType: 'export',
       format: 'json',
+      formatOptions: {},
     };
     await job(item);
 
@@ -421,6 +428,7 @@ describe('export', () => {
       filename: 'exported',
       fileType: 'export',
       format: 'json',
+      formatOptions: {},
     };
     await job(item);
 
@@ -483,6 +491,7 @@ describe('export', () => {
       filename: 'exported',
       fileType: 'export',
       format: 'json',
+      formatOptions: {},
     };
     await job(item);
 
