@@ -13,7 +13,6 @@ import { isObject } from 'lodash';
 const isFullNameDoBSchema = (obj: unknown): boolean => {
   if (isObject(obj)) {
     const keys = Object.keys(obj);
-    console.log(obj);
     return (
       ['firstName', 'middleName', 'lastName', 'dateOfBirth'].every((attr) => keys.includes(attr)) && keys.length === 4
     );
