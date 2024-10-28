@@ -1,35 +1,8 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
-import { JsonFormContext } from '../../Context';
-import { GoADate, GoADatePicker, GoAFormItem, GoAGrid, GoAInput, GoAInputDate } from '@abgov/react-components-new';
-import { NameInputs } from '../FullName/FullNameInputs';
-import { onChangeForDateControl, onKeyPressForDateControl, onBlurForDateControl } from '../../util/inputControlUtils';
-import { checkFieldValidity } from '../../util/stringUtils';
+import { GoADate, GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components-new';
 
 type DateOfBirthControlProps = ControlProps;
-
-export const FullNameDobReviewControl = (props: DateOfBirthControlProps): JSX.Element => {
-  return (
-    <>
-      <GoAGrid minChildWidth="0ch" gap="s">
-        <GoAFormItem label="First Name">
-          <div data-testid={`firstName-control-`}>{props.data?.firstName}</div>
-        </GoAFormItem>
-        <GoAFormItem label="Middle Name (optional)">
-          <div data-testid={`middleName-control-`}>{props.data?.middleName}</div>
-        </GoAFormItem>
-        <GoAFormItem label="Last Name">
-          <div data-testid={`lastName-control-`}>{props.data?.lastName}</div>
-        </GoAFormItem>
-      </GoAGrid>
-      <GoAGrid minChildWidth="0ch" gap="s">
-        <GoAFormItem label="Date of birth">
-          <div data-testid={`dob-control-`}>{props.data?.dateOfBirth}</div>
-        </GoAFormItem>
-      </GoAGrid>
-    </>
-  );
-};
 
 export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element => {
   const { data, path, schema, handleChange, uischema } = props;
@@ -40,7 +13,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     firstName: '',
     middleName: '',
     lastName: '',
-    dateOfBirth: new Date(),
+    dateOfBirth: undefined,
   };
 
   const validDates = () => {
@@ -74,7 +47,8 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
   const handleRequiredFieldBlur = (name: string) => {
     if ((!data?.[name] || data?.[name] === '') && requiredFields.includes(name)) {
       const err = { ...errors };
-      err[name] = `${name} is required`;
+      const modifiedName = name === 'firstName' ? 'First Name' : 'Last Name';
+      err[name] = `${modifiedName} is required`;
       setErrors(err);
     } else {
       delete errors[name];
@@ -101,7 +75,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           />
         </GoAFormItem>
         <GoAFormItem
-          label="Middle Name (optional)"
+          label="Middle Name"
           requirement={schema?.required?.includes('middleName') ? 'required' : undefined}
         >
           <GoAInput
@@ -132,7 +106,11 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
         </GoAFormItem>
       </GoAGrid>
       <GoAGrid minChildWidth="0ch" gap="s">
-        <GoAFormItem label="Date of Birth" error={errors?.['dateOfBirth'] ?? ''}>
+        <GoAFormItem
+          label="Date of Birth"
+          error={errors?.['dateOfBirth'] ?? ''}
+          requirement={requiredFields?.includes('dateOfBirth') ? 'required' : undefined}
+        >
           <GoAInput
             type="date"
             name="dateOfBirth"

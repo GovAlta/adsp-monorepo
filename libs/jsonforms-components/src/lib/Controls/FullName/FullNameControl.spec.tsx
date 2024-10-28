@@ -34,7 +34,6 @@ describe('FullNameControl', () => {
 
   it('renders the FullNameControl component with the correct initial values', async () => {
     const component = render(<FullNameControl {...defaultProps} />);
-
     const firstNameInput = component.getByTestId('name-form-first-name');
     const middleNameInput = component.getByTestId('name-form-middle-name');
 

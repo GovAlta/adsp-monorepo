@@ -1,8 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { FullNameDobControl } from './FullNameDobControl';
-import { ControlElement } from '@jsonforms/core';
+import { FullNameDobReviewControl } from './FullNameDobReview-Control';
+import { ControlElement, ControlProps } from '@jsonforms/core';
 import { isFullNameDoB } from './FullNameDobTester';
+import { FullNameDobControl } from './FullNameDobControl';
 
 describe('FullNameDobControl', () => {
   const mockHandleChange = jest.fn(() => Promise.resolve());
@@ -314,4 +315,81 @@ describe('FullNameDobControl', () => {
       {}
     )
   ).toBe(true);
+});
+
+describe('FullName Dob ReviewControl', () => {
+  const defaultReviewProps: ControlProps = {
+    data: {
+      firstName: 'John',
+      middleName: 'A.',
+      lastName: 'Doe',
+      dateOfBirth: '2024-10-10',
+    },
+    id: 'full-name-dob-review',
+    label: '',
+    uischema: {
+      type: 'Control',
+      scope: '',
+    },
+    errors: '',
+    rootSchema: {},
+    schema: {},
+    enabled: false,
+    visible: false,
+    path: '',
+    handleChange: function (path: string, value: string): void {
+      throw new Error('Function not implemented.');
+    },
+  };
+
+  it('renders the FullNameDobReviewControl component with correct data', async () => {
+    render(<FullNameDobReviewControl {...defaultReviewProps} />);
+
+    const firstNameReview = screen.getByTestId('firstName-control-full-name-dob-review');
+    const middleNameReview = screen.getByTestId('middleName-control-full-name-dob-review');
+    const lastNameReview = screen.getByTestId('lastName-control-full-name-dob-review');
+    const dobReview = screen.getByTestId('dob-control-full-name-dob-review');
+    await (async () => {
+      expect(firstNameReview).toHaveTextContent('John');
+      expect(middleNameReview).toHaveTextContent('A.');
+      expect(lastNameReview).toHaveTextContent('Doe');
+      expect(dobReview).toHaveTextContent('2024-10-10');
+    });
+  });
+
+  it('renders empty values when no data is provided', async () => {
+    const defaultProps: ControlProps = {
+      data: {
+        firstName: '',
+        middleName: '',
+        lastName: '',
+        dateOfBirth: null,
+      },
+      path: 'path-to-data',
+      schema: { required: ['firstName', 'lastName'] },
+      handleChange: () => {},
+      label: '',
+      uischema: {
+        type: 'Control',
+        scope: '',
+      },
+      errors: '',
+      rootSchema: {},
+      id: 'full-name-dob-review-empty',
+      enabled: false,
+      visible: false,
+    };
+    render(<FullNameDobReviewControl {...defaultProps} />);
+
+    const firstNameReview = screen.getByTestId('firstName-control-full-name-dob-review-empty');
+    const middleNameReview = screen.getByTestId('middleName-control-full-name-dob-review-empty');
+    const lastNameReview = screen.getByTestId('lastName-control-full-name-dob-review-empty');
+    const dobReview = screen.getByTestId('dob-control-full-name-dob-review-empty');
+    await (async () => {
+      expect(firstNameReview).toHaveValue('');
+      expect(middleNameReview).toHaveValue('');
+      expect(lastNameReview).toHaveValue('');
+      expect(dobReview).toHaveValue('');
+    });
+  });
 });

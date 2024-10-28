@@ -13,7 +13,10 @@ interface NameInputsProps {
   isStepperReview?: boolean;
   data: Data;
   requiredFields: string[];
+  // eslint-disable-next-line
+  errors: any;
   handleInputChange: (field: string, value: string) => void;
+  handleRequiredFieldBlur: (field: string) => void;
 }
 
 export const NameInputs: React.FC<NameInputsProps> = ({
@@ -21,23 +24,15 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   middleName,
   lastName,
   handleInputChange,
+  handleRequiredFieldBlur,
   data,
   requiredFields,
+  errors,
 }: NameInputsProps): JSX.Element => {
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const handleRequiredFieldBlur = (name: string) => {
-    if (!data && (!data?.[name] || data?.[name] === '') && requiredFields.includes(name)) {
-      const err = { ...errors };
-      err[name] = `${name} is required`;
-      setErrors(err);
-    } else {
-      delete errors[name];
-    }
-  };
-
   return (
     <GoAGrid minChildWidth="0ch" gap="s">
       <GoAFormItem
+        testId="formitem-first-name"
         label="First Name"
         requirement={requiredFields?.includes('firstName') ? 'required' : undefined}
         error={errors?.['firstName'] ?? ''}
@@ -54,7 +49,8 @@ export const NameInputs: React.FC<NameInputsProps> = ({
         />
       </GoAFormItem>
       <GoAFormItem
-        label="Middle Name (optional)"
+        testId="formitem-middle-name"
+        label="Middle Name"
         requirement={requiredFields?.includes('middleName') ? 'required' : undefined}
       >
         <GoAInput
@@ -68,6 +64,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
         />
       </GoAFormItem>
       <GoAFormItem
+        testId="formitem-last-name"
         label="Last Name"
         requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
         error={errors?.['lastName'] ?? ''}
