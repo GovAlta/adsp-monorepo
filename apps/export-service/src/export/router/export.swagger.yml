@@ -37,6 +37,9 @@ components:
           type: string
           description: URN of the resource to export.
           example: urn:ads:platform:task-service:v1:/tasks
+        params:
+          type: object
+          description: Query parameters for the API request of results to export.
         fileType:
           type: string
           description: The **File Server** collection to which the output export file will be assigned.
