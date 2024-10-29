@@ -79,9 +79,9 @@ export function createExportJob({
           return data;
         });
 
-        const results = _.get(data, resultsPath);
-        if (Array.isArray(results)) {
-          results.push(...results);
+        const pageResults = _.get(data, resultsPath);
+        if (Array.isArray(pageResults)) {
+          results.push(...pageResults);
         } else if (Array.isArray(data)) {
           results.push(...data);
         } else {
