@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
@@ -50,6 +50,9 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setAddress(updatedAddress);
     handleChange(path, updatedAddress);
   };
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+
+  const dropdownRef = useRef<HTMLUListElement>(null);
 
   const handleInputChange = (field: string, value: string) => {
     let newAddress;
@@ -84,6 +87,8 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
         setOpen(true);
         const response = await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress);
         const suggestions = filterSuggestionsWithoutAddressCount(response);
+        console.log("suggestions",suggestions);
+
         if (isAlbertaAddress) {
           setSuggestions(filterAlbertaAddresses(suggestions));
         } else {
@@ -106,27 +111,111 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
     const suggestAddress = mapSuggestionToAddress(suggestion);
+    console.log("suggestAddress",suggestAddress);
     setAddress(suggestAddress);
     handleChange(path, suggestAddress);
     setSuggestions([]);
     setErrors({});
   };
+
   const handleRequiredFieldBlur = (name: string) => {
     const requiredFields = (schema as { required: string[] }).required;
-    if (!data?.[name] || data[name] === '' || requiredFields.includes(name)) {
-      const err = { ...errors };
-      err[name] = name === 'municipality' ? `city is required` : `${name} is required`;
+    // console.log("data 1",data?.[name]);
+    // console.log("data 2",requiredFields?.includes(name));
+    console.log("requiredFields",requiredFields);
+    console.log("data?.[name]",data?.[name]);
+    console.log("name",name);
+    console.log("first condition", !data?.[name]);
+    console.log("second condition", data?.[name] === '');
+
+
+    let err = { ...errors };
+    if(data?.["city"] === undefined || data?.["city"] === ""){
+       err[name] = name === 'municipality' ? `city is required 1` : ""
+       setErrors(err);
+    }
+
+    if(!data?.[name] || data[name] === '' || data?.[name] === undefined){
+      // err[name] = name === 'municipality' ? `city is required` : `${name} is required`;
+      err[name] =  name === 'municipality' ? `city is required 2` : `${name} is required`;
       setErrors(err);
-    } else {
+    }
+
+    if(!data?.[name]){
+      err[name] =  name === 'addressLine1' ? `${name} is required` : ``;
+      setErrors(err);
+    }
+
+    else{
       delete errors[name];
     }
+
+
+
+
+
+    // if (!data?.[name] || data?.[name] === '' || requiredFields.includes(name)) {
+    //   const err = { ...errors };
+    //   err[name] = name === 'municipality' ? `city is required` : `${name} is required`;
+    //   setErrors(err);
+    // } else {
+    //   delete errors[name];
+    // }
   };
+
+
+  useEffect(() => {
+    if (dropdownRef.current) {
+        const selectedItem = dropdownRef.current.children[selectedIndex];
+        if (selectedItem) {
+          selectedItem.scrollIntoView({
+            block: 'nearest',
+            behavior: 'smooth',
+          });
+        }
+      }
+    }, [selectedIndex, open]);
+
+const handleKeyDown = (e:any) => {
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex((prevIndex) =>
+            prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0
+        );
+        handleDropdownChange(e.target.value)
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex((prevIndex) =>
+            prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1
+        );
+        handleDropdownChange(e.target.value)
+    } else if (e.key === 'Enter') {
+      handleDropdownChange(e.target.value)
+      setLoading(false);
+      if (selectedIndex >= 0) {
+        document.getElementById("goaInput")?.blur()
+        let suggestion = suggestions[selectedIndex];
+        if(suggestion){
+          setTimeout(() => {
+              handleSuggestionClick(suggestion);
+              setOpen(false);
+            }, 100);
+          }
+        }
+    }
+};
+
   return (
     <div>
       {renderHelp()}
       <GoAFormItem label={label} error={errors?.['addressLine1'] ?? ''} data-testId="form-address-line1">
-        <SearchBox>
+        <SearchBox onKeyDown={(e)=>{
+            if(open){
+              handleKeyDown(e)
+            }
+          }}>
           <GoAInput
+            id="goaInput"
             leadingIcon={autocompletion ? 'search' : undefined}
             name="addressLine1"
             testId="address-form-address1"
@@ -144,13 +233,24 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
           {loading && autocompletion && <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress> }
 
           {suggestions && autocompletion && (
-            <ul className="suggestions" tabIndex={0}>
+            <ul ref={dropdownRef} className="suggestions" tabIndex={0}>
               {suggestions &&
                 autocompletion &&
                 open &&
                 suggestions.map((suggestion, index) => (
-                  <li key={index} onClick={() => handleSuggestionClick(suggestion)}>
-                    {`${suggestion.Text}  ${suggestion.Description}`}
+                  <li
+                  data-index={index}
+                  key={index}
+                  onClick={() => {
+                      handleSuggestionClick(suggestion)
+                    }}
+                  style={{
+                    backgroundColor: selectedIndex === index ? 'var(--color-primary)' : '',
+                    color: selectedIndex === index ? ' var(--color-white)' : '',
+                    fontWeight :  selectedIndex === index ? 'var(--fw-bold)' : '',
+                  }}
+                  >
+                  {`${suggestion.Text}  ${suggestion.Description}`}
                   </li>
                 ))}
             </ul>
