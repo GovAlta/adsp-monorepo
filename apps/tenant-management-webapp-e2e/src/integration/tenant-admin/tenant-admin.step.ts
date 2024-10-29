@@ -858,42 +858,6 @@ Then(
   }
 );
 
-// Only one event details is open before calling this step
-Then(
-  'the user views the event details with status changing from {string} to {string}',
-  function (oldStatus: string, newStatus: string) {
-    tenantAdminObj.eventDetails().then((elements) => {
-      expect(elements.length).to.equal(1);
-    });
-    tenantAdminObj
-      .eventDetails()
-      .invoke('text')
-      .then((eventDetails) => {
-        expect(eventDetails).to.contain('"originalStatus": ' + '"' + oldStatus.toLowerCase() + '"');
-        expect(eventDetails).to.contain('"newStatus": ' + '"' + newStatus.toLowerCase() + '"');
-      });
-  }
-);
-
-Then(
-  'the user views the event details of {string}, {string}, {string}, {string}, {string}',
-  function (serviceName, apiVersion, url, namespace, username) {
-    tenantAdminObj.eventDetails().then((elements) => {
-      expect(elements.length).to.equal(1);
-    });
-    tenantAdminObj
-      .eventDetails()
-      .invoke('text')
-      .then((eventDetails) => {
-        expect(eventDetails).to.contain('"URL": ' + '"' + url + '"');
-        expect(eventDetails).to.contain('"api": ' + '"' + apiVersion + '"');
-        expect(eventDetails).to.contain('"service": ' + '"' + serviceName + '"');
-        expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
-        expect(eventDetails).to.contain('"name": ' + '"' + username + '"');
-      });
-  }
-);
-
 Then(
   'the user views {string}, {string}, {string} under {string}',
   function (roleName, roleDesc, isInAdminRole, serviceName: string) {
@@ -1002,20 +966,3 @@ Then('the user can access the log in page with the corresponding tenant id showi
 Then('the user is redirected to the tenant management landing page', function () {
   welcomPageObj.welcomePageTitle().should('contain.text', 'The Alberta Digital Service Platform (ADSP)');
 });
-
-Then(
-  'the user views the event details for the configuration-updated event to have {string} as the securityClassification value',
-  function (securityClassification: string) {
-    tenantAdminObj.eventDetails().then((elements) => {
-      expect(elements.length).to.equal(1);
-    });
-    tenantAdminObj
-      .eventDetails()
-      .invoke('text')
-      .then((eventDetails) => {
-        expect(eventDetails).to.contain(
-          '"securityClassification": ' + '"' + securityClassification.toLowerCase() + '"'
-        );
-      });
-  }
-);

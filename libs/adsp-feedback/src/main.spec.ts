@@ -1,11 +1,8 @@
 import { AdspFeedback } from './main';
-
 describe('AdspFeedback selectRating', () => {
   let adspFeedback: AdspFeedback;
-
   beforeEach(() => {
     adspFeedback = new AdspFeedback();
-
     document.body.innerHTML = `
       <div>
         <div class="rating" data-index="0"><img class="rating" src="defaultImage1" /></div>
@@ -26,7 +23,6 @@ describe('AdspFeedback selectRating', () => {
         <button class="adsp-fb-form-primary" disabled></button>
       </div>
     `;
-
     adspFeedback['ratings'] = [
       {
         svgClick: 'clickedImage1',
@@ -78,7 +74,6 @@ describe('AdspFeedback selectRating', () => {
     if (adspFeedback['commentSelector'].value) {
       adspFeedback['commentSelector'].value.checked = true;
     }
-
     adspFeedback['sendButtonRef'] = { value: document.createElement('button') };
     adspFeedback['feedbackFormRef'] = { value: document.createElement('div') };
     Object.defineProperty(window, 'matchMedia', {
@@ -95,28 +90,22 @@ describe('AdspFeedback selectRating', () => {
       })),
     });
   });
-
   it('should select the correct rating and update the image source', () => {
     const ratingIndex = 2;
     const previousRating = adspFeedback['selectedRating'];
     adspFeedback['selectRating'](ratingIndex);
-
     // Verify the new image source is updated
     const images = document.querySelectorAll('.rating') as NodeListOf<HTMLImageElement>;
     expect(images[ratingIndex].src).toContain('clickedImage3');
-
     if (previousRating !== -1) {
       const previousImage = images[previousRating] as HTMLImageElement;
       expect(previousImage.src).toContain(adspFeedback['ratings'][previousRating].svgDefault);
     }
-
     // Verify selected rating is updated
     expect(adspFeedback['selectedRating']).toBe(ratingIndex);
-
     // Verify the text color is updated (Convert RGB to HEX)
     const texts = document.querySelectorAll('.ratingText') as NodeListOf<HTMLImageElement>;
     const text = texts[ratingIndex] as HTMLImageElement;
-
     const rgbToHex = (rgb: string) => {
       const rgbValues = rgb.match(/\d+/g)?.map(Number);
       if (!rgbValues) return rgb;
@@ -129,21 +118,17 @@ describe('AdspFeedback selectRating', () => {
       expect(rgbToHex(text.style.color)).toBe('#0081A2');
     }
   });
-
   it('should enable send button when commentSelector is checked', () => {
     const ratingIndex = 1;
     adspFeedback['commentSelector'].value.checked = true;
     adspFeedback['selectRating'](ratingIndex);
-
     // Verify the send button is enabled
     expect(adspFeedback['sendButtonRef'].value?.disabled).toBe(false);
   });
-
   it('should disable send button if commentSelector is unchecked', () => {
     adspFeedback['commentSelector'].value.checked = false;
     const ratingIndex = 3;
     adspFeedback['selectRating'](ratingIndex);
-
     // Check that the send button should remain disabled
     adspFeedback['sendButtonRef'].value.setAttribute('disabled', 'disabled');
     expect(adspFeedback['sendButtonRef'].value?.disabled).toBe(true);

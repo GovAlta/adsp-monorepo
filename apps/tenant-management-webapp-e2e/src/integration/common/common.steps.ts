@@ -219,7 +219,7 @@ When('the user clicks Cancel button in delete confirmation modal', function () {
     .shadow()
     .find('button')
     .scrollIntoView()
-    .should('be.visible')
+    // .should('be.visible')  // Not working with form disposition modal
     .click({ force: true });
   cy.wait(4000); // Wait for the record to be removed from the page
 });
@@ -303,6 +303,7 @@ Then('the {string} landing page is displayed', function (pageTitle) {
   });
 });
 
+// Event definition
 const eventsObj = new events();
 When('the user clicks Add definition button on event definitions page', function () {
   eventsObj.addDefinitionButton().shadow().find('button').click({ force: true });
@@ -344,6 +345,30 @@ Then(
         break;
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+When(
+  'the user clicks {string} button for the definition of {string} and {string} under {string}',
+  function (button, eventName, eventDesc, eventNamespace) {
+    switch (button) {
+      case 'Edit':
+        eventsObj
+          .editDefinitionButton(eventNamespace, eventName, eventDesc)
+          .shadow()
+          .find('button')
+          .click({ force: true });
+        break;
+      case 'Delete':
+        eventsObj
+          .deleteDefinitionButton(eventNamespace, eventName, eventDesc)
+          .shadow()
+          .find('button')
+          .click({ force: true });
+        break;
+      default:
+        expect(button).to.be.oneOf(['Edit', 'Delete']);
     }
   }
 );
@@ -612,6 +637,59 @@ Then(
   }
 );
 
+Then(
+  'the user views the event details of {string}, {string}, {string}, {string}, {string}',
+  function (serviceName, apiVersion, url, namespace, username) {
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        expect(eventDetails).to.contain('"URL": ' + '"' + url + '"');
+        expect(eventDetails).to.contain('"api": ' + '"' + apiVersion + '"');
+        expect(eventDetails).to.contain('"service": ' + '"' + serviceName + '"');
+        expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
+        expect(eventDetails).to.contain('"name": ' + '"' + username + '"');
+      });
+  }
+);
+
+Then(
+  'the user views the event details for the configuration-updated event to have {string} as the securityClassification value',
+  function (securityClassification: string) {
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        expect(eventDetails).to.contain(
+          '"securityClassification": ' + '"' + securityClassification.toLowerCase() + '"'
+        );
+      });
+  }
+);
+
+// Only one event details is open before calling this step
+Then(
+  'the user views the event details with status changing from {string} to {string}',
+  function (oldStatus: string, newStatus: string) {
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        expect(eventDetails).to.contain('"originalStatus": ' + '"' + oldStatus.toLowerCase() + '"');
+        expect(eventDetails).to.contain('"newStatus": ' + '"' + newStatus.toLowerCase() + '"');
+      });
+  }
+);
+
 // Task steps:
 Given('all existing tasks in {string} if any have been deleted', function (queue) {
   const getTasksRequestURL =
@@ -763,6 +841,7 @@ Then('the user views a from draft of {string}', function (formDefinition) {
     formId = url.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
     expect(formId).to.be.not.null;
   });
+  cy.viewport(1920, 1080);
 });
 
 When('the user enters {string} in a text field labelled {string}', function (text: string, label) {

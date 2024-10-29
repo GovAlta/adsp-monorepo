@@ -65,7 +65,7 @@ Feature: Feedback
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "https://abctest.com", "No" on Sites page
 
-  @TEST_CS-3196 @REQ_CS-3031 @REQ_CS-3369 @regression @ignore
+  @TEST_CS-3196 @REQ_CS-3031 @REQ_CS-3369 @regression
   Scenario: As a site visitor, I can access and complete a feedback form, so that I can share my feedback
     Given a tenant admin user is on tenant admin page
     When the user clicks the Feedback badge
