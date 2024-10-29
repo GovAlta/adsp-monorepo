@@ -709,4 +709,59 @@ describe('Form Stepper Control', () => {
     expect(result).toHaveLength(1);
     expect(result[0].label).toBe('first');
   });
+
+  it('should return undefined for non-existent property', () => {
+    const obj = { name: 'John' };
+    const result = getProperty(obj, 'nonExistentProp');
+    expect(result).toBeUndefined();
+  });
+
+  it('opens modal if submit function is not provided in context', () => {
+    const onSubmit = jest.fn();
+    const form = getForm({
+      name: { firstName: 'Bob', lastName: 'Bing' },
+      address: { street: 'Sesame', city: 'Seattle' },
+    });
+    const renderer = render(<ContextProvider submit={{ submitForm: onSubmit }}>{form}</ContextProvider>);
+    window.HTMLElement.prototype.scrollIntoView = function () {};
+    // Move to review Page
+    const next = renderer.getByTestId('next-button');
+    const nextShadow = next.shadowRoot?.querySelector('button');
+    expect(nextShadow).not.toBeNull();
+    fireEvent.click(nextShadow!);
+    fireEvent.click(nextShadow!);
+
+    const submitBtn = renderer.getByTestId('stepper-submit-btn');
+    fireEvent.click(submitBtn);
+    const modal = renderer.getByTestId('submit-confirmation');
+    expect(modal).toHaveAttribute('open', 'false');
+  });
+
+  it('marks form as invalid if required fields are missing', () => {
+    const onSubmit = jest.fn();
+    const form = getForm({
+      name: { firstName: '', lastName: '' },
+      address: { street: '', city: '' },
+    });
+    const renderer = render(<ContextProvider submit={{ submitForm: onSubmit }}>{form}</ContextProvider>);
+    window.HTMLElement.prototype.scrollIntoView = function () {};
+    // Move to review Page
+    const next = renderer.getByTestId('next-button');
+    const nextShadow = next.shadowRoot?.querySelector('button');
+    expect(nextShadow).not.toBeNull();
+    fireEvent.click(nextShadow!);
+    fireEvent.click(nextShadow!);
+
+    const submitBtn = renderer.getByTestId('stepper-submit-btn');
+    expect(submitBtn).toBeDisabled();
+  });
+
+  it('navigates to the specified tab when setTab is called', () => {
+    const renderer = render(getForm(formData));
+    const nextButton = renderer.getByTestId('next-button');
+    fireEvent.click(nextButton);
+
+    const stepper = renderer.getByTestId('stepper-test');
+    expect(stepper).toHaveAttribute('step', '1');
+  });
 });
