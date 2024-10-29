@@ -1,13 +1,14 @@
 import { AdspId, EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { JobRepository, FileResult, FileService } from '@core-services/job-common';
 import axios from 'axios';
+import * as _ from 'lodash';
 import * as path from 'path';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
 import { exported, exportFailed } from '../events';
 import { getFormatter } from '../format';
 import { ExportServiceWorkItem } from './types';
-import { isPagedResults, retry } from './util';
+import { isPaged, retry } from './util';
 
 const MAX_PAGES = 5000;
 
@@ -33,6 +34,7 @@ export function createExportJob({
     jobId,
     resourceId: resourceIdValue,
     params,
+    resultsPath,
     fileType,
     filename,
     format,
@@ -64,32 +66,33 @@ export function createExportJob({
           });
 
           const token = await tokenProvider.getAccessToken();
-          const { data } = await axios.get<{ results: unknown[]; page: { size: number; next: string } } | unknown[]>(
-            resourceUrl.href,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-              params: {
-                ...params,
-                tenantId,
-                top: 1000,
-                after,
-              },
-            }
-          );
+          const { data } = await axios.get<unknown>(resourceUrl.href, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              ...params,
+              tenantId,
+              top: 1000,
+              after,
+            },
+          });
 
           return data;
         });
 
-        if (isPagedResults(data)) {
-          results.push(...data.results);
-
-          // Get the next cursor for paged results so we can get more pages.
-          after = data.page.next;
+        const results = _.get(data, resultsPath);
+        if (Array.isArray(results)) {
+          results.push(...results);
         } else if (Array.isArray(data)) {
           results.push(...data);
         } else {
           results.push(data);
         }
+
+        if (isPaged(data)) {
+          // Get the next cursor for paged results so we can get more pages.
+          after = data.page.next;
+        }
+
         page += 1;
       } while (after || page > MAX_PAGES);
 

@@ -14,10 +14,10 @@ class JsonStringifyTransform extends Transform {
 
   override _transform(chunk: unknown, _encoding: BufferEncoding, callback: TransformCallback): void {
     if (this.firstChunk) {
-      this.push(`  ${JSON.stringify(chunk, null, this.pretty ? 2 : undefined)}`);
+      this.push(`${JSON.stringify(chunk, null, this.pretty ? 2 : undefined)}`);
       this.firstChunk = false;
     } else {
-      this.push(`,\n  ${JSON.stringify(chunk, null, this.pretty ? 2 : undefined)}`);
+      this.push(`,\n${JSON.stringify(chunk, null, this.pretty ? 2 : undefined)}`);
     }
     callback();
   }

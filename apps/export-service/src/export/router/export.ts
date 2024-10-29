@@ -26,7 +26,7 @@ export function createExportJob(
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
-      const { fileType, filename, format, formatOptions, resourceId: resourceIdValue, params } = req.body;
+      const { fileType, filename, format, formatOptions, resourceId: resourceIdValue, params, resultsPath } = req.body;
       const resourceId = AdspId.parse(resourceIdValue);
 
       if (!isAllowedUser(user, tenantId, ServiceRoles.Exporter, true)) {
@@ -47,6 +47,7 @@ export function createExportJob(
         tenantId: `${tenantId}`,
         resourceId: resourceIdValue,
         params,
+        resultsPath: resultsPath || 'results',
         format,
         formatOptions: formatOptions || {},
         fileType: fileType || EXPORT_FILE,
@@ -119,6 +120,7 @@ export function createExportRouter({
       body('formatOptions').optional().isObject(),
       body('resourceId').custom((input) => AdspId.isAdspId(input)),
       body('params').optional().isObject(),
+      body('resultsPath').optional().isString().isLength({ min: 1, max: 150 }),
       body('filename').optional({ nullable: true }).isString().isLength({ min: 1, max: 100 }),
       body('fileType').optional({ nullable: true }).isString().isLength({ min: 1, max: 50 })
     ),
