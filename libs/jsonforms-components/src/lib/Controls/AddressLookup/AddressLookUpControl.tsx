@@ -87,8 +87,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
         setOpen(true);
         const response = await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress);
         const suggestions = filterSuggestionsWithoutAddressCount(response);
-        console.log("suggestions",suggestions);
-
         if (isAlbertaAddress) {
           setSuggestions(filterAlbertaAddresses(suggestions));
         } else {
@@ -111,7 +109,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
     const suggestAddress = mapSuggestionToAddress(suggestion);
-    console.log("suggestAddress",suggestAddress);
     setAddress(suggestAddress);
     handleChange(path, suggestAddress);
     setSuggestions([]);
@@ -119,16 +116,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   const handleRequiredFieldBlur = (name: string) => {
-    const requiredFields = (schema as { required: string[] }).required;
-    // console.log("data 1",data?.[name]);
-    // console.log("data 2",requiredFields?.includes(name));
-    console.log("requiredFields",requiredFields);
-    console.log("data?.[name]",data?.[name]);
-    console.log("name",name);
-    console.log("first condition", !data?.[name]);
-    console.log("second condition", data?.[name] === '');
-
-
     let err = { ...errors };
     if(data?.["city"] === undefined || data?.["city"] === ""){
        err[name] = name === 'municipality' ? `city is required 1` : ""
@@ -136,7 +123,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     }
 
     if(!data?.[name] || data[name] === '' || data?.[name] === undefined){
-      // err[name] = name === 'municipality' ? `city is required` : `${name} is required`;
       err[name] =  name === 'municipality' ? `city is required 2` : `${name} is required`;
       setErrors(err);
     }
@@ -150,17 +136,10 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       delete errors[name];
     }
 
-
-
-
-
-    // if (!data?.[name] || data?.[name] === '' || requiredFields.includes(name)) {
-    //   const err = { ...errors };
-    //   err[name] = name === 'municipality' ? `city is required` : `${name} is required`;
-    //   setErrors(err);
-    // } else {
-    //   delete errors[name];
-    // }
+    setTimeout(() => {
+      setSuggestions([])
+      setOpen(false)
+    }, 100);
   };
 
 
@@ -209,11 +188,14 @@ const handleKeyDown = (e:any) => {
     <div>
       {renderHelp()}
       <GoAFormItem label={label} error={errors?.['addressLine1'] ?? ''} data-testId="form-address-line1">
-        <SearchBox onKeyDown={(e)=>{
-            if(open){
-              handleKeyDown(e)
+        <SearchBox
+            onKeyDown={(e) => {
+              if(open){
+                handleKeyDown(e)
+              }
             }
-          }}>
+          }
+        >
           <GoAInput
             id="goaInput"
             leadingIcon={autocompletion ? 'search' : undefined}
@@ -225,11 +207,9 @@ const handleKeyDown = (e:any) => {
             onChange={(name, value) => handleDropdownChange(value)}
             onBlur={(name, value) => {
               handleRequiredFieldBlur(name)
-              setOpen(false)
             }}
             width="100%"
           />
-          {/* {loading && autocompletion && <GoASkeleton type="text" data-testId="loading" key={1} />} */}
           {loading && autocompletion && <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress> }
 
           {suggestions && autocompletion && (
@@ -242,8 +222,8 @@ const handleKeyDown = (e:any) => {
                   data-index={index}
                   key={index}
                   onClick={() => {
-                      handleSuggestionClick(suggestion)
-                    }}
+                    handleSuggestionClick(suggestion)
+                  }}
                   style={{
                     backgroundColor: selectedIndex === index ? 'var(--color-primary)' : '',
                     color: selectedIndex === index ? ' var(--color-white)' : '',
