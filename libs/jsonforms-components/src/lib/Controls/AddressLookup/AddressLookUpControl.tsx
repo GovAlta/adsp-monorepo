@@ -3,7 +3,7 @@ import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
 
-import { GoAFormItem, GoAInput, GoASkeleton } from '@abgov/react-components-new';
+import { GoACircularProgress, GoAFormItem, GoAInput, GoASkeleton } from '@abgov/react-components-new';
 import { Address, Suggestion } from './types';
 
 import {
@@ -134,10 +134,15 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
             placeholder="Start typing the first line of your address"
             value={address?.addressLine1 || ''}
             onChange={(name, value) => handleDropdownChange(value)}
-            onBlur={(name, value) => handleRequiredFieldBlur(name)}
+            onBlur={(name, value) => {
+              handleRequiredFieldBlur(name)
+              setOpen(false)
+            }}
             width="100%"
           />
-          {loading && autocompletion && <GoASkeleton type="text" data-testId="loading" key={1} />}
+          {/* {loading && autocompletion && <GoASkeleton type="text" data-testId="loading" key={1} />} */}
+          {loading && autocompletion && <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress> }
+
           {suggestions && autocompletion && (
             <ul className="suggestions" tabIndex={0}>
               {suggestions &&
