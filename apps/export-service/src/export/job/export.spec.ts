@@ -127,7 +127,7 @@ describe('export', () => {
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
@@ -199,7 +199,7 @@ describe('export', () => {
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
@@ -269,7 +269,7 @@ describe('export', () => {
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.csv',
       expect.any(Readable)
     );
@@ -339,7 +339,7 @@ describe('export', () => {
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
@@ -535,7 +535,7 @@ describe('export', () => {
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
@@ -602,7 +602,7 @@ describe('export', () => {
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
@@ -666,7 +666,7 @@ describe('export', () => {
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
