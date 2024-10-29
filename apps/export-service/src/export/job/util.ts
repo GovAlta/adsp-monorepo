@@ -1,10 +1,9 @@
 import { Results } from '@core-services/core-common';
 import { ExponentialBackoff, handleAll, retry as retryBuilder } from 'cockatiel';
 
-export function isPagedResults(data: unknown): data is Results<unknown> {
+export function isPaged(data: unknown): data is Pick<Results<unknown>, 'page'> {
   return (
     typeof data === 'object' &&
-    Array.isArray((data as Results<unknown>)?.results) &&
     typeof (data as Results<unknown>)?.page === 'object'
   );
 }

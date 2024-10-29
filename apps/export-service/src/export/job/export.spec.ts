@@ -113,6 +113,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -121,7 +122,7 @@ describe('export', () => {
     await job(item);
 
     expect(exported).toBe(
-      '[\n  {"id":"test-1","name":"Test 1","extra":{"nested":true}},\n  {"id":"test-2","name":"Test 2","other":{"deep":{"nested":"value"}}}\n]\n'
+      '[\n{"id":"test-1","name":"Test 1","extra":{"nested":true}},\n{"id":"test-2","name":"Test 2","other":{"deep":{"nested":"value"}}}\n]\n'
     );
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
@@ -184,6 +185,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -192,7 +194,7 @@ describe('export', () => {
     await job(item);
 
     expect(exported).toContain(
-      '[\n  {\n  "id": "test-1",\n  "name": "Test 1",\n  "extra": {\n    "nested": true\n  }\n},'
+      '[\n{\n  "id": "test-1",\n  "name": "Test 1",\n  "extra": {\n    "nested": true\n  }\n},'
     );
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
@@ -255,6 +257,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'csv',
@@ -324,6 +327,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -331,7 +335,7 @@ describe('export', () => {
     };
     await job(item);
 
-    expect(exported).toBe('[\n  {"id":"test-1","name":"Test 1"},\n  {"id":"test-2","name":"Test 2"}\n]\n');
+    expect(exported).toBe('[\n{"id":"test-1","name":"Test 1"},\n{"id":"test-2","name":"Test 2"}\n]\n');
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
@@ -364,6 +368,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -405,6 +410,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -445,6 +451,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -516,6 +523,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -523,7 +531,7 @@ describe('export', () => {
     };
     await job(item);
 
-    expect(exported).toBe('[\n  {"id":"test-1","name":"Test 1"},\n  {"id":"test-2","name":"Test 2"}\n]\n');
+    expect(exported).toBe('[\n{"id":"test-1","name":"Test 1"},\n{"id":"test-2","name":"Test 2"}\n]\n');
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
@@ -582,6 +590,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -589,7 +598,7 @@ describe('export', () => {
     };
     await job(item);
 
-    expect(exported).toBe('[\n  {"id":"test-1","name":"Test 1"},\n  {"id":"test-2","name":"Test 2"}\n]\n');
+    expect(exported).toBe('[\n{"id":"test-1","name":"Test 1"},\n{"id":"test-2","name":"Test 2"}\n]\n');
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
@@ -645,6 +654,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -652,7 +662,7 @@ describe('export', () => {
     };
     await job(item);
 
-    expect(exported).toBe('[\n  {"id":"test-1","name":"Test 1"}\n]\n');
+    expect(exported).toBe('[\n{"id":"test-1","name":"Test 1"}\n]\n');
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,

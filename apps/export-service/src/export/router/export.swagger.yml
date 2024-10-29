@@ -40,6 +40,9 @@ components:
         params:
           type: object
           description: Query parameters for the API request of results to export.
+        resultsPath:
+          type: string
+          description: Path to the results in the API response of results to export.
         fileType:
           type: string
           description: The **File Server** collection to which the output export file will be assigned.
