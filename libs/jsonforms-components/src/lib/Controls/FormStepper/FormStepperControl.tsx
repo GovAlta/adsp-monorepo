@@ -136,6 +136,11 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   }
 
   function nextPage(page: number, disabled: boolean[]) {
+    const pageStatus = getCompletionStatus(inputStatuses, page);
+    const statuses = [...stepStatuses];
+    statuses[page - 1] = pageStatus ? pageStatus : 'incomplete';
+    setStepStatuses(statuses);
+
     page++;
     while (page <= disabled.length && disabled[page - 1]) {
       page++;
@@ -150,12 +155,20 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     }
     setPage(page);
   }
+  function updatePageStatusAndSetPage(page: number, pageStatus: GoAFormStepStatusType | undefined) {
+    const statuses = [...stepStatuses];
+    statuses[page - 1] = pageStatus || 'incomplete';
+    setStepStatuses(statuses);
 
-  function setTab(page: number) {
     const categoryLabels = [...allCategories.elements.map((category) => category.label), summaryLabel];
     const visibleLabels = [...visibleCategoryLabels, summaryLabel];
     const newPage = mapToVisibleStep(page, categoryLabels, visibleLabels);
     setPage(newPage);
+  }
+
+  function setTab(page: number) {
+    const pageStatus = getCompletionStatus(inputStatuses, page);
+    updatePageStatusAndSetPage(page, pageStatus);
   }
 
   function setPage(page: number) {
