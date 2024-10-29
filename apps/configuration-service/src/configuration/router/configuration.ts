@@ -565,7 +565,7 @@ export function createConfigurationRouter({
       param('namespace')
         .isString()
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
-      query('top').optional().isInt({ min: 1, max: 100 }),
+      query('top').optional().isInt({ min: 1, max: 1000 }),
       query('after').optional().isString()
     ),
     findConfiguration(apiId, configurationRepository)

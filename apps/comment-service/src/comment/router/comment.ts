@@ -3,7 +3,7 @@ import { NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
-import { ServiceRoles } from '../roles';
+import { ExportServiceRoles, ServiceRoles } from '../roles';
 import { CommentCriteria } from '../types';
 
 interface CommentRouterProps {
@@ -30,10 +30,14 @@ export function getComments(repository: TopicRepository): RequestHandler {
         if (!type) {
           throw new NotFoundError('topic type', criteria.typeIdEquals);
         }
-        if (!type.canRead(user)) {
+
+        if (!type.canRead(user) && !isAllowedUser(user, tenantId, ExportServiceRoles.ExportJob)) {
           throw new UnauthorizedUserError('get comments', user);
         }
-      } else if (!isAllowedUser(user, tenantId, ServiceRoles.Admin)) {
+      } else if (
+        !isAllowedUser(user, tenantId, ServiceRoles.Admin) &&
+        !isAllowedUser(user, tenantId, ExportServiceRoles.ExportJob)
+      ) {
         throw new UnauthorizedUserError('get comments', user);
       }
 

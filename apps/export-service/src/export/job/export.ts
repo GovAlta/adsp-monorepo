@@ -111,7 +111,7 @@ export function createExportJob({
       const result = await fileService.upload(
         tenantId,
         fileType,
-        resourceIdValue,
+        jobId,
         `${path.basename(filename, path.extname(filename))}.${extension}`,
         content
       );
