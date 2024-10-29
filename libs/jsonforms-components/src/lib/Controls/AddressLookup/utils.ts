@@ -44,16 +44,16 @@ export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
   }
 
   const descriptionParts = suggestion.Description.split(',');
-  const city = descriptionParts[0].trim();
+  const municipality = descriptionParts[0].trim();
   const provinceAndPostalCode = descriptionParts[1].trim().split(' ');
-  const province = provinceAndPostalCode[0];
+  const subdivisionCode = provinceAndPostalCode[0];
   const postalCode = descriptionParts[2].trim();
 
   return {
     addressLine1,
     addressLine2,
-    city,
-    province,
+    municipality,
+    subdivisionCode,
     postalCode,
     country: 'CA',
   };
@@ -62,4 +62,28 @@ export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
 export const validatePostalCode = (values: string): boolean => {
   const postalCodeRegex = /^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/;
   return postalCodeRegex.test(values);
+};
+
+export const handlePostalCodeValidation = (
+  validatePc: boolean,
+  message: string,
+  value: string,
+  errors: Record<string, string>
+) => {
+  const newErrors = { ...errors };
+
+  if (!validatePc && value.length >= 4) {
+    newErrors['postalCode'] = message;
+  } else {
+    delete newErrors['postalCode'];
+  }
+
+  return newErrors;
+};
+
+export const formatPostalCode = (value: string) => {
+  if (value.length >= 4 && value.indexOf(' ') === -1) {
+    return value.slice(0, 3) + ' ' + value.slice(3);
+  }
+  return value;
 };

@@ -1,3 +1,11 @@
-import { rankWith, RankedTester, and, scopeEndsWith } from '@jsonforms/core';
+import { rankWith, RankedTester } from '@jsonforms/core';
+import { createSchemaMatchTester } from '../../common/tester';
 
-export const AddressLookUpTester: RankedTester = rankWith(3, and(scopeEndsWith('mailingAddress')));
+export const isAddressLookup = createSchemaMatchTester([
+  'addressLine2',
+  'municipality',
+  'addressLine1',
+  'subdivisionCode',
+  'postalCode',
+]);
+export const AddressLookUpTester: RankedTester = rankWith(4, isAddressLookup);

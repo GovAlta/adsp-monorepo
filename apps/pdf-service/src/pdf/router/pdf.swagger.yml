@@ -78,7 +78,7 @@ components:
           example: user-jane-doe
         data:
           description: The variable (Handlebars) assignments to be applied to the template when generating a PDF.  This is an arbitrary JSON object, but its properties must match those expected by the template.
-          example: { "user" : { "name" : "Jane Doe" }}
+          example: { "user": { "name": "Jane Doe" } }
         filename:
           description: The name of the file that will be given to the generated PDF document.  It must be unique within your tenant.
           type: string
@@ -98,7 +98,7 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/Template'
+                $ref: "#/components/schemas/Template"
 
 /pdf/v1/templates/{templateId}:
   get:
@@ -118,32 +118,33 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Template'
+              $ref: "#/components/schemas/Template"
 
 /pdf/v1/jobs:
   post:
     tags:
       - Generator
-    description: "Initiate a new, asynchronous Job to generate a PDF document.  The Job's *properties* are cached, with a finite TTL, and it is important for your application
-to ensure that it receives the *file id* of the new PDF document within that time frame, e.g. by polling  \n>GET /pdf/v1/jobs/{jobId}. TTL is approximately 12 hours."
+    description:
+      "Initiate a new, asynchronous Job to generate a PDF document.  The Job's *properties* are cached, with a finite TTL, and it is important for your application
+      to ensure that it receives the *file id* of the new PDF document within that time frame, e.g. by polling  \n>GET /pdf/v1/jobs/{jobId}. TTL is approximately 12 hours."
     requestBody:
       required: true
       content:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/GenerateOperation'
+              - $ref: "#/components/schemas/GenerateOperation"
             discriminator:
               propertyName: operation
               mapping:
-                generate: '#/components/schemas/GenerateOperation'
+                generate: "#/components/schemas/GenerateOperation"
     responses:
       200:
         description: Job successfully created.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Job'
+              $ref: "#/components/schemas/Job"
         links:
           getJobById:
             description: The `id` returned can be used as the `jobId` parameter in `GET /pdf/v1/jobs/{jobId}`
@@ -170,4 +171,4 @@ to ensure that it receives the *file id* of the new PDF document within that tim
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Job'
+              $ref: "#/components/schemas/Job"

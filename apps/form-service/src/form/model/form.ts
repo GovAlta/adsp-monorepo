@@ -246,7 +246,7 @@ export class FormEntity implements Form {
     queueTaskService: QueueTaskService,
     submissionRepository: FormSubmissionRepository,
     pdfService: PdfService
-  ): Promise<[FormEntity, FormSubmissionEntity]> {
+  ): Promise<[FormEntity, FormSubmissionEntity, string]> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
     }
@@ -279,11 +279,13 @@ export class FormEntity implements Form {
       }
     }
 
+    let jobId = null;
+
     if (this.definition.submissionPdfTemplate) {
-      pdfService.generateFormPdf(this, submission);
+      jobId = await pdfService.generateFormPdf(this, submission);
     }
 
-    return [saved, submission];
+    return [saved, submission, jobId];
   }
 
   async archive(user: User): Promise<FormEntity> {

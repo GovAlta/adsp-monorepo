@@ -38,6 +38,7 @@ const initializeApp = async (): Promise<express.Application> => {
     amqpUser: environment.AMQP_USER,
     amqpPassword: environment.AMQP_PASSWORD,
     amqpUrl: environment.AMQP_URL,
+    amqpConsumerPriority: environment.AMQP_CONSUMER_PRIORITY,
     logger,
   });
 

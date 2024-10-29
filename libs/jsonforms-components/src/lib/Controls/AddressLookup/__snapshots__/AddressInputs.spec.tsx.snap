@@ -22,20 +22,24 @@ exports[`AddressInputs matches snapshot 1`] = `
     minchildwidth="0ch"
   >
     <goa-form-item
+      error=""
       label="City"
+      requirement="optional"
     >
       <goa-input
         arialabel="address-form-city"
         data-testid="address-form-city"
         handletrailingiconclick="false"
-        name="city"
+        name="municipality"
         value="Edmonton"
         variant="goa"
         width="100%"
       />
     </goa-form-item>
     <goa-form-item
+      error=""
       label="Postal Code"
+      requirement="optional"
     >
       <goa-input
         arialabel="address-form-postal-code"
@@ -59,7 +63,7 @@ exports[`AddressInputs matches snapshot 1`] = `
       label="Province"
     >
       <div
-        class="sc-gswNZR honsqf"
+        class="sc-gswNZR cDxa-dW"
         data-testid="address-form-province"
       >
         Alberta
@@ -69,7 +73,7 @@ exports[`AddressInputs matches snapshot 1`] = `
       label="Country"
     >
       <div
-        class="sc-gswNZR honsqf"
+        class="sc-gswNZR cDxa-dW"
         data-testid="address-form-country"
       >
         Canada

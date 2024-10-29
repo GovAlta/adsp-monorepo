@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import FormsPage from './forms.page';
 import { injectAxe } from '../../support/app.po';
 import { htmlReport } from '../../support/axe-html-reporter-util';
@@ -57,6 +57,7 @@ Then('the user views a from draft of {string}', function (formDefinition) {
     formId = url.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
     expect(formId).to.be.not.null;
   });
+  cy.viewport(1920, 1080);
 });
 
 When('the user sends a delete form request', function () {
@@ -78,15 +79,15 @@ Then('the new form is deleted', function () {
   expect(responseObj.body.deleted).to.equal(true);
 });
 
-When('the user enters {string} in a text field labelled {string}', function (text, label) {
+When('the user enters {string} in a text field labelled {string}', function (text: string, label) {
   formsObj.formTextField(label).shadow().find('input').clear().type(text, { force: true, delay: 200 });
 });
 
-When('the user enters {string} in a date picker labelled {string}', function (date, label) {
+When('the user enters {string} in a date picker labelled {string}', function (date: string, label) {
   formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true });
 });
 
-When('the user enters {string} in a dropdown labelled {string}', function (value, label) {
+When('the user enters {string} in a dropdown labelled {string}', function (value: string, label) {
   formsObj.formDropdown(label).find('goa-input').click({ force: true });
   formsObj.formDropdown(label).find('div').contains(value).click({ force: true });
 });
@@ -141,18 +142,24 @@ When('the user clicks list with detail button labelled as {string} in the form',
   cy.wait(1000);
 });
 
-When('the user enters {string} in list with detail element text field labelled {string}', function (text, label) {
-  formsObj
-    .formListWithDetailDependantTextField(label)
-    .shadow()
-    .find('input')
-    .clear()
-    .type(text, { force: true, delay: 200 });
-});
+When(
+  'the user enters {string} in list with detail element text field labelled {string}',
+  function (text: string, label) {
+    formsObj
+      .formListWithDetailDependantTextField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(text, { force: true, delay: 200 });
+  }
+);
 
-When('the user enters {string} in list with detail element date input labelled {string}', function (date, label) {
-  formsObj.formListWithDetailDependantDateInput(label).shadow().find('input').clear().type(date, { force: true });
-});
+When(
+  'the user enters {string} in list with detail element date input labelled {string}',
+  function (date: string, label) {
+    formsObj.formListWithDetailDependantDateInput(label).shadow().find('input').clear().type(date, { force: true });
+  }
+);
 
 Then('the user views a callout with a message of {string}', function (message) {
   formsObj.formSuccessCallout().shadow().find('h3').should('have.text', message);
@@ -161,7 +168,7 @@ Then('the user views a callout with a message of {string}', function (message) {
 // List with detail label need to be passed in the format of <child element field label:parent array label>, i.e. First name:Dependant
 Then(
   'the user views the summary of {string} with {string} as {string} {string}',
-  function (sectionName, value, requiredOrNot, label) {
+  function (sectionName, value, requiredOrNot, label: string) {
     let isFound = false;
     if (label.includes(':')) {
       const listWithDetailLabels = label.split(':');

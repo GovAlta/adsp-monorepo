@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import feedback from './feedback.page';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
@@ -82,7 +82,7 @@ Then('the user views the hint text of {string}', function (hintText) {
   feedbackObj.feedbackSitesRegisterSiteModalHintText(hintText).should('exist');
 });
 
-When('the user enters {string}, {string} in Register site modal', function (siteUrl, isAnonymous) {
+When('the user enters {string}, {string} in Register site modal', function (siteUrl: string, isAnonymous) {
   feedbackObj
     .feedbackSitesSiteModalAnonymousCheckbox()
     .shadow()
@@ -344,7 +344,7 @@ Then('the user views a required technical issues area', function () {
 
 When(
   'the user enters {string}, {string}, {string}, {string} in Give feedback main modal',
-  function (rating, comments, haveIssues, detail) {
+  function (rating, comments: string, haveIssues: string, detail: string) {
     feedbackObj.feedbackMainModalRating(rating).click();
     if (comments !== 'N/A') {
       feedbackObj.feedbackMainModalAdditionalCommentsTextField().type(comments);
@@ -510,7 +510,7 @@ Then('the user views feedback details with timestamp, rating, comments, technica
     .feedbackFeedbackTableItemDetails()
     .find('h2')
     .then((elements) => {
-      expect(elements.length).to.lte(2);
+      expect(elements.length).to.gte(2);
       if (elements.length == 3) {
         expect(elements[0].outerText).to.eq('Rating');
         expect(elements[1].outerText).to.eq('Comments');

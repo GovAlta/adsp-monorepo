@@ -108,8 +108,16 @@ jobs:
           oc apply -f ${{ matrix.app }}.prod.json -l apply-prod=true,component!=database
       - name: Deploy Production
         run: |
-          oc rollout latest dc/${{ matrix.app }}
-          oc rollout status dc/${{ matrix.app }}
+          if oc get dc/${{ matrix.app }} ; then
+            oc rollout latest dc/${{ matrix.app }}
+            oc rollout status dc/${{ matrix.app }}
+          elif oc get deployment/${{ matrix.app }} ; then
+            oc set triggers deployment/${{ matrix.app }} --auto
+            oc rollout status deployment/${{ matrix.app }}
+            oc set triggers deployment/${{ matrix.app }} --manual
+          else
+            echo 'No DeploymentConfig or Deployment found for ${{ matrix.app }}.'
+          fi
 
   smokeTestProd:
     runs-on: ubuntu-22.04

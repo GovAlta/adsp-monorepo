@@ -2,7 +2,6 @@ using Adsp.Platform.ScriptService.Services.Platform;
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using Adsp.Sdk.Events;
-using Newtonsoft.Json;
 using NLua;
 using RestSharp;
 
@@ -25,6 +24,11 @@ internal class ScriptFunctions : IScriptFunctions
 
   public virtual string? GeneratePdf(string templateId, string filename, object values)
   {
+    if (String.IsNullOrEmpty(templateId))
+    {
+      throw new ArgumentException("templateId cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.PdfServiceId).Result;
     var requestUrl = new Uri(servicesUrl, "/pdf/v1/jobs");
 
@@ -60,6 +64,16 @@ internal class ScriptFunctions : IScriptFunctions
 
   public IDictionary<string, object?>? GetConfiguration(string @namespace, string name)
   {
+    if (String.IsNullOrEmpty(@namespace))
+    {
+      throw new ArgumentException("namespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ConfigurationServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/configuration/v2/configuration/{@namespace}/{name}/active");
 
@@ -75,6 +89,11 @@ internal class ScriptFunctions : IScriptFunctions
 
   public FormDataResult? GetFormData(string formId)
   {
+    if (String.IsNullOrEmpty(formId))
+    {
+      throw new ArgumentException("formId cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/data");
 
@@ -87,8 +106,18 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
-  public virtual IDictionary<string, object?>? GetFormSubmission(string formId, string submissionId)
+  public virtual FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
   {
+    if (String.IsNullOrEmpty(formId))
+    {
+      throw new ArgumentException("formId cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(submissionId))
+    {
+      throw new ArgumentException("submissionId cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
 
@@ -97,15 +126,22 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var submission = _client.GetAsync<string>(request).Result;
-    var result = submission != null ? JsonConvert.DeserializeObject<IDictionary<string, object?>>(submission) : null;
-    var fix = result != null ? DictionaryToJson.Fix(result) : null;
-
-    return fix;
+    var result = _client.GetAsync<FormSubmissionResult>(request).Result;
+    return result;
   }
 
   public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
   {
+    if (String.IsNullOrEmpty(@namespace))
+    {
+      throw new ArgumentException("namespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     var eventServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.EventServiceId).Result;
     var requestUrl = new Uri(eventServiceUrl, $"/event/v1/events");
     var token = _getToken().Result;
@@ -131,6 +167,21 @@ internal class ScriptFunctions : IScriptFunctions
 
   public virtual DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
   {
+    if (String.IsNullOrEmpty(formId))
+    {
+      throw new ArgumentException("formId cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(submissionId))
+    {
+      throw new ArgumentException("submissionId cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(dispositionStatus))
+    {
+      throw new ArgumentException("dispositionStatus cannot be null or empty.");
+    }
+
     var formServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(formServiceUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
     var token = _getToken().Result;
@@ -152,6 +203,11 @@ internal class ScriptFunctions : IScriptFunctions
 
   public virtual object? HttpGet(string url)
   {
+    if (String.IsNullOrEmpty(url))
+    {
+      throw new ArgumentException("url cannot be null or empty.");
+    }
+
     var token = _getToken().Result;
     var request = new RestRequest(url, Method.Get);
     request.AddHeader("Authorization", $"Bearer {token}");
@@ -165,6 +221,21 @@ internal class ScriptFunctions : IScriptFunctions
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
   )
   {
+    if (String.IsNullOrEmpty(queueNamespace))
+    {
+      throw new ArgumentException("queueNamespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(queueName))
+    {
+      throw new ArgumentException("queueName cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.TaskServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/task/v1/queues/{queueNamespace}/{queueName}/tasks");
 
@@ -189,6 +260,16 @@ internal class ScriptFunctions : IScriptFunctions
 
   public virtual IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null)
   {
+    if (String.IsNullOrEmpty(@namespace))
+    {
+      throw new ArgumentException("namespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/value/v1/{@namespace}/values/{name}");
     var token = _getToken().Result;
@@ -210,6 +291,16 @@ internal class ScriptFunctions : IScriptFunctions
 
   public virtual IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)
   {
+    if (String.IsNullOrEmpty(@namespace))
+    {
+      throw new ArgumentException("namespace cannot be null or empty.");
+    }
+
+    if (String.IsNullOrEmpty(name))
+    {
+      throw new ArgumentException("name cannot be null or empty.");
+    }
+
     const string CONTEXT_KEY = "context";
     const string VALUE_KEY = "value";
     const string CORRELATION_ID_KEY = "correlationId";
@@ -227,12 +318,12 @@ internal class ScriptFunctions : IScriptFunctions
       Context = null
     };
 
-    if (value.GetType() == typeof(LuaTable))
+    if (value?.GetType() == typeof(LuaTable))
     {
       var table = ((LuaTable)value);
       var dataValue = table.ToDictionary();
 
-      if (!dataValue.ContainsKey(VALUE_KEY))
+      if (!dataValue.TryGetValue(VALUE_KEY, out value))
       {
         throw new ArgumentException("value is required.");
       }
@@ -241,7 +332,7 @@ internal class ScriptFunctions : IScriptFunctions
       {
         valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
       }
-      if (dataValue.ContainsKey(CONTEXT_KEY) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
+      if (dataValue.TryGetValue(VALUE_KEY, out value) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
       {
         valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?> ?? new Dictionary<string, object?>();
       }
@@ -252,21 +343,21 @@ internal class ScriptFunctions : IScriptFunctions
     {
       var dataValue = value as IDictionary<string, object>;
 
-      if (!dataValue.ContainsKey(VALUE_KEY))
+      if (dataValue != null && !dataValue.TryGetValue(VALUE_KEY, out value))
       {
         throw new ArgumentException("value is required.");
       }
 
-      if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
+      if (dataValue?[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
       {
         valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
       }
-      if (dataValue.ContainsKey(CONTEXT_KEY) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
+      if (dataValue != null && dataValue.TryGetValue(VALUE_KEY, out value) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
       {
         valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?>;
       }
 
-      valueRequest.CorrelationId = dataValue[CORRELATION_ID_KEY]?.ToString();
+      valueRequest.CorrelationId = dataValue?[CORRELATION_ID_KEY]?.ToString();
     }
     else
     {

@@ -59,8 +59,9 @@ Feature: Value
   @TEST_CS-3387 @REQ_CS-2899 @regression
   Scenario: As a tenant admin, I can see core value definitions
     Given a tenant admin user is on value overview page
+    When the user selects "Definitions" tab for "Value"
     # Validate no duplicate name as core definition name is allowed
-    When the user clicks Add definition button on value service overview page
+    When the user clicks Add definition button on value definitions page
     Then the user views Add value definition modal
     When the user enters "comment-service", "service-metrics", "Low level metrics of the service.", "N/A" in value definition modal
     And the user clicks Save button in value definition modal

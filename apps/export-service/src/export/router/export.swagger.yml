@@ -1,0 +1,138 @@
+components:
+  schemas:
+    Job:
+      type: object
+      properties:
+        id:
+          description: Id of the Job spawned to export. Required when polling to get the status of the Job.
+          type: string
+          example: a66ccc16-28fc-44fb-a499-d12df0262b8b
+        status:
+          type: string
+          enum: [queued, completed, failed]
+          description: Indicates the status of the export Job.
+        urn:
+          type: string
+          description: Logical URN to use for querying the job status.  You can map the URN to a URL using the [ADSP Service SDK's](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/directory/serviceDirectory.ts) getResourceUrl(AdspId\`urn\`)
+          example: urn:ads:platform:export-service:v1:/jobs/a66ccc16-28fc-44fb-a499-d12df0262b8b
+        result:
+          type: object
+          properties:
+            urn:
+              type: string
+              description: Logical URN to use for downloading the export file.  You can map the URN to a URL using the [ADSP Service SDK's](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/directory/serviceDirectory.ts) getResourceUrl(AdspId\`urn\`)
+              example: urn:ads:platform:file-service:v1:/files/51091c0d-15ce-4e93-81ab-1c6e546c667c
+            id:
+              description: A `fileId` to be used with the [File Service](https://api.adsp.alberta.ca/platform/?urls.primaryName=File%20service) for downloading the export file.
+              type: string
+              example: 51091c0d-15ce-4e93-81ab-1c6e546c667c
+            filename:
+              type: string
+              description: The name of the export file.
+              example: Exports-2022-02-19.csv
+    ExportRequest:
+      type: object
+      properties:
+        resourceId:
+          type: string
+          description: URN of the resource to export.
+          example: urn:ads:platform:task-service:v1:/tasks
+        params:
+          type: object
+          description: Query parameters for the API request of results to export.
+        fileType:
+          type: string
+          description: The **File Server** collection to which the output export file will be assigned.
+          example: task-export-file
+        format:
+          description: Export format for the data.
+          type: string
+          enum: [csv, json]
+          example: csv
+        filename:
+          description: The name of the file that will be given to the export file.
+          type: string
+          example: Exports-2022-02-19
+      required: [resourceId, format]
+    CsvExportRequest:
+      allOf:
+        - $ref: "#/components/schemas/ExportRequest"
+        - type: object
+          properties:
+            formatOptions:
+              description: CSV Export format options.
+              type: object
+              properties:
+                columns:
+                  type: array
+                  items:
+                    oneOf:
+                      - type: string
+                      - type: object
+                        properties:
+                          key:
+                            type: string
+                          header:
+                            type: string
+                        required: [key]
+                  example: [id, name, description]
+
+    JsonExportRequest:
+      allOf:
+        - $ref: "#/components/schemas/ExportRequest"
+        - type: object
+          properties:
+            formatOptions:
+              description: JSON Export format options.
+              type: object
+              properties:
+                pretty:
+                  description: Flag indicating if the output json should be formatted to be easier to read.
+                  type: boolean
+
+/export/v1/jobs:
+  post:
+    tags:
+      - Export
+    description: "Initiate a new, asynchronous Job to export resources."
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/CsvExportRequest"
+              - $ref: "#/components/schemas/JsonExportRequest"
+            discriminator:
+              propertyName: format
+              mapping:
+                csv: "#/components/schemas/CsvExportRequest"
+                json: "#/components/schemas/JsonExportRequest"
+    responses:
+      200:
+        description: Job successfully created.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Job"
+
+/export/v1/jobs/{jobId}:
+  get:
+    tags:
+      - Export
+    description: Retrieve the specified job's attributes.
+    operationId: getJob
+    parameters:
+      - name: jobId
+        description: ID of job to retrieve.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Job successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Job"

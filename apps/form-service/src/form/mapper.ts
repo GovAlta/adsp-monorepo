@@ -1,6 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from './model';
 import { Form, Intake } from './types';
+import { FormEntityWithJobId } from './router';
 
 export function mapFormDefinition(entity: FormDefinitionEntity, intake?: Intake) {
   return {
@@ -25,6 +26,7 @@ export type FormResponse = Omit<Form, 'anonymousApplicant' | 'definition' | 'app
   urn: string;
   definition: { id: string; name: string };
   applicant: { addressAs: string };
+  jobId?: string;
 };
 
 export type FormSubmissionResponse = Omit<
@@ -38,12 +40,14 @@ export type FormSubmissionResponse = Omit<
     id: string;
     urn: string;
   };
+  jobId?: string;
 };
 
-export function mapForm(apiId: AdspId, entity: FormEntity): FormResponse {
+export function mapForm(apiId: AdspId, entity: FormEntityWithJobId): FormResponse {
   return {
     urn: `${apiId}:/forms/${entity.id}`,
     id: entity.id,
+    jobId: entity?.jobId,
     securityClassification: entity?.securityClassification,
     definition: entity.definition
       ? {
@@ -68,12 +72,13 @@ export function mapForm(apiId: AdspId, entity: FormEntity): FormResponse {
 
 export function mapFormWithFormSubmission(
   apiId: AdspId,
-  entity: FormEntity,
+  entity: FormEntityWithJobId,
   submissionEntity: FormSubmissionEntity
 ): FormSubmissionResponse {
   return {
     urn: `${apiId}:/forms/${entity.id}`,
     id: entity.id,
+    jobId: entity?.jobId,
     securityClassification: entity?.securityClassification,
     definition: entity.definition
       ? {

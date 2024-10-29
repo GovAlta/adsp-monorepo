@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
@@ -12,6 +12,8 @@ import {
   mapSuggestionToAddress,
   filterSuggestionsWithoutAddressCount,
   validatePostalCode,
+  handlePostalCodeValidation,
+  formatPostalCode,
 } from './utils';
 import { SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
@@ -34,17 +36,18 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const defaultAddress = {
     addressLine1: '',
     addressLine2: '',
-    city: '',
-    province: isAlbertaAddress ? 'AB' : '',
+    municipality: '',
+    subdivisionCode: isAlbertaAddress ? 'AB' : '',
     postalCode: '',
     country: 'CA',
   };
+
   const [address, setAddress] = useState<Address>(data || defaultAddress);
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
-  const [postalCodeErrorMsg, setPostalCodeErrorMsg] = useState('');
-
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const requiredFields = (schema as { required: string[] }).required;
   const updateFormData = (updatedAddress: Address) => {
     setAddress(updatedAddress);
     handleChange(path, updatedAddress);
@@ -52,22 +55,19 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const handleInputChange = (field: string, value: string) => {
     let newAddress;
+    const postalCodeErrorMessage = (schema as { errorMessage?: { properties?: { postalCode?: string } } }).errorMessage
+      ?.properties?.postalCode;
+
     if (field === 'postalCode') {
       const validatePc = validatePostalCode(value);
-
-      if (!validatePc && value.length >= 4) {
-        const postalCodeErrorMessage = (schema as { errorMessage?: { properties?: { postalCode?: string } } })
-          .errorMessage?.properties?.postalCode;
-        setPostalCodeErrorMsg(postalCodeErrorMessage ?? '');
-      } else {
-        setPostalCodeErrorMsg('');
-      }
-      if (value.length >= 4 && value.indexOf(' ') === -1) {
-        value = value.slice(0, 3) + ' ' + value.slice(3);
-      }
+      setErrors(
+        handlePostalCodeValidation(validatePc, postalCodeErrorMessage ? postalCodeErrorMessage : '', value, errors)
+      );
+      value = formatPostalCode(value);
       newAddress = { ...address, [field]: value.toUpperCase() };
     } else {
       newAddress = { ...address, [field]: value };
+      delete errors[field];
     }
 
     setAddress(newAddress);
@@ -100,7 +100,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     fetchSuggestions();
   }, [searchTerm, formUrl, isAlbertaAddress]);
 
-  const handleDropdownChange = async (value: string) => {
+  const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
     handleInputChange('addressLine1', value);
   };
@@ -110,20 +110,31 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setAddress(suggestAddress);
     handleChange(path, suggestAddress);
     setSuggestions([]);
+    setErrors({});
+  };
+  const handleRequiredFieldBlur = (name: string) => {
+    if ((!data?.[name] || data?.[name] === '') && requiredFields?.includes(name)) {
+      const err = { ...errors };
+      err[name] = name === 'municipality' ? `city is required` : `${name} is required`;
+      setErrors(err);
+    } else {
+      delete errors[name];
+    }
   };
   return (
     <div>
       {renderHelp()}
-      <GoAFormItem label={label}>
+      <GoAFormItem label={label} error={errors?.['addressLine1'] ?? ''} data-testId="form-address-line1">
         <SearchBox>
           <GoAInput
             leadingIcon={autocompletion ? 'search' : undefined}
             name="addressLine1"
             testId="address-form-address1"
             ariaLabel={'address-form-address1'}
-            placeholder="Start typing the first line of your address"
+            placeholder="Start typing the first line of your address, required."
             value={address?.addressLine1 || ''}
             onChange={(name, value) => handleDropdownChange(value)}
+            onBlur={(name) => handleRequiredFieldBlur(name)}
             width="100%"
           />
           {loading && autocompletion && <GoASkeleton type="text" data-testId="loading" key={1} />}
@@ -133,7 +144,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
                 autocompletion &&
                 open &&
                 suggestions.map((suggestion, index) => (
-                  <li key={index} onClick={() => handleSuggestionClick(suggestion)}>
+                  <li key={index} onClick={(e) => handleSuggestionClick(suggestion)}>
                     {`${suggestion.Text}  ${suggestion.Description}`}
                   </li>
                 ))}
@@ -144,9 +155,11 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       <br />
       <AddressInputs
         address={address}
+        errors={errors}
         handleInputChange={handleInputChange}
         isAlbertaAddress={isAlbertaAddress}
-        postalCodeErrorMsg={postalCodeErrorMsg}
+        handleOnBlur={handleRequiredFieldBlur}
+        requiredFields={requiredFields}
       />
     </div>
   );
