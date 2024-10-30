@@ -9,8 +9,10 @@ import { FunctionComponent, useEffect } from 'react';
 import styled from 'styled-components';
 import { Form, FormDefinition, metaDataSelector, AppDispatch, downloadFile, downloadFormPdf, store } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
-import { pdfFileSelector, checkPdfFileSelector, checkPdfFile } from '../state';
+import { checkPdfFileSelector, getSocketChannel } from '../state';
 import { DownloadLink } from '../containers/DownloadLink';
+import { streamPdfSocket } from '../state/pdf.slice';
+import { checkPdfFile, checkExistingPdfFile } from '../state/file.slice';
 export const ContextProvider = ContextProviderFactory();
 
 interface ApplicationStatusProps {
@@ -49,8 +51,11 @@ const setReadOnly = (element) => {
 
 export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ definition, form, data }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const pdfFile = useSelector((state: AppState) => pdfFileSelector(state));
-  const pdfFileExists = useSelector((state: AppState) => checkPdfFileSelector(state));
+  const pdfFileExists = useSelector((state: AppState) => checkPdfFileSelector(state) || checkExistingPdfFile(state));
+
+  const socketChannel = useSelector((state: AppState) => {
+    return getSocketChannel(state);
+  });
 
   const downloadFormFile = async (file) => {
     const element = document.createElement('a');
@@ -78,29 +83,22 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     element.click();
   };
 
+  // do immediate check on load, in case this is a subsequent page reload
   useEffect(() => {
     if (definition.generatesPdf) {
       if (pdfFileExists === null && form?.urn) {
         dispatch(checkPdfFile(form.submission?.id ? form.submission.urn : form?.urn));
       }
     }
-
-    const intervalId = setInterval(() => {
-      if (definition.generatesPdf) {
-        if (!pdfFileExists) {
-          dispatch(checkPdfFile(form.submission?.id ? form.submission.urn : form?.urn));
-        }
-      }
-    }, 1000);
-
-    setTimeout(() => {
-      clearInterval(intervalId);
-    }, 10000);
-
-    return () => clearInterval(intervalId);
-  }, [dispatch, definition, form, pdfFile, pdfFileExists]);
+  }, []);
 
   const metadata = useSelector(metaDataSelector);
+
+  useEffect(() => {
+    if (!socketChannel && definition.generatesPdf) {
+      dispatch(streamPdfSocket({ disconnect: false, jobId: form.jobId }));
+    }
+  }, [socketChannel, dispatch, definition]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Grid>
@@ -109,10 +107,12 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
         <GoACallout type="success" heading="We're processing your application">
           Your application was received on {moment(form.submitted).format('MMMM D, YYYY')} and we're working on it.
           {definition.generatesPdf && pdfFileExists && (
-            <DownloadLink
-              link={() => downloadPDFFile(form.submission?.id ? form.submission.urn : form?.urn)}
-              text="Download PDF copy"
-            />
+            <div>
+              <DownloadLink
+                link={() => downloadPDFFile(form.submission?.id ? form.submission.urn : form?.urn)}
+                text="Download PDF copy"
+              />
+            </div>
           )}
         </GoACallout>
         <Heading>The submitted form for your reference</Heading>

@@ -20,7 +20,7 @@ import {
 } from '../events';
 import { TaskEntity } from '../model/task';
 import { TaskRepository } from '../repository';
-import { DirectoryServiceRoles, TaskServiceRoles } from '../roles';
+import { DirectoryServiceRoles, ExportServiceRoles, TaskServiceRoles } from '../roles';
 import { Task, TaskPriority, TaskServiceConfiguration } from '../types';
 import {
   TaskOperations,
@@ -46,13 +46,17 @@ export const getTasks =
   async (req, res, next) => {
     try {
       const user = req.user;
-      if (!(user?.roles?.includes(TaskServiceRoles.Admin) || user?.roles?.includes(TaskServiceRoles.TaskReader))) {
-        throw new UnauthorizedUserError('read tasks', user);
-      }
 
       const tenantId = req.tenant?.id;
       if (!tenantId) {
         throw new InvalidOperationError('Cannot retrieve task without tenant context.');
+      }
+
+      if (
+        !isAllowedUser(user, tenantId, [TaskServiceRoles.Admin, TaskServiceRoles.TaskReader]) &&
+        !isAllowedUser(user, tenantId, ExportServiceRoles.ExportJob, true)
+      ) {
+        throw new UnauthorizedUserError('read tasks', user);
       }
 
       const { top: topValue, after, criteria: criteriaValue } = req.query;
@@ -229,12 +233,7 @@ export function deleteTask(apiId: AdspId, logger: Logger, eventService: EventSer
   };
 }
 
-export function createTaskRouter({
-  logger,
-  apiId,
-  taskRepository: repository,
-  eventService,
-}: TaskRouterProps): Router {
+export function createTaskRouter({ logger, apiId, taskRepository: repository, eventService }: TaskRouterProps): Router {
   const router = Router();
 
   const validateIdHandler = createValidationHandler(param('id').isUUID());

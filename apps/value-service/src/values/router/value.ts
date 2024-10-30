@@ -6,7 +6,7 @@ import { Logger } from 'winston';
 import { valueWritten } from '../events';
 import { NamespaceEntity } from '../model';
 import { ValuesRepository } from '../repository';
-import { MetricCriteria, MetricInterval, ServiceUserRoles, Value, ValueCriteria } from '../types';
+import { ExportServiceRoles, MetricCriteria, MetricInterval, ServiceUserRoles, Value, ValueCriteria } from '../types';
 
 interface ValueRouterProps {
   logger: Logger;
@@ -87,7 +87,7 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         throw new InvalidOperationError('Tenant context is required for operation.');
       }
 
-      if (!isAllowedUser(user, tenant.id, ServiceUserRoles.Reader, true)) {
+      if (!isAllowedUser(user, tenant.id, [ServiceUserRoles.Reader, ExportServiceRoles.ExportJob], true)) {
         throw new UnauthorizedUserError('read values', user);
       }
 

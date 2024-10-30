@@ -205,7 +205,16 @@ const additionalStyles = `
             border: 1px solid #dcdcdc;
             border-radius: 0.25rem;
             padding: 0.75rem;
+            width: 95%;
             margin: 0 0 1em 0;
+        }
+
+        .list-item-borderless-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 0.375rem 0;
+            width: 95%;
         }
 
         .review-item-title {

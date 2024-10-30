@@ -13,6 +13,7 @@ import {
   filterSuggestionsWithoutAddressCount,
   validatePostalCode,
   handlePostalCodeValidation,
+  formatPostalCode,
 } from './utils';
 import { SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
@@ -35,8 +36,8 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const defaultAddress = {
     addressLine1: '',
     addressLine2: '',
-    city: '',
-    province: isAlbertaAddress ? 'AB' : '',
+    municipality: '',
+    subdivisionCode: isAlbertaAddress ? 'AB' : '',
     postalCode: '',
     country: 'CA',
   };
@@ -46,6 +47,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const requiredFields = (schema as { required: string[] }).required;
   const updateFormData = (updatedAddress: Address) => {
     setAddress(updatedAddress);
     handleChange(path, updatedAddress);
@@ -64,12 +66,11 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       setErrors(
         handlePostalCodeValidation(validatePc, postalCodeErrorMessage ? postalCodeErrorMessage : '', value, errors)
       );
-      if (value.length >= 4 && value.indexOf(' ') === -1) {
-        value = value.slice(0, 3) + ' ' + value.slice(3);
-      }
+      value = formatPostalCode(value);
       newAddress = { ...address, [field]: value.toUpperCase() };
     } else {
       newAddress = { ...address, [field]: value };
+      delete errors[field];
     }
 
     setAddress(newAddress);
@@ -114,20 +115,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setSuggestions([]);
     setErrors({});
   };
-
-  const handleRequiredFieldBlur = (name: string) => {
-    let err = { ...errors };
-    if(data?.["city"] === undefined || data?.["city"] === ""){
-       err[name] = name === 'municipality' ? `city is required 1` : ""
-       setErrors(err);
-    }
-
-    if(!data?.[name] || data[name] === '' || data?.[name] === undefined){
-      err[name] =  name === 'municipality' ? `city is required 2` : `${name} is required`;
-      setErrors(err);
-    }
-
-    if(!data?.[name]){
+/){
       err[name] =  name === 'addressLine1' ? `${name} is required` : ``;
       setErrors(err);
     }
@@ -202,12 +190,10 @@ const handleKeyDown = (e:any) => {
             name="addressLine1"
             testId="address-form-address1"
             ariaLabel={'address-form-address1'}
-            placeholder="Start typing the first line of your address"
+            placeholder="Start typing the first line of your address, required."
             value={address?.addressLine1 || ''}
             onChange={(name, value) => handleDropdownChange(value)}
-            onBlur={(name, value) => {
-              handleRequiredFieldBlur(name)
-            }}
+            onBlur={(name) => handleRequiredFieldBlur(name)}
             width="100%"
           />
           {loading && autocompletion && <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress> }
@@ -244,6 +230,7 @@ const handleKeyDown = (e:any) => {
         handleInputChange={handleInputChange}
         isAlbertaAddress={isAlbertaAddress}
         handleOnBlur={handleRequiredFieldBlur}
+        requiredFields={requiredFields}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import {
   filterSuggestionsWithoutAddressCount,
   validatePostalCode,
   handlePostalCodeValidation,
+  formatPostalCode,
 } from './utils';
 import axios from 'axios';
 import { Suggestion, Address } from './types';
@@ -74,8 +75,8 @@ describe('mapSuggestionToAddress', () => {
     const expectedAddress: Address = {
       addressLine1: '1234 Example St',
       addressLine2: '',
-      city: 'Edmonton',
-      province: 'AB',
+      municipality: 'Edmonton',
+      subdivisionCode: 'AB',
       postalCode: 'T5J 2N9',
       country: 'CA',
     };
@@ -96,8 +97,8 @@ describe('mapSuggestionToAddress', () => {
     const expectedAddress: Address = {
       addressLine1: '20 St S',
       addressLine2: 'Suite-636',
-      city: 'Calgary',
-      province: 'AB',
+      municipality: 'Calgary',
+      subdivisionCode: 'AB',
       postalCode: 'T3H 2V4',
       country: 'CA',
     };
@@ -118,8 +119,8 @@ describe('mapSuggestionToAddress', () => {
     const expectedAddress: Address = {
       addressLine1: '100 Main St',
       addressLine2: 'Apt-456',
-      city: 'Lethbridge',
-      province: 'AB',
+      municipality: 'Lethbridge',
+      subdivisionCode: 'AB',
       postalCode: 'T1K 3M4',
       country: 'CA',
     };
@@ -229,95 +230,121 @@ describe('filterSuggestionsWithoutAddressCount', () => {
 
     expect(filteredSuggestions).toHaveLength(0);
   });
-  describe('validatePostalCode', () => {
-    it('returns true for a valid postal code (K1A 0B1)', () => {
-      expect(validatePostalCode('K1A 0B1')).toBe(true);
-    });
+});
+describe('validatePostalCode', () => {
+  it('returns true for a valid postal code (K1A 0B1)', () => {
+    expect(validatePostalCode('K1A 0B1')).toBe(true);
+  });
 
-    it('returns true for a valid postal code (X9X 9X9)', () => {
-      expect(validatePostalCode('X9X 9X9')).toBe(true);
-    });
+  it('returns true for a valid postal code (X9X 9X9)', () => {
+    expect(validatePostalCode('X9X 9X9')).toBe(true);
+  });
 
-    it('returns false for missing space (A1A1A1)', () => {
-      expect(validatePostalCode('A1A1A1')).toBe(false);
-    });
+  it('returns false for missing space (A1A1A1)', () => {
+    expect(validatePostalCode('A1A1A1')).toBe(false);
+  });
 
-    it('returns false for incorrect format with no letters (123 456)', () => {
-      expect(validatePostalCode('123 456')).toBe(false);
-    });
+  it('returns false for incorrect format with no letters (123 456)', () => {
+    expect(validatePostalCode('123 456')).toBe(false);
+  });
 
-    it('returns false for incorrect format with special characters (A1A-1A1)', () => {
-      expect(validatePostalCode('A1A-1A1')).toBe(false);
-    });
+  it('returns false for incorrect format with special characters (A1A-1A1)', () => {
+    expect(validatePostalCode('A1A-1A1')).toBe(false);
+  });
 
-    it('returns false for input with too many characters (A1A 1A12)', () => {
-      expect(validatePostalCode('A1A 1A12')).toBe(false);
-    });
+  it('returns false for input with too many characters (A1A 1A12)', () => {
+    expect(validatePostalCode('A1A 1A12')).toBe(false);
+  });
 
-    it('returns false for empty string', () => {
-      expect(validatePostalCode('')).toBe(false);
+  it('returns false for empty string', () => {
+    expect(validatePostalCode('')).toBe(false);
+  });
+});
+
+describe('handlePostalCodeValidation', () => {
+  it('should set postal code error when postal code is invalid and value length >= 4', () => {
+    const validatePc = false;
+    const message = 'Invalid postal code';
+    const value = '1234';
+    const errors = {};
+
+    const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+
+    expect(updatedErrors).toEqual({ postalCode: 'Invalid postal code' });
+  });
+
+  it('should not set postal code error when value length is less than 4', () => {
+    const validatePc = false;
+    const message = 'Invalid postal code';
+    const value = '123';
+    const errors = {};
+
+    const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+
+    expect(updatedErrors).toEqual({});
+  });
+
+  it('should remove postal code error when postal code is valid', () => {
+    const validatePc = true;
+    const message = 'Invalid postal code';
+    const value = '1234';
+    const errors = { postalCode: 'Invalid postal code' };
+
+    const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+
+    expect(updatedErrors).toEqual({});
+  });
+
+  it('should not modify other errors when setting postal code error', () => {
+    const validatePc = false;
+    const message = 'Invalid postal code';
+    const value = '1234';
+    const errors = { city: 'City is required' };
+
+    const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+
+    expect(updatedErrors).toEqual({
+      city: 'City is required',
+      postalCode: 'Invalid postal code',
     });
   });
 
-  describe('handlePostalCodeValidation', () => {
-    it('should set postal code error when postal code is invalid and value length >= 4', () => {
-      const validatePc = false;
-      const message = 'Invalid postal code';
-      const value = '1234';
-      const errors = {};
+  it('should not modify other errors when removing postal code error', () => {
+    const validatePc = true;
+    const message = 'Invalid postal code';
+    const value = '1234';
+    const errors = { city: 'City is required', postalCode: 'Invalid postal code' };
 
-      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+    const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
 
-      expect(updatedErrors).toEqual({ postalCode: 'Invalid postal code' });
+    expect(updatedErrors).toEqual({
+      city: 'City is required',
     });
+  });
+});
+describe('formatPostalCode', () => {
+  it('should add a space after the third character if the string length is >= 4 and no space exists', () => {
+    expect(formatPostalCode('A0A0A0')).toBe('A0A 0A0');
+    expect(formatPostalCode('12345')).toBe('123 45');
+  });
 
-    it('should not set postal code error when value length is less than 4', () => {
-      const validatePc = false;
-      const message = 'Invalid postal code';
-      const value = '123';
-      const errors = {};
+  it('should not modify a string that already contains a space after the third character', () => {
+    expect(formatPostalCode('A0A 0A0')).toBe('A0A 0A0');
+    expect(formatPostalCode('123 45')).toBe('123 45');
+  });
 
-      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
+  it('should not modify strings with fewer than 4 characters', () => {
+    expect(formatPostalCode('A0')).toBe('A0');
+    expect(formatPostalCode('12')).toBe('12');
+  });
 
-      expect(updatedErrors).toEqual({});
-    });
+  it('should return the original string if it already contains a space', () => {
+    expect(formatPostalCode('A0A 0A0')).toBe('A0A 0A0');
+    expect(formatPostalCode('A0A 123')).toBe('A0A 123');
+  });
 
-    it('should remove postal code error when postal code is valid', () => {
-      const validatePc = true;
-      const message = 'Invalid postal code';
-      const value = '1234';
-      const errors = { postalCode: 'Invalid postal code' };
-
-      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
-
-      expect(updatedErrors).toEqual({});
-    });
-
-    it('should not modify other errors when setting postal code error', () => {
-      const validatePc = false;
-      const message = 'Invalid postal code';
-      const value = '1234';
-      const errors = { city: 'City is required' };
-
-      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
-
-      expect(updatedErrors).toEqual({
-        city: 'City is required',
-        postalCode: 'Invalid postal code',
-      });
-    });
-
-    it('should not modify other errors when removing postal code error', () => {
-      const validatePc = true;
-      const message = 'Invalid postal code';
-      const value = '1234';
-      const errors = { city: 'City is required', postalCode: 'Invalid postal code' };
-
-      const updatedErrors = handlePostalCodeValidation(validatePc, message, value, errors);
-
-      expect(updatedErrors).toEqual({
-        city: 'City is required',
-      });
-    });
+  it('should return the original string if the length is less than 4', () => {
+    expect(formatPostalCode('A0')).toBe('A0');
+    expect(formatPostalCode('A')).toBe('A');
   });
 });

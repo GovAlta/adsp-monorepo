@@ -32,7 +32,7 @@ import {
   PatchRequests,
   PostRequests,
 } from './types';
-import { ConfigurationServiceRoles } from '../roles';
+import { ConfigurationServiceRoles, ExportServiceRoles } from '../roles';
 
 export interface ConfigurationRouterProps extends Repositories {
   serviceId: AdspId;
@@ -210,7 +210,10 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
       const { top: topValue, after } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
 
-      if (!isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin)) {
+      if (
+        !isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin) &&
+        !isAllowedUser(user, tenantId, ExportServiceRoles.ExportJob, true)
+      ) {
         throw new UnauthorizedUserError('find configuration', user);
       }
 
@@ -562,7 +565,7 @@ export function createConfigurationRouter({
       param('namespace')
         .isString()
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
-      query('top').optional().isInt({ min: 1, max: 100 }),
+      query('top').optional().isInt({ min: 1, max: 1000 }),
       query('after').optional().isString()
     ),
     findConfiguration(apiId, configurationRepository)
