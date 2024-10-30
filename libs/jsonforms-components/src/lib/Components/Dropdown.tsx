@@ -7,7 +7,7 @@ import { GoADropdownListContainer, GoADropdownListContainerWrapper, GoADropdownL
 export const isValidKey = (keyCode: string): boolean => {
   if (keyCode === 'Shift' || keyCode === 'Alt') return false;
 
-  const regex = new RegExp(/^[a-zA-Z0-9!%$@.#?-_]+$/);
+  const regex = new RegExp(/^[a-zA-Z0-9!%$@.#?\-_]+$/);
   return regex.test(keyCode);
 };
 
