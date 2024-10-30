@@ -212,7 +212,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
               return item.label.includes(value);
             });
             setItems(selectedItems);
-            //setIsOpen(false);
           }
         }}
         trailingIcon={trailingIcon}
