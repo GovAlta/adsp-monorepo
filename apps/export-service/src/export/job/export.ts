@@ -10,7 +10,7 @@ import { getFormatter } from '../format';
 import { ExportServiceWorkItem } from './types';
 import { isPaged, retry } from './util';
 
-const MAX_PAGES = 5000;
+const MAX_PAGES = 10000;
 
 interface ExportJobProps {
   logger: Logger;
@@ -71,7 +71,7 @@ export function createExportJob({
             params: {
               ...params,
               tenantId,
-              top: 1000,
+              top: 500,
               after,
             },
           });
