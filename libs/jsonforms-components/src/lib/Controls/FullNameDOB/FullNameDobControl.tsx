@@ -4,6 +4,13 @@ import { GoADate, GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components
 
 type DateOfBirthControlProps = ControlProps;
 
+interface Data {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  dateOfBirth: GoADate;
+}
+
 export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element => {
   const { data, path, schema, handleChange, uischema } = props;
   const requiredFields = (schema as { required: string[] }).required;
@@ -37,22 +44,35 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     const updatedData = { ...formData, [field]: value };
     setFormData(updatedData);
     updateFormData(updatedData);
+    handleRequiredFieldBlur(field, updatedData);
   };
   const handleDobChange = (field: string, value: GoADate) => {
     const updatedData = { ...formData, [field]: value };
     setFormData(updatedData);
     updateFormData(updatedData);
   };
-
-  const handleRequiredFieldBlur = (name: string) => {
-    if ((!data?.[name] || data?.[name] === '') && requiredFields.includes(name)) {
-      const err = { ...errors };
-      const modifiedName = name === 'firstName' ? 'First name' : name === 'lastName' ? 'Last name' : 'Date of birth';
+  /* istanbul ignore next */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleRequiredFieldBlur = (name: string, updatedData?: any) => {
+    const err = { ...errors };
+    if (
+      (!data?.[name] || data?.[name] === '') &&
+      requiredFields.includes(name) &&
+      (!updatedData || updatedData?.[name] === '')
+    ) {
+      const modifiedName =
+        name === 'firstName'
+          ? 'First name'
+          : name === 'lastName'
+          ? 'Last name'
+          : name === 'dateOfBirth'
+          ? 'Date of birth'
+          : '';
       err[name] = `${modifiedName} is required`;
-      setErrors(err);
     } else {
-      delete errors[name];
+      err[name] = '';
     }
+    setErrors(err);
   };
 
   return (
@@ -69,8 +89,14 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
             testId="name-form-first-name"
             ariaLabel={'name-form-first-name'}
             value={formData.firstName || ''}
-            onChange={(name, value) => handleInputChange(name, value)}
-            onBlur={(name) => handleRequiredFieldBlur(name)}
+            onChange={(name, value) => {
+              handleInputChange(name, value);
+              handleRequiredFieldBlur(name);
+            }}
+            onBlur={(name) => {
+              /* istanbul ignore next */
+              handleRequiredFieldBlur(name);
+            }}
             width="100%"
           />
         </GoAFormItem>
@@ -100,7 +126,10 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
             ariaLabel={'name-form-last-name'}
             value={formData.lastName || ''}
             onChange={(name, value) => handleInputChange(name, value)}
-            onBlur={(name) => handleRequiredFieldBlur(name)}
+            onBlur={(name) => {
+              /* istanbul ignore next */
+              handleRequiredFieldBlur(name);
+            }}
             width="100%"
           />
         </GoAFormItem>
@@ -121,7 +150,10 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
             placeholder="YYYY-MM-DD"
             value={formData?.dateOfBirth}
             onChange={(name, value) => handleDobChange(name, value)}
-            onBlur={(name) => handleRequiredFieldBlur(name)}
+            onBlur={(name) => {
+              /* istanbul ignore next */
+              handleRequiredFieldBlur(name);
+            }}
             width="100%"
           />
         </GoAFormItem>

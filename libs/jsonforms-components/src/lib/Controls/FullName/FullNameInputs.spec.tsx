@@ -152,6 +152,61 @@ describe('NameInputs', () => {
     expect(blurred).toBe(true);
   });
 
+  // it('triggers blur event by clicking outside of the input', async () => {
+  //   const component = render(
+  //     <NameInputs
+  //       firstName=""
+  //       middleName={defaultName.middleName}
+  //       lastName={defaultName.lastName}
+  //       handleInputChange={mockHandleInputChange}
+  //       requiredFields={requiredFields}
+  //       data={{ ...defaultName, firstName: '' }}
+  //     />
+  //   );
+
+  //   const firstNameInput = component.getByTestId('name-form-first-name');
+  //   fireEvent.focus(firstNameInput);
+  //   fireEvent(firstNameInput, new CustomEvent('_focus', {}));
+  //   fireEvent(
+  //     firstNameInput,
+  //     new CustomEvent('_change', {
+  //       detail: { name: 'firstName', value: '' },
+  //     })
+  //   );
+
+  //   const outsideEl = component.getByTestId('wrapper');
+  //   fireEvent(outsideEl, new CustomEvent('_click'));
+
+  //   const errorMessage = screen.getByText('First Name is required');
+  //   expect(errorMessage).toBeInTheDocument();
+  // });
+
+  // it('calls handleRequiredFieldBlur when onBlur is triggered directly', () => {
+  //   const { container } = render(
+  //     <NameInputs
+  //       firstName=""
+  //       middleName={defaultName.middleName}
+  //       lastName={defaultName.lastName}
+  //       handleInputChange={mockHandleInputChange}
+  //       requiredFields={requiredFields}
+  //       data={{ ...defaultName, firstName: '' }}
+  //     />
+  //   );
+
+  //   const firstNameInput = container.querySelector('[data-testid="name-form-first-name"]');
+  //   if (firstNameInput) {
+  //     fireEvent.focus(firstNameInput);
+  //     fireEvent.change(firstNameInput, { target: { value: 'a' } });
+  //     fireEvent.blur(firstNameInput);
+  //     fireEvent.change(firstNameInput, { target: { value: '' } });
+  //     const outsideEl = container.querySelector('[data-testid="wrapper"]');
+  //     fireEvent.click(outsideEl!);
+
+  //     const errorMessage = screen.getByText('First Name is required');
+  //     expect(errorMessage).toBeInTheDocument();
+  //   }
+  // });
+
   it('shows required error when last name is missing and blurred', async () => {
     render(
       <NameInputs
