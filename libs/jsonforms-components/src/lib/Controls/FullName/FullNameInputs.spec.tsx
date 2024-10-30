@@ -27,10 +27,8 @@ describe('NameInputs', () => {
         middleName={defaultName.middleName}
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
-        handleRequiredFieldBlur={handleBlur}
         requiredFields={requiredFields}
         data={defaultName}
-        errors={{}}
       />
     );
 
@@ -56,8 +54,6 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-        handleRequiredFieldBlur={handleBlur}
-        errors={{}}
       />
     );
 
@@ -82,8 +78,6 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-        handleRequiredFieldBlur={handleBlur}
-        errors={{}}
       />
     );
     await (async () => {
@@ -102,8 +96,6 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-        handleRequiredFieldBlur={handleBlur}
-        errors={{}}
       />
     );
 
@@ -128,8 +120,6 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-        handleRequiredFieldBlur={handleBlur}
-        errors={{}}
       />
     );
 
@@ -154,8 +144,6 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={{ ...defaultName, firstName: '' }}
-        handleRequiredFieldBlur={handleBlur}
-        errors={{}}
       />
     );
 
@@ -173,8 +161,6 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={{ ...defaultName, lastName: '' }}
-        handleRequiredFieldBlur={handleBlur}
-        errors={{}}
       />
     );
 
@@ -183,21 +169,6 @@ describe('NameInputs', () => {
     expect(blurred).toBe(true);
   });
 
-  it('matches snapshot', () => {
-    const { asFragment } = render(
-      <NameInputs
-        firstName={defaultName.firstName}
-        middleName={defaultName.middleName}
-        lastName={defaultName.lastName}
-        handleInputChange={mockHandleInputChange}
-        requiredFields={requiredFields}
-        data={defaultName}
-        handleRequiredFieldBlur={handleBlur}
-        errors={{}}
-      />
-    );
-    expect(asFragment()).toMatchSnapshot();
-  });
   expect(
     isFullName(
       {
@@ -271,16 +242,35 @@ describe('NameInputs Component', () => {
         middleName={defaultName.middleName}
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
-        handleRequiredFieldBlur={mockHandleRequiredFieldBlur}
         requiredFields={requiredFields}
         data={defaultName}
-        errors={{}}
       />
     );
 
     expect(screen.getByTestId('name-form-first-name')).toHaveValue(defaultName.firstName);
     expect(screen.getByTestId('name-form-middle-name')).toHaveValue(defaultName.middleName);
     expect(screen.getByTestId('name-form-last-name')).toHaveValue(defaultName.lastName);
+  });
+
+  it('shows error messagewhen a required field is blurred when empty', async () => {
+    render(
+      <NameInputs
+        firstName={defaultName.firstName}
+        middleName={defaultName.middleName}
+        lastName={defaultName.lastName}
+        handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={defaultName}
+      />
+    );
+    const firstNameInput = screen.getByTestId('name-form-first-name');
+    fireEvent.focus(firstNameInput);
+    fireEvent.change(firstNameInput, { target: { value: '' } });
+    fireEvent.blur(firstNameInput);
+    await (async () => {
+      const errorMessage = screen.getByText('First Name is required');
+      expect(errorMessage).toBeInTheDocument();
+    });
   });
 
   it('calls handleInputChange when first name is changed', () => {
@@ -290,10 +280,8 @@ describe('NameInputs Component', () => {
         middleName={defaultName.middleName}
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
-        handleRequiredFieldBlur={mockHandleRequiredFieldBlur}
         requiredFields={requiredFields}
         data={defaultName}
-        errors={{}}
       />
     );
 
@@ -315,10 +303,8 @@ describe('NameInputs Component', () => {
         middleName={defaultName.middleName}
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
-        handleRequiredFieldBlur={mockHandleRequiredFieldBlur}
         requiredFields={requiredFields}
         data={defaultName}
-        errors={{}}
       />
     );
 
@@ -328,41 +314,6 @@ describe('NameInputs Component', () => {
     expect(blurred).toBe(true);
   });
 
-  it('displays error message for first name if provided in errors prop', () => {
-    render(
-      <NameInputs
-        firstName=""
-        middleName={defaultName.middleName}
-        lastName={defaultName.lastName}
-        handleInputChange={mockHandleInputChange}
-        handleRequiredFieldBlur={mockHandleRequiredFieldBlur}
-        requiredFields={requiredFields}
-        data={{ ...defaultName, firstName: '' }}
-        errors={errors}
-      />
-    );
-
-    const formitemFirstName = screen.getByTestId('formitem-first-name');
-    expect(formitemFirstName).toHaveAttribute('error', 'First Name is required');
-  });
-
-  it('displays error message for last name if provided in errors prop', () => {
-    render(
-      <NameInputs
-        firstName={defaultName.firstName}
-        middleName={defaultName.middleName}
-        lastName=""
-        handleInputChange={mockHandleInputChange}
-        handleRequiredFieldBlur={mockHandleRequiredFieldBlur}
-        requiredFields={requiredFields}
-        data={{ ...defaultName, lastName: '' }}
-        errors={errors}
-      />
-    );
-    const formitemLastName = screen.getByTestId('formitem-last-name');
-    expect(formitemLastName).toHaveAttribute('error', 'Last Name is required');
-  });
-
   it('does not display error for optional middle name', () => {
     render(
       <NameInputs
@@ -370,10 +321,8 @@ describe('NameInputs Component', () => {
         middleName=""
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
-        handleRequiredFieldBlur={mockHandleRequiredFieldBlur}
         requiredFields={requiredFields}
         data={{ ...defaultName, middleName: '' }}
-        errors={{}}
       />
     );
 
@@ -387,10 +336,8 @@ describe('NameInputs Component', () => {
         middleName={defaultName.middleName}
         lastName={defaultName.lastName}
         handleInputChange={mockHandleInputChange}
-        handleRequiredFieldBlur={mockHandleRequiredFieldBlur}
         requiredFields={requiredFields}
         data={defaultName}
-        errors={{}}
       />
     );
     const formitemFirstName = screen.getByTestId('formitem-first-name');

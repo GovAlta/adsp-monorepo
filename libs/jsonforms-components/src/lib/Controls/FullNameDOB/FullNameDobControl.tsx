@@ -47,7 +47,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
   const handleRequiredFieldBlur = (name: string) => {
     if ((!data?.[name] || data?.[name] === '') && requiredFields.includes(name)) {
       const err = { ...errors };
-      const modifiedName = name === 'firstName' ? 'First Name' : 'Last Name';
+      const modifiedName = name === 'firstName' ? 'First name' : name === 'lastName' ? 'Last name' : 'Date of birth';
       err[name] = `${modifiedName} is required`;
       setErrors(err);
     } else {

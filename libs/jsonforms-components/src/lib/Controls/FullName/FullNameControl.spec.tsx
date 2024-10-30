@@ -58,6 +58,18 @@ describe('FullNameControl', () => {
       });
     });
   });
+  it('shows error message when a required field is blurred when empty', async () => {
+    render(<FullNameControl {...defaultProps} />);
+
+    const firstNameInput = screen.getByTestId('name-form-first-name');
+    fireEvent.focus(firstNameInput);
+    fireEvent.change(firstNameInput, { target: { value: '' } });
+    fireEvent.blur(firstNameInput);
+    await (async () => {
+      const errorMessage = screen.getByText('First Name is required');
+      expect(errorMessage).toBeInTheDocument();
+    });
+  });
 
   it('calls handleChange when user inputs a new last name', async () => {
     render(<FullNameControl {...defaultProps} />);

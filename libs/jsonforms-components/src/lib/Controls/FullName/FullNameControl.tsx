@@ -26,7 +26,6 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
 export const FullNameControl = (props: FullNameProps): JSX.Element => {
   const { data, path, schema, handleChange } = props;
   const requiredFields = (schema as { required: string[] }).required;
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const defaultName = {
     firstName: '',
     middleName: '',
@@ -44,27 +43,14 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
     updateFormData(updatedName);
   };
 
-  const handleRequiredFieldBlur = (name: string) => {
-    if ((!data?.[name] || data?.[name] === '') && requiredFields.includes(name)) {
-      const err = { ...errors };
-      const modifiedName = name === 'firstName' ? 'First Name' : 'Last Name';
-      err[name] = `${modifiedName} is required`;
-      setErrors(err);
-    } else {
-      delete errors[name];
-    }
-  };
-
   return (
     <NameInputs
       firstName={defaultName.firstName}
       middleName={defaultName.middleName}
       lastName={defaultName.lastName}
       handleInputChange={handleInputChange}
-      handleRequiredFieldBlur={handleRequiredFieldBlur}
       data={data}
       requiredFields={requiredFields}
-      errors={errors}
     />
   );
 };

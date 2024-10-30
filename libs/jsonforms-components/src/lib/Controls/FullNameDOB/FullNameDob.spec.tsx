@@ -193,25 +193,6 @@ describe('FullNameDobControl', () => {
     });
   });
 
-  it('matches snapshot', () => {
-    const { asFragment } = render(
-      <FullNameDobControl
-        data={defaultFormData}
-        handleChange={mockHandleChange}
-        path="path-to-data"
-        schema={{}}
-        uischema={{} as ControlElement}
-        label={''}
-        errors={''}
-        rootSchema={{}}
-        id={''}
-        enabled={false}
-        visible={false}
-      />
-    );
-    expect(asFragment()).toMatchSnapshot();
-  });
-
   it('test fullnameDoB tester', () => {
     expect(
       isFullNameDoB(

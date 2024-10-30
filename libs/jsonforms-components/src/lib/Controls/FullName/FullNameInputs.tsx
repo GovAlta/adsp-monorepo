@@ -14,9 +14,7 @@ interface NameInputsProps {
   data: Data;
   requiredFields: string[];
   // eslint-disable-next-line
-  errors: any;
   handleInputChange: (field: string, value: string) => void;
-  handleRequiredFieldBlur: (field: string) => void;
 }
 
 export const NameInputs: React.FC<NameInputsProps> = ({
@@ -24,11 +22,20 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   middleName,
   lastName,
   handleInputChange,
-  handleRequiredFieldBlur,
   data,
   requiredFields,
-  errors,
 }: NameInputsProps): JSX.Element => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const handleRequiredFieldBlur = (name: string) => {
+    if ((!data?.[name] || data?.[name] === '') && requiredFields.includes(name)) {
+      const err = { ...errors };
+      const modifiedName = name === 'firstName' ? 'First Name' : 'Last Name';
+      err[name] = `${modifiedName} is required`;
+      setErrors(err);
+    } else {
+      delete errors[name];
+    }
+  };
   return (
     <GoAGrid minChildWidth="0ch" gap="s">
       <GoAFormItem

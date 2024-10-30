@@ -85,6 +85,15 @@ describe('input number controls', () => {
       expect(blurred).toBe(true);
     });
 
+    it('can trigger on Key Press event', async () => {
+      const props = { ...staticProps };
+      const component = render(GoANumberInput(props));
+      const input = component.getByTestId('age-input');
+      const blurred = fireEvent.keyPress(input);
+
+      expect(blurred).toBe(true);
+    });
+
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
 
