@@ -80,7 +80,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           key={`jsonforms-${label}-dropdown`}
           id={`jsonforms-${label}-dropdown`}
           label={label}
-          isAutocompletion={autoCompletion}
+          isAutoCompletion={autoCompletion}
           onChange={(value: string) => {
             handleChange(path, value);
           }}

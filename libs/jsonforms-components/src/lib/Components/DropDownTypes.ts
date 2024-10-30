@@ -9,7 +9,7 @@ export interface DropdownProps {
   selected: string;
   optionListMaxHeight?: string;
   onChange: (value: string) => void;
-  isAutocompletion?: boolean;
+  isAutoCompletion?: boolean;
   id?: string;
 }
 
