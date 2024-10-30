@@ -1,15 +1,16 @@
 import { AdspId, EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { JobRepository, FileResult, FileService } from '@core-services/job-common';
 import axios from 'axios';
+import * as _ from 'lodash';
 import * as path from 'path';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
 import { exported, exportFailed } from '../events';
 import { getFormatter } from '../format';
 import { ExportServiceWorkItem } from './types';
-import { isPagedResults, retry } from './util';
+import { isPaged, retry } from './util';
 
-const MAX_PAGES = 5000;
+const MAX_PAGES = 10000;
 
 interface ExportJobProps {
   logger: Logger;
@@ -33,6 +34,7 @@ export function createExportJob({
     jobId,
     resourceId: resourceIdValue,
     params,
+    resultsPath,
     fileType,
     filename,
     format,
@@ -48,6 +50,11 @@ export function createExportJob({
       const resourceId = AdspId.parse(resourceIdValue);
       const resourceUrl = await directory.getResourceUrl(resourceId);
 
+      logger.debug(`Export job (ID: ${jobId}) resource URL resolved to: ${resourceUrl}`, {
+        context: 'ExportJob',
+        tenantId: tenantIdValue,
+      });
+
       const results = [];
       let after: string,
         page = 1;
@@ -59,32 +66,33 @@ export function createExportJob({
           });
 
           const token = await tokenProvider.getAccessToken();
-          const { data } = await axios.get<{ results: unknown[]; page: { size: number; next: string } } | unknown[]>(
-            resourceUrl.href,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-              params: {
-                ...params,
-                tenantId,
-                top: 1000,
-                after,
-              },
-            }
-          );
+          const { data } = await axios.get<unknown>(resourceUrl.href, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              ...params,
+              tenantId,
+              top: 500,
+              after,
+            },
+          });
 
           return data;
         });
 
-        if (isPagedResults(data)) {
-          results.push(...data.results);
-
-          // Get the next cursor for paged results so we can get more pages.
-          after = data?.page?.next;
+        const pageResults = _.get(data, resultsPath);
+        if (Array.isArray(pageResults)) {
+          results.push(...pageResults);
         } else if (Array.isArray(data)) {
           results.push(...data);
         } else {
           results.push(data);
         }
+
+        if (isPaged(data)) {
+          // Get the next cursor for paged results so we can get more pages.
+          after = data.page.next;
+        }
+
         page += 1;
       } while (after || page > MAX_PAGES);
 
@@ -103,7 +111,7 @@ export function createExportJob({
       const result = await fileService.upload(
         tenantId,
         fileType,
-        resourceIdValue,
+        jobId,
         `${path.basename(filename, path.extname(filename))}.${extension}`,
         content
       );
@@ -126,9 +134,11 @@ export function createExportJob({
     } catch (err) {
       // Handle the error by recording the failure; don't bother retrying in the work queue.
       await repository.update(jobId, 'failed');
-      eventService.send(exportFailed(tenantId, requestedBy, jobId, resourceIdValue, format, filename));
 
-      logger.warn(`Export job (ID: ${jobId}) for resource: ${resourceIdValue} failed with error: ${err}`, {
+      const error = axios.isAxiosError(err) ? err.response?.data?.errorMessage || err.message : err.toString();
+      eventService.send(exportFailed(tenantId, requestedBy, jobId, resourceIdValue, format, filename, error));
+
+      logger.warn(`Export job (ID: ${jobId}) for resource: ${resourceIdValue} failed with error: ${error}`, {
         context: 'ExportJob',
         tenantId: tenantIdValue,
       });

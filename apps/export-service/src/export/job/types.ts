@@ -4,6 +4,7 @@ export interface ExportServiceWorkItem {
   timestamp: Date;
   resourceId: string;
   params: Record<string, unknown>;
+  resultsPath: string;
   fileType: string;
   filename: string;
   format: string;

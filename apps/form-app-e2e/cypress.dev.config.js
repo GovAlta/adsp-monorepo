@@ -34,6 +34,7 @@ module.exports = defineConfig({
     tenantWebAppUrl: 'https://adsp-dev.gov.ab.ca/',
     formApi: 'https://form-service.adsp-dev.gov.ab.ca/',
   },
+  retries: 2,
   defaultCommandTimeout: 10000,
   fileServerFolder: '.',
   fixturesFolder: './src/fixtures',

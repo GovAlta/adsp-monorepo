@@ -46,6 +46,7 @@ describe('export', () => {
 
   beforeEach(() => {
     axiosMock.get.mockReset();
+    axiosMock.isAxiosError.mockReset();
     directoryMock.getResourceUrl.mockClear();
     fileServiceMock.upload.mockClear();
     eventServiceMock.send.mockClear();
@@ -112,6 +113,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -120,12 +122,84 @@ describe('export', () => {
     await job(item);
 
     expect(exported).toBe(
-      '[\n  {"id":"test-1","name":"Test 1","extra":{"nested":true}},\n  {"id":"test-2","name":"Test 2","other":{"deep":{"nested":"value"}}}\n]\n'
+      '[\n{"id":"test-1","name":"Test 1","extra":{"nested":true}},\n{"id":"test-2","name":"Test 2","other":{"deep":{"nested":"value"}}}\n]\n'
     );
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
+      item.filename + '.json',
+      expect.any(Readable)
+    );
+    expect(repositoryMock.update).toHaveBeenCalledWith('export-1', 'completed', result);
+    expect(eventServiceMock.send).toHaveBeenCalledWith(
+      expect.objectContaining({ name: ExportCompletedDefinition.name })
+    );
+  });
+
+  it('can process export json with pretty format option', async () => {
+    const job = createExportJob({
+      logger: loggerMock,
+      directory: directoryMock,
+      tokenProvider: tokenProviderMock,
+      eventService: eventServiceMock,
+      repository: repositoryMock,
+      fileService: fileServiceMock,
+    });
+
+    directoryMock.getResourceUrl.mockResolvedValue(new URL('http://test-service/test/v1/tests'));
+    axiosMock.get.mockResolvedValueOnce({
+      data: {
+        results: [
+          { id: 'test-1', name: 'Test 1', extra: { nested: true } },
+          { id: 'test-2', name: 'Test 2', other: { deep: { nested: 'value' } } },
+        ],
+        page: {},
+      },
+    });
+
+    const result = {
+      id: 'exported-1',
+      urn: 'urn:ads:platform:file-service:v1:/files/exported-1',
+      filename: 'exported.csv',
+    };
+    const decoder = new TextDecoder();
+    let exported = '';
+    fileServiceMock.upload.mockImplementationOnce(
+      async (_tenantId, _fileType, _recordId, _filename, content: Readable) => {
+        return new Promise((resolve, reject) => {
+          content.on('data', (chunk: unknown) => {
+            exported += decoder.decode(chunk as Buffer);
+          });
+          content.on('error', (err) => reject(err));
+          content.on('end', () => resolve(result));
+          content.read();
+        });
+      }
+    );
+
+    const item = {
+      tenantId: tenantId.toString(),
+      jobId: 'export-1',
+      timestamp: new Date(),
+      resourceId: adspId`${apiId}:/tests`.toString(),
+      requestedBy: { id: 'tester', name: 'Tester' },
+      params: {},
+      resultsPath: 'results',
+      filename: 'exported',
+      fileType: 'export',
+      format: 'json',
+      formatOptions: { pretty: true },
+    };
+    await job(item);
+
+    expect(exported).toContain(
+      '[\n{\n  "id": "test-1",\n  "name": "Test 1",\n  "extra": {\n    "nested": true\n  }\n},'
+    );
+    expect(fileServiceMock.upload).toHaveBeenCalledWith(
+      expect.any(AdspId),
+      item.fileType,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
@@ -183,6 +257,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'csv',
@@ -194,7 +269,7 @@ describe('export', () => {
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.csv',
       expect.any(Readable)
     );
@@ -252,6 +327,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -259,17 +335,54 @@ describe('export', () => {
     };
     await job(item);
 
-    expect(exported).toBe('[\n  {"id":"test-1","name":"Test 1"},\n  {"id":"test-2","name":"Test 2"}\n]\n');
+    expect(exported).toBe('[\n{"id":"test-1","name":"Test 1"},\n{"id":"test-2","name":"Test 2"}\n]\n');
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
     expect(repositoryMock.update).toHaveBeenCalledWith('export-1', 'completed', result);
     expect(eventServiceMock.send).toHaveBeenCalledWith(
       expect.objectContaining({ name: ExportCompletedDefinition.name })
+    );
+  });
+
+  it('can handle processing error', async () => {
+    const job = createExportJob({
+      logger: loggerMock,
+      directory: directoryMock,
+      tokenProvider: tokenProviderMock,
+      eventService: eventServiceMock,
+      repository: repositoryMock,
+      fileService: fileServiceMock,
+    });
+
+    directoryMock.getResourceUrl.mockRejectedValue(new Error('oh noes!'));
+
+    const item = {
+      tenantId: tenantId.toString(),
+      jobId: 'export-1',
+      timestamp: new Date(),
+      resourceId: adspId`${apiId}:/tests`.toString(),
+      requestedBy: { id: 'tester', name: 'Tester' },
+      params: {},
+      resultsPath: 'results',
+      filename: 'exported',
+      fileType: 'export',
+      format: 'json',
+      formatOptions: {},
+    };
+    await job(item);
+
+    expect(fileServiceMock.upload).not.toHaveBeenCalled();
+    expect(repositoryMock.update).toHaveBeenCalledWith('export-1', 'failed');
+    expect(eventServiceMock.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: ExportFailedDefinition.name,
+        payload: expect.objectContaining({ error: 'Error: oh noes!' }),
+      })
     );
   });
 
@@ -284,7 +397,11 @@ describe('export', () => {
     });
 
     directoryMock.getResourceUrl.mockResolvedValue(new URL('http://test-service/test/v1/tests'));
-    axiosMock.get.mockRejectedValue(new Error('oh noes!'));
+
+    const error = new Error('oh noes!');
+    error['response'] = { data: { errorMessage: 'Something went wrong!' } };
+    axiosMock.get.mockRejectedValue(error);
+    axiosMock.isAxiosError.mockReturnValueOnce(true);
 
     const item = {
       tenantId: tenantId.toString(),
@@ -293,6 +410,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -302,7 +420,53 @@ describe('export', () => {
 
     expect(fileServiceMock.upload).not.toHaveBeenCalled();
     expect(repositoryMock.update).toHaveBeenCalledWith('export-1', 'failed');
-    expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: ExportFailedDefinition.name }));
+    expect(eventServiceMock.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: ExportFailedDefinition.name,
+        payload: expect.objectContaining({ error: 'Something went wrong!' }),
+      })
+    );
+  });
+
+  it('can handle request failure without data', async () => {
+    const job = createExportJob({
+      logger: loggerMock,
+      directory: directoryMock,
+      tokenProvider: tokenProviderMock,
+      eventService: eventServiceMock,
+      repository: repositoryMock,
+      fileService: fileServiceMock,
+    });
+
+    directoryMock.getResourceUrl.mockResolvedValue(new URL('http://test-service/test/v1/tests'));
+
+    const error = new Error('oh noes!');
+    axiosMock.get.mockRejectedValue(error);
+    axiosMock.isAxiosError.mockReturnValueOnce(true);
+
+    const item = {
+      tenantId: tenantId.toString(),
+      jobId: 'export-1',
+      timestamp: new Date(),
+      resourceId: adspId`${apiId}:/tests`.toString(),
+      requestedBy: { id: 'tester', name: 'Tester' },
+      params: {},
+      resultsPath: 'results',
+      filename: 'exported',
+      fileType: 'export',
+      format: 'json',
+      formatOptions: {},
+    };
+    await job(item);
+
+    expect(fileServiceMock.upload).not.toHaveBeenCalled();
+    expect(repositoryMock.update).toHaveBeenCalledWith('export-1', 'failed');
+    expect(eventServiceMock.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: ExportFailedDefinition.name,
+        payload: expect.objectContaining({ error: 'oh noes!' }),
+      })
+    );
   });
 
   it('can process export paged results', async () => {
@@ -359,6 +523,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -366,11 +531,11 @@ describe('export', () => {
     };
     await job(item);
 
-    expect(exported).toBe('[\n  {"id":"test-1","name":"Test 1"},\n  {"id":"test-2","name":"Test 2"}\n]\n');
+    expect(exported).toBe('[\n{"id":"test-1","name":"Test 1"},\n{"id":"test-2","name":"Test 2"}\n]\n');
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
@@ -425,6 +590,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -432,11 +598,11 @@ describe('export', () => {
     };
     await job(item);
 
-    expect(exported).toBe('[\n  {"id":"test-1","name":"Test 1"},\n  {"id":"test-2","name":"Test 2"}\n]\n');
+    expect(exported).toBe('[\n{"id":"test-1","name":"Test 1"},\n{"id":"test-2","name":"Test 2"}\n]\n');
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
@@ -488,6 +654,7 @@ describe('export', () => {
       resourceId: adspId`${apiId}:/tests`.toString(),
       requestedBy: { id: 'tester', name: 'Tester' },
       params: {},
+      resultsPath: 'results',
       filename: 'exported',
       fileType: 'export',
       format: 'json',
@@ -495,11 +662,11 @@ describe('export', () => {
     };
     await job(item);
 
-    expect(exported).toBe('[\n  {"id":"test-1","name":"Test 1"}\n]\n');
+    expect(exported).toBe('[\n{"id":"test-1","name":"Test 1"}\n]\n');
     expect(fileServiceMock.upload).toHaveBeenCalledWith(
       expect.any(AdspId),
       item.fileType,
-      item.resourceId,
+      item.jobId,
       item.filename + '.json',
       expect.any(Readable)
     );
