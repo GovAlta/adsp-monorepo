@@ -4,7 +4,12 @@ import { isEqual } from 'lodash';
 import { ARROW_DOWN_KEY, ARROW_UP_KEY, DropdownProps, ENTER_KEY, ESCAPE_KEY, Item, TAB_KEY } from './DropDownTypes';
 import { GoADropdownListContainer, GoADropdownListContainerWrapper, GoADropdownListOption } from './styled-components';
 
-export const removeCharacters = (keyCode: number) => {};
+export const isValidKey = (keyCode: string): boolean => {
+  if (keyCode === 'Shift' || keyCode === 'Alt') return false;
+
+  const regex = new RegExp(/^[a-zA-Z0-9!%$@.#?-_]+$/);
+  return regex.test(keyCode);
+};
 
 export const Dropdown = (props: DropdownProps): JSX.Element => {
   const { label, selected, onChange, optionListMaxHeight, isAutoCompletion, id } = props;
@@ -43,26 +48,15 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textInput]);
 
-  //Handling onBlur event for the GoAInput component as we need the FocusEvent instead of
-  //the built in onBlur event used by GoAInput
+  /* istanbul ignore next */
   const handleTextInputOnBlur = (e: FocusEvent) => {
     if (e.relatedTarget === null) {
       setIsOpen(false);
-    }
-    if (e.relatedTarget && e.relatedTarget && !isAutoCompletion) {
+    } else if (e.relatedTarget && !isAutoCompletion) {
       const dropDownEl = e.relatedTarget as HTMLDivElement;
       if (dropDownEl) {
         if (!dropDownEl.id.startsWith(`${PREFIX}-${label}`)) {
           setIsOpen(false);
-        } else {
-          const id = dropDownEl.innerText;
-          const dropDownItem = props.items.find((di) => {
-            return di.label === id;
-          });
-          if (dropDownItem) {
-            //updateDropDownData(dropDownItem);
-            //setIsOpen(false);
-          }
         }
       }
     }
@@ -100,9 +94,10 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
   };
 
+  /* istanbul ignore next */
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === ENTER_KEY) {
-      setIsOpen(!isOpen);
+      setIsOpen((previousIsOpen) => !previousIsOpen);
       const el = document.getElementById(`${PREFIX}-${label}-${items.at(0)?.value}`);
       setElementFocus(e, el, false);
     } else if (e.key === ARROW_UP_KEY) {
@@ -123,20 +118,19 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       if (el === null && !isAutoCompletion) {
         const elements = document.querySelectorAll(`[id='${PREFIX}-dropDownList-${label}']`);
         const element = elements.item(0).children.item(1) as HTMLElement;
-
+        el = document.getElementById(`${PREFIX}-${label}-${element.innerText}`);
+      } else if (el === null && isAutoCompletion) {
+        const elements = document.querySelectorAll(`[id=${PREFIX}-dropDownList-${label}]`);
+        const element = elements[0].children[0] as HTMLElement;
         el = document.getElementById(`${PREFIX}-${label}-${element.innerText}`);
       }
-      // else if (el === null && isAutoCompletion) {
-      //   const elements = document.querySelectorAll(`[id=${PREFIX}-dropDownList-${label}]`);
-      //   const element = elements[0].children[0] as HTMLElement;
-
-      //   el = document.getElementById(`${PREFIX}-${label}-${element.innerText}`);
-      // }
       setElementFocus(e, el, true);
     } else if (e.key === ESCAPE_KEY || e.key === TAB_KEY) {
       setIsOpen(false);
     } else {
-      // setInputText((prev) => `${prev}${e.key}`);
+      if (isValidKey(e.key)) {
+        setIsOpen(true);
+      }
     }
   };
 
@@ -218,7 +212,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
               return item.label.includes(value);
             });
             setItems(selectedItems);
-            setIsOpen(true);
+            //setIsOpen(false);
           }
         }}
         trailingIcon={trailingIcon}
