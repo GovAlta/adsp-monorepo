@@ -7,3 +7,7 @@ export enum FormServiceRoles {
   FileReader = 'form-file-reader',
   Tester = 'form-tester',
 }
+
+export enum ExportServiceRoles {
+  ExportJob = 'urn:ads:platform:export-service:export-job',
+}

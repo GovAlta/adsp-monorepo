@@ -1,6 +1,6 @@
 {{#if (isControlAndHasScope element) }}
     {{#if (isArray element data) }}
-        {{#withEachDataWithItems data element.scope requiredFields element dataSchema }}
+        {{#withEachDataWithItems data element.scope requiredFields element dataSchema params.dataSchema }}
             <div class="list-item-basic">
                 {{#forEachItem params.items this params.requiredFields }}
                     <div class="list-item-borderless">
@@ -43,8 +43,8 @@
         </div>
     {{/withEachData}}
 {{else if (hasElements element) }}
-    {{#withEach element.elements data requiredFields }}
-        <div class="grid-padding">
+    {{#withEach element.elements data requiredFields dataSchema }}
+        <div class="list-item-borderless-box">
             {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
         </div>
     {{/withEach}}

@@ -8,8 +8,8 @@ describe('AddressInputs', () => {
   const defaultAddress: Address = {
     addressLine1: '123 Main St',
     addressLine2: 'Apt 4',
-    city: 'Edmonton',
-    province: 'BC',
+    municipality: 'Edmonton',
+    subdivisionCode: 'BC',
     postalCode: 'T5T 1V4',
     country: 'CA',
   };
@@ -24,9 +24,9 @@ describe('AddressInputs', () => {
     const addressLine2 = component.getByTestId('address-form-address2');
     expect((addressLine2 as HTMLInputElement).value).toBe(defaultAddress.addressLine2);
     const city = component.getByTestId('address-form-city');
-    expect((city as HTMLInputElement).value).toBe(defaultAddress.city);
+    expect((city as HTMLInputElement).value).toBe(defaultAddress.municipality);
     const province = component.getByTestId('address-form-province-dropdown');
-    expect((province as HTMLInputElement).value).toBe(defaultAddress.province);
+    expect((province as HTMLInputElement).value).toBe(defaultAddress.subdivisionCode);
     const postalCode = component.getByTestId('address-form-postal-code');
     expect((postalCode as HTMLInputElement).value).toBe(defaultAddress.postalCode);
   });
@@ -70,7 +70,6 @@ describe('AddressInputs', () => {
     const blurred = fireEvent.blur(cityInput);
 
     expect(blurred).toBe(true);
-    //  expect(mockHandleInputBlur).toHaveBeenCalledWith('municipality');
   });
   it('calls handleInputChange on user input in postal code', () => {
     render(<AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} />);

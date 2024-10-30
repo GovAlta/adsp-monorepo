@@ -415,6 +415,103 @@ objects:
               name: event-service:${DEPLOY_TAG}
               namespace: ${INFRA_NAMESPACE}
           type: ImageChange
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: event-service
+        component: job
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: event-service-job
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "event-service:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image"
+            }
+          ]
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: event-service
+          component: job
+      template:
+        metadata:
+          labels:
+            app: event-service
+            component: job
+        spec:
+          containers:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/event-service@${DEPLOY_TAG}
+              envFrom:
+                - configMapRef:
+                    name: event-service
+                - configMapRef:
+                    name: directory-overrides
+                - secretRef:
+                    name: event-service
+              env:
+                - name: PORT
+                  value: "3333"
+                - name: AMQP_CONSUMER_PRIORITY
+                  value: "1"
+              imagePullPolicy: IfNotPresent
+              name: event-service
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 2
+                timeoutSeconds: 1
+                periodSeconds: 5
+                successThreshold: 1
+                failureThreshold: 20
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 2
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 5
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
   - apiVersion: v1
     kind: Service
     metadata:

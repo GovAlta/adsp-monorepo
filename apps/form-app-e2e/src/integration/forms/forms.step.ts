@@ -57,6 +57,7 @@ Then('the user views a from draft of {string}', function (formDefinition) {
     formId = url.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
     expect(formId).to.be.not.null;
   });
+  cy.viewport(1920, 1080);
 });
 
 When('the user sends a delete form request', function () {

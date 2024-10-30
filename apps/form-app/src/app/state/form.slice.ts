@@ -36,6 +36,7 @@ export interface Form {
     id: string;
     urn: string;
   };
+  jobId?: string;
 }
 
 interface FormDataResponse {
