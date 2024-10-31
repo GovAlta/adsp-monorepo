@@ -40,17 +40,20 @@ describe('fetchAddressSuggestions', () => {
     };
     mockedAxios.get.mockResolvedValueOnce(mockResponse);
 
-    const result = await fetchAddressSuggestions(searchTerm, formUrl, true);
+    // const result =
+    await fetchAddressSuggestions(formUrl, searchTerm, true).then((result)=>{
+      expect(result).toEqual(mockResponse.data.Items);
+    });
 
-    expect(result).toEqual(mockResponse.data.Items);
   });
 
   it('should return an empty array on API error', async () => {
     mockedAxios.get.mockRejectedValueOnce(new Error('API Error'));
 
-    const result = await fetchAddressSuggestions(searchTerm, formUrl);
-
-    expect(result).toEqual([]);
+    // const result =
+    await fetchAddressSuggestions(formUrl, searchTerm).then((result)=>{
+      expect(result).toEqual([]);
+    });
   });
 });
 describe('filterAlbertaAddresses', () => {

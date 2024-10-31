@@ -17,6 +17,7 @@ import {
 } from './utils';
 import { SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
+import axios from 'axios';
 
 type AddressLookUpProps = ControlProps;
 
@@ -81,19 +82,29 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     return <HelpContentComponent {...props} isParent={true} showLabel={false} />;
   };
 
+
+
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (searchTerm.length > 2) {
         setLoading(true);
         setOpen(true);
-        const response = await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress);
-        const suggestions = filterSuggestionsWithoutAddressCount(response);
-        if (isAlbertaAddress) {
-          setSuggestions(filterAlbertaAddresses(suggestions));
-        } else {
-          setSuggestions(suggestions);
-        }
-        setLoading(false);
+        // const response = await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress);
+        // const suggestions = filterSuggestionsWithoutAddressCount(response);
+        // if (isAlbertaAddress) {
+        //   setSuggestions(filterAlbertaAddresses(suggestions));
+        // } else {
+        //   setSuggestions(suggestions);
+        // }
+        await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress).then((response)=>{
+          const suggestions = filterSuggestionsWithoutAddressCount(response);
+          if (isAlbertaAddress) {
+            setSuggestions(filterAlbertaAddresses(suggestions));
+          } else {
+            setSuggestions(suggestions);
+          }
+          setLoading(false);
+        })
       } else {
         setSuggestions([]);
         setOpen(false);
@@ -119,17 +130,17 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const handleRequiredFieldBlur = (name: string) => {
     let err = { ...errors };
     if(data?.["city"] === undefined || data?.["city"] === ""){
-       err[name] = name === 'municipality' ? `city is required 1` : ""
-       setErrors(err);
+      err[name] = name === 'municipality' ? 'city is required' : ""
+      setErrors(err);
     }
 
     if(!data?.[name] || data[name] === '' || data?.[name] === undefined){
-      err[name] =  name === 'municipality' ? `city is required 2` : `${name} is required`;
+      err[name] = name === 'municipality' ? 'city is required' : `${name} is required`;
       setErrors(err);
     }
 
     if(!data?.[name]){
-      err[name] =  name === 'addressLine1' ? `${name} is required` : ``;
+      err[name] = name === 'addressLine1' ? `${name} is required` : ``;
       setErrors(err);
     }
 
@@ -143,6 +154,30 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     }, 100);
   };
 
+  useEffect(()=>{
+    const test = async() => {
+      try {
+        const params = {
+          country: 'CAN',
+          languagePreference: 'en',
+          lastId: '',
+          maxSuggestions: isAlbertaAddress ? '50' : '10',
+          searchTerm: searchTerm,
+        };
+        await axios.get(formUrl, { params }).then((res)=>{
+          const response = res?.data?.Items || [];
+          return response;
+        }).catch((err)=>{
+          return [];
+        })
+        // return response?.data?.Items || [];
+      } catch (error) {
+        console.error('Error fetching address suggestions:', error);
+        return [];
+      }
+    }
+    test();
+  },[])
 
   useEffect(() => {
     if (dropdownRef.current) {
@@ -205,8 +240,8 @@ const handleKeyDown = (e:any) => {
             ariaLabel={'address-form-address1'}
             placeholder="Start typing the first line of your address, required."
             value={address?.addressLine1 || ''}
-            onChange={(name, value) => handleDropdownChange(value)}
-            onBlur={(name, value) => {
+            onChange={(value) => handleDropdownChange(value)}
+            onBlur={(name) => {
               handleRequiredFieldBlur(name)
             }}
             width="100%"

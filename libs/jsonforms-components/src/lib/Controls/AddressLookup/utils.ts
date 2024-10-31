@@ -15,13 +15,19 @@ export const fetchAddressSuggestions = async (
   };
 
   try {
-    const response = await axios.get(formUrl, { params });
-    return response.data.Items || [];
+    await axios.get(formUrl, { params }).then((res) => {
+      // return response.data.Items || [];
+      const response = res?.data?.Items || [];
+      return response;
+    }).catch((err)=>{
+      return [];
+    })
   } catch (error) {
     console.error('Error fetching address suggestions:', error);
     return [];
   }
 };
+
 export const filterAlbertaAddresses = (suggestions: Suggestion[]): Suggestion[] => {
   return suggestions.filter((suggestion) => suggestion.Description.includes('AB'));
 };
