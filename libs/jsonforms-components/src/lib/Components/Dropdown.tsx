@@ -12,7 +12,7 @@ export const isValidKey = (keyCode: string): boolean => {
 };
 
 export const Dropdown = (props: DropdownProps): JSX.Element => {
-  const { label, selected, onChange, optionListMaxHeight, isEnabled, isAutoCompletion, id } = props;
+  const { label, selected, onChange, optionListMaxHeight, isAutoCompletion, enabled, id } = props;
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(selected);
@@ -200,7 +200,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         onTrailingIconClick={() => {
           setIsOpen(!isOpen);
         }}
-        disabled={!isEnabled}
+        disabled={!enabled}
         name={`dropdown-${label}`}
         width="100%"
         value={inputText}

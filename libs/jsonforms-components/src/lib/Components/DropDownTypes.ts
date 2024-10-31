@@ -7,6 +7,7 @@ export interface DropdownProps {
   items: Array<Item>;
   label: string;
   selected: string;
+  enabled: boolean;
   optionListMaxHeight?: string;
   onChange: (value: string) => void;
   isAutoCompletion?: boolean;
