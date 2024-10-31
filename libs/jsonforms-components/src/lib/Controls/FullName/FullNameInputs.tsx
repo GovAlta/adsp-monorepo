@@ -26,17 +26,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   requiredFields,
 }: NameInputsProps): JSX.Element => {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  /* istanbul ignore next */
-  // const handleRequiredFieldBlur = (name: string) => {
-  //   if ((!data?.[name] || data?.[name] === '') && requiredFields.includes(name)) {
-  //     const err = { ...errors };
-  //     const modifiedName = name === 'firstName' ? 'First name' : 'Last name';
-  //     err[name] = `${modifiedName} is required`;
-  //     setErrors(err);
-  //   } else {
-  //     delete errors[name];
-  //   }
-  // };
+
   return (
     <GoAGrid minChildWidth="0ch" gap="s" testId="wrapper">
       <GoAFormItem
@@ -52,10 +42,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
           ariaLabel={'name-form-first-name'}
           value={firstName || ''}
           onChange={(name, value) => handleInputChange(name, value)}
-          onBlur={(name) => {
-            /* istanbul ignore next */
-            // handleRequiredFieldBlur(name);
-          }}
+          onBlur={(name) => {}}
           width="100%"
         />
       </GoAFormItem>
@@ -87,10 +74,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
           ariaLabel={'name-form-last-name'}
           value={lastName || ''}
           onChange={(name, value) => handleInputChange(name, value)}
-          onBlur={(name) => {
-            /* istanbul ignore next */
-            // handleRequiredFieldBlur(name);
-          }}
+          onBlur={(name) => {}}
           width="100%"
         />
       </GoAFormItem>
