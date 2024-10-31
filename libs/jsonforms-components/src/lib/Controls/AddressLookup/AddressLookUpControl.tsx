@@ -154,31 +154,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     }, 100);
   };
 
-  useEffect(()=>{
-    const test = async() => {
-      try {
-        const params = {
-          country: 'CAN',
-          languagePreference: 'en',
-          lastId: '',
-          maxSuggestions: isAlbertaAddress ? '50' : '10',
-          searchTerm: searchTerm,
-        };
-        await axios.get(formUrl, { params }).then((res)=>{
-          const response = res?.data?.Items || [];
-          return response;
-        }).catch((err)=>{
-          return [];
-        })
-        // return response?.data?.Items || [];
-      } catch (error) {
-        console.error('Error fetching address suggestions:', error);
-        return [];
-      }
-    }
-    test();
-  },[])
-
   useEffect(() => {
     if (dropdownRef.current) {
         const selectedItem = dropdownRef.current.children[selectedIndex];
@@ -241,9 +216,7 @@ const handleKeyDown = (e:any) => {
             placeholder="Start typing the first line of your address, required."
             value={address?.addressLine1 || ''}
             onChange={(value) => handleDropdownChange(value)}
-            onBlur={(name) => {
-              handleRequiredFieldBlur(name)
-            }}
+            onBlur={(name) => handleRequiredFieldBlur(name)}
             width="100%"
           />
           {loading && autocompletion && <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress> }
