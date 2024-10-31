@@ -121,7 +121,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   const handleRequiredFieldBlur = (name: string) => {
-    let err = { ...errors };
+    const err = { ...errors };
     if(data?.["city"] === undefined || data?.["city"] === ""){
       err[name] = name === 'municipality' ? 'city is required' : ""
       setErrors(err);
@@ -177,7 +177,7 @@ const handleKeyDown = (e:any) => {
       setLoading(false);
       if (selectedIndex >= 0) {
         document.getElementById("goaInput")?.blur()
-        let suggestion = suggestions[selectedIndex];
+        const suggestion = suggestions[selectedIndex];
         if(suggestion){
           setTimeout(() => {
               handleSuggestionClick(suggestion);
