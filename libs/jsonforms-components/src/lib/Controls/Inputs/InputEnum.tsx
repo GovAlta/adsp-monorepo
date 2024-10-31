@@ -22,7 +22,7 @@ function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undef
 }
 
 export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
-  const { data, id, enabled, errors, schema, path, handleChange, options, config, label, uischema, required } = props;
+  const { data, enabled, path, handleChange, options, config, label, uischema, required } = props;
 
   const registerCtx = useContext(JsonFormsRegisterContext);
   const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
@@ -80,6 +80,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           key={`jsonforms-${label}-dropdown`}
           id={`jsonforms-${label}-dropdown`}
           label={label}
+          isEnabled={enabled}
           isAutoCompletion={autoCompletion}
           onChange={(value: string) => {
             handleChange(path, value);
