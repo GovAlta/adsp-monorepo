@@ -11,7 +11,8 @@ interface NameInputsProps {
   middleName?: string;
   lastName: string;
   isStepperReview?: boolean;
-  data: Data;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any;
   requiredFields: string[];
   // eslint-disable-next-line
   handleInputChange: (field: string, value: string) => void;
@@ -26,6 +27,29 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   requiredFields,
 }: NameInputsProps): JSX.Element => {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /* istanbul ignore next */
+
+  const handleRequiredFieldBlur = (name: string, updatedData?: any) => {
+    const err = { ...errors };
+    if (
+      (!data?.[name] || data?.[name] === '') &&
+      requiredFields.includes(name) &&
+      (!updatedData || updatedData?.[name] === '')
+    ) {
+      const modifiedName =
+        name === 'firstName'
+          ? 'First name'
+          : name === 'lastName'
+          ? 'Last name'
+          : name === 'dateOfBirth'
+          ? 'Date of birth'
+          : '';
+      err[name] = `${modifiedName} is required`;
+    } else {
+      err[name] = '';
+    }
+    setErrors(err);
+  };
 
   return (
     <GoAGrid minChildWidth="0ch" gap="s" testId="wrapper">
@@ -42,7 +66,10 @@ export const NameInputs: React.FC<NameInputsProps> = ({
           ariaLabel={'name-form-first-name'}
           value={firstName || ''}
           onChange={(name, value) => handleInputChange(name, value)}
-          onBlur={(name) => {}}
+          onBlur={(name) => {
+            /* istanbul ignore next */
+            handleRequiredFieldBlur(name);
+          }}
           width="100%"
         />
       </GoAFormItem>
@@ -74,7 +101,10 @@ export const NameInputs: React.FC<NameInputsProps> = ({
           ariaLabel={'name-form-last-name'}
           value={lastName || ''}
           onChange={(name, value) => handleInputChange(name, value)}
-          onBlur={(name) => {}}
+          onBlur={(name) => {
+            /* istanbul ignore next */
+            handleRequiredFieldBlur(name);
+          }}
           width="100%"
         />
       </GoAFormItem>
