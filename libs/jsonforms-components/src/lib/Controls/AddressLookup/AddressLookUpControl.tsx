@@ -159,21 +159,21 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       }
     }, [selectedIndex, open]);
 
-const handleKeyDown = (e:any) => {
+const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex((prevIndex) =>
             prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0
         );
-        handleDropdownChange(e.target.value)
+        handleDropdownChange(e.currentTarget.value)
     } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setSelectedIndex((prevIndex) =>
             prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1
         );
-        handleDropdownChange(e.target.value)
+        handleDropdownChange(e.currentTarget.value)
     } else if (e.key === 'Enter') {
-      handleDropdownChange(e.target.value)
+      handleDropdownChange(e.currentTarget.value)
       setLoading(false);
       if (selectedIndex >= 0) {
         document.getElementById("goaInput")?.blur()
