@@ -89,13 +89,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       if (searchTerm.length > 2) {
         setLoading(true);
         setOpen(true);
-        // const response = await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress);
-        // const suggestions = filterSuggestionsWithoutAddressCount(response);
-        // if (isAlbertaAddress) {
-        //   setSuggestions(filterAlbertaAddresses(suggestions));
-        // } else {
-        //   setSuggestions(suggestions);
-        // }
         await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress).then((response)=>{
           const suggestions = filterSuggestionsWithoutAddressCount(response);
           if (isAlbertaAddress) {
