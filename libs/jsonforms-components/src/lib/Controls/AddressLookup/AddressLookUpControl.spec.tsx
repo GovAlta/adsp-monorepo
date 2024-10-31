@@ -60,7 +60,7 @@ describe('AddressLookUpControl', () => {
 
     return render(
       <JsonFormContext.Provider value={mockFormContext}>
-        <AddressLookUpControl {...props} />
+        <AddressLookUpControl label={''} errors={''} rootSchema={undefined} id={''} enabled={false} visible={false} {...props} />
       </JsonFormContext.Provider>
     );
   };
@@ -110,13 +110,17 @@ describe('AddressLookUpControl', () => {
     const inputField = screen.getByTestId('address-form-address1');
 
     fireEvent.change(inputField, { target: { value: '123' } });
+    // expect((inputField as HTMLInputElement).value).toBe('123');
 
-    fireEvent(
-      inputField,
-      new CustomEvent('_change', {
-        detail: { name: 'addressLine1', value: '123' },
-      })
-    );
+
+    fireEvent.change(inputField, { target: { value: '123' } });
+
+    // fireEvent(
+    //   inputField,
+    //   new CustomEvent('_change', {
+    //     detail: { name: 'addressLine1', value: '123' },
+    //   })
+    // );
     expect((inputField as HTMLInputElement).value).toBe('123');
   });
 

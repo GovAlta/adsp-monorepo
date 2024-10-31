@@ -15,13 +15,10 @@ export const fetchAddressSuggestions = async (
   };
 
   try {
-    await axios.get(formUrl, { params }).then((res) => {
-      // return response.data.Items || [];
-      const response = res?.data?.Items || [];
-      return response;
-    }).catch((err)=>{
-      return [];
-    })
+
+          const response = await axios.get(formUrl, {params});
+          return response.data.Items; // Ensure data is returned here
+
   } catch (error) {
     console.error('Error fetching address suggestions:', error);
     return [];
