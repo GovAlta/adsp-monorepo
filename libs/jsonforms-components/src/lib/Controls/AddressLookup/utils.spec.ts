@@ -32,6 +32,7 @@ const mockSuggestions: Suggestion[] = [
 describe('fetchAddressSuggestions', () => {
   const formUrl = 'http://mockapi.com/address';
   const searchTerm = 'Main St';
+
   it('should return suggestions on successful API call', async () => {
     const mockResponse = {
       data: {
@@ -40,22 +41,22 @@ describe('fetchAddressSuggestions', () => {
     };
     mockedAxios.get.mockResolvedValueOnce(mockResponse);
 
-    // const result =
-    await fetchAddressSuggestions(formUrl, searchTerm, true).then((result)=>{
-      expect(result).toEqual(mockResponse.data.Items);
-    });
-
+    const result = await fetchAddressSuggestions(formUrl, searchTerm, true);
+    expect(result).toEqual(mockResponse.data.Items);
   });
 
   it('should return an empty array on API error', async () => {
-    mockedAxios.get.mockRejectedValueOnce(new Error('API Error'));
+    // Suppress console.error for this test case
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    // const result =
-    await fetchAddressSuggestions(formUrl, searchTerm).then((result)=>{
-      expect(result).toEqual([]);
-    });
+    mockedAxios.get.mockRejectedValueOnce(new Error('API Error'));
+    const result = await fetchAddressSuggestions(formUrl, searchTerm);
+    expect(result).toEqual([]);
+
+    // Restore console.error after the test
+    consoleErrorSpy.mockRestore();
   });
-});
+})
 describe('filterAlbertaAddresses', () => {
   it('should filter out non-Alberta addresses', () => {
     const result = filterAlbertaAddresses(mockSuggestions);
