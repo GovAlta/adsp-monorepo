@@ -1,0 +1,45 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "lib": ["ES2020"],
+    "target": "ES2019",
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    "esModuleInterop": true,
+    "noImplicitThis": true,
+    "outDir": "dist",
+    "rootDir": "."
+    // Strapi default configuration redundant or not working with base tsconfig.
+    // "moduleResolution": "Node",
+    // "skipLibCheck": true,
+    // "resolveJsonModule": true,
+    // "noEmitOnError": true,
+  },
+  "include": [
+    // Include root files
+    "./",
+    // Include all ts files
+    "./**/*.ts",
+    // Include all js files
+    "./**/*.js",
+    // Force the JSON files in the src folder to be included
+    "src/**/*.json"
+  ],
+
+  "exclude": [
+    "node_modules/",
+    "build/",
+    "dist/",
+    ".cache/",
+    ".tmp/",
+
+    // Do not include admin files in the server compilation
+    "src/admin/",
+    // Do not include test files
+    "**/*.test.*",
+    // Do not include plugins in the server compilation
+    "src/plugins/**"
+  ]
+}
