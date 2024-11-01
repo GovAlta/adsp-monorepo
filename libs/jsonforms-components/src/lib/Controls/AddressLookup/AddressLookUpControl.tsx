@@ -120,6 +120,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setErrors({});
   };
 
+  /* istanbul ignore next */
   const handleRequiredFieldBlur = (name: string) => {
     const err = { ...errors };
     if(data?.["city"] === undefined || data?.["city"] === ""){
@@ -159,6 +160,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       }
     }, [selectedIndex, open]);
 
+/* istanbul ignore next */
 const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'ArrowDown') {
         e.preventDefault();

@@ -114,13 +114,6 @@ describe('AddressLookUpControl', () => {
 
 
     fireEvent.change(inputField, { target: { value: '123' } });
-
-    // fireEvent(
-    //   inputField,
-    //   new CustomEvent('_change', {
-    //     detail: { name: 'addressLine1', value: '123' },
-    //   })
-    // );
     expect((inputField as HTMLInputElement).value).toBe('123');
   });
 
