@@ -76,7 +76,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
       ) : (
         <Dropdown
           items={mergedOptions as unknown as Item[]}
-          enabled={!enabled}
+          enabled={enabled}
           selected={data}
           key={`jsonforms-${label}-dropdown`}
           id={`jsonforms-${label}-dropdown`}
