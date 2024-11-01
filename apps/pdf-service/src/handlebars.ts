@@ -164,6 +164,10 @@ class HandlebarsTemplateService implements TemplateService {
       return requiredFields;
     });
 
+    handlebars.registerHelper('isGroup', function (element) {
+      return element.type === 'Group';
+    });
+
     handlebars.registerHelper('isControlAndHasScope', function (element) {
       return element.type === 'Control' && element.scope;
     });
@@ -317,6 +321,7 @@ class HandlebarsTemplateService implements TemplateService {
 
     handlebars.registerHelper('label', function (element) {
       const label = element?.label ? element.label : resolveLabelFromScope(element.scope);
+      console.log('Label', `${element.type} ${label} `);
       return label;
     });
     handlebars.registerHelper('value', function (element, data) {
