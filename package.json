@@ -174,6 +174,7 @@
     "@shelf/jest-mongodb": "^2.1.0",
     "@svgr/rollup": "8.1.0",
     "@svgr/webpack": "8.1.0",
+    "@swc/core": "^1.7.42",
     "@testing-library/jest-dom": "6.4.2",
     "@testing-library/react": "13.4.0",
     "@types/amqplib": "^0.5.13",
