@@ -24,8 +24,8 @@ export const EventButtonWrapper = styled.div`
   margin: 19px 0;
 `;
 
-export const MaxHeight = styled.div`
-  max-height: ${(p: HeightProps) => p.height + 'px'};
+export const MaxHeight = styled.div<HeightProps>`
+  max-height: ${(p) => p.height + 'px'};
 `;
 export const DescriptionText = styled.div`
   font-size: var(--fs-base);
