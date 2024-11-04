@@ -95,7 +95,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
               testId="address-form-province-dropdown"
               ariaLabel={'address-form-province'}
               value={address?.subdivisionCode || ''}
-              onChange={(value) => handleInputChange('province', value)}
+              onChange={(_, value) => handleInputChange('subdivisionCode', value as string)}
               relative={true}
               width="25ch"
             >

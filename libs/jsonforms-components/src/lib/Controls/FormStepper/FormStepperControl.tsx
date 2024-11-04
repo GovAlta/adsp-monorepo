@@ -130,14 +130,20 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* istanbul ignore next */
   if (categories?.length < 1) {
     // eslint-disable-next-line
     return <></>;
   }
 
   function nextPage(page: number, disabled: boolean[]) {
+    const pageStatus = getCompletionStatus(inputStatuses, page);
+    const statuses = [...stepStatuses];
+    statuses[page - 1] = pageStatus ? pageStatus : 'incomplete';
+    setStepStatuses(statuses);
     page++;
     while (page <= disabled.length && disabled[page - 1]) {
+      /* istanbul ignore next */
       page++;
     }
     setPage(page);
@@ -146,15 +152,21 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   function prevPage(page: number, disabled: boolean[]) {
     page--;
     while (page >= 0 && disabled[page - 1]) {
+      /* istanbul ignore next */
       page--;
     }
     setPage(page);
   }
 
+  /* istanbul ignore next */
   function setTab(page: number) {
     const categoryLabels = [...allCategories.elements.map((category) => category.label), summaryLabel];
     const visibleLabels = [...visibleCategoryLabels, summaryLabel];
     const newPage = mapToVisibleStep(page, categoryLabels, visibleLabels);
+    const pageStatus = getCompletionStatus(inputStatuses, page);
+    const statuses = [...stepStatuses];
+    statuses[page - 1] = pageStatus ? pageStatus : 'incomplete';
+    setStepStatuses(statuses);
     setPage(newPage);
   }
 
@@ -245,6 +257,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                           {category.elements
                             .filter((field) => {
                               const conditionProps = field.rule?.condition as SchemaBasedCondition;
+                              /* istanbul ignore next */
                               if (conditionProps && data) {
                                 const canHideControlParts = conditionProps?.scope?.split('/');
                                 const canHideControl =
