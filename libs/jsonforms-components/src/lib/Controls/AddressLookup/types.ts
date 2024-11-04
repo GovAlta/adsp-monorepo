@@ -1,6 +1,6 @@
 export interface Address {
   addressLine1: string;
-  addressLine2: string;
+  addressLine2?: string;
   municipality: string;
   subdivisionCode: string;
   postalCode: string;

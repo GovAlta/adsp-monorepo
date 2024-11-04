@@ -6,32 +6,8 @@ import blueUnderLineSvg from './assets/Blue-Underline.svg';
 import closeOutlineSvg from './assets/close-outline.svg';
 import errorIconSvg from './assets/Error_Icon.svg';
 import greenCircleCheckmarkSvg from './assets/green-circle-checkmark.svg';
-
-import veryDifficultSvgDefault from './assets/Very_Difficult-Default.svg';
-import veryDifficultSvgError from './assets/Very_Difficult-Error.svg';
-import veryDifficultSvgHover from './assets/Very_Difficult-Hover.svg';
-import veryDifficultSvgClick from './assets/Very_Difficult-Click.svg';
-
-import difficultSvgDefault from './assets/Difficult-Default.svg';
-import difficultSvgError from './assets/Difficult-Error.svg';
-import difficultSvgHover from './assets/Difficult-Hover.svg';
-import difficultSvgClick from './assets/Difficult-Click.svg';
-
-import neutralSvgDefault from './assets/Neutral-Default.svg';
-import neutralSvgError from './assets/Neutral-Error.svg';
-import neutralSvgHover from './assets/Neutral-Hover.svg';
-import neutralSvgClick from './assets/Neutral-Click.svg';
-
-import easySvgDefault from './assets/Easy-Default.svg';
-import easySvgError from './assets/Easy-Error.svg';
-import easySvgHover from './assets/Easy-Hover.svg';
-import easySvgClick from './assets/Easy-Click.svg';
-
-import veryEasySvgDefault from './assets/Very_Easy-Default.svg';
-import veryEasySvgError from './assets/Very_Easy-Error.svg';
-import veryEasySvgHover from './assets/Very_Easy-Hover.svg';
-import veryEasySvgClick from './assets/Very_Easy-Click.svg';
-
+import openLinkSvg from './assets/Open-Link.svg';
+import { ratings } from './ratings';
 export class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
   private apiUrl?: URL;
@@ -56,6 +32,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private commentSelector: Ref<HTMLInputElement> = createRef();
   private firstFocusableElement?: HTMLElement;
   private lastFocusableElement?: HTMLElement;
+  private ratings = ratings;
 
   constructor() {
     const site = `${document.location.protocol}//${document.location.host}`;
@@ -63,6 +40,7 @@ export class AdspFeedback implements AdspFeedbackApi {
       return Promise.resolve({ site, view: document.location.pathname });
     };
     this.onDimChange(false);
+
     const scriptElement = document.currentScript as HTMLScriptElement;
     if (scriptElement) {
       const scriptUrl = new URL(scriptElement.src);
@@ -91,6 +69,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     document.body.classList.add('modal-open');
     this.onDimChange(true);
   }
+
   private handleKeyOpenStartForm(event: KeyboardEvent) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -247,53 +226,6 @@ export class AdspFeedback implements AdspFeedbackApi {
   }
 
   private selectedRating: number = -1;
-  private ratings = [
-    {
-      label: 'Very Difficult',
-      rate: 'terrible',
-      value: 0,
-      svgDefault: veryDifficultSvgDefault,
-      svgError: veryDifficultSvgError,
-      svgHover: veryDifficultSvgHover,
-      svgClick: veryDifficultSvgClick,
-    },
-    {
-      label: 'Difficult',
-      rate: 'bad',
-      value: 1,
-      svgDefault: difficultSvgDefault,
-      svgError: difficultSvgError,
-      svgHover: difficultSvgHover,
-      svgClick: difficultSvgClick,
-    },
-    {
-      label: 'Neutral',
-      rate: 'neutral',
-      value: 2,
-      svgDefault: neutralSvgDefault,
-      svgError: neutralSvgError,
-      svgHover: neutralSvgHover,
-      svgClick: neutralSvgClick,
-    },
-    {
-      label: 'Easy',
-      rate: 'good',
-      value: 3,
-      svgDefault: easySvgDefault,
-      svgError: easySvgError,
-      svgHover: easySvgHover,
-      svgClick: easySvgClick,
-    },
-    {
-      label: 'Very Easy',
-      rate: 'delightful',
-      value: 4,
-      svgDefault: veryEasySvgDefault,
-      svgError: veryEasySvgError,
-      svgHover: veryEasySvgHover,
-      svgClick: veryEasySvgClick,
-    },
-  ];
 
   private reset() {
     this.clearRating(this.selectedRating);
@@ -365,7 +297,6 @@ export class AdspFeedback implements AdspFeedbackApi {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderRating = (rating: any, index: number) => {
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     return html`
       <div class="rating-div">
         <img
@@ -379,41 +310,39 @@ export class AdspFeedback implements AdspFeedbackApi {
           tabindex="0"
           aria-label="${rating.label}"
         />
-        ${isSmallScreen
-          ? html`
-              <p
-                class="ratingText"
-                @mouseover="${() => this.updateHover(index, true)}"
-                @mouseout="${() => this.updateHover(index, false)}"
-                @click="${() => this.selectRating(index)}"
-              >
-                ${rating.label}
-              </p>
-            `
-          : html`<span class="tooltip-text">${rating.label}</span>`}
+
+        <p
+          class="ratingText"
+          @mouseover="${() => this.updateHover(index, true)}"
+          @mouseout="${() => this.updateHover(index, false)}"
+          @click="${() => this.selectRating(index)}"
+        >
+          ${rating.label}
+        </p>
+        <span class="tooltip-text">${rating.label}</span>
       </div>
     `;
   };
   private updateHover = (index: number, isHovering: boolean) => {
+    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     const rating = this.ratings[index];
     const images = document.querySelectorAll('.rating');
     const image = images[index] as HTMLImageElement;
-    const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     image.src =
       isHovering && this.selectedRating !== index
         ? rating.svgHover
         : this.selectedRating === index
         ? rating.svgClick
         : rating.svgDefault;
-    if (isSmallScreen) {
-      const texts = document.querySelectorAll('.ratingText');
-      const text = texts[index] as HTMLImageElement;
-      text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
-    } else {
+
+    const texts = document.querySelectorAll('.ratingText');
+    const text = texts[index] as HTMLImageElement;
+    text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+    if (!isSmallScreen) {
       const tooltips = document.querySelectorAll('.tooltip-text');
       const tooltip = tooltips[index] as HTMLImageElement;
-      tooltip.style.visibility = isHovering && !isSmallScreen ? 'visible' : 'hidden';
-      tooltip.style.opacity = isHovering && !isSmallScreen ? '1' : '0';
+      tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
+      tooltip.style.opacity = isHovering ? '1' : '0';
       if (index === 0) {
         tooltip.style.marginLeft = '35px';
         tooltip.classList.add('modified');
@@ -466,6 +395,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
+
     if (this.commentSelector.value && this.commentSelector.value.checked === true) {
       this.sendButtonRef.value?.removeAttribute('disabled');
     }
@@ -640,32 +570,32 @@ export class AdspFeedback implements AdspFeedbackApi {
             width: 98%;
 
             > div > img {
+              width: 46px;
+              height: 46px;
             }
             > div > img:first-child {
               padding-left: 0px;
             }
-            > div > p {
-              display: none;
-            }
-
-            span.tooltip-text {
-              visibility: hidden;
-              margin-left: 25px;
-              background-color: #666666;
-              color: #fff;
-              text-align: center;
-              border-radius: 5px;
-              padding: 8px 12px;
-              margin-top: 53px;
-              position: absolute;
-              transform: translateX(-50%);
-              white-space: nowrap;
-              opacity: 0;
-              -webkit-transition: opacity 0.3s;
-            }
           }
-
-          .adsp-fb .adsp-fb-form-rating .tooltip-text::before {
+          .tooltip-text {
+            visibility: hidden;
+            margin-left: 25px;
+            background-color: #666666;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 8px 12px;
+            margin-top: 53px;
+            position: absolute;
+            transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
+            white-space: nowrap;
+            opacity: 0;
+            z-index: 2;
+            transition: opacity 0.3s;
+            -webkit-transition: opacity 0.3s;
+          }
+          .tooltip-text:before {
             content: '';
             position: absolute;
             top: -10px;
@@ -673,13 +603,16 @@ export class AdspFeedback implements AdspFeedbackApi {
             margin-left: -5px;
             border-width: 5px;
             border-style: solid;
+            transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
             border-color: transparent transparent #666666 transparent;
           }
-
-          .adsp-fb .adsp-fb-form-rating .tooltip-text.modified::before {
+          .tooltip-text.modified:before {
             left: 40%;
           }
-
+          .ratingText {
+            display: none;
+          }
           .adsp-fb .adsp-fb-form-comment {
             display: flex;
             flex-direction: column;
@@ -869,7 +802,10 @@ export class AdspFeedback implements AdspFeedbackApi {
           }
           .rating {
             cursor: pointer;
+            transform: translateZ(0);
+            will-change: transform, color;
             transition: transform 0.3s ease-in-out color 0.3s ease;
+            transition: -webkit-transform 0.3s ease-in-out, color 0.3s ease;
           }
 
           .title {
@@ -988,7 +924,13 @@ export class AdspFeedback implements AdspFeedbackApi {
           }
           .p-content {
             line-height: 28px;
+            > a,
+            > a:link,
+            > a:visited {
+              color: #0070c4;
+            }
           }
+
           @media screen and (max-width: 767px) {
             .adsp-fb div.adsp-fb-form-container {
             }
@@ -1042,6 +984,10 @@ export class AdspFeedback implements AdspFeedbackApi {
             .adsp-fb .adsp-fb-container-heading {
               height: 55px !important;
             }
+            .adsp-fb .rating-div {
+              flex-direction: row;
+              gap: 6px;
+            }
             .adsp-fb .adsp-fb-form-rating {
               flex-direction: column-reverse;
               gap: 16px;
@@ -1055,22 +1001,20 @@ export class AdspFeedback implements AdspFeedbackApi {
                 height: 32px;
                 padding-right: 8px;
               }
-              > div > p {
-                margin-bottom: 0px !important;
-                display: block;
-                padding: 0;
-              }
-              > div > p :hover {
-                color: #004f84;
-              }
-              > div > span {
-                visibility: hidden;
-                opacity: 0;
-              }
+            }
+            tooltip-text {
+              visibility: hidden;
+              opacity: 0;
             }
             .ratingText {
               padding-top: 12px;
               cursor: pointer;
+              margin-bottom: 0px !important;
+              display: block;
+              padding: 0;
+            }
+            .ratingText :hover {
+              color: #004f84;
             }
           }
           @media screen and (max-height: 800px) {
@@ -1270,7 +1214,16 @@ export class AdspFeedback implements AdspFeedbackApi {
                       <p class="p-content">
                         Thank you for providing your feedback. We will use your input to improve the service. You will
                         not receive a response from this submission. If you do require a response, you can contact
-                        government through <a href="https://www.alberta.ca/contact-government">Alberta Connects</a>.
+                        government through
+                        <a target="_blank" href="https://www.alberta.ca/contact-government"
+                          >Alberta Connects
+                          <img
+                            class="connect-icon"
+                            src=${openLinkSvg}
+                            width="18px"
+                            height="18px"
+                            alt="Open Alberta Connects"
+                        /></a>
                       </p>
                       <div class="adsp-fb adsp-fb-success-actions">
                         <button

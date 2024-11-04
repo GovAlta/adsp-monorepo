@@ -510,7 +510,7 @@ Then('the user views feedback details with timestamp, rating, comments, technica
     .feedbackFeedbackTableItemDetails()
     .find('h2')
     .then((elements) => {
-      expect(elements.length).to.lte(2);
+      expect(elements.length).to.gte(2);
       if (elements.length == 3) {
         expect(elements[0].outerText).to.eq('Rating');
         expect(elements[1].outerText).to.eq('Comments');

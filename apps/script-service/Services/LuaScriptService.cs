@@ -35,7 +35,7 @@ internal sealed class LuaScriptService : ILuaScriptService
     try
     {
       using var lua = new Lua();
-      lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken, lua));
+      lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken));
       lua["script"] = script;
       lua["inputs"] = inputs;
 
@@ -78,7 +78,7 @@ internal sealed class LuaScriptService : ILuaScriptService
 
       using var lua = new Lua();
       lua.State.Encoding = Encoding.UTF8;
-      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, getToken, lua));
+      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, getToken));
 
       lua["script"] = definition.Script;
       lua["inputs"] = inputs;

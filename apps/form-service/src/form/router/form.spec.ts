@@ -11,6 +11,7 @@ import {
   createForm,
   createFormRouter,
   findFormSubmissions,
+  findSubmissions,
   getFormDefinitions,
   getFormSubmission,
   mapFormForSubmission,
@@ -214,6 +215,7 @@ describe('form router', () => {
     formSubmissionMock.get.mockReset();
     formSubmissionMock.save.mockClear();
     formSubmissionMock.delete.mockReset();
+    formSubmissionMock.find.mockClear();
     formSubmissionMock.dispositionSubmission.mockReset();
     formSubmissionMock.getByFormIdAndSubmissionId.mockReset();
     formSubmissionEntityMock.dispositionSubmission.mockReset();
@@ -1596,6 +1598,180 @@ describe('form router', () => {
     });
   });
 
+  describe('findSubmissions', () => {
+    const user = {
+      tenantId,
+      id: 'tester',
+      roles: [FormServiceRoles.Admin],
+    };
+    it('can create handler for find submissions', () => {
+      const handler = findSubmissions(apiId, formSubmissionMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can find form submissions', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {},
+        getServiceConfiguration: jest.fn(),
+      };
+
+      const page = {};
+
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
+
+      const handler = findSubmissions(apiId, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(formSubmissionMock.find).toBeCalledWith(100, undefined, expect.objectContaining({ tenantIdEquals: tenantId }));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
+    it('can find form submissions of definition', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          top: '10',
+          after: 'abc-123',
+          criteria: JSON.stringify({ createDateBefore: '2024-01-12', definitionIdEquals: definition.id }),
+        },
+        getServiceConfiguration: jest.fn(),
+      };
+
+      const page = {};
+
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+
+      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+      formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
+
+      const handler = findSubmissions(apiId, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getServiceConfiguration).toHaveBeenCalledWith(definition.id, tenantId);
+      expect(formSubmissionMock.find).toBeCalledWith(
+        10,
+        'abc-123',
+        expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
+    it('can find form submissions of definition as assessor', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['test-assessor'],
+      };
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          criteria: JSON.stringify({ createDateBefore: '2024-01-12', definitionIdEquals: definition.id }),
+        },
+        getServiceConfiguration: jest.fn(),
+      };
+
+      const page = {};
+
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+
+      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+      formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
+
+      const handler = findSubmissions(apiId, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getServiceConfiguration).toHaveBeenCalledWith(definition.id, tenantId);
+      expect(formSubmissionMock.find).toBeCalledWith(
+        100,
+        undefined,
+        expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
+    it('can find form submissions not authorized', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['abc'],
+      };
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {},
+        getServiceConfiguration: jest.fn(),
+      };
+
+      const page = {};
+
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
+
+      const handler = findSubmissions(apiId, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(formSubmissionMock.find).not.toBeCalled();
+      expect(res.send).not.toBeCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+    });
+
+    it('can find form submissions of definition not authorized', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['abc'],
+      };
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        query: {
+          criteria: JSON.stringify({ createDateBefore: '2024-01-12', definitionIdEquals: definition.id }),
+        },
+        getServiceConfiguration: jest.fn(),
+      };
+
+      const page = {};
+
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
+
+      const handler = findSubmissions(apiId, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(formSubmissionMock.find).not.toBeCalled();
+      expect(res.send).not.toBeCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+    });
+  });
+
   describe('findFormSubmissions', () => {
     const user = {
       tenantId,
@@ -1630,7 +1806,11 @@ describe('form router', () => {
       const handler = findFormSubmissions(apiId, formSubmissionMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(formSubmissionMock.find).toBeCalled();
+      expect(formSubmissionMock.find).toBeCalledWith(
+        100,
+        undefined,
+        expect.objectContaining({ tenantIdEquals: tenantId, formIdEquals: 'test-form' })
+      );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 
@@ -1726,11 +1906,12 @@ describe('form router', () => {
       const handler = findFormSubmissions(apiId, formSubmissionMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(formSubmissionMock.find).toBeCalled();
+      expect(formSubmissionMock.find).not.toBeCalled();
       expect(res.send).not.toBeCalled();
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
   });
+
   describe('validateCriteria', () => {
     const user = {
       tenantId,

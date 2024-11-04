@@ -24,19 +24,25 @@ public static class TestUtil
     return MockTokenGetter.Object;
   }
 
-  public static IRestClient GetRestClient<T>(AdspId serviceId, string endpoint, Object expectedResult)
+  public static IRestClient GetRestClient<T>(AdspId serviceId, string endpoint, Object expectedResult, bool success = true)
   {
     using var mockHttp = new MockHttpMessageHandler();
     string mockedHttpResponse = JsonConvert.SerializeObject(expectedResult, Formatting.None);
     var ServiceDirectory = GetServiceUrl(serviceId);
     var requestUrl = new Uri(ServiceDirectory.GetServiceUrl(serviceId).Result, endpoint);
 
-    mockHttp.When(HttpMethod.Get, requestUrl.AbsoluteUri)
-        .Respond(
-          "application/json",
-          mockedHttpResponse
-        );
-
+    var handler = mockHttp.When(HttpMethod.Get, requestUrl.AbsoluteUri);
+    if (success)
+    {
+      handler.Respond(
+         "application/json",
+         mockedHttpResponse
+       );
+    }
+    else
+    {
+      handler.Throw(new HttpRequestException("404 (Not Found)"));
+    }
 
     var mockRestClient = new RestClient(
       new RestClientOptions
