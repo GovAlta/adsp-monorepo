@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Dropdown } from './Dropdown';
+import { Dropdown, isValidKey } from './Dropdown';
 import exp from 'constants';
+import { GoAInputProps } from '@abgov/react-components-new';
 
 describe('Dropdown Component', () => {
   it('render the dropdown component', () => {
@@ -44,7 +45,7 @@ describe('Dropdown Component', () => {
         items={items}
         selected={items[0].value}
         onChange={(value) => {}}
-        isAutocompletion={true}
+        isAutoCompletion={true}
         id="jsonforms-dropdown-mock-test"
       />
     );
@@ -69,7 +70,7 @@ describe('Dropdown Component', () => {
           items={items}
           selected={items[0].value}
           onChange={(value) => {}}
-          isAutocompletion={true}
+          isAutoCompletion={true}
           id="jsonforms-dropdown-mock-test"
         />
       );
@@ -125,7 +126,7 @@ describe('Dropdown Component', () => {
           items={items}
           selected={items[0].value}
           onChange={(value) => {}}
-          isAutocompletion={true}
+          isAutoCompletion={true}
           id="jsonforms-dropdown-mock-test"
         />
       );
@@ -190,7 +191,7 @@ describe('Dropdown Component', () => {
           items={items}
           selected={items[0].value}
           onChange={(value) => {}}
-          isAutocompletion={true}
+          isAutoCompletion={true}
           id="jsonforms-dropdown-mock-test"
         />
       );
@@ -229,7 +230,7 @@ describe('Dropdown Component', () => {
           items={items}
           selected={items[0].value}
           onChange={(value) => {}}
-          isAutocompletion={true}
+          isAutoCompletion={true}
           id="jsonforms-dropdown-mock-test"
         />
       );
@@ -254,7 +255,7 @@ describe('Dropdown Component', () => {
           items={items}
           selected={items[0].value}
           onChange={(value) => {}}
-          isAutocompletion={true}
+          isAutoCompletion={true}
           id="jsonforms-dropdown-mock-test"
         />
       );
@@ -283,6 +284,18 @@ describe('Dropdown Component', () => {
       );
       fireEvent(input, new CustomEvent('_change', { detail: { name: 'label-a', value: 'value-a' } }));
       expect(input.getAttribute('value')).toBe('value-a');
+    });
+  });
+  describe('test util functions', () => {
+    it('test isValidKey is true with letter character', () => {
+      expect(isValidKey('a')).toBe(true);
+    });
+    it('test isValidKey is true if it is a number', () => {
+      expect(isValidKey('1')).toBe(true);
+    });
+
+    it('test isValidKey is false if it is not a shift key', () => {
+      expect(isValidKey('Shift')).toBe(false);
     });
   });
 });
