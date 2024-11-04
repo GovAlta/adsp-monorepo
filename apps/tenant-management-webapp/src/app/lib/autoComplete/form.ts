@@ -174,12 +174,26 @@ export class FormUISchemaElementCompletionItemProvider extends JsonObjectComplet
           }
           case 'number':
           case 'integer':
+            suggestions.push({
+              label: `Control:"${currentLabelPath}"`,
+              insertText: `{ "type": "Control", "scope": "${currentPath}" }`,
+              path,
+            });
+            break;
           case 'array':
             suggestions.push({
               label: `Control:"${currentLabelPath}"`,
               insertText: `{ "type": "Control", "scope": "${currentPath}" }`,
               path,
             });
+
+            if (property?.items?.type === 'object') {
+              suggestions.push({
+                label: `ListWithDetail:"${currentLabelPath}"`,
+                insertText: `{ "type": "ListWithDetail", "scope": "${currentPath}" }`,
+                path,
+              });
+            }
             break;
           case 'object':
           default:

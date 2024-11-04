@@ -4,8 +4,16 @@ import { isEqual } from 'lodash';
 import { ARROW_DOWN_KEY, ARROW_UP_KEY, DropdownProps, ENTER_KEY, ESCAPE_KEY, Item, TAB_KEY } from './DropDownTypes';
 import { GoADropdownListContainer, GoADropdownListContainerWrapper, GoADropdownListOption } from './styled-components';
 
+export const isValidKey = (keyCode: string): boolean => {
+  if (keyCode === 'Shift' || keyCode === 'Alt') return false;
+
+  const regex = new RegExp(/^[a-zA-Z0-9!%$@.#?\-_]+$/);
+  return regex.test(keyCode);
+};
+
 export const Dropdown = (props: DropdownProps): JSX.Element => {
-  const { label, selected, onChange, optionListMaxHeight, isAutocompletion, id } = props;
+  const { label, selected, onChange, optionListMaxHeight, isAutoCompletion, enabled, id } = props;
+
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(selected);
   const [items, setItems] = useState(props.items);
@@ -29,18 +37,34 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     if (textInput) {
       textInput.addEventListener('click', inputTextOnClick);
       textInput.addEventListener('keydown', handleKeyDown, false);
+      textInput.addEventListener('blur', handleTextInputOnBlur, false);
     }
     return () => {
       if (textInput) {
         textInput.removeEventListener('click', inputTextOnClick);
         textInput.removeEventListener('keydown', handleKeyDown);
+        textInput.removeEventListener('blur', handleTextInputOnBlur);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textInput]);
 
+  /* istanbul ignore next */
+  const handleTextInputOnBlur = (e: FocusEvent) => {
+    if (e.relatedTarget === null) {
+      setIsOpen(false);
+    } else if (e.relatedTarget && !isAutoCompletion) {
+      const dropDownEl = e.relatedTarget as HTMLDivElement;
+      if (dropDownEl) {
+        if (!dropDownEl.id.startsWith(`${PREFIX}-${label}`)) {
+          setIsOpen(false);
+        }
+      }
+    }
+  };
+
   const inputTextOnClick = (e: MouseEvent) => {
-    setIsOpen(!isOpen);
+    setIsOpen((previousIsOpen) => !previousIsOpen);
   };
 
   const updateDropDownData = (item: Item) => {
@@ -48,7 +72,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     setSelectedOption(item.value);
     setInputText(item.label);
 
-    if (isAutocompletion) {
+    if (isAutoCompletion) {
       const selectedItems = props.items.filter((filterItem) => {
         return filterItem.label === item.label;
       });
@@ -71,9 +95,10 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
   };
 
+  /* istanbul ignore next */
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === ENTER_KEY) {
-      setIsOpen(!isOpen);
+      setIsOpen((previousIsOpen) => !previousIsOpen);
       const el = document.getElementById(`${PREFIX}-${label}-${items.at(0)?.value}`);
       setElementFocus(e, el, false);
     } else if (e.key === ARROW_UP_KEY) {
@@ -91,14 +116,22 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       }
       let el = document.getElementById(`${PREFIX}-${label}-${props.items.at(index)?.value}`);
 
-      if (el === null) {
-        const elements = document.querySelectorAll(`[id=${PREFIX}-dropDownList-${label}]`);
+      if (el === null && !isAutoCompletion) {
+        const elements = document.querySelectorAll(`[id='${PREFIX}-dropDownList-${label}']`);
         const element = elements.item(0).children.item(1) as HTMLElement;
+        el = document.getElementById(`${PREFIX}-${label}-${element.innerText}`);
+      } else if (el === null && isAutoCompletion) {
+        const elements = document.querySelectorAll(`[id=${PREFIX}-dropDownList-${label}]`);
+        const element = elements[0].children[0] as HTMLElement;
         el = document.getElementById(`${PREFIX}-${label}-${element.innerText}`);
       }
       setElementFocus(e, el, true);
     } else if (e.key === ESCAPE_KEY || e.key === TAB_KEY) {
       setIsOpen(false);
+    } else {
+      if (isValidKey(e.key)) {
+        setIsOpen(true);
+      }
     }
   };
 
@@ -167,19 +200,20 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         onTrailingIconClick={() => {
           setIsOpen(!isOpen);
         }}
+        disabled={!enabled}
         name={`dropdown-${label}`}
         width="100%"
         value={inputText}
         testId={`${id}-input`}
         id={`${id}-input`}
-        readonly={!isAutocompletion}
+        readonly={!isAutoCompletion}
         onChange={(name, value) => {
-          if (isAutocompletion) {
+          if (isAutoCompletion) {
+            setInputText(value);
             const selectedItems = props.items.filter((item) => {
               return item.label.includes(value);
             });
             setItems(selectedItems);
-            setIsOpen(true);
           }
         }}
         trailingIcon={trailingIcon}
@@ -211,7 +245,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
                   onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
                     handDropDownItemOnKeyDown(e, item);
                   }}
-                  onClick={() => {
+                  onClick={(e: React.MouseEvent<HTMLDivElement>) => {
                     updateDropDownData(item);
                   }}
                 >
