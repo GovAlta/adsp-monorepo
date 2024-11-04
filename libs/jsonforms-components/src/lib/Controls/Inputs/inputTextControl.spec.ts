@@ -112,6 +112,20 @@ describe('Input Text Control tests', () => {
       expect(blurred).toBe(true);
     });
 
+    it('should format sin', async () => {
+      const props = { ...sinProps, handleChange: handleChangeMock };
+      const { getByTestId } = render(GoAInputText(props));
+      const input = getByTestId('firstName-input');
+      await fireEvent(
+        input,
+        new CustomEvent('_change', {
+          detail: { value: '123456789' },
+        })
+      );
+      // await fireEvent.change(input, { target: { value: '123456789' } });
+      expect(handleChangeMock).toHaveBeenCalledWith('', '123 456 789');
+    });
+
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
       const component = render(GoAInputText(props));
@@ -121,7 +135,7 @@ describe('Input Text Control tests', () => {
       handleChangeMock();
       expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
-      expect(handleChangeMock.mock.calls.length).toBe(1);
+      expect(handleChangeMock.mock.calls.length).toBe(2);
     });
   });
 
