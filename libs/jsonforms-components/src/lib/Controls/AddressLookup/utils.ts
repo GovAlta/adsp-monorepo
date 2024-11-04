@@ -52,8 +52,8 @@ export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
   return {
     addressLine1,
     addressLine2,
-    city,
-    province,
+    municipality: city,
+    subdivisionCode: province,
     postalCode,
     country: 'CA',
   };
