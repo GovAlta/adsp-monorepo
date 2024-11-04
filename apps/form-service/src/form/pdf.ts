@@ -116,6 +116,13 @@ const additionalStyles = `
             font-weight: 400;
         }
 
+        h4.groupPadding {
+            margin: 0.5rem 0 1.5rem 0!important;
+            line-height: 0;
+            color: #333;
+            font-size: 1.5em;
+            font-weight: 400;
+        }
         h4 {
             margin: 1.5em 0 0;
             padding: 0;
