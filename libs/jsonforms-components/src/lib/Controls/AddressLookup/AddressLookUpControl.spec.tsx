@@ -108,11 +108,6 @@ describe('AddressLookUpControl', () => {
     const handleDropdownChange = jest.fn(() => Promise.resolve());
     renderComponent();
     const inputField = screen.getByTestId('address-form-address1');
-
-    fireEvent.change(inputField, { target: { value: '123' } });
-    // expect((inputField as HTMLInputElement).value).toBe('123');
-
-
     fireEvent.change(inputField, { target: { value: '123' } });
     expect((inputField as HTMLInputElement).value).toBe('123');
   });

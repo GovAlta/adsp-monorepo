@@ -41,8 +41,9 @@ describe('fetchAddressSuggestions', () => {
     };
     mockedAxios.get.mockResolvedValueOnce(mockResponse);
 
-    const result = await fetchAddressSuggestions(formUrl, searchTerm, true);
-    expect(result).toEqual(mockResponse.data.Items);
+    await fetchAddressSuggestions(formUrl, searchTerm, true).then((result)=>{
+      expect(result).toEqual(mockResponse.data.Items);
+    });
   });
 
   it('should return an empty array on API error', async () => {

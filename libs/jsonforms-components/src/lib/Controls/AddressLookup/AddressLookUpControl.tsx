@@ -3,7 +3,7 @@ import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
 
-import { GoACircularProgress, GoAFormItem, GoAInput, GoASkeleton } from '@abgov/react-components-new';
+import { GoACircularProgress, GoAFormItem, GoAInput } from '@abgov/react-components-new';
 import { Address, Suggestion } from './types';
 
 import {
@@ -15,9 +15,8 @@ import {
   handlePostalCodeValidation,
   formatPostalCode,
 } from './utils';
-import { SearchBox } from './styled-components';
+import { ListItem, SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
-import axios from 'axios';
 
 type AddressLookUpProps = ControlProps;
 
@@ -161,21 +160,19 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     }, [selectedIndex, open]);
 
 /* istanbul ignore next */
-const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
+const handleKeyDown = (e:any,value:any,key:any) => {
+    if (key === 'ArrowDown') {
         setSelectedIndex((prevIndex) =>
             prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0
         );
-        handleDropdownChange(e.currentTarget.value)
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
+        handleDropdownChange(value)
+    } else if (key === 'ArrowUp') {
         setSelectedIndex((prevIndex) =>
             prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1
         );
-        handleDropdownChange(e.currentTarget.value)
-    } else if (e.key === 'Enter') {
-      handleDropdownChange(e.currentTarget.value)
+        handleDropdownChange(value)
+    } else if (key === 'Enter') {
+      handleDropdownChange(value)
       setLoading(false);
       if (selectedIndex >= 0) {
         document.getElementById("goaInput")?.blur()
@@ -194,14 +191,7 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     <div>
       {renderHelp()}
       <GoAFormItem label={label} error={errors?.['addressLine1'] ?? ''} data-testId="form-address-line1">
-        <SearchBox
-            onKeyDown={(e) => {
-              if(open){
-                handleKeyDown(e)
-              }
-            }
-          }
-        >
+        <SearchBox>
           <GoAInput
             id="goaInput"
             leadingIcon={autocompletion ? 'search' : undefined}
@@ -210,9 +200,17 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
             ariaLabel={'address-form-address1'}
             placeholder="Start typing the first line of your address, required."
             value={address?.addressLine1 || ''}
-            onChange={(value) => handleDropdownChange(value)}
+            onChange={(e,value) => {
+              handleDropdownChange(value)
+            }}
             onBlur={(name) => handleRequiredFieldBlur(name)}
             width="100%"
+            onKeyPress={(e:any,value:any,key:any) => {
+                if(open){
+                  handleKeyDown(e,value,key)
+                }
+              }
+            }
           />
           {loading && autocompletion && <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress> }
 
@@ -222,20 +220,17 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
                 autocompletion &&
                 open &&
                 suggestions.map((suggestion, index) => (
-                  <li
+                  <ListItem
                   data-index={index}
                   key={index}
                   onClick={() => {
                     handleSuggestionClick(suggestion)
                   }}
-                  style={{
-                    backgroundColor: selectedIndex === index ? 'var(--color-primary)' : '',
-                    color: selectedIndex === index ? ' var(--color-white)' : '',
-                    fontWeight :  selectedIndex === index ? 'var(--fw-bold)' : '',
-                  }}
+                  selectedIndex={selectedIndex}
+                  index={index}
                   >
                   {`${suggestion.Text}  ${suggestion.Description}`}
-                  </li>
+                  </ListItem>
                 ))}
             </ul>
           )}
