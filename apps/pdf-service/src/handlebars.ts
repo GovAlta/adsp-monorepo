@@ -321,9 +321,9 @@ class HandlebarsTemplateService implements TemplateService {
 
     handlebars.registerHelper('label', function (element) {
       const label = element?.label ? element.label : resolveLabelFromScope(element.scope);
-      console.log('Label', `${element.type} ${label} `);
       return label;
     });
+
     handlebars.registerHelper('value', function (element, data) {
       let value = getFormFieldValue(element.scope, data ? data : {});
 
