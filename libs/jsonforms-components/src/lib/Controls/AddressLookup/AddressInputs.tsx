@@ -53,21 +53,6 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
       <br />
       <GoAGrid minChildWidth="0ch" gap="s">
         <GoAFormItem
-          label="City"
-          error={errors?.['municipality'] ?? ''}
-          requirement={requiredFields?.includes('municipality') ? 'required' : 'optional'}
-        >
-          <GoAInput
-            name="municipality"
-            testId="address-form-city"
-            ariaLabel={'address-form-city'}
-            value={address?.municipality || ''}
-            onChange={(name, value) => handleInputChange(name, value)}
-            onBlur={(name, value) => handleOnBlur(name)}
-            width="100%"
-          />
-        </GoAFormItem>
-        <GoAFormItem
           label="Postal Code"
           error={errors?.['postalCode'] ?? ''}
           requirement={requiredFields?.includes('postalCode') ? 'required' : 'optional'}
@@ -79,34 +64,73 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             placeholder="A0A 0A0"
             value={address?.postalCode || ''}
             onChange={(name, value) => handleInputChange(name, value)}
-            onBlur={(name, value) => handleOnBlur(name)}
+            onBlur={(name) => handleOnBlur(name)}
             width="100%"
             maxLength={7}
           />
         </GoAFormItem>
-      </GoAGrid>
-      <br />
-      <GoAGrid minChildWidth="0" gap="s">
         <GoAFormItem label="Province">
           {isAlbertaAddress && <LabelDiv data-testid="address-form-province">Alberta</LabelDiv>}
           {!isAlbertaAddress && (
-            <GoADropdown
+            <GoAInput
+              id="province"
               name="province"
-              testId="address-form-province-dropdown"
+              testId="address-form-province"
               ariaLabel={'address-form-province'}
               value={address?.subdivisionCode || ''}
-              onChange={(value) => handleInputChange('province', value)}
-              relative={true}
-              width="25ch"
-            >
-              {provinces.map((w) => (
-                <GoADropdownItem key={w.value} value={w.value} label={w.label} />
-              ))}
-            </GoADropdown>
+              onChange={(name, value) => handleInputChange(name, value)}
+              onBlur={(name) => handleOnBlur(name)}
+              width="100%"
+            />
+
+            // <GoADropdown
+            //   id="province"
+            //   name="province"
+            //   testId="address-form-province-dropdown"
+            //   ariaLabel={'address-form-province'}
+            //   value={address?.subdivisionCode || ''}
+            //   onChange={(_, value) => handleInputChange('subdivisionCode', value as string)}
+            //   relative={true}
+            //   width="25ch"
+            // >
+            //   {provinces.map((w) => (
+            //     <GoADropdownItem key={w.value} value={w.value} label={w.label} />
+            //   ))}
+            // </GoADropdown>
           )}
         </GoAFormItem>
+      </GoAGrid>
+      <br />
+      <GoAGrid minChildWidth="0" gap="s">
+        <GoAFormItem
+          label="City"
+          error={errors?.['municipality'] ?? ''}
+          requirement={requiredFields?.includes('municipality') ? 'required' : 'optional'}
+        >
+          <GoAInput
+            id="city"
+            name="city"
+            testId="address-form-city"
+            ariaLabel={'address-form-city'}
+            value={address?.city || ''}
+            onChange={(name, value) => handleInputChange(name, value)}
+            onBlur={(name) => handleOnBlur(name)}
+            width="100%"
+          />
+        </GoAFormItem>
+
         <GoAFormItem label="Country">
-          <LabelDiv data-testid="address-form-country">Canada</LabelDiv>
+          <GoAInput
+            id="country"
+            name="country"
+            testId="address-form-Country"
+            ariaLabel={'address-form-Country'}
+            value={address?.country || ''}
+            onChange={(name, value) => handleInputChange(name, value)}
+            onBlur={(name) => handleOnBlur(name)}
+            width="100%"
+          />
+          {/* <LabelDiv data-testid="address-form-country">Canada</LabelDiv> */}
         </GoAFormItem>
       </GoAGrid>
     </>

@@ -44,7 +44,7 @@ export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
   }
 
   const descriptionParts = suggestion.Description.split(',');
-  const municipality = descriptionParts[0].trim();
+  const city = descriptionParts[0].trim();
   const provinceAndPostalCode = descriptionParts[1].trim().split(' ');
   const subdivisionCode = provinceAndPostalCode[0];
   const postalCode = descriptionParts[2].trim();
@@ -52,7 +52,7 @@ export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
   return {
     addressLine1,
     addressLine2,
-    municipality,
+    city,
     subdivisionCode,
     postalCode,
     country: 'CA',

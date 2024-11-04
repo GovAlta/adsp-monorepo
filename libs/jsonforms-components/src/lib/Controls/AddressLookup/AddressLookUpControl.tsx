@@ -36,7 +36,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const defaultAddress = {
     addressLine1: '',
     addressLine2: '',
-    municipality: '',
+    city: '',
     subdivisionCode: isAlbertaAddress ? 'AB' : '',
     postalCode: '',
     country: 'CA',
@@ -57,7 +57,10 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     let newAddress;
     const postalCodeErrorMessage = (schema as { errorMessage?: { properties?: { postalCode?: string } } }).errorMessage
       ?.properties?.postalCode;
-
+    if (field === 'addressLine1') {
+      newAddress = { ...address, [field]: normalizeAddress(value) };
+      console.log(newAddress);
+    }
     if (field === 'postalCode') {
       const validatePc = validatePostalCode(value);
       setErrors(
@@ -69,9 +72,23 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       newAddress = { ...address, [field]: value };
       delete errors[field];
     }
+    if (field === 'country') {
+      validateLocation(address);
+    }
 
     setAddress(newAddress);
     updateFormData(newAddress);
+  };
+  const validateLocation = (address: Address) => {
+    if (address.country !== 'CA' || address.subdivisionCode !== 'AB') {
+      alert('Please enter a valid Alberta address.');
+      return false;
+    }
+    return true;
+  };
+  const normalizeAddress = (addressLine1: string) => {
+    const abbreviations: any = { St: 'Street', Ave: 'Avenue', Blvd: 'Boulevard' };
+    return addressLine1.replace(/\b(St|Ave|Blvd)\b/g, (match) => abbreviations[match] || match);
   };
 
   const renderHelp = () => {
@@ -115,7 +132,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const handleRequiredFieldBlur = (name: string) => {
     if ((!data?.[name] || data?.[name] === '') && requiredFields?.includes(name)) {
       const err = { ...errors };
-      err[name] = name === 'municipality' ? `city is required` : `${name} is required`;
+      err[name] = name === 'city' ? `city is required` : `${name} is required`;
       setErrors(err);
     } else {
       delete errors[name];
