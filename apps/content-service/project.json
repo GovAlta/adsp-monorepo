@@ -9,8 +9,8 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "strapi build --bundler=webpack",
-          "rsync -a --delete ./dist ../../dist/apps/content-service"
+          "strapi build",
+          "rsync -a --delete ./dist/ ../../dist/apps/content-service"
         ],
         "parallel": false,
         "cwd": "apps/content-service"
@@ -24,7 +24,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "strapi develop --bundler=webpack",
+        "command": "strapi develop",
         "cwd": "apps/content-service"
       }
     }

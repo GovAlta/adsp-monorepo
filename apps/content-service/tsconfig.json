@@ -1,5 +1,4 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "module": "CommonJS",
     "lib": ["ES2020"],
@@ -9,13 +8,12 @@
     "incremental": true,
     "esModuleInterop": true,
     "noImplicitThis": true,
+    "moduleResolution": "Node",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmitOnError": true,
     "outDir": "dist",
     "rootDir": "."
-    // Strapi default configuration redundant or not working with base tsconfig.
-    // "moduleResolution": "Node",
-    // "skipLibCheck": true,
-    // "resolveJsonModule": true,
-    // "noEmitOnError": true,
   },
   "include": [
     // Include root files

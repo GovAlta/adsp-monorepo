@@ -32,7 +32,8 @@
     "tmw-e2e:regression-test": "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --env.'TAGS'='@regression' --baseUrl=https://tenant-management-webapp-test.os99.int.alberta.ca",
     "tmw-e2e:html-report": "node .\\apps\\tenant-management-webapp-e2e\\src\\support\\multiple-cucumber-html-reporter.js",
     "workspace-generator": "nx workspace-generator",
-    "prepare": "nx g @nx-dotnet/core:restore"
+    "prepare": "nx g @nx-dotnet/core:restore",
+    "postinstall": "npm --prefix apps/content-service ci"
   },
   "private": true,
   "dependencies": {
@@ -42,9 +43,6 @@
     "@faker-js/faker": "7.0.1",
     "@keycloak/keycloak-admin-client": "^19.0.3",
     "@socket.io/redis-adapter": "^8.3.0",
-    "@strapi/plugin-cloud": "5.2.0",
-    "@strapi/plugin-users-permissions": "5.2.0",
-    "@strapi/strapi": "5.2.0",
     "ajv": "^8.6.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
@@ -54,7 +52,6 @@
     "archiver": "^7.0.1",
     "async-es": "^3.2.0",
     "axios": "1.7.4",
-    "better-sqlite3": "11.3.0",
     "botbuilder": "^4.23.0",
     "clamscan": "^2.0.1",
     "class-transformer": "^0.3.1",
