@@ -196,7 +196,6 @@ const handleKeyDown = (e:string,value:string,key:string) => {
           <GoAInput
             leadingIcon={autocompletion && enabled ? 'search' : undefined}
             id="goaInput"
-            leadingIcon={autocompletion ? 'search' : undefined}
             name="addressLine1"
             testId="address-form-address1"
             readonly={readOnly}
