@@ -235,5 +235,53 @@ class FormPage {
       `//h4/div[contains(text(),"${serviceName}")]/parent::h4/following-sibling::goa-table[1]//tbody/tr/td[1][text()="${roleName}"]/following-sibling::td[1]/goa-checkbox`
     );
   }
+
+  formPreviewTextField(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]/goa-input[@type="text"]`);
+  }
+
+  formPreviewDateInput(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]/goa-input[@type="date"]`);
+  }
+
+  formPreviewDropdown(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]//div[contains(@data-testid, "dropdown")]`);
+  }
+
+  formPreviewNextButton() {
+    return cy.xpath('//goa-button[@data-testid="next-button"]');
+  }
+
+  formPreviewCheckbox(label) {
+    return cy.xpath(`//goa-checkbox[@text="${label}"]`);
+  }
+
+  formPreviewSubmitButton() {
+    return cy.xpath('//goa-button[@data-testid="stepper-submit-btn"]');
+  }
+
+  formPreviewListWithDetailButton(label) {
+    return cy.xpath(`//goa-button[contains(@data-testid, "object-array-toolbar") and text()="${label}"]`);
+  }
+
+  formPreviewListWithDetailDependantTextField(label) {
+    return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label}"]//goa-input`);
+  }
+
+  formPreviewListWithDetailDependantDateInput(label) {
+    return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label}"]//goa-input`);
+  }
+
+  formPreviewRadioGroup(question) {
+    return cy.xpath(`//goa-form-item[@label="${question}"]//goa-radio-group`);
+  }
+
+  formDataView() {
+    return cy.xpath('//div[@data-testid="data-view"]');
+  }
+
+  formDataContent() {
+    return cy.xpath('//div[@data-testid="data-view"]/div/div');
+  }
 }
 export default FormPage;
