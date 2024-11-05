@@ -10,6 +10,7 @@
     "noImplicitThis": true,
     "moduleResolution": "Node",
     "skipLibCheck": true,
+    "sourceMap": true,
     "resolveJsonModule": true,
     "noEmitOnError": true,
     "outDir": "dist",
