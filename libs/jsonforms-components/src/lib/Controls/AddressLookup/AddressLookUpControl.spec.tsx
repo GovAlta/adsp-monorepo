@@ -72,7 +72,7 @@ describe('AddressLookUpControl', () => {
 
     return render(
       <JsonFormContext.Provider value={mockFormContext}>
-        <AddressLookUpControl label={''} errors={''} rootSchema={undefined} id={''} enabled={false} visible={false} {...props} />
+        <AddressLookUpControl {...props} />
       </JsonFormContext.Provider>
     );
   };
