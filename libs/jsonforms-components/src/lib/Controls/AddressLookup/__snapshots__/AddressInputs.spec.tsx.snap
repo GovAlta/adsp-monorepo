@@ -62,7 +62,6 @@ exports[`AddressInputs matches snapshot 1`] = `
     <goa-form-item
       label="Province"
     >
-
       <div
         class="sc-gswNZR cDxa-dW"
         data-testid="address-form-province"
