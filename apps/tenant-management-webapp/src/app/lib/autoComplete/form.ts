@@ -43,22 +43,29 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
       for (const property in schema.properties) {
         const currentPath = `${path}/properties/${property}`;
         const currentLabelPath = `${labelPath || path}/p.../${property}`;
+        const propertySchema = schema.properties[property];
 
-        suggestions.push({
-          label: `"${currentLabelPath}"`,
-          insertText: `"${currentPath}"`,
-          path,
-        });
+        const isParentRef = (currentPath.match(/properties/g) || []).length === 1;
 
-        // Resolve children if current property is an object.
-        if (recurse && typeof schema.properties[property] === 'object') {
-          const children = this.convertDataSchemaToSuggestion(
-            recurse,
-            schema.properties[property],
-            currentPath,
-            currentLabelPath
-          );
-          suggestions.push(...children);
+        const hasNoRefChildren = 'properties' in propertySchema && isParentRef;
+
+        if (recurse && typeof schema.properties[property] === 'object' && hasNoRefChildren) {
+          suggestions.push({
+            label: `"${currentLabelPath}"`,
+            insertText: `"${currentPath}"`,
+            path,
+          });
+
+          // Resolve children if current property is an object.
+          if (recurse && typeof schema.properties[property] === 'object') {
+            const children = this.convertDataSchemaToSuggestion(
+              recurse,
+              schema.properties[property],
+              currentPath,
+              currentLabelPath
+            );
+            suggestions.push(...children);
+          }
         }
       }
     }
