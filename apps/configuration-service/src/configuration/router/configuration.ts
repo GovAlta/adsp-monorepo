@@ -112,7 +112,7 @@ export const assertAuthenticateConfigHandler =
       if (!isRequestNotAllowed) {
         next();
       } else {
-        if (isRequestNotAllowed && !req.query.tenant) {
+        if (isRequestNotAllowed && !(req.query?.tenant || req.query?.tenantId)) {
           res.sendStatus(401);
         }
 
