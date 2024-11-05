@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: content-service
+        component: api
+      name: content-service
+    data:
+      KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
+      DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
+      LOG_LEVEL: debug
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: content-service
+        component: api
+      name: content-service
+    stringData:
+      CLIENT_ID: urn:ads:platform:content-service
+      CLIENT_SECRET:
