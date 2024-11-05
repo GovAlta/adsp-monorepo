@@ -89,12 +89,6 @@ export class AdspFeedback implements AdspFeedbackApi {
       this.closeFeedbackForm();
     }
   }
-  private handleKeyFeedbackExit(event: KeyboardEvent) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      this.closeFeedbackForm();
-    }
-  }
 
   private closeStartForm() {
     this.startRef?.value?.setAttribute('data-show', 'false');
@@ -960,10 +954,6 @@ export class AdspFeedback implements AdspFeedbackApi {
             .adsp-fb-main {
               overflow-y: auto;
             }
-            .adsp-fb .adsp-fb-form {
-              height: auto !important;
-              max-height: none !important;
-            }
             .adsp-fb .adsp-fb-content {
               margin-bottom: 0px;
               padding-top: 24px;
@@ -1094,7 +1084,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                       width="30px"
                       height="30px"
                       @click="${this.closeFeedbackForm}"
-                      @keydown=${this.handleKeyFeedbackExit}
+                      @keydown=${this.handleKeyExit}
                       alt="close feedback"
                       aria-label="Close feedback image"
                     />
