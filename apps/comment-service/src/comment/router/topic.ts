@@ -6,7 +6,7 @@ import { Logger } from 'winston';
 import { commentCreated, commentDeleted, commentUpdated, topicCreated, topicDeleted, topicUpdated } from '../events';
 import { TopicEntity, TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
-import { DirectoryServiceRoles, ServiceRoles } from '../roles';
+import { DirectoryServiceRoles, ExportServiceRoles, ServiceRoles } from '../roles';
 import { Topic, TopicType } from '../types';
 
 interface TopicRouterProps {
@@ -56,14 +56,18 @@ export function getTopics(apiId: AdspId, repository: TopicRepository): RequestHa
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
         tenantId
       );
-      const { page, results } = await repository.getTopics(types, top, after as string, {
+      const { page, results: entities } = await repository.getTopics(types, top, after as string, {
         ...criteria,
         tenantIdEquals: tenantId,
       });
 
+      const results = isAllowedUser(user, tenantId, ExportServiceRoles.ExportJob, true)
+        ? entities
+        : entities.filter((r) => r.canRead(user));
+
       res.send({
         page,
-        results: results.filter((r) => r.canRead(user)).map((r) => mapTopic(apiId, r)),
+        results: results.map((r) => mapTopic(apiId, r)),
       });
     } catch (err) {
       next(err);

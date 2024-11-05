@@ -7,6 +7,7 @@ interface AddressInputsProps {
   address: Address;
   handleInputChange: (field: string, value: string) => void;
   isAlbertaAddress?: boolean;
+  readOnly?: boolean;
   // eslint-disable-next-line
   errors?: any;
   handleOnBlur: (field: string) => void;
@@ -17,6 +18,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
   address,
   handleInputChange,
   isAlbertaAddress,
+  readOnly,
   errors,
   handleOnBlur,
   requiredFields,
@@ -43,6 +45,8 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
         <GoAInput
           name="addressLine2"
           testId="address-form-address2"
+          disabled={readOnly}
+          readonly={readOnly}
           ariaLabel={'address-form-address2'}
           placeholder="Unit number, suite, apartment"
           value={address?.addressLine2 || ''}
@@ -61,6 +65,8 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             name="municipality"
             testId="address-form-city"
             ariaLabel={'address-form-city'}
+            disabled={readOnly}
+            readonly={readOnly}
             value={address?.municipality || ''}
             onChange={(name, value) => handleInputChange(name, value)}
             onBlur={(name, value) => handleOnBlur(name)}
@@ -76,6 +82,8 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             name="postalCode"
             testId="address-form-postal-code"
             ariaLabel={'address-form-postal-code'}
+            disabled={readOnly}
+            readonly={readOnly}
             placeholder="A0A 0A0"
             value={address?.postalCode || ''}
             onChange={(name, value) => handleInputChange(name, value)}
@@ -91,11 +99,11 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
           {isAlbertaAddress && <LabelDiv data-testid="address-form-province">Alberta</LabelDiv>}
           {!isAlbertaAddress && (
             <GoADropdown
-              name="province"
+              name="subdivisionCode"
               testId="address-form-province-dropdown"
               ariaLabel={'address-form-province'}
               value={address?.subdivisionCode || ''}
-              onChange={(value) => handleInputChange('province', value)}
+              onChange={(_, value) => handleInputChange('subdivisionCode', value as string)}
               relative={true}
               width="25ch"
             >
