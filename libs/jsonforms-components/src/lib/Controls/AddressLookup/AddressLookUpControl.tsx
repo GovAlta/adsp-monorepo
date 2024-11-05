@@ -160,7 +160,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     }, [selectedIndex, open]);
 
 /* istanbul ignore next */
-const handleKeyDown = (e:any,value:any,key:any) => {
+const handleKeyDown = (e:string,value:string,key:string) => {
     if (key === 'ArrowDown') {
         setSelectedIndex((prevIndex) =>
             prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0
@@ -205,7 +205,7 @@ const handleKeyDown = (e:any,value:any,key:any) => {
             }}
             onBlur={(name) => handleRequiredFieldBlur(name)}
             width="100%"
-            onKeyPress={(e:any,value:any,key:any) => {
+            onKeyPress={(e:string,value:string,key:string) => {
                 if(open){
                   handleKeyDown(e,value,key)
                 }
