@@ -17,6 +17,7 @@ describe('Dropdown Component', () => {
     ];
     render(
       <Dropdown
+        enabled={true}
         label="mock-test"
         items={items}
         selected={items[0].value}
@@ -41,6 +42,7 @@ describe('Dropdown Component', () => {
     ];
     render(
       <Dropdown
+        enabled={true}
         label="mock-test"
         items={items}
         selected={items[0].value}
@@ -66,6 +68,7 @@ describe('Dropdown Component', () => {
     it('can trigger enter/tab/ecape keys', () => {
       const component = render(
         <Dropdown
+          enabled={true}
           label="mock-test"
           items={items}
           selected={items[0].value}
@@ -122,6 +125,7 @@ describe('Dropdown Component', () => {
     it('can trigger up/down arrrow keys', () => {
       const component = render(
         <Dropdown
+          enabled={true}
           label="mock-test"
           items={items}
           selected={items[0].value}
@@ -187,6 +191,7 @@ describe('Dropdown Component', () => {
       ];
       const component = render(
         <Dropdown
+          enabled={true}
           label="mock-test"
           items={items}
           selected={items[0].value}
@@ -226,6 +231,7 @@ describe('Dropdown Component', () => {
       ];
       const component = render(
         <Dropdown
+          enabled={true}
           label="mock-test"
           items={items}
           selected={items[0].value}
@@ -251,6 +257,7 @@ describe('Dropdown Component', () => {
     it('can press enter key for search', () => {
       const component = render(
         <Dropdown
+          enabled={true}
           label="mock-test"
           items={items}
           selected={items[0].value}

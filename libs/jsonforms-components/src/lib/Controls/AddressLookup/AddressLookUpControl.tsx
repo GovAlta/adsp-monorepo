@@ -23,7 +23,7 @@ type AddressLookUpProps = ControlProps;
 const ADDRESS_PATH = 'api/gateway/v1/address/v1/find';
 
 export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => {
-  const { data, path, schema, handleChange, uischema } = props;
+  const { data, path, schema, enabled, handleChange, uischema, rootSchema } = props;
 
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
   const formCtx = useContext(JsonFormContext);
@@ -187,16 +187,20 @@ const handleKeyDown = (e:string,value:string,key:string) => {
     }
 };
 
+  const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   return (
     <div>
       {renderHelp()}
       <GoAFormItem label={label} error={errors?.['addressLine1'] ?? ''} data-testId="form-address-line1">
         <SearchBox>
           <GoAInput
+            leadingIcon={autocompletion && enabled ? 'search' : undefined}
             id="goaInput"
             leadingIcon={autocompletion ? 'search' : undefined}
             name="addressLine1"
             testId="address-form-address1"
+            readonly={readOnly}
+            disabled={!enabled}
             ariaLabel={'address-form-address1'}
             placeholder="Start typing the first line of your address, required."
             value={address?.addressLine1 || ''}
@@ -240,6 +244,7 @@ const handleKeyDown = (e:string,value:string,key:string) => {
       <AddressInputs
         address={address}
         errors={errors}
+        readOnly={readOnly}
         handleInputChange={handleInputChange}
         isAlbertaAddress={isAlbertaAddress}
         handleOnBlur={handleRequiredFieldBlur}
