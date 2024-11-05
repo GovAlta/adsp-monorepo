@@ -54,10 +54,9 @@ objects:
           referencePolicy:
             type: Local
 
-  # DeploymentConfig (and Service and Route) is created in each environment of the
-  # primary pipeline as well as branch deployment.
-  - apiVersion: v1
-    kind: DeploymentConfig
+  # Deployment (and Service and Route) is created in each environment of the
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       labels:
         app: content-service
@@ -67,26 +66,25 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: content-service
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "content-service:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
+            }
+          ]
     spec:
-      replicas: 3
-      revisionHistoryLimit: 3
+      replicas: 1
       selector:
-        app: content-service
-        component: api
-      strategy:
-        type: Rolling
-        rollingParams:
-          timeoutSeconds: 600
-          maxUnavailable: 25%
-          maxSurge: 25%
-        activeDeadlineSeconds: 21600
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
+        matchLabels:
+          app: content-service
+          component: api
       template:
         metadata:
           labels:
@@ -94,7 +92,9 @@ objects:
             component: api
         spec:
           containers:
-            - envFrom:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/content-service@${DEPLOY_TAG}
+              envFrom:
                 - configMapRef:
                     name: content-service
                 - configMapRef:
@@ -104,13 +104,6 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
-                - name: REDIS_HOST
-                  value: content-service-redis
-                - name: REDIS_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-password
-                      name: content-service-redis
               imagePullPolicy: IfNotPresent
               name: content-service
               ports:
@@ -151,16 +144,14 @@ objects:
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
-      test: false
-      triggers:
-        - imageChangeParams:
-            containerNames:
-              - content-service
-            from:
-              kind: ImageStreamTag
-              name: content-service:${DEPLOY_TAG}
-              namespace: ${INFRA_NAMESPACE}
-          type: ImageChange
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
+
   - apiVersion: v1
     kind: Service
     metadata:
