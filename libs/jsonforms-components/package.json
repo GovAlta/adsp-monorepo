@@ -16,7 +16,7 @@
   "dependencies": {
     "axios": "^1.6.7",
     "lodash": "^4.17.20",
-    "styled-components": "^5.3.6"
+    "styled-components": "^6.0.0"
   },
   "optionalDependencies": {
     "@apidevtools/json-schema-ref-parser": "^11.7.0"

@@ -1,5 +1,10 @@
 import styled from 'styled-components';
 
+interface ListItemProps {
+  selectedIndex: number;
+  index: number;
+}
+
 export const SearchBox = styled.div`
   position: relative;
 
@@ -35,4 +40,10 @@ export const SearchBox = styled.div`
 export const LabelDiv = styled.div`
   font-size: var(--fs-sl);
   padding-bottom: 1.5rem;
+`;
+
+export const ListItem = styled.li<ListItemProps>`
+  background-color: ${({ selectedIndex, index }) => selectedIndex === index ? 'var(--color-primary)' : ''};
+  color: ${({ selectedIndex, index }) => selectedIndex === index ?  'var(--color-white) !important' : ''};
+  font-weight: ${({ selectedIndex, index }) => selectedIndex === index ?  'var(--fw-bold)' : ''};
 `;
