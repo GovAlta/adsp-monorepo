@@ -88,7 +88,7 @@ const GenerateRows = (
   cells?: JsonFormsCellRendererRegistryEntry[],
   uischema?: ControlElement
 ) => {
-  if (schema.type === 'object') {
+  if (schema?.type === 'object') {
     const props = {
       schema,
       rowPath,
@@ -110,7 +110,7 @@ const GenerateRows = (
 };
 
 const getValidColumnProps = (scopedSchema: JsonSchema) => {
-  if (scopedSchema.type === 'object' && typeof scopedSchema.properties === 'object') {
+  if (scopedSchema?.type === 'object' && typeof scopedSchema?.properties === 'object') {
     return Object.keys(scopedSchema.properties).filter((prop) => scopedSchema.properties?.[prop].type !== 'array');
   }
   // primitives
@@ -145,7 +145,7 @@ interface OwnPropsOfNonEmptyCell {
   uischema?: ControlElement;
 }
 const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOfNonEmptyCell): NonEmptyCellProps => {
-  const path = ownProps.rowPath + (ownProps.schema.type === 'object' ? '.' + ownProps.propName : '');
+  const path = ownProps.rowPath + (ownProps.schema?.type === 'object' ? '.' + ownProps.propName : '');
   const errors = '';
   return {
     uischema: ownProps.uischema,
