@@ -63,7 +63,7 @@ exports[`AddressInputs matches snapshot 1`] = `
       label="Province"
     >
       <div
-        class="sc-gswNZR cDxa-dW"
+        class="sc-gtLWhw gqAVOl"
         data-testid="address-form-province"
       >
         Alberta
@@ -73,7 +73,7 @@ exports[`AddressInputs matches snapshot 1`] = `
       label="Country"
     >
       <div
-        class="sc-gswNZR cDxa-dW"
+        class="sc-gtLWhw gqAVOl"
         data-testid="address-form-country"
       >
         Canada

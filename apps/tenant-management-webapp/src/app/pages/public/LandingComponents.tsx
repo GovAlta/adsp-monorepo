@@ -29,9 +29,9 @@ export const H2 = styled.h2`
 export const Paragraph = styled.p`
   margin-bottom: 1.5rem !important;
 `;
-export const CardContent = styled.div`
+export const CardContent = styled.div<CardContentProps>`
   line-height: 1.75em;
-  min-height: ${(props: CardContentProps) => {
+  min-height: ${(props) => {
     const width = window.innerWidth;
     if (width < 768) {
       return 'initial';
