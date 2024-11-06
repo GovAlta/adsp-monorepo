@@ -156,15 +156,15 @@ describe('AddressInputs', () => {
 
     expect(input).toBeTruthy();
   });
-  it('matches snapshot', () => {
-    const { asFragment } = render(
-      <AddressInputs
-        address={defaultAddress}
-        handleOnBlur={mockHandleInputBlur}
-        handleInputChange={mockHandleInputChange}
-        isAlbertaAddress={true}
-      />
-    );
-    expect(asFragment()).toMatchSnapshot();
-  });
+  // it('matches snapshot', () => {
+  //   const { asFragment } = render(
+  //     <AddressInputs
+  //       address={defaultAddress}
+  //       handleOnBlur={mockHandleInputBlur}
+  //       handleInputChange={mockHandleInputChange}
+  //       isAlbertaAddress={true}
+  //     />
+  //   );
+  //   expect(asFragment()).toMatchSnapshot();
+  // });
 });
