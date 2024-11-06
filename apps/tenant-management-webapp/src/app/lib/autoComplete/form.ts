@@ -45,11 +45,7 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
         const currentLabelPath = `${labelPath || path}/p.../${property}`;
         const propertySchema = schema.properties[property];
 
-        const isParentRef = (currentPath.match(/properties/g) || []).length === 1;
-
-        const hasNoRefChildren = 'properties' in propertySchema && isParentRef;
-
-        if (recurse && typeof schema.properties[property] === 'object' && hasNoRefChildren) {
+        if (recurse && typeof schema.properties[property] === 'object') {
           suggestions.push({
             label: `"${currentLabelPath}"`,
             insertText: `"${currentPath}"`,
@@ -57,7 +53,7 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
           });
 
           // Resolve children if current property is an object.
-          if (recurse && typeof schema.properties[property] === 'object') {
+          if (recurse && typeof schema.properties[property] === 'object' && !('$comment' in propertySchema)) {
             const children = this.convertDataSchemaToSuggestion(
               recurse,
               schema.properties[property],
