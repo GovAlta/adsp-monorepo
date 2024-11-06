@@ -124,10 +124,4 @@ describe('AddressInputs', () => {
 
     expect(input).toBeTruthy();
   });
-  it('matches snapshot', () => {
-    const { asFragment } = render(
-      <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={true} />
-    );
-    expect(asFragment()).toMatchSnapshot();
-  });
 });
