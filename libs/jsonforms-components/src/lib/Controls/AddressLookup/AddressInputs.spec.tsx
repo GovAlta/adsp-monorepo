@@ -37,7 +37,13 @@ describe('AddressInputs', () => {
   });
 
   it('calls handleInputChange on user input in address2', () => {
-    render(<AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} />);
+    render(
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+      />
+    );
 
     const addressLine2Input = screen.getByTestId('address-form-address2');
     fireEvent.change(addressLine2Input, { target: { value: 'Suite 5' } });
