@@ -1,6 +1,7 @@
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import type { Core } from '@strapi/strapi';
 import { ADSP_SERVICE_NAME } from './constants';
+import adaptTenantStrategy from './strategies';
 // import adaptTenantStrategy from './strategies';
 
 const register = async ({ strapi }: { strapi: Core.Strapi }) => {
@@ -17,8 +18,16 @@ const register = async ({ strapi }: { strapi: Core.Strapi }) => {
   );
   strapi.add(ADSP_SERVICE_NAME, capabilities);
 
-  // const tenantStrategy = adaptTenantStrategy(capabilities);
-  // strapi.get('auth').register('content-api', tenantStrategy);
+  // Register strategy to Content API.
+  const tenantStrategy = adaptTenantStrategy(capabilities);
+  strapi.get('auth').register('content-api', tenantStrategy);
+
+  // Register tenant ID field.
+  strapi.customFields.register({
+    name: 'tenant',
+    plugin: 'adspi-strapi',
+    type: 'string',
+  });
 };
 
 export default register;
