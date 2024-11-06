@@ -50,7 +50,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
     <GoAGrid minChildWidth="0ch" gap="s" testId="wrapper">
       <GoAFormItem
         testId="formitem-first-name"
-        label="First Name"
+        label="First name"
         requirement={requiredFields?.includes('firstName') ? 'required' : undefined}
         error={errors?.['firstName'] ?? ''}
       >
@@ -70,7 +70,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
       </GoAFormItem>
       <GoAFormItem
         testId="formitem-middle-name"
-        label="Middle Name"
+        label="Middle name"
         requirement={requiredFields?.includes('middleName') ? 'required' : undefined}
       >
         <GoAInput
@@ -85,7 +85,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
       </GoAFormItem>
       <GoAFormItem
         testId="formitem-last-name"
-        label="Last Name"
+        label="Last name"
         requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
         error={errors?.['lastName'] ?? ''}
       >
