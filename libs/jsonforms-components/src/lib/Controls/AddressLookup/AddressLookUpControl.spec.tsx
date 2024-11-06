@@ -5,6 +5,7 @@ import { fetchAddressSuggestions } from './utils';
 import { JsonFormContext } from '../../Context';
 import { Suggestion } from './types';
 import { isAddressLookup } from './AddressLookupTester';
+import { ControlElement, JsonSchema4, JsonSchema7, TesterContext, UISchemaElement } from '@jsonforms/core';
 
 jest.mock('./utils', () => ({
   fetchAddressSuggestions: jest.fn(),
@@ -32,6 +33,14 @@ describe('AddressLookUpControl', () => {
         postalCode: '',
         country: 'CAN',
       },
+      enabled: true,
+      rootSchema: {} as JsonSchema4,
+      id: 'address',
+      label: 'Mailing Address',
+      visible: true,
+      errors: '',
+      type: 'Control',
+      scope: '#/properties/personFullName',
       path: 'address',
       schema: {
         title: 'Alberta postal address',
@@ -46,13 +55,16 @@ describe('AddressLookUpControl', () => {
             },
           },
         },
-      },
+      } as JsonSchema7,
+
       uischema: {
+        type: 'Control',
+        scope: '',
         options: {
           autocomplete: true,
         },
         label: 'Address Lookup',
-      },
+      } as ControlElement,
       handleChange: mockHandleChange,
     };
 
@@ -60,10 +72,15 @@ describe('AddressLookUpControl', () => {
 
     return render(
       <JsonFormContext.Provider value={mockFormContext}>
-        <AddressLookUpControl label={''} errors={''} rootSchema={undefined} id={''} enabled={false} visible={false} {...props} />
+        <AddressLookUpControl {...props} />
       </JsonFormContext.Provider>
     );
   };
+
+  const dummyTestContext = {
+    rootSchema: {},
+    config: {},
+  } as TesterContext;
 
   const mockSuggestions: Suggestion[] = [
     {
@@ -93,8 +110,8 @@ describe('AddressLookUpControl', () => {
   it('should render the component with input fields', () => {
     renderComponent();
     const input = screen.getByTestId('address-form-address1');
-    const inputElement = input?.shadowRoot.querySelector('input');
-    expect(inputElement.placeholder).toBe('Start typing the first line of your address, required.');
+    const inputElement = input?.shadowRoot?.querySelector('input');
+    expect(inputElement?.placeholder).toBe('Start typing the first line of your address, required.');
   });
   it('should render the input fields with empty values', () => {
     renderComponent();
@@ -122,13 +139,15 @@ describe('AddressLookUpControl', () => {
 
   it('can map the control based on address schema', () => {
     // wrong ui schema type
+
     expect(
       isAddressLookup(
         {
           type: 'Category',
-        },
+          scope: '#/properties/personFullName',
+        } as UISchemaElement,
         {},
-        {}
+        dummyTestContext
       )
     ).toBe(false);
 
@@ -137,8 +156,8 @@ describe('AddressLookUpControl', () => {
       isAddressLookup(
         {
           type: 'Control',
-          scope: '#/properties/personFullName',
-        },
+          scope: '#/properties/albertaAddress',
+        } as UISchemaElement,
         {
           type: 'object',
           properties: {
@@ -170,10 +189,10 @@ describe('AddressLookUpControl', () => {
                   lastName: 'Include period (.) if providing your initial',
                 },
               },
-            },
+            } as JsonSchema7,
           },
         },
-        {}
+        dummyTestContext
       )
     ).toBe(false);
 
@@ -183,7 +202,7 @@ describe('AddressLookUpControl', () => {
         {
           type: 'Control',
           scope: '#/properties/albertaAddress',
-        },
+        } as UISchemaElement,
         {
           type: 'object',
           properties: {
@@ -201,13 +220,13 @@ describe('AddressLookUpControl', () => {
                         "A portion of an individual's mailing address which identifies a specific location within a municipality.",
                       minLength: 1,
                       maxLength: 60,
-                    },
+                    } as JsonSchema7,
                   ],
                 },
                 municipality: {
                   type: 'string',
                   $comment: 'The name of a city, town, hamlet, or village.',
-                },
+                } as JsonSchema7,
                 subdivisionCode: {
                   const: 'AB',
                 },
@@ -227,10 +246,10 @@ describe('AddressLookUpControl', () => {
                   postalCode: 'Must be in A0A 0A0 capital letters and numbers format',
                 },
               },
-            },
+            } as JsonSchema7,
           },
         },
-        {}
+        dummyTestContext
       )
     ).toBe(false);
 
@@ -239,7 +258,7 @@ describe('AddressLookUpControl', () => {
         {
           type: 'Control',
           scope: '#/properties/albertaAddress',
-        },
+        } as UISchemaElement,
         {
           type: 'object',
           properties: {
@@ -248,7 +267,18 @@ describe('AddressLookUpControl', () => {
               title: 'Alberta postal address',
               type: 'object',
               properties: {
-                addressLine1: 'line1',
+                addressLine1: {
+                  description: 'Building number and street, or PO box',
+                  allOf: [
+                    {
+                      type: 'string',
+                      $comment:
+                        "A portion of an individual's mailing address which identifies a specific location within a municipality.",
+                      minLength: 1,
+                      maxLength: 60,
+                    } as JsonSchema7,
+                  ],
+                },
                 addressLine2: {
                   description: 'Apartment or unit number',
                   allOf: [
@@ -258,7 +288,7 @@ describe('AddressLookUpControl', () => {
                         "A portion of an individual's mailing address which identifies a specific location within a municipality.",
                       minLength: 1,
                       maxLength: 60,
-                    },
+                    } as JsonSchema7,
                   ],
                 },
                 municipality: {
@@ -275,6 +305,7 @@ describe('AddressLookUpControl', () => {
                   pattern: '^$|^[A-Z][0-9][A-Z] [0-9][A-Z][0-9]$',
                 },
                 country: {
+                  $comment: 'The international standard two-letter country code.',
                   const: 'CA',
                 },
               },
@@ -284,10 +315,10 @@ describe('AddressLookUpControl', () => {
                   postalCode: 'Must be in A0A 0A0 capital letters and numbers format',
                 },
               },
-            },
+            } as JsonSchema7,
           },
         },
-        {}
+        dummyTestContext
       )
     ).toBe(true);
   });
