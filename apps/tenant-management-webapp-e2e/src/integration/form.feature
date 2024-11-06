@@ -260,3 +260,54 @@ Feature: Form
     Then the user views delete "form definition" confirmation modal for "autotest-defaultApplicantRole"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the form definition of "autotest-defaultApplicantRole", "autotest desc"
+
+  @TEST_CS-2702 @REQ_CS-2679 @regression
+  Scenario: As a tenant admin, I can see the form output data in the form preview
+    Given a tenant admin user is on form definitions page
+    When the user clicks "Edit" button for the form definition of "autotest-preview-data", "DO NOT DELETE"
+    Then the user views form definition editor for "autotest-preview-data", "DO NOT DELETE"
+    # Enter form data
+    When the user enters "Joe" in a text field labelled "First name" in preview pane
+    And the user enters "Smith" in a text field labelled "Last name" in preview pane
+    And the user enters "1970-10-30" in a date picker labelled "Birthday" in preview pane
+    And the user enters "CA" in a dropdown labelled "Nationality" in preview pane
+    And the user clicks Next button in the form in preview pane
+    And the user "selects" a checkbox labelled "Citizen" in preview pane
+    And the user selects "Not Married" radio button for the question of "Are you married?" in preview pane
+    And the user clicks list with detail button labelled as "Add child" in the form in preview pane
+    And the user enters "John" in list with detail element text field labelled "Given name" in preview pane
+    And the user enters "Smith" in list with detail element text field labelled "Surname" in preview pane
+    And the user enters "2010-01-15" in list with detail element date input labelled "Dob" in preview pane
+    # Verify form data
+    When the user clicks "Data" tab in form definition editor
+    Then the user views form data pane
+    And the user views form data of "Joe" as "firstName" on data page
+    And the user views form data of "Smith" as "lastName" on data page
+    And the user views form data of "1970-10-30" as "birthDate" on data page
+    And the user views form data of "CA" as "nationality" on data page
+    And the user views form data of "false" as "isMarried" on data page
+    And the user views form data of "true" as "citizen" for "residencyOptions" object on data page
+    And the user views form data of "John:Smith:2010-01-15" as "givenName:surname:dob" for "dependant" array on data page
+    # Modify form data
+    When the user clicks "Preview" tab in form definition editor
+    Then the user views form definition Preview pane
+    When the user enters "James" in a text field labelled "First name" in preview pane
+    And the user enters "Bond" in a text field labelled "Last name" in preview pane
+    And the user enters "1960-11-20" in a date picker labelled "Birthday" in preview pane
+    And the user enters "Other" in a dropdown labelled "Nationality" in preview pane
+    And the user clicks Next button in the form in preview pane
+    And the user "unselects" a checkbox labelled "Citizen" in preview pane
+    And the user selects "Married" radio button for the question of "Are you married?" in preview pane
+    And the user clicks list with detail button labelled as "Add child" in the form in preview pane
+    And the user enters "Ben" in list with detail element text field labelled "Given name" in preview pane
+    And the user enters "Bond" in list with detail element text field labelled "Surname" in preview pane
+    And the user enters "2011-05-15" in list with detail element date input labelled "Dob" in preview pane
+    # Verify modified form data
+    When the user clicks "Data" tab in form definition editor
+    Then the user views form data of "James" as "firstName" on data page
+    And the user views form data of "Bond" as "lastName" on data page
+    And the user views form data of "1960-11-20" as "birthDate" on data page
+    And the user views form data of "Other" as "nationality" on data page
+    And the user views form data of "true" as "isMarried" on data page
+    And the user views form data of "false" as "citizen" for "residencyOptions" object on data page
+    And the user views form data of "Ben:Bond:2011-05-15" as "givenName:surname:dob" for "dependant" array on data page
