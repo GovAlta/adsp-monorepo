@@ -283,5 +283,11 @@ class FormPage {
   formDataContent() {
     return cy.xpath('//div[@data-testid="data-view"]/div/div');
   }
+
+  formPreviewView() {
+    return cy.xpath(
+      '//div[text()="Preview" and contains(@class, "active")]/parent::div/following-sibling::div[@data-testid="preview-view-tab"]'
+    );
+  }
 }
 export default FormPage;

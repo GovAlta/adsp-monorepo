@@ -290,6 +290,7 @@ Feature: Form
     And the user views form data of "John:Smith:2010-01-15" as "givenName:surname:dob" for "dependant" array on data page
     # Modify form data
     When the user clicks "Preview" tab in form definition editor
+    Then the user views form definition Preview pane
     When the user enters "James" in a text field labelled "First name" in preview pane
     And the user enters "Bond" in a text field labelled "Last name" in preview pane
     And the user enters "1960-11-20" in a date picker labelled "Birthday" in preview pane

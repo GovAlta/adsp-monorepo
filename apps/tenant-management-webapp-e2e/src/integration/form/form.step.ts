@@ -1173,3 +1173,7 @@ Then(
       });
   }
 );
+
+Then('the user views form definition Preview pane', function () {
+  formObj.formPreviewView().should('exist');
+});
