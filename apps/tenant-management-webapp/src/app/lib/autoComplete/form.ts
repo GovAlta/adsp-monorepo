@@ -53,7 +53,7 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
           });
 
           // Resolve children if current property is an object.
-          if (recurse && typeof schema.properties[property] === 'object' && !('$comment' in propertySchema)) {
+          if (recurse && typeof schema.properties[property] === 'object') {
             const children = this.convertDataSchemaToSuggestion(
               recurse,
               schema.properties[property],
