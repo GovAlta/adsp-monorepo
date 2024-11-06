@@ -86,8 +86,8 @@ interface ItemProps {
   //eslint-disable-next-line
   notifications: any[];
 }
-const ScrollBarFixMain = styled.div`
+const ScrollBarFixMain = styled.div<ItemProps>`
   margin-left: calc(100vw - 100%);
   margin-right: 0;
-  padding-top: ${(props: ItemProps) => (props.notifications.length >= 1 ? '12rem' : '99px')};
+  padding-top: ${(props) => (props.notifications.length >= 1 ? '12rem' : '99px')};
 `;

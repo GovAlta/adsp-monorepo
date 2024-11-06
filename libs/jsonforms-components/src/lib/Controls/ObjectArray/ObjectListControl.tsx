@@ -95,7 +95,7 @@ const GenerateRows = (
   count?: number,
   data?: StateData
 ) => {
-  if (schema.type === 'object') {
+  if (schema?.type === 'object') {
     const props = {
       schema,
       rowPath,

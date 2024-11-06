@@ -152,7 +152,7 @@ export const loadDefinition = createAsyncThunk(
 
             try {
               const { data } = await axios.get(`${baseCacheServiceUrl}/active`, {
-                params: { tenant: tenantId, orLatest: true },
+                params: { tenantId, orLatest: true },
               });
               if (!_.isEmpty(data?.configuration) && _.isArray(data?.configuration)) {
                 registerData.push({
