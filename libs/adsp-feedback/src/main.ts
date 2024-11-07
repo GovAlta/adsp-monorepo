@@ -30,8 +30,14 @@ export class AdspFeedback implements AdspFeedbackApi {
   private dimRef: Ref<HTMLTextAreaElement> = createRef();
   private ratingSelector: Ref<HTMLInputElement> = createRef();
   private commentSelector: Ref<HTMLInputElement> = createRef();
-  private firstFocusableElement?: HTMLElement;
-  private lastFocusableElement?: HTMLElement;
+  private firstFocusableElement?: Ref<HTMLElement>;
+  private lastFocusableElement?: Ref<HTMLButtonElement>;
+  private feedbackStartCloseButton: Ref<HTMLButtonElement> = createRef();
+  private feedbackStartCloseImg: Ref<HTMLElement> = createRef();
+  private feedbackFormCloseImg: Ref<HTMLElement> = createRef();
+  private feedbackCloseErrorButton: Ref<HTMLButtonElement> = createRef();
+  private feedbackCloseSucessButton: Ref<HTMLButtonElement> = createRef();
+  private cancelButtonRef: Ref<HTMLButtonElement> = createRef();
   private ratings = ratings;
 
   constructor() {
@@ -62,8 +68,8 @@ export class AdspFeedback implements AdspFeedbackApi {
     this.startRef?.value?.setAttribute('data-show', 'true');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
-    this.lastFocusableElement = this.startRef?.value?.querySelector('#start') as HTMLElement;
-    this.firstFocusableElement = this.startRef?.value?.querySelector('.feedback-close-button') as HTMLElement;
+    this.lastFocusableElement = this.feedbackStartCloseButton;
+    this.firstFocusableElement = this.feedbackStartCloseImg;
     document.addEventListener('keydown', this.trapTabKey);
     document.addEventListener('keydown', this.handleEscapeKey);
     document.body.classList.add('modal-open');
@@ -94,8 +100,8 @@ export class AdspFeedback implements AdspFeedbackApi {
     this.startRef?.value?.setAttribute('data-show', 'false');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'true');
-    this.firstFocusableElement = this.feedbackFormRef?.value?.querySelector('.feedback-close-button') as HTMLElement;
-    this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-secondary') as HTMLElement;
+    this.firstFocusableElement = this.feedbackFormCloseImg;
+    this.lastFocusableElement = this.cancelButtonRef;
 
     document.addEventListener('keydown', this.trapTabKey);
     document.addEventListener('keydown', this.handleEscapeKey);
@@ -111,15 +117,15 @@ export class AdspFeedback implements AdspFeedbackApi {
     if (e.key === 'Tab') {
       if (e.shiftKey) {
         // If Shift + Tab
-        if (document.activeElement === this.firstFocusableElement) {
+        if (document.activeElement === this.firstFocusableElement?.value) {
           e.preventDefault();
-          this.lastFocusableElement!.focus();
+          this.lastFocusableElement!.value?.focus();
         }
       } else {
         // If Tab
-        if (document.activeElement === this.lastFocusableElement) {
+        if (document.activeElement === this.lastFocusableElement?.value) {
           e.preventDefault();
-          this.firstFocusableElement!.focus();
+          this.firstFocusableElement!.value?.focus();
         }
       }
     }
@@ -201,9 +207,12 @@ export class AdspFeedback implements AdspFeedbackApi {
         if (this.ratingSelector.value.checked === false) {
           this.ratingSelector.value.focus();
           this.ratingSelector.value.checked = true;
-          this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
+          this.technicalCommentRefOnChange();
         }
       }
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      this.onIssueChange(e);
     }
   };
 
@@ -270,20 +279,21 @@ export class AdspFeedback implements AdspFeedbackApi {
           method: 'POST',
           body: JSON.stringify(request),
         });
-
+        this.firstFocusableElement = this.feedbackFormCloseImg;
         if (!response.ok) {
           console.log(`Response received for sending feedback to API not 200: ${response.status}`);
           this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
-          this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
+
+          this.lastFocusableElement = this.feedbackCloseErrorButton;
         } else {
           this.feedbackFormRef.value?.setAttribute('data-completed', 'true');
-          this.lastFocusableElement = document.querySelector('#feedback-close-success') as HTMLElement;
+          this.lastFocusableElement = this.feedbackCloseSucessButton;
         }
       } catch (err) {
         console.log(`Error encountered sending feedback to API: ${err}`);
 
         this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
-        this.lastFocusableElement = document.querySelector('#feedback-close-error') as HTMLElement;
+        this.lastFocusableElement = this.feedbackCloseErrorButton;
       }
       this.feedbackFormRef.value?.scrollTo(0, 0);
       this.feedbackFormClassRef?.value?.setAttribute('style', 'max-height:560px');
@@ -357,7 +367,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
   };
 
-  private technicalCommentRefOnChange = (e: KeyboardEvent) => {
+  private technicalCommentRefOnChange = () => {
     if (
       this.technicalCommentRef?.value &&
       this.technicalCommentRef?.value?.value.length > 0 &&
@@ -384,8 +394,7 @@ export class AdspFeedback implements AdspFeedbackApi {
       text.style.color = '#333333';
     }
     this.selectedRating = index;
-    this.lastFocusableElement = this.feedbackFormRef?.value?.querySelector('.adsp-fb-form-primary') as HTMLElement;
-
+    this.lastFocusableElement = this.sendButtonRef;
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
@@ -1041,6 +1050,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                   <div class="adsp-fb-container-heading">
                     <h3 class="title">Give feedback</h3>
                     <img
+                      ${ref(this.feedbackStartCloseImg)}
                       class="feedback-close-button"
                       tabindex="0"
                       src=${closeOutlineSvg}
@@ -1061,6 +1071,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                     </p>
                     <div class="adsp-fb-actions">
                       <button
+                        ${ref(this.feedbackStartCloseButton)}
                         class="adsp-fb-form-primary"
                         id="start"
                         @click=${this.closeStartForm}
@@ -1079,6 +1090,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                     <h3 class="title">Give feedback</h3>
                     <img
                       class="feedback-close-button"
+                      ${ref(this.feedbackFormCloseImg)}
                       tabindex="0"
                       src=${closeOutlineSvg}
                       width="30px"
@@ -1115,13 +1127,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                       <div class="radio-container">
                         <label><b>Did you experience any technical issues?</b><span> (required)</span></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
-                          <div
-                            id="technicalIssueYes"
-                            class="radio-span"
-                            @keydown=${(e: KeyboardEvent) => {
-                              this.handleRadioKeyDown(e);
-                            }}
-                          >
+                          <div id="technicalIssueYes" class="radio-span">
                             <input
                               tabindex="0"
                               name="YesOrNo"
@@ -1131,6 +1137,9 @@ export class AdspFeedback implements AdspFeedbackApi {
                               class="radio"
                               ${ref(this.ratingSelector)}
                               aria-label="Yes"
+                              @keydown=${(e: KeyboardEvent) => {
+                                this.handleRadioKeyDown(e);
+                              }}
                             />
                             <label for="yes" class="radio-label"> Yes </label>
                           </div>
@@ -1144,6 +1153,9 @@ export class AdspFeedback implements AdspFeedbackApi {
                               class="radio"
                               ${ref(this.commentSelector)}
                               aria-label="No"
+                              @keydown=${(e: KeyboardEvent) => {
+                                this.handleRadioKeyDown(e);
+                              }}
                             />
 
                             <label for="no" class="radio-label"> No </label>
@@ -1175,6 +1187,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                     </div>
                     <div class="adsp-fb-actions">
                       <button
+                        ${ref(this.cancelButtonRef)}
                         @click=${this.closeFeedbackForm}
                         class="adsp-fb-form-secondary"
                         type="button"
@@ -1218,6 +1231,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                       <div class="adsp-fb adsp-fb-success-actions">
                         <button
                           @click=${this.closeAllFeedback}
+                          ${ref(this.feedbackCloseSucessButton)}
                           id="feedback-close-success"
                           class="adsp-fb-form-primary"
                           type="button"
@@ -1243,6 +1257,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                           </p>
                           <div>
                             <button
+                              ${ref(this.feedbackCloseErrorButton)}
                               @click=${this.closeErrorForm}
                               class="adsp-fb-form-primary"
                               id="feedback-close-error"
