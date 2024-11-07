@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from './model';
+import { FormDefinitionEntity, FormSubmissionEntity } from './model';
 import { Form, Intake } from './types';
 import { FormEntityWithJobId } from './router';
 
@@ -16,7 +16,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity, intake?: Intake)
     dataSchema: entity.dataSchema,
     uiSchema: entity.uiSchema,
     dispositionStates: entity.dispositionStates,
-    generatesPdf: !!entity.submissionPdfTemplate,
+    generatesPdf: !!entity.submissionPdfTemplate && !entity.anonymousApply,
     scheduledIntakes: entity.scheduledIntakes,
     intake,
   };

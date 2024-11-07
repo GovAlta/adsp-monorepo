@@ -37,7 +37,14 @@ import {
   GoABooleanRadioControl,
   GoInputBaseReviewControl,
   AddressLookUpControl,
+  AddressLookUpControlReview,
   AddressLookUpTester,
+  FullNameTester,
+  FullNameControl,
+  FullNameDobControl,
+  FullNameDobTester,
+  FullNameReviewControl,
+  FullNameDobReviewControl,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -153,6 +160,9 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseReviewRenderers,
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploaderReview) },
+  { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameReviewControl) },
+  { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobReviewControl) },
+  { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControlReview) },
 ];
 
 export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
@@ -160,6 +170,8 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: CategorizationRendererTester, renderer: FormStepperControl },
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
   { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
+  { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameControl) },
+  { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobControl) },
 ];
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];

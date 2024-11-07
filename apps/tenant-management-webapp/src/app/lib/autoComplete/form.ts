@@ -43,22 +43,25 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
       for (const property in schema.properties) {
         const currentPath = `${path}/properties/${property}`;
         const currentLabelPath = `${labelPath || path}/p.../${property}`;
+        const propertySchema = schema.properties[property];
 
-        suggestions.push({
-          label: `"${currentLabelPath}"`,
-          insertText: `"${currentPath}"`,
-          path,
-        });
-
-        // Resolve children if current property is an object.
         if (recurse && typeof schema.properties[property] === 'object') {
-          const children = this.convertDataSchemaToSuggestion(
-            recurse,
-            schema.properties[property],
-            currentPath,
-            currentLabelPath
-          );
-          suggestions.push(...children);
+          suggestions.push({
+            label: `"${currentLabelPath}"`,
+            insertText: `"${currentPath}"`,
+            path,
+          });
+
+          // Resolve children if current property is an object.
+          if (recurse && typeof schema.properties[property] === 'object') {
+            const children = this.convertDataSchemaToSuggestion(
+              recurse,
+              schema.properties[property],
+              currentPath,
+              currentLabelPath
+            );
+            suggestions.push(...children);
+          }
         }
       }
     }
@@ -174,12 +177,26 @@ export class FormUISchemaElementCompletionItemProvider extends JsonObjectComplet
           }
           case 'number':
           case 'integer':
+            suggestions.push({
+              label: `Control:"${currentLabelPath}"`,
+              insertText: `{ "type": "Control", "scope": "${currentPath}" }`,
+              path,
+            });
+            break;
           case 'array':
             suggestions.push({
               label: `Control:"${currentLabelPath}"`,
               insertText: `{ "type": "Control", "scope": "${currentPath}" }`,
               path,
             });
+
+            if (property?.items?.type === 'object') {
+              suggestions.push({
+                label: `ListWithDetail:"${currentLabelPath}"`,
+                insertText: `{ "type": "ListWithDetail", "scope": "${currentPath}" }`,
+                path,
+              });
+            }
             break;
           case 'object':
           default:

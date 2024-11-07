@@ -4,8 +4,8 @@ interface PagePros {
   ready?: boolean;
 }
 
-const Page = styled.div`
-  display: ${(props: PagePros) => (props.ready === true || props.ready === undefined ? 'flex' : 'none')};
+const Page = styled.div<PagePros>`
+  display: ${(props) => (props.ready === true || props.ready === undefined ? 'flex' : 'none')};
   flex-direction: column;
   @media (min-width: 1024px) {
     flex-direction: row;

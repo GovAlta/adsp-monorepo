@@ -30,9 +30,9 @@ export const GoADropdownListContainerWrapper = styled.div<GoADropdownListContain
 `;
 
 export const GoADropdownListContainer = styled.div<GoADropdownListContainerProps>`
-  border: solid 1px #dcdcdc;
-  border-radius: 4px;
-  background: #fff;
+  border: solid 1px var(--goa-color-greyscale-200);
+  border-radius: var(--goa-space-2xs);
+  background: var(--goa-color-greyscale-white);
   padding: 0;
   margin-top: 3px;
   width: 100%;
@@ -40,7 +40,7 @@ export const GoADropdownListContainer = styled.div<GoADropdownListContainerProps
   z-index: 1000;
   caret-color: transparent;
   position: absolute;
-  line-height: 2rem;
+  line-height: var(--goa-space-xl);
   max-height: ${(p) => p.optionListMaxHeight || '272px'};
 
   &:focus-visible {
@@ -53,10 +53,10 @@ export const GoADropdownListContainer = styled.div<GoADropdownListContainerProps
 `;
 
 export const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
-  padding: 4px 12px;
+  padding: var(--goa-space-2xs) var(--goa-space-s);
   text-overflow: ellipsis;
   color: ${(p) => (p.isSelected ? 'white' : 'var(--goa-color-greyscale-black)')} !important;
-  border: 0px solid #f1f1f1;
+  border: 0px solid var(--goa-color-greyscale-100);
   z-index: 1001;
   cursor: pointer;
   background: ${(p) => (p.isSelected ? 'var(--goa-color-interactive-default)' : '#fff')};

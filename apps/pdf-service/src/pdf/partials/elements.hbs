@@ -43,6 +43,12 @@
         </div>
     {{/withEachData}}
 {{else if (hasElements element) }}
+    {{#if (isGroup element )}}
+        <h4 class="groupPadding">
+            {{ label element }}
+        </h4>
+    {{/if}}
+
     {{#withEach element.elements data requiredFields dataSchema }}
         <div class="list-item-borderless-box">
             {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}

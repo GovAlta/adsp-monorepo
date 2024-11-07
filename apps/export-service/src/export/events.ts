@@ -111,6 +111,7 @@ export const exportQueued = (
   name: ExportQueuedDefinition.name,
   tenantId,
   timestamp: new Date(),
+  correlationId: jobId,
   payload: {
     jobId,
     resourceId: resourceId.toString(),
@@ -134,6 +135,7 @@ export const exported = (
   name: ExportCompletedDefinition.name,
   tenantId,
   timestamp: new Date(),
+  correlationId: jobId,
   payload: {
     jobId,
     resourceId: resourceId.toString(),
@@ -157,11 +159,12 @@ export const exportFailed = (
   resourceId: string,
   format: string,
   filename: string,
-  error: string,
+  error: string
 ): DomainEvent => ({
   name: ExportFailedDefinition.name,
   tenantId,
   timestamp: new Date(),
+  correlationId: jobId,
   payload: {
     jobId,
     resourceId,

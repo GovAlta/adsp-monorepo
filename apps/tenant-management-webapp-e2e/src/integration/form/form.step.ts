@@ -1010,3 +1010,170 @@ Then(
       });
   }
 );
+
+When('the user enters {string} in a text field labelled {string} in preview pane', function (text: string, label) {
+  formObj.formPreviewTextField(label).shadow().find('input').clear().type(text, { force: true, delay: 200 });
+});
+
+When('the user enters {string} in a date picker labelled {string} in preview pane', function (date: string, label) {
+  formObj.formPreviewDateInput(label).shadow().find('input').clear().type(date, { force: true });
+});
+
+When('the user enters {string} in a dropdown labelled {string} in preview pane', function (value: string, label) {
+  formObj.formPreviewDropdown(label).find('goa-input').click({ force: true });
+  formObj.formPreviewDropdown(label).find('div').contains(value).click({ force: true });
+});
+
+When('the user clicks Next button in the form in preview pane', function () {
+  formObj.formPreviewNextButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});
+
+When('the user {string} a checkbox labelled {string} in preview pane', function (checkboxOperation, label) {
+  formObj
+    .formPreviewCheckbox(label)
+    .shadow()
+    .find('.goa-checkbox-container')
+    .invoke('attr', 'class')
+    .then((classAttVal) => {
+      if (classAttVal == undefined) {
+        expect.fail('Failed to get checkbox class attribute value.');
+      } else {
+        switch (checkboxOperation) {
+          case 'selects':
+            if (classAttVal.includes('selected')) {
+              cy.log('The checkbox was already checked.');
+            } else {
+              formObj.formPreviewCheckbox(label).shadow().find('.goa-checkbox-container').click({ force: true });
+              cy.wait(1000);
+            }
+            break;
+          case 'unselects':
+            if (classAttVal.includes('selected')) {
+              formObj.formPreviewCheckbox(label).shadow().find('.goa-checkbox-container').click({ force: true });
+              cy.wait(1000);
+            } else {
+              cy.log('The checkbox was already unchecked.');
+            }
+            break;
+          default:
+            expect(checkboxOperation).to.be.oneOf(['selects', 'unselects']);
+        }
+      }
+    });
+});
+
+When('the user clicks submit button in the form in preview pane', function () {
+  cy.wait(2000);
+  formObj.formPreviewSubmitButton().shadow().find('button').click({ force: true });
+  cy.wait(5000);
+});
+
+When('the user clicks list with detail button labelled as {string} in the form in preview pane', function (label) {
+  formObj.formPreviewListWithDetailButton(label).shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});
+
+When(
+  'the user enters {string} in list with detail element text field labelled {string} in preview pane',
+  function (text: string, label) {
+    formObj
+      .formPreviewListWithDetailDependantTextField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(text, { force: true, delay: 200 });
+  }
+);
+
+When(
+  'the user enters {string} in list with detail element date input labelled {string} in preview pane',
+  function (date: string, label) {
+    formObj
+      .formPreviewListWithDetailDependantDateInput(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(date, { force: true });
+  }
+);
+
+When(
+  'the user selects {string} radio button for the question of {string} in preview pane',
+  function (radioLabel, question) {
+    formObj.formPreviewRadioGroup(question).shadow().find(`[value="${radioLabel}"]`).click({ force: true });
+    cy.wait(1000);
+  }
+);
+
+Then('the user views form data pane', function () {
+  formObj.formDataView().should('exist');
+});
+
+Then('the user views form data of {string} as {string} on data page', function (value, nodeName) {
+  formObj
+    .formDataContent()
+    .invoke('text')
+    .then((data) => {
+      if (value == 'true' || value == 'false') {
+        expect(data).to.contain('"' + nodeName + '"' + ': ' + value);
+      } else {
+        expect(data).to.contain('"' + nodeName + '"' + ': ' + '"' + value + '"');
+      }
+    });
+});
+
+Then(
+  'the user views form data of {string} as {string} for {string} object on data page',
+  function (value, nodeName, parentNodeName) {
+    formObj
+      .formDataContent()
+      .invoke('text')
+      .then((data) => {
+        if (value == 'true' || value == 'false') {
+          const regex = new RegExp(`(.|\n)+"${parentNodeName}": {(.|\n)+"${nodeName}": ${value}(.|\n)+`);
+          expect(data).to.match(regex);
+        } else {
+          const regex = new RegExp(`(.|\n)+"${parentNodeName}": {(.|\n)+"${nodeName}": "${value}"(.|\n)+`);
+          expect(data).to.match(regex);
+        }
+      });
+  }
+);
+
+Then(
+  'the user views form data of {string} as {string} for {string} array on data page',
+  function (value: string, nodeName: string, parentNodeName) {
+    const names = nodeName.split(':');
+    const values = value.split(':');
+    expect(names.length).to.eq(values.length);
+    let arrayString = '';
+    for (let i = 0; i < names.length; i++) {
+      if (value == 'true' || value == 'false') {
+        if (i == names.length - 1) {
+          arrayString = arrayString + '"' + names[i] + '": ' + values[i] + '(.|\n)+';
+        } else {
+          arrayString = arrayString + '"' + names[i] + '": ' + values[i] + '(.|\n)+';
+        }
+      } else {
+        if (i == names.length - 1) {
+          arrayString = arrayString + '"' + names[i] + '": "' + values[i] + '"(.|\n)+';
+        } else {
+          arrayString = arrayString + '"' + names[i] + '": "' + values[i] + '"(.|\n)+';
+        }
+      }
+    }
+    cy.log(arrayString);
+    const regex = new RegExp(`(.|\n)+"${parentNodeName}": (.|\n)+${arrayString}`);
+    formObj
+      .formDataContent()
+      .invoke('text')
+      .then((data) => {
+        expect(data).to.match(regex);
+      });
+  }
+);
+
+Then('the user views form definition Preview pane', function () {
+  formObj.formPreviewView().should('exist');
+});
