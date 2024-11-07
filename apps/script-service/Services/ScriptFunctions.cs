@@ -130,7 +130,7 @@ internal class ScriptFunctions : IScriptFunctions
     return result;
   }
 
-  public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
+  public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, LuaTable? context = null, LuaTable? payload = null)
   {
     if (String.IsNullOrEmpty(@namespace))
     {
@@ -151,9 +151,9 @@ internal class ScriptFunctions : IScriptFunctions
       Namespace = @namespace,
       Name = name,
       CorrelationId = correlationId,
-      Context = context,
+      Context = context.ToDictionary(),
       Timestamp = DateTime.Now,
-      Payload = payload ?? new Dictionary<string, object>()
+      Payload = payload != null ? payload.ToDictionary() : new Dictionary<string, object>()
     };
 
     var request = new RestRequest(requestUrl, Method.Post);
