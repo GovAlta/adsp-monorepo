@@ -3,8 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { NameInputs } from './FullNameInputs';
 import { isFullName } from './FullNameTester';
 import '@testing-library/jest-dom';
+import { JsonSchema7, TesterContext, UISchemaElement } from '@jsonforms/core';
 
 describe('NameInputs', () => {
+  const dummyTestContext = {
+    rootSchema: {},
+    config: {},
+  } as TesterContext;
+
   const mockHandleInputChange = jest.fn();
   const handleBlur = jest.fn();
 
@@ -174,7 +180,7 @@ describe('NameInputs', () => {
       {
         type: 'Control',
         scope: '#/properties/personFullName',
-      },
+      } as UISchemaElement,
       {
         type: 'object',
         properties: {
@@ -186,17 +192,17 @@ describe('NameInputs', () => {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema7,
               middleName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema7,
               lastName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema7,
             },
             required: ['firstName', 'lastName'],
             errorMessage: {
@@ -206,10 +212,10 @@ describe('NameInputs', () => {
                 lastName: 'Include period (.) if providing your initial',
               },
             },
-          },
+          } as JsonSchema7,
         },
       },
-      {}
+      dummyTestContext
     )
   ).toBe(true);
 });
