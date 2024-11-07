@@ -23,7 +23,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
-  public override bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
+  public override bool SendDomainEvent(string @namespace, string name, string? correlationId, LuaTable? context = null, LuaTable? payload = null)
   {
     if (String.IsNullOrEmpty(@namespace))
     {
