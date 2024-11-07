@@ -6,6 +6,10 @@ import { JsonFormContext } from '../../Context';
 import { Suggestion } from './types';
 import { isAddressLookup } from './AddressLookupTester';
 import { ControlElement, JsonSchema4, JsonSchema7, TesterContext, UISchemaElement } from '@jsonforms/core';
+import axios from 'axios';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
 
 jest.mock('./utils', () => ({
   fetchAddressSuggestions: jest.fn(),
@@ -56,7 +60,6 @@ describe('AddressLookUpControl', () => {
           },
         },
       } as JsonSchema7,
-
       uischema: {
         type: 'Control',
         scope: '',
@@ -107,6 +110,7 @@ describe('AddressLookUpControl', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   it('should render the component with input fields', () => {
     renderComponent();
     const input = screen.getByTestId('address-form-address1');
@@ -127,6 +131,112 @@ describe('AddressLookUpControl', () => {
     const inputField = screen.getByTestId('address-form-address1');
     fireEvent.change(inputField, { target: { value: '123' } });
     expect((inputField as HTMLInputElement).value).toBe('123');
+  });
+
+  it('can trigger onChange', async () => {
+    renderComponent();
+    const inputField = screen.getByTestId('address-form-address1');
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_change', {
+        detail: { value: '123' },
+      })
+    );
+    expect((inputField as HTMLInputElement).value).toBe('123');
+  });
+
+  it('can trigger onChange for non Alberta', async () => {
+    const component = renderComponent({
+      data: null,
+      enabled: true,
+      rootSchema: {} as JsonSchema4,
+      id: 'address',
+      label: null,
+      visible: true,
+      errors: '',
+      type: 'Control',
+      scope: '#/properties/personFullName',
+      path: 'address',
+      schema: {
+        title: 'BC postal address',
+        properties: {
+          subdivisionCode: {
+            const: null,
+          },
+          required: ['addressLine1', 'municipality', 'postalCode'],
+          errorMessage: {
+            properties: {
+              postalCode: 'Must be in 0A0 A0A capital letters and numbers format',
+            },
+          },
+        },
+      } as JsonSchema7,
+      uischema: {
+        type: 'Control',
+        scope: '',
+        options: {
+          autocomplete: true,
+        },
+        label: 'Address Lookup',
+      } as ControlElement,
+      handleChange: mockHandleChange,
+    });
+
+    const inputField = screen.getByTestId('address-form-address1');
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_change', {
+        detail: { value: '123' },
+      })
+    );
+
+    expect((inputField as HTMLInputElement).value).toBe('123');
+  });
+
+  it('can trigger input onBlur', async () => {
+    const component = renderComponent();
+
+    const inputField = screen.getByTestId('address-form-address1');
+
+    fireEvent(inputField, new CustomEvent('_blur', { detail: { name: 'test', value: '123' } }));
+  });
+
+  it('can trigger onKeyPress', async () => {
+    const component = renderComponent();
+
+    const inputField = screen.getByTestId('address-form-address1');
+
+    fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'test', value: '123' } }));
+
+    console.log('inputField', (inputField as HTMLInputElement).value);
+    console.log('inputField', inputField.outerHTML);
+
+    // expect((inputField as HTMLInputElement).value).toBe('123');
+  });
+  it('can trigger onKeyPress Arrow keys', async () => {
+    const component = renderComponent();
+
+    const inputField = screen.getByTestId('address-form-address1');
+    await axiosMock.get.mockResolvedValueOnce(mockSuggestions);
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_change', {
+        detail: { value: '123' },
+      })
+    );
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', { detail: { name: 'test', value: 'ArrowDown', key: 'ArrowDown' } })
+    );
+
+    fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'test', value: 'ArrowUp', key: 'ArrowUp' } }));
+    fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'test', value: 'Enter', key: 'Enter' } }));
+
+    // expect((inputField as HTMLInputElement).value).toBe('123');
   });
 
   it('displays no suggestions for less than 3 characters', async () => {
