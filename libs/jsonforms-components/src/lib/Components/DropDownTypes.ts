@@ -38,3 +38,7 @@ export const ESCAPE_KEY = 'Escape';
 export const ARROW_DOWN_KEY = 'ArrowDown';
 export const ARROW_UP_KEY = 'ArrowUp';
 export const TAB_KEY = 'Tab';
+export const SPACE_KEY = ' ';
+export const ALT_KEY = 'Alt';
+
+export const SHIFT_KEY = 'Shift';
