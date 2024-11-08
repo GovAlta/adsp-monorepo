@@ -35,7 +35,7 @@ public sealed class ScriptFunctionsTests : IDisposable
     var StubFunctions = new StubScriptFunctions(Tenant, ServiceDirectory, TestUtil.GetMockToken());
 
     var Expected = StubFunctions.GetFormSubmission(FormId, SubmissionId);
-    using var RestClient = TestUtil.GetRestClient<FormSubmissionResult>(FormServiceId, endpoint, HttpMethod.Get, Expected);
+    using var RestClient = TestUtil.GetRestClient(FormServiceId, endpoint, HttpMethod.Get, Expected);
     var ScriptFunctions = new ScriptFunctions(FormServiceId, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), RestClient);
     var Actual = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);
     Assert.Equal(SubmissionId, Actual?.id);
@@ -54,7 +54,7 @@ public sealed class ScriptFunctionsTests : IDisposable
     var StubFunctions = new StubScriptFunctions(Tenant, ServiceDirectory, TestUtil.GetMockToken());
 
     var Expected = StubFunctions.GetFormSubmission(FormId, SubmissionId);
-    using var RestClient = TestUtil.GetRestClient<FormSubmissionResult>(FormServiceId, endpoint, HttpMethod.Get, Expected);
+    using var RestClient = TestUtil.GetRestClient(FormServiceId, endpoint, HttpMethod.Get, Expected);
     var ScriptFunctions = new ScriptFunctions(Tenant, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), RestClient);
     var Actual = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);
     Assert.Null(Actual);
@@ -68,7 +68,7 @@ public sealed class ScriptFunctionsTests : IDisposable
     var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
     var ServiceDirectory = TestUtil.GetServiceUrl(EventServiceId);
 
-    using var RestClient = TestUtil.GetRestClientToInspectBody<bool>(
+    using var RestClient = TestUtil.GetRestClientToInspectBody(
       EventServiceId,
       endpoint,
       HttpMethod.Post,
@@ -88,6 +88,36 @@ public sealed class ScriptFunctionsTests : IDisposable
     LuaTable payload = (LuaTable)_lua["payload"];
     var Actual = ScriptFunctions.SendDomainEvent("namespace", "name", null, null, payload);
     Assert.True(Actual);
+  }
+
+  [Fact]
+  public void CanWriteComplexValue()
+  {
+    var ValueServiceId = AdspId.Parse("urn:ads:platform:value-service");
+    var _namespace = "my-space";
+    var name = "my-test";
+    var endpoint = $"/value/v1/{_namespace}/values/{name}";
+    var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
+    var ServiceDirectory = TestUtil.GetServiceUrl(ValueServiceId);
+
+    using var RestClient = TestUtil.GetRestClientToInspectBody(ValueServiceId, endpoint, HttpMethod.Post, null,
+      (b) =>
+      {
+        var body = (Dictionary<string, object>)JsonConvert.DeserializeObject<JToken>(b).ToDictionary();
+        Assert.Equal("my-space", body["namespace"]);
+        Assert.Equal("my-test", body["name"]);
+        Assert.Equal("", body["correlationId"]);
+        var context = ((Dictionary<string, object>)body["context"]);
+        Assert.True(context.Count == 0);
+        var index = (Dictionary<string, object>)((Dictionary<string, object>)body["value"])["index"];
+        Assert.Equal("test-Index", index["1"]);
+      }
+);
+    var ScriptFunctions = new ScriptFunctions(Tenant, TestUtil.GetServiceUrl(ValueServiceId), TestUtil.GetMockToken(), RestClient);
+    _lua.DoString("theValue = { value = {index = {'test-Index'}}, context={}, correlationId='' }");
+    LuaTable value = (LuaTable)_lua["theValue"];
+    var Actual = ScriptFunctions.WriteValue(_namespace, name, value);
+    Assert.Null(Actual);
   }
 
 }
