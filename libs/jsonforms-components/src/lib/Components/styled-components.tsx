@@ -81,7 +81,8 @@ export const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
   &:focus-within {
     caret-color: transparent;
     color: 'var(--goa-color-text-light) !important';
-    background-color: var(--goa-color-interactive-hover) !important;
+    background-color: ${(p) =>
+      p.isSelected ? 'var(--goa-color-interactive-hover)' : 'var(--goa-color-greyscale-100) !important'};
   }
   .dropDownListItem:focus-visible {
     caret-color: transparent;
