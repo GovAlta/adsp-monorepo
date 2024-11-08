@@ -7,6 +7,7 @@ export interface EditorSuggestion {
   insertText: string;
   children?: EditorSuggestion[];
   path?: string;
+  isRef?: string;
 }
 const MAX_LINE_LENGTH = 10000;
 
