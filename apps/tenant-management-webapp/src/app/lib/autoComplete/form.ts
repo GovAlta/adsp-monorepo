@@ -2,6 +2,8 @@ import { commonV1JsonSchema, standardV1JsonSchema } from '@abgov/data-exchange-s
 import type { editor, Position } from 'monaco-editor';
 import type { EditorSuggestion } from './autoComplete';
 import { JsonObjectCompletionItemProvider, JsonPropertyValueCompletionItemProvider, PeerContextType } from './json';
+import { TesterContext } from '@jsonforms/core';
+import { isAddressLookup, isFullName, isFullNameDoB } from '@abgov/jsonforms-components';
 
 export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCompletionItemProvider {
   private static standardValues: EditorSuggestion[];
@@ -36,7 +38,8 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
     recurse: boolean,
     schema: Record<string, unknown>,
     path: string,
-    labelPath?: string
+    labelPath?: string,
+    isRefSchema?: boolean
   ): EditorSuggestion[] {
     const suggestions: EditorSuggestion[] = [];
     if (typeof schema?.properties === 'object') {
@@ -44,24 +47,39 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
         const currentPath = `${path}/properties/${property}`;
         const currentLabelPath = `${labelPath || path}/p.../${property}`;
         const propertySchema = schema.properties[property];
+        const uiSchema = {
+          type: 'Control',
+          scope: currentPath,
+        };
+        const dummyTestContext = {
+          rootSchema: {},
+          config: {},
+        } as TesterContext;
 
-        if (recurse && typeof schema.properties[property] === 'object') {
+        const isRef =
+          isAddressLookup(uiSchema, schema, dummyTestContext) ||
+          isFullName(uiSchema, schema, dummyTestContext) ||
+          isFullNameDoB(uiSchema, schema, dummyTestContext) ||
+          isRefSchema;
+
+        if (recurse && typeof schema.properties[property] === 'object' && isRef) {
           suggestions.push({
             label: `"${currentLabelPath}"`,
             insertText: `"${currentPath}"`,
             path,
           });
+        }
 
-          // Resolve children if current property is an object.
-          if (recurse && typeof schema.properties[property] === 'object') {
-            const children = this.convertDataSchemaToSuggestion(
-              recurse,
-              schema.properties[property],
-              currentPath,
-              currentLabelPath
-            );
-            suggestions.push(...children);
-          }
+        // Resolve children if current property is an object.
+        if (recurse && typeof schema.properties[property] === 'object') {
+          const children = this.convertDataSchemaToSuggestion(
+            recurse,
+            schema.properties[property],
+            currentPath,
+            currentLabelPath,
+            true
+          );
+          suggestions.push(...children);
         }
       }
     }
