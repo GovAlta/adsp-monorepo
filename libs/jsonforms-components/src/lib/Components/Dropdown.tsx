@@ -1,7 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { GoAInput, GoAInputProps } from '@abgov/react-components-new';
 import { isEqual } from 'lodash';
-import { ARROW_DOWN_KEY, ARROW_UP_KEY, DropdownProps, ENTER_KEY, ESCAPE_KEY, Item, TAB_KEY } from './DropDownTypes';
+import {
+  ARROW_DOWN_KEY,
+  ARROW_UP_KEY,
+  DropdownProps,
+  ENTER_KEY,
+  ESCAPE_KEY,
+  Item,
+  SPACE_KEY,
+  TAB_KEY,
+} from './DropDownTypes';
 import { GoADropdownListContainer, GoADropdownListContainerWrapper, GoADropdownListOption } from './styled-components';
 
 export const isValidKey = (keyCode: string): boolean => {
@@ -97,7 +106,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   /* istanbul ignore next */
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === ENTER_KEY) {
+    if (e.key === ENTER_KEY || e.key === SPACE_KEY) {
       setIsOpen((previousIsOpen) => !previousIsOpen);
       const el = document.getElementById(`${PREFIX}-${label}-${items.at(0)?.value}`);
       setElementFocus(e, el, false);
@@ -136,7 +145,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   };
 
   const handDropDownItemOnKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, item: Item) => {
-    if (e.key === ENTER_KEY) {
+    if (e.key === ENTER_KEY || e.key === SPACE_KEY) {
       updateDropDownData(item);
       const inputEl = document.getElementById(`${id}-input`) as GoAInputProps & HTMLElement;
 
