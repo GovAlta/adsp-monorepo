@@ -49,14 +49,12 @@ export const GoADropdownListContainer = styled.div<GoADropdownListContainerProps
   &:hover {
     background-color: var(--goa-color-interactive-hover) !important;
     color: #fff !important;
-    color: #fff !important;
   }
 `;
 
 export const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
   padding: var(--goa-space-2xs) var(--goa-space-s);
   text-overflow: ellipsis;
-  color: ${(p) => (p.isSelected ? '#fff' : 'var(--goa-color-greyscale-black)')} !important;
   color: ${(p) => (p.isSelected ? '#fff' : 'var(--goa-color-greyscale-black)')} !important;
   border: 0px solid var(--goa-color-greyscale-100);
   z-index: 1001;
