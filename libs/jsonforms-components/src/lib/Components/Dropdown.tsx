@@ -11,7 +11,12 @@ import {
   SPACE_KEY,
   TAB_KEY,
 } from './DropDownTypes';
-import { GoADropdownListContainer, GoADropdownListContainerWrapper, GoADropdownListOption } from './styled-components';
+import {
+  GoADropdownListContainer,
+  GoADropdownListContainerWrapper,
+  GoADropdownListOption,
+  GoADropdownTextbox,
+} from './styled-components';
 
 export const isValidKey = (keyCode: string): boolean => {
   if (keyCode === 'Shift' || keyCode === 'Alt') return false;
@@ -205,29 +210,27 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   return (
     <div data-testid={id} key={id}>
-      <GoAInput
-        onTrailingIconClick={() => {
-          setIsOpen(!isOpen);
-        }}
-        disabled={!enabled}
-        name={`dropdown-${label}`}
-        width="100%"
-        value={inputText}
-        testId={`${id}-input`}
-        id={`${id}-input`}
-        readonly={!isAutoCompletion}
-        onChange={(name, value) => {
-          if (isAutoCompletion) {
-            setInputText(value);
-            const selectedItems = props.items.filter((item) => {
-              return item.label.includes(value);
-            });
-            setItems(selectedItems);
-          }
-        }}
-        trailingIcon={trailingIcon}
-      />
-
+      <GoADropdownTextbox isOpen={isOpen}>
+        <GoAInput
+          disabled={!enabled}
+          name={`dropdown-${label}`}
+          width="100%"
+          value={inputText}
+          testId={`${id}-input`}
+          id={`${id}-input`}
+          readonly={!isAutoCompletion}
+          onChange={(name, value) => {
+            if (isAutoCompletion) {
+              setInputText(value);
+              const selectedItems = props.items.filter((item) => {
+                return item.label.includes(value);
+              });
+              setItems(selectedItems);
+            }
+          }}
+          trailingIcon={trailingIcon}
+        />
+      </GoADropdownTextbox>
       <GoADropdownListContainerWrapper
         isOpen={isOpen}
         id={`${PREFIX}-dropDownListContainerWrapper-${label}`}

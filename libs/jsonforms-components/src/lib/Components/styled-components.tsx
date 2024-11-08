@@ -7,21 +7,15 @@ import {
 } from './DropDownTypes';
 
 export const GoADropdownTextbox = styled.div<GoADropdownTextboxProps>`
-  text-overflow: ellipsis;
-  overflow: hidden;
-  min-height: 43px;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 8px;
-  padding-right: 8px;
-  border-radius: 4px;
-  border: 1px solid #666;
-  font-size: 18px;
-  font-weight: 400;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  box-shadow: ${(p) => (p.isOpen ? `0 0 0 3px #feba35` : '')};
+  border-radius: var(--goa-space-2xs);
+  box-shadow: ${(p) => (p.isOpen ? `0 0 0 3px var(--goa-color-interactive-focus)` : '')};
+  &:hover {
+    cursor: pointer;
+  }
+
+  .inputStyle {
+    box-shadow: ${(p) => (p.isOpen ? `0 0 0 3px var(--goa-color-interactive-focus) !important` : '')};
+  }
 `;
 
 export const GoADropdownListContainerWrapper = styled.div<GoADropdownListContainerWrapperProps>`
