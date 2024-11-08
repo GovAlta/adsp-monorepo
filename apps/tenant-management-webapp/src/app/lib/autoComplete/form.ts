@@ -2,12 +2,8 @@ import { commonV1JsonSchema, standardV1JsonSchema } from '@abgov/data-exchange-s
 import type { editor, Position } from 'monaco-editor';
 import type { EditorSuggestion } from './autoComplete';
 import { JsonObjectCompletionItemProvider, JsonPropertyValueCompletionItemProvider, PeerContextType } from './json';
-import {
-  isAddressLookup,
-  isFullName,
-  isFullNameDoB,
-} from '../../../../../../libs/jsonforms-components/src/lib/Controls';
 import { TesterContext } from '@jsonforms/core';
+import { isAddressLookup, isFullName, isFullNameDoB } from '@abgov/jsonforms-components';
 
 export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCompletionItemProvider {
   private static standardValues: EditorSuggestion[];
