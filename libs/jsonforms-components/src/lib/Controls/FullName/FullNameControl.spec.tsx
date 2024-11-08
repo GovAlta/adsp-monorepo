@@ -49,7 +49,20 @@ describe('FullNameControl', () => {
     render(<FullNameControl {...defaultProps} />);
 
     const firstNameInput = screen.getByTestId('name-form-first-name');
-    fireEvent.change(firstNameInput, { target: { value: 'Jane' } });
+    // fireEvent.change(firstNameInput, { target: { value: 'Jane' } });
+    fireEvent(
+      firstNameInput,
+      new CustomEvent('_keyPress', {
+        detail: { name: 'firstName', value: 'Jane', key: 'e' },
+      })
+    );
+    fireEvent(
+      firstNameInput,
+      new CustomEvent('_change', {
+        detail: { name: 'firstName', value: 'Jane' },
+      })
+    );
+
     await (async () => {
       expect(mockHandleChange).toHaveBeenCalledWith('path-to-data', {
         firstName: 'Jane',
@@ -68,6 +81,29 @@ describe('FullNameControl', () => {
     await (async () => {
       const errorMessage = screen.getByText('First name is required');
       expect(errorMessage).toBeInTheDocument();
+    });
+  });
+
+  it('first name field is changed when key pressed with no errors.', async () => {
+    render(<FullNameControl {...defaultProps} />);
+    const firstNameInput = screen.getByTestId('name-form-first-name');
+
+    fireEvent(
+      firstNameInput,
+      new CustomEvent('_keyPress', {
+        detail: { name: 'firstName', value: 'Jane', key: 'e' },
+      })
+    );
+    fireEvent(
+      firstNameInput,
+      new CustomEvent('_change', {
+        detail: { name: 'firstName', value: 'Jane' },
+      })
+    );
+
+    await (async () => {
+      const errorMessage = screen.getByText('First name is required');
+      expect(errorMessage).not.toBeInTheDocument();
     });
   });
 

@@ -4,12 +4,8 @@ import { AddressLookUpControl } from './AddressLookUpControl';
 import { fetchAddressSuggestions } from './utils';
 import { JsonFormContext } from '../../Context';
 import { Suggestion } from './types';
-import { isAddressLookup } from './AddressLookupTester';
 import { ControlElement, JsonSchema4, JsonSchema7, TesterContext, UISchemaElement } from '@jsonforms/core';
 import axios from 'axios';
-
-jest.mock('axios');
-const axiosMock = axios as jest.Mocked<typeof axios>;
 
 const mockHandleChange = jest.fn();
 const formUrl = 'http://mock-form-url.com';
@@ -89,7 +85,7 @@ describe('AddressLookUpControl', () => {
     },
   ];
 
-  it('can filterAddressSuggestions', async () => {
+  it('can filterAddressSuggestions with results', async () => {
     const mockResponse = {
       data: {
         Items: mockSuggestions,
@@ -99,11 +95,11 @@ describe('AddressLookUpControl', () => {
     axios.get = jest.fn().mockImplementationOnce(() => {
       return Promise.resolve(mockResponse);
     });
-    const results = await fetchAddressSuggestions('tes', '123', true);
+    const results = await fetchAddressSuggestions('test', '123', true);
     console.log('results', results);
   });
 
-  it('can filter addresss with mouse click', async () => {
+  it('can filter addresss with mouse click with results', async () => {
     renderComponent();
     const inputField = screen.getByTestId('address-form-address1');
 
@@ -124,8 +120,10 @@ describe('AddressLookUpControl', () => {
     axios.get = jest.fn().mockImplementationOnce(() => {
       return Promise.resolve(mockResponse);
     });
-    await fetchAddressSuggestions('tes', '123', true);
+    const results = await fetchAddressSuggestions('test', '123', true);
 
     fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'test', value: 'Enter', key: 'Enter' } }));
+
+    expect(results).toHaveLength(mockResponse.data.Items.length);
   });
 });
