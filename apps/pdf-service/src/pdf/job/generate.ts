@@ -3,6 +3,7 @@ import { NotFoundError } from '@core-services/core-common';
 import { FileResult, FileService, JobRepository } from '@core-services/job-common';
 import * as path from 'path';
 import { Logger } from 'winston';
+import axios from 'axios';
 import { pdfGenerated, pdfGenerationFailed } from '../events';
 import { PdfTemplateEntity } from '../model';
 import { PdfServiceWorkItem } from './types';
@@ -16,6 +17,54 @@ export interface GenerateJobProps {
   fileService: FileService;
   eventService: EventService;
 }
+
+const ExtractCurrentRefs = async (dataSchema) => {
+  const properties = dataSchema?.properties || dataSchema?.definitions || [];
+  let propertyName = dataSchema?.definitions && 'definitions';
+  propertyName = dataSchema?.properties ? 'properties' : null;
+
+  const result = dataSchema;
+
+  for (const prop of Object.keys(properties)) {
+    if (properties[prop].$ref) {
+      try {
+        const refArray = properties[prop].$ref.split('#/');
+
+        // eslint-disable-next-line
+        const { data } = await axios.get<Record<string, Record<string, any[]>>>(properties[prop].$ref);
+
+        // eslint-disable-next-line
+        let parsedData = Object.assign({}, data) as any;
+
+        refArray[1].split('/').forEach((key) => {
+          parsedData = parsedData[key];
+        });
+
+        const resolvedData = await ExtractCurrentRefs(parsedData);
+        result[propertyName][prop] = resolvedData;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    } else if (properties[prop].type === 'object') {
+      result[propertyName][prop] = await ExtractCurrentRefs(properties[prop]);
+    } else {
+      result[propertyName][prop] = properties[prop];
+    }
+  }
+
+  if (dataSchema?.allOf) {
+    if (!result[propertyName]) {
+      result[propertyName] = {};
+    }
+    result[propertyName].allOf = await Promise.all(
+      dataSchema.allOf.map(async (item) => {
+        return await ExtractCurrentRefs(item);
+      })
+    );
+  }
+
+  return result;
+};
 
 const context = 'GenerateJob';
 export function createGenerateJob({
@@ -51,6 +100,12 @@ export function createGenerateJob({
       const pdfTemplate = configuration[templateId];
       if (!pdfTemplate) {
         throw new NotFoundError('PDF Template', templateId);
+      }
+
+      const dataSchema = Object.assign({}, data.content?.config?.dataSchema);
+      const newDataSchema = await ExtractCurrentRefs(dataSchema);
+      if (data.content?.config?.dataSchema) {
+        data.content.config.dataSchema = newDataSchema;
       }
 
       const pdf = await pdfTemplate.generate({ data });
