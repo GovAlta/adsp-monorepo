@@ -26,11 +26,11 @@ public static class TestUtil
     return MockTokenGetter.Object;
   }
 
-  public static IRestClient GetRestClient<T>(
+  public static IRestClient GetRestClient(
     AdspId serviceId,
     string endpoint,
     HttpMethod method,
-    object expectedResult,
+    object? expectedResult = null,
     bool success = true
   )
   {
@@ -63,11 +63,11 @@ public static class TestUtil
     return mockRestClient;
   }
 
-  public static IRestClient GetRestClientToInspectBody<T>(
+  public static IRestClient GetRestClientToInspectBody(
   AdspId serviceId,
   string endpoint,
   HttpMethod method,
-  object expectedResult,
+  object? expectedResult,
   Action<string> assert
 )
   {
