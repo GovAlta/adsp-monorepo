@@ -1,0 +1,51 @@
+import type { Core, UID } from '@strapi/strapi';
+
+const applyTenantContext = async (policyContext, _config, { strapi }: { strapi: Core.Strapi }) => {
+  const { model, id }: { model: UID.ContentType; id?: string } = policyContext['params'];
+  const user = policyContext['state']?.auth?.credentials;
+
+  const request = policyContext.request;
+  const tenantId = user?.tenantId;
+  let requestedTenantId: string;
+  if (tenantId) {
+    switch (request.method) {
+      case 'POST': {
+        // This is a create request, so set the tenantId in the data.
+        request.body.tenantId = tenantId;
+        break;
+      }
+      case 'GET': {
+        // This is a read request, so...
+        if (id) {
+          // for specific document read, check tenancy.
+          const document = await strapi.documents(model).findOne({ documentId: id });
+          requestedTenantId = document?.['tenantId'];
+        } else {
+          // for collection reads, add a tenantId criteria to the filter.
+          const filters: { $and: unknown[] } = { $and: [{ tenantId }] };
+          if (request.query.filters) {
+            filters.$and.push(request.query.filters);
+          }
+          request.query.filters = filters;
+        }
+        break;
+      }
+      case 'PUT':
+      case 'DELETE': {
+        // This is an update or delete request, so we need to verify user access to the associated content.
+        const document = await strapi.documents(model).findOne({ documentId: id });
+        requestedTenantId = document?.['tenantId'];
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  // Pass if user isn't in a tenant context, or
+  // requested document isn't in a tenant context, or
+  // tenant contexts are the same.
+  return !tenantId || !requestedTenantId || tenantId === requestedTenantId;
+};
+
+export default applyTenantContext;
