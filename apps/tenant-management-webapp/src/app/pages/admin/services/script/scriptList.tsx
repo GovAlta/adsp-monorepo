@@ -19,7 +19,7 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
   const getPathName = useLocation()
 
   useEffect(()=>{
-    if(getPathName.pathname.includes("/script/edit")){
+    if(getPathName.pathname.includes('/script/edit')){
       onEdit(script);
     }
   },[])

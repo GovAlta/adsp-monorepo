@@ -65,7 +65,6 @@ const TenantManagement = (): JSX.Element => {
       case 'PDF':
         return <PDFRouter />;
       case 'Script':
-        // return <Script />;
         return <ScriptRouter />
       case 'Status':
         return <Status />;
