@@ -1,11 +1,25 @@
 import type { Core, UID } from '@strapi/strapi';
 
-const applyTenantContext = async (policyContext, _config, { strapi }: { strapi: Core.Strapi }) => {
-  const { model, id }: { model: UID.ContentType; id?: string } = policyContext['params'];
+/**
+ * Policy that enforces user tenant context on content manager requests for authoring and publishing content.
+ *
+ * @param {*} policyContext
+ * @param {*} config
+ * @param {{ strapi: Core.Strapi }} { strapi }
+ * @returns
+ */
+const isTenantContentManager = async (
+  policyContext: Core.PolicyContext,
+  _config,
+  { strapi }: { strapi: Core.Strapi },
+) => {
+  const { model, id: documentId }: { model: UID.ContentType; id?: string } = policyContext['params'];
+
+  // This is the user object based on the built-in admin strategy.
   const user = policyContext['state']?.auth?.credentials;
 
   const request = policyContext.request;
-  const tenantId = user?.tenantId;
+  const tenantId = user?.tenantId?.toString();
   let requestedTenantId: string;
   if (tenantId) {
     switch (request.method) {
@@ -16,9 +30,9 @@ const applyTenantContext = async (policyContext, _config, { strapi }: { strapi: 
       }
       case 'GET': {
         // This is a read request, so...
-        if (id) {
+        if (documentId) {
           // for specific document read, check tenancy.
-          const document = await strapi.documents(model).findOne({ documentId: id });
+          const document = await strapi.documents(model).findOne({ documentId });
           requestedTenantId = document?.['tenantId'];
         } else {
           // for collection reads, add a tenantId criteria to the filter.
@@ -33,7 +47,7 @@ const applyTenantContext = async (policyContext, _config, { strapi }: { strapi: 
       case 'PUT':
       case 'DELETE': {
         // This is an update or delete request, so we need to verify user access to the associated content.
-        const document = await strapi.documents(model).findOne({ documentId: id });
+        const document = await strapi.documents(model).findOne({ documentId });
         requestedTenantId = document?.['tenantId'];
         break;
       }
@@ -48,4 +62,4 @@ const applyTenantContext = async (policyContext, _config, { strapi }: { strapi: 
   return !tenantId || !requestedTenantId || tenantId === requestedTenantId;
 };
 
-export default applyTenantContext;
+export default isTenantContentManager;

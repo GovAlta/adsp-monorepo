@@ -16,8 +16,7 @@ const register = async ({ strapi }: { strapi: Core.Strapi }) => {
       description: strapi.config.get('plugin::adsp-strapi.description'),
       roles: [
         { role: ServiceRoles.Admin, inTenantAdmin: true, description: 'Administrator role for the content service.' },
-        { role: ServiceRoles.Author, description: 'Author role permitted to create content.' },
-        { role: ServiceRoles.Editor, description: 'Editor role permitted to edit and publish content.' },
+        { role: ServiceRoles.Reader, description: 'Reader role permitted to access content via the content API.' },
       ],
       events: [UserRegisteredEventDefinition],
     },
@@ -40,7 +39,7 @@ const register = async ({ strapi }: { strapi: Core.Strapi }) => {
   // Add the tenant context policy to content-manager routes which check permissions.
   for (const route of strapi.plugins['content-manager'].routes['admin'].routes) {
     if (route.config.policies?.find((policy) => policy.name === 'plugin::content-manager.hasPermissions')) {
-      route.config.policies.push('plugin::adsp-strapi.applyTenantContext');
+      route.config.policies.push('plugin::adsp-strapi.isTenantContentManager');
     }
   }
 };

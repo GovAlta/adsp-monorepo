@@ -1,7 +1,9 @@
 import isAdminUser from './is-admin-user';
-import applyTenantContext from './apply-tenant-context';
+import isTenantContentManager from './is-tenant-content-manager';
+import isTenantUserWithRole from './is-tenant-user-with-role';
 
 export default {
   isAdminUser,
-  applyTenantContext,
+  isTenantUserWithRole,
+  isTenantContentManager,
 };
