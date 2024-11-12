@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
-import { ScriptOverview } from './overview';
 import BetaBadge from '@icons/beta-badge.svg';
+import { useState } from 'react';
+import { ScriptOverview } from './overview';
 import { ScriptsView } from './scriptsView';
 import { HeadingDiv } from './styled-components';
 
 import AsideLinks from '@components/AsideLinks';
+import { useLocation } from 'react-router-dom';
 
 export const Script = (): JSX.Element => {
   const [activeIndex, setActiveIndex] = useState<number>(0);

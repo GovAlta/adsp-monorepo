@@ -254,7 +254,17 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                       <ReviewItemSection key={index}>
                         <ReviewItemHeader>
                           <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-                          <Anchor onClick={() => setPage(index + 1)} data-testid={testId}>
+                          <Anchor
+                            tabIndex={readOnly ? -1 : 0}
+                            onClick={() => setPage(index + 1)}
+                            data-testid={testId}
+                            onKeyDown={(e) => {
+                              if (!readOnly && (e.key === ' ' || e.key === 'Enter')) {
+                                e.preventDefault();
+                                setPage(index + 1);
+                              }
+                            }}
+                          >
                             {readOnly ? 'View' : 'Edit'}
                           </Anchor>
                         </ReviewItemHeader>

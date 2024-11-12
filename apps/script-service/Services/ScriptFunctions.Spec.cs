@@ -5,6 +5,7 @@ using Adsp.Platform.ScriptService.Services.Platform;
 using NLua;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using FluentAssertions.Execution;
 
 namespace Adsp.Platform.ScriptService.Services;
 
@@ -107,10 +108,17 @@ public sealed class ScriptFunctionsTests : IDisposable
         Assert.Equal("my-space", body["namespace"]);
         Assert.Equal("my-test", body["name"]);
         Assert.Equal("", body["correlationId"]);
-        var context = ((Dictionary<string, object>)body["context"]);
+        var context = (Dictionary<string, object>)body["context"];
         Assert.True(context.Count == 0);
-        var index = (Dictionary<string, object>)((Dictionary<string, object>)body["value"])["index"];
-        Assert.Equal("test-Index", index["1"]);
+        var value = (Dictionary<string, object>)body["value"];
+        if (value["index"] is List<object> index)
+        {
+          Assert.Equal("test-Index", index[0]);
+        }
+        else
+        {
+          Assert.False(true);
+        }
       }
 );
     var ScriptFunctions = new ScriptFunctions(Tenant, TestUtil.GetServiceUrl(ValueServiceId), TestUtil.GetMockToken(), RestClient);
