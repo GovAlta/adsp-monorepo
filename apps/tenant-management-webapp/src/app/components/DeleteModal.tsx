@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { PageIndicator } from './Indicator';
 import { CenterPosition } from './styled-components';
+import { divide } from 'lodash';
 interface deleteModalProps {
   title: string;
   content?: string | JSX.Element;
@@ -16,6 +17,17 @@ export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel }: dele
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      const deletBtn = document.querySelector('[data-testId="delete-confirm"]') as HTMLButtonElement;
+      if (deletBtn) {
+        setTimeout(() => {
+          deletBtn.shadowRoot.querySelector('button').focus();
+        }, 0);
+      }
+    }
+  }, [isOpen]);
 
   return (
     <GoAModal
