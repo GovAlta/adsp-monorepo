@@ -1,5 +1,9 @@
-import canAccessTenant from './can-access-tenant';
+import isAdminUser from './is-admin-user';
+import isTenantContentManager from './is-tenant-content-manager';
+import isTenantUserWithRole from './is-tenant-user-with-role';
 
 export default {
-  canAccessTenant,
+  isAdminUser,
+  isTenantUserWithRole,
+  isTenantContentManager,
 };

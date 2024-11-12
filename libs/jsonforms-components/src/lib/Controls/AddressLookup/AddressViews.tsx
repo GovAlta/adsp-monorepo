@@ -25,10 +25,14 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
     { value: 'SK', label: 'Saskatchewan' },
     { value: 'YT', label: 'Yukon' },
   ];
+
   return (
     <>
       <GoAGrid minChildWidth="0" gap="s">
-        <GoAFormItem label={`${isAlbertaAddress ? 'Alberta p' : 'P'}ostal address`}>
+        <GoAFormItem
+          error={data?.addressLine1?.length === 0 ? 'addressLine1 is required' : ''}
+          label={`${isAlbertaAddress ? 'Alberta p' : 'Canada p'}ostal address`}
+        >
           <p>{data?.addressLine1}</p>
         </GoAFormItem>
 
@@ -40,10 +44,10 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
       </GoAGrid>
       <br />
       <GoAGrid minChildWidth="0ch" gap="s">
-        <GoAFormItem label="City">
-          <p>{data?.city}</p>
+        <GoAFormItem error={data?.municipality?.length === 0 ? 'city is required' : ''} label="City">
+          <p>{data?.municipality}</p>
         </GoAFormItem>
-        <GoAFormItem label="Postal Code">
+        <GoAFormItem error={data?.postalCode?.length === 0 ? 'postalCode is required' : ''} label="Postal Code">
           <p>{data?.postalCode}</p>
         </GoAFormItem>
       </GoAGrid>
@@ -53,7 +57,7 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
           {isAlbertaAddress && <div data-testid="address-form-province-view">Alberta</div>}
           {!isAlbertaAddress && (
             <div data-testid="address-form-province-view">
-              {provinces.find((p) => p.value === data?.province)?.label}
+              {provinces.find((p) => p.value === data?.subdivisionCode)?.label}
             </div>
           )}
         </GoAFormItem>

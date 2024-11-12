@@ -2,12 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import { GoAInput, GoAInputProps } from '@abgov/react-components-new';
 import { isEqual } from 'lodash';
 import {
+  ALT_KEY,
   ARROW_DOWN_KEY,
   ARROW_UP_KEY,
   DropdownProps,
   ENTER_KEY,
   ESCAPE_KEY,
   Item,
+  SHIFT_KEY,
   SPACE_KEY,
   TAB_KEY,
 } from './DropDownTypes';
@@ -19,7 +21,7 @@ import {
 } from './styled-components';
 
 export const isValidKey = (keyCode: string): boolean => {
-  if (keyCode === 'Shift' || keyCode === 'Alt') return false;
+  if (keyCode === SHIFT_KEY || keyCode === ALT_KEY) return false;
 
   const regex = new RegExp(/^[a-zA-Z0-9!%$@.#?\-_]+$/);
   return regex.test(keyCode);
@@ -50,18 +52,21 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   useEffect(() => {
     if (textInput) {
       textInput.addEventListener('click', inputTextOnClick);
-      textInput.addEventListener('keydown', handleKeyDown, false);
-      textInput.addEventListener('blur', handleTextInputOnBlur, false);
+      textInput.addEventListener('keydown', handleKeyDown);
+      textInput.addEventListener('blur', handleTextInputOnBlur);
     }
+    document.addEventListener('keydown', handleDocumentKeyDown);
+
     return () => {
       if (textInput) {
         textInput.removeEventListener('click', inputTextOnClick);
         textInput.removeEventListener('keydown', handleKeyDown);
         textInput.removeEventListener('blur', handleTextInputOnBlur);
       }
+      document.removeEventListener('keydown', handleDocumentKeyDown);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [textInput]);
+  }, [textInput, document]);
 
   /* istanbul ignore next */
   const handleTextInputOnBlur = (e: FocusEvent) => {
@@ -106,6 +111,13 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       if (preventDefault) {
         e.preventDefault();
       }
+    }
+  };
+
+  /* istanbul ignore next */
+  const handleDocumentKeyDown = (e: KeyboardEvent) => {
+    if (e.key === ESCAPE_KEY || e.key === TAB_KEY) {
+      setIsOpen(false);
     }
   };
 

@@ -26,7 +26,7 @@ import { FileRouter } from './services/file';
 import { ValueRouter } from './services/value';
 import { serviceVariables } from '../../../featureFlag';
 
-import { Script } from './services/script';
+import { ScriptRouter } from './services/script';
 import { Feedback } from './services/feedback';
 
 const TenantManagement = (): JSX.Element => {
@@ -65,7 +65,7 @@ const TenantManagement = (): JSX.Element => {
       case 'PDF':
         return <PDFRouter />;
       case 'Script':
-        return <Script />;
+        return <ScriptRouter />
       case 'Status':
         return <Status />;
       case 'Task':

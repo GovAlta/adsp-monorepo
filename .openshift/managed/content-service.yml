@@ -119,6 +119,9 @@ objects:
                   memory: 50Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
+              volumeMounts:
+                - mountPath: /opt/app-root/src/apps/content-service/.tmp
+                  name: content-service-data
               # readinessProbe:
               #   httpGet:
               #     path: /
@@ -139,6 +142,10 @@ objects:
               #   periodSeconds: 60
               #   successThreshold: 1
               #   failureThreshold: 5
+          volumes:
+            - name: content-service-data
+              persistentVolumeClaim:
+                claimName: content-service-sqllite
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
