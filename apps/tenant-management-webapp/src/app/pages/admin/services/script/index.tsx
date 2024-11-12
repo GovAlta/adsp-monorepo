@@ -1,1 +1,1 @@
-export { Script } from './script';
+export { ScriptRouter } from './routers'

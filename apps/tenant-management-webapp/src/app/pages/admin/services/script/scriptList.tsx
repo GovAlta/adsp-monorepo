@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { ScriptItem } from '@store/script/models';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
@@ -6,13 +6,24 @@ import { TableDiv } from './styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { DeleteScript } from '@store/script/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
+import { useLocation, useNavigate } from 'react-router-dom';
 interface ScriptItemProps {
   script: ScriptItem;
   onDelete?: (script: ScriptItem) => void;
   onEdit?: (script: ScriptItem) => void;
 }
 
+
 const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDelete, onEdit }: ScriptItemProps) => {
+  const navigate = useNavigate();
+  const getPathName = useLocation()
+
+  useEffect(()=>{
+    if(getPathName.pathname.includes("/script/edit")){
+      onEdit(script);
+    }
+  },[])
+
   return (
     <tr key={script.name}>
       <td headers="script-name" data-testid="script-name">
@@ -33,6 +44,10 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
               testId={`script-edit-${script.name}`}
               onClick={() => {
                 onEdit(script);
+                navigate({
+                  pathname: `edit/${script.id}`,
+                  search: '?headless=false',
+                });
               }}
             />
             <GoAContextMenuIcon
