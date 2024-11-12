@@ -79,7 +79,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     <>
       <GoAGrid minChildWidth="0ch" gap="s">
         <GoAFormItem
-          label="First Name"
+          label="First name"
           requirement={schema?.required?.includes('firstName') ? 'required' : undefined}
           error={errors?.['firstName'] ?? ''}
         >
@@ -101,7 +101,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           />
         </GoAFormItem>
         <GoAFormItem
-          label="Middle Name"
+          label="Middle name"
           requirement={schema?.required?.includes('middleName') ? 'required' : undefined}
         >
           <GoAInput
@@ -115,7 +115,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           />
         </GoAFormItem>
         <GoAFormItem
-          label="Last Name"
+          label="Last name"
           requirement={schema?.required?.includes('lastName') ? 'required' : undefined}
           error={errors?.['lastName'] ?? ''}
         >
@@ -136,7 +136,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
       </GoAGrid>
       <GoAGrid minChildWidth="0ch" gap="s">
         <GoAFormItem
-          label="Date of Birth"
+          label="Date of birth"
           error={errors?.['dateOfBirth'] ?? ''}
           requirement={requiredFields?.includes('dateOfBirth') ? 'required' : undefined}
         >

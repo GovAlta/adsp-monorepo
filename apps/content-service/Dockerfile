@@ -1,7 +1,7 @@
 FROM registry.redhat.io/rhel9/nodejs-20
 
-COPY . .
-COPY ./dist/apps/content-service ./apps/content-service/dist
+COPY --chown=1001:0 --chmod=777 . .
+COPY --chown=1001:0 --chmod=777 ./dist/apps/content-service ./apps/content-service/dist
 
 
 WORKDIR /opt/app-root/src/apps/content-service

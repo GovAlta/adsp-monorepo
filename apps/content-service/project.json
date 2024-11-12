@@ -10,6 +10,7 @@
       "options": {
         "commands": [
           "strapi build",
+          "mkdir -p ../../dist/apps",
           "rsync -a --delete ./dist/ ../../dist/apps/content-service"
         ],
         "parallel": false,

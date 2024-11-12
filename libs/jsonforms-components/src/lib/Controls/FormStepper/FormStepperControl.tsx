@@ -39,6 +39,7 @@ import { StatusTable, StepInputStatus, StepperContext, getCompletionStatus } fro
 import { validateData } from './util/validateData';
 import { mapToVisibleStep } from './util/stepNavigation';
 import { GoAReviewRenderers } from '../../../index';
+import { isEmpty } from 'lodash';
 
 export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLayout, AjvProps, TranslateProps {}
 export interface FormStepperComponentProps {
@@ -113,7 +114,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   useEffect(() => {
     const statuses = Array<GoAFormStepStatusType | undefined>(categories.length);
     categories.forEach((_, i) => {
-      statuses[i] = getCompletionStatus(inputStatuses, i + 1);
+      statuses[i] = isEmpty(stepStatuses[i]) ? getCompletionStatus(inputStatuses, i + 1) : stepStatuses[i];
     });
     setStepStatuses(statuses);
   }, [inputStatuses, categories]);
@@ -137,7 +138,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   }
 
   function nextPage(page: number, disabled: boolean[]) {
-    const pageStatus = getCompletionStatus(inputStatuses, page);
+    const pageStatus = getCompletionStatus(inputStatuses, page, true);
     const statuses = [...stepStatuses];
     statuses[page - 1] = pageStatus ? pageStatus : 'incomplete';
     setStepStatuses(statuses);
@@ -150,6 +151,10 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   }
 
   function prevPage(page: number, disabled: boolean[]) {
+    const pageStatus = getCompletionStatus(inputStatuses, page, true);
+    const statuses = [...stepStatuses];
+    statuses[page - 1] = pageStatus ? pageStatus : 'incomplete';
+    setStepStatuses(statuses);
     page--;
     while (page >= 0 && disabled[page - 1]) {
       /* istanbul ignore next */

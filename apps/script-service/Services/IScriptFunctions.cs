@@ -18,7 +18,7 @@ interface IScriptFunctions
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
   );
 
-  bool SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null);
+  bool SendDomainEvent(string namespaceValue, string name, string? correlationId, LuaTable? context = null, LuaTable? payload = null);
 
   object? HttpGet(string url);
 

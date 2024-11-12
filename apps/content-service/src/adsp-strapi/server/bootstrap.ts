@@ -1,20 +1,19 @@
-import { adspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import type { Core } from '@strapi/strapi';
 
 const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
   // bootstrap phase
-
-  await initializePlatform(
+  const conditions = [
     {
-      serviceId: adspId`urn:ads:platform:content-service`,
-      clientSecret: process.env.CLIENT_SECRET,
-      directoryUrl: new URL(process.env.DIRECTORY_URL),
-      accessServiceUrl: new URL(process.env.KEYCLOAK_ROOT_URL),
-      displayName: 'Content service',
-      description: ''
+      displayName: 'Is tenant user',
+      name: 'is-tenant-user',
+      plugin: 'adsp-strapi',
+      handler: (user) => {
+        return { name: user.name };
+      },
     },
-    { logger: strapi.log }
-  );
+  ];
+
+  await strapi.admin.services.permission.conditionProvider.registerMany(conditions);
 };
 
 export default bootstrap;

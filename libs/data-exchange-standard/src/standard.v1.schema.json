@@ -25,7 +25,7 @@
           "description": "Apartment or unit number",
           "allOf": [
             {
-              "$ref": "#/definitions/postalAddress/definitions/addressLine"
+              "$ref": "#/definitions/postalAddress/definitions/addressLine2"
             }
           ]
         },
@@ -60,17 +60,17 @@
           "maxLength": 2
         }
       },
-      "required": [
-        "addressLine1",
-        "subdivisionCode",
-        "postalCode",
-        "country"
-      ],
+      "required": ["addressLine1", "subdivisionCode", "postalCode", "country"],
       "definitions": {
         "addressLine": {
           "type": "string",
           "$comment": "A portion of an individual's mailing address which identifies a specific location within a municipality.",
           "minLength": 1,
+          "maxLength": 60
+        },
+        "addressLine2": {
+          "type": "string",
+          "$comment": "A portion of an individual's mailing address which identifies a specific location within a house or housing complex.",
           "maxLength": 60
         }
       }

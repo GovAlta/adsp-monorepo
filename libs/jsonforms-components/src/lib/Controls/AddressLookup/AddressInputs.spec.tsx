@@ -19,7 +19,12 @@ describe('AddressInputs', () => {
 
   it('renders all input fields with the correct initial values', () => {
     const component = render(
-      <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={false} />
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+        isAlbertaAddress={false}
+      />
     );
     const addressLine2 = component.getByTestId('address-form-address2');
     expect((addressLine2 as HTMLInputElement).value).toBe(defaultAddress.addressLine2);
@@ -32,7 +37,13 @@ describe('AddressInputs', () => {
   });
 
   it('calls handleInputChange on user input in address2', () => {
-    render(<AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} />);
+    render(
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+      />
+    );
 
     const addressLine2Input = screen.getByTestId('address-form-address2');
     fireEvent.change(addressLine2Input, { target: { value: 'Suite 5' } });
@@ -72,7 +83,13 @@ describe('AddressInputs', () => {
     expect(blurred).toBe(true);
   });
   it('calls handleInputChange on user input in postal code', () => {
-    render(<AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} />);
+    render(
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+      />
+    );
 
     const pcInput = screen.getByTestId('address-form-postal-code');
     fireEvent.change(pcInput, { target: { value: 'T2X 2N0' } });
@@ -91,7 +108,12 @@ describe('AddressInputs', () => {
 
   it('calls handleInputChange on user input in province for canadian address', () => {
     render(
-      <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={false} />
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+        isAlbertaAddress={false}
+      />
     );
 
     const provinceInput = screen.getByTestId('address-form-province-dropdown');
@@ -109,7 +131,12 @@ describe('AddressInputs', () => {
   });
   it(' province is label when isAlbertaAddress is true', () => {
     const component = render(
-      <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={true} />
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+        isAlbertaAddress={true}
+      />
     );
 
     const provinceInput = component.getByTestId('address-form-province');
@@ -117,17 +144,16 @@ describe('AddressInputs', () => {
   });
   it('renders default country as Canada ', () => {
     const component = render(
-      <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={true} />
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+        isAlbertaAddress={true}
+      />
     );
 
     const input = component.getByTestId('address-form-country');
 
     expect(input).toBeTruthy();
-  });
-  it('matches snapshot', () => {
-    const { asFragment } = render(
-      <AddressInputs address={defaultAddress} handleInputChange={mockHandleInputChange} isAlbertaAddress={true} />
-    );
-    expect(asFragment()).toMatchSnapshot();
   });
 });

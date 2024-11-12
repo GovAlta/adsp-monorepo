@@ -3,6 +3,8 @@ using RichardSzalay.MockHttp;
 using Moq;
 using Newtonsoft.Json;
 using Adsp.Sdk;
+using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace Adsp.Platform.ScriptService.Services;
 
@@ -24,14 +26,20 @@ public static class TestUtil
     return MockTokenGetter.Object;
   }
 
-  public static IRestClient GetRestClient<T>(AdspId serviceId, string endpoint, Object expectedResult, bool success = true)
+  public static IRestClient GetRestClient(
+    AdspId serviceId,
+    string endpoint,
+    HttpMethod method,
+    object? expectedResult = null,
+    bool success = true
+  )
   {
     using var mockHttp = new MockHttpMessageHandler();
     string mockedHttpResponse = JsonConvert.SerializeObject(expectedResult, Formatting.None);
     var ServiceDirectory = GetServiceUrl(serviceId);
     var requestUrl = new Uri(ServiceDirectory.GetServiceUrl(serviceId).Result, endpoint);
 
-    var handler = mockHttp.When(HttpMethod.Get, requestUrl.AbsoluteUri);
+    var handler = mockHttp.When(method, requestUrl.AbsoluteUri);
     if (success)
     {
       handler.Respond(
@@ -53,5 +61,68 @@ public static class TestUtil
     );
 
     return mockRestClient;
+  }
+
+  public static IRestClient GetRestClientToInspectBody(
+  AdspId serviceId,
+  string endpoint,
+  HttpMethod method,
+  object? expectedResult,
+  Action<string> assert
+)
+  {
+    using var mockHttp = new MockHttpMessageHandler();
+    var ServiceDirectory = GetServiceUrl(serviceId);
+    var requestUrl = new Uri(ServiceDirectory.GetServiceUrl(serviceId).Result, endpoint);
+
+    var handler = mockHttp.When(method, requestUrl.AbsoluteUri);
+    handler.Respond(req =>
+     {
+       var body = req.Content.ReadAsStringAsync().Result;
+       assert(body);
+       string mockedHttpResponse = JsonConvert.SerializeObject(expectedResult, Formatting.None);
+       return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+       {
+         Content = new StringContent(mockedHttpResponse, Encoding.UTF8, "application/json")
+       };
+     });
+
+    var mockRestClient = new RestClient(
+      new RestClientOptions
+      {
+        BaseUrl = requestUrl,
+        ConfigureMessageHandler = _ => mockHttp
+      }
+    );
+
+    return mockRestClient;
+  }
+
+  public static object ToDictionary(this JToken token)
+  {
+    if (token is JObject jObject)
+    {
+      var result = new Dictionary<string, object>();
+      foreach (var property in jObject.Properties())
+      {
+        result[property.Name] = ToDictionary(property.Value);
+      }
+      return result;
+    }
+    else if (token is JArray jArray)
+    {
+      var array = new List<object>();
+      foreach (var item in jArray)
+      {
+        array.Add(ToDictionary(item));
+      }
+      return array;
+    }
+    else if (token is JValue jValue)
+    {
+      return jValue.Value;
+    }
+
+    return null;
   }
 }

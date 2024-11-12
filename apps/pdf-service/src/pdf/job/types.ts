@@ -4,7 +4,7 @@ export interface PdfServiceWorkItem {
   jobId: string;
   tenantId: string;
   templateId: string;
-  data: Record<string, unknown>;
+  data: DataContent;
   fileType: string;
   filename: string;
   recordId: string;
@@ -12,4 +12,35 @@ export interface PdfServiceWorkItem {
     id: string;
     name: string;
   };
+}
+
+interface Config {
+  id: string;
+  name: string;
+  description: string;
+  applicantRoles: string[];
+  clerkRoles: string[];
+  assessorRoles: string[];
+  formDraftUrlTemplate: string;
+  anonymousApply: boolean;
+  dispositionStates: string[];
+  submissionRecords: boolean;
+  submissionPdfTemplate: string;
+  queueTaskToProcess: Record<string, string>;
+  supportTopic: boolean;
+  securityClassification: string;
+  dataSchema: Record<string, string | object>;
+  uiSchema: Record<string, string | object>;
+}
+
+interface Content {
+  config?: Config;
+  data?: Record<string, string | object>;
+}
+
+interface DataContent {
+  content?: Content;
+  formId?: string;
+  formData?: { data: Record<string, string> };
+  form?: Record<string, string>;
 }

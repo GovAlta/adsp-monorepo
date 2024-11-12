@@ -1,11 +1,23 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FullNameDobReviewControl } from './FullNameDobReviewControl';
-import { ControlElement, ControlProps } from '@jsonforms/core';
+import {
+  ControlElement,
+  ControlProps,
+  JsonSchema4,
+  JsonSchema7,
+  TesterContext,
+  UISchemaElement,
+} from '@jsonforms/core';
 import { isFullNameDoB } from './FullNameDobTester';
 import { FullNameDobControl } from './FullNameDobControl';
 
 describe('FullNameDobControl', () => {
+  const dummyTestContext = {
+    rootSchema: {},
+    config: {},
+  } as TesterContext;
+
   const mockHandleChange = jest.fn(() => Promise.resolve());
   const textBoxUiSchema: ControlElement = {
     type: 'Control',
@@ -200,7 +212,7 @@ describe('FullNameDobControl', () => {
           type: 'Category',
         },
         {},
-        {}
+        dummyTestContext
       )
     ).toBe(false);
   });
@@ -210,7 +222,7 @@ describe('FullNameDobControl', () => {
       {
         type: 'Control',
         scope: '#/properties/personFullName',
-      },
+      } as UISchemaElement,
       {
         type: 'object',
         properties: {
@@ -222,17 +234,17 @@ describe('FullNameDobControl', () => {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema7,
               middleName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema7,
               lastName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema7,
             },
             required: ['firstName', 'lastName'],
             errorMessage: {
@@ -242,10 +254,10 @@ describe('FullNameDobControl', () => {
                 lastName: 'Include period (.) if providing your initial',
               },
             },
-          },
+          } as JsonSchema7,
         },
       },
-      {}
+      dummyTestContext
     )
   ).toBe(false);
 
@@ -254,7 +266,7 @@ describe('FullNameDobControl', () => {
       {
         type: 'Control',
         scope: '#/properties/dateOfBirth',
-      },
+      } as UISchemaElement,
       {
         type: 'object',
         properties: {
@@ -266,17 +278,17 @@ describe('FullNameDobControl', () => {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema4,
               middleName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema4,
               lastName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema4,
               dateOfBirth: {
                 type: 'string',
                 format: 'date',
@@ -290,10 +302,10 @@ describe('FullNameDobControl', () => {
                 lastName: 'Include period (.) if providing your initial',
               },
             },
-          },
+          } as JsonSchema4,
         },
       },
-      {}
+      dummyTestContext
     )
   ).toBe(true);
 });
