@@ -1,7 +1,8 @@
 import { JsonSchema } from '@jsonforms/core';
 import Ajv from 'ajv';
 
-export const validateData = (jsonSchema: JsonSchema, data: unknown, ajv: Ajv): boolean => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const validateData = (jsonSchema: JsonSchema, data: any, ajv: Ajv): boolean => {
   const newSchema = JSON.parse(JSON.stringify(jsonSchema));
 
   Object.keys(newSchema.properties || {}).forEach((propertyName) => {
@@ -12,6 +13,9 @@ export const validateData = (jsonSchema: JsonSchema, data: unknown, ajv: Ajv): b
 
     if (property[propertyName]?.format === 'file-urn') {
       delete property[propertyName].format;
+    }
+    if (property[propertyName]?.title === 'Social insurance number' && data && data[propertyName] === '') {
+      delete data[propertyName];
     }
   });
 
