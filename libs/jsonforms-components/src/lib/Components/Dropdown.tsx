@@ -1,8 +1,22 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { GoAInput, GoAInputProps } from '@abgov/react-components-new';
 import { isEqual } from 'lodash';
-import { ARROW_DOWN_KEY, ARROW_UP_KEY, DropdownProps, ENTER_KEY, ESCAPE_KEY, Item, TAB_KEY } from './DropDownTypes';
-import { GoADropdownListContainer, GoADropdownListContainerWrapper, GoADropdownListOption } from './styled-components';
+import {
+  ARROW_DOWN_KEY,
+  ARROW_UP_KEY,
+  DropdownProps,
+  ENTER_KEY,
+  ESCAPE_KEY,
+  Item,
+  SPACE_KEY,
+  TAB_KEY,
+} from './DropDownTypes';
+import {
+  GoADropdownListContainer,
+  GoADropdownListContainerWrapper,
+  GoADropdownListOption,
+  GoADropdownTextbox,
+} from './styled-components';
 
 export const isValidKey = (keyCode: string): boolean => {
   if (keyCode === 'Shift' || keyCode === 'Alt') return false;
@@ -97,7 +111,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   /* istanbul ignore next */
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === ENTER_KEY) {
+    if (e.key === ENTER_KEY || e.key === SPACE_KEY) {
       setIsOpen((previousIsOpen) => !previousIsOpen);
       const el = document.getElementById(`${PREFIX}-${label}-${items.at(0)?.value}`);
       setElementFocus(e, el, false);
@@ -136,7 +150,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   };
 
   const handDropDownItemOnKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, item: Item) => {
-    if (e.key === ENTER_KEY) {
+    if (e.key === ENTER_KEY || e.key === SPACE_KEY) {
       updateDropDownData(item);
       const inputEl = document.getElementById(`${id}-input`) as GoAInputProps & HTMLElement;
 
@@ -196,29 +210,27 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   return (
     <div data-testid={id} key={id}>
-      <GoAInput
-        onTrailingIconClick={() => {
-          setIsOpen(!isOpen);
-        }}
-        disabled={!enabled}
-        name={`dropdown-${label}`}
-        width="100%"
-        value={inputText}
-        testId={`${id}-input`}
-        id={`${id}-input`}
-        readonly={!isAutoCompletion}
-        onChange={(name, value) => {
-          if (isAutoCompletion) {
-            setInputText(value);
-            const selectedItems = props.items.filter((item) => {
-              return item.label.includes(value);
-            });
-            setItems(selectedItems);
-          }
-        }}
-        trailingIcon={trailingIcon}
-      />
-
+      <GoADropdownTextbox isOpen={isOpen}>
+        <GoAInput
+          disabled={!enabled}
+          name={`dropdown-${label}`}
+          width="100%"
+          value={inputText}
+          testId={`${id}-input`}
+          id={`${id}-input`}
+          readonly={!isAutoCompletion}
+          onChange={(name, value) => {
+            if (isAutoCompletion) {
+              setInputText(value);
+              const selectedItems = props.items.filter((item) => {
+                return item.label.includes(value);
+              });
+              setItems(selectedItems);
+            }
+          }}
+          trailingIcon={trailingIcon}
+        />
+      </GoADropdownTextbox>
       <GoADropdownListContainerWrapper
         isOpen={isOpen}
         id={`${PREFIX}-dropDownListContainerWrapper-${label}`}

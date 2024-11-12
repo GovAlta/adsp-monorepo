@@ -167,6 +167,101 @@ describe('generate', () => {
       });
     });
 
+    it('can generate with form', (done) => {
+      const item: PdfServiceWorkItem = {
+        tenantId: `${tenantId}`,
+        work: 'generate',
+        jobId: uuid(),
+        timestamp: new Date(),
+        templateId: 'submitted-form',
+        fileType: GENERATED_PDF,
+        recordId: 'my-domain-record-1',
+        data: {
+          content: {
+            config: {
+              id: 'postal-address-alberta-2',
+              name: 'postal-address-alberta-2',
+              description: '',
+              applicantRoles: ['urn:ads:platform:form-service:form-applicant'],
+              clerkRoles: [],
+              assessorRoles: [],
+              formDraftUrlTemplate: 'http://localhost:4202/autotest/postal-address-alberta-2',
+              anonymousApply: false,
+              dispositionStates: [],
+              submissionRecords: false,
+              submissionPdfTemplate: 'submitted-form',
+              queueTaskToProcess: {
+                queueName: '',
+                queueNameSpace: '',
+              },
+              supportTopic: false,
+              securityClassification: 'protected b',
+              dataSchema: {
+                type: 'object',
+                properties: {
+                  mailingAddress: {
+                    $ref: 'https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressCanada',
+                  },
+                },
+              },
+              uiSchema: {
+                type: 'VerticalLayout',
+                elements: [
+                  {
+                    type: 'Group',
+                    label: 'Mailing address',
+                    elements: [
+                      {
+                        type: 'Control',
+                        scope: '#/properties/mailingAddress',
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            data: {
+              mailingAddress: {
+                addressLine1: '10411 65 Ave NW',
+                addressLine2: '',
+                municipality: 'Edmonton',
+                subdivisionCode: 'AB',
+                postalCode: 'T6H 1V2',
+                country: 'CA',
+              },
+            },
+          },
+        },
+        filename: 'test.pdf',
+        requestedBy: {
+          id: 'tester',
+          name: 'Testy McTester',
+        },
+      };
+
+      const myFormIdConfig = {
+        id: 'my-form-id',
+        name: 'my-form-id',
+      };
+
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce([{ 'submitted-form': templateEntity }]);
+      templateEntity.generate.mockResolvedValueOnce('content');
+      templateEntity.evaluateTemplates.mockResolvedValueOnce('');
+      const fileResult = {};
+      fileServiceMock.upload.mockResolvedValueOnce(fileResult);
+      axiosMock.get.mockResolvedValueOnce({ data: { 'my-form-id': myFormIdConfig } });
+
+      job(item, true, (err) => {
+        expect(err).toBeFalsy();
+        expect(repositoryMock.update).toHaveBeenCalledWith(item.jobId, 'completed', fileResult);
+        expect(eventServiceMock.send).toHaveBeenCalledWith(
+          expect.objectContaining({ name: PDF_GENERATED, payload: expect.objectContaining({ file: fileResult }) })
+        );
+        done();
+      });
+    });
+
     it('can handle missing template', async () => {
       const item: PdfServiceWorkItem = {
         tenantId: `${tenantId}`,

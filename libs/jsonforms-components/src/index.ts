@@ -67,6 +67,7 @@ import { GoAGroupReviewControl, GoAGroupReviewLayoutTester } from './lib/layouts
 export * from './lib/Context';
 export * from './lib/common';
 export * from './lib/Context/register';
+export * from './lib/Controls';
 
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls

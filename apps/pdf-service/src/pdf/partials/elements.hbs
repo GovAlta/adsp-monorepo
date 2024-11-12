@@ -9,6 +9,17 @@
                 {{/forEachItem}}
             </div>
         {{/withEachDataWithItems}}
+    {{else if (isObject element data) }}
+        {{#withItemsObject data element.scope requiredFields element dataSchema params.dataSchema }}
+        <b>{{ params.title }}</b>
+        <div class="list-item-basic">
+            {{#forEachItemObject params.items this params.requiredFields }}
+            <div class="list-item-borderless">
+                {{> elements element=params.element data=params.data requiredFields=params.requiredFields styles=styles }}
+            </div>
+            {{/forEachItemObject}}
+        </div>
+        {{/withItemsObject}}
     {{else}}
         <div class="grid-item">
             <strong>
@@ -21,37 +32,38 @@
         </div>
     {{/if}}
 {{else if (isListWithDetailAndHasScope element) }}
-    <div class="header">
+    <div class="vertical-flex">
+        <div class="header">
         <strong>{{ scopeName element.scope}}</strong>
-    </div>
-    {{#withEachData data element.scope requiredFields element}}
-        <div class="list-item-basic">
-            {{#if (hasOptionElements params.element)}}
-                    {{#eachDetail params.element.options.detail.elements this params.requiredFields }}
+        </div>
+        {{#withEachData data element.scope requiredFields element}}
+            <div class="list-item-basic-list">
+                {{#if (hasOptionElements params.element)}}
+                        {{#eachDetail params.element.options.detail.elements this params.requiredFields }}
+                            <div class="list-item-borderless-bottom-padding">
+                                {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
+                            </div>
+                        {{/eachDetail}}
+                {{/if}}
+                {{#if (hasElements params.element)}}
+                    {{#eachDetail params.element.elements this params.requiredFields }}
                         <div class="list-item-borderless-bottom-padding">
                             {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
                         </div>
                     {{/eachDetail}}
-            {{/if}}
-            {{#if (hasElements params.element)}}
-                {{#eachDetail params.element.elements this params.requiredFields }}
-                    <div class="list-item-borderless-bottom-padding">
-                        {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
-                    </div>
-                {{/eachDetail}}
-            {{/if}}
-        </div>
-    {{/withEachData}}
+                {{/if}}
+            </div>
+        {{/withEachData}}
+    </div>
 {{else if (hasElements element) }}
     {{#if (isGroup element )}}
         <h4 class="groupPadding">
             {{ label element }}
         </h4>
     {{/if}}
-
-    {{#withEach element.elements data requiredFields dataSchema }}
-        <div class="list-item-borderless-box">
+    <div class="list-item-borderless-box">
+        {{#withEach element.elements data requiredFields dataSchema }}
             {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
-        </div>
-    {{/withEach}}
+        {{/withEach}}
+    </div>
 {{/if}}
