@@ -1,5 +1,6 @@
 import { JsonSchema } from '@jsonforms/core';
 import Ajv from 'ajv';
+import { sinTitle } from '../../../common/Constants';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const validateData = (jsonSchema: JsonSchema, data: any, ajv: Ajv): boolean => {
@@ -14,7 +15,7 @@ export const validateData = (jsonSchema: JsonSchema, data: any, ajv: Ajv): boole
     if (property[propertyName]?.format === 'file-urn') {
       delete property[propertyName].format;
     }
-    if (property[propertyName]?.title === 'Social insurance number' && data && data[propertyName] === '') {
+    if (property[propertyName]?.title === sinTitle && data && data[propertyName] === '') {
       delete data[propertyName];
     }
   });
