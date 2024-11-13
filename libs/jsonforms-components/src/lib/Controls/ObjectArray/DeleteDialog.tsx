@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { DeleteDialogContent } from './styled-components';
 
@@ -24,6 +24,17 @@ export const DeleteDialog = React.memo(function DeleteDialog({
   title,
   message,
 }: DeleteDialogProps) {
+  useEffect(() => {
+    if (open) {
+      const deleteBtn = document.querySelector('[data-testId="object-array-confirm-button"]') as HTMLButtonElement;
+      if (deleteBtn) {
+        setTimeout(() => {
+          deleteBtn.shadowRoot?.querySelector('button')?.focus();
+        }, 200);
+      }
+    }
+  }, [open]);
+
   return (
     <GoAModal open={open} key={1} testId="object-array-modal" heading={title}>
       <DeleteDialogContent data-testid="object-array-modal-content">{message}</DeleteDialogContent>
