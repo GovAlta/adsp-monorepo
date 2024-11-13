@@ -18,6 +18,7 @@ export interface FormDefinition {
   queueTaskToProcess: QueueTaskToProcess;
   supportTopic: boolean;
   securityClassification?: SecurityClassification;
+  selectedTags: string[];
 }
 
 export interface Disposition {
@@ -55,6 +56,7 @@ export const defaultFormDefinition: FormDefinition = {
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
   securityClassification: SecurityClassification.ProtectedB,
+  selectedTags: [],
 };
 
 export interface FormState {

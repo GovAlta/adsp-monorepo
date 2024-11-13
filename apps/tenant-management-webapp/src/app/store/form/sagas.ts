@@ -108,6 +108,29 @@ export function* updateFormDefinition({ definition }: UpdateFormDefinitionsActio
     }
   }
 }
+export function* updateFormTags({ definition }: UpdateFormDefinitionsAction): SagaIterator {
+  const editorSelectedId: string = yield select((state: RootState) => state.form.editor.selectedId);
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  const tagId = { id: 'tags' };
+  const newTags = { ...tagId, ...definition };
+
+  if (baseUrl && token) {
+    try {
+      const { latest } = yield call(updateFormDefinitionApi, token, baseUrl, newTags);
+
+      yield put(updateFormDefinitionSuccess(latest.configuration));
+
+      // If the saved form definition is currently selected for editing, then update the editor state.
+      if (definition.id && definition.id === editorSelectedId) {
+        yield put(openEditorForDefinitionSuccess(latest.configuration, false));
+      }
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
 
 export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction): SagaIterator {
   yield put(

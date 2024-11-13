@@ -8,6 +8,8 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { selectFormAppLink } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { openEditorForDefinition } from '@store/form/action';
+import { TagModal } from './tagModal';
+
 interface PdfTemplateItemProps {
   formDefinition: FormDefinition;
   onDelete?: (FormDefinition) => void;
@@ -15,6 +17,7 @@ interface PdfTemplateItemProps {
 
 export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItemProps): JSX.Element => {
   const [showSchema, setShowSchema] = useState(false);
+  const [showTags, setShowTags] = useState(false);
   const formDescription =
     formDefinition.description?.length > 80
       ? formDefinition.description?.substring(0, 80) + '...'
@@ -39,6 +42,12 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
               title="Toggle details"
               onClick={() => setShowSchema(!showSchema)}
               testId="form-toggle-details-visibility"
+            />
+            <GoAContextMenuIcon
+              type={'add'}
+              title="Toggle tags"
+              onClick={() => setShowTags(!showTags)}
+              testId="form-toggle-tags-visibility"
             />
             <GoAContextMenuIcon
               type="open"
@@ -73,6 +82,21 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
           </GoAContextMenu>
         </td>
       </tr>
+      {showTags && (
+        <TagModal
+          open={showTags}
+          isEdit={false}
+          onClose={() => {
+            setShowTags(false);
+          }}
+          initialValue={formDefinition}
+          onSave={(definition) => {
+            setShowTags(false);
+
+            //  dispatch(updateFormDefinition(definition));
+          }}
+        />
+      )}
       {showSchema && (
         <tr>
           <td
