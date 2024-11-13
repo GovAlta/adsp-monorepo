@@ -100,6 +100,18 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     setIsOpen(false);
   };
 
+  const setInputTextFocus = () => {
+    const inputEl = document.getElementById(`${id}-input`) as GoAInputProps & HTMLElement;
+
+    if (inputEl) {
+      //The 'focused' property is part of the GoAInput component that is used to
+      //set focus on the input field. We need to set it back to false once we set focus on the input field. Doing with just .focus() doesnt work.
+      inputEl.focused = true;
+      inputEl.focus();
+      inputEl.focused = false;
+    }
+  };
+
   const setElementFocus = (
     e: KeyboardEvent | React.KeyboardEvent<HTMLElement>,
     element: HTMLElement | null,
@@ -126,6 +138,8 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     if (e.key === ENTER_KEY || e.key === SPACE_KEY) {
       setIsOpen((previousIsOpen) => !previousIsOpen);
       const el = document.getElementById(`${PREFIX}-${label}-${items.at(0)?.value}`);
+
+      setInputTextFocus();
       setElementFocus(e, el, false);
     } else if (e.key === ARROW_UP_KEY) {
       setIsOpen(true);
@@ -164,15 +178,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const handDropDownItemOnKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, item: Item) => {
     if (e.key === ENTER_KEY || e.key === SPACE_KEY) {
       updateDropDownData(item);
-      const inputEl = document.getElementById(`${id}-input`) as GoAInputProps & HTMLElement;
-
-      if (inputEl) {
-        //The 'focused' property is part of the GoAInput component that is used to
-        //set focus on the input field. We need to set it back to false once we set focus on the input field. Doing with just .focus() doesnt work.
-        inputEl.focused = true;
-        inputEl.focus();
-        inputEl.focused = false;
-      }
+      setInputTextFocus();
     }
     if (e.key === ESCAPE_KEY) {
       setIsOpen(false);

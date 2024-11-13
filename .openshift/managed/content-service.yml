@@ -104,6 +104,8 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
+                - name: DATABASE_FILENAME
+                  value: /opt/app-root/data/data.db
               imagePullPolicy: IfNotPresent
               name: content-service
               ports:
@@ -120,8 +122,8 @@ objects:
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               volumeMounts:
-                - mountPath: /opt/app-root/src/apps/content-service/.tmp
-                  name: content-service-data
+                - name: content-service-data
+                  mountPath: /opt/app-root/data
               # readinessProbe:
               #   httpGet:
               #     path: /
@@ -152,10 +154,11 @@ objects:
           securityContext: {}
           terminationGracePeriodSeconds: 30
       strategy:
-        type: RollingUpdate
-        rollingUpdate:
-          maxUnavailable: 25%
-          maxSurge: 25%
+        type: Recreate
+        # type: RollingUpdate
+        # rollingUpdate:
+        #   maxUnavailable: 25%
+        #   maxSurge: 25%
       revisionHistoryLimit: 10
       progressDeadlineSeconds: 600
 
