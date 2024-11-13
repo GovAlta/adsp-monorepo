@@ -4,6 +4,7 @@ import { ADSP_SERVICE_NAME } from './constants';
 import { UserRegisteredEventDefinition } from './events';
 import { ServiceRoles } from './roles';
 import getStrategies from './strategies';
+import { UserRegistrationInvite } from './notifications';
 
 const register = async ({ strapi }: { strapi: Core.Strapi }) => {
   const capabilities = await initializePlatform(
@@ -19,6 +20,7 @@ const register = async ({ strapi }: { strapi: Core.Strapi }) => {
         { role: ServiceRoles.Reader, description: 'Reader role permitted to access content via the content API.' },
       ],
       events: [UserRegisteredEventDefinition],
+      notifications: [UserRegistrationInvite]
     },
     { logger: strapi.log },
   );
