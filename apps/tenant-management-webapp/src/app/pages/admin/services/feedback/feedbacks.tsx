@@ -4,32 +4,23 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { FeedbackListTable } from './feedbacksTable';
-import { flattenDepth } from 'lodash';
 
 import { renderNoItem } from '@components/NoItem';
 import {
   GoABadge,
   GoAButton,
   GoACircularProgress,
-  GoADate,
   GoADropdown,
   GoADropdownItem,
   GoAFormItem,
-  GoAGrid,
-  GoAInput,
   GoAInputDate,
   GoASkeleton,
 } from '@abgov/react-components-new';
 import { LoadMoreWrapper } from '@components/styled-components';
-import {
-  FeedbackSearchCriteria,
-  FeedbackSite,
-  defaultFeedbackSite,
-  getDefaultSearchCriteria,
-} from '@store/feedback/models';
+import { FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
 import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
 import { ExportDates, FeedbackFilterError, ProgressWrapper } from './styled-components';
-import { stat } from 'fs';
+import { transformedData } from './ratings';
 
 interface VisibleProps {
   visible: boolean;
@@ -55,8 +46,6 @@ export const FeedbacksList = (): JSX.Element => {
   const [selectedSite, setSelectedSite] = useState('');
   const [searchCriteria, setSearchCriteria] = useState(getDefaultSearchCriteria);
   const [isExport, setIsExport] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [showDateError, setShowDateError] = useState<boolean>(false);
 
   const tenantName = useSelector((state: RootState) => {
@@ -127,7 +116,8 @@ export const FeedbacksList = (): JSX.Element => {
 
   useEffect(() => {
     if (isExport) {
-      const data = flattenJSON(exportData);
+      const transformData = transformedData(exportData);
+      const data = flattenJSON(transformData);
       const fileName = `${tenantName}-feedbacks`;
       const exportType = exportFromJSON.types.csv;
       exportFromJSON({ data, fileName, exportType });
