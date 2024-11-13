@@ -71,8 +71,10 @@
     "recaptcha",
     "reduxjs",
     "signin",
+    "strapi",
     "testid",
     "traceparent",
+    "uischema",
     "uninstantiated",
     "upsert",
     "uuidv"
