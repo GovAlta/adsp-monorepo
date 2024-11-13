@@ -1,4 +1,4 @@
-import type { EventService } from '@abgov/adsp-service-sdk';
+import { adspId, type EventService, type ServiceDirectory } from '@abgov/adsp-service-sdk';
 import type { Core } from '@strapi/strapi';
 import { errors, yup, validateYupSchema } from '@strapi/utils';
 import type { Context } from 'koa';
@@ -43,13 +43,19 @@ const user = ({ strapi }: { strapi: Core.Strapi }) => ({
     ctx.created({ data: { ...userInfo, registrationToken: createdUser.registrationToken } });
 
     // Complete registration at /admin/auth/register?registrationToken=<registrationToken>
-    const eventService = await strapi.service('plugin::adsp-strapi.eventService') as EventService;
+    const directory = (await strapi.service('plugin::adsp-strapi.directory')) as ServiceDirectory;
+    const contentServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:content-service`);
+
+    const eventService = (await strapi.service('plugin::adsp-strapi.eventService')) as EventService;
     eventService.send(
       userRegistered(tenantId, {
         email,
         firstName,
         lastName,
-        registrationToken: createdUser.registrationToken,
+        registrationUrl: new URL(
+          `/admin/auth/register?registrationToken=${createdUser.registrationToken}`,
+          contentServiceUrl,
+        ).href,
         isEditor: !!isEditor,
       }),
     );

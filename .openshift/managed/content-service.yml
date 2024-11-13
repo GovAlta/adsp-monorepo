@@ -104,8 +104,6 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
-                - name: DATABASE_FILENAME
-                  value: /opt/app-root/data/data.db
               imagePullPolicy: IfNotPresent
               name: content-service
               ports:
@@ -123,7 +121,7 @@ objects:
               terminationMessagePolicy: File
               volumeMounts:
                 - name: content-service-data
-                  mountPath: /opt/app-root/data
+                  mountPath: /opt/app-root/src/apps/content-service/.tmp
               # readinessProbe:
               #   httpGet:
               #     path: /
