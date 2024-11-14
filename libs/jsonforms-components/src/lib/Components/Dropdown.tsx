@@ -246,6 +246,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
               setItems(selectedItems);
             }
           }}
+          onTrailingIconClick={() => {}}
           trailingIcon={trailingIcon}
         />
       </GoADropdownTextbox>
