@@ -33,7 +33,8 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
   };
   const [nameData, setNameData] = useState(data || defaultName);
 
-  const updateFormData = (updatedData: string) => {
+  const updateFormData = (updatedData: object) => {
+    updatedData = Object.fromEntries(Object.entries(updatedData).filter(([_, value]) => value !== ''));
     handleChange(path, updatedData);
   };
 
