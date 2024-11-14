@@ -15,10 +15,6 @@
     "tenantId": {
       "type": "string"
     },
-    "service": {
-      "type": "string",
-      "required": true
-    },
     "releasedOn": {
       "type": "date",
       "required": true
@@ -30,6 +26,12 @@
     "version": {
       "type": "string",
       "required": true
+    },
+    "service": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::service.service",
+      "inversedBy": "releases"
     }
   }
 }
