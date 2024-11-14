@@ -51,7 +51,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   useEffect(() => {
     if (textInput) {
-      textInput.addEventListener('click', inputTextOnClick);
       textInput.addEventListener('keydown', handleKeyDown);
       textInput.addEventListener('blur', handleTextInputOnBlur);
     }
@@ -59,7 +58,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
     return () => {
       if (textInput) {
-        textInput.removeEventListener('click', inputTextOnClick);
         textInput.removeEventListener('keydown', handleKeyDown);
         textInput.removeEventListener('blur', handleTextInputOnBlur);
       }
@@ -80,10 +78,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
         }
       }
     }
-  };
-
-  const inputTextOnClick = (e: MouseEvent) => {
-    setIsOpen((previousIsOpen) => !previousIsOpen);
   };
 
   const updateDropDownData = (item: Item) => {
@@ -228,7 +222,12 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   return (
     <div data-testid={id} key={id}>
-      <GoADropdownTextbox isOpen={isOpen}>
+      <GoADropdownTextbox
+        isOpen={isOpen}
+        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+          setIsOpen((previousIsOpen) => !previousIsOpen);
+        }}
+      >
         <GoAInput
           disabled={!enabled}
           name={`dropdown-${label}`}
