@@ -1,11 +1,11 @@
 /**
- * service-release router
+ * service router
  */
 
 import { factories } from '@strapi/strapi';
 import { ServiceRoles } from '../../../adsp-strapi/server/roles';
 
-const model = 'api::service-release.service-release';
+const model = 'api::service.service';
 export default factories.createCoreRouter(model, {
   config: {
     find: {

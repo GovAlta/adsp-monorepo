@@ -7,13 +7,14 @@ export async function applyRequestTenant(
   tenantId: string,
   model: UID.ContentType,
   documentId: string,
+  onCreateRequest: () => void,
 ) {
   let documentTenant: string;
   if (tenantId) {
     switch (request.method) {
       case 'POST': {
         // This is a create request, so set the tenantId in the data.
-        request.body.tenantId = tenantId;
+        onCreateRequest();
         break;
       }
       case 'GET': {
