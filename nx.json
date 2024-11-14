@@ -137,6 +137,5 @@
       "!{projectRoot}/src/test-setup.[jt]s"
     ]
   },
-  "parallel": 1,
   "defaultBase": "main"
 }
