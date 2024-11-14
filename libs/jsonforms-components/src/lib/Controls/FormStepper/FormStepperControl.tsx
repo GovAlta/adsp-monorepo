@@ -268,7 +268,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                             {readOnly ? 'View' : 'Edit'}
                           </Anchor>
                         </ReviewItemHeader>
-                        <GoAGrid minChildWidth="600px">
+                        <div>
                           {category.elements
                             .filter((field) => {
                               const conditionProps = field.rule?.condition as SchemaBasedCondition;
@@ -299,7 +299,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                                 </div>
                               );
                             })}
-                        </GoAGrid>
+                        </div>
                       </ReviewItemSection>
                     );
                   })}

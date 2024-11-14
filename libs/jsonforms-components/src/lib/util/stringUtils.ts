@@ -1,4 +1,5 @@
 import { ControlProps, JsonSchema, extractSchema } from '@jsonforms/core';
+import { invalidSin, sinTitle } from '../common/Constants';
 
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
@@ -90,10 +91,10 @@ export const checkFieldValidity = (props: ControlProps): string => {
   const labelToUpdate = getLabelText(uischema.scope, label);
   const extraSchema = schema as JsonSchema & extractSchema;
 
-  if (extraSchema && data && extraSchema?.title === 'Social insurance number') {
+  if (extraSchema && data && extraSchema?.title === sinTitle) {
     if (data.length === 11 && !validateSinWithLuhn(data)) {
-      return 'Social insurance number is invalid';
-    } else if (data.length < 11) {
+      return data === '' ? '' : invalidSin;
+    } else if (data.length > 0 && data.length < 11) {
       return extraSchema.errorMessage;
     }
   }

@@ -9,7 +9,7 @@ export const UserRegisteredEventDefinition: DomainEventDefinition = {
       email: { type: 'string' },
       firstName: { type: 'string' },
       lastName: { type: 'string' },
-      registrationToken: { type: 'string' },
+      registrationUrl: { type: 'string' },
       isEditor: { type: 'boolean' },
     },
   },
@@ -19,13 +19,13 @@ interface NewUser {
   email: string;
   firstName: string;
   lastName: string;
-  registrationToken: string;
+  registrationUrl: string;
   isEditor: boolean;
 }
 
 export const userRegistered = (
   tenantId: AdspId,
-  { email, firstName, lastName, registrationToken, isEditor }: NewUser,
+  { email, firstName, lastName, registrationUrl, isEditor }: NewUser,
 ): DomainEvent => ({
   tenantId,
   name: UserRegisteredEventDefinition.name,
@@ -34,7 +34,7 @@ export const userRegistered = (
     email,
     firstName,
     lastName,
-    registrationToken,
+    registrationUrl,
     isEditor,
   },
 });
