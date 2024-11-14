@@ -176,6 +176,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
     if (e.key === ESCAPE_KEY) {
       setIsOpen(false);
+      setInputTextFocus();
     }
 
     let index = items.findIndex((val) => {
