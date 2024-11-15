@@ -7,7 +7,6 @@ import { ScriptsView } from './scriptsView';
 import { HeadingDiv } from './styled-components';
 
 import AsideLinks from '@components/AsideLinks';
-import { useLocation } from 'react-router-dom';
 
 export const Script = (): JSX.Element => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
