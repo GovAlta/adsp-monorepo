@@ -28,7 +28,7 @@ export const Script = (): JSX.Element => {
           <HeadingDiv>
             <h1 data-testid="script-service-title">Script service</h1> <img src={BetaBadge} alt="Files Service" />
           </HeadingDiv>
-          <Tabs activeIndex={scripts === 'true' ? 1 : 0} data-testid="script-tabs">
+          <Tabs activeIndex={scripts === 'true' ? 1 : activeIndex} data-testid="script-tabs">
             <Tab label="Overview" data-testid="script-overview-tabs">
               <ScriptOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
             </Tab>
