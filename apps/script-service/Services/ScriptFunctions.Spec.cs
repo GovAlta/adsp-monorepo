@@ -1,11 +1,9 @@
 using Moq;
 using Xunit;
 using Adsp.Sdk;
-using Adsp.Platform.ScriptService.Services.Platform;
 using NLua;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using FluentAssertions.Execution;
 
 namespace Adsp.Platform.ScriptService.Services;
 
@@ -104,21 +102,23 @@ public sealed class ScriptFunctionsTests : IDisposable
     using var RestClient = TestUtil.GetRestClientToInspectBody(ValueServiceId, endpoint, HttpMethod.Post, null,
       (b) =>
       {
-        var body = (Dictionary<string, object>)JsonConvert.DeserializeObject<JToken>(b).ToDictionary();
+        var body = JsonConvert.DeserializeObject<JToken>(b).ToDictionary();
         Assert.Equal("my-space", body["namespace"]);
         Assert.Equal("my-test", body["name"]);
         Assert.Equal("", body["correlationId"]);
-        var context = (Dictionary<string, object>)body["context"];
-        Assert.True(context.Count == 0);
-        var value = (Dictionary<string, object>)body["value"];
-        if (value["index"] is List<object> index)
-        {
-          Assert.Equal("test-Index", index[0]);
-        }
-        else
-        {
-          Assert.False(true);
-        }
+        var context = body["context"];
+        Assert.NotNull(context);
+        var foo = context!.GetType();
+        Assert.True(context!.GetType() == typeof(Dictionary<string, object>));
+        Assert.True(((IDictionary<string, object>)context).Count == 0);
+        var value = body["value"];
+        Assert.NotNull(value);
+        Assert.True(value!.GetType() == typeof(Dictionary<string, object>));
+        Assert.True(((Dictionary<string, object?>)value).Count == 1);
+        var index = ((Dictionary<string, object?>)value)["index"];
+        Assert.NotNull(index);
+        Assert.True(index!.GetType() == typeof(List<object>));
+        Assert.True(((List<object>)index)[0].GetType() == typeof(string));
       }
 );
     var ScriptFunctions = new ScriptFunctions(Tenant, TestUtil.GetServiceUrl(ValueServiceId), TestUtil.GetMockToken(), RestClient);
@@ -128,4 +128,52 @@ public sealed class ScriptFunctionsTests : IDisposable
     Assert.Null(Actual);
   }
 
+  [Fact]
+  public void ReadsValueCorrectly()
+  {
+    var ValueServiceId = AdspId.Parse("urn:ads:platform:value-service");
+    var _namespace = "mySpace";
+    var name = "myTest";
+    var endpoint = $"/value/v1/{_namespace}/values/{name}";
+    var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
+    var ServiceDirectory = TestUtil.GetServiceUrl(ValueServiceId);
+
+    var expected = new Dictionary<string, object>()
+    {
+      [_namespace] = new Dictionary<string, object>()
+      {
+        [name] = new[]
+        {
+          new Dictionary<string, object>()
+          {
+            ["context"] = "{}",
+            ["correlationId"] = "bob",
+            ["value"] = new Dictionary<string, object>()
+            {
+              ["index"] = new[] {"idx1", "idx2"}
+            }
+          }
+        }
+      }
+    };
+
+    using var RestClient = TestUtil.GetRestClient(ValueServiceId, endpoint, HttpMethod.Get, expected);
+    var ScriptFunctions = new ScriptFunctions(ValueServiceId, TestUtil.GetServiceUrl(ValueServiceId), TestUtil.GetMockToken(), RestClient);
+    var actual = ScriptFunctions.ReadValue(_namespace, name, 1);
+    Assert.NotNull(actual);
+    Assert.True(actual!.GetType() == typeof(Dictionary<string, object>));
+    Assert.True(actual![_namespace].GetType() == typeof(Dictionary<string, object>));
+    var myTest = ((Dictionary<string, object?>)actual![_namespace])[name];
+    Assert.True(myTest!.GetType() == typeof(List<object>));
+    var value = ((List<object>)myTest)[0];
+    Assert.True(value.GetType() == typeof(Dictionary<string, object>));
+    Assert.Equal("bob", ((Dictionary<string, object>)value)["correlationId"]);
+    var valueValue = ((Dictionary<string, object>)value)["value"];
+    Assert.True(valueValue.GetType() == typeof(Dictionary<string, object>));
+    var index = ((Dictionary<string, object>)valueValue)["index"];
+    Assert.True(index.GetType() == typeof(List<object>));
+    var items = (List<object>)index;
+    Assert.True(items[0].GetType() == typeof(string));
+    Assert.Equal("idx1", (string)items[0]);
+  }
 }
