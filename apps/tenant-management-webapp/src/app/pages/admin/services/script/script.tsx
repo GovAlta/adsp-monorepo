@@ -20,7 +20,7 @@ export const Script = (): JSX.Element => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
-  //         <Tabs activeIndex={queues === 'true' ? 1 : 0}>
+
   return (
     <Page>
       <Main>
