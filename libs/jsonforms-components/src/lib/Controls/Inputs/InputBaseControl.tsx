@@ -74,7 +74,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
             error={modifiedErrors}
             testId={`${isStepperReview === true && 'review-base-'}${path}`}
             label={props?.noLabel === true ? '' : labelToUpdate}
-            helpText={typeof uischema?.options?.help === 'string' ? uischema?.options?.help : ''}
+            helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
           >
             <InnerComponent {...modifiedProps} />
           </GoAFormItem>
