@@ -93,6 +93,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     document.body.style.overflow = 'unset';
     navigate({
       pathname: `/admin/services/script`,
+      search: '?scripts=true',
     });
   };
 

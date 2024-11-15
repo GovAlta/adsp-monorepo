@@ -13,11 +13,14 @@ export const Script = (): JSX.Element => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
 
+  const searchParams = new URLSearchParams(document.location.search);
+  const scripts = searchParams && searchParams.get('scripts');
+
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
-
+  //         <Tabs activeIndex={queues === 'true' ? 1 : 0}>
   return (
     <Page>
       <Main>
@@ -25,7 +28,7 @@ export const Script = (): JSX.Element => {
           <HeadingDiv>
             <h1 data-testid="script-service-title">Script service</h1> <img src={BetaBadge} alt="Files Service" />
           </HeadingDiv>
-          <Tabs activeIndex={activeIndex} data-testid="script-tabs">
+          <Tabs activeIndex={scripts === 'true' ? 1 : 0} data-testid="script-tabs">
             <Tab label="Overview" data-testid="script-overview-tabs">
               <ScriptOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
             </Tab>
