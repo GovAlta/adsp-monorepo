@@ -168,7 +168,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     const categoryLabels = [...allCategories.elements.map((category) => category.label), summaryLabel];
     const visibleLabels = [...visibleCategoryLabels, summaryLabel];
     const newPage = mapToVisibleStep(page, categoryLabels, visibleLabels);
-    const pageStatus = getCompletionStatus(inputStatuses, page);
+    const pageStatus = getCompletionStatus(inputStatuses, page, true);
     const statuses = [...stepStatuses];
     statuses[page - 1] = pageStatus ? pageStatus : 'incomplete';
     setStepStatuses(statuses);
