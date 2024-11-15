@@ -15,7 +15,7 @@ export const fetchAddressSuggestions = async (
   };
 
   try {
-    const response = await axios.get(formUrl, {params});
+    const response = await axios.get(formUrl, { params });
     return response.data.Items;
   } catch (error) {
     console.error('Error fetching address suggestions:', error);
@@ -75,6 +75,8 @@ export const handlePostalCodeValidation = (
 
   if (!validatePc && value.length >= 4) {
     newErrors['postalCode'] = message;
+  } else if (value.length === 0) {
+    newErrors['postalCode'] = 'Postal Code is required.';
   } else {
     delete newErrors['postalCode'];
   }

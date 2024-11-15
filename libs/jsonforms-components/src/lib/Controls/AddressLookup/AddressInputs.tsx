@@ -69,13 +69,13 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             readonly={readOnly}
             value={address?.municipality || ''}
             onChange={(name, value) => handleInputChange(name, value)}
-            onBlur={(name, value) => handleOnBlur(name)}
+            onBlur={(name) => handleOnBlur(name)}
             width="100%"
           />
         </GoAFormItem>
         <GoAFormItem
-          label="Postal Code"
-          error={errors?.['postalCode'] ?? ''}
+          label="Postal code"
+          error={errors?.postalCode ?? ''}
           requirement={requiredFields?.includes('postalCode') ? 'required' : 'optional'}
         >
           <GoAInput
@@ -87,7 +87,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             placeholder="A0A 0A0"
             value={address?.postalCode || ''}
             onChange={(name, value) => handleInputChange(name, value)}
-            onBlur={(name, value) => handleOnBlur(name)}
+            onBlur={(name) => handleOnBlur(name)}
             width="100%"
             maxLength={7}
           />
