@@ -1,36 +1,38 @@
 {{#if (isControlAndHasScope element) }}
-    {{#if (isArray element data) }}
-        {{#withEachDataWithItems data element.scope requiredFields element dataSchema params.dataSchema }}
+    <div class="vertical-flex" >
+        {{#if (isArray element data) }}
+            {{#withEachDataWithItems data element.scope requiredFields element dataSchema params.dataSchema }}
+                <div class="list-item-basic">
+                    {{#forEachItem params.items this params.requiredFields }}
+                        <div class="list-item-borderless">
+                            {{> elements element=params.element data=params.data requiredFields=params.requiredFields styles=styles }}
+                        </div>
+                    {{/forEachItem}}
+                </div>
+            {{/withEachDataWithItems}}
+        {{else if (isObject element data) }}
+            {{#withItemsObject data element.scope requiredFields element dataSchema params.dataSchema }}
+            <b>{{ params.title }}</b>
             <div class="list-item-basic">
-                {{#forEachItem params.items this params.requiredFields }}
-                    <div class="list-item-borderless">
-                        {{> elements element=params.element data=params.data requiredFields=params.requiredFields styles=styles }}
-                    </div>
-                {{/forEachItem}}
+                {{#forEachItemObject params.items this params.requiredFields }}
+                <div class="list-item-borderless">
+                    {{> elements element=params.element data=params.data requiredFields=params.requiredFields styles=styles }}
+                </div>
+                {{/forEachItemObject}}
             </div>
-        {{/withEachDataWithItems}}
-    {{else if (isObject element data) }}
-        {{#withItemsObject data element.scope requiredFields element dataSchema params.dataSchema }}
-        <b>{{ params.title }}</b>
-        <div class="list-item-basic">
-            {{#forEachItemObject params.items this params.requiredFields }}
-            <div class="list-item-borderless">
-                {{> elements element=params.element data=params.data requiredFields=params.requiredFields styles=styles }}
+            {{/withItemsObject}}
+        {{else}}
+            <div class="grid-item">
+                <strong>
+                    {{ label element }}{{#if (isRequiredField requiredFields element )}}
+                    *
+                    {{/if}}
+                    :
+                </strong>
+                {{ value element data }}
             </div>
-            {{/forEachItemObject}}
-        </div>
-        {{/withItemsObject}}
-    {{else}}
-        <div class="grid-item">
-            <strong>
-                {{ label element }}{{#if (isRequiredField requiredFields element )}}
-                *
-                {{/if}}
-                :
-            </strong>
-            {{ value element data }}
-        </div>
-    {{/if}}
+        {{/if}}
+    </div>
 {{else if (isListWithDetailAndHasScope element) }}
     <div class="vertical-flex">
         <div class="header">
@@ -56,14 +58,16 @@
         {{/withEachData}}
     </div>
 {{else if (hasElements element) }}
-    {{#if (isGroup element )}}
-        <h4 class="groupPadding">
-            {{ label element }}
-        </h4>
-    {{/if}}
-    <div class="list-item-borderless-box">
-        {{#withEach element.elements data requiredFields dataSchema }}
-            {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
-        {{/withEach}}
+    <div>
+        {{#if (isGroup element )}}
+            <h4 class="groupPadding">
+                {{ label element }}
+            </h4>
+        {{/if}}
+        <div class="list-item-borderless-box">
+            {{#withEach element.elements data requiredFields dataSchema }}
+                {{> elements element=this data=params.data requiredFields=params.requiredFields styles=styles }}
+            {{/withEach}}
+        </div>
     </div>
 {{/if}}

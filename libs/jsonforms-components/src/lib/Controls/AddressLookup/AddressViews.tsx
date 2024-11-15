@@ -31,7 +31,7 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
       <GoAGrid minChildWidth="0" gap="s">
         <GoAFormItem
           error={data?.addressLine1?.length === 0 ? 'addressLine1 is required' : ''}
-          label={`${isAlbertaAddress ? 'Alberta p' : 'Canada p'}ostal address`}
+          label={`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}
         >
           <p>{data?.addressLine1}</p>
         </GoAFormItem>
