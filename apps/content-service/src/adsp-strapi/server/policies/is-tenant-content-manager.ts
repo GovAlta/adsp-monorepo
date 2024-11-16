@@ -22,7 +22,9 @@ const isTenantContentManager = async (
 
     const request = policyContext.request;
     const tenantId = user?.tenantId?.toString();
-    const requestedTenantId: string = await applyRequestTenant(strapi, request, tenantId, model, documentId);
+    const requestedTenantId: string = await applyRequestTenant(strapi, request, tenantId, model, documentId, () => {
+      request.body.tenantId = tenantId;
+    });
 
     // Pass if user isn't in a tenant context, or
     // requested document isn't in a tenant context, or

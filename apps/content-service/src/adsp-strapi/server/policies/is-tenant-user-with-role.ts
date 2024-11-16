@@ -23,7 +23,9 @@ const isTenantUserWithRole = async (policyContext: Core.PolicyContext, config, {
 
     const user = policyContext['state']?.auth?.credentials;
     const tenantId = user?.tenantId;
-    const requestedTenantId: string = await applyRequestTenant(strapi, request, tenantId, model, documentId);
+    const requestedTenantId: string = await applyRequestTenant(strapi, request, tenantId, model, documentId, () => {
+      request.body.data.tenantId = tenantId?.toString();
+    });
 
     return isAllowedUser(user, requestedTenantId ? AdspId.parse(requestedTenantId) : null, [
       ServiceRoles.Admin,

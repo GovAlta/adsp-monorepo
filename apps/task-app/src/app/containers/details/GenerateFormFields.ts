@@ -24,11 +24,12 @@ export const getFormFieldValue = (scope: string, data: object) => {
       }
       currentValue = currentValue[key];
     }
-    return Array.isArray(currentValue)
-      ? currentValue[currentValue.length - 1]
-      : typeof currentValue === 'object'
-      ? ''
-      : currentValue;
+
+    if (typeof currentValue === 'object') {
+      return JSON.stringify(currentValue, null, 2);
+    } else {
+      return String(currentValue);
+    }
   } else {
     return '';
   }

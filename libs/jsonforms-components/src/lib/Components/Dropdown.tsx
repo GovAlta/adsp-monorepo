@@ -176,6 +176,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
     if (e.key === ESCAPE_KEY) {
       setIsOpen(false);
+      setInputTextFocus();
     }
 
     let index = items.findIndex((val) => {
@@ -245,6 +246,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
               setItems(selectedItems);
             }
           }}
+          onTrailingIconClick={() => {}}
           trailingIcon={trailingIcon}
         />
       </GoADropdownTextbox>

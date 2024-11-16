@@ -1,10 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using NLua;
+using Adsp.Platform.ScriptService.Services.Platform;
 
 namespace Adsp.Platform.ScriptService.Services.Util;
 internal static class LuaTableExtensions
 {
-  public static IDictionary<string, object> ToDictionary(this LuaTable? table)
+  public static IDictionary<string, object?> ToDictionary(this LuaTable? table)
   {
     var result = new Dictionary<string, object>();
     if (table != null)
@@ -64,5 +65,48 @@ internal static class LuaTableExtensions
       typedArray.SetValue(Convert.ChangeType(value, elementType), index++);
     }
     return typedArray;
+  }
+
+  const string CONTEXT_KEY = "context";
+  const string VALUE_KEY = "value";
+  const string CORRELATION_ID_KEY = "correlationId";
+
+  public static ValueCreateRequest ToRequest(this LuaTable tableValue, string @namespace, string name)
+  {
+    return tableValue.ToDictionary().ToRequest(@namespace, name);
+  }
+
+  public static ValueCreateRequest ToRequest(this IDictionary<string, object?> dataValue, string @namespace, string name)
+  {
+    Dictionary<string, object?>? value = null;
+    Dictionary<string, object?>? context = null;
+    string? correlationId;
+
+    if (dataValue != null && !dataValue.TryGetValue(VALUE_KEY, out _))
+    {
+      throw new ArgumentException("value is required.");
+    }
+
+    if (dataValue?[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
+    {
+      //     var rawValue = Deserialize<>()
+      value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
+    }
+    if (dataValue != null && dataValue.TryGetValue(VALUE_KEY, out _) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
+    {
+      context = dataValue[CONTEXT_KEY] as Dictionary<string, object?>;
+    }
+
+    correlationId = dataValue?[CORRELATION_ID_KEY]?.ToString();
+
+    return new ValueCreateRequest()
+    {
+      Namespace = @namespace,
+      Name = name,
+      Timestamp = DateTime.Now,
+      Value = value,
+      Context = context,
+      CorrelationId = correlationId
+    };
   }
 }

@@ -36,6 +36,7 @@ const resolveLabelFromScope = (scope: string) => {
 
   if (lastSegment) {
     const lowercased = lastSegment.replace(/([A-Z])/g, ' $1').toLowerCase();
+
     return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
   }
   return '';
@@ -69,7 +70,7 @@ const getFormFieldValue = (scope: string, data: object) => {
 };
 
 function sentenceCase(input) {
-  let formattedString = input.replace(/([A-Z])/g, ' $1').toLowerCase();
+  let formattedString = input.replace(/([A-Z0-9])/g, ' $1').toLowerCase();
   formattedString = formattedString.trim();
   formattedString = formattedString.charAt(0).toUpperCase() + formattedString.slice(1);
   return formattedString;
@@ -120,6 +121,32 @@ const fileId = (value: string, fileServiceUrl: string) => {
   }
 
   return `<a href="${fileServiceUrl}file/v1/files/${returnValue}/download?unsafe=true&embed=true">${returnValue}</a> `;
+};
+
+const valueMap = (value: string) => {
+  const mapping = [
+    { value: 'AB', label: 'Alberta' },
+    { value: 'BC', label: 'British Columbia' },
+    { value: 'MB', label: 'Manitoba' },
+    { value: 'NB', label: 'New Brunswick' },
+    { value: 'NL', label: 'Newfoundland and Labrador' },
+    { value: 'NS', label: 'Nova Scotia' },
+    { value: 'NT', label: 'Northwest Territories' },
+    { value: 'NU', label: 'Nunavut' },
+    { value: 'ON', label: 'Ontario' },
+    { value: 'PE', label: 'Prince Edward Island' },
+    { value: 'QC', label: 'Quebec' },
+    { value: 'SK', label: 'Saskatchewan' },
+    { value: 'YT', label: 'Yukon' },
+    { value: 'CA', label: 'Canada' },
+  ];
+
+  const found = mapping.find((item) => item.value === value);
+  if (found) {
+    return found.label;
+  } else {
+    return value;
+  }
 };
 
 class HandlebarsTemplateService implements TemplateService {
@@ -405,7 +432,14 @@ class HandlebarsTemplateService implements TemplateService {
     });
 
     handlebars.registerHelper('label', function (element) {
-      const label = element?.label ? element.label : resolveLabelFromScope(element.scope);
+      let label = element?.label ? element.label : resolveLabelFromScope(element.scope);
+
+      if (label === 'subdivisionCode') {
+        label = 'Province';
+      }
+
+      label = sentenceCase(label);
+
       return label;
     });
 
@@ -415,6 +449,8 @@ class HandlebarsTemplateService implements TemplateService {
       if (typeof value === 'string' && value.slice(0, 4) === 'urn:') {
         value = fileId(value, fileServiceUrl);
       }
+
+      value = valueMap(value);
 
       return value;
     });
