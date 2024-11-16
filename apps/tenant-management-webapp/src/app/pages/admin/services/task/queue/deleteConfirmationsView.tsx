@@ -3,7 +3,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { TableDiv } from './styled-components';
+import { TableDiv } from '../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 
 import { deleteTaskQueue } from '@store/task/action';

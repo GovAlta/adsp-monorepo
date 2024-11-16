@@ -16,7 +16,7 @@ import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, Validator } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 
-import { DescriptionItem, HelpText, ErrorMsg } from './styled-components';
+import { DescriptionItem, HelpText, ErrorMsg } from '../styled-components';
 interface TaskModalProps {
   initialValue?: QueueTaskDefinition;
   type: string;
