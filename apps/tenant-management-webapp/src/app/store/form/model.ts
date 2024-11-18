@@ -74,4 +74,10 @@ export interface FormState {
     uiSchemaError?: string;
     resolvedDataSchema: JsonSchema;
   };
+  metrics: FormMetrics;
+}
+
+export interface FormMetrics {
+  formsCreated?: number;
+  formsSubmitted?: number;
 }

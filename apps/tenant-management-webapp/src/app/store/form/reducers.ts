@@ -19,6 +19,7 @@ import {
   OPEN_EDITOR_FOR_DEFINITION_FAILED_ACTION,
   RESOLVE_DATA_SCHEMA_SUCCESS_ACTION,
   RESOLVE_DATA_SCHEMA_FAILED_ACTION,
+  FETCH_FORM_METRICS_SUCCESS_ACTION,
 } from './action';
 
 import { FormState } from './model';
@@ -38,6 +39,7 @@ export const defaultState: FormState = {
     uiSchema: {} as UISchemaElement,
     resolvedDataSchema: {},
   },
+  metrics: {},
 };
 
 export default function (state: FormState = defaultState, action: FormActionTypes): FormState {
@@ -228,7 +230,11 @@ export default function (state: FormState = defaultState, action: FormActionType
           dataSchemaError: action.error,
         },
       };
-
+    case FETCH_FORM_METRICS_SUCCESS_ACTION:
+      return {
+        ...state,
+        metrics: action.payload,
+      };
     default:
       return state;
   }

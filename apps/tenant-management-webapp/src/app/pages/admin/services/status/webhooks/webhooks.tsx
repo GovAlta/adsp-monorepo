@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
-import { WebhookHistoryModal } from '../webhookHistoryForm';
-import { TestWebhookModal } from '../testWebhook';
+import { WebhookHistoryModal } from './webhookHistoryForm';
+import { TestWebhookModal } from './testWebhook';
 import History from '../../../../../../assets/icons/history.svg';
 import { HoverWrapper, ToolTip } from '../styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';

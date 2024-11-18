@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { IconDiv, MoreDetails } from './styled-components';
+import { IconDiv, MoreDetails } from '../styled-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { QueueTaskDefinition } from '@store/task/model';
 
