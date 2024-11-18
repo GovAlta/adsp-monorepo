@@ -71,70 +71,69 @@ export const TestWebhookModal = (): JSX.Element => {
 
   return (
     <GoAModalStyle>
-      {isOpen && (
-        <GoAModal
-          testId={'test-webhook'}
-          heading={`Test webhook - ${webhook?.name}`}
-          actions={
-            <GoAButtonGroup alignment="end">
-              <GoAButton
-                type="secondary"
-                onClick={() => {
-                  dispatch(clearEventLogEntries());
-                  setShowEntries(false);
-                  dispatch(ResetModalState());
-                }}
-              >
-                Close
-              </GoAButton>
-              <GoAButton
-                type="primary"
-                disabled={selectedStatusName === null}
-                onClick={() => {
-                  dispatch(TestWebhooks(webhook, selectedStatusName));
-                }}
-              >
-                Test
-              </GoAButton>
-            </GoAButtonGroup>
-          }
-        >
-          <GoAFormItem label="Events">
-            {!orderedGroupNames && renderNoItem('event definition')}
+      <GoAModal
+        open={webhook !== undefined}
+        testId={'test-webhook'}
+        heading={`Test webhook - ${webhook?.name}`}
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              type="secondary"
+              onClick={() => {
+                dispatch(clearEventLogEntries());
+                setShowEntries(false);
+                dispatch(ResetModalState());
+              }}
+            >
+              Close
+            </GoAButton>
+            <GoAButton
+              type="primary"
+              disabled={selectedStatusName === null}
+              onClick={() => {
+                dispatch(TestWebhooks(webhook, selectedStatusName));
+              }}
+            >
+              Test
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      >
+        <GoAFormItem label="Events">
+          {!orderedGroupNames && renderNoItem('event definition')}
 
-            {events && (
-              <GoARadioGroup
-                name="option"
-                value={selectedStatusName}
-                onChange={(_, value) => setSelectedStatusName(value)}
-                orientation="vertical"
-                testId="status-radio-group"
-              >
-                {events?.map((val) => (
-                  <GoARadioItem name="option" value={val}></GoARadioItem>
-                ))}
-              </GoARadioGroup>
-            )}
-          </GoAFormItem>
-
-          {(showEntries || (indicator.show && indicator.message !== 'Loading...')) && (
-            <EntryDetail>
-              {indicator.show ? (
-                <div>
-                  <PageIndicator />
-                </div>
-              ) : (
-                showEntries &&
-                (entries ? (
-                  <JSONFont>{JSON.stringify(entries[0], null, 2)}</JSONFont>
-                ) : (
-                  'No timely response from webhook test server - please try again'
-                ))
-              )}
-            </EntryDetail>
+          {events && (
+            <GoARadioGroup
+              name="option"
+              value={selectedStatusName}
+              onChange={(_, value) => setSelectedStatusName(value)}
+              orientation="vertical"
+              testId="status-radio-group"
+            >
+              {events?.map((val) => (
+                <GoARadioItem name="option" value={val}></GoARadioItem>
+              ))}
+            </GoARadioGroup>
           )}
-        </GoAModal>
-      )}
+        </GoAFormItem>
+
+        {(showEntries || (indicator.show && indicator.message !== 'Loading...')) && (
+          <EntryDetail>
+            {indicator.show ? (
+              <div>
+                <PageIndicator />
+              </div>
+            ) : (
+              showEntries &&
+              (entries ? (
+                <JSONFont>{JSON.stringify(entries[0], null, 2)}</JSONFont>
+              ) : (
+                'No timely response from webhook test server - please try again'
+              ))
+            )}
+          </EntryDetail>
+        )}
+      </GoAModal>
     </GoAModalStyle>
   );
 };
