@@ -7,7 +7,7 @@ import { renderNoItem } from '@components/NoItem';
 import { GoAButton, GoACircularProgress } from '@abgov/react-components-new';
 import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
-import { ButtonPadding, ProgressWrapper } from './styled-components';
+import { ProgressWrapper } from '../styled-components';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
 
 interface AddEditQueueProps {

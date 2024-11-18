@@ -1,7 +1,7 @@
 import React from 'react';
 import { TaskDefinition } from '@store/task/model';
 
-import { ConfigTaskWrapper } from './styled-components';
+import { ConfigTaskWrapper } from '../styled-components';
 
 interface props {
   queue: TaskDefinition;
