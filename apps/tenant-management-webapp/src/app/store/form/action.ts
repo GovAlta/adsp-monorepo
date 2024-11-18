@@ -1,5 +1,5 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { FormDefinition } from './model';
+import { FormDefinition, FormMetrics } from './model';
 
 export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
@@ -29,6 +29,9 @@ export const PROCESS_UI_SCHEMA_FAILED_ACTION = 'form/PROCESS_UI_SCHEMA_FAILED_AC
 
 export const RESOLVE_DATA_SCHEMA_SUCCESS_ACTION = 'form/RESOLVE_DATA_SCHEMA_SUCCESS_ACTION';
 export const RESOLVE_DATA_SCHEMA_FAILED_ACTION = 'form/RESOLVE_DATA_SCHEMA_FAILED_ACTION';
+
+export const FETCH_FORM_METRICS_ACTION = 'form/FETCH_FORM_METRICS_ACTION';
+export const FETCH_FORM_METRICS_SUCCESS_ACTION = 'form/FETCH_FORM_METRICS_SUCCESS_ACTION';
 
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
@@ -133,6 +136,15 @@ export interface ResolveDataSchemaFailedAction {
   error: string;
 }
 
+export interface FetchFormMetricsAction {
+  type: typeof FETCH_FORM_METRICS_ACTION;
+}
+
+export interface FetchFormMetricsSuccessAction {
+  type: typeof FETCH_FORM_METRICS_SUCCESS_ACTION;
+  payload: FormMetrics;
+}
+
 export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
@@ -153,7 +165,9 @@ export type FormActionTypes =
   | ProcessUISchemaFailedAction
   | UpdateEditorFormDefinitionAction
   | ResolveDataSchemaSuccessAction
-  | ResolveDataSchemaFailedAction;
+  | ResolveDataSchemaFailedAction
+  | FetchFormMetricsAction
+  | FetchFormMetricsSuccessAction;
 
 export const clearFormDefinitions = (): ClearFormDefinitions => ({
   type: CLEAR_FORM_DEFINITIONS_ACTION,
@@ -266,4 +280,13 @@ export const resolvedDataSchema = (schema: JsonSchema): ResolveDataSchemaSuccess
 export const resolveDataSchemaFailed = (error: string): ResolveDataSchemaFailedAction => ({
   type: RESOLVE_DATA_SCHEMA_FAILED_ACTION,
   error,
+});
+
+export const fetchFormMetrics = (): FetchFormMetricsAction => ({
+  type: FETCH_FORM_METRICS_ACTION,
+});
+
+export const fetchFormMetricsSuccess = (metrics: FormMetrics): FetchFormMetricsSuccessAction => ({
+  type: FETCH_FORM_METRICS_SUCCESS_ACTION,
+  payload: metrics,
 });
