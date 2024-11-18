@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
+import { fetchFormMetrics } from '@store/form/action';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { FormMetrics } from './metrics';
 
 interface FormOverviewProps {
   setOpenAddDefinition: (val: boolean) => void;
@@ -9,6 +12,11 @@ interface FormOverviewProps {
 
 const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchFormMetrics());
+  }, [dispatch]);
 
   return (
     <OverviewLayout
@@ -36,6 +44,7 @@ const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element 
           Add definition
         </GoAButton>
       }
+      extra={<FormMetrics />}
     />
   );
 };
