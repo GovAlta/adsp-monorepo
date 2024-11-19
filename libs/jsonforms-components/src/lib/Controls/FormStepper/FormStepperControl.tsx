@@ -202,7 +202,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
           {/* Need to force a refresh here, GoAFormStepper cant change dynamically unless completely re-rendered */}
-          {categories === staleCategories && (
+          {categories.length === staleCategories.length && (
             <GoAFormStepper
               testId={uischema?.options?.testId || 'form-stepper-test'}
               step={step}
