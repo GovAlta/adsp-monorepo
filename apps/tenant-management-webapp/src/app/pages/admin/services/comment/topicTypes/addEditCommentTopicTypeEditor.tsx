@@ -134,7 +134,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   //eslint-disable-next-line
   useEffect(() => {}, [fetchKeycloakRolesState]);
 
-  const ClientRole = ({ roleNames, clientId }) => {
+  const ClientRole = ({ roleNames, clientId,setChangeInRoles }) => {
     const applicantRoles = types[0];
     const clerkRoles = types[1];
 
@@ -167,6 +167,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
           { title: types[1].name, selectedRoles: topicType[types[1].type] },
           { title: types[2].name, selectedRoles: topicType[types[2].type] },
         ]}
+        setChangeInRoles={setChangeInRoles}
       />
     );
   };
@@ -240,6 +241,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const heightCover = {
     height: calcHeight - 550,
   };
+
+  const [changeInRoles,setChangeInRoles]= useState(false);
 
   return (
     <CommentEditor>
@@ -336,7 +339,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <hr className="hr-resize" />
             <ScrollPane>
               {elements.map((e, key) => {
-                return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+                return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} setChangeInRoles={setChangeInRoles} />;
               })}
               {fetchKeycloakRolesState === ActionState.inProcess && (
                 <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>

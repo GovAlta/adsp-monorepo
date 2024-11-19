@@ -86,6 +86,8 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
     }
   }, [initStream, rolesObj]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [changeInRoles,setChangeInRoles] = useState(false);
+
   return (
     <StreamModalStyles>
       <GoAModal
@@ -235,6 +237,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
                     selectedRoles: selectedRoles?.[clientId]?.map((r) => `${clientId}:${r}`) || [],
                   },
                 ]}
+                setChangeInRoles={setChangeInRoles}
               />
             );
           })

@@ -131,6 +131,7 @@ interface ClientRoleProps {
   onUpdateRoles: (roles: string[], type: string) => void;
   configuration: Record<string, string[]>;
   showSelectedRoles?: boolean;
+  setChangeInRoles: (arg0: boolean)=>void;
 }
 
 const ClientRole = ({
@@ -140,6 +141,7 @@ const ClientRole = ({
   configuration,
   onUpdateRoles,
   showSelectedRoles,
+  setChangeInRoles
 }: ClientRoleProps) => {
   return (
     <ClientRoleTable
@@ -155,6 +157,7 @@ const ClientRole = ({
         { title: types[2].name, selectedRoles: configuration[types[2].type] },
       ]}
       showSelectedRoles={showSelectedRoles}
+      setChangeInRoles={setChangeInRoles}
     />
   );
 };
@@ -323,6 +326,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     setCurrentTab(tab);
   };
 
+  const [changeInRoles,setChangeInRoles] = useState(false);
+
   return (
     <FormEditor>
       {isLoading ? (
@@ -470,6 +475,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                               }
                             }}
                             showSelectedRoles={showSelectedRoles}
+                            setChangeInRoles={setChangeInRoles}
                           />
                         );
                       })}

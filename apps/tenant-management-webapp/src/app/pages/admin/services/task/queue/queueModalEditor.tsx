@@ -99,7 +99,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
 
   //eslint-disable-next-line
   useEffect(() => {}, [fetchKeycloakRolesState]);
-  const ClientRole = ({ roleNames, clientId }) => {
+  const ClientRole = ({ roleNames, clientId, setChangeInRoles }) => {
     return (
       <ClientRoleTable
         roles={roleNames}
@@ -116,13 +116,16 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
               workerRoles: roles,
             });
           }
-        }}
+        } }
         nameColumnWidth={40}
         service="Queue"
         checkedRoles={[
           { title: assignerRoles.name, selectedRoles: queue[assignerRoles.type] },
           { title: workerRoles.name, selectedRoles: queue[workerRoles.type] },
         ]}
+        setChangeInRoles={function (arg0: boolean): void {
+          throw new Error('Function not implemented.');
+        }}
       />
     );
   };
@@ -181,6 +184,8 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
+  const [changeInRoles,setChangeInRoles] = useState(false);
+
 
   return (
     <TaskEditor>
@@ -248,7 +253,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
             <ScrollPane>
               {tenantClients &&
                 elements.map((e, key) => {
-                  return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+                  return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} setChangeInRoles={setChangeInRoles} />;
                 })}
               {fetchKeycloakRolesState === ActionState.inProcess && (
                 <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>

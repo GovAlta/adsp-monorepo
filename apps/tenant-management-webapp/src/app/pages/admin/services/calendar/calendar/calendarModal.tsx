@@ -69,7 +69,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
     onCancel();
     validators.clear();
   };
-  const ClientRole = ({ roleNames, clientId }) => {
+  const ClientRole = ({ roleNames, clientId, setChangeInRoles }) => {
     return (
       <ClientRoleTable
         roles={roleNames}
@@ -93,6 +93,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
           { title: 'read', selectedRoles: calendar?.readRoles },
           { title: 'modify', selectedRoles: calendar?.updateRoles },
         ]}
+        setChangeInRoles={setChangeInRoles}
       />
     );
   };
@@ -102,6 +103,8 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
     validators.clear();
     onCancel();
   };
+
+  const [changeInRoles,setChangeInRoles] = useState(false);
 
   return (
     <GoAModal
@@ -175,7 +178,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
         />
       </GoAFormItem>
       {roles?.length !== 0 &&
-        roles.map((r) => <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />)}
+        roles.map((r) => <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} setChangeInRoles={setChangeInRoles} />)}
       {roles?.length === 0 && <TextGoASkeleton />}
     </GoAModal>
   );

@@ -157,7 +157,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
       });
   elements = elements.concat(clientElements);
 
-  const ClientRole = ({ roleNames, clientId }) => {
+  const ClientRole = ({ roleNames, clientId,setChangeInRoles }) => {
     return (
       <ClientRoleTable
         roles={roleNames}
@@ -182,9 +182,12 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
           { title: 'read', selectedRoles: fileType?.readRoles },
           { title: 'modify', selectedRoles: fileType?.updateRoles },
         ]}
+        setChangeInRoles={setChangeInRoles}
       />
     );
   };
+
+  const [changeInRoles,setChangeInRoles] = useState(false);
 
   return (
     <FileTypeEditor data-testid="filetype-editor">
@@ -388,7 +391,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
             <hr className="hr-resize" />
             <ScrollPane>
               {elements.map((e, key) => {
-                return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+                return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId}  setChangeInRoles={setChangeInRoles} />;
               })}
               {fetchKeycloakRolesState === ActionState.inProcess && (
                 <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>

@@ -1,50 +1,49 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import { FunctionComponent, useEffect, useRef, useState } from 'react';
 import {
-  ScriptEditorContainer,
+  EditModalStyle,
   EditScriptActions,
   MonacoDivBody,
-  EditModalStyle,
-  ScriptPane,
-  ResponseTableStyles,
-  TestInputDivBody,
-  ScrollPane,
-  TextLoadingIndicator,
   MonacoDivTabBody,
-  ScriptEditorTitle,
   MonacoDivTriggerEventsBody,
   NotificationBannerWrapper,
+  ResponseTableStyles,
+  ScriptEditorContainer,
+  ScriptEditorTitle,
+  ScriptPane,
+  ScrollPane,
+  TestInputDivBody,
+  TextLoadingIndicator,
 } from '../styled-components';
 import { TombStone } from './tombstone';
 
-import MonacoEditor, { useMonaco } from '@monaco-editor/react';
-import { languages } from 'monaco-editor';
-import { SaveFormModal } from '@components/saveModal';
-import { ScriptItem } from '@store/script/models';
-import { ClearScripts, ExecuteScript } from '@store/script/actions';
-import { useDispatch, useSelector } from 'react-redux';
+import { GoAButton, GoACheckbox, GoAFormItem, GoASkeleton } from '@abgov/react-components-new';
+import { CustomLoader } from '@components/CustomLoader';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
-import { RootState } from '@store/index';
+import { ClientRoleTable } from '@components/RoleTable';
+import { SaveFormModal } from '@components/saveModal';
+import { Tab, Tabs } from '@components/Tabs';
+import { buildSuggestions, luaTriggerInScope } from '@lib/autoComplete';
 import {
-  functionSuggestion,
-  functionSignature,
   extractSuggestionsForSchema,
+  functionSignature,
+  functionSuggestion,
   retrieveScriptSuggestions,
 } from '@lib/luaCodeCompletion';
-import { buildSuggestions, luaTriggerInScope } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton, GoACircularProgress } from '@abgov/react-components-new';
-import { Tab, Tabs } from '@components/Tabs';
-import { ClientRoleTable } from '@components/RoleTable';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
+import { getEventDefinitions } from '@store/event/actions';
+import { RootState } from '@store/index';
+import { ClearScripts, ExecuteScript } from '@store/script/actions';
+import { ScriptItem } from '@store/script/models';
 import { ActionState } from '@store/session/models';
 import { selectRoleList } from '@store/sharedSelectors/roles';
-import { ScriptEditorEventsTab } from './scriptEditorEventsTab';
-import { getEventDefinitions } from '@store/event/actions';
-import { scriptEditorConfig, scriptEditorJsonConfig } from './config';
-import { CustomLoader } from '@components/CustomLoader';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import useWindowDimensions from '@lib/useWindowDimensions';
 import { NotificationBanner } from 'app/notificationBanner';
+import { languages } from 'monaco-editor';
+import { useDispatch, useSelector } from 'react-redux';
+import { scriptEditorConfig, scriptEditorJsonConfig } from './config';
+import { ScriptEditorEventsTab } from './scriptEditorEventsTab';
 export interface ScriptEditorProps {
   name: string;
   description: string;
@@ -283,7 +282,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   //eslint-disable-next-line
   useEffect(() => {}, [fetchKeycloakRolesState]);
 
-  const ClientRole = ({ roleNames, clientId }) => {
+  const ClientRole = ({ roleNames, clientId, setChangeInRoles }) => {
     const runnerRoles = types[0];
 
     return (
@@ -301,6 +300,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         nameColumnWidth={80}
         service="Script"
         checkedRoles={[{ title: types[0].name, selectedRoles: script[types[0].type] }]}
+        setChangeInRoles={setChangeInRoles}
       />
     );
   };
@@ -328,6 +328,22 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
     return script.useServiceAccount;
   };
+  const [changeInRoles,setChangeInRoles] = useState(false);
+  const scrollPositionRef = useRef(0);
+  const containerRef = useRef(null);
+
+  const saveScrollPosition = () => {
+    if (containerRef.current) {
+      scrollPositionRef.current = containerRef.current.scrollTop;
+    }
+  };
+  saveScrollPosition();
+
+  if(changeInRoles){
+    setTimeout(() => {
+      containerRef.current.scrollTop = scrollPositionRef.current;
+    }, 100);
+  }
 
   return (
     <>
@@ -374,10 +390,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               </Tab>
               <Tab label="Roles" data-testid="script-roles-tab">
                 <MonacoDivTabBody data-testid="roles-editor-body">
-                  <ScrollPane style={{ height: monacoHeight }}>
+                  <ScrollPane ref={containerRef} style={{ height: monacoHeight }}>
                     {Array.isArray(roles)
                       ? roles.map((r) => {
-                          return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
+                          return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} setChangeInRoles={setChangeInRoles} />;
                         })
                       : null}
                     {fetchKeycloakRolesState === ActionState.inProcess && (

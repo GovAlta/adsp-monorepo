@@ -100,7 +100,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
       });
   elements = elements.concat(clientElements);
 
-  const SubscribeRole = ({ roleNames, clientId }) => {
+  const SubscribeRole = ({ roleNames, clientId,setChangeInRoles }) => {
     return (
       <ClientRoleTable
         roles={roleNames}
@@ -114,6 +114,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         nameColumnWidth={80}
         service="Notifications-type"
         checkedRoles={[{ title: 'subscribe', selectedRoles: type.subscriberRoles }]}
+        setChangeInRoles={setChangeInRoles}
       />
     );
   };
@@ -158,6 +159,8 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .add('address', 'address', checkForEmail)
     .build();
+
+const [changeInRoles,setChangeInRoles] = useState(false);
 
   return (
     <EditStyles>
@@ -366,7 +369,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           !isNotifyAddress &&
           !type.publicSubscribe &&
           elements.map((e, key) => {
-            return <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+            return <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} setChangeInRoles={setChangeInRoles} />;
           })}
       </GoAModal>
     </EditStyles>

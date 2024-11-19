@@ -86,7 +86,7 @@ export const AddScriptModal = ({
     validators.clear();
   };
 
-  const RunnerRole = ({ roleNames, clientId }) => {
+  const RunnerRole = ({ roleNames, clientId , setChangeInRoles }) => {
     return (
       <ClientRoleTable
         roles={roleNames}
@@ -100,9 +100,12 @@ export const AddScriptModal = ({
         nameColumnWidth={80}
         service="Script"
         checkedRoles={[{ title: 'runner', selectedRoles: script?.runnerRoles }]}
+        setChangeInRoles={setChangeInRoles}
       />
     );
   };
+
+  const [changeInRoles,setChangeInRoles] = useState(false);
 
   return (
     <GoAModal
@@ -198,7 +201,7 @@ export const AddScriptModal = ({
       {roles &&
         isNew &&
         roles.map((r) => {
-          return <RunnerRole roleNames={r?.roleNames} key={r?.clientId} clientId={r?.clientId} />;
+          return <RunnerRole roleNames={r?.roleNames} key={r?.clientId} clientId={r?.clientId} setChangeInRoles={setChangeInRoles}/>;
         })}
 
       {Object.entries(roles).length === 0 && <TextGoASkeleton key={1} lineCount={4}></TextGoASkeleton>}
