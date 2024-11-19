@@ -1,4 +1,4 @@
-import { GoARenderers, ContextProviderFactory } from '@abgov/jsonforms-components';
+import { GoAReviewRenderers, ContextProviderFactory } from '@abgov/jsonforms-components';
 import { UISchemaElement } from '@jsonforms/core';
 import { AppState } from '../state';
 import { GoACallout } from '@abgov/react-components-new';
@@ -129,7 +129,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
             uischema={readOnlyUiSchema(definition.uiSchema)}
             data={data}
             validationMode="NoValidation"
-            renderers={GoARenderers}
+            renderers={GoAReviewRenderers}
           />
         </ContextProvider>
       </GridItem>
