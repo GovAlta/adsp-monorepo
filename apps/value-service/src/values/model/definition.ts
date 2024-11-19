@@ -25,7 +25,7 @@ export class ValueDefinitionEntity implements ValueDefinition {
     namespace.validationService.setSchema(this.getSchemaKey(), definition.jsonSchema || {});
   }
 
-  public writeValue(tenantId: AdspId, value: Omit<Value, 'tenantId'>): Promise<Value> {
+  public prepareWrite(tenantId: AdspId, value: Omit<Value, 'tenantId'>): Value {
     this.namespace.validationService.validate(
       `value '${this.namespace.name}:${this.name}'`,
       this.getSchemaKey(),
@@ -52,7 +52,7 @@ export class ValueDefinitionEntity implements ValueDefinition {
       delete value.value[ValueDefinitionEntity.METRICS_KEY];
     }
 
-    return this.namespace.repository.writeValue(this.namespace.name, this.name, tenantId, valueRecord);
+    return valueRecord;
   }
 
   @AssertRole('read value', ServiceUserRoles.Reader, null, true)
