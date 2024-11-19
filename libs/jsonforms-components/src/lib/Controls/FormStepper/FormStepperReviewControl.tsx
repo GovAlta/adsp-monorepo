@@ -24,7 +24,16 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
             <ReviewItemHeader>
               <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
               {navigationFunc && (
-                <Anchor onClick={() => navigationFunc(index + 1)} data-testid={testId}>
+                <Anchor
+                  onClick={() => navigationFunc(index + 1)}
+                  data-testid={testId}
+                  onKeyDown={(e) => {
+                    if (!readOnly && (e.key === ' ' || e.key === 'Enter')) {
+                      e.preventDefault();
+                      navigationFunc(index + 1);
+                    }
+                  }}
+                >
                   {readOnly ? 'View' : 'Edit'}
                 </Anchor>
               )}
