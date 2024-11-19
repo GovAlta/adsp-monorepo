@@ -32,7 +32,7 @@ describe('event router', () => {
   const repositoryMock = {
     readValues: jest.fn(),
     countValues: jest.fn(),
-    writeValue: jest.fn(),
+    writeValues: jest.fn(),
     readMetrics: jest.fn(),
     readMetric: jest.fn(),
     writeMetric: jest.fn(),
@@ -47,7 +47,7 @@ describe('event router', () => {
     repositoryMock.countValues.mockReset();
     repositoryMock.readMetrics.mockReset();
     repositoryMock.readMetric.mockReset();
-    repositoryMock.writeValue.mockReset();
+    repositoryMock.writeValues.mockReset();
     eventServiceMock.send.mockReset();
   });
 
@@ -563,13 +563,15 @@ describe('event router', () => {
       req.getConfiguration.mockResolvedValueOnce([{}]);
 
       const value = {};
-      repositoryMock.writeValue.mockResolvedValueOnce({
-        tenantId,
-        timestamp: new Date(),
-        context: {},
-        correlationId: null,
-        value,
-      });
+      repositoryMock.writeValues.mockResolvedValueOnce([
+        {
+          tenantId,
+          timestamp: new Date(),
+          context: {},
+          correlationId: null,
+          value,
+        },
+      ]);
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -597,7 +599,7 @@ describe('event router', () => {
 
       req.getConfiguration.mockResolvedValueOnce([{}]);
 
-      repositoryMock.writeValue.mockImplementationOnce((_ns, _n, _t, v) => Promise.resolve(v));
+      repositoryMock.writeValues.mockImplementationOnce((_ns, _n, _t, vs) => Promise.resolve(vs));
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -628,13 +630,15 @@ describe('event router', () => {
       req.getConfiguration.mockResolvedValueOnce([{ 'test-service': namespace }]);
 
       const value = {};
-      repositoryMock.writeValue.mockResolvedValueOnce({
-        tenantId,
-        timestamp: new Date(),
-        context: {},
-        correlationId: null,
-        value,
-      });
+      repositoryMock.writeValues.mockResolvedValueOnce([
+        {
+          tenantId,
+          timestamp: new Date(),
+          context: {},
+          correlationId: null,
+          value,
+        },
+      ]);
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -684,13 +688,15 @@ describe('event router', () => {
       ]);
 
       const value = {};
-      repositoryMock.writeValue.mockResolvedValueOnce({
-        tenantId,
-        timestamp: new Date(),
-        context: {},
-        correlationId: null,
-        value,
-      });
+      repositoryMock.writeValues.mockResolvedValueOnce([
+        {
+          tenantId,
+          timestamp: new Date(),
+          context: {},
+          correlationId: null,
+          value,
+        },
+      ]);
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -718,7 +724,7 @@ describe('event router', () => {
 
       req.getConfiguration.mockResolvedValueOnce([{}]);
 
-      repositoryMock.writeValue.mockImplementationOnce((_ns, _n, _t, v) => Promise.resolve(v));
+      repositoryMock.writeValues.mockImplementationOnce((_ns, _n, _t, vs) => Promise.resolve(vs));
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -748,13 +754,13 @@ describe('event router', () => {
 
       req.getConfiguration.mockResolvedValueOnce([{}]);
 
-      repositoryMock.writeValue.mockRejectedValueOnce(new Error('oh noes!'));
+      repositoryMock.writeValues.mockRejectedValueOnce(new Error('oh noes!'));
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(eventServiceMock.send).not.toHaveBeenCalled();
-      expect(res.send).toHaveBeenCalledWith(null);
-      expect(next).not.toHaveBeenCalled();
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it('can handle failed array write', async () => {
@@ -777,13 +783,13 @@ describe('event router', () => {
 
       req.getConfiguration.mockResolvedValueOnce([{}]);
 
-      repositoryMock.writeValue.mockRejectedValueOnce(new Error('oh noes!'));
+      repositoryMock.writeValues.mockRejectedValueOnce(new Error('oh noes!'));
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(eventServiceMock.send).not.toHaveBeenCalled();
-      expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([]));
-      expect(next).not.toHaveBeenCalled();
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it('can write value on configuration error', async () => {
@@ -807,13 +813,15 @@ describe('event router', () => {
       req.getConfiguration.mockRejectedValueOnce(new Error('oh noes!'));
 
       const value = {};
-      repositoryMock.writeValue.mockResolvedValueOnce({
-        tenantId,
-        timestamp: new Date(),
-        context: {},
-        correlationId: null,
-        value,
-      });
+      repositoryMock.writeValues.mockResolvedValueOnce([
+        {
+          tenantId,
+          timestamp: new Date(),
+          context: {},
+          correlationId: null,
+          value,
+        },
+      ]);
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);

@@ -13,7 +13,7 @@ describe('ValueDefinitionEntity', () => {
   const repositoryMock = {
     readValues: jest.fn(),
     countValues: jest.fn(),
-    writeValue: jest.fn(),
+    writeValues: jest.fn(),
     readMetrics: jest.fn(),
     readMetric: jest.fn(),
     writeMetric: jest.fn(),
@@ -33,7 +33,7 @@ describe('ValueDefinitionEntity', () => {
   beforeEach(() => {
     validationServiceMock.validate.mockReset();
     repositoryMock.readValues.mockReset();
-    repositoryMock.writeValue.mockReset();
+    repositoryMock.writeValues.mockReset();
   });
 
   it('can create entity', () => {
@@ -95,16 +95,14 @@ describe('ValueDefinitionEntity', () => {
     });
   });
 
-  describe('writeValue', () => {
-    it('can write value', async () => {
+  describe('prepareValue', () => {
+    it('can prepare write value', async () => {
       const entity = new ValueDefinitionEntity(namespace, {
         name: 'test-value',
         description: null,
         type: null,
         jsonSchema: {},
       });
-
-      repositoryMock.writeValue.mockImplementationOnce((_ns, _n, _t, v) => Promise.resolve(v));
 
       const write = {
         timestamp: new Date(),
@@ -112,8 +110,8 @@ describe('ValueDefinitionEntity', () => {
         context: {},
         value: {},
       };
-      const result = await entity.writeValue(tenantId, write);
-      expect(result).toMatchObject(write);
+      const prepared = entity.prepareWrite(tenantId, write);
+      expect(prepared).toMatchObject(write);
       expect(validationServiceMock.validate).toHaveBeenCalledWith(
         "value 'test-service:test-value'",
         'test-service:test-value',
@@ -121,15 +119,13 @@ describe('ValueDefinitionEntity', () => {
       );
     });
 
-    it('can write value metrics', async () => {
+    it('can prepare write value metrics', async () => {
       const entity = new ValueDefinitionEntity(namespace, {
         name: 'test-value',
         description: null,
         type: null,
         jsonSchema: {},
       });
-
-      repositoryMock.writeValue.mockImplementationOnce((_ns, _n, _t, v) => Promise.resolve(v));
 
       const write = {
         timestamp: new Date(),
@@ -140,18 +136,8 @@ describe('ValueDefinitionEntity', () => {
           a: 123,
         },
       };
-      await entity.writeValue(tenantId, write);
-      expect(repositoryMock.writeValue).toHaveBeenCalledWith(
-        'test-service',
-        'test-value',
-        tenantId,
-        expect.objectContaining({ metrics: expect.objectContaining({ a: 123, b: 321 }) })
-      );
-      expect(validationServiceMock.validate).toHaveBeenCalledWith(
-        "value 'test-service:test-value'",
-        'test-service:test-value',
-        write.value
-      );
+      const prepared = entity.prepareWrite(tenantId, write);
+      expect(prepared.metrics).toEqual(expect.objectContaining({ a: 123, b: 321 }));
     });
   });
 });

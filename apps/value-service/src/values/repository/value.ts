@@ -9,7 +9,7 @@ export interface Page {
 }
 
 export interface ValuesRepository {
-  writeValue(namespace: string, name: string, tenantId: AdspId, value: Omit<Value, 'tenantId'>): Promise<Value>;
+  writeValues(namespace: string, name: string, tenantId: AdspId, value: Omit<Value, 'tenantId'>[]): Promise<Value[]>;
   readValues(top?: number, after?: string, criteria?: ValueCriteria): Promise<Results<Value>>;
 
   readMetrics(

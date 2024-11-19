@@ -8,41 +8,59 @@ type ValueRecord = Value & { namespace: string; name: string; tenant: string };
 export class TimescaleValuesRepository implements ValuesRepository {
   constructor(private knex: Knex) {}
 
-  async writeValue(namespace: string, name: string, tenantId: AdspId, value: Omit<Value, 'tenantId'>): Promise<Value> {
-    const record = await this.knex.transaction(async (ts) => {
-      const [row] = await ts<ValueRecord>('values')
-        .insert({
-          namespace,
-          name,
-          timestamp: value.timestamp,
-          tenant: tenantId?.toString(),
-          correlationId: value.correlationId,
-          context: value.context || {},
-          value: value.value,
-        })
+  async writeValues(
+    namespace: string,
+    name: string,
+    tenantId: AdspId,
+    values: Omit<Value, 'tenantId'>[]
+  ): Promise<Value[]> {
+    const records = await this.knex.transaction(async (ts) => {
+      const rows = await ts<ValueRecord>('values')
+        .insert(
+          values.map(({ timestamp, correlationId, context, value }) => ({
+            namespace,
+            name,
+            timestamp,
+            tenant: tenantId?.toString(),
+            correlationId: correlationId,
+            context: context || {},
+            value,
+          }))
+        )
         .returning('*');
 
-      if (value.metrics) {
-        const keys = Object.keys(value.metrics);
-        for (let i = 0; i < keys.length; i++) {
-          const key = keys[i];
-          const metric = value.metrics[key];
-          if (typeof metric === 'number') {
-            await this.writeMetricRecord(ts, tenantId, namespace, name, key, value.timestamp, metric);
-          }
-        }
+      const metrics = values
+        .filter(({ metrics }) => typeof metrics === 'object')
+        .reduce((valueMetrics, { timestamp, metrics }) => {
+          Object.entries(metrics).forEach(([metric, value]) => {
+            if (typeof value === 'number') {
+              valueMetrics.push({
+                namespace,
+                name,
+                timestamp,
+                metric,
+                value,
+              });
+            }
+          });
+
+          return valueMetrics;
+        }, [] as MetricValue[]);
+
+      if (metrics.length > 0) {
+        await this.writeMetricRecords(ts, tenantId, metrics);
       }
 
-      return row;
+      return rows;
     });
 
-    return {
-      timestamp: record.timestamp,
-      correlationId: record.correlationId,
-      tenantId: record.tenant ? AdspId.parse(record.tenant) : null,
-      context: record.context,
-      value: record.value,
-    };
+    return records.map(({ timestamp, correlationId, tenant, context, value }) => ({
+      timestamp,
+      correlationId,
+      tenantId: tenant ? AdspId.parse(tenant) : null,
+      context,
+      value,
+    }));
   }
 
   async readValues(top = 10, after?: string, criteria?: ValueCriteria): Promise<Results<Value>> {
@@ -302,37 +320,36 @@ export class TimescaleValuesRepository implements ValuesRepository {
     timestamp: Date,
     value: number
   ): Promise<MetricValue> {
-    return await this.knex.transaction((ts) =>
-      this.writeMetricRecord(ts, tenantId, namespace, name, metric, timestamp, value)
-    );
+    return await this.knex.transaction(async (ts) => {
+      const [result] = await this.writeMetricRecords(ts, tenantId, [{ namespace, name, timestamp, metric, value }]);
+      return result;
+    });
   }
 
-  private async writeMetricRecord(
+  private async writeMetricRecords(
     transaction: Knex.Transaction,
     tenantId: AdspId,
-    namespace: string,
-    name: string,
-    metric: string,
-    timestamp: Date,
-    value: number
-  ): Promise<MetricValue> {
-    const [row] = await transaction<MetricValue & { tenant: string }>('metrics')
-      .insert({
-        namespace,
-        name,
-        tenant: tenantId?.toString(),
-        metric,
-        timestamp,
-        value: value,
-      })
+    metrics: MetricValue[]
+  ): Promise<MetricValue[]> {
+    const rows = await transaction<MetricValue & { tenant: string }>('metrics')
+      .insert(
+        metrics.map(({ namespace, name, timestamp, metric, value }) => ({
+          namespace,
+          name,
+          tenant: tenantId?.toString(),
+          metric,
+          timestamp,
+          value,
+        }))
+      )
       .returning('*');
 
-    return {
-      namespace: row.namespace,
-      name: row.name,
-      metric: row.metric,
-      timestamp: row.timestamp,
-      value: row.value,
-    };
+    return rows.map(({ namespace, name, metric, timestamp, value }) => ({
+      namespace,
+      name,
+      metric,
+      timestamp,
+      value,
+    }));
   }
 }
