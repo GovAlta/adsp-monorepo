@@ -87,25 +87,23 @@ export const HeaderFont = styled.div`
 `;
 
 export const MoreDetails = styled.div`
-   {
-    background-color: var(--goa-color-greyscale-100);
-    padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
-    width: 100%;
-    text-align: left;
-    p {
-      font: var(--goa-typography-heading-xs);
-      color: var(--goa-color-text-secondary);
-      margin-bottom: var(--goa-space-m);
-    }
-    h2 {
-      font: var(--goa-typography-heading-s);
-      padding-left: var(--goa-space-none);
+  background-color: var(--goa-color-greyscale-100);
+  padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
+  width: 100%;
+  text-align: left;
+  p {
+    font: var(--goa-typography-heading-xs);
+    color: var(--goa-color-text-secondary);
+    margin-bottom: var(--goa-space-m);
+  }
+  h2 {
+    font: var(--goa-typography-heading-s);
+    padding-left: var(--goa-space-none);
 
-      margin-bottom: var(--goa-space-2xs);
-    }
-    span {
-      font: var(--goa-typography-body-m);
-    }
+    margin-bottom: var(--goa-space-2xs);
+  }
+  span {
+    font: var(--goa-typography-body-m);
   }
 `;
 
