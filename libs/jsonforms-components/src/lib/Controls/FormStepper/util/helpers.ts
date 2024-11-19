@@ -1,3 +1,4 @@
+// eslint-disable-next-line
 export const getProperty: any = (obj: any, propName: string) => {
   if (obj[propName] !== undefined) return obj[propName];
   for (const key in obj) {
