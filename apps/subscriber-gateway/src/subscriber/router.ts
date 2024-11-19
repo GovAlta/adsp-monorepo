@@ -269,7 +269,7 @@ export const createSubscriberRouter = ({
     '/subscribers/:subscriber',
     verifyCaptcha(logger, SUBSCRIPTION_RECAPTCHA_SECRET),
     createValidationHandler(
-      param('subscriberId').isMongoId(),
+      param('subscriber').isMongoId(),
       ...checkSchema(
         {
           operation: { isString: true },
