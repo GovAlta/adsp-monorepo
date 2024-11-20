@@ -45,6 +45,7 @@ import { CustomLoader } from '@components/CustomLoader';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { NotificationBanner } from 'app/notificationBanner';
+import { useNavigate } from 'react-router-dom';
 export interface ScriptEditorProps {
   name: string;
   description: string;
@@ -82,6 +83,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const [script, setScript] = useState<ScriptItem>(selectedScript);
   const [activeIndex] = useState<number>(0);
   const [customIndicator, setCustomIndicator] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -423,6 +425,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 } else {
                   onEditorCancel();
                   dispatch(ClearScripts());
+                  navigate({
+                    pathname: `/admin/services/script`,
+                  });
                 }
               }}
               testId="template-form-close"
@@ -440,6 +445,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             setSaveModal(false);
             onEditorCancel();
             dispatch(ClearScripts());
+            navigate(-1);
           }}
           saveDisable={Object.keys(errors).length > 0 || !hasChanged()}
           onSave={() => {
