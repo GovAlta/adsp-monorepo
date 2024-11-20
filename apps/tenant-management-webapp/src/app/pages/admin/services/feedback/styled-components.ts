@@ -109,11 +109,10 @@ export const MoreDetails = styled.div`
 
 export const IconDiv = styled.div`
   width: 100%;
-  display: flex;
   flex-direction: row;
   justify-content: center;
   goa-icon-button {
-    margin: 0 4px;
+    margin: 0 11px;
   }
 `;
 export const ProgressWrapper = styled.div`
