@@ -102,7 +102,7 @@ export function createExportJob({
         }
 
         page += 1;
-      } while (after || page > MAX_PAGES);
+      } while (after && page <= MAX_PAGES);
 
       const { extension, applyTransform } = await getFormatter(format);
       const records = Readable.from(results);
