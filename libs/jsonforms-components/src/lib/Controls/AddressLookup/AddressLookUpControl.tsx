@@ -86,17 +86,15 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       if (searchTerm.length > 2) {
         setLoading(true);
         setOpen(true);
-
-        const results = await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress);
-        if (results) {
-          const suggestions = filterSuggestionsWithoutAddressCount(results);
+        await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress).then((response) => {
+          const suggestions = filterSuggestionsWithoutAddressCount(response);
           if (isAlbertaAddress) {
             setSuggestions(filterAlbertaAddresses(suggestions));
           } else {
             setSuggestions(suggestions);
           }
           setLoading(false);
-        }
+        });
       } else {
         setSuggestions([]);
         setOpen(false);
@@ -104,7 +102,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [searchTerm, formUrl, isAlbertaAddress]);
+  }, [searchTerm]);
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
@@ -121,50 +119,26 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const handleRequiredFieldBlur = (name: string) => {
     const err = { ...errors };
-    if (data?.['city'] === undefined || data?.['city'] === '') {
-      err[name] = name === 'municipality' ? 'city is required' : '';
-      setErrors(err);
-    }
-
     if (!data?.[name] || data[name] === '' || data?.[name] === undefined) {
       err[name] = name === 'municipality' ? 'city is required' : `${name} is required`;
-      setErrors(err);
-    }
-
-    if (!data?.[name]) {
-      err[name] = name === 'addressLine1' ? `${name} is required` : ``;
       setErrors(err);
     } else {
       delete errors[name];
     }
-
-    setTimeout(() => {
-      setSuggestions([]);
-      setOpen(false);
-    }, 100);
+    setSuggestions([]);
+    setOpen(false);
   };
 
-  useEffect(() => {
-    if (dropdownRef.current) {
-      const selectedItem = dropdownRef.current.children[selectedIndex];
-      if (selectedItem) {
-        selectedItem.scrollIntoView({
-          block: 'nearest',
-          behavior: 'smooth',
-        });
-      }
-    }
-  }, [selectedIndex, open]);
-
+  /* istanbul ignore next */
   const handleKeyDown = (e: string, value: string, key: string) => {
     if (key === 'ArrowDown') {
       setSelectedIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
-      handleDropdownChange(value);
+      handleInputChange('addressLine1', value);
     } else if (key === 'ArrowUp') {
       setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1));
-      handleDropdownChange(value);
+      handleInputChange('addressLine1', value);
     } else if (key === 'Enter') {
-      handleDropdownChange(value);
+      handleInputChange('addressLine1', value);
       setLoading(false);
       if (selectedIndex >= 0) {
         document.getElementById('goaInput')?.blur();
@@ -173,7 +147,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
           setTimeout(() => {
             handleSuggestionClick(suggestion);
             setOpen(false);
-          }, 100);
+          }, 1);
         }
       }
     }
@@ -218,7 +192,11 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
                 suggestions.map((suggestion, index) => (
                   <ListItem
                     data-index={index}
-                    key={`suggestions-${index}`}
+                    key={index}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
                     onClick={() => {
                       handleSuggestionClick(suggestion);
                     }}

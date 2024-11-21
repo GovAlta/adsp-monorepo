@@ -22,3 +22,9 @@ items:
     stringData:
       CLIENT_ID: urn:ads:platform:content-service
       CLIENT_SECRET:
+      APP_KEYS:
+      API_TOKEN_SALT:
+      ADMIN_JWT_SECRET:
+      TRANSFER_TOKEN_SALT:
+      SUPER_ADMIN_EMAIL:
+      SUPER_ADMIN_PASSWORD:

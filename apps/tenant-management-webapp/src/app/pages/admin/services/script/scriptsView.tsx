@@ -25,6 +25,7 @@ import {
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, isValidJSONCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { TabletMessage } from '@components/TabletMessage';
+import { useNavigate } from 'react-router-dom';
 
 interface AddScriptProps {
   activeEdit: boolean;
@@ -47,6 +48,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
 
+  const navigate = useNavigate();
   const goBack = () => {
     setShowScriptEditForm(false);
   };
@@ -89,6 +91,10 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setShowScriptEditForm(false);
     validators.clear();
     document.body.style.overflow = 'unset';
+    navigate({
+      pathname: `/admin/services/script`,
+      search: '?scripts=true',
+    });
   };
 
   const openEditorOnAdd = (script) => {

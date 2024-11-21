@@ -2,12 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import { GoAInput, GoAInputProps } from '@abgov/react-components-new';
 import { isEqual } from 'lodash';
 import {
+  ALT_KEY,
   ARROW_DOWN_KEY,
   ARROW_UP_KEY,
   DropdownProps,
   ENTER_KEY,
   ESCAPE_KEY,
   Item,
+  SHIFT_KEY,
   SPACE_KEY,
   TAB_KEY,
 } from './DropDownTypes';
@@ -19,7 +21,7 @@ import {
 } from './styled-components';
 
 export const isValidKey = (keyCode: string): boolean => {
-  if (keyCode === 'Shift' || keyCode === 'Alt') return false;
+  if (keyCode === SHIFT_KEY || keyCode === ALT_KEY) return false;
 
   const regex = new RegExp(/^[a-zA-Z0-9!%$@.#?\-_]+$/);
   return regex.test(keyCode);
@@ -49,19 +51,20 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   useEffect(() => {
     if (textInput) {
-      textInput.addEventListener('click', inputTextOnClick);
-      textInput.addEventListener('keydown', handleKeyDown, false);
-      textInput.addEventListener('blur', handleTextInputOnBlur, false);
+      textInput.addEventListener('keydown', handleKeyDown);
+      textInput.addEventListener('blur', handleTextInputOnBlur);
     }
+    document.addEventListener('keydown', handleDocumentKeyDown);
+
     return () => {
       if (textInput) {
-        textInput.removeEventListener('click', inputTextOnClick);
         textInput.removeEventListener('keydown', handleKeyDown);
         textInput.removeEventListener('blur', handleTextInputOnBlur);
       }
+      document.removeEventListener('keydown', handleDocumentKeyDown);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [textInput]);
+  }, [textInput, document]);
 
   /* istanbul ignore next */
   const handleTextInputOnBlur = (e: FocusEvent) => {
@@ -77,10 +80,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     }
   };
 
-  const inputTextOnClick = (e: MouseEvent) => {
-    setIsOpen((previousIsOpen) => !previousIsOpen);
-  };
-
   const updateDropDownData = (item: Item) => {
     onChange(item.value);
     setSelectedOption(item.value);
@@ -93,6 +92,18 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       setItems(selectedItems);
     }
     setIsOpen(false);
+  };
+
+  const setInputTextFocus = () => {
+    const inputEl = document.getElementById(`${id}-input`) as GoAInputProps & HTMLElement;
+
+    if (inputEl) {
+      //The 'focused' property is part of the GoAInput component that is used to
+      //set focus on the input field. We need to set it back to false once we set focus on the input field. Doing with just .focus() doesnt work.
+      inputEl.focused = true;
+      inputEl.focus();
+      inputEl.focused = false;
+    }
   };
 
   const setElementFocus = (
@@ -110,10 +121,19 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   };
 
   /* istanbul ignore next */
+  const handleDocumentKeyDown = (e: KeyboardEvent) => {
+    if (e.key === ESCAPE_KEY || e.key === TAB_KEY) {
+      setIsOpen(false);
+    }
+  };
+
+  /* istanbul ignore next */
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === ENTER_KEY || e.key === SPACE_KEY) {
       setIsOpen((previousIsOpen) => !previousIsOpen);
       const el = document.getElementById(`${PREFIX}-${label}-${items.at(0)?.value}`);
+
+      setInputTextFocus();
       setElementFocus(e, el, false);
     } else if (e.key === ARROW_UP_KEY) {
       setIsOpen(true);
@@ -152,18 +172,11 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const handDropDownItemOnKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, item: Item) => {
     if (e.key === ENTER_KEY || e.key === SPACE_KEY) {
       updateDropDownData(item);
-      const inputEl = document.getElementById(`${id}-input`) as GoAInputProps & HTMLElement;
-
-      if (inputEl) {
-        //The 'focused' property is part of the GoAInput component that is used to
-        //set focus on the input field. We need to set it back to false once we set focus on the input field. Doing with just .focus() doesnt work.
-        inputEl.focused = true;
-        inputEl.focus();
-        inputEl.focused = false;
-      }
+      setInputTextFocus();
     }
     if (e.key === ESCAPE_KEY) {
       setIsOpen(false);
+      setInputTextFocus();
     }
 
     let index = items.findIndex((val) => {
@@ -210,7 +223,12 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
   return (
     <div data-testid={id} key={id}>
-      <GoADropdownTextbox isOpen={isOpen}>
+      <GoADropdownTextbox
+        isOpen={isOpen}
+        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+          setIsOpen((previousIsOpen) => !previousIsOpen);
+        }}
+      >
         <GoAInput
           disabled={!enabled}
           name={`dropdown-${label}`}
@@ -228,6 +246,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
               setItems(selectedItems);
             }
           }}
+          onTrailingIconClick={() => {}}
           trailingIcon={trailingIcon}
         />
       </GoADropdownTextbox>

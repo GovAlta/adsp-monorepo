@@ -1,7 +1,7 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Task } from './task';
-import { TaskDefinitionEditor } from './TaskDefinationEditor';
+import { TaskDefinitionEditor } from './queue/TaskDefinationEditor';
 
 export const TaskRouter = () => {
   return (

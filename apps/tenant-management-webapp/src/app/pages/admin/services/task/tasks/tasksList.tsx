@@ -15,7 +15,7 @@ import {
   GoASkeleton,
 } from '@abgov/react-components-new';
 import { TaskModal } from './taskModal';
-import { ButtonPadding, ProgressWrapper } from './styled-components';
+import { ButtonPadding, ProgressWrapper } from '../styled-components';
 import { TaskListTable } from './tasksTable';
 import { LoadMoreWrapper } from '@components/styled-components';
 

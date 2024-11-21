@@ -1,4 +1,4 @@
-import { AdspId, EventService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, EventService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
@@ -279,49 +279,53 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
         );
       }
 
-      const results = [];
       const valuesToWrite = Array.isArray(req.body) ? req.body : [req.body];
-      for (const valueToWrite of valuesToWrite) {
-        try {
-          const { tenantId: _tenantId, timestamp: timestampValue, ...value } = valueToWrite;
+      const events: DomainEvent[] = [];
+      const prepared = valuesToWrite
+        .map((valueToWrite) => {
+          try {
+            const { tenantId: _tenantId, timestamp: timestampValue, ...value } = valueToWrite;
 
-          // Handle either value write with envelop included or not.
-          const valueRecord: Omit<Value, 'tenantId'> =
-            (value as Value).value === undefined
-              ? {
-                  context: {},
-                  correlationId: null,
-                  timestamp: new Date(),
-                  value,
-                }
-              : {
-                  ...value,
-                  timestamp: timestampValue ? new Date(timestampValue) : new Date(),
-                };
+            // Handle either value write with envelop included or not.
+            let valueRecord: Omit<Value, 'tenantId'> =
+              (value as Value).value === undefined
+                ? {
+                    context: {},
+                    correlationId: null,
+                    timestamp: new Date(),
+                    value,
+                  }
+                : {
+                    ...value,
+                    timestamp: timestampValue ? new Date(timestampValue) : new Date(),
+                  };
 
-          // Write via the definition (which will validate) or directly if there is no definition.
-          const definition = namespaces?.[namespace]?.definitions[name];
-          let result: Value = null;
-          if (definition) {
-            result = await definition.writeValue(tenantId, valueRecord);
-          } else {
-            result = await repository.writeValue(namespace, name, tenantId, valueRecord);
+            // Write via the definition (which will validate) or directly if there is no definition.
+            const definition = namespaces?.[namespace]?.definitions[name];
+            if (definition) {
+              valueRecord = definition.prepareWrite(tenantId, valueRecord);
+
+              if (definition.sendWriteEvent) {
+                events.push(valueWritten(req.user, namespace, name, { tenantId, ...valueRecord }));
+              }
+            }
+
+            return valueRecord;
+          } catch (err) {
+            logger.warn(`Error encountered writing value ${namespace}:${name}: ${err}`, {
+              context: 'value-router',
+              tenantId: tenantId?.toString(),
+              user: `${user.name} (ID: ${user.id})`,
+            });
+
+            return;
           }
+        })
+        .filter((value) => !!value);
 
-          results.push(result);
-
-          // Only send write events for value definitions configured to emit write events.
-          // TODO: This is better encapsulated in ValueDefinitionEntity.writeValue ?
-          if (definition?.sendWriteEvent) {
-            eventService.send(valueWritten(req.user, namespace, name, result));
-          }
-        } catch (err) {
-          logger.warn(`Error encountered writing value ${namespace}:${name}.`, {
-            context: 'value-router',
-            tenantId: tenantId?.toString(),
-            user: `${user.name} (ID: ${user.id})`,
-          });
-        }
+      const results = await repository.writeValues(namespace, name, tenantId, prepared);
+      for (const event of events) {
+        eventService.send(event);
       }
 
       logger.info(

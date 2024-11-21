@@ -10,9 +10,5 @@ export const AddressLookUpControlReview = (props: AddressViewProps): JSX.Element
 
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
 
-  return (
-    <div>
-      <AddressViews data={data} isAlbertaAddress={isAlbertaAddress} />
-    </div>
-  );
+  return <AddressViews data={data} isAlbertaAddress={isAlbertaAddress} />;
 };

@@ -87,35 +87,32 @@ export const HeaderFont = styled.div`
 `;
 
 export const MoreDetails = styled.div`
-   {
-    background-color: var(--goa-color-greyscale-100);
-    padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
-    width: 100%;
-    text-align: left;
-    p {
-      font: var(--goa-typography-heading-xs);
-      color: var(--goa-color-text-secondary);
-      margin-bottom: var(--goa-space-m);
-    }
-    h2 {
-      font: var(--goa-typography-heading-s);
-      padding-left: var(--goa-space-none);
+  background-color: var(--goa-color-greyscale-100);
+  padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
+  width: 100%;
+  text-align: left;
+  p {
+    font: var(--goa-typography-heading-xs);
+    color: var(--goa-color-text-secondary);
+    margin-bottom: var(--goa-space-m);
+  }
+  h2 {
+    font: var(--goa-typography-heading-s);
+    padding-left: var(--goa-space-none);
 
-      margin-bottom: var(--goa-space-2xs);
-    }
-    span {
-      font: var(--goa-typography-body-m);
-    }
+    margin-bottom: var(--goa-space-2xs);
+  }
+  span {
+    font: var(--goa-typography-body-m);
   }
 `;
 
 export const IconDiv = styled.div`
   width: 100%;
-  display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: center;
   goa-icon-button {
-    margin: 0 4px;
+    margin: 0 11px;
   }
 `;
 export const ProgressWrapper = styled.div`

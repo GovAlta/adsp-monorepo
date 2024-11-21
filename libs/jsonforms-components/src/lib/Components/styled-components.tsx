@@ -43,6 +43,8 @@ export const GoADropdownListContainer = styled.div<GoADropdownListContainerProps
   &:hover {
     background-color: var(--goa-color-interactive-hover) !important;
     color: #fff !important;
+    /* Fix to override scrollbar color in Firefox */
+    scrollbar-color: #a8a8a8 var(--goa-color-greyscale-100) !important;
   }
 `;
 

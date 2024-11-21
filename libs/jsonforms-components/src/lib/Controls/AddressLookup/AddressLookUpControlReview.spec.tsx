@@ -27,8 +27,8 @@ describe('AddressLookUpControlReview', () => {
       data: {
         addressLine1: '10111 111 ave',
         addressLine2: 'Second unit',
-        city: 'Edmonton',
-        province: 'AB',
+        municipality: 'Edmonton',
+        subdivisionCode: 'AB',
         postalCode: 'T6G 1E1',
         country: 'CAN',
       },
@@ -46,7 +46,7 @@ describe('AddressLookUpControlReview', () => {
             },
           },
         },
-        required: ['addressLine1', 'city', 'province', 'postalCode', 'country'], // Ensure required is at the root level
+        required: ['addressLine1', 'municipality', 'subdivisionCode', 'postalCode', 'country'], // Ensure required is at the root level
       } as unknown as ControlElement,
       scope: '#/properties/lastName',
       uischema: {
@@ -97,10 +97,10 @@ describe('AddressLookUpControlReview', () => {
   it('should render the component with input fields with a different province ', () => {
     renderComponent({
       data: {
-        province: 'BC',
+        subdivisionCode: 'BC',
         addressLine1: '10111 111 ave',
         addressLine2: 'Second unit',
-        city: 'Edmonton',
+        municipality: 'Vancouver',
         postalCode: 'T6G 1E1',
         country: 'CAN',
       },
@@ -113,7 +113,7 @@ describe('AddressLookUpControlReview', () => {
 
     expect(screen.getByText('British Columbia')).toBeInTheDocument();
     expect(screen.getByText('Canada')).toBeInTheDocument();
-    expect(screen.getByText('Edmonton')).toBeInTheDocument();
+    expect(screen.getByText('Vancouver')).toBeInTheDocument();
     expect(screen.getByText('10111 111 ave')).toBeInTheDocument();
     expect(screen.getByText('T6G 1E1')).toBeInTheDocument();
   });

@@ -11,7 +11,7 @@ import {
   TaskEditorTitle,
   TaskEditor,
   ScrollPane,
-} from './styled-components';
+} from '../styled-components';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { UpdateTaskQueue, getTaskQueues } from '@store/task/action';
 import { ClientRoleTable } from '@components/RoleTable';

@@ -190,7 +190,7 @@ const additionalStyles = `
 
         .grid-item {
             flex: 1 1 calc(41% - 1rem);
-            margin: 0 2em 0 0;
+            margin: 0 3em 0 0;
         }
         .grid-padding {
             display: flex;

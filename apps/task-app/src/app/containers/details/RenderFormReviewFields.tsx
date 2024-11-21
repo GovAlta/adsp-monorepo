@@ -20,9 +20,7 @@ export const Element = ({ element, index, data, requiredFields }) => {
 
   const clonedElement = JSON.parse(JSON.stringify(element));
   const lastSegment: string = clonedElement.scope?.split('/').pop();
-  const value =
-    clonedElement.type === 'Control' &&
-    (getFormFieldValue(clonedElement?.scope, data ? data : {}).toString() as string);
+  const value = clonedElement.type === 'Control' && getFormFieldValue(clonedElement?.scope, data ? data : {});
 
   const fileDataUrl = useSelector((state: AppState) => fileDataUrlSelector(state, value));
   const metadata = useSelector((state: AppState) => fileMetadataSelector(state, value));
@@ -52,7 +50,13 @@ export const Element = ({ element, index, data, requiredFields }) => {
         <strong>
           {label} {asterisk + ': '}
         </strong>
-        {isAdspId(value) ? <a onClick={() => download()}>{metadata?.filename}</a> : value}
+        {isAdspId(value) ? (
+          <a onClick={() => download()}>{metadata?.filename}</a>
+        ) : (
+          <div>
+            <pre>{value}</pre>
+          </div>
+        )}
       </GridItem>
     );
   } else if (clonedElement.type !== 'ListWithDetail' && clonedElement?.elements) {

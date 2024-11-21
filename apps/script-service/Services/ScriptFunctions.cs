@@ -1,7 +1,9 @@
+using System.Runtime.CompilerServices;
 using Adsp.Platform.ScriptService.Services.Platform;
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using Adsp.Sdk.Events;
+using Newtonsoft.Json.Linq;
 using NLua;
 using RestSharp;
 
@@ -281,11 +283,12 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    // Using generic IDictionary because the value service will return different key values and we
-    // can't have specific json property names in our own class.
-    var result = _client.GetAsync<IDictionary<string, object>>(request).Result;
-
-    return result;
+    var result = _client.GetAsync(request).Result;
+    // Cannot cast the result to a dictionary directly, as the conversion
+    // does not deal with nested dictionaries very well.  Instead, convert
+    // the result to a JToken and let our converter do its thing.
+    var value = JToken.Parse(result.Content);
+    return value?.ToDictionary();
 
   }
 
@@ -301,63 +304,18 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("name cannot be null or empty.");
     }
 
-    const string CONTEXT_KEY = "context";
-    const string VALUE_KEY = "value";
-    const string CORRELATION_ID_KEY = "correlationId";
-
+    ValueCreateRequest? valueRequest;
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/value/v1/{@namespace}/values/{name}");
     var token = _getToken().Result;
 
-    var valueRequest = new ValueCreateRequest()
+    if (value is LuaTable luaTable)
     {
-      Namespace = @namespace,
-      Name = name,
-      Timestamp = DateTime.Now,
-      Value = null,
-      Context = null
-    };
-
-    if (value?.GetType() == typeof(LuaTable))
-    {
-      var table = ((LuaTable)value);
-      var dataValue = table.ToDictionary();
-
-      if (!dataValue.TryGetValue(VALUE_KEY, out value))
-      {
-        throw new ArgumentException("value is required.");
-      }
-
-      if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
-      {
-        valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
-      }
-      if (dataValue.TryGetValue(VALUE_KEY, out value) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
-      {
-        valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?> ?? new Dictionary<string, object?>();
-      }
-
-      valueRequest.CorrelationId = dataValue[CORRELATION_ID_KEY].ToString();
+      valueRequest = luaTable.ToRequest(@namespace, name);
     }
-    else if (value is IDictionary<string, object> dictionary)
+    else if (value is IDictionary<string, object?> dictionary)
     {
-      var dataValue = value as IDictionary<string, object>;
-
-      if (dataValue != null && !dataValue.TryGetValue(VALUE_KEY, out value))
-      {
-        throw new ArgumentException("value is required.");
-      }
-
-      if (dataValue?[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
-      {
-        valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
-      }
-      if (dataValue != null && dataValue.TryGetValue(VALUE_KEY, out value) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
-      {
-        valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?>;
-      }
-
-      valueRequest.CorrelationId = dataValue?[CORRELATION_ID_KEY]?.ToString();
+      valueRequest = dictionary.ToRequest(@namespace, name);
     }
     else
     {
@@ -371,9 +329,6 @@ internal class ScriptFunctions : IScriptFunctions
 
     // Using generic IDictionary because the value service will return different key values and we
     // can't have specific json property names in our own class.
-    var result = _client.PostAsync<IDictionary<string, object?>?>(request).Result;
-
-    return result;
+    return _client.PostAsync<IDictionary<string, object?>?>(request).Result;
   }
-
 }
