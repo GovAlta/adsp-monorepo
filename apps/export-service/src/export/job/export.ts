@@ -71,9 +71,10 @@ export function createExportJob({
             params: {
               ...params,
               tenantId,
-              top: 500,
+              top: 200,
               after,
             },
+            timeout: 60000,
           });
 
           return data;
@@ -87,6 +88,13 @@ export function createExportJob({
         } else {
           results.push(data);
         }
+        logger.debug(
+          `After page ${page} request for export job (ID: ${jobId}) total retrieved results: ${results.length}`,
+          {
+            context: 'ExportJob',
+            tenantId: tenantIdValue,
+          }
+        );
 
         if (isPaged(data)) {
           // Get the next cursor for paged results so we can get more pages.
