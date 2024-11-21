@@ -188,7 +188,7 @@ const Subscriptions = (): JSX.Element => {
               <ButtonMargin>
                 <GoAButton
                   size="compact"
-                  disabled={validCodeExists}
+                  disabled={validCodeExists || isEmailVerified === undefined || isEmailVerified === true}
                   testId="verify-email"
                   onClick={() => {
                     dispatch(VerifyEmail(subscriber, true));
