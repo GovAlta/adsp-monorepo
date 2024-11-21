@@ -62,8 +62,6 @@ export const ScriptsView = ({ activeEdit, openAddScriptInitialValue }: AddScript
 
   useEffect(() => {
     dispatch(fetchScripts());
-    dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
