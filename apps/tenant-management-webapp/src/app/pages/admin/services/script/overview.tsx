@@ -24,10 +24,10 @@ export const ScriptOverview = ({
   const description = `The script services provides the ability to execute configured Lua scripts. Applications can use this to capture simple logic in configuration. For example, benefits calculations can be configured in a script and executed via the script service API so that policy changes to the formula can implemented through configuration change.`;
 
   useEffect(() => {
-    setOpenAddScript(false);
+    setOpenAddScript((prev) => false);
     navigate('/admin/services/script');
     return () => {
-      setOpenAddScript(false);
+      setOpenAddScript((prev) => false);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

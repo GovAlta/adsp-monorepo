@@ -16,9 +16,6 @@ export const Script = (): JSX.Element => {
   const searchParams = new URLSearchParams(document.location.search);
   const scripts = searchParams && searchParams.get('scripts');
 
-  const searchParams = new URLSearchParams(document.location.search);
-  const scripts = searchParams && searchParams.get('scripts');
-
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
     setActivateEditState(edit);
