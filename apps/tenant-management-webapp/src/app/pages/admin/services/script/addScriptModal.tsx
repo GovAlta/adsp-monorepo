@@ -128,7 +128,7 @@ export const AddScriptModal = ({
           <GoAButton
             type="primary"
             testId="script-modal-save"
-            disabled={script.name === '' || validators && validators.haveErrors()}
+            disabled={script.name === '' || (validators && validators.haveErrors())}
             onClick={() => {
               validationCheck();
             }}

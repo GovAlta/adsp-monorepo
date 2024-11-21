@@ -268,6 +268,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     }
   }, [monaco, dataSchema]);
 
+  const getFilteredRoles = (roleNames, clientId, checkedRoles) => {
+    const allCheckedRoles = Object.values(checkedRoles).flat();
+    return showSelectedRoles
+      ? roleNames.filter((role) => {
+          const selectedRole = clientId ? `${clientId}:${role}` : role;
+          return allCheckedRoles.includes(selectedRole);
+        })
+      : roleNames;
+  };
+
   const navigate = useNavigate();
   const close = () => {
     dispatch(ClearNewFileList());
@@ -448,6 +458,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 56 }}>
                     <ScrollPane>
                       {roles.map((e, key) => {
+                        const rolesMap = getFilteredRoles(e.roleNames, e.clientId, {
+                          applicantRoles: definition?.applicantRoles,
+                          clerkRoles: definition?.clerkRoles,
+                          assessorRoles: definition?.assessorRoles,
+                        });
                         return (
                           <ClientRole
                             roleNames={e.roleNames}
