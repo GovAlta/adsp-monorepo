@@ -130,17 +130,9 @@ interface ClientRoleProps {
   anonymousRead: boolean;
   onUpdateRoles: (roles: string[], type: string) => void;
   configuration: Record<string, string[]>;
-  showSelectedRoles?: boolean;
 }
 
-const ClientRole = ({
-  roleNames,
-  clientId,
-  anonymousRead,
-  configuration,
-  onUpdateRoles,
-  showSelectedRoles,
-}: ClientRoleProps) => {
+const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdateRoles }: ClientRoleProps) => {
   return (
     <ClientRoleTable
       roles={roleNames}
@@ -154,7 +146,6 @@ const ClientRole = ({
         { title: types[1].name, selectedRoles: configuration[types[1].type] },
         { title: types[2].name, selectedRoles: configuration[types[2].type] },
       ]}
-      showSelectedRoles={showSelectedRoles}
     />
   );
 };
@@ -264,6 +255,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       };
     }
   }, [monaco, dataSchema]);
+
+  const getFilteredRoles = (roleNames, clientId, checkedRoles) => {
+    const allCheckedRoles = Object.values(checkedRoles).flat();
+    return showSelectedRoles
+      ? roleNames.filter((role) => {
+          const selectedRole = clientId ? `${clientId}:${role}` : role;
+          return allCheckedRoles.includes(selectedRole);
+        })
+      : roleNames;
+  };
 
   const navigate = useNavigate();
   const close = () => {
@@ -443,34 +444,40 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 56 }}>
                     <ScrollPane>
                       {roles.map((e, key) => {
+                        const rolesMap = getFilteredRoles(e.roleNames, e.clientId, {
+                          applicantRoles: definition?.applicantRoles,
+                          clerkRoles: definition?.clerkRoles,
+                          assessorRoles: definition?.assessorRoles,
+                        });
                         return (
-                          <ClientRole
-                            roleNames={e.roleNames}
-                            key={key}
-                            clientId={e.clientId}
-                            anonymousRead={definition.anonymousApply}
-                            configuration={{
-                              applicantRoles: definition.applicantRoles,
-                              clerkRoles: definition.clerkRoles,
-                              assessorRoles: definition.assessorRoles,
-                            }}
-                            onUpdateRoles={(roles, type) => {
-                              if (type === applicantRoles.name) {
-                                setDefinition({
-                                  applicantRoles: [...new Set(roles)],
-                                });
-                              } else if (type === clerkRoles.name) {
-                                setDefinition({
-                                  clerkRoles: [...new Set(roles)],
-                                });
-                              } else {
-                                setDefinition({
-                                  assessorRoles: [...new Set(roles)],
-                                });
-                              }
-                            }}
-                            showSelectedRoles={showSelectedRoles}
-                          />
+                          rolesMap.length > 0 && (
+                            <ClientRole
+                              roleNames={rolesMap}
+                              key={key}
+                              clientId={e.clientId}
+                              anonymousRead={definition.anonymousApply}
+                              configuration={{
+                                applicantRoles: definition.applicantRoles,
+                                clerkRoles: definition.clerkRoles,
+                                assessorRoles: definition.assessorRoles,
+                              }}
+                              onUpdateRoles={(roles, type) => {
+                                if (type === applicantRoles.name) {
+                                  setDefinition({
+                                    applicantRoles: [...new Set(roles)],
+                                  });
+                                } else if (type === clerkRoles.name) {
+                                  setDefinition({
+                                    clerkRoles: [...new Set(roles)],
+                                  });
+                                } else {
+                                  setDefinition({
+                                    assessorRoles: [...new Set(roles)],
+                                  });
+                                }
+                              }}
+                            />
+                          )
                         );
                       })}
                       {isLoadingRoles && <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>}

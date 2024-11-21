@@ -22,7 +22,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity, intake?: Intake)
   };
 }
 
-export type FormResponse = Omit<Form, 'anonymousApplicant' | 'definition' | 'applicant' | 'data' | 'files'> & {
+export type FormResponse = Omit<Form, 'anonymousApplicant' | 'definition' | 'applicant'> & {
   urn: string;
   definition: { id: string; name: string };
   applicant: { addressAs: string };
@@ -43,7 +43,7 @@ export type FormSubmissionResponse = Omit<
   jobId?: string;
 };
 
-export function mapForm(apiId: AdspId, entity: FormEntityWithJobId): FormResponse {
+export function mapForm(apiId: AdspId, entity: FormEntityWithJobId, includeData = false): FormResponse {
   return {
     urn: `${apiId}:/forms/${entity.id}`,
     id: entity.id,
@@ -67,6 +67,8 @@ export function mapForm(apiId: AdspId, entity: FormEntityWithJobId): FormRespons
           addressAs: entity.applicant.addressAs,
         }
       : null,
+    data: includeData ? entity.data : undefined,
+    files: includeData ? entity.files : undefined,
   };
 }
 
