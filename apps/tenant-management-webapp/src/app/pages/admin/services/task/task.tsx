@@ -1,8 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
-import { QueuesList } from './queuesList';
-import { TasksList } from './tasksList';
+import { QueuesList } from './queue/queuesList';
+import { TasksList } from './tasks/tasksList';
 import { TaskOverview } from './taskOverview';
 import AsideLinks from '@components/AsideLinks';
 import { useSelector } from 'react-redux';

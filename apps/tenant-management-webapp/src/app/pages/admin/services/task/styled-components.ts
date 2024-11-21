@@ -335,18 +335,16 @@ export const ErrorMsg = styled.div`
 `;
 
 export const MoreDetails = styled.div`
-   {
-    background-color: var(--goa-color-greyscale-100);
-    padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
-    width: 100%;
-    text-align: left;
-    p {
-      font-weight: bold;
-      padding-top: var(--goa-space-s);
-      margin-bottom: var(--goa-space-xs);
-    }
-    span {
-    }
+  background-color: var(--goa-color-greyscale-100);
+  padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
+  width: 100%;
+  text-align: left;
+  p {
+    font-weight: bold;
+    padding-top: var(--goa-space-s);
+    margin-bottom: var(--goa-space-xs);
+  }
+  span {
   }
 `;
 

@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Adsp.Sdk;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Adsp.Platform.ScriptService.Services;
 
@@ -98,25 +99,34 @@ public static class TestUtil
     return mockRestClient;
   }
 
-  public static object ToDictionary(this JToken token)
+  public static Dictionary<string, object>? ToDictionary(this JToken token)
+  {
+    if (token != null && token is JObject item)
+    {
+      return (Dictionary<string, object>)DictionaryHelper(item);
+    }
+    return null;
+  }
+
+  public static object DictionaryHelper(JToken token)
   {
     if (token is JObject jObject)
     {
       var result = new Dictionary<string, object>();
       foreach (var property in jObject.Properties())
       {
-        result[property.Name] = ToDictionary(property.Value);
+        result[property.Name] = DictionaryHelper(property.Value);
       }
       return result;
     }
     else if (token is JArray jArray)
     {
-      var array = new List<object>();
+      var items = new List<object>();
       foreach (var item in jArray)
       {
-        array.Add(ToDictionary(item));
+        items.Add(DictionaryHelper(item));
       }
-      return array;
+      return items;
     }
     else if (token is JValue jValue)
     {

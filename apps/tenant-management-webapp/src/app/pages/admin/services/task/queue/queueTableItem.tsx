@@ -2,7 +2,7 @@ import React from 'react';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { useNavigate } from 'react-router-dom';
 import { TaskDefinition } from '@store/task/model';
-import { taskAppUrlSelector } from './selectors';
+import { taskAppUrlSelector } from '../selectors';
 import { useSelector } from 'react-redux';
 
 interface QueueTableItemProps {

@@ -3,7 +3,7 @@ import DataTable from '@components/DataTable';
 import { TaskTableItem } from './taskTableItem';
 import { QueueTaskDefinition } from '@store/task/model';
 
-import { HeaderFont, TableDiv } from './styled-components';
+import { HeaderFont, TableDiv } from '../styled-components';
 
 export interface TaskTableProps {
   tasks: QueueTaskDefinition[];

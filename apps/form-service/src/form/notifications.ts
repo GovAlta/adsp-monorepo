@@ -101,11 +101,15 @@ export const FormStatusNotificationType: NotificationType = {
           body: `
 <section>
   <p>Your {{ event.payload.form.definition.name }} submission has been received.</p>
+  <p>Click <a href="{{ event.payload.form.formDraftUrl }}">here</a> to get back to your draft</p>
 </section>`,
         },
         sms: {
           subject: '{{ event.payload.form.definition.name }} received',
-          body: 'Your {{ event.payload.form.definition.name }} submission has been received.',
+          body: `
+          Your {{ event.payload.form.definition.name }} submission has been received.
+          Go to {{ event.payload.form.formDraftUrl }} to get back to your draft.',
+         `,
         },
       },
     },

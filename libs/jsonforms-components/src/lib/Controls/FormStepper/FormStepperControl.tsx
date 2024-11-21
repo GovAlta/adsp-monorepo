@@ -79,6 +79,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
   const optionProps = (uischema.options as FormStepperOptionProps) || {};
 
   const [step, setStep] = React.useState(0);
+  const [staleCategories, setStaleCategories] = React.useState(categorization.elements);
   const [isFormValid, setIsFormValid] = React.useState(false);
   const [showNextBtn, setShowNextBtn] = React.useState(true);
   const [isOpen, setIsOpen] = React.useState(false);
@@ -130,6 +131,10 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     setStep(componentProps?.controlledNav ? 1 : 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    setStaleCategories(categories);
+  }, [categories]);
 
   /* istanbul ignore next */
   if (categories?.length < 1) {
@@ -196,24 +201,27 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     <div data-testid="form-stepper-test-wrapper">
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-          <GoAFormStepper
-            testId={uischema?.options?.testId || 'form-stepper-test'}
-            step={step}
-            onChange={(step) => {
-              setTab(step);
-            }}
-          >
-            {categories?.map((_, index) => {
-              return (
-                <GoAFormStep
-                  key={`${visibleCategoryLabels[index]}-tab`}
-                  text={`${visibleCategoryLabels[index]}`}
-                  status={stepStatuses[index]}
-                />
-              );
-            })}
-            <GoAFormStep text="Review" />
-          </GoAFormStepper>
+          {/* Need to force a refresh here, GoAFormStepper cant change dynamically unless completely re-rendered */}
+          {categories.length === staleCategories.length && (
+            <GoAFormStepper
+              testId={uischema?.options?.testId || 'form-stepper-test'}
+              step={step}
+              onChange={(step) => {
+                setTab(step);
+              }}
+            >
+              {categories?.map((_, index) => {
+                return (
+                  <GoAFormStep
+                    key={`${visibleCategoryLabels[index]}-tab`}
+                    text={`${visibleCategoryLabels[index]}`}
+                    status={stepStatuses[index]}
+                  />
+                );
+              })}
+              <GoAFormStep text="Review" />
+            </GoAFormStepper>
+          )}
           <GoAPages current={step} mb="xl">
             {categories?.map((category, index) => {
               const props: StepProps = {

@@ -83,7 +83,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (searchTerm.length > 2 && searchTerm.charAt(searchTerm.length - 1) !== ' ') {
+      if (searchTerm.length > 2) {
         setLoading(true);
         setOpen(true);
         await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress).then((response) => {
@@ -102,7 +102,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [searchTerm, formUrl, isAlbertaAddress]);
+  }, [searchTerm]);
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
@@ -120,51 +120,26 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   /* istanbul ignore next */
   const handleRequiredFieldBlur = (name: string) => {
     const err = { ...errors };
-    if (data?.['city'] === undefined || data?.['city'] === '') {
-      err[name] = name === 'municipality' ? 'city is required' : '';
-      setErrors(err);
-    }
-
     if (!data?.[name] || data[name] === '' || data?.[name] === undefined) {
       err[name] = name === 'municipality' ? 'city is required' : `${name} is required`;
-      setErrors(err);
-    }
-
-    if (!data?.[name]) {
-      err[name] = name === 'addressLine1' ? `${name} is required` : ``;
       setErrors(err);
     } else {
       delete errors[name];
     }
-
-    setTimeout(() => {
-      setSuggestions([]);
-      setOpen(false);
-    }, 100);
+    setSuggestions([]);
+    setOpen(false);
   };
-
-  useEffect(() => {
-    if (dropdownRef.current) {
-      const selectedItem = dropdownRef.current.children[selectedIndex];
-      if (selectedItem) {
-        selectedItem.scrollIntoView({
-          block: 'nearest',
-          behavior: 'smooth',
-        });
-      }
-    }
-  }, [selectedIndex, open]);
 
   /* istanbul ignore next */
   const handleKeyDown = (e: string, value: string, key: string) => {
     if (key === 'ArrowDown') {
       setSelectedIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
-      handleDropdownChange(value);
+      handleInputChange('addressLine1', value);
     } else if (key === 'ArrowUp') {
       setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1));
-      handleDropdownChange(value);
-    } else if (key === 'Enter' || (key === ' ' && value.length > 2)) {
-      handleDropdownChange(value);
+      handleInputChange('addressLine1', value);
+    } else if (key === 'Enter') {
+      handleInputChange('addressLine1', value);
       setLoading(false);
       if (selectedIndex >= 0) {
         document.getElementById('goaInput')?.blur();
