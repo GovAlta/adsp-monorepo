@@ -159,8 +159,9 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const { top: topValue, after, criteria: criteriaValue } = req.query;
+      const { top: topValue, after, criteria: criteriaValue, includeData: includeDataValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
+      const includeData = includeDataValue === 'true';
       let criteria: FormCriteria = {};
 
       try {
@@ -169,9 +170,12 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         throw new InvalidOperationError('Bad form criteria');
       }
 
-      if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin, true)) {
+      if (!isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ExportServiceRoles.ExportJob], true)) {
         // If user is not a form service admin, then limit search to only forms created by the user.
         criteria.createdByIdEquals = user.id;
+        if (includeData) {
+          throw new UnauthorizedUserError('find forms include data', user);
+        }
       }
 
       if (user.tenantId) {
@@ -182,7 +186,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
 
       end();
       res.send({
-        results: results.filter((r) => r.canRead(user)).map((r) => mapForm(apiId, r)),
+        results: results.filter((r) => r.canRead(user)).map((r) => mapForm(apiId, r, includeData)),
         page,
       });
     } catch (err) {
@@ -738,6 +742,8 @@ export function createFormRouter({
         {
           top: { optional: true, isInt: { options: { min: 1, max: 5000 } } },
           after: { optional: true, isString: true },
+          criteria: { optional: true, isJSON: true },
+          includeData: { optional: true, isBoolean: true },
         },
         ['query']
       )
