@@ -21,7 +21,7 @@ export const Script = (): JSX.Element => {
   };
 
   let index = 0;
-  if (scripts === ' true') {
+  if (scripts === 'true') {
     index = 1;
   } else {
     index = activeIndex;
