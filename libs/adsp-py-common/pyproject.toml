@@ -28,7 +28,7 @@ readme = 'README.md'
   types-cachetools = "^5.3.0.7"
   httpx = "^0.25.0"
   more-itertools = "^10.1.0"
-  urnparse = "^0.2.1"
+  urnparse = "^0.2.2"
 
     [tool.poetry.dependencies.pyjwt]
     extras = [ "crypto" ]
