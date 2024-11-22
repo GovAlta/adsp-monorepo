@@ -174,6 +174,24 @@ objects:
         spec:
           serviceAccountName: event-service-rabbitmq
           terminationGracePeriodSeconds: 30
+          initContainers:
+            - name: rm-erlang-cookie
+              image: 'busybox:1.37'
+              command:
+                - sh
+                - '-c'
+                - rm /var/lib/rabbitmq/.erlang.cookie
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 500Mi
+                requests:
+                  cpu: 100m
+                  memory: 200Mi
+              volumeMounts:
+                - name: event-service-rabbitmq-storage
+                  mountPath: /var/lib/rabbitmq
+              imagePullPolicy: IfNotPresent
           containers:
             - name: rabbitmq
               command:
@@ -181,7 +199,7 @@ objects:
               args:
                 - -c
                 - cp -v /etc/rabbitmq/rabbitmq.conf ${RABBITMQ_CONFIG_FILE}.conf; exec docker-entrypoint.sh rabbitmq-server
-              image: rabbitmq:3.8-management
+              image: rabbitmq:3.11-management
               imagePullPolicy: IfNotPresent
               volumeMounts:
                 - name: config-volume
@@ -200,14 +218,14 @@ objects:
                   containerPort: 25672
               livenessProbe:
                 exec:
-                  command: ["rabbitmqctl", "status"]
+                  command: ["rabbitmq-diagnostics", "ping"]
                 initialDelaySeconds: 120
                 periodSeconds: 60
                 timeoutSeconds: 30
               readinessProbe:
                 exec:
-                  command: ["rabbitmqctl", "status"]
-                initialDelaySeconds: 120
+                  command: ["rabbitmq-diagnostics", "ping"]
+                initialDelaySeconds: 30
                 periodSeconds: 60
                 timeoutSeconds: 30
               env:

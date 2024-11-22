@@ -1,13 +1,11 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Adsp.Sdk.Tenancy;
 using RestSharp;
 
 namespace Adsp.Sdk.Access;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class TenantKeyProvider : ITenantKeyProvider, IDisposable
 {
   private readonly ILogger<TenantKeyProvider> _logger;

@@ -1,11 +1,10 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RestSharp;
 
 namespace Adsp.Sdk.Configuration;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class ConfigurationService : IConfigurationService, IDisposable
 {
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
@@ -73,8 +72,6 @@ internal sealed class ConfigurationService : IConfigurationService, IDisposable
     return GetConfiguration<T, (T?, T?)>(serviceId, tenantId);
   }
 
-
-  [SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "Default to returning null")]
   private async Task<T?> RetrieveConfiguration<T>(AdspId serviceId, AdspId? tenantId = null)
   {
     T? configuration = default;

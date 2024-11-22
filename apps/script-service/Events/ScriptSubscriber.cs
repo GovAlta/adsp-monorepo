@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
@@ -6,7 +5,7 @@ using Adsp.Sdk.Events;
 using Microsoft.Extensions.Options;
 
 namespace Adsp.Platform.ScriptService.Events;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
 {
   private readonly ILogger<ScriptSubscriber> _logger;
