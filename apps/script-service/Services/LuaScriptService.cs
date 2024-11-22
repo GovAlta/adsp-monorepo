@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using Adsp.Platform.ScriptService.Events;
@@ -9,8 +8,7 @@ using NLua;
 using NLua.Exceptions;
 
 namespace Adsp.Platform.ScriptService.Services;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-[SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "WIP: script error handling")]
+
 internal sealed class LuaScriptService : ILuaScriptService
 {
   private readonly ILogger<LuaScriptService> _logger;

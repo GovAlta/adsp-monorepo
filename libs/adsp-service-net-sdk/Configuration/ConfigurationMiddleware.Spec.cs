@@ -114,8 +114,9 @@ public class ConfigurationMiddlewareTests
 
     Func<Task> act = async () =>
     {
-      var nullHttp = (HttpContext?)null;
-      await middleware().InvokeAsync(nullHttp);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+      await middleware().InvokeAsync(null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
     };
 
     await act.Should().ThrowAsync<ArgumentNullException>();

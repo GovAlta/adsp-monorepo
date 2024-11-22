@@ -1,27 +1,13 @@
-using Adsp.Sdk.Access;
 using FluentAssertions;
 using Xunit;
-using System.Web;
 using Microsoft.AspNetCore.Authentication;
 using Moq;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Adsp.Sdk;
 using Microsoft.Extensions.DependencyInjection;
-using Adsp.Sdk.Tenancy;
-using Microsoft.Extensions.Caching.Memory;
-using RichardSzalay.MockHttp;
-using RestSharp;
-using Adsp.Sdk.Access.Tests;
-using Adsp.Sdk.Directory;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
 using System.Text;
-using System;
 using Microsoft.AspNetCore.Http;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Principal;
 using System.Security.Claims;
 
 namespace Adsp.Sdk.Access.Tests;
@@ -203,7 +189,6 @@ public class AccessExtensionsTests
   }
 
   [Fact]
-  [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1806:Do not ignore method results", Justification = "Will not create object")]
   public void WillThrowExceptionForInvalidOptionsInAddTenantJwtAuthentication()
   {
 
@@ -239,7 +224,6 @@ public class AccessExtensionsTests
 
 
   [Fact]
-  [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1806:Do not ignore method results", Justification = "Will not create object")]
   public void WillThrowExceptionForInvalidOptionsInAddRealmJwtAuthentication()
   {
     var tenantScheme = AdspAuthenticationSchemes.Tenant;

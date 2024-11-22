@@ -26,7 +26,7 @@ public class ConfigurationStartupFilterTests
   }
 
   [Fact]
-  public async Task CanConnectClient()
+  public void CanConnectClient()
   {
     var client = new Mock<IConfigurationUpdateClient>();
     var options = new Mock<IOptions<AdspOptions>>();

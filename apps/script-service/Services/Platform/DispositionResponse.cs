@@ -1,9 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using Adsp.Sdk.Util;
 
 namespace Adsp.Platform.ScriptService.Services.Platform;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
+
 internal sealed class DispositionResponse
 {
   [JsonPropertyName("urn")]
@@ -55,7 +53,6 @@ internal sealed class DispositionResponse
   public string? Hash { get; set; }
 }
 
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
 internal sealed class CreatedBy
 {
   [JsonPropertyName("id")]
@@ -65,7 +62,6 @@ internal sealed class CreatedBy
   public string? Name { get; set; }
 }
 
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
 internal sealed class UpdatedBy
 {
   [JsonPropertyName("id")]
@@ -75,7 +71,6 @@ internal sealed class UpdatedBy
   public string? Name { get; set; }
 }
 
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
 internal sealed class Disposition
 {
   [JsonPropertyName("date")]
