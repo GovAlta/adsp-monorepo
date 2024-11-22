@@ -22,7 +22,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
   private readonly bool _enabled;
 
   private IConnection? _connection;
-  private IModel? _channel;
+  private IChannel? _channel;
   private bool _disposed;
 
   public AmqpEventSubscriberService(
@@ -44,15 +44,14 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
 
     _connectionFactory = new ConnectionFactory
     {
-      DispatchConsumersAsync = true,
-      HostName = options.Value.Hostname,
-      UserName = options.Value.Username,
-      Password = options.Value.Password,
-      VirtualHost = options.Value.Vhost,
+      HostName = options.Value.Hostname!,
+      UserName = options.Value.Username!,
+      Password = options.Value.Password!,
+      VirtualHost = options.Value.Vhost!,
     };
   }
 
-  public void Connect()
+  public async void Connect()
   {
     if (!_enabled)
     {
@@ -60,102 +59,94 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
       return;
     }
 
-    _connection = _connectionFactory.CreateConnection();
-    _channel = _connection.CreateModel();
+    _connection = await _connectionFactory.CreateConnectionAsync();
+    _channel = await _connection.CreateChannelAsync();
 
-    DeclareQueueConfiguration(_channel);
+    await DeclareQueueConfiguration(_channel);
 
     var consumer = new AsyncEventingBasicConsumer(_channel);
-    consumer.Received += HandleEvent;
+    consumer.ReceivedAsync += HandleEvent;
 
-    _channel.BasicConsume(_queueName, false, consumer);
+    await _channel.BasicConsumeAsync(_queueName, false, consumer);
     _logger.LogInformation("Connected to {Hostname} on queue {Queue} for domain events.", _connectionFactory.HostName, _queueName);
   }
 
   public void Disconnect()
   {
     IConnection? connection = _connection;
-    IModel? channel = _channel;
+    IChannel? channel = _channel;
 
-    if (channel != null)
-    {
-      channel.Dispose();
-    }
+    channel?.Dispose();
+    connection?.Dispose();
 
-    if (connection != null)
-    {
-      connection.Dispose();
-    }
     _logger.LogInformation("Disconnected from {Hostname} and queue {Queue}.", _connectionFactory.HostName, _queueName);
   }
 
-  protected void DeclareQueueConfiguration(IModel channel)
+  protected async Task DeclareQueueConfiguration(IChannel channel)
   {
-    channel.ExchangeDeclare($"{_queueName}-dead-letter", "topic", durable: true, autoDelete: false);
-    channel.QueueDeclare(
+    await channel.ExchangeDeclareAsync($"{_queueName}-dead-letter", "topic", durable: true, autoDelete: false);
+    await channel.QueueDeclareAsync(
       $"undelivered-{_queueName}",
       autoDelete: false,
       exclusive: false,
       durable: true,
-      arguments: new Dictionary<string, object> { { "x-queue-type", "quorum" } }
+      arguments: new Dictionary<string, object?> { { "x-queue-type", "quorum" } }
     );
-    channel.QueueBind($"undelivered-{_queueName}", $"{_queueName}-dead-letter", "#");
+    await channel.QueueBindAsync($"undelivered-{_queueName}", $"{_queueName}-dead-letter", "#");
 
-    channel.QueueDeclare(
+    await channel.QueueDeclareAsync(
       _queueName,
       autoDelete: false,
       exclusive: false,
       durable: true,
-      arguments: new Dictionary<string, object> {
+      arguments: new Dictionary<string, object?> {
         { "x-queue-type", "quorum" },
         { "x-dead-letter-exchange", $"{_queueName}-dead-letter" }
       }
     );
 
-    channel.ExchangeDeclare("domain-events", "topic", durable: true, autoDelete: false);
-    channel.QueueBind(_queueName, "domain-events", "#");
+    await channel.ExchangeDeclareAsync("domain-events", "topic", durable: true, autoDelete: false);
+    await channel.QueueBindAsync(_queueName, "domain-events", "#");
   }
 
   private async Task HandleEvent(object sender, BasicDeliverEventArgs args)
   {
     _logger.LogDebug("Processing domain event with delivery tag {Tag}...", args.DeliveryTag);
 
-    var channel = ((IBasicConsumer)sender).Model;
+    IChannel channel = ((IAsyncBasicConsumer)sender).Channel!;
     try
     {
-      var payload = ConvertMessage(new Dictionary<string, object>(args.BasicProperties.Headers), args.Body);
+      IDictionary<string, object?> headers = args.BasicProperties.Headers!;
+      TPayload payload = ConvertMessage(headers, args.Body);
       var received = new FullDomainEvent<TPayload>(
-        AdspId.Parse(args.BasicProperties.GetHeaderValueOrDefault<string>("tenantId", _serializerOptions)),
-        args.BasicProperties.GetHeaderValueOrDefault<string>("namespace", _serializerOptions)!,
-        args.BasicProperties.GetHeaderValueOrDefault<string>("name", _serializerOptions)!,
-        DateTime.Parse(args.BasicProperties.GetHeaderValueOrDefault<string>("timestamp", _serializerOptions)!, CultureInfo.InvariantCulture),
+        AdspId.Parse(headers["tenantId"] as string),
+        (headers["namespace"] as string)!,
+        (headers["name"] as string)!,
+        DateTime.Parse((headers["timestamp"] as string)!, CultureInfo.InvariantCulture),
         payload,
-        args.BasicProperties.GetHeaderValueOrDefault<string>("correlationId", _serializerOptions),
-        args.BasicProperties.GetHeaderValueOrDefault<IDictionary<string, object>>("context", _serializerOptions)
+        headers["correlationId"] as string,
+        headers["context"] as IDictionary<string, object>
       );
 
       _logger.LogDebug("Signalling domain event {Namespace}:{Name} with delivery tag {Tag}...", received.Namespace, received.Name, args.DeliveryTag);
 
       await _subscriber.OnEvent(received);
 
-      channel.BasicAck(args.DeliveryTag, false);
+      await channel.BasicAckAsync(args.DeliveryTag, false);
       _logger.LogInformation("Processed domain event {Namespace}:{Name} with delivery tag {Tag}.", received.Namespace, received.Name, args.DeliveryTag);
     }
     catch (Exception e)
     {
-      channel.BasicNack(args.DeliveryTag, false, !args.Redelivered);
+      await channel.BasicNackAsync(args.DeliveryTag, false, !args.Redelivered);
       _logger.LogWarning(e, "Failed processing domain event with delivery tag {Tag} and requeue: {Requeue}.", args.DeliveryTag, !args.Redelivered);
     }
   }
 
-  protected virtual TPayload ConvertMessage(IDictionary<string, object> headers, ReadOnlyMemory<byte> body)
+  protected virtual TPayload ConvertMessage(IDictionary<string, object?> headers, ReadOnlyMemory<byte> body)
   {
-    if (JsonSerializer.Deserialize<TPayload>(body.Span, _serializerOptions) is not TPayload result)
-    {
-      throw new InternalErrorException("Error encountered deserializing event message.");
-    }
-
-    return result!;
+    return JsonSerializer.Deserialize<TPayload>(body.Span, _serializerOptions) is not TPayload result
+      ? throw new InternalErrorException("Error encountered deserializing event message.")
+      : result;
   }
 
   protected virtual void Dispose(bool disposing)

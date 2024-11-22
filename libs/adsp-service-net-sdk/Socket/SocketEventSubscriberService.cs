@@ -3,8 +3,8 @@ using Adsp.Sdk.Events;
 using Adsp.Sdk.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SocketIO.Serializer.SystemTextJson;
 using SocketIOClient;
-using SocketIOClient.JsonSerializer;
 using SocketIOClient.Transport;
 
 namespace Adsp.Sdk.Socket;
@@ -86,14 +86,16 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
     }
   }
 
-  private async Task<SocketIO> CreateSocketClient()
+  private async Task<SocketIOClient.SocketIO> CreateSocketClient()
   {
     var tenant = _realm != null ? await _tenantService.GetTenantByRealm(_realm) : null;
 
     var pushServiceUrl = await _serviceDirectory.GetServiceUrl(AdspPlatformServices.PushServiceId);
     var token = await _tokenProvider.GetAccessToken();
 
-    var client = new SocketIO(
+    var serializerOptions = new JsonSerializerOptions();
+    serializerOptions.Converters.Add(new DictionaryJsonConverter());
+    var client = new SocketIOClient.SocketIO(
       pushServiceUrl,
       new SocketIOOptions
       {
@@ -102,18 +104,10 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
         Query = new Dictionary<string, string> { { "stream", _streamId } },
         Auth = new Dictionary<string, string> { { "token", token } }
       }
-    );
-
-    if (client.JsonSerializer is SystemTextJsonSerializer jsonSerializer)
+    )
     {
-      // Set the dictionary converter for the default case where payload is just generically deserialized.
-      jsonSerializer.OptionsProvider = () =>
-      {
-        var options = new JsonSerializerOptions();
-        options.Converters.Add(new DictionaryJsonConverter());
-        return options;
-      };
-    }
+      Serializer = new SystemTextJsonSerializer(serializerOptions)
+    };
 
     client.OnConnected += (_s, _e) =>
     {
