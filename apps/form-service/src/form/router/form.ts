@@ -170,7 +170,8 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         throw new InvalidOperationError('Bad form criteria');
       }
 
-      if (!isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ExportServiceRoles.ExportJob], true)) {
+      const hasAccessToAll = isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ExportServiceRoles.ExportJob], true);
+      if (!hasAccessToAll) {
         // If user is not a form service admin, then limit search to only forms created by the user.
         criteria.createdByIdEquals = user.id;
         if (includeData) {
@@ -186,7 +187,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
 
       end();
       res.send({
-        results: results.filter((r) => r.canRead(user)).map((r) => mapForm(apiId, r, includeData)),
+        results: results.filter((r) => hasAccessToAll || r.canRead(user)).map((r) => mapForm(apiId, r, includeData)),
         page,
       });
     } catch (err) {

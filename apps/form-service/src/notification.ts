@@ -68,7 +68,7 @@ class NotificationServiceImpl implements NotificationService {
 
       return subscriber;
     } catch (err) {
-      if (isAxiosError(err) && err.status === 404) {
+      if (isAxiosError(err) && err.response?.status === 404) {
         this.logger.info(`Notification service returned not found for subscriber ${urn}.`, {
           ...LOG_CONTEXT,
           tenant: tenantId?.toString(),
