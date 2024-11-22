@@ -1,5 +1,3 @@
-
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Adsp.Sdk.Events;
 using Adsp.Sdk.Util;
@@ -10,7 +8,7 @@ using SocketIOClient.JsonSerializer;
 using SocketIOClient.Transport;
 
 namespace Adsp.Sdk.Socket;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISubscriberService, IDisposable
   where TPayload : class
   where TSubscriber : IEventSubscriber<TPayload>
@@ -23,7 +21,7 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
   private readonly IEventSubscriber<TPayload> _subscriber;
   private readonly string? _realm;
   private readonly bool _enabled;
-  private SocketIO? _client;
+  private SocketIOClient.SocketIO? _client;
 
   public SocketEventSubscriberService(
     string streamId,

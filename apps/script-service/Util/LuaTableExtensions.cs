@@ -1,11 +1,11 @@
-using System.Diagnostics.CodeAnalysis;
 using NLua;
 using Adsp.Platform.ScriptService.Services.Platform;
+using System.Globalization;
 
 namespace Adsp.Platform.ScriptService.Services.Util;
 internal static class LuaTableExtensions
 {
-  public static IDictionary<string, object?> ToDictionary(this LuaTable? table)
+  public static IDictionary<string, object> ToDictionary(this LuaTable? table)
   {
     var result = new Dictionary<string, object>();
     if (table != null)
@@ -30,7 +30,6 @@ internal static class LuaTableExtensions
     return result;
   }
 
-  [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Catching general exceptions is necessary here.")]
   private static bool IsArray(this LuaTable item)
   {
     if (item.Keys.Count == 0) return false;
@@ -39,7 +38,7 @@ internal static class LuaTableExtensions
     {
       try
       {
-        int index = Convert.ToInt32(key);
+        int index = Convert.ToInt32(key, CultureInfo.InvariantCulture);
         if (index != expectedKey++) return false;
       }
       catch
@@ -50,7 +49,6 @@ internal static class LuaTableExtensions
     return true;
   }
 
-  [SuppressMessage("Performance", "CA1851:Possible multiple enumerations of 'IEnumerable' collection", Justification = "Multiple enumerations are intentional and safe here.")]
   private static Array ToArray(this LuaTable table)
   {
     var values = table.Values.Cast<object>();
@@ -62,7 +60,7 @@ internal static class LuaTableExtensions
     int index = 0;
     foreach (var value in values)
     {
-      typedArray.SetValue(Convert.ChangeType(value, elementType), index++);
+      typedArray.SetValue(Convert.ChangeType(value, elementType, CultureInfo.InvariantCulture), index++);
     }
     return typedArray;
   }
@@ -76,7 +74,7 @@ internal static class LuaTableExtensions
     return tableValue.ToDictionary().ToRequest(@namespace, name);
   }
 
-  public static ValueCreateRequest ToRequest(this IDictionary<string, object?> dataValue, string @namespace, string name)
+  public static ValueCreateRequest ToRequest(this IDictionary<string, object> dataValue, string @namespace, string name)
   {
     Dictionary<string, object?>? value = null;
     Dictionary<string, object?>? context = null;

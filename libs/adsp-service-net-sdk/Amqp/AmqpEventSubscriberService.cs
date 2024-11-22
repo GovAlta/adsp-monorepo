@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json;
 using Adsp.Sdk.Errors;
@@ -10,7 +9,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
 namespace Adsp.Sdk.Amqp;
-[SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "Errors handled by retry and dead lettering.")]
+
 internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberService, IDisposable
   where TPayload : class
   where TSubscriber : IEventSubscriber<TPayload>
@@ -151,7 +150,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
 
   protected virtual TPayload ConvertMessage(IDictionary<string, object> headers, ReadOnlyMemory<byte> body)
   {
-    if (JsonSerializer.Deserialize(body.Span, typeof(TPayload), _serializerOptions) is not TPayload result)
+    if (JsonSerializer.Deserialize<TPayload>(body.Span, _serializerOptions) is not TPayload result)
     {
       throw new InternalErrorException("Error encountered deserializing event message.");
     }

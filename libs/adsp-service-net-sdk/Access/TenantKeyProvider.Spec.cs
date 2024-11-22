@@ -1,4 +1,3 @@
-using Adsp.Sdk.Access;
 using FluentAssertions;
 using Xunit;
 using Moq;
@@ -7,7 +6,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using RichardSzalay.MockHttp;
-using System.Security.Cryptography;
 using System.Text;
 using RestSharp;
 
@@ -66,14 +64,15 @@ public class TenantKeyProviderTests
     return issuerCache.Object;
   }
 
-  [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2000:Dispose objects before losing scope", Justification = "Http client here will be disposed in TenantProvider Dispose function.")]
   private static IRestClient CreateFakeHttpClient(string realm)
   {
     var host = "https://fake-host.com";
     var metadataPath = $"auth/realms/{realm}/.well-known/openid-configuration";
     var metadataUrl = new Uri($"{host}/{metadataPath}");
     var jwksUri = new Uri($"{host}/fake-jwks-path");
+#pragma warning disable CA2000 // Dispose objects before losing scope
     var mockHttp = new MockHttpMessageHandler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
     mockHttp
       .When(HttpMethod.Get, metadataUrl.AbsoluteUri)
@@ -117,7 +116,6 @@ public class TenantKeyProviderTests
   }
 
   [Fact]
-  [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1806:Do not ignore method results", Justification = "Will not create object")]
   public void WillThrowExceptionForInvalidOptions()
   {
 
@@ -127,8 +125,7 @@ public class TenantKeyProviderTests
     var options = Options.Create(new AdspOptions() { });
     Action newTokenProviderAction = () =>
     {
-
-      new TenantKeyProvider(logger, cache, issuerCache, options);
+      _ = new TenantKeyProvider(logger, cache, issuerCache, options);
     };
 
     newTokenProviderAction.Should()

@@ -99,7 +99,7 @@ public static class AmqpExtensions
         }
         else
         {
-          result = (T?)JsonSerializer.Deserialize(stringValue, typeof(T), options);
+          result = JsonSerializer.Deserialize<T>(stringValue, options);
         }
       }
     }

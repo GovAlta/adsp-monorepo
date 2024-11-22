@@ -1,15 +1,12 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace Adsp.Sdk.Errors;
-[SuppressMessage("Usage", "CA1032: Implement standard exception constructors", Justification = "Abstract class")]
+
+#pragma warning disable CA1032 // Implement standard exception constructors
 public abstract class HttpResponseException : Exception
+#pragma warning restore CA1032 // Implement standard exception constructors
 {
-  private readonly HttpStatusCode _status;
-  public HttpStatusCode Status
-  {
-    get { return _status; }
-  }
+  public HttpStatusCode Status { get; }
 
   protected HttpResponseException() : base()
   {
@@ -17,11 +14,11 @@ public abstract class HttpResponseException : Exception
 
   protected HttpResponseException(HttpStatusCode status, string message) : base(message)
   {
-    _status = status;
+    Status = status;
   }
 
   protected HttpResponseException(HttpStatusCode status, string message, Exception innerException) : base(message, innerException)
   {
-    _status = status;
+    Status = status;
   }
 }

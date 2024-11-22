@@ -1,11 +1,10 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using RestSharp;
 
 namespace Adsp.Sdk.Registration;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class ServiceRegistrar : IServiceRegistrar, IDisposable
 {
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
@@ -19,7 +18,7 @@ internal sealed class ServiceRegistrar : IServiceRegistrar, IDisposable
   private readonly IRestClient _client;
   private readonly AsyncPolicy _retryPolicy;
   private readonly AdspId _serviceId;
-  private readonly Dictionary<string, DomainEventDefinition> _eventDefinitions = new();
+  private readonly Dictionary<string, DomainEventDefinition> _eventDefinitions = [];
 
   public ServiceRegistrar(
     ILogger<ServiceRegistrar> logger,

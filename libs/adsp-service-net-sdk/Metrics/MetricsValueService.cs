@@ -1,13 +1,10 @@
-
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RestSharp;
 
 namespace Adsp.Sdk.Metrics;
-[SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "WIP: script error handling")]
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class MetricsValueService : IMetricsValueService
 {
   private const int WriteDelayMs = 60000;
@@ -18,8 +15,8 @@ internal sealed class MetricsValueService : IMetricsValueService
   private readonly AdspId _serviceId;
   private readonly IRestClient _client;
 
-  private readonly object _bufferLock = new();
-  private readonly IList<MetricsValue> _buffer = new List<MetricsValue>();
+  private readonly Lock _bufferLock = new();
+  private readonly IList<MetricsValue> _buffer = [];
 
   private CancellationTokenSource? _cancellationSource;
 
@@ -83,7 +80,10 @@ internal sealed class MetricsValueService : IMetricsValueService
         _buffer.Add(write);
       }
 
-      _cancellationSource?.Cancel();
+      if (_cancellationSource is not null)
+      {
+        await _cancellationSource.CancelAsync();
+      }
       var cancellationSource = new CancellationTokenSource();
       _cancellationSource = cancellationSource;
 
@@ -101,7 +101,7 @@ internal sealed class MetricsValueService : IMetricsValueService
     IList<MetricsValue> buffer;
     lock (_bufferLock)
     {
-      buffer = new List<MetricsValue>(_buffer);
+      buffer = [.. _buffer];
       _buffer.Clear();
     }
 
