@@ -117,16 +117,15 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     IModel channel = ((IAsyncBasicConsumer)sender).Model!;
     try
     {
-      IDictionary<string, object?> headers = args.BasicProperties.Headers!;
-      TPayload payload = ConvertMessage(headers, args.Body);
+      TPayload payload = ConvertMessage(new Dictionary<string, object?>(args.BasicProperties.Headers), args.Body);
       var received = new FullDomainEvent<TPayload>(
-        AdspId.Parse(headers["tenantId"] as string),
-        (headers["namespace"] as string)!,
-        (headers["name"] as string)!,
-        DateTime.Parse((headers["timestamp"] as string)!, CultureInfo.InvariantCulture),
+        AdspId.Parse(args.BasicProperties.GetHeaderValueOrDefault<string>("tenantId", _serializerOptions)),
+        args.BasicProperties.GetHeaderValueOrDefault<string>("namespace", _serializerOptions)!,
+        args.BasicProperties.GetHeaderValueOrDefault<string>("name", _serializerOptions)!,
+        DateTime.Parse(args.BasicProperties.GetHeaderValueOrDefault<string>("timestamp", _serializerOptions)!, CultureInfo.InvariantCulture),
         payload,
-        headers["correlationId"] as string,
-        headers["context"] as IDictionary<string, object>
+        args.BasicProperties.GetHeaderValueOrDefault<string>("correlationId", _serializerOptions),
+        args.BasicProperties.GetHeaderValueOrDefault<IDictionary<string, object>>("context", _serializerOptions)
       );
 
       _logger.LogDebug("Signalling domain event {Namespace}:{Name} with delivery tag {Tag}...", received.Namespace, received.Name, args.DeliveryTag);
