@@ -55,3 +55,6 @@ dotnet_diagnostic.CA1851.severity = suggestion
 
 # IDE1006: Naming Styles
 dotnet_diagnostic.IDE1006.severity = suggestion
+
+# IDE0290: Use primary constructor
+dotnet_diagnostic.IDE0290.severity = suggestion
