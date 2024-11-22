@@ -3,6 +3,7 @@ using Adsp.Sdk;
 using NLua;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Adsp.Platform.ScriptService.Services.Util;
 
 namespace Adsp.Platform.ScriptService.Services;
 
