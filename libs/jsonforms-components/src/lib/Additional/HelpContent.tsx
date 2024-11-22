@@ -59,7 +59,7 @@ export const HelpContentComponent = ({
     );
 
   const renderImage = ({ height, width, alt, src }: OptionProps): JSX.Element => {
-    return <img src={src} width={width} height={height} alt={alt} />;
+    return <img src={src} width={width} height={height} alt={alt || 'help-content-toggle-img'} />;
   };
 
   const textVariant =
