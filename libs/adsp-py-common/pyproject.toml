@@ -27,7 +27,7 @@ readme = 'README.md'
   cachetools = "^5.3.2"
   types-cachetools = "^5.3.0.7"
   httpx = "^0.25.0"
-  more-itertools = "^10.1.0"
+  more-itertools = "^10.5.0"
   urnparse = "^0.2.1"
 
     [tool.poetry.dependencies.pyjwt]
