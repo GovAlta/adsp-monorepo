@@ -77,7 +77,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
 
   return (
     <>
-      <GoAGrid minChildWidth="0ch" gap="s">
+      <GoAGrid minChildWidth="0ch" gap="s" mb="m">
         <GoAFormItem
           label="First name"
           requirement={schema?.required?.includes('firstName') ? 'required' : undefined}
