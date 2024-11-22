@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    schedule:
+      interval: "weekly"
+    directories:
+      - "/"
+      - "/apps/content-service"
+    groups:
+      prod-dependencies:
+        dependency-type: "production"
+      dev-dependencies:
+        dependency-type: "development"
+  - package-ecosystem: "pip"
+    schedule:
+      interval: "weekly"
+    directories:
+      - "/libs/adsp-py-common"
+      - "/libs/adsp-service-django-sdk"
+      - "libs/adsp-service-flask-sdk"
+  - package-ecosystem: "maven"
+    schedule:
+      interval: "weekly"
+    directories:
+      - "/libs/adsp-service-spring-sdk"
