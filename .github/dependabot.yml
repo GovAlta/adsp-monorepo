@@ -18,8 +18,18 @@ updates:
       - "/libs/adsp-py-common"
       - "/libs/adsp-service-django-sdk"
       - "libs/adsp-service-flask-sdk"
+    groups:
+      prod-dependencies:
+        dependency-type: "production"
+      dev-dependencies:
+        dependency-type: "development"
   - package-ecosystem: "maven"
     schedule:
       interval: "weekly"
     directories:
       - "/libs/adsp-service-spring-sdk"
+    groups:
+      prod-dependencies:
+        dependency-type: "production"
+      dev-dependencies:
+        dependency-type: "development"
