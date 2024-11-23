@@ -12,13 +12,13 @@
   },
   "dependencies": {
     "@abgov/adsp-service-sdk": "^2.3.0",
-    "@strapi/plugin-cloud": "5.2.0",
-    "@strapi/plugin-users-permissions": "5.2.0",
-    "@strapi/strapi": "5.2.0",
-    "better-sqlite3": "11.3.0",
+    "@strapi/plugin-cloud": "5.4.1",
+    "@strapi/plugin-users-permissions": "5.4.1",
+    "@strapi/strapi": "5.4.1",
+    "better-sqlite3": "11.5.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-router-dom": "^6.0.0",
+    "react-router-dom": "^7.0.1",
     "styled-components": "^6.0.0"
   },
   "devDependencies": {
