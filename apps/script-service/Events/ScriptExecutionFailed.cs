@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Sdk;
@@ -12,7 +11,6 @@ namespace Adsp.Platform.ScriptService.Events;
  * schema generator.  The quick and dirty solution is to just copy
  * the properties of ScriptEvent here.
  */
-[SuppressMessage("Usage", "CA2227: Collection properties should be read only", Justification = "Data transfer object")]
 public class ScriptExecutionFailed
 {
   public const string EventName = "script-execution-failed";
@@ -35,7 +33,9 @@ public class ScriptExecutionFailed
 
   [JsonPropertyName("inputs")]
   [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+#pragma warning disable CA2227 // Collection properties should be read only
   public IDictionary<string, object?>? Inputs { get; set; }
+#pragma warning restore CA2227 // Collection properties should be read only
 
   [JsonPropertyName("error")]
   public string? Error { get; set; }

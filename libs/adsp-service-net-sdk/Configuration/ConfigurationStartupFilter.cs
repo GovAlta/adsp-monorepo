@@ -1,10 +1,9 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Configuration;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class ConfigurationStartupFilter : IStartupFilter
 {
   private readonly IConfigurationUpdateClient _client;

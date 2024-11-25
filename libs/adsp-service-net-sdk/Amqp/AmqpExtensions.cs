@@ -25,7 +25,7 @@ public static class AmqpExtensions
     services.AddSingleton<ISubscriberService, AmqpEventSubscriberService<TPayload, TSubscriber>>(
       (providers) =>
       {
-        var options = providers.GetRequiredService<IOptions<AmqpConnectionOptions>>();
+        IOptions<AmqpConnectionOptions> options = providers.GetRequiredService<IOptions<AmqpConnectionOptions>>();
         return new AmqpEventSubscriberService<TPayload, TSubscriber>(
           queueName,
           providers.GetRequiredService<ILogger<AmqpEventSubscriberService<TPayload, TSubscriber>>>(),
@@ -62,7 +62,7 @@ public static class AmqpExtensions
   public static bool IsMatch<TPayload>(this EventIdentity identity, FullDomainEvent<TPayload>? received) where TPayload : class
   {
     return identity != null &&
-      (
+
         received != null &&
         String.Equals(identity.Namespace, received.Namespace, StringComparison.Ordinal) &&
         String.Equals(identity.Name, received.Name, StringComparison.Ordinal) &&
@@ -72,19 +72,16 @@ public static class AmqpExtensions
         ) &&
         (
           identity.Criteria?.Context == null ||
-          !identity.Criteria.Context.Where(
-            c => received.Context == null ||
-              !received.Context.TryGetValue(c.Key, out object? value) ||
-              !Equals(value, c.Value)
-          ).Any()
-        )
-      );
+          !identity.Criteria.Context.Any(c => received.Context == null ||
+              !received.Context.TryGetValue(c.Key, out var value) ||
+              !Equals(value, c.Value))
+        );
   }
 
   internal static T? GetHeaderValueOrDefault<T>(this IBasicProperties properties, string key, JsonSerializerOptions options)
   {
     T? result = default;
-    if (properties?.Headers.TryGetValue(key, out object? raw) == true)
+    if (properties.Headers?.TryGetValue(key, out var raw) == true)
     {
       if (raw is T typedValue)
       {
@@ -99,7 +96,7 @@ public static class AmqpExtensions
         }
         else
         {
-          result = (T?)JsonSerializer.Deserialize(stringValue, typeof(T), options);
+          result = JsonSerializer.Deserialize<T>(stringValue, options);
         }
       }
     }

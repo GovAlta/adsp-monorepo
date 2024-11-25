@@ -1,9 +1,9 @@
-using Moq;
 using Xunit;
 using Adsp.Sdk;
 using NLua;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Adsp.Platform.ScriptService.Services.Util;
 
 namespace Adsp.Platform.ScriptService.Services;
 
@@ -74,11 +74,11 @@ public sealed class ScriptFunctionsTests : IDisposable
       true,
       (r) =>
       {
-        var result = r;
-        var body = JsonConvert.DeserializeObject<JToken>(r)?.ToDictionary();
+        var result = r!;
+        var body = JsonConvert.DeserializeObject<JToken>(result)?.ToDictionary();
         Assert.NotNull(body);
         Assert.IsType<Dictionary<string, object>>(body);
-        var payload = ((Dictionary<string, object>)body)["payload"];
+        var payload = body!["payload"];
         Assert.Equal("Bob Bing", ((Dictionary<string, object>)payload)["name"]);
       }
     );
@@ -102,8 +102,8 @@ public sealed class ScriptFunctionsTests : IDisposable
     using var RestClient = TestUtil.GetRestClientToInspectBody(ValueServiceId, endpoint, HttpMethod.Post, null,
       (b) =>
       {
-        var body = JsonConvert.DeserializeObject<JToken>(b).ToDictionary();
-        Assert.Equal("my-space", body["namespace"]);
+        var body = JsonConvert.DeserializeObject<JToken>(b!)?.ToDictionary();
+        Assert.Equal("my-space", body!["namespace"]);
         Assert.Equal("my-test", body["name"]);
         Assert.Equal("", body["correlationId"]);
         var context = body["context"];

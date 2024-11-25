@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Adsp.Platform.ScriptService.Services.Platform;
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
@@ -287,9 +286,12 @@ internal class ScriptFunctions : IScriptFunctions
     // Cannot cast the result to a dictionary directly, as the conversion
     // does not deal with nested dictionaries very well.  Instead, convert
     // the result to a JToken and let our converter do its thing.
-    var value = JToken.Parse(result.Content);
+    JToken? value = null;
+    if (result?.Content is not null)
+    {
+      value = JToken.Parse(result.Content);
+    }
     return value?.ToDictionary();
-
   }
 
   public virtual IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)
@@ -313,7 +315,7 @@ internal class ScriptFunctions : IScriptFunctions
     {
       valueRequest = luaTable.ToRequest(@namespace, name);
     }
-    else if (value is IDictionary<string, object?> dictionary)
+    else if (value is IDictionary<string, object> dictionary)
     {
       valueRequest = dictionary.ToRequest(@namespace, name);
     }

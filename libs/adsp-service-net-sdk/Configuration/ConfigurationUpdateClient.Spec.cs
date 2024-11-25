@@ -1,12 +1,8 @@
 using FluentAssertions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Adsp.Sdk.Events;
-using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
-using SocketIOClient;
-using System.Reactive.Linq;
 
 namespace Adsp.Sdk.Configuration;
 

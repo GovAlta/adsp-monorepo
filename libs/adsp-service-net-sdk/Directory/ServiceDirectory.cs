@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -6,7 +5,7 @@ using Polly;
 using RestSharp;
 
 namespace Adsp.Sdk.Directory;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
 {
   private readonly ILogger<ServiceDirectory> _logger;

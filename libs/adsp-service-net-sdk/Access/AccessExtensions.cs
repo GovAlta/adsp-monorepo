@@ -8,6 +8,9 @@ using Microsoft.IdentityModel.Tokens;
 namespace Adsp.Sdk.Access;
 internal static class AccessExtensions
 {
+  private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+  { PropertyNameCaseInsensitive = true };
+
   internal static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, bool isCore, Tenant? tenant)
   {
     var subClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
@@ -35,7 +38,7 @@ internal static class AccessExtensions
     {
       var access = JsonSerializer.Deserialize<AccessClaimRoles>(
         realmAccessClaim.Value,
-        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        JsonSerializerOptions
       );
 
       if (access?.Roles != null)
@@ -50,7 +53,7 @@ internal static class AccessExtensions
     {
       var clientsRoles = JsonSerializer.Deserialize<Dictionary<string, AccessClaimRoles>>(
         resourceAccessClaim.Value,
-        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        JsonSerializerOptions
       );
 
       if (clientsRoles != null)
