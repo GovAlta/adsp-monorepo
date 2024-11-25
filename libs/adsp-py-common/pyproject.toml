@@ -40,7 +40,7 @@ readme = 'README.md'
   pytest-coverage = "^0.0"
   pytest-html = "^4.1.1"
   black = "^24.10.0"
-  tox = "^4.15.1"
+  tox = "^4.23.2"
 
 [build-system]
 requires = ["poetry-core==1.1.0"]
