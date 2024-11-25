@@ -148,74 +148,26 @@ describe('AddressLookUpControl', () => {
     expect((inputField as HTMLInputElement).value).toBe('T5H 1Y8');
   });
 
-  // it('can trigger onChange for non Alberta', async () => {
-  //   jest.setTimeout(1000);
-  //   renderComponent({
-  //     data: null,
-  //     enabled: true,
-  //     rootSchema: {} as JsonSchema4,
-  //     id: 'address',
-  //     label: null,
-  //     visible: true,
-  //     errors: '',
-  //     type: 'Control',
-  //     scope: '#/properties/personFullName',
-  //     path: 'address',
-  //     schema: {
-  //       title: 'BC postal address',
-  //       properties: {
-  //         subdivisionCode: {
-  //           const: null,
-  //         },
-  //         required: ['addressLine1', 'municipality', 'postalCode'],
-  //         errorMessage: {
-  //           properties: {
-  //             postalCode: 'Must be in 0A0 A0A capital letters and numbers format',
-  //           },
-  //         },
-  //       },
-  //     } as JsonSchema7,
-  //     uischema: {
-  //       type: 'Control',
-  //       scope: '',
-  //       options: {
-  //         autocomplete: true,
-  //       },
-  //       label: 'Address Lookup',
-  //     } as ControlElement,
-  //     handleChange: mockHandleChange,
-  //   });
-
-  //   const inputField = screen.getByTestId('address-form-address1');
-
-  //   fireEvent(
-  //     inputField,
-  //     new CustomEvent('_change', {
-  //       detail: { name: 'postalCode', value: 'VFV 1Y6' },
-  //     })
-  //   );
-
-  //   expect((inputField as HTMLInputElement).value).toBe('123');
-  //   jest.setTimeout(1000);
-  // });
-
   it('can trigger input onBlur', async () => {
     renderComponent();
-
     const inputField = screen.getByTestId('address-form-address1');
-
     fireEvent(inputField, new CustomEvent('_blur', { detail: { name: 'test', value: '123' } }));
   });
 
   it('can trigger onKeyPress Arrow keys', async () => {
+    await axiosMock.get.mockResolvedValueOnce(mockSuggestions);
     renderComponent();
     const inputField = screen.getByTestId('address-form-address1');
-    await axiosMock.get.mockResolvedValueOnce(mockSuggestions);
 
     jest.setTimeout(1500);
     fireEvent(
       inputField,
       new CustomEvent('_keyPress', { detail: { name: 'ArrowDown', value: 'ArrowDown', key: 'ArrowDown' } })
+    );
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', { detail: { name: 'ArrowUp', value: 'ArrowUp', key: 'ArrowUp' } })
     );
   });
 
