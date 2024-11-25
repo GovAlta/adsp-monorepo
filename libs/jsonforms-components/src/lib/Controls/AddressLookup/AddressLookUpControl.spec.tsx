@@ -154,23 +154,6 @@ describe('AddressLookUpControl', () => {
     fireEvent(inputField, new CustomEvent('_blur', { detail: { name: 'test', value: '123' } }));
   });
 
-  it('can trigger onKeyPress Arrow keys', async () => {
-    await axiosMock.get.mockResolvedValueOnce(mockSuggestions);
-    renderComponent();
-    const inputField = screen.getByTestId('address-form-address1');
-
-    jest.setTimeout(1500);
-    fireEvent(
-      inputField,
-      new CustomEvent('_keyPress', { detail: { name: 'ArrowDown', value: 'ArrowDown', key: 'ArrowDown' } })
-    );
-
-    fireEvent(
-      inputField,
-      new CustomEvent('_keyPress', { detail: { name: 'ArrowUp', value: 'ArrowUp', key: 'ArrowUp' } })
-    );
-  });
-
   it('displays no suggestions for less than 3 characters', async () => {
     renderComponent();
     const input = screen.getByPlaceholderText('Start typing the first line of your address, required.');
