@@ -7,6 +7,7 @@ import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForDateControl, onChangeForDateControl, onKeyPressForDateControl } from '../../util/inputControlUtils';
 import { callout } from '../../Additional/GoACalloutControl';
 import { standardizeDate } from '../../util/dateUtils';
+import { FormFieldWrapper } from './style-component';
 
 export type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 export const errMalformedDate = (scope: string, type: string): string => {
@@ -53,38 +54,40 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   }
 
   return (
-    <GoAInputDate
-      error={checkFieldValidity(props as ControlProps).length > 0}
-      width={width}
-      name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-      value={standardizeDate(data) || ''}
-      testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      disabled={!enabled}
-      readonly={readOnly}
-      onChange={(name: string, value: Date | string) => {
-        onChangeForDateControl({
-          name,
-          value,
-          controlProps: props as ControlProps,
-        });
-      }}
-      onKeyPress={(name: string, value: Date | string, key: string) => {
-        onKeyPressForDateControl({
-          name,
-          value,
-          key,
-          controlProps: props as ControlProps,
-        });
-      }}
-      onBlur={(name: string, value: Date | string) => {
-        onBlurForDateControl({
-          name,
-          value,
-          controlProps: props as ControlProps,
-        });
-      }}
-      {...reformatDateProps(uischema?.options?.componentProps)}
-    />
+    <FormFieldWrapper>
+      <GoAInputDate
+        error={checkFieldValidity(props as ControlProps).length > 0}
+        width={width}
+        name={appliedUiSchemaOptions?.name || `${id || label}-input`}
+        value={standardizeDate(data) || ''}
+        testId={appliedUiSchemaOptions?.testId || `${id}-input`}
+        disabled={!enabled}
+        readonly={readOnly}
+        onChange={(name: string, value: Date | string) => {
+          onChangeForDateControl({
+            name,
+            value,
+            controlProps: props as ControlProps,
+          });
+        }}
+        onKeyPress={(name: string, value: Date | string, key: string) => {
+          onKeyPressForDateControl({
+            name,
+            value,
+            key,
+            controlProps: props as ControlProps,
+          });
+        }}
+        onBlur={(name: string, value: Date | string) => {
+          onBlurForDateControl({
+            name,
+            value,
+            controlProps: props as ControlProps,
+          });
+        }}
+        {...reformatDateProps(uischema?.options?.componentProps)}
+      />
+    </FormFieldWrapper>
   );
 };
 

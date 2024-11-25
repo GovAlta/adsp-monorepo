@@ -15,6 +15,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForTextControl, onKeyPressForTextControl } from '../../util/inputControlUtils';
+import { FormFieldWrapper } from './style-component';
 
 export type GoAInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -61,36 +62,38 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
   };
 
   const txtAreaComponent = (
-    <GoATextArea
-      error={errorsFormInput.length > 0}
-      value={textAreaValue}
-      disabled={!enabled}
-      readOnly={readOnly}
-      placeholder={placeholder}
-      testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      name={textAreaName}
-      width={width}
-      // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
-      // maxCount={schema.maxLength || 256}
-      onKeyPress={(name: string, value: string, key: string) => {
-        const newValue = autoCapitalize ? value.toUpperCase() : value;
-        if (value.length === 0 || (required && errorsFormInput.length === 0 && value.length > 0)) {
-          onKeyPressForTextControl({
-            name,
-            value: newValue,
-            key,
-            controlProps: props as ControlProps,
-          });
-        }
-      }}
-      onChange={(name: string, value: string) => {
-        if (data !== value) {
+    <FormFieldWrapper>
+      <GoATextArea
+        error={errorsFormInput.length > 0}
+        value={textAreaValue}
+        disabled={!enabled}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        testId={appliedUiSchemaOptions?.testId || `${id}-input`}
+        name={textAreaName}
+        width={width}
+        // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
+        // maxCount={schema.maxLength || 256}
+        onKeyPress={(name: string, value: string, key: string) => {
           const newValue = autoCapitalize ? value.toUpperCase() : value;
-          handleChange(path, newValue);
-        }
-      }}
-      {...uischema?.options?.componentProps}
-    />
+          if (value.length === 0 || (required && errorsFormInput.length === 0 && value.length > 0)) {
+            onKeyPressForTextControl({
+              name,
+              value: newValue,
+              key,
+              controlProps: props as ControlProps,
+            });
+          }
+        }}
+        onChange={(name: string, value: string) => {
+          if (data !== value) {
+            const newValue = autoCapitalize ? value.toUpperCase() : value;
+            handleChange(path, newValue);
+          }
+        }}
+        {...uischema?.options?.componentProps}
+      />
+    </FormFieldWrapper>
   );
 
   return txtAreaComponent;
