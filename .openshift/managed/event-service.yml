@@ -199,7 +199,7 @@ objects:
               args:
                 - -c
                 - cp -v /etc/rabbitmq/rabbitmq.conf ${RABBITMQ_CONFIG_FILE}.conf; exec docker-entrypoint.sh rabbitmq-server
-              image: rabbitmq:3.11-management
+              image: rabbitmq:3.13-management
               imagePullPolicy: IfNotPresent
               volumeMounts:
                 - name: config-volume
