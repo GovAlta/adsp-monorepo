@@ -82,7 +82,10 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
                 setShowDetails(!showDetails);
               }}
             />
-            <div
+            <GoAContextMenuIcon
+              testId={`webhook-test-${id}`}
+              title="History"
+              type="time"
               onClick={() => {
                 dispatch(
                   UpdateModalState({
@@ -92,11 +95,7 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
                   })
                 );
               }}
-              className="tooltip-container"
-            >
-              <img src={History} alt="History" className="hover-image" />
-              <span className="tooltip-text">Webhook history</span>
-            </div>
+            />
             <GoAContextMenuIcon
               testId={`webhook-test-${id}`}
               title="Test"
@@ -259,33 +258,5 @@ const Menu = styled.tr`
 
   .hover {
     display: block;
-  }
-
-  .tooltip-container {
-    position: relative;
-    display: inline-block;
-  }
-
-  .tooltip-text {
-    visibility: hidden;
-    opacity: 0;
-    width: 110px;
-    background-color: #dcdcdc;
-    color: #050505;
-    font-size: 12px;
-    text-align: center;
-    transition: all 0.4s 0.7s ease;
-    position: absolute;
-    z-index: 1;
-    top: -25px;
-    left: -50%;
-  }
-
-  .tooltip-container:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
-  }
-  .hover-image {
-    cursor: pointer;
   }
 `;

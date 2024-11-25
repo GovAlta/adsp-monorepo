@@ -92,11 +92,11 @@ public class ConfigurationServiceTests
 
     var serviceId = AdspId.Parse("urn:ads:test:test-service");
     var tenantId = AdspId.Parse("urn:ads:platform:tenant-service:v2:/tenants/test");
-    using (ConfigurationService service = new ConfigurationService(logger, cache.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client))
+    using (var service = new ConfigurationService(logger, cache.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client))
     {
       var (tenant, core) = await service.GetConfiguration<object>(serviceId, tenantId);
-      tenant.ToString().Should().BeEquivalentTo(mockedHttpResponse);
-      core.ToString().Should().BeEquivalentTo(mockedHttpResponse);
+      tenant?.ToString().Should().BeEquivalentTo(mockedHttpResponse);
+      core?.ToString().Should().BeEquivalentTo(mockedHttpResponse);
     }
   }
 }

@@ -322,75 +322,59 @@ export const DescriptionItem = styled.div`
 `;
 
 export const ErrorMsg = styled.div`
-   {
-    display: inline-flex;
-    color: var(--color-red);
-    pointer-events: none;
-    gap: 0.25rem;
-  }
+  display: inline-flex;
+  color: var(--color-red);
+  pointer-events: none;
+  gap: 0.25rem;
 `;
 
 export const CommentsList = styled.div`
-   {
-    border: 1px solid #adadad;
-    height: 108px;
-    border-radius: 4px;
-    width: 673px;
-    margin-bottom: 1rem;
-    background-color: var(--goa-color-text-light);
-    padding: 0.75rem 1rem;
-  }
+  border: 1px solid #adadad;
+  height: 108px;
+  border-radius: 4px;
+  width: 673px;
+  margin-bottom: 1rem;
+  background-color: var(--goa-color-text-light);
+  padding: 0.75rem 1rem;
 `;
 export const CommentsHeader = styled.div`
-   {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 `;
 export const CommentsHeadGroup = styled.div`
-   {
-    display: flex;
-    align-items: center;
-    justify-content: start;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: start;
 `;
 export const CommentsHeading = styled.div`
-   {
-    font-size: var(--goa-font-size-4);
-    font-weight: var(--goa-font-weight-bold);
-    line-height: var(--goa-line-height-3);
-    letter-spacing: 0em;
-    text-align: left;
-    color: var(--goa-color-text-default);
-  }
+  font-size: var(--goa-font-size-4);
+  font-weight: var(--goa-font-weight-bold);
+  line-height: var(--goa-line-height-3);
+  letter-spacing: 0em;
+  text-align: left;
+  color: var(--goa-color-text-default);
 `;
 export const CommentsDate = styled.div`
-   {
-    font-size: var(--goa-font-size-2);
-    font-weight: var(--goa-font-weight-regular);
-    line-height: var(--goa-line-height-2);
-    letter-spacing: 0em;
-    text-align: left;
-    color: var(--goa-color-text-disabled);
-    margin-left: var(--goa-space-m);
-  }
+  font-size: var(--goa-font-size-2);
+  font-weight: var(--goa-font-weight-regular);
+  line-height: var(--goa-line-height-2);
+  letter-spacing: 0em;
+  text-align: left;
+  color: var(--goa-color-text-disabled);
+  margin-left: var(--goa-space-m);
 `;
 export const CommentsActions = styled.div`
-   {
-    padding: 0px, 4px, 0px, 4px;
-  }
+  padding: 0px, 4px, 0px, 4px;
 `;
 export const CommentBody = styled.div`
-   {
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 24px;
-    color: #333333;
-    letter-spacing: 0em;
-    text-align: left;
-    text-wrap: wrap;
-  }
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #333333;
+  letter-spacing: 0em;
+  text-align: left;
+  text-wrap: wrap;
 `;
 export const TopicDelete = styled.div`
    {

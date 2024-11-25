@@ -31,6 +31,9 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9'
     - name: E2E Test
       uses: cypress-io/github-action@v6
       env:

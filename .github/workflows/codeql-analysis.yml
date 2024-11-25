@@ -49,6 +49,10 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - if: ${{ matrix.language != 'javascript' }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9'
+      - if: ${{ matrix.language != 'javascript' }}
         run: npm ci
 
       # Initializes the CodeQL tools for scanning.
