@@ -1,10 +1,9 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Configuration;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Middleware for application builder")]
+
 internal sealed class ConfigurationMiddleware
 {
   public const string ConfigurationContextKey = "ADSP:ConfigurationService";

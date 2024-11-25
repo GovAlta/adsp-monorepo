@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Adsp.Sdk.Utils;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -6,7 +5,7 @@ using Polly;
 using RestSharp;
 
 namespace Adsp.Sdk.Tenancy;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class TenantService : ITenantService, IDisposable
 {
   private static readonly AdspId TENANT_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:tenant-service:v2");

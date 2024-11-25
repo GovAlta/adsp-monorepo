@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json;
 using Adsp.Sdk.Errors;
@@ -10,7 +9,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
 namespace Adsp.Sdk.Amqp;
-[SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "Errors handled by retry and dead lettering.")]
+
 internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberService, IDisposable
   where TPayload : class
   where TSubscriber : IEventSubscriber<TPayload>
@@ -78,15 +77,9 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     IConnection? connection = _connection;
     IModel? channel = _channel;
 
-    if (channel != null)
-    {
-      channel.Dispose();
-    }
+    channel?.Dispose();
+    connection?.Dispose();
 
-    if (connection != null)
-    {
-      connection.Dispose();
-    }
     _logger.LogInformation("Disconnected from {Hostname} and queue {Queue}.", _connectionFactory.HostName, _queueName);
   }
 
@@ -98,7 +91,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
       autoDelete: false,
       exclusive: false,
       durable: true,
-      arguments: new Dictionary<string, object> { { "x-queue-type", "quorum" } }
+      arguments: new Dictionary<string, object?> { { "x-queue-type", "quorum" } }
     );
     channel.QueueBind($"undelivered-{_queueName}", $"{_queueName}-dead-letter", "#");
 
@@ -107,7 +100,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
       autoDelete: false,
       exclusive: false,
       durable: true,
-      arguments: new Dictionary<string, object> {
+      arguments: new Dictionary<string, object?> {
         { "x-queue-type", "quorum" },
         { "x-dead-letter-exchange", $"{_queueName}-dead-letter" }
       }
@@ -121,10 +114,10 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
   {
     _logger.LogDebug("Processing domain event with delivery tag {Tag}...", args.DeliveryTag);
 
-    var channel = ((IBasicConsumer)sender).Model;
+    IModel channel = ((IAsyncBasicConsumer)sender).Model!;
     try
     {
-      var payload = ConvertMessage(new Dictionary<string, object>(args.BasicProperties.Headers), args.Body);
+      TPayload payload = ConvertMessage(new Dictionary<string, object?>(args.BasicProperties.Headers), args.Body);
       var received = new FullDomainEvent<TPayload>(
         AdspId.Parse(args.BasicProperties.GetHeaderValueOrDefault<string>("tenantId", _serializerOptions)),
         args.BasicProperties.GetHeaderValueOrDefault<string>("namespace", _serializerOptions)!,
@@ -149,14 +142,11 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     }
   }
 
-  protected virtual TPayload ConvertMessage(IDictionary<string, object> headers, ReadOnlyMemory<byte> body)
+  protected virtual TPayload ConvertMessage(IDictionary<string, object?> headers, ReadOnlyMemory<byte> body)
   {
-    if (JsonSerializer.Deserialize(body.Span, typeof(TPayload), _serializerOptions) is not TPayload result)
-    {
-      throw new InternalErrorException("Error encountered deserializing event message.");
-    }
-
-    return result!;
+    return JsonSerializer.Deserialize<TPayload>(body.Span, _serializerOptions) is not TPayload result
+      ? throw new InternalErrorException("Error encountered deserializing event message.")
+      : result;
   }
 
   protected virtual void Dispose(bool disposing)

@@ -15,7 +15,7 @@ RUN curl -LJO https://github.com/NLua/lua/tarball/75f9788 \
 
 USER 1001:0
 
-FROM registry.access.redhat.com/ubi8/dotnet-70-runtime
+FROM registry.access.redhat.com/ubi8/dotnet-90-runtime
 
 ARG SERVICE
 

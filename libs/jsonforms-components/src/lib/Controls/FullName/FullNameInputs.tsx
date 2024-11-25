@@ -46,7 +46,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   };
 
   return (
-    <GoAGrid minChildWidth="0ch" gap="s" testId="wrapper">
+    <GoAGrid minChildWidth="0ch" gap="s" mb="m" testId="wrapper">
       <GoAFormItem
         testId="formitem-first-name"
         label="First name"

@@ -1,11 +1,8 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Adsp.Sdk.Util;
 
 namespace Adsp.Platform.ScriptService.Services.Platform
 {
-  [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
   internal sealed class FormSubmissionResult
   {
     public string? id { get; set; }
