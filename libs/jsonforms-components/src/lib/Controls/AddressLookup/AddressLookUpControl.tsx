@@ -102,7 +102,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [searchTerm]);
+  }, [searchTerm]); // eslint-disable-line
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
@@ -129,7 +129,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setOpen(false);
   };
 
-  /* istanbul ignore next */
   const handleKeyDown = (e: string, value: string, key: string) => {
     if (key === 'ArrowDown') {
       setSelectedIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
