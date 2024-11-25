@@ -47,9 +47,8 @@ describe('FullNameControl', () => {
 
   it('calls handleChange when user inputs a new first name', async () => {
     render(<FullNameControl {...defaultProps} />);
-
     const firstNameInput = screen.getByTestId('name-form-first-name');
-    // fireEvent.change(firstNameInput, { target: { value: 'Jane' } });
+
     fireEvent(
       firstNameInput,
       new CustomEvent('_keyPress', {
