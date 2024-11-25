@@ -258,7 +258,7 @@ describe('NameInputs Component', () => {
     expect(screen.getByTestId('name-form-last-name')).toHaveValue(defaultName.lastName);
   });
 
-  it('shows error messagewhen a required field is blurred when empty', async () => {
+  it('shows error message when a required field is blurred when empty', async () => {
     render(
       <NameInputs
         firstName={defaultName.firstName}
@@ -303,6 +303,8 @@ describe('NameInputs Component', () => {
   });
 
   it('calls handleRequiredFieldBlur when first name loses focus', () => {
+    const requiredFields = ['firstName', 'lastName'];
+
     render(
       <NameInputs
         firstName={defaultName.firstName}
@@ -315,7 +317,46 @@ describe('NameInputs Component', () => {
     );
 
     const firstNameInput = screen.getByTestId('name-form-first-name');
-    const blurred = fireEvent.blur(firstNameInput);
+
+    const blurred = fireEvent(
+      firstNameInput,
+      new CustomEvent('_blur', {
+        detail: { name: 'firstName', value: 'Jane' },
+      })
+    );
+
+    expect(blurred).toBe(true);
+  });
+
+  it('calls handleRequiredFieldBlur when first name is empty and loses focus', () => {
+    const requiredFields = ['firstName', 'lastName'];
+    const defaultName = {
+      firstName: '',
+      middleName: 'A.',
+      lastName: 'Doe',
+    };
+
+    render(
+      <NameInputs
+        firstName={defaultName.firstName}
+        middleName={defaultName.middleName}
+        lastName={defaultName.lastName}
+        handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={defaultName}
+      />
+    );
+
+    const firstNameInput = screen.getByTestId('name-form-first-name');
+
+    //const blurred = fireEvent.blur(firstNameInput);
+    //fireEvent(inputField, new CustomEvent('_blur', { detail: { name: 'test', value: '123' } }));
+    const blurred = fireEvent(
+      firstNameInput,
+      new CustomEvent('_blur', {
+        detail: { name: 'firstName', value: '' },
+      })
+    );
 
     expect(blurred).toBe(true);
   });

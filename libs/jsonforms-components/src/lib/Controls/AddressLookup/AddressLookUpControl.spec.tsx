@@ -1,23 +1,29 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AddressLookUpControl } from './AddressLookUpControl';
-import { fetchAddressSuggestions } from './utils';
+import { fetchAddressSuggestions, validatePostalCode } from './utils';
 import { JsonFormContext } from '../../Context';
 import { Suggestion } from './types';
 import { isAddressLookup } from './AddressLookupTester';
 import { ControlElement, JsonSchema4, JsonSchema7, TesterContext, UISchemaElement } from '@jsonforms/core';
+import axios from 'axios';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
 
 jest.mock('./utils', () => ({
   fetchAddressSuggestions: jest.fn(),
   filterAlbertaAddresses: jest.fn(),
   mapSuggestionToAddress: jest.fn(),
   filterSuggestionsWithoutAddressCount: jest.fn(),
+  validatePostalCode: jest.fn(),
 }));
 const mockHandleChange = jest.fn();
 const formUrl = 'http://mock-form-url.com';
 const mockFormContext = {
   formUrl,
 };
+
 describe('AddressLookUpControl', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -56,7 +62,6 @@ describe('AddressLookUpControl', () => {
           },
         },
       } as JsonSchema7,
-
       uischema: {
         type: 'Control',
         scope: '',
@@ -107,6 +112,7 @@ describe('AddressLookUpControl', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   it('should render the component with input fields', () => {
     renderComponent();
     const input = screen.getByTestId('address-form-address1');
@@ -127,6 +133,25 @@ describe('AddressLookUpControl', () => {
     const inputField = screen.getByTestId('address-form-address1');
     fireEvent.change(inputField, { target: { value: '123' } });
     expect((inputField as HTMLInputElement).value).toBe('123');
+  });
+
+  it('can trigger onChange', async () => {
+    renderComponent();
+    const inputField = screen.getByTestId('address-form-address1');
+    (validatePostalCode as jest.Mock).mockResolvedValueOnce(true);
+    fireEvent(
+      inputField,
+      new CustomEvent('_change', {
+        detail: { name: 'postalCode', value: 'T5H 1Y8' },
+      })
+    );
+    expect((inputField as HTMLInputElement).value).toBe('T5H 1Y8');
+  });
+
+  it('can trigger input onBlur', async () => {
+    renderComponent();
+    const inputField = screen.getByTestId('address-form-address1');
+    fireEvent(inputField, new CustomEvent('_blur', { detail: { name: 'test', value: '123' } }));
   });
 
   it('displays no suggestions for less than 3 characters', async () => {

@@ -106,7 +106,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [searchTerm, dropdownSelected]);
+  }, [searchTerm, dropdownSelected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
@@ -122,7 +122,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setDropdownSelected(true);
   };
 
-  /* istanbul ignore next */
   const handleRequiredFieldBlur = (name: string) => {
     const err = { ...errors };
     if (!data?.[name] || data[name] === '' || data?.[name] === undefined) {
@@ -135,7 +134,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setOpen(false);
   };
 
-  /* istanbul ignore next */
   const handleKeyDown = (e: string, value: string, key: string) => {
     if (key === 'ArrowDown') {
       setSelectedIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
