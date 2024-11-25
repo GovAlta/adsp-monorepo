@@ -22,7 +22,12 @@ export const StepperContext = createContext({
 });
 
 const isEmpty = (value: unknown): boolean => {
-  return value === undefined || value === null || (typeof value === 'string' && value.length < 1);
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === 'string' && value.length < 1) ||
+    (typeof value === 'boolean' && value === false)
+  );
 };
 
 export const getCompletionStatus = (

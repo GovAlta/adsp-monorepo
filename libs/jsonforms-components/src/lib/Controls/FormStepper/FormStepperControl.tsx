@@ -139,15 +139,28 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
     setPage(page);
   }
 
+  const getAllStatuses = (nextPage: number, totalVisibleTabs: number) => {
+    const previouslyActivePage = nextPage - 1;
+    const statuses = [...stepStatuses];
+
+    for (let currentPage = 1; currentPage <= previouslyActivePage; currentPage++) {
+      const pageStatus = getCompletionStatus(inputStatuses, currentPage, true);
+
+      statuses[currentPage - 1] = pageStatus ? pageStatus : 'incomplete';
+    }
+
+    return statuses;
+  };
+
   /* istanbul ignore next */
   function setTab(page: number) {
     const categoryLabels = [...allCategories.elements.map((category) => category.label), summaryLabel];
     const visibleLabels = [...visibleCategoryLabels, summaryLabel];
     const newPage = mapToVisibleStep(page, categoryLabels, visibleLabels);
-    const pageStatus = getCompletionStatus(inputStatuses, page, true);
-    const statuses = [...stepStatuses];
-    statuses[page - 1] = pageStatus ? pageStatus : 'incomplete';
-    setStepStatuses(statuses);
+    if (Object.keys(inputStatuses).length) {
+      const statuses = getAllStatuses(page, visibleLabels.length);
+      setStepStatuses(statuses);
+    }
     setPage(newPage);
   }
 
