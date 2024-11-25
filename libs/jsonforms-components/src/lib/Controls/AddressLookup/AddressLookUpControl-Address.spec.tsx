@@ -126,4 +126,72 @@ describe('AddressLookUpControl', () => {
 
     expect(results).toHaveLength(mockResponse.data.Items.length);
   });
+
+  it('can filter address with key presses ArrowDown with results', async () => {
+    renderComponent();
+    const inputField = screen.getByTestId('address-form-address1');
+
+    fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'addressLine1', value: '123', key: '123' } }));
+    fireEvent(
+      inputField,
+      new CustomEvent('_change', {
+        detail: { value: '123' },
+      })
+    );
+
+    const mockResponse = {
+      data: {
+        Items: mockSuggestions,
+      },
+    };
+
+    axios.get = jest.fn().mockImplementationOnce(() => {
+      return Promise.resolve(mockResponse);
+    });
+    const results = await fetchAddressSuggestions('test', '123', true);
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', { detail: { name: 'ArrowDown', value: 'ArrowDown', key: 'ArrowDown' } })
+    );
+    fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'Enter', value: 'Enter', key: 'Enter' } }));
+
+    expect(results).toHaveLength(mockResponse.data.Items.length);
+  });
+
+  it('can filter address with key presses ArrowDown with results', async () => {
+    renderComponent();
+    const inputField = screen.getByTestId('address-form-address1');
+
+    fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'addressLine1', value: '123', key: '123' } }));
+    fireEvent(
+      inputField,
+      new CustomEvent('_change', {
+        detail: { value: '123' },
+      })
+    );
+
+    const mockResponse = {
+      data: {
+        Items: mockSuggestions,
+      },
+    };
+
+    axios.get = jest.fn().mockImplementationOnce(() => {
+      return Promise.resolve(mockResponse);
+    });
+    const results = await fetchAddressSuggestions('test', '123', true);
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', { detail: { name: 'ArrowDown', value: 'ArrowDown', key: 'ArrowDown' } })
+    );
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', { detail: { name: 'ArrowUp', value: 'ArrowUp', key: 'ArrowUp' } })
+    );
+    fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'Enter', value: 'Enter', key: 'Enter' } }));
+
+    expect(results).toHaveLength(mockResponse.data.Items.length);
+  });
 });
