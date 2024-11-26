@@ -22,7 +22,7 @@ export const BooleanComponent = ({
     errors,
   } as ControlProps);
 
-  const text = label + (required ? ' (required)' : '');
+  const text = `${uischema?.options?.text ? uischema?.options?.text : label}${required ? ' (required)' : ''}`;
   return (
     <GoACheckbox
       error={errorsFormInput.length > 0}
@@ -35,7 +35,7 @@ export const BooleanComponent = ({
         handleChange(path, checked);
       }}
       {...uischema?.options?.componentProps}
-    ></GoACheckbox>
+    />
   );
 };
 export const BooleanControl = (props: ControlProps) => (

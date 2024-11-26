@@ -177,18 +177,14 @@ export const HelpText = styled.div`
 `;
 
 export const ErrorMsg = styled.div`
-   {
-    display: inline-flex;
-    color: var(--color-red);
-    pointer-events: none;
-    gap: 0.25rem;
-  }
+  display: inline-flex;
+  color: var(--color-red);
+  pointer-events: none;
+  gap: 0.25rem;
 `;
 
 export const Events = styled.div`
-   {
-    display: flex;
-  }
+  display: flex;
 `;
 
 export const NoPaddingTd = styled.td`

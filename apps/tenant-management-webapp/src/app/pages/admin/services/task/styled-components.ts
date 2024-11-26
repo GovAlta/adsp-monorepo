@@ -326,12 +326,10 @@ export const DescriptionItem = styled.div`
 `;
 
 export const ErrorMsg = styled.div`
-   {
-    display: inline-flex;
-    color: var(--color-red);
-    pointer-events: none;
-    gap: 0.25rem;
-  }
+  display: inline-flex;
+  color: var(--color-red);
+  pointer-events: none;
+  gap: 0.25rem;
 `;
 
 export const MoreDetails = styled.div`
