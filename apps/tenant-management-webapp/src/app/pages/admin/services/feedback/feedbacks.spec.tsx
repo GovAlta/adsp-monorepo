@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, screen, waitFor, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { FeedbacksList } from './feedbacks';
+import { FeedbacksList } from './feedback/feedbacks';
 import configureStore from 'redux-mock-store';
 import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';

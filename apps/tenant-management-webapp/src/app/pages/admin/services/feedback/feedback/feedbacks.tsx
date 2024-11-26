@@ -19,8 +19,8 @@ import {
 import { LoadMoreWrapper } from '@components/styled-components';
 import { FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
 import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
-import { ExportDates, FeedbackFilterError, ProgressWrapper } from './styled-components';
-import { transformedData } from './ratings';
+import { ExportDates, FeedbackFilterError, ProgressWrapper } from '../styled-components';
+import { transformedData } from '../ratings';
 
 interface VisibleProps {
   visible: boolean;
@@ -161,7 +161,7 @@ export const FeedbacksList = (): JSX.Element => {
             <GoAFormItem label="Start date" helpText="File will be exported as a CSV">
               <GoAInputDate
                 width="22.54ch"
-                name="calendar-event-filter-start-date"
+                name="feedback-filter-start-date"
                 value={selectedSite && searchCriteria.startDate}
                 disabled={!selectedSite}
                 onChange={(name, value) => {
@@ -184,7 +184,7 @@ export const FeedbacksList = (): JSX.Element => {
             <GoAFormItem label="End date">
               <GoAInputDate
                 width="22.54ch"
-                name="calendar-event-filter-end-date"
+                name="feedback-filter-end-date"
                 value={selectedSite && searchCriteria.endDate}
                 disabled={!selectedSite}
                 onChange={(name, value) => {
@@ -216,7 +216,7 @@ export const FeedbacksList = (): JSX.Element => {
             variant="normal"
             onClick={exportToCsv}
             testId="exportBtn"
-            disabled={!selectedSite || showDateError}
+            disabled={!selectedSite || showDateError || Object.keys(feedbacks).length === 0}
           >
             Export
           </GoAButton>
