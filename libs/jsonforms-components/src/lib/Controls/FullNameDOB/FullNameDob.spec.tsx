@@ -153,7 +153,6 @@ describe('FullNameDobControl', () => {
     );
 
     const lastNameInput = screen.getByTestId('name-form-last-name');
-    fireEvent.change(lastNameInput, { target: { value: 'Smith' } });
 
     fireEvent(
       lastNameInput,
