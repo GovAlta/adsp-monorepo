@@ -75,7 +75,7 @@ public sealed class ScriptFunctionsTests : IDisposable
       (r) =>
       {
         var result = r!;
-        var body = JsonConvert.DeserializeObject<JToken>(result)?.ToDictionary();
+        var body = JsonConvert.DeserializeObject<JToken>(result)?.ToDictionary<object>();
         Assert.NotNull(body);
         Assert.IsType<Dictionary<string, object>>(body);
         var payload = body!["payload"];
@@ -102,7 +102,7 @@ public sealed class ScriptFunctionsTests : IDisposable
     using var RestClient = TestUtil.GetRestClientToInspectBody(ValueServiceId, endpoint, HttpMethod.Post, null,
       (b) =>
       {
-        var body = JsonConvert.DeserializeObject<JToken>(b!)?.ToDictionary();
+        var body = JsonConvert.DeserializeObject<JToken>(b!)?.ToDictionary<object>();
         Assert.Equal("my-space", body!["namespace"]);
         Assert.Equal("my-test", body["name"]);
         Assert.Equal("", body["correlationId"]);
@@ -118,11 +118,11 @@ public sealed class ScriptFunctionsTests : IDisposable
         var index = ((Dictionary<string, object?>)value)["index"];
         Assert.NotNull(index);
         Assert.True(index!.GetType() == typeof(List<object>));
-        Assert.True(((List<object>)index)[0].GetType() == typeof(string));
+        Assert.True(((List<object>)index).Count == 3);
       }
 );
     var ScriptFunctions = new ScriptFunctions(Tenant, TestUtil.GetServiceUrl(ValueServiceId), TestUtil.GetMockToken(), RestClient);
-    _lua.DoString("theValue = { value = {index = {'test-Index'}}, context={}, correlationId='' }");
+    _lua.DoString("theValue = { value = {index = {'Idx1', 'Idx2', 'Idx3'}}, context={}, correlationId='' }");
     LuaTable value = (LuaTable)_lua["theValue"];
     var Actual = ScriptFunctions.WriteValue(_namespace, name, value);
     Assert.Null(Actual);
@@ -176,4 +176,49 @@ public sealed class ScriptFunctionsTests : IDisposable
     Assert.True(items[0].GetType() == typeof(string));
     Assert.Equal("idx1", (string)items[0]);
   }
+
+  [Fact]
+  public void CanGetFormDataWithLists()
+  {
+    var data = @"
+      {
+        ""id"": ""a869b024-55d1-45e8-8380-7bfae7d0f534"",
+        ""data"": {
+          ""inventory"": [
+              {
+                ""product"": ""Clothing""
+              },
+              {
+                ""product"": ""Junk""
+              },
+              {
+                ""product"": ""Food""
+              }
+          ],
+          ""appId"": ""another-app-id"",
+          ""serviceName"": ""Three Generator"",
+          ""editorName"": ""Bob"",
+          ""editorEmail"": ""roy.styan@gov.ab.ca""
+        },
+        ""files"": {
+          ""fileName"": ""fileURN""
+        }
+      }";
+    var expected = JObject.Parse(data);
+
+    var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
+    var FormId = "my-form";
+    var endpoint = $"/form/v1/forms/{FormId}/data";
+    var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
+    IServiceDirectory ServiceDirectory = TestUtil.GetServiceUrl(FormServiceId);
+    using RestSharp.IRestClient RestClient = TestUtil.GetRestClient(FormServiceId, endpoint, HttpMethod.Get, expected);
+    var ScriptFunctions = new ScriptFunctions(Tenant, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), RestClient);
+    Platform.FormDataResult? actual = ScriptFunctions.GetFormData(FormId);
+    Assert.NotNull(actual);
+    Assert.NotNull(actual?.data);
+    Assert.NotNull(actual?.data?["inventory"]);
+    Assert.Equal(3, ((List<object>)actual?.data?["inventory"]!).Count);
+    Assert.Equal(1, actual.files!.Count);
+  }
 }
+

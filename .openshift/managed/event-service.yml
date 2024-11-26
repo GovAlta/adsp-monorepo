@@ -106,7 +106,9 @@ objects:
         ## Disk space
         disk_free_limit.absolute = 1.5GB
         ## Memory
-        vm_memory_high_watermark.relative = 0.8
+        vm_memory_high_watermark.absolute = 3Gi
+        ## Logging
+        log.console = true
       enabled_plugins: |
         [rabbitmq_management,rabbitmq_peer_discovery_k8s,rabbitmq_shovel,rabbitmq_shovel_management].
   - apiVersion: v1
@@ -199,7 +201,7 @@ objects:
               args:
                 - -c
                 - cp -v /etc/rabbitmq/rabbitmq.conf ${RABBITMQ_CONFIG_FILE}.conf; exec docker-entrypoint.sh rabbitmq-server
-              image: rabbitmq:3.11-management
+              image: rabbitmq:3.13-management
               imagePullPolicy: IfNotPresent
               volumeMounts:
                 - name: config-volume

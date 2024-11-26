@@ -206,6 +206,7 @@ const AttachmentBorder = styled.div`
 `;
 
 const FileUploaderStyle = styled.div`
+  margin-bottom: var(--goa-space-l);
   .label {
     display: block;
     font-weight: var(--goa-font-weight-bold);
