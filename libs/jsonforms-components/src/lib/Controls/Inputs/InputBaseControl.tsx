@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
-import { FormFieldWrapper } from './style-component';
+
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 import { StepInputStatus, StepperContext } from '../FormStepper/StepperContext';
 import { Visible } from '../../util';
@@ -68,17 +68,15 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>
       <Visible visible={visible}>
-        <FormFieldWrapper>
-          <GoAFormItem
-            requirement={required ? 'required' : undefined}
-            error={modifiedErrors}
-            testId={`${isStepperReview === true && 'review-base-'}${path}`}
-            label={props?.noLabel === true ? '' : labelToUpdate}
-            helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
-          >
-            <InnerComponent {...modifiedProps} />
-          </GoAFormItem>
-        </FormFieldWrapper>
+        <GoAFormItem
+          requirement={required ? 'required' : undefined}
+          error={modifiedErrors}
+          testId={`${isStepperReview === true && 'review-base-'}${path}`}
+          label={props?.noLabel === true ? '' : labelToUpdate}
+          helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
+        >
+          <InnerComponent {...modifiedProps} />
+        </GoAFormItem>
       </Visible>
     </JsonFormRegisterProvider>
   );
