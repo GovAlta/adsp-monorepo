@@ -63,7 +63,6 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
 
   useEffect(() => {
     dispatch(loadForm(formId));
-    document.body.style.overflow = 'unset';
   }, [dispatch, formId]);
 
   const [showComments, setShowComments] = useState(false);
