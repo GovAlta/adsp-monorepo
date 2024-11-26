@@ -57,7 +57,11 @@ export function* fetchFormDefinitions(payload): SagaIterator {
     try {
       const url = `${configBaseUrl}/configuration/v2/configuration/form-service?top=50&after=${next}`;
       const { results, page } = yield call(fetchFormDefinitionsApi, token, url);
-
+      yield put(
+        UpdateIndicator({
+          show: true,
+        })
+      );
       const definitions = results.reduce((acc, def) => {
         if (def.latest?.configuration?.id) {
           acc[def.latest.configuration.id] = def.latest.configuration;
@@ -67,7 +71,11 @@ export function* fetchFormDefinitions(payload): SagaIterator {
 
         return acc;
       }, {});
-
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
       yield put(getFormDefinitionsSuccess(definitions, page.next, page.after));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
