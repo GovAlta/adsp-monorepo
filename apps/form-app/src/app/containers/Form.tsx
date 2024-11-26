@@ -56,6 +56,12 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const showSubmit = useSelector(showSubmitSelector);
 
   useEffect(() => {
+    if (document.body.style.overflow === 'hidden') {
+      document.body.style.overflow = 'unset';
+    }
+  });
+
+  useEffect(() => {
     dispatch(loadForm(formId));
   }, [dispatch, formId]);
 
