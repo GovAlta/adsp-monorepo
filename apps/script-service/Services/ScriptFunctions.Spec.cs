@@ -220,5 +220,52 @@ public sealed class ScriptFunctionsTests : IDisposable
     Assert.Equal(3, ((List<object>)actual?.data?["inventory"]!).Count);
     Assert.Equal(1, actual.files!.Count);
   }
+
+  [Fact]
+  public void CanGetConfiguration()
+  {
+    var data = @"
+    {
+      ""urn"": ""urn:ads:platform:configuration-service:v2:/configuration/platform/feedback-service"",
+      ""namespace"": ""platform"",
+      ""name"": ""feedback-service"",
+      ""latest"": {
+        ""revision"": 0,
+        ""created"": ""2024-07-29T20:15:04.558Z"",
+        ""lastUpdated"": ""2024-08-08T21:41:19.115Z"",
+        ""configuration"": {
+          ""sites"": [
+            {
+              ""url"": ""https://common-capabilities-dcp-uat.apps.aro.gov.ab.ca"",
+              ""allowAnonymous"": true
+            },
+            {
+              ""url"": ""https://digital-standards-dcp-uat.apps.aro.gov.ab.ca"",
+              ""allowAnonymous"": true
+            }
+          ]
+        }
+      },
+      ""active"": null
+    }";
+    var expected = JObject.Parse(data);
+    var _namespace = "namespace";
+    var name = "name";
+    var configurationServiceId = AdspId.Parse("urn:ads:platform:configuration-service");
+    var endpoint = $"/configuration/v2/configuration/{_namespace}/{name}/active";
+    var tenant = AdspId.Parse("urn:ads:platform:my-tenant");
+    IServiceDirectory ServiceDirectory = TestUtil.GetServiceUrl(configurationServiceId);
+    using RestSharp.IRestClient RestClient = TestUtil.GetRestClient(configurationServiceId, endpoint, HttpMethod.Get, expected);
+    var ScriptFunctions = new ScriptFunctions(tenant, TestUtil.GetServiceUrl(configurationServiceId), TestUtil.GetMockToken(), RestClient);
+    IDictionary<string, object?>? actual = ScriptFunctions.GetConfiguration(_namespace, name);
+    Assert.NotNull(actual);
+    var latest = (IDictionary<string, object>)actual!["latest"]!;
+    Assert.NotNull(latest);
+    var configuration = (IDictionary<string, object>)latest["configuration"];
+    Assert.NotNull(configuration);
+    var sites = (List<object>)configuration["sites"];
+    Assert.NotNull(sites);
+    Assert.Equal(3, sites.Count);
+  }
 }
 
