@@ -126,8 +126,8 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         }}
       />
 
+      {indicator.show && <PageIndicator />}
       {!indicator.show && !formDefinitions && renderNoItem('form templates')}
-      {/* {indicator.show && <PageIndicator />} */}
       {formDefinitions && Object.keys(formDefinitions).length > 0 && (
         <>
           <FormDefinitionsTable
