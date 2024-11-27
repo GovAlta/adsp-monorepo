@@ -84,8 +84,8 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    ConfigurationResult? result = _client.GetAsync<ConfigurationResult>(request).Result;
-    return result?.Configuration;
+    RestResponse data = _client.GetAsync(request).Result;
+    return ParseResponse(data)?.ToDictionary<object?>();
   }
 
   public FormDataResult? GetFormData(string formId)

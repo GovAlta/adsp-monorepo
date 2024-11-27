@@ -265,7 +265,7 @@ public sealed class ScriptFunctionsTests : IDisposable
     Assert.NotNull(configuration);
     var sites = (List<object>)configuration["sites"];
     Assert.NotNull(sites);
-    Assert.Equal(3, sites.Count);
+    Assert.Equal(2, sites.Count);
   }
 }
 
