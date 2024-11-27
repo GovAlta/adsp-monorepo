@@ -130,6 +130,8 @@ export const Form = styled(FormComponent)`
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 70%;
+    overflow: auto;
+    padding-bottom: var(--goa-space-2xl);
   }
 
   .commentsPane {
