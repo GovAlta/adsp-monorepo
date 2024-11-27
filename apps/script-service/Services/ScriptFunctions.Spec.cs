@@ -267,5 +267,67 @@ public sealed class ScriptFunctionsTests : IDisposable
     Assert.NotNull(sites);
     Assert.Equal(2, sites.Count);
   }
+
+  [Fact]
+  public void CanDispositionForm()
+  {
+    var data = @"
+      {
+        ""urn"": ""urn:ads:platform:form-service:v1:/forms/e78378d6-43c3-494b-9641-accdfd02a4d0/submissions/207291bd-3877-4196-91af-934590ad0d28"",
+        ""id"": ""207291bd-3877-4196-91af-934590ad0d28"",
+        ""formId"": ""e78378d6-43c3-494b-9641-accdfd02a4d0"",
+        ""formDefinitionId"": ""a-form-for-script-testing"",
+        ""formData"": {
+          ""appId"": ""22-frosty-penguins"",
+          ""serviceName"": ""Bob's house of penguins"",
+          ""editorName"": ""Bob"",
+          ""editorEmail"": ""bob@bob.com"",
+          ""inventory"": [
+            {
+              ""product"": ""Tuxes""
+            },
+            {
+              ""product"": ""Bow Ties""
+            },
+            {
+              ""product"": ""cummerbunds""
+            }
+          ]
+        },
+        ""formFiles"": {},
+        ""created"": ""2024-11-27T15:35:53.017Z"",
+        ""createdBy"": {
+          ""id"": ""f5f11695-a7c2-405a-8121-5479a8a1205c"",
+          ""name"": ""service-account-postman""
+        },
+        ""securityClassification"": ""protected b"",
+        ""disposition"": null,
+        ""updated"": ""2024-11-27T15:35:53.017Z"",
+        ""updatedBy"": {
+          ""id"": ""f5f11695-a7c2-405a-8121-5479a8a1205c"",
+          ""name"": ""service-account-postman""
+        },
+        ""hash"": ""52524f9d178eef5457e0cc005aeb01f46bd2a7b8""
+    }";
+    var expected = JObject.Parse(data);
+    var formId = "e78378d6-43c3-494b-9641-accdfd02a4d0";
+    var submissionId = "207291bd-3877-4196-91af-934590ad0d28";
+    var status = "accepted";
+    var reason = "because";
+    var formServiceId = AdspId.Parse("urn:ads:platform:form-service");
+    var endpoint = $"/form/v1/forms/{formId}/submissions/{submissionId}";
+    var tenant = AdspId.Parse("urn:ads:platform:my-tenant");
+    IServiceDirectory ServiceDirectory = TestUtil.GetServiceUrl(formServiceId);
+    using RestSharp.IRestClient RestClient = TestUtil.GetRestClient(formServiceId, endpoint, HttpMethod.Post, expected);
+    var ScriptFunctions = new ScriptFunctions(tenant, TestUtil.GetServiceUrl(formServiceId), TestUtil.GetMockToken(), RestClient);
+    IDictionary<string, object?>? actual = ScriptFunctions.DispositionFormSubmission(formId, submissionId, status, reason);
+    Assert.NotNull(actual);
+    Assert.Equal("207291bd-3877-4196-91af-934590ad0d28", actual!["id"]);
+    var actualData = (IDictionary<string, object?>?)actual["formData"];
+    Assert.NotNull(actualData);
+    var inventory = actualData!["inventory"];
+    Assert.NotNull(inventory);
+    Assert.Equal(3, ((List<object>)inventory!).Count());
+  }
 }
 

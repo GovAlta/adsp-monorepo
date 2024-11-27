@@ -37,7 +37,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return true;
   }
 
-  public override DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
+  public override IDictionary<string, object?>? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
   {
     if (String.IsNullOrEmpty(formId))
     {
