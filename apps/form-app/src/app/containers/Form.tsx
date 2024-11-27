@@ -26,17 +26,6 @@ import { DraftForm } from '../components/DraftForm';
 import { SubmittedForm } from '../components/SubmittedForm';
 import { LogoutModal } from '../components/LogoutModal';
 
-const SavingIndicator = styled.span`
-  display: flex;
-  flex-direction: row-reverse;
-  opacity: 0;
-  transition: opacity 400ms;
-
-  &[data-saving='true'] {
-    opacity: 1;
-  }
-`;
-
 interface FormProps {
   className?: string;
 }
@@ -72,7 +61,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
       <LoadingIndicator isLoading={busy.loading} />
       <LogoutModal />
       <div className={className} data-show={showComments}>
-        <Container vs={3} hs={1} key={formId}>
+        <Container vs={1} hs={1} key={formId}>
           {definition && form && !fileBusy.loading && (
             <>
               {form.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
@@ -141,6 +130,8 @@ export const Form = styled(FormComponent)`
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 70%;
+    overflow: auto;
+    padding-bottom: var(--goa-space-2xl);
   }
 
   .commentsPane {

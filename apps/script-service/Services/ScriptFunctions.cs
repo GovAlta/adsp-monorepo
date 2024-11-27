@@ -30,7 +30,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("templateId cannot be null or empty.");
     }
 
-    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.PdfServiceId).Result;
+    Uri servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.PdfServiceId).Result;
     var requestUrl = new Uri(servicesUrl, "/pdf/v1/jobs");
 
     var token = _getToken().Result;
@@ -59,7 +59,7 @@ internal class ScriptFunctions : IScriptFunctions
 
     request.AddJsonBody(generationRequest);
 
-    var result = _client.PostAsync<PdfGenerationResult>(request).Result;
+    PdfGenerationResult? result = _client.PostAsync<PdfGenerationResult>(request).Result;
     return result?.Id;
   }
 
@@ -75,7 +75,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("name cannot be null or empty.");
     }
 
-    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ConfigurationServiceId).Result;
+    Uri servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ConfigurationServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/configuration/v2/configuration/{@namespace}/{name}/active");
 
     var token = _getToken().Result;
@@ -84,8 +84,8 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var result = _client.GetAsync<ConfigurationResult>(request).Result;
-    return result?.Configuration;
+    RestResponse data = _client.GetAsync(request).Result;
+    return ParseResponse(data)?.ToDictionary<object?>();
   }
 
   public FormDataResult? GetFormData(string formId)
@@ -173,7 +173,7 @@ internal class ScriptFunctions : IScriptFunctions
   }
 
 
-  public virtual DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
+  public virtual IDictionary<string, object?>? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
   {
     if (String.IsNullOrEmpty(formId))
     {
@@ -204,8 +204,8 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddHeader("Authorization", $"Bearer {token}");
     request.AddQueryParameter("tenantId", _tenantId.ToString());
 
-    DispositionResponse? result = _client.PostAsync<DispositionResponse>(request).Result;
-    return result;
+    RestResponse result = _client.PostAsync(request).Result;
+    return ParseResponse(result)?.ToDictionary<object?>();
   }
 
 

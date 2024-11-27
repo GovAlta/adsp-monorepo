@@ -22,7 +22,7 @@ interface IScriptFunctions
 
   object? HttpGet(string url);
 
-  DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason);
+  IDictionary<string, object?>? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason);
 
   IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null);
 

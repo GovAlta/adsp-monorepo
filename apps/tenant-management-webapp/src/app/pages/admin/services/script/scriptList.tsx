@@ -43,7 +43,6 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
               title="Edit"
               testId={`script-edit-${script.name}`}
               onClick={() => {
-                onEdit(script);
                 navigate({
                   pathname: `edit/${script.id}`,
                   search: '?headless=false',

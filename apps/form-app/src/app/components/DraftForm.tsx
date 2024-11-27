@@ -169,9 +169,11 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     <Grid>
       <GridItem md={1} />
       <GridItem md={10}>
-        <SavingIndicator data-saving={saving}>
-          <GoABadge type="information" content="Saving..." />
-        </SavingIndicator>
+        {!anonymousApply && (
+          <SavingIndicator data-saving={saving}>
+            <GoABadge type="information" content="Saving..." />
+          </SavingIndicator>
+        )}
         <ContextProvider
           submit={{
             submitForm: onSubmitFunction,
@@ -186,8 +188,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         >
           <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
         </ContextProvider>
-        <GoAButtonGroup alignment="end">
-          {showSubmit && (
+        {showSubmit && (
+          <GoAButtonGroup alignment="end" mb="l">
             <GoAButton
               mt="2xl"
               disabled={!canSubmit}
@@ -199,8 +201,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             >
               Submit
             </GoAButton>
-          )}
-        </GoAButtonGroup>
+          </GoAButtonGroup>
+        )}
       </GridItem>
       <GridItem md={1} />
     </Grid>
