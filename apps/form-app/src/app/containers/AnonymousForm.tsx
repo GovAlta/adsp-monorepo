@@ -35,7 +35,7 @@ export const AnonymousForm: FunctionComponent = () => {
   return (
     <div key={`anonymous-${definition?.id}`}>
       <LoadingIndicator isLoading={!initialized} />
-      <Container vs={3} hs={1}>
+      <Container vs={1} hs={1}>
         {initialized &&
           (definition?.anonymousApply ? (
             <>
