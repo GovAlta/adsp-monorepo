@@ -173,7 +173,7 @@ internal class ScriptFunctions : IScriptFunctions
   }
 
 
-  public virtual DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
+  public virtual IDictionary<string, object?>? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
   {
     if (String.IsNullOrEmpty(formId))
     {
@@ -204,8 +204,8 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddHeader("Authorization", $"Bearer {token}");
     request.AddQueryParameter("tenantId", _tenantId.ToString());
 
-    DispositionResponse? result = _client.PostAsync<DispositionResponse>(request).Result;
-    return result;
+    RestResponse result = _client.PostAsync(request).Result;
+    return ParseResponse(result)?.ToDictionary<object?>();
   }
 
 
