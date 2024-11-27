@@ -102,7 +102,7 @@ export const onSaveDispositionForModal = (
   definition: FormDefinition,
   selectedEditModalIndex: number | null
 ): [FormDefinition, number | null] => {
-  const currentDispositionStates = [...definition.dispositionStates] || [];
+  const currentDispositionStates = definition.dispositionStates || [];
   if (newDisposition) {
     if (currentDisposition) {
       currentDispositionStates.push(currentDisposition);
