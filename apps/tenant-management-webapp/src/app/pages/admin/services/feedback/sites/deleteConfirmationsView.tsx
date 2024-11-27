@@ -1,5 +1,5 @@
 import { FeedbackSite } from '@store/feedback/models';
-import { DeleteGap, TableDiv } from './styled-components';
+import { DeleteGap, TableDiv } from '../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 
 interface siteDeleteProps {
