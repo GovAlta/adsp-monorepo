@@ -2,6 +2,7 @@ import { Container, Recaptcha } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import styled from 'styled-components';
 import { DraftForm } from '../components/DraftForm';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { SubmittedForm } from '../components/SubmittedForm';
@@ -20,7 +21,11 @@ import {
   AppState,
 } from '../state';
 
-export const AnonymousForm: FunctionComponent = () => {
+interface FormProps {
+  className?: string;
+}
+
+const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const recaptchaKey = useSelector((state: AppState) => state.config.environment.recaptchaKey);
@@ -35,35 +40,58 @@ export const AnonymousForm: FunctionComponent = () => {
   return (
     <div key={`anonymous-${definition?.id}`}>
       <LoadingIndicator isLoading={!initialized} />
-      <Container vs={1} hs={1}>
-        {initialized &&
-          (definition?.anonymousApply ? (
-            <>
-              {form?.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
-              {!form && (
-                <DraftForm
-                  definition={definition}
-                  form={form}
-                  data={data}
-                  canSubmit={canSubmit}
-                  showSubmit={showSubmit}
-                  saving={busy.saving}
-                  anonymousApply={definition?.anonymousApply}
-                  submitting={busy.submitting}
-                  onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
-                  }}
-                  onSubmit={function () {
-                    dispatch(submitAnonymousForm());
-                  }}
-                />
-              )}
-            </>
-          ) : (
-            <Navigate to=".." />
-          ))}
-      </Container>
+      <div className={className}>
+        <Container vs={1} hs={1}>
+          {initialized &&
+            (definition?.anonymousApply ? (
+              <>
+                {form?.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
+                {!form && (
+                  <DraftForm
+                    definition={definition}
+                    form={form}
+                    data={data}
+                    canSubmit={canSubmit}
+                    showSubmit={showSubmit}
+                    saving={busy.saving}
+                    anonymousApply={definition?.anonymousApply}
+                    submitting={busy.submitting}
+                    onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
+                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
+                    }}
+                    onSubmit={function () {
+                      dispatch(submitAnonymousForm());
+                    }}
+                  />
+                )}
+              </>
+            ) : (
+              <Navigate to=".." />
+            ))}
+        </Container>
+      </div>
       <Recaptcha siteKey={recaptchaKey} />
     </div>
   );
 };
+export const AnonymousForm = styled(AnonymousFormComponent)`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row-reverse;
+
+  @media (max-width: 639px) {
+    flex-direction: column;
+  }
+
+  > :first-child {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 70%;
+    overflow: auto;
+    padding-bottom: var(--goa-space-2xl);
+  }
+`;

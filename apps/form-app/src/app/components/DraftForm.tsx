@@ -169,9 +169,11 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     <Grid>
       <GridItem md={1} />
       <GridItem md={10}>
-        <SavingIndicator data-saving={saving}>
-          <GoABadge type="information" content="Saving..." />
-        </SavingIndicator>
+        {!anonymousApply && (
+          <SavingIndicator data-saving={saving}>
+            <GoABadge type="information" content="Saving..." />
+          </SavingIndicator>
+        )}
         <ContextProvider
           submit={{
             submitForm: onSubmitFunction,
