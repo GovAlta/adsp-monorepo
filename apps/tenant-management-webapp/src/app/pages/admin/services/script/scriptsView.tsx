@@ -25,7 +25,7 @@ import {
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, isValidJSONCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { TabletMessage } from '@components/TabletMessage';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface AddScriptProps {
   activeEdit: boolean;
@@ -48,7 +48,7 @@ export const ScriptsView = ({ activeEdit, openAddScriptInitialValue }: AddScript
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
-
+  const location = useLocation();
   const navigate = useNavigate();
   const goBack = () => {
     setShowScriptEditForm(false);
@@ -122,7 +122,9 @@ export const ScriptsView = ({ activeEdit, openAddScriptInitialValue }: AddScript
 
   const onEdit = (script) => {
     script.testInputs = testInput;
-    setSelectedScript(script);
+    if(location.pathname.includes(script.id)){
+      setSelectedScript(scripts[script.id]);
+    }
     setShowScriptEditForm(true);
   };
 
