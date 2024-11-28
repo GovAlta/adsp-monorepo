@@ -57,14 +57,18 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
-  public override object? HttpGet(string url)
+  public override IDictionary<string, object?>? HttpGet(string url)
   {
     if (String.IsNullOrEmpty(url))
     {
       throw new ArgumentException("url cannot be null or empty.");
     }
 
-    return "simulated success";
+    return new Dictionary<string, object?>
+    {
+      ["name"] = "Bob",
+      ["grade"] = "A"
+    };
   }
 
   public override IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)

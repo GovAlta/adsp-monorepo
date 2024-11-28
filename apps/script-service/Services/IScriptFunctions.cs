@@ -20,7 +20,7 @@ interface IScriptFunctions
 
   bool SendDomainEvent(string namespaceValue, string name, string? correlationId, LuaTable? context = null, LuaTable? payload = null);
 
-  object? HttpGet(string url);
+  IDictionary<string, object?>? HttpGet(string url);
 
   IDictionary<string, object?>? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason);
 
