@@ -506,4 +506,5 @@ export const Anchor = styled.div`
   text-decoration: underline;
   outline: none;
   cursor: pointer;
+  margin-right: 4px;
 `;
