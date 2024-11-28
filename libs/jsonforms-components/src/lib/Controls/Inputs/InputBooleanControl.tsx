@@ -39,7 +39,7 @@ export const BooleanComponent = ({
   );
 };
 export const BooleanControl = (props: ControlProps) => (
-  <GoAInputBaseControl {...{ ...props, noLabel: true }} input={BooleanComponent} />
+  <GoAInputBaseControl {...{ ...props }} input={BooleanComponent} />
 );
 
 export const GoABooleanControlTester: RankedTester = rankWith(2, isBooleanControl);
