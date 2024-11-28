@@ -82,6 +82,18 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
     validators.clear();
   };
 
+  const nameFieldValidation = (value: string) => {
+    const validations = {
+      name: value,
+    };
+    validators.remove('name');
+    if (isNew) {
+      validations['duplicated'] = value;
+    }
+    validators.checkAll(validations);
+    setQueue({ ...queue, name: value });
+  };
+
   return (
     <GoAModal
       testId="add-queue-modal"
@@ -145,18 +157,15 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
           data-testid={`queue-modal-name-input`}
           aria-label="name"
           disabled={!isNew}
-          onChange={(name, value) => {
-            const validations = {
-              name: value,
-            };
-            validators.remove('name');
-            if (isNew) {
-              validations['duplicated'] = value;
-            }
-            validators.checkAll(validations);
-
-            setQueue({ ...queue, name: value });
+          onBlur={(name: string, value: string) => {
+            nameFieldValidation(value);
           }}
+          onKeyPress={(name: string, value: string, key: string) => {
+            if (key !== 'Tab' && value.length === 0) {
+              nameFieldValidation(value);
+            }
+          }}
+          onChange={(name, value) => {}}
         />
       </GoAFormItem>
     </GoAModal>

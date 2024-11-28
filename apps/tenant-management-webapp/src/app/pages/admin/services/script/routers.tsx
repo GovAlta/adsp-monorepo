@@ -6,7 +6,7 @@ export const ScriptRouter = () => {
   return (
     <Routes>
       <Route path="/" element={<Script />} />
-      <Route path="/edit/:id" element={<ScriptsView activeEdit={false} />} />
+      <Route path="/edit/:id" element={<ScriptsView />} />
     </Routes>
   );
 };
