@@ -78,10 +78,9 @@ import {
 import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
 import { FormConfigDefinition } from './formConfigDefinition';
-import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
-import { RowFlex, QueueTaskDropdown, H3, BorderBottom } from './style-components';
+import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -626,15 +625,20 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     </FlexRow>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                       <SubmissionConfigurationPadding>
-                        <InfoCircleWithInlineHelp
-                          initialLabelValue={definition.submissionRecords}
-                          label="Task queue to process &nbsp;"
-                          text={
-                            getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
-                              ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
-                              : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
-                          }
-                        />
+                        <H3Inline>Task queue to process</H3Inline>
+                        <ToolTipAdjust>
+                          {definition.submissionRecords && (
+                            <GoATooltip
+                              content={
+                                getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                                  ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                                  : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                              }
+                            >
+                              <GoAIcon type="information-circle"></GoAIcon>
+                            </GoATooltip>
+                          )}
+                        </ToolTipAdjust>
                         <QueueTaskDropdown>
                           {queueTasks && Object.keys(queueTasks).length > 0 && (
                             <GoADropdown

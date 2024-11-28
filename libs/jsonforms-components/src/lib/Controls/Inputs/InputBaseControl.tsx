@@ -6,6 +6,7 @@ import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 import { StepInputStatus, StepperContext } from '../FormStepper/StepperContext';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
+import { FormFieldWrapper } from './style-component';
 
 export type GoAInputType =
   | 'text'
@@ -68,15 +69,17 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>
       <Visible visible={visible}>
-        <GoAFormItem
-          requirement={required ? 'required' : undefined}
-          error={modifiedErrors}
-          testId={`${isStepperReview === true && 'review-base-'}${path}`}
-          label={props?.noLabel === true ? '' : labelToUpdate}
-          helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
-        >
-          <InnerComponent {...modifiedProps} />
-        </GoAFormItem>
+        <FormFieldWrapper>
+          <GoAFormItem
+            requirement={required ? 'required' : undefined}
+            error={modifiedErrors}
+            testId={`${isStepperReview === true && 'review-base-'}${path}`}
+            label={props?.noLabel === true ? '' : labelToUpdate}
+            helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
+          >
+            <InnerComponent {...modifiedProps} />
+          </GoAFormItem>
+        </FormFieldWrapper>
       </Visible>
     </JsonFormRegisterProvider>
   );

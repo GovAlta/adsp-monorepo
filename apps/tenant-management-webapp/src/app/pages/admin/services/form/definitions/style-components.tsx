@@ -56,4 +56,16 @@ export const BorderBottom = styled.div`
 
 export const FormPreviewSpacer = styled.div`
   margin-top: var(--goa-space-l);
-`
+`;
+
+export const H3Inline = styled.h3`
+  display: inline-block;
+  position: relative;
+  top: var(--goa-space-s);
+`;
+
+export const ToolTipAdjust = styled.div`
+  position: relative;
+  top: var(--goa-space-s);
+  display: inline-block;
+`;

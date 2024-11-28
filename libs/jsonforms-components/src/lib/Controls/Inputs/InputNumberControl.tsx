@@ -4,7 +4,6 @@ import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-import { FormFieldWrapper } from './style-component';
 import {
   onBlurForNumericControl,
   onChangeForNumericControl,
@@ -28,45 +27,43 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
-    <FormFieldWrapper>
-      <GoAInput
-        type="number"
-        error={errorsFormInput.length > 0}
-        disabled={!enabled}
-        readonly={readOnly}
-        value={InputValue}
-        placeholder={placeholder}
-        step={StepValue}
-        min={MinValue}
-        max={MaxValue}
-        width={width}
-        name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-        testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-        onKeyPress={(name: string, value: string, key: string) => {
-          onKeyPressNumericControl({
-            name,
-            value,
-            key,
-            controlProps: props as ControlProps,
-          });
-        }}
-        onBlur={(name: string, value: string) => {
-          onBlurForNumericControl({
-            name,
-            value,
-            controlProps: props as ControlProps,
-          });
-        }}
-        onChange={(name: string, value: string) => {
-          onChangeForNumericControl({
-            name,
-            value,
-            controlProps: props as ControlProps,
-          });
-        }}
-        {...uischema?.options?.componentProps}
-      />
-    </FormFieldWrapper>
+    <GoAInput
+      type="number"
+      error={errorsFormInput.length > 0}
+      disabled={!enabled}
+      readonly={readOnly}
+      value={InputValue}
+      placeholder={placeholder}
+      step={StepValue}
+      min={MinValue}
+      max={MaxValue}
+      width={width}
+      name={appliedUiSchemaOptions?.name || `${id || label}-input`}
+      testId={appliedUiSchemaOptions?.testId || `${id}-input`}
+      onKeyPress={(name: string, value: string, key: string) => {
+        onKeyPressNumericControl({
+          name,
+          value,
+          key,
+          controlProps: props as ControlProps,
+        });
+      }}
+      onBlur={(name: string, value: string) => {
+        onBlurForNumericControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
+      }}
+      onChange={(name: string, value: string) => {
+        onChangeForNumericControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
+      }}
+      {...uischema?.options?.componentProps}
+    />
   );
 };
 

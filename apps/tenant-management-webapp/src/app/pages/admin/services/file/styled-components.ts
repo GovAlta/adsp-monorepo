@@ -148,7 +148,7 @@ export const OuterFileTypeTemplateEditorContainer = styled.div`
 `;
 
 export const DropDownZIndex = styled.div`
-  z-index: 1100;
+  z-index: 100;
   position: relative;
 `;
 
