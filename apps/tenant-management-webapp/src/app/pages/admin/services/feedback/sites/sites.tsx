@@ -6,7 +6,7 @@ import { SiteAddEditForm } from './edit';
 import { deleteFeedbackSite, getFeedbackSites, updateFeedbackSite } from '@store/feedback/actions';
 import { FeedbackSite, defaultFeedbackSite } from '@store/feedback/models';
 import { RootState } from '@store/index';
-import { ButtonPadding } from './styled-components';
+import { ButtonPadding } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
 

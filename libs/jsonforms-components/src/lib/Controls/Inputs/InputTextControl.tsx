@@ -7,7 +7,6 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForTextControl, onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import { sinTitle } from '../../common/Constants';
-
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 export const formatSin = (value: string) => {

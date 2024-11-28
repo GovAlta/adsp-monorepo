@@ -4,13 +4,10 @@ using Moq;
 using Newtonsoft.Json;
 using Adsp.Sdk;
 using System.Text;
-using Newtonsoft.Json.Linq;
-using System.Runtime.CompilerServices;
 
 namespace Adsp.Platform.ScriptService.Services;
 
-#pragma warning disable CA1062 // Its just test code.
-public static class TestUtil
+internal static class TestUtil
 {
   public static IServiceDirectory GetServiceUrl(AdspId serviceId)
   {
@@ -36,8 +33,8 @@ public static class TestUtil
   )
   {
     using var mockHttp = new MockHttpMessageHandler();
-    string mockedHttpResponse = JsonConvert.SerializeObject(expectedResult, Formatting.None);
-    var ServiceDirectory = GetServiceUrl(serviceId);
+    var mockedHttpResponse = JsonConvert.SerializeObject(expectedResult, Formatting.None);
+    IServiceDirectory ServiceDirectory = GetServiceUrl(serviceId);
     var requestUrl = new Uri(ServiceDirectory.GetServiceUrl(serviceId).Result, endpoint);
 
     var handler = mockHttp.When(method, requestUrl.AbsoluteUri);
@@ -69,7 +66,7 @@ public static class TestUtil
   string endpoint,
   HttpMethod method,
   object? expectedResult,
-  Action<string> assert
+  Action<string?> assert
 )
   {
     using var mockHttp = new MockHttpMessageHandler();
@@ -79,7 +76,7 @@ public static class TestUtil
     var handler = mockHttp.When(method, requestUrl.AbsoluteUri);
     handler.Respond(req =>
      {
-       var body = req.Content.ReadAsStringAsync().Result;
+       var body = req.Content?.ReadAsStringAsync().Result;
        assert(body);
        string mockedHttpResponse = JsonConvert.SerializeObject(expectedResult, Formatting.None);
        return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
@@ -97,42 +94,5 @@ public static class TestUtil
     );
 
     return mockRestClient;
-  }
-
-  public static Dictionary<string, object>? ToDictionary(this JToken token)
-  {
-    if (token != null && token is JObject item)
-    {
-      return (Dictionary<string, object>)DictionaryHelper(item);
-    }
-    return null;
-  }
-
-  public static object DictionaryHelper(JToken token)
-  {
-    if (token is JObject jObject)
-    {
-      var result = new Dictionary<string, object>();
-      foreach (var property in jObject.Properties())
-      {
-        result[property.Name] = DictionaryHelper(property.Value);
-      }
-      return result;
-    }
-    else if (token is JArray jArray)
-    {
-      var items = new List<object>();
-      foreach (var item in jArray)
-      {
-        items.Add(DictionaryHelper(item));
-      }
-      return items;
-    }
-    else if (token is JValue jValue)
-    {
-      return jValue.Value;
-    }
-
-    return null;
   }
 }

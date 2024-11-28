@@ -51,7 +51,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     setFormData(updatedData);
     updateFormData(updatedData);
   };
-  /* istanbul ignore next */
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleRequiredFieldBlur = (name: string, updatedData?: any) => {
     const err = { ...errors };
@@ -77,7 +77,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
 
   return (
     <>
-      <GoAGrid minChildWidth="0ch" gap="s">
+      <GoAGrid minChildWidth="0ch" gap="s" mb="m">
         <GoAFormItem
           label="First name"
           requirement={schema?.required?.includes('firstName') ? 'required' : undefined}
@@ -93,7 +93,6 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
               handleInputChange(name, value);
             }}
             onBlur={(name) => {
-              /* istanbul ignore next */
               handleRequiredFieldBlur(name);
             }}
             width="100%"

@@ -25,18 +25,20 @@ import {
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, isValidJSONCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { TabletMessage } from '@components/TabletMessage';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface AddScriptProps {
   activeEdit: boolean;
+  openAddScriptInitialValue?: boolean;
 }
 
-export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
+export const ScriptsView = ({ activeEdit, openAddScriptInitialValue }: AddScriptProps): JSX.Element => {
   const getDefaultTestInput = () => {
     // Oct-27-2022 Paul: we might need to update the default input in the feature.
     return JSON.stringify({ testVariable: 'some data' });
   };
   const dispatch = useDispatch();
-  const [openAddScript, setOpenAddScript] = useState(false);
+  const [openAddScript, setOpenAddScript] = useState(openAddScriptInitialValue || false);
   const [showScriptEditForm, setShowScriptEditForm] = useState(false);
   const [selectedScript, setSelectedScript] = useState<ScriptItem>(defaultScript);
   const [name, setName] = useState('');
@@ -46,7 +48,8 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
-
+  const location = useLocation();
+  const navigate = useNavigate();
   const goBack = () => {
     setShowScriptEditForm(false);
   };
@@ -55,15 +58,13 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
   );
   const isNotificationActive = latestNotification && !latestNotification.disabled;
+  const { scripts } = useSelector((state: RootState) => state.scriptService);
 
   useEffect(() => {
     dispatch(fetchScripts());
-    // dispatch(FetchRealmRoles());
-    // dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { scripts } = useSelector((state: RootState) => state.scriptService);
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -89,6 +90,10 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setShowScriptEditForm(false);
     validators.clear();
     document.body.style.overflow = 'unset';
+    navigate({
+      pathname: `/admin/services/script`,
+      search: '?scripts=true',
+    });
   };
 
   const openEditorOnAdd = (script) => {
@@ -117,7 +122,9 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
 
   const onEdit = (script) => {
     script.testInputs = testInput;
-    setSelectedScript(script);
+    if(location.pathname.includes(script.id)){
+      setSelectedScript(scripts[script.id]);
+    }
     setShowScriptEditForm(true);
   };
 
@@ -141,6 +148,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   useEffect(() => {
     showScriptEditForm ? (document.body.style.overflow = 'hidden') : (document.body.style.overflow = 'unset');
   }, [showScriptEditForm]);
+
   return (
     <section>
       <div>

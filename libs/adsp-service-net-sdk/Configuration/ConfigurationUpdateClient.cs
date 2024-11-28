@@ -1,10 +1,8 @@
-
-using System.Diagnostics.CodeAnalysis;
 using Adsp.Sdk.Events;
 using Microsoft.Extensions.Logging;
 
 namespace Adsp.Sdk.Configuration;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class ConfigurationUpdateClient : IEventSubscriber<ConfigurationUpdate>
 {
   private const string ConfigurationEventNamespace = "configuration-service";

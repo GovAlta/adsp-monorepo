@@ -13,16 +13,16 @@ interface ScriptItemProps {
   onEdit?: (script: ScriptItem) => void;
 }
 
-
 const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDelete, onEdit }: ScriptItemProps) => {
   const navigate = useNavigate();
-  const getPathName = useLocation()
+  const location = useLocation();
 
-  useEffect(()=>{
-    if(getPathName.pathname.includes('/script/edit')){
+  useEffect(() => {
+    if (location.pathname.includes('/script/edit')) {
       onEdit(script);
     }
-  },[])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
 
   return (
     <tr key={script.name}>
@@ -43,7 +43,6 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
               title="Edit"
               testId={`script-edit-${script.name}`}
               onClick={() => {
-                onEdit(script);
                 navigate({
                   pathname: `edit/${script.id}`,
                   search: '?headless=false',

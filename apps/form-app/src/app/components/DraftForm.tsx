@@ -162,9 +162,11 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
 
   return (
     <div>
-      <SavingIndicator data-saving={saving}>
-        <GoABadge type="information" content="Saving..." />
-      </SavingIndicator>
+      {!anonymousApply && (
+        <SavingIndicator data-saving={saving}>
+          <GoABadge type="information" content="Saving..." />
+        </SavingIndicator>
+      )}
       <ContextProvider
         submit={{
           submitForm: onSubmitFunction,

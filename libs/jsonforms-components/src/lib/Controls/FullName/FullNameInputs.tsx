@@ -28,7 +28,6 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   requiredFields,
 }: NameInputsProps): JSX.Element => {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  /* istanbul ignore next */
 
   // eslint-disable-next-line
   const handleRequiredFieldBlur = (name: string, updatedData?: any) => {
@@ -47,7 +46,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   };
 
   return (
-    <GoAGrid minChildWidth="0ch" gap="s" testId="wrapper">
+    <GoAGrid minChildWidth="0ch" gap="s" mb="m" testId="wrapper">
       <GoAFormItem
         testId="formitem-first-name"
         label="First name"
@@ -62,7 +61,6 @@ export const NameInputs: React.FC<NameInputsProps> = ({
           value={firstName || ''}
           onChange={(name, value) => handleInputChange(name, value)}
           onBlur={(name) => {
-            /* istanbul ignore next */
             handleRequiredFieldBlur(name);
           }}
           width="100%"
@@ -97,7 +95,6 @@ export const NameInputs: React.FC<NameInputsProps> = ({
           value={lastName || ''}
           onChange={(name, value) => handleInputChange(name, value)}
           onBlur={(name) => {
-            /* istanbul ignore next */
             handleRequiredFieldBlur(name);
           }}
           width="100%"

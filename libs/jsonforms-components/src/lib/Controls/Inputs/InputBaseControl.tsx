@@ -2,11 +2,11 @@ import React, { useContext, useEffect } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { useJsonForms } from '@jsonforms/react';
-import { FormFieldWrapper } from './style-component';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 import { StepInputStatus, StepperContext } from '../FormStepper/StepperContext';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
+import { FormFieldWrapper } from './style-component';
 
 export type GoAInputType =
   | 'text'

@@ -1,8 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { IconDiv, MoreDetails } from './styled-components';
+import { IconDiv, MoreDetails } from '../styled-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Feedback, Rating } from '@store/feedback/models';
-import { URL } from './styled-components';
+import { URL } from '../styled-components';
 import moment from 'moment';
 
 interface FeedbackTableItemProps {

@@ -2,6 +2,7 @@ import { CellProps, WithClassname, ControlProps } from '@jsonforms/core';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
+
 export type WithBaseInputReviewProps = CellProps & WithClassname & WithInputProps;
 
 export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JSX.Element => {

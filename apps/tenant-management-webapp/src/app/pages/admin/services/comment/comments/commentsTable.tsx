@@ -135,7 +135,10 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
                   </IconDiv>
                 </CommentsActions>
               </CommentsHeader>
+
               <CommentBody data-testid={`comment-content-${index}`}>{comment.content}</CommentBody>
+
+              <br />
             </CommentsList>
           );
         })}

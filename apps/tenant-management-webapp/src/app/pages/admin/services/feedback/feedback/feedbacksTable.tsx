@@ -3,7 +3,7 @@ import DataTable from '@components/DataTable';
 import { FeedbackTableItem } from './feedbackTableItem';
 import { Feedback } from '@store/feedback/models';
 
-import { TableDiv } from './styled-components';
+import { TableDiv } from '../styled-components';
 
 export interface FeedbackTableProps {
   feedbacks: Feedback[];

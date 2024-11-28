@@ -5,8 +5,8 @@ import { RootState } from '@store/index';
 import React, { FunctionComponent, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { FeedbackOverview } from './overview';
-import { FeedbackSites } from './sites';
-import { FeedbacksList } from './feedbacks';
+import { FeedbackSites } from './sites/sites';
+import { FeedbacksList } from './feedback/feedbacks';
 
 import AsideLinks from '@components/AsideLinks';
 export const Feedback: FunctionComponent = () => {

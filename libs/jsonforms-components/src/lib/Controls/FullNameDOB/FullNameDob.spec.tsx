@@ -153,7 +153,6 @@ describe('FullNameDobControl', () => {
     );
 
     const lastNameInput = screen.getByTestId('name-form-last-name');
-    fireEvent.change(lastNameInput, { target: { value: 'Smith' } });
 
     fireEvent(
       lastNameInput,
@@ -193,6 +192,45 @@ describe('FullNameDobControl', () => {
     fireEvent(
       dobInput,
       new CustomEvent('_change', {
+        detail: { name: 'dateOfBirth', value: '2000-12-12' },
+      })
+    );
+
+    expect((dobInput as HTMLInputElement).value).toBe('2000-12-12');
+    expect(mockHandleChange).toBeCalledTimes(1);
+    expect(mockHandleChange).toHaveBeenCalledWith('path-to-data', {
+      ...defaultFormData,
+      dateOfBirth: '2000-12-12',
+    });
+  });
+  it('calls handleRequiredFieldBlur on user input in date of birth', () => {
+    render(
+      <FullNameDobControl
+        data={defaultFormData}
+        handleChange={mockHandleChange}
+        path="path-to-data"
+        schema={{}}
+        uischema={{} as ControlElement}
+        label={''}
+        errors={''}
+        rootSchema={{}}
+        id={''}
+        enabled={false}
+        visible={false}
+      />
+    );
+
+    const dobInput = screen.getByTestId('dob-form-dateOfBirth');
+    fireEvent(
+      dobInput,
+      new CustomEvent('_change', {
+        detail: { name: 'dateOfBirth', value: '2000-12-12' },
+      })
+    );
+
+    fireEvent(
+      dobInput,
+      new CustomEvent('_blur', {
         detail: { name: 'dateOfBirth', value: '2000-12-12' },
       })
     );

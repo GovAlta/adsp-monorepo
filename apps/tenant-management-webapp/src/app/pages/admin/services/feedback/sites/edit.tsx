@@ -13,7 +13,7 @@ import {
   characterCheck,
   validationPattern,
 } from '@lib/validation/checkInput';
-import { CheckboxSpaceWrapper, HelpText } from './styled-components';
+import { CheckboxSpaceWrapper, HelpText } from '../styled-components';
 
 interface SiteFormProps {
   initialValue?: FeedbackSite;

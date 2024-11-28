@@ -46,8 +46,9 @@ export const LabelDiv = styled.div`
   padding-bottom: 1.5rem;
 `;
 
+/* istanbul ignore next */
 export const ListItem = styled.li<ListItemProps>`
-  background-color: ${({ selectedIndex, index }) => selectedIndex === index ? 'var(--color-primary)' : ''};
-  color: ${({ selectedIndex, index }) => selectedIndex === index ?  'var(--color-white) !important' : ''};
-  font-weight: ${({ selectedIndex, index }) => selectedIndex === index ?  'var(--fw-bold)' : ''};
+  background-color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-primary)' : '')};
+  color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-white) !important' : '')};
+  font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--fw-bold)' : '')};
 `;

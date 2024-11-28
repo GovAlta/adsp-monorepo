@@ -6,7 +6,7 @@ internal sealed class MetricsContext
   private const string ResponseTimeMetric = "response-time";
 
   private readonly Stopwatch _stopwatch = new();
-  private readonly object _metricsLock = new();
+  private readonly Lock _metricsLock = new();
   private readonly IDictionary<string, decimal> _metrics = new Dictionary<string, decimal>();
 
   public Stopwatch Stopwatch

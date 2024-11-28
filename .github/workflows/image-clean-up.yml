@@ -18,6 +18,9 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9'
       - run: npm ci
       - shell: bash
         run: echo "ALL_APPS=$(npx nx show projects --type=app | tr "\n" ", ")" >> $GITHUB_ENV
