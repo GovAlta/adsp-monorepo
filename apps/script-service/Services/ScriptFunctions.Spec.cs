@@ -329,5 +329,28 @@ public sealed class ScriptFunctionsTests : IDisposable
     Assert.NotNull(inventory);
     Assert.Equal(3, ((List<object>)inventory!).Count());
   }
+
+  [Fact]
+  public void CanCallApi()
+  {
+    var data = @"
+      {
+        ""firstName"": ""Bob"",
+        ""lastName"": ""Bing"",
+        ""middleName"": ""Billy"",
+        ""otherName"": ""Bob""
+    }";
+    var expected = JObject.Parse(data);
+    var serviceId = AdspId.Parse("urn:ads:platform:my-service");
+    var endpoint = "https://bob.com/bob/v2/bobs";
+    var tenant = AdspId.Parse("urn:ads:platform:my-tenant");
+    IServiceDirectory ServiceDirectory = TestUtil.GetServiceUrl(serviceId);
+    using RestSharp.IRestClient RestClient = TestUtil.GetRestClient(serviceId, endpoint, HttpMethod.Get, expected);
+    var ScriptFunctions = new ScriptFunctions(tenant, TestUtil.GetServiceUrl(serviceId), TestUtil.GetMockToken(), RestClient);
+    IDictionary<string, object?>? actual = ScriptFunctions.HttpGet(endpoint);
+    Assert.NotNull(actual);
+    Assert.Equal("Bob", actual!["firstName"]);
+    Assert.Equal("Bing", actual!["lastName"]);
+  }
 }
 
