@@ -209,7 +209,7 @@ internal class ScriptFunctions : IScriptFunctions
   }
 
 
-  public virtual object? HttpGet(string url)
+  public virtual IDictionary<string, object?>? HttpGet(string url)
   {
     if (String.IsNullOrEmpty(url))
     {
@@ -220,8 +220,8 @@ internal class ScriptFunctions : IScriptFunctions
     var request = new RestRequest(url, Method.Get);
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    IDictionary<string, object>? response = _client.GetAsync<IDictionary<string, object>>(request).Result;
-    return response;
+    RestResponse data = _client.GetAsync(request).Result;
+    return ParseResponse(data)?.ToDictionary<object?>();
   }
 
   public virtual string? CreateTask(
@@ -342,5 +342,4 @@ internal class ScriptFunctions : IScriptFunctions
     }
     return value;
   }
-
 }

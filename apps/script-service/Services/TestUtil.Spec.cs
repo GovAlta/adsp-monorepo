@@ -33,8 +33,8 @@ internal static class TestUtil
   )
   {
     using var mockHttp = new MockHttpMessageHandler();
-    string mockedHttpResponse = JsonConvert.SerializeObject(expectedResult, Formatting.None);
-    var ServiceDirectory = GetServiceUrl(serviceId);
+    var mockedHttpResponse = JsonConvert.SerializeObject(expectedResult, Formatting.None);
+    IServiceDirectory ServiceDirectory = GetServiceUrl(serviceId);
     var requestUrl = new Uri(ServiceDirectory.GetServiceUrl(serviceId).Result, endpoint);
 
     var handler = mockHttp.When(method, requestUrl.AbsoluteUri);
