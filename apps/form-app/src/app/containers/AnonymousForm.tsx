@@ -1,8 +1,10 @@
 import { Container, Recaptcha } from '@core-services/app-common';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { FunctionComponent } from 'react';
+import { createDefaultAjv } from '@abgov/jsonforms-components';
 import { Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { DraftForm } from '../components/DraftForm';
+import { DraftFormWrapper } from '../components/DraftFormWrapper';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { SubmittedForm } from '../components/SubmittedForm';
 import {
@@ -19,6 +21,8 @@ import {
   submitAnonymousForm,
   AppState,
 } from '../state';
+
+const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
 export const AnonymousForm: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,7 +45,7 @@ export const AnonymousForm: FunctionComponent = () => {
             <>
               {form?.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
               {!form && (
-                <DraftForm
+                <DraftFormWrapper
                   definition={definition}
                   form={form}
                   data={data}
@@ -56,6 +60,7 @@ export const AnonymousForm: FunctionComponent = () => {
                   onSubmit={function () {
                     dispatch(submitAnonymousForm());
                   }}
+                  ajv={ajv}
                 />
               )}
             </>
