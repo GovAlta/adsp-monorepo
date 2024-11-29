@@ -22,16 +22,33 @@ export const StepperContext = createContext({
 });
 
 const isEmpty = (value: unknown): boolean => {
-  return value === undefined || value === null || (typeof value === 'string' && value.length < 1);
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === 'string' && value.length < 1) ||
+    (typeof value === 'boolean' && value === false)
+  );
 };
 
-export const getCompletionStatus = (table: StatusTable, step: number): GoAFormStepStatusType | undefined => {
+export const getCompletionStatus = (
+  table: StatusTable,
+  step: number,
+  isFormChanged = false
+): GoAFormStepStatusType | undefined => {
   const nonEmptyCount = getNonEmptyCount(table, step);
+  const requiredCount = getRequiredCount(table, step);
 
   if (nonEmptyCount === 0) {
-    return undefined;
+    if (!isFormChanged) {
+      return undefined;
+    }
+    if (requiredCount === 0) {
+      return 'complete';
+    } else {
+      return 'incomplete';
+    }
   }
-  const requiredCount = getRequiredCount(table, step);
+
   const requiredNonEmptyCount = getNonEmptyRequiredCount(table, step);
   if (requiredNonEmptyCount === requiredCount) {
     return 'complete';
@@ -40,7 +57,9 @@ export const getCompletionStatus = (table: StatusTable, step: number): GoAFormSt
 };
 
 const getNonEmptyCount = (table: StatusTable, step: number): number => {
-  const nonEmptyStatuses = Object.keys(table).filter((k) => table[k].step === step && !isEmpty(table[k].value));
+  const nonEmptyStatuses = Object.keys(table).filter((k) => {
+    return table[k].step === step && !isEmpty(table[k].value);
+  });
   return nonEmptyStatuses.length;
 };
 

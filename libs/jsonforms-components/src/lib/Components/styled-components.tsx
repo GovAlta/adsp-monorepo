@@ -7,21 +7,15 @@ import {
 } from './DropDownTypes';
 
 export const GoADropdownTextbox = styled.div<GoADropdownTextboxProps>`
-  text-overflow: ellipsis;
-  overflow: hidden;
-  min-height: 43px;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 8px;
-  padding-right: 8px;
-  border-radius: 4px;
-  border: 1px solid #666;
-  font-size: 18px;
-  font-weight: 400;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  box-shadow: ${(p) => (p.isOpen ? `0 0 0 3px #feba35` : '')};
+  border-radius: var(--goa-space-2xs);
+  box-shadow: ${(p) => (p.isOpen ? `0 0 0 3px var(--goa-color-interactive-focus)` : '')};
+  &:hover {
+    cursor: pointer;
+  }
+
+  .inputStyle {
+    box-shadow: ${(p) => (p.isOpen ? `0 0 0 3px var(--goa-color-interactive-focus) !important` : '')};
+  }
 `;
 
 export const GoADropdownListContainerWrapper = styled.div<GoADropdownListContainerWrapperProps>`
@@ -48,14 +42,16 @@ export const GoADropdownListContainer = styled.div<GoADropdownListContainerProps
   }
   &:hover {
     background-color: var(--goa-color-interactive-hover) !important;
-    color: white !important;
+    color: #fff !important;
+    /* Fix to override scrollbar color in Firefox */
+    scrollbar-color: #a8a8a8 var(--goa-color-greyscale-100) !important;
   }
 `;
 
 export const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
   padding: var(--goa-space-2xs) var(--goa-space-s);
   text-overflow: ellipsis;
-  color: ${(p) => (p.isSelected ? 'white' : 'var(--goa-color-greyscale-black)')} !important;
+  color: ${(p) => (p.isSelected ? '#fff' : 'var(--goa-color-greyscale-black)')} !important;
   border: 0px solid var(--goa-color-greyscale-100);
   z-index: 1001;
   cursor: pointer;
@@ -76,16 +72,18 @@ export const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
   &:focus-visible {
     caret-color: transparent;
     color: black !important;
-    background-color: var(--goa-color-interactive-hover) !important;
+    background-color: ${(p) =>
+      p.isSelected ? 'var(--goa-color-interactive-hover)' : 'var(--goa-color-greyscale-100) !important'};
   }
   &:focus-within {
     caret-color: transparent;
-    color: ${(p) => (p.isSelected ? 'white' : 'var(--goa-color-interactive-hover)')} !important;
-    background-color: var(--goa-color-interactive-hover) !important;
+    color: #fff !important;
+    background-color: ${(p) =>
+      p.isSelected ? 'var(--goa-color-interactive-hover)' : 'var(--goa-color-greyscale-100) !important'};
   }
   .dropDownListItem:focus-visible {
     caret-color: transparent;
     outline: none !important;
-    color: ${(p) => (p.isSelected ? 'white' : 'var(--goa-color-interactive-hover) !important')};
+    color: ${(p) => (p.isSelected ? '#fff' : 'var(--goa-color-interactive-hover) !important')};
   }
 `;

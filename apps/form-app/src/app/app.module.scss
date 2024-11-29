@@ -4,6 +4,7 @@
 
 html,
 body {
+  overflow: hidden;
   margin: 0;
   height: 100vh;
 
@@ -11,11 +12,15 @@ body {
     margin: 0;
     height: 100vh;
   }
+
 }
 
 main {
   flex-grow: 1;
   position: relative;
+  a[target=_blank]:after {
+    background: none !important;
+  }
 }
 
 .app {

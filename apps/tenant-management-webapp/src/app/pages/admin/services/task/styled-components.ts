@@ -326,27 +326,23 @@ export const DescriptionItem = styled.div`
 `;
 
 export const ErrorMsg = styled.div`
-   {
-    display: inline-flex;
-    color: var(--color-red);
-    pointer-events: none;
-    gap: 0.25rem;
-  }
+  display: inline-flex;
+  color: var(--color-red);
+  pointer-events: none;
+  gap: 0.25rem;
 `;
 
 export const MoreDetails = styled.div`
-   {
-    background-color: var(--goa-color-greyscale-100);
-    padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
-    width: 100%;
-    text-align: left;
-    p {
-      font-weight: bold;
-      padding-top: var(--goa-space-s);
-      margin-bottom: var(--goa-space-xs);
-    }
-    span {
-    }
+  background-color: var(--goa-color-greyscale-100);
+  padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
+  width: 100%;
+  text-align: left;
+  p {
+    font-weight: bold;
+    padding-top: var(--goa-space-s);
+    margin-bottom: var(--goa-space-xs);
+  }
+  span {
   }
 `;
 

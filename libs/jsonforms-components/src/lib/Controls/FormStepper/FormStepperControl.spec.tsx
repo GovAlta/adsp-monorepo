@@ -1,12 +1,12 @@
-import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Category, SchemaBasedCondition, UISchemaElement } from '@jsonforms/core';
 import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
-import FormStepperControl, { FormStepperOptionProps, getProperty } from './FormStepperControl';
-import { StatusTable, StepInputStatus } from './StepperContext';
-import { useState } from 'react';
+import { FormStepperOptionProps } from './FormStepperControl';
+import { getProperty } from './util/helpers';
+
 export const ContextProvider = ContextProviderFactory();
 
 /**

@@ -35,6 +35,11 @@ export const Anchor = styled.div`
   text-decoration: underline;
   outline: none;
   cursor: pointer;
+
+  &:focus {
+    outline: 2px solid #0070c4;
+    background-color: #e6f7ff;
+  }
 `;
 
 export const ReviewListItem = styled.div`

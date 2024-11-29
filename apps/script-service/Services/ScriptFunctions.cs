@@ -2,6 +2,7 @@ using Adsp.Platform.ScriptService.Services.Platform;
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using Adsp.Sdk.Events;
+using Newtonsoft.Json.Linq;
 using NLua;
 using RestSharp;
 
@@ -29,7 +30,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("templateId cannot be null or empty.");
     }
 
-    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.PdfServiceId).Result;
+    Uri servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.PdfServiceId).Result;
     var requestUrl = new Uri(servicesUrl, "/pdf/v1/jobs");
 
     var token = _getToken().Result;
@@ -58,7 +59,7 @@ internal class ScriptFunctions : IScriptFunctions
 
     request.AddJsonBody(generationRequest);
 
-    var result = _client.PostAsync<PdfGenerationResult>(request).Result;
+    PdfGenerationResult? result = _client.PostAsync<PdfGenerationResult>(request).Result;
     return result?.Id;
   }
 
@@ -74,7 +75,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("name cannot be null or empty.");
     }
 
-    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ConfigurationServiceId).Result;
+    Uri servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ConfigurationServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/configuration/v2/configuration/{@namespace}/{name}/active");
 
     var token = _getToken().Result;
@@ -83,8 +84,8 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var result = _client.GetAsync<ConfigurationResult>(request).Result;
-    return result?.Configuration;
+    RestResponse data = _client.GetAsync(request).Result;
+    return ParseResponse(data)?.ToDictionary<object?>();
   }
 
   public FormDataResult? GetFormData(string formId)
@@ -94,7 +95,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("formId cannot be null or empty.");
     }
 
-    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
+    Uri servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/data");
 
     var token = _getToken().Result;
@@ -102,8 +103,15 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var result = _client.GetAsync<FormDataResult>(request).Result;
-    return result;
+    RestResponse data = _client.GetAsync(request).Result;
+    JToken? json = ParseResponse(data);
+    return json != null
+      ? new FormDataResult()
+      {
+        data = json["data"]?.ToDictionary<object?>(),
+        files = json["files"]?.ToDictionary<string?>()
+      }
+      : null;
   }
 
   public virtual FormSubmissionResult? GetFormSubmission(string formId, string submissionId)
@@ -118,7 +126,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("submissionId cannot be null or empty.");
     }
 
-    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
+    Uri servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
 
     var token = _getToken().Result;
@@ -126,11 +134,11 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var result = _client.GetAsync<FormSubmissionResult>(request).Result;
+    FormSubmissionResult? result = _client.GetAsync<FormSubmissionResult>(request).Result;
     return result;
   }
 
-  public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
+  public virtual bool SendDomainEvent(string @namespace, string name, string? correlationId, LuaTable? context = null, LuaTable? payload = null)
   {
     if (String.IsNullOrEmpty(@namespace))
     {
@@ -142,7 +150,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("name cannot be null or empty.");
     }
 
-    var eventServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.EventServiceId).Result;
+    Uri eventServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.EventServiceId).Result;
     var requestUrl = new Uri(eventServiceUrl, $"/event/v1/events");
     var token = _getToken().Result;
     var body = new FullDomainEvent<IDictionary<string, object>>()
@@ -151,21 +159,21 @@ internal class ScriptFunctions : IScriptFunctions
       Namespace = @namespace,
       Name = name,
       CorrelationId = correlationId,
-      Context = context,
+      Context = context.ToDictionary(),
       Timestamp = DateTime.Now,
-      Payload = payload ?? new Dictionary<string, object>()
+      Payload = payload != null ? payload.ToDictionary() : new Dictionary<string, object>()
     };
 
     var request = new RestRequest(requestUrl, Method.Post);
     request.AddJsonBody(body);
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var result = _client.PostAsync(request).Result;
+    RestResponse result = _client.PostAsync(request).Result;
     return result.IsSuccessful;
   }
 
 
-  public virtual DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
+  public virtual IDictionary<string, object?>? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
   {
     if (String.IsNullOrEmpty(formId))
     {
@@ -182,7 +190,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("dispositionStatus cannot be null or empty.");
     }
 
-    var formServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
+    Uri formServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
     var requestUrl = new Uri(formServiceUrl, $"/form/v1/forms/{formId}/submissions/{submissionId}");
     var token = _getToken().Result;
     var body = new
@@ -196,12 +204,12 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddHeader("Authorization", $"Bearer {token}");
     request.AddQueryParameter("tenantId", _tenantId.ToString());
 
-    var result = _client.PostAsync<DispositionResponse>(request).Result;
-    return result;
+    RestResponse result = _client.PostAsync(request).Result;
+    return ParseResponse(result)?.ToDictionary<object?>();
   }
 
 
-  public virtual object? HttpGet(string url)
+  public virtual IDictionary<string, object?>? HttpGet(string url)
   {
     if (String.IsNullOrEmpty(url))
     {
@@ -212,8 +220,8 @@ internal class ScriptFunctions : IScriptFunctions
     var request = new RestRequest(url, Method.Get);
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var response = _client.GetAsync<IDictionary<string, object>>(request).Result;
-    return response;
+    RestResponse data = _client.GetAsync(request).Result;
+    return ParseResponse(data)?.ToDictionary<object?>();
   }
 
   public virtual string? CreateTask(
@@ -236,7 +244,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("name cannot be null or empty.");
     }
 
-    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.TaskServiceId).Result;
+    Uri servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.TaskServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/task/v1/queues/{queueNamespace}/{queueName}/tasks");
 
     var token = _getToken().Result;
@@ -254,7 +262,7 @@ internal class ScriptFunctions : IScriptFunctions
     };
     request.AddJsonBody(generationRequest);
 
-    var result = _client.PostAsync<TaskCreationResult>(request).Result;
+    TaskCreationResult? result = _client.PostAsync<TaskCreationResult>(request).Result;
     return result?.Id;
   }
 
@@ -270,7 +278,7 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("name cannot be null or empty.");
     }
 
-    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
+    Uri servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/value/v1/{@namespace}/values/{name}");
     var token = _getToken().Result;
 
@@ -281,12 +289,8 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    // Using generic IDictionary because the value service will return different key values and we
-    // can't have specific json property names in our own class.
-    var result = _client.GetAsync<IDictionary<string, object>>(request).Result;
-
-    return result;
-
+    RestResponse data = _client.GetAsync(request).Result;
+    return ParseResponse(data)?.ToDictionary<object>();
   }
 
   public virtual IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)
@@ -301,63 +305,18 @@ internal class ScriptFunctions : IScriptFunctions
       throw new ArgumentException("name cannot be null or empty.");
     }
 
-    const string CONTEXT_KEY = "context";
-    const string VALUE_KEY = "value";
-    const string CORRELATION_ID_KEY = "correlationId";
-
-    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
+    ValueCreateRequest? valueRequest;
+    Uri servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ValueServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/value/v1/{@namespace}/values/{name}");
     var token = _getToken().Result;
 
-    var valueRequest = new ValueCreateRequest()
+    if (value is LuaTable luaTable)
     {
-      Namespace = @namespace,
-      Name = name,
-      Timestamp = DateTime.Now,
-      Value = null,
-      Context = null
-    };
-
-    if (value?.GetType() == typeof(LuaTable))
-    {
-      var table = ((LuaTable)value);
-      var dataValue = table.ToDictionary();
-
-      if (!dataValue.TryGetValue(VALUE_KEY, out value))
-      {
-        throw new ArgumentException("value is required.");
-      }
-
-      if (dataValue[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
-      {
-        valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
-      }
-      if (dataValue.TryGetValue(VALUE_KEY, out value) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
-      {
-        valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?> ?? new Dictionary<string, object?>();
-      }
-
-      valueRequest.CorrelationId = dataValue[CORRELATION_ID_KEY].ToString();
+      valueRequest = luaTable.ToRequest(@namespace, name);
     }
     else if (value is IDictionary<string, object> dictionary)
     {
-      var dataValue = value as IDictionary<string, object>;
-
-      if (dataValue != null && !dataValue.TryGetValue(VALUE_KEY, out value))
-      {
-        throw new ArgumentException("value is required.");
-      }
-
-      if (dataValue?[VALUE_KEY].GetType() == typeof(Dictionary<string, object>))
-      {
-        valueRequest.Value = dataValue[VALUE_KEY] as Dictionary<string, object?>;
-      }
-      if (dataValue != null && dataValue.TryGetValue(VALUE_KEY, out value) && dataValue[CONTEXT_KEY].GetType() == typeof(Dictionary<string, object>))
-      {
-        valueRequest.Context = dataValue[CONTEXT_KEY] as Dictionary<string, object?>;
-      }
-
-      valueRequest.CorrelationId = dataValue?[CORRELATION_ID_KEY]?.ToString();
+      valueRequest = dictionary.ToRequest(@namespace, name);
     }
     else
     {
@@ -371,9 +330,16 @@ internal class ScriptFunctions : IScriptFunctions
 
     // Using generic IDictionary because the value service will return different key values and we
     // can't have specific json property names in our own class.
-    var result = _client.PostAsync<IDictionary<string, object?>?>(request).Result;
-
-    return result;
+    return _client.PostAsync<IDictionary<string, object?>?>(request).Result;
   }
 
+  private static JToken? ParseResponse(RestResponse response)
+  {
+    JToken? value = null;
+    if (response?.Content is not null)
+    {
+      value = JToken.Parse(response.Content);
+    }
+    return value;
+  }
 }

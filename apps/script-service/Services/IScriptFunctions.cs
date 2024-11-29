@@ -18,11 +18,11 @@ interface IScriptFunctions
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
   );
 
-  bool SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null);
+  bool SendDomainEvent(string namespaceValue, string name, string? correlationId, LuaTable? context = null, LuaTable? payload = null);
 
-  object? HttpGet(string url);
+  IDictionary<string, object?>? HttpGet(string url);
 
-  DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason);
+  IDictionary<string, object?>? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason);
 
   IDictionary<string, object>? ReadValue(string @namespace, string name, int top = 10, string? after = null);
 

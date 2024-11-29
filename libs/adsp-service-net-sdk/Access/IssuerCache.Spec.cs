@@ -1,14 +1,9 @@
-using Adsp.Sdk.Access;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Xunit;
 using Moq;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using RichardSzalay.MockHttp;
-using RestSharp;
-using Adsp.Sdk.Tenancy;
-using Adsp.Sdk.Directory;
 
 namespace Adsp.Sdk.Access.Tests;
 
@@ -41,8 +36,10 @@ public class IssuerCacheTests
   private static ITenantService CreateFakeTenantService()
   {
     var tenantService = new Mock<ITenantService>();
-    var tenants = new List<Tenant>();
-    tenants.Add(CreateFakeTenant());
+    var tenants = new List<Tenant>
+    {
+      CreateFakeTenant()
+    };
     tenantService.Setup(
       p => p.GetTenants()
     ).ReturnsAsync(tenants);

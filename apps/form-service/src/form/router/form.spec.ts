@@ -581,6 +581,29 @@ describe('form router', () => {
         expect.objectContaining({ createdByIdEquals: user.id })
       );
     });
+
+    it('can prevent non-admin user from finding forms with data', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [],
+      };
+      const req = {
+        user,
+        query: { includeData: 'true' },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
   });
 
   describe('createForm', () => {
@@ -1629,7 +1652,11 @@ describe('form router', () => {
       const handler = findSubmissions(apiId, formSubmissionMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(formSubmissionMock.find).toBeCalledWith(100, undefined, expect.objectContaining({ tenantIdEquals: tenantId }));
+      expect(formSubmissionMock.find).toBeCalledWith(
+        100,
+        undefined,
+        expect.objectContaining({ tenantIdEquals: tenantId })
+      );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 

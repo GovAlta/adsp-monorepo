@@ -20,7 +20,7 @@ import { StatusOverview } from './overview';
 import { useActionStateCheck } from '@components/Indicator';
 import { ApplicationList } from './styled-components';
 
-import { WebhookFormModal } from './webhookForm';
+import { WebhookFormModal } from './webhooks/webhookForm';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import AsideLinks from '@components/AsideLinks';
 import { AddEditStatusWebhookType } from '@store/status/models';

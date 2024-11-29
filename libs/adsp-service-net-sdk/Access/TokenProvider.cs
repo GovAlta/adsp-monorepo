@@ -1,13 +1,12 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RestSharp;
 
 namespace Adsp.Sdk.Access;
-[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+
 internal sealed class TokenProvider : ITokenProvider, IDisposable
 {
-  private readonly object _lock = new();
+  private readonly Lock _lock = new();
   private string? _token;
   private DateTime _expiry;
 

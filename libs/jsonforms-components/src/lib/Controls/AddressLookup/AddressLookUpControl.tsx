@@ -48,6 +48,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const requiredFields = (schema as { required: string[] }).required;
+  const [dropdownSelected, setDropdownSelected] = useState(false);
   const updateFormData = (updatedAddress: Address) => {
     setAddress(updatedAddress);
     handleChange(path, updatedAddress);
@@ -57,6 +58,9 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const dropdownRef = useRef<HTMLUListElement>(null);
 
   const handleInputChange = (field: string, value: string) => {
+    if (field === 'addressLine1' && searchTerm.length < 3) {
+      setDropdownSelected(false);
+    }
     let newAddress;
     const postalCodeErrorMessage = (schema as { errorMessage?: { properties?: { postalCode?: string } } }).errorMessage
       ?.properties?.postalCode;
@@ -81,14 +85,12 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     return <HelpContentComponent {...props} isParent={true} showLabel={false} />;
   };
 
-
-
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (searchTerm.length > 2) {
+      if (searchTerm.length > 2 && dropdownSelected === false) {
         setLoading(true);
         setOpen(true);
-        await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress).then((response)=>{
+        await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress).then((response) => {
           const suggestions = filterSuggestionsWithoutAddressCount(response);
           if (isAlbertaAddress) {
             setSuggestions(filterAlbertaAddresses(suggestions));
@@ -96,7 +98,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
             setSuggestions(suggestions);
           }
           setLoading(false);
-        })
+        });
       } else {
         setSuggestions([]);
         setOpen(false);
@@ -104,7 +106,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [searchTerm, formUrl, isAlbertaAddress]);
+  }, [searchTerm, dropdownSelected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
@@ -117,75 +119,43 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     handleChange(path, suggestAddress);
     setSuggestions([]);
     setErrors({});
+    setDropdownSelected(true);
   };
 
-  /* istanbul ignore next */
   const handleRequiredFieldBlur = (name: string) => {
     const err = { ...errors };
-    if(data?.["city"] === undefined || data?.["city"] === ""){
-      err[name] = name === 'municipality' ? 'city is required' : ""
-      setErrors(err);
-    }
-
-    if(!data?.[name] || data[name] === '' || data?.[name] === undefined){
+    if (!data?.[name] || data[name] === '' || data?.[name] === undefined) {
       err[name] = name === 'municipality' ? 'city is required' : `${name} is required`;
       setErrors(err);
-    }
-
-    if(!data?.[name]){
-      err[name] = name === 'addressLine1' ? `${name} is required` : ``;
-      setErrors(err);
-    }
-
-    else{
+    } else {
       delete errors[name];
     }
-
-    setTimeout(() => {
-      setSuggestions([])
-      setOpen(false)
-    }, 100);
+    setSuggestions([]);
+    setOpen(false);
   };
 
-  useEffect(() => {
-    if (dropdownRef.current) {
-        const selectedItem = dropdownRef.current.children[selectedIndex];
-        if (selectedItem) {
-          selectedItem.scrollIntoView({
-            block: 'nearest',
-            behavior: 'smooth',
-          });
-        }
-      }
-    }, [selectedIndex, open]);
-
-/* istanbul ignore next */
-const handleKeyDown = (e:string,value:string,key:string) => {
+  const handleKeyDown = (e: string, value: string, key: string) => {
     if (key === 'ArrowDown') {
-        setSelectedIndex((prevIndex) =>
-            prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0
-        );
-        handleDropdownChange(value)
+      setSelectedIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
+      handleInputChange('addressLine1', value);
     } else if (key === 'ArrowUp') {
-        setSelectedIndex((prevIndex) =>
-            prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1
-        );
-        handleDropdownChange(value)
+      setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1));
+      handleInputChange('addressLine1', value);
     } else if (key === 'Enter') {
-      handleDropdownChange(value)
+      handleInputChange('addressLine1', value);
       setLoading(false);
       if (selectedIndex >= 0) {
-        document.getElementById("goaInput")?.blur()
+        document.getElementById('goaInput')?.blur();
         const suggestion = suggestions[selectedIndex];
-        if(suggestion){
+        if (suggestion) {
           setTimeout(() => {
-              handleSuggestionClick(suggestion);
-              setOpen(false);
-            }, 100);
-          }
+            handleSuggestionClick(suggestion);
+            setOpen(false);
+          }, 1);
         }
+      }
     }
-};
+  };
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   return (
@@ -203,36 +173,39 @@ const handleKeyDown = (e:string,value:string,key:string) => {
             ariaLabel={'address-form-address1'}
             placeholder="Start typing the first line of your address, required."
             value={address?.addressLine1 || ''}
-            onChange={(e,value) => {
-              handleDropdownChange(value)
-            }}
+            onChange={(e, value) => handleDropdownChange(value)}
             onBlur={(name) => handleRequiredFieldBlur(name)}
             width="100%"
-            onKeyPress={(e:string,value:string,key:string) => {
-                if(open){
-                  handleKeyDown(e,value,key)
-                }
+            onKeyPress={(e: string, value: string, key: string) => {
+              if (open) {
+                handleKeyDown(e, value, key);
               }
-            }
+            }}
           />
-          {loading && autocompletion && <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress> }
+          {loading && autocompletion && (
+            <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress>
+          )}
 
-          {suggestions && autocompletion && (
-            <ul ref={dropdownRef} className="suggestions" tabIndex={0}>
+          {!loading && suggestions && autocompletion && (
+            <ul ref={dropdownRef} className="suggestions">
               {suggestions &&
                 autocompletion &&
                 open &&
                 suggestions.map((suggestion, index) => (
                   <ListItem
-                  data-index={index}
-                  key={index}
-                  onClick={() => {
-                    handleSuggestionClick(suggestion)
-                  }}
-                  selectedIndex={selectedIndex}
-                  index={index}
+                    data-index={index}
+                    key={index}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={() => {
+                      handleSuggestionClick(suggestion);
+                    }}
+                    selectedIndex={selectedIndex}
+                    index={index}
                   >
-                  {`${suggestion.Text}  ${suggestion.Description}`}
+                    {`${suggestion.Text}  ${suggestion.Description}`}
                   </ListItem>
                 ))}
             </ul>

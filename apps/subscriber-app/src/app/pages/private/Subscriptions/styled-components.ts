@@ -41,3 +41,7 @@ export const VerificationWrapper = styled.div`
   top: 3px;
   margin-right: var(--goa-space-xs);
 `;
+
+export const FormGap = styled.div`
+  margin-top: var(--goa-space-xs);
+`;

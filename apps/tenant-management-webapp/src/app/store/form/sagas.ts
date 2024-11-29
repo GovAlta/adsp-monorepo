@@ -1,10 +1,14 @@
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
+import { JsonSchema, UISchemaElement } from '@jsonforms/core';
+import { ajv } from '@lib/validation/checkInput';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
-import { RootState } from '../index';
-import { select, call, put, takeEvery, delay, takeLatest } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
+import { fetchServiceMetrics } from '@store/common';
+import { getAccessToken } from '@store/tenant/sagas';
+import { select, call, put, takeEvery, delay, takeLatest } from 'redux-saga/effects';
+import { RootState } from '../index';
 import {
   UpdateFormDefinitionsAction,
   getFormDefinitionsSuccess,
@@ -32,9 +36,9 @@ import {
   PROCESS_DATA_SCHEMA_SUCCESS_ACTION,
   OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION,
   OpenEditorForDefinitionSuccessAction,
+  fetchFormMetricsSuccess,
+  FETCH_FORM_METRICS_ACTION,
 } from './action';
-
-import { getAccessToken } from '@store/tenant/sagas';
 import {
   fetchFormDefinitionsApi,
   updateFormDefinitionApi,
@@ -42,8 +46,6 @@ import {
   fetchFormDefinitionApi,
 } from './api';
 import { FormDefinition } from './model';
-import { ajv } from '@lib/validation/checkInput';
-import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -55,7 +57,11 @@ export function* fetchFormDefinitions(payload): SagaIterator {
     try {
       const url = `${configBaseUrl}/configuration/v2/configuration/form-service?top=50&after=${next}`;
       const { results, page } = yield call(fetchFormDefinitionsApi, token, url);
-
+      yield put(
+        UpdateIndicator({
+          show: true,
+        })
+      );
       const definitions = results.reduce((acc, def) => {
         if (def.latest?.configuration?.id) {
           acc[def.latest.configuration.id] = def.latest.configuration;
@@ -65,7 +71,11 @@ export function* fetchFormDefinitions(payload): SagaIterator {
 
         return acc;
       }, {});
-
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
       yield put(getFormDefinitionsSuccess(definitions, page.next, page.after));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -223,6 +233,20 @@ export function* resolveDataSchema({ schema }: ProcessDataSchemaSuccessAction) {
   }
 }
 
+export function* fetchFormMetrics(): SagaIterator {
+  yield* fetchServiceMetrics('form-service', function* (metrics) {
+    const formsCreatedMetric = 'form-service:form-created:count';
+    const formsSubmittedMetric = 'form-service:form-submitted:count';
+
+    yield put(
+      fetchFormMetricsSuccess({
+        formsCreated: parseInt(metrics[formsCreatedMetric]?.values[0]?.sum || '0', 10),
+        formsSubmitted: parseInt(metrics[formsSubmittedMetric]?.values[0]?.sum || '0', 10),
+      })
+    );
+  });
+}
+
 export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
   yield takeEvery(UPDATE_FORM_DEFINITION_ACTION, updateFormDefinition);
@@ -232,4 +256,5 @@ export function* watchFormSagas(): Generator {
   yield takeLatest(SET_DRAFT_DATA_SCHEMA_ACTION, parseDataSchemaDraft);
   yield takeLatest(SET_DRAFT_UI_SCHEMA_ACTION, parseUISchemaDraft);
   yield takeLatest(PROCESS_DATA_SCHEMA_SUCCESS_ACTION, resolveDataSchema);
+  yield takeLatest(FETCH_FORM_METRICS_ACTION, fetchFormMetrics);
 }

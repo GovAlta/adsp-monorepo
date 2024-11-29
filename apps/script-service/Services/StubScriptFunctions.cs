@@ -1,7 +1,6 @@
 using Adsp.Platform.ScriptService.Services.Platform;
 using Adsp.Sdk;
 using NLua;
-using RestSharp;
 
 namespace Adsp.Platform.ScriptService.Services;
 
@@ -23,7 +22,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
-  public override bool SendDomainEvent(string @namespace, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
+  public override bool SendDomainEvent(string @namespace, string name, string? correlationId, LuaTable? context = null, LuaTable? payload = null)
   {
     if (String.IsNullOrEmpty(@namespace))
     {
@@ -38,7 +37,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return true;
   }
 
-  public override DispositionResponse? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
+  public override IDictionary<string, object?>? DispositionFormSubmission(string formId, string submissionId, string dispositionStatus, string reason)
   {
     if (String.IsNullOrEmpty(formId))
     {
@@ -58,14 +57,18 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return null;
   }
 
-  public override object? HttpGet(string url)
+  public override IDictionary<string, object?>? HttpGet(string url)
   {
     if (String.IsNullOrEmpty(url))
     {
       throw new ArgumentException("url cannot be null or empty.");
     }
 
-    return "simulated success";
+    return new Dictionary<string, object?>
+    {
+      ["name"] = "Bob",
+      ["grade"] = "A"
+    };
   }
 
   public override IDictionary<string, object?>? WriteValue(string @namespace, string name, object? value)

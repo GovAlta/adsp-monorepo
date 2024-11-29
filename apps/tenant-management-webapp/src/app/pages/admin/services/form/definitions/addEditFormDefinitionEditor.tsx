@@ -78,10 +78,9 @@ import {
 import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
 import { FormConfigDefinition } from './formConfigDefinition';
-import { InfoCircleWithInlineHelp } from './infoCircleWithInlineHelp';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
-import { RowFlex, QueueTaskDropdown, H3, BorderBottom } from './style-components';
+import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -130,17 +129,9 @@ interface ClientRoleProps {
   anonymousRead: boolean;
   onUpdateRoles: (roles: string[], type: string) => void;
   configuration: Record<string, string[]>;
-  showSelectedRoles?: boolean;
 }
 
-const ClientRole = ({
-  roleNames,
-  clientId,
-  anonymousRead,
-  configuration,
-  onUpdateRoles,
-  showSelectedRoles,
-}: ClientRoleProps) => {
+const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdateRoles }: ClientRoleProps) => {
   return (
     <ClientRoleTable
       roles={roleNames}
@@ -154,7 +145,6 @@ const ClientRole = ({
         { title: types[1].name, selectedRoles: configuration[types[1].type] },
         { title: types[2].name, selectedRoles: configuration[types[2].type] },
       ]}
-      showSelectedRoles={showSelectedRoles}
     />
   );
 };
@@ -264,6 +254,16 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       };
     }
   }, [monaco, dataSchema]);
+
+  const getFilteredRoles = (roleNames, clientId, checkedRoles) => {
+    const allCheckedRoles = Object.values(checkedRoles).flat();
+    return showSelectedRoles
+      ? roleNames.filter((role) => {
+          const selectedRole = clientId ? `${clientId}:${role}` : role;
+          return allCheckedRoles.includes(selectedRole);
+        })
+      : roleNames;
+  };
 
   const navigate = useNavigate();
   const close = () => {
@@ -443,34 +443,40 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 56 }}>
                     <ScrollPane>
                       {roles.map((e, key) => {
+                        const rolesMap = getFilteredRoles(e.roleNames, e.clientId, {
+                          applicantRoles: definition?.applicantRoles,
+                          clerkRoles: definition?.clerkRoles,
+                          assessorRoles: definition?.assessorRoles,
+                        });
                         return (
-                          <ClientRole
-                            roleNames={e.roleNames}
-                            key={key}
-                            clientId={e.clientId}
-                            anonymousRead={definition.anonymousApply}
-                            configuration={{
-                              applicantRoles: definition.applicantRoles,
-                              clerkRoles: definition.clerkRoles,
-                              assessorRoles: definition.assessorRoles,
-                            }}
-                            onUpdateRoles={(roles, type) => {
-                              if (type === applicantRoles.name) {
-                                setDefinition({
-                                  applicantRoles: [...new Set(roles)],
-                                });
-                              } else if (type === clerkRoles.name) {
-                                setDefinition({
-                                  clerkRoles: [...new Set(roles)],
-                                });
-                              } else {
-                                setDefinition({
-                                  assessorRoles: [...new Set(roles)],
-                                });
-                              }
-                            }}
-                            showSelectedRoles={showSelectedRoles}
-                          />
+                          rolesMap.length > 0 && (
+                            <ClientRole
+                              roleNames={rolesMap}
+                              key={key}
+                              clientId={e.clientId}
+                              anonymousRead={definition.anonymousApply}
+                              configuration={{
+                                applicantRoles: definition.applicantRoles,
+                                clerkRoles: definition.clerkRoles,
+                                assessorRoles: definition.assessorRoles,
+                              }}
+                              onUpdateRoles={(roles, type) => {
+                                if (type === applicantRoles.name) {
+                                  setDefinition({
+                                    applicantRoles: [...new Set(roles)],
+                                  });
+                                } else if (type === clerkRoles.name) {
+                                  setDefinition({
+                                    clerkRoles: [...new Set(roles)],
+                                  });
+                                } else {
+                                  setDefinition({
+                                    assessorRoles: [...new Set(roles)],
+                                  });
+                                }
+                              }}
+                            />
+                          )
                         );
                       })}
                       {isLoadingRoles && <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>}
@@ -619,15 +625,20 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     </FlexRow>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                       <SubmissionConfigurationPadding>
-                        <InfoCircleWithInlineHelp
-                          initialLabelValue={definition.submissionRecords}
-                          label="Task queue to process &nbsp;"
-                          text={
-                            getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
-                              ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
-                              : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
-                          }
-                        />
+                        <H3Inline>Task queue to process</H3Inline>
+                        <ToolTipAdjust>
+                          {definition.submissionRecords && (
+                            <GoATooltip
+                              content={
+                                getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                                  ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                                  : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                              }
+                            >
+                              <GoAIcon type="information-circle"></GoAIcon>
+                            </GoATooltip>
+                          )}
+                        </ToolTipAdjust>
                         <QueueTaskDropdown>
                           {queueTasks && Object.keys(queueTasks).length > 0 && (
                             <GoADropdown

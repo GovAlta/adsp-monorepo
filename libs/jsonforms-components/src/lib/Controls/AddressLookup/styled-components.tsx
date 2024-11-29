@@ -37,13 +37,18 @@ export const SearchBox = styled.div`
   }
 `;
 
+export const AddressIndent = styled.div`
+  margin: 1em 1.5em 0 1.5em;
+`;
+
 export const LabelDiv = styled.div`
   font-size: var(--fs-sl);
   padding-bottom: 1.5rem;
 `;
 
+/* istanbul ignore next */
 export const ListItem = styled.li<ListItemProps>`
-  background-color: ${({ selectedIndex, index }) => selectedIndex === index ? 'var(--color-primary)' : ''};
-  color: ${({ selectedIndex, index }) => selectedIndex === index ?  'var(--color-white) !important' : ''};
-  font-weight: ${({ selectedIndex, index }) => selectedIndex === index ?  'var(--fw-bold)' : ''};
+  background-color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-primary)' : '')};
+  color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-white) !important' : '')};
+  font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--fw-bold)' : '')};
 `;

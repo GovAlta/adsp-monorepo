@@ -15,6 +15,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForTextControl, onKeyPressForTextControl } from '../../util/inputControlUtils';
+import { FormFieldWrapper } from './style-component';
 
 export type GoAInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 

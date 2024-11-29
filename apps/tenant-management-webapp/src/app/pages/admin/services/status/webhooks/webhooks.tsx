@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
-import { WebhookHistoryModal } from '../webhookHistoryForm';
-import { TestWebhookModal } from '../testWebhook';
-import History from '../../../../../../assets/icons/history.svg';
+import { RootState } from '@store/index';
+import { WebhookHistoryModal } from './webhookHistoryForm';
+import { TestWebhookModal } from './testWebhook';
+import History from '@assets/icons/history.svg';
 import { HoverWrapper, ToolTip } from '../styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { WebhookDeleteModal } from './webhookDeleteModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateModalState } from '@store/session/actions';
+import { GoACircularProgress } from '@abgov/react-components-new';
 import {
   AddEditStatusWebhookType,
   StatusWebhookHistoryType,
@@ -18,6 +20,7 @@ import {
 } from '@store/status/models';
 import { selectStatusWebhooks } from '@store/status/selectors';
 import { fetchWebhooks } from '@store/status/actions';
+import { renderNoItem } from '@components/NoItem';
 export const EntryDetail = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
@@ -79,7 +82,10 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
                 setShowDetails(!showDetails);
               }}
             />
-            <div
+            <GoAContextMenuIcon
+              testId={`webhook-test-${id}`}
+              title="History"
+              type="time"
               onClick={() => {
                 dispatch(
                   UpdateModalState({
@@ -89,11 +95,7 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
                   })
                 );
               }}
-              className="hover-blue tooltip"
-            >
-              <img src={History} alt="History" />
-              <span className="tooltip-text">Webhook history</span>
-            </div>
+            />
             <GoAContextMenuIcon
               testId={`webhook-test-${id}`}
               title="Test"
@@ -157,43 +159,49 @@ export const WebhookListTable = () => {
   useEffect(() => {
     dispatch(fetchWebhooks());
   }, [dispatch]);
-
+  // eslint-disable-next-line
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
   // eslint-disable-next-line
   useEffect(() => {}, [webhooks]);
 
-  if (webhooks && Object.keys(webhooks).length === 0) {
-    return <b>There are no webhooks yet</b>;
-  }
-
   return (
     <>
-      <TableLayout>
-        <DataTable data-testid="file-types-table">
-          <thead data-testid="file-types-table-header">
-            <tr>
-              <th id="name" data-testid="events-definitions-table-header-name">
-                Name
-              </th>
-              <th id="URL" data-testid="events-definitions-table-header-name">
-                URL
-              </th>
-              <th id="intervalMinutes" data-testid="events-definitions-table-header-name">
-                Wait Interval
-              </th>
-              <th className="actionsCol" id="actions">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {webhooks &&
-              Object.values(webhooks).map((webhook) => {
-                if (webhook === null) return null;
-                return <WebhookTableRow key={`webhook-${webhook.id}`} webhook={webhook} />;
-              })}
-          </tbody>
-        </DataTable>
-      </TableLayout>
+      {indicator.show && Object.keys(webhooks).length === 0 && (
+        <GoACircularProgress visible={indicator.show} size="small" />
+      )}
+
+      {!indicator.show && Object.keys(webhooks).length > 0 && (
+        <TableLayout>
+          <DataTable data-testid="file-types-table">
+            <thead data-testid="file-types-table-header">
+              <tr>
+                <th id="name" data-testid="events-definitions-table-header-name">
+                  Name
+                </th>
+                <th id="URL" data-testid="events-definitions-table-header-name">
+                  URL
+                </th>
+                <th id="intervalMinutes" data-testid="events-definitions-table-header-name">
+                  Wait Interval
+                </th>
+                <th className="actionsCol" id="actions">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {webhooks &&
+                Object.values(webhooks).map((webhook) => {
+                  if (webhook === null) return null;
+                  return <WebhookTableRow key={`webhook-${webhook.id}`} webhook={webhook} />;
+                })}
+            </tbody>
+          </DataTable>
+        </TableLayout>
+      )}
+      {!indicator.show && !webhooks && Object.keys(webhooks).length === 0 && renderNoItem('webhooks')}
       <WebhookActionModals />
     </>
   );
@@ -250,31 +258,5 @@ const Menu = styled.tr`
 
   .hover {
     display: block;
-  }
-
-  .tooltip {
-    position: relative;
-    display: inline-block;
-  }
-
-  .tooltip .tooltip-text {
-    visibility: hidden;
-    width: 90px;
-    background-color: white;
-    color: #0f0f0f;
-    font-size: 11px;
-    text-align: center;
-    border: 1px solid black;
-
-    /* Position the tooltip */
-    position: absolute;
-    z-index: 1;
-    top: 25px;
-    left: 70%;
-  }
-
-  .tooltip:hover .tooltip-text {
-    visibility: visible;
-    transition: all 0.4s 0.7s ease;
   }
 `;

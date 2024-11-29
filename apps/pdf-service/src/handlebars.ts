@@ -36,10 +36,15 @@ const resolveLabelFromScope = (scope: string) => {
 
   if (lastSegment) {
     const lowercased = lastSegment.replace(/([A-Z])/g, ' $1').toLowerCase();
+
     return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
   }
   return '';
 };
+
+function isObject(value) {
+  return typeof value === 'object' && value !== null;
+}
 
 const getFormFieldValue = (scope: string, data: object) => {
   if (data !== undefined) {
@@ -63,6 +68,13 @@ const getFormFieldValue = (scope: string, data: object) => {
     return '';
   }
 };
+
+function sentenceCase(input) {
+  let formattedString = input.replace(/([A-Z0-9])/g, ' $1').toLowerCase();
+  formattedString = formattedString.trim();
+  formattedString = formattedString.charAt(0).toUpperCase() + formattedString.slice(1);
+  return formattedString;
+}
 
 export const getAllRequiredFields = (schema: JsonSchema4 | JsonSchema7): string[] => {
   const requiredFields: string[] = [];
@@ -109,6 +121,32 @@ const fileId = (value: string, fileServiceUrl: string) => {
   }
 
   return `<a href="${fileServiceUrl}file/v1/files/${returnValue}/download?unsafe=true&embed=true">${returnValue}</a> `;
+};
+
+const valueMap = (value: string) => {
+  const mapping = [
+    { value: 'AB', label: 'Alberta' },
+    { value: 'BC', label: 'British Columbia' },
+    { value: 'MB', label: 'Manitoba' },
+    { value: 'NB', label: 'New Brunswick' },
+    { value: 'NL', label: 'Newfoundland and Labrador' },
+    { value: 'NS', label: 'Nova Scotia' },
+    { value: 'NT', label: 'Northwest Territories' },
+    { value: 'NU', label: 'Nunavut' },
+    { value: 'ON', label: 'Ontario' },
+    { value: 'PE', label: 'Prince Edward Island' },
+    { value: 'QC', label: 'Quebec' },
+    { value: 'SK', label: 'Saskatchewan' },
+    { value: 'YT', label: 'Yukon' },
+    { value: 'CA', label: 'Canada' },
+  ];
+
+  const found = mapping.find((item) => item.value === value);
+  if (found) {
+    return found.label;
+  } else {
+    return value;
+  }
 };
 
 class HandlebarsTemplateService implements TemplateService {
@@ -200,6 +238,26 @@ class HandlebarsTemplateService implements TemplateService {
       }
     });
 
+    handlebars.registerHelper('isObject', function (element, data) {
+      if (data !== undefined) {
+        const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let currentValue: any = data;
+
+        for (const key of pathArray) {
+          if (currentValue[key] === undefined) {
+            return '';
+          }
+          currentValue = currentValue[key];
+        }
+
+        return isObject(currentValue);
+      } else {
+        return false;
+      }
+    });
+
     handlebars.registerHelper('grabDataArray', function (context, element, requiredFields, options) {
       let ret = '';
       if (!options) {
@@ -266,11 +324,13 @@ class HandlebarsTemplateService implements TemplateService {
         requiredFields = null;
       }
 
-      const dataArray = context[scopeName];
+      const dataArray = context && context[scopeName];
 
-      for (let i = 0, j = dataArray.length; i < j; i++) {
-        const extendedContext = Object.assign({}, dataArray[i], { params: { requiredFields, element } });
-        ret = ret + options.fn(extendedContext);
+      if (dataArray) {
+        for (let i = 0, j = dataArray.length; i < j; i++) {
+          const extendedContext = Object.assign({}, dataArray[i], { params: { requiredFields, element } });
+          ret = ret + options.fn(extendedContext);
+        }
       }
 
       return ret;
@@ -301,6 +361,58 @@ class HandlebarsTemplateService implements TemplateService {
         return ret;
       }
     );
+    handlebars.registerHelper(
+      'withItemsObject',
+      function (context, scope, requiredFields, element, dataSchema, dataSchemaAgain, options) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let currentValue: any = context;
+
+        const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+
+        for (const key of pathArray) {
+          if (currentValue[key] === undefined) {
+            return '';
+          }
+          currentValue = currentValue[key];
+        }
+
+        let ret = '';
+        const scopeName = scope.replace('#/properties/', '');
+
+        if (!options) {
+          options = { ...requiredFields };
+          requiredFields = null;
+        }
+
+        const validDataSchema = dataSchema || dataSchemaAgain;
+        const items = validDataSchema?.properties[scopeName].properties;
+        const dataArray = context[scopeName];
+
+        const extendedContext = Object.assign({}, dataArray, {
+          params: { requiredFields, element, items: items || [], title: sentenceCase(pathArray[0]) },
+        });
+        ret = ret + options.fn(extendedContext);
+
+        return ret;
+      }
+    );
+
+    handlebars.registerHelper('forEachItemObject', function (context, data, requiredFields, options) {
+      let ret = '';
+
+      Object.keys(context).forEach(function (key) {
+        const element = {
+          type: 'Control',
+          scope: key,
+          label: key,
+        };
+
+        const extendedContext = Object.assign({}, element, { params: { requiredFields, data, element } });
+        ret = ret + options.fn(extendedContext);
+      });
+
+      return ret;
+    });
 
     handlebars.registerHelper('forEachItem', function (context, data, requiredFields, options) {
       let ret = '';
@@ -320,7 +432,14 @@ class HandlebarsTemplateService implements TemplateService {
     });
 
     handlebars.registerHelper('label', function (element) {
-      const label = element?.label ? element.label : resolveLabelFromScope(element.scope);
+      let label = element?.label ? element.label : resolveLabelFromScope(element.scope);
+
+      if (label === 'subdivisionCode') {
+        label = 'Province';
+      }
+
+      label = sentenceCase(label);
+
       return label;
     });
 
@@ -331,10 +450,15 @@ class HandlebarsTemplateService implements TemplateService {
         value = fileId(value, fileServiceUrl);
       }
 
+      value = valueMap(value);
+
       return value;
     });
     handlebars.registerHelper('isControl', function (element) {
       return element.type === 'Control';
+    });
+    handlebars.registerHelper('isDataSchema', function (dataSchema) {
+      return !!dataSchema;
     });
     handlebars.registerHelper('hasTypeControlOrList', function (element) {
       return element.type === 'Control' || element.type === 'ListWithDetail';

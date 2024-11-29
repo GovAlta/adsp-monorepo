@@ -7,9 +7,8 @@ using NJsonSchema.Generation;
 namespace Adsp.Sdk;
 public abstract class ConfigurationDefinition
 {
-  protected static readonly JsonSchemaGeneratorSettings SchemaSettings = new()
+  protected static readonly SystemTextJsonSchemaGeneratorSettings SchemaSettings = new()
   {
-    SerializerSettings = null,
     SerializerOptions = new JsonSerializerOptions { }
   };
 

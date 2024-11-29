@@ -5,7 +5,7 @@ import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForTextControl, onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
-
+import { sinTitle } from '../../common/Constants';
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 export const formatSin = (value: string) => {
@@ -33,7 +33,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
 
   const errorsFormInput = checkFieldValidity(props as ControlProps);
-  const isSinField = schema.title === 'Social insurance number';
+  const isSinField = schema.title === sinTitle;
 
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
@@ -58,7 +58,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
       // side effect that causes the validation to render when it shouldn't.
       onChange={(name: string, value: string) => {
         let formattedValue = value;
-        if (schema && schema.title === 'Social insurance number') {
+        if (schema && schema.title === sinTitle && value !== '') {
           formattedValue = formatSin(value);
         }
         onChangeForInputControl({

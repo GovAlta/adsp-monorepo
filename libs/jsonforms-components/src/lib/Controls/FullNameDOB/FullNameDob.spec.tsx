@@ -1,11 +1,23 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FullNameDobReviewControl } from './FullNameDobReviewControl';
-import { ControlElement, ControlProps } from '@jsonforms/core';
+import {
+  ControlElement,
+  ControlProps,
+  JsonSchema4,
+  JsonSchema7,
+  TesterContext,
+  UISchemaElement,
+} from '@jsonforms/core';
 import { isFullNameDoB } from './FullNameDobTester';
 import { FullNameDobControl } from './FullNameDobControl';
 
 describe('FullNameDobControl', () => {
+  const dummyTestContext = {
+    rootSchema: {},
+    config: {},
+  } as TesterContext;
+
   const mockHandleChange = jest.fn(() => Promise.resolve());
   const textBoxUiSchema: ControlElement = {
     type: 'Control',
@@ -141,7 +153,6 @@ describe('FullNameDobControl', () => {
     );
 
     const lastNameInput = screen.getByTestId('name-form-last-name');
-    fireEvent.change(lastNameInput, { target: { value: 'Smith' } });
 
     fireEvent(
       lastNameInput,
@@ -192,6 +203,45 @@ describe('FullNameDobControl', () => {
       dateOfBirth: '2000-12-12',
     });
   });
+  it('calls handleRequiredFieldBlur on user input in date of birth', () => {
+    render(
+      <FullNameDobControl
+        data={defaultFormData}
+        handleChange={mockHandleChange}
+        path="path-to-data"
+        schema={{}}
+        uischema={{} as ControlElement}
+        label={''}
+        errors={''}
+        rootSchema={{}}
+        id={''}
+        enabled={false}
+        visible={false}
+      />
+    );
+
+    const dobInput = screen.getByTestId('dob-form-dateOfBirth');
+    fireEvent(
+      dobInput,
+      new CustomEvent('_change', {
+        detail: { name: 'dateOfBirth', value: '2000-12-12' },
+      })
+    );
+
+    fireEvent(
+      dobInput,
+      new CustomEvent('_blur', {
+        detail: { name: 'dateOfBirth', value: '2000-12-12' },
+      })
+    );
+
+    expect((dobInput as HTMLInputElement).value).toBe('2000-12-12');
+    expect(mockHandleChange).toBeCalledTimes(1);
+    expect(mockHandleChange).toHaveBeenCalledWith('path-to-data', {
+      ...defaultFormData,
+      dateOfBirth: '2000-12-12',
+    });
+  });
 
   it('test fullnameDoB tester', () => {
     expect(
@@ -200,7 +250,7 @@ describe('FullNameDobControl', () => {
           type: 'Category',
         },
         {},
-        {}
+        dummyTestContext
       )
     ).toBe(false);
   });
@@ -210,7 +260,7 @@ describe('FullNameDobControl', () => {
       {
         type: 'Control',
         scope: '#/properties/personFullName',
-      },
+      } as UISchemaElement,
       {
         type: 'object',
         properties: {
@@ -222,17 +272,17 @@ describe('FullNameDobControl', () => {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema7,
               middleName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema7,
               lastName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema7,
             },
             required: ['firstName', 'lastName'],
             errorMessage: {
@@ -242,10 +292,10 @@ describe('FullNameDobControl', () => {
                 lastName: 'Include period (.) if providing your initial',
               },
             },
-          },
+          } as JsonSchema7,
         },
       },
-      {}
+      dummyTestContext
     )
   ).toBe(false);
 
@@ -254,7 +304,7 @@ describe('FullNameDobControl', () => {
       {
         type: 'Control',
         scope: '#/properties/dateOfBirth',
-      },
+      } as UISchemaElement,
       {
         type: 'object',
         properties: {
@@ -266,17 +316,17 @@ describe('FullNameDobControl', () => {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema4,
               middleName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema4,
               lastName: {
                 $comment: 'The name (first, middle, last, preferred, other, etc.) of a person.',
                 type: 'string',
                 pattern: "^$|^\\p{L}[\\p{L}\\p{M}.'\\- ]{0,58}[\\p{L}.']$",
-              },
+              } as JsonSchema4,
               dateOfBirth: {
                 type: 'string',
                 format: 'date',
@@ -290,10 +340,10 @@ describe('FullNameDobControl', () => {
                 lastName: 'Include period (.) if providing your initial',
               },
             },
-          },
+          } as JsonSchema4,
         },
       },
-      {}
+      dummyTestContext
     )
   ).toBe(true);
 });

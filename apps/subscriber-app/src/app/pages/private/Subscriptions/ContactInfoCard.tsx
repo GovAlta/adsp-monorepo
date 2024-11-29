@@ -21,6 +21,8 @@ import {
   GoABadge,
   GoAFormItem,
 } from '@abgov/react-components-new';
+
+import { FormGap } from './styled-components';
 interface ContactInfoCardProps {
   subscriber?: Subscriber;
 }
@@ -215,51 +217,56 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             <Grid>
               <GridItem md={3.5} hSpacing={1}>
                 <Label>Email</Label>
-                <GoAFormItem label="" error={formErrors?.['email']}>
-                  <GoAInput
-                    type="email"
-                    aria-label="email"
-                    name="email"
-                    value={emailContactInformation}
-                    onChange={setValue}
-                    testId="contact-email-input"
-                    width="100%"
-                  />
-                </GoAFormItem>
+                <FormGap>
+                  <GoAFormItem label="" error={formErrors?.['email']}>
+                    <GoAInput
+                      type="email"
+                      aria-label="email"
+                      name="email"
+                      value={emailContactInformation}
+                      onChange={setValue}
+                      testId="contact-email-input"
+                      width="100%"
+                    />
+                  </GoAFormItem>
+                </FormGap>
               </GridItem>
 
               <GridItem md={3.5} hSpacing={1}>
                 <Label>Phone number</Label>
-
-                <GoAFormItem label="" error={formErrors?.['sms']}>
-                  <GoAInput
-                    type="tel"
-                    aria-label="sms"
-                    name="sms"
-                    width="100%"
-                    value={SMSContactInformation}
-                    testId="contact-sms-input"
-                    onChange={setValue}
-                    trailingIcon="close"
-                    onTrailingIconClick={() => {
-                      setSMSContactInformation('');
-                    }}
-                  />
-                </GoAFormItem>
+                <FormGap>
+                  <GoAFormItem label="" error={formErrors?.['sms']}>
+                    <GoAInput
+                      type="tel"
+                      aria-label="sms"
+                      name="sms"
+                      width="100%"
+                      value={SMSContactInformation}
+                      testId="contact-sms-input"
+                      onChange={setValue}
+                      trailingIcon="close"
+                      onTrailingIconClick={() => {
+                        setSMSContactInformation('');
+                      }}
+                    />
+                  </GoAFormItem>
+                </FormGap>
               </GridItem>
 
               <GridItem md={5}>
                 <Label>My preferred notification channel</Label>
                 <br />
-                <GoARadioGroup
-                  name="channel"
-                  value={preferredChannel}
-                  onChange={(_, value) => updateChannelPreference(value)}
-                >
-                  <GoARadioItem value={Channels.email} name="channel" label="Email" />
+                <FormGap>
+                  <GoARadioGroup
+                    name="channel"
+                    value={preferredChannel}
+                    onChange={(_, value) => updateChannelPreference(value)}
+                  >
+                    <GoARadioItem value={Channels.email} name="channel" label="Email" />
 
-                  <GoARadioItem value={Channels.sms} name="channel" label="SMS" />
-                </GoARadioGroup>
+                    <GoARadioItem value={Channels.sms} name="channel" label="SMS" />
+                  </GoARadioGroup>
+                </FormGap>
               </GridItem>
             </Grid>
           ) : (
@@ -272,20 +279,23 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                         <div data-testid="email-label">
                           <Label>Email</Label>
                         </div>
-                        {isEmailVerified !== undefined && isEmailVerified === true && (
-                          <div>
-                            <GoABadge type="success" content="Verified" />
-                          </div>
-                        )}
-                        {isEmailVerified !== undefined && isEmailVerified === false && (
-                          <div>
-                            {codeEmailExists ? (
-                              <GoABadge type="midtone" content="Pending" />
-                            ) : (
-                              <GoABadge type="important" content="Not verified" />
-                            )}
-                          </div>
-                        )}
+
+                        <FormGap>
+                          {isEmailVerified !== undefined && isEmailVerified === true && (
+                            <div>
+                              <GoABadge type="success" content="Verified" />
+                            </div>
+                          )}
+                          {isEmailVerified !== undefined && isEmailVerified === false && (
+                            <div>
+                              {codeEmailExists ? (
+                                <GoABadge type="midtone" content="Pending" />
+                              ) : (
+                                <GoABadge type="important" content="Not verified" />
+                              )}
+                            </div>
+                          )}
+                        </FormGap>
                       </VerificationWrapper>
 
                       {subscriberEmail}
@@ -297,18 +307,20 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                     <Label>Phone number</Label>
                     <p>
                       <VerificationWrapper>
-                        {isSmsVerified !== undefined && isSmsVerified === true && (
-                          <GoABadge type="success" content="Verified" />
-                        )}
-                        {isSmsVerified !== undefined && isSmsVerified === false && (
-                          <div>
-                            {codeSMSExists ? (
-                              <GoABadge type="midtone" content="Pending" />
-                            ) : (
-                              <GoABadge type="important" content="Not verified" />
-                            )}
-                          </div>
-                        )}
+                        <FormGap>
+                          {isSmsVerified !== undefined && isSmsVerified === true && (
+                            <GoABadge type="success" content="Verified" />
+                          )}
+                          {isSmsVerified !== undefined && isSmsVerified === false && (
+                            <div>
+                              {codeSMSExists ? (
+                                <GoABadge type="midtone" content="Pending" />
+                              ) : (
+                                <GoABadge type="important" content="Not verified" />
+                              )}
+                            </div>
+                          )}
+                        </FormGap>
                       </VerificationWrapper>
 
                       {phoneWrapper(subscriberSMS)}
@@ -317,18 +329,19 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 </GridItem>
                 <GridItem md={5}>
                   <Label>My preferred notification channel</Label>
-                  <br />
-                  <GoARadioGroup
-                    name="preferredChannel"
-                    //eslint-disable-next-line
-                    onChange={() => {}}
-                    disabled={true}
-                    value={preferredChannel}
-                  >
-                    <GoARadioItem value={Channels.email} name="preferredChannel" label="Email" />
+                  <FormGap>
+                    <GoARadioGroup
+                      name="preferredChannel"
+                      //eslint-disable-next-line
+                      onChange={() => {}}
+                      disabled={true}
+                      value={preferredChannel}
+                    >
+                      <GoARadioItem value={Channels.email} name="preferredChannel" label="Email" />
 
-                    <GoARadioItem value={Channels.sms} name="preferredChannel" label="SMS" />
-                  </GoARadioGroup>
+                      <GoARadioItem value={Channels.sms} name="preferredChannel" label="SMS" />
+                    </GoARadioGroup>
+                  </FormGap>
                 </GridItem>
               </Grid>
 

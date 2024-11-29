@@ -36,7 +36,8 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
 
   const [formData, setFormData] = useState(data || defaultNameAndDob);
 
-  const updateFormData = (updatedData: string) => {
+  const updateFormData = (updatedData: object) => {
+    updatedData = Object.fromEntries(Object.entries(updatedData).filter(([_, value]) => value !== ''));
     handleChange(path, updatedData);
   };
 
@@ -44,14 +45,13 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     const updatedData = { ...formData, [field]: value };
     setFormData(updatedData);
     updateFormData(updatedData);
-    handleRequiredFieldBlur(field, updatedData);
   };
   const handleDobChange = (field: string, value: GoADate) => {
     const updatedData = { ...formData, [field]: value };
     setFormData(updatedData);
     updateFormData(updatedData);
   };
-  /* istanbul ignore next */
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleRequiredFieldBlur = (name: string, updatedData?: any) => {
     const err = { ...errors };
@@ -77,7 +77,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
 
   return (
     <>
-      <GoAGrid minChildWidth="0ch" gap="s">
+      <GoAGrid minChildWidth="0ch" gap="s" mb="m">
         <GoAFormItem
           label="First name"
           requirement={schema?.required?.includes('firstName') ? 'required' : undefined}
@@ -91,10 +91,8 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
             value={formData.firstName || ''}
             onChange={(name, value) => {
               handleInputChange(name, value);
-              handleRequiredFieldBlur(name);
             }}
             onBlur={(name) => {
-              /* istanbul ignore next */
               handleRequiredFieldBlur(name);
             }}
             width="100%"
