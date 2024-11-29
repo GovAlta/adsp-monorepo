@@ -200,12 +200,6 @@ class FormPage {
     );
   }
 
-  definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBox() {
-    return cy.xpath(
-      '//goa-dropdown[@name="queueTasks"]/parent::*/preceding-sibling::div[@class="info-circle"]//*[@class="small-text"]'
-    );
-  }
-
   definitionsLoadMoreButton() {
     return cy.xpath('//goa-button[@data-testid="form-event-load-more-btn"]');
   }
