@@ -1,10 +1,23 @@
+import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { GoAInputTextProps, GoAInputText, GoATextControl, formatSin } from './InputTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
+import { JsonFormsContext } from '@jsonforms/react';
 
 import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util/stringUtils';
+
+const mockContextValue = {
+  errors: [],
+  data: {},
+};
+
+//eslint-disable-next-line
+const TestComponent: React.FC<{ props: any }> = ({ props }) => {
+  const ctx = React.useContext(JsonFormsContext);
+  return <>{checkFieldValidity(props, ctx)}</>;
+};
 
 describe('Input Text Control tests', () => {
   const textBoxUiSchema: ControlElement = {
@@ -83,7 +96,12 @@ describe('Input Text Control tests', () => {
   describe('can create control', () => {
     it('can create control', () => {
       const props = { ...staticProps };
-      const component = render(GoAInputText(props));
+
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>
+      );
       expect(component.getByTestId('firstName-input')).toBeInTheDocument();
     });
 
@@ -97,7 +115,12 @@ describe('Input Text Control tests', () => {
   describe('text control events', () => {
     it('can trigger keyPress event', async () => {
       const props = { ...staticProps };
-      const component = render(GoAInputText(props));
+
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>
+      );
       const input = component.getByTestId('firstName-input');
       const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
       expect(pressed).toBe(true);
@@ -106,7 +129,12 @@ describe('Input Text Control tests', () => {
 
     it('can trigger on Blur event', async () => {
       const props = { ...staticProps };
-      const component = render(GoAInputText(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>
+      );
+
       const input = component.getByTestId('firstName-input');
       const blurred = fireEvent.blur(input);
       expect(blurred).toBe(true);
@@ -114,7 +142,12 @@ describe('Input Text Control tests', () => {
 
     it('should format sin', async () => {
       const props = { ...sinProps, handleChange: handleChangeMock };
-      const { getByTestId } = render(GoAInputText(props));
+
+      const { getByTestId } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>
+      );
       const input = getByTestId('firstName-input');
       await fireEvent(
         input,
@@ -128,8 +161,13 @@ describe('Input Text Control tests', () => {
 
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(GoAInputText(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>
+      );
       const input = component.getByTestId('firstName-input');
+
       const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
 
       handleChangeMock();
@@ -141,7 +179,13 @@ describe('Input Text Control tests', () => {
 
   describe('Control Types test', () => {
     it('Empty Boolean control should show error', () => {
-      expect(checkFieldValidity(emptyBooleanProps)).toBe('First name is required');
+      const { getByText } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <TestComponent props={emptyBooleanProps} />
+        </JsonFormsContext.Provider>
+      );
+
+      expect(getByText('First name is required')).toBeTruthy();
     });
     it('Check if the date is a valid date/time', () => {
       const date = new Date();
@@ -153,11 +197,21 @@ describe('Input Text Control tests', () => {
   });
   describe('Luhn validation function tests', () => {
     it('Must be three groups of three digits', () => {
-      expect(checkFieldValidity(sinProps)).toBe('Must be three groups of three digits.');
+      const { getByText } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <TestComponent props={sinProps} />
+        </JsonFormsContext.Provider>
+      );
+      expect(getByText('Must be three groups of three digits.')).toBeTruthy();
     });
 
     it('should enter valid SIN', () => {
-      expect(checkFieldValidity(invalidSinProps)).toBe('Social insurance number is invalid');
+      const { getByText } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <TestComponent props={invalidSinProps} />
+        </JsonFormsContext.Provider>
+      );
+      expect(getByText('Social insurance number is invalid')).toBeTruthy();
     });
     it('should return true for valid SIN Number', () => {
       expect(validateSinWithLuhn(Number('046454286'))).toBe(true);
