@@ -195,18 +195,8 @@ class FormPage {
   }
 
   definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoCircle() {
-    return cy.xpath('//goa-dropdown[@name="queueTasks"]/parent::*/preceding-sibling::div[@class="info-circle"]');
-  }
-
-  definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBox() {
     return cy.xpath(
-      '//goa-dropdown[@name="queueTasks"]/parent::*/preceding-sibling::div[@class="info-circle"]//*[@class="small-text"]'
-    );
-  }
-
-  definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBoxCloseBtn() {
-    return cy.xpath(
-      '//goa-dropdown[@name="queueTasks"]/parent::*/preceding-sibling::*//*[@class="small-close-button"]'
+      '//*[@data-testid="lifecycle"]//h3[text()="Task queue to process"]/following-sibling::*[1]//goa-tooltip'
     );
   }
 
