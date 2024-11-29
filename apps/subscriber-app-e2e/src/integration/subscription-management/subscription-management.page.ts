@@ -68,11 +68,11 @@ class SubscriptionManagementPage {
   }
 
   phoneNumberFormItemWithError() {
-    return cy.xpath('//label[text()="Phone number"]/following-sibling::goa-form-item[@error]');
+    return cy.xpath('//label[text()="Phone number"]/following-sibling::div/goa-form-item[@error]');
   }
 
   emailFormItemWithError() {
-    return cy.xpath('//label[text()="Email"]/following-sibling::goa-form-item[@error]');
+    return cy.xpath('//label[text()="Email"]/following-sibling::div/goa-form-item[@error]');
   }
 
   preferredNotificationChannelGroup() {
