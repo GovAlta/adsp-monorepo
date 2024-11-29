@@ -157,7 +157,6 @@ export const ScriptEditorWrapper: FunctionComponent<ScriptEditorWrapperProps> = 
 
   const saveScript = (script) => {
     setSelectedScript(script);
-
     dispatch(UpdateScript(script, false));
   };
 
