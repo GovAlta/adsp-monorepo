@@ -28,7 +28,7 @@ ADSP is designed to be a multi-tenant system and all platform micro-services sup
 
 The [Tenant service](./services/tenant-service.md) acts as a register of tenants and each tenant is associated with a JWT issuer (keycloak realm). Services retrieve this information via the tenant service API.
 
-Users and tenant service accounts are authenticated against tenant realms and their requests include JWT bearer tokens signed by the tenant issuer. Platform services verity tokens and map requests to the appropriate tenant context based on the issuer.
+Users and tenant service accounts are authenticated against tenant realms and their requests include JWT bearer tokens signed by the tenant issuer. Platform services verify tokens and map requests to the appropriate tenant context based on the issuer.
 
 ### Tenant isolation
 ADSP does not use a per tenant instancing approach. Each platform service is a horizontally scaled set of pods that all tenants share. Platform services use the request tenant context to scope API requests to tenant specific records. Platform service accounts are in the **Core** context and are permitted to specify the request tenant context.
