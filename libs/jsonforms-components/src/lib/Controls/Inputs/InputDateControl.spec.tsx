@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoADateTimeControl, GoAInputDateTimeProps, GoADateTimeInput } from './InputDateTimeControl';
-import { ControlElement, ControlProps } from '@jsonforms/core';
+import { GoAInputDateProps, GoADateInput } from './InputDateControl';
+import { ControlElement } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
 const mockContextValue = {
@@ -9,7 +9,7 @@ const mockContextValue = {
   data: {},
 };
 
-describe('input date time controls', () => {
+describe('input date controls', () => {
   const theDate = {
     theDate: '',
   };
@@ -24,14 +24,22 @@ describe('input date time controls', () => {
     },
   };
 
-  const uiSchema: ControlElement = {
-    type: 'Control',
-    scope: '#/properties/theDate',
-    label: 'Date control test',
+  const uiSchema = (min: string, max: string): ControlElement => {
+    return {
+      type: 'Control',
+      scope: '#/properties/theDate',
+      label: 'Date control test',
+      options: {
+        componentProps: {
+          min: min,
+          max: max,
+        },
+      },
+    };
   };
 
-  const staticProps: GoAInputDateTimeProps = {
-    uischema: uiSchema,
+  const staticProps: GoAInputDateProps = {
+    uischema: uiSchema('2023-02-01', '2025-02-01'),
     schema: dateSchema,
     rootSchema: dateSchema,
     handleChange: (path, value) => {},
@@ -48,13 +56,12 @@ describe('input date time controls', () => {
 
   const handleChangeMock = jest.fn(() => Promise.resolve());
 
-  describe('date time input control tests', () => {
+  describe('date input control tests', () => {
     it('can render date input control', () => {
-      const props = { ...staticProps, uischema: uiSchema };
-
+      const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025-02-01') };
       const component = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoADateTimeInput {...props} />
+          <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
       expect(component.getByTestId('myDateId-input')).toBeInTheDocument();
@@ -62,16 +69,22 @@ describe('input date time controls', () => {
 
     it('can create base control', () => {
       const props = { ...staticProps };
-      const baseControl = render(GoADateTimeControl(props as ControlProps));
+
+      const baseControl = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+
       expect(baseControl).toBeDefined();
     });
 
     it('can trigger keyPress event', async () => {
-      const props = { ...staticProps, uischema: uiSchema };
+      const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025-02-01') };
 
       const component = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoADateTimeInput {...props} />
+          <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
 
@@ -85,7 +98,7 @@ describe('input date time controls', () => {
       const props = { ...staticProps };
       const component = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoADateTimeInput {...props} />
+          <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
       const input = component.getByTestId('myDateId-input');
@@ -96,9 +109,10 @@ describe('input date time controls', () => {
 
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
+
       const component = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoADateTimeInput {...props} />
+          <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
 

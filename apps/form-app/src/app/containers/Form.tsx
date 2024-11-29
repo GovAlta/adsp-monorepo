@@ -1,3 +1,4 @@
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { GoAIconButton } from '@abgov/react-components-new';
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -22,13 +23,16 @@ import {
 import styled from 'styled-components';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import CommentsViewer from './CommentsViewer';
-import { DraftForm } from '../components/DraftForm';
 import { SubmittedForm } from '../components/SubmittedForm';
 import { LogoutModal } from '../components/LogoutModal';
+import { createDefaultAjv } from '@abgov/jsonforms-components';
+import { DraftFormWrapper } from '../components/DraftFormWrapper';
 
 interface FormProps {
   className?: string;
 }
+
+const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
 const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const { formId } = useParams();
@@ -66,7 +70,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
             <>
               {form.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
               {form.status === 'draft' && (
-                <DraftForm
+                <DraftFormWrapper
                   definition={definition}
                   form={form}
                   data={data}
@@ -85,6 +89,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                     dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
                   }}
                   onSubmit={(form) => dispatch(submitForm(form.id))}
+                  ajv={ajv}
                 />
               )}
             </>
