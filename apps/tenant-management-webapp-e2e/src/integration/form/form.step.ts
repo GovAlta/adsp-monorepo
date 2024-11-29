@@ -898,28 +898,29 @@ Then(
       case 'views':
         if (enableOrDisable == 'enabling') {
           formObj
-            .definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBox()
-            .invoke('text')
+            .definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoCircle()
+            .invoke('attr', 'content')
             .should('contain', 'A task will be created in queue');
         } else if (enableOrDisable !== 'enabling') {
           formObj
-            .definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBox()
-            .invoke('text')
+            .definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoCircle()
+            .invoke('attr', 'content')
             .should('contain', 'No task will be created for processing of the submissions');
         }
         break;
       case 'should not view':
-        formObj.definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBox().should('not.exist');
+        formObj
+          .definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoCircle()
+          .shadow()
+          .find('[class^=tooltiptext]')
+          .invoke('attr', 'style')
+          .should('contains', 'visibility: hidden');
         break;
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
     }
   }
 );
-
-When('the user clicks x icon for the help tooltip for task queue to process dropdown', function () {
-  formObj.definitionEditorSubmissionConfigTaskQueueToProcessDropdownInfoBoxCloseBtn().click();
-});
 
 When('the user saves the changes if any and go back out of form definition editor', function () {
   formObj.editorSaveButton().then((element) => {
