@@ -31,21 +31,20 @@ const HelpLink = (): JSX.Element => {
 };
 
 export const Form: FunctionComponent = () => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
-
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
 
-  const searchParams = new URLSearchParams(document.location.search);
-
-  const definitions = tenantName && searchParams.get('definitions');
   const dispatch = useDispatch();
-
   const formDefinitions = useSelector((state: RootState) => state.form?.definitions);
+
+  const searchParams = new URLSearchParams(document.location.search);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
+  const definitions = tenantName && searchParams.get('definitions');
 
   useEffect(() => {
     if (formDefinitions && Object.keys(formDefinitions).length === 0) {
       dispatch(getFormDefinitions());
     }
+
     //  eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

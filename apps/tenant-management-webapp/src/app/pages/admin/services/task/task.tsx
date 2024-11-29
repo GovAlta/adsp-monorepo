@@ -28,7 +28,7 @@ export const Task: FunctionComponent = () => {
         <h1 data-testid="task-title">Task service</h1>
         <Tabs activeIndex={queues === 'true' ? 1 : 0}>
           <Tab label="Overview" data-testid="task-service-overview-tab">
-            <TaskOverview setOpenAddTask={setOpenAddTask} />
+            <TaskOverview />
           </Tab>
           <Tab label="Queues" data-testid="task-service-queues-tab">
             <QueuesList openAddTask={openAddTask} />
