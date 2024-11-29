@@ -2,7 +2,7 @@ import React from 'react';
 import { CellProps, WithClassname, ControlProps, isDateTimeControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInputDateTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import {
@@ -20,10 +20,11 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
+  const ctx = useJsonForms();
 
   return (
     <GoAInputDateTime
-      error={checkFieldValidity(props as ControlProps).length > 0}
+      error={checkFieldValidity(props as ControlProps, ctx).length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data ? new Date(data).toISOString() : ''}

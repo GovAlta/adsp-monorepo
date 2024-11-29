@@ -1,6 +1,6 @@
 import React from 'react';
 import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import { GoARadioGroup, GoARadioItem } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
@@ -26,13 +26,19 @@ export const BooleanRadioComponent = ({
   const TrueDescription = description || appliedUiSchemaOptions?.descriptionForTrue;
   const FalseDescription = description || appliedUiSchemaOptions?.descriptionForFalse;
   const BaseTestId = appliedUiSchemaOptions?.testId || `${path}-boolean-radio-jsonform`;
-  const errorsFormInput = checkFieldValidity({
-    data,
-    uischema,
-    label,
-    required,
-    errors,
-  } as ControlProps);
+
+  const ctx = useJsonForms();
+
+  const errorsFormInput = checkFieldValidity(
+    {
+      data,
+      uischema,
+      label,
+      required,
+      errors,
+    } as ControlProps,
+    ctx
+  );
 
   return (
     <Visible visible={visible}>

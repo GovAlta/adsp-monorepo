@@ -2,6 +2,12 @@ import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GoAInputIntegerProps, GoAInputInteger, GoAIntegerControl } from './InputIntegerControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
+import { JsonFormsContext } from '@jsonforms/react';
+
+const mockContextValue = {
+  errors: [],
+  data: {},
+};
 
 describe('input number controls', () => {
   const textBoxUiSchema: ControlElement = {
@@ -32,12 +38,20 @@ describe('input number controls', () => {
   describe('can create input number control', () => {
     it('can create control', () => {
       const props = { ...staticProps };
-      const component = render(GoAInputInteger(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
       expect(component.getByTestId('age-input')).toBeInTheDocument();
     });
     it('can create base control', () => {
       const props = { ...staticProps };
-      const baseControl = render(GoAIntegerControl(props));
+      const baseControl = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAIntegerControl {...props} />
+        </JsonFormsContext.Provider>
+      );
       expect(baseControl).toBeDefined();
     });
   });
@@ -45,7 +59,11 @@ describe('input number controls', () => {
   describe('can trigger input events', () => {
     it('can trigger keyPress event', async () => {
       const props = { ...staticProps };
-      const component = render(GoAInputInteger(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
 
       const input = component.getByTestId('age-input');
       const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
@@ -56,7 +74,11 @@ describe('input number controls', () => {
     it('can trigger keyPress with non numeric values', () => {
       const nonNumericValue = 'z';
       const props = { ...staticProps, data: nonNumericValue };
-      const component = render(GoAInputInteger(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
       const input = component.getByTestId('age-input');
       const pressed = fireEvent.keyPress(input, { key: nonNumericValue, code: 90, charCode: 90 });
 
@@ -67,7 +89,12 @@ describe('input number controls', () => {
     it('can trigger keyPress with numeric values', () => {
       const numericValue = '1';
       const props = { ...staticProps, data: numericValue };
-      const component = render(GoAInputInteger(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
+
       const input = component.getByTestId('age-input');
       const pressed = fireEvent.keyPress(input, { key: numericValue, code: 49, charCode: 49 });
 
@@ -77,7 +104,11 @@ describe('input number controls', () => {
 
     it('can trigger on Blur event', async () => {
       const props = { ...staticProps };
-      const component = render(GoAInputInteger(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
       const input = component.getByTestId('age-input');
       const blurred = fireEvent.blur(input);
 
@@ -86,7 +117,11 @@ describe('input number controls', () => {
 
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(GoAInputInteger(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
       const input = component.getByTestId('age-input');
       const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
 

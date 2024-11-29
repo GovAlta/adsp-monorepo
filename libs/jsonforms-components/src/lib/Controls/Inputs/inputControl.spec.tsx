@@ -3,6 +3,8 @@ import '@testing-library/jest-dom';
 import { GoADateInput, errMalformedDate } from './InputDateControl';
 import { GoAInputDateProps } from './InputDateControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
+import { JsonFormsContext } from '@jsonforms/react';
+
 import {
   isNotKeyPressTabOrShift,
   isRequiredAndHasNoData,
@@ -22,6 +24,11 @@ import {
 
 const theDate = {
   theDate: '',
+};
+
+const mockContextValue = {
+  errors: [],
+  data: {},
 };
 
 const dateSchema = {
@@ -68,31 +75,51 @@ describe('input control tests', () => {
   describe('input date control tests', () => {
     it('can render valid date', () => {
       const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025-02-01') };
-      const component = render(GoADateInput(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
       expect(component.getByTestId('My ID-input')).toBeInTheDocument();
     });
 
     it('can detect malformed max dates in schema', () => {
       const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025a/02-01') };
-      const component = render(GoADateInput(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
       expect(component.getByText(errMalformedDate(props.uischema.scope, 'Max'))).toBeInTheDocument();
     });
 
     it('can detect malformed min dates in schema', () => {
       const props = { ...staticProps, uischema: uiSchema('2023b/02-01', '2025-02-01') };
-      const component = render(GoADateInput(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
       expect(component.getByText(errMalformedDate(props.uischema.scope, 'Min'))).toBeInTheDocument();
     });
 
     it('will reformat non-standard min dates', () => {
       const props = { ...staticProps, uischema: uiSchema('2023/02-01', '2025-02-01') };
-      const component = render(GoADateInput(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
       expect(component.getByTestId('My ID-input')).toBeInTheDocument();
     });
 
     it('will reformat non-standard max', () => {
       const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025/02-01') };
-      const component = render(GoADateInput(props));
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
       expect(component.getByTestId('My ID-input')).toBeInTheDocument();
     });
   });
