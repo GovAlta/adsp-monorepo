@@ -91,7 +91,6 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
       validations['duplicated'] = value;
     }
     validators.checkAll(validations);
-    setQueue({ ...queue, name: value });
   };
 
   return (
@@ -159,11 +158,13 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
           disabled={!isNew}
           onBlur={(name: string, value: string) => {
             nameFieldValidation(value);
+            setQueue({ ...queue, name: value });
           }}
           onKeyPress={(name: string, value: string, key: string) => {
             if (key !== 'Tab' && value.length === 0) {
               nameFieldValidation(value);
             }
+            setQueue({ ...queue, name: value });
           }}
           onChange={(name, value) => {}}
         />
