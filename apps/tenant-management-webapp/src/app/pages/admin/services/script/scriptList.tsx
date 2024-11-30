@@ -17,7 +17,6 @@ interface ScriptItemProps {
 const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDelete, onEdit }: ScriptItemProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { scripts } = useSelector((state: RootState) => state.scriptService);
 
   useEffect(() => {
     const scriptId = location.pathname.split('/').at(-1);
@@ -82,10 +81,7 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
     setSelectedDeleteScript(script);
     setShowDeleteConfirmation(true);
   };
-  // Object.keys(scripts).map((name) => {
-  //   console.log('name', scripts[name]);
-  //   return name;
-  // });
+
   return (
     <TableDiv key="script">
       <DataTable data-testid="script-table">
@@ -108,12 +104,7 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
 
         <tbody>
           {Object.keys(scripts).map((scriptName) => (
-            <ScriptItemComponent
-              key={scriptName}
-              script={scripts[scriptName] as ScriptItem}
-              onDelete={onDelete}
-              onEdit={onEdit}
-            />
+            <ScriptItemComponent key={scriptName} script={scripts[scriptName]} onDelete={onDelete} onEdit={onEdit} />
           ))}
         </tbody>
       </DataTable>
