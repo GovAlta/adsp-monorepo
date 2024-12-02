@@ -3,7 +3,7 @@ import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
 
-import { GoACircularProgress, GoAFormItem, GoAInput } from '@abgov/react-components-new';
+import { GoAFormItem, GoAInput, GoASpinner } from '@abgov/react-components-new';
 import { Address, Suggestion } from './types';
 
 import {
@@ -163,29 +163,33 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       {renderHelp()}
       <GoAFormItem label={label} error={errors?.['addressLine1'] ?? ''} data-testId="form-address-line1">
         <SearchBox>
-          <GoAInput
-            leadingIcon={autocompletion && enabled ? 'search' : undefined}
-            id="goaInput"
-            name="addressLine1"
-            testId="address-form-address1"
-            readonly={readOnly}
-            disabled={!enabled}
-            ariaLabel={'address-form-address1'}
-            placeholder="Start typing the first line of your address, required."
-            value={address?.addressLine1 || ''}
-            onChange={(e, value) => handleDropdownChange(value)}
-            onBlur={(name) => handleRequiredFieldBlur(name)}
-            width="100%"
-            onKeyPress={(e: string, value: string, key: string) => {
-              if (open) {
-                handleKeyDown(e, value, key);
-              }
-            }}
-          />
-          {loading && autocompletion && (
-            <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress>
-          )}
+          <div className="input-container">
+            <GoAInput
+              leadingIcon={autocompletion && enabled ? 'search' : undefined}
+              id="goaInput"
+              name="addressLine1"
+              testId="address-form-address1"
+              readonly={readOnly}
+              disabled={!enabled}
+              ariaLabel={'address-form-address1'}
+              placeholder="Start typing the first line of your address, required."
+              value={address?.addressLine1 || ''}
+              onChange={(e, value) => handleDropdownChange(value)}
+              onBlur={(name) => handleRequiredFieldBlur(name)}
+              width="100%"
+              onKeyPress={(e: string, value: string, key: string) => {
+                if (open) {
+                  handleKeyDown(e, value, key);
+                }
+              }}
+            />
 
+            {loading && (
+              <div className="input-spinner">
+                <GoASpinner type="infinite" size="small"></GoASpinner>
+              </div>
+            )}
+          </div>
           {!loading && suggestions && autocompletion && (
             <ul ref={dropdownRef} className="suggestions">
               {suggestions &&
