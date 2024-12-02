@@ -1,6 +1,7 @@
 import React from 'react';
 import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith, optionIs, and } from '@jsonforms/core';
-import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
+import { TranslateProps, withJsonFormsEnumProps, withTranslateProps, useJsonForms } from '@jsonforms/react';
+
 import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -15,7 +16,8 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const { data, className, id, enabled, schema, uischema, path, handleChange, options, config, label, t } = props;
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
-  const errorsFormInput = checkFieldValidity(props as ControlProps);
+  const ctx = useJsonForms();
+  const errorsFormInput = checkFieldValidity(props as ControlProps, ctx);
   return (
     <GoARadioGroup
       error={errorsFormInput.length > 0}

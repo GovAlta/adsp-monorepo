@@ -2,7 +2,7 @@ import React from 'react';
 import { CellProps, WithClassname, ControlProps, isIntegerControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import {
@@ -26,7 +26,8 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
-  const errorsFormInput = checkFieldValidity(props as ControlProps);
+  const ctx = useJsonForms();
+  const errorsFormInput = checkFieldValidity(props as ControlProps, ctx);
 
   return (
     <GoAInput

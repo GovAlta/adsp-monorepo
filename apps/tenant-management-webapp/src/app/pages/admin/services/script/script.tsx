@@ -37,14 +37,10 @@ export const Script = (): JSX.Element => {
           </HeadingDiv>
           <Tabs activeIndex={index} data-testid="script-tabs">
             <Tab label="Overview" data-testid="script-overview-tabs">
-              <ScriptOverview
-                setActiveIndex={setActiveIndex}
-                setActiveEdit={activateEdit}
-                setOpenAddScript={setOpenAddScript}
-              />
+              <ScriptOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
             </Tab>
             <Tab label="Scripts" data-testid="scripts-tab">
-              <ScriptsView activeEdit={activateEditState} openAddScriptInitialValue={openAddScript} />
+              <ScriptsView />
             </Tab>
           </Tabs>
         </>

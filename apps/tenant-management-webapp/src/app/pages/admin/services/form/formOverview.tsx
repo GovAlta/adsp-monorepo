@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
-import { fetchFormMetrics } from '@store/form/action';
+import { fetchFormMetrics, openEditorForDefinition, updateFormDefinition } from '@store/form/action';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FormMetrics } from './metrics';
+import { AddEditFormDefinition } from './definitions/addEditFormDefinition';
+import { defaultFormDefinition } from '@store/form/model';
 
 interface FormOverviewProps {
   setOpenAddDefinition: (val: boolean) => void;
@@ -13,6 +15,7 @@ interface FormOverviewProps {
 const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [openModal, setOpenModal] = useState<boolean>(false);
 
   useEffect(() => {
     dispatch(fetchFormMetrics());
@@ -34,15 +37,33 @@ const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element 
         </section>
       }
       addButton={
-        <GoAButton
-          testId="add-definition"
-          onClick={() => {
-            setOpenAddDefinition(true);
-            navigate('/admin/services/form?definitions=true');
-          }}
-        >
-          Add definition
-        </GoAButton>
+        <>
+          <GoAButton
+            testId="add-definition"
+            onClick={() => {
+              setOpenModal(true);
+            }}
+          >
+            Add definition
+          </GoAButton>
+          <AddEditFormDefinition
+            open={openModal}
+            isEdit={false}
+            initialValue={defaultFormDefinition}
+            onClose={() => {
+              setOpenModal(false);
+            }}
+            onSave={(definition) => {
+              setOpenAddDefinition(false);
+              navigate({
+                pathname: `edit/${definition.id}`,
+                search: '?headless=true',
+              });
+              dispatch(updateFormDefinition(definition));
+              dispatch(openEditorForDefinition(definition.id, definition));
+            }}
+          />
+        </>
       }
       extra={<FormMetrics />}
     />
