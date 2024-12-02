@@ -52,3 +52,6 @@ export const ListItem = styled.li<ListItemProps>`
   color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-white) !important' : '')};
   font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--fw-bold)' : '')};
 `;
+export const Spinner = styled.div`
+  animation: rotate 2s linear infinite;
+`;

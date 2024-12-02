@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
-
+import { SmallLoadingIndicator } from './SmallLoadingIndicator';
 import { GoACircularProgress, GoAFormItem, GoAInput } from '@abgov/react-components-new';
 import { Address, Suggestion } from './types';
 
@@ -183,7 +183,8 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
             }}
           />
           {loading && autocompletion && (
-            <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress>
+            // <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress>
+            <SmallLoadingIndicator />
           )}
 
           {!loading && suggestions && autocompletion && (
