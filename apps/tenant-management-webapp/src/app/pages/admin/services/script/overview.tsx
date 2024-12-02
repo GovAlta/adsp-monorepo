@@ -28,6 +28,7 @@ export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverview
   const updateAddScriptModal = (open: boolean) => {
     setOpenModal(open);
   };
+
   return (
     <>
       <OverviewLayout
@@ -36,7 +37,7 @@ export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverview
           <GoAButton
             testId="add-script-btn"
             onClick={() => {
-              setOpenModal(true);
+              setActiveEdit(true);
             }}
           >
             Add script
@@ -48,6 +49,7 @@ export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverview
         updateOpenAddScriptModal={updateAddScriptModal}
         openAddScriptModal={openModal}
         showScriptTable={false}
+        setActiveEdit={setActiveEdit}
       />
     </>
   );

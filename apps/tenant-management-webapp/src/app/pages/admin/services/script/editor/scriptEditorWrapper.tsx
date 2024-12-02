@@ -32,12 +32,14 @@ export const getDefaultTestInput = () => {
 interface ScriptEditorWrapperProps {
   openAddScriptModal: boolean;
   updateOpenAddScriptModal?: (val: boolean) => void;
+  setActiveEdit: (boolean) => void;
   showScriptTable: boolean;
 }
 export const ScriptEditorWrapper: FunctionComponent<ScriptEditorWrapperProps> = ({
   showScriptTable,
   openAddScriptModal,
   updateOpenAddScriptModal,
+  setActiveEdit,
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -117,7 +119,9 @@ export const ScriptEditorWrapper: FunctionComponent<ScriptEditorWrapperProps> = 
   const reset = () => {
     setTestInput(getDefaultTestInput());
     setSelectedScript(defaultScript);
+    setActiveEdit(false);
     setOpenAddScript(false);
+
     if (updateOpenAddScriptModal) {
       updateOpenAddScriptModal(false);
     }
@@ -141,14 +145,18 @@ export const ScriptEditorWrapper: FunctionComponent<ScriptEditorWrapperProps> = 
 
   const goBack = () => {
     setShowScriptEditForm(false);
-    navigate({
-      pathname: `/admin/services/script`,
-      search: '?scripts=true',
-    });
+    if (setActiveEdit) {
+      setActiveEdit(false);
+    }
+    setOpenAddScript(false);
   };
 
   const onEdit = (script) => {
     script.testInputs = testInput;
+    setOpenAddScript(false);
+    if (setActiveEdit) {
+      setActiveEdit(false);
+    }
     if (location.pathname.includes(script.id)) {
       setSelectedScript(scripts[script.id]);
     }

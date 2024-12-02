@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScriptEditorWrapper } from './editor/scriptEditorWrapper';
 import { GoAButton } from '@abgov/react-components-new';
 
-export const ScriptsView = (): JSX.Element => {
+interface ScriptsViewProps {
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (index: number) => void;
+  activeEdit: boolean;
+}
+export const ScriptsView = ({ setActiveEdit, activeEdit }: ScriptsViewProps): JSX.Element => {
   const [openAddScript, setOpenAddScript] = useState(false);
 
   const updateAddScriptModal = (open: boolean) => {
     setOpenAddScript(open);
+  };
+
+  useEffect(() => {
+    if (activeEdit) {
+      reset();
+      setOpenAddScript(true);
+    }
+  }, [activeEdit]);
+
+  const reset = () => {
+    setOpenAddScript(false);
+    document.body.style.overflow = 'unset';
   };
   return (
     <section>
@@ -26,6 +43,7 @@ export const ScriptsView = (): JSX.Element => {
         updateOpenAddScriptModal={updateAddScriptModal}
         openAddScriptModal={openAddScript}
         showScriptTable={true}
+        setActiveEdit={setActiveEdit}
       />
     </section>
   );
