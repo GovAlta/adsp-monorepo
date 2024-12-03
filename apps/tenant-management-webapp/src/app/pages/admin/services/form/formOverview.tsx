@@ -3,20 +3,36 @@ import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
 import { fetchFormMetrics, openEditorForDefinition, updateFormDefinition } from '@store/form/action';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FormMetrics } from './metrics';
 import { AddEditFormDefinition } from './definitions/addEditFormDefinition';
 import { defaultFormDefinition } from '@store/form/model';
+import { FormDefinitions } from './definitions/definitions';
 
 interface FormOverviewProps {
   setOpenAddDefinition: (val: boolean) => void;
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (index: number) => void;
+  activateEdit: boolean;
+  openAddDefinition: boolean;
 }
 
-const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
+const FormOverview = ({
+  setOpenAddDefinition,
+  activateEdit,
+  setActiveEdit,
+  setActiveIndex,
+  openAddDefinition,
+}: FormOverviewProps): JSX.Element => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [openModal, setOpenModal] = useState<boolean>(false);
+  const location = useLocation();
+  const addOpenFormEditor = location.state?.addOpenFormEditor;
+  const [addNewFormDefinition, setAddNewFormDefinition] = useState(addOpenFormEditor);
 
+  useEffect(() => {
+    setActiveIndex(0);
+  }, []);
   useEffect(() => {
     dispatch(fetchFormMetrics());
   }, [dispatch]);
@@ -41,27 +57,19 @@ const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element 
           <GoAButton
             testId="add-definition"
             onClick={() => {
-              setOpenModal(true);
+              setActiveEdit(true);
+              setActiveIndex(1);
+              setOpenAddDefinition(true);
             }}
           >
             Add definition
           </GoAButton>
-          <AddEditFormDefinition
-            open={openModal}
-            isEdit={false}
-            initialValue={defaultFormDefinition}
-            onClose={() => {
-              setOpenModal(false);
-            }}
-            onSave={(definition) => {
-              setOpenAddDefinition(false);
-              navigate({
-                pathname: `edit/${definition.id}`,
-                search: '?headless=true',
-              });
-              dispatch(updateFormDefinition(definition));
-              dispatch(openEditorForDefinition(definition.id, definition));
-            }}
+          <FormDefinitions
+            setOpenAddDefinition={setOpenAddDefinition}
+            showFormDefinitions={false}
+            openAddDefinition={openAddDefinition}
+            setActiveEdit={setActiveEdit}
+            setActiveIndex={setActiveIndex}
           />
         </>
       }
