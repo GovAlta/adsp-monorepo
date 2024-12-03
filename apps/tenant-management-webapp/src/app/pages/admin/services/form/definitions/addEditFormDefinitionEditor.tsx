@@ -268,7 +268,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const navigate = useNavigate();
   const close = () => {
     dispatch(ClearNewFileList());
-    navigate('..?definitions=true', { state: { isNavigatedFromEdit: true } });
+    navigate('..?definitions=true', { state: { addOpenFormEditor: true, isNavigatedFromEdit: true } });
   };
 
   const openModalFunction = (disposition) => {
