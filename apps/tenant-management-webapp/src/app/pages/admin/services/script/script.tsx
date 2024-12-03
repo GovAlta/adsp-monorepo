@@ -11,7 +11,6 @@ import AsideLinks from '@components/AsideLinks';
 export const Script = (): JSX.Element => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
-  const [openAddScript, setOpenAddScript] = useState(false);
 
   const searchParams = new URLSearchParams(document.location.search);
   const scripts = searchParams && searchParams.get('scripts');
@@ -37,14 +36,14 @@ export const Script = (): JSX.Element => {
           </HeadingDiv>
           <Tabs activeIndex={index} data-testid="script-tabs">
             <Tab label="Overview" data-testid="script-overview-tabs">
-              <ScriptOverview
-                setActiveIndex={setActiveIndex}
-                setActiveEdit={activateEdit}
-                setOpenAddScript={setOpenAddScript}
-              />
+              <ScriptOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
             </Tab>
             <Tab label="Scripts" data-testid="scripts-tab">
-              <ScriptsView activeEdit={activateEditState} openAddScriptInitialValue={openAddScript} />
+              <ScriptsView
+                activeEdit={activateEditState}
+                setActiveIndex={setActiveIndex}
+                setActiveEdit={activateEdit}
+              />
             </Tab>
           </Tabs>
         </>

@@ -55,6 +55,7 @@ const LinkCopyComponent = ({ link, text }: LinkCopyComponentProps): JSX.Element 
         type="secondary"
         leadingIcon="link"
         testId="copy-link-button"
+        aria-label="Copy Link"
         onClick={() => {
           navigator.clipboard.writeText(link);
           setIsCopied(true);

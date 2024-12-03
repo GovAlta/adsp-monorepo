@@ -101,7 +101,7 @@ export const onSaveDispositionForModal = (
   definition: FormDefinition,
   selectedEditModalIndex: number | null
 ): [FormDefinition, number | null] => {
-  const currentDispositionStates = [...definition.dispositionStates] || [];
+  const currentDispositionStates = [...definition.dispositionStates];
   if (newDisposition) {
     if (currentDisposition) {
       currentDispositionStates.push(currentDisposition);
@@ -268,7 +268,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const navigate = useNavigate();
   const close = () => {
     dispatch(ClearNewFileList());
-    navigate('..?definitions=true', { state: { isNavigatedFromEdit: true } });
+    navigate('..?definitions=true', { state: { addOpenFormEditor: true, isNavigatedFromEdit: true } });
   };
 
   const openModalFunction = (disposition) => {

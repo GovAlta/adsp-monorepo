@@ -1,11 +1,13 @@
 import { Container, Recaptcha } from '@core-services/app-common';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { FunctionComponent } from 'react';
+import { createDefaultAjv } from '@abgov/jsonforms-components';
 import { Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import styled from 'styled-components';
-import { DraftForm } from '../components/DraftForm';
+import { DraftFormWrapper } from '../components/DraftFormWrapper';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { SubmittedForm } from '../components/SubmittedForm';
+import styled from 'styled-components';
 import {
   ValidationError,
   AppDispatch,
@@ -21,6 +23,7 @@ import {
   AppState,
 } from '../state';
 
+const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 interface FormProps {
   className?: string;
 }
@@ -47,7 +50,7 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
               <>
                 {form?.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
                 {!form && (
-                  <DraftForm
+                  <DraftFormWrapper
                     definition={definition}
                     form={form}
                     data={data}
@@ -62,6 +65,7 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
                     onSubmit={function () {
                       dispatch(submitAnonymousForm());
                     }}
+                    ajv={ajv}
                   />
                 )}
               </>

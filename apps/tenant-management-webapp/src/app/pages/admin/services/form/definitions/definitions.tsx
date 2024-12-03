@@ -24,9 +24,18 @@ import { useLocation, useNavigate } from 'react-router-dom';
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
   isNavigatedFromEdit?: boolean;
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (index: number) => void;
+  showFormDefinitions: boolean;
+  setOpenAddDefinition: (val: boolean) => void;
 }
 
-export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
+export const FormDefinitions = ({
+  openAddDefinition,
+  setOpenAddDefinition,
+  setActiveIndex,
+  showFormDefinitions,
+}: FormDefinitionsProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
@@ -61,6 +70,9 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     if (openAddDefinition) {
       setOpenAddFormDefinition(true);
     }
+    return () => {
+      setOpenAddFormDefinition(false);
+    };
   }, [openAddDefinition]);
 
   useEffect(() => {
@@ -83,13 +95,11 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, [formDefinitions]);
+
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, []);
 
-  const deleteAction = () => {
-    dispatch(deleteFormDefinition(currentDefinition));
-  };
   useEffect(() => {
     if (!indicator.show) {
       setShowDeleteConfirmation(false);
@@ -99,20 +109,24 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
-      <GoAButton
-        testId="add-definition"
-        onClick={() => {
-          setOpenAddFormDefinition(true);
-        }}
-        mb={'l'}
-      >
-        Add definition
-      </GoAButton>
+      {showFormDefinitions && (
+        <GoAButton
+          testId="add-definition"
+          onClick={() => {
+            setOpenAddFormDefinition(true);
+          }}
+          mb={'l'}
+        >
+          Add definition
+        </GoAButton>
+      )}
+
       <AddEditFormDefinition
         open={openAddFormDefinition}
         isEdit={false}
         onClose={() => {
           setOpenAddFormDefinition(false);
+          setOpenAddDefinition(false);
         }}
         initialValue={defaultFormDefinition}
         onSave={(definition) => {
@@ -128,7 +142,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
 
       {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
       {!indicator.show && !formDefinitions && renderNoItem('form templates')}
-      {formDefinitions && Object.keys(formDefinitions).length > 0 && (
+      {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
           <FormDefinitionsTable
             definitions={formDefinitions}

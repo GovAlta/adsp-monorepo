@@ -1,19 +1,39 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
-import { fetchFormMetrics } from '@store/form/action';
+import { fetchFormMetrics, openEditorForDefinition, updateFormDefinition } from '@store/form/action';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FormMetrics } from './metrics';
+import { AddEditFormDefinition } from './definitions/addEditFormDefinition';
+import { defaultFormDefinition } from '@store/form/model';
+import { FormDefinitions } from './definitions/definitions';
 
 interface FormOverviewProps {
   setOpenAddDefinition: (val: boolean) => void;
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (index: number) => void;
+  activateEdit: boolean;
+  openAddDefinition: boolean;
 }
 
-const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
+const FormOverview = ({
+  setOpenAddDefinition,
+  activateEdit,
+  setActiveEdit,
+  setActiveIndex,
+  openAddDefinition,
+}: FormOverviewProps): JSX.Element => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
+  const addOpenFormEditor = location.state?.addOpenFormEditor;
+  const [addNewFormDefinition, setAddNewFormDefinition] = useState(addOpenFormEditor);
 
+  useEffect(() => {
+    setActiveIndex(0);
+    //  eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     dispatch(fetchFormMetrics());
   }, [dispatch]);
@@ -34,15 +54,26 @@ const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element 
         </section>
       }
       addButton={
-        <GoAButton
-          testId="add-definition"
-          onClick={() => {
-            setOpenAddDefinition(true);
-            navigate('/admin/services/form?definitions=true');
-          }}
-        >
-          Add definition
-        </GoAButton>
+        <>
+          <GoAButton
+            testId="add-definition"
+            onClick={() => {
+              setActiveEdit(true);
+              setActiveIndex(1);
+              setOpenAddDefinition(true);
+            }}
+          >
+            Add definition
+          </GoAButton>
+
+          <FormDefinitions
+            setOpenAddDefinition={setOpenAddDefinition}
+            showFormDefinitions={false}
+            openAddDefinition={openAddDefinition}
+            setActiveEdit={setActiveEdit}
+            setActiveIndex={setActiveIndex}
+          />
+        </>
       }
       extra={<FormMetrics />}
     />
