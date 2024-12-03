@@ -100,9 +100,6 @@ export const FormDefinitions = ({
     document.body.style.overflow = 'unset';
   }, []);
 
-  const deleteAction = () => {
-    dispatch(deleteFormDefinition(currentDefinition));
-  };
   useEffect(() => {
     if (!indicator.show) {
       setShowDeleteConfirmation(false);

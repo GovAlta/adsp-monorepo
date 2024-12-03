@@ -54,7 +54,6 @@ export const Form: FunctionComponent = () => {
   }, []);
 
   useEffect(() => {
-    console.log('useEffect isNavigatedFromEditor', isNavigatedFromEditor);
     if (isNavigatedFromEditor) {
       activateEdit(true);
     }

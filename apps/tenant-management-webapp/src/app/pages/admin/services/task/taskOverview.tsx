@@ -9,15 +9,25 @@ import { UpdateTaskQueue } from '@store/task/action';
 
 interface TaskOverviewProps {
   setOpenAddTask: (val: boolean) => void;
+
+  setActiveEdit: (edit: boolean) => void;
+  setActiveIndex: (index: number) => void;
+  activeEdit: boolean;
+  openAddTask: boolean;
 }
 
-export const TaskOverview = (): JSX.Element => {
+export const TaskOverview = ({
+  setActiveEdit,
+  setActiveIndex,
+  activeEdit,
+  openAddTask,
+  setOpenAddTask,
+}: TaskOverviewProps): JSX.Element => {
   const [selectedQueue, setSelectedQueue] = useState<TaskDefinition>(defaultTaskQueue);
-  const [openAddTask, setOpenAddTask] = useState(false);
 
   useEffect(() => {
-    setOpenAddTask(false);
-    navigate('/admin/services/task');
+    setActiveEdit(false);
+    setActiveIndex(0);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
@@ -30,39 +40,26 @@ export const TaskOverview = (): JSX.Element => {
   };
 
   return (
-    <>
-      <OverviewLayout
-        description={
-          <section>
-            <p>
-              The task service provides a model for tasks, task queues, and task assignment. Applications can use the
-              task service for work management as an aspect to augment domain specific concepts and processes.
-            </p>
-          </section>
-        }
-        addButton={
-          <GoAButton
-            testId="add-queue"
-            onClick={() => {
-              navigate('/admin/services/task?queues=true');
-              setOpenAddTask(true);
-            }}
-          >
-            Add queue
-          </GoAButton>
-        }
-      />
-      {openAddTask ? (
-        <QueueModal
-          open={true}
-          initialValue={selectedQueue}
-          type={'new'}
-          onCancel={() => {
-            reset();
+    <OverviewLayout
+      description={
+        <section>
+          <p>
+            The task service provides a model for tasks, task queues, and task assignment. Applications can use the task
+            service for work management as an aspect to augment domain specific concepts and processes.
+          </p>
+        </section>
+      }
+      addButton={
+        <GoAButton
+          testId="add-queue"
+          onClick={() => {
+            setActiveEdit(true);
+            setOpenAddTask(true);
           }}
-          onSave={(queue) => dispatch(UpdateTaskQueue(queue))}
-        />
-      ) : null}
-    </>
+        >
+          Add queue
+        </GoAButton>
+      }
+    />
   );
 };

@@ -32,6 +32,7 @@ const FormOverview = ({
 
   useEffect(() => {
     setActiveIndex(0);
+    //  eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     dispatch(fetchFormMetrics());
@@ -64,6 +65,7 @@ const FormOverview = ({
           >
             Add definition
           </GoAButton>
+
           <FormDefinitions
             setOpenAddDefinition={setOpenAddDefinition}
             showFormDefinitions={false}
