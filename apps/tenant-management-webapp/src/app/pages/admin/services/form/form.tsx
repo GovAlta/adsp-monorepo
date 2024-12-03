@@ -64,7 +64,6 @@ export const Form: FunctionComponent = () => {
     setActivateEditState(edit);
   };
 
-  console.log('index', activeIndex);
   return (
     <Page>
       <Main>
