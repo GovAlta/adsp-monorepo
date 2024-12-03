@@ -35,6 +35,20 @@ export const SearchBox = styled.div`
     cursor: pointer;
     font-weight: var(--fw-bold);
   }
+  .input-container {
+    position: relative;
+    display: inline-block;
+    width: 100%; /* Ensures it spans the parent container */
+  }
+
+  .input-container .input-spinner {
+    position: absolute;
+    top: 50%;
+    right: 8px; /* Adjust based on padding or margin of the input field */
+    transform: translateY(-50%);
+    z-index: 1; /* Ensure it appears above the input */
+    pointer-events: none; /* Prevent spinner from interfering with clicks */
+  }
 `;
 
 export const AddressIndent = styled.div`
