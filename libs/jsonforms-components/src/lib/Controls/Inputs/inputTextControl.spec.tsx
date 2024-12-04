@@ -15,8 +15,7 @@ const mockContextValue = {
 
 //eslint-disable-next-line
 const TestComponent: React.FC<{ props: any }> = ({ props }) => {
-  const ctx = React.useContext(JsonFormsContext);
-  return <>{checkFieldValidity(props, ctx)}</>;
+  return <>{checkFieldValidity(props)}</>;
 };
 
 describe('Input Text Control tests', () => {

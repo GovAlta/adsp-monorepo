@@ -1,5 +1,5 @@
 import { isBooleanControl, RankedTester, rankWith, ControlProps, isDescriptionHidden } from '@jsonforms/core';
-import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoACheckbox } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
@@ -15,18 +15,14 @@ export const BooleanComponent = ({
   errors,
   schema,
 }: ControlProps) => {
-  const ctx = useJsonForms();
-  const errorsFormInput = checkFieldValidity(
-    {
-      data,
-      uischema,
-      label,
-      required,
-      errors,
-      schema,
-    } as ControlProps,
-    ctx
-  );
+  const errorsFormInput = checkFieldValidity({
+    data,
+    uischema,
+    label,
+    required,
+    errors,
+    schema,
+  } as ControlProps);
 
   const text = `${
     schema?.title || schema?.description
