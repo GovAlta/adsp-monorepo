@@ -1,7 +1,6 @@
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInput } from '@abgov/react-components-new';
-import { useJsonForms as uJsonForms } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
@@ -33,8 +32,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
 
-  const ctx = uJsonForms();
-  const errorsFormInput = checkFieldValidity(props as ControlProps, ctx);
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
   const isSinField = schema.title === sinTitle;
 
   const autoCapitalize =

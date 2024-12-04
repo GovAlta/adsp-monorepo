@@ -11,7 +11,7 @@ import {
 } from '@jsonforms/core';
 import { GoATextArea } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
-import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForTextControl, onKeyPressForTextControl } from '../../util/inputControlUtils';
@@ -26,8 +26,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const ctx = useJsonForms();
-  const errorsFormInput = checkFieldValidity(props as ControlProps, ctx);
+  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   const width = uischema?.options?.componentProps?.readOnly ?? '100%';
   const autoCapitalize =

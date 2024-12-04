@@ -11,7 +11,7 @@ import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import type Ajv from 'ajv';
+
 import {
   AppDispatch,
   Form,
@@ -42,7 +42,6 @@ interface DraftFormProps {
   anonymousApply?: boolean;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
-  ajv: Ajv;
 }
 
 export const populateDropdown = (schema, enumerators) => {
@@ -58,12 +57,11 @@ export const populateDropdown = (schema, enumerators) => {
   return newSchema as JsonSchema;
 };
 
-const JsonFormsWrapper = ({ ajv, definition, data, onChange, readonly }) => {
+const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
-        ajv={ajv}
         readonly={readonly}
         schema={populateDropdown(definition.dataSchema, enumerators)}
         uischema={definition.uiSchema}
@@ -97,7 +95,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   anonymousApply,
   onChange,
   onSubmit,
-  ajv,
 }) => {
   const onSubmitFunction = () => {
     onSubmit(form);
@@ -179,7 +176,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         }}
         formUrl="https://form.adsp-uat.alberta.ca"
       >
-        <JsonFormsWrapper ajv={ajv} definition={definition} data={data} onChange={onChange} readonly={submitting} />
+        <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
       </ContextProvider>
     </div>
   );

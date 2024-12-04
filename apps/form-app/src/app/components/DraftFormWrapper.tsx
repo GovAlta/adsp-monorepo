@@ -49,13 +49,19 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
   onSubmit,
   ajv,
 }) => {
+  const unfilledRequired =
+    definition.dataSchema.required.filter((requiredItem) => {
+      const requiredItemX = Object.keys(data).find((key) => key === requiredItem && (data[key] as string).length === 0);
+      return requiredItemX;
+    }).length > 0;
+
   const ButtonGroup = ({ showSubmit, canSubmit, onSubmit, form }): JSX.Element => {
     return (
       <GoAButtonGroup alignment="end">
         {showSubmit && (
           <GoAButton
             mt="2xl"
-            disabled={!canSubmit || ajv.errors?.length > 0}
+            disabled={!canSubmit || unfilledRequired}
             type="primary"
             data-testid="form-submit"
             onClick={() => {
@@ -83,7 +89,6 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
           submitting={submitting}
           onChange={onChange}
           onSubmit={onSubmit}
-          ajv={ajv}
         />
         <ButtonGroup showSubmit={showSubmit} canSubmit={canSubmit} onSubmit={onSubmit} form={form} />
       </GridItem>
