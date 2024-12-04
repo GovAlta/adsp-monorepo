@@ -1,7 +1,7 @@
 import { CellProps, WithClassname, ControlProps, isDateControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInputDate } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
-import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForDateControl, onChangeForDateControl, onKeyPressForDateControl } from '../../util/inputControlUtils';
@@ -37,7 +37,6 @@ const reformatDateProps = (props: any): any => {
 };
 
 export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
-  const ctx = useJsonForms();
   const { data, config, id, enabled, uischema, path, handleChange, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
@@ -55,7 +54,7 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
 
   return (
     <GoAInputDate
-      error={checkFieldValidity(props as ControlProps, ctx).length > 0}
+      error={checkFieldValidity(props as ControlProps).length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={standardizeDate(data) || ''}

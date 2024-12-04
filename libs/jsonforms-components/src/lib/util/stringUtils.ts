@@ -1,8 +1,5 @@
 import { ControlProps, JsonSchema, extractSchema } from '@jsonforms/core';
-
-import { JsonFormsStateContext } from '@jsonforms/react';
 import { invalidSin, sinTitle } from '../common/Constants';
-import { useJsonForms } from '@jsonforms/react';
 
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
@@ -83,8 +80,14 @@ interface extractSchema {
   errorMessage?: string;
 }
 
-export const checkFieldValidity = (props: ControlProps, ctx: JsonFormsStateContext): string => {
-  const { data, errors: ajvErrors, required, label, uischema, schema, path, id, description } = props;
+/**
+ * Check if a required, defined input value is valid. Returns an appropriate
+ * error message if not.
+ * @param props
+ * @returns error message
+ */
+export const checkFieldValidity = (props: ControlProps): string => {
+  const { data, errors: ajvErrors, required, label, uischema, schema } = props;
   const labelToUpdate = getLabelText(uischema.scope, label);
   const extraSchema = schema as JsonSchema & extractSchema;
 
@@ -96,35 +99,7 @@ export const checkFieldValidity = (props: ControlProps, ctx: JsonFormsStateConte
     }
   }
   if (required) {
-    if (ctx.core?.ajv) {
-      const newError = {
-        instancePath: path,
-        message: ajvErrors,
-        schemaPath: id,
-        keyword: description || '',
-        params: {},
-      };
-
-      const index = (ctx.core.ajv.errors || []).findIndex((error) => {
-        return error?.schemaPath === id;
-      });
-
-      if (schema && (isEmptyBoolean(schema, data) || isEmptyNumber(schema, data))) {
-        if (index > -1) {
-          (ctx.core.ajv.errors || [])[index] = newError;
-        } else {
-          ctx.core.ajv.errors = [...(ctx.core.ajv.errors || []), newError];
-        }
-      } else {
-        if (index > -1) {
-          delete (ctx.core.ajv.errors || [])[index];
-        }
-      }
-    }
-
-    if (ctx.core?.ajv?.errors) {
-      ctx.core.ajv.errors = ctx.core?.ajv?.errors.filter((e) => e !== null);
-    }
+    if (data === undefined) return '';
 
     if (schema) {
       if (isEmptyBoolean(schema, data)) {

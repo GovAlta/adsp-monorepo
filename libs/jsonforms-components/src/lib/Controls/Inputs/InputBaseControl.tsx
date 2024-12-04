@@ -1,7 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
-import { useJsonForms } from '@jsonforms/react';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 import { StepInputStatus, StepperContext } from '../FormStepper/StepperContext';
 import { Visible } from '../../util';
@@ -34,8 +33,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const { uischema, visible, label, input, required, errors, path, isStepperReview } = props;
   const InnerComponent = input;
   const labelToUpdate: string = getLabelText(uischema.scope, label || '');
-  const ctx = useJsonForms();
-  let modifiedErrors = checkFieldValidity(props as ControlProps, ctx);
+  let modifiedErrors = checkFieldValidity(props as ControlProps);
 
   if (modifiedErrors === 'must be equal to one of the allowed values') {
     modifiedErrors = '';
