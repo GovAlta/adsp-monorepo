@@ -25,7 +25,7 @@ export const SearchBox = styled.div`
     overflow: hidden auto;
   }
   .suggestions li {
-    padding: 0.5rem;
+    padding: var(--goa-space-2xs);
     color: var(--color-gray-900);
   }
   .suggestion-active,
