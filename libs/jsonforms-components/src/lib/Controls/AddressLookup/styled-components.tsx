@@ -56,8 +56,8 @@ export const AddressIndent = styled.div`
 `;
 
 export const LabelDiv = styled.div`
-  font-size: var(--fs-sl);
-  padding-bottom: 1.5rem;
+  font-size: var(--goa-font-size-2);
+  padding-bottom: var(--goa-space-l);
 `;
 
 /* istanbul ignore next */
