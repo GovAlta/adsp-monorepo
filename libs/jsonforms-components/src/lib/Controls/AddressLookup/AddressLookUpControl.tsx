@@ -32,7 +32,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const autocompletion = uischema?.options?.autocomplete !== false;
   const [open, setOpen] = useState(false);
 
-  const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : schema?.title;
+  const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : '';
   const defaultAddress = {
     addressLine1: '',
     addressLine2: '',
@@ -161,7 +161,12 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   return (
     <div>
       {renderHelp()}
-      <GoAFormItem label={label} error={errors?.['addressLine1'] ?? ''} data-testId="form-address-line1">
+      <h3>{label}</h3>
+      <GoAFormItem
+        label={'Street address or P.O. box'}
+        error={errors?.['addressLine1'] ?? ''}
+        data-testId="form-address-line1"
+      >
         <SearchBox>
           <div className="input-container">
             <GoAInput
