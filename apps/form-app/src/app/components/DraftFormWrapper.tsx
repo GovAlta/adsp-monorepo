@@ -50,7 +50,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
   ajv,
 }) => {
   const unfilledRequired =
-    definition.dataSchema.required.filter((requiredItem) => {
+    definition.dataSchema.required?.filter((requiredItem) => {
       const requiredItemX = Object.keys(data).find((key) => key === requiredItem && (data[key] as string).length === 0);
       return requiredItemX;
     }).length > 0;
