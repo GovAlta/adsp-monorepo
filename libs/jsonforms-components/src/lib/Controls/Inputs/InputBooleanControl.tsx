@@ -1,8 +1,8 @@
-import { isBooleanControl, RankedTester, rankWith, ControlProps, isDescriptionHidden } from '@jsonforms/core';
+import { isBooleanControl, RankedTester, rankWith, ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoACheckbox } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
+import { checkFieldValidity, getLastSegmentFromPointer, convertToReadableFormat } from '../../util/stringUtils';
 
 export const BooleanComponent = ({
   data,
@@ -31,12 +31,13 @@ export const BooleanComponent = ({
         : schema?.description
       : uischema?.options?.text
   }${required ? ' (required)' : ''}`;
+
   return (
     <GoACheckbox
       error={errorsFormInput.length > 0}
       testId={`${path}-checkbox-test-id`}
       disabled={!enabled}
-      text={text && text !== 'undefined' ? text : getLabelText(uischema.scope, label || '')}
+      text={text && text !== 'undefined' ? text : convertToReadableFormat(getLastSegmentFromPointer(uischema.scope))}
       name={`${path}`}
       checked={data}
       onChange={(_: string, checked: boolean) => {
