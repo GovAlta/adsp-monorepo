@@ -15,7 +15,7 @@ import { Categorization, deriveLabelForUISchemaElement, Category, isVisible, isE
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
 
-import { RightAlignmentDiv } from './styled-components';
+import { FormStepperSummaryH3, RightAlignmentDiv } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
@@ -234,7 +234,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
               );
             })}
             <div data-testid="summary_step-content">
-              <h3 style={{ flex: 1, marginBottom: '1rem' }}>{summaryLabel}</h3>
+              <FormStepperSummaryH3>{summaryLabel}</FormStepperSummaryH3>
               <FormStepperReviewer navigationFunc={setPage} {...props} />
             </div>
           </GoAPages>
