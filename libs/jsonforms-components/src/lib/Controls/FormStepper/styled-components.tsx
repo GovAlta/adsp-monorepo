@@ -63,7 +63,6 @@ export const RightAlignmentDiv = styled.div`
   margin-bottom: var(--goa-space-l);
 `;
 
-//<h3 style={{ flex: 1, marginBottom: '1rem' }}>{summaryLabel}</h3>
 export const FormStepperSummaryH3 = styled.h3`
   flex: 1;
   margin-bottom: var(--goa-space-m);
