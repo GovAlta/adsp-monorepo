@@ -58,9 +58,14 @@ export const ListWithDetailHeading = styled.h3`
 `;
 
 export const RightAlignmentDiv = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: var(--goa-space-l);
+  @media screen and (max-width: 767px) {
+    margin-bottom: var(--goa-space-l);
+  }
+  @media screen and (min-width: 768px) {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--goa-space-l);
+  }
 `;
 
 export const FormStepperSummaryH3 = styled.h3`
