@@ -24,6 +24,20 @@ interface DraftFormProps {
   ajv: Ajv;
 }
 
+const unfilledRequiredRecursive = (schema, data) => {
+  const currentUnfilledRequired =
+    (schema?.required || []).filter((requiredItem) => {
+      return Object.keys(data).find((key) => key === requiredItem && (data[key] as string).length === 0);
+    }).length > 0;
+
+  const subsetRequired =
+    Object.keys(schema?.properties || []).filter((prop) => {
+      return schema?.properties && unfilledRequiredRecursive(schema?.properties[prop], data[prop] || {});
+    }).length > 0;
+
+  return currentUnfilledRequired || subsetRequired;
+};
+
 export const populateDropdown = (schema, enumerators) => {
   const newSchema = JSON.parse(JSON.stringify(schema));
 
@@ -47,13 +61,8 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
   submitting,
   onChange,
   onSubmit,
-  ajv,
 }) => {
-  const unfilledRequired =
-    definition.dataSchema.required.filter((requiredItem) => {
-      const requiredItemX = Object.keys(data).find((key) => key === requiredItem && (data[key] as string).length === 0);
-      return requiredItemX;
-    }).length > 0;
+  const unfilledRequired = unfilledRequiredRecursive(definition.dataSchema, data);
 
   const ButtonGroup = ({ showSubmit, canSubmit, onSubmit, form }): JSX.Element => {
     return (
