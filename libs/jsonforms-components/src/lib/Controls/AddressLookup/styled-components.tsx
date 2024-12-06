@@ -20,12 +20,10 @@ export const SearchBox = styled.div`
     background: var(--color-white);
     box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
     z-index: 99;
-    padding-left: 0px;
-
     overflow: hidden auto;
   }
   .suggestions li {
-    padding: 0.5rem;
+    padding: var(--goa-space-xs) var(--goa-space-2xs) var(--goa-space-xs) 2px;
     color: var(--color-gray-900);
   }
   .suggestion-active,
@@ -56,8 +54,8 @@ export const AddressIndent = styled.div`
 `;
 
 export const LabelDiv = styled.div`
-  font-size: var(--fs-sl);
-  padding-bottom: 1.5rem;
+  font-size: var(--goa-font-size-2);
+  padding-bottom: var(--goa-space-l);
 `;
 
 /* istanbul ignore next */
