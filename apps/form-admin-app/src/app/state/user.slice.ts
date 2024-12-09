@@ -1,0 +1,207 @@
+import { Dispatch, createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
+import axios from 'axios';
+import keycloak, { KeycloakInstance } from 'keycloak-js';
+import { v4 as uuidv4 } from 'uuid';
+import { ConfigState } from './config.slice';
+import { AppState } from './store';
+import { isAxiosErrorPayload } from './util';
+import { FeedbackMessage } from './types';
+
+export const USER_FEATURE_KEY = 'user';
+
+interface Tenant {
+  id: string;
+  name: string;
+  realm: string;
+}
+
+export interface UserState {
+  tenant: Tenant;
+  initialized: boolean;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    roles: string[];
+  };
+}
+
+let client: KeycloakInstance;
+async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
+  if (client?.realm !== realm) {
+    client = keycloak({
+      url: `${config.environment.access.url}/auth`,
+      clientId: config.environment.access.client_id,
+      realm,
+    });
+
+    try {
+      await client.init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        silentCheckSsoRedirectUri: new URL('/silent-check-sso.html', window.location.href).href,
+      });
+      client.onAuthLogout = () => {
+        dispatch(userActions.clearUser());
+      };
+    } catch (err) {
+      // Keycloak client throws undefined in certain cases.
+    }
+  }
+
+  return client;
+}
+
+export async function getAccessToken(): Promise<string> {
+  let token = null;
+  if (client) {
+    try {
+      await client.updateToken(60);
+      token = client.token;
+    } catch (err) {
+      // If we're unable to update token, return no value and the request will fail on 401.
+    }
+  }
+  return token;
+}
+
+export const initializeTenant = createAsyncThunk(
+  'user/initialize-tenant',
+  async (name: string, { getState, dispatch, rejectWithValue }) => {
+    const { config } = getState() as AppState;
+    const url = config.directory['urn:ads:platform:tenant-service'];
+    if (!url) {
+      return null;
+    }
+
+    const { data } = await axios.get<{ results: Tenant[] }>(new URL('/api/tenant/v2/tenants', url).href, {
+      params: {
+        name: name.replace(/-/g, ' '),
+      },
+    });
+
+    const tenant = data?.results?.[0];
+    if (!tenant) {
+      return rejectWithValue({
+        id: uuidv4(),
+        level: 'error',
+        message: `Tenant "${name}" not found.`,
+      } as FeedbackMessage);
+    } else {
+      dispatch(initializeUser(tenant));
+      return tenant;
+    }
+  }
+);
+
+export const initializeUser = createAsyncThunk(
+  'user/initialize-user',
+  async (tenant: Tenant, { getState, dispatch }) => {
+    const { config } = getState() as AppState;
+
+    const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+    if (client.tokenParsed) {
+      return {
+        id: client.tokenParsed.sub,
+        name: client.tokenParsed['name'] || client.tokenParsed['preferred_username'] || client.tokenParsed['email'],
+        email: client.tokenParsed['email'],
+        roles: Object.entries(client.tokenParsed.resource_access || {}).reduce(
+          (roles, [client, clientAccess]) => [
+            ...roles,
+            ...(clientAccess.roles?.map((clientRole) => `${client}:${clientRole}`) || []),
+          ],
+          client.tokenParsed.realm_access?.roles || []
+        ),
+      };
+    } else {
+      return null;
+    }
+  }
+);
+
+const getIdpHint = (): string => {
+  const location: string = window.location.href;
+  const skipSSO = location.indexOf('kc_idp_hint') > -1;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
+  let idp = 'core';
+  if (skipSSO && !idpFromUrl) {
+    idp = ' ';
+  }
+
+  return idp;
+};
+
+export const loginUser = createAsyncThunk(
+  'user/login',
+  async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
+    const { config } = getState() as AppState;
+    const idpHint = getIdpHint();
+
+    const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+    await client.login({
+      idpHint,
+      redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
+    });
+
+    // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
+    return await client.loadUserProfile();
+  }
+);
+
+export const logoutUser = createAsyncThunk(
+  'user/logout',
+  async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
+    const { config } = getState() as AppState;
+
+    const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+    await client.logout({
+      redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
+    });
+  }
+);
+
+const initialUserState: UserState = {
+  initialized: false,
+  tenant: null,
+  user: undefined,
+};
+
+const userSlice = createSlice({
+  name: USER_FEATURE_KEY,
+  initialState: initialUserState,
+  reducers: {
+    clearUser: (state) => {
+      state.user = undefined;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(initializeTenant.fulfilled, (state, { payload }) => {
+        state.tenant = payload;
+      })
+      .addCase(initializeUser.fulfilled, (state, { payload }) => {
+        state.user = payload;
+        state.initialized = true;
+      })
+      .addCase(loginUser.fulfilled, (state, { payload }) => {
+        state.user = payload as typeof state.user;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+      })
+      .addMatcher(isRejectedWithValue(), (state, { payload }) => {
+        if (isAxiosErrorPayload(payload) && payload.status === 401) {
+          state.user = null;
+        }
+      });
+  },
+});
+
+export const userReducer = userSlice.reducer;
+export const userActions = userSlice.actions;
+
+export const tenantSelector = (state: AppState) => state.user.tenant;
+
+export const userSelector = (state: AppState) => state.user;

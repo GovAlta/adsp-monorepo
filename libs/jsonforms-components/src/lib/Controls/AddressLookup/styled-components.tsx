@@ -20,13 +20,11 @@ export const SearchBox = styled.div`
     background: var(--color-white);
     box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
     z-index: 99;
-    padding-left: 0px;
-
     overflow: hidden auto;
+    padding-left: 0.5rem;
   }
   .suggestions li {
-    padding: var(--goa-space-2xs);
-    color: var(--color-gray-900);
+
   }
   .suggestion-active,
   .suggestions li:hover {
@@ -53,6 +51,18 @@ export const SearchBox = styled.div`
 
 export const AddressIndent = styled.div`
   margin: 1em 1.5em 0 1.5em;
+  textwrap: 'wrap';
+  wordbreak: 'break-word';
+`;
+
+export const TextWrap = styled.p`
+  text-wrap: auto;
+  word-break: break-word;
+`;
+
+export const TextWrapDiv = styled.div`
+  text-wrap: auto;
+  word-break: break-word;
 `;
 
 export const LabelDiv = styled.div`
@@ -65,4 +75,5 @@ export const ListItem = styled.li<ListItemProps>`
   background-color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-primary)' : '')};
   color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-white) !important' : '')};
   font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--fw-bold)' : '')};
+  padding: var(--goa-space-xs) var(--goa-space-2xs) var(--goa-space-xs);
 `;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GoAFormItem, GoAInput, GoAGrid } from '@abgov/react-components-new';
 import { first } from 'lodash';
+import { TextWrapDiv } from '../AddressLookup/styled-components';
 interface Data {
   firstName: string;
   middleName: string;

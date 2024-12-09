@@ -14,6 +14,7 @@ export const ReviewItemSection = styled.div`
   padding: 1rem;
   border: 1px solid #dcdcdc;
   border-radius: 5px;
+  overflow-x: auto;
 `;
 
 export const ReviewItemBasic = styled.div`
@@ -48,8 +49,9 @@ export const ReviewContent = styled.div`
   margin-top: var(--goa-space-l);
   overflow-y: auto;
   padding-bottom: 0;
-  max-width: 624px;
-  width: 100%;
+  min-width: 624px;
+  max-width: 100%;
+  width: auto;
   margin: 0 auto;
 `;
 

@@ -142,7 +142,7 @@ Here are some out-of-the-box formats that not only render with the correct input
   "scope": "#/properties/isOver18"
   "label": "Are you over 18 years of age?",
   "options": {
-    "radio": true,
+    "format": "radio",
     "textForTrue": "Yes",
     "textForFalse": "No"
   }
@@ -196,7 +196,7 @@ For when the user must select from a limited set of answers.
   "scope": "#/properties/colour",
   "label": "What's your favorite colour?",
   "options": {
-    "radio": true,
+    "format": "radio",
     "componentProps": {
       "orientation": "horizontal"
     }
