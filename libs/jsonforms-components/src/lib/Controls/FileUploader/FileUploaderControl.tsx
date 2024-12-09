@@ -23,14 +23,18 @@ export const FileUploaderReview = (props: FileUploaderLayoutRendererProps) => {
 
 export const FileUploader = ({ data, path, handleChange, uischema, ...props }: FileUploaderLayoutRendererProps) => {
   const enumerators = useContext(JsonFormContext);
-  const uploadTriggerFunction = enumerators.functions.get('upload-file');
+
+  if (!enumerators) {
+    return <></>;
+  }
+  const uploadTriggerFunction = enumerators?.functions?.get('upload-file');
   const uploadTrigger = uploadTriggerFunction && uploadTriggerFunction();
-  const downloadTriggerFunction = enumerators.functions.get('download-file');
+  const downloadTriggerFunction = enumerators?.functions?.get('download-file');
   const downloadTrigger = downloadTriggerFunction && downloadTriggerFunction();
-  const deleteTriggerFunction = enumerators.functions.get('delete-file');
+  const deleteTriggerFunction = enumerators?.functions?.get('delete-file');
   const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
 
-  const fileListValue = enumerators.data.get('file-list');
+  const fileListValue = enumerators?.data.get('file-list');
 
   const countries = [
     'Argentina',
