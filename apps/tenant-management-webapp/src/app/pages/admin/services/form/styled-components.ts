@@ -412,9 +412,8 @@ export const SpinnerPaddingSmall = styled.div`
   margin: 0 0 0 5px;
   float: right;
 `;
-export const OverflowWrap = styled.div`
-  overflow-wrap: break-word;
-  overflow-y: hidden;
+export const OverflowWrap = styled.span`
+   word-break: break-all;
 `;
 
 export const PreviewTopStyle = styled.div`
