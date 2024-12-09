@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: form-admin-app
+        component: app
+      name: form-admin-app
+    data:
+      configuration: |-
+        {
+          "production": true,
+          "directory": {
+            "url": "https://directory-service.adsp-dev.gov.ab.ca"
+          },
+          "access": {
+            "url": "https://access.adsp-dev.gov.ab.ca",
+            "client_id": "urn:ads:platform:form-admin-app"
+          }
+        }
