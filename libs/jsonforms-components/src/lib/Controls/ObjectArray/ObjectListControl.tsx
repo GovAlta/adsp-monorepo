@@ -295,7 +295,6 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
           <thead>
             <tr key={0}>
               {Object.keys(properties).map((key, index) => {
-                console.log('isInReview', properties);
                 if (!isInReview) {
                   return (
                     <th key={index}>
