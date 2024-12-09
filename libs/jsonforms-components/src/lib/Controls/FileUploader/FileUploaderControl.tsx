@@ -24,9 +24,6 @@ export const FileUploaderReview = (props: FileUploaderLayoutRendererProps) => {
 export const FileUploader = ({ data, path, handleChange, uischema, ...props }: FileUploaderLayoutRendererProps) => {
   const enumerators = useContext(JsonFormContext);
 
-  if (!enumerators) {
-    return <></>;
-  }
   const uploadTriggerFunction = enumerators?.functions?.get('upload-file');
   const uploadTrigger = uploadTriggerFunction && uploadTriggerFunction();
   const downloadTriggerFunction = enumerators?.functions?.get('download-file');
@@ -49,7 +46,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     'Kenya',
   ];
 
-  enumerators.addFormContextData('countries', countries);
+  enumerators?.addFormContextData('countries', countries);
   const user = enumerators?.getFormContextData('user');
 
   // eslint-disable-next-line
@@ -112,7 +109,9 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true || user === null;
   const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? '';
   const accept = uischema?.options?.componentProps?.accept ?? '';
-
+  if (!enumerators) {
+    return <></>;
+  }
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">
       {required ? (
