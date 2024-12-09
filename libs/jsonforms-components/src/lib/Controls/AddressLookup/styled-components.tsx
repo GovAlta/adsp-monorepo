@@ -24,6 +24,7 @@ export const SearchBox = styled.div`
     padding-left: 0.5rem;
   }
   .suggestions li {
+
   }
   .suggestion-active,
   .suggestions li:hover {
@@ -50,11 +51,23 @@ export const SearchBox = styled.div`
 
 export const AddressIndent = styled.div`
   margin: 1em 1.5em 0 1.5em;
+  textwrap: 'wrap';
+  wordbreak: 'break-word';
+`;
+
+export const TextWrap = styled.p`
+  text-wrap: auto;
+  word-break: break-word;
+`;
+
+export const TextWrapDiv = styled.div`
+  text-wrap: auto;
+  word-break: break-word;
 `;
 
 export const LabelDiv = styled.div`
-  font-size: var(--fs-sl);
-  padding-bottom: 1.5rem;
+  font-size: var(--goa-font-size-2);
+  padding-bottom: var(--goa-space-l);
 `;
 
 /* istanbul ignore next */

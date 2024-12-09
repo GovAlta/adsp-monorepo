@@ -163,3 +163,29 @@ export const convertToReadableFormat = (input: string): string => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 };
+
+/**
+ * Converts a input to sentence case (eg: incomeThresholdExample or IncomeThresholdExample)
+ * to 'Income threshold example' with the first letter in the sentence capitalized.
+ *
+ * @param input - The camelCase or PascalCase string (e.g., "incomeThresholdExample").
+ * @returns A formatted string with spaces and capitalization (e.g., "Income threshold example").
+ */
+export const convertToSentenceCase = (input: string) => {
+  if (!input) {
+    return input;
+  }
+
+  const convertedInput = convertToReadableFormat(input);
+
+  if (!convertedInput) return convertedInput;
+
+  const firstWord = convertedInput.split(' ').splice(0, 1);
+  const newWords = convertedInput
+    .split(' ')
+    .splice(1)
+    .map((word) => word.charAt(0).toLowerCase() + word.slice(1).toLowerCase())
+    .join(' ');
+
+  return firstWord.concat(newWords).join(' ');
+};
