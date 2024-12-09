@@ -20,8 +20,8 @@ import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { GoAGrid, GoAIconButton, GoAContainer, GoATable, GoAInput } from '@abgov/react-components-new';
-import { ToolBarHeader, ObjectArrayTitle, TextCenter, NonEmptyCellStyle } from './styled-components';
-import { Visible } from '../../util';
+import { ToolBarHeader, ObjectArrayTitle, TextCenter, NonEmptyCellStyle, TableTHHeader } from './styled-components';
+import { convertToSentenceCase, Visible } from '../../util';
 import { GoAReviewRenderers } from '../../../index';
 import {
   objectListReducer,
@@ -295,10 +295,18 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
           <thead>
             <tr key={0}>
               {Object.keys(properties).map((key, index) => {
+                console.log('isInReview', properties);
+                if (!isInReview) {
+                  return (
+                    <th key={index}>
+                      <p>{convertToSentenceCase(key)}</p>
+                    </th>
+                  );
+                }
                 return (
-                  <th key={index}>
-                    <p>{key}</p>
-                  </th>
+                  <TableTHHeader key={index}>
+                    <p>{convertToSentenceCase(key)}</p>
+                  </TableTHHeader>
                 );
               })}
               {isInReview !== true && (

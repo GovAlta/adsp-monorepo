@@ -66,3 +66,7 @@ export const ListContainer = styled.div`
   padding: 0 1.5rem 0 0;
   border: 1px solid #dcdcdc;
 `;
+
+export const TableTHHeader = styled.th`
+  background-color: #f1f1f1 !important;
+`;
