@@ -98,7 +98,9 @@ objects:
             component: app
         spec:
           containers:
-            - env:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              env:
                 - name: PORT
                   value: "8080"
               imagePullPolicy: IfNotPresent
