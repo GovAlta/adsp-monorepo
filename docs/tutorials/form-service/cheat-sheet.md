@@ -196,7 +196,7 @@ For when the user must select from a limited set of answers.
   "scope": "#/properties/colour",
   "label": "What's your favorite colour?",
   "options": {
-    "radio": true,
+    "format": "radio",
     "componentProps": {
       "orientation": "horizontal"
     }
