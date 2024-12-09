@@ -21,10 +21,10 @@ export const SearchBox = styled.div`
     box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
     z-index: 99;
     overflow: hidden auto;
+    padding-left: 0.5rem;
   }
   .suggestions li {
-    padding: var(--goa-space-xs) var(--goa-space-2xs) var(--goa-space-xs) 2px;
-    color: var(--color-gray-900);
+
   }
   .suggestion-active,
   .suggestions li:hover {
@@ -75,4 +75,5 @@ export const ListItem = styled.li<ListItemProps>`
   background-color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-primary)' : '')};
   color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-white) !important' : '')};
   font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--fw-bold)' : '')};
+  padding: var(--goa-space-xs) var(--goa-space-2xs) var(--goa-space-xs);
 `;
