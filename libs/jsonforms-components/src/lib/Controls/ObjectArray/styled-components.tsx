@@ -68,5 +68,5 @@ export const ListContainer = styled.div`
 `;
 
 export const TableTHHeader = styled.th`
-  background-color: #f1f1f1 !important;
+  background-color: var(--goa-color-greyscale-100) !important;
 `;
