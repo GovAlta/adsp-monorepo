@@ -51,6 +51,18 @@ export const SearchBox = styled.div`
 
 export const AddressIndent = styled.div`
   margin: 1em 1.5em 0 1.5em;
+  textwrap: 'wrap';
+  wordbreak: 'break-word';
+`;
+
+export const TextWrap = styled.p`
+  text-wrap: auto;
+  word-break: break-word;
+`;
+
+export const TextWrapDiv = styled.div`
+  text-wrap: auto;
+  word-break: break-word;
 `;
 
 export const LabelDiv = styled.div`
