@@ -61,7 +61,7 @@ objects:
 
   # Deployment (and Service and Route) is created in each environment of the
   # primary pipline as well as branch deployment.
-  - apiVersion: v1
+  - apiVersion: apps/v1
     kind: Deployment
     metadata:
       labels:
