@@ -454,7 +454,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-            z-index: 10;
+            z-index: 1000; /* Ensure it overlays other content */
             visibility: hidden;
           }
           img:focus-visible {
@@ -488,7 +488,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             display: none;
           }
           .adsp-fb .adsp-fb-badge {
-            z-index: 1000;
+            z-index: 10;
             background: #0081a2;
             color: #ffffff;
             position: fixed;
