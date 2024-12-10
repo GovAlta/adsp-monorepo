@@ -25,11 +25,7 @@ export const BooleanComponent = ({
   } as ControlProps);
 
   const text = `${
-    schema?.title || schema?.description
-      ? schema?.title
-        ? schema?.title
-        : schema?.description
-      : uischema?.options?.text
+    uischema?.options?.text ? uischema?.options?.text : schema?.title ? schema?.title : schema?.description
   }${required ? ' (required)' : ''}`;
 
   return (

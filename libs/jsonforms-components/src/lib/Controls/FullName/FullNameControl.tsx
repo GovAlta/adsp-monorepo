@@ -4,9 +4,9 @@ import { JsonFormContext } from '../../Context';
 import { GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components-new';
 import { checkFieldValidity } from '../../util/stringUtils';
 import { NameInputs } from './FullNameInputs';
+import { TextWrapDiv } from '../AddressLookup/styled-components';
 
 type FullNameProps = ControlProps;
-
 export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
   const requiredFields = (props.schema as { required: string[] }).required;
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -27,17 +27,23 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
         requirement={requiredFields?.includes('firstName') ? 'required' : undefined}
         error={errors?.['firstName'] ?? ''}
       >
-        <div data-testid={`firstName-control-${props.id}`}>{props.data?.firstName}</div>
+        <TextWrapDiv>
+          <div data-testid={`firstName-control-${props.id}`}>{props.data?.firstName}</div>
+        </TextWrapDiv>
       </GoAFormItem>
       <GoAFormItem label="Middle Name">
-        <div data-testid={`middleName-control-${props.id}`}>{props.data?.middleName}</div>
+        <TextWrapDiv>
+          <div data-testid={`middleName-control-${props.id}`}>{props.data?.middleName}</div>
+        </TextWrapDiv>
       </GoAFormItem>
       <GoAFormItem
         label="Last Name"
         requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
         error={errors?.['lastName'] ?? ''}
       >
-        <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
+        <TextWrapDiv>
+          <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
+        </TextWrapDiv>
       </GoAFormItem>
     </GoAGrid>
   );
