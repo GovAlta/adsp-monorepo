@@ -7,38 +7,22 @@ import {
   GoADropdownItem,
   GoATextArea,
 } from '@abgov/react-components-new';
-import { Grid } from '../../../lib/common/Grid';
 import { useDispatch, useSelector } from 'react-redux';
 import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
-import {
-  AppDispatch,
-  formSelector,
-  selectForm,
-  AppState,
-  formLoadingSelector,
-  anyFileLoadingSelector,
-} from '../../state';
-import { getAllRequiredFields } from './getRequiredFields';
-import { Categorization, isVisible, ControlElement, Category } from '@jsonforms/core';
+import { AppDispatch, formSelector, selectForm } from '../../state';
 import { useValidators } from '../../../lib/validations/useValidators';
 import { isNotEmptyCheck } from '../../../lib/validations/checkInput';
 import { AdspId } from '../../../lib/adspId';
-
+import { GoAReviewRenderers } from '@abgov/jsonforms-components';
+import { JsonForms } from '@jsonforms/react';
 import {
-  ReviewItem,
-  ReviewItemSection,
-  ReviewItemTitle,
-  ReviewItemBasic,
   ReviewContainer,
   ReviewContent,
   ActionContainer,
   ActionControl,
+  FormReviewContainer,
 } from './styled-components';
-import { RenderFormReviewFields } from './RenderFormReviewFields';
-import { ajv } from '../../../lib/validations/checkInput';
-import { Element } from './RenderFormReviewFields';
-import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { TaskCancelModal } from './TaskCancelModal';
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
@@ -52,10 +36,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const form = useSelector(formSelector);
-  const formIsLoading = useSelector((state: AppState) => formLoadingSelector(state));
-
-  const anyFileIsLoading = useSelector((state: AppState) => anyFileLoadingSelector(state));
-
   const adspId = AdspId.parse(task.recordId);
   const [_, _type, id, _submission, submissionId] = adspId.resource.split('/');
 
@@ -72,10 +52,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const definitionId = form.forms[id]?.formDefinitionId;
   const definition = form.definitions[definitionId];
   const currentForm = form.forms[id];
-  const categorization = definition?.uiSchema as Categorization;
-  const [categories, setCategories] = React.useState<(Categorization | Category | ControlElement)[]>(
-    categorization?.elements
-  );
 
   const dispositionStates = [...(definition?.dispositionStates ?? [])].sort((a, b) =>
     a.name.toLowerCase().localeCompare(b.name.toLowerCase())
@@ -94,11 +70,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     validators.clear();
   };
 
-  useEffect(() => {
-    const cats = categorization?.elements.filter((category) => isVisible(category, currentForm?.formData, '', ajv));
-    setCategories(cats as (Categorization | Category | ControlElement)[]);
-  }, [categorization, currentForm]);
-
   const disableFormDispositionControls = () => {
     if (task.status === TASK_STATUS.PENDING) return true;
 
@@ -114,51 +85,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     if (Object.keys(errors).length > 0) return true;
 
     return !user.isWorker || isExecuting;
-  };
-
-  const loading = formIsLoading || anyFileIsLoading;
-
-  const renderFormSubmissionReview = () => {
-    return (
-      <div>
-        <LoadingIndicator isLoading={loading} />
-        {!loading && categories && (
-          <ReviewItem>
-            {categories.map((category, index) => {
-              const categoryLabel = category.label || category.i18n || '';
-              const requiredFields = getAllRequiredFields(definition?.dataSchema);
-
-              return (
-                <div>
-                  {category?.type === 'Control' ? (
-                    <ReviewItemBasic>
-                      <Element
-                        element={category}
-                        index={index}
-                        data={currentForm?.formData}
-                        requiredFields={requiredFields}
-                      />
-                    </ReviewItemBasic>
-                  ) : (
-                    // eslint-disable-next-line react/jsx-no-comment-textnodes
-                    <ReviewItemSection key={index}>
-                      <ReviewItemTitle>{categoryLabel as string}</ReviewItemTitle>
-                      <Grid>
-                        <RenderFormReviewFields
-                          elements={category?.elements}
-                          data={currentForm?.formData}
-                          requiredFields={requiredFields}
-                        />
-                      </Grid>
-                    </ReviewItemSection>
-                  )}
-                </div>
-              );
-            })}
-          </ReviewItem>
-        )}
-      </div>
-    );
   };
 
   const renderDisposition = () => {
@@ -270,10 +196,21 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   };
   return (
     <ReviewContainer>
-      <ReviewContent>
-        {renderFormSubmissionReview()}
-        {renderTaskCancelModal()}
-      </ReviewContent>
+      {definition && (
+        <ActionContainer>
+          <FormReviewContainer>
+            <JsonForms
+              readonly={true}
+              schema={definition?.dataSchema}
+              uischema={definition?.uiSchema}
+              data={currentForm?.formData}
+              validationMode="NoValidation"
+              renderers={GoAReviewRenderers}
+            />
+          </FormReviewContainer>
+        </ActionContainer>
+      )}
+      <ReviewContent>{renderTaskCancelModal()}</ReviewContent>
       <ActionContainer>
         <goa-divider mt="m" mb="none"></goa-divider>
         <ActionControl>{renderDisposition()}</ActionControl>
