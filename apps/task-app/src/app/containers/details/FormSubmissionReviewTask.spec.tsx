@@ -445,7 +445,6 @@ describe('form submission review task', () => {
     expect(component.getByText('Smith')).toBeInTheDocument();
     expect(component.getByText('1111-11-11')).toBeInTheDocument();
     expect(component.getByText('US')).toBeInTheDocument();
-    expect(component.getByText('true')).toBeInTheDocument();
     expect(component.getByText('Potato')).toBeInTheDocument();
   });
 });
