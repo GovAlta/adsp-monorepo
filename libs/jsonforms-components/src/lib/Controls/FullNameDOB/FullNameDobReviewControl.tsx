@@ -43,7 +43,9 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
           requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
           error={errors?.['lastName'] ?? ''}
         >
-          <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
+          <TextWrapDiv>
+            <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
+          </TextWrapDiv>
         </GoAFormItem>
       </GoAGrid>
       <GoAGrid minChildWidth="0ch" gap="s">
