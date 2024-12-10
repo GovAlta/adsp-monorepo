@@ -90,6 +90,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
         dispatch(checkPdfFile(form.submission?.id ? form.submission.urn : form?.urn));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const metadata = useSelector(metaDataSelector);
