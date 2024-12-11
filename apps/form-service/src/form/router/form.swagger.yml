@@ -38,6 +38,8 @@ components:
               type: string
         generatesPdf:
           type: boolean
+        submissionRecords:
+          type: boolean
     Form:
       type: object
       properties:
@@ -249,7 +251,7 @@ components:
         schema:
           type: string
       - name: includeData
-        description: Flag indicating if data should be included in results. Only available to admins.
+        description: Flag indicating if data should be included in results.
         in: query
         required: false
         schema:
@@ -362,6 +364,13 @@ components:
     tags:
       - Form
     description: Retrieves a form.
+    parameters:
+      - name: includeData
+        description: Flag indicating if data should be included in results.
+        in: query
+        required: false
+        schema:
+          type: boolean
     responses:
       200:
         description: Successfully retrieved the form.

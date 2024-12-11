@@ -949,6 +949,7 @@ describe('form router', () => {
         user,
         tenant: { id: tenantId },
         params: { formId: 'test-form' },
+        query: {},
         form: formEntity,
       };
       const res = { send: jest.fn() };
@@ -974,6 +975,7 @@ describe('form router', () => {
         user,
         tenant: { id: tenantId },
         params: { formId: 'test-form' },
+        query: {},
         form: formEntity,
       };
       const res = { send: jest.fn() };

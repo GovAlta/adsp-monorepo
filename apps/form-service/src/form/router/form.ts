@@ -84,6 +84,14 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
   return async (req, res, next) => {
     const form: FormEntity = req[FORM];
     try {
+      const user = req.user;
+      const { includeData: includeDataValue } = req.query;
+      const includeData = includeDataValue === 'true';
+
+      if (includeData) {
+        await form.accessByUser(user);
+      }
+
       if (form.status === FormStatus.Submitted && form.submitted !== null) {
         const criteria = {
           tenantIdEquals: req.tenant?.id,
@@ -96,10 +104,10 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
         if (results.length > 0) {
           res.send(mapFormWithFormSubmission(apiId, form, results.at(0)));
         } else {
-          res.send(mapForm(apiId, form));
+          res.send(mapForm(apiId, form, includeData));
         }
       } else {
-        res.send(mapForm(apiId, form));
+        res.send(mapForm(apiId, form, includeData));
       }
     } catch (err) {
       next(err);
@@ -784,7 +792,7 @@ export function createFormRouter({
   router.get(
     '/forms/:formId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('formId').isUUID()),
+    createValidationHandler(param('formId').isUUID(), query('includeData').optional().isBoolean()),
     getForm(repository),
     mapFormForSubmission(apiId, submissionRepository)
   );
@@ -852,10 +860,8 @@ export function createFormRouter({
   router.get(
     '/submissions/:submissionId',
     assertAuthenticatedHandler,
-    createValidationHandler(
-      param('submissionId').isUUID(),
-      getFormSubmission(apiId, submissionRepository)
-    )
+    createValidationHandler(param('submissionId').isUUID()),
+    getFormSubmission(apiId, submissionRepository)
   );
 
   router.get(

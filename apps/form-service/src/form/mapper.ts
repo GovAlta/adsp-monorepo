@@ -17,6 +17,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity, intake?: Intake)
     uiSchema: entity.uiSchema,
     dispositionStates: entity.dispositionStates,
     generatesPdf: !!entity.submissionPdfTemplate && !entity.anonymousApply,
+    submissionRecords: entity.submissionRecords,
     scheduledIntakes: entity.scheduledIntakes,
     intake,
   };
