@@ -55,6 +55,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
   definition,
   form,
   data,
+  anonymousApply,
   canSubmit,
   showSubmit,
   saving,
@@ -92,6 +93,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
           definition={definition}
           form={form}
           data={data}
+          anonymousApply={anonymousApply}
           canSubmit={canSubmit}
           showSubmit={showSubmit}
           saving={saving}
