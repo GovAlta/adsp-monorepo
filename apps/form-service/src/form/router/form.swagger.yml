@@ -599,7 +599,7 @@ components:
                     size:
                       type: number
 
-/form/v1//submissions:
+/form/v1/submissions:
   get:
     tags:
       - Form Submission
@@ -670,3 +670,22 @@ components:
                       type: string
                     size:
                       type: number
+/form/v1/submissions/{submissionId}:
+  parameters:
+    - name: submissionId
+      description: ID of the submission.
+      required: true
+      in: path
+      schema:
+        type: string
+  get:
+    tags:
+      - Form Submission
+    description: Retrieves a form submission.
+    responses:
+      200:
+        description: Successfully retrieved the form submission.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormSubmission"

@@ -84,33 +84,21 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     }));
   }
 
-  get(tenantId: AdspId, id: string): Promise<FormSubmissionEntity> {
+  get(tenantId: AdspId, id: string, formId?: string): Promise<FormSubmissionEntity> {
     return new Promise<FormSubmissionEntity>((resolve, reject) => {
-      this.submissionModel
-        .findOne({ tenantId: tenantId.toString(), id }, null, { lean: true })
-        .exec(async (err, doc) => {
-          if (err) {
-            reject(err);
-          } else {
-            const entity = doc ? this.fromDoc(tenantId, doc) : null;
-            resolve(entity);
-          }
-        });
-    });
-  }
+      const query = { tenantId: tenantId.toString(), id };
+      if (formId) {
+        query['formId'] = formId;
+      }
 
-  getByFormIdAndSubmissionId(tenantId: AdspId, id: string, formId: string): Promise<FormSubmissionEntity> {
-    return new Promise<FormSubmissionEntity>((resolve, reject) => {
-      this.submissionModel
-        .findOne({ tenantId: tenantId.toString(), formId: formId, id: id }, null, { lean: true })
-        .exec(async (err, doc) => {
-          if (err) {
-            reject(err);
-          } else {
-            const entity = doc ? this.fromDoc(tenantId, doc) : null;
-            resolve(entity);
-          }
-        });
+      this.submissionModel.findOne(query, null, { lean: true }).exec(async (err, doc) => {
+        if (err) {
+          reject(err);
+        } else {
+          const entity = doc ? this.fromDoc(tenantId, doc) : null;
+          resolve(entity);
+        }
+      });
     });
   }
 
