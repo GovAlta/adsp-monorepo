@@ -170,7 +170,12 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         throw new InvalidOperationError('Bad form criteria');
       }
 
-      const hasAccessToAll = isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ExportServiceRoles.ExportJob], true);
+      const hasAccessToAll = isAllowedUser(
+        user,
+        req.tenant.id,
+        [FormServiceRoles.Admin, ExportServiceRoles.ExportJob],
+        true
+      );
       if (!hasAccessToAll) {
         // If user is not a form service admin, then limit search to only forms created by the user.
         criteria.createdByIdEquals = user.id;
@@ -406,7 +411,7 @@ export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmi
       const { formId, submissionId } = req.params;
       const user = req.user;
 
-      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
+      const formSubmission = await submissionRepository.get(req.tenant.id, submissionId, formId);
       if (!formSubmission) {
         throw new NotFoundError('Form Submission', submissionId);
       }
@@ -446,7 +451,7 @@ export function updateFormSubmissionDisposition(
         }
       );
 
-      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(tenantId, submissionId, formId);
+      const formSubmission = await submissionRepository.get(tenantId, submissionId, formId);
       if (!formSubmission) {
         throw new NotFoundError('Form submission', submissionId);
       }
@@ -842,6 +847,15 @@ export function createFormRouter({
         })
     ),
     findSubmissions(apiId, submissionRepository)
+  );
+
+  router.get(
+    '/submissions/:submissionId',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('submissionId').isUUID(),
+      getFormSubmission(apiId, submissionRepository)
+    )
   );
 
   router.get(
