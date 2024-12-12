@@ -58,7 +58,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const dropdownRef = useRef<HTMLUListElement>(null);
 
   const handleInputChange = (field: string, value: string) => {
-    if (field === 'addressLine1' && searchTerm.length < 3) {
+    if (field === 'addressLine1') {
       setDropdownSelected(false);
     }
     let newAddress;
