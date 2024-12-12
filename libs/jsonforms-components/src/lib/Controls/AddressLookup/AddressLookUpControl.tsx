@@ -134,6 +134,18 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setOpen(false);
   };
 
+  useEffect(() => {
+    if (dropdownRef.current && selectedIndex !== -1) {
+      const activeItem = dropdownRef.current?.querySelector(`li[data-index="${selectedIndex}"]`);
+      if (activeItem) {
+        activeItem.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }
+    }
+  }, [selectedIndex]);
+
   const handleKeyDown = (e: string, value: string, key: string) => {
     if (key === 'ArrowDown') {
       setSelectedIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
