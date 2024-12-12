@@ -1,15 +1,13 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
 import { useScripts } from '@core-services/app-common';
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation, useParams, useNavigate } from 'react-router-dom';
-
+import { Route, Routes, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   AppDispatch,
   configInitializedSelector,
   extensionsSelector,
   initializeTenant,
-  loadExtensions,
   loginUser,
   logoutUser,
   tenantSelector,
@@ -19,6 +17,7 @@ import {
 import { FeedbackNotification } from './FeedbackNotification';
 import { AuthorizeUser } from './AuthorizeUser';
 import { useFeedbackLinkHandler } from '../util/feedbackUtils';
+import { FormDefinition } from './FormDefinition';
 
 export const FormAdminTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -80,7 +79,11 @@ export const FormAdminTenant = () => {
       <FeedbackNotification />
       <main>
         <AuthorizeUser>
-          <div />
+          <section>
+            <Routes>
+              <Route path="/:definitionId/*" element={<FormDefinition />} />
+            </Routes>
+          </section>
         </AuthorizeUser>
       </main>
     </React.Fragment>
