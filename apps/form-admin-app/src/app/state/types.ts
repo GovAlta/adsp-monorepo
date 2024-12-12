@@ -1,40 +1,46 @@
-import { FormDefinition } from './form.slice';
+import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 
-export const TASK_SERVICE_ID = 'urn:ads:platform:task-service';
 export const PUSH_SERVICE_ID = 'urn:ads:platform:push-service';
 export const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
 
-export interface QueueDefinition {
-  namespace: string;
-  name: string;
-  displayName?: string;
-  description: string;
-  assignerRoles: string[];
-  workerRoles: string[];
-}
-
-export type TaskStatus = 'Pending' | 'In Progress' | 'Stopped' | 'Cancelled' | 'Completed';
-export type TaskPriority = 'Normal' | 'High' | 'Urgent';
-export interface Task {
-  urn: string;
-  id: string;
-  recordId?: string;
-  queue: { namespace: string; name: string };
-  name: string;
-  definition: FormDefinition;
-  description: string;
-  priority: TaskPriority;
-  status: TaskStatus;
-  createdOn: Date;
-  startedOn?: Date;
-  endedOn?: Date;
-  assignment: {
-    assignedTo: {
-      id: string;
-      name: string;
-    };
+export interface PagedResults<T> {
+  results: T[];
+  page: {
+    after: string;
+    next: string;
   };
 }
+
+interface DispositionState {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface FormDefinition {
+  id: string;
+  name: string;
+  dataSchema: JsonSchema;
+  uiSchema: UISchemaElement;
+  applicantRoles: string[];
+  clerkRoles: string[];
+  dispositionStates: DispositionState[];
+  submissionRecords: boolean;
+}
+
+export interface Form {
+  urn: string;
+  id: string;
+  status: string;
+  created: Date;
+  createdBy: { id: string; name: string };
+  submitted: Date;
+  lastAccessed: Date;
+  applicant: { addressAs: string };
+  data?: Record<string, unknown>;
+  files?: Record<string, string>;
+}
+
 export interface FormDisposition {
   id: string;
   status: string;
@@ -61,12 +67,6 @@ export interface FormSubmission {
     name: string;
   };
   hash: string;
-}
-
-export interface Person {
-  id: string;
-  name: string;
-  email: string;
 }
 
 export interface SerializedAxiosError {

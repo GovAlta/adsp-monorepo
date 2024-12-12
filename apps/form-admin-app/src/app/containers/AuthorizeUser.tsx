@@ -31,7 +31,7 @@ export const AuthorizeUser: FunctionComponent<AuthorizeUserProps> = ({ roles, ch
     if (tenant && user === null && !loggedOut && !error) {
       dispatch(loginUser({ tenant, from: location.pathname }));
     }
-  }, [tenant, user, dispatch, loggedOut]);
+  }, [tenant, user, dispatch, loggedOut, error, location.pathname]);
 
   return initialized ? (
     user && (!roles?.length || roles.find((r) => user.roles?.includes(r))) ? (

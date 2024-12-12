@@ -32,7 +32,7 @@
         "scripts": [],
         "babelUpwardRootMode": true,
         "webpackConfig": "apps/form-admin-app/webpack.config.js",
-        "externalDependencies": ["@apidevtools/json-schema-ref-parser"]
+        "externalDependencies": []
       },
       "configurations": {
         "development": {
