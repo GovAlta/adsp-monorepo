@@ -7,7 +7,7 @@ import {
   GoATable,
 } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, criteriaSelector, findSubmissions, formActions, submissionsSelector } from '../state';
+import { AppDispatch, findSubmissions, submissionsSelector, submissionCriteriaSelector, formActions } from '../state';
 import { FunctionComponent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ContentContainer } from '../components/ContentContainer';
@@ -19,13 +19,14 @@ interface FormSubmissionsProps {
 
 export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ definitionId }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const criteria = useSelector(criteriaSelector);
-  const submissions = useSelector(submissionsSelector);
-
   const navigate = useNavigate();
 
+  const submissions = useSelector(submissionsSelector);
+  const criteria = useSelector(submissionCriteriaSelector);
+
   useEffect(() => {
-    dispatch(findSubmissions({ definitionId }));
+    dispatch(findSubmissions({ definitionId, criteria }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [definitionId, dispatch]);
 
   return (
@@ -34,6 +35,8 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
         <form>
           <GoAFormItem label="Disposition">
             <GoADropdown
+              relative={true}
+              name="submission-disposition"
               value={
                 typeof criteria['dispositioned'] !== 'boolean'
                   ? 'all'
@@ -41,14 +44,14 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                   ? 'dispositioned'
                   : 'not dispositioned'
               }
-              onChange={(_, values) => {
+              onChange={(_, values) =>
                 dispatch(
-                  formActions.setFormSubmissionCriteria({
+                  formActions.setSubmissionCriteria({
                     ...criteria,
                     dispositioned: values === 'all' ? undefined : values === 'dispositioned',
                   })
-                );
-              }}
+                )
+              }
             >
               <GoADropdownItem value="not dispositioned" label="Not dispositioned" />
               <GoADropdownItem value="dispositioned" label="Dispositioned" />
@@ -58,7 +61,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           <GoAButtonGroup alignment="end">
             <GoAButton
               type="secondary"
-              onClick={() => dispatch(formActions.setFormSubmissionCriteria({ dispositioned: false }))}
+              onClick={() => dispatch(formActions.setSubmissionCriteria({ dispositioned: false }))}
             >
               Reset
             </GoAButton>

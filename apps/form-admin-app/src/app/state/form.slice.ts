@@ -6,6 +6,7 @@ import { DateTime } from 'luxon';
 import { AppState } from './store';
 import { FormSubmission, FORM_SERVICE_ID, PagedResults, Form, FormDefinition } from './types';
 import { getAccessToken } from './user.slice';
+import { AdspId } from '../../lib/adspId';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -15,11 +16,12 @@ export const initialFormState: FormState = {
     loading: false,
     executing: false,
   },
-  criteria: { dispositioned: false },
   definitions: {},
   forms: {},
   submissions: {},
   results: [],
+  formCriteria: {},
+  submissionCriteria: { dispositioned: false },
   next: null,
   selectedDefinition: null,
   selectedForm: null,
@@ -43,11 +45,12 @@ export interface FormState {
     loading: boolean;
     executing: boolean;
   };
-  criteria: FormSubmissionCriteria | FormCriteria;
   forms: Record<string, Form>;
   submissions: Record<string, FormSubmission>;
   definitions: Record<string, FormDefinition>;
   results: string[];
+  formCriteria: FormCriteria;
+  submissionCriteria: FormSubmissionCriteria;
   next: string;
   selectedDefinition: string;
   selectedForm: string;
@@ -57,28 +60,21 @@ export interface FormState {
 export const updateFormDisposition = createAsyncThunk(
   'form/update-form-disposition',
   async (
-    {
-      formId,
-      submissionId,
-      dispositionStatus,
-      dispositionReason,
-    }: { formId: string; submissionId: string; dispositionStatus: string; dispositionReason: string },
+    { submissionUrn, status, reason }: { submissionUrn: AdspId; status: string; reason: string },
     { getState, rejectWithValue }
   ) => {
-    const state = getState() as AppState;
-    const { directory } = state.config;
-
     try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
       const accessToken = await getAccessToken();
-      if (formId && submissionId) {
-        const formServiceUrl = `${directory[FORM_SERVICE_ID]}/form/v1/forms/${formId}/submissions/${submissionId}`;
-        const { data } = await axios.post<FormSubmission>(
-          formServiceUrl,
-          { dispositionStatus: dispositionStatus, dispositionReason: dispositionReason },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return data;
-      }
+
+      const { data } = await axios.post<FormSubmission>(
+        new URL(`/form/v1${submissionUrn.resource}`, formServiceUrl).href,
+        { dispositionStatus: status, dispositionReason: reason },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      return data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -94,7 +90,10 @@ export const updateFormDisposition = createAsyncThunk(
 
 export const findForms = createAsyncThunk(
   'form/find-forms',
-  async ({ definitionId, after }: { definitionId: string; after?: string }, { getState, rejectWithValue }) => {
+  async (
+    { definitionId, after }: { definitionId: string; after?: string; criteria?: FormCriteria },
+    { getState, rejectWithValue }
+  ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
 
@@ -295,10 +294,10 @@ export const formSlice = createSlice({
   initialState: initialFormState,
   reducers: {
     setFormCriteria: (state, { payload }: { payload: FormCriteria }) => {
-      state.criteria = payload;
+      state.formCriteria = payload;
     },
-    setFormSubmissionCriteria: (state, { payload }: { payload: FormSubmissionCriteria }) => {
-      state.criteria = payload;
+    setSubmissionCriteria: (state, { payload }: { payload: FormSubmissionCriteria }) => {
+      state.submissionCriteria = payload;
     },
   },
   extraReducers: (builder) => {
@@ -449,4 +448,4 @@ export const formLoadingSelector = createSelector(
   }
 );
 
-export const criteriaSelector = (state: AppState): FormSubmissionCriteria | FormCriteria => state.form.criteria;
+export const submissionCriteriaSelector = (state: AppState) => state.form.submissionCriteria;

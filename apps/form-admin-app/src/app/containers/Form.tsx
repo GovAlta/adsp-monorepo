@@ -17,7 +17,7 @@ export const Form = () => {
   }, [dispatch, formId]);
 
   return (
-    <DetailsLayout>
+    <DetailsLayout initialized={!!(definition && form)} actionsForm={<form></form>}>
       <FormViewer dataSchema={definition?.dataSchema} uiSchema={definition?.uiSchema} data={form?.data} />
     </DetailsLayout>
   );

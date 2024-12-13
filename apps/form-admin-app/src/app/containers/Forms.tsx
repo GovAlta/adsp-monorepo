@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, findForms, formsSelector } from '../state';
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoATable } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoATable } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
 import { SearchLayout } from '../components/SearchLayout';
 
@@ -11,22 +11,25 @@ interface FormsProps {
 
 export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const forms = useSelector(formsSelector);
-
   const navigate = useNavigate();
+
+  const forms = useSelector(formsSelector);
 
   useEffect(() => {
     dispatch(findForms({ definitionId }));
   }, [definitionId, dispatch]);
 
   return (
-    <SearchLayout>
-      {/* <form>
-        <GoAButtonGroup alignment="end">
-          <GoAButton type="secondary">Reset</GoAButton>
-          <GoAButton type="primary">Search</GoAButton>
-        </GoAButtonGroup>
-      </form> */}
+    <SearchLayout
+      searchForm={
+        <form>
+          <GoAButtonGroup alignment="end">
+            <GoAButton type="secondary">Reset</GoAButton>
+            <GoAButton type="primary">Search</GoAButton>
+          </GoAButtonGroup>
+        </form>
+      }
+    >
       <GoATable width="100%">
         <thead>
           <tr>

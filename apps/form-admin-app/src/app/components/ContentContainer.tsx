@@ -6,4 +6,5 @@ export const ContentContainer = styled.div`
   padding-left: var(--goa-space-3xl);
   padding-right: var(--goa-space-3xl);
   overflow: auto;
+  flex: 1;
 `;
