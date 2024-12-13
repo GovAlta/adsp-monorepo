@@ -113,6 +113,8 @@ components:
         createDateAfter:
           type: string
           format: date-time
+        dispositioned:
+          type: boolean
         dispositionStatusEquals:
           type: string
         dispositionDateBefore:

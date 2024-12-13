@@ -53,6 +53,10 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       query['createdBy.name'] = criteria.createdByIdEquals;
     }
 
+    if (typeof criteria?.dispositioned === 'boolean') {
+      query.disposition = { $exists: criteria.dispositioned };
+    }
+
     if (criteria?.dispositionDateBefore) {
       query['disposition.date'] = { $lt: new Date(criteria.dispositionDateBefore).toISOString() };
     }
