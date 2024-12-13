@@ -37,6 +37,7 @@ export interface FormSubmissionCriteria {
   submissionStatusEquals?: string;
   createDateBefore?: Date;
   createDateAfter?: Date;
+  dispositioned?: boolean;
   dispositionStatusEquals?: string;
   dispositionDateBefore?: Date;
   dispositionDateAfter?: Date;
