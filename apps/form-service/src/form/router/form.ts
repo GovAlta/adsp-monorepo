@@ -84,6 +84,14 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
   return async (req, res, next) => {
     const form: FormEntity = req[FORM];
     try {
+      const user = req.user;
+      const { includeData: includeDataValue } = req.query;
+      const includeData = includeDataValue === 'true';
+
+      if (includeData) {
+        await form.accessByUser(user);
+      }
+
       if (form.status === FormStatus.Submitted && form.submitted !== null) {
         const criteria = {
           tenantIdEquals: req.tenant?.id,
@@ -96,10 +104,10 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
         if (results.length > 0) {
           res.send(mapFormWithFormSubmission(apiId, form, results.at(0)));
         } else {
-          res.send(mapForm(apiId, form));
+          res.send(mapForm(apiId, form, includeData));
         }
       } else {
-        res.send(mapForm(apiId, form));
+        res.send(mapForm(apiId, form, includeData));
       }
     } catch (err) {
       next(err);
@@ -170,7 +178,12 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         throw new InvalidOperationError('Bad form criteria');
       }
 
-      const hasAccessToAll = isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ExportServiceRoles.ExportJob], true);
+      const hasAccessToAll = isAllowedUser(
+        user,
+        req.tenant.id,
+        [FormServiceRoles.Admin, ExportServiceRoles.ExportJob],
+        true
+      );
       if (!hasAccessToAll) {
         // If user is not a form service admin, then limit search to only forms created by the user.
         criteria.createdByIdEquals = user.id;
@@ -406,7 +419,7 @@ export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmi
       const { formId, submissionId } = req.params;
       const user = req.user;
 
-      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
+      const formSubmission = await submissionRepository.get(req.tenant.id, submissionId, formId);
       if (!formSubmission) {
         throw new NotFoundError('Form Submission', submissionId);
       }
@@ -446,7 +459,7 @@ export function updateFormSubmissionDisposition(
         }
       );
 
-      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(tenantId, submissionId, formId);
+      const formSubmission = await submissionRepository.get(tenantId, submissionId, formId);
       if (!formSubmission) {
         throw new NotFoundError('Form submission', submissionId);
       }
@@ -779,7 +792,7 @@ export function createFormRouter({
   router.get(
     '/forms/:formId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('formId').isUUID()),
+    createValidationHandler(param('formId').isUUID(), query('includeData').optional().isBoolean()),
     getForm(repository),
     mapFormForSubmission(apiId, submissionRepository)
   );
@@ -842,6 +855,13 @@ export function createFormRouter({
         })
     ),
     findSubmissions(apiId, submissionRepository)
+  );
+
+  router.get(
+    '/submissions/:submissionId',
+    assertAuthenticatedHandler,
+    createValidationHandler(param('submissionId').isUUID()),
+    getFormSubmission(apiId, submissionRepository)
   );
 
   router.get(

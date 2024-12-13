@@ -11,7 +11,7 @@ export const Landing: FunctionComponent = () => {
     <React.Fragment>
       <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
 
-      <GoAAppHeader url="/" heading="Alberta Digital Service Platform - Form" />
+      <GoAAppHeader url="https://www.alberta.ca/" heading="Alberta Digital Service Platform - Form" />
       <Band title="Form">Draft, save and submit information using forms.</Band>
       <main>
         <section>

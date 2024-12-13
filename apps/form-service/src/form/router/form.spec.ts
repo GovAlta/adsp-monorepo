@@ -90,7 +90,6 @@ describe('form router', () => {
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
-    getByFormIdAndSubmissionId: jest.fn(),
   };
 
   const formSubmissionMock = {
@@ -98,7 +97,6 @@ describe('form router', () => {
     find: jest.fn(),
     save: jest.fn(),
     delete: jest.fn(),
-    getByFormIdAndSubmissionId: jest.fn(),
     dispositionSubmission: jest.fn(),
   };
 
@@ -217,7 +215,6 @@ describe('form router', () => {
     formSubmissionMock.delete.mockReset();
     formSubmissionMock.find.mockClear();
     formSubmissionMock.dispositionSubmission.mockReset();
-    formSubmissionMock.getByFormIdAndSubmissionId.mockReset();
     formSubmissionEntityMock.dispositionSubmission.mockReset();
 
     notificationServiceMock.subscribe.mockReset();
@@ -952,6 +949,7 @@ describe('form router', () => {
         user,
         tenant: { id: tenantId },
         params: { formId: 'test-form' },
+        query: {},
         form: formEntity,
       };
       const res = { send: jest.fn() };
@@ -977,6 +975,7 @@ describe('form router', () => {
         user,
         tenant: { id: tenantId },
         params: { formId: 'test-form' },
+        query: {},
         form: formEntity,
       };
       const res = { send: jest.fn() };
@@ -1510,13 +1509,13 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      formSubmissionMock.getByFormIdAndSubmissionId.mockResolvedValueOnce(formSubmissionEntity);
+      formSubmissionMock.get.mockResolvedValueOnce(formSubmissionEntity);
       formSubmissionMock.save.mockResolvedValueOnce(formSubmissionEntity);
 
       const handler = updateFormSubmissionDisposition(apiId, logger, eventServiceMock, formSubmissionMock);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(formSubmissionMock.getByFormIdAndSubmissionId).toBeCalled();
+      expect(formSubmissionMock.get).toBeCalled();
       expect(formSubmissionMock.save).toBeCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'formSubmission-id' }));
     });
@@ -1533,7 +1532,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      formSubmissionMock.getByFormIdAndSubmissionId.mockResolvedValueOnce(null);
+      formSubmissionMock.get.mockResolvedValueOnce(null);
       formSubmissionMock.save.mockResolvedValueOnce(formSubmissionEntity);
 
       const handler = updateFormSubmissionDisposition(apiId, logger, eventServiceMock, formSubmissionMock);
@@ -1567,7 +1566,7 @@ describe('form router', () => {
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
-      formSubmissionMock.getByFormIdAndSubmissionId.mockResolvedValueOnce(formSubmissionEntity);
+      formSubmissionMock.get.mockResolvedValueOnce(formSubmissionEntity);
 
       const handler = getFormSubmission(apiId, formSubmissionMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -1586,7 +1585,7 @@ describe('form router', () => {
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
-      formSubmissionMock.getByFormIdAndSubmissionId.mockResolvedValueOnce(null);
+      formSubmissionMock.get.mockResolvedValueOnce(null);
 
       const handler = getFormSubmission(apiId, formSubmissionMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -1611,7 +1610,7 @@ describe('form router', () => {
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
-      formSubmissionMock.getByFormIdAndSubmissionId.mockResolvedValueOnce(formSubmissionEntity);
+      formSubmissionMock.get.mockResolvedValueOnce(formSubmissionEntity);
 
       const handler = getFormSubmission(apiId, formSubmissionMock);
       await handler(req as unknown as Request, res as unknown as Response, next);

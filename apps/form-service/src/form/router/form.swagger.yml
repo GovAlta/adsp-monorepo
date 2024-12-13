@@ -38,6 +38,8 @@ components:
               type: string
         generatesPdf:
           type: boolean
+        submissionRecords:
+          type: boolean
     Form:
       type: object
       properties:
@@ -111,6 +113,8 @@ components:
         createDateAfter:
           type: string
           format: date-time
+        dispositioned:
+          type: boolean
         dispositionStatusEquals:
           type: string
         dispositionDateBefore:
@@ -249,7 +253,7 @@ components:
         schema:
           type: string
       - name: includeData
-        description: Flag indicating if data should be included in results. Only available to admins.
+        description: Flag indicating if data should be included in results.
         in: query
         required: false
         schema:
@@ -362,6 +366,13 @@ components:
     tags:
       - Form
     description: Retrieves a form.
+    parameters:
+      - name: includeData
+        description: Flag indicating if data should be included in results.
+        in: query
+        required: false
+        schema:
+          type: boolean
     responses:
       200:
         description: Successfully retrieved the form.
@@ -599,7 +610,7 @@ components:
                     size:
                       type: number
 
-/form/v1//submissions:
+/form/v1/submissions:
   get:
     tags:
       - Form Submission
@@ -670,3 +681,22 @@ components:
                       type: string
                     size:
                       type: number
+/form/v1/submissions/{submissionId}:
+  parameters:
+    - name: submissionId
+      description: ID of the submission.
+      required: true
+      in: path
+      schema:
+        type: string
+  get:
+    tags:
+      - Form Submission
+    description: Retrieves a form submission.
+    responses:
+      200:
+        description: Successfully retrieved the form submission.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormSubmission"
