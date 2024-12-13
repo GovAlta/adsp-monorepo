@@ -7,7 +7,6 @@ import { Forms } from './Forms';
 import { FormSubmissions } from './FormSubmissions';
 import { FormSubmission } from './FormSubmission';
 import { Form } from './Form';
-import { ContentContainer } from '../components/ContentContainer';
 
 export const FormDefinition: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -29,13 +28,11 @@ export const FormDefinition: FunctionComponent = () => {
       <Route
         path="/"
         element={
-          <ContentContainer>
-            {definition.submissionRecords ? (
-              <FormSubmissions definitionId={definitionId} />
-            ) : (
-              <Forms definitionId={definitionId} />
-            )}
-          </ContentContainer>
+          definition.submissionRecords ? (
+            <FormSubmissions definitionId={definitionId} />
+          ) : (
+            <Forms definitionId={definitionId} />
+          )
         }
       />
     </Routes>

@@ -11,6 +11,9 @@ const DetailsLayoutContainer = styled.div`
   right: 0;
   display: flex;
   flex-direction: column;
+  & > :first-child {
+    background: var(--goa-color-greyscale-100);
+  }
 `;
 
 interface DetailsLayoutProps {

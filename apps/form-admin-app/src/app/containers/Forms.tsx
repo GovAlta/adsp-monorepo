@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, findForms, formsSelector } from '../state';
 import { GoAButton, GoAButtonGroup, GoAFormItem, GoATable } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
+import { SearchLayout } from '../components/SearchLayout';
 
 interface FormsProps {
   definitionId: string;
@@ -19,7 +20,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   }, [definitionId, dispatch]);
 
   return (
-    <div>
+    <SearchLayout>
       {/* <form>
         <GoAButtonGroup alignment="end">
           <GoAButton type="secondary">Reset</GoAButton>
@@ -38,12 +39,12 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
         <tbody>
           {forms.map((form) => (
             <tr key={form.urn}>
-              <td>{form.created.toISOString()}</td>
+              <td>{form.created.toFormat('LLL dd, yyyy')}</td>
               <td>{form.createdBy.name}</td>
               <td>{form.applicant?.addressAs}</td>
               <td>
                 <GoAButtonGroup alignment="end">
-                  <GoAButton type="secondary" onClick={() => navigate(`forms/${form.id}`)}>
+                  <GoAButton type="secondary" size="compact" onClick={() => navigate(`forms/${form.id}`)}>
                     Open
                   </GoAButton>
                 </GoAButtonGroup>
@@ -52,6 +53,6 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           ))}
         </tbody>
       </GoATable>
-    </div>
+    </SearchLayout>
   );
 };
