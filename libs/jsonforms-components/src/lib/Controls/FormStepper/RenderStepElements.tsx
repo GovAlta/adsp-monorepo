@@ -21,6 +21,7 @@ export interface StepProps {
   disabledCategoryMap: boolean[];
   renderers: JsonFormsRendererRegistryEntry[] | undefined;
   cells: JsonFormsCellRendererRegistryEntry[] | undefined;
+  data: Record<string, unknown>;
 }
 export const RenderStepElements = (props: StepProps): JSX.Element => {
   return (

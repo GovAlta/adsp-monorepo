@@ -49,9 +49,11 @@ export const SearchBox = styled.div`
 `;
 
 export const AddressIndent = styled.div`
-  margin: 1em 1.5em 0 1.5em;
+  margin: 0.5em 0 0.5em 0;
   textwrap: 'wrap';
   wordbreak: 'break-word';
+  border: 1px solid #dcdcdc;
+  padding: 1.35em;
 `;
 
 export const TextWrap = styled.p`

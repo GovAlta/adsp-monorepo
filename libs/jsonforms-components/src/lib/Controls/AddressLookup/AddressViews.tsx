@@ -70,8 +70,6 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
           </GoAFormItem>
         </GoAGrid>
       </AddressIndent>
-      <br />
-      <br />
     </>
   );
 };
