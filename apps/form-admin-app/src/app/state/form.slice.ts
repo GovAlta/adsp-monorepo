@@ -2,6 +2,7 @@ import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-s
 import { tryResolveRefs } from '@abgov/jsonforms-components';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { DateTime } from 'luxon';
 import { AppState } from './store';
 import { FormSubmission, FORM_SERVICE_ID, PagedResults, Form, FormDefinition } from './types';
 import { getAccessToken } from './user.slice';
@@ -14,6 +15,7 @@ export const initialFormState: FormState = {
     loading: false,
     executing: false,
   },
+  criteria: { dispositioned: false },
   definitions: {},
   forms: {},
   submissions: {},
@@ -24,12 +26,24 @@ export const initialFormState: FormState = {
   selectedSubmission: null,
 };
 
+interface FormSubmissionCriteria {
+  dispositioned?: boolean;
+  createdAfter?: string;
+  createdBefore?: string;
+}
+
+interface FormCriteria {
+  createdAfter?: string;
+  createdBefore?: string;
+}
+
 export interface FormState {
   busy: {
     initializing: boolean;
     loading: boolean;
     executing: boolean;
   };
+  criteria: FormSubmissionCriteria | FormCriteria;
   forms: Record<string, Form>;
   submissions: Record<string, FormSubmission>;
   definitions: Record<string, FormDefinition>;
@@ -102,14 +116,7 @@ export const findForms = createAsyncThunk(
         },
       });
 
-      return {
-        ...data,
-        results: data.results.map(({ created, submitted, ...result }) => ({
-          ...result,
-          created: new Date(created),
-          submitted: new Date(submitted),
-        })),
-      };
+      return data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -125,7 +132,10 @@ export const findForms = createAsyncThunk(
 
 export const findSubmissions = createAsyncThunk(
   'form/find-submissions',
-  async ({ definitionId, after }: { definitionId: string; after?: string }, { getState, rejectWithValue }) => {
+  async (
+    { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormSubmissionCriteria },
+    { getState, rejectWithValue }
+  ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
 
@@ -140,19 +150,13 @@ export const findSubmissions = createAsyncThunk(
           top: 20,
           after,
           criteria: JSON.stringify({
+            ...criteria,
             definitionIdEquals: definitionId,
           }),
         },
       });
 
-      return {
-        ...data,
-        results: data.results.map(({ created, updated, ...result }) => ({
-          ...result,
-          created: new Date(created),
-          updated: new Date(updated),
-        })),
-      };
+      return data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -289,7 +293,14 @@ export const loadSubmission = createAsyncThunk(
 export const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
-  reducers: {},
+  reducers: {
+    setFormCriteria: (state, { payload }: { payload: FormCriteria }) => {
+      state.criteria = payload;
+    },
+    setFormSubmissionCriteria: (state, { payload }: { payload: FormSubmissionCriteria }) => {
+      state.criteria = payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(selectDefinition.fulfilled, (state, { meta }) => {
@@ -392,7 +403,14 @@ export const formsSelector = createSelector(
   (state: AppState) => state.form.forms,
   (state: AppState) => state.form.results,
   (forms, results) => {
-    return results.map((result) => forms[result]).filter((result) => !!result);
+    return results
+      .map((result) => forms[result])
+      .filter((result) => !!result)
+      .map(({ created, submitted, ...result }) => ({
+        ...result,
+        created: DateTime.fromISO(created),
+        submitted: submitted ? DateTime.fromISO(submitted) : null,
+      }));
   }
 );
 
@@ -400,7 +418,14 @@ export const submissionsSelector = createSelector(
   (state: AppState) => state.form.submissions,
   (state: AppState) => state.form.results,
   (submissions, results) => {
-    return results.map((result) => submissions[result]).filter((result) => !!result);
+    return results
+      .map((result) => submissions[result])
+      .filter((result) => !!result)
+      .map(({ created, updated, ...result }) => ({
+        ...result,
+        created: DateTime.fromISO(created),
+        updated: updated ? DateTime.fromISO(updated) : null,
+      }));
   }
 );
 
@@ -423,3 +448,5 @@ export const formLoadingSelector = createSelector(
     return isBusy;
   }
 );
+
+export const criteriaSelector = (state: AppState): FormSubmissionCriteria | FormCriteria => state.form.criteria;

@@ -54,7 +54,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     }
 
     if (typeof criteria?.dispositioned === 'boolean') {
-      query.disposition = { $exists: criteria.dispositioned };
+      query['disposition.id'] = { $exists: criteria.dispositioned };
     }
 
     if (criteria?.dispositionDateBefore) {
