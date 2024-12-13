@@ -21,7 +21,7 @@ const SearchLayoutContainer = styled.div`
 
 interface SearchLayout {
   children: ReactNode;
-  searchForm?: ReactNode;
+  searchForm: ReactNode;
 }
 export const SearchLayout: FunctionComponent<SearchLayout> = ({ children, searchForm }) => {
   return (

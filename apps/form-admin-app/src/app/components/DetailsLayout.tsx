@@ -2,6 +2,7 @@ import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { FunctionComponent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { LoadingIndicator } from './LoadingIndicator';
 
 const DetailsLayoutContainer = styled.div`
   position: absolute;
@@ -13,14 +14,27 @@ const DetailsLayoutContainer = styled.div`
   flex-direction: column;
   & > :first-child {
     background: var(--goa-color-greyscale-100);
+    border-bottom: 1px solid var(--goa-color-greyscale-200);
+    flex: 0;
+  }
+  & > :last-child {
+    background: var(--goa-color-greyscale-100);
+    border-top: 1px solid var(--goa-color-greyscale-200);
+    flex: 0;
+    padding-top: var(--goa-space-m);
+    padding-bottom: var(--goa-space-s);
+    padding-left: var(--goa-space-s);
+    padding-right: var(--goa-space-s);
   }
 `;
 
 interface DetailsLayoutProps {
+  initialized: boolean;
   children: ReactNode;
+  actionsForm: ReactNode;
 }
 
-export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({ children }) => {
+export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({ initialized, children, actionsForm }) => {
   const navigate = useNavigate();
 
   return (
@@ -30,7 +44,14 @@ export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({ children 
           Back
         </GoAButton>
       </GoAButtonGroup>
-      {children}
+      {initialized ? (
+        <>
+          {children}
+          {actionsForm}
+        </>
+      ) : (
+        <LoadingIndicator isLoading={true} />
+      )}
     </DetailsLayoutContainer>
   );
 };
