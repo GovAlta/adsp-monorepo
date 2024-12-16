@@ -428,7 +428,7 @@ export const formSlice = createSlice({
       })
       .addCase(updateFormDisposition.fulfilled, (state, { payload }) => {
         state.busy.executing = false;
-        state.submissions[payload.formId] = payload;
+        state.submissions[payload.id] = payload;
       });
   },
 });
