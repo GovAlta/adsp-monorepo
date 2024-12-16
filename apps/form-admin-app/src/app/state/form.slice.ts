@@ -98,7 +98,7 @@ export const loadDefinitions = createAsyncThunk(
     try {
       const accessToken = await getAccessToken();
       const requestUrl = new URL('/form/v1/definitions', directory[FORM_SERVICE_ID]);
-      const { data } = await axios.get<FormDefinition[]>(requestUrl.href, {
+      const { data } = await axios.get<PagedResults<FormDefinition>>(requestUrl.href, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: { top: 100, after },
       });
@@ -351,10 +351,11 @@ export const formSlice = createSlice({
       })
       .addCase(loadDefinitions.fulfilled, (state, { payload }) => {
         state.busy.loading = false;
-        state.definitions = payload.reduce(
+        state.definitions = payload.results.reduce(
           (definitions, definition) => ({ ...definitions, [definition.id]: definition }),
           {}
         );
+        state.next = payload.page.next;
       })
       .addCase(loadDefinitions.rejected, (state) => {
         state.busy.loading = false;
