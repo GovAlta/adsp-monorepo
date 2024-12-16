@@ -89,29 +89,33 @@ export const updateFormDisposition = createAsyncThunk(
   }
 );
 
-export const loadDefinitions = createAsyncThunk('form/load-definitions', async (_, { getState, rejectWithValue }) => {
-  const state = getState() as AppState;
-  const { directory } = state.config;
+export const loadDefinitions = createAsyncThunk(
+  'form/load-definitions',
+  async ({ after }: { after?: string }, { getState, rejectWithValue }) => {
+    const state = getState() as AppState;
+    const { directory } = state.config;
 
-  try {
-    const accessToken = await getAccessToken();
-    const requestUrl = new URL('/form/v1/definitions', directory[FORM_SERVICE_ID]);
-    const { data } = await axios.get<FormDefinition[]>(requestUrl.href, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    return data;
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      return rejectWithValue({
-        status: err.response?.status,
-        message: err.response?.data?.errorMessage || err.message,
+    try {
+      const accessToken = await getAccessToken();
+      const requestUrl = new URL('/form/v1/definitions', directory[FORM_SERVICE_ID]);
+      const { data } = await axios.get<FormDefinition[]>(requestUrl.href, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { top: 100, after },
       });
-    } else {
-      throw err;
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
     }
   }
-});
+);
 
 export const findForms = createAsyncThunk(
   'form/find-forms',
@@ -333,6 +337,7 @@ export const formSlice = createSlice({
         // Clear the form if the form definition is changing.
         if (state.selectedDefinition !== meta.arg) {
           state.results = [];
+          state.next = null;
         }
       })
       .addCase(selectForm.fulfilled, (state, { meta }) => {
@@ -494,3 +499,5 @@ export const busySelector = (state: AppState) => state.form.busy;
 export const submissionCriteriaSelector = (state: AppState) => state.form.submissionCriteria;
 
 export const formCriteriaSelector = (state: AppState) => state.form.formCriteria;
+
+export const nextSelector = (state: AppState) => state.form.next;

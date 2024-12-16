@@ -7,6 +7,8 @@ import {
   GoATable,
 } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
+import { FunctionComponent, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AppDispatch,
   findSubmissions,
@@ -14,9 +16,8 @@ import {
   submissionCriteriaSelector,
   formActions,
   busySelector,
+  nextSelector,
 } from '../state';
-import { FunctionComponent, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ContentContainer } from '../components/ContentContainer';
 import { SearchLayout } from '../components/SearchLayout';
 
@@ -31,6 +32,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const busy = useSelector(busySelector);
   const submissions = useSelector(submissionsSelector);
   const criteria = useSelector(submissionCriteriaSelector);
+  const next = useSelector(nextSelector);
 
   useEffect(() => {
     dispatch(findSubmissions({ definitionId, criteria }));
@@ -109,6 +111,19 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 </td>
               </tr>
             ))}
+            {next && (
+              <td colSpan={5}>
+                <GoAButtonGroup alignment="center">
+                  <GoAButton
+                    type="tertiary"
+                    disabled={busy.loading}
+                    onClick={() => dispatch(findSubmissions({ definitionId, criteria, after: next }))}
+                  >
+                    Load more
+                  </GoAButton>
+                </GoAButtonGroup>
+              </td>
+            )}
           </tbody>
         </GoATable>
       </ContentContainer>

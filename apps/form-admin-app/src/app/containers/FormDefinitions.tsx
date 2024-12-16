@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, definitionsSelector, loadDefinitions } from '../state';
-import { GoAButton, GoAButtonGroup, GoATable } from '@abgov/react-components-new';
+import { AppDispatch, busySelector, definitionsSelector, loadDefinitions, userSelector } from '../state';
+import { GoAButton, GoAButtonGroup, GoACallout, GoATable } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
@@ -10,14 +10,37 @@ export const FormsDefinitions = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    dispatch(loadDefinitions());
-  }, [dispatch]);
-
+  const { user } = useSelector(userSelector);
+  const busy = useSelector(busySelector);
   const definitions = useSelector(definitionsSelector);
 
+  useEffect(() => {
+    if (user?.roles.includes('urn:ads:platform:form-service:form-admin')) {
+      dispatch(loadDefinitions({}));
+    }
+  }, [dispatch, user]);
+
   return (
-    <SearchLayout searchForm={<form></form>}>
+    <SearchLayout
+      searchForm={
+        user?.roles.includes('urn:ads:platform:form-service:form-admin') ? (
+          <form>
+            <GoAButtonGroup alignment="end">
+              <GoAButton type="primary" disabled={busy.loading} onClick={() => dispatch(loadDefinitions({}))}>
+                Load
+              </GoAButton>
+            </GoAButtonGroup>
+          </form>
+        ) : (
+          <div>
+            <GoACallout heading="Access to listing not available" type="information">
+              You don't have permission to access the listing of Form definitions. Contact your administrator for
+              access, or for links to the specific workspaces you need access to.
+            </GoACallout>
+          </div>
+        )
+      }
+    >
       <ContentContainer>
         <GoATable width="100%">
           <thead>
