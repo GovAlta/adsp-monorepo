@@ -10,7 +10,14 @@ import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { AppDispatch, definitionSelector, selectSubmission, submissionSelector, updateFormDisposition } from '../state';
+import {
+  AppDispatch,
+  busySelector,
+  definitionSelector,
+  selectSubmission,
+  submissionSelector,
+  updateFormDisposition,
+} from '../state';
 import { FormViewer } from '../components/FormViewer';
 import { ContentContainer } from '../components/ContentContainer';
 import { DetailsLayout } from '../components/DetailsLayout';
@@ -20,6 +27,7 @@ export const FormSubmission = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { submissionId } = useParams();
+  const busy = useSelector(busySelector);
   const definition = useSelector(definitionSelector);
   const submission = useSelector(submissionSelector);
 
@@ -64,7 +72,7 @@ export const FormSubmission = () => {
               </GoAFormItem>
               <GoAButtonGroup alignment="end">
                 <GoAButton
-                  disabled={!draft.selectedDisposition || !draft.reason}
+                  disabled={!draft.selectedDisposition || !draft.reason || busy.executing}
                   onClick={() =>
                     dispatch(
                       updateFormDisposition({
