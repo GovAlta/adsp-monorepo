@@ -301,7 +301,7 @@ describe('form router', () => {
       const next = jest.fn();
 
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://configuration-service/configuration/v2'));
-      axiosMock.get.mockResolvedValueOnce({ data: { page: {}, results: [{ latest: definition }] } });
+      axiosMock.get.mockResolvedValueOnce({ data: { page: {}, results: [{ latest: { configuration: definition } }] } });
 
       const handler = getFormDefinitions(directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);

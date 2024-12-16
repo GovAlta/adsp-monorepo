@@ -7,13 +7,15 @@ import {
   GoATextArea,
 } from '@abgov/react-components-new';
 import { DateTime } from 'luxon';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import {
   AppDispatch,
   busySelector,
   definitionSelector,
+  dispositionDraftSelector,
+  formActions,
   selectSubmission,
   submissionSelector,
   updateFormDisposition,
@@ -30,8 +32,7 @@ export const FormSubmission = () => {
   const busy = useSelector(busySelector);
   const definition = useSelector(definitionSelector);
   const submission = useSelector(submissionSelector);
-
-  const [draft, setDraft] = useState({ selectedDisposition: '', reason: '' });
+  const draft = useSelector(dispositionDraftSelector);
 
   useEffect(() => {
     dispatch(selectSubmission(submissionId));
@@ -58,8 +59,8 @@ export const FormSubmission = () => {
             <>
               <GoAFormItem label="Disposition">
                 <GoADropdown
-                  value={draft.selectedDisposition}
-                  onChange={(_, selectedDisposition: string) => setDraft({ ...draft, selectedDisposition })}
+                  value={draft.status}
+                  onChange={(_, status: string) => formActions.setDispositionDraft({ ...draft, status })}
                   relative={true}
                 >
                   {definition?.dispositionStates?.map((state) => (
@@ -68,16 +69,20 @@ export const FormSubmission = () => {
                 </GoADropdown>
               </GoAFormItem>
               <GoAFormItem label="Reason">
-                <GoATextArea name="reason" value={draft.reason} onChange={(reason) => setDraft({ ...draft, reason })} />
+                <GoATextArea
+                  name="reason"
+                  value={draft.reason}
+                  onChange={(reason) => formActions.setDispositionDraft({ ...draft, reason })}
+                />
               </GoAFormItem>
               <GoAButtonGroup alignment="end">
                 <GoAButton
-                  disabled={!draft.selectedDisposition || !draft.reason || busy.executing}
+                  disabled={!draft.status || !draft.reason || busy.executing}
                   onClick={() =>
                     dispatch(
                       updateFormDisposition({
                         submissionUrn: AdspId.parse(submission.urn),
-                        status: draft.selectedDisposition,
+                        status: draft.status,
                         reason: draft.reason,
                       })
                     )
