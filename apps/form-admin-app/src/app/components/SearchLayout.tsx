@@ -16,6 +16,7 @@ const SearchLayoutContainer = styled.div`
     padding-left: var(--goa-space-s);
     padding-right: var(--goa-space-s);
     background: var(--goa-color-greyscale-100);
+    border-bottom: 1px solid var(--goa-color-greyscale-200);
   }
 `;
 

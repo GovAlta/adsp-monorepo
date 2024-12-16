@@ -1,8 +1,15 @@
-import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
+import {
+  GoAAppHeader,
+  GoAButton,
+  GoAMicrositeHeader,
+  GoASideMenu,
+  GoASideMenuHeading,
+} from '@abgov/react-components-new';
 import { useScripts } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes, useLocation, useParams, useNavigate } from 'react-router-dom';
+import { Route, Routes, useLocation, useParams, useNavigate, Navigate } from 'react-router-dom';
+import styled from 'styled-components';
 import {
   AppDispatch,
   configInitializedSelector,
@@ -14,10 +21,18 @@ import {
   userSelector,
   feedbackSelector,
 } from '../state';
-import { FeedbackNotification } from './FeedbackNotification';
-import { AuthorizeUser } from './AuthorizeUser';
 import { useFeedbackLinkHandler } from '../util/feedbackUtils';
+import { AuthorizeUser } from './AuthorizeUser';
+import { FeedbackNotification } from './FeedbackNotification';
+import { FormsDefinitions } from './FormDefinitions';
 import { FormDefinition } from './FormDefinition';
+import { NavigationMenu } from './NavigationMenu';
+
+const TenantMainContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+`;
 
 export const FormAdminTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -77,15 +92,22 @@ export const FormAdminTenant = () => {
         )}
       </GoAAppHeader>
       <FeedbackNotification />
-      <main>
-        <AuthorizeUser>
-          <section>
-            <Routes>
-              <Route path="/:definitionId/*" element={<FormDefinition />} />
-            </Routes>
-          </section>
-        </AuthorizeUser>
-      </main>
+      <AuthorizeUser>
+        <TenantMainContainer>
+          <nav>
+            <NavigationMenu />
+          </nav>
+          <main>
+            <section>
+              <Routes>
+                <Route path="/definitions/:definitionId/*" element={<FormDefinition />} />
+                <Route path="/definitions" element={<FormsDefinitions />} />
+                <Route index element={<Navigate to="definitions" />} />
+              </Routes>
+            </section>
+          </main>
+        </TenantMainContainer>
+      </AuthorizeUser>
     </React.Fragment>
   );
 };

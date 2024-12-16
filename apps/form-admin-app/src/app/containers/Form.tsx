@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { AppDispatch, definitionSelector, formSelector, selectForm } from '../state';
 import { FormViewer } from '../components/FormViewer';
 import { DetailsLayout } from '../components/DetailsLayout';
+import { ContentContainer } from '../components/ContentContainer';
 
 export const Form = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -18,7 +19,9 @@ export const Form = () => {
 
   return (
     <DetailsLayout initialized={!!(definition && form)} actionsForm={<form></form>}>
-      <FormViewer dataSchema={definition?.dataSchema} uiSchema={definition?.uiSchema} data={form?.data} />
+      <ContentContainer>
+        <FormViewer dataSchema={definition?.dataSchema} uiSchema={definition?.uiSchema} data={form?.data} />
+      </ContentContainer>
     </DetailsLayout>
   );
 };

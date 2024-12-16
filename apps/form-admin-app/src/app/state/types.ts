@@ -20,18 +20,25 @@ interface DispositionState {
 export interface FormDefinition {
   id: string;
   name: string;
+  description: string;
   dataSchema: JsonSchema;
   uiSchema: UISchemaElement;
   applicantRoles: string[];
   clerkRoles: string[];
   dispositionStates: DispositionState[];
   submissionRecords: boolean;
+  anonymousApply: boolean;
+}
+
+export enum FormStatus {
+  draft = 'Draft',
+  submitted = 'Submitted',
 }
 
 export interface Form {
   urn: string;
   id: string;
-  status: string;
+  status: FormStatus;
   created: string;
   createdBy: { id: string; name: string };
   submitted: string;
