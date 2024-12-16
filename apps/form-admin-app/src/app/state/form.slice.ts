@@ -4,7 +4,15 @@ import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios';
 import { DateTime } from 'luxon';
 import { AppState } from './store';
-import { FormSubmission, FORM_SERVICE_ID, PagedResults, Form, FormDefinition, FormStatus } from './types';
+import {
+  FormSubmission,
+  FORM_SERVICE_ID,
+  PagedResults,
+  Form,
+  FormDefinition,
+  FormStatus,
+  FormDisposition,
+} from './types';
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
 
@@ -26,6 +34,7 @@ export const initialFormState: FormState = {
   selectedDefinition: null,
   selectedForm: null,
   selectedSubmission: null,
+  dispositionDraft: { status: '', reason: '' },
 };
 
 interface FormSubmissionCriteria {
@@ -56,6 +65,7 @@ export interface FormState {
   selectedDefinition: string;
   selectedForm: string;
   selectedSubmission: string;
+  dispositionDraft: Omit<FormDisposition, 'id' | 'date'>;
 }
 
 export const updateFormDisposition = createAsyncThunk(
@@ -329,6 +339,9 @@ export const formSlice = createSlice({
     setSubmissionCriteria: (state, { payload }: { payload: FormSubmissionCriteria }) => {
       state.submissionCriteria = payload;
     },
+    setDispositionDraft: (state, { payload }: { payload: Omit<FormDisposition, 'id' | 'date'> }) => {
+      state.dispositionDraft = payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -502,3 +515,5 @@ export const submissionCriteriaSelector = (state: AppState) => state.form.submis
 export const formCriteriaSelector = (state: AppState) => state.form.formCriteria;
 
 export const nextSelector = (state: AppState) => state.form.next;
+
+export const dispositionDraftSelector = (state: AppState) => state.form.dispositionDraft;

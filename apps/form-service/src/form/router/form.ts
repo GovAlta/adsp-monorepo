@@ -143,7 +143,7 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
-      const { data } = await axios.get<Results<{ latest: FormDefinition }>>(
+      const { data } = await axios.get<Results<{ latest: { configuration: FormDefinition } }>>(
         new URL('v2/configuration/form-service', configurationApiUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -151,7 +151,7 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         }
       );
 
-      res.send({ ...data, results: data.results.map(({ latest }) => mapFormDefinition(latest)) });
+      res.send({ ...data, results: data.results.map(({ latest }) => mapFormDefinition(latest.configuration)) });
     } catch (err) {
       next(err);
     }
