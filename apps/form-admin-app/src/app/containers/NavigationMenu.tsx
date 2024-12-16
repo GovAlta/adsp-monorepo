@@ -1,17 +1,19 @@
 import { GoASideMenu, GoASideMenuHeading } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
 import { definitionSelector } from '../state';
-import { useNavigate } from 'react-router-dom';
 
 export const NavigationMenu = () => {
   const navigate = useNavigate();
+
+  const { tenant } = useParams();
   const definition = useSelector(definitionSelector);
 
   return (
     <GoASideMenu>
       <GoASideMenuHeading icon="documents">Form definitions</GoASideMenuHeading>
       <a
-        href={'definitions'}
+        href={`/${tenant}/definitions`}
         onClick={(e) => {
           navigate('definitions');
           e.preventDefault();
@@ -23,7 +25,7 @@ export const NavigationMenu = () => {
         <>
           <GoASideMenuHeading icon="document">{definition.name}</GoASideMenuHeading>
           <a
-            href={`definitions/${definition.id}/overview`}
+            href={`/${tenant}/definitions/${definition.id}/overview`}
             onClick={(e) => {
               navigate(`definitions/${definition.id}/overview`);
               e.preventDefault();
@@ -32,7 +34,7 @@ export const NavigationMenu = () => {
             Overview
           </a>
           <a
-            href={`definitions/${definition.id}/forms`}
+            href={`/${tenant}/definitions/${definition.id}/forms`}
             onClick={(e) => {
               navigate(`definitions/${definition.id}/forms`);
               e.preventDefault();
@@ -42,7 +44,7 @@ export const NavigationMenu = () => {
           </a>
           {definition.submissionRecords && (
             <a
-              href={`definitions/${definition.id}/submissions`}
+              href={`/${tenant}/definitions/${definition.id}/submissions`}
               onClick={(e) => {
                 navigate(`definitions/${definition.id}/submissions`);
                 e.preventDefault();
