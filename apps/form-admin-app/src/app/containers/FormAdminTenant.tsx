@@ -102,7 +102,7 @@ export const FormAdminTenant = () => {
               <Routes>
                 <Route path="/definitions/:definitionId/*" element={<FormDefinition />} />
                 <Route path="/definitions" element={<FormsDefinitions />} />
-                <Route index element={<Navigate to="definitions" />} />
+                <Route path="*" element={<Navigate to="definitions" />} />
               </Routes>
             </section>
           </main>

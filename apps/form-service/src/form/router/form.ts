@@ -147,7 +147,7 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         new URL('v2/configuration/form-service', configurationApiUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
-          params: { top, after },
+          params: { top, after, tenantId: tenantId?.toString() },
         }
       );
 

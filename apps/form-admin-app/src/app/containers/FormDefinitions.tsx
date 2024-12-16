@@ -1,6 +1,6 @@
-import { FunctionComponent, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, busySelector, definitionsSelector, loadDefinitions, userSelector } from '../state';
+import { AppDispatch, busySelector, definitionsSelector, loadDefinitions, nextSelector, userSelector } from '../state';
 import { GoAButton, GoAButtonGroup, GoACallout, GoATable } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
 import { SearchLayout } from '../components/SearchLayout';
@@ -12,6 +12,7 @@ export const FormsDefinitions = () => {
 
   const { user } = useSelector(userSelector);
   const busy = useSelector(busySelector);
+  const next = useSelector(nextSelector);
   const definitions = useSelector(definitionsSelector);
 
   useEffect(() => {
@@ -66,6 +67,19 @@ export const FormsDefinitions = () => {
                 </td>
               </tr>
             ))}
+            {next && (
+              <td colSpan={5}>
+                <GoAButtonGroup alignment="center">
+                  <GoAButton
+                    type="tertiary"
+                    disabled={busy.loading}
+                    onClick={() => dispatch(loadDefinitions({ after: next }))}
+                  >
+                    Load more
+                  </GoAButton>
+                </GoAButtonGroup>
+              </td>
+            )}
           </tbody>
         </GoATable>
       </ContentContainer>
