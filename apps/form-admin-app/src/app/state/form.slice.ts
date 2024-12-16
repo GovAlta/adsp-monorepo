@@ -4,7 +4,7 @@ import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios';
 import { DateTime } from 'luxon';
 import { AppState } from './store';
-import { FormSubmission, FORM_SERVICE_ID, PagedResults, Form, FormDefinition } from './types';
+import { FormSubmission, FORM_SERVICE_ID, PagedResults, Form, FormDefinition, FormStatus } from './types';
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
 
@@ -20,7 +20,7 @@ export const initialFormState: FormState = {
   forms: {},
   submissions: {},
   results: [],
-  formCriteria: {},
+  formCriteria: { statusEquals: 'submitted' },
   submissionCriteria: { dispositioned: false },
   next: null,
   selectedDefinition: null,
@@ -35,6 +35,7 @@ interface FormSubmissionCriteria {
 }
 
 interface FormCriteria {
+  statusEquals: string;
   createdAfter?: string;
   createdBefore?: string;
 }
@@ -88,10 +89,34 @@ export const updateFormDisposition = createAsyncThunk(
   }
 );
 
+export const loadDefinitions = createAsyncThunk('form/load-definitions', async (_, { getState, rejectWithValue }) => {
+  const state = getState() as AppState;
+  const { directory } = state.config;
+
+  try {
+    const accessToken = await getAccessToken();
+    const requestUrl = new URL('/form/v1/definitions', directory[FORM_SERVICE_ID]);
+    const { data } = await axios.get<FormDefinition[]>(requestUrl.href, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    return data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      return rejectWithValue({
+        status: err.response?.status,
+        message: err.response?.data?.errorMessage || err.message,
+      });
+    } else {
+      throw err;
+    }
+  }
+});
+
 export const findForms = createAsyncThunk(
   'form/find-forms',
   async (
-    { definitionId, after }: { definitionId: string; after?: string; criteria?: FormCriteria },
+    { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormCriteria },
     { getState, rejectWithValue }
   ) => {
     const state = getState() as AppState;
@@ -100,22 +125,23 @@ export const findForms = createAsyncThunk(
     try {
       const accessToken = await getAccessToken();
       const requestUrl = new URL('/form/v1/forms', directory[FORM_SERVICE_ID]);
-      const { data } = await axios.get<
-        PagedResults<Omit<Form, 'created' | 'submitted'> & { created: string; submitted: string }>
-      >(requestUrl.href, {
+      const { data } = await axios.get<PagedResults<Form>>(requestUrl.href, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: {
           top: 20,
           after,
           includeData: true,
           criteria: JSON.stringify({
+            ...criteria,
             definitionIdEquals: definitionId,
-            statusEquals: 'submitted',
           }),
         },
       });
 
-      return data;
+      return {
+        ...data,
+        results: data.results.map(({ status, ...result }) => ({ ...result, status: FormStatus[status] })),
+      };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -247,7 +273,7 @@ export const loadForm = createAsyncThunk('form/load-form', async (formId: string
       params: { includeData: true },
     });
 
-    return data;
+    return { ...data, status: FormStatus[data.status] };
   } catch (err) {
     if (axios.isAxiosError(err)) {
       return rejectWithValue({
@@ -310,10 +336,23 @@ export const formSlice = createSlice({
         }
       })
       .addCase(selectForm.fulfilled, (state, { meta }) => {
-        state.selectedDefinition = meta.arg;
+        state.selectedForm = meta.arg;
       })
       .addCase(selectSubmission.fulfilled, (state, { meta }) => {
         state.selectedSubmission = meta.arg;
+      })
+      .addCase(loadDefinitions.pending, (state) => {
+        state.busy.loading = true;
+      })
+      .addCase(loadDefinitions.fulfilled, (state, { payload }) => {
+        state.busy.loading = false;
+        state.definitions = payload.reduce(
+          (definitions, definition) => ({ ...definitions, [definition.id]: definition }),
+          {}
+        );
+      })
+      .addCase(loadDefinitions.rejected, (state) => {
+        state.busy.loading = false;
       })
       .addCase(loadDefinition.pending, (state) => {
         state.busy.initializing = true;
@@ -392,6 +431,16 @@ export const formReducer = formSlice.reducer;
 
 export const formActions = formSlice.actions;
 
+export const definitionsSelector = createSelector(
+  (state: AppState) => state.form.definitions,
+  (definitions) => {
+    return Object.values(definitions).reduce((results, definition) => {
+      results.push(definition);
+      return results;
+    }, [] as FormDefinition[]);
+  }
+);
+
 export const definitionSelector = createSelector(
   (state: AppState) => state.form.definitions,
   (state: AppState) => state.form.selectedDefinition,
@@ -440,12 +489,8 @@ export const submissionSelector = createSelector(
   (submissions, selected) => submissions[selected]
 );
 
-export const formLoadingSelector = createSelector(
-  (state: AppState) => state.form.busy,
-  (busy) => {
-    const isBusy = busy.initializing;
-    return isBusy;
-  }
-);
+export const busySelector = (state: AppState) => state.form.busy;
 
 export const submissionCriteriaSelector = (state: AppState) => state.form.submissionCriteria;
+
+export const formCriteriaSelector = (state: AppState) => state.form.formCriteria;

@@ -1,9 +1,17 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, findForms, formsSelector } from '../state';
-import { GoAButton, GoAButtonGroup, GoATable } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoAButtonGroup,
+  GoADropdown,
+  GoADropdownItem,
+  GoAFormItem,
+  GoATable,
+} from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
+import { AppDispatch, busySelector, findForms, formActions, formCriteriaSelector, formsSelector } from '../state';
 import { SearchLayout } from '../components/SearchLayout';
+import { ContentContainer } from '../components/ContentContainer';
 
 interface FormsProps {
   definitionId: string;
@@ -13,49 +21,81 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const busy = useSelector(busySelector);
   const forms = useSelector(formsSelector);
+  const criteria = useSelector(formCriteriaSelector);
 
   useEffect(() => {
-    dispatch(findForms({ definitionId }));
+    dispatch(findForms({ definitionId, criteria }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [definitionId, dispatch]);
 
   return (
     <SearchLayout
       searchForm={
         <form>
+          <GoAFormItem label="Status">
+            <GoADropdown
+              relative={true}
+              name="form-status"
+              value={criteria.statusEquals}
+              onChange={(_, value: string) =>
+                dispatch(
+                  formActions.setFormCriteria({
+                    ...criteria,
+                    statusEquals: value,
+                  })
+                )
+              }
+            >
+              <GoADropdownItem value="submitted" label="Submitted" />
+              <GoADropdownItem value="draft" label="Draft" />
+              <GoADropdownItem value={null} label="All" />
+            </GoADropdown>
+          </GoAFormItem>
           <GoAButtonGroup alignment="end">
             <GoAButton type="secondary">Reset</GoAButton>
-            <GoAButton type="primary">Search</GoAButton>
+            <GoAButton
+              type="primary"
+              disabled={busy.loading}
+              onClick={() => dispatch(findForms({ definitionId, criteria }))}
+            >
+              Search
+            </GoAButton>
           </GoAButtonGroup>
         </form>
       }
     >
-      <GoATable width="100%">
-        <thead>
-          <tr>
-            <th>Submitted on</th>
-            <th>Created by</th>
-            <th>Applicant</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {forms.map((form) => (
-            <tr key={form.urn}>
-              <td>{form.created.toFormat('LLL dd, yyyy')}</td>
-              <td>{form.createdBy.name}</td>
-              <td>{form.applicant?.addressAs}</td>
-              <td>
-                <GoAButtonGroup alignment="end">
-                  <GoAButton type="secondary" size="compact" onClick={() => navigate(`forms/${form.id}`)}>
-                    Open
-                  </GoAButton>
-                </GoAButtonGroup>
-              </td>
+      <ContentContainer>
+        <GoATable width="100%">
+          <thead>
+            <tr>
+              <th>Created on</th>
+              <th>Submitted on</th>
+              <th>Status</th>
+              <th>Applicant</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </GoATable>
+          </thead>
+          <tbody>
+            {forms.map((form) => (
+              <tr key={form.urn}>
+                <td>{form.created.toFormat('LLL dd, yyyy')}</td>
+                <td>{form.submitted?.toFormat('LLL dd, yyyy')}</td>
+                <td>{form.status}</td>
+                <td>{form.applicant?.addressAs}</td>
+                <td>
+                  <GoAButtonGroup alignment="end">
+                    <GoAButton type="secondary" size="compact" onClick={() => navigate(form.id)}>
+                      Open
+                    </GoAButton>
+                  </GoAButtonGroup>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </GoATable>
+      </ContentContainer>
     </SearchLayout>
   );
 };

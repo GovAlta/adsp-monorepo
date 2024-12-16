@@ -231,6 +231,8 @@ const initializeApp = async (): Promise<express.Application> => {
     ...repositories,
     serviceId,
     logger,
+    directory,
+    tokenProvider,
     eventService,
     tenantService,
     notificationService,

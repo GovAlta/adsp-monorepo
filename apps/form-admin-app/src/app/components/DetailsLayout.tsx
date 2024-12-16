@@ -40,7 +40,7 @@ export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({ initializ
   return (
     <DetailsLayoutContainer>
       <GoAButtonGroup alignment="start" mt="s" ml="s" mb="s">
-        <GoAButton type="secondary" onClick={() => navigate('..')}>
+        <GoAButton type="secondary" onClick={() => navigate(-1)}>
           Back
         </GoAButton>
       </GoAButtonGroup>

@@ -7,7 +7,14 @@ import {
   GoATable,
 } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, findSubmissions, submissionsSelector, submissionCriteriaSelector, formActions } from '../state';
+import {
+  AppDispatch,
+  findSubmissions,
+  submissionsSelector,
+  submissionCriteriaSelector,
+  formActions,
+  busySelector,
+} from '../state';
 import { FunctionComponent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ContentContainer } from '../components/ContentContainer';
@@ -21,6 +28,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const busy = useSelector(busySelector);
   const submissions = useSelector(submissionsSelector);
   const criteria = useSelector(submissionCriteriaSelector);
 
@@ -65,7 +73,11 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
             >
               Reset
             </GoAButton>
-            <GoAButton type="primary" onClick={() => dispatch(findSubmissions({ definitionId, criteria }))}>
+            <GoAButton
+              type="primary"
+              disabled={busy.loading}
+              onClick={() => dispatch(findSubmissions({ definitionId, criteria }))}
+            >
               Search
             </GoAButton>
           </GoAButtonGroup>
@@ -90,7 +102,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 <td>{submission.disposition?.status}</td>
                 <td>
                   <GoAButtonGroup alignment="end">
-                    <GoAButton type="secondary" size="compact" onClick={() => navigate(`submissions/${submission.id}`)}>
+                    <GoAButton type="secondary" size="compact" onClick={() => navigate(submission.id)}>
                       Open
                     </GoAButton>
                   </GoAButtonGroup>
