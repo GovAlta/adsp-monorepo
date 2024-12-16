@@ -9,7 +9,15 @@ import {
   GoATable,
 } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
-import { AppDispatch, busySelector, findForms, formActions, formCriteriaSelector, formsSelector } from '../state';
+import {
+  AppDispatch,
+  busySelector,
+  findForms,
+  formActions,
+  formCriteriaSelector,
+  formsSelector,
+  nextSelector,
+} from '../state';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
 
@@ -24,6 +32,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const busy = useSelector(busySelector);
   const forms = useSelector(formsSelector);
   const criteria = useSelector(formCriteriaSelector);
+  const next = useSelector(nextSelector);
 
   useEffect(() => {
     dispatch(findForms({ definitionId, criteria }));
@@ -54,7 +63,12 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             </GoADropdown>
           </GoAFormItem>
           <GoAButtonGroup alignment="end">
-            <GoAButton type="secondary">Reset</GoAButton>
+            <GoAButton
+              type="secondary"
+              onClick={() => dispatch(formActions.setFormCriteria({ statusEquals: 'submitted' }))}
+            >
+              Reset
+            </GoAButton>
             <GoAButton
               type="primary"
               disabled={busy.loading}
@@ -93,6 +107,19 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 </td>
               </tr>
             ))}
+            {next && (
+              <td colSpan={5}>
+                <GoAButtonGroup alignment="center">
+                  <GoAButton
+                    type="tertiary"
+                    disabled={busy.loading}
+                    onClick={() => dispatch(findForms({ definitionId, criteria, after: next }))}
+                  >
+                    Load more
+                  </GoAButton>
+                </GoAButtonGroup>
+              </td>
+            )}
           </tbody>
         </GoATable>
       </ContentContainer>

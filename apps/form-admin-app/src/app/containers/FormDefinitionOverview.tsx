@@ -10,6 +10,7 @@ interface FormDefinitionOverviewProps {
 
 export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewProps> = () => {
   const definition = useSelector(definitionSelector);
+
   return (
     <ContentContainer>
       <GoAContainer>
