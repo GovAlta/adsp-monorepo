@@ -60,7 +60,7 @@ export const FormSubmission = () => {
               <GoAFormItem label="Disposition">
                 <GoADropdown
                   value={draft.status}
-                  onChange={(_, status: string) => formActions.setDispositionDraft({ ...draft, status })}
+                  onChange={(_, status: string) => dispatch(formActions.setDispositionDraft({ ...draft, status }))}
                   relative={true}
                 >
                   {definition?.dispositionStates?.map((state) => (
@@ -72,7 +72,7 @@ export const FormSubmission = () => {
                 <GoATextArea
                   name="reason"
                   value={draft.reason}
-                  onChange={(reason) => formActions.setDispositionDraft({ ...draft, reason })}
+                  onChange={(reason) => dispatch(formActions.setDispositionDraft({ ...draft, reason }))}
                 />
               </GoAFormItem>
               <GoAButtonGroup alignment="end">

@@ -28,6 +28,7 @@ export interface FormDefinition {
   dispositionStates: DispositionState[];
   submissionRecords: boolean;
   anonymousApply: boolean;
+  generatesPdf: boolean;
 }
 
 export enum FormStatus {

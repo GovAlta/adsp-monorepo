@@ -22,6 +22,7 @@ main {
 nav {
   width: 250px;
   border-right: 1px solid var(--goa-color-greyscale-200);
+  overflow-x: hidden;
 }
 
 .app {
