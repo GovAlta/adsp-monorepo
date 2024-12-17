@@ -159,6 +159,9 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             validators['name'].check(value);
             setCalendarEvent({ ...calendarEvent, name: value });
           }}
+          onBlur={() => {
+            validators.checkAll({ name: calendarEvent?.name });
+          }}
         />
       </GoAFormItem>
       <GoAFormItem error={errors?.['description']} label="Description" mb={'xl'}>

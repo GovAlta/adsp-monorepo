@@ -116,6 +116,10 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
               validators['url'].check(value);
               setSite({ ...site, url: value });
             }}
+            onBlur={() => {
+              validators.checkAll({ url: site.url });
+              setUrlError(errors?.['url'] || '');
+            }}
           />
         </GoAFormItem>
         <CheckboxSpaceWrapper>
