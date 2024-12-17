@@ -17,9 +17,11 @@ import {
   formActions,
   busySelector,
   nextSelector,
+  selectedDataValuesSelector,
 } from '../state';
 import { ContentContainer } from '../components/ContentContainer';
 import { SearchLayout } from '../components/SearchLayout';
+import { DataValueCell } from '../components/DataValueCell';
 
 interface FormSubmissionsProps {
   definitionId: string;
@@ -31,8 +33,9 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
 
   const busy = useSelector(busySelector);
   const submissions = useSelector(submissionsSelector);
+  const columns = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(submissionCriteriaSelector);
-  const next = useSelector(nextSelector);
+  const { submissions: next } = useSelector(nextSelector);
 
   useEffect(() => {
     dispatch(findSubmissions({ definitionId, criteria }));
@@ -73,14 +76,14 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               type="secondary"
               onClick={() => dispatch(formActions.setSubmissionCriteria({ dispositioned: false }))}
             >
-              Reset
+              Reset filter
             </GoAButton>
             <GoAButton
               type="primary"
               disabled={busy.loading}
               onClick={() => dispatch(findSubmissions({ definitionId, criteria }))}
             >
-              Search
+              Search submissions
             </GoAButton>
           </GoAButtonGroup>
         </form>
@@ -91,8 +94,10 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           <thead>
             <tr>
               <th>Submitted on</th>
-              <th>Created by</th>
               <th>Disposition</th>
+              {columns.map(({ name }) => (
+                <th>{name}</th>
+              ))}
               <th>Actions</th>
             </tr>
           </thead>
@@ -100,8 +105,10 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
             {submissions.map((submission) => (
               <tr key={submission.urn}>
                 <td>{submission.created.toFormat('LLL dd, yyyy')}</td>
-                <td>{submission.createdBy.name}</td>
                 <td>{submission.disposition?.status}</td>
+                {columns.map(({ path }) => (
+                  <DataValueCell key={path}>{submission.values[path]}</DataValueCell>
+                ))}
                 <td>
                   <GoAButtonGroup alignment="end">
                     <GoAButton type="secondary" size="compact" onClick={() => navigate(submission.id)}>
@@ -112,7 +119,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               </tr>
             ))}
             {next && (
-              <td colSpan={5}>
+              <td colSpan={3 + columns.length}>
                 <GoAButtonGroup alignment="center">
                   <GoAButton
                     type="tertiary"

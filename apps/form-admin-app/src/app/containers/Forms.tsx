@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   AppDispatch,
   busySelector,
+  selectedDataValuesSelector,
   findForms,
   formActions,
   formCriteriaSelector,
@@ -20,6 +21,7 @@ import {
 } from '../state';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
+import { DataValueCell } from '../components/DataValueCell';
 
 interface FormsProps {
   definitionId: string;
@@ -31,8 +33,9 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
 
   const busy = useSelector(busySelector);
   const forms = useSelector(formsSelector);
+  const columns = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(formCriteriaSelector);
-  const next = useSelector(nextSelector);
+  const { forms: next } = useSelector(nextSelector);
 
   useEffect(() => {
     dispatch(findForms({ definitionId, criteria }));
@@ -67,14 +70,14 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               type="secondary"
               onClick={() => dispatch(formActions.setFormCriteria({ statusEquals: 'submitted' }))}
             >
-              Reset
+              Reset filter
             </GoAButton>
             <GoAButton
               type="primary"
               disabled={busy.loading}
               onClick={() => dispatch(findForms({ definitionId, criteria }))}
             >
-              Search
+              Search forms
             </GoAButton>
           </GoAButtonGroup>
         </form>
@@ -85,9 +88,10 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           <thead>
             <tr>
               <th>Created on</th>
-              <th>Submitted on</th>
               <th>Status</th>
-              <th>Applicant</th>
+              {columns.map(({ name }) => (
+                <th>{name}</th>
+              ))}
               <th>Actions</th>
             </tr>
           </thead>
@@ -95,9 +99,10 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             {forms.map((form) => (
               <tr key={form.urn}>
                 <td>{form.created.toFormat('LLL dd, yyyy')}</td>
-                <td>{form.submitted?.toFormat('LLL dd, yyyy')}</td>
                 <td>{form.status}</td>
-                <td>{form.applicant?.addressAs}</td>
+                {columns.map(({ path }) => (
+                  <DataValueCell key={path}>{form.values[path]}</DataValueCell>
+                ))}
                 <td>
                   <GoAButtonGroup alignment="end">
                     <GoAButton type="secondary" size="compact" onClick={() => navigate(form.id)}>
@@ -108,7 +113,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               </tr>
             ))}
             {next && (
-              <td colSpan={5}>
+              <td colSpan={3 + columns.length}>
                 <GoAButtonGroup alignment="center">
                   <GoAButton
                     type="tertiary"

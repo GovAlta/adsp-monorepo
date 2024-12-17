@@ -1,39 +1,103 @@
-import { GoAContainer, GoADetails, GoAFormItem } from '@abgov/react-components-new';
+import { GoACheckbox, GoAContainer, GoADetails, GoAFormItem, GoASpacer, GoATable } from '@abgov/react-components-new';
 import { FunctionComponent } from 'react';
-import { useSelector } from 'react-redux';
-import { definitionSelector } from '../state';
+import { useDispatch, useSelector } from 'react-redux';
+import styled from 'styled-components';
+import { AppDispatch, dataValuesSelector, definitionSelector, updateDataValue } from '../state';
 import { ContentContainer } from '../components/ContentContainer';
+
+const OverviewLayout = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: auto;
+`;
 
 interface FormDefinitionOverviewProps {
   definitionId: string;
 }
 
 export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewProps> = () => {
+  const dispatch = useDispatch<AppDispatch>();
+
   const definition = useSelector(definitionSelector);
+  const dataValues = useSelector(dataValuesSelector);
 
   return (
-    <ContentContainer>
-      <GoAContainer>
-        <GoAFormItem label="ID">
-          <span>{definition.id}</span>
-        </GoAFormItem>
-        <GoAFormItem label="Name">
-          <span>{definition.name}</span>
-        </GoAFormItem>
-        <GoAFormItem label="Description">
-          <span>{definition.description}</span>
-        </GoAFormItem>
-      </GoAContainer>
-      {definition.anonymousApply ? (
-        <GoADetails heading="Anonymous applicants">Applicants can create and submit forms without signing in.</GoADetails>
-      ) : (
-        <GoADetails heading="Signed in applicants">Applicants must sign in in order to create and submit forms.</GoADetails>
-      )}
-      {definition.submissionRecords ? (
-        <GoADetails heading="Creates submission records">Submission records are created when forms are submitted.</GoADetails>
-      ) : (
-        <GoADetails heading="No submission records">Submission records are not created when forms are submitted.</GoADetails>
-      )}
-    </ContentContainer>
+    <OverviewLayout>
+      <ContentContainer>
+        <h2>Overview</h2>
+        <GoAContainer mt="m">
+          <GoAFormItem label="ID">
+            <span>{definition.id}</span>
+          </GoAFormItem>
+          <GoAFormItem label="Name">
+            <span>{definition.name}</span>
+          </GoAFormItem>
+          <GoAFormItem label="Description">
+            <span>{definition.description}</span>
+          </GoAFormItem>
+        </GoAContainer>
+        <h3>General</h3>
+        <GoASpacer vSpacing="m" />
+        {definition.anonymousApply ? (
+          <GoADetails heading="Anonymous applicants">
+            Applicants can create and submit forms without signing in.
+          </GoADetails>
+        ) : (
+          <GoADetails heading="Signed in applicants">
+            Applicants must sign in in order to create and submit forms.
+          </GoADetails>
+        )}
+        {definition.generatesPdf ? (
+          <GoADetails heading="Creates submission PDF">
+            PDF copy of the submitted information is created when forms are submitted.
+          </GoADetails>
+        ) : (
+          <GoADetails heading="No submission PDF">PDF copy is not created when forms are submitted.</GoADetails>
+        )}
+        {definition.submissionRecords ? (
+          <GoADetails heading="Creates submission records">
+            Submission records are created when forms are submitted.
+          </GoADetails>
+        ) : (
+          <GoADetails heading="No submission records">
+            Submission records are not created when forms are submitted.
+          </GoADetails>
+        )}
+        <h3>Data value columns</h3>
+        <p>
+          Select the form data values to show as columns so that forms and submissions are easier to view at a glance.
+          The preferences shown here are saved and shared between users accessing this application from this workstation.
+        </p>
+        <GoATable width="100%" mt="m">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Path</th>
+              <th>Show column</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dataValues.map(({ name, path, selected }) => (
+              <tr key={path}>
+                <td>{name}</td>
+                <td>{path}</td>
+                <td>
+                  <GoACheckbox
+                    name="Show column"
+                    checked={!!selected}
+                    onChange={(_, selected) =>
+                      dispatch(updateDataValue({ definitionId: definition.id, path, selected }))
+                    }
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </GoATable>
+      </ContentContainer>
+    </OverviewLayout>
   );
 };

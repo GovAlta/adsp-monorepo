@@ -1,10 +1,14 @@
-import { useEffect } from 'react';
+import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, busySelector, definitionsSelector, loadDefinitions, nextSelector, userSelector } from '../state';
-import { GoAButton, GoAButtonGroup, GoACallout, GoATable } from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoAButtonGroup, GoACallout, GoATable } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
+
+const FeatureBadge: FunctionComponent<{ feature?: boolean }> = ({ feature }) => {
+  return feature ? <GoABadge type="success" content="Yes" /> : <GoABadge type="information" content="No" />;
+};
 
 export const FormsDefinitions = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -12,7 +16,7 @@ export const FormsDefinitions = () => {
 
   const { user } = useSelector(userSelector);
   const busy = useSelector(busySelector);
-  const next = useSelector(nextSelector);
+  const { definitions: next } = useSelector(nextSelector);
   const definitions = useSelector(definitionsSelector);
 
   useEffect(() => {
@@ -28,7 +32,7 @@ export const FormsDefinitions = () => {
           <form>
             <GoAButtonGroup alignment="end">
               <GoAButton type="primary" disabled={busy.loading} onClick={() => dispatch(loadDefinitions({}))}>
-                Load
+                Load definitions
               </GoAButton>
             </GoAButtonGroup>
           </form>
@@ -49,6 +53,7 @@ export const FormsDefinitions = () => {
               <th>Name</th>
               <th>Anonymous applicant</th>
               <th>Creates submissions</th>
+              <th>Creates PDF</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -56,8 +61,15 @@ export const FormsDefinitions = () => {
             {definitions.map((definition) => (
               <tr key={definition.id}>
                 <td>{definition.name}</td>
-                <td>{definition.anonymousApply ? 'Yes' : 'No'}</td>
-                <td>{definition.submissionRecords ? 'Yes' : 'No'}</td>
+                <td>
+                  <FeatureBadge feature={definition.anonymousApply} />
+                </td>
+                <td>
+                  <FeatureBadge feature={definition.submissionRecords} />
+                </td>
+                <td>
+                  <FeatureBadge feature={definition.generatesPdf} />
+                </td>
                 <td>
                   <GoAButtonGroup alignment="end">
                     <GoAButton type="secondary" size="compact" onClick={() => navigate(definition.id)}>
