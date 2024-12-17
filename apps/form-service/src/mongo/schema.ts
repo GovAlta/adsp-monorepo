@@ -15,6 +15,9 @@ export const formSchema = new Schema(
       type: String,
       required: true,
     },
+    securityClassification: {
+      type: String,
+    },
     formDraftUrl: {
       type: String,
     },
@@ -22,6 +25,7 @@ export const formSchema = new Schema(
       type: Boolean,
       default: false,
     },
+
     applicantId: {
       type: String,
       required: true,
@@ -145,6 +149,9 @@ export const formSubmissionSchema = new Schema(
     submissionStatus: {
       type: String,
       required: false,
+    },
+    securityClassification: {
+      type: String,
     },
     disposition: { type: formDeposition, required: false },
     hash: String,

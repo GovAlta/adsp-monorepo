@@ -341,20 +341,16 @@ export function formArchived(apiId: AdspId, user: User, form: FormEntity): Domai
   };
 }
 
-export function submissionDispositioned(
-  apiId: AdspId,
-  user: User,
-  form: FormEntity,
-  submission: FormSubmissionEntity
-): DomainEvent {
-  const formResponse = mapForm(apiId, form);
+export function submissionDispositioned(apiId: AdspId, user: User, submission: FormSubmissionEntity): DomainEvent {
+  const form = submission.form;
+  const formResponse = form ? mapForm(apiId, form) : null;
   return {
     name: SUBMISSION_DISPOSITIONED,
     timestamp: new Date(),
-    tenantId: form.tenantId,
+    tenantId: submission.tenantId,
     correlationId: getCorrelationId(formResponse),
     context: {
-      definitionId: form.definition.id,
+      definitionId: submission.definition?.id,
     },
     payload: {
       form: formResponse,

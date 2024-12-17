@@ -79,7 +79,7 @@ export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntit
     formFiles: Object.entries(entity.formFiles || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
     created: entity.created,
     createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
-    securityClassification: entity?.securityClassification,
+    securityClassification: entity.securityClassification,
     disposition: entity.disposition
       ? {
           id: entity.disposition.id,
@@ -503,7 +503,7 @@ export function updateFormSubmissionDisposition(
       end();
 
       res.send(mapFormSubmissionData(apiId, updated));
-      eventService.send(submissionDispositioned(apiId, user, updated.form, updated));
+      eventService.send(submissionDispositioned(apiId, user, updated));
 
       logger.info(
         `Updated disposition of form submission with ID: ${submissionId} (form ID: ${formId}) to '${dispositionStatus}'.`,

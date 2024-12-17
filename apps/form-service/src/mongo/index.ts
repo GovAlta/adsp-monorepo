@@ -43,7 +43,7 @@ export const createRepositories = ({
         } else {
           const definitionRepository = new ConfigurationFormDefinitionRepository(logger, configurationService);
           const formRepository = new MongoFormRepository(logger, definitionRepository, notificationService);
-          const formSubmissionRepository = new MongoFormSubmissionRepository(logger, formRepository);
+          const formSubmissionRepository = new MongoFormSubmissionRepository(logger, definitionRepository, formRepository);
           resolve({
             formRepository,
             formSubmissionRepository,
