@@ -483,6 +483,7 @@ export const formSlice = createSlice({
       })
       .addCase(selectSubmission.fulfilled, (state, { meta }) => {
         state.selectedSubmission = meta.arg;
+        state.dispositionDraft = initialFormState.dispositionDraft;
       })
       .addCase(loadDefinitions.pending, (state) => {
         state.busy.loading = true;
