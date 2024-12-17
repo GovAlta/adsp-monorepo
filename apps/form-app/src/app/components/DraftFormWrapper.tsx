@@ -70,7 +70,8 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
       <GoAButtonGroup alignment="end">
         {showSubmit && (
           <GoAButton
-            mt="2xl"
+            mt="s"
+            mb="3xl"
             disabled={!canSubmit || unfilledRequired}
             type="primary"
             data-testid="form-submit"
