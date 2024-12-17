@@ -2,14 +2,24 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Model, model } from 'mongoose';
 import { Logger } from 'winston';
-import { FormRepository, FormSubmissionCriteria, FormSubmissionEntity, FormSubmissionRepository } from '../form';
+import {
+  FormDefinitionRepository,
+  FormRepository,
+  FormSubmissionCriteria,
+  FormSubmissionEntity,
+  FormSubmissionRepository,
+} from '../form';
 import { formSubmissionSchema } from './schema';
 import { FormSubmissionDoc } from './types';
 
 export class MongoFormSubmissionRepository implements FormSubmissionRepository {
   private submissionModel: Model<Document & FormSubmissionDoc>;
 
-  constructor(private logger: Logger, private formRepository: FormRepository) {
+  constructor(
+    private logger: Logger,
+    private definitionRepository: FormDefinitionRepository,
+    private formRepository: FormRepository
+  ) {
     this.submissionModel = model<Document & FormSubmissionDoc>('formSubmission', formSubmissionSchema);
     this.submissionModel.on('index', (err: unknown) => {
       if (err) {
@@ -143,6 +153,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       updatedBy: entity.updatedBy?.name,
       updatedById: entity.updatedBy?.id,
       submissionStatus: entity.submissionStatus,
+      securityClassification: entity.securityClassification,
       updatedDateTime: entity.updated,
       formData: entity.formData,
       formFiles: Object.entries(entity.formFiles).reduce(
@@ -155,6 +166,8 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
   }
 
   private fromDoc = async (tenantId: AdspId, doc: FormSubmissionDoc): Promise<FormSubmissionEntity> => {
+    // Get the definition and form separately since it's possible that one or the other has been deleted.
+    const definition = await this.definitionRepository.getDefinition(tenantId, doc.formDefinitionId);
     const form = await this.formRepository.get(tenantId, doc.formId);
 
     return new FormSubmissionEntity(
@@ -168,6 +181,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         createdBy: doc.createdBy,
         updatedBy: { id: doc.updatedById, name: doc.updatedBy },
         submissionStatus: doc.submissionStatus,
+        securityClassification: doc.securityClassification,
         updated: doc.updatedDateTime,
         formData: doc.formData,
         formFiles: Object.entries(doc.formFiles).reduce(
@@ -177,6 +191,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         disposition: doc.disposition,
         hash: doc.hash,
       },
+      definition,
       form
     );
   };

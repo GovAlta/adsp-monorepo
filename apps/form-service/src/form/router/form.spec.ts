@@ -211,7 +211,13 @@ describe('form router', () => {
     formInfo
   );
 
-  const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+  const formSubmissionEntity = new FormSubmissionEntity(
+    formSubmissionMock,
+    tenantId,
+    formSubmissionInfo,
+    definition,
+    entity
+  );
 
   beforeEach(() => {
     axiosMock.get.mockClear();
@@ -1731,7 +1737,13 @@ describe('form router', () => {
 
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
 
-      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+      const formSubmissionEntity = new FormSubmissionEntity(
+        formSubmissionMock,
+        tenantId,
+        formSubmissionInfo,
+        definition,
+        entity
+      );
       formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
 
       const handler = findSubmissions(apiId, formSubmissionMock);
@@ -1770,7 +1782,13 @@ describe('form router', () => {
 
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
 
-      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+      const formSubmissionEntity = new FormSubmissionEntity(
+        formSubmissionMock,
+        tenantId,
+        formSubmissionInfo,
+        definition,
+        entity
+      );
       formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
 
       const handler = findSubmissions(apiId, formSubmissionMock);
@@ -1911,7 +1929,13 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+      const formSubmissionEntity = new FormSubmissionEntity(
+        formSubmissionMock,
+        tenantId,
+        formSubmissionInfo,
+        definition,
+        entity
+      );
 
       repositoryMock.get.mockResolvedValueOnce(null);
 

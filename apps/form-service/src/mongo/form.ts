@@ -168,7 +168,7 @@ export class MongoFormRepository implements FormRepository {
         submitted: doc.submitted,
         lastAccessed: doc.lastAccessed,
         data: doc.data,
-        securityClassification: definition?.securityClassification,
+        securityClassification: doc.securityClassification,
         files: Object.entries(doc.files).reduce((fs, [key, f]) => ({ ...fs, [key]: f ? AdspId.parse(f) : null }), {}),
       },
       doc.hash
