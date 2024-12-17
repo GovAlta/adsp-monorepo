@@ -144,13 +144,15 @@ export const FileTypeModal = ({
 
                 const validations = {
                   name: value,
+                  duplicated: value,
                 };
                 validators.remove('name');
 
-                validations['duplicated'] = value;
-
                 validators.checkAll(validations);
                 setFileType(newFileType);
+              }}
+              onBlur={() => {
+                validators.checkAll({ name: fileType.name, duplicated: fileType.name });
               }}
               aria-label="name"
             />

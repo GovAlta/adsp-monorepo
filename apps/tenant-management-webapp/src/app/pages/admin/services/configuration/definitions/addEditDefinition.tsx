@@ -149,6 +149,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               validators['namespace'].check(value);
               setDefinition({ ...definition, namespace: value });
             }}
+            onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['name']} label="Name">
@@ -165,6 +166,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               validators['name'].check(value);
               setDefinition({ ...definition, name: value });
             }}
+            onBlur={() => validators.checkAll({ name: definition.name })}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['description']} label="Description">

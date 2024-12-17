@@ -141,10 +141,12 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 name: value,
               };
               validators.remove('name');
-
               validators.checkAll(validations);
 
               setTemplate(isEdit ? { ...template, name: value } : { ...template, name: value, id: toKebabName(value) });
+            }}
+            onBlur={() => {
+              validators.checkAll({ name: template.name });
             }}
           />
         </GoAFormItem>
