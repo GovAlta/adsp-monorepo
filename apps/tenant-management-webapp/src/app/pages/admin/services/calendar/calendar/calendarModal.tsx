@@ -5,7 +5,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
 import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
-
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from '../styled-components';
 import { RootState } from '@store/index';
@@ -15,6 +14,7 @@ import { selectRoleList } from '@store/sharedSelectors/roles';
 import { selectCalendarsByName } from '@store/calendar/selectors';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { areObjectsEqual } from '@lib/objectUtil';
+
 interface CalendarModalProps {
   calendarName: string | undefined;
   onCancel?: () => void;
@@ -52,6 +52,15 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
     .add('duplicated', 'name', duplicateNameCheck(calendarNames, 'Calendar'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
+
+  const validateField = (field: string, value: string) => {
+    validators.remove(field);
+    const validations = { [field]: value };
+    if (isNew && field === 'name') {
+      validations['duplicated'] = value;
+    }
+    validators.checkAll(validations);
+  };
 
   const validationCheck = () => {
     const validations = {
@@ -110,22 +119,14 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
       heading={title}
       actions={
         <GoAButtonGroup alignment="end">
-          <GoAButton
-            type="secondary"
-            testId="calendar-modal-cancel"
-            onClick={() => {
-              handleCancelClick();
-            }}
-          >
+          <GoAButton type="secondary" testId="calendar-modal-cancel" onClick={handleCancelClick}>
             Cancel
           </GoAButton>
           <GoAButton
             type="primary"
             testId="calendar-modal-save"
             disabled={validators.haveErrors() || areObjectsEqual(calendar, initialValue)}
-            onClick={() => {
-              validationCheck();
-            }}
+            onClick={validationCheck}
           >
             Save
           </GoAButton>
@@ -142,17 +143,11 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
           disabled={!isNew}
           width="100%"
           onChange={(name, value) => {
-            const validations = {
-              name: value,
-            };
-            validators.remove('name');
-            if (isNew) {
-              validations['duplicated'] = value;
-            }
-            validators.checkAll(validations);
+            validateField('name', value);
             const calendarId = toKebabName(value);
             setCalendar({ ...calendar, name: calendarId, displayName: value });
           }}
+          onBlur={() => validateField('name', calendar?.displayName || '')}
         />
       </GoAFormItem>
       <GoAFormItem label="Calendar ID">

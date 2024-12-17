@@ -177,7 +177,7 @@ export const ApplicationFormModal: FC<Props> = ({
           onChange={(name, value) => {
             if (!isEdit) {
               const appKey = toKebabName(value);
-              // check for duplicate appKey
+              validators.remove('nameAppKey');
               validators['nameAppKey'].check(appKey);
               setApplication({
                 ...application,
@@ -185,12 +185,19 @@ export const ApplicationFormModal: FC<Props> = ({
                 appKey,
               });
             } else {
-              // should not update appKey during update
+              validators.remove('nameOnly');
               validators['nameOnly'].check(value);
               setApplication({
                 ...application,
                 name: value,
               });
+            }
+          }}
+          onBlur={() => {
+            if (!isEdit) {
+              validators.checkAll({ nameAppKey: application?.appKey });
+            } else {
+              validators.checkAll({ nameOnly: application?.name });
             }
           }}
           aria-label="name"

@@ -137,12 +137,13 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
                     duplicate: value,
                   };
                   validators.remove('name');
-
                   validators.checkAll(validations);
-
                   setTopicType(
                     isEdit ? { ...topicType, name: value } : { ...topicType, name: value, id: toKebabName(value) }
                   );
+                }}
+                onBlur={() => {
+                  validators.checkAll({ name: topicType.name, duplicate: topicType.name });
                 }}
               />
             </GoAFormItem>

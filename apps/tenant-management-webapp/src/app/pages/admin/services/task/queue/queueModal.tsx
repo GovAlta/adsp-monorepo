@@ -122,9 +122,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
           aria-label="namespace"
           disabled={!isNew}
           onChange={(namespace, value) => {
-            const validations = {
-              namespace: value,
-            };
+            const validations = { namespace: value };
             validators.remove('namespace');
             validators.remove('name');
             if (isNew) {
@@ -133,6 +131,9 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
             validators.checkAll(validations);
 
             setQueue({ ...queue, namespace: value });
+          }}
+          onBlur={() => {
+            validators.checkAll({ namespace: queue.namespace });
           }}
         />
       </GoAFormItem>
@@ -146,9 +147,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
           aria-label="name"
           disabled={!isNew}
           onChange={(name, value) => {
-            const validations = {
-              name: value,
-            };
+            const validations = { name: value };
             validators.remove('name');
             if (isNew) {
               validations['duplicated'] = value;
@@ -156,6 +155,9 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
             validators.checkAll(validations);
 
             setQueue({ ...queue, name: value });
+          }}
+          onBlur={() => {
+            validators.checkAll({ name: queue.name });
           }}
         />
       </GoAFormItem>
