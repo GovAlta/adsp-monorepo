@@ -43,33 +43,39 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
         <GoASpacer vSpacing="m" />
         {definition.anonymousApply ? (
           <GoADetails heading="Anonymous applicants">
-            Applicants can create and submit forms without signing in.
+            Applicants can create and submit forms without signing in. This can reduce the quality of submissions, and
+            users may resubmit the same information more than once.
           </GoADetails>
         ) : (
           <GoADetails heading="Signed in applicants">
-            Applicants must sign in in order to create and submit forms.
+            Applicants must sign in to create and submit forms. The user applying can start and resume from a draft of
+            the form, then submit once ready.
           </GoADetails>
         )}
         {definition.generatesPdf ? (
-          <GoADetails heading="Creates submission PDF">
+          <GoADetails heading="Creates PDF when submitted">
             PDF copy of the submitted information is created when forms are submitted.
           </GoADetails>
         ) : (
-          <GoADetails heading="No submission PDF">PDF copy is not created when forms are submitted.</GoADetails>
+          <GoADetails heading="No PDF is created">PDF copy is not created when forms are submitted.</GoADetails>
         )}
         {definition.submissionRecords ? (
           <GoADetails heading="Creates submission records">
-            Submission records are created when forms are submitted.
+            Submission records are created when forms are submitted. The submission captures the information in the form
+            when it is submitted for processing, and it can be dispositioned to record a decision.
           </GoADetails>
         ) : (
           <GoADetails heading="No submission records">
-            Submission records are not created when forms are submitted.
+            Submission records are not created when forms are submitted. The form status indicates if it has been
+            submitted. Any follow-up actions such as service fulfillment or client onboarding need to be handled outside
+            the form system.
           </GoADetails>
         )}
         <h3>Data value columns</h3>
         <p>
           Select the form data values to show as columns so that forms and submissions are easier to view at a glance.
-          The preferences shown here are saved and shared between users accessing this application from this workstation.
+          The preferences shown here are saved and shared between users accessing this application from this
+          workstation.
         </p>
         <GoATable width="100%" mt="m">
           <thead>
@@ -87,6 +93,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                 <td>
                   <GoACheckbox
                     name="Show column"
+                    mt="s"
                     checked={!!selected}
                     onChange={(_, selected) =>
                       dispatch(updateDataValue({ definitionId: definition.id, path, selected }))
