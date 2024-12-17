@@ -8,14 +8,20 @@ export const ClientRegisteredEventDefinition: DomainEventDefinition = {
     type: 'object',
     properties: {
       client: {
-        id: { type: 'string' },
-        name: { type: 'string' },
-        clientId: { type: 'string' },
-        authCallbackUrl: { type: 'string' },
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          clientId: { type: 'string' },
+          authCallbackUrl: { type: 'string' },
+        },
       },
       registeredBy: {
-        id: { type: 'string' },
-        name: { type: 'string' },
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
       },
     },
   },
