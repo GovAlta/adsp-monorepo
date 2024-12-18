@@ -38,9 +38,11 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const { submissions: next } = useSelector(nextSelector);
 
   useEffect(() => {
-    dispatch(findSubmissions({ definitionId, criteria }));
+    if (submissions.length < 1) {
+      dispatch(findSubmissions({ definitionId, criteria }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [definitionId, dispatch]);
+  }, [definitionId, dispatch, submissions]);
 
   return (
     <SearchLayout
@@ -80,10 +82,11 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
             </GoAButton>
             <GoAButton
               type="primary"
+              leadingIcon="search"
               disabled={busy.loading}
               onClick={() => dispatch(findSubmissions({ definitionId, criteria }))}
             >
-              Search submissions
+              Find submissions
             </GoAButton>
           </GoAButtonGroup>
         </form>
