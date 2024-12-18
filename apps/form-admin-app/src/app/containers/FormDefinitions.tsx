@@ -20,10 +20,10 @@ export const FormsDefinitions = () => {
   const definitions = useSelector(definitionsSelector);
 
   useEffect(() => {
-    if (user?.roles.includes('urn:ads:platform:form-service:form-admin')) {
+    if (user?.roles.includes('urn:ads:platform:form-service:form-admin') && definitions.length < 1) {
       dispatch(loadDefinitions({}));
     }
-  }, [dispatch, user]);
+  }, [dispatch, user, definitions]);
 
   return (
     <SearchLayout

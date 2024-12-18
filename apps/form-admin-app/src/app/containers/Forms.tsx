@@ -38,9 +38,11 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const { forms: next } = useSelector(nextSelector);
 
   useEffect(() => {
-    dispatch(findForms({ definitionId, criteria }));
+    if (forms.length < 1) {
+      dispatch(findForms({ definitionId, criteria }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [definitionId, dispatch]);
+  }, [definitionId, dispatch, forms]);
 
   return (
     <SearchLayout
@@ -74,10 +76,11 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             </GoAButton>
             <GoAButton
               type="primary"
+              leadingIcon="search"
               disabled={busy.loading}
               onClick={() => dispatch(findForms({ definitionId, criteria }))}
             >
-              Search forms
+              Find forms
             </GoAButton>
           </GoAButtonGroup>
         </form>
