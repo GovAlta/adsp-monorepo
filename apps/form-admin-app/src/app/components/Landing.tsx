@@ -7,6 +7,10 @@ import GoALogo from '../../assets/goa-logo.svg';
 import DispositionSubmission from '../../assets/DispositionSubmission.png';
 import FindFormDrafts from '../../assets/FindFormDrafts.png';
 
+const Main = styled.main`
+  overflow: auto;
+`;
+
 const DashBoardImg = styled.img`
   box-shadow: 1px 5px 28px 0px #00000033;
 `;
@@ -18,7 +22,7 @@ export const Landing: FunctionComponent = () => {
       <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoAAppHeader url="/" heading="Alberta Digital Service Platform - Form administration" />
       <Band title="Form administration">Review forms and submissions.</Band>
-      <main>
+      <Main>
         <section>
           <Container vs={3} hs={1}>
             <Grid>
@@ -75,7 +79,7 @@ export const Landing: FunctionComponent = () => {
             </Grid>
           </Container>
         </section>
-      </main>
+      </Main>
       <Footer logoSrc={GoALogo} />
     </React.Fragment>
   );
