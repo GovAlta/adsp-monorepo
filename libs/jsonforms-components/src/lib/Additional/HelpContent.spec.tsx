@@ -119,3 +119,7 @@ describe('Help Content Control', () => {
     expect(image[0]).toBeInTheDocument();
   });
 });
+
+describe('Help Content Markdown', () => {
+  it('will validate markdown with mdx-js', () => {});
+});
