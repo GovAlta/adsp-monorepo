@@ -144,10 +144,16 @@ export const AddEditValueDefinition = ({
             width="100%"
             onChange={(key, value) => {
               validators.remove('namespace');
+              validators.remove('duplicated');
               validators['namespace'].check(value);
+              const combinedIdentifier = `${value}:${definition.name}`;
+              validators['duplicated'].check(combinedIdentifier);
               setDefinition({ ...definition, namespace: value });
             }}
-            onBlur={() => validators.checkAll({ namespace: definition.namespace })}
+            onBlur={() => {
+              const combinedIdentifier = `${definition.namespace}:${definition.name}`;
+              validators.checkAll({ namespace: definition.namespace, duplicated: combinedIdentifier });
+            }}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['name']} label="Name">
@@ -161,10 +167,16 @@ export const AddEditValueDefinition = ({
             width="100%"
             onChange={(key, value) => {
               validators.remove('name');
+              validators.remove('duplicated');
               validators['name'].check(value);
+              const combinedIdentifier = `${definition.namespace}:${value}`;
+              validators['duplicated'].check(combinedIdentifier);
               setDefinition({ ...definition, name: value });
             }}
-            onBlur={() => validators.checkAll({ name: definition.name })}
+            onBlur={() => {
+              const combinedIdentifier = `${definition.namespace}:${definition.name}`;
+              validators.checkAll({ name: definition.name, duplicated: combinedIdentifier });
+            }}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['description']} label="Description">

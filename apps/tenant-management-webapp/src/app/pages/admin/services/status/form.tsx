@@ -13,6 +13,7 @@ import {
   isNotEmptyCheck,
   Validator,
   wordMaxLengthCheck,
+  duplicateNameCheck,
 } from '@lib/validation/checkInput';
 
 import { RootState } from '@store/index';
@@ -99,6 +100,14 @@ export const ApplicationFormModal: FC<Props> = ({
     isDuplicateAppKey()
   )
     .add('nameOnly', 'name', checkForBadChars, isDuplicateAppName())
+    .add(
+      'duplicated',
+      'name',
+      duplicateNameCheck(
+        applications.map((app) => app.name),
+        'Application'
+      )
+    )
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .add(
       'url',
@@ -167,7 +176,7 @@ export const ApplicationFormModal: FC<Props> = ({
         </GoAButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['name']} label="Application name">
+      <GoAFormItem error={errors?.['duplicated'] || errors?.['name']} label="Application name">
         <GoAInput
           type="text"
           name="name"
@@ -179,6 +188,8 @@ export const ApplicationFormModal: FC<Props> = ({
               const appKey = toKebabName(value);
               validators.remove('nameAppKey');
               validators['nameAppKey'].check(appKey);
+              validators.remove('duplicated');
+              validators['duplicated'].check(value);
               setApplication({
                 ...application,
                 name: value,
@@ -187,6 +198,8 @@ export const ApplicationFormModal: FC<Props> = ({
             } else {
               validators.remove('nameOnly');
               validators['nameOnly'].check(value);
+              validators.remove('duplicated');
+              validators['duplicated'].check(value);
               setApplication({
                 ...application,
                 name: value,
