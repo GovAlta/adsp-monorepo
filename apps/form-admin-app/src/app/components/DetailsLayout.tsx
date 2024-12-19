@@ -30,20 +30,29 @@ const DetailsLayoutContainer = styled.div`
 
 interface DetailsLayoutProps {
   initialized: boolean;
+  header: ReactNode;
   children: ReactNode;
   actionsForm: ReactNode;
 }
 
-export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({ initialized, children, actionsForm }) => {
+export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({
+  initialized,
+  header,
+  children,
+  actionsForm,
+}) => {
   const navigate = useNavigate();
 
   return (
     <DetailsLayoutContainer>
-      <GoAButtonGroup alignment="start" mt="s" ml="s" mb="s">
-        <GoAButton type="secondary" onClick={() => navigate(-1)}>
-          Back
-        </GoAButton>
-      </GoAButtonGroup>
+      <div>
+        <GoAButtonGroup alignment="start" mt="s" ml="s">
+          <GoAButton type="secondary" leadingIcon="arrow-back" onClick={() => navigate(-1)}>
+            Back
+          </GoAButton>
+        </GoAButtonGroup>
+        {header}
+      </div>
       {initialized ? (
         <>
           {children}
