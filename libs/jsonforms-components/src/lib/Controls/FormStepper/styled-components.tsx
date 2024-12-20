@@ -19,10 +19,7 @@ export const ReviewItemSection = styled.div`
   border-radius: 5px;
 
   .element-style {
-    border: 1px solid grey;
-    margin: 3px;
-    padding: 15px;
-    background-color: white;
+    max-width: 1439px;
   }
 `;
 export const ReviewItemHeader = styled.div`
