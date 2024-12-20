@@ -13,15 +13,19 @@ class PdfServiceImpl implements PdfService {
         tenant: form.tenantId.toString(),
       });
 
-      const config = {
-        id: form.definition.id,
-        name: form.definition.name,
-        dataSchema: form.definition.dataSchema,
-        uiSchema: form.definition.uiSchema,
-      };
-
-      const formDefinitions = {
-        content: { config, data: form.data },
+      const pdfData = {
+        definition: {
+          id: form.definition.id,
+          name: form.definition.name,
+          dataSchema: form.definition.dataSchema,
+          uiSchema: form.definition.uiSchema,
+        },
+        form: {
+          id: form.id,
+          submitted: form.submitted,
+          securityClassification: form.securityClassification,
+        },
+        content: { data: form.data },
       };
 
       const recordId = `urn:ads:platform:form-service:v1:/forms/${form.id}${
@@ -31,7 +35,7 @@ class PdfServiceImpl implements PdfService {
       const pdfGenerateBody = {
         operation: 'generate',
         templateId: form.definition.submissionPdfTemplate,
-        data: formDefinitions,
+        data: pdfData,
         filename: `${form.definition.submissionPdfTemplate}-${form.definition.id}.pdf`,
         recordId: recordId,
       };
