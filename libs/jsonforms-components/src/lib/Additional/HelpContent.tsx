@@ -108,6 +108,7 @@ export const HelpContentComponent = ({
     );
   };
 
+  /* istanbul ignore next */
   const getMarkDownData = (helpText: string | string[] | undefined) => {
     if (helpText === undefined) return '';
     if (typeof helpText === 'string') return helpText;

@@ -27,5 +27,5 @@ export const HelpContentDiv = styled.div`
 `;
 
 export const InvalidMarkdown = styled.div`
-  color: red;
+  color: var(--goa-color-interactive-error);
 `;

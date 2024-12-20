@@ -7,7 +7,7 @@ export default {
     '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['@nx/react/babel'] }],
   },
   moduleNameMapper: {
-    //Need to stub this and ignore
+    //Need to stub mdx-js and ignore running tests against mdx-js library
     '@mdx-js/mdx': '<rootDir>/src/lib/.jest/mdx-js-stub.js',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
