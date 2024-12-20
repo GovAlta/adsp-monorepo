@@ -6,6 +6,55 @@ import { FormEntity, FormSubmissionEntity, PdfService } from './form';
 class PdfServiceImpl implements PdfService {
   constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) {}
 
+  // TODO: this should be done with a library.
+  private extractCurrentRefs = async (dataSchema) => {
+    const properties = dataSchema?.properties || dataSchema?.definitions || [];
+    let propertyName = dataSchema?.definitions && 'definitions';
+    propertyName = dataSchema?.properties ? 'properties' : null;
+
+    const result = dataSchema;
+
+    for (const prop of Object.keys(properties)) {
+      if (properties[prop].$ref) {
+        try {
+          const refArray = properties[prop].$ref.split('#/');
+
+          // eslint-disable-next-line
+          const { data } = await axios.get<Record<string, Record<string, any[]>>>(properties[prop].$ref);
+
+          // eslint-disable-next-line
+          let parsedData = Object.assign({}, data) as any;
+
+          refArray[1].split('/').forEach((key) => {
+            parsedData = parsedData[key];
+          });
+
+          const resolvedData = await this.extractCurrentRefs(parsedData);
+          result[propertyName][prop] = resolvedData;
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+      } else if (properties[prop].type === 'object') {
+        result[propertyName][prop] = await this.extractCurrentRefs(properties[prop]);
+      } else {
+        result[propertyName][prop] = properties[prop];
+      }
+    }
+
+    if (dataSchema?.allOf) {
+      if (!result[propertyName]) {
+        result[propertyName] = {};
+      }
+      result[propertyName].allOf = await Promise.all(
+        dataSchema.allOf.map(async (item) => {
+          return await this.extractCurrentRefs(item);
+        })
+      );
+    }
+
+    return result;
+  };
+
   async generateFormPdf(form: FormEntity, submission?: FormSubmissionEntity): Promise<string> {
     try {
       this.logger.debug(`Requesting PDF generation for form (ID: ${form.id})...`, {
@@ -17,7 +66,9 @@ class PdfServiceImpl implements PdfService {
         definition: {
           id: form.definition.id,
           name: form.definition.name,
-          dataSchema: form.definition.dataSchema,
+          dataSchema: form.definition.dataSchema
+            ? await this.extractCurrentRefs(form.definition.dataSchema)
+            : form.definition.dataSchema,
           uiSchema: form.definition.uiSchema,
         },
         form: {
