@@ -17,23 +17,12 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
   const categorization = uischema as Categorization;
   const categories = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
-  const [containerWidth, setContainerWidth] = useState(window.innerWidth);
-
-  useEffect(() => {
-    const updateWidth = () => {
-      setContainerWidth(window.innerWidth);
-    };
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, []);
 
   return (
     <ReviewItem>
       {categories.map((category, index) => {
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
         const testId = `${categoryLabel}-review-link`;
-        const computedWidth = Math.max(600, containerWidth * 0.37);
         return (
           <ReviewItemSection key={index}>
             <ReviewItemHeader>
@@ -53,7 +42,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
                 </Anchor>
               )}
             </ReviewItemHeader>
-            <GoAGrid minChildWidth={`${computedWidth}px`}>
+            <GoAGrid minChildWidth="100%">
               {category.elements
                 .filter((field) => {
                   const conditionProps = field.rule?.condition as SchemaBasedCondition;
