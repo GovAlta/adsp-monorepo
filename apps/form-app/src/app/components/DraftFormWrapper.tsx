@@ -65,22 +65,29 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
 }) => {
   const unfilledRequired = unfilledRequiredRecursive(definition.dataSchema, data);
 
+  const handleMouseEnter = () => {
+    const focusedElement = document.activeElement as HTMLElement | null;
+    focusedElement.blur();
+  };
+
   const ButtonGroup = ({ showSubmit, canSubmit, onSubmit, form }): JSX.Element => {
     return (
       <GoAButtonGroup alignment="end">
         {showSubmit && (
-          <GoAButton
-            mt="s"
-            mb="3xl"
-            disabled={!canSubmit || unfilledRequired}
-            type="primary"
-            data-testid="form-submit"
-            onClick={() => {
-              onSubmit(form);
-            }}
-          >
-            Submit
-          </GoAButton>
+          <div onMouseEnter={handleMouseEnter}>
+            <GoAButton
+              mt="s"
+              mb="3xl"
+              disabled={!canSubmit || unfilledRequired}
+              type="primary"
+              data-testid="form-submit"
+              onClick={() => {
+                onSubmit(form);
+              }}
+            >
+              Submit
+            </GoAButton>
+          </div>
         )}
       </GoAButtonGroup>
     );
