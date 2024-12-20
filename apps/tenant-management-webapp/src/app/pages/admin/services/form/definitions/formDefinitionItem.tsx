@@ -27,8 +27,8 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
   return (
     <>
       <tr>
-        <td data-testid="form-definitions-name">{formDefinition.name}</td>
-        <td data-testid="form-definitions-template-id">{formDefinition.id}</td>
+      <td data-testid="form-definitions-name"><OverflowWrap>{formDefinition.name}</OverflowWrap></td>
+        <td data-testid="form-definitions-template-id"><OverflowWrap>{formDefinition.id}</OverflowWrap></td>
         <td data-testid="form-definitions-description"><OverflowWrap>{formDescription}</OverflowWrap></td>
         <td data-testid="form-definitions-action">
           <GoAContextMenu>
@@ -87,4 +87,4 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
       )}
     </>
   );
-};
+}
