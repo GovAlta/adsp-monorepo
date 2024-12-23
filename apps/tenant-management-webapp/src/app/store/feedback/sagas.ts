@@ -21,7 +21,6 @@ import {
   FETCH_FEEDBACK_METRICS_ACTION,
   fetchFeedbackMetricsSuccess,
 } from './actions';
-
 import { getAccessToken } from '@store/tenant/sagas';
 import { SagaIterator } from 'redux-saga';
 import moment from 'moment';

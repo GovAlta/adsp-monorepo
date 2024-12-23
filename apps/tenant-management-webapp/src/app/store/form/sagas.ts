@@ -13,6 +13,7 @@ import {
   UpdateFormDefinitionsAction,
   getFormDefinitionsSuccess,
   updateFormDefinitionSuccess,
+  EXPORT_FORM_INFO_ACTION,
   FETCH_FORM_DEFINITIONS_ACTION,
   UPDATE_FORM_DEFINITION_ACTION,
   DELETE_FORM_DEFINITION_ACTION,
@@ -44,6 +45,7 @@ import {
   updateFormDefinitionApi,
   deleteFormDefinitionApi,
   fetchFormDefinitionApi,
+  exportApi,
 } from './api';
 import { FormDefinition } from './model';
 
@@ -84,6 +86,29 @@ export function* fetchFormDefinitions(payload): SagaIterator {
           show: false,
         })
       );
+    }
+  }
+}
+
+export function* exportFormInfo(payload): SagaIterator {
+  const exportBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.exportServiceUrl);
+  const token: string = yield call(getAccessToken);
+  if (exportBaseUrl && token) {
+    try {
+      const url = `${exportBaseUrl}/export/v1/jobs`;
+      const requestBody = {
+        resourceId: `urn:ads:platform:form-service:v1:/${payload.resource}`,
+        format: 'json',
+        params: {
+          criteria: JSON.stringify({
+            definitionIdEquals: payload.id,
+          }),
+        },
+        filename: `Exports-${new Date().toISOString().replace(/[:.]/g, '-')}`,
+      };
+      yield call(exportApi, token, url, requestBody);
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -249,6 +274,7 @@ export function* fetchFormMetrics(): SagaIterator {
 
 export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
+  yield takeEvery(EXPORT_FORM_INFO_ACTION, exportFormInfo);
   yield takeEvery(UPDATE_FORM_DEFINITION_ACTION, updateFormDefinition);
   yield takeEvery(DELETE_FORM_DEFINITION_ACTION, deleteFormDefinition);
   yield takeEvery(OPEN_EDITOR_FOR_DEFINITION_ACTION, openEditorForDefinition);

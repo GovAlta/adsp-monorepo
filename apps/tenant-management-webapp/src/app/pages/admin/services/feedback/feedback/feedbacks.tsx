@@ -211,7 +211,7 @@ export const FeedbacksList = (): JSX.Element => {
             </div>
           )}
           <GoAButton
-            type="secondary"
+            type="primary"
             size="normal"
             variant="normal"
             onClick={exportToCsv}
