@@ -157,6 +157,9 @@ export const AddScriptModal = ({
               setScript({ ...script, name: value });
             }
           }}
+          onBlur={() => {
+            validators.checkAll({ name: script.name });
+          }}
         />
       </GoAFormItem>
       <GoAFormItem label="Script ID">

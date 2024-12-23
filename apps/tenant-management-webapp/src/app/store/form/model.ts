@@ -59,6 +59,7 @@ export const defaultFormDefinition: FormDefinition = {
 
 export interface FormState {
   definitions: Record<string, FormDefinition>;
+
   nextEntries: string;
   editor: {
     selectedId: string;

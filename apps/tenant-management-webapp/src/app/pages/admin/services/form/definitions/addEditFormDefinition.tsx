@@ -193,6 +193,9 @@ export const AddEditFormDefinition = ({
                     isEdit ? { ...definition, name: value } : { ...definition, name: value, id: toKebabName(value) }
                   );
                 }}
+                onBlur={() => {
+                  validators.checkAll({ name: definition.name, duplicate: definition.name });
+                }}
               />
             </GoAFormItem>
           </FormFormItem>

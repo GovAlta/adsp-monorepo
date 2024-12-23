@@ -5,6 +5,7 @@ import { FormSubmissionRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { FormDisposition, FormSubmission, SecurityClassificationType } from '../types';
 import { FormEntity } from './form';
+import { FormDefinitionEntity } from './definition';
 
 export class FormSubmissionEntity implements FormSubmission {
   id: string;
@@ -20,7 +21,7 @@ export class FormSubmissionEntity implements FormSubmission {
   submissionStatus: string;
   disposition: FormDisposition;
   hash: string;
-  securityClassification?: SecurityClassificationType;
+  securityClassification: SecurityClassificationType;
 
   get formSubmissionUrn() {
     const urn = `urn:ads:platform:form-service:v1:/forms/${this.formId}${this.id ? `/submissions/${this.id}` : ''}`;
@@ -44,12 +45,13 @@ export class FormSubmissionEntity implements FormSubmission {
         updated: new Date(),
         formData: form.data,
         formFiles: form.files,
-        formDefinitionId: form.definition?.id,
+        formDefinitionId: form.definition.id,
         formId: form.id,
         disposition: null,
         hash: form.hash,
-        securityClassification: form?.securityClassification,
+        securityClassification: form.securityClassification,
       },
+      form.definition,
       form
     );
 
@@ -60,6 +62,7 @@ export class FormSubmissionEntity implements FormSubmission {
     private repository: FormSubmissionRepository,
     tenantId: AdspId,
     formSubmission: FormSubmission,
+    public definition?: FormDefinitionEntity,
     public form?: FormEntity
   ) {
     this.id = formSubmission.id;
@@ -75,13 +78,14 @@ export class FormSubmissionEntity implements FormSubmission {
     this.submissionStatus = formSubmission.submissionStatus;
     this.disposition = formSubmission.disposition || null;
     this.hash = formSubmission.hash;
-    this.securityClassification = form?.securityClassification;
+    // This is for backwards compatibility, but security classification should be saved against the submission.
+    this.securityClassification = formSubmission.securityClassification || form?.securityClassification;
   }
 
   canRead(user: User): boolean {
     return (
       isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true) ||
-      isAllowedUser(user, this.tenantId, this.form?.definition?.assessorRoles || [])
+      isAllowedUser(user, this.tenantId, this.definition?.assessorRoles || [])
     );
   }
 
@@ -96,17 +100,12 @@ export class FormSubmissionEntity implements FormSubmission {
 
   async dispositionSubmission(user: User, status: string, reason?: string): Promise<FormSubmissionEntity> {
     if (
-      !isAllowedUser(
-        user,
-        this.tenantId,
-        [FormServiceRoles.Admin, ...(this.form?.definition?.assessorRoles || [])],
-        true
-      )
+      !isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, ...(this.definition?.assessorRoles || [])], true)
     ) {
       throw new UnauthorizedUserError('updated form disposition', user);
     }
 
-    const hasStateToUpdate = this.form?.definition?.dispositionStates?.find((states) => states.name === status);
+    const hasStateToUpdate = this.definition?.dispositionStates?.find((states) => states.name === status);
     if (!hasStateToUpdate) {
       throw new InvalidValueError('Status', `Invalid Form Disposition Status for Form Submission ID: ${this.id}`);
     }

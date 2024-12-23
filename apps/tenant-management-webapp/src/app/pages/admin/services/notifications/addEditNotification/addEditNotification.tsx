@@ -210,6 +210,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               }
               setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
             }}
+            onBlur={() => {
+              validators.checkAll({ name: type.name, duplicated: type.name });
+            }}
           />
         </GoAFormItem>
         <GoAFormItem label="Type ID">

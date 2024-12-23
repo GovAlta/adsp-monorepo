@@ -1,19 +1,19 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { LoadingIndicator } from '../components/LoadingIndicator';
-import { AppDispatch, definitionSelector, formLoadingSelector, selectDefinition } from '../state';
+import { AppDispatch, definitionSelector, busySelector, selectDefinition } from '../state';
 import { Forms } from './Forms';
 import { FormSubmissions } from './FormSubmissions';
 import { FormSubmission } from './FormSubmission';
 import { Form } from './Form';
-import { ContentContainer } from '../components/ContentContainer';
+import { FormDefinitionOverview } from './FormDefinitionOverview';
 
 export const FormDefinition: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const definition = useSelector(definitionSelector);
-  const busy = useSelector(formLoadingSelector);
+  const busy = useSelector(busySelector);
 
   const { definitionId: definitionIdValue } = useParams();
   const definitionId = definitionIdValue?.toLowerCase();
@@ -24,22 +24,18 @@ export const FormDefinition: FunctionComponent = () => {
 
   return definition ? (
     <Routes>
-      <Route path="/submissions/:submissionId" element={<FormSubmission />} />
+      {definition.submissionRecords && (
+        <>
+          <Route path="/submissions/:submissionId" element={<FormSubmission />} />
+          <Route path="/submissions" element={<FormSubmissions definitionId={definitionId} />} />
+        </>
+      )}
       <Route path="/forms/:formId" element={<Form />} />
-      <Route
-        path="/"
-        element={
-          <ContentContainer>
-            {definition.submissionRecords ? (
-              <FormSubmissions definitionId={definitionId} />
-            ) : (
-              <Forms definitionId={definitionId} />
-            )}
-          </ContentContainer>
-        }
-      />
+      <Route path="/forms" element={<Forms definitionId={definitionId} />} />
+      <Route path="/overview" element={<FormDefinitionOverview definitionId={definitionId} />} />
+      <Route path="*" element={<Navigate to={definition.submissionRecords ? 'submissions' : 'forms'} />} />
     </Routes>
   ) : (
-    <LoadingIndicator isLoading={busy} />
+    <LoadingIndicator isLoading={busy.initializing} />
   );
 };

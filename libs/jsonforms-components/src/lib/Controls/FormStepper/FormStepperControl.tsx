@@ -218,6 +218,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps): JS
                 disabledCategoryMap,
                 renderers,
                 cells,
+                data,
               };
               return (
                 <div

@@ -8,6 +8,18 @@ export const fetchFormDefinitionsApi = async (token: string, url: string): Promi
   return res.data;
 };
 
+export const exportApi = async (
+  token: string,
+  url: string,
+  //  eslint-disable-next-line
+  requestBody: any
+): Promise<Record<string, FormDefinition>> => {
+  const res = await axios.post(url, requestBody, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
 export const fetchFormDefinitionApi = async (
   token: string,
   serviceUrl: string,

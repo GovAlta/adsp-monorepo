@@ -1,8 +1,11 @@
+import React, { useState, useEffect } from 'react';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { Categorization, SchemaBasedCondition, isVisible } from '@jsonforms/core';
+import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped } from '@jsonforms/core';
+import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
 import { getProperty } from './util/helpers';
+import { withAjvProps } from '../../util/layout';
 import { GoAGrid } from '@abgov/react-components-new';
 import { FormStepperComponentProps } from './types';
 import { GoAReviewRenderers } from '../../../index';
@@ -13,6 +16,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
   const readOnly = componentProps?.readOnly ?? false;
   const categorization = uischema as Categorization;
   const categories = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
+  const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
 
   return (
     <ReviewItem>
@@ -38,7 +42,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
                 </Anchor>
               )}
             </ReviewItemHeader>
-            <GoAGrid minChildWidth="600px">
+            <GoAGrid minChildWidth="100%">
               {category.elements
                 .filter((field) => {
                   const conditionProps = field.rule?.condition as SchemaBasedCondition;
@@ -53,9 +57,27 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
                     return field;
                   }
                 })
+                .map((e) => {
+                  const layout = e as Layout;
+                  if (
+                    rescopeMaps.some((scope) =>
+                      layout.elements
+                        ?.map((el) => {
+                          const element = el as unknown as Scoped;
+                          return element.scope;
+                        })
+                        .includes(scope)
+                    )
+                  ) {
+                    return layout.elements;
+                  } else {
+                    return e;
+                  }
+                })
+                .flat()
                 .map((element, index) => {
                   return (
-                    <div key={`form-stepper-category-${index}`}>
+                    <div key={`form-stepper-category-${index}`} className="element-style">
                       <JsonFormsDispatch
                         data-testid={`jsonforms-object-list-defined-elements-dispatch`}
                         schema={schema}
@@ -74,3 +96,6 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
     </ReviewItem>
   );
 };
+export const FormStepperReviewControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormStepperReviewer)));
+
+export default FormStepperReviewer;

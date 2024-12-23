@@ -31,7 +31,7 @@ export class FormEntity implements Form {
   status: FormStatus;
   data: Record<string, unknown>;
   files: Record<string, AdspId>;
-  securityClassification?: SecurityClassificationType;
+  securityClassification: SecurityClassificationType;
 
   static async create(
     user: User,
@@ -57,7 +57,7 @@ export class FormEntity implements Form {
       status: FormStatus.Draft,
       data: {},
       files: {},
-      securityClassification: definition?.securityClassification,
+      securityClassification: definition.securityClassification,
     });
 
     return await repository.save(form);
@@ -84,7 +84,8 @@ export class FormEntity implements Form {
     this.status = form.status;
     this.data = form.data || {};
     this.files = form.files || {};
-    this.securityClassification = form?.securityClassification;
+    // This is for backwards compatibility, but security classification should be saved against the form.
+    this.securityClassification = form.securityClassification || definition?.securityClassification;
   }
 
   /**

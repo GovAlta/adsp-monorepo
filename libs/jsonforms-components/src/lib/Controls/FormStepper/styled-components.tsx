@@ -17,6 +17,10 @@ export const ReviewItemSection = styled.div`
   padding: var(--goa-space-m);
   border: 1px solid #dcdcdc;
   border-radius: 5px;
+
+  .element-style {
+    max-width: 1439px;
+  }
 `;
 export const ReviewItemHeader = styled.div`
   display: flex;

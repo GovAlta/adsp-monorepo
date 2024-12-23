@@ -20,22 +20,30 @@ interface DispositionState {
 export interface FormDefinition {
   id: string;
   name: string;
+  description: string;
   dataSchema: JsonSchema;
   uiSchema: UISchemaElement;
   applicantRoles: string[];
   clerkRoles: string[];
   dispositionStates: DispositionState[];
   submissionRecords: boolean;
+  anonymousApply: boolean;
+  generatesPdf: boolean;
+}
+
+export enum FormStatus {
+  draft = 'Draft',
+  submitted = 'Submitted',
 }
 
 export interface Form {
   urn: string;
   id: string;
-  status: string;
-  created: Date;
+  status: FormStatus;
+  created: string;
   createdBy: { id: string; name: string };
-  submitted: Date;
-  lastAccessed: Date;
+  submitted: string;
+  lastAccessed: string;
   applicant: { addressAs: string };
   data?: Record<string, unknown>;
   files?: Record<string, string>;
@@ -45,7 +53,7 @@ export interface FormDisposition {
   id: string;
   status: string;
   reason: string;
-  date: Date;
+  date: string;
 }
 
 export interface FormSubmission {
@@ -55,13 +63,13 @@ export interface FormSubmission {
   formDefinitionId: string;
   formData: Record<string, string>;
   formFiles: Record<string, string>;
-  created: Date;
+  created: string;
   createdBy: {
     id: string;
     name: string;
   };
   disposition: FormDisposition;
-  updated: Date;
+  updated: string;
   updatedBy: {
     id: string;
     name: string;

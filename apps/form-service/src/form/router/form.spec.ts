@@ -1,4 +1,4 @@
-import { adspId, Channel, GoAError, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { adspId, Channel, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError, ValidationService } from '@core-services/core-common';
 import axios from 'axios';
 import { Request, Response } from 'express';
@@ -90,6 +90,15 @@ describe('form router', () => {
     get: jest.fn(),
     save: jest.fn((save) => Promise.resolve(save)),
     delete: jest.fn(),
+  };
+
+  const directoryMock = {
+    getServiceUrl: jest.fn(),
+    getResourceUrl: jest.fn(),
+  };
+
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(() => Promise.resolve('token')),
   };
 
   const formSubmissionMock = {
@@ -202,9 +211,17 @@ describe('form router', () => {
     formInfo
   );
 
-  const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+  const formSubmissionEntity = new FormSubmissionEntity(
+    formSubmissionMock,
+    tenantId,
+    formSubmissionInfo,
+    definition,
+    entity
+  );
 
   beforeEach(() => {
+    axiosMock.get.mockClear();
+
     repositoryMock.save.mockClear();
     repositoryMock.get.mockReset();
     repositoryMock.delete.mockReset();
@@ -224,6 +241,8 @@ describe('form router', () => {
     commentServiceMock.createSupportTopic.mockClear();
     pdfServiceMock.generateFormPdf.mockClear();
     tenantServiceMock.getTenant.mockClear();
+
+    directoryMock.getServiceUrl.mockClear();
   });
 
   it('can create router', () => {
@@ -231,6 +250,8 @@ describe('form router', () => {
       apiId,
       logger,
       repository: repositoryMock,
+      directory: directoryMock,
+      tokenProvider: tokenProviderMock,
       eventService: eventServiceMock,
       notificationService: notificationServiceMock,
       queueTaskService: queueTaskServiceMock,
@@ -245,7 +266,12 @@ describe('form router', () => {
   });
 
   describe('getFormDefinitions', () => {
-    it('calls next with error', async () => {
+    it('can create handler', () => {
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can call next with unauthorized for non admin', async () => {
       const user = {
         tenantId,
         id: 'tester',
@@ -253,14 +279,45 @@ describe('form router', () => {
       };
       const req = {
         user,
-        getConfiguration: jest.fn(),
+        query: {},
+        tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      await getFormDefinitions(req as unknown as Request, res as unknown as Response, next);
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(GoAError));
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can get definitions', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        query: {},
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://configuration-service/configuration/v2'));
+      axiosMock.get.mockResolvedValueOnce({ data: { page: {}, results: [{ latest: { configuration: definition } }] } });
+
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: expect.any(Object),
+          results: expect.arrayContaining([expect.objectContaining({ id: definition.id })]),
+        })
+      );
     });
   });
 
@@ -1244,7 +1301,7 @@ describe('form router', () => {
     });
 
     it('can submit form with pdf template', async () => {
-      axiosMock.post.mockResolvedValueOnce({ response: 'succees' });
+      axiosMock.post.mockResolvedValueOnce({ response: 'success' });
       const user = {
         tenantId,
         id: 'tester',
@@ -1680,7 +1737,13 @@ describe('form router', () => {
 
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
 
-      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+      const formSubmissionEntity = new FormSubmissionEntity(
+        formSubmissionMock,
+        tenantId,
+        formSubmissionInfo,
+        definition,
+        entity
+      );
       formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
 
       const handler = findSubmissions(apiId, formSubmissionMock);
@@ -1719,7 +1782,13 @@ describe('form router', () => {
 
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
 
-      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+      const formSubmissionEntity = new FormSubmissionEntity(
+        formSubmissionMock,
+        tenantId,
+        formSubmissionInfo,
+        definition,
+        entity
+      );
       formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
 
       const handler = findSubmissions(apiId, formSubmissionMock);
@@ -1860,7 +1929,13 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const formSubmissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo, entity);
+      const formSubmissionEntity = new FormSubmissionEntity(
+        formSubmissionMock,
+        tenantId,
+        formSubmissionInfo,
+        definition,
+        entity
+      );
 
       repositoryMock.get.mockResolvedValueOnce(null);
 

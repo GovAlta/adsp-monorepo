@@ -1,4 +1,4 @@
-import { AdspId, EventService, TenantService, adspId } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, ServiceDirectory, TenantService, TokenProvider, adspId } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { FileService } from '../file';
@@ -25,6 +25,8 @@ export * from './calendar';
 interface FormMiddlewareProps extends Repositories {
   serviceId: AdspId;
   logger: Logger;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
   eventService: EventService;
   tenantService: TenantService;
   notificationService: NotificationService;
@@ -42,6 +44,8 @@ export const applyFormMiddleware = (
     serviceId,
     logger,
     formRepository: repository,
+    directory,
+    tokenProvider,
     eventService,
     tenantService,
     notificationService,
@@ -60,6 +64,8 @@ export const applyFormMiddleware = (
     apiId,
     logger,
     repository,
+    directory,
+    tokenProvider,
     eventService,
     tenantService,
     queueTaskService,

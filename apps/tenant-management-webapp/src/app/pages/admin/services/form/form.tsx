@@ -13,7 +13,7 @@ import { selectFormAppHost } from '@store/form/selectors';
 import { fetchDirectory } from '@store/directory/actions';
 import { getFormDefinitions } from '@store/form/action';
 import { useLocation } from 'react-router-dom';
-
+import { FormExport } from './export/formExport';
 const HelpLink = (): JSX.Element => {
   const dispatch = useDispatch();
   useEffect(() => {
@@ -90,6 +90,9 @@ export const Form: FunctionComponent = () => {
                 setActiveEdit={activateEdit}
                 setActiveIndex={setActiveIndex}
               />
+            </Tab>
+            <Tab label="Export" data-testid="form-export">
+              <FormExport />
             </Tab>
           </Tabs>
         </>

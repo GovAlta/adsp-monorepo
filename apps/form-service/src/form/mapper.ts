@@ -1,9 +1,9 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { FormDefinitionEntity, FormSubmissionEntity } from './model';
-import { Form, Intake } from './types';
+import { FormSubmissionEntity } from './model';
+import { Form, FormDefinition, Intake } from './types';
 import { FormEntityWithJobId } from './router';
 
-export function mapFormDefinition(entity: FormDefinitionEntity, intake?: Intake) {
+export function mapFormDefinition(entity: FormDefinition, intake?: Intake) {
   return {
     id: entity.id,
     name: entity.name,

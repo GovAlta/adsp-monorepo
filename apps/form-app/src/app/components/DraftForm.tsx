@@ -1,9 +1,11 @@
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import {
   GoARenderers,
   JsonFormContext,
   enumerators,
   ContextProviderFactory,
   JsonFormRegisterProvider,
+  createDefaultAjv,
 } from '@abgov/jsonforms-components';
 import { GoABadge } from '@abgov/react-components-new';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
@@ -57,6 +59,7 @@ export const populateDropdown = (schema, enumerators) => {
   return newSchema as JsonSchema;
 };
 
+const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
   return (
@@ -69,6 +72,7 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
         validationMode="ValidateAndShow"
         renderers={GoARenderers}
         onChange={onChange}
+        ajv={ajv}
       />
     </JsonFormRegisterProvider>
   );
