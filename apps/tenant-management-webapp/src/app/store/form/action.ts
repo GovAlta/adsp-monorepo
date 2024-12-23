@@ -33,6 +33,9 @@ export const RESOLVE_DATA_SCHEMA_FAILED_ACTION = 'form/RESOLVE_DATA_SCHEMA_FAILE
 export const FETCH_FORM_METRICS_ACTION = 'form/FETCH_FORM_METRICS_ACTION';
 export const FETCH_FORM_METRICS_SUCCESS_ACTION = 'form/FETCH_FORM_METRICS_SUCCESS_ACTION';
 
+export const EXPORT_FORM_INFO_ACTION = 'form/EXPORT_FORM_INFO_ACTION';
+export const EXPORT_FORM_INFO_SUCCESS_ACTION = 'form/EXPORT_FORM_INFO_SUCCESS_ACTION';
+
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
 }
@@ -46,6 +49,17 @@ export interface FetchFormDefinitionsSuccessAction {
   payload: Record<string, FormDefinition>;
   next: string;
   after: string;
+}
+
+export interface ExportFormInfoAction {
+  type: typeof EXPORT_FORM_INFO_ACTION;
+  id: string;
+  resource: string;
+}
+
+export interface ExportFormInfoSuccessAction {
+  type: typeof EXPORT_FORM_INFO_SUCCESS_ACTION;
+  payload: '';
 }
 
 export interface UpdateFormDefinitionsAction {
@@ -149,6 +163,8 @@ export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
   | FetchFormDefinitionsAction
+  | ExportFormInfoAction
+  | ExportFormInfoSuccessAction
   | DeleteFormDefinitionAction
   | DeleteFormDefinitionSuccessAction
   | UpdateFormDefinitionsAction
@@ -208,6 +224,17 @@ export const getFormDefinitionsSuccess = (
   payload: results,
   next,
   after,
+});
+
+export const getExportFormInfo = (id: string, resource: string): ExportFormInfoAction => ({
+  type: EXPORT_FORM_INFO_ACTION,
+  id,
+  resource,
+});
+
+export const getExportFormInfoSuccess = (): ExportFormInfoSuccessAction => ({
+  type: EXPORT_FORM_INFO_SUCCESS_ACTION,
+  payload: '',
 });
 
 export const deleteFormById = (id: string): DeleteFormByIDAction => ({
