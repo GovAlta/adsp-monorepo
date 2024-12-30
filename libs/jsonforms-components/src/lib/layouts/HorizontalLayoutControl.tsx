@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutProps, RankedTester, rankWith, uiTypeIs, HorizontalLayout } from '@jsonforms/core';
-import { LayoutRenderer, LayoutRendererProps } from '../util/layout';
+import { LayoutRenderer, LayoutRendererProps, ReviewLayoutRenderer } from '../util/layout';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 
 export const GoAHorizontalLayoutTester: RankedTester = rankWith(2, uiTypeIs('HorizontalLayout'));
@@ -48,7 +48,7 @@ export const GoAHorizontalReviewLayoutComponent = ({
     width: uischema?.options?.review?.width || '30ch',
   };
 
-  return <LayoutRenderer {...childProps} renderers={renderers} cells={cells} />;
+  return <ReviewLayoutRenderer {...childProps} renderers={renderers} cells={cells} />;
 };
 
 export const GoAHorizontalLayout = withJsonFormsLayoutProps(GoAHorizontalLayoutComponent, true);
