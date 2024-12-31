@@ -33,17 +33,14 @@ const summaryLabel = 'Summary';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const FormStepper = (props: CategorizationStepperLayoutRendererProps) => {
+  const formStepperCtx = useContext(JsonFormsStepperContext);
   /**
-   * The path check is to prevent the categorization in categorization case. This scenario is not supported in the current version.
+   * StepperCtx can only be provided once to prevent issues from categorization in categorization
    *  */
-  if (props.path === undefined) {
+  if (formStepperCtx?.isProvided === true) {
     return <FormStepperView {...props} />;
   }
-  return (
-    <JsonFormsStepperContextProvider StepperProps={{ ...props }}>
-      <FormStepperView {...props} />
-    </JsonFormsStepperContextProvider>
-  );
+  return <JsonFormsStepperContextProvider StepperProps={{ ...props }} children={<FormStepperView {...props} />} />;
 };
 
 export const FormStepperView = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {

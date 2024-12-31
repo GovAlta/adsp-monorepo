@@ -81,6 +81,8 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
 
       return { ...state };
     }
+    default:
+      return state;
   }
 
   return state;
