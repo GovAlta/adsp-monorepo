@@ -22,6 +22,7 @@ export interface JsonFormsStepperContextProps {
   selectPath: () => string;
   selectCategory: (id: number) => CategoryState;
   goToPage: (id: number, updateCategoryId?: number) => void;
+  isProvided?: boolean;
 }
 
 export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean => {
@@ -100,6 +101,7 @@ export const JsonFormsStepperContextProvider = ({
 
   const context = useMemo(() => {
     return {
+      isProvided: true,
       stepperDispatch,
       selectStepperState: () => {
         return stepperState;
@@ -137,5 +139,6 @@ export const JsonFormsStepperContextProvider = ({
       },
     };
   }, [ctx?.core, stepperDispatch, stepperState]);
+
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };
