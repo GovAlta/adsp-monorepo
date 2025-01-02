@@ -55,6 +55,7 @@ const initializeApp = async (): Promise<express.Application> => {
     eventService,
     healthCheck,
     tenantHandler,
+    configurationHandler,
     traceHandler,
     clearCached,
   } = await initializePlatform(
@@ -105,7 +106,12 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(passport.initialize());
   app.use(traceHandler);
 
-  app.use('/export', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
+  app.use(
+    '/export',
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
 
   const { repository, ...repositories } = createJobRepository<FileResult>({ logger, ...environment });
 
