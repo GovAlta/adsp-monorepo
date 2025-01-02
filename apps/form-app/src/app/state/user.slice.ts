@@ -154,7 +154,6 @@ export const loginUser = createAsyncThunk(
 
     const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
     await client.login({
-      idpHint: 'core',
       redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
     });
 
