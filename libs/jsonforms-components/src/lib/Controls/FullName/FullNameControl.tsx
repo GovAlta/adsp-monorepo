@@ -1,8 +1,6 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { ControlProps } from '@jsonforms/core';
-import { JsonFormContext } from '../../Context';
-import { GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components-new';
-import { checkFieldValidity } from '../../util/stringUtils';
+import React, { useEffect, useState } from 'react';
+import { ControlProps, isEnabled } from '@jsonforms/core';
+import { GoAFormItem, GoAGrid } from '@abgov/react-components-new';
 import { NameInputs } from './FullNameInputs';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
 
@@ -49,7 +47,7 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
   );
 };
 export const FullNameControl = (props: FullNameProps): JSX.Element => {
-  const { data, path, schema, handleChange } = props;
+  const { data, path, schema, handleChange, enabled } = props;
   const requiredFields = (schema as { required: string[] }).required;
   const defaultName = {
     firstName: '',
@@ -76,6 +74,7 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
       lastName={defaultName.lastName}
       handleInputChange={handleInputChange}
       data={data}
+      disabled={!enabled}
       requiredFields={requiredFields}
     />
   );

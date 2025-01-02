@@ -156,4 +156,20 @@ describe('AddressInputs', () => {
 
     expect(input).toBeTruthy();
   });
+
+  it('can disable the component', () => {
+    const component = render(
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+        isAlbertaAddress={true}
+        enabled={false}
+      />
+    );
+
+    const input = component.getByTestId('address-form-postal-code');
+
+    expect(input?.getAttribute('disabled')).toBe('true');
+  });
 });
