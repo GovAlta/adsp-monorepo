@@ -1,4 +1,4 @@
-import React, { ReactNode, useContext } from 'react';
+import React, { useContext } from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { enumerators, ContextProviderC, ContextProviderFactory } from '.';

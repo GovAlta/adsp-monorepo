@@ -9,9 +9,10 @@ import { withAjvProps } from '../../util/layout';
 import { GoAGrid } from '@abgov/react-components-new';
 import { FormStepperComponentProps } from './types';
 import { GoAReviewRenderers } from '../../../index';
+import { CategorizationStepperLayoutRendererProps } from './types';
 
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
-  const { uischema, data, schema, ajv, cells, renderers, visible, enabled, navigationFunc } = props;
+  const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;
   const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
   const readOnly = componentProps?.readOnly ?? false;
   const categorization = uischema as Categorization;
@@ -29,12 +30,14 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
               <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
               {navigationFunc && (
                 <Anchor
-                  onClick={() => navigationFunc(index + 1)}
+                  onClick={() => {
+                    navigationFunc(index);
+                  }}
                   data-testid={testId}
                   onKeyDown={(e) => {
                     if (!readOnly && (e.key === ' ' || e.key === 'Enter')) {
                       e.preventDefault();
-                      navigationFunc(index + 1);
+                      navigationFunc(index);
                     }
                   }}
                 >

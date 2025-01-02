@@ -1,5 +1,5 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { fireEvent, render, waitFor, screen } from '@testing-library/react';
+import React, { useContext, useEffect } from 'react';
+import { render, screen } from '@testing-library/react';
 import { JsonFormRegisterProvider, JsonFormsRegisterContext } from './registerContext';
 import { RegisterConfig } from './actions';
 import '@testing-library/jest-dom';
