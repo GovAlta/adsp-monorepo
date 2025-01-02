@@ -1,0 +1,16 @@
+/* This css file is here to override any parent/root css files
+   that add spacing, sizes, color that the help content uses
+   to display markdown content it uses.
+*/
+li > ul,
+li > ol,
+li > ul,
+li > ol {
+  padding-left: var(--goa-space-m) !important;
+  margin-top: initial;
+}
+
+em {
+  font-size: var(--goa-typography-body-s) !important;
+  color: var(--goa-color-text-default) !important;
+}

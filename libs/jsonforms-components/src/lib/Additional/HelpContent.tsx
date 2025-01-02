@@ -9,6 +9,7 @@ import { Visible } from '../util';
 import { RenderLink } from './LinkControl';
 import { compileSync, createProcessor, evaluateSync } from '@mdx-js/mdx';
 import * as runtime from 'react/jsx-runtime';
+import './HelpContent.css';
 
 interface OptionProps {
   ariaLabel?: string;
@@ -67,6 +68,7 @@ export const MarkdownComponent = ({ markdown }: MdxMarkdown): JSX.Element => {
   const response = checkMarkDownIsValid(markdown);
   if (response.isValid) {
     const { default: MDXContent } = evaluateSync(markdown, { ...runtime, Fragment: React.Fragment });
+    console.log('MDXContent', MDXContent);
     return React.createElement(MDXContent, {});
   }
   return <InvalidMarkdown>Help content markdown is invalid: {response.error} </InvalidMarkdown>;
@@ -114,7 +116,8 @@ export const HelpContentComponent = ({
     if (typeof helpText === 'string') return helpText;
 
     if (Array.isArray(helpText)) {
-      const data = helpText.join('\n');
+      //Two spaces after the text inserts a line break in markdown.
+      const data = helpText.join('  \n');
       return data;
     }
 
