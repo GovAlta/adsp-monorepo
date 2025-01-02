@@ -82,6 +82,65 @@ describe('export', () => {
           format: 'csv',
           resourceId: 'urn:ads:platform:test-service:v1:/tests',
         },
+        getServiceConfiguration: jest.fn(() => Promise.resolve({ getSource: jest.fn() })),
+      };
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      const job = {
+        id: '123',
+        status: 'completed',
+        result: null,
+      };
+      repositoryMock.create.mockResolvedValueOnce(job);
+
+      const handler = createExportJob(
+        serviceId,
+        loggerMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        repositoryMock
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: job.id, status: job.status }));
+      expect(repositoryMock.create).toHaveBeenCalledWith(tenantId);
+      expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jobId: job.id,
+          format: req.body.format,
+          fileType: EXPORT_FILE,
+          resourceId: req.body.resourceId,
+        })
+      );
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: ExportQueuedDefinition.name,
+        })
+      );
+    });
+
+    it('can create export job for configured exporter roles', async () => {
+      const req = {
+        user: { tenantId, id: 'tester', name: 'Tester', roles: ['urn:ads:platform:test-service:test-exporter'] },
+        tenant: {
+          id: tenantId,
+        },
+        body: {
+          format: 'csv',
+          resourceId: 'urn:ads:platform:test-service:v1:/tests',
+        },
+        getServiceConfiguration: jest.fn(() =>
+          Promise.resolve({
+            getSource: jest.fn(() => ({
+              exporterRoles: ['urn:ads:platform:test-service:test-exporter'],
+            })),
+          })
+        ),
       };
 
       const res = {
@@ -133,6 +192,7 @@ describe('export', () => {
           format: 'csv',
           resourceId: 'urn:ads:platform:test-service:v1:/tests',
         },
+        getServiceConfiguration: jest.fn(() => Promise.resolve({ getSource: jest.fn() })),
       };
 
       const res = {
@@ -165,6 +225,7 @@ describe('export', () => {
           resourceId: 'urn:ads:platform:test-service:v1:/tests',
           fileType: 'custom-type',
         },
+        getServiceConfiguration: jest.fn(() => Promise.resolve({ getSource: jest.fn() })),
       };
 
       const res = {
@@ -219,6 +280,7 @@ describe('export', () => {
           resourceId: 'urn:ads:platform:test-service:v1:/tests',
           fileType: 'custom-type',
         },
+        getServiceConfiguration: jest.fn(() => Promise.resolve({ getSource: jest.fn() })),
       };
 
       const res = {
