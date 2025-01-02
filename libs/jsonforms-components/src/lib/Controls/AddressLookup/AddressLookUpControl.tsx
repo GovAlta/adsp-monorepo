@@ -238,6 +238,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
         address={address}
         errors={errors}
         readOnly={readOnly}
+        enabled={enabled}
         handleInputChange={handleInputChange}
         isAlbertaAddress={isAlbertaAddress}
         handleOnBlur={handleRequiredFieldBlur}

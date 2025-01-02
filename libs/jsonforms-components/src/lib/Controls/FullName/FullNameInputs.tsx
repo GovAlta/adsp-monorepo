@@ -12,7 +12,7 @@ interface NameInputsProps {
   middleName?: string;
   lastName: string;
   isStepperReview?: boolean;
-
+  disabled?: boolean;
   // eslint-disable-next-line
   data: any;
   requiredFields: string[];
@@ -27,6 +27,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   handleInputChange,
   data,
   requiredFields,
+  disabled,
 }: NameInputsProps): JSX.Element => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -57,6 +58,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
         <GoAInput
           type="text"
           name="firstName"
+          disabled={disabled}
           testId="name-form-first-name"
           ariaLabel={'name-form-first-name'}
           value={firstName || ''}
@@ -75,6 +77,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
         <GoAInput
           type="text"
           name="middleName"
+          disabled={disabled}
           testId="name-form-middle-name"
           ariaLabel={'name-form-middle-name'}
           value={middleName || ''}
@@ -91,6 +94,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
         <GoAInput
           type="text"
           name="lastName"
+          disabled={disabled}
           testId="name-form-last-name"
           ariaLabel={'name-form-last-name'}
           value={lastName || ''}

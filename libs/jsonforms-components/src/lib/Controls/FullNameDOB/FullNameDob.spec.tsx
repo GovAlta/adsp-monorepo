@@ -100,6 +100,25 @@ describe('FullNameDobControl', () => {
     });
   });
 
+  it('can disable inputs', () => {
+    const { getByTestId } = render(
+      <FullNameDobControl
+        data={defaultFormData}
+        handleChange={mockHandleChange}
+        path="path-to-data"
+        schema={{}}
+        uischema={{} as ControlElement}
+        label={''}
+        errors={''}
+        rootSchema={{}}
+        id={''}
+        enabled={false}
+        visible={false}
+      />
+    );
+    expect(getByTestId('name-form-middle-name').getAttribute('disabled')).toBe('true');
+  });
+
   it('calls handleChange on user input in middle name', () => {
     render(
       <FullNameDobControl
