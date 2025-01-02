@@ -1,6 +1,6 @@
 import { Dispatch, createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
 import axios from 'axios';
-import keycloak, { KeycloakInstance } from 'keycloak-js';
+import Keycloak from 'keycloak-js';
 import { v4 as uuidv4 } from 'uuid';
 import { ConfigState } from './config.slice';
 import { FeedbackMessage } from './feedback.slice';
@@ -26,7 +26,7 @@ export interface UserState {
   };
 }
 
-let client: KeycloakInstance;
+let client: Keycloak;
 
 export const getKeycloakExpiry = () => {
   if (client) {
@@ -38,7 +38,7 @@ export const getKeycloakExpiry = () => {
 
 async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
   if (client?.realm !== realm) {
-    client = keycloak({
+    client = new Keycloak({
       url: `${config.environment.access.url}/auth`,
       clientId: config.environment.access.client_id,
       realm,

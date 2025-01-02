@@ -1,3 +1,4 @@
+export * from './components/AuthCallback';
 export * from './components/Band';
 export * from './components/CommentsViewer';
 export * from './components/Container';
