@@ -63,7 +63,7 @@ class KeycloakAuthImpl implements KeycloakAuth {
 
   public async initialize(realm: string) {
     if (realm !== this.keycloak?.realm) {
-      this.keycloak = Keycloak({ ...this.config, realm });
+      this.keycloak = new Keycloak({ ...this.config, realm });
       await this.keycloak.init({ ...this.config });
     }
   }
