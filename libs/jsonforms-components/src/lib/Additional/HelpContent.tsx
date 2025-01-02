@@ -68,7 +68,6 @@ export const MarkdownComponent = ({ markdown }: MdxMarkdown): JSX.Element => {
   const response = checkMarkDownIsValid(markdown);
   if (response.isValid) {
     const { default: MDXContent } = evaluateSync(markdown, { ...runtime, Fragment: React.Fragment });
-    console.log('MDXContent', MDXContent);
     return React.createElement(MDXContent, {});
   }
   return <InvalidMarkdown>Help content markdown is invalid: {response.error} </InvalidMarkdown>;
