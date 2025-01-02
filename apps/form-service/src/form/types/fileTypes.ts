@@ -28,7 +28,6 @@ export const FormExportFileType: FileType = {
   rules: {
     retention: {
       active: true,
-      createdAt: '2023-04-20T17:19:22Z',
       deleteInDays: 30,
     },
   },
