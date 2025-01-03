@@ -10,13 +10,17 @@ export type StepperAction =
   | { type: 'page/prev' }
   | { type: 'page/to/index'; payload: { id: number } }
   | { type: 'update/category'; payload: { errors: ErrorObject[]; id: number } }
-  | { type: 'validate/form'; payload: { errors?: ErrorObject[] } };
+  | { type: 'validate/form'; payload: { errors?: ErrorObject[] } }
+  | { type: 'update/uischema'; payload: { state: StepperContextDataType } };
 
 export const stepperReducer = (state: StepperContextDataType, action: StepperAction): StepperContextDataType => {
   const { activeId, categories } = state;
   const lastId = categories[categories.length - 1].id;
 
   switch (action.type) {
+    case 'update/uischema': {
+      return { ...action.payload.state };
+    }
     case 'page/next': {
       state.activeId += 1;
       if (activeId === lastId) {

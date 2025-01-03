@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useMemo, useReducer, Dispatch } from 'react';
+import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect } from 'react';
 import { CategorizationStepperLayoutRendererProps } from '../types';
 import { Categorization, deriveLabelForUISchemaElement, isEnabled, toDataPath } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
@@ -139,6 +139,12 @@ export const JsonFormsStepperContextProvider = ({
       },
     };
   }, [ctx?.core, stepperDispatch, stepperState]);
+
+  useEffect(() => {
+    if (context?.isProvided === true) {
+      stepperDispatch({ type: 'update/uischema', payload: { state: createStepperContextInitData(StepperProps) } });
+    }
+  }, [StepperProps.uischema]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };
