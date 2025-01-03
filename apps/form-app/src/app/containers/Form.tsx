@@ -3,6 +3,8 @@ import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { createDefaultAjv } from '@abgov/jsonforms-components';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import {
   AppDispatch,
   busySelector,
@@ -56,6 +58,8 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
 
   const [showComments, setShowComments] = useState(false);
 
+  const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
+
   return (
     <div key={formId}>
       <LoadingIndicator isLoading={busy.loading} />
@@ -82,9 +86,14 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                       errors = null;
                     }
 
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
+                    errors.concat(ajv.errors);
+                    errors.push(...(ajv?.errors || []));
+                    const combinedErrors = errors.concat(ajv?.errors).filter((x) => x !== null);
+
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: combinedErrors }));
                   }}
                   onSubmit={(form) => dispatch(submitForm(form.id))}
+                  ajv={ajv}
                 />
               )}
             </>
