@@ -49,7 +49,7 @@ export function createExportJob(
         }
       }
 
-      const job = await repository.create(tenantId);
+      const job = await repository.create(user, tenantId);
       await queueService.enqueue({
         timestamp: new Date(),
         jobId: job.id,
@@ -87,13 +87,13 @@ export function getExportJob(serviceId: AdspId, repository: JobRepository<FileRe
       const user = req.user;
       const { jobId } = req.params;
 
-      if (!isAllowedUser(user, req.tenant.id, ServiceRoles.Exporter)) {
-        throw new UnauthorizedUserError('get export job', user);
-      }
-
       const job = await repository.get(jobId);
       if (!job) {
         throw new NotFoundError('export job', jobId);
+      }
+
+      if (user?.id !== job?.createdBy?.id && !isAllowedUser(user, req.tenant.id, ServiceRoles.Exporter)) {
+        throw new UnauthorizedUserError('get export job', user);
       }
 
       res.send(mapJob(serviceId, job));

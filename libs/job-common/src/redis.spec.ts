@@ -1,4 +1,4 @@
-import { adspId } from '@abgov/adsp-service-sdk';
+import { adspId, User } from '@abgov/adsp-service-sdk';
 import { RedisClient } from 'redis';
 import { FileResult } from './job';
 import { RedisJobRepository } from './redis';
@@ -20,7 +20,7 @@ describe('RedisJobRepository', () => {
   describe('create', () => {
     it('can create job', async () => {
       redisClient.setex.mockImplementationOnce((_key, _timeout, _value, cb) => cb());
-      const job = await repository.create(tenantId);
+      const job = await repository.create({ id: 'test', name: 'tester' } as User, tenantId);
       expect(redisClient.setex).toHaveBeenCalledWith(
         expect.any(String),
         60 * 60 * 24,
@@ -33,7 +33,7 @@ describe('RedisJobRepository', () => {
     });
     it('can reject for redis err', async () => {
       redisClient.setex.mockImplementationOnce((_key, _timeout, _value, cb) => cb(new Error('no noes!')));
-      await expect(repository.create(tenantId)).rejects.toThrow(Error);
+      await expect(repository.create({ id: 'test', name: 'tester' } as User, tenantId)).rejects.toThrow(Error);
     });
   });
 
