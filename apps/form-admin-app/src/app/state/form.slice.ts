@@ -14,39 +14,13 @@ import {
   FormDefinition,
   FormStatus,
   FormDisposition,
+  EXPORT_SERVICE_ID,
 } from './types';
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
+import { downloadFile } from './file.slice';
 
 export const FORM_FEATURE_KEY = 'form';
-
-export const initialFormState: FormState = {
-  busy: {
-    initializing: false,
-    loading: false,
-    executing: false,
-  },
-  definitions: {},
-  dataValues: {},
-  forms: {},
-  submissions: {},
-  results: {
-    definitions: [],
-    forms: [],
-    submissions: [],
-  },
-  formCriteria: { statusEquals: 'submitted' },
-  submissionCriteria: { dispositioned: false },
-  next: {
-    definitions: null,
-    forms: null,
-    submissions: null,
-  },
-  selectedDefinition: null,
-  selectedForm: null,
-  selectedSubmission: null,
-  dispositionDraft: { status: '', reason: '' },
-};
 
 interface FormSubmissionCriteria {
   dispositioned?: boolean;
@@ -67,11 +41,27 @@ interface DataValue {
   type: string | string[];
 }
 
+interface Job {
+  id: string;
+  status: 'queued' | 'completed' | 'failed';
+  result?: {
+    urn: string;
+    filename: string;
+  };
+}
+
+interface ExportState {
+  definitionId?: string;
+  jobId?: string;
+  result?: { urn: string; filename: string };
+}
+
 export interface FormState {
   busy: {
     initializing: boolean;
     loading: boolean;
     executing: boolean;
+    exporting: boolean;
   };
   forms: Record<string, Form>;
   submissions: Record<string, FormSubmission>;
@@ -93,7 +83,44 @@ export interface FormState {
   selectedForm: string;
   selectedSubmission: string;
   dispositionDraft: Omit<FormDisposition, 'id' | 'date'>;
+  export: {
+    forms: ExportState;
+    submissions: ExportState;
+  };
 }
+
+export const initialFormState: FormState = {
+  busy: {
+    initializing: false,
+    loading: false,
+    executing: false,
+    exporting: false,
+  },
+  definitions: {},
+  dataValues: {},
+  forms: {},
+  submissions: {},
+  results: {
+    definitions: [],
+    forms: [],
+    submissions: [],
+  },
+  formCriteria: { statusEquals: 'submitted' },
+  submissionCriteria: { dispositioned: false },
+  next: {
+    definitions: null,
+    forms: null,
+    submissions: null,
+  },
+  selectedDefinition: null,
+  selectedForm: null,
+  selectedSubmission: null,
+  dispositionDraft: { status: '', reason: '' },
+  export: {
+    forms: {},
+    submissions: {},
+  },
+};
 
 export const updateFormDisposition = createAsyncThunk(
   'form/update-form-disposition',
@@ -450,6 +477,124 @@ export const loadSubmission = createAsyncThunk(
   }
 );
 
+export const getExportJobStatus = createAsyncThunk(
+  'form/get-export-job-status',
+  async (jobId: string, { dispatch, getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
+      const token = await getAccessToken();
+
+      const { data } = await axios.get<Job>(new URL(`/export/v1/jobs/${jobId}`, exportServiceUrl).href, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      switch (data.status) {
+        case 'queued':
+          setTimeout(() => dispatch(getExportJobStatus(jobId)), 2000);
+          break;
+        case 'completed':
+          dispatch(downloadFile(data.result.urn));
+          break;
+      }
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const exportForms = createAsyncThunk(
+  'form/export-forms',
+  async (definitionId: string, { dispatch, getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
+      const token = await getAccessToken();
+
+      const { data } = await axios.post<Job>(
+        new URL('/export/v1/jobs', exportServiceUrl).href,
+        {
+          resourceId: 'urn:ads:platform:form-service:v1:/forms',
+          format: 'json',
+          fileType: 'form-export',
+          params: {
+            includeData: true,
+            criteria: JSON.stringify({
+              definitionIdEquals: definitionId,
+            }),
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setTimeout(() => dispatch(getExportJobStatus(data.id)), 2000);
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const exportSubmissions = createAsyncThunk(
+  'form/export-submissions',
+  async (definitionId: string, { dispatch, getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
+      const token = await getAccessToken();
+
+      const { data } = await axios.post<Job>(
+        new URL('/export/v1/jobs', exportServiceUrl).href,
+        {
+          resourceId: 'urn:ads:platform:form-service:v1:/submissions',
+          format: 'json',
+          fileType: 'form-export',
+          params: {
+            criteria: JSON.stringify({
+              definitionIdEquals: definitionId,
+            }),
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setTimeout(() => dispatch(getExportJobStatus(data.id)), 2000);
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
@@ -473,6 +618,7 @@ export const formSlice = createSlice({
           state.results.submissions = [];
           state.next.forms = null;
           state.next.submissions = null;
+          state.export = { forms: {}, submissions: {} };
         }
       })
       .addCase(selectDefinition.fulfilled, (state, { meta }) => {
@@ -584,6 +730,40 @@ export const formSlice = createSlice({
       .addCase(updateFormDisposition.fulfilled, (state, { payload }) => {
         state.busy.executing = false;
         state.submissions[payload.id] = payload;
+      })
+      .addCase(exportForms.pending, (state, { meta }) => {
+        state.busy.exporting = true;
+        state.export.forms = { definitionId: meta.arg };
+      })
+      .addCase(exportForms.fulfilled, (state, { payload, meta }) => {
+        if (state.export.forms.definitionId === meta.arg && !state.export.forms.jobId) {
+          state.export.forms.jobId = payload.id;
+        }
+      })
+      .addCase(exportForms.rejected, (state) => {
+        state.busy.exporting = false;
+      })
+      .addCase(exportSubmissions.pending, (state, { meta }) => {
+        state.busy.exporting = true;
+        state.export.submissions = { definitionId: meta.arg };
+      })
+      .addCase(exportSubmissions.fulfilled, (state, { payload, meta }) => {
+        if (state.export.submissions.definitionId === meta.arg && !state.export.submissions.jobId) {
+          state.export.submissions.jobId = payload.id;
+        }
+      })
+      .addCase(exportSubmissions.rejected, (state) => {
+        state.busy.exporting = false;
+      })
+      .addCase(getExportJobStatus.fulfilled, (state, { payload }) => {
+        if (payload.status === 'completed') {
+          if (state.export.forms.jobId === payload.id) {
+            state.export.forms.result = payload.result;
+          } else if (state.export.submissions.jobId === payload.id) {
+            state.export.submissions.result = payload.result;
+          }
+          state.busy.exporting = false;
+        }
       });
   },
 });
@@ -671,3 +851,30 @@ export const formCriteriaSelector = (state: AppState) => state.form.formCriteria
 export const nextSelector = (state: AppState) => state.form.next;
 
 export const dispositionDraftSelector = (state: AppState) => state.form.dispositionDraft;
+
+export const isFormAdminSelector = (state: AppState) =>
+  state.user.user?.roles?.includes('urn:ads:platform:form-service:form-admin');
+
+export const formsExportSelector = createSelector(
+  (state: AppState) => state.form.export.forms,
+  (state: AppState) => state.file.files,
+  (state: AppState) => state.form.busy.exporting,
+  (state: AppState) => state.file.busy.download,
+  (state, files, exporting, downloading) => ({
+    filename: state.result?.filename,
+    dataUri: state.result?.urn ? files[state.result.urn] : null,
+    working: exporting || (state.result?.urn && downloading[state.result.urn]),
+  })
+);
+
+export const submissionsExportSelector = createSelector(
+  (state: AppState) => state.form.export.submissions,
+  (state: AppState) => state.file.files,
+  (state: AppState) => state.form.busy.exporting,
+  (state: AppState) => state.file.busy.download,
+  (state, files, exporting, downloading) => ({
+    filename: state.result?.filename,
+    dataUri: state.result?.urn ? files[state.result.urn] : null,
+    working: exporting || (state.result?.urn && downloading[state.result.urn]),
+  })
+);

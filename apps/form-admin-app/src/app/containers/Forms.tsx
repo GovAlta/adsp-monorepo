@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect } from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   GoAButton,
@@ -18,10 +18,14 @@ import {
   formCriteriaSelector,
   formsSelector,
   nextSelector,
+  isFormAdminSelector,
+  exportForms,
+  formsExportSelector,
 } from '../state';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
 import { DataValueCell } from '../components/DataValueCell';
+import { ExportModal } from '../components/ExportModal';
 
 interface FormsProps {
   definitionId: string;
@@ -31,18 +35,22 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const [showExport, setShowExport] = useState(false);
+
+  const isFormAdmin = useSelector(isFormAdminSelector);
   const busy = useSelector(busySelector);
   const forms = useSelector(formsSelector);
   const columns = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(formCriteriaSelector);
   const { forms: next } = useSelector(nextSelector);
+  const formsExport = useSelector(formsExportSelector);
 
   useEffect(() => {
     if (forms.length < 1) {
       dispatch(findForms({ definitionId, criteria }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [definitionId, dispatch, forms]);
+  }, [definitionId, dispatch]);
 
   return (
     <SearchLayout
@@ -68,6 +76,11 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             </GoADropdown>
           </GoAFormItem>
           <GoAButtonGroup alignment="end">
+            {isFormAdmin && (
+              <GoAButton type="tertiary" mr="xl" onClick={() => setShowExport(true)}>
+                Export to file
+              </GoAButton>
+            )}
             <GoAButton
               type="secondary"
               onClick={() => dispatch(formActions.setFormCriteria({ statusEquals: 'submitted' }))}
@@ -131,6 +144,13 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           </tbody>
         </GoATable>
       </ContentContainer>
+      <ExportModal
+        open={showExport}
+        heading="Export forms to file"
+        state={formsExport}
+        onClose={() => setShowExport(false)}
+        onStartExport={() => dispatch(exportForms(definitionId))}
+      />
     </SearchLayout>
   );
 };
