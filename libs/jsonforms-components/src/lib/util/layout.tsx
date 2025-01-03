@@ -101,9 +101,7 @@ export const ReviewLayoutRenderer = ({
     if (direction === 'row') {
       return (
         <Visible visible={visible}>
-          <ReviewGrid>
-            {renderLayoutElements(elements, schema, path, enabled, renderers, cells)}
-          </ReviewGrid>
+          <ReviewGrid>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</ReviewGrid>
         </Visible>
       );
     } else {
@@ -114,9 +112,8 @@ export const ReviewLayoutRenderer = ({
   }
 };
 
-
 export const ReviewGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, calc(50% - 8px)));
   gap: 16px;
 `;
