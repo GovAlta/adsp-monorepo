@@ -1,5 +1,5 @@
 import { Session } from '@store/session/models';
-import Keycloak, { KeycloakConfig, KeycloakInitOptions, KeycloakInstance } from 'keycloak-js';
+import Keycloak, { KeycloakConfig, KeycloakInitOptions } from 'keycloak-js';
 
 const LOGOUT_REDIRECT = '/logout-redirect';
 const LOGIN_REDIRECT = '/login-redirect';
@@ -53,7 +53,7 @@ class KeycloakAuthImpl implements KeycloakAuth {
   loginRedirect: string;
   logoutRedirect: string;
 
-  keycloak: KeycloakInstance;
+  keycloak: Keycloak;
 
   constructor(config: KeycloakConfig & KeycloakInitOptions) {
     this.config = config;
@@ -64,7 +64,7 @@ class KeycloakAuthImpl implements KeycloakAuth {
   public async initialize(realm: string) {
     if (realm !== this.keycloak?.realm) {
       this.keycloak = new Keycloak({ ...this.config, realm });
-      await this.keycloak.init({ ...this.config });
+      await this.keycloak.init({ ...this.config, onLoad: 'check-sso' });
     }
   }
 
@@ -88,8 +88,7 @@ class KeycloakAuthImpl implements KeycloakAuth {
 
   async checkSSO() {
     try {
-      const authenticated =
-        this.keycloak.authenticated || (await this.keycloak.init({ ...this.config, onLoad: 'check-sso' }));
+      const authenticated = this.keycloak.authenticated;
       if (authenticated) {
         return this.convertToSession(this.keycloak);
       } else {
@@ -127,7 +126,7 @@ class KeycloakAuthImpl implements KeycloakAuth {
     }
   }
 
-  private convertToSession(kc: KeycloakInstance): Session {
+  private convertToSession(kc: Keycloak): Session {
     return {
       authenticated: kc.authenticated,
       clientId: kc.clientId,
