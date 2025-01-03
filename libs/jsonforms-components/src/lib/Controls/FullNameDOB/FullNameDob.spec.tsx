@@ -65,6 +65,45 @@ describe('FullNameDobControl', () => {
     expect((dobInput as HTMLInputElement).value).toBe(defaultFormData.dateOfBirth);
   });
 
+  it('renders with required values', () => {
+    const component = render(
+      <FullNameDobControl
+        data={{...defaultFormData, lastName: null}}
+        handleChange={mockHandleChange}
+        path="path-to-data"
+        schema={{
+          type: 'object',
+          properties: {
+            firstName: { type: 'string' },
+            middleName: { type: 'string' },
+            lastName: { type: 'string' },
+            dateOfBirth: { type: 'string' },
+          },
+          required: ['firstName', 'middleName', 'lastName', 'dateOfBirth']
+        }}
+        uischema={{} as ControlElement}
+        label={''}
+        errors={''}
+        rootSchema={{}}
+        id={''}
+        enabled={false}
+        visible={false}
+      />
+    );
+
+    const firstNameInput = component.getByTestId('name-form-first-name');
+    expect((firstNameInput as HTMLInputElement).value).toBe(defaultFormData.firstName);
+
+    const middleNameInput = component.getByTestId('name-form-middle-name');
+    expect((middleNameInput as HTMLInputElement).value).toBe(defaultFormData.middleName);
+
+    const lastNameFormItem = component.getByTestId('name-form-last-name').parentElement;
+    expect(lastNameFormItem?.getAttribute('requirement')).toBe('required');
+
+    const dobInput = component.getByTestId('dob-form-dateOfBirth');
+    expect((dobInput as HTMLInputElement).value).toBe(defaultFormData.dateOfBirth);
+  });
+
   it('calls handleChange on user input in first name', () => {
     render(
       <FullNameDobControl
@@ -222,6 +261,7 @@ describe('FullNameDobControl', () => {
       dateOfBirth: '2000-12-12',
     });
   });
+
   it('calls handleRequiredFieldBlur on user input in date of birth', () => {
     render(
       <FullNameDobControl
