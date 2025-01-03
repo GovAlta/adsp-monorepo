@@ -12,11 +12,13 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
       ...FormPropertyValueCompletionItemProvider.convertDataSchemaToSuggestion(
         false,
         standardV1JsonSchema,
+        standardV1JsonSchema,
         `${standardV1JsonSchema.$id}#`,
         'standard.v1#'
       ),
       ...FormPropertyValueCompletionItemProvider.convertDataSchemaToSuggestion(
         false,
+        commonV1JsonSchema,
         commonV1JsonSchema,
         `${commonV1JsonSchema.$id}#`,
         'common.v1#'
@@ -28,6 +30,7 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
     const scopeSuggestions = FormPropertyValueCompletionItemProvider.convertDataSchemaToSuggestion(
       true,
       dataSchema,
+      dataSchema,
       '#'
     );
 
@@ -36,6 +39,7 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
 
   private static convertDataSchemaToSuggestion(
     recurse: boolean,
+    rootSchema: Record<string, unknown>,
     schema: Record<string, unknown>,
     path: string,
     labelPath?: string
@@ -51,14 +55,14 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
           scope: currentPath,
         };
         const dummyTestContext = {
-          rootSchema: {},
+          rootSchema,
           config: {},
         } as TesterContext;
 
         const isRef =
-          isAddressLookup(uiSchema, schema, dummyTestContext) ||
-          isFullName(uiSchema, schema, dummyTestContext) ||
-          isFullNameDoB(uiSchema, schema, dummyTestContext);
+          isAddressLookup(uiSchema, rootSchema, dummyTestContext) ||
+          isFullName(uiSchema, rootSchema, dummyTestContext) ||
+          isFullNameDoB(uiSchema, rootSchema, dummyTestContext);
 
         if (property?.type !== 'object' || isRef)
           suggestions.push({
@@ -69,7 +73,13 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
 
         // Resolve children if current property is an object.
         if (recurse && typeof property === 'object') {
-          const children = this.convertDataSchemaToSuggestion(recurse, property, currentPath, currentLabelPath);
+          const children = this.convertDataSchemaToSuggestion(
+            recurse,
+            rootSchema,
+            property,
+            currentPath,
+            currentLabelPath
+          );
           suggestions.push(...children);
         }
       }
@@ -90,6 +100,7 @@ export class FormPropertyValueCompletionItemProvider extends JsonPropertyValueCo
         if (recurse && typeof schema.definitions[definition] === 'object') {
           const children = this.convertDataSchemaToSuggestion(
             recurse,
+            schema,
             schema.definitions[definition],
             currentPath,
             currentLabelPath
@@ -126,7 +137,7 @@ export class FormUISchemaElementCompletionItemProvider extends JsonObjectComplet
   constructor(dataSchema: Record<string, unknown>) {
     super(/^\s*(?:}, ?({?)|"elements": ?\[({?))$/, [
       ...FormUISchemaElementCompletionItemProvider.layoutUIelements,
-      ...FormUISchemaElementCompletionItemProvider.convertDataSchemaToSuggestion(dataSchema, '#'),
+      ...FormUISchemaElementCompletionItemProvider.convertDataSchemaToSuggestion(dataSchema, dataSchema, '#'),
     ]);
   }
 
@@ -149,6 +160,7 @@ export class FormUISchemaElementCompletionItemProvider extends JsonObjectComplet
   }
 
   private static convertDataSchemaToSuggestion(
+    rootSchema: Record<string, unknown>,
     schema: Record<string, unknown>,
     path: string,
     labelPath?: string
@@ -213,15 +225,15 @@ export class FormUISchemaElementCompletionItemProvider extends JsonObjectComplet
               scope: currentPath,
             };
             const dummyTestContext = {
-              rootSchema: {},
+              rootSchema,
               config: {},
             } as TesterContext;
 
             // For known ref schemas of type object, include a control binding.
             if (
-              isAddressLookup(uiSchema, schema, dummyTestContext) ||
-              isFullName(uiSchema, schema, dummyTestContext) ||
-              isFullNameDoB(uiSchema, schema, dummyTestContext)
+              isAddressLookup(uiSchema, rootSchema, dummyTestContext) ||
+              isFullName(uiSchema, rootSchema, dummyTestContext) ||
+              isFullNameDoB(uiSchema, rootSchema, dummyTestContext)
             ) {
               suggestions.push({
                 label: `Control:"${currentLabelPath}"`,
@@ -246,6 +258,7 @@ export class FormUISchemaElementCompletionItemProvider extends JsonObjectComplet
         // Note: Not based the schema type value since the value might be composed via other keywords like allOf.
         if (typeof property === 'object') {
           const children = this.convertDataSchemaToSuggestion(
+            rootSchema,
             schema.properties[propertyName],
             currentPath,
             currentLabelPath
