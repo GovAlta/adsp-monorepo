@@ -77,7 +77,6 @@ describe('File Type Entity', () => {
         retention: {
           active: true,
           deleteInDays: 3,
-          createdAt: '2023-04-18T18:00:53+00:00',
         },
       }
     );

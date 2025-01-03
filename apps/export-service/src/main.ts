@@ -1,6 +1,11 @@
 import { AdspId, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler, createAmqpQueueService } from '@core-services/core-common';
+import {
+  createLogger,
+  createErrorHandler,
+  createAmqpQueueService,
+  createAmqpConfigUpdateService,
+} from '@core-services/core-common';
 import { createFileService, createJobRepository, FileResult } from '@core-services/job-common';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -12,11 +17,14 @@ import { promisify } from 'util';
 import { environment } from './environments/environment';
 import {
   applyExportMiddleware,
+  configurationSchema,
+  ConfigurationValue,
   ExportCompletedDefinition,
   ExportFailedDefinition,
   ExportFileType,
   ExportGenerationUpdatesStream,
   ExportQueuedDefinition,
+  ExportServiceConfiguration,
   ExportServiceWorkItem,
   ServiceRoles,
 } from './export';
@@ -47,7 +55,9 @@ const initializeApp = async (): Promise<express.Application> => {
     eventService,
     healthCheck,
     tenantHandler,
+    configurationHandler,
     traceHandler,
+    clearCached,
   } = await initializePlatform(
     {
       serviceId,
@@ -64,6 +74,14 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Export job role assigned to the export service service account.',
         },
       ],
+      configuration: {
+        schema: configurationSchema,
+        description: 'Optional configuration of export sources to permit export by additional roles.',
+      },
+      combineConfiguration: function (config: ConfigurationValue, coreConfig: ConfigurationValue, tenantId: AdspId) {
+        return new ExportServiceConfiguration({ ...config, ...coreConfig }, tenantId);
+      },
+      useLongConfigurationCacheTTL: true,
       events: [ExportQueuedDefinition, ExportCompletedDefinition, ExportFailedDefinition],
       eventStreams: [ExportGenerationUpdatesStream],
       fileTypes: [ExportFileType],
@@ -88,9 +106,25 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(passport.initialize());
   app.use(traceHandler);
 
-  app.use('/export', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
+  app.use(
+    '/export',
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
 
   const { repository, ...repositories } = createJobRepository<FileResult>({ logger, ...environment });
+
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
+  });
+
   const queueService = await createAmqpQueueService<ExportServiceWorkItem>({
     logger,
     queue: 'export-service-work',

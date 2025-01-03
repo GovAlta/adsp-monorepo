@@ -13,7 +13,7 @@ interface Data {
 }
 
 export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element => {
-  const { data, path, schema, handleChange, uischema } = props;
+  const { data, path, schema, handleChange, enabled } = props;
   const requiredFields = (schema as { required: string[] }).required;
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -85,6 +85,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           error={errors?.['firstName'] ?? ''}
         >
           <GoAInput
+            disabled={!enabled}
             type="text"
             name="firstName"
             testId="name-form-first-name"
@@ -106,6 +107,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           <GoAInput
             type="text"
             name="middleName"
+            disabled={!enabled}
             testId="name-form-middle-name"
             ariaLabel={'name-form-middle-name'}
             value={formData.middleName || ''}
@@ -121,6 +123,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           <GoAInput
             type="text"
             name="lastName"
+            disabled={!enabled}
             testId="name-form-last-name"
             ariaLabel={'name-form-last-name'}
             value={formData.lastName || ''}
@@ -142,6 +145,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           <GoAInput
             type="date"
             name="dateOfBirth"
+            disabled={!enabled}
             min={validDates().minDate}
             max={validDates().maxDate}
             testId={`dob-form-dateOfBirth`}

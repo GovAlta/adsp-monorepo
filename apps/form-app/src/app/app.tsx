@@ -1,10 +1,11 @@
 import '@abgov/web-components/index.css';
+import { AuthCallback } from '@core-services/app-common';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthCallback } from './components/AuthCallback';
 import { FormTenant } from './containers/FormTenant';
 import { Landing } from './components/Landing';
 import { Login } from './components/Login';
 import styles from './app.module.scss';
+
 declare global {
   interface Window {
     adspFeedback: {
