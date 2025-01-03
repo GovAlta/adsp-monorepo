@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
+import { useJsonForms } from '@jsonforms/react';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
 
@@ -17,6 +18,7 @@ import {
 } from './utils';
 import { ListItem, SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
+import { ErrorObject } from 'ajv';
 
 type AddressLookUpProps = ControlProps;
 
@@ -29,6 +31,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const formCtx = useContext(JsonFormContext);
   const formHost = formCtx?.formUrl;
   const formUrl = `${formHost}/${ADDRESS_PATH}`;
+  const ctx = useJsonForms();
   const autocompletion = uischema?.options?.autocomplete !== false;
   const [open, setOpen] = useState(false);
 
@@ -84,6 +87,25 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const renderHelp = () => {
     return <HelpContentComponent {...props} isParent={true} showLabel={false} />;
   };
+
+  useEffect(() => {
+    if (ctx.core?.ajv) {
+      // eslint-disable-next-line
+      const newError: ErrorObject<string, Record<string, any>, unknown>[] = [];
+
+      Object.keys(errors).forEach((err) => {
+        newError.push({
+          instancePath: path,
+          message: err,
+          schemaPath: '',
+          keyword: '',
+          params: {},
+        });
+      });
+
+      ctx.core.ajv.errors = newError;
+    }
+  }, [errors, ctx, path]);
 
   useEffect(() => {
     const fetchSuggestions = async () => {

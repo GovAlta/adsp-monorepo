@@ -93,6 +93,29 @@ describe('Help Content Control', () => {
     console.log(sectionContent?.outerHTML);
     expect(sectionContent?.innerHTML).toBe(helpSchema.elements[0].options.help);
   });
+  it('will render detailed help content with markdown', () => {
+    const helpSchema = {
+      type: 'HelpContent',
+      label: 'This is the main heading',
+      elements: [
+        {
+          type: 'HelpContent',
+          label: 'This is section heading',
+          options: {
+            help: 'This is the help content.',
+          },
+        },
+      ],
+      options: {
+        variant: 'details',
+        markdown: true,
+      },
+    };
+    const form = getForm(helpSchema);
+    const renderer = render(form);
+    const mainWrapper = renderer.container.querySelector('div > :scope goa-details');
+    expect(mainWrapper).toBeNull();
+  });
 
   it('will render image in help content', () => {
     const helpSchema = {

@@ -5,6 +5,7 @@ import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { FunctionComponent } from 'react';
 import { Form, FormDefinition, ValidationError } from '../state';
 import { DraftForm } from './DraftForm';
+import Ajv from 'ajv';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -20,6 +21,7 @@ interface DraftFormProps {
   anonymousApply?: boolean;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
+  ajv: Ajv;
 }
 
 export const populateDropdown = (schema, enumerators) => {
@@ -46,8 +48,8 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
   submitting,
   onChange,
   onSubmit,
+  ajv,
 }) => {
-
   const handleMouseEnter = () => {
     const focusedElement = document.activeElement as HTMLElement | null;
     focusedElement.blur();
@@ -91,6 +93,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
           submitting={submitting}
           onChange={onChange}
           onSubmit={onSubmit}
+          ajv={ajv}
         />
         <ButtonGroup showSubmit={showSubmit} canSubmit={canSubmit} onSubmit={onSubmit} form={form} />
       </GridItem>

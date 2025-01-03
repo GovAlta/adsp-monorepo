@@ -5,8 +5,36 @@ import { fetchAddressSuggestions, validatePostalCode } from './utils';
 import { JsonFormContext } from '../../Context';
 import { Suggestion } from './types';
 import { isAddressLookup } from './AddressLookupTester';
-import { ControlElement, JsonSchema4, JsonSchema7, TesterContext, UISchemaElement } from '@jsonforms/core';
+import {
+  ControlElement,
+  JsonFormsCore,
+  JsonSchema4,
+  JsonSchema7,
+  TesterContext,
+  UISchemaElement,
+} from '@jsonforms/core';
+import { useJsonForms } from '@jsonforms/react';
 import axios from 'axios';
+
+import type { Ajv } from 'ajv';
+
+const mockUseJsonForms = useJsonForms as jest.MockedFunction<typeof useJsonForms>;
+
+const mockCore: JsonFormsCore = {
+  data: {},
+  schema: {},
+  uischema: {
+    type: 'Control',
+  },
+  errors: [],
+  validationMode: 'ValidateAndShow',
+  ajv: {} as unknown as Ajv,
+};
+
+jest.mock('@jsonforms/react', () => ({
+  useJsonForms: jest.fn(),
+  withJsonFormsControlProps: jest.fn(),
+}));
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -346,5 +374,114 @@ describe('AddressLookUpControl', () => {
         dummyTestContext
       )
     ).toBe(true);
+  });
+});
+
+describe('AddressLookUpControl with error', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  mockUseJsonForms.mockReturnValue({
+    core: mockCore,
+  });
+
+  const renderComponent = (overrides = {}) => {
+    const defaultProps = {
+      data: {
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        province: '',
+        postalCode: '',
+        country: 'CAN',
+      },
+      enabled: true,
+      rootSchema: {} as JsonSchema4,
+      id: 'address',
+      label: 'Mailing Address',
+      visible: true,
+      errors: 'error message',
+      type: 'Control',
+      scope: '#/properties/personFullName',
+      path: 'address',
+      schema: {
+        title: 'Alberta postal address',
+        properties: {
+          subdivisionCode: {
+            const: 'BC',
+          },
+          required: ['addressLine1', 'municipality', 'postalCode'],
+          errorMessage: {
+            properties: {
+              postalCode: 'Must be in 0A0 A0A capital letters and numbers format',
+            },
+          },
+        },
+      } as JsonSchema7,
+      uischema: {
+        type: 'Control',
+        scope: '',
+        options: {
+          autocomplete: true,
+        },
+        label: 'Address Lookup',
+      } as ControlElement,
+      handleChange: mockHandleChange,
+    };
+
+    const props = { ...defaultProps, ...overrides };
+
+    return render(
+      <JsonFormContext.Provider value={mockFormContext}>
+        <AddressLookUpControl {...props} />
+      </JsonFormContext.Provider>
+    );
+  };
+
+  const dummyTestContext = {
+    rootSchema: {},
+    config: {},
+  } as TesterContext;
+
+  const mockSuggestions: Suggestion[] = [
+    {
+      Id: '1',
+      Text: '123 Main St',
+      Highlight: '',
+      Cursor: 0,
+      Description: 'Calgary, AB, T1X 1A1',
+      Next: '',
+    },
+    {
+      Id: '2',
+      Text: '456 Elm St',
+      Highlight: '',
+      Cursor: 0,
+      Description: 'Edmonton, AB, T6H 3Y9',
+      Next: '',
+    },
+    {
+      Id: '2',
+      Text: '456 Elm St',
+      Highlight: '',
+      Cursor: 0,
+      Description: 'Vancouver, BC, V5L 4S1',
+      Next: '',
+    },
+  ];
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should render the component with input fields', () => {
+    renderComponent();
+    const input = screen.getByTestId('address-form-address1');
+    const inputElement = input?.shadowRoot?.querySelector('input');
+    expect(inputElement?.placeholder).toBe('Start typing the first line of your address, required.');
   });
 });

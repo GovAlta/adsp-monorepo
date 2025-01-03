@@ -1,6 +1,8 @@
 import { Container, Recaptcha } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { Navigate } from 'react-router-dom';
+import { createDefaultAjv } from '@abgov/jsonforms-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { DraftFormWrapper } from '../components/DraftFormWrapper';
 import { LoadingIndicator } from '../components/LoadingIndicator';
@@ -37,6 +39,8 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
   const canSubmit = useSelector(canSubmitSelector);
   const showSubmit = useSelector(showSubmitSelector);
 
+  const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
+
   return (
     <div key={`anonymous-${definition?.id}`}>
       <LoadingIndicator isLoading={!initialized} />
@@ -57,11 +61,14 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
                     anonymousApply={definition?.anonymousApply}
                     submitting={busy.submitting}
                     onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
-                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
+                      errors.push(...(ajv?.errors || []));
+                      const combinedErrors = errors.concat(ajv?.errors).filter((x) => x !== null);
+                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: combinedErrors }));
                     }}
                     onSubmit={function () {
                       dispatch(submitAnonymousForm());
                     }}
+                    ajv={ajv}
                   />
                 )}
               </>
