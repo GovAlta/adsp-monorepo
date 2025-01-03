@@ -9,7 +9,7 @@ const SearchLayoutContainer = styled.div`
   right: 0;
   display: flex;
   flex-direction: column;
-  & > :first-child {
+  & > form:first-child {
     flex: 0;
     padding-top: var(--goa-space-m);
     padding-bottom: var(--goa-space-s);
