@@ -100,7 +100,7 @@ export function generatePdf(
         }
       }
 
-      const job = await repository.create(tenantId);
+      const job = await repository.create(user, tenantId);
       logger.info(`Successfully created the job ${job.id}.`);
       await queueService.enqueue({
         timestamp: new Date(),
