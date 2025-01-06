@@ -26,12 +26,14 @@ interface FormSubmissionCriteria {
   dispositioned?: boolean;
   createdAfter?: string;
   createdBefore?: string;
+  dataCriteria?: Record<string, unknown>;
 }
 
 interface FormCriteria {
   statusEquals: string;
   createdAfter?: string;
   createdBefore?: string;
+  dataCriteria?: Record<string, unknown>;
 }
 
 interface DataValue {
@@ -514,7 +516,10 @@ export const getExportJobStatus = createAsyncThunk(
 
 export const exportForms = createAsyncThunk(
   'form/export-forms',
-  async (definitionId: string, { dispatch, getState, rejectWithValue }) => {
+  async (
+    { definitionId, criteria }: { definitionId: string; criteria: FormCriteria },
+    { dispatch, getState, rejectWithValue }
+  ) => {
     try {
       const { config } = getState() as AppState;
       const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
@@ -529,6 +534,7 @@ export const exportForms = createAsyncThunk(
           params: {
             includeData: true,
             criteria: JSON.stringify({
+              ...criteria,
               definitionIdEquals: definitionId,
             }),
           },
@@ -556,7 +562,7 @@ export const exportForms = createAsyncThunk(
 
 export const exportSubmissions = createAsyncThunk(
   'form/export-submissions',
-  async (definitionId: string, { dispatch, getState, rejectWithValue }) => {
+  async ({ definitionId, criteria }: { definitionId: string; criteria: FormSubmissionCriteria }, { dispatch, getState, rejectWithValue }) => {
     try {
       const { config } = getState() as AppState;
       const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
@@ -570,6 +576,7 @@ export const exportSubmissions = createAsyncThunk(
           fileType: 'form-export',
           params: {
             criteria: JSON.stringify({
+              ...criteria,
               definitionIdEquals: definitionId,
             }),
           },
@@ -733,10 +740,10 @@ export const formSlice = createSlice({
       })
       .addCase(exportForms.pending, (state, { meta }) => {
         state.busy.exporting = true;
-        state.export.forms = { definitionId: meta.arg };
+        state.export.forms = { definitionId: meta.arg.definitionId };
       })
       .addCase(exportForms.fulfilled, (state, { payload, meta }) => {
-        if (state.export.forms.definitionId === meta.arg && !state.export.forms.jobId) {
+        if (state.export.forms.definitionId === meta.arg.definitionId && !state.export.forms.jobId) {
           state.export.forms.jobId = payload.id;
         }
       })
@@ -745,10 +752,10 @@ export const formSlice = createSlice({
       })
       .addCase(exportSubmissions.pending, (state, { meta }) => {
         state.busy.exporting = true;
-        state.export.submissions = { definitionId: meta.arg };
+        state.export.submissions = { definitionId: meta.arg.definitionId };
       })
       .addCase(exportSubmissions.fulfilled, (state, { payload, meta }) => {
-        if (state.export.submissions.definitionId === meta.arg && !state.export.submissions.jobId) {
+        if (state.export.submissions.definitionId === meta.arg.definitionId && !state.export.submissions.jobId) {
           state.export.submissions.jobId = payload.id;
         }
       })

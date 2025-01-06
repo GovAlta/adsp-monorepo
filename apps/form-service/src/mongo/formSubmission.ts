@@ -80,7 +80,9 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     }
 
     if (criteria?.dataCriteria) {
-      query.formData = criteria?.dataCriteria;
+      Object.entries(criteria.dataCriteria).forEach((property, value) => {
+        query[`formData.${property}`] = value;
+      });
     }
 
     return new Promise<FormSubmissionEntity[]>((resolve, reject) => {

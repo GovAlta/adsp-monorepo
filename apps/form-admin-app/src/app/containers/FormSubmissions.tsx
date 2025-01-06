@@ -4,6 +4,7 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoAFormItem,
+  GoAInput,
   GoATable,
 } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,6 +28,7 @@ import { SearchLayout } from '../components/SearchLayout';
 import { DataValueCell } from '../components/DataValueCell';
 import { Digest } from '../components/Digest';
 import { ExportModal } from '../components/ExportModal';
+import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 
 interface FormSubmissionsProps {
   definitionId: string;
@@ -41,7 +43,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const isFormAdmin = useSelector(isFormAdminSelector);
   const busy = useSelector(busySelector);
   const submissions = useSelector(submissionsSelector);
-  const columns = useSelector(selectedDataValuesSelector);
+  const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(submissionCriteriaSelector);
   const { submissions: next } = useSelector(nextSelector);
   const submissionsExport = useSelector(submissionsExportSelector);
@@ -57,32 +59,56 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
     <SearchLayout
       searchForm={
         <form>
-          <GoAFormItem label="Disposition">
-            <GoADropdown
-              relative={true}
-              name="submission-disposition"
-              value={
-                typeof criteria['dispositioned'] !== 'boolean'
-                  ? 'all'
-                  : criteria['dispositioned'] === true
-                  ? 'dispositioned'
-                  : 'not dispositioned'
-              }
-              onChange={(_, values) =>
-                dispatch(
-                  formActions.setSubmissionCriteria({
-                    ...criteria,
-                    dispositioned: values === 'all' ? undefined : values === 'dispositioned',
-                  })
-                )
-              }
-            >
-              <GoADropdownItem value="not dispositioned" label="Not dispositioned" />
-              <GoADropdownItem value="dispositioned" label="Dispositioned" />
-              <GoADropdownItem value="all" label="All" />
-            </GoADropdown>
-          </GoAFormItem>
-          <GoAButtonGroup alignment="end">
+          <SearchFormItemsContainer>
+            <GoAFormItem label="Disposition">
+              <GoADropdown
+                relative={true}
+                name="submission-disposition"
+                value={
+                  typeof criteria['dispositioned'] !== 'boolean'
+                    ? 'all'
+                    : criteria['dispositioned'] === true
+                    ? 'dispositioned'
+                    : 'not dispositioned'
+                }
+                onChange={(_, values) =>
+                  dispatch(
+                    formActions.setSubmissionCriteria({
+                      ...criteria,
+                      dispositioned: values === 'all' ? undefined : values === 'dispositioned',
+                    })
+                  )
+                }
+              >
+                <GoADropdownItem value="not dispositioned" label="Not dispositioned" />
+                <GoADropdownItem value="dispositioned" label="Dispositioned" />
+                <GoADropdownItem value="all" label="All" />
+              </GoADropdown>
+            </GoAFormItem>
+            {dataValues
+              .filter(({ type }) => type === 'string')
+              .map(({ name, path }) => (
+                <GoAFormItem label={name} key={path} ml="m">
+                  <GoAInput
+                    type="text"
+                    onChange={(_, value: string) =>
+                      dispatch(
+                        formActions.setSubmissionCriteria({
+                          ...criteria,
+                          dataCriteria: {
+                            ...criteria?.dataCriteria,
+                            [path]: value,
+                          },
+                        })
+                      )
+                    }
+                    value={criteria?.dataCriteria?.[path]?.toString() || ''}
+                    name={name}
+                  />
+                </GoAFormItem>
+              ))}
+          </SearchFormItemsContainer>
+          <GoAButtonGroup alignment="end" mt="l">
             {isFormAdmin && (
               <GoAButton type="tertiary" mr="xl" onClick={() => setShowExport(true)}>
                 Export to file
@@ -113,7 +139,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               <th>Submitted on</th>
               <th>Digest</th>
               <th>Disposition</th>
-              {columns.map(({ name }) => (
+              {dataValues.map(({ name }) => (
                 <th>{name}</th>
               ))}
               <th>Actions</th>
@@ -127,7 +153,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                   <Digest value={submission.hash} />
                 </td>
                 <td>{submission.disposition?.status}</td>
-                {columns.map(({ path }) => (
+                {dataValues.map(({ path }) => (
                   <DataValueCell key={path}>{submission.values[path]}</DataValueCell>
                 ))}
                 <td>
@@ -140,7 +166,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               </tr>
             ))}
             {next && (
-              <td colSpan={4 + columns.length}>
+              <td colSpan={4 + dataValues.length}>
                 <GoAButtonGroup alignment="center">
                   <GoAButton
                     type="tertiary"
@@ -160,7 +186,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
         heading="Export submissions to file"
         state={submissionsExport}
         onClose={() => setShowExport(false)}
-        onStartExport={() => dispatch(exportSubmissions(definitionId))}
+        onStartExport={() => dispatch(exportSubmissions({ definitionId, criteria }))}
       />
     </SearchLayout>
   );
