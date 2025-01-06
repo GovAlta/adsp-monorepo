@@ -37,4 +37,5 @@ export interface FormCriteria {
   createdByIdEquals?: string;
   hashEquals?: string;
   anonymousApplicantEquals?: boolean;
+  dataCriteria?: Record<string, unknown>;
 }
