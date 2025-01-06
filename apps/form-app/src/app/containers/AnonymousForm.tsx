@@ -61,9 +61,10 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
                     anonymousApply={definition?.anonymousApply}
                     submitting={busy.submitting}
                     onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
-                      errors.push(...(ajv?.errors || []));
-                      const combinedErrors = errors.concat(ajv?.errors).filter((x) => x !== null);
-                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: combinedErrors }));
+                      // seems to be causing infinite loop in some cases - need to look into it before going this route
+                      // errors.push(...(ajv?.errors || []));
+                      //  const combinedErrors = errors.concat(ajv?.errors).filter((x) => x !== null);
+                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
                     }}
                     onSubmit={function () {
                       dispatch(submitAnonymousForm());
