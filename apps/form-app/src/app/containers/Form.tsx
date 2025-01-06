@@ -137,6 +137,7 @@ export const Form = styled(FormComponent)`
   }
 
   > :first-child {
+    position: relative;
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 70%;
