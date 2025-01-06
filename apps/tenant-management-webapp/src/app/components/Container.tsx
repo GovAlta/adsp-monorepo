@@ -41,6 +41,7 @@ const Container = styled.div<Props>`
     padding: ${(props) => `${props.xlVSpacing ?? props.vs ?? 0}rem ${props.xlHSpacing ?? props.hs ?? 0}rem`};
     margin: 0 auto;
     width: 1152px;
+    // width: 1400px;
   }
 `;
 

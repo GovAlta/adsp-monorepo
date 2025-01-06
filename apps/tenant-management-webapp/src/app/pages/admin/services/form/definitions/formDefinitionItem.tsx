@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FormDefinition } from '@store/form/model';
-import { OverflowWrap, EntryDetail } from '../styled-components';
+import { OverflowWrap, EntryDetail, TableDataName, TableDataId, TableDataDescription } from '../styled-components';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,9 +27,9 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
   return (
     <>
       <tr>
-      <td data-testid="form-definitions-name"><OverflowWrap>{formDefinition.name}</OverflowWrap></td>
-        <td data-testid="form-definitions-template-id"><OverflowWrap>{formDefinition.id}</OverflowWrap></td>
-        <td data-testid="form-definitions-description"><OverflowWrap>{formDescription}</OverflowWrap></td>
+        <TableDataName data-testid="form-definitions-name">{formDefinition.name}</TableDataName>
+        <TableDataId data-testid="form-definitions-template-id">{formDefinition.id}</TableDataId>
+        <TableDataDescription data-testid="form-definitions-description">{formDescription}</TableDataDescription>
         <td data-testid="form-definitions-action">
           <GoAContextMenu>
             <GoAContextMenuIcon
@@ -87,4 +87,4 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
       )}
     </>
   );
-}
+};
