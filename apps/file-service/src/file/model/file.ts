@@ -36,7 +36,14 @@ export class FileEntity implements File {
     content: Readable
   ): Promise<FileEntity> {
     if (!type.canUpdateFile(user)) {
+      logger.debug(
+        `User: ${user.name} not authorize to update: '${type.name}' with roles: ${type.updateRoles?.join(`,`)}`
+      );
       throw new UnauthorizedError('User not authorized to create file.');
+    } else {
+      logger.debug(
+        `User: ${user.name} was authorize to update: '${type.name}' with roles: ${type.updateRoles?.join(`,`)}`
+      );
     }
 
     let entity = new FileEntity(storageProvider, repository, type, {
