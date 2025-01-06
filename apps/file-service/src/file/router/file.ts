@@ -129,6 +129,10 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
         }
       );
     } catch (err) {
+      if (err instanceof Error) {
+        logger.error(`File Upload: ${err.message} ${err.message} ${err.cause} `);
+        logger.error(`File Upload Stack: ${err.stack}: `);
+      }
       next(err);
     }
   };
