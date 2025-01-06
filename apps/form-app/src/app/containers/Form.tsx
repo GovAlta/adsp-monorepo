@@ -86,11 +86,12 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                       errors = null;
                     }
 
-                    errors.concat(ajv.errors);
-                    errors.push(...(ajv?.errors || []));
-                    const combinedErrors = errors.concat(ajv?.errors).filter((x) => x !== null);
+                    // seems to be causing infinite loop in some cases - need to look into it before going this route
+                    // errors.concat(ajv.errors);
+                    // errors.push(...(ajv?.errors || []));
+                    //const combinedErrors = errors.concat(ajv?.errors).filter((x) => x !== null);
 
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: combinedErrors }));
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
                   }}
                   onSubmit={(form) => dispatch(submitForm(form.id))}
                   ajv={ajv}
