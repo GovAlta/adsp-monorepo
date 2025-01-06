@@ -1,5 +1,6 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { FormDefinition, FormMetrics } from './model';
+import { FormDefinition, FormMetrics, FormExportResponse } from './model';
+import { Socket } from 'socket.io-client';
 
 export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
@@ -36,6 +37,9 @@ export const FETCH_FORM_METRICS_SUCCESS_ACTION = 'form/FETCH_FORM_METRICS_SUCCES
 export const EXPORT_FORM_INFO_ACTION = 'form/EXPORT_FORM_INFO_ACTION';
 export const EXPORT_FORM_INFO_SUCCESS_ACTION = 'form/EXPORT_FORM_INFO_SUCCESS_ACTION';
 
+export const START_SOCKET_STREAM_ACTION = 'form/START_SOCKET_STREAM_ACTION';
+export const START_SOCKET_STREAM_SUCCESS = 'form/START_SOCKET_STREAM_SUCCESS';
+
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
 }
@@ -59,7 +63,15 @@ export interface ExportFormInfoAction {
 
 export interface ExportFormInfoSuccessAction {
   type: typeof EXPORT_FORM_INFO_SUCCESS_ACTION;
-  payload: '';
+  payload: FormExportResponse;
+}
+
+export interface StartStreamAction {
+  type: typeof START_SOCKET_STREAM_ACTION;
+}
+export interface StartStreamActionSuccess {
+  type: typeof START_SOCKET_STREAM_SUCCESS;
+  socket: Socket;
 }
 
 export interface UpdateFormDefinitionsAction {
@@ -165,6 +177,8 @@ export type FormActionTypes =
   | FetchFormDefinitionsAction
   | ExportFormInfoAction
   | ExportFormInfoSuccessAction
+  | StartStreamAction
+  | StartStreamActionSuccess
   | DeleteFormDefinitionAction
   | DeleteFormDefinitionSuccessAction
   | UpdateFormDefinitionsAction
@@ -232,9 +246,18 @@ export const getExportFormInfo = (id: string, resource: string): ExportFormInfoA
   resource,
 });
 
-export const getExportFormInfoSuccess = (): ExportFormInfoSuccessAction => ({
+export const startSocket = (): StartStreamAction => ({
+  type: START_SOCKET_STREAM_ACTION,
+});
+
+export const startSocketSuccess = (socket: Socket): StartStreamActionSuccess => ({
+  type: START_SOCKET_STREAM_SUCCESS,
+  socket,
+});
+
+export const getExportFormInfoSuccess = (response: FormExportResponse): ExportFormInfoSuccessAction => ({
   type: EXPORT_FORM_INFO_SUCCESS_ACTION,
-  payload: '',
+  payload: response,
 });
 
 export const deleteFormById = (id: string): DeleteFormByIDAction => ({

@@ -9,6 +9,7 @@ import { fetchServiceMetrics } from '@store/common';
 import { getAccessToken } from '@store/tenant/sagas';
 import { select, call, put, takeEvery, delay, takeLatest } from 'redux-saga/effects';
 import { RootState } from '../index';
+import { io, Socket } from 'socket.io-client';
 import {
   UpdateFormDefinitionsAction,
   getFormDefinitionsSuccess,
@@ -39,6 +40,8 @@ import {
   OpenEditorForDefinitionSuccessAction,
   fetchFormMetricsSuccess,
   FETCH_FORM_METRICS_ACTION,
+  START_SOCKET_STREAM_ACTION,
+  startSocketSuccess,
 } from './action';
 import {
   fetchFormDefinitionsApi,
@@ -93,8 +96,9 @@ export function* fetchFormDefinitions(payload): SagaIterator {
 export function* exportFormInfo(payload): SagaIterator {
   const exportBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.exportServiceUrl);
   const token: string = yield call(getAccessToken);
-  if (exportBaseUrl && token) {
-    try {
+
+  try {
+    if (exportBaseUrl && token) {
       const url = `${exportBaseUrl}/export/v1/jobs`;
       const requestBody = {
         resourceId: `urn:ads:platform:form-service:v1:/${payload.resource}`,
@@ -103,14 +107,34 @@ export function* exportFormInfo(payload): SagaIterator {
           criteria: JSON.stringify({
             definitionIdEquals: payload.id,
           }),
+          includeData: true,
         },
         filename: `Exports-${new Date().toISOString().replace(/[:.]/g, '-')}`,
       };
       yield call(exportApi, token, url, requestBody);
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
     }
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   }
+}
+export function* startSocket(): SagaIterator {
+  const token: string = yield call(getAccessToken);
+  const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
+  const socket: Socket = io(pushServiceUrl, {
+    query: {
+      stream: 'export-updates',
+    },
+    withCredentials: true,
+    extraHeaders: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  yield put(startSocketSuccess(socket));
 }
 
 const ensureRolesAreUniqueWithNoDuplicates = (definition: FormDefinition) => {
@@ -283,4 +307,5 @@ export function* watchFormSagas(): Generator {
   yield takeLatest(SET_DRAFT_UI_SCHEMA_ACTION, parseUISchemaDraft);
   yield takeLatest(PROCESS_DATA_SCHEMA_SUCCESS_ACTION, resolveDataSchema);
   yield takeLatest(FETCH_FORM_METRICS_ACTION, fetchFormMetrics);
+  yield takeEvery(START_SOCKET_STREAM_ACTION, startSocket);
 }

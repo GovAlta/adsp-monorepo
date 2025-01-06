@@ -376,6 +376,22 @@ describe('NameInputs Component', () => {
     expect(screen.queryByText('Middle Name is required')).not.toBeInTheDocument();
   });
 
+  it('can disable the inputs', () => {
+    const { getByTestId } = render(
+      <NameInputs
+        firstName={defaultName.firstName}
+        middleName=""
+        lastName={defaultName.lastName}
+        handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={{ ...defaultName, middleName: '' }}
+        disabled={true}
+      />
+    );
+
+    expect(getByTestId('name-form-last-name').getAttribute('disabled')).toBe('true');
+  });
+
   it('sets requirement label correctly for required and optional fields', () => {
     render(
       <NameInputs

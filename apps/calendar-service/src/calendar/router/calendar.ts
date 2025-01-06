@@ -158,8 +158,9 @@ export const getCalendarEvents: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
     const calendar: CalendarEntity = req[CALENDAR_KEY];
-    const { top: topValue, after, criteria: criteriaValue } = req.query;
+    const { top: topValue, after, includeAttendees, criteria: criteriaValue } = req.query;
     const top = topValue ? parseInt(topValue as string) : 10;
+
     const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
     if (criteria?.startsAfter) {
       criteria.startsAfter = DateTime.fromISO(criteria.startsAfter);
@@ -172,6 +173,13 @@ export const getCalendarEvents: RequestHandler = async (req, res, next) => {
     }
 
     const result = await calendar.getEvents(user, top, after as string, criteria);
+
+    if (includeAttendees === 'true') {
+      for (const res of result.results) {
+        await res.loadAttendees(user);
+      }
+    }
+
     res.send({
       results: result.results.map(mapCalendarEvent),
       page: result.page,
@@ -415,7 +423,7 @@ export const createCalendarRouter = ({
   router.get(
     '/calendars/:name/events',
     validateNameHandler,
-    createValidationHandler(query('criteria').optional().isJSON()),
+    createValidationHandler(query('criteria').optional().isJSON(), query('includeeAttendees').optional().isBoolean()),
     getCalendar(tenantService),
     getCalendarEvents
   );
@@ -430,6 +438,7 @@ export const createCalendarRouter = ({
   router.get(
     '/calendars/:name/events/:id',
     validateNameAndEventIdHandler,
+    createValidationHandler(query('includeeAttendees').optional().isBoolean()),
     getCalendar(tenantService),
     getCalendarEvent,
     retrieveCalendarEvent

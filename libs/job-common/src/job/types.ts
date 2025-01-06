@@ -6,6 +6,7 @@ export type JobStatus = 'queued' | 'completed' | 'failed';
 export interface JobState<T> {
   tenantId: AdspId;
   id: string;
+  createdBy: { id: string; name: string };
   status: JobStatus;
   result?: T;
 }

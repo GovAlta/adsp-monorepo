@@ -2,6 +2,7 @@ import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 
 export const PUSH_SERVICE_ID = 'urn:ads:platform:push-service';
 export const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
+export const EXPORT_SERVICE_ID = 'urn:ads:platform:export-service';
 
 export interface PagedResults<T> {
   results: T[];

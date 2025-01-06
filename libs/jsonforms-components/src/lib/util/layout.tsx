@@ -1,6 +1,7 @@
 import React, { ComponentType } from 'react';
 import { useJsonForms } from '@jsonforms/react';
 import isEmpty from 'lodash/isEmpty';
+import styled from 'styled-components';
 import type { UISchemaElement } from '@jsonforms/core';
 import {
   JsonFormsCellRendererRegistryEntry,
@@ -83,3 +84,36 @@ export const LayoutRenderer = ({
     }
   }
 };
+export const ReviewLayoutRenderer = ({
+  elements,
+  schema,
+  path,
+  enabled,
+  direction,
+  renderers,
+  cells,
+  visible,
+  width,
+}: LayoutRendererProps) => {
+  if (isEmpty(elements)) {
+    return null;
+  } else {
+    if (direction === 'row') {
+      return (
+        <Visible visible={visible}>
+          <ReviewGrid>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</ReviewGrid>
+        </Visible>
+      );
+    } else {
+      return (
+        <Visible visible={visible}>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</Visible>
+      );
+    }
+  }
+};
+
+export const ReviewGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, calc(50% - 8px)));
+  gap: 16px;
+`;

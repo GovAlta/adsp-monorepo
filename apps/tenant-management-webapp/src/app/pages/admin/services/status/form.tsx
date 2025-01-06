@@ -126,6 +126,8 @@ export const ApplicationFormModal: FC<Props> = ({
     application.status = 'operational';
     dispatch(saveApplication(application));
     if (onSave) onSave();
+    validators.clear();
+    setApplication({ ...defaultApplication });
   }
 
   function isFormValid(): boolean {

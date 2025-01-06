@@ -1,6 +1,9 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { SecurityClassification } from '@store/common/models';
+import { FileItem } from '@store/file/models';
+import { Socket } from 'socket.io-client';
 
+export type ExportStatus = 'queued' | 'completed' | 'failed';
 export interface FormDefinition {
   id: string;
   name: string;
@@ -56,11 +59,34 @@ export const defaultFormDefinition: FormDefinition = {
   supportTopic: false,
   securityClassification: SecurityClassification.ProtectedB,
 };
-
+export interface Stream {
+  namespace: string;
+  name: string;
+  correlationId: string;
+  context: {
+    jobId: string;
+    templateId: string;
+  };
+  timestamp: string;
+  payload: {
+    jobId: string;
+    templateId: string;
+    file?: {
+      urn: string;
+      id: string;
+      filename: string;
+    };
+    error?: string;
+    requestedBy: {
+      id: string;
+      name: string;
+    };
+  };
+}
 export interface FormState {
   definitions: Record<string, FormDefinition>;
-
   nextEntries: string;
+  exportResult: FormExportResponse;
   editor: {
     selectedId: string;
     loading: boolean;
@@ -75,7 +101,27 @@ export interface FormState {
     uiSchemaError?: string;
     resolvedDataSchema: JsonSchema;
   };
+
   metrics: FormMetrics;
+  socket: Socket;
+}
+export interface FormExportResponse {
+  id?: string;
+  formDefinitionId?: string;
+  formId?: string;
+  status?: ExportStatus;
+  urn?: string;
+  result?: {
+    urn?: string;
+    id?: string;
+    filename?: string;
+  };
+  payload?: {
+    file?: {
+      id?: string;
+    };
+    error?: string;
+  };
 }
 
 export interface FormMetrics {

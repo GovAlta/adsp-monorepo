@@ -42,4 +42,5 @@ export interface FormSubmissionCriteria {
   dispositionDateBefore?: Date;
   dispositionDateAfter?: Date;
   createdByIdEquals?: string;
+  dataCriteria?: Record<string, unknown>;
 }

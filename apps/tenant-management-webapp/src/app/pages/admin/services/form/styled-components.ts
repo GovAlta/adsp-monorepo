@@ -413,7 +413,7 @@ export const SpinnerPaddingSmall = styled.div`
   float: right;
 `;
 export const OverflowWrap = styled.span`
-   word-break: break-all;
+  word-break: break-all;
 `;
 
 export const PreviewTopStyle = styled.div`
@@ -537,4 +537,10 @@ export const Anchor = styled.div`
   text-decoration: underline;
   outline: none;
   cursor: pointer;
+`;
+
+export const ExportWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
