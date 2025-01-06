@@ -10,7 +10,6 @@ import {
   PreviewContainer,
   PDFTitle,
   PreviewWrapper,
-  EditTemplateActions,
   PdfViewer,
 } from '../../styled-components';
 

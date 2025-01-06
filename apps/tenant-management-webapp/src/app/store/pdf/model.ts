@@ -3,7 +3,7 @@ import { defaultTemplateHeader } from '../../store/pdf/defaultTemplates/header';
 import { defaultTemplateFooter } from '../../store/pdf/defaultTemplates/footer';
 import { defaultTemplateCss } from '../../store/pdf/defaultTemplates/css';
 import { defaultAssignments } from '../../store/pdf/defaultTemplates/assignments';
-
+import { FileItem } from '@store/file/models';
 export interface PdfTemplate {
   id: string;
   name: string;
@@ -59,17 +59,6 @@ interface SocketChannel {
 }
 
 export type SchemaType = unknown;
-
-export interface FileItem {
-  id?: string;
-  filename?: string;
-  size?: number;
-  fileURN?: string;
-  typeName?: string;
-  recordId?: string;
-  created?: string;
-  lastAccessed?: string;
-}
 
 export interface PdfMetrics {
   pdfGenerated?: number;
