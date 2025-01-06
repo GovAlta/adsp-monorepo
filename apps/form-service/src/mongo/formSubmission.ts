@@ -79,6 +79,10 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       query['disposition.status'] = criteria.dispositionStatusEquals;
     }
 
+    if (criteria?.dataCriteria) {
+      query.formData = criteria?.dataCriteria;
+    }
+
     return new Promise<FormSubmissionEntity[]>((resolve, reject) => {
       this.submissionModel
         .find(query, null, { lean: true })
