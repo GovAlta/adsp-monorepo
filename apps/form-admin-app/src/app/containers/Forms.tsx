@@ -6,7 +6,6 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoAFormItem,
-  GoAInput,
   GoATable,
 } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +27,7 @@ import { ContentContainer } from '../components/ContentContainer';
 import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
+import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 
 interface FormsProps {
   definitionId: string;
@@ -59,7 +59,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
       searchForm={
         <form>
           <SearchFormItemsContainer>
-            <GoAFormItem label="Status">
+            <GoAFormItem label="Status" mr="m">
               <GoADropdown
                 relative={true}
                 name="form-status"
@@ -78,28 +78,26 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 <GoADropdownItem value={null} label="All" />
               </GoADropdown>
             </GoAFormItem>
-            {dataValues
-              .filter(({ type }) => type === 'string')
-              .map(({ name, path }) => (
-                <GoAFormItem label={name} key={path} ml="m">
-                  <GoAInput
-                    type="text"
-                    onChange={(_, value: string) =>
-                      dispatch(
-                        formActions.setFormCriteria({
-                          ...criteria,
-                          dataCriteria: {
-                            ...criteria?.dataCriteria,
-                            [path]: value,
-                          },
-                        })
-                      )
-                    }
-                    value={criteria?.dataCriteria?.[path]?.toString() || ''}
-                    name={name}
-                  />
-                </GoAFormItem>
-              ))}
+            {dataValues.map(({ name, path, type }) => (
+              <DataValueCriteriaItem
+                key={path}
+                name={name}
+                path={path}
+                type={type}
+                value={criteria?.dataCriteria?.[path]?.toString() || ''}
+                onChange={(value) =>
+                  dispatch(
+                    formActions.setFormCriteria({
+                      ...criteria,
+                      dataCriteria: {
+                        ...criteria?.dataCriteria,
+                        [path]: value || undefined,
+                      },
+                    })
+                  )
+                }
+              />
+            ))}
           </SearchFormItemsContainer>
           <GoAButtonGroup alignment="end" mt="l">
             {isFormAdmin && (
