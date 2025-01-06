@@ -20,6 +20,7 @@ import {
   RESOLVE_DATA_SCHEMA_SUCCESS_ACTION,
   RESOLVE_DATA_SCHEMA_FAILED_ACTION,
   FETCH_FORM_METRICS_SUCCESS_ACTION,
+  START_SOCKET_STREAM_SUCCESS,
 } from './action';
 
 import { FormState } from './model';
@@ -27,6 +28,7 @@ import { FormState } from './model';
 export const defaultState: FormState = {
   definitions: {},
   nextEntries: null,
+  exportResult: {},
   editor: {
     selectedId: null,
     loading: false,
@@ -39,6 +41,7 @@ export const defaultState: FormState = {
     uiSchema: {} as UISchemaElement,
     resolvedDataSchema: {},
   },
+  socket: null,
   metrics: {},
 };
 
@@ -68,6 +71,11 @@ export default function (state: FormState = defaultState, action: FormActionType
           ...state.editor,
           saving: state.editor.selectedId === action.definition.id ? true : state.editor.saving,
         },
+      };
+    case START_SOCKET_STREAM_SUCCESS:
+      return {
+        ...state,
+        socket: action.socket,
       };
 
     case UPDATE_FORM_DEFINITION_SUCCESS_ACTION:
