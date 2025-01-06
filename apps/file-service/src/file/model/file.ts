@@ -37,12 +37,12 @@ export class FileEntity implements File {
   ): Promise<FileEntity> {
     if (!type.canUpdateFile(user)) {
       logger.debug(
-        `User: ${user.name} not authorize to update: '${type.name}' with roles: ${type.updateRoles.join(`,`)}`
+        `User: ${user.name} not authorize to update: '${type.name}' with roles: ${type.updateRoles?.join(`,`)}`
       );
       throw new UnauthorizedError('User not authorized to create file.');
     } else {
       logger.debug(
-        `User: ${user.name} was authorize to update: '${type.name}' with roles: ${type.updateRoles.join(`,`)}`
+        `User: ${user.name} was authorize to update: '${type.name}' with roles: ${type.updateRoles?.join(`,`)}`
       );
     }
 
