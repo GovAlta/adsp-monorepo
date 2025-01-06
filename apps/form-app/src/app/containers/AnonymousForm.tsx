@@ -96,6 +96,7 @@ export const AnonymousForm = styled(AnonymousFormComponent)`
   }
 
   > :first-child {
+    position: relative;
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 70%;
