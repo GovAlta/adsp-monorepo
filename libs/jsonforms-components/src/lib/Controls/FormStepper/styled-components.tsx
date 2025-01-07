@@ -19,7 +19,7 @@ export const ReviewItemSection = styled.div`
   border-radius: 5px;
 
   .element-style {
-    max-width: 1439px;
+    max-width: 1600px;
   }
 `;
 export const ReviewItemHeader = styled.div`
