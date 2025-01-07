@@ -60,7 +60,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       onChange={(name: string, value: string) => {
         if (data !== value) {
           const newValue = autoCapitalize ? value.toUpperCase() : value;
-          handleChange(path, newValue === '' ? null : newValue);
+          handleChange(path, newValue);
         }
       }}
       {...uischema?.options?.componentProps}

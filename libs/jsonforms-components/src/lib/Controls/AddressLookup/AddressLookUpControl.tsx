@@ -71,7 +71,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
         handlePostalCodeValidation(validatePc, postalCodeErrorMessage ? postalCodeErrorMessage : '', value, errors)
       );
       value = formatPostalCode(value);
-      newAddress = { ...address, [field]: value !== '' ? value.toUpperCase() : undefined };
+      newAddress = { ...address, [field]: value.toUpperCase() };
     } else {
       newAddress = { ...address, [field]: value };
       delete errors[field];

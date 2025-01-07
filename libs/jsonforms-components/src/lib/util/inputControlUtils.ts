@@ -163,7 +163,9 @@ export const onChangeForInputControl = (props: EventChangeControlProps) => {
   const { value } = props;
   const { controlProps } = props;
   const { handleChange, path } = controlProps;
-  handleChange(path, value === '' ? null : value);
+  if (value && value !== null) {
+    handleChange(path, value);
+  }
 };
 
 /**
