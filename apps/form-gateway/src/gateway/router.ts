@@ -187,6 +187,7 @@ export function downloadFile(
       const downloadPath = fileApiUrl.toString() + `/files/${fileId}/download` + `?unsafe=true`;
 
       return proxy(new URL('', fileApiUrl).href, {
+        limit: '5mb',
         async proxyReqOptDecorator(opts) {
           opts.headers.Authorization = `Bearer ${token}`;
           const trace = getContextTrace();
