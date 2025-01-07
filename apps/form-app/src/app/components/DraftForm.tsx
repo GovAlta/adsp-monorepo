@@ -27,7 +27,6 @@ import {
   AppState,
   store,
 } from '../state';
-import Ajv from 'ajv';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -43,7 +42,6 @@ interface DraftFormProps {
   anonymousApply?: boolean;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
-  ajv: Ajv;
 }
 
 export const populateDropdown = (schema, enumerators) => {
@@ -59,7 +57,7 @@ export const populateDropdown = (schema, enumerators) => {
   return newSchema as JsonSchema;
 };
 
-const JsonFormsWrapper = ({ definition, data, onChange, readonly, ajv }) => {
+const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
@@ -71,7 +69,6 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly, ajv }) => {
         validationMode="ValidateAndShow"
         renderers={GoARenderers}
         onChange={onChange}
-        ajv={ajv}
       />
     </JsonFormRegisterProvider>
   );
@@ -98,7 +95,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   anonymousApply,
   onChange,
   onSubmit,
-  ajv,
 }) => {
   const onSubmitFunction = () => {
     onSubmit(form);
@@ -180,7 +176,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         }}
         formUrl="https://form.adsp-uat.alberta.ca"
       >
-        <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} ajv={ajv} />
+        <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
       </ContextProvider>
     </div>
   );
