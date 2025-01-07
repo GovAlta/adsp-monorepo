@@ -419,16 +419,16 @@ export const OverflowWrap = styled.span`
 `;
 
 export const TableDataName = styled.td`
-  width: 33.33%;
-  // word-break: break-all;
+  word-break: break-all;
+  width: 250px;
 `;
 export const TableDataId = styled.td`
-  width: 33.33%;
   word-break: break-all;
+  width: 250px;
 `;
 export const TableDataDescription = styled.td`
-  width: 33.33%;
   word-break: break-all;
+  width: 250px;
 `;
 
 export const PreviewTopStyle = styled.div`
