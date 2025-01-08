@@ -1,8 +1,13 @@
 import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, logoutUser, renewSession, sessionExpirySelector, tenantSelector } from '../state';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import styled from 'styled-components';
+import { AppDispatch, logoutUser, renewSession, sessionExpirySelector, tenantSelector } from '../state';
+
+const SecondsSpan = styled.span`
+  font-weight: bold;
+`;
 
 export const SessionExpiryModal = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -19,11 +24,15 @@ export const SessionExpiryModal = () => {
 
   return (
     showAlert && (
-      <GoAModal heading="Continue working?" open={showAlert}>
-        <p>
-          Your session will expiry in <span>{seconds}</span>.
-        </p>
-        <GoAButtonGroup alignment="end">
+      <GoAModal heading="Continue working?" open={true}>
+        {seconds > 0 ? (
+          <div>
+            Your session will expire in <SecondsSpan>{seconds}</SecondsSpan> seconds. Do you want to continue working?
+          </div>
+        ) : (
+          <div>Your session has expired. Please logout, then sign in again if you would like to continue working.</div>
+        )}
+        <GoAButtonGroup alignment="end" mt="l">
           <GoAButton
             type={seconds > 0 ? 'secondary' : 'primary'}
             onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
@@ -31,7 +40,7 @@ export const SessionExpiryModal = () => {
             Logout
           </GoAButton>
           {seconds > 0 && (
-            <GoAButton ml="m" type="primary" onClick={() => dispatch(renewSession())}>
+            <GoAButton type="primary" onClick={() => dispatch(renewSession())}>
               Continue working
             </GoAButton>
           )}

@@ -244,7 +244,7 @@ export const sessionExpirySelector = createSelector(
   (state: AppState) => state.user.sessionExpiresAt,
   (state: AppState) => state.user.showSessionExpiryAlert,
   (expiresAt, showAlert) => ({
-    secondsTilExpiry: DateTime.fromISO(expiresAt).diff(DateTime.now()).as('seconds'),
+    secondsTilExpiry: Math.round(DateTime.fromISO(expiresAt).diff(DateTime.now()).as('seconds')),
     showAlert,
   })
 );
