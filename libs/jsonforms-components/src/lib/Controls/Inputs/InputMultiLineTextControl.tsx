@@ -14,7 +14,7 @@ import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { checkFieldValidity } from '../../util/stringUtils';
-import { onKeyPressForTextControl } from '../../util/inputControlUtils';
+import { onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 
 export type GoAInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -48,6 +48,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       // maxCount={schema.maxLength || 256}
       onKeyPress={(name: string, value: string, key: string) => {
         const newValue = autoCapitalize ? value.toUpperCase() : value;
+
         if (value.length === 0 || (required && errorsFormInput.length === 0 && value.length > 0)) {
           onKeyPressForTextControl({
             name,
@@ -56,12 +57,15 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
             controlProps: props as ControlProps,
           });
         }
+
+        onChangeForInputControl({
+          name,
+          value: newValue,
+          controlProps: props as ControlProps,
+        });
       }}
       onChange={(name: string, value: string) => {
-        if (data !== value) {
-          const newValue = autoCapitalize ? value.toUpperCase() : value;
-          handleChange(path, newValue);
-        }
+        // this is not triggered unless you tab out
       }}
       {...uischema?.options?.componentProps}
     />
