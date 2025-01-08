@@ -1,15 +1,26 @@
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal, GoASpacer, GoASpinner } from '@abgov/react-components-new';
-import { FunctionComponent } from 'react';
+import {
+  GoAButton,
+  GoAButtonGroup,
+  GoAFormItem,
+  GoAModal,
+  GoARadioGroup,
+  GoARadioItem,
+  GoASpacer,
+  GoASpinner,
+} from '@abgov/react-components-new';
+import { FunctionComponent, useState } from 'react';
 
 interface ExportModalProps {
   open: boolean;
   heading: string;
   state: { working: boolean; dataUri?: string; filename?: string };
   onClose: () => void;
-  onStartExport: () => void;
+  onStartExport: (format: 'json' | 'csv') => void;
 }
 
 export const ExportModal: FunctionComponent<ExportModalProps> = ({ open, heading, state, onClose, onStartExport }) => {
+  const [format, setFormat] = useState<'json' | 'csv'>('json');
+
   return (
     <GoAModal heading={heading} open={open}>
       <form>
@@ -22,12 +33,20 @@ export const ExportModal: FunctionComponent<ExportModalProps> = ({ open, heading
             <GoASpinner size="medium" type="infinite" />
           </>
         ) : (
-          <div>
-            <span>
-              Click "Start export" to initiate export of records. You will be able to download the output file once
-              export is complete.
-            </span>
-          </div>
+          <>
+            <div>
+              <span>
+                Click "Start export" to initiate export of records. You will be able to download the output file once
+                export is complete.
+              </span>
+            </div>
+            <GoAFormItem label="Export format" mt="l">
+              <GoARadioGroup name="format" onChange={(_, value: 'json' | 'csv') => setFormat(value)} value={format}>
+                <GoARadioItem value="json" label="JSON" />
+                <GoARadioItem value="csv" label="CSV" />
+              </GoARadioGroup>
+            </GoAFormItem>
+          </>
         )}
         {state.dataUri && (
           <GoAFormItem label="Last exported file" mt="l">
@@ -40,7 +59,7 @@ export const ExportModal: FunctionComponent<ExportModalProps> = ({ open, heading
           <GoAButton type="secondary" onClick={onClose}>
             Close
           </GoAButton>
-          <GoAButton type="primary" onClick={onStartExport} disabled={state.working}>
+          <GoAButton type="primary" onClick={() => onStartExport(format)} disabled={state.working}>
             Start export
           </GoAButton>
         </GoAButtonGroup>

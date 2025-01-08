@@ -32,7 +32,7 @@ export type FormResponse = Omit<Form, 'anonymousApplicant' | 'definition' | 'app
 
 export type FormSubmissionResponse = Omit<
   Form,
-  'anonymousApplicant' | 'definition' | 'applicant' | 'data' | 'files'
+  'anonymousApplicant' | 'definition' | 'applicant'
 > & {
   urn: string;
   definition: { id: string; name: string };
@@ -76,7 +76,8 @@ export function mapForm(apiId: AdspId, entity: FormEntityWithJobId, includeData 
 export function mapFormWithFormSubmission(
   apiId: AdspId,
   entity: FormEntityWithJobId,
-  submissionEntity: FormSubmissionEntity
+  submissionEntity: FormSubmissionEntity,
+  includeData = false
 ): FormSubmissionResponse {
   return {
     urn: `${apiId}:/forms/${entity.id}`,
@@ -101,6 +102,8 @@ export function mapFormWithFormSubmission(
           addressAs: entity.applicant.addressAs,
         }
       : null,
+    data: includeData ? entity.data : undefined,
+    files: includeData ? entity.files : undefined,
     submission: {
       id: submissionEntity.id,
       urn: submissionEntity.formSubmissionUrn,

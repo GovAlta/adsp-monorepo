@@ -18,7 +18,7 @@ import {
 } from './types';
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
-import { downloadFile } from './file.slice';
+import { downloadFile, FileMetadata, findFile, loadFileMetadata } from './file.slice';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -62,12 +62,14 @@ export interface FormState {
   busy: {
     initializing: boolean;
     loading: boolean;
+    findPdf: boolean;
     executing: boolean;
     exporting: boolean;
   };
   forms: Record<string, Form>;
   submissions: Record<string, FormSubmission>;
   definitions: Record<string, FormDefinition>;
+  pdfs: Record<string, string>;
   dataValues: Record<string, DataValue[]>;
   results: {
     definitions: string[];
@@ -95,6 +97,7 @@ export const initialFormState: FormState = {
   busy: {
     initializing: false,
     loading: false,
+    findPdf: false,
     executing: false,
     exporting: false,
   },
@@ -102,6 +105,7 @@ export const initialFormState: FormState = {
   dataValues: {},
   forms: {},
   submissions: {},
+  pdfs: {},
   results: {
     definitions: [],
     forms: [],
@@ -276,24 +280,17 @@ export const selectDefinition = createAsyncThunk(
   }
 );
 
-export const selectForm = createAsyncThunk('form/select-form', (formId: string, { getState, dispatch }) => {
-  const { form } = getState() as AppState;
-
-  if (formId && !form.forms[formId]?.data) {
+export const selectForm = createAsyncThunk('form/select-form', (formId: string, { dispatch }) => {
+  if (formId) {
     dispatch(loadForm(formId));
   }
 });
 
-export const selectSubmission = createAsyncThunk(
-  'form/select-submission',
-  (submissionId: string, { getState, dispatch }) => {
-    const { form } = getState() as AppState;
-
-    if (submissionId && !form.submissions[submissionId]) {
-      dispatch(loadSubmission(submissionId));
-    }
+export const selectSubmission = createAsyncThunk('form/select-submission', (submissionId: string, { dispatch }) => {
+  if (submissionId) {
+    dispatch(loadSubmission(submissionId));
   }
-);
+});
 
 function getDataValues(schema: JsonSchema, path: string[]): DataValue[] {
   const dataValues = [];
@@ -426,33 +423,44 @@ export const updateDataValue = createAsyncThunk(
   }
 );
 
-export const loadForm = createAsyncThunk('form/load-form', async (formId: string, { getState, rejectWithValue }) => {
-  try {
-    const { config } = getState() as AppState;
-    const formServiceUrl = config.directory[FORM_SERVICE_ID];
-    const token = await getAccessToken();
+export const loadForm = createAsyncThunk(
+  'form/load-form',
+  async (formId: string, { dispatch, getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const token = await getAccessToken();
 
-    const { data } = await axios.get<Form>(new URL(`/form/v1/forms/${formId}`, formServiceUrl).href, {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { includeData: true },
-    });
-
-    return { ...data, status: FormStatus[data.status] };
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      return rejectWithValue({
-        status: err.response?.status,
-        message: err.response?.data?.errorMessage || err.message,
+      const { data } = await axios.get<Form>(new URL(`/form/v1/forms/${formId}`, formServiceUrl).href, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { includeData: true },
       });
-    } else {
-      throw err;
+
+      if (data.files) {
+        for (const urn of Object.values(data.files)) {
+          await dispatch(loadFileMetadata(urn));
+        }
+      }
+
+      dispatch(findFormPdf(data.urn));
+
+      return { ...data, status: FormStatus[data.status] };
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
     }
   }
-});
+);
 
 export const loadSubmission = createAsyncThunk(
   'form/load-submission',
-  async (submissionId: string, { getState, rejectWithValue }) => {
+  async (submissionId: string, { dispatch, getState, rejectWithValue }) => {
     try {
       const { config } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
@@ -464,6 +472,14 @@ export const loadSubmission = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      if (data.formFiles) {
+        for (const urn of Object.values(data.formFiles)) {
+          await dispatch(loadFileMetadata(urn));
+        }
+      }
+
+      dispatch(findFormPdf(data.urn));
 
       return data;
     } catch (err) {
@@ -517,7 +533,7 @@ export const getExportJobStatus = createAsyncThunk(
 export const exportForms = createAsyncThunk(
   'form/export-forms',
   async (
-    { definitionId, criteria }: { definitionId: string; criteria: FormCriteria },
+    { definitionId, criteria, format }: { definitionId: string; criteria: FormCriteria; format: 'json' | 'csv' },
     { dispatch, getState, rejectWithValue }
   ) => {
     try {
@@ -529,7 +545,7 @@ export const exportForms = createAsyncThunk(
         new URL('/export/v1/jobs', exportServiceUrl).href,
         {
           resourceId: 'urn:ads:platform:form-service:v1:/forms',
-          format: 'json',
+          format,
           fileType: 'form-export',
           params: {
             includeData: true,
@@ -562,7 +578,14 @@ export const exportForms = createAsyncThunk(
 
 export const exportSubmissions = createAsyncThunk(
   'form/export-submissions',
-  async ({ definitionId, criteria }: { definitionId: string; criteria: FormSubmissionCriteria }, { dispatch, getState, rejectWithValue }) => {
+  async (
+    {
+      definitionId,
+      criteria,
+      format,
+    }: { definitionId: string; criteria: FormSubmissionCriteria; format: 'json' | 'csv' },
+    { dispatch, getState, rejectWithValue }
+  ) => {
     try {
       const { config } = getState() as AppState;
       const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
@@ -572,7 +595,7 @@ export const exportSubmissions = createAsyncThunk(
         new URL('/export/v1/jobs', exportServiceUrl).href,
         {
           resourceId: 'urn:ads:platform:form-service:v1:/submissions',
-          format: 'json',
+          format,
           fileType: 'form-export',
           params: {
             criteria: JSON.stringify({
@@ -589,6 +612,29 @@ export const exportSubmissions = createAsyncThunk(
       setTimeout(() => dispatch(getExportJobStatus(data.id)), 2000);
 
       return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const findFormPdf = createAsyncThunk(
+  'form/find-form-pdf',
+  async (urn: string, { dispatch, getState, rejectWithValue }) => {
+    try {
+      const state = getState() as AppState;
+      if (canAccessPdfSelector(state)) {
+        const { payload } = await dispatch(findFile({ recordId: urn, type: 'generated-pdf' }));
+
+        return payload as FileMetadata;
+      }
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -771,6 +817,16 @@ export const formSlice = createSlice({
           }
           state.busy.exporting = false;
         }
+      })
+      .addCase(findFormPdf.pending, (state) => {
+        state.busy.findPdf = true;
+      })
+      .addCase(findFormPdf.rejected, (state) => {
+        state.busy.findPdf = true;
+      })
+      .addCase(findFormPdf.fulfilled, (state, { payload, meta }) => {
+        state.pdfs[meta.arg] = payload?.urn;
+        state.busy.findPdf = false;
       });
   },
 });
@@ -843,10 +899,24 @@ export const formSelector = createSelector(
   (forms, selected) => forms[selected]
 );
 
+export const formFilesSelector = createSelector(
+  formSelector,
+  (state: AppState) => state.file.metadata,
+  (form, metadata) =>
+    Object.entries(form?.files || {}).reduce((files, [key, urn]) => ({ ...files, [key]: metadata[urn] }), {})
+);
+
 export const submissionSelector = createSelector(
   (state: AppState) => state.form.submissions,
   (state: AppState) => state.form.selectedSubmission,
   (submissions, selected) => submissions[selected]
+);
+
+export const submissionFilesSelector = createSelector(
+  (state: AppState) => state.file.metadata,
+  submissionSelector,
+  (metadata, submission) =>
+    Object.entries(submission?.formFiles || {}).reduce((files, [key, urn]) => ({ ...files, [key]: metadata[urn] }), {})
 );
 
 export const busySelector = (state: AppState) => state.form.busy;
@@ -861,6 +931,10 @@ export const dispositionDraftSelector = (state: AppState) => state.form.disposit
 
 export const isFormAdminSelector = (state: AppState) =>
   state.user.user?.roles?.includes('urn:ads:platform:form-service:form-admin');
+
+export const canAccessPdfSelector = (state: AppState) =>
+  state.user.user?.roles?.includes('urn:ads:platform:file-service:file-admin') ||
+  state.user.user?.roles?.includes('urn:ads:platform:pdf-service:pdf-generator');
 
 export const formsExportSelector = createSelector(
   (state: AppState) => state.form.export.forms,
@@ -884,4 +958,14 @@ export const submissionsExportSelector = createSelector(
     dataUri: state.result?.urn ? files[state.result.urn] : null,
     working: exporting || (state.result?.urn && downloading[state.result.urn]),
   })
+);
+
+export const pdfSelector = createSelector(
+  (state: AppState) => state.file.metadata,
+  (state: AppState) => state.form.pdfs,
+  (_: AppState, urn: string) => urn,
+  (metadata, pdfs, urn) => {
+    const pdf = pdfs[urn];
+    return pdf ? metadata[pdf] : null;
+  }
 );
