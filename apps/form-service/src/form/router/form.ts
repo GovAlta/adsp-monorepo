@@ -116,7 +116,7 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
         });
 
         if (results.length > 0) {
-          res.send(mapFormWithFormSubmission(apiId, form, results.at(0)));
+          res.send(mapFormWithFormSubmission(apiId, form, results.at(0), includeData));
         } else {
           res.send(mapForm(apiId, form, includeData));
         }

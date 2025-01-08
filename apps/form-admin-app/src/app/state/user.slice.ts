@@ -61,7 +61,7 @@ async function initializeKeycloakClient(dispatch: Dispatch, realm: string, confi
 let sessionTimeout;
 function updateSessionTimeout(dispatch: Dispatch) {
   const expires = DateTime.fromSeconds(client.refreshTokenParsed.exp);
-  dispatch(userActions.setSessionExpiry({ expiresAt: expires.toFormat('ttt') }));
+  dispatch(userActions.setSessionExpiry({ expiresAt: expires.toISO() }));
 
   if (sessionTimeout) {
     clearTimeout(sessionTimeout);
@@ -69,8 +69,8 @@ function updateSessionTimeout(dispatch: Dispatch) {
 
   const tilExpiresAlert = expires.diff(DateTime.now()).minus(120000);
   sessionTimeout = setTimeout(
-    () => dispatch(userActions.setSessionExpiry({ expiresAt: expires.toFormat('ttt'), showAlert: true })),
-    tilExpiresAlert.milliseconds
+    () => dispatch(userActions.setSessionExpiry({ expiresAt: expires.toISO(), showAlert: true })),
+    tilExpiresAlert.as('milliseconds')
   );
 }
 
@@ -193,6 +193,11 @@ const initialUserState: UserState = {
   showSessionExpiryAlert: false,
 };
 
+export const renewSession = createAsyncThunk('user/renew-session', async () => {
+  // Getting the access token triggers refresh token use and update.
+  await getAccessToken();
+});
+
 const userSlice = createSlice({
   name: USER_FEATURE_KEY,
   initialState: initialUserState,
@@ -239,7 +244,7 @@ export const sessionExpirySelector = createSelector(
   (state: AppState) => state.user.sessionExpiresAt,
   (state: AppState) => state.user.showSessionExpiryAlert,
   (expiresAt, showAlert) => ({
-    secondsTilExpiry: DateTime.fromFormat(expiresAt, 'ttt').diff(DateTime.now()).seconds,
+    secondsTilExpiry: DateTime.fromISO(expiresAt).diff(DateTime.now()).as('seconds'),
     showAlert,
   })
 );
