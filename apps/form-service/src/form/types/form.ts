@@ -24,7 +24,7 @@ export interface Form {
   lastAccessed: Date;
   status: FormStatus;
   data: Record<string, unknown>;
-  files: Record<string, string>;
+  files: Record<string, AdspId>;
   securityClassification?: SecurityClassificationType;
 }
 
