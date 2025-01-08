@@ -129,8 +129,8 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             <tr>
               <th>Created on</th>
               <th>Status</th>
-              {dataValues.map(({ name }) => (
-                <th>{name}</th>
+              {dataValues.map(({ name, path }) => (
+                <th key={path}>{name}</th>
               ))}
               <th>Actions</th>
             </tr>
@@ -173,7 +173,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
         heading="Export forms to file"
         state={formsExport}
         onClose={() => setShowExport(false)}
-        onStartExport={() => dispatch(exportForms({ definitionId, criteria }))}
+        onStartExport={(format) => dispatch(exportForms({ definitionId, criteria, format }))}
       />
     </SearchLayout>
   );

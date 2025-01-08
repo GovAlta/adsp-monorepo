@@ -137,8 +137,8 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               <th>Submitted on</th>
               <th>Digest</th>
               <th>Disposition</th>
-              {dataValues.map(({ name }) => (
-                <th>{name}</th>
+              {dataValues.map(({ name, path }) => (
+                <th key={path}>{name}</th>
               ))}
               <th>Actions</th>
             </tr>
@@ -184,7 +184,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
         heading="Export submissions to file"
         state={submissionsExport}
         onClose={() => setShowExport(false)}
-        onStartExport={() => dispatch(exportSubmissions({ definitionId, criteria }))}
+        onStartExport={(format) => dispatch(exportSubmissions({ definitionId, criteria, format }))}
       />
     </SearchLayout>
   );

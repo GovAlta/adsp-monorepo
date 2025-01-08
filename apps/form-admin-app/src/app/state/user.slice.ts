@@ -1,6 +1,7 @@
-import { Dispatch, createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
+import { Dispatch, createAsyncThunk, createSelector, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Keycloak from 'keycloak-js';
+import { DateTime } from 'luxon';
 import { v4 as uuidv4 } from 'uuid';
 import { ConfigState } from './config.slice';
 import { AppState } from './store';
@@ -24,6 +25,8 @@ export interface UserState {
     email: string;
     roles: string[];
   };
+  sessionExpiresAt?: string;
+  showSessionExpiryAlert: boolean;
 }
 
 let client: Keycloak;
@@ -44,12 +47,31 @@ async function initializeKeycloakClient(dispatch: Dispatch, realm: string, confi
       client.onAuthLogout = () => {
         dispatch(userActions.clearUser());
       };
+      client.onAuthRefreshSuccess = () => {
+        updateSessionTimeout(dispatch);
+      };
     } catch (err) {
       // Keycloak client throws undefined in certain cases.
     }
   }
 
   return client;
+}
+
+let sessionTimeout;
+function updateSessionTimeout(dispatch: Dispatch) {
+  const expires = DateTime.fromSeconds(client.refreshTokenParsed.exp);
+  dispatch(userActions.setSessionExpiry({ expiresAt: expires.toFormat('ttt') }));
+
+  if (sessionTimeout) {
+    clearTimeout(sessionTimeout);
+  }
+
+  const tilExpiresAlert = expires.diff(DateTime.now()).minus(120000);
+  sessionTimeout = setTimeout(
+    () => dispatch(userActions.setSessionExpiry({ expiresAt: expires.toFormat('ttt'), showAlert: true })),
+    tilExpiresAlert.milliseconds
+  );
 }
 
 export async function getAccessToken(): Promise<string> {
@@ -101,6 +123,8 @@ export const initializeUser = createAsyncThunk(
 
     const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
     if (client.tokenParsed) {
+      updateSessionTimeout(dispatch);
+
       return {
         id: client.tokenParsed.sub,
         name: client.tokenParsed['name'] || client.tokenParsed['preferred_username'] || client.tokenParsed['email'],
@@ -166,6 +190,7 @@ const initialUserState: UserState = {
   initialized: false,
   tenant: null,
   user: undefined,
+  showSessionExpiryAlert: false,
 };
 
 const userSlice = createSlice({
@@ -174,6 +199,10 @@ const userSlice = createSlice({
   reducers: {
     clearUser: (state) => {
       state.user = undefined;
+    },
+    setSessionExpiry: (state, { payload }: { payload: { expiresAt: string; showAlert?: boolean } }) => {
+      state.sessionExpiresAt = payload.expiresAt;
+      state.showSessionExpiryAlert = !!payload.showAlert;
     },
   },
   extraReducers: (builder) => {
@@ -205,3 +234,12 @@ export const userActions = userSlice.actions;
 export const tenantSelector = (state: AppState) => state.user.tenant;
 
 export const userSelector = (state: AppState) => state.user;
+
+export const sessionExpirySelector = createSelector(
+  (state: AppState) => state.user.sessionExpiresAt,
+  (state: AppState) => state.user.showSessionExpiryAlert,
+  (expiresAt, showAlert) => ({
+    secondsTilExpiry: DateTime.fromFormat(expiresAt, 'ttt').diff(DateTime.now()).seconds,
+    showAlert,
+  })
+);

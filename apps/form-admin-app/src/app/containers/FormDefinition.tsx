@@ -15,8 +15,7 @@ export const FormDefinition: FunctionComponent = () => {
   const definition = useSelector(definitionSelector);
   const busy = useSelector(busySelector);
 
-  const { definitionId: definitionIdValue } = useParams();
-  const definitionId = definitionIdValue?.toLowerCase();
+  const { definitionId } = useParams();
 
   useEffect(() => {
     dispatch(selectDefinition(definitionId));

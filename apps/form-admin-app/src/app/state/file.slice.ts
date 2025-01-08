@@ -6,7 +6,7 @@ import { getAccessToken } from './user.slice';
 
 export const FILE_FEATURE_KEY = 'file';
 
-interface FileMetadata {
+export interface FileMetadata {
   urn: string;
   filename: string;
   mimeType?: string;
@@ -65,24 +65,59 @@ export const downloadFile = createAsyncThunk(
         metadata = await getFileMetadata(fileServiceUrl, urn);
       }
 
-      const token = await getAccessToken();
-      const { data, headers } = await axios.get(
-        new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}/download`, fileServiceUrl).href,
-        {
-          responseType: 'blob',
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const mimeType = headers['content-type']?.toString();
+      let file = fileState.files[urn];
+      if (!file) {
+        const token = await getAccessToken();
+        const { data, headers } = await axios.get(
+          new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}/download`, fileServiceUrl).href,
+          {
+            responseType: 'blob',
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const mimeType = headers['content-type']?.toString();
 
-      const file = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(new File([data], metadata.filename, { type: mimeType }));
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(reader.error);
+        file = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(new File([data], metadata.filename, { type: mimeType }));
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+        });
+      }
+
+      return { file, metadata: { ...metadata } };
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const findFile = createAsyncThunk(
+  'file/find-file',
+  async ({ recordId, type }: { recordId: string; type: string }, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const fileServiceUrl = config.directory[FILE_SERVICE_ID];
+
+      const token = await getAccessToken();
+      const { data } = await axios.get<{ results: FileMetadata[] }>(new URL('/file/v1/files', fileServiceUrl).href, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          criteria: JSON.stringify({
+            typeEquals: type,
+            recordIdEquals: recordId,
+          }),
+        },
       });
 
-      return { file, metadata: { ...metadata, mimeType } };
+      return data.results[0];
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -102,6 +137,7 @@ interface FileState {
   busy: {
     download: Record<string, boolean>;
     metadata: Record<string, boolean>;
+    find: boolean;
   };
 }
 
@@ -111,6 +147,7 @@ const initialFileState: FileState = {
   busy: {
     download: {},
     metadata: {},
+    find: false,
   },
 };
 
@@ -140,6 +177,18 @@ const fileSlice = createSlice({
       })
       .addCase(downloadFile.rejected, (state, { meta }) => {
         state.busy.download[meta.arg] = false;
+      })
+      .addCase(findFile.pending, (state) => {
+        state.busy.find = true;
+      })
+      .addCase(findFile.fulfilled, (state, { payload }) => {
+        if (payload) {
+          state.metadata[payload.urn] = payload;
+        }
+        state.busy.find = false;
+      })
+      .addCase(findFile.rejected, (state) => {
+        state.busy.find = false;
       });
   },
 });
