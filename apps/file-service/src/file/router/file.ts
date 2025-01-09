@@ -16,6 +16,8 @@ import {
 } from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param, query } from 'express-validator';
+import { pipeline } from 'stream/promises';
+import validator from 'validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { createUpload } from './upload';
@@ -23,7 +25,6 @@ import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
 import { DirectoryServiceRoles, FileCriteria } from '../types';
-import validator from 'validator';
 import { mapFile, mapFileType } from '../mapper';
 import { FileTypeEntity } from '../model';
 
@@ -243,9 +244,8 @@ export function downloadFile(logger: Logger): RequestHandler {
           tenant: fileEntity.tenantId?.toString(),
           user: user ? `${user.name} (ID: ${user.id})` : null,
         });
-        res.end();
       });
-      stream.pipe(res, { end: false });
+      await pipeline(stream, res);
     } catch (err) {
       next(err);
     }
