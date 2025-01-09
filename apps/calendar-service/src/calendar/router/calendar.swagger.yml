@@ -3,6 +3,8 @@ components:
     Calendar:
       type: object
       properties:
+        urn:
+          type: string
         name:
           type: string
         displayName:
@@ -20,6 +22,8 @@ components:
     CalendarEvent:
       type: object
       properties:
+        urn:
+          type: string
         id:
           type: number
         recordId:
@@ -43,7 +47,7 @@ components:
         attendees:
           type: array
           items:
-            $ref: '#/components/schemas/Attendee'
+            $ref: "#/components/schemas/Attendee"
     Attendee:
       type: object
       properties:
@@ -96,7 +100,7 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/Calendar'
+                $ref: "#/components/schemas/Calendar"
 
 /calendar/v1/calendars/{name}:
   get:
@@ -122,7 +126,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Calendar'
+              $ref: "#/components/schemas/Calendar"
 
 /calendar/v1/calendars/{name}/export:
   get:
@@ -167,7 +171,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CalendarEventCriteria'
+              $ref: "#/components/schemas/CalendarEventCriteria"
     responses:
       200:
         description: Request completed successfully.
@@ -216,7 +220,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CalendarEventCriteria'
+              $ref: "#/components/schemas/CalendarEventCriteria"
     responses:
       200:
         description: Request completed successfully.
@@ -228,7 +232,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/CalendarEvent'
+                    $ref: "#/components/schemas/CalendarEvent"
                 page:
                   type: object
                   properties:
@@ -272,7 +276,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CalendarEvent'
+              $ref: "#/components/schemas/CalendarEvent"
 
 /calendar/v1/calendars/{name}/events/{id}:
   parameters:
@@ -311,7 +315,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CalendarEvent'
+              $ref: "#/components/schemas/CalendarEvent"
   patch:
     tags:
       - Calendar
@@ -345,7 +349,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CalendarEvent'
+              $ref: "#/components/schemas/CalendarEvent"
   delete:
     tags:
       - Calendar
@@ -385,7 +389,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Attendee'
+              $ref: "#/components/schemas/Attendee"
   post:
     tags:
       - Calendar
@@ -408,7 +412,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Attendee'
+              $ref: "#/components/schemas/Attendee"
 
 /calendar/v1/calendars/{name}/events/{id}/attendees/{attendeeId}:
   parameters:
@@ -440,7 +444,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Attendee'
+              $ref: "#/components/schemas/Attendee"
   put:
     tags:
       - Calendar
@@ -462,7 +466,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Attendee'
+              $ref: "#/components/schemas/Attendee"
   delete:
     tags:
       - Calendar
