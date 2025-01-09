@@ -111,6 +111,7 @@ class CalendarServiceImpl implements CalendarService {
 
   private mapIntake(response: IntakeResponse, isUpcoming: boolean): Intake {
     return {
+      urn: response.urn,
       name: response.name,
       description: response.description,
       start: new Date(response.start),
