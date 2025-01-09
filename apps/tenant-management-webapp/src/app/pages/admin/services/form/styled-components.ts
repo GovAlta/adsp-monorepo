@@ -414,21 +414,6 @@ export const SpinnerPaddingSmall = styled.div`
 `;
 export const OverflowWrap = styled.span`
   word-break: break-all;
-  display: inline-block;
-  width: 100%;
-`;
-
-export const TableDataName = styled.td`
-  word-break: break-all;
-  width: 250px;
-`;
-export const TableDataId = styled.td`
-  word-break: break-all;
-  width: 250px;
-`;
-export const TableDataDescription = styled.td`
-  word-break: break-all;
-  width: 250px;
 `;
 
 export const PreviewTopStyle = styled.div`

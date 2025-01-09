@@ -40,8 +40,7 @@ const Container = styled.div<Props>`
   @media (min-width: 1280px) {
     padding: ${(props) => `${props.xlVSpacing ?? props.vs ?? 0}rem ${props.xlHSpacing ?? props.hs ?? 0}rem`};
     margin: 0 auto;
-    max-width: 1490px;
-    width: 100%;
+    width: 1152px;
   }
 `;
 
