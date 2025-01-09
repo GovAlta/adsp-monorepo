@@ -435,7 +435,7 @@ export const createCalendarRouter = ({
     validateNameHandler,
     createValidationHandler(query('criteria').optional().isJSON(), query('includeAttendees').optional().isBoolean()),
     getCalendar(tenantService),
-    getCalendarEvents
+    getCalendarEvents(apiId)
   );
   router.post(
     '/calendars/:name/events',
@@ -451,7 +451,7 @@ export const createCalendarRouter = ({
     createValidationHandler(query('includeAttendees').optional().isBoolean()),
     getCalendar(tenantService),
     getCalendarEvent,
-    retrieveCalendarEvent
+    retrieveCalendarEvent(apiId)
   );
   router.patch(
     '/calendars/:name/events/:id',
