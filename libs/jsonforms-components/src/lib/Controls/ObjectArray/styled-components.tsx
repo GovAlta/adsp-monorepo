@@ -14,7 +14,7 @@ export const ToolBarHeader = styled.div`
   margin-bottom: var(--goa-space-l);
 `;
 
-export const ObjectArrayTitle = styled.h2`
+export const ObjectArrayTitle = styled.h3`
   margin-bottom: var(--goa-space-l);
 `;
 
