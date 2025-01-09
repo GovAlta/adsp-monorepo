@@ -18,7 +18,7 @@ import {
   busySelector,
   nextSelector,
   selectedDataValuesSelector,
-  isFormAdminSelector,
+  canExportSelector,
   exportSubmissions,
   submissionsExportSelector,
 } from '../state';
@@ -40,7 +40,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
 
   const [showExport, setShowExport] = useState(false);
 
-  const isFormAdmin = useSelector(isFormAdminSelector);
+  const canExport = useSelector(canExportSelector);
   const busy = useSelector(busySelector);
   const submissions = useSelector(submissionsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
@@ -107,7 +107,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
             ))}
           </SearchFormItemsContainer>
           <GoAButtonGroup alignment="end" mt="l">
-            {isFormAdmin && (
+            {canExport && (
               <GoAButton type="tertiary" mr="xl" onClick={() => setShowExport(true)}>
                 Export to file
               </GoAButton>
@@ -164,17 +164,19 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               </tr>
             ))}
             {next && (
-              <td colSpan={4 + dataValues.length}>
-                <GoAButtonGroup alignment="center">
-                  <GoAButton
-                    type="tertiary"
-                    disabled={busy.loading}
-                    onClick={() => dispatch(findSubmissions({ definitionId, criteria, after: next }))}
-                  >
-                    Load more
-                  </GoAButton>
-                </GoAButtonGroup>
-              </td>
+              <tr>
+                <td colSpan={4 + dataValues.length}>
+                  <GoAButtonGroup alignment="center">
+                    <GoAButton
+                      type="tertiary"
+                      disabled={busy.loading}
+                      onClick={() => dispatch(findSubmissions({ definitionId, criteria, after: next }))}
+                    >
+                      Load more
+                    </GoAButton>
+                  </GoAButtonGroup>
+                </td>
+              </tr>
             )}
           </tbody>
         </GoATable>

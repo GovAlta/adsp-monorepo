@@ -18,13 +18,28 @@ export const SessionExpiryModal = () => {
 
   const [seconds, setSeconds] = useState(secondsTilExpiry);
   useEffect(() => {
-    const interval = setInterval(() => setSeconds((count) => count - 1), 1000);
-    return () => clearInterval(interval);
-  }, [setSeconds]);
+    // Set the interval to count down only if we're showing the modal.
+    if (showAlert) {
+      const interval = setInterval(
+        () =>
+          setSeconds((count) => {
+            const next = count - 1;
+
+            // Stop if we're at 0.
+            if (next < 1) {
+              clearInterval(interval);
+            }
+            return next;
+          }),
+        1000
+      );
+      return () => clearInterval(interval);
+    }
+  }, [setSeconds, showAlert]);
 
   return (
     showAlert && (
-      <GoAModal heading="Continue working?" open={true}>
+      <GoAModal heading="Continue working?" open={showAlert}>
         {seconds > 0 ? (
           <div>
             Your session will expire in <SecondsSpan>{seconds}</SecondsSpan> seconds. Do you want to continue working?

@@ -26,6 +26,7 @@ export interface FormDefinition {
   uiSchema: UISchemaElement;
   applicantRoles: string[];
   clerkRoles: string[];
+  assessorRoles: string[];
   dispositionStates: DispositionState[];
   submissionRecords: boolean;
   anonymousApply: boolean;
@@ -35,6 +36,7 @@ export interface FormDefinition {
 export enum FormStatus {
   draft = 'Draft',
   submitted = 'Submitted',
+  archived = 'Archived'
 }
 
 export interface Form {

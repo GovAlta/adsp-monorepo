@@ -128,37 +128,6 @@ export const initialFormState: FormState = {
   },
 };
 
-export const updateFormDisposition = createAsyncThunk(
-  'form/update-form-disposition',
-  async (
-    { submissionUrn, status, reason }: { submissionUrn: AdspId; status: string; reason: string },
-    { getState, rejectWithValue }
-  ) => {
-    try {
-      const { config } = getState() as AppState;
-      const formServiceUrl = config.directory[FORM_SERVICE_ID];
-      const accessToken = await getAccessToken();
-
-      const { data } = await axios.post<FormSubmission>(
-        new URL(`/form/v1${submissionUrn.resource}`, formServiceUrl).href,
-        { dispositionStatus: status, dispositionReason: reason },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-
-      return data;
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        return rejectWithValue({
-          status: err.response?.status,
-          message: err.response?.data?.errorMessage || err.message,
-        });
-      } else {
-        throw err;
-      }
-    }
-  }
-);
-
 export const loadDefinitions = createAsyncThunk(
   'form/load-definitions',
   async ({ after }: { after?: string }, { getState, rejectWithValue }) => {
@@ -648,6 +617,65 @@ export const findFormPdf = createAsyncThunk(
   }
 );
 
+export const updateFormDisposition = createAsyncThunk(
+  'form/update-form-disposition',
+  async (
+    { submissionUrn, status, reason }: { submissionUrn: AdspId; status: string; reason: string },
+    { getState, rejectWithValue }
+  ) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.post<FormSubmission>(
+        new URL(`/form/v1${submissionUrn.resource}`, formServiceUrl).href,
+        { dispositionStatus: status, dispositionReason: reason },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const runFormOperation = createAsyncThunk(
+  'form/run-form-operation',
+  async ({ urn, operation }: { urn: AdspId; operation: 'to-draft' | 'archive' }, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.post<Form>(
+        new URL(`/form/v1${urn.resource}`, formServiceUrl).href,
+        { operation },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      return { ...data, status: FormStatus[data.status] };
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
@@ -774,16 +802,6 @@ export const formSlice = createSlice({
       .addCase(findSubmissions.rejected, (state) => {
         state.busy.loading = false;
       })
-      .addCase(updateFormDisposition.pending, (state) => {
-        state.busy.executing = true;
-      })
-      .addCase(updateFormDisposition.rejected, (state) => {
-        state.busy.executing = true;
-      })
-      .addCase(updateFormDisposition.fulfilled, (state, { payload }) => {
-        state.busy.executing = false;
-        state.submissions[payload.id] = payload;
-      })
       .addCase(exportForms.pending, (state, { meta }) => {
         state.busy.exporting = true;
         state.export.forms = { definitionId: meta.arg.definitionId };
@@ -827,6 +845,27 @@ export const formSlice = createSlice({
       .addCase(findFormPdf.fulfilled, (state, { payload, meta }) => {
         state.pdfs[meta.arg] = payload?.urn;
         state.busy.findPdf = false;
+      })
+      .addCase(updateFormDisposition.pending, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(updateFormDisposition.rejected, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(updateFormDisposition.fulfilled, (state, { payload }) => {
+        state.busy.executing = false;
+        state.submissions[payload.id] = payload;
+      })
+      .addCase(runFormOperation.pending, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(runFormOperation.rejected, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(runFormOperation.fulfilled, (state, { payload }) => {
+        state.busy.executing = false;
+        // Merge the form since operation request doesn't return data and files.
+        state.forms[payload.id] = { ...state.forms[payload.id], ...payload };
       });
   },
 });
@@ -929,12 +968,21 @@ export const nextSelector = (state: AppState) => state.form.next;
 
 export const dispositionDraftSelector = (state: AppState) => state.form.dispositionDraft;
 
-export const isFormAdminSelector = (state: AppState) =>
+export const canExportSelector = (state: AppState) =>
   state.user.user?.roles?.includes('urn:ads:platform:form-service:form-admin');
 
 export const canAccessPdfSelector = (state: AppState) =>
   state.user.user?.roles?.includes('urn:ads:platform:file-service:file-admin') ||
   state.user.user?.roles?.includes('urn:ads:platform:pdf-service:pdf-generator');
+
+export const canArchiveSelector = canExportSelector;
+export const canSetToDraftSelector = createSelector(
+  definitionSelector,
+  (state: AppState) => state.user.user,
+  (definition, user) =>
+    (definition && !definition.anonymousApply && user?.roles?.includes('urn:ads:platform:form-service:form-admin')) ||
+    !!user.roles?.find((role) => definition?.assessorRoles?.includes(role))
+);
 
 export const formsExportSelector = createSelector(
   (state: AppState) => state.form.export.forms,

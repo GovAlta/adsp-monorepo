@@ -17,7 +17,7 @@ const DetailsLayoutContainer = styled.div`
     border-bottom: 1px solid var(--goa-color-greyscale-200);
     flex: 0;
   }
-  & > :last-child {
+  & > form:last-child {
     background: var(--goa-color-greyscale-100);
     border-top: 1px solid var(--goa-color-greyscale-200);
     flex: 0;
@@ -30,6 +30,7 @@ const DetailsLayoutContainer = styled.div`
 
 interface DetailsLayoutProps {
   initialized: boolean;
+  navButtons?: ReactNode;
   header: ReactNode;
   children: ReactNode;
   actionsForm: ReactNode;
@@ -37,6 +38,7 @@ interface DetailsLayoutProps {
 
 export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({
   initialized,
+  navButtons,
   header,
   children,
   actionsForm,
@@ -50,6 +52,7 @@ export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({
           <GoAButton type="secondary" leadingIcon="arrow-back" onClick={() => navigate(-1)}>
             Back
           </GoAButton>
+          {navButtons}
         </GoAButtonGroup>
         {header}
       </div>
