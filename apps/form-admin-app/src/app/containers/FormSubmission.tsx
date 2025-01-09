@@ -9,7 +9,7 @@ import {
 import { DateTime } from 'luxon';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   AppDispatch,
   busySelector,
@@ -30,6 +30,7 @@ import { PdfDownload } from './PdfDownload';
 
 export const FormSubmission = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
 
   const { submissionId } = useParams();
   const busy = useSelector(busySelector);
@@ -45,6 +46,13 @@ export const FormSubmission = () => {
   return (
     <DetailsLayout
       initialized={!!(definition && submission)}
+      navButtons={
+        submission?.formId && (
+          <GoAButton type="tertiary" onClick={() => navigate(`../forms/${submission.formId}`)}>
+            Go to related form
+          </GoAButton>
+        )
+      }
       header={
         submission && (
           <PropertiesContainer>

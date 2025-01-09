@@ -80,17 +80,19 @@ export const FormsDefinitions = () => {
               </tr>
             ))}
             {next && (
-              <td colSpan={5}>
-                <GoAButtonGroup alignment="center">
-                  <GoAButton
-                    type="tertiary"
-                    disabled={busy.loading}
-                    onClick={() => dispatch(loadDefinitions({ after: next }))}
-                  >
-                    Load more
-                  </GoAButton>
-                </GoAButtonGroup>
-              </td>
+              <tr>
+                <td colSpan={5}>
+                  <GoAButtonGroup alignment="center">
+                    <GoAButton
+                      type="tertiary"
+                      disabled={busy.loading}
+                      onClick={() => dispatch(loadDefinitions({ after: next }))}
+                    >
+                      Load more
+                    </GoAButton>
+                  </GoAButtonGroup>
+                </td>
+              </tr>
             )}
           </tbody>
         </GoATable>

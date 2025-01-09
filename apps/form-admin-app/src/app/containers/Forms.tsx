@@ -18,7 +18,7 @@ import {
   formCriteriaSelector,
   formsSelector,
   nextSelector,
-  isFormAdminSelector,
+  canExportSelector,
   exportForms,
   formsExportSelector,
 } from '../state';
@@ -39,7 +39,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
 
   const [showExport, setShowExport] = useState(false);
 
-  const isFormAdmin = useSelector(isFormAdminSelector);
+  const canExport = useSelector(canExportSelector);
   const busy = useSelector(busySelector);
   const forms = useSelector(formsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
@@ -75,6 +75,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               >
                 <GoADropdownItem value="submitted" label="Submitted" />
                 <GoADropdownItem value="draft" label="Draft" />
+                <GoADropdownItem value="archived" label="Archived" />
                 <GoADropdownItem value={null} label="All" />
               </GoADropdown>
             </GoAFormItem>
@@ -100,7 +101,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             ))}
           </SearchFormItemsContainer>
           <GoAButtonGroup alignment="end" mt="l">
-            {isFormAdmin && (
+            {canExport && (
               <GoAButton type="tertiary" mr="xl" onClick={() => setShowExport(true)}>
                 Export to file
               </GoAButton>
@@ -153,17 +154,19 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               </tr>
             ))}
             {next && (
-              <td colSpan={3 + dataValues.length}>
-                <GoAButtonGroup alignment="center">
-                  <GoAButton
-                    type="tertiary"
-                    disabled={busy.loading}
-                    onClick={() => dispatch(findForms({ definitionId, criteria, after: next }))}
-                  >
-                    Load more
-                  </GoAButton>
-                </GoAButtonGroup>
-              </td>
+              <tr>
+                <td colSpan={3 + dataValues.length}>
+                  <GoAButtonGroup alignment="center">
+                    <GoAButton
+                      type="tertiary"
+                      disabled={busy.loading}
+                      onClick={() => dispatch(findForms({ definitionId, criteria, after: next }))}
+                    >
+                      Load more
+                    </GoAButton>
+                  </GoAButtonGroup>
+                </td>
+              </tr>
             )}
           </tbody>
         </GoATable>
