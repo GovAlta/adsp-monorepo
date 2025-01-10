@@ -7,6 +7,7 @@ import { downloadFile, getFiles, uploadFile } from '.';
 import { FileEntity, FileTypeEntity } from '..';
 import { FileType, ServiceUserRoles } from '../types';
 import { createFileRouter, deleteFile, fileOperation, getFile, getType, getTypes } from './file';
+import { Readable } from 'stream';
 
 describe('file router', () => {
   const serviceId = adspId`urn:ads:platform:file-service`;
@@ -548,7 +549,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const stream = { pipe: jest.fn() };
+      const stream = Readable.from(['test value']);
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
@@ -577,7 +578,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const stream = { pipe: jest.fn() };
+      const stream = Readable.from(['test value']);
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(publicFile);
 
@@ -606,7 +607,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const stream = { pipe: jest.fn() };
+      const stream = Readable.from(['test value']);
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(fileImage);
 
@@ -634,7 +635,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const stream = { pipe: jest.fn() };
+      const stream = Readable.from(['test value']);
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(fileVideo);
 
@@ -664,7 +665,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const stream = { pipe: jest.fn() };
+      const stream = Readable.from(['test value']);
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
@@ -702,7 +703,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const stream = { pipe: jest.fn() };
+      const stream = Readable.from(['test value']);
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
@@ -740,7 +741,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const stream = { pipe: jest.fn() };
+      const stream = Readable.from(['test value']);
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
@@ -772,7 +773,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const stream = { pipe: jest.fn() };
+      const stream = Readable.from(['test value']);
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
