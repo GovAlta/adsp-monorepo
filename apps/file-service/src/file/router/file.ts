@@ -245,7 +245,19 @@ export function downloadFile(logger: Logger): RequestHandler {
           user: user ? `${user.name} (ID: ${user.id})` : null,
         });
       });
-      await pipeline(stream, res);
+
+      // Use catch instead of awaiting pipeline since the response is inflight and
+      // it's too late to use the regular request error handler to set a status code.
+      pipeline(stream, res).catch((err) => {
+        logger.warn(
+          `Stream pipeline of file '${fileEntity.filename}' (ID: ${fileEntity.id}) encountered error: ${err}`,
+          {
+            context: 'file-router',
+            tenant: fileEntity.tenantId?.toString(),
+            user: user ? `${user.name} (ID: ${user.id})` : null,
+          }
+        );
+      });
     } catch (err) {
       next(err);
     }
