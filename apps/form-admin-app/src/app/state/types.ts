@@ -1,8 +1,10 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 
+export const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service';
 export const PUSH_SERVICE_ID = 'urn:ads:platform:push-service';
 export const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
 export const EXPORT_SERVICE_ID = 'urn:ads:platform:export-service';
+export const CALENDAR_SERVICE_ID = 'urn:ads:platform:calendar-service';
 
 export interface PagedResults<T> {
   results: T[];
@@ -12,13 +14,32 @@ export interface PagedResults<T> {
   };
 }
 
+export interface CalendarEvent {
+  urn: string;
+  id: number;
+  start: string;
+  end?: string;
+  name: string;
+  description: string;
+  recordId: string;
+}
+
 interface DispositionState {
   id: string;
   name: string;
   description: string;
 }
 
+export interface Intake {
+  urn: string;
+  start: string;
+  end?: string;
+  isAllDay: boolean;
+  isUpcoming: boolean;
+}
+
 export interface FormDefinition {
+  urn: string;
   id: string;
   name: string;
   description: string;
@@ -31,12 +52,14 @@ export interface FormDefinition {
   submissionRecords: boolean;
   anonymousApply: boolean;
   generatesPdf: boolean;
+  scheduledIntakes: boolean;
+  intake?: Intake;
 }
 
 export enum FormStatus {
   draft = 'Draft',
   submitted = 'Submitted',
-  archived = 'Archived'
+  archived = 'Archived',
 }
 
 export interface Form {

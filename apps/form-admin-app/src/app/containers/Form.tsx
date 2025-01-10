@@ -105,7 +105,7 @@ export const Form = () => {
               Cancel
             </GoAButton>
             <GoAButton
-              type="primary"
+              type={form?.status === FormStatus.submitted ? 'primary' : 'secondary'}
               onClick={() => {
                 dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'archive' }));
                 setShowArchiveConfirm(false);

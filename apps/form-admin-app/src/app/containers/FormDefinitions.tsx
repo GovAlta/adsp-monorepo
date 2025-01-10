@@ -52,6 +52,7 @@ export const FormsDefinitions = () => {
             <tr>
               <th>Name</th>
               <th>Anonymous applicant</th>
+              <th>Schedule intakes</th>
               <th>Creates submissions</th>
               <th>Creates PDF</th>
               <th>Actions</th>
@@ -63,6 +64,9 @@ export const FormsDefinitions = () => {
                 <td>{definition.name}</td>
                 <td>
                   <FeatureBadge feature={definition.anonymousApply} />
+                </td>
+                <td>
+                  <FeatureBadge feature={definition.scheduledIntakes} />
                 </td>
                 <td>
                   <FeatureBadge feature={definition.submissionRecords} />
@@ -81,7 +85,7 @@ export const FormsDefinitions = () => {
             ))}
             {next && (
               <tr>
-                <td colSpan={5}>
+                <td colSpan={6}>
                   <GoAButtonGroup alignment="center">
                     <GoAButton
                       type="tertiary"

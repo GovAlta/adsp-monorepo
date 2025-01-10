@@ -15,6 +15,8 @@ import {
   FormStatus,
   FormDisposition,
   EXPORT_SERVICE_ID,
+  CALENDAR_SERVICE_ID,
+  CONFIGURATION_SERVICE_ID,
 } from './types';
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
@@ -142,7 +144,13 @@ export const loadDefinitions = createAsyncThunk(
         params: { top: 20, after },
       });
 
-      return data;
+      return {
+        ...data,
+        results: data.results.map((result) => ({
+          ...result,
+          urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${result.id}`,
+        })),
+      };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -238,16 +246,11 @@ export const findSubmissions = createAsyncThunk(
   }
 );
 
-export const selectDefinition = createAsyncThunk(
-  'form/select-definition',
-  (definitionId: string, { getState, dispatch }) => {
-    const { form } = getState() as AppState;
-
-    if (definitionId && (!form.definitions[definitionId] || !form.dataValues[definitionId])) {
-      dispatch(loadDefinition(definitionId));
-    }
+export const selectDefinition = createAsyncThunk('form/select-definition', (definitionId: string, { dispatch }) => {
+  if (definitionId) {
+    dispatch(loadDefinition(definitionId));
   }
-);
+});
 
 export const selectForm = createAsyncThunk('form/select-form', (formId: string, { dispatch }) => {
   if (formId) {
@@ -300,7 +303,7 @@ export const loadDefinition = createAsyncThunk(
         await dispatch(initializeDataValues({ definitionId, schema: data.dataSchema }));
       }
 
-      return data;
+      return { ...data, urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${data.id}` };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -676,7 +679,7 @@ export const runFormOperation = createAsyncThunk(
   }
 );
 
-export const formSlice = createSlice({
+const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
   reducers: {
@@ -719,7 +722,7 @@ export const formSlice = createSlice({
         state.busy.loading = false;
         state.definitions = payload.results.reduce(
           (definitions, definition) => ({ ...definitions, [definition.id]: definition }),
-          state.definitions
+          state.definitions as Record<string, FormDefinition>
         );
         state.results.definitions = [
           ...(payload.page.after ? state.results.definitions : []),
@@ -774,7 +777,10 @@ export const formSlice = createSlice({
       })
       .addCase(findForms.fulfilled, (state, { payload }) => {
         state.busy.loading = false;
-        state.forms = payload.results.reduce((results, form) => ({ ...results, [form.id]: form }), state.forms);
+        state.forms = payload.results.reduce(
+          (results, form) => ({ ...results, [form.id]: form }),
+          state.forms as Record<string, Form>
+        );
         state.results.forms = [
           ...(payload.page.after ? state.results.forms : []),
           ...payload.results.map((result) => result.id),
@@ -791,7 +797,7 @@ export const formSlice = createSlice({
         state.busy.loading = false;
         state.submissions = payload.results.reduce(
           (results, form) => ({ ...results, [form.id]: form }),
-          state.submissions
+          state.submissions as Record<string, FormSubmission>
         );
         state.results.submissions = [
           ...(payload.page.after ? state.results.submissions : []),
@@ -840,7 +846,7 @@ export const formSlice = createSlice({
         state.busy.findPdf = true;
       })
       .addCase(findFormPdf.rejected, (state) => {
-        state.busy.findPdf = true;
+        state.busy.findPdf = false;
       })
       .addCase(findFormPdf.fulfilled, (state, { payload, meta }) => {
         state.pdfs[meta.arg] = payload?.urn;
@@ -850,7 +856,7 @@ export const formSlice = createSlice({
         state.busy.executing = true;
       })
       .addCase(updateFormDisposition.rejected, (state) => {
-        state.busy.executing = true;
+        state.busy.executing = false;
       })
       .addCase(updateFormDisposition.fulfilled, (state, { payload }) => {
         state.busy.executing = false;
@@ -860,12 +866,15 @@ export const formSlice = createSlice({
         state.busy.executing = true;
       })
       .addCase(runFormOperation.rejected, (state) => {
-        state.busy.executing = true;
+        state.busy.executing = false;
       })
       .addCase(runFormOperation.fulfilled, (state, { payload }) => {
         state.busy.executing = false;
         // Merge the form since operation request doesn't return data and files.
-        state.forms[payload.id] = { ...state.forms[payload.id], ...payload };
+        state.forms[payload.id] = {
+          ...(state.forms[payload.id] as Form),
+          ...payload,
+        };
       });
   },
 });
@@ -885,7 +894,20 @@ export const definitionsSelector = createSelector(
 export const definitionSelector = createSelector(
   (state: AppState) => state.form.definitions,
   (state: AppState) => state.form.selectedDefinition,
-  (definitions, selected) => definitions[selected]
+  (definitions, selected) => {
+    const definition = definitions[selected];
+
+    return definition
+      ? {
+          ...definition,
+          intake: definition.intake && {
+            ...definition.intake,
+            start: definition.intake.start && DateTime.fromISO(definition.intake.start),
+            end: definition.intake.end && DateTime.fromISO(definition.intake.end),
+          },
+        }
+      : undefined;
+  }
 );
 
 export const dataValuesSelector = createSelector(
@@ -970,6 +992,7 @@ export const dispositionDraftSelector = (state: AppState) => state.form.disposit
 
 export const canExportSelector = (state: AppState) =>
   state.user.user?.roles?.includes('urn:ads:platform:form-service:form-admin');
+export const canGetIntakeCalendarSelector = canExportSelector;
 
 export const canAccessPdfSelector = (state: AppState) =>
   state.user.user?.roles?.includes('urn:ads:platform:file-service:file-admin') ||
