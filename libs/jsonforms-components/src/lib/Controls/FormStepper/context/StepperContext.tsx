@@ -144,7 +144,7 @@ export const JsonFormsStepperContextProvider = ({
     if (context?.isProvided === true) {
       stepperDispatch({ type: 'update/uischema', payload: { state: createStepperContextInitData(StepperProps) } });
     }
-  }, [StepperProps.uischema]);
+  }, [JSON.stringify(StepperProps.uischema)]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };
