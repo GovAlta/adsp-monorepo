@@ -44,6 +44,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const [address, setAddress] = useState<Address>(data || defaultAddress);
   const [searchTerm, setSearchTerm] = useState('');
+  const [saveSearchTerm, setSaveSearchTerm] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -86,6 +87,13 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   useEffect(() => {
+    if (saveSearchTerm) {
+      handleInputChange('addressLine1', searchTerm);
+      setSaveSearchTerm(false);
+    }
+  }, [saveSearchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     const fetchSuggestions = async () => {
       if (searchTerm.length > 2 && dropdownSelected === false) {
         setLoading(true);
@@ -106,11 +114,11 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [searchTerm, dropdownSelected]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
-    handleInputChange('addressLine1', value);
+    setSaveSearchTerm(true);
   };
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
