@@ -1,9 +1,10 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { SecurityClassification } from '@store/common/models';
-import { FileItem } from '@store/file/models';
 import { Socket } from 'socket.io-client';
 
 export type ExportStatus = 'queued' | 'completed' | 'failed';
+export type ExportFormat = 'json' | 'csv';
+
 export interface FormDefinition {
   id: string;
   name: string;
@@ -101,7 +102,7 @@ export interface FormState {
     uiSchemaError?: string;
     resolvedDataSchema: JsonSchema;
   };
-
+  columns: ColumnOption[];
   metrics: FormMetrics;
   socket: Socket;
 }
@@ -127,4 +128,58 @@ export interface FormExportResponse {
 export interface FormMetrics {
   formsCreated?: number;
   formsSubmitted?: number;
+}
+export interface ColumnOption {
+  id: string;
+  label: string;
+  selected: boolean;
+  group: 'Standard Properties' | 'Form Data';
+}
+
+export interface FormInfoItem {
+  urn?: string;
+  id?: string;
+  jobId?: string;
+  definition?: FormDefinition;
+  anonymousApplicant?: boolean;
+  applicant?: {
+    addressAs?: string;
+  };
+  status?: ExportStatus;
+  created?: string;
+  createdBy?: {
+    id?: string;
+    name?: string;
+  };
+  lastAccessed?: string;
+  locked?: string;
+  submitted?: string;
+  submission?: {
+    id?: string;
+    name?: string;
+  };
+}
+
+export interface SubmissionInfoItem {
+  urn?: string;
+  id?: string;
+  definitionId?: string;
+  tenantId?: string;
+  formId?: string;
+  //eslint-disable-next-line
+  formData?: {};
+  //eslint-disable-next-line
+  formFiles?: {};
+  created?: string;
+  createdBy?: {
+    id?: string;
+    name?: string;
+  };
+  updatedBy?: string;
+  updated?: string;
+  disposition?: {
+    status?: ExportStatus;
+    reason?: string;
+    date?: string;
+  };
 }
