@@ -1,12 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
-import { useJsonForms } from '@jsonforms/react';
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
-import { ErrorObject } from 'ajv';
 
 export type GoAInputType =
   | 'text'
@@ -31,45 +29,14 @@ export interface WithInput {
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
-  const { uischema, visible, label, input, required, errors, path, isStepperReview, id } = props;
+  const { uischema, visible, label, input, required, path, isStepperReview } = props;
   const InnerComponent = input;
   const labelToUpdate: string = getLabelText(uischema.scope, label || '');
-  const ctx = useJsonForms();
   let modifiedErrors = checkFieldValidity(props as ControlProps);
 
   if (modifiedErrors === 'must be equal to one of the allowed values') {
     modifiedErrors = '';
   }
-
-  useEffect(() => {
-    if (ctx.core?.ajv) {
-      // eslint-disable-next-line
-      const newError: ErrorObject<string, Record<string, any>, unknown> = {
-        instancePath: path,
-        message: modifiedErrors,
-        schemaPath: id,
-        keyword: '',
-        params: {},
-      };
-
-      const existingErrorIndex = (ctx.core.ajv.errors || []).findIndex((error) => {
-        return error?.schemaPath === id;
-      });
-      if (modifiedErrors) {
-        if (existingErrorIndex > -1) {
-          (ctx.core.ajv.errors || [])[existingErrorIndex] = newError;
-        } else {
-          ctx.core.ajv.errors = [...(ctx.core.ajv.errors || []), newError];
-        }
-      } else {
-        if (existingErrorIndex > -1) {
-          delete (ctx.core.ajv.errors || [])[existingErrorIndex];
-        }
-      }
-
-      ctx.core.ajv.errors = ctx.core?.ajv?.errors?.filter((e) => e !== null) || [];
-    }
-  }, [modifiedErrors, ctx, path, id]);
 
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>

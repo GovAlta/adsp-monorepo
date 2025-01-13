@@ -6,7 +6,6 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoAFormItem,
-  GoAInput,
   GoATable,
 } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +18,7 @@ import {
   formCriteriaSelector,
   formsSelector,
   nextSelector,
-  isFormAdminSelector,
+  canExportSelector,
   exportForms,
   formsExportSelector,
 } from '../state';
@@ -28,6 +27,7 @@ import { ContentContainer } from '../components/ContentContainer';
 import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
+import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 
 interface FormsProps {
   definitionId: string;
@@ -39,7 +39,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
 
   const [showExport, setShowExport] = useState(false);
 
-  const isFormAdmin = useSelector(isFormAdminSelector);
+  const canExport = useSelector(canExportSelector);
   const busy = useSelector(busySelector);
   const forms = useSelector(formsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
@@ -59,7 +59,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
       searchForm={
         <form>
           <SearchFormItemsContainer>
-            <GoAFormItem label="Status">
+            <GoAFormItem label="Status" mr="m">
               <GoADropdown
                 relative={true}
                 name="form-status"
@@ -75,34 +75,33 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               >
                 <GoADropdownItem value="submitted" label="Submitted" />
                 <GoADropdownItem value="draft" label="Draft" />
+                <GoADropdownItem value="archived" label="Archived" />
                 <GoADropdownItem value={null} label="All" />
               </GoADropdown>
             </GoAFormItem>
-            {dataValues
-              .filter(({ type }) => type === 'string')
-              .map(({ name, path }) => (
-                <GoAFormItem label={name} key={path} ml="m">
-                  <GoAInput
-                    type="text"
-                    onChange={(_, value: string) =>
-                      dispatch(
-                        formActions.setFormCriteria({
-                          ...criteria,
-                          dataCriteria: {
-                            ...criteria?.dataCriteria,
-                            [path]: value,
-                          },
-                        })
-                      )
-                    }
-                    value={criteria?.dataCriteria?.[path]?.toString() || ''}
-                    name={name}
-                  />
-                </GoAFormItem>
-              ))}
+            {dataValues.map(({ name, path, type }) => (
+              <DataValueCriteriaItem
+                key={path}
+                name={name}
+                path={path}
+                type={type}
+                value={criteria?.dataCriteria?.[path]?.toString() || ''}
+                onChange={(value) =>
+                  dispatch(
+                    formActions.setFormCriteria({
+                      ...criteria,
+                      dataCriteria: {
+                        ...criteria?.dataCriteria,
+                        [path]: value || undefined,
+                      },
+                    })
+                  )
+                }
+              />
+            ))}
           </SearchFormItemsContainer>
           <GoAButtonGroup alignment="end" mt="l">
-            {isFormAdmin && (
+            {canExport && (
               <GoAButton type="tertiary" mr="xl" onClick={() => setShowExport(true)}>
                 Export to file
               </GoAButton>
@@ -131,8 +130,8 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             <tr>
               <th>Created on</th>
               <th>Status</th>
-              {dataValues.map(({ name }) => (
-                <th>{name}</th>
+              {dataValues.map(({ name, path }) => (
+                <th key={path}>{name}</th>
               ))}
               <th>Actions</th>
             </tr>
@@ -155,17 +154,19 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               </tr>
             ))}
             {next && (
-              <td colSpan={3 + dataValues.length}>
-                <GoAButtonGroup alignment="center">
-                  <GoAButton
-                    type="tertiary"
-                    disabled={busy.loading}
-                    onClick={() => dispatch(findForms({ definitionId, criteria, after: next }))}
-                  >
-                    Load more
-                  </GoAButton>
-                </GoAButtonGroup>
-              </td>
+              <tr>
+                <td colSpan={3 + dataValues.length}>
+                  <GoAButtonGroup alignment="center">
+                    <GoAButton
+                      type="tertiary"
+                      disabled={busy.loading}
+                      onClick={() => dispatch(findForms({ definitionId, criteria, after: next }))}
+                    >
+                      Load more
+                    </GoAButton>
+                  </GoAButtonGroup>
+                </td>
+              </tr>
             )}
           </tbody>
         </GoATable>
@@ -175,7 +176,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
         heading="Export forms to file"
         state={formsExport}
         onClose={() => setShowExport(false)}
-        onStartExport={() => dispatch(exportForms({ definitionId, criteria }))}
+        onStartExport={(format) => dispatch(exportForms({ definitionId, criteria, format }))}
       />
     </SearchLayout>
   );

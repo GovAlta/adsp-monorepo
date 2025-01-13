@@ -1,5 +1,5 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { FormDefinition, FormMetrics, FormExportResponse } from './model';
+import { FormDefinition, FormMetrics, FormExportResponse, ColumnOption } from './model';
 import { Socket } from 'socket.io-client';
 
 export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
@@ -38,8 +38,13 @@ export const EXPORT_FORM_INFO_ACTION = 'form/EXPORT_FORM_INFO_ACTION';
 export const EXPORT_FORM_INFO_SUCCESS_ACTION = 'form/EXPORT_FORM_INFO_SUCCESS_ACTION';
 
 export const START_SOCKET_STREAM_ACTION = 'form/START_SOCKET_STREAM_ACTION';
-export const START_SOCKET_STREAM_SUCCESS = 'form/START_SOCKET_STREAM_SUCCESS';
+export const START_SOCKET_STREAM_SUCCESS_ACTION = 'form/START_SOCKET_STREAM_SUCCESS_ACTION';
 
+export const FETCH_FORM_INFO_ACTION = 'form/FETCH_FORM_INFO_ACTION';
+export const FETCH_FORM_INFO_SUCCESS_ACTION = 'form/FETCH_FORM_INFO_SUCCESS_ACTION';
+
+export const FETCH_SUBMISSION_INFO_ACTION = 'form/FETCH_SUBMISSION_INFO_ACTION';
+export const FETCH_SUBMISSION_INFO_SUCCESS_ACTION = 'form/FETCH_SUBMISSION_INFO_SUCCESS_ACTION';
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
 }
@@ -59,6 +64,8 @@ export interface ExportFormInfoAction {
   type: typeof EXPORT_FORM_INFO_ACTION;
   id: string;
   resource: string;
+  format: string;
+  selectedColumn?: string[];
 }
 
 export interface ExportFormInfoSuccessAction {
@@ -69,9 +76,31 @@ export interface ExportFormInfoSuccessAction {
 export interface StartStreamAction {
   type: typeof START_SOCKET_STREAM_ACTION;
 }
-export interface StartStreamActionSuccess {
-  type: typeof START_SOCKET_STREAM_SUCCESS;
+export interface StartStreamSuccessAction {
+  type: typeof START_SOCKET_STREAM_SUCCESS_ACTION;
   socket: Socket;
+}
+
+export interface FetchFormInfoAction {
+  type: typeof FETCH_FORM_INFO_ACTION;
+  definitionId: string;
+}
+
+export interface FetchFormInfoSuccessAction {
+  type: typeof FETCH_FORM_INFO_SUCCESS_ACTION;
+
+  payload: ColumnOption[];
+}
+
+export interface FetchSubmissionInfoAction {
+  type: typeof FETCH_SUBMISSION_INFO_ACTION;
+  definitionId: string;
+}
+
+export interface FetchSubmissionInfoSuccessAction {
+  type: typeof FETCH_SUBMISSION_INFO_SUCCESS_ACTION;
+
+  payload: ColumnOption[];
 }
 
 export interface UpdateFormDefinitionsAction {
@@ -178,7 +207,7 @@ export type FormActionTypes =
   | ExportFormInfoAction
   | ExportFormInfoSuccessAction
   | StartStreamAction
-  | StartStreamActionSuccess
+  | StartStreamSuccessAction
   | DeleteFormDefinitionAction
   | DeleteFormDefinitionSuccessAction
   | UpdateFormDefinitionsAction
@@ -196,6 +225,10 @@ export type FormActionTypes =
   | UpdateEditorFormDefinitionAction
   | ResolveDataSchemaSuccessAction
   | ResolveDataSchemaFailedAction
+  | FetchFormInfoAction
+  | FetchFormInfoSuccessAction
+  | FetchSubmissionInfoAction
+  | FetchSubmissionInfoSuccessAction
   | FetchFormMetricsAction
   | FetchFormMetricsSuccessAction;
 
@@ -240,18 +273,41 @@ export const getFormDefinitionsSuccess = (
   after,
 });
 
-export const getExportFormInfo = (id: string, resource: string): ExportFormInfoAction => ({
+export const getExportFormInfo = (
+  id: string,
+  resource: string,
+  format: string,
+  selectedColumn: string[]
+): ExportFormInfoAction => ({
   type: EXPORT_FORM_INFO_ACTION,
   id,
   resource,
+  format,
+  selectedColumn,
+});
+export const fetchFormInfo = (definitionId: string): FetchFormInfoAction => ({
+  type: FETCH_FORM_INFO_ACTION,
+  definitionId,
+});
+export const fetchFormInfoSuccess = (payload: ColumnOption[]): FetchFormInfoSuccessAction => ({
+  type: FETCH_FORM_INFO_SUCCESS_ACTION,
+  payload,
+});
+export const fetchSubmissionInfo = (definitionId: string): FetchSubmissionInfoAction => ({
+  type: FETCH_SUBMISSION_INFO_ACTION,
+  definitionId,
+});
+export const fetchSubmissionInfoSuccess = (payload: ColumnOption[]): FetchSubmissionInfoSuccessAction => ({
+  type: FETCH_SUBMISSION_INFO_SUCCESS_ACTION,
+  payload,
 });
 
 export const startSocket = (): StartStreamAction => ({
   type: START_SOCKET_STREAM_ACTION,
 });
 
-export const startSocketSuccess = (socket: Socket): StartStreamActionSuccess => ({
-  type: START_SOCKET_STREAM_SUCCESS,
+export const startSocketSuccess = (socket: Socket): StartStreamSuccessAction => ({
+  type: START_SOCKET_STREAM_SUCCESS_ACTION,
   socket,
 });
 

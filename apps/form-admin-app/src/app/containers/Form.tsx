@@ -1,20 +1,40 @@
-import { GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components-new';
 import { DateTime } from 'luxon';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { AppDispatch, definitionSelector, formSelector, selectForm } from '../state';
-import { FormViewer } from '../components/FormViewer';
+import {
+  AppDispatch,
+  busySelector,
+  canArchiveSelector,
+  canSetToDraftSelector,
+  definitionSelector,
+  formFilesSelector,
+  formSelector,
+  FormStatus,
+  runFormOperation,
+  selectForm,
+} from '../state';
+import { FormViewer } from './FormViewer';
 import { DetailsLayout } from '../components/DetailsLayout';
 import { ContentContainer } from '../components/ContentContainer';
 import { PropertiesContainer } from '../components/PropertiesContainer';
+import { PdfDownload } from './PdfDownload';
+import { AdspId } from '../../lib/adspId';
 
 export const Form = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { formId } = useParams();
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+
   const definition = useSelector(definitionSelector);
   const form = useSelector(formSelector);
+  const files = useSelector(formFilesSelector);
+
+  const busy = useSelector(busySelector);
+  const canSetToDraft = useSelector(canSetToDraftSelector);
+  const canArchive = useSelector(canArchiveSelector);
 
   useEffect(() => {
     dispatch(selectForm(formId));
@@ -41,14 +61,61 @@ export const Form = () => {
             <GoAFormItem mr="xl" mb="s" label="Submitted on">
               {form.submitted && DateTime.fromISO(form.submitted).toFormat('LLL dd, yyyy')}
             </GoAFormItem>
+            <PdfDownload urn={form.urn} />
           </PropertiesContainer>
         )
       }
-      actionsForm={<form></form>}
+      actionsForm={
+        <form>
+          <GoAButtonGroup alignment="end">
+            {form?.status === FormStatus.submitted && canSetToDraft && (
+              <GoAButton
+                type="secondary"
+                disabled={busy.executing}
+                onClick={() => dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'to-draft' }))}
+              >
+                Set to draft
+              </GoAButton>
+            )}
+            {form?.status !== FormStatus.archived && canArchive && (
+              <GoAButton type="primary" disabled={busy.executing} onClick={() => setShowArchiveConfirm(true)}>
+                Archive form
+              </GoAButton>
+            )}
+          </GoAButtonGroup>
+        </form>
+      }
     >
-      <ContentContainer>
-        <FormViewer dataSchema={definition?.dataSchema} uiSchema={definition?.uiSchema} data={form?.data} />
-      </ContentContainer>
+      <>
+        <ContentContainer>
+          <FormViewer
+            dataSchema={definition?.dataSchema}
+            uiSchema={definition?.uiSchema}
+            data={form?.data}
+            files={files}
+          />
+        </ContentContainer>
+        <GoAModal heading="Archive this form?" open={showArchiveConfirm}>
+          <div>
+            Archiving the form will change its status to "Archived" so it can be separated from forms that are still
+            being actively worked on. The applicant will no longer be able to update the form.
+          </div>
+          <GoAButtonGroup alignment="end" mt="xl">
+            <GoAButton type="secondary" onClick={() => setShowArchiveConfirm(false)}>
+              Cancel
+            </GoAButton>
+            <GoAButton
+              type={form?.status === FormStatus.submitted ? 'primary' : 'secondary'}
+              onClick={() => {
+                dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'archive' }));
+                setShowArchiveConfirm(false);
+              }}
+            >
+              Archive form
+            </GoAButton>
+          </GoAButtonGroup>
+        </GoAModal>
+      </>
     </DetailsLayout>
   );
 };

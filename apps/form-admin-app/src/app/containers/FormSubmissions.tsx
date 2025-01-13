@@ -4,7 +4,6 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoAFormItem,
-  GoAInput,
   GoATable,
 } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,7 +18,7 @@ import {
   busySelector,
   nextSelector,
   selectedDataValuesSelector,
-  isFormAdminSelector,
+  canExportSelector,
   exportSubmissions,
   submissionsExportSelector,
 } from '../state';
@@ -29,6 +28,7 @@ import { DataValueCell } from '../components/DataValueCell';
 import { Digest } from '../components/Digest';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
+import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 
 interface FormSubmissionsProps {
   definitionId: string;
@@ -40,7 +40,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
 
   const [showExport, setShowExport] = useState(false);
 
-  const isFormAdmin = useSelector(isFormAdminSelector);
+  const canExport = useSelector(canExportSelector);
   const busy = useSelector(busySelector);
   const submissions = useSelector(submissionsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
@@ -60,7 +60,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
       searchForm={
         <form>
           <SearchFormItemsContainer>
-            <GoAFormItem label="Disposition">
+            <GoAFormItem label="Disposition" mr="m">
               <GoADropdown
                 relative={true}
                 name="submission-disposition"
@@ -85,31 +85,29 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 <GoADropdownItem value="all" label="All" />
               </GoADropdown>
             </GoAFormItem>
-            {dataValues
-              .filter(({ type }) => type === 'string')
-              .map(({ name, path }) => (
-                <GoAFormItem label={name} key={path} ml="m">
-                  <GoAInput
-                    type="text"
-                    onChange={(_, value: string) =>
-                      dispatch(
-                        formActions.setSubmissionCriteria({
-                          ...criteria,
-                          dataCriteria: {
-                            ...criteria?.dataCriteria,
-                            [path]: value,
-                          },
-                        })
-                      )
-                    }
-                    value={criteria?.dataCriteria?.[path]?.toString() || ''}
-                    name={name}
-                  />
-                </GoAFormItem>
-              ))}
+            {dataValues.map(({ name, path, type }) => (
+              <DataValueCriteriaItem
+                key={path}
+                name={name}
+                path={path}
+                type={type}
+                value={criteria?.dataCriteria?.[path]?.toString() || ''}
+                onChange={(value) =>
+                  dispatch(
+                    formActions.setSubmissionCriteria({
+                      ...criteria,
+                      dataCriteria: {
+                        ...criteria?.dataCriteria,
+                        [path]: value || undefined,
+                      },
+                    })
+                  )
+                }
+              />
+            ))}
           </SearchFormItemsContainer>
           <GoAButtonGroup alignment="end" mt="l">
-            {isFormAdmin && (
+            {canExport && (
               <GoAButton type="tertiary" mr="xl" onClick={() => setShowExport(true)}>
                 Export to file
               </GoAButton>
@@ -139,8 +137,8 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               <th>Submitted on</th>
               <th>Digest</th>
               <th>Disposition</th>
-              {dataValues.map(({ name }) => (
-                <th>{name}</th>
+              {dataValues.map(({ name, path }) => (
+                <th key={path}>{name}</th>
               ))}
               <th>Actions</th>
             </tr>
@@ -166,17 +164,19 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               </tr>
             ))}
             {next && (
-              <td colSpan={4 + dataValues.length}>
-                <GoAButtonGroup alignment="center">
-                  <GoAButton
-                    type="tertiary"
-                    disabled={busy.loading}
-                    onClick={() => dispatch(findSubmissions({ definitionId, criteria, after: next }))}
-                  >
-                    Load more
-                  </GoAButton>
-                </GoAButtonGroup>
-              </td>
+              <tr>
+                <td colSpan={4 + dataValues.length}>
+                  <GoAButtonGroup alignment="center">
+                    <GoAButton
+                      type="tertiary"
+                      disabled={busy.loading}
+                      onClick={() => dispatch(findSubmissions({ definitionId, criteria, after: next }))}
+                    >
+                      Load more
+                    </GoAButton>
+                  </GoAButtonGroup>
+                </td>
+              </tr>
             )}
           </tbody>
         </GoATable>
@@ -186,7 +186,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
         heading="Export submissions to file"
         state={submissionsExport}
         onClose={() => setShowExport(false)}
-        onStartExport={() => dispatch(exportSubmissions({ definitionId, criteria }))}
+        onStartExport={(format) => dispatch(exportSubmissions({ definitionId, criteria, format }))}
       />
     </SearchLayout>
   );

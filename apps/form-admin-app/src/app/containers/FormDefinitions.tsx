@@ -52,6 +52,7 @@ export const FormsDefinitions = () => {
             <tr>
               <th>Name</th>
               <th>Anonymous applicant</th>
+              <th>Schedule intakes</th>
               <th>Creates submissions</th>
               <th>Creates PDF</th>
               <th>Actions</th>
@@ -63,6 +64,9 @@ export const FormsDefinitions = () => {
                 <td>{definition.name}</td>
                 <td>
                   <FeatureBadge feature={definition.anonymousApply} />
+                </td>
+                <td>
+                  <FeatureBadge feature={definition.scheduledIntakes} />
                 </td>
                 <td>
                   <FeatureBadge feature={definition.submissionRecords} />
@@ -80,17 +84,19 @@ export const FormsDefinitions = () => {
               </tr>
             ))}
             {next && (
-              <td colSpan={5}>
-                <GoAButtonGroup alignment="center">
-                  <GoAButton
-                    type="tertiary"
-                    disabled={busy.loading}
-                    onClick={() => dispatch(loadDefinitions({ after: next }))}
-                  >
-                    Load more
-                  </GoAButton>
-                </GoAButtonGroup>
-              </td>
+              <tr>
+                <td colSpan={6}>
+                  <GoAButtonGroup alignment="center">
+                    <GoAButton
+                      type="tertiary"
+                      disabled={busy.loading}
+                      onClick={() => dispatch(loadDefinitions({ after: next }))}
+                    >
+                      Load more
+                    </GoAButton>
+                  </GoAButtonGroup>
+                </td>
+              </tr>
             )}
           </tbody>
         </GoATable>

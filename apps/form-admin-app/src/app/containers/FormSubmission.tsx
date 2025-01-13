@@ -9,7 +9,7 @@ import {
 import { DateTime } from 'luxon';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   AppDispatch,
   busySelector,
@@ -17,22 +17,26 @@ import {
   dispositionDraftSelector,
   formActions,
   selectSubmission,
+  submissionFilesSelector,
   submissionSelector,
   updateFormDisposition,
 } from '../state';
-import { FormViewer } from '../components/FormViewer';
+import { FormViewer } from './FormViewer';
 import { ContentContainer } from '../components/ContentContainer';
 import { DetailsLayout } from '../components/DetailsLayout';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import { AdspId } from '../../lib/adspId';
+import { PdfDownload } from './PdfDownload';
 
 export const FormSubmission = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
 
   const { submissionId } = useParams();
   const busy = useSelector(busySelector);
   const definition = useSelector(definitionSelector);
   const submission = useSelector(submissionSelector);
+  const files = useSelector(submissionFilesSelector);
   const draft = useSelector(dispositionDraftSelector);
 
   useEffect(() => {
@@ -42,6 +46,13 @@ export const FormSubmission = () => {
   return (
     <DetailsLayout
       initialized={!!(definition && submission)}
+      navButtons={
+        submission?.formId && (
+          <GoAButton type="tertiary" onClick={() => navigate(`../forms/${submission.formId}`)}>
+            Go to related form
+          </GoAButton>
+        )
+      }
       header={
         submission && (
           <PropertiesContainer>
@@ -51,6 +62,7 @@ export const FormSubmission = () => {
             <GoAFormItem mr="xl" mb="s" label="Submitted on">
               {DateTime.fromISO(submission.created).toFormat('LLL dd, yyyy')}
             </GoAFormItem>
+            <PdfDownload urn={submission.urn} />
           </PropertiesContainer>
         )
       }
@@ -109,7 +121,12 @@ export const FormSubmission = () => {
       }
     >
       <ContentContainer>
-        <FormViewer dataSchema={definition?.dataSchema} uiSchema={definition?.uiSchema} data={submission?.formData} />
+        <FormViewer
+          dataSchema={definition?.dataSchema}
+          uiSchema={definition?.uiSchema}
+          data={submission?.formData}
+          files={files}
+        />
       </ContentContainer>
     </DetailsLayout>
   );

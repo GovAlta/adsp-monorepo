@@ -17,7 +17,7 @@ export const SearchBox = styled.div`
     width: 100%;
     position: absolute;
 
-    background: var(--color-white);
+    background: var(--goa-color-greyscale-white);
     box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
     z-index: 99;
     overflow: hidden auto;
@@ -27,10 +27,10 @@ export const SearchBox = styled.div`
   }
   .suggestion-active,
   .suggestions li:hover {
-    background-color: var(--color-primary);
-    color: var(--color-white);
+    background-color: var(--goa-color-interactive-default);
+    color: var(--goa-color-greyscale-white);
     cursor: pointer;
-    font-weight: var(--fw-bold);
+    font-weight: 600;
   }
   .input-container {
     position: relative;
@@ -73,9 +73,9 @@ export const LabelDiv = styled.div`
 
 /* istanbul ignore next */
 export const ListItem = styled.li<ListItemProps>`
-  background-color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-primary)' : '')};
-  color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-white) !important' : '')};
-  font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--fw-bold)' : '')};
+  background-color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--goa-color-interactive-default)' : '')};
+  color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--goa-color-greyscale-white) !important' : '')};
+  font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? '600' : '')};
   padding: var(--goa-space-xs) var(--goa-space-2xs) var(--goa-space-xs) var(--goa-space-xs);
   margin-left: 0.25rem;
 `;

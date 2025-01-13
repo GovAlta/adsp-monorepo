@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -15,10 +16,10 @@ import {
 import { AnonymousForm } from './AnonymousForm';
 import { AuthorizeUser } from './AuthorizeUser';
 import { Form } from './Form';
-import { AutoCreateApplication } from '../components/AutoCreateApplication';
 import { ContinueApplication } from '../components/ContinueApplication';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { StartApplication } from '../components/StartApplication';
+import { ScheduledIntake } from '../components/ScheduledIntake';
 
 interface FormDefinitionStartProps {
   definitionId: string;
@@ -41,30 +42,33 @@ const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ defi
   return (
     <>
       <LoadingIndicator isLoading={!formInitialized || !definitionInitialized} />
-      {definitionInitialized &&
-        (definition?.anonymousApply ? (
-          <Navigate to="draft" />
-        ) : (
-          <AuthorizeUser roles={[...(definition?.applicantRoles || []), ...(definition?.clerkRoles || [])]}>
-            {formInitialized && form?.id ? (
-              <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
-            ) : urlParams.has(AUTO_CREATE_PARAM) && formInitialized ? (
-              <AutoCreateApplication form={form} />
-            ) : (
-              <StartApplication
-                definition={definition}
-                canStart={!busy.creating}
-                onStart={async () => {
-                  const { payload } = await dispatch(createForm(definitionId));
-                  const form = payload as FormObject;
-                  if (form?.id) {
-                    navigate(`${form.id}`);
-                  }
-                }}
-              />
-            )}
-          </AuthorizeUser>
-        ))}
+      {definitionInitialized && definition && (
+        <ScheduledIntake definition={definition}>
+          {definition.anonymousApply ? (
+            <Navigate to="draft" />
+          ) : (
+            <AuthorizeUser roles={[...definition.applicantRoles, ...definition.clerkRoles]}>
+              {formInitialized &&
+                (form?.id ? (
+                  <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
+                ) : (
+                  <StartApplication
+                    definition={definition}
+                    autoCreate={urlParams.has(AUTO_CREATE_PARAM, 'true')}
+                    canCreate={!busy.creating}
+                    onCreate={async () => {
+                      const { payload } = await dispatch(createForm(definition.id));
+                      const form = payload as FormObject;
+                      if (form?.id) {
+                        navigate(`${form.id}`);
+                      }
+                    }}
+                  />
+                ))}
+            </AuthorizeUser>
+          )}
+        </ScheduledIntake>
+      )}
     </>
   );
 };

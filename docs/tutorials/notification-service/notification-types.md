@@ -69,7 +69,7 @@ You can also customize the text of your messages using the [Handlebars Template 
 
 ![](/adsp-monorepo/assets/notification-service/handlebars.png){: width="400" }
 
-The _data.event.payload_ prefix tells the notification service that this particular key refers to the _domain event_ triggered, and the payload object it is triggered with i.e. the API call triggering the event has a payload object associated with it. In this example, the payload object would have an _amount_ property with an appropriate value, like 5¢, or $5 if you're feeling generous. Before the email is sent the template is processed to substitute its keys with the values in the payload. You can learn more about events and payloads [here](/adsp-monorepo/tutorials/notification-service/events.html).
+The _event.payload_ prefix tells the notification service that this particular key refers to the _domain event_ triggered, and the payload object it is triggered with i.e. the API call triggering the event has a payload object associated with it. In this example, the payload object would have an _amount_ property with an appropriate value, like 5¢, or $5 if you're feeling generous. Before the email is sent the template is processed to substitute its keys with the values in the payload. You can learn more about events and payloads [here](/adsp-monorepo/tutorials/notification-service/events.html).
 
 ### Text Messages
 

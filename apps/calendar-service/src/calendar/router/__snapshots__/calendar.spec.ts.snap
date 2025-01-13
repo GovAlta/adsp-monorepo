@@ -13,12 +13,13 @@ exports[`calendar router createCalendarEvent can create event 1`] = `
   "context": undefined,
   "description": "Test 1 2 3",
   "end": null,
-  "id": undefined,
+  "id": 1,
   "isAllDay": false,
   "isPublic": false,
   "name": "test",
   "recordId": undefined,
   "start": Any<DateTime>,
+  "urn": "urn:ads:platform:calendar-service:v1:/calendars/test/events/1",
 }
 `;
 
@@ -63,6 +64,7 @@ exports[`calendar router getCalendars can get calendars 1`] = `
     "updateRoles": [
       "test-updater",
     ],
+    "urn": "urn:ads:platform:calendar-service:v1:/calendars/test",
   },
 ]
 `;
@@ -90,6 +92,7 @@ exports[`calendar router retrieveCalendarEvent can retrieve event 1`] = `
   "name": "test",
   "recordId": undefined,
   "start": Any<DateTime>,
+  "urn": "urn:ads:platform:calendar-service:v1:/calendars/test/events/12",
 }
 `;
 
@@ -112,5 +115,6 @@ exports[`calendar router updateCalendarEvent can update event 1`] = `
   "name": "test 2",
   "recordId": undefined,
   "start": Any<DateTime>,
+  "urn": "urn:ads:platform:calendar-service:v1:/calendars/test/events/12",
 }
 `;

@@ -31,8 +31,8 @@ export const Digest: FunctionComponent<DigestProps> = ({ value }) => {
 
   return (
     <div>
-      {values.map((value) => (
-        <DigestElement rgb={value} />
+      {values.map((value, idx) => (
+        <DigestElement key={idx} rgb={value} />
       ))}
     </div>
   );

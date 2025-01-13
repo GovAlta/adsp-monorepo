@@ -71,6 +71,7 @@ export function* fetchConfig(): SagaIterator {
           feedbackServiceUrl: entryMapping['feedback-service'],
           formServiceApiUrl: data.serviceUrls.formServiceUrl,
           exportServiceUrl: entryMapping['export-service'],
+          formAppApiUrl: entryMapping['form-service'],
         },
         featureFlags: data.featureFlags,
       };

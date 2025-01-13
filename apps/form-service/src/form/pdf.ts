@@ -202,7 +202,7 @@ const header = `
      * The width was determined empirically, for aesthetic reasons,
      * to be about 60% of the page (a4) width of 210mm.
      */
-    width: 130mm;
+    width: 160mm;
   }
   .header-wrapper p {
     display: inline-block;

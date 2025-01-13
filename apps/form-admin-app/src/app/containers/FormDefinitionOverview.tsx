@@ -1,9 +1,33 @@
-import { GoACheckbox, GoAContainer, GoADetails, GoAFormItem, GoASpacer, GoATable } from '@abgov/react-components-new';
-import { FunctionComponent } from 'react';
+import {
+  GoABadge,
+  GoAButton,
+  GoAButtonGroup,
+  GoACheckbox,
+  GoAContainer,
+  GoADetails,
+  GoAFormItem,
+  GoAIconButton,
+  GoASpacer,
+  GoATable,
+} from '@abgov/react-components-new';
+import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { AppDispatch, dataValuesSelector, definitionSelector, updateDataValue } from '../state';
+import {
+  AppDispatch,
+  AppState,
+  canGetIntakeCalendarSelector,
+  createEvent,
+  dataValuesSelector,
+  definitionSelector,
+  deleteEvent,
+  getEvents,
+  recordEventsSelector,
+  updateDataValue,
+} from '../state';
 import { ContentContainer } from '../components/ContentContainer';
+import { PropertiesContainer } from '../components/PropertiesContainer';
+import { ScheduleIntakeModal } from '../components/ScheduleIntakeModal';
 
 const OverviewLayout = styled.div`
   position: absolute;
@@ -21,23 +45,54 @@ interface FormDefinitionOverviewProps {
 export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewProps> = () => {
   const dispatch = useDispatch<AppDispatch>();
 
+  const [showScheduleIntake, setShowScheduleIntake] = useState(false);
+
+  const canGetIntakeCalendar = useSelector(canGetIntakeCalendarSelector);
   const definition = useSelector(definitionSelector);
   const dataValues = useSelector(dataValuesSelector);
+  const intakeEvents = useSelector((state: AppState) => recordEventsSelector(state, definition.urn));
+
+  useEffect(() => {
+    if (definition.scheduledIntakes && canGetIntakeCalendar) {
+      const now = new Date().toISOString();
+      dispatch(
+        getEvents({
+          calendar: 'form-intake',
+          criteria: {
+            recordId: definition.urn,
+            activeOn: now,
+          },
+        })
+      );
+
+      dispatch(
+        getEvents({
+          calendar: 'form-intake',
+          criteria: {
+            recordId: definition.urn,
+            startsAfter: now,
+          },
+        })
+      );
+    }
+  }, [dispatch, canGetIntakeCalendar, definition]);
 
   return (
     <OverviewLayout>
       <ContentContainer>
         <h2>Overview</h2>
         <GoAContainer mt="m">
-          <GoAFormItem label="ID">
-            <span>{definition.id}</span>
-          </GoAFormItem>
-          <GoAFormItem label="Name">
-            <span>{definition.name}</span>
-          </GoAFormItem>
-          <GoAFormItem label="Description">
-            <span>{definition.description}</span>
-          </GoAFormItem>
+          <PropertiesContainer>
+            <GoAFormItem label="ID" mr="m">
+              <span>{definition.id}</span>
+            </GoAFormItem>
+            <GoAFormItem label="Name" mr="m">
+              <span>{definition.name}</span>
+            </GoAFormItem>
+            <GoAFormItem label="Description" mr="m">
+              <span>{definition.description}</span>
+            </GoAFormItem>
+          </PropertiesContainer>
         </GoAContainer>
         <h3>General</h3>
         <GoASpacer vSpacing="m" />
@@ -70,6 +125,74 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             submitted. Any follow-up actions such as service fulfillment or client onboarding need to be handled outside
             the form system.
           </GoADetails>
+        )}
+        {definition?.scheduledIntakes && (
+          <>
+            <h3>Intake scheduling</h3>
+            <p>
+              This form is configured for scheduled intakes. Applicants will only be able to create and submit forms
+              during periods of active intake scheduled on a calendar.
+            </p>
+            {/* <div>
+              <GoAFormItem label="Starts on" mt="l" mr="l" ml="none">
+                {definition.intake ? <span>{definition.intake.start?.toFormat('LLLL dd tt')}</span> : 'None'}
+              </GoAFormItem>
+              <GoAFormItem label="Ends on" mt="l" mr="l" ml="none">
+                {definition.intake ? <span>{definition.intake.end?.toFormat('LLLL dd tt')}</span> : 'None'}
+              </GoAFormItem>
+            </div> */}
+            <GoATable width="100%">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Starts on</th>
+                  <th>Ends on</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {intakeEvents.map((event) => (
+                  <tr key={event.urn}>
+                    <td>
+                      {definition.intake?.urn === event.urn && (
+                        <GoABadge type="success" content={definition.intake.isUpcoming ? 'Upcoming' : 'Active'} />
+                      )}
+                    </td>
+                    <td>{event.start.toFormat('LLLL dd ttt')}</td>
+                    <td>{event.end.toFormat('LLLL dd ttt')}</td>
+                    <td>
+                      <GoAIconButton icon="trash" onClick={() => dispatch(deleteEvent(event.urn))} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </GoATable>
+            <form>
+              <GoAButtonGroup alignment="end" mt="l">
+                <GoAButton type="secondary" onClick={() => setShowScheduleIntake(true)}>
+                  Schedule intake
+                </GoAButton>
+              </GoAButtonGroup>
+              <ScheduleIntakeModal
+                open={showScheduleIntake}
+                onClose={() => setShowScheduleIntake(false)}
+                onSchedule={(start, end) => {
+                  dispatch(
+                    createEvent({
+                      recordId: definition.urn,
+                      start,
+                      end,
+                      name: `Intake for ${definition.name}`,
+                      description:
+                        `Open intake event for ${definition.name} (ID: ${definition.id}). ` +
+                        `During this event, applicants can create and submit the ${definition.name} form`,
+                    })
+                  );
+                  setShowScheduleIntake(false);
+                }}
+              />
+            </form>
+          </>
         )}
         <h3>Data value columns</h3>
         <p>

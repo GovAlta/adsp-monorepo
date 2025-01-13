@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { GoACallout } from '@abgov/react-components-new';
 import { FunctionComponent, ReactElement } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { userSelector, AppDispatch, tenantSelector, loginUser, feedbackSelector } from '../state';
 import { LoadingIndicator } from '../components/LoadingIndicator';
+import { SessionExpiryModal } from './SessionExpiryModal';
 
 interface AuthorizeUserProps {
   roles?: string[];
@@ -35,7 +36,10 @@ export const AuthorizeUser: FunctionComponent<AuthorizeUserProps> = ({ roles, ch
 
   return initialized ? (
     user && (!roles?.length || roles.find((r) => user.roles?.includes(r))) ? (
-      children
+      <>
+        {children}
+        <SessionExpiryModal />
+      </>
     ) : (
       // Not authorized placeholder; in this state the user has been resolved and doesn't satisfy access requirement.
       <div>

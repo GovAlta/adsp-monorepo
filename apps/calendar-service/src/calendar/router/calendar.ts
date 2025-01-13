@@ -1,4 +1,4 @@
-import { AdspId, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
@@ -20,8 +20,9 @@ interface DateRouterProps {
   tenantService: TenantService;
 }
 
-function mapCalendar(entity: CalendarEntity) {
+function mapCalendar(apiId: AdspId, entity: CalendarEntity) {
   return {
+    urn: `${apiId}:/calendars/${entity.name}`,
     name: entity.name,
     displayName: entity.displayName,
     description: entity.description,
@@ -30,8 +31,9 @@ function mapCalendar(entity: CalendarEntity) {
   };
 }
 
-function mapCalendarEvent(entity: CalendarEventEntity) {
+function mapCalendarEvent(apiId: AdspId, entity: CalendarEventEntity) {
   const dto = {
+    urn: `${apiId}:/calendars/${entity.calendar.name}/events/${entity.id}`,
     id: entity.id,
     recordId: entity.recordId,
     context: entity.context,
@@ -58,16 +60,18 @@ function mapEventAttendee(attendee: Attendee) {
   };
 }
 
-export const getCalendars: RequestHandler = async (req, res, next) => {
-  try {
-    const calendars = await req.getConfiguration<CalendarServiceConfiguration, CalendarServiceConfiguration>();
+export function getCalendars(apiId: AdspId): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const calendars = await req.getConfiguration<CalendarServiceConfiguration, CalendarServiceConfiguration>();
 
-    const results = Object.entries(calendars || {}).map(([_k, calender]) => mapCalendar(calender));
-    res.send(results);
-  } catch (err) {
-    next(err);
-  }
-};
+      const results = Object.entries(calendars || {}).map(([_k, calender]) => mapCalendar(apiId, calender));
+      res.send(results);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 const CALENDAR_KEY = 'calendar';
 const { TIME_ZONE } = environment;
@@ -154,43 +158,45 @@ export const exportCalendar =
     }
   };
 
-export const getCalendarEvents: RequestHandler = async (req, res, next) => {
-  try {
-    const user = req.user;
-    const calendar: CalendarEntity = req[CALENDAR_KEY];
-    const { top: topValue, after, includeAttendees, criteria: criteriaValue } = req.query;
-    const top = topValue ? parseInt(topValue as string) : 10;
+export function getCalendarEvents(apiId: AdspId): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const calendar: CalendarEntity = req[CALENDAR_KEY];
+      const { top: topValue, after, includeAttendees, criteria: criteriaValue } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 10;
 
-    const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
-    if (criteria?.startsAfter) {
-      criteria.startsAfter = DateTime.fromISO(criteria.startsAfter);
-    }
-    if (criteria?.endsBefore) {
-      criteria.endsBefore = DateTime.fromISO(criteria.endsBefore);
-    }
-    if (criteria?.activeOn) {
-      criteria.activeOn = DateTime.fromISO(criteria.activeOn);
-    }
-
-    const result = await calendar.getEvents(user, top, after as string, criteria);
-
-    if (includeAttendees === 'true') {
-      for (const res of result.results) {
-        await res.loadAttendees(user);
+      const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
+      if (criteria?.startsAfter) {
+        criteria.startsAfter = DateTime.fromISO(criteria.startsAfter);
       }
-    }
+      if (criteria?.endsBefore) {
+        criteria.endsBefore = DateTime.fromISO(criteria.endsBefore);
+      }
+      if (criteria?.activeOn) {
+        criteria.activeOn = DateTime.fromISO(criteria.activeOn);
+      }
 
-    res.send({
-      results: result.results.map(mapCalendarEvent),
-      page: result.page,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
+      const result = await calendar.getEvents(user, top, after as string, criteria);
+
+      if (includeAttendees === 'true') {
+        for (const res of result.results) {
+          await res.loadAttendees(user);
+        }
+      }
+
+      res.send({
+        results: result.results.map((result) => mapCalendarEvent(apiId, result)),
+        page: result.page,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export const createCalendarEvent =
-  (eventService: EventService): RequestHandler =>
+  (apiId: AdspId, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -199,7 +205,7 @@ export const createCalendarEvent =
       const calendar: CalendarEntity = req[CALENDAR_KEY];
 
       const entity = await calendar.createEvent(user, event);
-      res.send(mapCalendarEvent(entity));
+      res.send(mapCalendarEvent(apiId, entity));
       eventService.send(calendarEventCreated(user, entity));
     } catch (err) {
       next(err);
@@ -226,24 +232,26 @@ export const getCalendarEvent: RequestHandler = async (req, _res, next) => {
   }
 };
 
-export const retrieveCalendarEvent: RequestHandler = async (req, res, next) => {
-  try {
-    const user = req.user;
-    const { includeAttendees } = req.query;
-    const event: CalendarEventEntity = req[EVENT_KEY];
+export function retrieveCalendarEvent(apiId: AdspId): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const { includeAttendees } = req.query;
+      const event: CalendarEventEntity = req[EVENT_KEY];
 
-    if (includeAttendees === 'true') {
-      await event.loadAttendees(user);
+      if (includeAttendees === 'true') {
+        await event.loadAttendees(user);
+      }
+
+      res.send(mapCalendarEvent(apiId, event));
+    } catch (err) {
+      next(err);
     }
-
-    res.send(mapCalendarEvent(event));
-  } catch (err) {
-    next(err);
-  }
-};
+  };
+}
 
 export const updateCalendarEvent =
-  (eventService: EventService): RequestHandler =>
+  (apiId: AdspId, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -256,7 +264,7 @@ export const updateCalendarEvent =
       const event: CalendarEventEntity = req[EVENT_KEY];
       const result = await event.update(user, update);
 
-      res.send(mapCalendarEvent(result));
+      res.send(mapCalendarEvent(apiId, result));
       eventService.send(calendarEventUpdated(user, update, result));
     } catch (err) {
       next(err);
@@ -369,6 +377,8 @@ export const createCalendarRouter = ({
   directory,
   tenantService,
 }: DateRouterProps): Router => {
+  const apiId = adspId`${serviceId}:v1`;
+
   const router = Router();
 
   const validateNameHandler = createValidationHandler(param('name').isString().isLength({ min: 1, max: 50 }));
@@ -408,9 +418,9 @@ export const createCalendarRouter = ({
     )
   );
 
-  router.get('/calendars', getCalendars);
+  router.get('/calendars', getCalendars(apiId));
   router.get('/calendars/:name', validateNameHandler, getCalendar(tenantService), (req, res) =>
-    res.send(mapCalendar(req[CALENDAR_KEY]))
+    res.send(mapCalendar(apiId, req[CALENDAR_KEY]))
   );
 
   router.get(
@@ -423,25 +433,25 @@ export const createCalendarRouter = ({
   router.get(
     '/calendars/:name/events',
     validateNameHandler,
-    createValidationHandler(query('criteria').optional().isJSON(), query('includeeAttendees').optional().isBoolean()),
+    createValidationHandler(query('criteria').optional().isJSON(), query('includeAttendees').optional().isBoolean()),
     getCalendar(tenantService),
-    getCalendarEvents
+    getCalendarEvents(apiId)
   );
   router.post(
     '/calendars/:name/events',
     validateNameHandler,
     validateCalendarEventHandler,
     getCalendar(tenantService),
-    createCalendarEvent(eventService)
+    createCalendarEvent(apiId, eventService)
   );
 
   router.get(
     '/calendars/:name/events/:id',
     validateNameAndEventIdHandler,
-    createValidationHandler(query('includeeAttendees').optional().isBoolean()),
+    createValidationHandler(query('includeAttendees').optional().isBoolean()),
     getCalendar(tenantService),
     getCalendarEvent,
-    retrieveCalendarEvent
+    retrieveCalendarEvent(apiId)
   );
   router.patch(
     '/calendars/:name/events/:id',
@@ -449,7 +459,7 @@ export const createCalendarRouter = ({
     validateCalendarEventHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    updateCalendarEvent(eventService)
+    updateCalendarEvent(apiId, eventService)
   );
   router.delete(
     '/calendars/:name/events/:id',

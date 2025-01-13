@@ -23,6 +23,13 @@ export interface FormDefinition {
   registerData?: RegisterData;
   anonymousApply: boolean;
   generatesPdf?: boolean;
+  scheduledIntakes: boolean;
+  intake?: {
+    start: string;
+    end?: string;
+    isAllDay: boolean;
+    isUpcoming: boolean;
+  };
 }
 
 export interface Form {

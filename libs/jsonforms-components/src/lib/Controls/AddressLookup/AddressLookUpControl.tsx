@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
-import { useJsonForms } from '@jsonforms/react';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
 
@@ -18,7 +17,6 @@ import {
 } from './utils';
 import { ListItem, SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
-import { ErrorObject } from 'ajv';
 
 type AddressLookUpProps = ControlProps;
 
@@ -31,7 +29,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const formCtx = useContext(JsonFormContext);
   const formHost = formCtx?.formUrl;
   const formUrl = `${formHost}/${ADDRESS_PATH}`;
-  const ctx = useJsonForms();
   const autocompletion = uischema?.options?.autocomplete !== false;
   const [open, setOpen] = useState(false);
 
@@ -47,6 +44,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const [address, setAddress] = useState<Address>(data || defaultAddress);
   const [searchTerm, setSearchTerm] = useState('');
+  const [saveSearchTerm, setSaveSearchTerm] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -89,23 +87,11 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   useEffect(() => {
-    if (ctx.core?.ajv) {
-      // eslint-disable-next-line
-      const newError: ErrorObject<string, Record<string, any>, unknown>[] = [];
-
-      Object.keys(errors).forEach((err) => {
-        newError.push({
-          instancePath: path,
-          message: err,
-          schemaPath: '',
-          keyword: '',
-          params: {},
-        });
-      });
-
-      ctx.core.ajv.errors = newError;
+    if (saveSearchTerm) {
+      handleInputChange('addressLine1', searchTerm);
+      setSaveSearchTerm(false);
     }
-  }, [errors, ctx, path]);
+  }, [saveSearchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -128,11 +114,11 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [searchTerm, dropdownSelected]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
-    handleInputChange('addressLine1', value);
+    setSaveSearchTerm(true);
   };
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
