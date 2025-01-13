@@ -1,15 +1,27 @@
 import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
-import { FunctionComponent } from 'react';
+import { FunctionComponent, useEffect } from 'react';
 import { FormDefinition } from '../state';
 
 interface StartApplicationProps {
   definition: FormDefinition;
-  canStart: boolean;
-  onStart: () => void;
+  autoCreate: boolean;
+  canCreate: boolean;
+  onCreate: () => void;
 }
 
-export const StartApplication: FunctionComponent<StartApplicationProps> = ({ definition, canStart, onStart }) => {
+export const StartApplication: FunctionComponent<StartApplicationProps> = ({
+  definition,
+  autoCreate,
+  canCreate,
+  onCreate,
+}) => {
+  useEffect(() => {
+    if (autoCreate && canCreate) {
+      onCreate();
+    }
+  });
+
   return (
     <div>
       <Band title="Start a new application">Start your application for {definition.name}.</Band>
@@ -19,7 +31,7 @@ export const StartApplication: FunctionComponent<StartApplicationProps> = ({ def
           <GridItem md={10}>
             <div>
               <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" data-testid="form-start-application" disabled={!canStart} onClick={onStart}>
+                <GoAButton type="primary" data-testid="form-start-application" disabled={!canCreate} onClick={onCreate}>
                   Start application
                 </GoAButton>
               </GoAButtonGroup>
