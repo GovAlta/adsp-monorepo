@@ -42,6 +42,7 @@ export interface ServiceUrls {
   feedbackServiceUrl: string;
   formServiceApiUrl: string;
   exportServiceUrl: string;
+  formAppApiUrl: string;
 }
 
 export interface FeatureFlags {
