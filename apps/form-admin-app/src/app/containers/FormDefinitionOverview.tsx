@@ -143,10 +143,12 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             </div> */}
             <GoATable width="100%">
               <thead>
-                <th></th>
-                <th>Starts on</th>
-                <th>Ends on</th>
-                <th>Actions</th>
+                <tr>
+                  <th></th>
+                  <th>Starts on</th>
+                  <th>Ends on</th>
+                  <th>Actions</th>
+                </tr>
               </thead>
               <tbody>
                 {intakeEvents.map((event) => (

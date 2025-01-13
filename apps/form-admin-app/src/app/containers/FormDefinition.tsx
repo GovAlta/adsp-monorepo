@@ -32,7 +32,7 @@ export const FormDefinition: FunctionComponent = () => {
       <Route path="/forms/:formId" element={<Form />} />
       <Route path="/forms" element={<Forms definitionId={definitionId} />} />
       <Route path="/overview" element={<FormDefinitionOverview definitionId={definitionId} />} />
-      <Route path="*" element={<Navigate to={definition.submissionRecords ? 'submissions' : 'forms'} />} />
+      <Route path="*" element={<Navigate to="overview" />} />
     </Routes>
   ) : (
     <LoadingIndicator isLoading={busy.initializing} />

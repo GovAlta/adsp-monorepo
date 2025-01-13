@@ -176,7 +176,7 @@ const calendarSlice = createSlice({
       })
       .addCase(deleteEvent.fulfilled, (state, { meta }) => {
         state.busy.executing = false;
-        state.events[meta.arg] = undefined;
+        delete state.events[meta.arg];
       })
       .addCase(createEvent.pending, (state) => {
         state.busy.executing = true;
