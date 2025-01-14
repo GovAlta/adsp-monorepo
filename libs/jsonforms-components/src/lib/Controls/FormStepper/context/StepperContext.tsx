@@ -95,7 +95,7 @@ export const JsonFormsStepperContextProvider = ({
   StepperProps,
 }: JsonFormsStepperContextProviderProps): JSX.Element => {
   const ctx = useJsonForms();
-
+  const { schema, ajv } = StepperProps;
   const [stepperState, dispatch] = useReducer(stepperReducer, createStepperContextInitData(StepperProps));
   const stepperDispatch = StepperProps?.customDispatch || dispatch;
 
@@ -119,32 +119,36 @@ export const JsonFormsStepperContextProvider = ({
         return stepperState.categories[id];
       },
       goToPage: (id: number, updateCategoryId?: number) => {
+        ajv.validate(schema, ctx.core?.data || {});
+
         if (updateCategoryId !== undefined) {
           stepperDispatch({
             type: 'update/category',
-            payload: { errors: ctx.core?.errors || [], id: updateCategoryId },
+            payload: { errors: ctx?.core?.errors, id: updateCategoryId, ajv },
           });
         }
 
         if (stepperState.isOnReview !== true) {
           stepperDispatch({
             type: 'update/category',
-            payload: { errors: ctx.core?.errors || [], id: stepperState.activeId },
+            payload: { errors: ctx?.core?.errors, id: stepperState.activeId, ajv },
           });
         }
 
-        stepperDispatch({ type: 'validate/form', payload: { errors: ctx.core?.errors } });
-
+        stepperDispatch({
+          type: 'validate/form',
+          payload: { errors: ctx?.core?.errors },
+        });
         stepperDispatch({ type: 'page/to/index', payload: { id } });
       },
     };
-  }, [ctx?.core, stepperDispatch, stepperState]);
+  }, [stepperDispatch, stepperState, ctx.core?.errors]);
 
   useEffect(() => {
     if (context?.isProvided === true) {
       stepperDispatch({ type: 'update/uischema', payload: { state: createStepperContextInitData(StepperProps) } });
     }
-  }, [JSON.stringify(StepperProps.uischema)]);
+  }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };

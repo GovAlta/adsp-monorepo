@@ -2,6 +2,9 @@ import { StepperContextDataType } from './types';
 import { ErrorObject } from 'ajv';
 import { toDataPath } from '@jsonforms/core';
 import { Dispatch } from 'react';
+import Ajv from 'ajv';
+
+import { getIncompletePaths } from './StepperContext';
 
 export type JsonFormStepperDispatch = Dispatch<StepperAction>;
 
@@ -9,7 +12,7 @@ export type StepperAction =
   | { type: 'page/next' }
   | { type: 'page/prev' }
   | { type: 'page/to/index'; payload: { id: number } }
-  | { type: 'update/category'; payload: { errors: ErrorObject[]; id: number } }
+  | { type: 'update/category'; payload: { errors?: ErrorObject[]; id: number; ajv: Ajv } }
   | { type: 'validate/form'; payload: { errors?: ErrorObject[] } }
   | { type: 'update/uischema'; payload: { state: StepperContextDataType } };
 
@@ -68,14 +71,17 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       }
     }
     case 'update/category': {
-      const { id, errors } = action.payload as { errors: ErrorObject[]; id: number };
-      if (state.isOnReview) {
-        return { ...state };
-      }
+      const { id, ajv, errors } = action.payload as { ajv: Ajv; id: number; errors: ErrorObject[] };
+      /*
+        ctx.core.errors only includes required errors when the fields are touched. In this case, we still ajv to figure out the required errors at the very beginning.
+       */
+      const incompletePaths = getIncompletePaths(ajv, state.categories[id].scopes);
+
       const errorsInCategory = errors.filter((e) =>
         categories[id].scopes.map((s) => '/' + toDataPath(s)).includes(e.instancePath)
       );
-      state.categories[id].isCompleted = errorsInCategory.filter((e) => e.keyword === 'required').length === 0;
+
+      state.categories[id].isCompleted = incompletePaths?.length === 0;
       state.categories[id].isValid = errorsInCategory.length === 0;
       return { ...state };
     }
