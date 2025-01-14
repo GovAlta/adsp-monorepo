@@ -1,37 +1,148 @@
-import { FunctionComponent, useEffect } from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, busySelector, definitionsSelector, loadDefinitions, nextSelector, userSelector } from '../state';
-import { GoABadge, GoAButton, GoAButtonGroup, GoACallout, GoATable } from '@abgov/react-components-new';
+import {
+  AppDispatch,
+  AppState,
+  formBusySelector,
+  definitionsSelector,
+  directoryBusySelector,
+  FormDefinition,
+  getResourceTags,
+  loadDefinitions,
+  nextSelector,
+  resourceTagsSelector,
+  Tag,
+  tagResource,
+  untagResource,
+  userSelector,
+  getTags,
+  tagsSelector,
+  Resource,
+} from '../state';
+import {
+  GoABadge,
+  GoAButton,
+  GoAButtonGroup,
+  GoACallout,
+  GoAChip,
+  GoADropdown,
+  GoADropdownItem,
+  GoAFormItem,
+  GoAIconButton,
+  GoATable,
+} from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
+import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
 
-const FeatureBadge: FunctionComponent<{ feature?: boolean }> = ({ feature }) => {
-  return feature ? <GoABadge type="success" content="Yes" /> : <GoABadge type="information" content="No" />;
+const FeatureBadge: FunctionComponent<{ feature: string; hasFeature?: boolean }> = ({ feature, hasFeature }) => {
+  return hasFeature && <GoABadge type="information" content={feature} mr="xs" mb="xs" />;
+};
+
+const TagBadge: FunctionComponent<{ tag: Tag; onDelete: () => void }> = ({ tag, onDelete }) => {
+  return <GoAChip content={tag.label} deletable={true} onClick={onDelete} mr="xs" mb="xs" />;
+};
+
+interface FormDefinitionRowProps {
+  definition: FormDefinition;
+  dispatch: AppDispatch;
+  navigate: (to: string) => void;
+  onTag: () => void;
+  onUntag: (tag: Tag) => void;
+}
+
+export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({
+  definition,
+  dispatch,
+  navigate,
+  onTag,
+  onUntag,
+}) => {
+  const tags = useSelector((state: AppState) => resourceTagsSelector(state, definition.urn));
+
+  useEffect(() => {
+    dispatch(getResourceTags({ urn: definition.urn }));
+  }, [dispatch, definition]);
+
+  return (
+    <tr key={definition.id}>
+      <td>{definition.name}</td>
+      <td>
+        {tags?.map((tag) => (
+          <TagBadge key={tag.value} tag={tag} onDelete={() => onUntag(tag)} />
+        ))}
+        <GoAIconButton icon="add-circle" variant="nocolor" onClick={onTag} />
+      </td>
+      <td>
+        <FeatureBadge feature="Anonymous applicant" hasFeature={definition.anonymousApply} />
+        <FeatureBadge feature="Scheduled intakes" hasFeature={definition.scheduledIntakes} />
+        <FeatureBadge feature="Creates submissions" hasFeature={definition.submissionRecords} />
+        <FeatureBadge feature="Creates PDF" hasFeature={definition.generatesPdf} />
+      </td>
+      <td>
+        <GoAButtonGroup alignment="end">
+          <GoAButton type="secondary" size="compact" onClick={() => navigate(definition.id)}>
+            Select
+          </GoAButton>
+        </GoAButtonGroup>
+      </td>
+    </tr>
+  );
 };
 
 export const FormsDefinitions = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const [showTagDefinition, setShowTagDefinition] = useState<Pick<Resource, 'name' | 'urn'>>(null);
+  const [searchTag, setSearchTag] = useState('');
+
   const { user } = useSelector(userSelector);
-  const busy = useSelector(busySelector);
+
+  const directoryBusy = useSelector(directoryBusySelector);
+  const tags = useSelector(tagsSelector);
+
+  const busy = useSelector(formBusySelector);
   const { definitions: next } = useSelector(nextSelector);
   const definitions = useSelector(definitionsSelector);
 
   useEffect(() => {
-    if (user?.roles.includes('urn:ads:platform:form-service:form-admin') && definitions.length < 1) {
+    if (user?.roles.includes('urn:ads:platform:form-service:form-admin')) {
       dispatch(loadDefinitions({}));
     }
-  }, [dispatch, user, definitions]);
+  }, [dispatch, user]);
+
+  useEffect(() => {
+    dispatch(getTags({}));
+  }, [dispatch]);
 
   return (
     <SearchLayout
       searchForm={
         user?.roles.includes('urn:ads:platform:form-service:form-admin') ? (
           <form>
+            <GoAFormItem label="Tag">
+              <GoADropdown
+                name="tag"
+                relative={true}
+                value={searchTag}
+                onChange={(_: string, value: string) => setSearchTag(value)}
+              >
+                {tags.map(({ value, label }) => (
+                  <GoADropdownItem key={value} value={value} label={label} />
+                ))}
+              </GoADropdown>
+            </GoAFormItem>
             <GoAButtonGroup alignment="end">
-              <GoAButton type="primary" disabled={busy.loading} onClick={() => dispatch(loadDefinitions({}))}>
+              <GoAButton type="secondary" disabled={busy.loading} onClick={() => setSearchTag('')}>
+                Reset filter
+              </GoAButton>
+              <GoAButton
+                type="primary"
+                disabled={busy.loading}
+                onClick={() => dispatch(loadDefinitions({ tag: searchTag }))}
+              >
                 Load definitions
               </GoAButton>
             </GoAButtonGroup>
@@ -51,41 +162,25 @@ export const FormsDefinitions = () => {
           <thead>
             <tr>
               <th>Name</th>
-              <th>Anonymous applicant</th>
-              <th>Schedule intakes</th>
-              <th>Creates submissions</th>
-              <th>Creates PDF</th>
+              <th>Tags</th>
+              <th>Features</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {definitions.map((definition) => (
-              <tr key={definition.id}>
-                <td>{definition.name}</td>
-                <td>
-                  <FeatureBadge feature={definition.anonymousApply} />
-                </td>
-                <td>
-                  <FeatureBadge feature={definition.scheduledIntakes} />
-                </td>
-                <td>
-                  <FeatureBadge feature={definition.submissionRecords} />
-                </td>
-                <td>
-                  <FeatureBadge feature={definition.generatesPdf} />
-                </td>
-                <td>
-                  <GoAButtonGroup alignment="end">
-                    <GoAButton type="secondary" size="compact" onClick={() => navigate(definition.id)}>
-                      Select
-                    </GoAButton>
-                  </GoAButtonGroup>
-                </td>
-              </tr>
+              <FormDefinitionRow
+                key={definition.id}
+                dispatch={dispatch}
+                navigate={navigate}
+                definition={definition}
+                onTag={() => setShowTagDefinition(definition)}
+                onUntag={(tag) => dispatch(untagResource({ urn: definition.urn, tag }))}
+              />
             ))}
             {next && (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={4}>
                   <GoAButtonGroup alignment="center">
                     <GoAButton
                       type="tertiary"
@@ -100,6 +195,16 @@ export const FormsDefinitions = () => {
             )}
           </tbody>
         </GoATable>
+        <AddTagModal
+          open={!!showTagDefinition}
+          resource={showTagDefinition}
+          tagging={directoryBusy.executing}
+          onClose={() => setShowTagDefinition(null)}
+          onTag={async (urn, label) => {
+            await dispatch(tagResource({ urn, label }));
+            setShowTagDefinition(null);
+          }}
+        />
       </ContentContainer>
     </SearchLayout>
   );

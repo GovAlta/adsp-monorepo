@@ -193,9 +193,10 @@ const initialUserState: UserState = {
   showSessionExpiryAlert: false,
 };
 
-export const renewSession = createAsyncThunk('user/renew-session', async () => {
+export const renewSession = createAsyncThunk('user/renew-session', async (_, { dispatch }) => {
   // Getting the access token triggers refresh token use and update.
   await getAccessToken();
+  updateSessionTimeout(dispatch);
 });
 
 const userSlice = createSlice({

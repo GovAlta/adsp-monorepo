@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   AppDispatch,
-  busySelector,
+  formBusySelector,
   definitionSelector,
   dispositionDraftSelector,
   formActions,
@@ -33,7 +33,7 @@ export const FormSubmission = () => {
   const navigate = useNavigate();
 
   const { submissionId } = useParams();
-  const busy = useSelector(busySelector);
+  const busy = useSelector(formBusySelector);
   const definition = useSelector(definitionSelector);
   const submission = useSelector(submissionSelector);
   const files = useSelector(submissionFilesSelector);

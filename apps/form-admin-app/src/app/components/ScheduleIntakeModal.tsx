@@ -11,7 +11,7 @@ import { FunctionComponent, useState } from 'react';
 interface ScheduleIntakeModalProps {
   open: boolean;
   onClose: () => void;
-  onSchedule: (start: Date, end: Date) => void;
+  onSchedule: (start: Date, end: Date) => Promise<void>;
 }
 
 export const ScheduleIntakeModal: FunctionComponent<ScheduleIntakeModalProps> = ({ open, onClose, onSchedule }) => {
@@ -34,8 +34,8 @@ export const ScheduleIntakeModal: FunctionComponent<ScheduleIntakeModalProps> = 
         </GoAButton>
         <GoAButton
           disabled={!start || !end}
-          onClick={() =>
-            onSchedule(
+          onClick={async () =>
+            await onSchedule(
               typeof start === 'string' ? new Date(start) : start,
               typeof end === 'string' ? new Date(end) : end
             )

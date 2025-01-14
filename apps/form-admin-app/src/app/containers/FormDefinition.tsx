@@ -2,7 +2,7 @@ import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { LoadingIndicator } from '../components/LoadingIndicator';
-import { AppDispatch, definitionSelector, busySelector, selectDefinition } from '../state';
+import { AppDispatch, definitionSelector, formBusySelector, selectDefinition } from '../state';
 import { Forms } from './Forms';
 import { FormSubmissions } from './FormSubmissions';
 import { FormSubmission } from './FormSubmission';
@@ -13,7 +13,7 @@ export const FormDefinition: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const definition = useSelector(definitionSelector);
-  const busy = useSelector(busySelector);
+  const busy = useSelector(formBusySelector);
 
   const { definitionId } = useParams();
 
