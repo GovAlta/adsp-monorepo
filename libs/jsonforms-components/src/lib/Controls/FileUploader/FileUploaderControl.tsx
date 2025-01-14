@@ -7,6 +7,7 @@ import { JsonFormContext } from '../../Context';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 import { DeleteFileModal } from './DeleteFileModal';
+import { convertToSentenceCase } from '../../util';
 
 interface FileUploadAdditionalProps {
   isStepperReview?: boolean;
@@ -117,7 +118,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
       {required ? (
         <GoAFormItem label={label} requirement="required"></GoAFormItem>
       ) : (
-        <div className="label">{props.label}</div>
+        <div className="label">{convertToSentenceCase(props.label)}</div>
       )}
       {!readOnly && (
         <div className="file-upload">
