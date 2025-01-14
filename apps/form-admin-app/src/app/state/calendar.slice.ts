@@ -208,3 +208,5 @@ export const recordEventsSelector = createSelector(
       }))
       .sort((a, b) => (a.start < b.start ? -1 : 1))
 );
+
+export const calendarBusySelector = (state: AppState) => state.calendar.busy;

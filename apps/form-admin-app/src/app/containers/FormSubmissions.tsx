@@ -29,6 +29,7 @@ import { Digest } from '../components/Digest';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
+import { RowSkeleton } from '../components/RowSkeleton';
 
 interface FormSubmissionsProps {
   definitionId: string;
@@ -163,6 +164,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 </td>
               </tr>
             ))}
+            <RowSkeleton columns={4 + dataValues.length} show={busy.loading} />
             {next && (
               <tr>
                 <td colSpan={4 + dataValues.length}>

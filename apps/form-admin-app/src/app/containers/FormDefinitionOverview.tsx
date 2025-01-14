@@ -16,6 +16,7 @@ import styled from 'styled-components';
 import {
   AppDispatch,
   AppState,
+  calendarBusySelector,
   canGetIntakeCalendarSelector,
   createEvent,
   dataValuesSelector,
@@ -28,6 +29,7 @@ import {
 import { ContentContainer } from '../components/ContentContainer';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import { ScheduleIntakeModal } from '../components/ScheduleIntakeModal';
+import { RowSkeleton } from '../components/RowSkeleton';
 
 const OverviewLayout = styled.div`
   position: absolute;
@@ -50,6 +52,8 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
   const canGetIntakeCalendar = useSelector(canGetIntakeCalendarSelector);
   const definition = useSelector(definitionSelector);
   const dataValues = useSelector(dataValuesSelector);
+
+  const calendarBusy = useSelector(calendarBusySelector);
   const intakeEvents = useSelector((state: AppState) => recordEventsSelector(state, definition.urn));
 
   useEffect(() => {
@@ -157,6 +161,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                     </td>
                   </tr>
                 ))}
+                <RowSkeleton show={calendarBusy.loading} columns={4} />
               </tbody>
             </GoATable>
             <form>

@@ -29,12 +29,14 @@ import {
   GoADropdownItem,
   GoAFormItem,
   GoAIconButton,
+  GoASkeleton,
   GoATable,
 } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
 import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
+import { RowSkeleton } from '../components/RowSkeleton';
 
 const FeatureBadge: FunctionComponent<{ feature: string; hasFeature?: boolean }> = ({ feature, hasFeature }) => {
   return hasFeature && <GoABadge type="information" content={feature} mr="xs" mb="xs" />;
@@ -46,6 +48,7 @@ const TagBadge: FunctionComponent<{ tag: Tag; onDelete: () => void }> = ({ tag, 
 
 interface FormDefinitionRowProps {
   definition: FormDefinition;
+  loadingTags: boolean;
   dispatch: AppDispatch;
   navigate: (to: string) => void;
   onTag: () => void;
@@ -54,6 +57,7 @@ interface FormDefinitionRowProps {
 
 export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({
   definition,
+  loadingTags,
   dispatch,
   navigate,
   onTag,
@@ -68,12 +72,16 @@ export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({
   return (
     <tr key={definition.id}>
       <td>{definition.name}</td>
-      <td>
-        {tags?.map((tag) => (
-          <TagBadge key={tag.value} tag={tag} onDelete={() => onUntag(tag)} />
-        ))}
-        <GoAIconButton icon="add-circle" variant="nocolor" onClick={onTag} />
-      </td>
+      {loadingTags ? (
+        <td><GoASkeleton type="text-small" /></td>
+      ) : (
+        <td>
+          {tags?.map((tag) => (
+            <TagBadge key={tag.value} tag={tag} onDelete={() => onUntag(tag)} />
+          ))}
+          <GoAIconButton icon="add-circle" variant="color" onClick={onTag} />
+        </td>
+      )}
       <td>
         <FeatureBadge feature="Anonymous applicant" hasFeature={definition.anonymousApply} />
         <FeatureBadge feature="Scheduled intakes" hasFeature={definition.scheduledIntakes} />
@@ -174,10 +182,12 @@ export const FormsDefinitions = () => {
                 dispatch={dispatch}
                 navigate={navigate}
                 definition={definition}
+                loadingTags={directoryBusy.loadingResourceTags[definition.urn]}
                 onTag={() => setShowTagDefinition(definition)}
                 onUntag={(tag) => dispatch(untagResource({ urn: definition.urn, tag }))}
               />
             ))}
+            <RowSkeleton columns={4} show={busy.loading} />
             {next && (
               <tr>
                 <td colSpan={4}>
