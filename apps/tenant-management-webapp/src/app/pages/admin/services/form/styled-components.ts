@@ -87,7 +87,7 @@ export const ConfigFormWrapper = styled.div`
   padding-left: 3px;
   border: solid 1px #dcdcdc;
   border-radius: 3px;
-  height: 8.1rem;
+  height: 8.125rem;
   background-color: #f1f1f1;
   padding-right: 1rem;
   border-bottom: solid 16px #f1f1f1;
