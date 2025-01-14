@@ -15,7 +15,7 @@ import {
   submissionsSelector,
   submissionCriteriaSelector,
   formActions,
-  busySelector,
+  formBusySelector,
   nextSelector,
   selectedDataValuesSelector,
   canExportSelector,
@@ -41,7 +41,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const [showExport, setShowExport] = useState(false);
 
   const canExport = useSelector(canExportSelector);
-  const busy = useSelector(busySelector);
+  const busy = useSelector(formBusySelector);
   const submissions = useSelector(submissionsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(submissionCriteriaSelector);

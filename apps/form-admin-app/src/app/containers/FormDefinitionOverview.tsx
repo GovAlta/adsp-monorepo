@@ -133,14 +133,6 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
               This form is configured for scheduled intakes. Applicants will only be able to create and submit forms
               during periods of active intake scheduled on a calendar.
             </p>
-            {/* <div>
-              <GoAFormItem label="Starts on" mt="l" mr="l" ml="none">
-                {definition.intake ? <span>{definition.intake.start?.toFormat('LLLL dd tt')}</span> : 'None'}
-              </GoAFormItem>
-              <GoAFormItem label="Ends on" mt="l" mr="l" ml="none">
-                {definition.intake ? <span>{definition.intake.end?.toFormat('LLLL dd tt')}</span> : 'None'}
-              </GoAFormItem>
-            </div> */}
             <GoATable width="100%">
               <thead>
                 <tr>
@@ -176,8 +168,8 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
               <ScheduleIntakeModal
                 open={showScheduleIntake}
                 onClose={() => setShowScheduleIntake(false)}
-                onSchedule={(start, end) => {
-                  dispatch(
+                onSchedule={async (start, end) => {
+                  await dispatch(
                     createEvent({
                       recordId: definition.urn,
                       start,

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import {
   AppDispatch,
-  busySelector,
+  formBusySelector,
   canArchiveSelector,
   canSetToDraftSelector,
   definitionSelector,
@@ -32,7 +32,7 @@ export const Form = () => {
   const form = useSelector(formSelector);
   const files = useSelector(formFilesSelector);
 
-  const busy = useSelector(busySelector);
+  const busy = useSelector(formBusySelector);
   const canSetToDraft = useSelector(canSetToDraftSelector);
   const canArchive = useSelector(canArchiveSelector);
 

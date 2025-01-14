@@ -11,7 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   AppDispatch,
-  busySelector,
+  formBusySelector,
   selectedDataValuesSelector,
   findForms,
   formActions,
@@ -40,7 +40,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const [showExport, setShowExport] = useState(false);
 
   const canExport = useSelector(canExportSelector);
-  const busy = useSelector(busySelector);
+  const busy = useSelector(formBusySelector);
   const forms = useSelector(formsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(formCriteriaSelector);
