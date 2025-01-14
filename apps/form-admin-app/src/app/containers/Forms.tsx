@@ -28,6 +28,7 @@ import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
+import { RowSkeleton } from '../components/RowSkeleton';
 
 interface FormsProps {
   definitionId: string;
@@ -153,6 +154,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 </td>
               </tr>
             ))}
+            <RowSkeleton columns={3 + dataValues.length} show={busy.loading} />
             {next && (
               <tr>
                 <td colSpan={3 + dataValues.length}>

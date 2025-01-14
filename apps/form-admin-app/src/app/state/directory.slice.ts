@@ -27,6 +27,7 @@ interface DirectoryState {
   next: string;
   busy: {
     loading: boolean;
+    loadingResourceTags: Record<string, boolean>;
     executing: boolean;
   };
 }
@@ -40,6 +41,7 @@ const initialState: DirectoryState = {
   next: null,
   busy: {
     loading: false,
+    loadingResourceTags: {},
     executing: false,
   },
 };
@@ -237,14 +239,14 @@ const directorySlice = createSlice({
         }
         state.next = payload.page.next;
       })
-      .addCase(getResourceTags.pending, (state) => {
-        state.busy.loading = true;
+      .addCase(getResourceTags.pending, (state, { meta }) => {
+        state.busy.loadingResourceTags[meta.arg.urn] = true;
       })
-      .addCase(getResourceTags.rejected, (state) => {
-        state.busy.loading = false;
+      .addCase(getResourceTags.rejected, (state, { meta }) => {
+        state.busy.loadingResourceTags[meta.arg.urn] = false;
       })
       .addCase(getResourceTags.fulfilled, (state, { payload, meta }) => {
-        state.busy.loading = false;
+        state.busy.loadingResourceTags[meta.arg.urn] = false;
         const tagValues = payload.results.map((result) => result.value);
         state.results = [...(meta.arg.after ? state.results : []), ...tagValues];
         for (const result of payload.results) {
