@@ -171,7 +171,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
           setTimeout(() => {
             handleSuggestionClick(suggestion);
             setOpen(false);
-          }, 1);
+          }, 50);
         }
       }
     }
