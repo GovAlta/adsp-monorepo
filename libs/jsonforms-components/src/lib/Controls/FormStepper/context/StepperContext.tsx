@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect } from 'react';
 import { CategorizationStepperLayoutRendererProps } from '../types';
-import { Categorization, deriveLabelForUISchemaElement, isEnabled, toDataPath } from '@jsonforms/core';
+import { Categorization, deriveLabelForUISchemaElement, isEnabled, toDataPath, getControlPath } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
@@ -41,7 +41,7 @@ export const getIncompletePaths = (ajv: Ajv, scopes: string[]): string[] => {
   const requiredErrorPaths: string[] | undefined = ajv?.errors
     ?.filter((e) => e.keyword === 'required')
     .map((e) => {
-      return (e?.schema as unknown as string[])?.[0];
+      return getControlPath(e);
     });
 
   const _scopes = scopes
