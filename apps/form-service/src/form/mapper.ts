@@ -19,6 +19,7 @@ export function mapFormDefinition(entity: FormDefinition, intake?: Intake) {
     generatesPdf: !!entity.submissionPdfTemplate && !entity.anonymousApply,
     submissionRecords: entity.submissionRecords,
     scheduledIntakes: entity.scheduledIntakes,
+    supportTopic: entity.supportTopic,
     intake,
   };
 }
