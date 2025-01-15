@@ -1,3 +1,16 @@
+import {
+  GoABadge,
+  GoAButton,
+  GoAButtonGroup,
+  GoACallout,
+  GoAChip,
+  GoADropdown,
+  GoADropdownItem,
+  GoAFormItem,
+  GoAIconButton,
+  GoASkeleton,
+  GoATable,
+} from '@abgov/react-components-new';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -19,19 +32,6 @@ import {
   tagsSelector,
   Resource,
 } from '../state';
-import {
-  GoABadge,
-  GoAButton,
-  GoAButtonGroup,
-  GoACallout,
-  GoAChip,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoAIconButton,
-  GoASkeleton,
-  GoATable,
-} from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
 import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
@@ -73,7 +73,9 @@ export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({
     <tr key={definition.id}>
       <td>{definition.name}</td>
       {loadingTags ? (
-        <td><GoASkeleton type="text-small" /></td>
+        <td>
+          <GoASkeleton type="text-small" />
+        </td>
       ) : (
         <td>
           {tags?.map((tag) => (
@@ -84,9 +86,10 @@ export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({
       )}
       <td>
         <FeatureBadge feature="Anonymous applicant" hasFeature={definition.anonymousApply} />
-        <FeatureBadge feature="Scheduled intakes" hasFeature={definition.scheduledIntakes} />
+        <FeatureBadge feature="Applicant questions" hasFeature={definition.supportTopic} />
         <FeatureBadge feature="Creates submissions" hasFeature={definition.submissionRecords} />
         <FeatureBadge feature="Creates PDF" hasFeature={definition.generatesPdf} />
+        <FeatureBadge feature="Scheduled intakes" hasFeature={definition.scheduledIntakes} />
       </td>
       <td>
         <GoAButtonGroup alignment="end">

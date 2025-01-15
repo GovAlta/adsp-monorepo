@@ -111,6 +111,16 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             the form, then submit once ready.
           </GoADetails>
         )}
+        {definition.supportTopic ? (
+          <GoADetails heading="Applicant questions">
+            Applicants can send questions regarding their form, which staff can review and respond to. Anonymous
+            applicants are not able to send questions.
+          </GoADetails>
+        ) : (
+          <GoADetails heading="No applicant questions">
+            Applicants are not able to send questions through the form system.
+          </GoADetails>
+        )}
         {definition.generatesPdf ? (
           <GoADetails heading="Creates PDF when submitted">
             PDF copy of the submitted information is created when forms are submitted.
