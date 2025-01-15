@@ -418,6 +418,11 @@ export const SpinnerPaddingSmall = styled.div`
   margin: 0 0 0 5px;
   float: right;
 `;
+
+export const TableData = styled.td`
+  width: 33.33%;
+`;
+
 export const OverflowWrap = styled.span`
   word-break: break-all;
 `;
