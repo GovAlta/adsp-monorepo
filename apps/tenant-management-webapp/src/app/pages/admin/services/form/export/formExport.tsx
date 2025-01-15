@@ -13,6 +13,7 @@ import {
   GoARadioGroup,
   GoARadioItem,
   GoACheckbox,
+  GoABadge,
 } from '@abgov/react-components-new';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
@@ -27,6 +28,7 @@ import { FormDefinition, Stream, ExportFormat, ColumnOption } from '@store/form/
 
 import { DownloadFileService, FetchFilesService } from '@store/file/actions';
 import { ExportWrapper } from '../styled-components';
+import { truncateString } from '@lib/stringUtil';
 
 export const FormExport = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -72,14 +74,14 @@ export const FormExport = (): JSX.Element => {
     if (exportFormat === 'csv') {
       selectedColumns = columns.filter((col) => col.selected).map((col) => col.id);
     }
-
+    setSpinner(true);
     if (selectedForm?.submissionRecords === true) {
       dispatch(getExportFormInfo(selectedForm?.id, 'submissions', exportFormat, selectedColumns));
     } else {
       dispatch(getExportFormInfo(selectedForm.id, 'forms', exportFormat, selectedColumns));
     }
     dispatch(startSocket());
-    setSpinner(true);
+
     setLoadingMessage('Exporting File ...');
   };
 
@@ -153,13 +155,14 @@ export const FormExport = (): JSX.Element => {
     });
 
     socket?.on(`export-service:export-completed`, (streamData) => {
-      setExportStream(streamData);
-      setLoadingMessage('Loading File ...');
+      if (streamData?.payload?.file?.filename.includes(truncateString(selectedForm.id))) {
+        setExportStream(streamData);
+        setLoadingMessage('Loading File ...');
+      }
     });
 
     socket?.on(`export-service:export-failed`, (streamData) => {
       setError(streamData?.error);
-      setSpinner(false);
     });
 
     return () => {
@@ -241,7 +244,7 @@ export const FormExport = (): JSX.Element => {
         </GoAFormItem>
         <br />
         <GoAFormItem label="Records">
-          <h3>{resourceType}</h3>
+          {selectedForm && <GoABadge type="information" content={resourceType}></GoABadge>}
         </GoAFormItem>
         <br />
         <GoAFormItem label="Format">
@@ -280,6 +283,7 @@ export const FormExport = (): JSX.Element => {
                   <div>
                     <h4>Form Data</h4>
                     {columns
+                      .sort()
                       .filter((col) => col.group === 'Form Data')
                       .map((col) => (
                         <label key={col.id}>
@@ -315,7 +319,7 @@ export const FormExport = (): JSX.Element => {
               title="Download"
               testId="download-template-icon"
               size="medium"
-              disabled={iconDisable}
+              disabled={iconDisable || spinner}
               onClick={() => {
                 onDownloadFile(currentFile);
               }}

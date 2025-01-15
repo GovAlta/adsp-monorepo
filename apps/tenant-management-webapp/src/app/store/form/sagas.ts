@@ -11,6 +11,8 @@ import { select, call, put, takeEvery, delay, takeLatest } from 'redux-saga/effe
 import { RootState } from '../index';
 import { io, Socket } from 'socket.io-client';
 import axios from 'axios';
+import { truncateString } from '@lib/stringUtil';
+
 import {
   UpdateFormDefinitionsAction,
   getFormDefinitionsSuccess,
@@ -99,10 +101,6 @@ export function* fetchFormDefinitions(payload): SagaIterator {
   }
 }
 
-const truncateString = (input: string, maxLength: number = 24): string => {
-  return input.length > maxLength ? input.slice(0, maxLength) : input;
-};
-
 export function* exportFormInfo(payload): SagaIterator {
   const exportBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.exportServiceUrl);
   const token: string = yield call(getAccessToken);
@@ -134,7 +132,7 @@ export function* exportFormInfo(payload): SagaIterator {
     );
   }
 }
-export function* fetchFormInfo(definitionId): SagaIterator {
+export function* fetchFormInfo(payload): SagaIterator {
   const formAppUrl: string = yield select((state: RootState) => state.config.serviceUrls?.formAppApiUrl);
   const token: string = yield call(getAccessToken);
   try {
@@ -142,7 +140,7 @@ export function* fetchFormInfo(definitionId): SagaIterator {
       const url = `${formAppUrl}/form/v1/forms`;
       const params: Record<string, string | number | boolean> = { top: 10 };
       params.includeData = true;
-      params.definitionId = definitionId;
+      params.criteria = JSON.stringify({ definitionIdEquals: payload.definitionId });
 
       const formInfo = yield call(axios.get, url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -160,20 +158,21 @@ export function* fetchFormInfo(definitionId): SagaIterator {
   }
 }
 
-export function* fetchSubmissionInfo(definitionId): SagaIterator {
+export function* fetchSubmissionInfo(payload): SagaIterator {
   const formAppUrl: string = yield select((state: RootState) => state.config.serviceUrls?.formAppApiUrl);
   const token: string = yield call(getAccessToken);
   try {
     if (formAppUrl && token) {
       const url = `${formAppUrl}/form/v1/submissions`;
-      const params: Record<string, string | number | boolean> = { top: 10 };
+      const params: Record<string, string | number | boolean> = { top: 100 };
       params.includeData = true;
-      params.definitionId = definitionId;
+      params.criteria = JSON.stringify({ definitionIdEquals: payload.definitionId });
 
       const submissionInfo = yield call(axios.get, url, {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });
+
       yield put(fetchSubmissionInfoSuccess(transformToColumns(submissionInfo.data.results)));
     }
   } catch (err) {
@@ -361,6 +360,7 @@ export function* fetchFormMetrics(): SagaIterator {
 }
 
 type Item = { id: string; label: string };
+
 const removeDuplicatesById = (array: Item[]): Item[] => {
   return array.filter((item, index, self) => self.findIndex((t) => t.id === item.id) === index);
 };
