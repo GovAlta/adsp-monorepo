@@ -288,7 +288,7 @@ const SearchBox = styled.div`
     padding: 0.5rem;
     color: var(--color-gray-900);
   }
-  .suggestion-active,
+
   .suggestions li:hover {
     background-color: var(--color-primary);
     color: var(--color-white);
