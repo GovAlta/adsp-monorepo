@@ -39,9 +39,11 @@ export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean
 
 export const getIncompletePaths = (ajv: Ajv, scopes: string[]): string[] => {
   const requiredErrorPaths: string[] | undefined = ajv?.errors
-    ?.filter((e) => e.keyword === 'required')
+    ?.filter((e) => e.keyword === 'required' || e.keyword === 'minLength')
     .map((e) => {
-      return (e?.schema as unknown as string[])?.[0];
+      const schemaName = (e?.schema as unknown as string[])?.[0];
+      const instancePath = e.instancePath.replace(/^\//, '').replace(/\//g, '.');
+      return schemaName ? instancePath + '.' + schemaName : instancePath;
     });
 
   const _scopes = scopes
