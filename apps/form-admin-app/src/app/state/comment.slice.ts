@@ -40,7 +40,7 @@ const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
 
 export const loadTopic = createAsyncThunk(
   'comment/load-topic',
-  async ({ resourceId }: { resourceId: string }, { getState, rejectWithValue }) => {
+  async ({ resourceId, typeId }: { resourceId: string, typeId: string }, { getState, rejectWithValue }) => {
     if (!resourceId) {
       throw new Error('resourceId not specified');
     }
@@ -55,7 +55,7 @@ export const loadTopic = createAsyncThunk(
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {
-            criteria: JSON.stringify({ resourceIdEquals: resourceId }),
+            criteria: JSON.stringify({ resourceIdEquals: resourceId, typeIdEquals: typeId }),
           },
         }
       );

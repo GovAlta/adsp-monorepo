@@ -12,19 +12,13 @@ const DetailsLayoutContainer = styled.div`
   right: 0;
   display: flex;
   flex-direction: column;
+  & > * {
+    flex: 1
+  }
   & > :first-child {
     background: var(--goa-color-greyscale-100);
     border-bottom: 1px solid var(--goa-color-greyscale-200);
     flex: 0;
-  }
-  & > form:last-child {
-    background: var(--goa-color-greyscale-100);
-    border-top: 1px solid var(--goa-color-greyscale-200);
-    flex: 0;
-    padding-top: var(--goa-space-m);
-    padding-bottom: var(--goa-space-s);
-    padding-left: var(--goa-space-s);
-    padding-right: var(--goa-space-s);
   }
 `;
 
@@ -33,7 +27,7 @@ interface DetailsLayoutProps {
   navButtons?: ReactNode;
   header: ReactNode;
   children: ReactNode;
-  actionsForm: ReactNode;
+  actionsForm?: ReactNode;
 }
 
 export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({

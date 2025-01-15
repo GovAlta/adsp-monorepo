@@ -54,6 +54,7 @@ export interface FormDefinition {
   anonymousApply: boolean;
   generatesPdf: boolean;
   scheduledIntakes: boolean;
+  supportTopic: boolean;
   intake?: Intake;
 }
 

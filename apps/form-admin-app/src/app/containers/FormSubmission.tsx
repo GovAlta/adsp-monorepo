@@ -21,11 +21,12 @@ import {
   submissionSelector,
   updateFormDisposition,
 } from '../state';
-import { FormViewer } from './FormViewer';
+import { AdspId } from '../../lib/adspId';
 import { ContentContainer } from '../components/ContentContainer';
 import { DetailsLayout } from '../components/DetailsLayout';
 import { PropertiesContainer } from '../components/PropertiesContainer';
-import { AdspId } from '../../lib/adspId';
+import { ActionsForm } from '../components/ActionsForm';
+import { FormViewer } from './FormViewer';
 import { PdfDownload } from './PdfDownload';
 
 export const FormSubmission = () => {
@@ -67,57 +68,59 @@ export const FormSubmission = () => {
         )
       }
       actionsForm={
-        submission?.disposition ? (
-          <PropertiesContainer>
-            <GoAFormItem ml="xl" label="Disposition">
-              <span>{submission.disposition.status}</span>
-            </GoAFormItem>
-            <GoAFormItem ml="xl" label="Reason">
-              <span>{submission.disposition.reason}</span>
-            </GoAFormItem>
-            <GoAFormItem ml="xl" label="Dispositioned on">
-              <span>{DateTime.fromISO(submission.disposition.date).toFormat('LLL dd, yyyy')}</span>
-            </GoAFormItem>
-          </PropertiesContainer>
-        ) : (
-          <form>
-            <GoAFormItem label="Disposition">
-              <GoADropdown
-                value={draft.status || ''}
-                onChange={(_, status: string) => dispatch(formActions.setDispositionDraft({ ...draft, status }))}
-                relative={true}
-              >
-                <GoADropdownItem value={''} label={'None selected'} />
-                {definition?.dispositionStates?.map((state) => (
-                  <GoADropdownItem key={state.id} value={state.name} label={state.name} />
-                ))}
-              </GoADropdown>
-            </GoAFormItem>
-            <GoAFormItem label="Reason">
-              <GoATextArea
-                name="reason"
-                value={draft.reason}
-                onChange={(_, reason) => dispatch(formActions.setDispositionDraft({ ...draft, reason }))}
-              />
-            </GoAFormItem>
-            <GoAButtonGroup alignment="end">
-              <GoAButton
-                disabled={!draft.status || !draft.reason || busy.executing}
-                onClick={() =>
-                  dispatch(
-                    updateFormDisposition({
-                      submissionUrn: AdspId.parse(submission.urn),
-                      status: draft.status,
-                      reason: draft.reason,
-                    })
-                  )
-                }
-              >
-                Disposition
-              </GoAButton>
-            </GoAButtonGroup>
-          </form>
-        )
+        <ActionsForm>
+          {submission?.disposition ? (
+            <PropertiesContainer>
+              <GoAFormItem ml="xl" label="Disposition">
+                <span>{submission.disposition.status}</span>
+              </GoAFormItem>
+              <GoAFormItem ml="xl" label="Reason">
+                <span>{submission.disposition.reason}</span>
+              </GoAFormItem>
+              <GoAFormItem ml="xl" label="Dispositioned on">
+                <span>{DateTime.fromISO(submission.disposition.date).toFormat('LLL dd, yyyy')}</span>
+              </GoAFormItem>
+            </PropertiesContainer>
+          ) : (
+            <>
+              <GoAFormItem label="Disposition">
+                <GoADropdown
+                  value={draft.status || ''}
+                  onChange={(_, status: string) => dispatch(formActions.setDispositionDraft({ ...draft, status }))}
+                  relative={true}
+                >
+                  <GoADropdownItem value={''} label={'None selected'} />
+                  {definition?.dispositionStates?.map((state) => (
+                    <GoADropdownItem key={state.id} value={state.name} label={state.name} />
+                  ))}
+                </GoADropdown>
+              </GoAFormItem>
+              <GoAFormItem label="Reason">
+                <GoATextArea
+                  name="reason"
+                  value={draft.reason}
+                  onChange={(_, reason) => dispatch(formActions.setDispositionDraft({ ...draft, reason }))}
+                />
+              </GoAFormItem>
+              <GoAButtonGroup alignment="end">
+                <GoAButton
+                  disabled={!draft.status || !draft.reason || busy.executing}
+                  onClick={() =>
+                    dispatch(
+                      updateFormDisposition({
+                        submissionUrn: AdspId.parse(submission.urn),
+                        status: draft.status,
+                        reason: draft.reason,
+                      })
+                    )
+                  }
+                >
+                  Disposition
+                </GoAButton>
+              </GoAButtonGroup>
+            </>
+          )}
+        </ActionsForm>
       }
     >
       <ContentContainer>
