@@ -1,11 +1,12 @@
-import { GoAButton, GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import styled from 'styled-components';
 import {
   AppDispatch,
-  busySelector,
+  formBusySelector,
   canArchiveSelector,
   canSetToDraftSelector,
   definitionSelector,
@@ -14,6 +15,8 @@ import {
   FormStatus,
   runFormOperation,
   selectForm,
+  loadTopic,
+  selectTopic,
 } from '../state';
 import { FormViewer } from './FormViewer';
 import { DetailsLayout } from '../components/DetailsLayout';
@@ -21,6 +24,14 @@ import { ContentContainer } from '../components/ContentContainer';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import { PdfDownload } from './PdfDownload';
 import { AdspId } from '../../lib/adspId';
+import CommentsViewer from './CommentsViewer';
+import { ActionsForm } from '../components/ActionsForm';
+import { Tab, Tabs } from '../components/Tabs';
+
+const FormContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
 
 export const Form = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -32,13 +43,22 @@ export const Form = () => {
   const form = useSelector(formSelector);
   const files = useSelector(formFilesSelector);
 
-  const busy = useSelector(busySelector);
+  const busy = useSelector(formBusySelector);
   const canSetToDraft = useSelector(canSetToDraftSelector);
   const canArchive = useSelector(canArchiveSelector);
 
   useEffect(() => {
     dispatch(selectForm(formId));
   }, [dispatch, formId]);
+
+  useEffect(() => {
+    if (form) {
+      (async () => {
+        await dispatch(loadTopic({ resourceId: form.urn, typeId: 'form-questions' }));
+        await dispatch(selectTopic({ resourceId: form.urn }));
+      })();
+    }
+  }, [dispatch, definition, form]);
 
   return (
     <DetailsLayout
@@ -65,57 +85,66 @@ export const Form = () => {
           </PropertiesContainer>
         )
       }
-      actionsForm={
-        <form>
-          <GoAButtonGroup alignment="end">
-            {form?.status === FormStatus.submitted && canSetToDraft && (
-              <GoAButton
-                type="secondary"
-                disabled={busy.executing}
-                onClick={() => dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'to-draft' }))}
-              >
-                Set to draft
-              </GoAButton>
-            )}
-            {form?.status !== FormStatus.archived && canArchive && (
-              <GoAButton type="primary" disabled={busy.executing} onClick={() => setShowArchiveConfirm(true)}>
-                Archive form
-              </GoAButton>
-            )}
-          </GoAButtonGroup>
-        </form>
-      }
     >
-      <>
-        <ContentContainer>
-          <FormViewer
-            dataSchema={definition?.dataSchema}
-            uiSchema={definition?.uiSchema}
-            data={form?.data}
-            files={files}
-          />
-        </ContentContainer>
-        <GoAModal heading="Archive this form?" open={showArchiveConfirm}>
-          <div>
-            Archiving the form will change its status to "Archived" so it can be separated from forms that are still
-            being actively worked on. The applicant will no longer be able to update the form.
-          </div>
-          <GoAButtonGroup alignment="end" mt="xl">
-            <GoAButton type="secondary" onClick={() => setShowArchiveConfirm(false)}>
-              Cancel
-            </GoAButton>
-            <GoAButton
-              type={form?.status === FormStatus.submitted ? 'primary' : 'secondary'}
-              onClick={() => {
-                dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'archive' }));
-                setShowArchiveConfirm(false);
-              }}
-            >
-              Archive form
-            </GoAButton>
-          </GoAButtonGroup>
-        </GoAModal>
-      </>
+      <Tabs>
+        <Tab heading="Form">
+          <FormContainer>
+            <ContentContainer>
+              <FormViewer
+                dataSchema={definition?.dataSchema}
+                uiSchema={definition?.uiSchema}
+                data={form?.data}
+                files={files}
+              />
+            </ContentContainer>
+            <ActionsForm>
+              <GoAButtonGroup alignment="end">
+                {form?.status === FormStatus.submitted && canSetToDraft && (
+                  <GoAButton
+                    type="secondary"
+                    disabled={busy.executing}
+                    onClick={() => dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'to-draft' }))}
+                  >
+                    Set to draft
+                  </GoAButton>
+                )}
+                {form?.status !== FormStatus.archived && canArchive && (
+                  <GoAButton
+                    type={form?.status === FormStatus.submitted ? 'primary' : 'secondary'}
+                    disabled={busy.executing}
+                    onClick={() => setShowArchiveConfirm(true)}
+                  >
+                    Archive form
+                  </GoAButton>
+                )}
+              </GoAButtonGroup>
+            </ActionsForm>
+            <GoAModal heading="Archive this form?" open={showArchiveConfirm}>
+              <div>
+                Archiving the form will change its status to "Archived" so it can be separated from forms that are still
+                being actively worked on. The applicant will no longer be able to update the form.
+              </div>
+              <GoAButtonGroup alignment="end" mt="xl">
+                <GoAButton type="secondary" onClick={() => setShowArchiveConfirm(false)}>
+                  Cancel
+                </GoAButton>
+                <GoAButton
+                  type="primary"
+                  onClick={() => {
+                    dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'archive' }));
+                    setShowArchiveConfirm(false);
+                  }}
+                >
+                  Archive form
+                </GoAButton>
+              </GoAButtonGroup>
+            </GoAModal>
+          </FormContainer>
+        </Tab>
+        <Tab heading="Applicant questions" hide={!definition.supportTopic}>
+          <CommentsViewer />
+        </Tab>
+      </Tabs>
     </DetailsLayout>
   );
 };

@@ -3,6 +3,7 @@ import { tryResolveRefs } from '@abgov/jsonforms-components';
 import { JsonSchema } from '@jsonforms/core';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
+import dashify from 'dashify';
 import _ from 'lodash';
 import { DateTime } from 'luxon';
 import { AppState } from './store';
@@ -15,12 +16,12 @@ import {
   FormStatus,
   FormDisposition,
   EXPORT_SERVICE_ID,
-  CALENDAR_SERVICE_ID,
   CONFIGURATION_SERVICE_ID,
 } from './types';
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
 import { downloadFile, FileMetadata, findFile, loadFileMetadata } from './file.slice';
+import { getTaggedResources } from './directory.slice';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -132,25 +133,43 @@ export const initialFormState: FormState = {
 
 export const loadDefinitions = createAsyncThunk(
   'form/load-definitions',
-  async ({ after }: { after?: string }, { getState, rejectWithValue }) => {
+  async ({ tag, after }: { tag?: string; after?: string }, { dispatch, getState, rejectWithValue }) => {
     const state = getState() as AppState;
     const { directory } = state.config;
 
     try {
-      const accessToken = await getAccessToken();
-      const requestUrl = new URL('/form/v1/definitions', directory[FORM_SERVICE_ID]);
-      const { data } = await axios.get<PagedResults<FormDefinition>>(requestUrl.href, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: { top: 20, after },
-      });
+      if (tag) {
+        const { results, page } = await dispatch(getTaggedResources({ value: dashify(tag), after })).unwrap();
 
-      return {
-        ...data,
-        results: data.results.map((result) => ({
-          ...result,
-          urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${result.id}`,
-        })),
-      };
+        const definitions = [];
+        for (const result of results.filter(({ type }) => type === 'configuration')) {
+          const [_, definitionId] = result.urn.match(/form-service\/([a-zA-Z0-9-_ ]{1,50})$/);
+          if (definitionId) {
+            const definition = await dispatch(loadDefinition(definitionId)).unwrap();
+            definitions.push({ ...definition, urn: result.urn });
+          }
+        }
+
+        return {
+          page,
+          results: definitions,
+        };
+      } else {
+        const accessToken = await getAccessToken();
+        const requestUrl = new URL('/form/v1/definitions', directory[FORM_SERVICE_ID]);
+        const { data } = await axios.get<PagedResults<FormDefinition>>(requestUrl.href, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { top: 50, after },
+        });
+
+        return {
+          ...data,
+          results: data.results.map((result) => ({
+            ...result,
+            urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${result.id}`,
+          })),
+        };
+      }
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -980,7 +999,7 @@ export const submissionFilesSelector = createSelector(
     Object.entries(submission?.formFiles || {}).reduce((files, [key, urn]) => ({ ...files, [key]: metadata[urn] }), {})
 );
 
-export const busySelector = (state: AppState) => state.form.busy;
+export const formBusySelector = (state: AppState) => state.form.busy;
 
 export const submissionCriteriaSelector = (state: AppState) => state.form.submissionCriteria;
 

@@ -26,6 +26,8 @@ export const CommentsViewer: FunctionComponent = () => {
 
   return (
     <CommentsViewerComponent
+      heading="Questions"
+      addCommentLabel="Add response"
       comments={results}
       canComment={canComment}
       canLoadMore={!!next}

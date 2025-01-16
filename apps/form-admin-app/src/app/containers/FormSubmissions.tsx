@@ -15,7 +15,7 @@ import {
   submissionsSelector,
   submissionCriteriaSelector,
   formActions,
-  busySelector,
+  formBusySelector,
   nextSelector,
   selectedDataValuesSelector,
   canExportSelector,
@@ -29,6 +29,7 @@ import { Digest } from '../components/Digest';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
+import { RowSkeleton } from '../components/RowSkeleton';
 
 interface FormSubmissionsProps {
   definitionId: string;
@@ -41,7 +42,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const [showExport, setShowExport] = useState(false);
 
   const canExport = useSelector(canExportSelector);
-  const busy = useSelector(busySelector);
+  const busy = useSelector(formBusySelector);
   const submissions = useSelector(submissionsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(submissionCriteriaSelector);
@@ -163,6 +164,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 </td>
               </tr>
             ))}
+            <RowSkeleton columns={4 + dataValues.length} show={busy.loading} />
             {next && (
               <tr>
                 <td colSpan={4 + dataValues.length}>

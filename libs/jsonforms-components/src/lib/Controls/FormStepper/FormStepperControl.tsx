@@ -73,7 +73,6 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
 
   return (
     <div data-testid="form-stepper-test-wrapper">
-      <div>{categories[activeId]?.isCompleted && categories[activeId]?.isVisited}</div>
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
           {/* Need to force a refresh here, GoAFormStepper cant change dynamically unless completely re-rendered */}
@@ -91,7 +90,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                   data-testid={`stepper-tab-${index}`}
                   key={`stepper-tab-${index}`}
                   text={`${c.label}`}
-                  status={c.isValid ? 'complete' : 'incomplete'}
+                  status={c.isCompleted && c.isValid && c.isVisited ? 'complete' : 'incomplete'}
                 />
               );
             })}

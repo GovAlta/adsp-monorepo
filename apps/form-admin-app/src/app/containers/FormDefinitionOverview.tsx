@@ -16,6 +16,7 @@ import styled from 'styled-components';
 import {
   AppDispatch,
   AppState,
+  calendarBusySelector,
   canGetIntakeCalendarSelector,
   createEvent,
   dataValuesSelector,
@@ -28,6 +29,7 @@ import {
 import { ContentContainer } from '../components/ContentContainer';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import { ScheduleIntakeModal } from '../components/ScheduleIntakeModal';
+import { RowSkeleton } from '../components/RowSkeleton';
 
 const OverviewLayout = styled.div`
   position: absolute;
@@ -50,6 +52,8 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
   const canGetIntakeCalendar = useSelector(canGetIntakeCalendarSelector);
   const definition = useSelector(definitionSelector);
   const dataValues = useSelector(dataValuesSelector);
+
+  const calendarBusy = useSelector(calendarBusySelector);
   const intakeEvents = useSelector((state: AppState) => recordEventsSelector(state, definition.urn));
 
   useEffect(() => {
@@ -107,6 +111,16 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             the form, then submit once ready.
           </GoADetails>
         )}
+        {definition.supportTopic ? (
+          <GoADetails heading="Applicant questions">
+            Applicants can send questions regarding their form, which staff can review and respond to. Anonymous
+            applicants are not able to send questions.
+          </GoADetails>
+        ) : (
+          <GoADetails heading="No applicant questions">
+            Applicants are not able to send questions through the form system.
+          </GoADetails>
+        )}
         {definition.generatesPdf ? (
           <GoADetails heading="Creates PDF when submitted">
             PDF copy of the submitted information is created when forms are submitted.
@@ -133,14 +147,6 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
               This form is configured for scheduled intakes. Applicants will only be able to create and submit forms
               during periods of active intake scheduled on a calendar.
             </p>
-            {/* <div>
-              <GoAFormItem label="Starts on" mt="l" mr="l" ml="none">
-                {definition.intake ? <span>{definition.intake.start?.toFormat('LLLL dd tt')}</span> : 'None'}
-              </GoAFormItem>
-              <GoAFormItem label="Ends on" mt="l" mr="l" ml="none">
-                {definition.intake ? <span>{definition.intake.end?.toFormat('LLLL dd tt')}</span> : 'None'}
-              </GoAFormItem>
-            </div> */}
             <GoATable width="100%">
               <thead>
                 <tr>
@@ -165,6 +171,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                     </td>
                   </tr>
                 ))}
+                <RowSkeleton show={calendarBusy.loading} columns={4} />
               </tbody>
             </GoATable>
             <form>
@@ -176,8 +183,8 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
               <ScheduleIntakeModal
                 open={showScheduleIntake}
                 onClose={() => setShowScheduleIntake(false)}
-                onSchedule={(start, end) => {
-                  dispatch(
+                onSchedule={async (start, end) => {
+                  await dispatch(
                     createEvent({
                       recordId: definition.urn,
                       start,

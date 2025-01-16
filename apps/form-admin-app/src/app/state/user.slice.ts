@@ -25,8 +25,8 @@ export interface UserState {
     email: string;
     roles: string[];
   };
-  sessionExpiresAt?: string;
-  showSessionExpiryAlert: boolean;
+  sessionExpiresAt: string;
+  alertSessionExpiresAt: string;
 }
 
 let client: Keycloak;
@@ -60,18 +60,20 @@ async function initializeKeycloakClient(dispatch: Dispatch, realm: string, confi
 
 let sessionTimeout;
 function updateSessionTimeout(dispatch: Dispatch) {
-  const expires = DateTime.fromSeconds(client.refreshTokenParsed.exp);
-  dispatch(userActions.setSessionExpiry({ expiresAt: expires.toISO() }));
+  if (client.refreshTokenParsed) {
+    const expires = DateTime.fromSeconds(client.refreshTokenParsed.exp);
+    dispatch(userActions.setSessionExpiry({ expiresAt: expires.toISO(), alert: false }));
 
-  if (sessionTimeout) {
-    clearTimeout(sessionTimeout);
+    if (sessionTimeout) {
+      clearTimeout(sessionTimeout);
+    }
+
+    const tilExpiresAlert = expires.diff(DateTime.now()).minus(120000);
+    sessionTimeout = setTimeout(
+      () => dispatch(userActions.setSessionExpiry({ expiresAt: expires.toISO(), alert: true })),
+      tilExpiresAlert.as('milliseconds')
+    );
   }
-
-  const tilExpiresAlert = expires.diff(DateTime.now()).minus(120000);
-  sessionTimeout = setTimeout(
-    () => dispatch(userActions.setSessionExpiry({ expiresAt: expires.toISO(), showAlert: true })),
-    tilExpiresAlert.as('milliseconds')
-  );
 }
 
 export async function getAccessToken(): Promise<string> {
@@ -190,12 +192,14 @@ const initialUserState: UserState = {
   initialized: false,
   tenant: null,
   user: undefined,
-  showSessionExpiryAlert: false,
+  sessionExpiresAt: null,
+  alertSessionExpiresAt: null,
 };
 
-export const renewSession = createAsyncThunk('user/renew-session', async () => {
+export const renewSession = createAsyncThunk('user/renew-session', async (_, { dispatch }) => {
   // Getting the access token triggers refresh token use and update.
   await getAccessToken();
+  updateSessionTimeout(dispatch);
 });
 
 const userSlice = createSlice({
@@ -205,9 +209,9 @@ const userSlice = createSlice({
     clearUser: (state) => {
       state.user = undefined;
     },
-    setSessionExpiry: (state, { payload }: { payload: { expiresAt: string; showAlert?: boolean } }) => {
+    setSessionExpiry: (state, { payload }: { payload: { expiresAt: string, alert: boolean } }) => {
       state.sessionExpiresAt = payload.expiresAt;
-      state.showSessionExpiryAlert = !!payload.showAlert;
+      state.alertSessionExpiresAt = payload.alert ? payload.expiresAt : null;
     },
   },
   extraReducers: (builder) => {
@@ -241,10 +245,9 @@ export const tenantSelector = (state: AppState) => state.user.tenant;
 export const userSelector = (state: AppState) => state.user;
 
 export const sessionExpirySelector = createSelector(
-  (state: AppState) => state.user.sessionExpiresAt,
-  (state: AppState) => state.user.showSessionExpiryAlert,
-  (expiresAt, showAlert) => ({
-    secondsTilExpiry: Math.round(DateTime.fromISO(expiresAt).diff(DateTime.now()).as('seconds')),
-    showAlert,
+  (state: AppState) => state.user.alertSessionExpiresAt,
+  (expiresAt) => ({
+    secondsTilExpiry: expiresAt && Math.round(DateTime.fromISO(expiresAt).diff(DateTime.now()).as('seconds')),
+    showAlert: !!expiresAt,
   })
 );
