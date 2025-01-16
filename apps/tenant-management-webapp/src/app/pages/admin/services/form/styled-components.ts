@@ -414,11 +414,11 @@ export const SpinnerPaddingSmall = styled.div`
 `;
 
 export const TableDataName = styled.td`
-  width: 150px;
+  width: 9.375rem;
 `;
 
 export const TableDataId = styled.td`
-  width: 130px;
+  width: 8.125rem;
 `;
 
 export const TableDataDescription = styled.td``;
