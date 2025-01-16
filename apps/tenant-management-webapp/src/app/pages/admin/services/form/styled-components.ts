@@ -555,9 +555,3 @@ export const Anchor = styled.div`
   outline: none;
   cursor: pointer;
 `;
-
-export const ExportWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;

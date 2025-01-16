@@ -135,7 +135,6 @@ export const loginUserWithIDP = createAsyncThunk(
 
     const client = await initializeKeycloakClient(dispatch, realm, config);
     Promise.all([
-      client.init({ checkLoginIframe: false }),
       client.login({
         idpHint: idpFromUrl,
         redirectUri: from === '/' ? new URL(`/auth/callback?from=${'/'}`, window.location.href).href : from,

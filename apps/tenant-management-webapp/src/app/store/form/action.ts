@@ -66,6 +66,7 @@ export interface ExportFormInfoAction {
   resource: string;
   format: string;
   selectedColumn?: string[];
+  fileName?: string;
 }
 
 export interface ExportFormInfoSuccessAction {
@@ -277,13 +278,15 @@ export const getExportFormInfo = (
   id: string,
   resource: string,
   format: string,
-  selectedColumn: string[]
+  selectedColumn: string[],
+  fileName: string
 ): ExportFormInfoAction => ({
   type: EXPORT_FORM_INFO_ACTION,
   id,
   resource,
   format,
   selectedColumn,
+  fileName,
 });
 export const fetchFormInfo = (definitionId: string): FetchFormInfoAction => ({
   type: FETCH_FORM_INFO_ACTION,
