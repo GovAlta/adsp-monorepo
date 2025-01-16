@@ -11,7 +11,6 @@ import { select, call, put, takeEvery, delay, takeLatest } from 'redux-saga/effe
 import { RootState } from '../index';
 import { io, Socket } from 'socket.io-client';
 import axios from 'axios';
-import { truncateString } from '@lib/stringUtil';
 
 import {
   UpdateFormDefinitionsAction,
@@ -116,7 +115,7 @@ export function* exportFormInfo(payload): SagaIterator {
           }),
           includeData: true,
         },
-        filename: `Exports-${truncateString(payload?.id)}-${new Date().toISOString().replace(/[:.]/g, '-')}`,
+        filename: payload.fileName,
         ...(payload.format === 'csv' && { formatOptions: { columns: payload.selectedColumn } }),
       };
 
@@ -397,12 +396,12 @@ const transformToColumns = (items: (FormInfoItem | SubmissionInfoItem)[]): Colum
   return [
     ...standardProperties.map((prop) => ({
       ...prop,
-      selected: false,
+      selected: true,
       group: 'Standard Properties' as const,
     })),
     ...removeDuplicatesById(dataProperties).map((prop) => ({
       ...prop,
-      selected: false,
+      selected: true,
       group: 'Form Data' as const,
     })),
   ];
