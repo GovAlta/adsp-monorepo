@@ -22,7 +22,9 @@ interface DraftComment {
 
 interface CommentsViewerProps {
   className?: string;
-  typeLabel?: string;
+  heading?: string;
+  addCommentLabel?: string;
+  anonymousName?: string;
   canComment: boolean;
   canLoadMore: boolean;
   comments: Comment[];
@@ -46,7 +48,9 @@ function formatTimestamp(timestamp: Date): string {
 
 const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   className,
-  typeLabel,
+  heading,
+  addCommentLabel,
+  anonymousName,
   canComment,
   canLoadMore,
   draft,
@@ -57,15 +61,17 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   onUpdateDraft,
   onAddComment,
 }) => {
-  typeLabel = typeLabel || 'comment';
+  heading = heading || 'Comments';
+  addCommentLabel = addCommentLabel || 'Add comment';
+  anonymousName = anonymousName || 'Commenter';
   return (
     <div className={className}>
-      <h3>{typeLabel}s</h3>
+      <h3>{heading}</h3>
       <div className="comments">
         {comments.map((result) => (
           <div key={result.id} className="comment" data-user-comment={result.byCurrentUser}>
             <div>
-              <span>{result.createdBy.name}</span>
+              <span>{result.createdBy.name || anonymousName}</span>
               <span>{formatTimestamp(result.createdOn)}</span>
             </div>
             <div>
@@ -81,13 +87,13 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
         )}
       </div>
       <form>
-        <GoAFormItem label={`New ${typeLabel}`}>
+        <GoAFormItem label={addCommentLabel}>
           <GoATextArea
             name="comment"
             value={draft.content || ''}
             disabled={!canComment}
             onChange={(_, value) => onUpdateDraft({ title: draft.title, content: value })}
-            placeholder={`Write your ${typeLabel}...`}
+            placeholder={'Write your comment...'}
             width="100%"
           />
         </GoAFormItem>
@@ -100,7 +106,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
             Clear
           </GoAButton>
           <GoAButton type="primary" disabled={!draft.content || commenting} onClick={() => onAddComment(draft)}>
-            Add {typeLabel}
+            {addCommentLabel}
           </GoAButton>
         </GoAButtonGroup>
       </form>

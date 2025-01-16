@@ -18,6 +18,7 @@ export class PostgresTopicRepository implements TopicRepository {
           type: types[record.type],
           resourceId: AdspId.isAdspId(record.resource) ? AdspId.parse(record.resource) : record.resource,
           commenters: record.commenters,
+          requiresAttention: record.requiresAttention,
         })
       : null;
   }
@@ -66,6 +67,10 @@ export class PostgresTopicRepository implements TopicRepository {
 
       if (criteria.typeIdEquals) {
         queryCriteria.type = criteria.typeIdEquals;
+      }
+
+      if (criteria.requiresAttention) {
+        queryCriteria.requiresAttention = true;
       }
 
       query.where(queryCriteria);
@@ -163,6 +168,7 @@ export class PostgresTopicRepository implements TopicRepository {
           securityClassification: entity.securityClassification,
           resource: entity.resourceId?.toString(),
           commenters: entity.commenters,
+          requiresAttention: entity.requiresAttention,
         })
         .onConflict(['tenant', 'id'])
         .merge()

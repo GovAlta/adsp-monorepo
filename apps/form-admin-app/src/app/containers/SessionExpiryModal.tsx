@@ -16,10 +16,11 @@ export const SessionExpiryModal = () => {
   const tenant = useSelector(tenantSelector);
   const { showAlert, secondsTilExpiry } = useSelector(sessionExpirySelector);
 
-  const [seconds, setSeconds] = useState(secondsTilExpiry);
+  const [seconds, setSeconds] = useState(120);
   useEffect(() => {
     // Set the interval to count down only if we're showing the modal.
     if (showAlert) {
+      setSeconds(secondsTilExpiry);
       const interval = setInterval(
         () =>
           setSeconds((count) => {
@@ -35,7 +36,7 @@ export const SessionExpiryModal = () => {
       );
       return () => clearInterval(interval);
     }
-  }, [setSeconds, showAlert]);
+  }, [setSeconds, secondsTilExpiry, showAlert]);
 
   return (
     showAlert && (

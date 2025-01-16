@@ -136,7 +136,11 @@ export const addComment = createAsyncThunk(
       const token = await getAccessToken();
       const { data } = await axios.post<Comment>(
         new URL(`/comment/v1/topics/${topic.id}/comments`, commentServiceUrl).href,
-        comment,
+        {
+          ...comment,
+          // This is expected to be an applicant question, so flag the topic.
+          requiresAttention: true,
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
