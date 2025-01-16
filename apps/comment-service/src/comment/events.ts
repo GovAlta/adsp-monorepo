@@ -27,6 +27,7 @@ const topicSchema = {
       enum: ['public', 'protected a', 'protected b', 'protected c', '', null],
       default: 'protected a',
     },
+    requiresAttention: { type: 'boolean' },
   },
   required: ['id', 'name'],
 };

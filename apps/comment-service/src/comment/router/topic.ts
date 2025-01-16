@@ -41,6 +41,7 @@ function mapTopic(apiId: AdspId, topic: Topic): TopicResponse {
     resourceId: topic.resourceId?.toString(),
     commenters: topic.commenters,
     securityClassification: topic.securityClassification,
+    requiresAttention: topic.requiresAttention,
   };
 }
 
@@ -216,10 +217,10 @@ export function createTopicComment(apiId: AdspId, logger: Logger, eventService: 
   return async (req, res, next) => {
     try {
       const user = req.user;
-      const comment = req.body;
+      const { requiresAttention, ...comment } = req.body;
       const topic: TopicEntity = req[TopicKey];
 
-      const result = await topic.postComment(user, comment);
+      const result = await topic.postComment(user, comment, requiresAttention);
       res.send(result);
 
       eventService.send(commentCreated(apiId, topic, result));
@@ -393,7 +394,8 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
     createValidationHandler(
       param('topicId').isInt(),
       body('title').optional({ nullable: true }).isString().isLength({ min: 1, max: 255 }),
-      body('content').optional({ nullable: true }).isString().isLength({ min: 1 })
+      body('content').isString().isLength({ min: 1 }),
+      body('requiresAttention').optional({ nullable: true }).isBoolean()
     ),
     getTopic(repository),
     createTopicComment(apiId, logger, eventService)

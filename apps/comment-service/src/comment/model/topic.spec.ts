@@ -170,14 +170,20 @@ describe('TopicEntity', () => {
   });
 
   describe('getComments', () => {
-    const entity = new TopicEntity(repositoryMock, type, { tenantId, id: 1, name: 'Test', description: 'test' });
+    const entity = new TopicEntity(repositoryMock, type, {
+      tenantId,
+      id: 1,
+      name: 'Test',
+      description: 'test',
+      commenters: ['commenter'],
+    });
     it('can return comments for user with reader role', async () => {
-      const comments = {};
+      const comments = { results: [], page: {} };
       repositoryMock.getComments.mockResolvedValueOnce(comments);
 
       const criteria = {};
       const result = await entity.getComments({ ...user, roles: ['test-reader'] } as User, 10, null, criteria);
-      expect(result).toBe(comments);
+      expect(result).toEqual(expect.objectContaining(comments));
       expect(repositoryMock.getComments).toHaveBeenCalledWith(
         10,
         null,
@@ -188,21 +194,113 @@ describe('TopicEntity', () => {
     it('can fail for user without role', async () => {
       await expect(entity.getComments({ ...user, roles: [] } as User, 10)).rejects.toThrow(UnauthorizedUserError);
     });
+
+    it('can return anonymized comments for commenter', async () => {
+      const commentA = {
+        id: 123,
+        content: 'test',
+        createdBy: {
+          id: 'commenter',
+          name: 'Commenter',
+        },
+        lastUpdatedBy: {
+          id: 'commenter',
+          name: 'Commenter',
+        },
+      };
+      const commentB = {
+        id: 124,
+        content: 'test',
+        createdBy: {
+          id: user.id,
+          name: user.name,
+        },
+        lastUpdatedBy: {
+          id: user.id,
+          name: user.name,
+        },
+      };
+      const comments = { results: [commentA, commentB], page: {} };
+      repositoryMock.getComments.mockResolvedValueOnce(comments);
+
+      const criteria = {};
+      const result = await entity.getComments({ ...user, id: 'commenter' } as User, 10, null, criteria);
+      expect(result).toEqual(
+        expect.objectContaining({
+          ...comments,
+          results: expect.arrayContaining([
+            expect.objectContaining(commentA),
+            expect.objectContaining({
+              ...commentB,
+              createdBy: expect.objectContaining({ id: user.id, name: null }),
+              lastUpdatedBy: expect.objectContaining({ id: user.id, name: null }),
+            }),
+          ]),
+        })
+      );
+      expect(repositoryMock.getComments).toHaveBeenCalledWith(
+        10,
+        null,
+        expect.objectContaining({ topicIdEquals: entity.id, tenantIdEquals: entity.tenantId })
+      );
+    });
   });
 
   describe('getComment', () => {
-    const entity = new TopicEntity(repositoryMock, type, { tenantId, id: 1, name: 'Test', description: 'test' });
+    const entity = new TopicEntity(repositoryMock, type, {
+      tenantId,
+      id: 1,
+      name: 'Test',
+      description: 'test',
+      commenters: ['commenter'],
+    });
     it('can return comment for user with reader role', async () => {
-      const comment = {};
+      const comment = {
+        id: 123,
+        content: 'test',
+        createdBy: {
+          id: user.id,
+          name: user.name,
+        },
+        lastUpdatedBy: {
+          id: user.id,
+          name: user.name,
+        },
+      };
       repositoryMock.getComment.mockResolvedValueOnce(comment);
 
       const result = await entity.getComment({ ...user, roles: ['test-reader'] } as User, 1);
-      expect(result).toBe(comment);
+      expect(result).toEqual(expect.objectContaining(comment));
       expect(repositoryMock.getComment).toHaveBeenCalledWith(entity, 1);
     });
 
     it('can fail for user without role', async () => {
       await expect(entity.getComment({ ...user, roles: [] } as User, 1)).rejects.toThrow(UnauthorizedUserError);
+    });
+
+    it('can return anonymized comment for commenter', async () => {
+      const comment = {
+        id: 123,
+        content: 'test',
+        createdBy: {
+          id: 'commenter',
+          name: 'Commenter',
+        },
+        lastUpdatedBy: {
+          id: user.id,
+          name: user.name,
+        },
+      };
+      repositoryMock.getComment.mockResolvedValueOnce(comment);
+
+      const result = await entity.getComment({ ...user, id: 'commenter' } as User, 1);
+      expect(result).toEqual(
+        expect.objectContaining({
+          ...comment,
+          lastUpdatedBy: expect.objectContaining({ id: user.id, name: null }),
+        })
+      );
+      expect(repositoryMock.getComment).toHaveBeenCalledWith(entity, 1);
     });
   });
 
@@ -235,6 +333,92 @@ describe('TopicEntity', () => {
       await expect(entity.postComment({ ...user, roles: [] } as User, {} as Comment)).rejects.toThrow(
         UnauthorizedUserError
       );
+    });
+
+    it('can create comment and flag requires attention', async () => {
+      const entity = new TopicEntity(repositoryMock, type, { tenantId, id: 1, name: 'Test', description: 'test' });
+      const comment = {
+        title: 'test',
+        content: 'testing',
+      };
+      repositoryMock.saveComment.mockResolvedValueOnce(comment);
+      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
+
+      const commenter = { ...user, roles: ['test-commenter'] } as User;
+      const result = await entity.postComment(commenter, comment as Comment, true);
+      expect(result).toBe(comment);
+      expect(repositoryMock.saveComment).toHaveBeenCalledWith(
+        entity,
+        expect.objectContaining({
+          ...comment,
+          id: undefined,
+          createdBy: commenter,
+          createdOn: expect.any(Date),
+          lastUpdatedBy: commenter,
+          lastUpdatedOn: expect.any(Date),
+        })
+      );
+      expect(entity.requiresAttention).toBe(true);
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
+
+    it('can create comment and clear requires attention', async () => {
+      const entity = new TopicEntity(repositoryMock, type, {
+        tenantId,
+        id: 1,
+        name: 'Test',
+        description: 'test',
+        requiresAttention: true,
+      });
+      const comment = {
+        title: 'test',
+        content: 'testing',
+      };
+      repositoryMock.saveComment.mockResolvedValueOnce(comment);
+      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
+
+      const commenter = { ...user, roles: ['test-commenter'] } as User;
+      const result = await entity.postComment(commenter, comment as Comment, false);
+      expect(result).toBe(comment);
+      expect(repositoryMock.saveComment).toHaveBeenCalledWith(
+        entity,
+        expect.objectContaining({
+          ...comment,
+          id: undefined,
+          createdBy: commenter,
+          createdOn: expect.any(Date),
+          lastUpdatedBy: commenter,
+          lastUpdatedOn: expect.any(Date),
+        })
+      );
+      expect(entity.requiresAttention).toBe(false);
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
+
+    it('can skip requires attention update when not changed', async () => {
+      const entity = new TopicEntity(repositoryMock, type, { tenantId, id: 1, name: 'Test', description: 'test' });
+      const comment = {
+        title: 'test',
+        content: 'testing',
+      };
+      repositoryMock.saveComment.mockResolvedValueOnce(comment);
+
+      const commenter = { ...user, roles: ['test-commenter'] } as User;
+      const result = await entity.postComment(commenter, comment as Comment, false);
+      expect(result).toBe(comment);
+      expect(repositoryMock.saveComment).toHaveBeenCalledWith(
+        entity,
+        expect.objectContaining({
+          ...comment,
+          id: undefined,
+          createdBy: commenter,
+          createdOn: expect.any(Date),
+          lastUpdatedBy: commenter,
+          lastUpdatedOn: expect.any(Date),
+        })
+      );
+      expect(entity.requiresAttention).toBe(false);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
     });
   });
 

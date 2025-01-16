@@ -19,12 +19,14 @@ export interface Topic {
   securityClassification?: string;
   description: string;
   commenters?: string[];
+  requiresAttention: boolean;
 }
 
 export interface TopicCriteria {
   tenantIdEquals?: AdspId;
   typeIdEquals?: string;
   resourceIdEquals?: AdspId | string;
+  requiresAttention?: boolean;
   // nameLike?: string;
   // descriptionLike?: string;
 }

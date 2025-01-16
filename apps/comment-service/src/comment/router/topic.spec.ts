@@ -576,13 +576,13 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const result = {};
+      const result = { results: [], page: {} };
       repositoryMock.getComments.mockResolvedValueOnce(result);
 
       const handler = getTopicComments();
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(res.send).toHaveBeenCalledWith(result);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining(result));
     });
 
     it('can call next with error for unauthorized user', async () => {
