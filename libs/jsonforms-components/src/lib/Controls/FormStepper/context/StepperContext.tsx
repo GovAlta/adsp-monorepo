@@ -146,7 +146,10 @@ export const JsonFormsStepperContextProvider = ({
 
   useEffect(() => {
     if (context?.isProvided === true) {
-      stepperDispatch({ type: 'update/uischema', payload: { state: createStepperContextInitData(StepperProps) } });
+      stepperDispatch({
+        type: 'update/uischema',
+        payload: { state: createStepperContextInitData({ ...StepperProps, activeId: stepperState?.activeId }) },
+      });
     }
   }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
 
