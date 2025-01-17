@@ -24,4 +24,5 @@ export interface CommentCriteria {
   titleLike?: string;
   contentLike?: string;
   titleOrContentLike?: string;
+  idGreaterThan?: number;
 }

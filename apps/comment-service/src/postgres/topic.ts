@@ -119,6 +119,10 @@ export class PostgresTopicRepository implements TopicRepository {
       }
       query.where(queryCriteria);
 
+      if (criteria.idGreaterThan) {
+        query.andWhere('id', '>', criteria.idGreaterThan);
+      }
+
       if (criteria.titleLike) {
         query.andWhereRaw("to_tsvector('english', title) @@ to_tsquery(?)", `'${criteria.titleLike}'`);
       }

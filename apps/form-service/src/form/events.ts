@@ -3,6 +3,7 @@ import { FormEntity, FormSubmissionEntity } from './model';
 import { FormResponse, mapForm } from './mapper';
 import { SUBMITTED_FORM } from './pdf';
 import { FormServiceRoles } from './roles';
+import { SUPPORT_COMMENT_TOPIC_TYPE_ID } from './comment';
 
 export const FORM_CREATED = 'form-created';
 export const FORM_DELETED = 'form-deleted';
@@ -415,6 +416,55 @@ export const SubmittedFormPdfUpdatesStream: Stream = {
         timestamp: 'timestamp',
         jobId: 'payload.jobId',
         templateId: 'payload.templateId',
+      },
+    },
+  ],
+};
+
+export const FormQuestionUpdatesStream: Stream = {
+  id: 'form-questions-updates',
+  name: 'Form questions topic updates',
+  description: 'Provides update events on form questions topics.',
+  subscriberRoles: [
+    `urn:ads:platform:form-service:${FormServiceRoles.Admin}`,
+    `urn:ads:platform:form-service:${FormServiceRoles.Applicant}`,
+  ],
+  publicSubscribe: false,
+  events: [
+    {
+      namespace: 'comment-service',
+      name: 'comment-created',
+      criteria: {
+        context: { topicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID },
+      },
+      map: {
+        timestamp: 'timestamp',
+        topic: 'payload.topic',
+        commentId: 'payload.comment.id',
+      },
+    },
+    {
+      namespace: 'comment-service',
+      name: 'comment-updated',
+      criteria: {
+        context: { topicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID },
+      },
+      map: {
+        timestamp: 'timestamp',
+        topic: 'payload.topic',
+        commentId: 'payload.comment.id',
+      },
+    },
+    {
+      namespace: 'comment-service',
+      name: 'comment-deleted',
+      criteria: {
+        context: { topicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID },
+      },
+      map: {
+        timestamp: 'timestamp',
+        topic: 'payload.topic',
+        commentId: 'payload.comment.id',
       },
     },
   ],
