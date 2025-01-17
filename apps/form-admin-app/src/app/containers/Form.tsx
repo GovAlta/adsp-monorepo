@@ -17,6 +17,8 @@ import {
   selectForm,
   loadTopic,
   selectTopic,
+  topicSelector,
+  AppState,
 } from '../state';
 import { FormViewer } from './FormViewer';
 import { DetailsLayout } from '../components/DetailsLayout';
@@ -42,6 +44,7 @@ export const Form = () => {
   const definition = useSelector(definitionSelector);
   const form = useSelector(formSelector);
   const files = useSelector(formFilesSelector);
+  const topic = useSelector((state: AppState) => topicSelector(state, form?.urn));
 
   const busy = useSelector(formBusySelector);
   const canSetToDraft = useSelector(canSetToDraftSelector);
@@ -141,7 +144,11 @@ export const Form = () => {
             </GoAModal>
           </FormContainer>
         </Tab>
-        <Tab heading="Applicant questions" hide={!definition.supportTopic}>
+        <Tab
+          heading="Applicant questions"
+          hide={!definition.supportTopic}
+          icon={topic?.requiresAttention ? 'mail-unread' : null}
+        >
           <CommentsViewer />
         </Tab>
       </Tabs>

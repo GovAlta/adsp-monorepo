@@ -32,7 +32,7 @@ import {
   tagsSelector,
   Resource,
 } from '../state';
-import { useNavigate } from 'react-router-dom';
+import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
@@ -50,7 +50,7 @@ interface FormDefinitionRowProps {
   definition: FormDefinition;
   loadingTags: boolean;
   dispatch: AppDispatch;
-  navigate: (to: string) => void;
+  navigate: NavigateFunction;
   onTag: () => void;
   onUntag: (tag: Tag) => void;
 }

@@ -1,8 +1,10 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { io, Socket } from 'socket.io-client';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
 import { hasRole } from './util';
+import { PagedResults, PUSH_SERVICE_ID } from './types';
 
 export const COMMENT_FEATURE_KEY = 'comment';
 
@@ -14,6 +16,7 @@ interface TopicType {
 }
 
 interface Topic {
+  requiresAttention: boolean;
   resourceId: string;
   id: number;
   name: string;
@@ -38,9 +41,99 @@ interface NewComment {
 
 const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
 
+let socket: Socket;
+export const connectStream = createAsyncThunk(
+  'comment/connectStream',
+  async ({ stream, typeId }: { stream: string; typeId: string }, { dispatch, getState }) => {
+    const state = getState() as AppState;
+    const { directory } = state.config;
+
+    // Create the connection if no previous connection or it is disconnected.
+    if (socket && socket.connected) {
+      socket.disconnect();
+    }
+
+    socket = io(`${directory[PUSH_SERVICE_ID]}/`, {
+      query: {
+        stream,
+        criteria: JSON.stringify({
+          context: { typeId },
+        }),
+      },
+      withCredentials: true,
+      auth: async (cb) => {
+        try {
+          const token = await getAccessToken();
+          cb({ token });
+        } catch (err) {
+          // Token retrieval failed and connection (using auth result) will also fail after.
+          cb(null);
+        }
+      },
+    });
+
+    socket.on('connect', () => {
+      dispatch(commentActions.streamConnectionChanged(true));
+    });
+
+    socket.on('disconnect', () => {
+      dispatch(commentActions.streamConnectionChanged(false));
+    });
+
+    const onTopicUpdate = ({ topic }: { topic: Topic }) => {
+      dispatch(loadTopic({ resourceId: topic.resourceId, typeId }));
+    };
+    socket.on('comment-service:topic-updated', onTopicUpdate);
+    socket.on('comment-service:comment-created', ({ topic }: { topic: Topic }) => {
+      onTopicUpdate({ topic });
+
+      const { comment } = getState() as AppState;
+      if (comment.selected.resourceId === topic.resourceId) {
+        dispatch(loadComments({ topic: comment.topics[topic.resourceId] }));
+      }
+    });
+    // socket.on('comment-service:comment-updated', ({ topic }: { topic: Topic }) => {});
+    // socket.on('comment-service:comment-deleted', ({ topic }: { topic: Topic }) => {});
+  }
+);
+
+export const loadTopics = createAsyncThunk(
+  'comment/load-topics',
+  async (
+    { typeId, requiresAttention, after }: { typeId: string; requiresAttention?: boolean; after?: string },
+    { getState, rejectWithValue }
+  ) => {
+    const { config } = getState() as AppState;
+    const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
+
+    try {
+      const token = await getAccessToken();
+      const { data } = await axios.get<PagedResults<Topic>>(new URL('/comment/v1/topics', commentServiceUrl).href, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          criteria: JSON.stringify({ requiresAttention, typeIdEquals: typeId }),
+          top: 50,
+          after,
+        },
+      });
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const loadTopic = createAsyncThunk(
-  'comment/load-topic',
-  async ({ resourceId, typeId }: { resourceId: string, typeId: string }, { getState, rejectWithValue }) => {
+  'comment/find-topic',
+  async ({ resourceId, typeId }: { resourceId: string; typeId: string }, { getState, rejectWithValue }) => {
     if (!resourceId) {
       throw new Error('resourceId not specified');
     }
@@ -78,7 +171,7 @@ export const loadTopic = createAsyncThunk(
 
 export const loadComments = createAsyncThunk(
   'comment/load-comments',
-  async ({ next, topic }: { next?: string; topic: Topic }, { getState, rejectWithValue }) => {
+  async ({ after, topic }: { after?: string; topic: Topic }, { getState, rejectWithValue }) => {
     const { config } = getState() as AppState;
     const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
 
@@ -89,7 +182,7 @@ export const loadComments = createAsyncThunk(
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {
-            after: next,
+            after,
           },
         }
       );
@@ -135,7 +228,10 @@ export const selectTopic = createAsyncThunk(
 
 export const addComment = createAsyncThunk(
   'comment/add-comment',
-  async ({ topic, comment }: { topic: Topic; comment: NewComment }, { getState, rejectWithValue }) => {
+  async (
+    { topic, comment, requiresAttention }: { topic: Topic; comment: NewComment; requiresAttention?: boolean },
+    { getState, rejectWithValue }
+  ) => {
     const { config } = getState() as AppState;
     const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
 
@@ -143,7 +239,7 @@ export const addComment = createAsyncThunk(
       const token = await getAccessToken();
       const { data } = await axios.post<Comment>(
         new URL(`/comment/v1/topics/${topic.id}/comments`, commentServiceUrl).href,
-        comment,
+        { ...comment, requiresAttention },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -166,11 +262,14 @@ export const addComment = createAsyncThunk(
 interface CommentState {
   topicTypes: Record<string, TopicType>;
   topics: Record<string, Topic>;
+  results: string[];
+  next: string;
   selected: {
     resourceId: string;
     canRead: boolean;
     canComment: boolean;
   };
+  updateStreamConnected: boolean;
   comments: {
     results: Comment[];
     next: string;
@@ -185,11 +284,14 @@ interface CommentState {
 const initialCommentState: CommentState = {
   topicTypes: {},
   topics: {},
+  results: [],
+  next: null,
   selected: {
     resourceId: null,
     canRead: false,
     canComment: false,
   },
+  updateStreamConnected: false,
   comments: {
     results: [],
     next: null,
@@ -208,6 +310,9 @@ const commentSlice = createSlice({
   name: COMMENT_FEATURE_KEY,
   initialState: initialCommentState,
   reducers: {
+    streamConnectionChanged: (state, { payload }: { payload: boolean }) => {
+      state.updateStreamConnected = payload;
+    },
     setDraftComment: (state, { payload }: { payload: NewComment }) => {
       state.draft.title = payload.title;
       state.draft.content = payload.content;
@@ -215,6 +320,24 @@ const commentSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(loadTopics.pending, (state) => {
+        state.busy.loading = true;
+      })
+      .addCase(loadTopics.fulfilled, (state, { payload, meta }) => {
+        state.busy.loading = false;
+        state.topics = payload.results.reduce(
+          (topics, result) => ({ ...topics, [result.resourceId]: result }),
+          state.topics
+        );
+        state.results = [
+          ...(meta.arg.after ? state.results : []),
+          ...payload.results.map((result) => result.resourceId),
+        ];
+        state.next = payload.page.next;
+      })
+      .addCase(loadTopics.rejected, (state) => {
+        state.busy.loading = false;
+      })
       .addCase(loadTopic.pending, (state) => {
         state.busy.loading = true;
       })
@@ -238,7 +361,7 @@ const commentSlice = createSlice({
       })
       .addCase(loadComments.pending, (state, { meta }) => {
         state.busy.loading = true;
-        if (!meta.arg.next) {
+        if (!meta.arg.after) {
           state.comments.results = [];
           state.comments.next = null;
         }
@@ -272,6 +395,12 @@ export const commentActions = commentSlice.actions;
 
 export const topicsSelector = (state: AppState) => state.comment.topics;
 
+export const topicSelector = createSelector(
+  topicsSelector,
+  (_: AppState, resourceId: string) => resourceId,
+  (topics, resourceId) => resourceId && topics[resourceId]
+);
+
 export const selectedTopicSelector = createSelector(
   (state: AppState) => state.comment.topics,
   (state: AppState) => state.comment.selected.resourceId,
@@ -283,7 +412,11 @@ export const commentsSelector = createSelector(
   (state: AppState) => state.user.user?.id,
   ({ results, next }, userId) => ({
     results: [...results]
-      .map((r) => ({ ...r, createdOn: new Date(r.createdOn), byCurrentUser: r.createdBy.id === userId }))
+      .map((r) => ({
+        ...r,
+        createdOn: new Date(r.createdOn),
+        byCurrentUser: r.createdBy.id === userId,
+      }))
       .sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()),
     next,
   })

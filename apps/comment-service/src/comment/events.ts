@@ -149,6 +149,7 @@ export function topicCreated(apiId: AdspId, topic: Topic, createdBy: User): Doma
     context: {
       topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
     },
     payload: {
       topic: topicResponse,
@@ -170,6 +171,7 @@ export function topicUpdated(apiId: AdspId, topic: Topic, updatedBy: User): Doma
     context: {
       topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
     },
     payload: {
       topic: topicResponse,
@@ -191,6 +193,7 @@ export function topicDeleted(apiId: AdspId, topic: Topic, deletedBy: User): Doma
     context: {
       topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
     },
     payload: {
       topic: topicResponse,
@@ -212,6 +215,7 @@ export function commentCreated(apiId: AdspId, topic: Topic, comment: Comment): D
     context: {
       topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
       commentId: comment.id,
     },
     payload: {
@@ -235,6 +239,7 @@ export function commentUpdated(apiId: AdspId, topic: Topic, comment: Comment): D
     context: {
       topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
       commentId: comment.id,
     },
     payload: {
@@ -258,6 +263,7 @@ export function commentDeleted(apiId: AdspId, topic: Topic, comment: Comment, de
     context: {
       topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
       commentId: comment.id,
     },
     payload: {
