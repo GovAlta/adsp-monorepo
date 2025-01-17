@@ -1,12 +1,12 @@
 import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect } from 'react';
 import { CategorizationStepperLayoutRendererProps } from '../types';
-import { Categorization, deriveLabelForUISchemaElement, isEnabled, toDataPath, getControlPath } from '@jsonforms/core';
+import { Categorization, deriveLabelForUISchemaElement, isEnabled } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
-import Ajv from 'ajv';
 import { JsonFormStepperDispatch } from './reducer';
 import { useJsonForms } from '@jsonforms/react';
+import { getIncompletePaths } from './util';
 
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
@@ -24,32 +24,6 @@ export interface JsonFormsStepperContextProps {
   goToPage: (id: number, updateCategoryId?: number) => void;
   isProvided?: boolean;
 }
-
-export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean => {
-  return errorPaths.some((ePath) => {
-    /**
-     *  case A: errorPaths: [name] path: [name]
-     *
-     *  case B: errorPath: [name] path: [name.firstName]
-     * */
-
-    return ePath === path || path.startsWith(ePath + '.');
-  });
-};
-
-export const getIncompletePaths = (ajv: Ajv, scopes: string[]): string[] => {
-  const requiredErrorPaths: string[] | undefined = ajv?.errors
-    ?.filter((e) => e.keyword === 'required')
-    .map((e) => {
-      return getControlPath(e);
-    });
-
-  const _scopes = scopes
-    .map((scope) => toDataPath(scope))
-    .filter((path) => requiredErrorPaths && isErrorPathIncluded(requiredErrorPaths, path));
-
-  return _scopes;
-};
 
 const createStepperContextInitData = (
   props: CategorizationStepperLayoutRendererProps & { activeId?: number }
