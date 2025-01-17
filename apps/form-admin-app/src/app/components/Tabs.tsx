@@ -1,3 +1,4 @@
+import { GoAIcon, type GoAIconProps } from '@abgov/react-components-new';
 import { FunctionComponent, ReactNode, useState } from 'react';
 import styled from 'styled-components';
 
@@ -5,6 +6,7 @@ interface TabProps {
   heading: string;
   hide?: boolean;
   children: ReactNode;
+  icon?: GoAIconProps['type'];
 }
 export const Tab: FunctionComponent<TabProps> = ({ children }) => {
   return children;
@@ -59,7 +61,8 @@ export const Tabs: FunctionComponent<TabsProps> = ({ children }) => {
         {available.length > 1 &&
           available.map((child, idx) => (
             <button key={child.props.heading} data-selected={idx === selected} onClick={() => setSelected(idx)}>
-              {child.props.heading}
+              <span>{child.props.heading}</span>
+              {child.props.icon && <GoAIcon type={child.props.icon} size="small" ml="xs" />}
             </button>
           ))}
       </div>

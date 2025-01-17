@@ -1,14 +1,15 @@
-import { FunctionComponent, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import {
   GoAButton,
   GoAButtonGroup,
   GoADropdown,
   GoADropdownItem,
   GoAFormItem,
+  GoAIcon,
   GoATable,
 } from '@abgov/react-components-new';
-import { useNavigate } from 'react-router-dom';
+import { FunctionComponent, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { NavigateFunction, useNavigate } from 'react-router-dom';
 import {
   AppDispatch,
   formBusySelector,
@@ -21,6 +22,11 @@ import {
   canExportSelector,
   exportForms,
   formsExportSelector,
+  loadTopic,
+  definitionSelector,
+  topicSelector,
+  AppState,
+  connectStream,
 } from '../state';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
@@ -29,6 +35,42 @@ import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 import { RowSkeleton } from '../components/RowSkeleton';
+
+interface FormRowProps {
+  dispatch: AppDispatch;
+  navigate: NavigateFunction;
+  hasSupportTopic: boolean;
+  form: ReturnType<typeof formsSelector>[0];
+  dataValues: ReturnType<typeof selectedDataValuesSelector>;
+}
+
+const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSupportTopic, form, dataValues }) => {
+  const topic = useSelector((state: AppState) => topicSelector(state, form.urn));
+
+  useEffect(() => {
+    if (hasSupportTopic) {
+      dispatch(loadTopic({ resourceId: form.urn, typeId: 'form-questions' }));
+    }
+  }, [dispatch, hasSupportTopic, form]);
+
+  return (
+    <tr key={form.urn}>
+      <td>{topic?.requiresAttention && <GoAIcon type="mail-unread" size="small" />}</td>
+      <td>{form.created.toFormat('LLL dd, yyyy')}</td>
+      <td>{form.status}</td>
+      {dataValues.map(({ path }) => (
+        <DataValueCell key={path}>{form.values[path]}</DataValueCell>
+      ))}
+      <td>
+        <GoAButtonGroup alignment="end">
+          <GoAButton type="secondary" size="compact" onClick={() => navigate(form.id)}>
+            Open
+          </GoAButton>
+        </GoAButtonGroup>
+      </td>
+    </tr>
+  );
+};
 
 interface FormsProps {
   definitionId: string;
@@ -42,6 +84,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
 
   const canExport = useSelector(canExportSelector);
   const busy = useSelector(formBusySelector);
+  const definition = useSelector(definitionSelector);
   const forms = useSelector(formsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(formCriteriaSelector);
@@ -54,6 +97,12 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [definitionId, dispatch]);
+
+  useEffect(() => {
+    if (definition?.supportTopic) {
+      dispatch(connectStream({ stream: 'form-questions-updates', typeId: 'form-questions' }));
+    }
+  }, [dispatch, definition]);
 
   return (
     <SearchLayout
@@ -129,6 +178,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
         <GoATable width="100%">
           <thead>
             <tr>
+              <th></th>
               <th>Created on</th>
               <th>Status</th>
               {dataValues.map(({ name, path }) => (
@@ -139,25 +189,19 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           </thead>
           <tbody>
             {forms.map((form) => (
-              <tr key={form.urn}>
-                <td>{form.created.toFormat('LLL dd, yyyy')}</td>
-                <td>{form.status}</td>
-                {dataValues.map(({ path }) => (
-                  <DataValueCell key={path}>{form.values[path]}</DataValueCell>
-                ))}
-                <td>
-                  <GoAButtonGroup alignment="end">
-                    <GoAButton type="secondary" size="compact" onClick={() => navigate(form.id)}>
-                      Open
-                    </GoAButton>
-                  </GoAButtonGroup>
-                </td>
-              </tr>
+              <FormRow
+                key={form.urn}
+                dispatch={dispatch}
+                navigate={navigate}
+                hasSupportTopic={definition?.supportTopic}
+                form={form}
+                dataValues={dataValues}
+              />
             ))}
-            <RowSkeleton columns={3 + dataValues.length} show={busy.loading} />
+            <RowSkeleton columns={4 + dataValues.length} show={busy.loading} />
             {next && (
               <tr>
-                <td colSpan={3 + dataValues.length}>
+                <td colSpan={4 + dataValues.length}>
                   <GoAButtonGroup alignment="center">
                     <GoAButton
                       type="tertiary"

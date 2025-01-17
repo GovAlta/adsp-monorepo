@@ -8,12 +8,13 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoAFormItem,
-  GoAIconButton,
   GoACircularProgress,
   GoARadioGroup,
   GoARadioItem,
   GoACheckbox,
   GoABadge,
+  GoAButtonGroup,
+  GoADetails,
 } from '@abgov/react-components-new';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
@@ -24,17 +25,26 @@ import {
   fetchFormInfo,
   fetchSubmissionInfo,
 } from '@store/form/action';
-import { FormDefinition, Stream, ExportFormat, ColumnOption } from '@store/form/model';
+import {
+  FormDefinition,
+  Stream,
+  ExportFormat,
+  ColumnOption,
+  FormInfoItem,
+  SubmissionInfoItem,
+} from '@store/form/model';
 
 import { DownloadFileService, FetchFilesService } from '@store/file/actions';
-import { ExportWrapper } from '../styled-components';
+
 import { truncateString } from '@lib/stringUtil';
 
+type Item = { id: string; label: string };
 export const FormExport = (): JSX.Element => {
   const dispatch = useDispatch();
 
   const [selectedForm, setSelectedForm] = useState<FormDefinition>();
   const [resourceType, setResourceType] = useState('');
+  const [fileName, setFileName] = useState('');
   const [exportStream, setExportStream] = useState<Stream>(null);
   const [error, setError] = useState('');
   const [currentFile, setCurrentFile] = useState(null);
@@ -76,15 +86,19 @@ export const FormExport = (): JSX.Element => {
     }
     setSpinner(true);
     if (selectedForm?.submissionRecords === true) {
-      dispatch(getExportFormInfo(selectedForm?.id, 'submissions', exportFormat, selectedColumns));
+      dispatch(getExportFormInfo(selectedForm?.id, 'submissions', exportFormat, selectedColumns, fileName));
     } else {
-      dispatch(getExportFormInfo(selectedForm.id, 'forms', exportFormat, selectedColumns));
+      dispatch(getExportFormInfo(selectedForm.id, 'forms', exportFormat, selectedColumns, fileName));
     }
     dispatch(startSocket());
 
     setLoadingMessage('Exporting File ...');
   };
-
+  useEffect(() => {
+    if (selectedForm) {
+      setFileName(`Exports-${truncateString(selectedForm?.id)}-${new Date().toISOString().replace(/[:.]/g, '-')}`);
+    }
+  }, [selectedForm]);
   useEffect(() => {
     dispatch(FetchFilesService());
   }, [exportStream]);
@@ -155,7 +169,7 @@ export const FormExport = (): JSX.Element => {
     });
 
     socket?.on(`export-service:export-completed`, (streamData) => {
-      if (streamData?.payload?.file?.filename.includes(truncateString(selectedForm.id))) {
+      if (streamData?.payload?.file?.filename.includes(fileName)) {
         setExportStream(streamData);
         setLoadingMessage('Loading File ...');
       }
@@ -262,10 +276,9 @@ export const FormExport = (): JSX.Element => {
                 <GoARadioItem name="formatOptions" value="csv"></GoARadioItem>
               </GoARadioGroup>
               {exportFormat === 'csv' && (
-                <div>
-                  <h3>Columns Configuration</h3>
+                <GoADetails heading="Columns configuration">
                   <div>
-                    <h4>Standard Properties</h4>
+                    <h4>Standard properties</h4>
                     {columns
                       .filter((col) => col.group === 'Standard Properties')
                       .map((col) => (
@@ -281,7 +294,7 @@ export const FormExport = (): JSX.Element => {
                   </div>
 
                   <div>
-                    <h4>Form Data</h4>
+                    <h4>Form data</h4>
                     {columns
                       .sort()
                       .filter((col) => col.group === 'Form Data')
@@ -296,35 +309,36 @@ export const FormExport = (): JSX.Element => {
                         </label>
                       ))}
                   </div>
-                </div>
+                </GoADetails>
               )}
             </div>
           )}
         </GoAFormItem>
         {!spinner && (
-          <ExportWrapper>
+          <GoAButtonGroup alignment="start">
             <GoAButton
               type="primary"
               size="normal"
               variant="normal"
               onClick={exportToFile}
-              testId="exportBtn"
+              testId="export-button"
               disabled={!selectedForm || Object.keys(formDefinitions).length === 0}
             >
               Export
             </GoAButton>
 
-            <GoAIconButton
-              icon="download"
-              title="Download"
-              testId="download-template-icon"
-              size="medium"
+            <GoAButton
+              type="secondary"
+              testId="export-download-button"
+              size="normal"
               disabled={iconDisable || spinner}
               onClick={() => {
                 onDownloadFile(currentFile);
               }}
-            />
-          </ExportWrapper>
+            >
+              Download
+            </GoAButton>
+          </GoAButtonGroup>
         )}
 
         {spinner && <GoACircularProgress message={loadingMessage} visible={true} size="small" />}

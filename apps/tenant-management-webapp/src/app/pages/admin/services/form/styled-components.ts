@@ -419,9 +419,15 @@ export const SpinnerPaddingSmall = styled.div`
   float: right;
 `;
 
-export const TableData = styled.td`
-  width: 33.33%;
+export const TableDataName = styled.td`
+  width: 9.375rem;
 `;
+
+export const TableDataId = styled.td`
+  width: 8.125rem;
+`;
+
+export const TableDataDescription = styled.td``;
 
 export const OverflowWrap = styled.span`
   word-break: break-all;
@@ -548,10 +554,4 @@ export const Anchor = styled.div`
   text-decoration: underline;
   outline: none;
   cursor: pointer;
-`;
-
-export const ExportWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 `;

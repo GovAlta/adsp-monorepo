@@ -160,6 +160,29 @@ export interface FormInfoItem {
   };
 }
 
+export interface Form {
+  definition?: FormDefinition;
+  id: string;
+  formDraftUrl: string;
+  applicant?: {
+    id: string;
+    urn: string;
+    userId: string;
+    addressAs: string;
+    channels: { channel: string; address: string }[];
+  };
+  anonymousApplicant: boolean;
+  created: Date;
+  createdBy: { id: string; name: string };
+  locked: Date;
+  submitted: Date;
+  lastAccessed: Date;
+  status: string;
+  data: Record<string, unknown>;
+  files: Record<string, string>;
+  securityClassification?: string;
+}
+
 export interface SubmissionInfoItem {
   urn?: string;
   id?: string;

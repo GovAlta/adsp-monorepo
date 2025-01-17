@@ -26,15 +26,17 @@ export const CommentsViewer: FunctionComponent = () => {
 
   return (
     <CommentsViewerComponent
+      heading="Questions"
+      addCommentLabel="Add response"
       comments={results}
       canComment={canComment}
       canLoadMore={!!next}
       loading={loading}
       commenting={executing}
       draft={draft}
-      onLoadMore={() => dispatch(loadComments({ next, topic }))}
+      onLoadMore={() => dispatch(loadComments({ after: next, topic }))}
       onUpdateDraft={(draft) => dispatch(commentActions.setDraftComment(draft))}
-      onAddComment={(draft) => dispatch(addComment({ topic, comment: draft }))}
+      onAddComment={(draft) => dispatch(addComment({ topic, comment: draft, requiresAttention: false }))}
     />
   );
 };
