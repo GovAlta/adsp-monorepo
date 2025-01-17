@@ -1,10 +1,8 @@
 import { StepperContextDataType } from './types';
 import { ErrorObject } from 'ajv';
-import { toDataPath } from '@jsonforms/core';
 import { Dispatch } from 'react';
 import Ajv from 'ajv';
-
-import { getIncompletePaths } from './StepperContext';
+import { getIncompletePaths, getErrorsInScopes } from './util';
 
 export type JsonFormStepperDispatch = Dispatch<StepperAction>;
 
@@ -77,10 +75,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
        */
       const incompletePaths = getIncompletePaths(ajv, state.categories[id].scopes);
 
-      const errorsInCategory = errors.filter((e) =>
-        categories[id].scopes.map((s) => '/' + toDataPath(s)).includes(e.instancePath)
-      );
-
+      const errorsInCategory = getErrorsInScopes(errors, state.categories[id].scopes || []);
       state.categories[id].isCompleted = incompletePaths?.length === 0;
       state.categories[id].isValid = errorsInCategory.length === 0;
       return { ...state };
