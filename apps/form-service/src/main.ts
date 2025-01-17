@@ -38,6 +38,7 @@ import {
   INTAKE_CALENDAR_NAME,
   SUPPORT_COMMENT_TOPIC_TYPE_ID,
   FormExportFileType,
+  FormQuestionUpdatesStream,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -127,7 +128,7 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusSetToDraftDefinition,
         SubmissionDispositionedDefinition,
       ],
-      eventStreams: [SubmittedFormPdfUpdatesStream],
+      eventStreams: [SubmittedFormPdfUpdatesStream, FormQuestionUpdatesStream],
       notifications: [FormStatusNotificationType],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [
