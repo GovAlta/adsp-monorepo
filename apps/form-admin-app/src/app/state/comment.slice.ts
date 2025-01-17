@@ -88,9 +88,8 @@ export const connectStream = createAsyncThunk(
       onTopicUpdate({ topic });
 
       const { comment } = getState() as AppState;
-      if (comment.selected.resourceId === topic.resourceId && comment.topics[topic.resourceId]) {
-        const { id } = comment.comments.results[comment.comments.results.length - 1];
-        dispatch(loadComments({ topic: comment.topics[topic.resourceId], idGreaterThan: id }));
+      if (comment.selected.resourceId === topic.resourceId) {
+        dispatch(loadComments({ topic: comment.topics[topic.resourceId] }));
       }
     });
     // socket.on('comment-service:comment-updated', ({ topic }: { topic: Topic }) => {});
@@ -172,10 +171,7 @@ export const loadTopic = createAsyncThunk(
 
 export const loadComments = createAsyncThunk(
   'comment/load-comments',
-  async (
-    { next, topic, idGreaterThan }: { next?: string; topic: Topic; idGreaterThan?: number },
-    { getState, rejectWithValue }
-  ) => {
+  async ({ after, topic }: { after?: string; topic: Topic }, { getState, rejectWithValue }) => {
     const { config } = getState() as AppState;
     const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
 
@@ -186,8 +182,7 @@ export const loadComments = createAsyncThunk(
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {
-            after: next,
-            criteria: JSON.stringify({ idGreaterThan }),
+            after,
           },
         }
       );
@@ -366,7 +361,7 @@ const commentSlice = createSlice({
       })
       .addCase(loadComments.pending, (state, { meta }) => {
         state.busy.loading = true;
-        if (!meta.arg.next) {
+        if (!meta.arg.after) {
           state.comments.results = [];
           state.comments.next = null;
         }
@@ -374,7 +369,7 @@ const commentSlice = createSlice({
       .addCase(loadComments.fulfilled, (state, { payload }) => {
         state.busy.loading = false;
 
-        state.comments.results = [...state.comments.results, ...payload.results].sort((a, b) => a.id - b.id);
+        state.comments.results = [...state.comments.results, ...payload.results];
         state.comments.next = payload.page.next;
       })
       .addCase(loadComments.rejected, (state) => {
