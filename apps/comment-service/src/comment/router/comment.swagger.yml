@@ -35,6 +35,8 @@
                   type: string
                 titleOrContentLike:
                   type: string
+                idGreaterThan:
+                  type: number
     responses:
       200:
         description: Request completed successfully.
