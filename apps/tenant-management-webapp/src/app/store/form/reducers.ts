@@ -21,8 +21,6 @@ import {
   RESOLVE_DATA_SCHEMA_FAILED_ACTION,
   FETCH_FORM_METRICS_SUCCESS_ACTION,
   START_SOCKET_STREAM_SUCCESS_ACTION,
-  FETCH_FORM_INFO_SUCCESS_ACTION,
-  FETCH_SUBMISSION_INFO_SUCCESS_ACTION,
   EXPORT_FORM_INFO_SUCCESS_ACTION,
 } from './action';
 
@@ -85,17 +83,6 @@ export default function (state: FormState = defaultState, action: FormActionType
       return {
         ...state,
         exportResult: action.payload,
-      };
-
-    case FETCH_FORM_INFO_SUCCESS_ACTION:
-      return {
-        ...state,
-        columns: action.payload,
-      };
-    case FETCH_SUBMISSION_INFO_SUCCESS_ACTION:
-      return {
-        ...state,
-        columns: action.payload,
       };
 
     case UPDATE_FORM_DEFINITION_SUCCESS_ACTION:

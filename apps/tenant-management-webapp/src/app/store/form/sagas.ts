@@ -44,10 +44,6 @@ import {
   FETCH_FORM_METRICS_ACTION,
   START_SOCKET_STREAM_ACTION,
   startSocketSuccess,
-  FETCH_FORM_INFO_ACTION,
-  FETCH_SUBMISSION_INFO_ACTION,
-  fetchFormInfoSuccess,
-  fetchSubmissionInfoSuccess,
   getExportFormInfoSuccess,
 } from './action';
 import {
@@ -121,58 +117,6 @@ export function* exportFormInfo(payload): SagaIterator {
 
       const exportResult = yield call(exportApi, token, url, requestBody);
       yield put(getExportFormInfoSuccess(exportResult));
-    }
-  } catch (err) {
-    yield put(ErrorNotification({ error: err }));
-    yield put(
-      UpdateIndicator({
-        show: false,
-      })
-    );
-  }
-}
-export function* fetchFormInfo(payload): SagaIterator {
-  const formAppUrl: string = yield select((state: RootState) => state.config.serviceUrls?.formAppApiUrl);
-  const token: string = yield call(getAccessToken);
-  try {
-    if (formAppUrl && token) {
-      const url = `${formAppUrl}/form/v1/forms`;
-      const params: Record<string, string | number | boolean> = { top: 10 };
-      params.includeData = true;
-      params.criteria = JSON.stringify({ definitionIdEquals: payload.definitionId });
-
-      const formInfo = yield call(axios.get, url, {
-        headers: { Authorization: `Bearer ${token}` },
-        params,
-      });
-      yield put(fetchFormInfoSuccess(transformToColumns(formInfo.data.results)));
-    }
-  } catch (err) {
-    yield put(ErrorNotification({ error: err }));
-    yield put(
-      UpdateIndicator({
-        show: false,
-      })
-    );
-  }
-}
-
-export function* fetchSubmissionInfo(payload): SagaIterator {
-  const formAppUrl: string = yield select((state: RootState) => state.config.serviceUrls?.formAppApiUrl);
-  const token: string = yield call(getAccessToken);
-  try {
-    if (formAppUrl && token) {
-      const url = `${formAppUrl}/form/v1/submissions`;
-      const params: Record<string, string | number | boolean> = { top: 100 };
-      params.includeData = true;
-      params.criteria = JSON.stringify({ definitionIdEquals: payload.definitionId });
-
-      const submissionInfo = yield call(axios.get, url, {
-        headers: { Authorization: `Bearer ${token}` },
-        params,
-      });
-
-      yield put(fetchSubmissionInfoSuccess(transformToColumns(submissionInfo.data.results)));
     }
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
@@ -358,55 +302,6 @@ export function* fetchFormMetrics(): SagaIterator {
   });
 }
 
-type Item = { id: string; label: string };
-
-const removeDuplicatesById = (array: Item[]): Item[] => {
-  return array.filter((item, index, self) => self.findIndex((t) => t.id === item.id) === index);
-};
-//eslint-disable-next-line
-const extractDotDelimitedKeys = (obj: any, prefix = ''): { id: string; label: string }[] => {
-  const keys: { id: string; label: string }[] = [];
-
-  Object.keys(obj).forEach((key) => {
-    const fullPath = prefix ? `${prefix}.${key}` : key;
-    if (typeof obj[key] === 'object' && obj[key] !== null) {
-      keys.push(...extractDotDelimitedKeys(obj[key], fullPath));
-    } else {
-      keys.push({ id: fullPath, label: fullPath });
-    }
-  });
-
-  return keys;
-};
-
-const transformToColumns = (items: (FormInfoItem | SubmissionInfoItem)[]): ColumnOption[] => {
-  // Define standard properties for both types
-  const standardProperties: Item[] = [
-    { id: 'urn', label: 'URN' },
-    { id: 'id', label: 'ID' },
-    { id: 'created', label: 'Created' },
-    { id: 'createdBy.name', label: 'Created By Name' },
-    { id: 'createdBy.id', label: 'Created By ID' },
-  ];
-
-  const dataProperties = items.flatMap((item) => {
-    return extractDotDelimitedKeys(item).filter((item) => !standardProperties.some((aItem) => aItem.id === item.id));
-  });
-
-  return [
-    ...standardProperties.map((prop) => ({
-      ...prop,
-      selected: true,
-      group: 'Standard Properties' as const,
-    })),
-    ...removeDuplicatesById(dataProperties).map((prop) => ({
-      ...prop,
-      selected: true,
-      group: 'Form Data' as const,
-    })),
-  ];
-};
-
 export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
   yield takeEvery(EXPORT_FORM_INFO_ACTION, exportFormInfo);
@@ -419,6 +314,4 @@ export function* watchFormSagas(): Generator {
   yield takeLatest(PROCESS_DATA_SCHEMA_SUCCESS_ACTION, resolveDataSchema);
   yield takeLatest(FETCH_FORM_METRICS_ACTION, fetchFormMetrics);
   yield takeEvery(START_SOCKET_STREAM_ACTION, startSocket);
-  yield takeEvery(FETCH_FORM_INFO_ACTION, fetchFormInfo);
-  yield takeEvery(FETCH_SUBMISSION_INFO_ACTION, fetchSubmissionInfo);
 }
