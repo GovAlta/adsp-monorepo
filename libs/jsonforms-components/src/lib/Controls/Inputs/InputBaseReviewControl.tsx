@@ -25,7 +25,9 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   }${required ? ' is required.' : ''}`;
 
   const requiredLabel =
-    data !== undefined && schema.type === 'boolean' ? <RequiredTextLabel>{` (required)`}</RequiredTextLabel> : null;
+    data !== undefined && schema.type === 'boolean' && required ? (
+      <RequiredTextLabel>{` (required)`}</RequiredTextLabel>
+    ) : null;
 
   if (isBoolean) {
     const label = uischema.options?.text?.trim();

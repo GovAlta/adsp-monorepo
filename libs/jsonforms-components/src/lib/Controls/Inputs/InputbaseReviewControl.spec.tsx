@@ -9,6 +9,7 @@ describe('GoABaseInputReviewComponent', () => {
     data: 'Review Text',
     id: 'input-id',
     isValid: true,
+    required: true,
     rootSchema: {},
     uischema: {
       type: 'Control',
@@ -52,6 +53,60 @@ describe('GoABaseInputReviewComponent', () => {
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
     expect(reviewControl.textContent).toBe('No');
+  });
+
+  it('renders "No" for checkbox boolean false data', () => {
+    const props = {
+      ...baseProps,
+      uischema: {
+        ...baseProps.uischema,
+        options: {
+          radio: false,
+          text: 'test',
+        },
+      },
+      data: false,
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toBe('No (test)');
+  });
+
+  it('renders "Yes" for checkbox boolean true data', () => {
+    const props = {
+      ...baseProps,
+      uischema: {
+        ...baseProps.uischema,
+        options: {
+          radio: false,
+          text: 'test',
+        },
+      },
+      data: true,
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toBe('Yes (test)');
+  });
+
+  it('renders "No" for checkbox boolean with data for required', () => {
+    const props = {
+      ...baseProps,
+      schema: {
+        type: 'boolean',
+      },
+      uischema: {
+        ...baseProps.uischema,
+        options: {
+          radio: false,
+          text: 'test',
+        },
+      },
+      data: false,
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toBe('No (test) (required)');
   });
 
   it('renders an empty string for undefined data', () => {
