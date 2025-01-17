@@ -439,7 +439,7 @@ export const FormQuestionUpdatesStream: Stream = {
       },
       map: {
         timestamp: 'timestamp',
-        topicId: 'payload.topic.id',
+        topic: 'payload.topic',
         commentId: 'payload.comment.id',
       },
     },
@@ -451,7 +451,7 @@ export const FormQuestionUpdatesStream: Stream = {
       },
       map: {
         timestamp: 'timestamp',
-        topicId: 'payload.topic.id',
+        topic: 'payload.topic',
         commentId: 'payload.comment.id',
       },
     },
@@ -463,7 +463,7 @@ export const FormQuestionUpdatesStream: Stream = {
       },
       map: {
         timestamp: 'timestamp',
-        topicId: 'payload.topic.id',
+        topic: 'payload.topic',
         commentId: 'payload.comment.id',
       },
     },
