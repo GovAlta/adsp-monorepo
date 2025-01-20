@@ -26,7 +26,7 @@ export const Pdf: FunctionComponent = () => {
           <Tab label="Overview" data-testid="pdf-service-overview-tab">
             <PdfOverview setOpenAddTemplate={setOpenAddTemplate} />
           </Tab>
-          <Tab label="Templates" data-testid="pdf-service-tenplates-tab">
+          <Tab label="Templates" data-testid="pdf-service-templates-tab">
             <PdfTemplates openAddTemplate={openAddTemplate} />
           </Tab>
         </Tabs>

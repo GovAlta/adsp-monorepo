@@ -47,6 +47,7 @@ import {
   setDraftUISchema,
   updateFormDefinition,
   updateEditorFormDefinition,
+  getFormDefinitions,
 } from '@store/form/action';
 import { Disposition, FormDefinition } from '@store/form/model';
 import { isFormUpdatedSelector, modifiedDefinitionSelector, schemaErrorSelector } from '@store/form/selectors';
@@ -183,7 +184,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const setDefinition = (update: Partial<FormDefinition>) => dispatch(updateEditorFormDefinition(update));
   const isLoading = useSelector((state: RootState) => state.form.editor.loading);
   const isSaving = useSelector((state: RootState) => state.form.editor.saving);
-
+  const formDefinitions = useSelector((state: RootState) => state.form.definitions);
   const tempUiSchema = useSelector((state: RootState) => state.form.editor.uiSchemaDraft);
   const tempDataSchema = useSelector((state: RootState) => state.form.editor.dataSchemaDraft);
   const schemaError = useSelector(schemaErrorSelector);
@@ -269,6 +270,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const close = () => {
     dispatch(ClearNewFileList());
     navigate('..?definitions=true', { state: { addOpenFormEditor: true, isNavigatedFromEdit: true } });
+    if (Object.keys(formDefinitions).length === 0) {
+      dispatch(getFormDefinitions());
+    }
   };
 
   const openModalFunction = (disposition) => {

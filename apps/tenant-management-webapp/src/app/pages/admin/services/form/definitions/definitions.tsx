@@ -24,8 +24,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
   isNavigatedFromEdit?: boolean;
-  setActiveEdit: (boolean) => void;
-  setActiveIndex: (index: number) => void;
   showFormDefinitions: boolean;
   setOpenAddDefinition: (val: boolean) => void;
 }
@@ -33,7 +31,6 @@ interface FormDefinitionsProps {
 export const FormDefinitions = ({
   openAddDefinition,
   setOpenAddDefinition,
-  setActiveIndex,
   showFormDefinitions,
 }: FormDefinitionsProps) => {
   const navigate = useNavigate();
