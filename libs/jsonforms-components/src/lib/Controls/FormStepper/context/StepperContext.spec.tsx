@@ -5,11 +5,12 @@ import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStep
 import { CategorizationStepperLayoutRendererProps } from '../types';
 import { StepperContextDataType } from './types';
 
-import Ajv from 'ajv';
+import Ajv, { ErrorObject } from 'ajv';
 import { stepperReducer } from './reducer';
+import { subErrorInParent } from './util';
 
 describe('Test jsonforms stepper context', () => {
-  const ajvInstance = new Ajv({ allErrors: true, verbose: true });
+  const ajvInstance = new Ajv({ allErrors: true, verbose: true, strict: false });
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -262,5 +263,27 @@ describe('Test jsonforms stepper context', () => {
         }
       ).isValid
     ).toBe(false);
+  });
+
+  it('test the util', async () => {
+    const error: ErrorObject = {
+      instancePath: '/Users/0/firstname',
+      schemaPath: '#/properties/Users/items/required',
+      keyword: 'required',
+      params: { missingProperty: 'firstname' },
+      message: "must have required property 'firstname'",
+      schema: ['firstname'],
+      parentSchema: {
+        type: 'object',
+        title: 'Users',
+        required: [Array],
+        properties: [Object],
+      },
+      data: { lastname: 'test' },
+    };
+    ajvInstance.validate(schema, { Users: [{ lastname: 'test' }] });
+    const result = subErrorInParent(error, ['/Users']);
+
+    expect(result).toBe(true);
   });
 });

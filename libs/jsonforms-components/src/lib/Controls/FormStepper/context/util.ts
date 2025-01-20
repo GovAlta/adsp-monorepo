@@ -31,7 +31,7 @@ export const getIncompletePaths = (ajv: Ajv, scopes: string[]): string[] => {
   return _scopes;
 };
 
-const subErrorInParent = (error: ErrorObject, paths: string[]): boolean => {
+export const subErrorInParent = (error: ErrorObject, paths: string[]): boolean => {
   /*
     Detect is there sub error in an object array.
     For example: error with instance path /roadmap/0/when belongs to /roadmap
