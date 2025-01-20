@@ -19,7 +19,7 @@ import { WithBasicDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid, GoAIconButton, GoAContainer, GoATable, GoAInput } from '@abgov/react-components-new';
+import { GoAGrid, GoAIconButton, GoAContainer, GoATable, GoAInput, GoAFormItem } from '@abgov/react-components-new';
 import { ToolBarHeader, ObjectArrayTitle, TextCenter, NonEmptyCellStyle, TableTHHeader } from './styled-components';
 import { convertToSentenceCase, Visible } from '../../util';
 import { GoAReviewRenderers } from '../../../index';
@@ -93,7 +93,9 @@ const GenerateRows = (
   uischema?: ControlElement,
   isInReview?: boolean,
   count?: number,
-  data?: StateData
+  data?: StateData,
+  // eslint-disable-next-line
+  errors?: any
 ) => {
   if (schema?.type === 'object') {
     const props = {
@@ -106,6 +108,7 @@ const GenerateRows = (
       openDeleteDialog,
       data,
       handleChange,
+      errors,
     };
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -150,7 +153,8 @@ const EmptyList = ({ numColumns, translations }: EmptyListProps) => (
 
 interface NonEmptyCellProps extends OwnPropsOfNonEmptyCell {
   rootSchema?: JsonSchema;
-  errors: string;
+  // eslint-disable-next-line
+  errors?: Record<string, any>;
   enabled: boolean;
 }
 interface OwnPropsOfNonEmptyCell {
@@ -172,14 +176,12 @@ interface OwnPropsOfNonEmptyCellWithDialog extends OwnPropsOfNonEmptyCell {
 }
 
 const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOfNonEmptyCell): NonEmptyCellProps => {
-  const errors = '';
-
   return {
     uischema: ownProps.uischema,
     rowPath: ownProps.rowPath,
     schema: ownProps.schema,
     rootSchema: ctx.core?.schema,
-    errors,
+    errors: ctx.core?.errors || undefined,
     enabled: ownProps.enabled,
     cells: ownProps.cells || ctx.cells,
     renderers: ownProps.renderers || ctx.renderers,
@@ -192,7 +194,8 @@ interface NonEmptyRowComponentProps {
   schema: JsonSchema;
   rootSchema?: JsonSchema;
   rowPath: string;
-  errors: string;
+  // eslint-disable-next-line
+  errors?: Record<string, any>;
   enabled: boolean;
   renderers?: JsonFormsRendererRegistryEntry[];
   cells?: JsonFormsCellRendererRegistryEntry[];
@@ -220,56 +223,9 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     count,
     openDeleteDialog,
     handleChange,
+    errors,
   } = props;
-  const propNames = getValidColumnProps(schema);
-  const propScopes = (uischema as ControlElement)?.scope
-    ? propNames.map((name) => {
-        return `#/properties/${name}`;
-      })
-    : [];
-
-  const scopesInElements = extractScopesFromUISchema(uischema);
-
-  const scopesNotInElements = propScopes.filter((scope) => {
-    return !scopesInElements.includes(scope);
-  });
-
-  /**
-   * Get the first layout type in the elements for the object array and used it
-   * as the default type, if none is provided.
-   * @returns layout type
-   */
-  const getFirstLayoutType = () => {
-    let defaultType = 'HorizontalLayout';
-
-    if (uischema?.options?.defaultType) return uischema?.options?.defaultType;
-
-    if (uischema?.options?.detail && uischema?.options?.detail?.elements?.length > 0) {
-      defaultType = uischema?.options?.detail?.elements.at(0).type;
-    }
-
-    return defaultType;
-  };
-
-  /* Create default elements for scope not defined in the uischema
-   * future work: merge the options
-   */
-  const uiSchemaElementsForNotDefined = {
-    type: getFirstLayoutType(),
-    elements: scopesNotInElements.map((scope) => {
-      return {
-        type: 'Control',
-        scope,
-        options: {
-          isStepperReview: isInReview,
-        },
-      };
-    }),
-  };
-
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
-
-  const title = rowPath.split('.')[0];
 
   return (
     <NonEmptyCellStyle>
@@ -317,12 +273,19 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
           </thead>
           <tbody>
             {range(count || 0).map((num, i) => {
+              // eslint-disable-next-line
+              const errorRow = errors?.find((error: any) =>
+                error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
+              ) as { message: string };
               return (
                 <tr key={i}>
                   {Object.keys(properties).map((element, ix) => {
                     const dataObject = properties[element];
                     const schemaName = element;
-
+                    const error = errors?.find(
+                      // eslint-disable-next-line
+                      (e: any) => e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}`
+                    ) as { message: string };
                     return (
                       <td key={ix}>
                         {isInReview ? (
@@ -330,7 +293,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                             {data && data[num] ? (data[num][element] as unknown as string) : ''}
                           </div>
                         ) : (
-                          <div>
+                          <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
                             <GoAInput
                               type={dataObject.type === 'number' ? 'number' : 'text'}
                               id={schemaName}
@@ -338,18 +301,20 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                               value={data && data[num] ? (data[num][element] as unknown as string) : ''}
                               testId={`#/properties/${schemaName}-input-${i}`}
                               onChange={(name: string, value: string) => {
-                                handleChange(title, { [num]: { [name]: value } });
+                                handleChange(rowPath, {
+                                  [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
+                                });
                               }}
                               aria-label={schemaName}
                               width="100%"
                             />
-                          </div>
+                          </GoAFormItem>
                         )}
                       </td>
                     );
                   })}
-                  <td>
-                    {isInReview !== true && (
+                  <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
+                    {!isInReview && (
                       <GoAIconButton
                         icon="trash"
                         aria-label={`remove-element-${num}`}
@@ -477,7 +442,7 @@ const ObjectArrayList = ({
     return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
   }
   const appliedUiSchemaOptions = merge({}, config, uischema.options);
-  const childPath = Paths.compose(path, `${0}`);
+  const childPath = path;
 
   return (
     <NonEmptyList
@@ -572,30 +537,35 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     dispatch({ type: DELETE_ACTION, payload: { name: path, category: currentCategory } });
   };
 
-  const handleChangeWithData = (name: string, value: StateData) => {
-    const categories = registers.categories;
-    const currentCategory = categories[name].data;
-    const newData: StateData = {};
-    const allKeys = Object.keys(value).concat(Object.keys(currentCategory));
-    const allKeysUnique = allKeys.filter((a, b) => allKeys.indexOf(a) === b);
-    Object.keys(allKeysUnique).forEach((num) => {
-      if (!newData[num]) {
-        newData[num] = {};
-      }
-      currentCategory[num] &&
-        Object.keys(currentCategory[num]).forEach((name) => {
-          newData[num][name] = currentCategory[num][name];
-        });
-      value[num] &&
-        Object.keys(value[num]).forEach((name) => {
-          newData[num][name] = value[num][name] || (currentCategory[num] && currentCategory[num][name]);
-        });
-    });
-    const handleChangeData = Object.keys(newData).map((key) => {
-      return newData[key];
-    });
-    props.handleChange(name, handleChangeData);
-    dispatch({ type: ADD_DATA_ACTION, payload: { name, category: newData } });
+  const handleChangeWithData = (path: string, value: StateData) => {
+    if (path) {
+      const categories = registers.categories;
+      const currentCategory = categories[path].data;
+      const newData: StateData = {};
+      const allKeys = Object.keys(value).concat(Object.keys(currentCategory));
+      const allKeysUnique = allKeys.filter((a, b) => allKeys.indexOf(a) === b);
+
+      Object.keys(allKeysUnique).forEach((num) => {
+        if (!newData[num]) {
+          newData[num] = {};
+        }
+        currentCategory[num] &&
+          Object.keys(currentCategory[num]).forEach((path) => {
+            newData[num][path] = currentCategory[num][path];
+          });
+        value[num] &&
+          Object.keys(value[num]).forEach((path) => {
+            newData[num][path] = value[num][path] || (currentCategory[num] && currentCategory[num][path]);
+          });
+      });
+
+      const handleChangeData = Object.keys(newData).map((key) => {
+        return newData[key];
+      });
+
+      props.handleChange(path, JSON.parse(JSON.stringify(handleChangeData)));
+      dispatch({ type: ADD_DATA_ACTION, payload: { name: path, category: newData } });
+    }
   };
 
   useEffect(() => {
@@ -610,7 +580,6 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
       });
     }
   }, []);
-  const title = path.split('.')[0];
   const controlElement = uischema as ControlElement;
   // eslint-disable-next-line
   const listTitle = label || uischema.options?.title;
@@ -644,8 +613,8 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
           enabled={enabled}
           openDeleteDialog={openDeleteDialog}
           translations={translations}
-          count={registers.categories[title]?.count || Object.keys(data || []).length}
-          data={data || registers.categories[title]?.data}
+          count={registers.categories[path]?.count || Object.keys(data || []).length}
+          data={data || registers.categories[path]?.data}
           cells={cells}
           config={config}
           isInReview={isInReview}
