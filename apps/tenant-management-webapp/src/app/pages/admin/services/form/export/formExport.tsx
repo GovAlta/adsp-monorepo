@@ -15,30 +15,18 @@ import {
   GoABadge,
   GoAButtonGroup,
   GoADetails,
+  GoADivider,
 } from '@abgov/react-components-new';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
-import {
-  getFormDefinitions,
-  getExportFormInfo,
-  startSocket,
-  fetchFormInfo,
-  fetchSubmissionInfo,
-} from '@store/form/action';
-import {
-  FormDefinition,
-  Stream,
-  ExportFormat,
-  ColumnOption,
-  FormInfoItem,
-  SubmissionInfoItem,
-} from '@store/form/model';
+import { getFormDefinitions, getExportFormInfo, startSocket, openEditorForDefinition } from '@store/form/action';
+import { FormDefinition, Stream, ExportFormat } from '@store/form/model';
 
+import { transformToColumns, ColumnOption } from '@lib/schemaUtil';
 import { DownloadFileService, FetchFilesService } from '@store/file/actions';
 
 import { truncateString } from '@lib/stringUtil';
 
-type Item = { id: string; label: string };
 export const FormExport = (): JSX.Element => {
   const dispatch = useDispatch();
 
@@ -63,10 +51,9 @@ export const FormExport = (): JSX.Element => {
   const [spinner, setSpinner] = useState(false);
   const spinnerTimeout = useRef(null);
   const socket = useSelector((state: RootState) => state.form?.socket);
-
+  const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema) as Record<string, unknown>;
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
-  const columnsOption = useSelector((state: RootState) => state?.form?.columns);
   const [columns, setColumns] = useState<ColumnOption[]>([]);
 
   const onDownloadFile = async (file) => {
@@ -85,11 +72,8 @@ export const FormExport = (): JSX.Element => {
       selectedColumns = columns.filter((col) => col.selected).map((col) => col.id);
     }
     setSpinner(true);
-    if (selectedForm?.submissionRecords === true) {
-      dispatch(getExportFormInfo(selectedForm?.id, 'submissions', exportFormat, selectedColumns, fileName));
-    } else {
-      dispatch(getExportFormInfo(selectedForm.id, 'forms', exportFormat, selectedColumns, fileName));
-    }
+
+    dispatch(getExportFormInfo(selectedForm.id, resourceType, exportFormat, selectedColumns, fileName));
     dispatch(startSocket());
 
     setLoadingMessage('Exporting File ...');
@@ -104,17 +88,7 @@ export const FormExport = (): JSX.Element => {
   }, [exportStream]);
 
   useEffect(() => {
-    setColumns(columnsOption);
-  }, [columnsOption]);
-
-  useEffect(() => {
-    if (exportFormat === 'csv') {
-      if (selectedForm?.submissionRecords === true) {
-        dispatch(fetchSubmissionInfo(selectedForm?.id));
-      } else {
-        dispatch(fetchFormInfo(selectedForm?.id));
-      }
-    }
+    setColumns(transformToColumns(selectedForm, dataSchema));
   }, [exportFormat, selectedForm]);
 
   useEffect(() => {
@@ -229,7 +203,7 @@ export const FormExport = (): JSX.Element => {
   return (
     <section>
       <div>
-        <GoAFormItem label="Form types">
+        <GoAFormItem label="Form definition">
           <GoADropdown
             name="formTypes"
             value={selectedForm?.name}
@@ -239,6 +213,7 @@ export const FormExport = (): JSX.Element => {
               setIconDisable(true);
               setResourceType(currentForm?.submissionRecords === true ? 'Submissions' : 'Forms');
               setError('');
+              dispatch(openEditorForDefinition(currentForm.id));
             }}
             aria-label="form-selection-dropdown"
             width="100%"
@@ -256,10 +231,10 @@ export const FormExport = (): JSX.Element => {
             ))}
           </GoADropdown>
         </GoAFormItem>
+
+        <h3>Records</h3>
+        {selectedForm && <GoABadge type="information" content={resourceType}></GoABadge>}
         <br />
-        <GoAFormItem label="Records">
-          {selectedForm && <GoABadge type="information" content={resourceType}></GoABadge>}
-        </GoAFormItem>
         <br />
         <GoAFormItem label="Format">
           {!spinner && (
@@ -280,7 +255,7 @@ export const FormExport = (): JSX.Element => {
                   <div>
                     <h4>Standard properties</h4>
                     {columns
-                      .filter((col) => col.group === 'Standard Properties')
+                      .filter((col) => col.group === 'Standard properties')
                       .map((col) => (
                         <label key={col.id}>
                           <GoACheckbox
@@ -297,7 +272,7 @@ export const FormExport = (): JSX.Element => {
                     <h4>Form data</h4>
                     {columns
                       .sort()
-                      .filter((col) => col.group === 'Form Data')
+                      .filter((col) => col.group === 'Form data')
                       .map((col) => (
                         <label key={col.id}>
                           <GoACheckbox
@@ -314,6 +289,7 @@ export const FormExport = (): JSX.Element => {
             </div>
           )}
         </GoAFormItem>
+        <GoADivider mb="l" />
         {!spinner && (
           <GoAButtonGroup alignment="start">
             <GoAButton
@@ -344,7 +320,7 @@ export const FormExport = (): JSX.Element => {
         {spinner && <GoACircularProgress message={loadingMessage} visible={true} size="small" />}
 
         <br />
-        {!spinner && socketStatus()}
+        {!spinner && !iconDisable && socketStatus()}
       </div>
     </section>
   );

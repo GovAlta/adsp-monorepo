@@ -90,7 +90,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                   data-testid={`stepper-tab-${index}`}
                   key={`stepper-tab-${index}`}
                   text={`${c.label}`}
-                  status={c.isCompleted && c.isValid && c.isVisited ? 'complete' : 'incomplete'}
+                  status={c.isVisited ? (c.isCompleted && c.isValid ? 'complete' : 'incomplete') : undefined}
                 />
               );
             })}
