@@ -107,7 +107,7 @@ class Common {
   }
 
   formAppFormTextField(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]/goa-input[@type="text"]`);
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="text"]`);
   }
 
   formAppFormSubmitButton() {

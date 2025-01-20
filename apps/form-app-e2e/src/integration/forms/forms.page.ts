@@ -16,11 +16,11 @@ class FormsPage {
   }
 
   formTextField(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]/goa-input[@type="text"]`);
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="text"]`);
   }
 
   formDateInput(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]/goa-input[@type="date"]`);
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="date"]`);
   }
 
   formDropdown(label) {

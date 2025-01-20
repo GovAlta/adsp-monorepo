@@ -1,13 +1,13 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
-import { ScriptItem } from '@store/script/models';
-import { useDispatch, useSelector } from 'react-redux';
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 import DataTable from '@components/DataTable';
-import { TableDiv } from './styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { DeleteScript } from '@store/script/actions';
-import { GoAContextMenuIcon } from '@components/ContextMenu';
+import { ScriptItem } from '@store/script/models';
+import React, { FunctionComponent, useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { RootState } from '@store/index';
+import { TableDataScriptDescription, TableDataScriptId, TableDataScriptName } from '../form/styled-components';
+import { TableDiv } from './styled-components';
 interface ScriptItemProps {
   script: ScriptItem;
   onDelete?: (script: ScriptItem) => void;
@@ -28,15 +28,15 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
 
   return (
     <tr key={script.name}>
-      <td headers="script-name" data-testid="script-name">
+      <TableDataScriptName headers="script-name" data-testid="script-name">
         {script.name}
-      </td>
-      <td headers="script-id" data-testid="script-id">
+      </TableDataScriptName>
+      <TableDataScriptId headers="script-id" data-testid="script-id">
         {script.id}
-      </td>
-      <td headers="script-description" data-testid="script-description">
+      </TableDataScriptId>
+      <TableDataScriptDescription headers="script-description" data-testid="script-description">
         {script.description}
-      </td>
+      </TableDataScriptDescription>
       <td headers="script-actions" data-testid="script-actions">
         {onDelete && (
           <div style={{ display: 'flex' }}>

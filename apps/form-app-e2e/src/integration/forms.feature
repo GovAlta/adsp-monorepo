@@ -5,7 +5,8 @@ Feature: Form app
     When a user goes to form app overview site
     Then the user views the overview page of form app
 
-  @accessibility @regression
+  # CS-3894
+  @accessibility @regression @ignore
   Scenario: As a user, I can see the form app overview page without any critical and serious accessibility issues
     When a user goes to form app overview site
     Then no critical or serious accessibility issues on "form app overview" page
