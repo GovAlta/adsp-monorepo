@@ -24,20 +24,11 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     uischema?.options?.text ? uischema?.options?.text : schema?.title ? schema?.title : schema?.description
   }${required ? ' is required.' : ''}`;
 
-  const requiredLabel =
-    data !== undefined && schema.type === 'boolean' && required ? (
+  const renderRequiredLabel = () => {
+    return data !== undefined && schema.type === 'boolean' && required ? (
       <RequiredTextLabel>{` (required)`}</RequiredTextLabel>
     ) : null;
-
-  if (isBoolean) {
-    const label = uischema.options?.text?.trim();
-
-    if (uischema.options?.radio === true) {
-      reviewText = data ? `Yes` : `No`;
-    } else {
-      reviewText = data ? `Yes (${label})` : `No (${label})`;
-    }
-  }
+  };
 
   const renderWarningMessage = () => {
     if (uischema.options?.radio) return null;
@@ -49,10 +40,20 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     return null;
   };
 
+  if (isBoolean) {
+    const label = uischema.options?.text?.trim();
+
+    if (uischema.options?.radio === true) {
+      reviewText = data ? `Yes` : `No`;
+    } else {
+      reviewText = data ? `Yes (${label})` : `No (${label})`;
+    }
+  }
+
   return (
     <div style={{ textWrap: 'wrap', wordBreak: 'break-word' }} data-testid={`review-control-${id}`}>
       {reviewText}
-      {requiredLabel}
+      {renderRequiredLabel()}
       {renderWarningMessage()}
     </div>
   );
