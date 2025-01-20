@@ -8,7 +8,7 @@ import { debounce } from 'lodash';
 import { AppState } from './store';
 import { hashData } from './util';
 import { getAccessToken } from './user.slice';
-import { loadTopic, selectTopic } from './comment.slice';
+import { connectStream, loadTopic, selectTopic } from './comment.slice';
 import { loadFileMetadata } from './file.slice';
 
 export const FORM_FEATURE_KEY = 'form';
@@ -253,6 +253,7 @@ export const findUserForm = createAsyncThunk(
 );
 
 const SUPPORT_TOPIC_TYPE_ID = 'form-questions';
+const SUPPORT_TOPIC_STREAM_ID = 'form-questions-updates';
 
 export const loadForm = createAsyncThunk(
   'form/load-form',
@@ -286,9 +287,17 @@ export const loadForm = createAsyncThunk(
         }
       }
 
-      dispatch(loadTopic({ resourceId: form.urn, typeId: SUPPORT_TOPIC_TYPE_ID })).then(() =>
-        dispatch(selectTopic({ resourceId: form.urn }))
-      );
+      const result = await dispatch(loadTopic({ resourceId: form.urn, typeId: SUPPORT_TOPIC_TYPE_ID })).unwrap();
+      if (result) {
+        dispatch(selectTopic({ resourceId: form.urn }));
+        dispatch(
+          connectStream({
+            stream: SUPPORT_TOPIC_STREAM_ID,
+            typeId: SUPPORT_TOPIC_TYPE_ID,
+            topicId: result.id,
+          })
+        );
+      }
 
       return { ...data, form, digest: await hashData(data) };
     } catch (err) {

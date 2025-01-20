@@ -1,9 +1,11 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { io, Socket } from 'socket.io-client';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
 
 export const COMMENT_FEATURE_KEY = 'comment';
+export const PUSH_SERVICE_ID = 'urn:ads:platform:push-service';
 
 interface TopicType {
   id: string;
@@ -38,9 +40,70 @@ interface NewComment {
 
 const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
 
+let socket: Socket;
+export const connectStream = createAsyncThunk(
+  'comment/connectStream',
+  async (
+    { stream, typeId, topicId }: { stream: string; typeId?: string; topicId?: number },
+    { dispatch, getState }
+  ) => {
+    const state = getState() as AppState;
+    const { directory } = state.config;
+
+    // Create the connection if no previous connection or it is disconnected.
+    if (socket && socket.connected) {
+      socket.disconnect();
+    }
+
+    socket = io(`${directory[PUSH_SERVICE_ID]}/`, {
+      query: {
+        stream,
+        criteria: JSON.stringify({
+          context: { topicTypeId: typeId, topicId },
+        }),
+      },
+      withCredentials: true,
+      auth: async (cb) => {
+        try {
+          const token = await getAccessToken();
+          cb({ token });
+        } catch (err) {
+          // Token retrieval failed and connection (using auth result) will also fail after.
+          cb(null);
+        }
+      },
+    });
+
+    socket.on('connect', () => {
+      dispatch(commentActions.streamConnectionChanged(true));
+    });
+
+    socket.on('disconnect', () => {
+      dispatch(commentActions.streamConnectionChanged(false));
+    });
+
+    const onTopicUpdate = ({ topic }: { topic: Topic }) => {
+      dispatch(loadTopic({ resourceId: topic.resourceId, typeId }));
+    };
+    const onCommentUpdate = ({ topic }: { topic: Topic }) => {
+      onTopicUpdate({ topic });
+
+      const { comment } = getState() as AppState;
+      if (comment.selected.resourceId === topic.resourceId) {
+        dispatch(loadComments({ topic: comment.topics[topic.resourceId] }));
+      }
+    };
+
+    socket.on('comment-service:topic-updated', onTopicUpdate);
+    socket.on('comment-service:comment-created', onCommentUpdate);
+    socket.on('comment-service:comment-updated', onCommentUpdate);
+    socket.on('comment-service:comment-deleted', onCommentUpdate);
+  }
+);
+
 export const loadTopic = createAsyncThunk(
   'comment/load-topic',
-  async ({ resourceId, typeId }: { resourceId: string; typeId: string }, { getState, rejectWithValue }) => {
+  async ({ resourceId, typeId }: { resourceId: string; typeId: string }, { getState }) => {
     if (!resourceId) {
       throw new Error('resourceId not specified');
     }
@@ -66,8 +129,6 @@ export const loadTopic = createAsyncThunk(
     } finally {
       // Using comment service is an optional. We will not report error when if the user cannot fetch comments from remote.
     }
-
-    return null;
   }
 );
 
@@ -128,7 +189,10 @@ export const selectTopic = createAsyncThunk(
 
 export const addComment = createAsyncThunk(
   'comment/add-comment',
-  async ({ topic, comment }: { topic: Topic; comment: NewComment }, { getState, rejectWithValue }) => {
+  async (
+    { topic, comment, requiresAttention }: { topic: Topic; comment: NewComment; requiresAttention?: boolean },
+    { getState, rejectWithValue }
+  ) => {
     const { config } = getState() as AppState;
     const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
 
@@ -136,11 +200,7 @@ export const addComment = createAsyncThunk(
       const token = await getAccessToken();
       const { data } = await axios.post<Comment>(
         new URL(`/comment/v1/topics/${topic.id}/comments`, commentServiceUrl).href,
-        {
-          ...comment,
-          // This is expected to be an applicant question, so flag the topic.
-          requiresAttention: true,
-        },
+        { ...comment, requiresAttention },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -168,6 +228,7 @@ interface CommentState {
     canRead: boolean;
     canComment: boolean;
   };
+  updateStreamConnected: boolean;
   comments: {
     results: Comment[];
     next: string;
@@ -187,6 +248,7 @@ const initialCommentState: CommentState = {
     canRead: false,
     canComment: false,
   },
+  updateStreamConnected: false,
   comments: {
     results: [],
     next: null,
@@ -205,6 +267,9 @@ const commentSlice = createSlice({
   name: COMMENT_FEATURE_KEY,
   initialState: initialCommentState,
   reducers: {
+    streamConnectionChanged: (state, { payload }: { payload: boolean }) => {
+      state.updateStreamConnected = payload;
+    },
     setDraftComment: (state, { payload }: { payload: NewComment }) => {
       state.draft.title = payload.title;
       state.draft.content = payload.content;
