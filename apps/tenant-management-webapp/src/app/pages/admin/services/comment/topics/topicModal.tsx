@@ -168,8 +168,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
                 setTopic({ ...topic, typeId: selectedTopicType });
               }}
               aria-label="add-select-topicType-dropdown"
-              relative={true}
-              width="55ch"
+              width={'54ch'}
               testId="add-comment-select-topicType-dropdown"
             >
               {Object.keys(topicTypes).map((item) => (

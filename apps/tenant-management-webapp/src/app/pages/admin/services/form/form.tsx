@@ -12,7 +12,8 @@ import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { selectFormAppHost } from '@store/form/selectors';
 import { fetchDirectory } from '@store/directory/actions';
 import { getFormDefinitions } from '@store/form/action';
-
+import { useLocation } from 'react-router-dom';
+import { FormExport } from './export/formExport';
 const HelpLink = (): JSX.Element => {
   const dispatch = useDispatch();
   useEffect(() => {
@@ -31,23 +32,37 @@ const HelpLink = (): JSX.Element => {
 };
 
 export const Form: FunctionComponent = () => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
+  const [openAddDefinition, setOpenAddDefinition] = useState<boolean>(false);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [activateEditState, setActivateEditState] = useState<boolean>(false);
 
-  const [openAddDefinition, setOpenAddDefinition] = useState(false);
+  const dispatch = useDispatch();
+  const formDefinitions = useSelector((state: RootState) => state.form?.definitions);
+  const location = useLocation();
 
   const searchParams = new URLSearchParams(document.location.search);
-
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const definitions = tenantName && searchParams.get('definitions');
-  const dispatch = useDispatch();
-
-  const formDefinitions = useSelector((state: RootState) => state.form?.definitions);
-
+  const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
+  const [isNavigatedFromEditor, setIsNavigatedFromEditor] = useState(isNavigatedFromEdit);
   useEffect(() => {
     if (formDefinitions && Object.keys(formDefinitions).length === 0) {
       dispatch(getFormDefinitions());
     }
+
     //  eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (isNavigatedFromEditor) {
+      activateEdit(true);
+    }
+  }, [isNavigatedFromEditor]);
+
+  const activateEdit = (edit: boolean) => {
+    setActiveIndex(1);
+    setActivateEditState(edit);
+  };
 
   return (
     <Page>
@@ -57,12 +72,27 @@ export const Form: FunctionComponent = () => {
             <h1 data-testid="form-title">Form service</h1>
             <img src={BetaBadge} alt="Form Service" />
           </HeadingDiv>
-          <Tabs activeIndex={definitions === 'true' ? 1 : 0} data-testid="form-tabs">
+          <Tabs activeIndex={activeIndex} data-testid="form-tabs">
             <Tab label="Overview" data-testid="form-overview-tab">
-              <FormOverview setOpenAddDefinition={setOpenAddDefinition} />
+              <FormOverview
+                openAddDefinition={openAddDefinition}
+                activateEdit={activateEditState}
+                setOpenAddDefinition={setOpenAddDefinition}
+                setActiveEdit={activateEdit}
+                setActiveIndex={setActiveIndex}
+              />
             </Tab>
             <Tab label="Definitions" data-testid="form-templates">
-              <FormDefinitions openAddDefinition={openAddDefinition} />
+              <FormDefinitions
+                setOpenAddDefinition={setOpenAddDefinition}
+                showFormDefinitions={true}
+                openAddDefinition={openAddDefinition}
+                setActiveEdit={activateEdit}
+                setActiveIndex={setActiveIndex}
+              />
+            </Tab>
+            <Tab label="Export" data-testid="form-export">
+              <FormExport />
             </Tab>
           </Tabs>
         </>

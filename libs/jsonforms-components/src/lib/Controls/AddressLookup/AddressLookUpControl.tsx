@@ -3,7 +3,7 @@ import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
 
-import { GoACircularProgress, GoAFormItem, GoAInput } from '@abgov/react-components-new';
+import { GoAFormItem, GoAInput, GoASpinner } from '@abgov/react-components-new';
 import { Address, Suggestion } from './types';
 
 import {
@@ -32,7 +32,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const autocompletion = uischema?.options?.autocomplete !== false;
   const [open, setOpen] = useState(false);
 
-  const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : schema?.title;
+  const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : '';
   const defaultAddress = {
     addressLine1: '',
     addressLine2: '',
@@ -44,6 +44,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const [address, setAddress] = useState<Address>(data || defaultAddress);
   const [searchTerm, setSearchTerm] = useState('');
+  const [saveSearchTerm, setSaveSearchTerm] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -58,7 +59,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const dropdownRef = useRef<HTMLUListElement>(null);
 
   const handleInputChange = (field: string, value: string) => {
-    if (field === 'addressLine1' && searchTerm.length < 3) {
+    if (field === 'addressLine1') {
       setDropdownSelected(false);
     }
     let newAddress;
@@ -86,6 +87,13 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   useEffect(() => {
+    if (saveSearchTerm) {
+      handleInputChange('addressLine1', searchTerm);
+      setSaveSearchTerm(false);
+    }
+  }, [saveSearchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     const fetchSuggestions = async () => {
       if (searchTerm.length > 2 && dropdownSelected === false) {
         setLoading(true);
@@ -106,11 +114,11 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [searchTerm, dropdownSelected]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
-    handleInputChange('addressLine1', value);
+    setSaveSearchTerm(true);
   };
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
@@ -134,6 +142,18 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setOpen(false);
   };
 
+  useEffect(() => {
+    if (dropdownRef.current && selectedIndex !== -1) {
+      const activeItem = dropdownRef.current?.querySelector(`li[data-index="${selectedIndex}"]`);
+      if (activeItem) {
+        activeItem.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }
+    }
+  }, [selectedIndex]);
+
   const handleKeyDown = (e: string, value: string, key: string) => {
     if (key === 'ArrowDown') {
       setSelectedIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
@@ -151,7 +171,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
           setTimeout(() => {
             handleSuggestionClick(suggestion);
             setOpen(false);
-          }, 1);
+          }, 50);
         }
       }
     }
@@ -161,31 +181,40 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   return (
     <div>
       {renderHelp()}
-      <GoAFormItem label={label} error={errors?.['addressLine1'] ?? ''} data-testId="form-address-line1">
+      <h3>{label}</h3>
+      <GoAFormItem
+        label={'Street address or P.O. box'}
+        error={errors?.['addressLine1'] ?? ''}
+        data-testId="form-address-line1"
+      >
         <SearchBox>
-          <GoAInput
-            leadingIcon={autocompletion && enabled ? 'search' : undefined}
-            id="goaInput"
-            name="addressLine1"
-            testId="address-form-address1"
-            readonly={readOnly}
-            disabled={!enabled}
-            ariaLabel={'address-form-address1'}
-            placeholder="Start typing the first line of your address, required."
-            value={address?.addressLine1 || ''}
-            onChange={(e, value) => handleDropdownChange(value)}
-            onBlur={(name) => handleRequiredFieldBlur(name)}
-            width="100%"
-            onKeyPress={(e: string, value: string, key: string) => {
-              if (open) {
-                handleKeyDown(e, value, key);
-              }
-            }}
-          />
-          {loading && autocompletion && (
-            <GoACircularProgress variant="inline" size="small" visible={true}></GoACircularProgress>
-          )}
+          <div className="input-container">
+            <GoAInput
+              leadingIcon={autocompletion && enabled ? 'search' : undefined}
+              id="goaInput"
+              name="addressLine1"
+              testId="address-form-address1"
+              readonly={readOnly}
+              disabled={!enabled}
+              ariaLabel={'address-form-address1'}
+              placeholder="Start typing the first line of your address, required."
+              value={address?.addressLine1 || ''}
+              onChange={(e, value) => handleDropdownChange(value)}
+              onBlur={(name) => handleRequiredFieldBlur(name)}
+              width="100%"
+              onKeyPress={(e: string, value: string, key: string) => {
+                if (open) {
+                  handleKeyDown(e, value, key);
+                }
+              }}
+            />
 
+            {loading && (
+              <div className="input-spinner">
+                <GoASpinner type="infinite" size="small"></GoASpinner>
+              </div>
+            )}
+          </div>
           {!loading && suggestions && autocompletion && (
             <ul ref={dropdownRef} className="suggestions">
               {suggestions &&
@@ -217,6 +246,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
         address={address}
         errors={errors}
         readOnly={readOnly}
+        enabled={enabled}
         handleInputChange={handleInputChange}
         isAlbertaAddress={isAlbertaAddress}
         handleOnBlur={handleRequiredFieldBlur}

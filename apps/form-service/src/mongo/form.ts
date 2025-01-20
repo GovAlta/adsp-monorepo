@@ -61,6 +61,12 @@ export class MongoFormRepository implements FormRepository {
       query.anonymousApplicant = criteria.anonymousApplicantEquals;
     }
 
+    if (criteria?.dataCriteria) {
+      Object.entries(criteria.dataCriteria).forEach(([property, value]) => {
+        query[`data.${property}`] = value;
+      });
+    }
+
     return new Promise<FormEntity[]>((resolve, reject) => {
       this.model
         .find(query, null, { lean: true })
@@ -139,7 +145,10 @@ export class MongoFormRepository implements FormRepository {
       securityClassification: entity.securityClassification,
       hash: entity.hash,
       data: entity.data,
-      files: Object.entries(entity.files).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
+      files: Object.entries(entity.files).reduce(
+        (fs, [key, f]) => ({ ...fs, [key.replace('.', ':')]: f?.toString() }),
+        {}
+      ),
     };
   }
 
@@ -168,8 +177,11 @@ export class MongoFormRepository implements FormRepository {
         submitted: doc.submitted,
         lastAccessed: doc.lastAccessed,
         data: doc.data,
-        securityClassification: definition?.securityClassification,
-        files: Object.entries(doc.files).reduce((fs, [key, f]) => ({ ...fs, [key]: f ? AdspId.parse(f) : null }), {}),
+        securityClassification: doc.securityClassification,
+        files: Object.entries(doc.files).reduce(
+          (fs, [key, f]) => ({ ...fs, [key.replace(':', '.')]: f ? AdspId.parse(f) : null }),
+          {}
+        ),
       },
       doc.hash
     );

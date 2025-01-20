@@ -1,6 +1,6 @@
 import React from 'react';
 import { GoAFormItem, GoAGrid } from '@abgov/react-components-new';
-import { AddressIndent } from './styled-components';
+import { AddressIndent, TextWrap } from './styled-components';
 
 interface AddressInputsProps {
   data: Record<string, string>;
@@ -38,21 +38,21 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
             label="Address line 1"
             error={data?.addressLine1?.length === 0 ? 'addressLine1 is required' : ''}
           >
-            <p>{data?.addressLine1}</p>
+            <TextWrap>{data?.addressLine1}</TextWrap>
           </GoAFormItem>
           {data?.addressLine2 && (
             <GoAFormItem label="Address line 2">
-              <p>{data.addressLine2}</p>
+              <TextWrap>{data.addressLine2}</TextWrap>
             </GoAFormItem>
           )}
         </GoAGrid>
         <br />
         <GoAGrid minChildWidth="0ch" gap="s">
           <GoAFormItem error={data?.municipality?.length === 0 ? 'city is required' : ''} label="City">
-            <p>{data?.municipality}</p>
+            <TextWrap>{data?.municipality}</TextWrap>
           </GoAFormItem>
           <GoAFormItem error={data?.postalCode?.length === 0 ? 'postalCode is required' : ''} label="Postal Code">
-            <p>{data?.postalCode}</p>
+            <TextWrap>{data?.postalCode}</TextWrap>
           </GoAFormItem>
         </GoAGrid>
         <br />
@@ -70,8 +70,6 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
           </GoAFormItem>
         </GoAGrid>
       </AddressIndent>
-      <br />
-      <br />
     </>
   );
 };

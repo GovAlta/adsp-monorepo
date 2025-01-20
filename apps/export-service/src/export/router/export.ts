@@ -1,4 +1,4 @@
-import { AdspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, assertAdspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   createValidationHandler,
   InvalidOperationError,
@@ -13,6 +13,7 @@ import { ServiceRoles } from '../roles';
 import { EXPORT_FILE } from '../fileTypes';
 import { exportQueued } from '../events';
 import { body, param } from 'express-validator';
+import { ExportServiceConfiguration } from '../configuration';
 
 export function createExportJob(
   serviceId: AdspId,
@@ -29,7 +30,15 @@ export function createExportJob(
       const { fileType, filename, format, formatOptions, resourceId: resourceIdValue, params, resultsPath } = req.body;
       const resourceId = AdspId.parse(resourceIdValue);
 
-      if (!isAllowedUser(user, tenantId, ServiceRoles.Exporter, true)) {
+      assertAdspId(resourceId, 'Value of resourceId must be a valid ADSP URN for an API resource.', 'resource');
+
+      const configuration = await req.getServiceConfiguration<ExportServiceConfiguration, ExportServiceConfiguration>(
+        null,
+        tenantId
+      );
+
+      const source = configuration?.getSource(resourceId);
+      if (!isAllowedUser(user, tenantId, [ServiceRoles.Exporter, ...(source?.exporterRoles || [])], true)) {
         throw new UnauthorizedUserError('create export job', user);
       }
 
@@ -40,7 +49,7 @@ export function createExportJob(
         }
       }
 
-      const job = await repository.create(tenantId);
+      const job = await repository.create(user, tenantId);
       await queueService.enqueue({
         timestamp: new Date(),
         jobId: job.id,
@@ -78,13 +87,13 @@ export function getExportJob(serviceId: AdspId, repository: JobRepository<FileRe
       const user = req.user;
       const { jobId } = req.params;
 
-      if (!isAllowedUser(user, req.tenant.id, ServiceRoles.Exporter)) {
-        throw new UnauthorizedUserError('get export job', user);
-      }
-
       const job = await repository.get(jobId);
       if (!job) {
         throw new NotFoundError('export job', jobId);
+      }
+
+      if (user?.id !== job?.createdBy?.id && !isAllowedUser(user, req.tenant.id, ServiceRoles.Exporter)) {
+        throw new UnauthorizedUserError('get export job', user);
       }
 
       res.send(mapJob(serviceId, job));

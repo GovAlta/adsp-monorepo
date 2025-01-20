@@ -105,7 +105,7 @@ describe('FormSubmission', () => {
     const entity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo);
 
     repositoryMock.save.mockResolvedValueOnce(entity);
-    FormSubmissionEntity.create(user, repositoryMock, {} as FormEntity, '21');
+    FormSubmissionEntity.create(user, repositoryMock, { definition: aDefinition } as FormEntity, '21');
 
     expect(repositoryMock.save).toBeCalled();
   });
@@ -141,7 +141,7 @@ describe('FormSubmission', () => {
 
   it('form submission can update disposition', async () => {
     const before = new Date();
-    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, {
+    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, aDefinition, {
       id: '242',
       definition: aDefinition,
     } as FormEntity);
@@ -156,7 +156,7 @@ describe('FormSubmission', () => {
   });
 
   it('form submission cannot update disposition - invalid status', async () => {
-    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, {
+    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, aDefinition, {
       id: '242',
       definition: aDefinition,
     } as FormEntity);
@@ -168,7 +168,7 @@ describe('FormSubmission', () => {
   });
 
   it('form submission cannot update disposition - unauthorized', async () => {
-    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, {
+    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, aDefinition, {
       id: 'fds435',
       definition: aDefinition,
     } as FormEntity);
@@ -180,7 +180,7 @@ describe('FormSubmission', () => {
   });
 
   it('can read definition is empty', async () => {
-    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, {
+    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, aDefinition, {
       id: 'fds435',
       definition: null,
     } as FormEntity);

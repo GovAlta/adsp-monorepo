@@ -14,7 +14,7 @@ export const ToolBarHeader = styled.div`
   margin-bottom: var(--goa-space-l);
 `;
 
-export const ObjectArrayTitle = styled.h2`
+export const ObjectArrayTitle = styled.h3`
   margin-bottom: var(--goa-space-l);
 `;
 
@@ -65,4 +65,8 @@ export const Trash = styled.div`
 export const ListContainer = styled.div`
   padding: 0 1.5rem 0 0;
   border: 1px solid #dcdcdc;
+`;
+
+export const TableTHHeader = styled.th`
+  background-color: var(--goa-color-greyscale-100) !important;
 `;

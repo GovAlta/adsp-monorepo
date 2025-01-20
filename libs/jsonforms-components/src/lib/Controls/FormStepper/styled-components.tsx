@@ -13,21 +13,25 @@ export const ReviewItem = styled.div`
 `;
 export const ReviewItemSection = styled.div`
   background-color: #f1f1f1;
-  margin-bottom: 1rem;
-  padding: 1rem;
+  margin-bottom: var(--goa-space-m);
+  padding: var(--goa-space-m);
   border: 1px solid #dcdcdc;
   border-radius: 5px;
+
+  .element-style {
+    max-width: 1600px;
+  }
 `;
 export const ReviewItemHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  margin-bottom: var(--goa-space-xl);
 `;
 export const ReviewItemTitle = styled.div`
-  font-size: var(--fs-xl);
-  line-height: var(--lh-lg);
-  font-weight: var(--fw-light);
+  font-size: var(--goa-space-l);
+  line-height: var(--goa-space-xl);
+  font-weight: 300;
 `;
 
 export const Anchor = styled.div`
@@ -58,7 +62,20 @@ export const ListWithDetailHeading = styled.h3`
 `;
 
 export const RightAlignmentDiv = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: var(--goa-space-l);
+  @media screen and (max-width: 767px) {
+    margin-bottom: var(--goa-space-l);
+  }
+  @media screen and (min-width: 768px) {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--goa-space-l);
+  }
+`;
+
+export const FormStepperSummaryH3 = styled.h3`
+  flex: 1;
+  margin-bottom: var(--goa-space-m);
+  font-size: var(--goa-font-size-7);
+  line-height: var(--goa-line-height-4);
+  font-weight: var(--goa-font-weight-regular);
 `;

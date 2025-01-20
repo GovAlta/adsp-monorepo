@@ -17,38 +17,65 @@ export const SearchBox = styled.div`
     width: 100%;
     position: absolute;
 
-    background: var(--color-white);
+    background: var(--goa-color-greyscale-white);
     box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
     z-index: 99;
-    padding-left: 0px;
-
     overflow: hidden auto;
+    padding-left: 0;
   }
   .suggestions li {
-    padding: 0.5rem;
-    color: var(--color-gray-900);
   }
   .suggestion-active,
   .suggestions li:hover {
-    background-color: var(--color-primary);
-    color: var(--color-white);
+    background-color: var(--goa-color-interactive-default);
+    color: var(--goa-color-greyscale-white);
     cursor: pointer;
-    font-weight: var(--fw-bold);
+    font-weight: 600;
+  }
+  .input-container {
+    position: relative;
+    display: inline-block;
+    width: 100%; /* Ensures it spans the parent container */
+  }
+
+  .input-container .input-spinner {
+    position: absolute;
+    top: 50%;
+    right: 8px; /* Adjust based on padding or margin of the input field */
+    transform: translateY(-50%);
+    z-index: 1; /* Ensure it appears above the input */
+    pointer-events: none; /* Prevent spinner from interfering with clicks */
   }
 `;
 
 export const AddressIndent = styled.div`
-  margin: 1em 1.5em 0 1.5em;
+  margin: 0.5em 0 0.5em 0;
+  textwrap: 'wrap';
+  wordbreak: 'break-word';
+  border: 1px solid #dcdcdc;
+  padding: 1.35em;
+`;
+
+export const TextWrap = styled.p`
+  text-wrap: auto;
+  word-break: break-word;
+`;
+
+export const TextWrapDiv = styled.div`
+  text-wrap: auto;
+  word-break: break-word;
 `;
 
 export const LabelDiv = styled.div`
-  font-size: var(--fs-sl);
-  padding-bottom: 1.5rem;
+  font-size: var(--goa-font-size-2);
+  padding-bottom: var(--goa-space-l);
 `;
 
 /* istanbul ignore next */
 export const ListItem = styled.li<ListItemProps>`
-  background-color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-primary)' : '')};
-  color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--color-white) !important' : '')};
-  font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--fw-bold)' : '')};
+  background-color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--goa-color-interactive-default)' : '')};
+  color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--goa-color-greyscale-white) !important' : '')};
+  font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? '600' : '')};
+  padding: var(--goa-space-xs) var(--goa-space-2xs) var(--goa-space-xs) var(--goa-space-xs);
+  margin-left: 0.25rem;
 `;

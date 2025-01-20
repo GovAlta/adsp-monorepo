@@ -1,0 +1,113 @@
+import {
+  GoAAppHeader,
+  GoAButton,
+  GoAMicrositeHeader,
+  GoASideMenu,
+  GoASideMenuHeading,
+} from '@abgov/react-components-new';
+import { useScripts } from '@core-services/app-common';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Route, Routes, useLocation, useParams, useNavigate, Navigate } from 'react-router-dom';
+import styled from 'styled-components';
+import {
+  AppDispatch,
+  configInitializedSelector,
+  extensionsSelector,
+  initializeTenant,
+  loginUser,
+  logoutUser,
+  tenantSelector,
+  userSelector,
+  feedbackSelector,
+} from '../state';
+import { useFeedbackLinkHandler } from '../util/feedbackUtils';
+import { AuthorizeUser } from './AuthorizeUser';
+import { FeedbackNotification } from './FeedbackNotification';
+import { FormsDefinitions } from './FormDefinitions';
+import { FormDefinition } from './FormDefinition';
+import { NavigationMenu } from './NavigationMenu';
+
+const TenantMainContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+`;
+
+export const FormAdminTenant = () => {
+  const { tenant: tenantName } = useParams<{ tenant: string }>();
+  const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+
+  const tenant = useSelector(tenantSelector);
+  const extensions = useSelector(extensionsSelector);
+  useFeedbackLinkHandler();
+  useScripts(...extensions);
+  const navigate = useNavigate();
+
+  const feedback = useSelector(feedbackSelector);
+
+  useEffect(() => {
+    if (feedback?.message.includes('not found')) {
+      navigate(`/overview`);
+    }
+  }, [feedback, navigate]);
+
+  const configInitialized = useSelector(configInitializedSelector);
+  const { initialized: userInitialized, user } = useSelector(userSelector);
+
+  useEffect(() => {
+    if (configInitialized) {
+      dispatch(initializeTenant(tenantName));
+    }
+  }, [configInitialized, tenantName, dispatch]);
+
+  return (
+    <React.Fragment>
+      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form administration`}>
+        {userInitialized && (
+          <span>
+            <span>{user?.name}</span>
+            {user ? (
+              <GoAButton
+                mt="s"
+                mr="s"
+                type="tertiary"
+                onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
+              >
+                Sign out
+              </GoAButton>
+            ) : (
+              <GoAButton
+                mt="s"
+                mr="s"
+                type="tertiary"
+                onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
+              >
+                Sign in
+              </GoAButton>
+            )}
+          </span>
+        )}
+      </GoAAppHeader>
+      <FeedbackNotification />
+      <AuthorizeUser>
+        <TenantMainContainer>
+          <nav>
+            <NavigationMenu />
+          </nav>
+          <main>
+            <section>
+              <Routes>
+                <Route path="/definitions/:definitionId/*" element={<FormDefinition />} />
+                <Route path="/definitions" element={<FormsDefinitions />} />
+                <Route path="*" element={<Navigate to="definitions" />} />
+              </Routes>
+            </section>
+          </main>
+        </TenantMainContainer>
+      </AuthorizeUser>
+    </React.Fragment>
+  );
+};

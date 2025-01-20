@@ -127,3 +127,65 @@ export const isValidDate = function (date: Date | string) {
     return false;
   }
 };
+
+/**
+ * Extracts the last segment from a JSON pointer string.
+ *
+ * @param pointer - The JSON pointer string (e.g., "#/properties/incomeThreshold").
+ * @returns The last segment of the JSON pointer or undefined if the pointer is invalid.
+ */
+
+export const getLastSegmentFromPointer = (pointer: string): string => {
+  if (!pointer.startsWith('#/')) {
+    throw new Error("Invalid JSON pointer. Must start with '#/'");
+  }
+
+  // Split the pointer into segments and return the last one
+  const segments = pointer.split('/');
+  return segments[segments.length - 1];
+};
+
+/**
+ * Converts a camelCase or PascalCase string to a human-readable format
+ * with each word capitalized.
+ *
+ * @param input - The camelCase or PascalCase string (e.g., "incomeThresholdExample").
+ * @returns A formatted string with spaces and capitalization (e.g., "Income Threshold Example").
+ */
+export const convertToReadableFormat = (input: string): string => {
+  if (!input) {
+    return input;
+  }
+
+  return input
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+/**
+ * Converts a input to sentence case (eg: incomeThresholdExample or IncomeThresholdExample)
+ * to 'Income threshold example' with the first letter in the sentence capitalized.
+ *
+ * @param input - The camelCase or PascalCase string (e.g., "incomeThresholdExample").
+ * @returns A formatted string with spaces and capitalization (e.g., "Income threshold example").
+ */
+export const convertToSentenceCase = (input: string) => {
+  if (!input) {
+    return input;
+  }
+
+  const convertedInput = convertToReadableFormat(input);
+
+  if (!convertedInput) return convertedInput;
+
+  const firstWord = convertedInput.split(' ').splice(0, 1);
+  const newWords = convertedInput
+    .split(' ')
+    .splice(1)
+    .map((word) => word.charAt(0).toLowerCase() + word.slice(1).toLowerCase())
+    .join(' ');
+
+  return firstWord.concat(newWords).join(' ');
+};

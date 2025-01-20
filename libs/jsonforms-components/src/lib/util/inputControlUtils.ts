@@ -10,7 +10,7 @@ import { standardizeDate } from './dateUtils';
  */
 export const isRequiredAndHasNoData = (props: ControlProps) => {
   const { data, required } = props;
-  return required && (data === undefined || data.length === 0);
+  return required && (data === undefined || data?.length === 0);
 };
 
 /**
@@ -163,7 +163,6 @@ export const onChangeForInputControl = (props: EventChangeControlProps) => {
   const { value } = props;
   const { controlProps } = props;
   const { handleChange, path } = controlProps;
-
   if (value && value !== null) {
     handleChange(path, value);
   }

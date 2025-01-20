@@ -12,6 +12,11 @@ import { DeleteConfirmationsView } from './deleteConfirmationsView';
 
 interface AddEditQueueProps {
   openAddTask: boolean;
+  setOpenAddTask: (val: boolean) => void;
+
+  setActiveEdit: (edit: boolean) => void;
+  setActiveIndex: (index: number) => void;
+  activeEdit: boolean;
 }
 export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
   const dispatch = useDispatch();

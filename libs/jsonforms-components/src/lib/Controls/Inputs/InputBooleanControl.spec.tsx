@@ -38,7 +38,7 @@ const getForm = (schema: object, uiSchema: UISchemaElement) => {
 describe('Input Boolean Control', () => {
   it('can render a checkbox', () => {
     const dataSchema = { type: 'object', properties: { isAlive: { type: 'boolean' } } };
-    const uiSchema = { type: 'Control', scope: '#/properties/isAlive', label: 'Check Me' };
+    const uiSchema = { type: 'Control', scope: '#/properties/isAlive', options: { text: 'Check Me' } };
     const renderer = render(getForm(dataSchema, uiSchema));
     const checkbox = renderer.getByTestId('isAlive-checkbox-test-id');
     expect(checkbox).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe('Input Boolean Control', () => {
 
   it('can render a required checkbox', () => {
     const dataSchema = { type: 'object', properties: { isAlive: { type: 'boolean' } }, required: ['isAlive'] };
-    const uiSchema = { type: 'Control', scope: '#/properties/isAlive', label: 'Check Me' };
+    const uiSchema = { type: 'Control', scope: '#/properties/isAlive', options: { text: 'Check Me' } };
     const renderer = render(getForm(dataSchema, uiSchema));
     const checkbox = renderer.getByTestId('isAlive-checkbox-test-id');
     expect(checkbox).toBeInTheDocument();

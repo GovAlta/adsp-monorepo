@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { GoAFormItem, GoAGrid } from '@abgov/react-components-new';
+import { TextWrapDiv } from '../AddressLookup/styled-components';
 
 type DateOfBirthReviewControlProps = ControlProps;
 
@@ -28,17 +29,23 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
           requirement={requiredFields?.includes('firstName') ? 'required' : undefined}
           error={errors?.['firstName'] ?? ''}
         >
-          <div data-testid={`firstName-control-${props.id}`}>{props.data?.firstName}</div>
+          <TextWrapDiv>
+            <div data-testid={`firstName-control-${props.id}`}>{props.data?.firstName}</div>
+          </TextWrapDiv>
         </GoAFormItem>
         <GoAFormItem label="Middle name">
-          <div data-testid={`middleName-control-${props.id}`}>{props.data?.middleName}</div>
+          <TextWrapDiv>
+            <div data-testid={`middleName-control-${props.id}`}>{props.data?.middleName}</div>
+          </TextWrapDiv>
         </GoAFormItem>
         <GoAFormItem
           label="Last name"
           requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
           error={errors?.['lastName'] ?? ''}
         >
-          <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
+          <TextWrapDiv>
+            <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
+          </TextWrapDiv>
         </GoAFormItem>
       </GoAGrid>
       <GoAGrid minChildWidth="0ch" gap="s">
@@ -47,7 +54,9 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
           requirement={requiredFields?.includes('dateOfBirth') ? 'required' : undefined}
           error={errors?.['dateOfBirth'] ?? ''}
         >
-          <div data-testid={`dob-control-${props.id}`}>{props.data?.dateOfBirth}</div>
+          <TextWrapDiv>
+            <div data-testid={`dob-control-${props.id}`}>{props.data?.dateOfBirth}</div>
+          </TextWrapDiv>
         </GoAFormItem>
       </GoAGrid>
     </>

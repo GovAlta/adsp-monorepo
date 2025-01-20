@@ -214,7 +214,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         activeParam = 0;
         completionProvider.dispose();
         helperProvider.dispose();
-        if (triggerEvents && triggerEvents.length > 0) {
+        if (triggerEvents && eventCompletionProvider && triggerEvents.length > 0) {
           eventCompletionProvider.dispose();
         }
       };

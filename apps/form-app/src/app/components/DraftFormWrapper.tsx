@@ -1,0 +1,99 @@
+import { ContextProviderFactory } from '@abgov/jsonforms-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { Grid, GridItem } from '@core-services/app-common';
+import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
+import { FunctionComponent } from 'react';
+import { Form, FormDefinition, ValidationError } from '../state';
+import { DraftForm } from './DraftForm';
+
+export const ContextProvider = ContextProviderFactory();
+
+export type JsonSchema = JsonSchema4 | JsonSchema7;
+interface DraftFormProps {
+  definition: FormDefinition;
+  form: Form;
+  data: Record<string, unknown>;
+  canSubmit: boolean;
+  showSubmit: boolean;
+  saving: boolean;
+  submitting: boolean;
+  anonymousApply?: boolean;
+  onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
+  onSubmit: (form: Form) => void;
+}
+
+export const populateDropdown = (schema, enumerators) => {
+  const newSchema = JSON.parse(JSON.stringify(schema));
+
+  Object.keys(newSchema.properties || {}).forEach((propertyName) => {
+    const property = newSchema.properties || {};
+    if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '') {
+      property[propertyName].enum = enumerators?.getFormContextData(propertyName) as string[];
+    }
+  });
+
+  return newSchema as JsonSchema;
+};
+
+export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
+  definition,
+  form,
+  data,
+  anonymousApply,
+  canSubmit,
+  showSubmit,
+  saving,
+  submitting,
+  onChange,
+  onSubmit,
+}) => {
+  const handleMouseEnter = () => {
+    const focusedElement = document.activeElement as HTMLElement | null;
+    focusedElement.blur();
+  };
+
+  const ButtonGroup = ({ showSubmit, canSubmit, onSubmit, form }): JSX.Element => {
+    return (
+      <GoAButtonGroup alignment="end">
+        {showSubmit && (
+          <div onMouseEnter={handleMouseEnter}>
+            <GoAButton
+              mt="s"
+              mb="3xl"
+              disabled={!canSubmit}
+              type="primary"
+              data-testid="form-submit"
+              onClick={() => {
+                onSubmit(form);
+              }}
+            >
+              Submit
+            </GoAButton>
+          </div>
+        )}
+      </GoAButtonGroup>
+    );
+  };
+
+  return (
+    <Grid>
+      <GridItem md={1} />
+      <GridItem md={10}>
+        <DraftForm
+          definition={definition}
+          form={form}
+          data={data}
+          anonymousApply={anonymousApply}
+          canSubmit={canSubmit}
+          showSubmit={showSubmit}
+          saving={saving}
+          submitting={submitting}
+          onChange={onChange}
+          onSubmit={onSubmit}
+        />
+        <ButtonGroup showSubmit={showSubmit} canSubmit={canSubmit} onSubmit={onSubmit} form={form} />
+      </GridItem>
+      <GridItem md={1} />
+    </Grid>
+  );
+};

@@ -1,19 +1,17 @@
-import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import {
   GoARenderers,
-  createDefaultAjv,
   JsonFormContext,
   enumerators,
   ContextProviderFactory,
   JsonFormRegisterProvider,
 } from '@abgov/jsonforms-components';
-import { GoABadge, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import { Grid, GridItem } from '@core-services/app-common';
+import { GoABadge } from '@abgov/react-components-new';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+
 import {
   AppDispatch,
   Form,
@@ -29,7 +27,6 @@ import {
   AppState,
   store,
 } from '../state';
-import { userSelector, configSelector, fileDataUrlSelector } from '../state';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -65,7 +62,6 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
-        ajv={createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema)}
         readonly={readonly}
         schema={populateDropdown(definition.dataSchema, enumerators)}
         uischema={definition.uiSchema}
@@ -94,8 +90,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   definition,
   form,
   data,
-  canSubmit,
-  showSubmit,
   saving,
   submitting,
   anonymousApply,
@@ -110,8 +104,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const files = useSelector(filesSelector);
   const metadata = useSelector(metaDataSelector);
-  const user = useSelector(userSelector);
-  const config = useSelector(configSelector);
   const getKeyByValue = (object, value) => {
     return Object.keys(object).find((key) => object[key] === value);
   };
@@ -166,45 +158,26 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   return (
-    <Grid>
-      <GridItem md={1} />
-      <GridItem md={10}>
-        {!anonymousApply && (
-          <SavingIndicator data-saving={saving}>
-            <GoABadge type="information" content="Saving..." />
-          </SavingIndicator>
-        )}
-        <ContextProvider
-          submit={{
-            submitForm: onSubmitFunction,
-          }}
-          fileManagement={{
-            fileList: metadata,
-            uploadFile: uploadFormFile,
-            downloadFile: downloadFormFile,
-            deleteFile: deleteFormFile,
-          }}
-          formUrl="https://form.adsp-uat.alberta.ca"
-        >
-          <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
-        </ContextProvider>
-        {showSubmit && (
-          <GoAButtonGroup alignment="end" mb="l">
-            <GoAButton
-              mt="2xl"
-              disabled={!canSubmit}
-              type="primary"
-              data-testid="form-submit"
-              onClick={() => {
-                onSubmit(form);
-              }}
-            >
-              Submit
-            </GoAButton>
-          </GoAButtonGroup>
-        )}
-      </GridItem>
-      <GridItem md={1} />
-    </Grid>
+    <div>
+      {!anonymousApply && (
+        <SavingIndicator data-saving={saving}>
+          <GoABadge type="information" content="Saving..." />
+        </SavingIndicator>
+      )}
+      <ContextProvider
+        submit={{
+          submitForm: onSubmitFunction,
+        }}
+        fileManagement={{
+          fileList: metadata,
+          uploadFile: uploadFormFile,
+          downloadFile: downloadFormFile,
+          deleteFile: deleteFormFile,
+        }}
+        formUrl="https://form.adsp-uat.alberta.ca"
+      >
+        <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
+      </ContextProvider>
+    </div>
   );
 };

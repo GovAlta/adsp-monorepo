@@ -241,7 +241,7 @@ const FileList = (): JSX.Element => {
             id="name"
             value={searchName}
             testId="file-type-name-input"
-            width="100%"
+            width="548px"
             onChange={(_, value) => setSearchName(value)}
           />
         </GoAFormItem>

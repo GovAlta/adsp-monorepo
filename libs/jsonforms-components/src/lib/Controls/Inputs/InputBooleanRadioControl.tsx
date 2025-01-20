@@ -26,6 +26,7 @@ export const BooleanRadioComponent = ({
   const TrueDescription = description || appliedUiSchemaOptions?.descriptionForTrue;
   const FalseDescription = description || appliedUiSchemaOptions?.descriptionForFalse;
   const BaseTestId = appliedUiSchemaOptions?.testId || `${path}-boolean-radio-jsonform`;
+
   const errorsFormInput = checkFieldValidity({
     data,
     uischema,

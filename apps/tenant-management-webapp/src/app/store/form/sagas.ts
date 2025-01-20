@@ -9,10 +9,14 @@ import { fetchServiceMetrics } from '@store/common';
 import { getAccessToken } from '@store/tenant/sagas';
 import { select, call, put, takeEvery, delay, takeLatest } from 'redux-saga/effects';
 import { RootState } from '../index';
+import { io, Socket } from 'socket.io-client';
+import axios from 'axios';
+
 import {
   UpdateFormDefinitionsAction,
   getFormDefinitionsSuccess,
   updateFormDefinitionSuccess,
+  EXPORT_FORM_INFO_ACTION,
   FETCH_FORM_DEFINITIONS_ACTION,
   UPDATE_FORM_DEFINITION_ACTION,
   DELETE_FORM_DEFINITION_ACTION,
@@ -38,14 +42,18 @@ import {
   OpenEditorForDefinitionSuccessAction,
   fetchFormMetricsSuccess,
   FETCH_FORM_METRICS_ACTION,
+  START_SOCKET_STREAM_ACTION,
+  startSocketSuccess,
+  getExportFormInfoSuccess,
 } from './action';
 import {
   fetchFormDefinitionsApi,
   updateFormDefinitionApi,
   deleteFormDefinitionApi,
   fetchFormDefinitionApi,
+  exportApi,
 } from './api';
-import { FormDefinition } from './model';
+import { FormDefinition, FormInfoItem, SubmissionInfoItem, ColumnOption } from './model';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -86,6 +94,53 @@ export function* fetchFormDefinitions(payload): SagaIterator {
       );
     }
   }
+}
+
+export function* exportFormInfo(payload): SagaIterator {
+  const exportBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.exportServiceUrl);
+  const token: string = yield call(getAccessToken);
+  try {
+    if (exportBaseUrl && token) {
+      const url = `${exportBaseUrl}/export/v1/jobs`;
+      const requestBody = {
+        resourceId: `urn:ads:platform:form-service:v1:/${payload?.resource}`,
+        format: payload.format,
+        params: {
+          criteria: JSON.stringify({
+            definitionIdEquals: payload?.id,
+          }),
+          includeData: true,
+        },
+        filename: payload.fileName,
+        ...(payload.format === 'csv' && { formatOptions: { columns: payload.selectedColumn } }),
+      };
+
+      const exportResult = yield call(exportApi, token, url, requestBody);
+      yield put(getExportFormInfoSuccess(exportResult));
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
+  }
+}
+
+export function* startSocket(): SagaIterator {
+  const token: string = yield call(getAccessToken);
+  const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
+  const socket: Socket = io(pushServiceUrl, {
+    query: {
+      stream: 'export-updates',
+    },
+    withCredentials: true,
+    extraHeaders: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  yield put(startSocketSuccess(socket));
 }
 
 const ensureRolesAreUniqueWithNoDuplicates = (definition: FormDefinition) => {
@@ -249,6 +304,7 @@ export function* fetchFormMetrics(): SagaIterator {
 
 export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
+  yield takeEvery(EXPORT_FORM_INFO_ACTION, exportFormInfo);
   yield takeEvery(UPDATE_FORM_DEFINITION_ACTION, updateFormDefinition);
   yield takeEvery(DELETE_FORM_DEFINITION_ACTION, deleteFormDefinition);
   yield takeEvery(OPEN_EDITOR_FOR_DEFINITION_ACTION, openEditorForDefinition);
@@ -257,4 +313,5 @@ export function* watchFormSagas(): Generator {
   yield takeLatest(SET_DRAFT_UI_SCHEMA_ACTION, parseUISchemaDraft);
   yield takeLatest(PROCESS_DATA_SCHEMA_SUCCESS_ACTION, resolveDataSchema);
   yield takeLatest(FETCH_FORM_METRICS_ACTION, fetchFormMetrics);
+  yield takeEvery(START_SOCKET_STREAM_ACTION, startSocket);
 }

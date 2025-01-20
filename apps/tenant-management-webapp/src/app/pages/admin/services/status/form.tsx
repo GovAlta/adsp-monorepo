@@ -13,6 +13,7 @@ import {
   isNotEmptyCheck,
   Validator,
   wordMaxLengthCheck,
+  duplicateNameCheck,
 } from '@lib/validation/checkInput';
 
 import { RootState } from '@store/index';
@@ -99,6 +100,14 @@ export const ApplicationFormModal: FC<Props> = ({
     isDuplicateAppKey()
   )
     .add('nameOnly', 'name', checkForBadChars, isDuplicateAppName())
+    .add(
+      'duplicated',
+      'name',
+      duplicateNameCheck(
+        applications.map((app) => app.name),
+        'Application'
+      )
+    )
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .add(
       'url',
@@ -117,6 +126,8 @@ export const ApplicationFormModal: FC<Props> = ({
     application.status = 'operational';
     dispatch(saveApplication(application));
     if (onSave) onSave();
+    validators.clear();
+    setApplication({ ...defaultApplication });
   }
 
   function isFormValid(): boolean {
@@ -167,7 +178,7 @@ export const ApplicationFormModal: FC<Props> = ({
         </GoAButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['name']} label="Application name">
+      <GoAFormItem error={errors?.['duplicated'] || errors?.['name']} label="Application name">
         <GoAInput
           type="text"
           name="name"
@@ -177,20 +188,31 @@ export const ApplicationFormModal: FC<Props> = ({
           onChange={(name, value) => {
             if (!isEdit) {
               const appKey = toKebabName(value);
-              // check for duplicate appKey
+              validators.remove('nameAppKey');
               validators['nameAppKey'].check(appKey);
+              validators.remove('duplicated');
+              validators['duplicated'].check(value);
               setApplication({
                 ...application,
                 name: value,
                 appKey,
               });
             } else {
-              // should not update appKey during update
+              validators.remove('nameOnly');
               validators['nameOnly'].check(value);
+              validators.remove('duplicated');
+              validators['duplicated'].check(value);
               setApplication({
                 ...application,
                 name: value,
               });
+            }
+          }}
+          onBlur={() => {
+            if (!isEdit) {
+              validators.checkAll({ nameAppKey: application?.appKey });
+            } else {
+              validators.checkAll({ nameOnly: application?.name });
             }
           }}
           aria-label="name"

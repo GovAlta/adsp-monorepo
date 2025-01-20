@@ -5,15 +5,19 @@ import {
   isAllowedUser,
   startBenchmark,
   UnauthorizedUserError,
-  GoAError,
   TenantService,
+  TokenProvider,
+  ServiceDirectory,
+  adspId,
 } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
   InvalidOperationError,
   NotFoundError,
+  Results,
 } from '@core-services/core-common';
+import axios from 'axios';
 import { RequestHandler, Router } from 'express';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
@@ -35,7 +39,15 @@ import { mapForm, mapFormDefinition, mapFormWithFormSubmission } from '../mapper
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { ExportServiceRoles, FormServiceRoles } from '../roles';
-import { Form, FormCriteria, FormStatus, FormSubmission, FormSubmissionCriteria, Intake } from '../types';
+import {
+  Form,
+  FormCriteria,
+  FormDefinition,
+  FormStatus,
+  FormSubmission,
+  FormSubmissionCriteria,
+  Intake,
+} from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -46,6 +58,8 @@ import {
 } from './types';
 import { PdfService } from '../pdf';
 import { CalendarService } from '../calendar';
+
+const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
@@ -65,7 +79,7 @@ export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntit
     formFiles: Object.entries(entity.formFiles || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
     created: entity.created,
     createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
-    securityClassification: entity?.securityClassification,
+    securityClassification: entity.securityClassification,
     disposition: entity.disposition
       ? {
           id: entity.disposition.id,
@@ -84,6 +98,14 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
   return async (req, res, next) => {
     const form: FormEntity = req[FORM];
     try {
+      const user = req.user;
+      const { includeData: includeDataValue } = req.query;
+      const includeData = includeDataValue === 'true';
+
+      if (includeData) {
+        await form.accessByUser(user);
+      }
+
       if (form.status === FormStatus.Submitted && form.submitted !== null) {
         const criteria = {
           tenantIdEquals: req.tenant?.id,
@@ -94,12 +116,12 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
         });
 
         if (results.length > 0) {
-          res.send(mapFormWithFormSubmission(apiId, form, results.at(0)));
+          res.send(mapFormWithFormSubmission(apiId, form, results.at(0), includeData));
         } else {
-          res.send(mapForm(apiId, form));
+          res.send(mapForm(apiId, form, includeData));
         }
       } else {
-        res.send(mapForm(apiId, form));
+        res.send(mapForm(apiId, form, includeData));
       }
     } catch (err) {
       next(err);
@@ -107,13 +129,34 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
   };
 }
 
-export const getFormDefinitions: RequestHandler = async (_req, _res, next) => {
-  try {
-    throw new GoAError('Definitions endpoint no longer supported.', { statusCode: 410 });
-  } catch (err) {
-    next(err);
-  }
-};
+export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 20;
+
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin)) {
+        throw new UnauthorizedUserError('access definitions', user);
+      }
+
+      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+      const token = await tokenProvider.getAccessToken();
+      const { data } = await axios.get<Results<{ latest: { configuration: FormDefinition } }>>(
+        new URL('v2/configuration/form-service', configurationApiUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { top, after, tenantId: tenantId?.toString() },
+        }
+      );
+
+      res.send({ ...data, results: data.results.map(({ latest }) => mapFormDefinition(latest.configuration)) });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export function getFormDefinition(tenantService: TenantService, calendarService: CalendarService): RequestHandler {
   return async (req, res, next) => {
@@ -170,7 +213,12 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         throw new InvalidOperationError('Bad form criteria');
       }
 
-      const hasAccessToAll = isAllowedUser(user, req.tenant.id, [FormServiceRoles.Admin, ExportServiceRoles.ExportJob], true);
+      const hasAccessToAll = isAllowedUser(
+        user,
+        req.tenant.id,
+        [FormServiceRoles.Admin, ExportServiceRoles.ExportJob],
+        true
+      );
       if (!hasAccessToAll) {
         // If user is not a form service admin, then limit search to only forms created by the user.
         criteria.createdByIdEquals = user.id;
@@ -406,7 +454,7 @@ export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmi
       const { formId, submissionId } = req.params;
       const user = req.user;
 
-      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(req.tenant.id, submissionId, formId);
+      const formSubmission = await submissionRepository.get(req.tenant.id, submissionId, formId);
       if (!formSubmission) {
         throw new NotFoundError('Form Submission', submissionId);
       }
@@ -446,7 +494,7 @@ export function updateFormSubmissionDisposition(
         }
       );
 
-      const formSubmission = await submissionRepository.getByFormIdAndSubmissionId(tenantId, submissionId, formId);
+      const formSubmission = await submissionRepository.get(tenantId, submissionId, formId);
       if (!formSubmission) {
         throw new NotFoundError('Form submission', submissionId);
       }
@@ -455,7 +503,7 @@ export function updateFormSubmissionDisposition(
       end();
 
       res.send(mapFormSubmissionData(apiId, updated));
-      eventService.send(submissionDispositioned(apiId, user, updated.form, updated));
+      eventService.send(submissionDispositioned(apiId, user, updated));
 
       logger.info(
         `Updated disposition of form submission with ID: ${submissionId} (form ID: ${formId}) to '${dispositionStatus}'.`,
@@ -701,6 +749,8 @@ interface FormRouterProps {
   apiId: AdspId;
   logger: Logger;
   repository: FormRepository;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
   eventService: EventService;
   tenantService: TenantService;
   notificationService: NotificationService;
@@ -716,6 +766,8 @@ export function createFormRouter({
   apiId,
   logger,
   repository,
+  directory,
+  tokenProvider,
   eventService,
   tenantService,
   notificationService,
@@ -728,7 +780,7 @@ export function createFormRouter({
 }: FormRouterProps): Router {
   const router = Router();
 
-  router.get('/definitions', getFormDefinitions);
+  router.get('/definitions', getFormDefinitions(directory, tokenProvider));
   router.get(
     '/definitions/:definitionId',
     createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
@@ -779,7 +831,7 @@ export function createFormRouter({
   router.get(
     '/forms/:formId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('formId').isUUID()),
+    createValidationHandler(param('formId').isUUID(), query('includeData').optional().isBoolean()),
     getForm(repository),
     mapFormForSubmission(apiId, submissionRepository)
   );
@@ -842,6 +894,13 @@ export function createFormRouter({
         })
     ),
     findSubmissions(apiId, submissionRepository)
+  );
+
+  router.get(
+    '/submissions/:submissionId',
+    assertAuthenticatedHandler,
+    createValidationHandler(param('submissionId').isUUID()),
+    getFormSubmission(apiId, submissionRepository)
   );
 
   router.get(

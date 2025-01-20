@@ -45,7 +45,7 @@ import {
   FullNameDobTester,
   FullNameReviewControl,
   FullNameDobReviewControl,
-  FormStepperReviewer,
+  FormStepperReviewControl,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -161,7 +161,7 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 
 export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseReviewRenderers,
-  { tester: CategorizationRendererTester, renderer: FormStepperReviewer },
+  { tester: CategorizationRendererTester, renderer: FormStepperReviewControl },
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploaderReview) },
   { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameReviewControl) },
   { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobReviewControl) },

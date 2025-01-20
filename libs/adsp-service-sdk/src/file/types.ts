@@ -1,5 +1,4 @@
 export interface Rule {
-  createdAt: string;
   active: true;
 }
 

@@ -1,19 +1,43 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
 import { useNavigate } from 'react-router-dom';
+import { QueueModal } from './queue/queueModal';
+import { useDispatch } from 'react-redux';
+import { defaultTaskQueue, TaskDefinition } from '@store/task/model';
+import { UpdateTaskQueue } from '@store/task/action';
 
 interface TaskOverviewProps {
   setOpenAddTask: (val: boolean) => void;
+
+  setActiveEdit: (edit: boolean) => void;
+  setActiveIndex: (index: number) => void;
+  activeEdit: boolean;
+  openAddTask: boolean;
 }
 
-export const TaskOverview = ({ setOpenAddTask }: TaskOverviewProps): JSX.Element => {
+export const TaskOverview = ({
+  setActiveEdit,
+  setActiveIndex,
+  activeEdit,
+  openAddTask,
+  setOpenAddTask,
+}: TaskOverviewProps): JSX.Element => {
+  const [selectedQueue, setSelectedQueue] = useState<TaskDefinition>(defaultTaskQueue);
+
   useEffect(() => {
-    setOpenAddTask(false);
-    navigate('/admin/services/task');
+    setActiveEdit(false);
+    setActiveIndex(0);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const reset = () => {
+    setSelectedQueue(defaultTaskQueue);
+    setOpenAddTask(false);
+    document.body.style.overflow = 'unset';
+  };
 
   return (
     <OverviewLayout
@@ -29,7 +53,7 @@ export const TaskOverview = ({ setOpenAddTask }: TaskOverviewProps): JSX.Element
         <GoAButton
           testId="add-queue"
           onClick={() => {
-            navigate('/admin/services/task?queues=true');
+            setActiveEdit(true);
             setOpenAddTask(true);
           }}
         >

@@ -25,3 +25,7 @@ export const HelpContentDiv = styled.div`
     margin: var(--goa-space-2xs) 0 var(--goa-space-2xs) 0;
   }
 `;
+
+export const InvalidMarkdown = styled.div`
+  color: var(--goa-color-interactive-error);
+`;

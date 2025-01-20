@@ -14,6 +14,7 @@ export const ReviewItemSection = styled.div`
   padding: 1rem;
   border: 1px solid #dcdcdc;
   border-radius: 5px;
+  overflow-x: auto;
 `;
 
 export const ReviewItemBasic = styled.div`
@@ -38,23 +39,24 @@ export const ListWithDetailHeading = styled.h3`
 export const ReviewContainer = styled.div`
   display: flex;
   flex-direction: column;
-  align-items:center;
-  padding-top: var(--goa-space-l)!important;
+  align-items: center;
+  padding-top: var(--goa-space-l) !important;
   height: 100%;
-  width:100%;
+  width: 100%;
 `;
 
 export const ReviewContent = styled.div`
   margin-top: var(--goa-space-l);
   overflow-y: auto;
   padding-bottom: 0;
-  max-width:624px;
-  width:100%;
+  min-width: 624px;
+  max-width: 100%;
+  width: auto;
   margin: 0 auto;
 `;
 
 export const ActionContainer = styled.div`
-  max-width:600px;
+  max-width: 600px;
   width: 100%;
   flex-shrink: 0;
   background-color: #fff;
@@ -63,4 +65,15 @@ export const ActionContainer = styled.div`
 
 export const ActionControl = styled.div`
   padding-top: var(--goa-space-s);
+`;
+
+export const FormReviewContainer = styled.div`
+  background-color: rgb(241, 241, 241);
+  margin-bottom: var(--goa-space-m);
+  padding-top: 0px !important;
+  padding: var(--goa-space-m);
+  border: 1px solid rgb(220, 220, 220);
+  border-radius: 5px;
+  max-height: 40vh;
+  overflow: auto;
 `;

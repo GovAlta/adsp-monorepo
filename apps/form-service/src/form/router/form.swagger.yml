@@ -38,6 +38,8 @@ components:
               type: string
         generatesPdf:
           type: boolean
+        submissionRecords:
+          type: boolean
     Form:
       type: object
       properties:
@@ -111,6 +113,8 @@ components:
         createDateAfter:
           type: string
           format: date-time
+        dispositioned:
+          type: boolean
         dispositionStatusEquals:
           type: string
         dispositionDateBefore:
@@ -201,15 +205,41 @@ components:
     tags:
       - Form
     description: Retrieves form definitions.
+    parameters:
+      - name: top
+        description: Number of definitions to return in a page.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
     responses:
       200:
         description: Successfully retrieved form definitions.
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/FormDefinition"
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                  $ref: "#/components/schemas/FormDefinition"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
+
 /form/v1/definitions/{definitionId}:
   get:
     tags:
@@ -249,7 +279,7 @@ components:
         schema:
           type: string
       - name: includeData
-        description: Flag indicating if data should be included in results. Only available to admins.
+        description: Flag indicating if data should be included in results.
         in: query
         required: false
         schema:
@@ -362,6 +392,13 @@ components:
     tags:
       - Form
     description: Retrieves a form.
+    parameters:
+      - name: includeData
+        description: Flag indicating if data should be included in results.
+        in: query
+        required: false
+        schema:
+          type: boolean
     responses:
       200:
         description: Successfully retrieved the form.
@@ -599,7 +636,7 @@ components:
                     size:
                       type: number
 
-/form/v1//submissions:
+/form/v1/submissions:
   get:
     tags:
       - Form Submission
@@ -670,3 +707,22 @@ components:
                       type: string
                     size:
                       type: number
+/form/v1/submissions/{submissionId}:
+  parameters:
+    - name: submissionId
+      description: ID of the submission.
+      required: true
+      in: path
+      schema:
+        type: string
+  get:
+    tags:
+      - Form Submission
+    description: Retrieves a form submission.
+    responses:
+      200:
+        description: Successfully retrieved the form submission.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormSubmission"

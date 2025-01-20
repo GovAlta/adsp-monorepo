@@ -31,12 +31,14 @@ import {
   FormStatusUnlockedDefinition,
   FormStatusSetToDraftDefinition,
   SubmissionDispositionedDefinition,
-  GeneratedSupportingDocFileType,
+  FormSupportingDocFileType,
   SUBMITTED_FORM,
   SubmittedFormPdfTemplate,
   SubmittedFormPdfUpdatesStream,
   INTAKE_CALENDAR_NAME,
   SUPPORT_COMMENT_TOPIC_TYPE_ID,
+  FormExportFileType,
+  FormQuestionUpdatesStream,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -115,7 +117,7 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Tester role for form service that allows access to forms without open intakes.',
         },
       ],
-      fileTypes: [GeneratedSupportingDocFileType],
+      fileTypes: [FormSupportingDocFileType, FormExportFileType],
       events: [
         FormCreatedDefinition,
         FormDeletedDefinition,
@@ -126,7 +128,7 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusSetToDraftDefinition,
         SubmissionDispositionedDefinition,
       ],
-      eventStreams: [SubmittedFormPdfUpdatesStream],
+      eventStreams: [SubmittedFormPdfUpdatesStream, FormQuestionUpdatesStream],
       notifications: [FormStatusNotificationType],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [
@@ -158,6 +160,16 @@ const initializeApp = async (): Promise<express.Application> => {
               description: 'Calendar of scheduled form intakes.',
               readRoles: [`urn:ads:platform:tenant-service:platform-service`],
               updateRoles: [`${serviceId}:${FormServiceRoles.Admin}`],
+            },
+          },
+        },
+        {
+          serviceId: adspId`urn:ads:platform:export-service`,
+          configuration: {
+            sources: {
+              [`${serviceId}`]: {
+                exporterRoles: [`${serviceId}:${FormServiceRoles.Admin}`],
+              },
             },
           },
         },
@@ -231,6 +243,8 @@ const initializeApp = async (): Promise<express.Application> => {
     ...repositories,
     serviceId,
     logger,
+    directory,
+    tokenProvider,
     eventService,
     tenantService,
     notificationService,

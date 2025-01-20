@@ -140,13 +140,18 @@ export const AddEditValueDefinition = ({
             value={definition.namespace}
             disabled={isEdit}
             testId="value-namespace"
-            aria-label="nameSpace"
+            aria-label="namespace"
             width="100%"
             onChange={(key, value) => {
-              validators.remove('namespace');
+              const updatedDefinition = { ...definition, namespace: value };
+              setDefinition(updatedDefinition);
+              const updatedIdentifiers = values.map((v: ValueDefinition) => `${v.namespace}:${v.name}`);
+              const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
+              validators.remove('duplicated');
+              validators['duplicated'].check(currentIdentifier, updatedIdentifiers);
               validators['namespace'].check(value);
-              setDefinition({ ...definition, namespace: value });
             }}
+            onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['name']} label="Name">
@@ -159,10 +164,15 @@ export const AddEditValueDefinition = ({
             aria-label="name"
             width="100%"
             onChange={(key, value) => {
-              validators.remove('name');
+              const updatedDefinition = { ...definition, name: value };
+              setDefinition(updatedDefinition);
+              const updatedIdentifiers = values.map((v: ValueDefinition) => `${v.namespace}:${v.name}`);
+              const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
+              validators.remove('duplicated');
+              validators['duplicated'].check(currentIdentifier, updatedIdentifiers);
               validators['name'].check(value);
-              setDefinition({ ...definition, name: value });
             }}
+            onBlur={() => validators.checkAll({ name: definition.name })}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['description']} label="Description">

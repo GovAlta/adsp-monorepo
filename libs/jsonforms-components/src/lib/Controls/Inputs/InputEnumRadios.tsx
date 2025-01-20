@@ -1,6 +1,7 @@
 import React from 'react';
 import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith, optionIs, and } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
+
 import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';

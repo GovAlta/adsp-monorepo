@@ -16,6 +16,8 @@ import {
 } from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param, query } from 'express-validator';
+import { pipeline } from 'stream/promises';
+import validator from 'validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { createUpload } from './upload';
@@ -23,7 +25,6 @@ import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
 import { DirectoryServiceRoles, FileCriteria } from '../types';
-import validator from 'validator';
 import { mapFile, mapFileType } from '../mapper';
 import { FileTypeEntity } from '../model';
 
@@ -207,6 +208,13 @@ export function downloadFile(logger: Logger): RequestHandler {
       }
 
       const stream = await fileEntity.readFile(user, fileStart, fileEnd);
+      stream.on('end', () => {
+        logger.debug(`Ending streaming of file '${fileEntity.filename}' (ID: ${fileEntity.id}) from source.`, {
+          context: 'file-router',
+          tenant: fileEntity.tenantId?.toString(),
+          user: user ? `${user.name} (ID: ${user.id})` : null,
+        });
+      });
 
       end();
 
@@ -237,15 +245,20 @@ export function downloadFile(logger: Logger): RequestHandler {
         res.setHeader('Connection', 'keep-alive');
       }
 
-      stream.on('end', () => {
-        logger.debug(`Ending streaming of file '${fileEntity.filename}' (ID: ${fileEntity.id}).`, {
-          context: 'file-router',
-          tenant: fileEntity.tenantId?.toString(),
-          user: user ? `${user.name} (ID: ${user.id})` : null,
-        });
-        res.end();
-      });
-      stream.pipe(res, { end: false });
+      try {
+        // Catch and handle pipeline exception since the response is inflight and
+        // it's too late to use the regular request error handler to set a status code.
+        await pipeline(stream, res);
+      } catch (err) {
+        logger.warn(
+          `Stream pipeline of file '${fileEntity.filename}' (ID: ${fileEntity.id}) encountered error: ${err}`,
+          {
+            context: 'file-router',
+            tenant: fileEntity.tenantId?.toString(),
+            user: user ? `${user.name} (ID: ${user.id})` : null,
+          }
+        );
+      }
     } catch (err) {
       next(err);
     }

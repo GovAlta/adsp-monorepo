@@ -2,10 +2,10 @@ import { Container, Recaptcha } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import styled from 'styled-components';
-import { DraftForm } from '../components/DraftForm';
+import { DraftFormWrapper } from '../components/DraftFormWrapper';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { SubmittedForm } from '../components/SubmittedForm';
+import styled from 'styled-components';
 import {
   ValidationError,
   AppDispatch,
@@ -47,7 +47,7 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
               <>
                 {form?.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
                 {!form && (
-                  <DraftForm
+                  <DraftFormWrapper
                     definition={definition}
                     form={form}
                     data={data}
@@ -57,7 +57,7 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
                     anonymousApply={definition?.anonymousApply}
                     submitting={busy.submitting}
                     onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
-                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
+                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
                     }}
                     onSubmit={function () {
                       dispatch(submitAnonymousForm());
@@ -88,6 +88,7 @@ export const AnonymousForm = styled(AnonymousFormComponent)`
   }
 
   > :first-child {
+    position: relative;
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 70%;

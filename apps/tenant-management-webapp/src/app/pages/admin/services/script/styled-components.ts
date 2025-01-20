@@ -535,7 +535,7 @@ export const TabletMessage = styled.div`
   }
 `;
 
-export const OuterNotificationTemplateEditorContainer = styled.div`
+export const OuterScriptTemplateEditorContainer = styled.div`
   width: 100%;
   height: 100vh;
   overflow: hidden;

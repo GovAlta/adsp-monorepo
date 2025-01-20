@@ -111,6 +111,7 @@ class CalendarServiceImpl implements CalendarService {
 
   private mapIntake(response: IntakeResponse, isUpcoming: boolean): Intake {
     return {
+      urn: response.urn,
       name: response.name,
       description: response.description,
       start: new Date(response.start),
@@ -126,7 +127,7 @@ export async function createCalendarService(
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   calendar: string,
-  calendarEventCache = new NodeCache({ stdTTL: 3600, useClones: false })
+  calendarEventCache = new NodeCache({ stdTTL: 30, useClones: false })
 ) {
   const calendarApiUrl = await directory.getServiceUrl(adspId`urn:ads:platform:calendar-service:v1`);
   return new CalendarServiceImpl(logger, tokenProvider, calendarApiUrl, calendar, calendarEventCache);

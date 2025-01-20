@@ -13,6 +13,7 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
+
   const errorsFormInput = checkFieldValidity(props as ControlProps);
   const width = uischema?.options?.componentProps?.readOnly ?? '100%';
 

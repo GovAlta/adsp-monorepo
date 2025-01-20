@@ -3,6 +3,8 @@ components:
     Calendar:
       type: object
       properties:
+        urn:
+          type: string
         name:
           type: string
         displayName:
@@ -20,6 +22,8 @@ components:
     CalendarEvent:
       type: object
       properties:
+        urn:
+          type: string
         id:
           type: number
         recordId:
@@ -203,6 +207,12 @@ components:
         required: false
         schema:
           type: string
+      - name: includeAttendees
+        description: Flag indicating if attendees should be included in events.
+        in: query
+        required: false
+        schema:
+          type: boolean
       - name: criteria
         description: Criteria for events to retrieve.
         in: query

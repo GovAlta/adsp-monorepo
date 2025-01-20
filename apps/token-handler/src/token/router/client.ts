@@ -147,6 +147,8 @@ export function createClientRouter({
 }: RouterOptions) {
   const router = Router();
 
+  router.options('/clients/:id', cors());
+
   router.post(
     '/clients/:id',
     cors(),

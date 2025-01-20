@@ -1,4 +1,4 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
+import { AdspId, User } from '@abgov/adsp-service-sdk';
 import { createClient, RedisClient } from 'redis';
 import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
@@ -8,8 +8,8 @@ const EXPIRY_SECONDS = 60 * 60 * 24;
 export class RedisJobRepository<T> implements JobRepository<T> {
   constructor(private readonly client: RedisClient) {}
 
-  create(tenantId: AdspId): Promise<JobState<T>> {
-    const job: JobState<T> = { id: uuid(), tenantId, status: 'queued' };
+  create(user: User, tenantId: AdspId): Promise<JobState<T>> {
+    const job: JobState<T> = { id: uuid(), tenantId, createdBy: { id: user.id, name: user.name }, status: 'queued' };
     return this.set(job.id, job);
   }
 

@@ -2,11 +2,14 @@
 import React from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { GoADetails } from '@abgov/react-components-new';
-import { HelpContentDiv } from './styled-components';
+import { HelpContentDiv, InvalidMarkdown } from './styled-components';
 import { ControlProps, ControlElement } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Visible } from '../util';
 import { RenderLink } from './LinkControl';
+import { compileSync, createProcessor, evaluateSync } from '@mdx-js/mdx';
+import * as runtime from 'react/jsx-runtime';
+import './HelpContent.css';
 
 interface OptionProps {
   ariaLabel?: string;
@@ -17,6 +20,7 @@ interface OptionProps {
   height?: string;
   width?: string;
   link?: string;
+  markdown?: boolean;
 }
 
 interface CustomControlElement extends ControlElement {
@@ -33,8 +37,40 @@ interface CustomControlProps extends ControlProps {
   uischema: CustomControlElement;
 }
 
+interface MdxMarkdown {
+  markdown: string;
+}
+
+interface MdxMarkdownResponse {
+  isValid: boolean;
+  error: string;
+}
+
 const HelpContentReviewComponent = (): JSX.Element => {
-  return <></>;
+  return <> </>;
+};
+
+const checkMarkDownIsValid = (markdown: string): MdxMarkdownResponse => {
+  let isValid = true;
+  let error: string = '';
+  try {
+    compileSync(markdown, {});
+  } catch (err) {
+    if (err instanceof Error) {
+      error = err.message;
+      error = error.slice(0, error.lastIndexOf(`\``) + 1);
+    }
+    isValid = false;
+  }
+  return { isValid, error };
+};
+export const MarkdownComponent = ({ markdown }: MdxMarkdown): JSX.Element => {
+  const response = checkMarkDownIsValid(markdown);
+  if (response.isValid) {
+    const { default: MDXContent } = evaluateSync(markdown, { ...runtime, Fragment: React.Fragment });
+    return React.createElement(MDXContent, {});
+  }
+  return <InvalidMarkdown>Help content markdown is invalid: {response.error} </InvalidMarkdown>;
 };
 
 export const HelpContentComponent = ({
@@ -47,15 +83,18 @@ export const HelpContentComponent = ({
   // eslint-disable-next-line
   const { uischema, visible, label } = props;
   const link = uischema?.options?.link;
+  const markdown = uischema?.options?.markdown ?? false;
+  const help = uischema?.options?.help;
+
   const renderHelp = () =>
-    Array.isArray(uischema?.options?.help) ? (
+    Array.isArray(help) ? (
       <ul>
-        {uischema?.options?.help.map((line: string, index: number) => (
+        {help.map((line: string, index: number) => (
           <li key={index}>{`${line}`}</li>
         ))}
       </ul>
     ) : (
-      <p className="single-line">{uischema?.options?.help}</p>
+      <p className="single-line">{help}</p>
     );
 
   const renderImage = ({ height, width, alt, src }: OptionProps): JSX.Element => {
@@ -70,10 +109,27 @@ export const HelpContentComponent = ({
     );
   };
 
+  /* istanbul ignore next */
+  const getMarkDownData = (helpText: string | string[] | undefined) => {
+    if (helpText === undefined) return '';
+    if (typeof helpText === 'string') return helpText;
+
+    if (Array.isArray(helpText)) {
+      //Two spaces after the text inserts a line break in markdown.
+      const data = helpText.join('  \n');
+      return data;
+    }
+
+    return '';
+  };
+
   const textVariant =
     !uischema.options?.variant ||
     (uischema.options?.variant !== 'details' && uischema.options?.variant !== 'hyperlink');
 
+  if (markdown) {
+    return MarkdownComponent({ markdown: getMarkDownData(uischema?.options?.help) });
+  }
   return (
     <Visible visible={visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>

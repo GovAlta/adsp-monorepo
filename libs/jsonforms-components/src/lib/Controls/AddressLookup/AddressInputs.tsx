@@ -12,6 +12,7 @@ interface AddressInputsProps {
   errors?: any;
   handleOnBlur: (field: string) => void;
   requiredFields?: string[];
+  enabled?: boolean;
 }
 
 export const AddressInputs: React.FC<AddressInputsProps> = ({
@@ -22,6 +23,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
   errors,
   handleOnBlur,
   requiredFields,
+  enabled,
 }: AddressInputsProps): JSX.Element => {
   const provinces = [
     { value: 'AB', label: 'Alberta' },
@@ -45,7 +47,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
         <GoAInput
           name="addressLine2"
           testId="address-form-address2"
-          disabled={readOnly}
+          disabled={!enabled}
           readonly={readOnly}
           ariaLabel={'address-form-address2'}
           placeholder="Unit number, suite, apartment"
@@ -65,7 +67,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             name="municipality"
             testId="address-form-city"
             ariaLabel={'address-form-city'}
-            disabled={readOnly}
+            disabled={!enabled}
             readonly={readOnly}
             value={address?.municipality || ''}
             onChange={(name, value) => handleInputChange(name, value)}
@@ -82,7 +84,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             name="postalCode"
             testId="address-form-postal-code"
             ariaLabel={'address-form-postal-code'}
-            disabled={readOnly}
+            disabled={!enabled}
             readonly={readOnly}
             placeholder="A0A 0A0"
             value={address?.postalCode || ''}
@@ -100,6 +102,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
           {!isAlbertaAddress && (
             <GoADropdown
               name="subdivisionCode"
+              disabled={!enabled}
               testId="address-form-province-dropdown"
               ariaLabel={'address-form-province'}
               value={address?.subdivisionCode || ''}

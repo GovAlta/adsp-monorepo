@@ -26,5 +26,6 @@ export function mapTopic(apiId: AdspId, topic: Topic): TopicResponse {
     resourceId: topic.resourceId?.toString(),
     commenters: topic.commenters,
     securityClassification: topic.securityClassification,
+    requiresAttention: topic.requiresAttention,
   };
 }

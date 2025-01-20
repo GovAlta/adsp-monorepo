@@ -65,8 +65,7 @@ export class FileTypeEntity implements FileType {
   }
 
   canAccess(user: User): boolean {
-    // This is for whether the user can access the File Type,
-    // but logic happens to be identical to accessing for file of type for now.
-    return this.canAccessFile(user);
+    // This is for whether the user can access the File Type.
+    return this.canAccessFile(user) || isAllowedUser(user, this.tenantId, [...this.updateRoles], true);
   }
 }

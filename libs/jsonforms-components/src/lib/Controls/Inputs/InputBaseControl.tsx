@@ -1,9 +1,7 @@
-import React, { useContext, useEffect } from 'react';
+import React from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
-
 import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
-import { StepInputStatus, StepperContext } from '../FormStepper/StepperContext';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
@@ -31,40 +29,14 @@ export interface WithInput {
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
-  const { uischema, visible, label, input, required, errors, path, isStepperReview } = props;
+  const { uischema, visible, label, input, required, path, isStepperReview } = props;
   const InnerComponent = input;
   const labelToUpdate: string = getLabelText(uischema.scope, label || '');
-
   let modifiedErrors = checkFieldValidity(props as ControlProps);
 
   if (modifiedErrors === 'must be equal to one of the allowed values') {
     modifiedErrors = '';
   }
-
-  const getStepStatus = (props: ControlProps & WithInput, value: unknown): StepInputStatus => {
-    return {
-      id: props.id,
-      value: value,
-      required: props.required || false,
-      type: props.schema.type,
-      step: stepperContext.stepId,
-    };
-  };
-
-  const stepperContext = useContext(StepperContext);
-  const handlerWithStepperUpdate = (path: string, value: unknown) => {
-    stepperContext.updateStatus(getStepStatus(props, value));
-    props.handleChange(path, value);
-  };
-  const modifiedProps = { ...props, handleChange: handlerWithStepperUpdate };
-
-  useEffect(() => {
-    if (!stepperContext.isInitialized(props.id)) {
-      const status = getStepStatus(props, props.data);
-      stepperContext.updateStatus(status);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>
@@ -77,7 +49,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
             label={props?.noLabel === true ? '' : labelToUpdate}
             helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
           >
-            <InnerComponent {...modifiedProps} />
+            <InnerComponent {...props} />
           </GoAFormItem>
         </FormFieldWrapper>
       </Visible>

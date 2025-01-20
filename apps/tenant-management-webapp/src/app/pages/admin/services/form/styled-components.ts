@@ -87,7 +87,7 @@ export const ConfigFormWrapper = styled.div`
   padding-left: 3px;
   border: solid 1px #dcdcdc;
   border-radius: 3px;
-  height: 7.375rem;
+  height: 8.125rem;
   background-color: #f1f1f1;
   padding-right: 1rem;
   border-bottom: solid 16px #f1f1f1;
@@ -99,12 +99,18 @@ export const ConfigFormWrapper = styled.div`
     width: 180px;
     float: left;
     overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
   }
   .idColumn {
     width: 180px;
     float: left;
     height: 100%;
     overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
   }
   .descColumn {
     width: calc(100% - 336px);
@@ -412,9 +418,19 @@ export const SpinnerPaddingSmall = styled.div`
   margin: 0 0 0 5px;
   float: right;
 `;
-export const OverflowWrap = styled.div`
-  overflow-wrap: break-word;
-  overflow-y: hidden;
+
+export const TableDataName = styled.td`
+  width: 9.375rem;
+`;
+
+export const TableDataId = styled.td`
+  width: 8.125rem;
+`;
+
+export const TableDataDescription = styled.td``;
+
+export const OverflowWrap = styled.span`
+  word-break: break-all;
 `;
 
 export const PreviewTopStyle = styled.div`

@@ -195,6 +195,7 @@ export class AdspFeedback implements AdspFeedbackApi {
 
   handleRadioKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'ArrowRight') {
+      e.preventDefault();
       if (this.commentSelector.value) {
         if (this.commentSelector.value.checked === false) {
           this.commentSelector.value.focus();
@@ -203,6 +204,7 @@ export class AdspFeedback implements AdspFeedbackApi {
         }
       }
     } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
       if (this.ratingSelector.value) {
         if (this.ratingSelector.value.checked === false) {
           this.ratingSelector.value.focus();
@@ -488,7 +490,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             display: none;
           }
           .adsp-fb .adsp-fb-badge {
-            z-index: 1000;
+            z-index: 10;
             background: #0081a2;
             color: #ffffff;
             position: fixed;

@@ -22,9 +22,9 @@ import {
 import styled from 'styled-components';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import CommentsViewer from './CommentsViewer';
-import { DraftForm } from '../components/DraftForm';
 import { SubmittedForm } from '../components/SubmittedForm';
 import { LogoutModal } from '../components/LogoutModal';
+import { DraftFormWrapper } from '../components/DraftFormWrapper';
 
 interface FormProps {
   className?: string;
@@ -66,7 +66,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
             <>
               {form.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
               {form.status === 'draft' && (
-                <DraftForm
+                <DraftFormWrapper
                   definition={definition}
                   form={form}
                   data={data}
@@ -82,7 +82,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                       errors = null;
                     }
 
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
                   }}
                   onSubmit={(form) => dispatch(submitForm(form.id))}
                 />
@@ -127,6 +127,7 @@ export const Form = styled(FormComponent)`
   }
 
   > :first-child {
+    position: relative;
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 70%;

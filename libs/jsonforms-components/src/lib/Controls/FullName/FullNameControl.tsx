@@ -1,12 +1,10 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { ControlProps } from '@jsonforms/core';
-import { JsonFormContext } from '../../Context';
-import { GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components-new';
-import { checkFieldValidity } from '../../util/stringUtils';
+import React, { useEffect, useState } from 'react';
+import { ControlProps, isEnabled } from '@jsonforms/core';
+import { GoAFormItem, GoAGrid } from '@abgov/react-components-new';
 import { NameInputs } from './FullNameInputs';
+import { TextWrapDiv } from '../AddressLookup/styled-components';
 
 type FullNameProps = ControlProps;
-
 export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
   const requiredFields = (props.schema as { required: string[] }).required;
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -27,23 +25,29 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
         requirement={requiredFields?.includes('firstName') ? 'required' : undefined}
         error={errors?.['firstName'] ?? ''}
       >
-        <div data-testid={`firstName-control-${props.id}`}>{props.data?.firstName}</div>
+        <TextWrapDiv>
+          <div data-testid={`firstName-control-${props.id}`}>{props.data?.firstName}</div>
+        </TextWrapDiv>
       </GoAFormItem>
       <GoAFormItem label="Middle Name">
-        <div data-testid={`middleName-control-${props.id}`}>{props.data?.middleName}</div>
+        <TextWrapDiv>
+          <div data-testid={`middleName-control-${props.id}`}>{props.data?.middleName}</div>
+        </TextWrapDiv>
       </GoAFormItem>
       <GoAFormItem
         label="Last Name"
         requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
         error={errors?.['lastName'] ?? ''}
       >
-        <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
+        <TextWrapDiv>
+          <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
+        </TextWrapDiv>
       </GoAFormItem>
     </GoAGrid>
   );
 };
 export const FullNameControl = (props: FullNameProps): JSX.Element => {
-  const { data, path, schema, handleChange } = props;
+  const { data, path, schema, handleChange, enabled } = props;
   const requiredFields = (schema as { required: string[] }).required;
   const defaultName = {
     firstName: '',
@@ -70,6 +74,7 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
       lastName={defaultName.lastName}
       handleInputChange={handleInputChange}
       data={data}
+      disabled={!enabled}
       requiredFields={requiredFields}
     />
   );

@@ -65,7 +65,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const navigate = useNavigate();
 
   const close = () => {
-    navigate('/admin/services/task?queues=true');
+    navigate('/admin/services/task?queues=true', { state: { isNavigatedFromEdit: true } });
   };
 
   useEffect(() => {

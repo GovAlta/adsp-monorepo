@@ -1,5 +1,6 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { FormDefinition, FormMetrics } from './model';
+import { FormDefinition, FormMetrics, FormExportResponse, ColumnOption } from './model';
+import { Socket } from 'socket.io-client';
 
 export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
@@ -33,6 +34,12 @@ export const RESOLVE_DATA_SCHEMA_FAILED_ACTION = 'form/RESOLVE_DATA_SCHEMA_FAILE
 export const FETCH_FORM_METRICS_ACTION = 'form/FETCH_FORM_METRICS_ACTION';
 export const FETCH_FORM_METRICS_SUCCESS_ACTION = 'form/FETCH_FORM_METRICS_SUCCESS_ACTION';
 
+export const EXPORT_FORM_INFO_ACTION = 'form/EXPORT_FORM_INFO_ACTION';
+export const EXPORT_FORM_INFO_SUCCESS_ACTION = 'form/EXPORT_FORM_INFO_SUCCESS_ACTION';
+
+export const START_SOCKET_STREAM_ACTION = 'form/START_SOCKET_STREAM_ACTION';
+export const START_SOCKET_STREAM_SUCCESS_ACTION = 'form/START_SOCKET_STREAM_SUCCESS_ACTION';
+
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
 }
@@ -46,6 +53,28 @@ export interface FetchFormDefinitionsSuccessAction {
   payload: Record<string, FormDefinition>;
   next: string;
   after: string;
+}
+
+export interface ExportFormInfoAction {
+  type: typeof EXPORT_FORM_INFO_ACTION;
+  id: string;
+  resource: string;
+  format: string;
+  selectedColumn?: string[];
+  fileName?: string;
+}
+
+export interface ExportFormInfoSuccessAction {
+  type: typeof EXPORT_FORM_INFO_SUCCESS_ACTION;
+  payload: FormExportResponse;
+}
+
+export interface StartStreamAction {
+  type: typeof START_SOCKET_STREAM_ACTION;
+}
+export interface StartStreamSuccessAction {
+  type: typeof START_SOCKET_STREAM_SUCCESS_ACTION;
+  socket: Socket;
 }
 
 export interface UpdateFormDefinitionsAction {
@@ -149,6 +178,10 @@ export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
   | FetchFormDefinitionsAction
+  | ExportFormInfoAction
+  | ExportFormInfoSuccessAction
+  | StartStreamAction
+  | StartStreamSuccessAction
   | DeleteFormDefinitionAction
   | DeleteFormDefinitionSuccessAction
   | UpdateFormDefinitionsAction
@@ -208,6 +241,35 @@ export const getFormDefinitionsSuccess = (
   payload: results,
   next,
   after,
+});
+
+export const getExportFormInfo = (
+  id: string,
+  resource: string,
+  format: string,
+  selectedColumn: string[],
+  fileName: string
+): ExportFormInfoAction => ({
+  type: EXPORT_FORM_INFO_ACTION,
+  id,
+  resource,
+  format,
+  selectedColumn,
+  fileName,
+});
+
+export const startSocket = (): StartStreamAction => ({
+  type: START_SOCKET_STREAM_ACTION,
+});
+
+export const startSocketSuccess = (socket: Socket): StartStreamSuccessAction => ({
+  type: START_SOCKET_STREAM_SUCCESS_ACTION,
+  socket,
+});
+
+export const getExportFormInfoSuccess = (response: FormExportResponse): ExportFormInfoSuccessAction => ({
+  type: EXPORT_FORM_INFO_SUCCESS_ACTION,
+  payload: response,
 });
 
 export const deleteFormById = (id: string): DeleteFormByIDAction => ({

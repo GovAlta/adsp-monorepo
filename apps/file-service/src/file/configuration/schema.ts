@@ -20,7 +20,6 @@ export const configurationSchema = {
             retention: {
               type: ['object', 'null'],
               properties: {
-                createdAt: { type: 'string' },
                 active: { type: 'boolean' },
                 deleteInDays: { type: 'integer' },
               },

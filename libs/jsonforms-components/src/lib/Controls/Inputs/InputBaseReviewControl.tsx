@@ -14,7 +14,11 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     reviewText = data ? 'Yes' : 'No';
   }
 
-  return <div data-testid={`review-control-${id}`}>{reviewText}</div>;
+  return (
+    <div style={{ textWrap: 'wrap', wordBreak: 'break-word' }} data-testid={`review-control-${id}`}>
+      {reviewText}
+    </div>
+  );
 };
 export const GoInputBaseReview = (props: ControlProps) => (
   <GoAInputBaseControl {...props} input={GoABaseInputReviewComponent} isStepperReview={true} />

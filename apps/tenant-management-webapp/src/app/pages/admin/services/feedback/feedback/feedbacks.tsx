@@ -160,7 +160,7 @@ export const FeedbacksList = (): JSX.Element => {
           <ExportDates>
             <GoAFormItem label="Start date" helpText="File will be exported as a CSV">
               <GoAInputDate
-                width="22.54ch"
+                width="30ch"
                 name="feedback-filter-start-date"
                 value={selectedSite && searchCriteria.startDate}
                 disabled={!selectedSite}
@@ -183,7 +183,7 @@ export const FeedbacksList = (): JSX.Element => {
 
             <GoAFormItem label="End date">
               <GoAInputDate
-                width="22.54ch"
+                width="30ch"
                 name="feedback-filter-end-date"
                 value={selectedSite && searchCriteria.endDate}
                 disabled={!selectedSite}
@@ -211,7 +211,7 @@ export const FeedbacksList = (): JSX.Element => {
             </div>
           )}
           <GoAButton
-            type="secondary"
+            type="primary"
             size="normal"
             variant="normal"
             onClick={exportToCsv}

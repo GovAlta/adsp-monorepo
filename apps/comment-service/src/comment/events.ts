@@ -27,6 +27,7 @@ const topicSchema = {
       enum: ['public', 'protected a', 'protected b', 'protected c', '', null],
       default: 'protected a',
     },
+    requiresAttention: { type: 'boolean' },
   },
   required: ['id', 'name'],
 };
@@ -146,7 +147,9 @@ export function topicCreated(apiId: AdspId, topic: Topic, createdBy: User): Doma
     timestamp: new Date(),
     correlationId: getCorrelationId(topicResponse),
     context: {
+      topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
     },
     payload: {
       topic: topicResponse,
@@ -166,7 +169,9 @@ export function topicUpdated(apiId: AdspId, topic: Topic, updatedBy: User): Doma
     timestamp: new Date(),
     correlationId: getCorrelationId(topicResponse),
     context: {
+      topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
     },
     payload: {
       topic: topicResponse,
@@ -186,7 +191,9 @@ export function topicDeleted(apiId: AdspId, topic: Topic, deletedBy: User): Doma
     timestamp: new Date(),
     correlationId: getCorrelationId(topicResponse),
     context: {
+      topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
     },
     payload: {
       topic: topicResponse,
@@ -206,7 +213,9 @@ export function commentCreated(apiId: AdspId, topic: Topic, comment: Comment): D
     timestamp: comment.createdOn,
     correlationId: getCorrelationId(topicResponse),
     context: {
+      topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
       commentId: comment.id,
     },
     payload: {
@@ -228,7 +237,9 @@ export function commentUpdated(apiId: AdspId, topic: Topic, comment: Comment): D
     timestamp: comment.lastUpdatedOn,
     correlationId: getCorrelationId(topicResponse),
     context: {
+      topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
       commentId: comment.id,
     },
     payload: {
@@ -250,7 +261,9 @@ export function commentDeleted(apiId: AdspId, topic: Topic, comment: Comment, de
     timestamp: new Date(),
     correlationId: getCorrelationId(topicResponse),
     context: {
+      topicTypeId: topic.type?.id,
       topicId: topic.id,
+      resourceId: topic.resourceId?.toString(),
       commentId: comment.id,
     },
     payload: {

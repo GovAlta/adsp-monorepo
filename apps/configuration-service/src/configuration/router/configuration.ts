@@ -218,7 +218,12 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
 
       if (
         !isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin) &&
-        !isAllowedUser(user, tenantId, ExportServiceRoles.ExportJob, true)
+        !isAllowedUser(
+          user,
+          tenantId,
+          [ConfigurationServiceRoles.ConfiguredService, ExportServiceRoles.ExportJob],
+          true
+        )
       ) {
         throw new UnauthorizedUserError('find configuration', user);
       }

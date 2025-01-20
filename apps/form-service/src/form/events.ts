@@ -3,6 +3,7 @@ import { FormEntity, FormSubmissionEntity } from './model';
 import { FormResponse, mapForm } from './mapper';
 import { SUBMITTED_FORM } from './pdf';
 import { FormServiceRoles } from './roles';
+import { SUPPORT_COMMENT_TOPIC_TYPE_ID } from './comment';
 
 export const FORM_CREATED = 'form-created';
 export const FORM_DELETED = 'form-deleted';
@@ -341,20 +342,16 @@ export function formArchived(apiId: AdspId, user: User, form: FormEntity): Domai
   };
 }
 
-export function submissionDispositioned(
-  apiId: AdspId,
-  user: User,
-  form: FormEntity,
-  submission: FormSubmissionEntity
-): DomainEvent {
-  const formResponse = mapForm(apiId, form);
+export function submissionDispositioned(apiId: AdspId, user: User, submission: FormSubmissionEntity): DomainEvent {
+  const form = submission.form;
+  const formResponse = form ? mapForm(apiId, form) : null;
   return {
     name: SUBMISSION_DISPOSITIONED,
     timestamp: new Date(),
-    tenantId: form.tenantId,
+    tenantId: submission.tenantId,
     correlationId: getCorrelationId(formResponse),
     context: {
-      definitionId: form.definition.id,
+      definitionId: submission.definition?.id,
     },
     payload: {
       form: formResponse,
@@ -419,6 +416,55 @@ export const SubmittedFormPdfUpdatesStream: Stream = {
         timestamp: 'timestamp',
         jobId: 'payload.jobId',
         templateId: 'payload.templateId',
+      },
+    },
+  ],
+};
+
+export const FormQuestionUpdatesStream: Stream = {
+  id: 'form-questions-updates',
+  name: 'Form questions topic updates',
+  description: 'Provides update events on form questions topics.',
+  subscriberRoles: [
+    `urn:ads:platform:form-service:${FormServiceRoles.Admin}`,
+    `urn:ads:platform:form-service:${FormServiceRoles.Applicant}`,
+  ],
+  publicSubscribe: false,
+  events: [
+    {
+      namespace: 'comment-service',
+      name: 'comment-created',
+      criteria: {
+        context: { topicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID },
+      },
+      map: {
+        timestamp: 'timestamp',
+        topic: 'payload.topic',
+        commentId: 'payload.comment.id',
+      },
+    },
+    {
+      namespace: 'comment-service',
+      name: 'comment-updated',
+      criteria: {
+        context: { topicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID },
+      },
+      map: {
+        timestamp: 'timestamp',
+        topic: 'payload.topic',
+        commentId: 'payload.comment.id',
+      },
+    },
+    {
+      namespace: 'comment-service',
+      name: 'comment-deleted',
+      criteria: {
+        context: { topicTypeId: SUPPORT_COMMENT_TOPIC_TYPE_ID },
+      },
+      map: {
+        timestamp: 'timestamp',
+        topic: 'payload.topic',
+        commentId: 'payload.comment.id',
       },
     },
   ],
