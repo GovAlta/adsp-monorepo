@@ -429,6 +429,20 @@ export const TableDataId = styled.td`
 
 export const TableDataDescription = styled.td``;
 
+export const TableDataScriptName = styled.td`
+  width: 9.375rem;
+  word-break: break-all;
+`;
+
+export const TableDataScriptId = styled.td`
+  width: 8.125rem;
+  word-break: break-all;
+`;
+
+export const TableDataScriptDescription = styled.td`
+  word-break: break-all;
+`;
+
 export const OverflowWrap = styled.span`
   word-break: break-all;
 `;
