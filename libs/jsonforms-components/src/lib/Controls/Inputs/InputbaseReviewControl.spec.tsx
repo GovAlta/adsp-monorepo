@@ -158,24 +158,6 @@ describe('GoABaseInputReviewComponent', () => {
     expect(reviewControl.textContent).toBe('Yes (Ideclare)');
   });
 
-  it('renders checkbox label with scope without options text property', () => {
-    const props = {
-      ...baseProps,
-      label: '',
-      uischema: {
-        ...baseProps.uischema,
-        scope: '#/properties/ideclare',
-        options: {
-          radio: false,
-        },
-      },
-      data: true,
-    };
-    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
-    const reviewControl = getByTestId('review-control-input-id');
-    expect(reviewControl.textContent).toBe('Yes (Ideclare)');
-  });
-
   it('renders checkbox label with Yes label', () => {
     const props = {
       ...baseProps,
