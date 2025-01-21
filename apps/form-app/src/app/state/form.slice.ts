@@ -182,8 +182,9 @@ export const loadDefinition = createAsyncThunk(
     } catch (err) {
       if (axios.isAxiosError(err)) {
         // 403 indicates the user isn't logged in and the form doesn't allow anonymous applicants.
+        // 404 indicates the form doesn't existing.
         // Return null instead of showing an error in the notification banner.
-        return err.response.status === 403
+        return err.response.status === 403 || err.response.status === 404
           ? null
           : rejectWithValue({
               status: err.response?.status,
