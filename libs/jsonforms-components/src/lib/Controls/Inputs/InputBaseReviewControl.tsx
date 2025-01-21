@@ -4,6 +4,7 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAIcon } from '@abgov/react-components-new';
 import { RequiredTextLabel, WarningIconDiv } from './style-component';
+import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
 
 export type WithBaseInputReviewProps = CellProps & WithClassname & WithInputProps & StatePropsOfControl;
 
@@ -17,7 +18,7 @@ const warningIcon = (errorMessage: string) => {
 };
 export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, id, uischema, schema, required } = props;
+  const { data, id, uischema, schema, required, label } = props;
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
   const requiredText = `${
@@ -25,6 +26,8 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   }${required ? ' is required.' : ''}`;
 
   const renderRequiredLabel = () => {
+    if (label !== '' && uischema.options?.text !== '') return null;
+
     return data !== undefined && schema.type === 'boolean' && required ? (
       <RequiredTextLabel>{` (required)`}</RequiredTextLabel>
     ) : null;
@@ -33,7 +36,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   const renderWarningMessage = () => {
     if (uischema.options?.radio) return null;
 
-    if (schema.type === 'boolean' && required && data === undefined) {
+    if (schema.type === 'boolean' && required && (data === undefined || data === false)) {
       return warningIcon(requiredText.trim());
     }
 
@@ -41,12 +44,17 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   };
 
   if (isBoolean) {
-    const label = uischema.options?.text?.trim();
+    const checkboxLabel =
+      uischema.options?.text?.trim() || convertToSentenceCase(getLastSegmentFromPointer(uischema.scope));
 
     if (uischema.options?.radio === true) {
       reviewText = data ? `Yes` : `No`;
     } else {
-      reviewText = data ? `Yes (${label})` : `No (${label})`;
+      if (label !== '' || typeof label === 'boolean') {
+        reviewText = data ? `Yes` : `No`;
+      } else {
+        reviewText = data ? `Yes (${checkboxLabel.trim()})` : `No (${checkboxLabel.trim()})`;
+      }
     }
   }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
-import { checkFieldValidity, getLabelText } from '../../util/stringUtils';
+import { checkFieldValidity, convertToSentenceCase, getLabelText } from '../../util/stringUtils';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
@@ -31,7 +31,7 @@ export interface WithInput {
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
   const { uischema, visible, label, input, required, path, isStepperReview } = props;
   const InnerComponent = input;
-  const labelToUpdate: string = getLabelText(uischema.scope, label || '');
+  const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
   let modifiedErrors = checkFieldValidity(props as ControlProps);
 
   if (modifiedErrors === 'must be equal to one of the allowed values') {
