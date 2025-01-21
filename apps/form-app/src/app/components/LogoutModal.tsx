@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { clearInterval, setInterval } from 'worker-timers';
 import { getKeycloakExpiry } from '../state';
-import { logoutUser, tenantSelector, AppDispatch, getAccessToken, definitionSelector } from '../state';
+import { logoutUser, tenantSelector, AppDispatch, getAccessToken} from '../state';
 import { useLocation } from 'react-router-dom';
 
 export const LogoutModal = (): JSX.Element => {
@@ -61,7 +61,7 @@ export const LogoutModal = (): JSX.Element => {
         countDownRef.current = null;
       }
     }
-  }, [tenant, open, dispatch, isAnonymous]);
+  }, [tenant, open, dispatch]);
 
   return (
     <GoAModal
