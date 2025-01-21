@@ -37,7 +37,7 @@ export const CommentsViewer: FunctionComponent = () => {
       draft={draft}
       onLoadMore={() => dispatch(loadComments({ next, topic }))}
       onUpdateDraft={(draft) => dispatch(commentActions.setDraftComment(draft))}
-      onAddComment={(draft) => dispatch(addComment({ topic, comment: draft }))}
+      onAddComment={(draft) => dispatch(addComment({ topic, comment: draft, requiresAttention: true }))}
     />
   );
 };
