@@ -15,13 +15,10 @@ export const LogoutModal = (): JSX.Element => {
   const ref = useRef(null);
   const countDownRef = useRef(null);
   const tenant = useSelector(tenantSelector);
-  const { definition } = useSelector(definitionSelector);
-
-  const isAnonymous = definition?.anonymousApply;
 
   useEffect(() => {
     // windows.worker is added to avoid affecting the spec files
-    if (!isAnonymous && window?.Worker) {
+    if (window?.Worker) {
       ref.current = setInterval(() => {
         const expiry = getKeycloakExpiry();
         const expiryInSecs = Math.ceil(expiry - Date.now() / 1000);
@@ -40,7 +37,7 @@ export const LogoutModal = (): JSX.Element => {
         clearInterval(ref.current);
       }
     };
-  }, [dispatch, isAnonymous]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (open) {
@@ -49,9 +46,7 @@ export const LogoutModal = (): JSX.Element => {
       countDownRef.current = setInterval(() => {
         setCountdownTime((time) => {
           if (time === 0) {
-            if (!isAnonymous) {
               dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
-            }
             return 0;
           }
 
@@ -67,10 +62,6 @@ export const LogoutModal = (): JSX.Element => {
       }
     }
   }, [tenant, open, dispatch, isAnonymous]);
-
-  if (isAnonymous) {
-    return null;
-  }
 
   return (
     <GoAModal
