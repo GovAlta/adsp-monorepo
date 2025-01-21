@@ -111,7 +111,7 @@ export function* exportFormInfo(payload): SagaIterator {
           }),
           includeData: true,
         },
-        filename: payload.fileName,
+        filename: `${payload.fileNamePrefix}-${new Date().toISOString().replace(/[:.]/g, '-')}`,
         ...(payload.format === 'csv' && { formatOptions: { columns: payload.selectedColumn } }),
       };
 
