@@ -3,6 +3,7 @@ import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import styled from 'styled-components';
 import {
   AppDispatch,
   busySelector,
@@ -19,12 +20,10 @@ import {
   submitForm,
   updateForm,
 } from '../state';
-import styled from 'styled-components';
-import { LoadingIndicator } from '../components/LoadingIndicator';
-import CommentsViewer from './CommentsViewer';
-import { SubmittedForm } from '../components/SubmittedForm';
-import { LogoutModal } from '../components/LogoutModal';
 import { DraftFormWrapper } from '../components/DraftFormWrapper';
+import { LogoutModal } from '../components/LogoutModal';
+import { SubmittedForm } from '../components/SubmittedForm';
+import CommentsViewer from './CommentsViewer';
 
 interface FormProps {
   className?: string;
@@ -58,11 +57,10 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
 
   return (
     <div key={formId}>
-      <LoadingIndicator isLoading={busy.loading} />
       {definition && !definition.anonymousApply && <LogoutModal />}
       <div className={className} data-show={showComments}>
         <Container vs={1} hs={1} key={formId}>
-          {definition && form && !fileBusy.loading && (
+          {form && !fileBusy.loading && (
             <>
               {form.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
               {form.status === 'draft' && (

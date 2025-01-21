@@ -2,6 +2,7 @@ import { GoACallout } from '@abgov/react-components-new';
 import { DateTime } from 'luxon';
 import { FunctionComponent, ReactNode } from 'react';
 import { FormDefinition } from '../state';
+import { FormNotAvailable } from './FormNoAvailable';
 
 interface ScheduledIntakeProps {
   definition: FormDefinition;
@@ -18,8 +19,6 @@ export const ScheduledIntake: FunctionComponent<ScheduledIntakeProps> = ({ defin
       {DateTime.fromISO(definition.intake.start).toFormat('LLLL dd, yyyy')}.
     </GoACallout>
   ) : (
-    <GoACallout mt="2xl" ml="2xl" mr="2xl" mb="2xl" type="information" heading="Not accepting applications">
-      This form is not available for applications at this time.
-    </GoACallout>
+    <FormNotAvailable />
   );
 };
