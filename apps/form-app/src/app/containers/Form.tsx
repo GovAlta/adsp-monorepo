@@ -59,7 +59,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   return (
     <div key={formId}>
       <LoadingIndicator isLoading={busy.loading} />
-      <LogoutModal />
+      {definition && !definition.anonymousApply && <LogoutModal />}
       <div className={className} data-show={showComments}>
         <Container vs={1} hs={1} key={formId}>
           {definition && form && !fileBusy.loading && (
