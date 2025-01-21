@@ -44,7 +44,10 @@ const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
 let socket: Socket;
 export const connectStream = createAsyncThunk(
   'comment/connectStream',
-  async ({ stream, typeId }: { stream: string; typeId: string }, { dispatch, getState }) => {
+  async (
+    { stream, typeId, topicId }: { stream: string; typeId?: string; topicId?: number },
+    { dispatch, getState }
+  ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
 
@@ -57,7 +60,7 @@ export const connectStream = createAsyncThunk(
       query: {
         stream,
         criteria: JSON.stringify({
-          context: { typeId },
+          context: { topicTypeId: typeId, topicId },
         }),
       },
       withCredentials: true,
@@ -83,17 +86,19 @@ export const connectStream = createAsyncThunk(
     const onTopicUpdate = ({ topic }: { topic: Topic }) => {
       dispatch(loadTopic({ resourceId: topic.resourceId, typeId }));
     };
-    socket.on('comment-service:topic-updated', onTopicUpdate);
-    socket.on('comment-service:comment-created', ({ topic }: { topic: Topic }) => {
+    const onCommentUpdate = ({ topic }: { topic: Topic }) => {
       onTopicUpdate({ topic });
 
       const { comment } = getState() as AppState;
       if (comment.selected.resourceId === topic.resourceId) {
         dispatch(loadComments({ topic: comment.topics[topic.resourceId] }));
       }
-    });
-    // socket.on('comment-service:comment-updated', ({ topic }: { topic: Topic }) => {});
-    // socket.on('comment-service:comment-deleted', ({ topic }: { topic: Topic }) => {});
+    };
+
+    socket.on('comment-service:topic-updated', onTopicUpdate);
+    socket.on('comment-service:comment-created', onCommentUpdate);
+    socket.on('comment-service:comment-updated', onCommentUpdate);
+    socket.on('comment-service:comment-deleted', onCommentUpdate);
   }
 );
 
