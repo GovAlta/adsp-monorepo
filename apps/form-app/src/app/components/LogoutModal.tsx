@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { clearInterval, setInterval } from 'worker-timers';
 import { getKeycloakExpiry } from '../state';
-import { logoutUser, tenantSelector, AppDispatch, getAccessToken } from '../state';
+import { logoutUser, tenantSelector, AppDispatch, getAccessToken, definitionSelector } from '../state';
 import { useLocation } from 'react-router-dom';
 
 export const LogoutModal = (): JSX.Element => {
@@ -15,10 +15,13 @@ export const LogoutModal = (): JSX.Element => {
   const ref = useRef(null);
   const countDownRef = useRef(null);
   const tenant = useSelector(tenantSelector);
+  const { definition } = useSelector(definitionSelector);
+
+  const isAnonymous = definition?.anonymousApply;
 
   useEffect(() => {
     // windows.worker is added to avoid affecting the spec files
-    if (window?.Worker) {
+    if (!isAnonymous && window?.Worker) {
       ref.current = setInterval(() => {
         const expiry = getKeycloakExpiry();
         const expiryInSecs = Math.ceil(expiry - Date.now() / 1000);
@@ -37,7 +40,7 @@ export const LogoutModal = (): JSX.Element => {
         clearInterval(ref.current);
       }
     };
-  }, [dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dispatch, isAnonymous]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (open) {
@@ -46,7 +49,9 @@ export const LogoutModal = (): JSX.Element => {
       countDownRef.current = setInterval(() => {
         setCountdownTime((time) => {
           if (time === 0) {
-            dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+            if (!isAnonymous) {
+              dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+            }
             return 0;
           }
 
@@ -61,7 +66,11 @@ export const LogoutModal = (): JSX.Element => {
         countDownRef.current = null;
       }
     }
-  }, [tenant, open, dispatch]);
+  }, [tenant, open, dispatch, isAnonymous]);
+
+  if (isAnonymous) {
+    return null;
+  }
 
   return (
     <GoAModal
