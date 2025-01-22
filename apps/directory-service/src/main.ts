@@ -60,6 +60,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantService,
     tokenProvider,
     configurationService,
+    configurationHandler,
     clearCached,
     metricsHandler,
     tenantHandler,
@@ -157,7 +158,14 @@ const initializeApp = async (): Promise<express.Application> => {
   const queueService = await createDirectoryQueueService({ ...environment, logger });
 
   app.use('/directory', metricsHandler, passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }));
-  app.use('/resource', metricsHandler, passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
+  app.use(
+    '/resource',
+    metricsHandler,
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
+
   applyDirectoryMiddleware(app, {
     ...repositories,
     serviceId,
