@@ -183,6 +183,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       {renderHelp()}
       <h3>{label}</h3>
       <GoAFormItem
+        requirement={'required'}
         label={'Street address or P.O. box'}
         error={errors?.['addressLine1'] ?? ''}
         data-testId="form-address-line1"
