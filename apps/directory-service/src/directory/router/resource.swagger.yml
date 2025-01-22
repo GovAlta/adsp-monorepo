@@ -3,10 +3,19 @@ components:
     Tag:
       type: object
       properties:
+        urn:
+          type: string
         label:
           type: string
         value:
           type: string
+        _links:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              href:
+                type: string
     Resource:
       type: object
       properties:

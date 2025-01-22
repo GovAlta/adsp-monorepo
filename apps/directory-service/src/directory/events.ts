@@ -1,11 +1,14 @@
 import type { DomainEvent, DomainEventDefinition, User, Stream } from '@abgov/adsp-service-sdk';
-import { Resource, Tag } from './types';
+import type { mapTag } from './mapper';
+import { Resource } from './types';
 
 const ENTRY_UPDATED = 'entry-updated';
 const ENTRY_DELETED = 'entry-deleted';
 export const TAGGED_RESOURCE = 'tagged-resource';
 const UNTAGGED_RESOURCE = 'untagged-resource';
 const RESOURCE_RESOLUTION_FAILED = 'resource-resolution-failed';
+
+type Tag = ReturnType<typeof mapTag>;
 
 export const EntryUpdatedDefinition: DomainEventDefinition = {
   name: ENTRY_UPDATED,
@@ -85,6 +88,7 @@ export const TaggedResourceDefinition: DomainEventDefinition = {
       tag: {
         type: 'object',
         properties: {
+          urn: { type: 'string' },
           label: { type: 'string' },
           value: { type: 'string' },
         },
@@ -117,6 +121,7 @@ export const UntaggedResourceDefinition: DomainEventDefinition = {
       tag: {
         type: 'object',
         properties: {
+          urn: { type: 'string' },
           label: { type: 'string' },
           value: { type: 'string' },
         },
@@ -218,10 +223,7 @@ export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, is
       description: resource.description,
       isNew: isNewResource,
     },
-    tag: {
-      label: tag.label,
-      value: tag.value,
-    },
+    tag,
     updatedBy: {
       id: updatedBy.id,
       name: updatedBy.name,
@@ -244,10 +246,7 @@ export const untaggedResource = (resource: Resource, tag: Tag, updatedBy: User):
       name: resource.name,
       description: resource.description,
     },
-    tag: {
-      label: tag.label,
-      value: tag.value,
-    },
+    tag,
     updatedBy: {
       id: updatedBy.id,
       name: updatedBy.name,
