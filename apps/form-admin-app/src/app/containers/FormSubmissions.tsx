@@ -147,7 +147,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           <tbody>
             {submissions.map((submission) => (
               <tr key={submission.urn}>
-                <td>{submission.created.toFormat('LLL dd, yyyy')}</td>
+                <td>{submission.created.toFormat('LLL d, yyyy')}</td>
                 <td>
                   <Digest value={submission.hash} />
                 </td>
