@@ -38,6 +38,10 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
   const { initialized, form } = useSelector(userFormSelector);
   const busy = useSelector(busySelector);
 
+  useEffect(() => {
+    dispatch(findUserForm(definition.id));
+  }, [dispatch, definition]);
+
   return definition.anonymousApply ? (
     <Navigate to="draft" />
   ) : (
@@ -69,7 +73,6 @@ export const FormDefinition: FunctionComponent = () => {
   const tenant = useSelector(tenantSelector);
   const { user } = useSelector(userSelector);
   const { definition, initialized: definitionInitialized } = useSelector(definitionSelector);
-  const { initialized: formInitialized } = useSelector(userFormSelector);
   const busy = useSelector(busySelector);
 
   useEffect(() => {
@@ -78,29 +81,26 @@ export const FormDefinition: FunctionComponent = () => {
     }
   }, [dispatch, definitionId, tenant]);
 
-  useEffect(() => {
-    dispatch(findUserForm(definitionId));
-  }, [dispatch, definitionId]);
-
   // Definition can be available even if there is no signed in user.
   // If definition is not available, then show the sign-in option as user might have access if they sign in.
   return (
     <>
-      <LoadingIndicator isLoading={!formInitialized || !definitionInitialized || busy.loading} />
-      {definitionInitialized && definition ? (
-        <ScheduledIntake definition={definition}>
-          <Routes>
-            <Route path="/draft" element={<AnonymousForm />} />
-            <Route path="/:formId" element={<Form />} />
-            <Route path="/" element={<FormDefinitionStart definition={definition} />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </ScheduledIntake>
-      ) : user ? (
-        <FormNotAvailable />
-      ) : (
-        <SignInStartApplication />
-      )}
+      <LoadingIndicator isLoading={!definitionInitialized || busy.loading} />
+      {definitionInitialized &&
+        (definition ? (
+          <ScheduledIntake definition={definition}>
+            <Routes>
+              <Route path="/draft" element={<AnonymousForm />} />
+              <Route path="/:formId" element={<Form />} />
+              <Route path="/" element={<FormDefinitionStart definition={definition} />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </ScheduledIntake>
+        ) : user ? (
+          <FormNotAvailable />
+        ) : (
+          <SignInStartApplication />
+        ))}
     </>
   );
 };
