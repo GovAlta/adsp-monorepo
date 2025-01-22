@@ -1,9 +1,9 @@
 import { AdspId, adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { createResourceRouter, getTaggedResources, getTags, tagOperation } from './resource';
+import { InvalidOperationError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { Request, Response } from 'express';
 import { ServiceRoles } from '../roles';
-import { InvalidOperationError } from '@core-services/core-common';
+import { createResourceRouter, getTaggedResources, getTags, tagOperation } from './resource';
 
 describe('resource', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -572,6 +572,61 @@ describe('resource', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can get tagged resources and include data', async () => {
+      const req = {
+        getServiceConfiguration: jest.fn(),
+        tenant: { id: tenantId },
+        user: {
+          tenantId,
+          id: 'tester',
+          name: 'Tester',
+          roles: [ServiceRoles.ResourceBrowser],
+          token: { bearer: 'test' },
+        },
+        params: { tag: 'test-tag' },
+        query: { includeRepresents: 'true' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      const page = {};
+      repositoryMock.getTaggedResources.mockResolvedValueOnce({ results, page });
+
+      const getResourceType = jest.fn();
+      const type = {
+        type: 'test',
+        resolve: jest.fn(),
+      };
+      getResourceType.mockReturnValueOnce(type);
+      const data = {};
+      type.resolve.mockResolvedValueOnce({
+        name: 'Test 123',
+        description: 'This is test 123',
+        data,
+      });
+      req.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
+
+      const handler = getTaggedResources(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTaggedResources).toHaveBeenCalledWith(tenantId, 'test-tag', 10, undefined);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          results: expect.arrayContaining([
+            expect.objectContaining({
+              urn: 'urn:ads:platform:file-service:v1:/files/123',
+              _embedded: expect.objectContaining({ represents: data }),
+            }),
+          ]),
+          page,
+        })
+      );
     });
   });
 });

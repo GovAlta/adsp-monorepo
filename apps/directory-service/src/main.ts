@@ -107,7 +107,7 @@ const initializeApp = async (): Promise<express.Application> => {
         tenantId: AdspId
       ) =>
         new DirectoryConfiguration(
-          { logger, directory, tokenProvider, repository: repositories.directoryRepository },
+          { logger, directory, repository: repositories.directoryRepository },
           tenant,
           core,
           tenantId
@@ -163,6 +163,7 @@ const initializeApp = async (): Promise<express.Application> => {
     serviceId,
     logger,
     directory,
+    tokenProvider,
     tenantService,
     eventService,
     configurationService,
