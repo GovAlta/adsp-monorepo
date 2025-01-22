@@ -586,7 +586,7 @@ describe('resource', () => {
           token: { bearer: 'test' },
         },
         params: { tag: 'test-tag' },
-        query: { embedRepresents: 'true' },
+        query: { includeRepresents: 'true' },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
