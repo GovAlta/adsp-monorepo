@@ -1,14 +1,13 @@
-import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
-import { ResourceType } from '../model';
-import { DirectoryConfigurationValue } from './types';
-import { Logger } from 'winston';
-import { DirectoryRepository } from '../repository';
+import { AdspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { DomainEvent } from '@core-services/core-common';
+import { Logger } from 'winston';
+import { ResourceType } from '../model';
+import { DirectoryRepository } from '../repository';
+import { DirectoryConfigurationValue } from './types';
 
 interface ConfigurationProps {
   logger: Logger;
   directory: ServiceDirectory;
-  tokenProvider: TokenProvider;
   repository: DirectoryRepository;
 }
 
@@ -17,7 +16,7 @@ export class DirectoryConfiguration {
   private resourceTypesByDeleteEvent: Record<string, ResourceType> = {};
 
   constructor(
-    { logger, directory, tokenProvider, repository }: ConfigurationProps,
+    { logger, directory, repository }: ConfigurationProps,
     tenant: DirectoryConfigurationValue,
     core: DirectoryConfigurationValue,
     tenantId: AdspId
@@ -26,7 +25,7 @@ export class DirectoryConfiguration {
       const apiResourceTypes = [];
       apiConfiguration?.resourceTypes?.forEach((type) => {
         try {
-          const resourceType = new ResourceType(logger, directory, tokenProvider, repository, type);
+          const resourceType = new ResourceType(logger, directory, repository, type);
           apiResourceTypes.push(resourceType);
 
           if (type.deleteEvent?.namespace && type.deleteEvent?.name) {

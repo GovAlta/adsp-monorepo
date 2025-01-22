@@ -9,13 +9,14 @@ import {
 import { createValidationHandler, InvalidOperationError } from '@core-services/core-common';
 import * as dashify from 'dashify';
 import { RequestHandler, Router } from 'express';
+import { body, query } from 'express-validator';
 import { Logger } from 'winston';
 import { DirectoryRepository } from '../repository';
 import { ServiceRoles } from '../roles';
 import { Resource, Tag } from '../types';
 import { TAG_OPERATION_TAG, TAG_OPERATION_UNTAG, TagOperationRequests } from './types';
 import { taggedResource, untaggedResource } from '../events';
-import { body, query } from 'express-validator';
+import { DirectoryConfiguration } from '../configuration';
 
 function mapTag(tag: Tag) {
   return tag
@@ -33,6 +34,12 @@ function mapResource(resource: Resource) {
         name: resource.name,
         description: resource.description,
         type: resource.type,
+        _links: {
+          represents: { href: resource.urn.toString() },
+        },
+        _embedded: resource.data && {
+          represents: resource.data,
+        },
       }
     : null;
 }
@@ -186,14 +193,34 @@ export function getTaggedResources(repository: DirectoryRepository): RequestHand
       const user = req.user;
       const tenantId = req.tenant?.id;
       const { tag } = req.params;
-      const { top: topValue, after } = req.query;
+      const { top: topValue, after, includeRepresents: includeRepresentsValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
+      const includeRepresents = includeRepresentsValue === 'true';
 
       if (!isAllowedUser(user, tenantId, [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger])) {
         throw new UnauthorizedUserError('get tagged resources', user);
       }
 
       const { results, page } = await repository.getTaggedResources(tenantId, tag, top, after as string);
+
+      // If includeData is true, then resolve the represented resource.
+      // This is effectively a join across APIs.
+      if (includeRepresents) {
+        const configuration = await req.getServiceConfiguration<DirectoryConfiguration, DirectoryConfiguration>(
+          null,
+          tenantId
+        );
+
+        for (const result of results) {
+          const type = configuration.getResourceType(result.urn);
+          if (type) {
+            const resolved = await type.resolve(user.token.bearer, result);
+            if (resolved) {
+              result.data = resolved.data;
+            }
+          }
+        }
+      }
 
       res.send({
         results: results.map(mapResource),
@@ -244,7 +271,11 @@ export function createResourceRouter({ logger, directory, eventService, reposito
 
   router.get(
     '/tags/:tag/resources',
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 500 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 500 }),
+      query('after').optional().isString(),
+      query('includeRepresents').optional().isBoolean()
+    ),
     getTaggedResources(repository)
   );
 

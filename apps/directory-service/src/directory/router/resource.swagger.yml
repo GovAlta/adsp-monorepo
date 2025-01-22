@@ -18,6 +18,15 @@ components:
           type: string
         type:
           type: string
+        _links:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              href:
+                type: string
+        _embedded:
+          type: object
     ResourceSpecification:
       type: object
       properties:
@@ -151,6 +160,12 @@ components:
         required: false
         schema:
           type: string
+      - name: includeRepresents
+        description: Flag indicating if resolved represented resource should be embedded in response.
+        in: query
+        required: false
+        schema:
+          type: boolean
       - name: tag
         description: Value of the tag.
         in: path

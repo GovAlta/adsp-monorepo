@@ -21,6 +21,10 @@ describe('resolve', () => {
     send: jest.fn(),
   };
 
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(() => Promise.resolve('token')),
+  };
+
   beforeEach(() => {
     configurationServiceMock.getServiceConfiguration.mockClear();
     eventServiceMock.send.mockClear();
@@ -29,6 +33,7 @@ describe('resolve', () => {
   it('can create job', () => {
     const job = createResolveJob({
       logger,
+      tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
       eventService: eventServiceMock,
     });
@@ -53,6 +58,7 @@ describe('resolve', () => {
 
     const job = createResolveJob({
       logger,
+      tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
       eventService: eventServiceMock,
     });
@@ -70,6 +76,7 @@ describe('resolve', () => {
 
     const job = createResolveJob({
       logger,
+      tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
       eventService: eventServiceMock,
     });
@@ -92,6 +99,7 @@ describe('resolve', () => {
 
     const job = createResolveJob({
       logger,
+      tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
       eventService: eventServiceMock,
     });
@@ -114,6 +122,7 @@ describe('resolve', () => {
 
     const job = createResolveJob({
       logger,
+      tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
       eventService: eventServiceMock,
     });
