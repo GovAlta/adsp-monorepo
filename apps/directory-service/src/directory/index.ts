@@ -11,6 +11,7 @@ import {
   AdspId,
   ServiceDirectory,
   TokenProvider,
+  adspId,
 } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, DomainEvent, WorkQueueService } from '@core-services/core-common';
 import { createDirectoryJobs } from './job';
@@ -59,6 +60,7 @@ export const applyDirectoryMiddleware = (
 
   const resourceRouter = createResourceRouter({
     logger,
+    apiId: adspId`${serviceId}:resource-v1`,
     directory,
     eventService,
     repository: directoryRepository,

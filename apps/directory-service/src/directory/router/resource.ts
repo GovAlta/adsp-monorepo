@@ -13,38 +13,12 @@ import { body, query } from 'express-validator';
 import { Logger } from 'winston';
 import { DirectoryRepository } from '../repository';
 import { ServiceRoles } from '../roles';
-import { Resource, Tag } from '../types';
-import { TAG_OPERATION_TAG, TAG_OPERATION_UNTAG, TagOperationRequests } from './types';
 import { taggedResource, untaggedResource } from '../events';
 import { DirectoryConfiguration } from '../configuration';
+import { mapTag, mapResource } from '../mapper';
+import { TAG_OPERATION_TAG, TAG_OPERATION_UNTAG, TagOperationRequests } from './types';
 
-function mapTag(tag: Tag) {
-  return tag
-    ? {
-        label: tag.label,
-        value: tag.value,
-      }
-    : null;
-}
-
-function mapResource(resource: Resource) {
-  return resource
-    ? {
-        urn: resource.urn.toString(),
-        name: resource.name,
-        description: resource.description,
-        type: resource.type,
-        _links: {
-          represents: { href: resource.urn.toString() },
-        },
-        _embedded: resource.data && {
-          represents: resource.data,
-        },
-      }
-    : null;
-}
-
-export function getTags(repository: DirectoryRepository): RequestHandler {
+export function getTags(apiId: AdspId, repository: DirectoryRepository): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -62,7 +36,7 @@ export function getTags(repository: DirectoryRepository): RequestHandler {
         resourceUrnEquals: resource,
       });
       res.send({
-        results: results.map(mapTag),
+        results: results.map((result) => mapTag(apiId, result)),
         page,
       });
     } catch (err) {
@@ -72,6 +46,7 @@ export function getTags(repository: DirectoryRepository): RequestHandler {
 }
 
 export function tagOperation(
+  apiId: AdspId,
   logger: Logger,
   directory: ServiceDirectory,
   eventService: EventService,
@@ -137,28 +112,30 @@ export function tagOperation(
         case TAG_OPERATION_TAG: {
           const { tag, resource, tagged, isNewResource } = await repository.applyTag(targetTag, targetResource);
 
+          const tagResult = mapTag(apiId, tag);
           result = {
             tagged,
-            tag: mapTag(tag),
+            tag: tagResult,
             resource: mapResource(resource),
           };
 
           if (tagged) {
-            event = taggedResource(resource, tag, user, isNewResource);
+            event = taggedResource(resource, tagResult, user, isNewResource);
           }
           break;
         }
         case TAG_OPERATION_UNTAG: {
           const { tag, resource, untagged } = await repository.removeTag(targetTag, targetResource);
 
+          const tagResult = mapTag(apiId, tag);
           result = {
             untagged,
-            tag: mapTag(tag),
+            tag: tagResult,
             resource: mapResource(resource),
           };
 
           if (untagged) {
-            event = untaggedResource(resource, tag, user);
+            event = untaggedResource(resource, tagResult, user);
           }
           break;
         }
@@ -233,13 +210,14 @@ export function getTaggedResources(repository: DirectoryRepository): RequestHand
 }
 
 interface ResourceRouterProps {
+  apiId: AdspId;
   logger: Logger;
   directory: ServiceDirectory;
   eventService: EventService;
   repository: DirectoryRepository;
 }
 
-export function createResourceRouter({ logger, directory, eventService, repository }: ResourceRouterProps) {
+export function createResourceRouter({ apiId, logger, directory, eventService, repository }: ResourceRouterProps) {
   const router = Router();
 
   router.get(
@@ -249,7 +227,7 @@ export function createResourceRouter({ logger, directory, eventService, reposito
       query('after').optional().isString(),
       query('resource').optional().isString().isLength({ min: 1, max: 2000 })
     ),
-    getTags(repository)
+    getTags(apiId, repository)
   );
   router.post(
     '/tags',
@@ -266,7 +244,7 @@ export function createResourceRouter({ logger, directory, eventService, reposito
       body('resource.name').optional().isString().isLength({ min: 1, max: 250 }),
       body('resource.description').optional().isString().isLength({ min: 1, max: 2000 })
     ),
-    tagOperation(logger, directory, eventService, repository)
+    tagOperation(apiId, logger, directory, eventService, repository)
   );
 
   router.get(
