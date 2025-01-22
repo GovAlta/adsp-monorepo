@@ -1,6 +1,5 @@
 import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
-import moment from 'moment';
 import { FunctionComponent } from 'react';
 import { Form, FormDefinition } from '../state';
 
@@ -14,7 +13,7 @@ export const ContinueApplication: FunctionComponent<ContinueApplicationProps> = 
   return (
     <div>
       <Band title="Continue your application">
-        We found a previous application for {definition.name} created on {moment(form.created).format('MMMM D, YYYY')}.
+        We found a previous application for {definition.name} created on {form.created.toFormat('LLLL d, yyyy')}.
       </Band>
       <Container vs={3} hs={1}>
         <Grid>

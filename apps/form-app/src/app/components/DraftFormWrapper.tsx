@@ -86,7 +86,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
         {daysTilIntakeEnd <= 5 && (
           <GoACallout type="information" heading="Intake closing soon">
             Intake is closing in {daysTilIntakeEnd} days. Please complete and submit your form before{' '}
-            {definition.intake.end.toFormat('LLLL dd, yyyy')} to apply.
+            {definition.intake.end.toFormat('LLLL d, yyyy')} to apply.
           </GoACallout>
         )}
         <DraftForm
