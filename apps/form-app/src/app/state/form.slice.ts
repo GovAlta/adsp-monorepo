@@ -10,10 +10,11 @@ import { hashData } from './util';
 import { getAccessToken } from './user.slice';
 import { connectStream, loadTopic, selectTopic } from './comment.slice';
 import { loadFileMetadata } from './file.slice';
+import { DateTime } from 'luxon';
 
 export const FORM_FEATURE_KEY = 'form';
 
-export interface FormDefinition {
+interface SerializableFormDefinition {
   id: string;
   name: string;
   dataSchema: JsonSchema;
@@ -32,13 +33,13 @@ export interface FormDefinition {
   };
 }
 
-export interface Form {
+interface SerializableForm {
   definition: { id: string };
   id: string;
   urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
-  created: Date;
-  submitted?: Date;
+  created: string;
+  submitted?: string;
   submission?: {
     id: string;
     urn: string;
@@ -52,14 +53,13 @@ interface FormDataResponse {
   files: Record<string, string>;
 }
 
-type SerializedForm = Omit<Form, 'created' | 'submitted'> & { created: string; submitted?: string };
 export type ValidationError = JsonFormsCore['errors'][number];
 
 export interface FormState {
-  definitions: Record<string, FormDefinition>;
+  definitions: Record<string, SerializableFormDefinition>;
   selected: string;
   userForm: string;
-  form: SerializedForm;
+  form: SerializableForm;
   data: Record<string, unknown>;
   files: Record<string, string>;
   config: Record<string, string>;
@@ -130,7 +130,7 @@ export const loadDefinition = createAsyncThunk(
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const { data } = await axios.get<FormDefinition>(
+      const { data } = await axios.get<SerializableFormDefinition>(
         new URL(`/form/v1/definitions/${definitionId}`, formServiceUrl).href,
         {
           headers,
@@ -212,7 +212,7 @@ export const findUserForm = createAsyncThunk(
       let token = await getAccessToken();
       const {
         data: { results },
-      } = await axios.get<{ results: SerializedForm[] }>(new URL(`/form/v1/forms`, formServiceUrl).href, {
+      } = await axios.get<{ results: SerializableForm[] }>(new URL(`/form/v1/forms`, formServiceUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           criteria: JSON.stringify({
@@ -264,7 +264,7 @@ export const loadForm = createAsyncThunk(
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
 
       let token = await getAccessToken();
-      const { data: form } = await axios.get<SerializedForm>(new URL(`/form/v1/forms/${formId}`, formServiceUrl).href, {
+      const { data: form } = await axios.get<SerializableForm>(new URL(`/form/v1/forms/${formId}`, formServiceUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -322,7 +322,7 @@ export const createForm = createAsyncThunk(
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
 
       const token = await getAccessToken();
-      const { data } = await axios.post<SerializedForm>(
+      const { data } = await axios.post<SerializableForm>(
         new URL(`/form/v1/forms`, formServiceUrl).href,
         {
           definitionId,
@@ -426,7 +426,7 @@ export const submitForm = createAsyncThunk(
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
 
       const token = await getAccessToken();
-      const { data } = await axios.post<SerializedForm>(
+      const { data } = await axios.post<SerializableForm>(
         new URL(`/form/v1/forms/${formId}`, formServiceUrl).href,
         { operation: 'submit' },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -458,7 +458,7 @@ export const submitAnonymousForm = createAsyncThunk(
         token = await grecaptcha.execute(config.environment.recaptchaKey, { action: 'submit_form' });
       }
 
-      const { data } = await axios.post<SerializedForm>(`/api/gateway/v1/forms`, {
+      const { data } = await axios.post<SerializableForm>(`/api/gateway/v1/forms`, {
         token,
         tenant: user.tenant.name,
         definitionId: form.selected,
@@ -618,18 +618,32 @@ export const formActions = formSlice.actions;
 export const definitionSelector = createSelector(
   (state: AppState) => state.form.definitions,
   (state: AppState) => state.form.selected,
-  (definitions, selected) => ({
-    definition: selected ? definitions[selected] : null,
-    initialized: definitions[selected] !== undefined,
-  })
+  (definitions, selected) => {
+    const definition = selected && definitions[selected];
+    return {
+      definition: definition && {
+        ...definition,
+        intake: definition.intake && {
+          ...definition.intake,
+          start: definition.intake.start && DateTime.fromISO(definition.intake.start),
+          end: definition.intake.end && DateTime.fromISO(definition.intake.end),
+        },
+      },
+      initialized: definition !== undefined,
+    };
+  }
 );
 
 export const formSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.form.form,
   ({ definition }, form) =>
-    definition && definition?.id === form?.definition.id
-      ? { ...form, created: new Date(form.created), submitted: form.submitted ? new Date(form.submitted) : null }
+    definition && form && definition?.id === form?.definition.id
+      ? {
+          ...form,
+          created: form.created && DateTime.fromISO(form.created),
+          submitted: form.submitted && DateTime.fromISO(form.submitted),
+        }
       : null
 );
 
@@ -668,3 +682,6 @@ export const canSubmitSelector = createSelector(
   (state: AppState) => state.form.busy.submitting,
   (errors, saving, submitting) => !errors?.length && !saving && !submitting
 );
+
+export type FormDefinition = ReturnType<typeof definitionSelector>['definition'];
+export type Form = ReturnType<typeof formSelector>;
