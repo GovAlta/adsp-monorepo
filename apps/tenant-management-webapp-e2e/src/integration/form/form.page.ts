@@ -227,15 +227,15 @@ class FormPage {
   }
 
   formPreviewTextField(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]/goa-input[@type="text"]`);
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="text"]`);
   }
 
   formPreviewDateInput(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]/goa-input[@type="date"]`);
+    return cy.xpath(`//goa-form-item[@label="${label} "]//goa-input[@type="date"]`);
   }
 
   formPreviewDropdown(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]//div[contains(@data-testid, "dropdown")]`);
+    return cy.xpath(`//goa-form-item[@label="${label} "]//div[contains(@data-testid, "dropdown")]`);
   }
 
   formPreviewNextButton() {
@@ -255,11 +255,15 @@ class FormPage {
   }
 
   formPreviewListWithDetailDependantTextField(label) {
-    return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label}"]//goa-input`);
+    return cy.xpath(
+      `//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[contains(@label, "${label}")]//goa-input`
+    );
   }
 
   formPreviewListWithDetailDependantDateInput(label) {
-    return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label}"]//goa-input`);
+    return cy.xpath(
+      `//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[contains(@label, "${label}")]//goa-input`
+    );
   }
 
   formPreviewRadioGroup(question) {

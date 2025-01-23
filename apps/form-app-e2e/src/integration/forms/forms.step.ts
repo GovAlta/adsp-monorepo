@@ -212,7 +212,7 @@ Then(
                   formsObj.formSummaryPageControlLabel(sectionName).then((labels) => {
                     if (
                       labels[i].getAttribute('requirement') == 'required' &&
-                      labels[i].getAttribute('label') == label
+                      labels[i].getAttribute('label')?.trim() == label
                     ) {
                       isFound = true;
                       cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
@@ -225,7 +225,7 @@ Then(
                   formsObj.formSummaryPageControlLabel(sectionName).then((labels) => {
                     if (
                       labels[i].getAttribute('requirement') != 'required' &&
-                      labels[i].getAttribute('label') == label
+                      labels[i].getAttribute('label')?.trim() == label
                     ) {
                       isFound = true;
                       cy.log(label + ': ' + value + ' is found? : ' + String(isFound));

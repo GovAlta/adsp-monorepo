@@ -22,21 +22,20 @@ import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
 import { getFormDefinitions, getExportFormInfo, startSocket, openEditorForDefinition } from '@store/form/action';
 import { FormDefinition, Stream, ExportFormat } from '@store/form/model';
 
-import { transformToColumns, ColumnOption } from '@lib/schemaUtil';
 import { DownloadFileService, FetchFilesService } from '@store/file/actions';
 
-import { truncateString } from '@lib/stringUtil';
+import { truncateString, transformToColumns, ColumnOption, generateRandomNumber } from './util';
 
 export const FormExport = (): JSX.Element => {
   const dispatch = useDispatch();
 
   const [selectedForm, setSelectedForm] = useState<FormDefinition>();
   const [resourceType, setResourceType] = useState('');
-  const [fileName, setFileName] = useState('');
+  const [fileNamePrefix, setFileNamePrefix] = useState('');
   const [exportStream, setExportStream] = useState<Stream>(null);
   const [error, setError] = useState('');
   const [currentFile, setCurrentFile] = useState(null);
-  const [iconDisable, setIconDisable] = useState(true);
+  const [downloadDisable, setDownloadDisable] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('');
   const formDefinitions = useSelector((state: RootState) => state.form.definitions);
   const exportResult = useSelector((state: RootState) => state.form.exportResult);
@@ -49,7 +48,7 @@ export const FormExport = (): JSX.Element => {
   const [socketDisconnect, setSocketDisconnect] = useState(undefined); // to track socket disconnection status
   const [socketConnectionError, setSocketConnectionError] = useState(undefined); // to track socket unexpected errors status
   const [spinner, setSpinner] = useState(false);
-  const spinnerTimeout = useRef(null);
+
   const socket = useSelector((state: RootState) => state.form?.socket);
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema) as Record<string, unknown>;
   const next = useSelector((state: RootState) => state.form.nextEntries);
@@ -71,21 +70,26 @@ export const FormExport = (): JSX.Element => {
     if (exportFormat === 'csv') {
       selectedColumns = columns.filter((col) => col.selected).map((col) => col.id);
     }
+
     setSpinner(true);
 
-    dispatch(getExportFormInfo(selectedForm.id, resourceType, exportFormat, selectedColumns, fileName));
+    dispatch(getExportFormInfo(selectedForm.id, resourceType, exportFormat, selectedColumns, fileNamePrefix));
     dispatch(startSocket());
 
     setLoadingMessage('Exporting File ...');
   };
   useEffect(() => {
     if (selectedForm) {
-      setFileName(`Exports-${truncateString(selectedForm?.id)}-${new Date().toISOString().replace(/[:.]/g, '-')}`);
+      setFileNamePrefix(`Exports-${truncateString(selectedForm?.id)}-${generateRandomNumber()}`);
     }
   }, [selectedForm]);
   useEffect(() => {
     dispatch(FetchFilesService());
   }, [exportStream]);
+
+  useEffect(() => {
+    dispatch(getFormDefinitions());
+  }, [Object.keys(formDefinitions).length === 0]);
 
   useEffect(() => {
     setColumns(transformToColumns(selectedForm, dataSchema));
@@ -95,7 +99,7 @@ export const FormExport = (): JSX.Element => {
     const file = fileList.find((file) => exportStream?.payload?.jobId === file?.recordId);
     if (file) {
       setCurrentFile(file);
-      setIconDisable(false);
+      setDownloadDisable(false);
       setSpinner(false);
     }
   }, [fileList]);
@@ -110,7 +114,6 @@ export const FormExport = (): JSX.Element => {
 
   useEffect(() => {
     socket?.on('connect', () => {
-      clearTimeout(spinnerTimeout.current);
       setSocketDisconnect(false);
       setSocketConnectionError(false);
       setSocketConnection(true);
@@ -118,7 +121,6 @@ export const FormExport = (): JSX.Element => {
     });
 
     socket?.on('disconnect', (reason) => {
-      clearTimeout(spinnerTimeout.current);
       // if connection disconnects from client or server side, consider it as a successful disconnect
       if (reason === 'io client disconnect' || reason === 'io server disconnect') {
         setSocketDisconnect(true);
@@ -130,11 +132,9 @@ export const FormExport = (): JSX.Element => {
       }
       setSocketConnection(false);
       setSocketConnecting(false);
-      setSpinner(false);
     });
 
     socket?.on('connect_error', (error) => {
-      clearTimeout(spinnerTimeout.current);
       setSocketConnectionError(true);
       setSocketConnection(false);
       setSocketConnecting(false);
@@ -143,7 +143,7 @@ export const FormExport = (): JSX.Element => {
     });
 
     socket?.on(`export-service:export-completed`, (streamData) => {
-      if (streamData?.payload?.file?.filename.includes(fileName)) {
+      if (streamData?.payload?.file?.filename.includes(fileNamePrefix)) {
         setExportStream(streamData);
         setLoadingMessage('Loading File ...');
       }
@@ -151,6 +151,7 @@ export const FormExport = (): JSX.Element => {
 
     socket?.on(`export-service:export-failed`, (streamData) => {
       setError(streamData?.error);
+      setSpinner(false);
     });
 
     return () => {
@@ -210,7 +211,7 @@ export const FormExport = (): JSX.Element => {
             onChange={(_, value: string) => {
               const currentForm = formList.find((form) => form.name === value);
               setSelectedForm(currentForm);
-              setIconDisable(true);
+              setDownloadDisable(true);
               setResourceType(currentForm?.submissionRecords === true ? 'Submissions' : 'Forms');
               setError('');
               dispatch(openEditorForDefinition(currentForm.id));
@@ -237,57 +238,55 @@ export const FormExport = (): JSX.Element => {
         <br />
         <br />
         <GoAFormItem label="Format">
-          {!spinner && (
-            <div>
-              <GoARadioGroup
-                name="formatOptions"
-                value={exportFormat}
-                onChange={(_, value) => setExportFormat(value as ExportFormat)}
-                orientation="horizontal"
-                testId="status-radio-group"
-                disabled={!selectedForm || Object.keys(formDefinitions).length === 0 || spinner}
-              >
-                <GoARadioItem name="formatOptions" value="json"></GoARadioItem>
-                <GoARadioItem name="formatOptions" value="csv"></GoARadioItem>
-              </GoARadioGroup>
-              {exportFormat === 'csv' && (
-                <GoADetails heading="Columns configuration">
-                  <div>
-                    <h4>Standard properties</h4>
-                    {columns
-                      .filter((col) => col.group === 'Standard properties')
-                      .map((col) => (
-                        <label key={col.id}>
-                          <GoACheckbox
-                            name={col.id}
-                            text={col.id}
-                            checked={col.selected}
-                            onChange={() => handleColumnToggle(col.id)}
-                          />
-                        </label>
-                      ))}
-                  </div>
+          <div>
+            <GoARadioGroup
+              name="formatOptions"
+              value={exportFormat}
+              onChange={(_, value) => setExportFormat(value as ExportFormat)}
+              orientation="horizontal"
+              testId="status-radio-group"
+              disabled={!selectedForm || Object.keys(formDefinitions).length === 0 || spinner}
+            >
+              <GoARadioItem name="formatOptions" value="json"></GoARadioItem>
+              <GoARadioItem name="formatOptions" value="csv"></GoARadioItem>
+            </GoARadioGroup>
+            {exportFormat === 'csv' && (
+              <GoADetails heading="Columns configuration">
+                <div>
+                  <h4>Standard properties</h4>
+                  {columns
+                    .filter((col) => col.group === 'Standard properties')
+                    .map((col) => (
+                      <label key={col.id}>
+                        <GoACheckbox
+                          name={col.id}
+                          text={col.id}
+                          checked={col.selected}
+                          onChange={() => handleColumnToggle(col.id)}
+                        />
+                      </label>
+                    ))}
+                </div>
 
-                  <div>
-                    <h4>Form data</h4>
-                    {columns
-                      .sort()
-                      .filter((col) => col.group === 'Form data')
-                      .map((col) => (
-                        <label key={col.id}>
-                          <GoACheckbox
-                            name={col.id}
-                            text={col.id}
-                            checked={col.selected}
-                            onChange={() => handleColumnToggle(col.id)}
-                          />
-                        </label>
-                      ))}
-                  </div>
-                </GoADetails>
-              )}
-            </div>
-          )}
+                <div>
+                  <h4>Form data</h4>
+                  {columns
+                    .sort()
+                    .filter((col) => col.group === 'Form data')
+                    .map((col) => (
+                      <label key={col.id}>
+                        <GoACheckbox
+                          name={col.id}
+                          text={col.id}
+                          checked={col.selected}
+                          onChange={() => handleColumnToggle(col.id)}
+                        />
+                      </label>
+                    ))}
+                </div>
+              </GoADetails>
+            )}
+          </div>
         </GoAFormItem>
         <GoADivider mb="l" />
         {!spinner && (
@@ -307,7 +306,7 @@ export const FormExport = (): JSX.Element => {
               type="secondary"
               testId="export-download-button"
               size="normal"
-              disabled={iconDisable || spinner}
+              disabled={downloadDisable || spinner}
               onClick={() => {
                 onDownloadFile(currentFile);
               }}
@@ -320,7 +319,7 @@ export const FormExport = (): JSX.Element => {
         {spinner && <GoACircularProgress message={loadingMessage} visible={true} size="small" />}
 
         <br />
-        {!spinner && !iconDisable && socketStatus()}
+        {!spinner && !downloadDisable && socketStatus()}
       </div>
     </section>
   );

@@ -56,7 +56,7 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
   return (
     <tr key={form.urn}>
       <td>{topic?.requiresAttention && <GoAIcon type="mail-unread" size="small" />}</td>
-      <td>{form.created.toFormat('LLL dd, yyyy')}</td>
+      <td>{form.created.toFormat('LLL d, yyyy')}</td>
       <td>{form.status}</td>
       {dataValues.map(({ path }) => (
         <DataValueCell key={path}>{form.values[path]}</DataValueCell>

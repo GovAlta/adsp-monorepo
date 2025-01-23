@@ -3,10 +3,19 @@ components:
     Tag:
       type: object
       properties:
+        urn:
+          type: string
         label:
           type: string
         value:
           type: string
+        _links:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              href:
+                type: string
     Resource:
       type: object
       properties:
@@ -18,6 +27,15 @@ components:
           type: string
         type:
           type: string
+        _links:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              href:
+                type: string
+        _embedded:
+          type: object
     ResourceSpecification:
       type: object
       properties:
@@ -133,6 +151,30 @@ components:
       401:
         description: Unauthorized
 
+/resource/v1/tags/{tag}:
+  get:
+    tags:
+      - Resource
+    description: Retrieves a tag.
+    parameters:
+      - name: tag
+        description: Value of the tag.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Tag"
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
 /resource/v1/tags/{tag}/resources:
   get:
     tags:
@@ -151,6 +193,21 @@ components:
         required: false
         schema:
           type: string
+      - name: includeRepresents
+        description: Flag indicating if resolved represented resource should be embedded in response.
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: criteria
+        description: Criteria for the resources to return.
+        in: query
+        required: false
+        schema:
+          type: object
+          properties:
+            typeEquals:
+              type: string
       - name: tag
         description: Value of the tag.
         in: path
@@ -169,6 +226,137 @@ components:
                   type: array
                   items:
                     $ref: "#/components/schemas/Resource"
+                page:
+                  type: object
+                  properties:
+                    next:
+                      description: Cursor for requesting the next next page, if any.  Next will be undefined if no more results are available.
+                      example: Ng==
+                      type: string
+                    size:
+                      description: The number of results returned.
+                      example: 10
+                      type: number
+                    after:
+                      description: |
+                        The cursor used to generate the current page. Note - Do not use this as the *after* parameter in subsequent calls,
+                        as it will just repeat the set just returned.
+                      example: Mw==
+                      type: string
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+/resource/v1/resources:
+  get:
+    tags:
+      - Resource
+    description: Retrieves resources.
+    parameters:
+      - name: criteria
+        description: Criteria for the resources to return.
+        in: query
+        required: false
+        schema:
+          type: object
+          properties:
+            typeEquals:
+              type: string
+    responses:
+      200:
+        description: Request completed successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Resource"
+                page:
+                  type: object
+                  properties:
+                    next:
+                      description: Cursor for requesting the next next page, if any.  Next will be undefined if no more results are available.
+                      example: Ng==
+                      type: string
+                    size:
+                      description: The number of results returned.
+                      example: 10
+                      type: number
+                    after:
+                      description: |
+                        The cursor used to generate the current page. Note - Do not use this as the *after* parameter in subsequent calls,
+                        as it will just repeat the set just returned.
+                      example: Mw==
+                      type: string
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+/resource/v1/resources/{resource}:
+  get:
+    tags:
+      - Resource
+    description: Retrieves a resource.
+    parameters:
+      - name: resource
+        description: URN of the resource.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Resource"
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+/resource/v1/resources/{resource}/tags:
+  get:
+    tags:
+      - Resource
+    description: Retrieves tags of a resource.
+    parameters:
+      - name: resource
+        description: URN of the resource.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: top
+        description: Number of results to retrieve.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for page of results to retrieve.
+        in: query
+        required: false
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Tag"
                 page:
                   type: object
                   properties:

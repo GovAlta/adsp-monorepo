@@ -6,7 +6,13 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+} from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -60,6 +66,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantService,
     tokenProvider,
     configurationService,
+    configurationHandler,
     clearCached,
     metricsHandler,
     tenantHandler,
@@ -107,7 +114,7 @@ const initializeApp = async (): Promise<express.Application> => {
         tenantId: AdspId
       ) =>
         new DirectoryConfiguration(
-          { logger, directory, tokenProvider, repository: repositories.directoryRepository },
+          { logger, directory, repository: repositories.directoryRepository },
           tenant,
           core,
           tenantId
@@ -118,6 +125,30 @@ const initializeApp = async (): Promise<express.Application> => {
       directoryUrl: new URL(environment.DIRECTORY_URL),
       eventStreams: [EntryUpdatesStream],
       values: [ServiceMetricsValueDefinition],
+      serviceConfigurations: [
+        {
+          serviceId: adspId`urn:ads:platform:cache-service`,
+          configuration: {
+            targets: {
+              [`${serviceId}:resource-v1`]: {
+                ttl: 8 * 60 * 60,
+                invalidationEvents: [
+                  {
+                    namespace: serviceId.service,
+                    name: TaggedResourceDefinition.name,
+                    resourceIdPath: ['tag._links.resources.href', 'resource._links.tags.href'],
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: UntaggedResourceDefinition.name,
+                    resourceIdPath: ['tag._links.resources.href', 'resource._links.tags.href'],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ],
     },
     { logger },
     {
@@ -157,12 +188,20 @@ const initializeApp = async (): Promise<express.Application> => {
   const queueService = await createDirectoryQueueService({ ...environment, logger });
 
   app.use('/directory', metricsHandler, passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }));
-  app.use('/resource', metricsHandler, passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
+  app.use(
+    '/resource',
+    metricsHandler,
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
+
   applyDirectoryMiddleware(app, {
     ...repositories,
     serviceId,
     logger,
     directory,
+    tokenProvider,
     tenantService,
     eventService,
     configurationService,
@@ -193,9 +232,11 @@ const initializeApp = async (): Promise<express.Application> => {
         health: { href: new URL('/health', rootUrl).href },
         api: [
           {
+            name: 'directory-v2',
             href: new URL('/directory/v2', rootUrl).href,
           },
           {
+            name: 'resource-v1',
             href: new URL('/resource/v1', rootUrl).href,
           },
         ],

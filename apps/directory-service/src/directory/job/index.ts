@@ -1,4 +1,4 @@
-import { AdspId, ConfigurationService, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { DomainEvent, WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { TAGGED_RESOURCE } from '../events';
@@ -8,6 +8,7 @@ import { createResolveJob } from './resolve';
 interface DirectoryJobProps {
   serviceId: AdspId;
   logger: Logger;
+  tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
   eventService: EventService;
   queueService: WorkQueueService<DomainEvent>;
@@ -16,11 +17,12 @@ interface DirectoryJobProps {
 export function createDirectoryJobs({
   serviceId,
   logger,
+  tokenProvider,
   configurationService,
   eventService,
   queueService,
 }: DirectoryJobProps) {
-  const resolveJob = createResolveJob({ logger, configurationService, eventService });
+  const resolveJob = createResolveJob({ logger, tokenProvider, configurationService, eventService });
   const deleteJob = createDeleteJob({ logger, configurationService });
 
   queueService.getItems().subscribe(({ item, retryOnError, done }) => {

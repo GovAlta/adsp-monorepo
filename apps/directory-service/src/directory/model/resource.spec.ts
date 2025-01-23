@@ -1,5 +1,5 @@
 import { AdspId, adspId } from '@abgov/adsp-service-sdk';
-import { DomainEvent, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { DomainEvent, InvalidOperationError } from '@core-services/core-common';
 import axios from 'axios';
 import { Logger } from 'winston';
 import { ResourceType } from './resource';
@@ -22,10 +22,6 @@ describe('ResourceType', () => {
     getResourceUrl: jest.fn(),
   };
 
-  const tokenProviderMock = {
-    getAccessToken: jest.fn(() => Promise.resolve('test')),
-  };
-
   const repositoryMock = {
     find: jest.fn(),
     getDirectories: jest.fn(),
@@ -36,6 +32,7 @@ describe('ResourceType', () => {
     getTaggedResources: jest.fn(),
     applyTag: jest.fn(),
     removeTag: jest.fn(),
+    getResources: jest.fn(),
     saveResource: jest.fn(),
     deleteResource: jest.fn(),
   };
@@ -45,10 +42,11 @@ describe('ResourceType', () => {
     axiosMock.isAxiosError.mockClear();
     directoryMock.getResourceUrl.mockClear();
     repositoryMock.deleteResource.mockClear();
+    repositoryMock.saveResource.mockClear();
   });
 
   it('can be created', () => {
-    const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+    const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
       type: 'test',
       matcher: '^\\/tests',
       namePath: 'testName',
@@ -60,7 +58,7 @@ describe('ResourceType', () => {
 
   describe('matches', () => {
     it('can match urn', () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -74,7 +72,7 @@ describe('ResourceType', () => {
     });
 
     it('can throw for non-resource URN', () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -86,8 +84,8 @@ describe('ResourceType', () => {
   });
 
   describe('resolve', () => {
-    it('can resolve resource', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+    it('can resolve resource and sync', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -103,7 +101,7 @@ describe('ResourceType', () => {
       axiosMock.get.mockResolvedValueOnce({ data: { testName: name, testDescription: description } });
       repositoryMock.saveResource.mockImplementationOnce((resource) => Promise.resolve(resource));
 
-      const result = await type.resolve({ tenantId, urn });
+      const result = await type.resolve('token', { tenantId, urn }, true);
       expect(result.tenantId).toBe(tenantId);
       expect(result.urn).toBe(urn);
       expect(result.name).toBe(name);
@@ -113,8 +111,33 @@ describe('ResourceType', () => {
       );
     });
 
+    it('can resolve resource and not sync', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+      });
+
+      const resourceUrl = new URL('https://test-service.com/test/v1/tests/123');
+      directoryMock.getResourceUrl.mockResolvedValueOnce(resourceUrl);
+
+      const urn = adspId`urn:ads:platform:test-service:v1:/tests/123`;
+      const name = 'Test 123';
+      const description = 'This is a description.';
+      axiosMock.get.mockResolvedValueOnce({ data: { testName: name, testDescription: description } });
+      repositoryMock.saveResource.mockImplementationOnce((resource) => Promise.resolve(resource));
+
+      const result = await type.resolve('token', { tenantId, urn });
+      expect(result.tenantId).toBe(tenantId);
+      expect(result.urn).toBe(urn);
+      expect(result.name).toBe(name);
+      expect(result.description).toBe(description);
+      expect(repositoryMock.saveResource).not.toHaveBeenCalled();
+    });
+
     it('can default description getter', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -129,7 +152,7 @@ describe('ResourceType', () => {
       axiosMock.get.mockResolvedValueOnce({ data: { testName: name, testDescription: description } });
       repositoryMock.saveResource.mockImplementationOnce((resource) => Promise.resolve(resource));
 
-      const result = await type.resolve({ tenantId, urn });
+      const result = await type.resolve('token', { tenantId, urn });
       expect(result.tenantId).toBe(tenantId);
       expect(result.urn).toBe(urn);
       expect(result.name).toBe(name);
@@ -137,7 +160,7 @@ describe('ResourceType', () => {
     });
 
     it('can throw on resolve error', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -150,11 +173,12 @@ describe('ResourceType', () => {
       const urn = adspId`urn:ads:platform:test-service:v1:/tests/123`;
       axiosMock.get.mockRejectedValueOnce(new Error('Oh noes!'));
 
-      await expect(type.resolve({ tenantId, urn })).rejects.toThrowError();
+      const resource = { tenantId, urn };
+      await expect(type.resolve('token', resource)).resolves.toBe(resource);
     });
 
     it('can throw for resource not in directory', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -164,11 +188,12 @@ describe('ResourceType', () => {
       directoryMock.getResourceUrl.mockResolvedValueOnce(null);
 
       const urn = adspId`urn:ads:platform:test-service:v1:/tests/123`;
-      await expect(type.resolve({ tenantId, urn })).rejects.toThrow(NotFoundError);
+      const resource = { tenantId, urn };
+      await expect(type.resolve('token', resource)).resolves.toBe(resource);
     });
 
     it('can throw for not matched resource', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -176,22 +201,23 @@ describe('ResourceType', () => {
       });
 
       await expect(
-        type.resolve({ tenantId, urn: adspId`urn:ads:platform:test-service:v1:/results/123` })
+        type.resolve('token', { tenantId, urn: adspId`urn:ads:platform:test-service:v1:/results/123` })
       ).rejects.toThrow(InvalidOperationError);
     });
 
     it('can throw for null resource', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
         descriptionPath: 'testDescription',
       });
 
-      await expect(type.resolve(null)).rejects.toThrow(Error);
+      await expect(type.resolve('token', null)).rejects.toThrow(Error);
     });
-    it('can delete not found resource', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+
+    it('can delete not found resource if sync true', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -210,15 +236,39 @@ describe('ResourceType', () => {
 
       repositoryMock.deleteResource.mockResolvedValueOnce(true);
 
-      const result = await type.resolve({ tenantId, urn });
+      const result = await type.resolve('token', { tenantId, urn }, true);
       expect(result).toBeUndefined();
       expect(repositoryMock.deleteResource).toHaveBeenCalledWith(expect.objectContaining({ tenantId, urn }));
+    });
+
+    it('can not delete on not found resource if sync false', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+      });
+
+      const resourceUrl = new URL('https://test-service.com/test/v1/tests/123');
+      directoryMock.getResourceUrl.mockResolvedValueOnce(resourceUrl);
+
+      const urn = adspId`urn:ads:platform:test-service:v1:/tests/123`;
+
+      const error = new Error('oh noes!');
+      error['response'] = { status: 404 };
+      axiosMock.get.mockRejectedValueOnce(error);
+      axiosMock.isAxiosError.mockReturnValueOnce(true);
+
+      const resource = { tenantId, urn };
+      const result = await type.resolve('token', resource);
+      expect(result).toBe(resource);
+      expect(repositoryMock.deleteResource).not.toHaveBeenCalled();
     });
   });
 
   describe('processDeleteEvent', () => {
     it('can delete resource on event', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -253,7 +303,7 @@ describe('ResourceType', () => {
     });
 
     it('can return null if no resource deleted', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -288,7 +338,7 @@ describe('ResourceType', () => {
     });
 
     it('can throw on null event', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -304,7 +354,7 @@ describe('ResourceType', () => {
     });
 
     it('can throw on malformed event', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',
@@ -330,7 +380,7 @@ describe('ResourceType', () => {
     });
 
     it('can throw on no resource ID from event payload', async () => {
-      const type = new ResourceType(loggerMock, directoryMock, tokenProviderMock, repositoryMock, {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
         namePath: 'testName',

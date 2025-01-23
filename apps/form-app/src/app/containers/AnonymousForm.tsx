@@ -1,9 +1,8 @@
-import { Container, Recaptcha } from '@core-services/app-common';
+import { Container, Grid, GridItem, Recaptcha } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { DraftFormWrapper } from '../components/DraftFormWrapper';
-import { LoadingIndicator } from '../components/LoadingIndicator';
 import { SubmittedForm } from '../components/SubmittedForm';
 import styled from 'styled-components';
 import {
@@ -29,7 +28,7 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
   const dispatch = useDispatch<AppDispatch>();
 
   const recaptchaKey = useSelector((state: AppState) => state.config.environment.recaptchaKey);
-  const { definition, initialized } = useSelector(definitionSelector);
+  const { definition } = useSelector(definitionSelector);
   const form = useSelector(formSelector);
   const data = useSelector(dataSelector);
   const files = useSelector(filesSelector);
@@ -39,38 +38,42 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
 
   return (
     <div key={`anonymous-${definition?.id}`}>
-      <LoadingIndicator isLoading={!initialized} />
       <div className={className}>
         <Container vs={1} hs={1}>
-          {initialized &&
-            (definition?.anonymousApply ? (
-              <>
-                {form?.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
-                {!form && (
-                  <DraftFormWrapper
-                    definition={definition}
-                    form={form}
-                    data={data}
-                    canSubmit={canSubmit}
-                    showSubmit={showSubmit}
-                    saving={busy.saving}
-                    anonymousApply={definition?.anonymousApply}
-                    submitting={busy.submitting}
-                    onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
-                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
-                    }}
-                    onSubmit={function () {
-                      dispatch(submitAnonymousForm());
-                    }}
-                  />
-                )}
-              </>
-            ) : (
-              <Navigate to=".." />
-            ))}
+          {definition?.anonymousApply ? (
+            <>
+              {form?.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
+              {!form && (
+                <DraftFormWrapper
+                  definition={definition}
+                  form={form}
+                  data={data}
+                  canSubmit={canSubmit}
+                  showSubmit={showSubmit}
+                  saving={busy.saving}
+                  anonymousApply={definition.anonymousApply}
+                  submitting={busy.submitting}
+                  onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+                  }}
+                  onSubmit={function () {
+                    dispatch(submitAnonymousForm());
+                  }}
+                />
+              )}
+            </>
+          ) : (
+            <Navigate to=".." />
+          )}
+          <Grid>
+            <GridItem md={1} />
+            <GridItem md={10}>
+              <Recaptcha siteKey={recaptchaKey} showBranding={true} />
+            </GridItem>
+            <GridItem md={1} />
+          </Grid>
         </Container>
       </div>
-      <Recaptcha siteKey={recaptchaKey} />
     </div>
   );
 };

@@ -1,11 +1,14 @@
-import type { DomainEvent, DomainEventDefinition, User, Stream } from '@abgov/adsp-service-sdk';
-import { Resource, Tag } from './types';
+import type { DomainEvent, DomainEventDefinition, User, Stream, AdspId } from '@abgov/adsp-service-sdk';
+import type { mapResource, mapTag } from './mapper';
 
 const ENTRY_UPDATED = 'entry-updated';
 const ENTRY_DELETED = 'entry-deleted';
 export const TAGGED_RESOURCE = 'tagged-resource';
 const UNTAGGED_RESOURCE = 'untagged-resource';
 const RESOURCE_RESOLUTION_FAILED = 'resource-resolution-failed';
+
+type Tag = ReturnType<typeof mapTag>;
+type Resource = ReturnType<typeof mapResource>;
 
 export const EntryUpdatedDefinition: DomainEventDefinition = {
   name: ENTRY_UPDATED,
@@ -85,6 +88,7 @@ export const TaggedResourceDefinition: DomainEventDefinition = {
       tag: {
         type: 'object',
         properties: {
+          urn: { type: 'string' },
           label: { type: 'string' },
           value: { type: 'string' },
         },
@@ -117,6 +121,7 @@ export const UntaggedResourceDefinition: DomainEventDefinition = {
       tag: {
         type: 'object',
         properties: {
+          urn: { type: 'string' },
           label: { type: 'string' },
           value: { type: 'string' },
         },
@@ -202,10 +207,16 @@ export const entryDeleted = (
   },
 });
 
-export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, isNewResource: boolean): DomainEvent => ({
+export const taggedResource = (
+  tenantId: AdspId,
+  resource: Resource,
+  tag: Tag,
+  updatedBy: User,
+  isNewResource: boolean
+): DomainEvent => ({
   name: TAGGED_RESOURCE,
   timestamp: new Date(),
-  tenantId: resource.tenantId,
+  tenantId,
   correlationId: tag.value,
   context: {
     tag: tag.value,
@@ -213,15 +224,10 @@ export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, is
   },
   payload: {
     resource: {
-      urn: resource.urn.toString(),
-      name: resource.name,
-      description: resource.description,
+      ...resource,
       isNew: isNewResource,
     },
-    tag: {
-      label: tag.label,
-      value: tag.value,
-    },
+    tag,
     updatedBy: {
       id: updatedBy.id,
       name: updatedBy.name,
@@ -229,25 +235,18 @@ export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, is
   },
 });
 
-export const untaggedResource = (resource: Resource, tag: Tag, updatedBy: User): DomainEvent => ({
+export const untaggedResource = (tenantId: AdspId, resource: Resource, tag: Tag, updatedBy: User): DomainEvent => ({
   name: UNTAGGED_RESOURCE,
   timestamp: new Date(),
-  tenantId: resource.tenantId,
+  tenantId,
   correlationId: tag.value,
   context: {
     tag: tag.value,
     resources: resource.urn.toString(),
   },
   payload: {
-    resource: {
-      urn: resource.urn.toString(),
-      name: resource.name,
-      description: resource.description,
-    },
-    tag: {
-      label: tag.label,
-      value: tag.value,
-    },
+    resource,
+    tag,
     updatedBy: {
       id: updatedBy.id,
       name: updatedBy.name,
@@ -255,18 +254,18 @@ export const untaggedResource = (resource: Resource, tag: Tag, updatedBy: User):
   },
 });
 
-export const resourceResolutionFailed = (resource: Resource, type: string, error: string): DomainEvent => ({
+export const resourceResolutionFailed = (tenantId: AdspId, urn: AdspId, type: string, error: string): DomainEvent => ({
   name: RESOURCE_RESOLUTION_FAILED,
   timestamp: new Date(),
-  tenantId: resource.tenantId,
+  tenantId,
   correlationId: type,
   context: {
-    resources: resource.urn.toString(),
+    resources: urn.toString(),
     type,
   },
   payload: {
     resource: {
-      urn: resource.urn.toString(),
+      urn: urn.toString(),
     },
     type,
     error,

@@ -1,8 +1,8 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import { Logger } from 'winston';
-import { DirectoryConfiguration } from './configuration';
-import { ResourceType } from '../model';
 import { DomainEvent } from '@core-services/core-common';
+import { Logger } from 'winston';
+import { ResourceType } from '../model';
+import { DirectoryConfiguration } from './configuration';
 
 describe('configuration', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -19,10 +19,6 @@ describe('configuration', () => {
     getResourceUrl: jest.fn(),
   };
 
-  const tokenProviderMock = {
-    getAccessToken: jest.fn(() => Promise.resolve('test')),
-  };
-
   const repositoryMock = {
     find: jest.fn(),
     getDirectories: jest.fn(),
@@ -33,6 +29,7 @@ describe('configuration', () => {
     getTaggedResources: jest.fn(),
     applyTag: jest.fn(),
     removeTag: jest.fn(),
+    getResources: jest.fn(),
     saveResource: jest.fn(),
     deleteResource: jest.fn(),
   };
@@ -42,7 +39,6 @@ describe('configuration', () => {
       {
         logger: loggerMock,
         directory: directoryMock,
-        tokenProvider: tokenProviderMock,
         repository: repositoryMock,
       },
       {},
@@ -60,7 +56,6 @@ describe('configuration', () => {
         {
           logger: loggerMock,
           directory: directoryMock,
-          tokenProvider: tokenProviderMock,
           repository: repositoryMock,
         },
         {},
@@ -89,7 +84,6 @@ describe('configuration', () => {
         {
           logger: loggerMock,
           directory: directoryMock,
-          tokenProvider: tokenProviderMock,
           repository: repositoryMock,
         },
         {
@@ -118,7 +112,6 @@ describe('configuration', () => {
         {
           logger: loggerMock,
           directory: directoryMock,
-          tokenProvider: tokenProviderMock,
           repository: repositoryMock,
         },
         {
@@ -157,7 +150,6 @@ describe('configuration', () => {
         {
           logger: loggerMock,
           directory: directoryMock,
-          tokenProvider: tokenProviderMock,
           repository: repositoryMock,
         },
         {},
@@ -196,7 +188,6 @@ describe('configuration', () => {
         {
           logger: loggerMock,
           directory: directoryMock,
-          tokenProvider: tokenProviderMock,
           repository: repositoryMock,
         },
         {},
@@ -240,7 +231,6 @@ describe('configuration', () => {
         {
           logger: loggerMock,
           directory: directoryMock,
-          tokenProvider: tokenProviderMock,
           repository: repositoryMock,
         },
         {},

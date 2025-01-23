@@ -91,8 +91,7 @@ export const FormTenant = () => {
           <section>
             <Routes>
               <Route path={`/:definitionId/*`} element={<FormDefinition />} />
-              <Route path="/" element={<div>{tenant?.name || tenantName}</div>} />
-              <Route path="*" element={<Navigate to={`/${tenantName}`} replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </section>
         )}

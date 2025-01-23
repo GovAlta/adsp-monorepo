@@ -1,4 +1,4 @@
-import { AdspId, ConfigurationService, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { DirectoryConfiguration } from '../configuration';
 import { resourceResolutionFailed } from '../events';
@@ -6,11 +6,12 @@ import { ResourceType } from '../model';
 
 interface ResolveJobProps {
   logger: Logger;
+  tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
   eventService: EventService;
 }
 
-export function createResolveJob({ logger, configurationService, eventService }: ResolveJobProps) {
+export function createResolveJob({ logger, tokenProvider, configurationService, eventService }: ResolveJobProps) {
   return async (tenantId: AdspId, urn: AdspId, retryOnError: boolean, done: (err?: Error) => void) => {
     const resource = { tenantId, urn };
     let type: ResourceType;
@@ -27,8 +28,9 @@ export function createResolveJob({ logger, configurationService, eventService }:
           tenant: tenantId.toString(),
         });
 
-        const result = await type.resolve(resource);
-        if (result) {
+        const token = await tokenProvider.getAccessToken();
+        const result = await type.resolve(token, resource, true);
+        if (result?.data) {
           logger.info(`Resolved resource ${urn} to name '${result.name}' and description '${result.description}'.`, {
             context: 'ResolveJob',
             tenant: tenantId.toString(),
@@ -59,7 +61,7 @@ export function createResolveJob({ logger, configurationService, eventService }:
           context: 'ResolveJob',
           tenant: tenantId.toString(),
         });
-        eventService.send(resourceResolutionFailed(resource, type?.type, `${err}`));
+        eventService.send(resourceResolutionFailed(tenantId, urn, type?.type, `${err}`));
       }
     }
   };

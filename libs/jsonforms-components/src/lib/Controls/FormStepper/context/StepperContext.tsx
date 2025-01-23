@@ -34,13 +34,14 @@ const createStepperContextInitData = (
 
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope');
-    const incompletePaths = getIncompletePaths(ajv, pickPropertyValues(c, 'scope'));
+    // ListWithDetail path might have conflicts with others. The errors in ListWithDetail will still be caught in the ctx.core.errors
+    const incompletePaths = getIncompletePaths(ajv, pickPropertyValues(c, 'scope', 'ListWithDetail'));
 
     return {
       id,
       label: deriveLabelForUISchemaElement(c, t) as string,
       scopes,
-      isVisited: id === 0,
+      isVisited: false,
       isCompleted: incompletePaths?.length === 0,
       isValid: incompletePaths?.length === 0,
       uischema: c,
@@ -54,8 +55,8 @@ const createStepperContextInitData = (
   return {
     categories: categories,
     activeId,
-    hasNextButton: true,
-    hasPrevButton: activeId > 0,
+    hasNextButton: true && activeId !== categories?.length,
+    hasPrevButton: activeId > 0 && activeId !== categories?.length,
     path,
     isOnReview: activeId === categories?.length,
     isValid: valid === true,

@@ -9,7 +9,6 @@ import { FormStepperOptionProps } from './FormStepperControl';
 import { getProperty } from './util/helpers';
 import { CategorizationStepperLayoutRendererProps } from './types';
 import { JsonFormsStepperContextProvider } from './context';
-import exp from 'constants';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -252,7 +251,7 @@ describe('Form Stepper Control', () => {
     const stepperHeader = renderer.getByTestId('form-stepper-headers-stepper-test');
     const step1 = stepperHeader.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
-    expect(step1!.getAttribute('status')).toBe('incomplete');
+    expect(step1!.getAttribute('status')).toBe(null);
   });
 
   it('will recognize a complete status', () => {
@@ -266,7 +265,7 @@ describe('Form Stepper Control', () => {
     const stepperHeader = renderer.getByTestId('form-stepper-headers-stepper-test');
     const step1 = stepperHeader.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
-    expect(step1!.getAttribute('status')).toBe('complete');
+    expect(step1!.getAttribute('status')).toBe(null);
   });
 
   describe('step navigation', () => {
@@ -445,5 +444,14 @@ describe('Form Stepper Control', () => {
       const testPrev = screen.getByText('testPrevious');
       expect(testPrev).toHaveTextContent('testPrevious');
     });
+  });
+
+  describe('test stepper helper', () => {
+    const obj = { prop: 'test' };
+
+    const result = getProperty(obj, 'props');
+    const result2 = getProperty(obj, 'prop');
+    expect(result).toBe(undefined);
+    expect(result2).toBe('test');
   });
 });

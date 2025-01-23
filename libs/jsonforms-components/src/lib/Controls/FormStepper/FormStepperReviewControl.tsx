@@ -9,7 +9,6 @@ import { withAjvProps } from '../../util/layout';
 import { GoAGrid } from '@abgov/react-components-new';
 import { FormStepperComponentProps } from './types';
 import { GoAReviewRenderers } from '../../../index';
-import { CategorizationStepperLayoutRendererProps } from './types';
 
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;
