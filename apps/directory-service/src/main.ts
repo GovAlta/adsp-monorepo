@@ -136,12 +136,12 @@ const initializeApp = async (): Promise<express.Application> => {
                   {
                     namespace: serviceId.service,
                     name: TaggedResourceDefinition.name,
-                    resourceIdPath: 'tag._links.resources.href',
+                    resourceIdPath: ['tag._links.resources.href', 'resource._links.tags.href'],
                   },
                   {
                     namespace: serviceId.service,
                     name: UntaggedResourceDefinition.name,
-                    resourceIdPath: 'tag._links.resources.href',
+                    resourceIdPath: ['tag._links.resources.href', 'resource._links.tags.href'],
                   },
                 ],
               },

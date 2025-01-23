@@ -8,6 +8,9 @@ export function mapTag(apiId: AdspId, tag: Tag) {
         label: tag.label,
         value: tag.value,
         _links: {
+          self: {
+            href: `${apiId}:/tags/${tag.value}`,
+          },
           resources: {
             href: `${apiId}:/tags/${tag.value}/resources`,
           },
@@ -16,7 +19,7 @@ export function mapTag(apiId: AdspId, tag: Tag) {
     : null;
 }
 
-export function mapResource(resource: Resource) {
+export function mapResource(apiId: AdspId, resource: Resource) {
   return resource
     ? {
         urn: resource.urn.toString(),
@@ -24,7 +27,15 @@ export function mapResource(resource: Resource) {
         description: resource.description,
         type: resource.type,
         _links: {
-          represents: { href: resource.urn.toString() },
+          self: {
+            href: `${apiId}:/resources/${encodeURIComponent(resource.urn.toString())}`,
+          },
+          represents: {
+            href: resource.urn.toString(),
+          },
+          tags: {
+            href: `${apiId}:/resources/${resource.urn}/tags`,
+          },
         },
         _embedded: resource.data && {
           represents: resource.data,

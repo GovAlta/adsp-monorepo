@@ -61,7 +61,7 @@ export function createResolveJob({ logger, tokenProvider, configurationService, 
           context: 'ResolveJob',
           tenant: tenantId.toString(),
         });
-        eventService.send(resourceResolutionFailed(resource, type?.type, `${err}`));
+        eventService.send(resourceResolutionFailed(tenantId, urn, type?.type, `${err}`));
       }
     }
   };
