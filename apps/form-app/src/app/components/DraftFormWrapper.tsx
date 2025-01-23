@@ -1,7 +1,8 @@
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoACallout } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
+import { DateTime } from 'luxon';
 import { FunctionComponent } from 'react';
 import { Form, FormDefinition, ValidationError } from '../state';
 import { DraftForm } from './DraftForm';
@@ -75,10 +76,19 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
     );
   };
 
+  const daysTilIntakeEnd =
+    definition?.intake?.end && Math.round(definition.intake.end?.diff(DateTime.now()).as('days'));
+
   return (
     <Grid>
       <GridItem md={1} />
       <GridItem md={10}>
+        {daysTilIntakeEnd <= 5 && (
+          <GoACallout type="information" heading="Intake closing soon">
+            Intake is closing in {daysTilIntakeEnd} days. Please complete and submit your form before{' '}
+            {definition.intake.end.toFormat('LLLL d, yyyy')} to apply.
+          </GoACallout>
+        )}
         <DraftForm
           definition={definition}
           form={form}

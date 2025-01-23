@@ -1,12 +1,13 @@
 import { AdspId, adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { createResourceRouter, getTaggedResources, getTags, tagOperation } from './resource';
+import { InvalidOperationError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { Request, Response } from 'express';
 import { ServiceRoles } from '../roles';
-import { InvalidOperationError } from '@core-services/core-common';
+import { createResourceRouter, getTaggedResources, getTags, tagOperation } from './resource';
 
 describe('resource', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+  const apiId = adspId`urn:ads:platform:directory-service:resource-v1`;
 
   const loggerMock = {
     debug: jest.fn(),
@@ -49,6 +50,7 @@ describe('resource', () => {
 
   it('can create router', () => {
     const router = createResourceRouter({
+      apiId,
       logger: loggerMock,
       directory: directoryMock,
       eventService: eventServiceMock,
@@ -59,7 +61,7 @@ describe('resource', () => {
 
   describe('getTags', () => {
     it('can create handler', () => {
-      const handler = getTags(repositoryMock);
+      const handler = getTags(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -81,7 +83,7 @@ describe('resource', () => {
       ];
       repositoryMock.getTags.mockResolvedValueOnce({ results, page });
 
-      const handler = getTags(repositoryMock);
+      const handler = getTags(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         10,
@@ -114,7 +116,7 @@ describe('resource', () => {
       ];
       repositoryMock.getTags.mockResolvedValueOnce({ results, page });
 
-      const handler = getTags(repositoryMock);
+      const handler = getTags(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         42,
@@ -138,7 +140,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = getTags(repositoryMock);
+      const handler = getTags(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
@@ -147,7 +149,7 @@ describe('resource', () => {
 
   describe('tagOperation', () => {
     it('can create handler', () => {
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -179,7 +181,7 @@ describe('resource', () => {
       };
       repositoryMock.applyTag.mockResolvedValueOnce({ tag, resource, tagged: true });
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.applyTag).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, ...tag }),
@@ -227,7 +229,7 @@ describe('resource', () => {
       };
       repositoryMock.removeTag.mockResolvedValueOnce({ tag, resource, untagged: true });
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.removeTag).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, ...tag }),
@@ -275,7 +277,7 @@ describe('resource', () => {
       };
       repositoryMock.applyTag.mockResolvedValueOnce({ tag, resource, tagged: true });
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.applyTag).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, ...req.body.tag }),
@@ -312,7 +314,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -337,7 +339,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -359,7 +361,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -382,7 +384,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -404,7 +406,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -429,7 +431,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -454,7 +456,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -481,7 +483,7 @@ describe('resource', () => {
 
       directoryMock.getResourceUrl.mockResolvedValueOnce(null);
 
-      const handler = tagOperation(loggerMock, directoryMock, eventServiceMock, repositoryMock);
+      const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -572,6 +574,61 @@ describe('resource', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can get tagged resources and include data', async () => {
+      const req = {
+        getServiceConfiguration: jest.fn(),
+        tenant: { id: tenantId },
+        user: {
+          tenantId,
+          id: 'tester',
+          name: 'Tester',
+          roles: [ServiceRoles.ResourceBrowser],
+          token: { bearer: 'test' },
+        },
+        params: { tag: 'test-tag' },
+        query: { includeRepresents: 'true' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      const page = {};
+      repositoryMock.getTaggedResources.mockResolvedValueOnce({ results, page });
+
+      const getResourceType = jest.fn();
+      const type = {
+        type: 'test',
+        resolve: jest.fn(),
+      };
+      getResourceType.mockReturnValueOnce(type);
+      const data = {};
+      type.resolve.mockResolvedValueOnce({
+        name: 'Test 123',
+        description: 'This is test 123',
+        data,
+      });
+      req.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
+
+      const handler = getTaggedResources(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTaggedResources).toHaveBeenCalledWith(tenantId, 'test-tag', 10, undefined);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          results: expect.arrayContaining([
+            expect.objectContaining({
+              urn: 'urn:ads:platform:file-service:v1:/files/123',
+              _embedded: expect.objectContaining({ represents: data }),
+            }),
+          ]),
+          page,
+        })
+      );
     });
   });
 });

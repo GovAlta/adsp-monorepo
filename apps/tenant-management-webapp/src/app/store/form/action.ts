@@ -61,7 +61,7 @@ export interface ExportFormInfoAction {
   resource: string;
   format: string;
   selectedColumn?: string[];
-  fileName?: string;
+  fileNamePrefix?: string;
 }
 
 export interface ExportFormInfoSuccessAction {
@@ -248,14 +248,14 @@ export const getExportFormInfo = (
   resource: string,
   format: string,
   selectedColumn: string[],
-  fileName: string
+  fileNamePrefix: string
 ): ExportFormInfoAction => ({
   type: EXPORT_FORM_INFO_ACTION,
   id,
   resource,
   format,
   selectedColumn,
-  fileName,
+  fileNamePrefix,
 });
 
 export const startSocket = (): StartStreamAction => ({

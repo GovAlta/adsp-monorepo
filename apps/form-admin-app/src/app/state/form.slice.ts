@@ -734,8 +734,12 @@ const formSlice = createSlice({
         state.selectedSubmission = meta.arg;
         state.dispositionDraft = initialFormState.dispositionDraft;
       })
-      .addCase(loadDefinitions.pending, (state) => {
+      .addCase(loadDefinitions.pending, (state, { meta }) => {
         state.busy.loading = true;
+        if (!meta.arg.after) {
+          state.results.definitions = [];
+          state.next.definitions = null;
+        }
       })
       .addCase(loadDefinitions.fulfilled, (state, { payload }) => {
         state.busy.loading = false;

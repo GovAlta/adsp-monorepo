@@ -164,8 +164,8 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                         <GoABadge type="success" content={definition.intake.isUpcoming ? 'Upcoming' : 'Active'} />
                       )}
                     </td>
-                    <td>{event.start.toFormat('LLLL dd ttt')}</td>
-                    <td>{event.end.toFormat('LLLL dd ttt')}</td>
+                    <td>{event.start.toFormat('LLL d, yyyy ttt')}</td>
+                    <td>{event.end.toFormat('LLL d, yyyy ttt')}</td>
                     <td>
                       <GoAIconButton icon="trash" onClick={() => dispatch(deleteEvent(event.urn))} />
                     </td>

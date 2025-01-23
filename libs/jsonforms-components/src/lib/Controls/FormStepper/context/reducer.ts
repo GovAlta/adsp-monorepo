@@ -74,7 +74,6 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
         ctx.core.errors only includes required errors when the fields are touched. In this case, we still ajv to figure out the required errors at the very beginning.
        */
       const incompletePaths = getIncompletePaths(ajv, state.categories[id].scopes);
-
       const errorsInCategory = getErrorsInScopes(errors, state.categories[id].scopes || []);
       state.categories[id].isCompleted = incompletePaths?.length === 0;
       state.categories[id].isValid = errorsInCategory.length === 0;

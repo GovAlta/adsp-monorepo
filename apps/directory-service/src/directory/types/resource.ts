@@ -11,7 +11,8 @@ export interface Resource {
   urn: AdspId;
   name?: string;
   description?: string;
-  type?: string
+  type?: string;
+  data?: unknown;
 }
 
 export interface TagCriteria {

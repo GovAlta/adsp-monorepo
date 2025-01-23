@@ -19,7 +19,15 @@ import { WithBasicDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid, GoAIconButton, GoAContainer, GoATable, GoAInput, GoAFormItem } from '@abgov/react-components-new';
+import {
+  GoAGrid,
+  GoAIconButton,
+  GoAContainer,
+  GoATable,
+  GoAInput,
+  GoAFormItem,
+  GoACallout,
+} from '@abgov/react-components-new';
 import { ToolBarHeader, ObjectArrayTitle, TextCenter, NonEmptyCellStyle, TableTHHeader } from './styled-components';
 import { convertToSentenceCase, Visible } from '../../util';
 import { GoAReviewRenderers } from '../../../index';
@@ -41,6 +49,7 @@ interface DataProperty {
   type: string;
   format?: string;
   maxLength?: number;
+  enum: string[];
 }
 interface DataObject {
   [key: string]: DataProperty;
@@ -294,20 +303,31 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           </div>
                         ) : (
                           <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
-                            <GoAInput
-                              type={dataObject.type === 'number' ? 'number' : 'text'}
-                              id={schemaName}
-                              name={schemaName}
-                              value={data && data[num] ? (data[num][element] as unknown as string) : ''}
-                              testId={`#/properties/${schemaName}-input-${i}`}
-                              onChange={(name: string, value: string) => {
-                                handleChange(rowPath, {
-                                  [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
-                                });
-                              }}
-                              aria-label={schemaName}
-                              width="100%"
-                            />
+                            {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
+                              <GoAInput
+                                type={dataObject.type === 'number' ? 'number' : 'text'}
+                                id={schemaName}
+                                name={schemaName}
+                                value={data && data[num] ? (data[num][element] as unknown as string) : ''}
+                                testId={`#/properties/${schemaName}-input-${i}`}
+                                onChange={(name: string, value: string) => {
+                                  handleChange(rowPath, {
+                                    [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
+                                  });
+                                }}
+                                aria-label={schemaName}
+                                width="100%"
+                              />
+                            ) : (
+                              <GoACallout
+                                type="important"
+                                size="medium"
+                                testId="form-support-callout"
+                                heading="Not supported"
+                              >
+                                Only string and number are supported inside arrays
+                              </GoACallout>
+                            )}
                           </GoAFormItem>
                         )}
                       </td>
@@ -529,9 +549,13 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     }
 
     if (currentCategory?.count > 0) currentCategory.count--;
-    const handleChangeData = Object.keys(newCategoryData).map((key) => {
+    let handleChangeData: unknown[] | null = Object.keys(newCategoryData).map((key) => {
       return newCategoryData[key];
     });
+
+    if (handleChangeData.length === 0) {
+      handleChangeData = null;
+    }
 
     props.handleChange(path, handleChangeData);
     dispatch({ type: DELETE_ACTION, payload: { name: path, category: currentCategory } });
@@ -589,7 +613,11 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
       <ToolBarHeader>
         {isInReview && listTitle && <b>{listTitle}</b>}
-        {!isInReview && listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
+        {!isInReview && listTitle && (
+          <ObjectArrayTitle>
+            {listTitle} <span>{additionalProps.required && '(required)'}</span>
+          </ObjectArrayTitle>
+        )}
         {!isInReview && (
           <ObjectArrayToolBar
             errors={errors}

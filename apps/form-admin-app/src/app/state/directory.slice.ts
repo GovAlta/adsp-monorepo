@@ -247,16 +247,18 @@ const directorySlice = createSlice({
       })
       .addCase(getResourceTags.fulfilled, (state, { payload, meta }) => {
         state.busy.loadingResourceTags[meta.arg.urn] = false;
+
         const tagValues = payload.results.map((result) => result.value);
         state.results = [...(meta.arg.after ? state.results : []), ...tagValues];
-        for (const result of payload.results) {
-          state.tags[result.value] = result;
-          state.resourceTags[meta.arg.urn] = [
-            ...(meta.arg.after ? state.resourceTags[meta.arg.urn] || [] : []),
-            ...tagValues,
-          ];
-        }
         state.next = payload.page.next;
+        state.resourceTags[meta.arg.urn] = [
+          ...(meta.arg.after ? state.resourceTags[meta.arg.urn] || [] : []),
+          ...tagValues,
+        ];
+        state.tags = {
+          ...state.tags,
+          ...payload.results.reduce((tags, result) => ({ ...tags, [result.value]: result }), {}),
+        };
       })
       .addCase(tagResource.pending, (state) => {
         state.busy.executing = true;

@@ -1,82 +1,79 @@
-import { DateTime } from 'luxon';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AppDispatch,
-  busySelector,
-  createForm,
   definitionSelector,
   findUserForm,
-  selectedDefinition,
   Form as FormObject,
+  FormDefinition as FormDefinitionObject,
+  selectedDefinition,
   userFormSelector,
   tenantSelector,
+  busySelector,
+  createForm,
+  userSelector,
 } from '../state';
+import { LoadingIndicator } from '../components/LoadingIndicator';
+import { ScheduledIntake } from '../components/ScheduledIntake';
+import { SignInStartApplication } from '../components/SignInStartApplication';
 import { AnonymousForm } from './AnonymousForm';
-import { AuthorizeUser } from './AuthorizeUser';
 import { Form } from './Form';
 import { ContinueApplication } from '../components/ContinueApplication';
-import { LoadingIndicator } from '../components/LoadingIndicator';
 import { StartApplication } from '../components/StartApplication';
-import { ScheduledIntake } from '../components/ScheduledIntake';
+import { FormNotAvailable } from '../components/FormNoAvailable';
 
-interface FormDefinitionStartProps {
-  definitionId: string;
+interface FormDefinitionStart {
+  definition: FormDefinitionObject;
 }
 
-const FormDefinitionStart: FunctionComponent<FormDefinitionStartProps> = ({ definitionId }) => {
-  const dispatch = useDispatch<AppDispatch>();
+export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ definition }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+
   const location = useLocation();
-  const { definition, initialized: definitionInitialized } = useSelector(definitionSelector);
-  const busy = useSelector(busySelector);
-  const { form, initialized: formInitialized } = useSelector(userFormSelector);
   const urlParams = new URLSearchParams(location.search);
   const AUTO_CREATE_PARAM = 'autoCreate';
 
-  useEffect(() => {
-    dispatch(findUserForm(definitionId));
-  }, [dispatch, definitionId]);
+  const { initialized, form } = useSelector(userFormSelector);
+  const busy = useSelector(busySelector);
 
-  return (
-    <>
-      <LoadingIndicator isLoading={!formInitialized || !definitionInitialized} />
-      {definitionInitialized && definition && (
-        <ScheduledIntake definition={definition}>
-          {definition.anonymousApply ? (
-            <Navigate to="draft" />
-          ) : (
-            <AuthorizeUser roles={[...definition.applicantRoles, ...definition.clerkRoles]}>
-              {formInitialized &&
-                (form?.id ? (
-                  <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
-                ) : (
-                  <StartApplication
-                    definition={definition}
-                    autoCreate={urlParams.has(AUTO_CREATE_PARAM, 'true')}
-                    canCreate={!busy.creating}
-                    onCreate={async () => {
-                      const { payload } = await dispatch(createForm(definition.id));
-                      const form = payload as FormObject;
-                      if (form?.id) {
-                        navigate(`${form.id}`);
-                      }
-                    }}
-                  />
-                ))}
-            </AuthorizeUser>
-          )}
-        </ScheduledIntake>
-      )}
-    </>
+  useEffect(() => {
+    dispatch(findUserForm(definition.id));
+  }, [dispatch, definition]);
+
+  return definition.anonymousApply ? (
+    <Navigate to="draft" />
+  ) : (
+    initialized &&
+      (form?.id ? (
+        <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
+      ) : (
+        <StartApplication
+          definition={definition}
+          autoCreate={urlParams.has(AUTO_CREATE_PARAM, 'true')}
+          canCreate={!busy.creating}
+          onCreate={async () => {
+            const { payload } = await dispatch(createForm(definition.id));
+            const form = payload as FormObject;
+            if (form?.id) {
+              navigate(`${form.id}`);
+            }
+          }}
+        />
+      ))
   );
 };
 
 export const FormDefinition: FunctionComponent = () => {
-  const { definitionId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
+
+  const { definitionId } = useParams();
+
   const tenant = useSelector(tenantSelector);
+  const { user } = useSelector(userSelector);
+  const { definition, initialized: definitionInitialized } = useSelector(definitionSelector);
+  const busy = useSelector(busySelector);
 
   useEffect(() => {
     if (tenant) {
@@ -84,19 +81,26 @@ export const FormDefinition: FunctionComponent = () => {
     }
   }, [dispatch, definitionId, tenant]);
 
+  // Definition can be available even if there is no signed in user.
+  // If definition is not available, then show the sign-in option as user might have access if they sign in.
   return (
-    <Routes>
-      <Route path="/draft" element={<AnonymousForm />} />
-      <Route
-        path="/:formId"
-        element={
-          <AuthorizeUser>
-            <Form />
-          </AuthorizeUser>
-        }
-      />
-      <Route path="/" element={<FormDefinitionStart definitionId={definitionId} />} />
-      <Route path="*" element={<Navigate to={`/${definitionId}`} replace />} />
-    </Routes>
+    <>
+      <LoadingIndicator isLoading={!definitionInitialized || busy.loading} />
+      {definitionInitialized &&
+        (definition ? (
+          <ScheduledIntake definition={definition}>
+            <Routes>
+              <Route path="/draft" element={<AnonymousForm />} />
+              <Route path="/:formId" element={<Form />} />
+              <Route path="/" element={<FormDefinitionStart definition={definition} />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </ScheduledIntake>
+        ) : user ? (
+          <FormNotAvailable />
+        ) : (
+          <SignInStartApplication />
+        ))}
+    </>
   );
 };
