@@ -3,7 +3,7 @@ import { Doc, decodeAfter, encodeNext, Results } from '@core-services/core-commo
 import { Document, Model, model, PipelineStage, Types } from 'mongoose';
 import { Logger } from 'winston';
 import { DirectoryEntity, DirectoryRepository } from '../directory';
-import { Criteria, Directory, Resource, Tag, TagCriteria } from '../directory/types';
+import { Criteria, Directory, Resource, ResourceCriteria, Tag, TagCriteria } from '../directory/types';
 import { directorySchema, resourceSchema, resourceTagSchema, tagSchema } from './schema';
 import { ResourceDoc, TagDoc } from './types';
 
@@ -140,7 +140,13 @@ export class MongoDirectoryRepository implements DirectoryRepository {
     query.tenantId = criteria?.tenantIdEquals ? criteria.tenantIdEquals.toString() : { $exists: false };
 
     let docs: TagDoc[];
+
+    // Resource criteria is mutually exclusive with other criteria except tenant.
     if (!criteria.resourceUrnEquals) {
+      if (criteria.valueEquals) {
+        query.value = criteria.valueEquals;
+      }
+
       docs = await this.tagModel.find(query, null, { lean: true }).skip(skip).limit(top).exec();
     } else {
       const pipeline: PipelineStage[] = [
@@ -201,7 +207,13 @@ export class MongoDirectoryRepository implements DirectoryRepository {
     };
   }
 
-  async getTaggedResources(tenantId: AdspId, tag: string, top: number, after: string): Promise<Results<Resource>> {
+  async getTaggedResources(
+    tenantId: AdspId,
+    tag: string,
+    top: number,
+    after: string,
+    criteria: ResourceCriteria
+  ): Promise<Results<Resource>> {
     const skip = decodeAfter(after);
 
     const pipeline: PipelineStage[] = [
@@ -252,6 +264,21 @@ export class MongoDirectoryRepository implements DirectoryRepository {
         },
       },
     ];
+
+    const query: Record<string, unknown> = {};
+    if (criteria) {
+      if (criteria.urnEquals) {
+        query.urn = criteria.urnEquals.toString();
+      }
+      if (criteria.typeEquals) {
+        query.type = criteria.typeEquals;
+      }
+
+      pipeline.push({
+        $match: query,
+      });
+    }
+
     const docs: ResourceDoc[] = await this.tagModel.aggregate(pipeline).exec();
 
     return {
@@ -365,6 +392,35 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       tag: this.fromTagDoc(tagDoc),
       resource: this.fromResourceDoc(resourceDoc),
       untagged: deleted,
+    };
+  }
+
+  async getResources(top: number, after: string, criteria: ResourceCriteria) {
+    const skip = decodeAfter(after);
+
+    const query: Record<string, unknown> = {};
+
+    // Tenant criteria is either a specific tenant or tags without any tenant context (i.e. core).
+    // Querying across different tenants isn't supported.
+    query.tenantId = criteria?.tenantIdEquals ? criteria.tenantIdEquals.toString() : { $exists: false };
+
+    if (criteria.urnEquals) {
+      query.urn = criteria.urnEquals.toString();
+    }
+
+    if (criteria.typeEquals) {
+      query.type = criteria.typeEquals.toString();
+    }
+
+    const docs = await this.resourceModel.find(query).skip(skip).limit(top).exec();
+
+    return {
+      results: docs.map(this.fromResourceDoc),
+      page: {
+        after,
+        next: encodeNext(docs.length, top, skip),
+        size: docs.length,
+      },
     };
   }
 

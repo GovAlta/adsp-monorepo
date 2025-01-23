@@ -18,6 +18,7 @@ export interface Resource {
 export interface TagCriteria {
   tenantIdEquals?: AdspId;
   resourceUrnEquals?: AdspId;
+  valueEquals?: string;
 }
 
 export interface ResourceTypeConfiguration {
@@ -30,4 +31,10 @@ export interface ResourceTypeConfiguration {
     name: string;
     resourceIdPath: string;
   };
+}
+
+export interface ResourceCriteria {
+  tenantIdEquals?: AdspId;
+  urnEquals?: AdspId;
+  typeEquals?: string;
 }
