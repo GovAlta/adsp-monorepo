@@ -139,14 +139,22 @@ export const loadDefinitions = createAsyncThunk(
 
     try {
       if (tag) {
-        const { results, page } = await dispatch(getTaggedResources({ value: dashify(tag), after })).unwrap();
+        const { results, page } = await dispatch(
+          getTaggedResources({ value: dashify(tag), after, includeRepresents: true, type: 'configuration' })
+        ).unwrap();
 
         const definitions = [];
-        for (const result of results.filter(({ type }) => type === 'configuration')) {
-          const [_, definitionId] = result.urn.match(/form-service\/([a-zA-Z0-9-_ ]{1,50})$/);
+        for (const { urn, _embedded } of results) {
+          // Note: Not all configuration resources are form definitions.
+          // Check the URN to confirm it's a form service namespace value.
+          const [_, definitionId] = urn.match(/form-service\/([a-zA-Z0-9-_ ]{1,50})$/);
           if (definitionId) {
-            const definition = await dispatch(loadDefinition(definitionId)).unwrap();
-            definitions.push({ ...definition, urn: result.urn });
+            if (_embedded?.represents?.['latest']?.configuration) {
+              definitions.push({ ..._embedded?.represents['latest'].configuration, urn });
+            } else {
+              const definition = await dispatch(loadDefinition(definitionId)).unwrap();
+              definitions.push(definition);
+            }
           }
         }
 

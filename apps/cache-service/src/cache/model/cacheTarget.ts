@@ -271,7 +271,12 @@ export class CacheTarget implements Target {
 
             const deleted = await this.provider.del(invalidateKey);
             if (deleted) {
-              this.logger.info(`Invalidated cache entry for path '${path}' on event ${namespace}:${name}.`, {
+              this.logger.info(`Invalidated cache entry for path '${cachedPath}' on event ${namespace}:${name}.`, {
+                context: 'CacheTarget',
+                tenant: this.tenantId.toString(),
+              });
+            } else {
+              this.logger.debug(`No entries invalidated for path '${cachedPath}' on event ${namespace}:${name}.`, {
                 context: 'CacheTarget',
                 tenant: this.tenantId.toString(),
               });

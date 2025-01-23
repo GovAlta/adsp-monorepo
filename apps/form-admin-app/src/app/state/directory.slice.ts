@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { DIRECTORY_SERVICE_ID, PagedResults } from './types';
+import { CACHE_SERVICE_ID, DIRECTORY_SERVICE_ID, PagedResults } from './types';
 import { getAccessToken } from './user.slice';
 import type { AppState } from './store';
 
@@ -11,6 +11,9 @@ export interface Resource {
   name: string;
   description: string;
   type: string;
+  _embedded?: {
+    represents: unknown;
+  };
 }
 
 export interface Tag {
@@ -78,19 +81,30 @@ export const getTags = createAsyncThunk(
 
 export const getTaggedResources = createAsyncThunk(
   'directory/get-tagged-resources',
-  async ({ value, after }: { value: string; after?: string }, { getState, rejectWithValue }) => {
+  async (
+    {
+      value,
+      after,
+      includeRepresents,
+      type,
+    }: { value: string; after?: string; includeRepresents?: boolean; type?: string },
+    { getState, rejectWithValue }
+  ) => {
     try {
       const { config } = getState() as AppState;
-      const directoryServiceUrl = config.directory[DIRECTORY_SERVICE_ID];
+      const cacheServiceUrl = config.directory[CACHE_SERVICE_ID];
       const accessToken = await getAccessToken();
 
+      // Request via cache service API.
       const { data } = await axios.get<PagedResults<Resource>>(
-        new URL(`/resource/v1/tags/${value}/resources`, directoryServiceUrl).href,
+        new URL(`/cache/v1/cache/${DIRECTORY_SERVICE_ID}:resource-v1/tags/${value}/resources`, cacheServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: {
             top: 50,
             after,
+            includeRepresents,
+            criteria: type && JSON.stringify({ typeEquals: type }),
           },
         }
       );
@@ -114,17 +128,23 @@ export const getResourceTags = createAsyncThunk(
   async ({ urn, after }: { urn: string; after?: string }, { getState, rejectWithValue }) => {
     try {
       const { config } = getState() as AppState;
-      const directoryServiceUrl = config.directory[DIRECTORY_SERVICE_ID];
+      const cacheServiceUrl = config.directory[CACHE_SERVICE_ID];
       const accessToken = await getAccessToken();
 
-      const { data } = await axios.get<PagedResults<Tag>>(new URL('/resource/v1/tags', directoryServiceUrl).href, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: {
-          top: 50,
-          after,
-          resource: urn,
-        },
-      });
+      // Request via cache service API.
+      const { data } = await axios.get<PagedResults<Tag>>(
+        new URL(
+          `/cache/v1/cache/${DIRECTORY_SERVICE_ID}:resource-v1/resources/${encodeURIComponent(urn)}/tags`,
+          cacheServiceUrl
+        ).href,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            top: 50,
+            after,
+          },
+        }
+      );
 
       return data;
     } catch (err) {
@@ -231,7 +251,12 @@ const directorySlice = createSlice({
         const resourceUrns = payload.results.map((result) => result.urn);
         state.results = [...(meta.arg.after ? state.results : []), ...resourceUrns];
         for (const result of payload.results) {
-          state.resources[result.urn] = result;
+          state.resources[result.urn] = {
+            urn: result.urn,
+            type: result.type,
+            name: result.name,
+            description: result.description,
+          };
           state.tagResources[meta.arg.value] = [
             ...(meta.arg.after ? state.tagResources[meta.arg.value] || [] : []),
             ...resourceUrns,
