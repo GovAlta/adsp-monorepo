@@ -203,11 +203,13 @@ components:
         description: Criteria for the resources to return.
         in: query
         required: false
-        schema:
-          type: object
-          properties:
-            typeEquals:
-              type: string
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                typeEquals:
+                  type: string
       - name: tag
         description: Value of the tag.
         in: path
@@ -258,11 +260,13 @@ components:
         description: Criteria for the resources to return.
         in: query
         required: false
-        schema:
-          type: object
-          properties:
-            typeEquals:
-              type: string
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                typeEquals:
+                  type: string
     responses:
       200:
         description: Request completed successfully

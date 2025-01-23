@@ -409,7 +409,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
     }
 
     if (criteria.typeEquals) {
-      query.type = criteria.typeEquals.toString();
+      query.type = criteria.typeEquals;
     }
 
     const docs = await this.resourceModel.find(query).skip(skip).limit(top).exec();

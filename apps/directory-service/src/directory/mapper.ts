@@ -34,7 +34,7 @@ export function mapResource(apiId: AdspId, resource: Resource) {
             href: resource.urn.toString(),
           },
           tags: {
-            href: `${apiId}:/resources/${resource.urn}/tags`,
+            href: `${apiId}:/resources/${encodeURIComponent(resource.urn.toString())}/tags`,
           },
         },
         _embedded: resource.data && {
