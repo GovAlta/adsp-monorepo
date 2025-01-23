@@ -66,10 +66,8 @@ export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({
   const tags = useSelector((state: AppState) => resourceTagsSelector(state, definition.urn));
 
   useEffect(() => {
-    if (!Array.isArray(tags)) {
-      dispatch(getResourceTags({ urn: definition.urn }));
-    }
-  }, [dispatch, definition, tags]);
+    dispatch(getResourceTags({ urn: definition.urn }));
+  }, [dispatch, definition]);
 
   return (
     <tr key={definition.id}>

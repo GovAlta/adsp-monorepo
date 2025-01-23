@@ -209,7 +209,7 @@ const userSlice = createSlice({
     clearUser: (state) => {
       state.user = undefined;
     },
-    setSessionExpiry: (state, { payload }: { payload: { expiresAt: string, alert: boolean } }) => {
+    setSessionExpiry: (state, { payload }: { payload: { expiresAt: string; alert: boolean } }) => {
       state.sessionExpiresAt = payload.expiresAt;
       state.alertSessionExpiresAt = payload.alert ? payload.expiresAt : null;
     },
