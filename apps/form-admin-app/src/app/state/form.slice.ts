@@ -21,7 +21,7 @@ import {
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
 import { downloadFile, FileMetadata, findFile, loadFileMetadata } from './file.slice';
-import { getTaggedResources } from './directory.slice';
+import { getResourcesTags, getTaggedResources } from './directory.slice';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -138,6 +138,7 @@ export const loadDefinitions = createAsyncThunk(
     const { directory } = state.config;
 
     try {
+      let result: PagedResults<FormDefinition>;
       if (tag) {
         const { results, page } = await dispatch(
           getTaggedResources({ value: dashify(tag), after, includeRepresents: true, type: 'configuration' })
@@ -153,7 +154,7 @@ export const loadDefinitions = createAsyncThunk(
           }
         }
 
-        return {
+        result = {
           page,
           results: definitions,
         };
@@ -165,7 +166,7 @@ export const loadDefinitions = createAsyncThunk(
           params: { top: 50, after },
         });
 
-        return {
+        result = {
           ...data,
           results: data.results.map((result) => ({
             ...result,
@@ -173,6 +174,12 @@ export const loadDefinitions = createAsyncThunk(
           })),
         };
       }
+
+      if (result.results?.length > 0) {
+        await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
+      }
+
+      return result;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
