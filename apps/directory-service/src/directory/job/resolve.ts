@@ -1,17 +1,25 @@
-import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, EventService, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { DirectoryConfiguration } from '../configuration';
-import { resourceResolutionFailed } from '../events';
+import { resourceDeleted, resourceResolutionFailed } from '../events';
 import { ResourceType } from '../model';
+import { mapResource } from '../mapper';
 
 interface ResolveJobProps {
+  apiId: AdspId;
   logger: Logger;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
   eventService: EventService;
 }
 
-export function createResolveJob({ logger, tokenProvider, configurationService, eventService }: ResolveJobProps) {
+export function createResolveJob({
+  apiId,
+  logger,
+  tokenProvider,
+  configurationService,
+  eventService,
+}: ResolveJobProps) {
   return async (tenantId: AdspId, urn: AdspId, retryOnError: boolean, done: (err?: Error) => void) => {
     const resource = { tenantId, urn };
     let type: ResourceType;
@@ -35,13 +43,20 @@ export function createResolveJob({ logger, tokenProvider, configurationService, 
             context: 'ResolveJob',
             tenant: tenantId.toString(),
           });
-        } else {
+        } else if (result === undefined) {
           logger.info(
             `Resource ${urn} could not be found on associated API during resolve and was deleted for consistency.`,
             {
               context: 'ResolveJob',
               tenant: tenantId.toString(),
             }
+          );
+
+          eventService.send(
+            resourceDeleted(tenantId, mapResource(apiId, resource), {
+              id: 'directory-resolve-job',
+              name: 'Directory resolve job',
+            } as User)
           );
         }
       } else {
@@ -61,7 +76,7 @@ export function createResolveJob({ logger, tokenProvider, configurationService, 
           context: 'ResolveJob',
           tenant: tenantId.toString(),
         });
-        eventService.send(resourceResolutionFailed(tenantId, urn, type?.type, `${err}`));
+        eventService.send(resourceResolutionFailed(tenantId, mapResource(apiId, resource), `${err}`));
       }
     }
   };

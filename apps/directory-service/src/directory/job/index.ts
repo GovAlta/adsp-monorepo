@@ -6,7 +6,7 @@ import { createDeleteJob } from './delete';
 import { createResolveJob } from './resolve';
 
 interface DirectoryJobProps {
-  serviceId: AdspId;
+  apiId: AdspId;
   logger: Logger;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
@@ -15,14 +15,14 @@ interface DirectoryJobProps {
 }
 
 export function createDirectoryJobs({
-  serviceId,
+  apiId,
   logger,
   tokenProvider,
   configurationService,
   eventService,
   queueService,
 }: DirectoryJobProps) {
-  const resolveJob = createResolveJob({ logger, tokenProvider, configurationService, eventService });
+  const resolveJob = createResolveJob({ apiId, logger, tokenProvider, configurationService, eventService });
   const deleteJob = createDeleteJob({ logger, configurationService });
 
   queueService.getItems().subscribe(({ item, retryOnError, done }) => {
@@ -32,7 +32,7 @@ export function createDirectoryJobs({
         tenant: item.tenantId?.toString(),
       });
 
-      if (item.namespace === serviceId.service) {
+      if (item.namespace === apiId.service) {
         if (item.name === TAGGED_RESOURCE) {
           const { urn, isNew } = item.payload.resource as { urn: string; isNew: boolean };
           if (urn && isNew) {

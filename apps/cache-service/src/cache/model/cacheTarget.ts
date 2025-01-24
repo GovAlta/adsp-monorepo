@@ -94,7 +94,13 @@ export class CacheTarget implements Target {
 
       const response = await this.getUpstream(req, res);
       if (response) {
-        await this.provider.set(key, invalidateKey, this.ttl, response);
+        if (response.status === 401) {
+          // Note: Unfortunately transient server side issue causing token validation failure results in a 401.
+          // In that case, the status code is in the 400s (i.e. client error), but the request may succeed on retry. Cache with a short TTL.
+          await this.provider.set(key, invalidateKey, 30, response);
+        } else {
+          await this.provider.set(key, invalidateKey, this.ttl, response);
+        }
 
         this.logger.info(
           `Cached upstream response (status: ${response.status}) for request to ${path} with TTL ${this.ttl}.`,
