@@ -225,7 +225,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       setEditType(true);
       activateEdit(false);
       setShowTemplateForm(false);
-      setFormTitle('Add notification type 2');
+      setFormTitle('Add notification type');
     }
   }, [activeEdit]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -384,7 +384,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           onClick={() => {
             setSelectedType(emptyNotificationType);
             setEditType(true);
-            setFormTitle('Add notification type 1');
+            setFormTitle('Add notification type');
             setSelectedEvent(emptyEvent);
           }}
         >
