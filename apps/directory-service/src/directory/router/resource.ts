@@ -309,7 +309,7 @@ export function getResources(apiId: AdspId, repository: DirectoryRepository): Re
             results.push(resource);
           }
         }
-        page = { size: criteria.length };
+        page = { size: results.length };
       }
 
       if (includeTags) {
