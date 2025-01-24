@@ -13,6 +13,7 @@ export interface Resource {
   description?: string;
   type?: string;
   data?: unknown;
+  tags?: Tag[];
 }
 
 export interface TagCriteria {

@@ -274,6 +274,24 @@ components:
       - Resource
     description: Retrieves resources.
     parameters:
+      - name: top
+        description: Number of results to retrieve.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for page of results to retrieve.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: includeTags
+        description: Flag indicating if resource tags should be embedded in response.
+        in: query
+        required: false
+        schema:
+          type: boolean
       - name: criteria
         description: Criteria for the resources to return.
         in: query
@@ -281,10 +299,14 @@ components:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                typeEquals:
-                  type: string
+              oneOf:
+                - type: object
+                  properties:
+                    typeEquals:
+                      type: string
+                - type: array
+                  items:
+                    type: string
     responses:
       200:
         description: Request completed successfully

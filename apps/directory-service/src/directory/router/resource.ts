@@ -17,6 +17,7 @@ import { resourceDeleted, tagDeleted, taggedResource, untaggedResource } from '.
 import { DirectoryConfiguration } from '../configuration';
 import { mapTag, mapResource } from '../mapper';
 import { TAG_OPERATION_TAG, TAG_OPERATION_UNTAG, TagOperationRequests } from './types';
+import { Resource } from '../types';
 
 export function getTags(apiId: AdspId, repository: DirectoryRepository): RequestHandler {
   return async (req, res, next) => {
@@ -274,18 +275,53 @@ export function getResources(apiId: AdspId, repository: DirectoryRepository): Re
     try {
       const user = req.user;
       const tenantId = req.tenant?.id;
-      const { top: topValue, after, criteria: criteriaValue } = req.query;
+      const { top: topValue, after, criteria: criteriaValue, includeTags: includeTagsValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
+      const includeTags = includeTagsValue === 'true';
 
       if (!isAllowedUser(user, tenantId, [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger])) {
         throw new UnauthorizedUserError('get resources', user);
       }
 
-      const { results, page } = await repository.getResources(top, after as string, {
-        ...criteria,
-        tenantIdEquals: tenantId,
-      });
+      let results: Resource[] = [],
+        page;
+      if (!Array.isArray(criteria)) {
+        const resources = await repository.getResources(top, after as string, {
+          ...criteria,
+          tenantIdEquals: tenantId,
+        });
+        results = resources.results;
+        page = resources.page;
+      } else {
+        for (const resourceId of criteria) {
+          if (!AdspId.isAdspId(resourceId)) {
+            throw new InvalidOperationError('criteria array must only contain valid resource urns.');
+          }
+
+          const {
+            results: [resource],
+          } = await repository.getResources(1, null, {
+            tenantIdEquals: tenantId,
+            urnEquals: AdspId.parse(resourceId),
+          });
+          if (resource) {
+            results.push(resource);
+          }
+        }
+        page = { size: criteria.length };
+      }
+
+      if (includeTags) {
+        for (const result of results) {
+          // Inline up to 10 tags if requested.
+          const { results: tags } = await repository.getTags(10, null, {
+            tenantIdEquals: tenantId,
+            resourceUrnEquals: result.urn,
+          });
+          result.tags = tags;
+        }
+      }
 
       res.send({
         results: results.map((result) => mapResource(apiId, result)),
