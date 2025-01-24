@@ -28,7 +28,14 @@ import {
   GoAFormItem,
   GoACallout,
 } from '@abgov/react-components-new';
-import { ToolBarHeader, ObjectArrayTitle, TextCenter, NonEmptyCellStyle, TableTHHeader } from './styled-components';
+import {
+  ToolBarHeader,
+  ObjectArrayTitle,
+  TextCenter,
+  NonEmptyCellStyle,
+  TableTHHeader,
+  RequiredSpan,
+} from './styled-components';
 import { convertToSentenceCase, Visible } from '../../util';
 import { GoAReviewRenderers } from '../../../index';
 import {
@@ -235,6 +242,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     errors,
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
+  const required = (schema.items as Record<string, string>).required;
 
   return (
     <NonEmptyCellStyle>
@@ -263,7 +271,10 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 if (!isInReview) {
                   return (
                     <th key={index}>
-                      <p>{convertToSentenceCase(key)}</p>
+                      <p>
+                        {convertToSentenceCase(key)}
+                        {required?.includes(key) && <RequiredSpan>(required)</RequiredSpan>}
+                      </p>
                     </th>
                   );
                 }
@@ -564,7 +575,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   const handleChangeWithData = (path: string, value: StateData) => {
     if (path) {
       const categories = registers.categories;
-      const currentCategory = categories[path].data;
+      const currentCategory = categories[path]?.data;
       const newData: StateData = {};
       const allKeys = Object.keys(value).concat(Object.keys(currentCategory));
       const allKeysUnique = allKeys.filter((a, b) => allKeys.indexOf(a) === b);
