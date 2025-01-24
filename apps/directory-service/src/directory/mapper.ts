@@ -43,8 +43,9 @@ export function mapResource(apiId: AdspId, resource: Resource) {
             href: `${apiId}:/resources`,
           },
         },
-        _embedded: resource.data && {
+        _embedded: {
           represents: resource.data,
+          tags: resource.tags?.map((tag) => mapTag(apiId, tag)),
         },
       }
     : null;

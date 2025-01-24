@@ -148,13 +148,8 @@ export const loadDefinitions = createAsyncThunk(
           // Note: Not all configuration resources are form definitions.
           // Check the URN to confirm it's a form service namespace value.
           const [_, definitionId] = urn.match(/form-service\/([a-zA-Z0-9-_ ]{1,50})$/);
-          if (definitionId) {
-            if (_embedded?.represents?.['latest']?.configuration) {
-              definitions.push({ ..._embedded?.represents['latest'].configuration, urn });
-            } else {
-              const definition = await dispatch(loadDefinition(definitionId)).unwrap();
-              definitions.push(definition);
-            }
+          if (definitionId && _embedded?.represents?.['latest']?.configuration) {
+            definitions.push({ ..._embedded?.represents['latest'].configuration, urn });
           }
         }
 
