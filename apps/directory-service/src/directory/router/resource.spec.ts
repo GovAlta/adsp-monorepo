@@ -5,6 +5,8 @@ import { Request, Response } from 'express';
 import { ServiceRoles } from '../roles';
 import {
   createResourceRouter,
+  deleteResource,
+  deleteTag,
   getResource,
   getResources,
   getResourceTags,
@@ -44,6 +46,7 @@ describe('resource', () => {
     getTaggedResources: jest.fn(),
     applyTag: jest.fn(),
     removeTag: jest.fn(),
+    deleteTag: jest.fn(),
     getResources: jest.fn(),
     saveResource: jest.fn(),
     deleteResource: jest.fn(),
@@ -55,8 +58,10 @@ describe('resource', () => {
     repositoryMock.getTaggedResources.mockClear();
     repositoryMock.applyTag.mockClear();
     repositoryMock.removeTag.mockClear();
+    repositoryMock.deleteTag.mockClear();
     directoryMock.getResourceUrl.mockClear();
     repositoryMock.getResources.mockClear();
+    repositoryMock.deleteResource.mockClear();
   });
 
   it('can create router', () => {
@@ -229,6 +234,83 @@ describe('resource', () => {
       );
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
       expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteTag', () => {
+    it('can create handler', () => {
+      const handler = deleteTag(apiId, repositoryMock, eventServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can delete tag', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.DirectoryAdmin] },
+        params: { tag: 'test-label' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          label: 'Test label',
+          value: 'test-label',
+        },
+      ];
+      repositoryMock.getTags.mockResolvedValueOnce({ results, page });
+
+      const deleted = true;
+      repositoryMock.deleteTag.mockResolvedValueOnce(deleted);
+
+      const handler = deleteTag(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTags).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted }));
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [] },
+        params: { tag: 'test-label' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = deleteTag(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can return false for not found', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.DirectoryAdmin] },
+        params: { tag: 'test-label' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [];
+      repositoryMock.getTags.mockResolvedValueOnce({ results, page });
+
+      const handler = deleteTag(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTags).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
+      expect(next).not.toHaveBeenCalledWith();
     });
   });
 
@@ -944,6 +1026,82 @@ describe('resource', () => {
       );
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
       expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteResource', () => {
+    it('can create handler', () => {
+      const handler = deleteResource(apiId, repositoryMock, eventServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can delete resource', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.DirectoryAdmin] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+
+      const deleted = true;
+      repositoryMock.deleteResource.mockResolvedValueOnce(deleted);
+
+      const handler = deleteResource(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted }));
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = deleteResource(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can return false with not found', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.DirectoryAdmin] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+
+      const handler = deleteResource(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
+      expect(next).not.toHaveBeenCalledWith();
     });
   });
 

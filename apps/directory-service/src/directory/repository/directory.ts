@@ -24,8 +24,9 @@ export interface DirectoryRepository {
     resource: Resource
   ): Promise<{ tag: Tag; resource: Resource; tagged: boolean; isNewResource: boolean }>;
   removeTag(tag: Tag, resource: Resource): Promise<{ tag?: Tag; resource?: Resource; untagged: boolean }>;
+  deleteTag(tag: Tag): Promise<boolean>;
 
-  getResources(top: number, after: string, criteria: ResourceCriteria);
+  getResources(top: number, after: string, criteria: ResourceCriteria): Promise<Results<Resource>>;
   saveResource(resource: Resource & { type?: string }): Promise<Resource>;
   deleteResource(resource: Resource): Promise<boolean>;
 }

@@ -51,6 +51,8 @@ export const applyDirectoryMiddleware = (
     queueService,
   }: DirectoryMiddlewareProps
 ): Application => {
+  const apiId = adspId`${serviceId}:resource-v1`;
+
   const directoryRouter = createDirectoryRouter({
     logger,
     directoryRepository,
@@ -60,7 +62,7 @@ export const applyDirectoryMiddleware = (
 
   const resourceRouter = createResourceRouter({
     logger,
-    apiId: adspId`${serviceId}:resource-v1`,
+    apiId,
     directory,
     eventService,
     repository: directoryRepository,
@@ -69,7 +71,7 @@ export const applyDirectoryMiddleware = (
   app.use('/directory/v2', directoryRouter);
   app.use('/resource/v1', assertAuthenticatedHandler, resourceRouter);
 
-  createDirectoryJobs({ serviceId, logger, tokenProvider, configurationService, eventService, queueService });
+  createDirectoryJobs({ apiId, logger, tokenProvider, configurationService, eventService, queueService });
 
   return app;
 };

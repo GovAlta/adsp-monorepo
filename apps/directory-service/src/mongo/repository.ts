@@ -395,6 +395,21 @@ export class MongoDirectoryRepository implements DirectoryRepository {
     };
   }
 
+  async deleteTag(tag: Tag): Promise<boolean> {
+    const deleted = await this.tagModel
+      .findOneAndDelete({
+        tenantId: tag.tenantId?.toString() || { $exists: false },
+        value: tag.value,
+      })
+      .exec();
+
+    if (deleted) {
+      await this.resourceTagModel.deleteMany({ tagId: deleted._id }).exec();
+    }
+
+    return !!deleted;
+  }
+
   async getResources(top: number, after: string, criteria: ResourceCriteria) {
     const skip = decodeAfter(after);
 

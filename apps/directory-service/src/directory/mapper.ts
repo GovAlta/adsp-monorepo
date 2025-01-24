@@ -14,6 +14,9 @@ export function mapTag(apiId: AdspId, tag: Tag) {
           resources: {
             href: `${apiId}:/tags/${tag.value}/resources`,
           },
+          collection: {
+            href: `${apiId}:/tags`,
+          },
         },
       }
     : null;
@@ -35,6 +38,9 @@ export function mapResource(apiId: AdspId, resource: Resource) {
           },
           tags: {
             href: `${apiId}:/resources/${encodeURIComponent(resource.urn.toString())}/tags`,
+          },
+          collection: {
+            href: `${apiId}:/resources`,
           },
         },
         _embedded: resource.data && {

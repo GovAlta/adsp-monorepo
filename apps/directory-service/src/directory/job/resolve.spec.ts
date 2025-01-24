@@ -4,6 +4,7 @@ import { createResolveJob } from './resolve';
 
 describe('resolve', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+  const apiId = adspId`urn:ads:platform:directory-service:resource-v1`;
 
   const logger = {
     debug: jest.fn(),
@@ -32,6 +33,7 @@ describe('resolve', () => {
 
   it('can create job', () => {
     const job = createResolveJob({
+      apiId,
       logger,
       tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
@@ -57,6 +59,7 @@ describe('resolve', () => {
     configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
     const job = createResolveJob({
+      apiId,
       logger,
       tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
@@ -75,6 +78,7 @@ describe('resolve', () => {
     configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
     const job = createResolveJob({
+      apiId,
       logger,
       tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
@@ -98,6 +102,7 @@ describe('resolve', () => {
     configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
     const job = createResolveJob({
+      apiId,
       logger,
       tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
@@ -121,6 +126,7 @@ describe('resolve', () => {
     configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
     const job = createResolveJob({
+      apiId,
       logger,
       tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
