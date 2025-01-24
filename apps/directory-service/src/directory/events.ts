@@ -6,6 +6,8 @@ const ENTRY_DELETED = 'entry-deleted';
 export const TAGGED_RESOURCE = 'tagged-resource';
 const UNTAGGED_RESOURCE = 'untagged-resource';
 const RESOURCE_RESOLUTION_FAILED = 'resource-resolution-failed';
+const RESOURCE_DELETED = 'resource-deleted';
+const TAG_DELETED = 'tag-deleted';
 
 type Tag = ReturnType<typeof mapTag>;
 type Resource = ReturnType<typeof mapResource>;
@@ -137,6 +139,56 @@ export const UntaggedResourceDefinition: DomainEventDefinition = {
   },
 };
 
+export const ResourceDeletedDefinition: DomainEventDefinition = {
+  name: RESOURCE_DELETED,
+  description: 'Signalled when a resource is deleted.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      resource: {
+        type: 'object',
+        properties: {
+          urn: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+        },
+      },
+      deletedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
+export const TagDeletedDefinition: DomainEventDefinition = {
+  name: TAG_DELETED,
+  description: 'Signalled when a tag is deleted.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      tag: {
+        type: 'object',
+        properties: {
+          urn: { type: 'string' },
+          label: { type: 'string' },
+          value: { type: 'string' },
+        },
+      },
+      deletedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
 export const ResourceResolutionFailedDefinition: DomainEventDefinition = {
   name: RESOURCE_RESOLUTION_FAILED,
   description: 'Signalled when a resource associated with a resource type could not be resolved.',
@@ -147,6 +199,8 @@ export const ResourceResolutionFailedDefinition: DomainEventDefinition = {
         type: 'object',
         properties: {
           urn: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
         },
       },
       type: { type: ['string', 'null'] },
@@ -220,7 +274,8 @@ export const taggedResource = (
   correlationId: tag.value,
   context: {
     tag: tag.value,
-    resources: resource.urn.toString(),
+    resource: resource.urn.toString(),
+    resourceType: resource.type,
   },
   payload: {
     resource: {
@@ -242,7 +297,8 @@ export const untaggedResource = (tenantId: AdspId, resource: Resource, tag: Tag,
   correlationId: tag.value,
   context: {
     tag: tag.value,
-    resources: resource.urn.toString(),
+    resource: resource.urn.toString(),
+    resourceType: resource.type,
   },
   payload: {
     resource,
@@ -254,21 +310,53 @@ export const untaggedResource = (tenantId: AdspId, resource: Resource, tag: Tag,
   },
 });
 
-export const resourceResolutionFailed = (tenantId: AdspId, urn: AdspId, type: string, error: string): DomainEvent => ({
+export const resourceResolutionFailed = (tenantId: AdspId, resource: Resource, error: string): DomainEvent => ({
   name: RESOURCE_RESOLUTION_FAILED,
   timestamp: new Date(),
   tenantId,
-  correlationId: type,
+  correlationId: resource.type,
   context: {
-    resources: urn.toString(),
-    type,
+    resource: resource.urn.toString(),
+    resourceType: resource.type,
   },
   payload: {
-    resource: {
-      urn: urn.toString(),
-    },
-    type,
+    resource,
     error,
+  },
+});
+
+export const resourceDeleted = (tenantId: AdspId, resource: Resource, deletedBy: User): DomainEvent => ({
+  name: RESOURCE_DELETED,
+  timestamp: new Date(),
+  tenantId,
+  correlationId: resource.type,
+  context: {
+    resource: resource.urn.toString(),
+    resourceType: resource.type,
+  },
+  payload: {
+    resource,
+    deletedBy: {
+      id: deletedBy.id,
+      name: deletedBy.name,
+    },
+  },
+});
+
+export const tagDeleted = (tenantId: AdspId, tag: Tag, deletedBy: User): DomainEvent => ({
+  name: TAG_DELETED,
+  timestamp: new Date(),
+  tenantId,
+  correlationId: tag.value,
+  context: {
+    tag: tag.value,
+  },
+  payload: {
+    tag,
+    deletedBy: {
+      id: deletedBy.id,
+      name: deletedBy.name,
+    },
   },
 });
 

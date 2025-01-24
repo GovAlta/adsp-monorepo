@@ -31,6 +31,8 @@ import {
   TaggedResourceDefinition,
   UntaggedResourceDefinition,
   ResourceResolutionFailedDefinition,
+  ResourceDeletedDefinition,
+  TagDeletedDefinition,
 } from './directory';
 import { createDirectoryQueueService } from './amqp';
 
@@ -103,6 +105,8 @@ const initializeApp = async (): Promise<express.Application> => {
         TaggedResourceDefinition,
         UntaggedResourceDefinition,
         ResourceResolutionFailedDefinition,
+        ResourceDeletedDefinition,
+        TagDeletedDefinition,
       ],
       configuration: {
         description: 'Resource types for resolving browse name and description for tagged resources.',
@@ -131,7 +135,7 @@ const initializeApp = async (): Promise<express.Application> => {
           configuration: {
             targets: {
               [`${serviceId}:resource-v1`]: {
-                ttl: 8 * 60 * 60,
+                ttl: 30 * 60,
                 invalidationEvents: [
                   {
                     namespace: serviceId.service,
@@ -142,6 +146,20 @@ const initializeApp = async (): Promise<express.Application> => {
                     namespace: serviceId.service,
                     name: UntaggedResourceDefinition.name,
                     resourceIdPath: ['tag._links.resources.href', 'resource._links.tags.href'],
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: ResourceDeletedDefinition.name,
+                    resourceIdPath: [
+                      'resource._links.self.href',
+                      'resource._links.tags.href',
+                      'resource._links.collection.href',
+                    ],
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: TagDeletedDefinition.name,
+                    resourceIdPath: ['tag._links.self.href', 'tag._links.resources.href', 'tag._links.collection.href'],
                   },
                 ],
               },

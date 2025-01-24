@@ -13,7 +13,7 @@ import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { DirectoryRepository } from '../repository';
 import { ServiceRoles } from '../roles';
-import { taggedResource, untaggedResource } from '../events';
+import { resourceDeleted, tagDeleted, taggedResource, untaggedResource } from '../events';
 import { DirectoryConfiguration } from '../configuration';
 import { mapTag, mapResource } from '../mapper';
 import { TAG_OPERATION_TAG, TAG_OPERATION_UNTAG, TagOperationRequests } from './types';
@@ -67,6 +67,38 @@ export function getTag(apiId: AdspId, repository: DirectoryRepository): RequestH
       }
 
       res.send(mapTag(apiId, result));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteTag(apiId: AdspId, repository: DirectoryRepository, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { tag } = req.params;
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.DirectoryAdmin)) {
+        throw new UnauthorizedUserError('delete tag', user);
+      }
+
+      const { results } = await repository.getTags(1, null, {
+        tenantIdEquals: tenantId,
+        valueEquals: tag,
+      });
+
+      let deleted = false;
+      const [result] = results;
+      if (result) {
+        deleted = await repository.deleteTag(result);
+        if (deleted) {
+          eventService.send(tagDeleted(tenantId, mapTag(apiId, result), user));
+        }
+      }
+
+      res.send({ deleted });
     } catch (err) {
       next(err);
     }
@@ -247,7 +279,7 @@ export function getResources(apiId: AdspId, repository: DirectoryRepository): Re
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
 
       if (!isAllowedUser(user, tenantId, [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger])) {
-        throw new UnauthorizedUserError('get tags', user);
+        throw new UnauthorizedUserError('get resources', user);
       }
 
       const { results, page } = await repository.getResources(top, after as string, {
@@ -274,7 +306,7 @@ export function getResource(apiId: AdspId, repository: DirectoryRepository): Req
       const resource = AdspId.parse(resourceValue as string);
 
       if (!isAllowedUser(user, tenantId, [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger])) {
-        throw new UnauthorizedUserError('get tags', user);
+        throw new UnauthorizedUserError('get resource', user);
       }
 
       const { results } = await repository.getResources(1, null, {
@@ -294,6 +326,43 @@ export function getResource(apiId: AdspId, repository: DirectoryRepository): Req
   };
 }
 
+export function deleteResource(
+  apiId: AdspId,
+  repository: DirectoryRepository,
+  eventService: EventService
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { resource: resourceValue } = req.params;
+      const resource = AdspId.parse(resourceValue as string);
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.DirectoryAdmin)) {
+        throw new UnauthorizedUserError('delete resource', user);
+      }
+
+      const { results } = await repository.getResources(1, null, {
+        tenantIdEquals: tenantId,
+        urnEquals: resource,
+      });
+
+      let deleted = false;
+      const [result] = results;
+      if (result) {
+        deleted = await repository.deleteResource(result);
+        if (deleted) {
+          eventService.send(resourceDeleted(tenantId, mapResource(apiId, result), user));
+        }
+      }
+
+      res.send({ deleted });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function getResourceTags(apiId: AdspId, repository: DirectoryRepository): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -305,7 +374,7 @@ export function getResourceTags(apiId: AdspId, repository: DirectoryRepository):
       const resource = AdspId.parse(resourceValue as string);
 
       if (!isAllowedUser(user, tenantId, [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger])) {
-        throw new UnauthorizedUserError('get tags', user);
+        throw new UnauthorizedUserError('get resource tags', user);
       }
 
       const { results, page } = await repository.getTags(top, after as string, {
@@ -371,6 +440,16 @@ export function createResourceRouter({ apiId, logger, directory, eventService, r
     getTag(apiId, repository)
   );
 
+  router.delete(
+    '/tags/:tag',
+    createValidationHandler(
+      param('tag')
+        .isString()
+        .matches(/^[0-9a-z-]{1,100}$/)
+    ),
+    deleteTag(apiId, repository, eventService)
+  );
+
   router.get(
     '/tags/:tag/resources',
     createValidationHandler(
@@ -399,6 +478,12 @@ export function createResourceRouter({ apiId, logger, directory, eventService, r
     '/resources/:resource',
     createValidationHandler(param('resource').isString().isLength({ min: 1, max: 2000 })),
     getResource(apiId, repository)
+  );
+
+  router.delete(
+    '/resources/:resource',
+    createValidationHandler(param('resource').isString().isLength({ min: 1, max: 2000 })),
+    deleteResource(apiId, repository, eventService)
   );
 
   router.get(

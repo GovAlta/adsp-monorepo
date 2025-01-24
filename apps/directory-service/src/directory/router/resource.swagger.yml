@@ -152,17 +152,17 @@ components:
         description: Unauthorized
 
 /resource/v1/tags/{tag}:
+  parameters:
+    - name: tag
+      description: Value of the tag.
+      in: path
+      required: true
+      schema:
+        type: string
   get:
     tags:
       - Resource
     description: Retrieves a tag.
-    parameters:
-      - name: tag
-        description: Value of the tag.
-        in: path
-        required: true
-        schema:
-          type: string
     responses:
       200:
         description: Request completed successfully
@@ -170,6 +170,24 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Tag"
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+  delete:
+    tags:
+      - Resource
+    description: Deletes a tag.
+    responses:
+      200:
+        description: Request completed successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
       400:
         description: Bad request
       401:
@@ -302,17 +320,17 @@ components:
         description: Unauthorized
 
 /resource/v1/resources/{resource}:
+  parameters:
+    - name: resource
+      description: URN of the resource.
+      in: path
+      required: true
+      schema:
+        type: string
   get:
     tags:
       - Resource
     description: Retrieves a resource.
-    parameters:
-      - name: resource
-        description: URN of the resource.
-        in: path
-        required: true
-        schema:
-          type: string
     responses:
       200:
         description: Request completed successfully
@@ -320,6 +338,24 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Resource"
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+  delete:
+    tags:
+      - Resource
+    description: Deletes a tag.
+    responses:
+      200:
+        description: Request completed successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
       400:
         description: Bad request
       401:
