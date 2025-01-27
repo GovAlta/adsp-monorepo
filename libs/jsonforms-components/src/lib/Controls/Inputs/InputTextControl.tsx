@@ -138,14 +138,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
               controlProps: props as ControlProps,
             });
           }}
-          onKeyPress={(name: string, value: string, key: string) => {
-            onKeyPressForTextControl({
-              name,
-              value: autoCapitalize ? value.toUpperCase() : value,
-              key,
-              controlProps: props as ControlProps,
-            });
-          }}
+          onKeyPress={(name: string, value: string, key: string) => {}}
           onBlur={(name: string, value: string) => {
             onBlurForTextControl({
               name,

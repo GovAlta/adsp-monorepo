@@ -29,6 +29,8 @@ describe('configuration', () => {
     getTaggedResources: jest.fn(),
     applyTag: jest.fn(),
     removeTag: jest.fn(),
+    deleteTag: jest.fn(),
+    getResources: jest.fn(),
     saveResource: jest.fn(),
     deleteResource: jest.fn(),
   };

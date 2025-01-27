@@ -585,6 +585,53 @@ describe('CacheTarget', () => {
       expect(providerMock.del).toHaveBeenCalledWith(invalidateKey);
     });
 
+    it('can invalidate multiple cache entry on event', async () => {
+      const target = new CacheTarget(logger, directoryMock as unknown as ServiceDirectory, providerMock, tenantId, {
+        serviceId: adspId`urn:ads:platform:test-service:v1`,
+        ttl: 300,
+        invalidationEvents: [
+          {
+            namespace: 'configuration-service',
+            name: 'configuration-updated',
+            resourceIdPath: ['urn', 'nested.urn'],
+          },
+        ],
+      });
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://test-service/test/v1'));
+      directoryMock.getResourceUrl
+        .mockResolvedValueOnce(new URL('https://test-service/test/v1/configuration/form-service/test'))
+        .mockResolvedValueOnce(new URL('https://test-service/test/v1/configuration/form-service/test2'));
+      providerMock.del.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+
+      await target.processEvent({
+        tenantId,
+        namespace: 'configuration-service',
+        name: 'configuration-updated',
+        payload: {
+          urn: 'urn:ads:platform:test-service:v1:/configuration/form-service/test',
+          nested: {
+            urn: 'urn:ads:platform:test-service:v1:/configuration/form-service/test2',
+          },
+        },
+        timestamp: new Date(),
+      });
+
+      const invalidateKey = hasha(
+        JSON.stringify({
+          tenantId: tenantId.toString(),
+          path: '/cache/urn:ads:platform:test-service:v1/configuration/form-service/test',
+        })
+      );
+      const invalidateKey2 = hasha(
+        JSON.stringify({
+          tenantId: tenantId.toString(),
+          path: '/cache/urn:ads:platform:test-service:v1/configuration/form-service/test2',
+        })
+      );
+      expect(providerMock.del).toHaveBeenCalledWith(invalidateKey);
+      expect(providerMock.del).toHaveBeenCalledWith(invalidateKey2);
+    });
+
     it('can invalidate cache entry for service target', async () => {
       const target = new CacheTarget(logger, directoryMock as unknown as ServiceDirectory, providerMock, tenantId, {
         serviceId: adspId`urn:ads:platform:test-service`,

@@ -42,14 +42,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       placeholder={placeholder}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onKeyPress={(name: string, value: string, key: string) => {
-        onKeyPressNumericControl({
-          name,
-          value,
-          key,
-          controlProps: props as ControlProps,
-        });
-      }}
+      onKeyPress={(name: string, value: string, key: string) => {}}
       onBlur={(name: string, value: string) => {
         onBlurForNumericControl({
           name,

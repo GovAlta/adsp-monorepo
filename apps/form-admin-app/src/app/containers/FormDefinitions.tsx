@@ -20,7 +20,6 @@ import {
   definitionsSelector,
   directoryBusySelector,
   FormDefinition,
-  getResourceTags,
   loadDefinitions,
   nextSelector,
   resourceTagsSelector,
@@ -49,7 +48,6 @@ const TagBadge: FunctionComponent<{ tag: Tag; onDelete: () => void }> = ({ tag, 
 interface FormDefinitionRowProps {
   definition: FormDefinition;
   loadingTags: boolean;
-  dispatch: AppDispatch;
   navigate: NavigateFunction;
   onTag: () => void;
   onUntag: (tag: Tag) => void;
@@ -58,18 +56,11 @@ interface FormDefinitionRowProps {
 export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({
   definition,
   loadingTags,
-  dispatch,
   navigate,
   onTag,
   onUntag,
 }) => {
   const tags = useSelector((state: AppState) => resourceTagsSelector(state, definition.urn));
-
-  useEffect(() => {
-    if (!Array.isArray(tags)) {
-      dispatch(getResourceTags({ urn: definition.urn }));
-    }
-  }, [dispatch, definition, tags]);
 
   return (
     <tr key={definition.id}>
@@ -184,7 +175,6 @@ export const FormsDefinitions = () => {
             {definitions.map((definition) => (
               <FormDefinitionRow
                 key={definition.id}
-                dispatch={dispatch}
                 navigate={navigate}
                 definition={definition}
                 loadingTags={directoryBusy.loadingResourceTags[definition.urn]}

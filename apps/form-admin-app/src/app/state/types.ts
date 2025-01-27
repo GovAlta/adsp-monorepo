@@ -6,6 +6,7 @@ export const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
 export const EXPORT_SERVICE_ID = 'urn:ads:platform:export-service';
 export const CALENDAR_SERVICE_ID = 'urn:ads:platform:calendar-service';
 export const DIRECTORY_SERVICE_ID = 'urn:ads:platform:directory-service';
+export const CACHE_SERVICE_ID = 'urn:ads:platform:cache-service';
 
 export interface PagedResults<T> {
   results: T[];

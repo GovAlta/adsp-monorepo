@@ -94,7 +94,13 @@ export class CacheTarget implements Target {
 
       const response = await this.getUpstream(req, res);
       if (response) {
-        await this.provider.set(key, invalidateKey, this.ttl, response);
+        if (response.status === 401) {
+          // Note: Unfortunately transient server side issue causing token validation failure results in a 401.
+          // In that case, the status code is in the 400s (i.e. client error), but the request may succeed on retry. Cache with a short TTL.
+          await this.provider.set(key, invalidateKey, 30, response);
+        } else {
+          await this.provider.set(key, invalidateKey, this.ttl, response);
+        }
 
         this.logger.info(
           `Cached upstream response (status: ${response.status}) for request to ${path} with TTL ${this.ttl}.`,
@@ -254,22 +260,33 @@ export class CacheTarget implements Target {
           tenant: this.tenantId.toString(),
         });
 
-        const resourceIdValue = _.get(payload, invalidationEvent.resourceIdPath) as string;
-        const resourceId = AdspId.parse(resourceIdValue);
-        if (resourceId.type === 'resource') {
-          const upstreamUrl = await this.directory.getServiceUrl(this.serviceId);
-          const resourceUrl = await this.directory.getResourceUrl(resourceId);
-          const relative = path.relative(upstreamUrl.href, resourceUrl.href);
+        const resourceIdPaths = Array.isArray(invalidationEvent.resourceIdPath)
+          ? invalidationEvent.resourceIdPath
+          : [invalidationEvent.resourceIdPath];
 
-          const cachedPath = path.join(`/cache/${this.serviceId}/`, relative);
-          const [_key, invalidateKey] = await this.getCacheKey(cachedPath);
+        const upstreamUrl = await this.directory.getServiceUrl(this.serviceId);
+        for (const resourceIdPath of resourceIdPaths) {
+          const resourceIdValue = _.get(payload, resourceIdPath) as string;
+          const resourceId = AdspId.parse(resourceIdValue);
+          if (resourceId.type === 'resource') {
+            const resourceUrl = await this.directory.getResourceUrl(resourceId);
+            const relative = path.relative(upstreamUrl.href, resourceUrl.href);
 
-          const deleted = await this.provider.del(invalidateKey);
-          if (deleted) {
-            this.logger.info(`Invalidated cache entry for path '${path}' on event ${namespace}:${name}.`, {
-              context: 'CacheTarget',
-              tenant: this.tenantId.toString(),
-            });
+            const cachedPath = path.join(`/cache/${this.serviceId}/`, relative);
+            const [_key, invalidateKey] = await this.getCacheKey(cachedPath);
+
+            const deleted = await this.provider.del(invalidateKey);
+            if (deleted) {
+              this.logger.info(`Invalidated cache entry for path '${cachedPath}' on event ${namespace}:${name}.`, {
+                context: 'CacheTarget',
+                tenant: this.tenantId.toString(),
+              });
+            } else {
+              this.logger.debug(`No entries invalidated for path '${cachedPath}' on event ${namespace}:${name}.`, {
+                context: 'CacheTarget',
+                tenant: this.tenantId.toString(),
+              });
+            }
           }
         }
       }

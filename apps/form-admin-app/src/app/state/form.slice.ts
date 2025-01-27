@@ -21,7 +21,7 @@ import {
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
 import { downloadFile, FileMetadata, findFile, loadFileMetadata } from './file.slice';
-import { getTaggedResources } from './directory.slice';
+import { getResourcesTags, getTaggedResources } from './directory.slice';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -138,19 +138,23 @@ export const loadDefinitions = createAsyncThunk(
     const { directory } = state.config;
 
     try {
+      let result: PagedResults<FormDefinition>;
       if (tag) {
-        const { results, page } = await dispatch(getTaggedResources({ value: dashify(tag), after })).unwrap();
+        const { results, page } = await dispatch(
+          getTaggedResources({ value: dashify(tag), after, includeRepresents: true, type: 'configuration' })
+        ).unwrap();
 
         const definitions = [];
-        for (const result of results.filter(({ type }) => type === 'configuration')) {
-          const [_, definitionId] = result.urn.match(/form-service\/([a-zA-Z0-9-_ ]{1,50})$/);
-          if (definitionId) {
-            const definition = await dispatch(loadDefinition(definitionId)).unwrap();
-            definitions.push({ ...definition, urn: result.urn });
+        for (const { urn, _embedded } of results) {
+          // Note: Not all configuration resources are form definitions.
+          // Check the URN to confirm it's a form service namespace value.
+          const [_, definitionId] = urn.match(/form-service\/([a-zA-Z0-9-_ ]{1,50})$/);
+          if (definitionId && _embedded?.represents?.['latest']?.configuration) {
+            definitions.push({ ..._embedded?.represents['latest'].configuration, urn });
           }
         }
 
-        return {
+        result = {
           page,
           results: definitions,
         };
@@ -162,7 +166,7 @@ export const loadDefinitions = createAsyncThunk(
           params: { top: 50, after },
         });
 
-        return {
+        result = {
           ...data,
           results: data.results.map((result) => ({
             ...result,
@@ -170,6 +174,12 @@ export const loadDefinitions = createAsyncThunk(
           })),
         };
       }
+
+      if (result.results?.length > 0) {
+        await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
+      }
+
+      return result;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({

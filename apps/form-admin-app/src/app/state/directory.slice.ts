@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { DIRECTORY_SERVICE_ID, PagedResults } from './types';
+import { CACHE_SERVICE_ID, DIRECTORY_SERVICE_ID, PagedResults } from './types';
 import { getAccessToken } from './user.slice';
 import type { AppState } from './store';
 
@@ -11,6 +11,10 @@ export interface Resource {
   name: string;
   description: string;
   type: string;
+  _embedded?: {
+    represents?: unknown;
+    tags?: Tag[];
+  };
 }
 
 export interface Tag {
@@ -78,19 +82,30 @@ export const getTags = createAsyncThunk(
 
 export const getTaggedResources = createAsyncThunk(
   'directory/get-tagged-resources',
-  async ({ value, after }: { value: string; after?: string }, { getState, rejectWithValue }) => {
+  async (
+    {
+      value,
+      after,
+      includeRepresents,
+      type,
+    }: { value: string; after?: string; includeRepresents?: boolean; type?: string },
+    { getState, rejectWithValue }
+  ) => {
     try {
       const { config } = getState() as AppState;
-      const directoryServiceUrl = config.directory[DIRECTORY_SERVICE_ID];
+      const cacheServiceUrl = config.directory[CACHE_SERVICE_ID];
       const accessToken = await getAccessToken();
 
+      // Request via cache service API.
       const { data } = await axios.get<PagedResults<Resource>>(
-        new URL(`/resource/v1/tags/${value}/resources`, directoryServiceUrl).href,
+        new URL(`/cache/v1/cache/${DIRECTORY_SERVICE_ID}:resource-v1/tags/${value}/resources`, cacheServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: {
             top: 50,
             after,
+            includeRepresents,
+            criteria: type && JSON.stringify({ typeEquals: type }),
           },
         }
       );
@@ -114,17 +129,57 @@ export const getResourceTags = createAsyncThunk(
   async ({ urn, after }: { urn: string; after?: string }, { getState, rejectWithValue }) => {
     try {
       const { config } = getState() as AppState;
-      const directoryServiceUrl = config.directory[DIRECTORY_SERVICE_ID];
+      const cacheServiceUrl = config.directory[CACHE_SERVICE_ID];
       const accessToken = await getAccessToken();
 
-      const { data } = await axios.get<PagedResults<Tag>>(new URL('/resource/v1/tags', directoryServiceUrl).href, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: {
-          top: 50,
-          after,
-          resource: urn,
-        },
-      });
+      // Request via cache service API.
+      const { data } = await axios.get<PagedResults<Tag>>(
+        new URL(
+          `/cache/v1/cache/${DIRECTORY_SERVICE_ID}:resource-v1/resources/${encodeURIComponent(urn)}/tags`,
+          cacheServiceUrl
+        ).href,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            top: 50,
+            after,
+          },
+        }
+      );
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const getResourcesTags = createAsyncThunk(
+  'directory/get-resources-tags',
+  async (urns: string[], { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const cacheServiceUrl = config.directory[CACHE_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      // Request via cache service API.
+      const { data } = await axios.get<PagedResults<Resource>>(
+        new URL(`/cache/v1/cache/${DIRECTORY_SERVICE_ID}:resource-v1/resources`, cacheServiceUrl).href,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            criteria: JSON.stringify(urns),
+            includeTags: true,
+          },
+        }
+      );
 
       return data;
     } catch (err) {
@@ -259,6 +314,33 @@ const directorySlice = createSlice({
           ...state.tags,
           ...payload.results.reduce((tags, result) => ({ ...tags, [result.value]: result }), {}),
         };
+      })
+      .addCase(getResourcesTags.pending, (state, { meta }) => {
+        for (const urn in meta.arg) {
+          state.busy.loadingResourceTags[urn] = true;
+        }
+      })
+      .addCase(getResourcesTags.rejected, (state, { meta }) => {
+        for (const urn in meta.arg) {
+          state.busy.loadingResourceTags[urn] = false;
+        }
+      })
+      .addCase(getResourcesTags.fulfilled, (state, { payload, meta }) => {
+        for (const urn in meta.arg) {
+          state.busy.loadingResourceTags[urn] = false;
+        }
+
+        for (const result of payload.results) {
+          state.resources[result.urn] = result;
+
+          if (result._embedded?.tags) {
+            state.resourceTags[result.urn] = [...result._embedded.tags.map((tag) => tag.value)];
+            state.tags = result._embedded.tags.reduce(
+              (tags, resourceTag) => ({ ...tags, [resourceTag.value]: resourceTag }),
+              state.tags
+            );
+          }
+        }
       })
       .addCase(tagResource.pending, (state) => {
         state.busy.executing = true;

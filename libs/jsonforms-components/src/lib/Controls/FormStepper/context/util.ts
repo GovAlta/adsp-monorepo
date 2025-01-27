@@ -37,8 +37,16 @@ export const subErrorInParent = (error: ErrorObject, paths: string[]): boolean =
     For example: error with instance path /roadmap/0/when belongs to /roadmap
   */
   const errorPaths = error.instancePath.split('/');
-  if (errorPaths.length < 3) return false;
-  if (isNumber(errorPaths[errorPaths.length - 2])) {
+  if (errorPaths.length < 2) return false;
+
+  // For case /roadmap/0
+  if (errorPaths.length > 1 && isNumber(errorPaths[errorPaths.length - 1])) {
+    const parentPath = errorPaths.slice(0, errorPaths.length - 1).join('/');
+    return paths.includes(parentPath);
+  }
+
+  // For case /roadmap/0/when
+  if (errorPaths.length > 2 && isNumber(errorPaths[errorPaths.length - 2])) {
     const parentPath = errorPaths.slice(0, errorPaths.length - 2).join('/');
     return paths.includes(parentPath);
   }
