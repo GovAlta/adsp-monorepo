@@ -113,6 +113,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   if (!enumerators) {
     return <></>;
   }
+  const helpText = uischema?.options?.help;
   const sentenceCaseLabel = convertToSentenceCase(label);
   return (
     <FileUploaderStyle id="file-upload" className="FileUploader">
@@ -126,6 +127,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
           <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} maxFileSize={maxFileSize} accept={accept} />
         </div>
       )}
+      {helpText && <HelpText>{helpText}</HelpText>}
       <div>
         {Array.isArray(data) && data[0] === 'Loading' ? (
           <GoAModal open={Array.isArray(data) && data[0] === 'Loading'}>
@@ -190,6 +192,12 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     </FileUploaderStyle>
   );
 };
+
+const HelpText = styled.div`
+  margin-top: var(--goa-space-xs);
+  font-size: var(--goa-font-size-3);
+  color: var(--goa-color-text-secondary);
+`;
 
 const AttachmentBorderDisabled = styled.div`
   display: flex;
