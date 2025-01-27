@@ -20,9 +20,19 @@ import {
 } from '../styled-components';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoACallout, GoADropdown, GoADropdownItem, GoAIcon, GoATooltip } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoACallout,
+  GoADropdown,
+  GoADropdownItem,
+  GoAIcon,
+  GoATooltip,
+  GoAButtonGroup,
+  GoACheckbox,
+  GoAFormItem,
+  GoAInput,
+} from '@abgov/react-components-new';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
-import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { FileTypeDefault, FileTypeDefaultOnEdit, FileTypeItem } from '@store/file/models';
 import { SecurityClassification } from '@store/common/models';

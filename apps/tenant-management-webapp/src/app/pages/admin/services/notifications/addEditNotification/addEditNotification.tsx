@@ -34,7 +34,7 @@ interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
   onSave?: (type: NotificationItem) => void;
-  title: string;
+  isNew?: boolean;
   open: boolean;
   realmRoles: Role[];
   tenantClients: ServiceRoleConfig;
@@ -50,7 +50,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   initialValue,
   onCancel,
   onSave,
-  title,
+  isNew,
   open,
   realmRoles,
   tenantClients,
@@ -158,13 +158,12 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .add('address', 'address', checkForEmail)
     .build();
-
   return (
     <EditStyles>
       <GoAModal
+        heading={isNew ? 'Add notification type' : 'Edit notification type'}
         testId="notification-types-form"
         open={open}
-        heading={title}
         actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
