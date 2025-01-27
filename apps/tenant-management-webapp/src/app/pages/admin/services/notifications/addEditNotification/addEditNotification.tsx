@@ -123,6 +123,10 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
       name: type.name,
     };
 
+    if (!isEdit) {
+      validations['duplicated'] = type.name;
+    }
+
     if (!type.channels.includes('email')) {
       type.channels = ['email', ...type.channels];
     }
@@ -207,9 +211,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
             }}
             onBlur={() => {
-              validators.checkAll({
-                name: type.name,
-              });
+              if (!isEdit) {
+                validators.checkAll({ name: type.name, duplicated: type.name });
+              } else {
+                validators.checkAll({ name: type.name });
+              }
             }}
           />
         </GoAFormItem>
