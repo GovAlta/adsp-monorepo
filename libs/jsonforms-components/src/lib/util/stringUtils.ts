@@ -87,8 +87,7 @@ interface extractSchema {
  * @returns error message
  */
 export const checkFieldValidity = (props: ControlProps): string => {
-  const { data, errors: ajvErrors, required, label, uischema, schema } = props;
-  const labelToUpdate = getLabelText(uischema.scope, label);
+  const { data, errors: ajvErrors, schema } = props;
   const extraSchema = schema as JsonSchema & extractSchema;
 
   if (extraSchema && data && extraSchema?.title === sinTitle) {
@@ -98,19 +97,7 @@ export const checkFieldValidity = (props: ControlProps): string => {
       return extraSchema.errorMessage;
     }
   }
-  if (required) {
-    if (data === undefined) return '';
-
-    if (schema) {
-      if (isEmptyBoolean(schema, data)) {
-        return `${labelToUpdate} is required`;
-      }
-
-      if (isEmptyNumber(schema, data)) {
-        return `${labelToUpdate} is required`;
-      }
-    }
-  }
+  if (data === undefined) return '';
 
   return ajvErrors;
 };

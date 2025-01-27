@@ -73,31 +73,6 @@ interface HandleChangeProps {
 
 export type ObjectArrayControlProps = ArrayLayoutProps & ArrayLayoutExtProps & ControlProps;
 
-// eslint-disable-next-line
-const extractScopesFromUISchema = (uischema: any): string[] => {
-  const scopes: string[] = [];
-
-  if (uischema?.elements) {
-    // eslint-disable-next-line
-    uischema?.elements?.forEach((element: any) => {
-      if (element?.elements) {
-        // eslint-disable-next-line
-        element?.elements?.forEach((internalElement: any) => {
-          if (internalElement?.scope) {
-            scopes.push(internalElement?.scope);
-          }
-        });
-      } else {
-        if (element?.scope) {
-          scopes.push(element?.scope);
-        }
-      }
-    });
-  }
-
-  return scopes;
-};
-
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
   schema: JsonSchema,
@@ -242,7 +217,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     errors,
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
-  const required = (schema.items as Record<string, string>).required;
+  const required = (schema.items as Record<string, string>)?.required;
 
   return (
     <NonEmptyCellStyle>
@@ -316,6 +291,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
                             {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
                               <GoAInput
+                                error={error?.message.length > 0}
                                 type={dataObject.type === 'number' ? 'number' : 'text'}
                                 id={schemaName}
                                 name={schemaName}
@@ -559,7 +535,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
       currentCategory.data = newCategoryData;
     }
 
-    if (currentCategory?.count > 0) currentCategory.count--;
+    if (currentCategory?.count && currentCategory?.count > 0) currentCategory.count--;
     let handleChangeData: unknown[] | null = Object.keys(newCategoryData).map((key) => {
       return newCategoryData[key];
     });
@@ -572,12 +548,13 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     dispatch({ type: DELETE_ACTION, payload: { name: path, category: currentCategory } });
   };
 
-  const handleChangeWithData = (path: string, value: StateData) => {
+  //eslint-disable-next-line
+  const handleChangeWithData = (path: string, value: Record<string, any>) => {
     if (path) {
       const categories = registers.categories;
-      const currentCategory = categories[path]?.data;
+      const currentCategory = categories[path]?.data || {};
       const newData: StateData = {};
-      const allKeys = Object.keys(value).concat(Object.keys(currentCategory));
+      const allKeys = Object.keys(value).concat(Object.keys(currentCategory || []));
       const allKeysUnique = allKeys.filter((a, b) => allKeys.indexOf(a) === b);
 
       Object.keys(allKeysUnique).forEach((num) => {
@@ -590,7 +567,8 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
           });
         value[num] &&
           Object.keys(value[num]).forEach((path) => {
-            newData[num][path] = value[num][path] || (currentCategory[num] && currentCategory[num][path]);
+            newData[num][path] =
+              value[num][path] !== undefined ? value[num][path] : currentCategory[num] && currentCategory[num][path];
           });
       });
 
