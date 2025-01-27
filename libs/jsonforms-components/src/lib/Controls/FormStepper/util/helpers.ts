@@ -19,15 +19,15 @@ export const pickPropertyValues = (obj: any, property: string, endWithType?: str
     } else if (_.isObject(obj[key])) {
       // if the object type is equal to end type, we are not going to continue the recursive approach
       if (endWithType && obj[key]?.type === endWithType) {
-        if (obj[key]) {
-          values.push(obj[key]);
+        if (property in obj[key]) {
+          values.push(obj[key][property]);
         }
       } else {
-        values = [...values, ...pickPropertyValues(obj[key], property)];
+        values = [...values, ...pickPropertyValues(obj[key], property, endWithType)];
       }
     } else if (_.isArray(obj[key])) {
       const nextValues = obj[key].map(function (arrayObj: object) {
-        return pickPropertyValues(arrayObj, property);
+        return pickPropertyValues(arrayObj, property, endWithType);
       });
       values = [...values, ...nextValues];
     }
