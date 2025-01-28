@@ -2,7 +2,6 @@ import { FileType, SecurityClassifications } from '@abgov/adsp-service-sdk';
 import { FormServiceRoles } from '../roles';
 
 export const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
-export const FORM_SUPPORTING_ANONYMOUS_DOCS = 'form-anonymous-supporting-documents';
 
 export const FormSupportingDocFileType: FileType = {
   id: FORM_SUPPORTING_DOCS,

@@ -2,7 +2,7 @@ import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-
 import { InvalidValueError } from '@core-services/core-common';
 import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionRepository } from '../repository';
-import { FormServiceRoles } from '../roles';
+import { DirectoryServiceRoles, FormServiceRoles } from '../roles';
 import { FormDisposition, FormSubmission, SecurityClassificationType } from '../types';
 import { FormEntity } from './form';
 import { FormDefinitionEntity } from './definition';
@@ -84,7 +84,7 @@ export class FormSubmissionEntity implements FormSubmission {
 
   canRead(user: User): boolean {
     return (
-      isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true) ||
+      isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, DirectoryServiceRoles.ResourceResolver], true) ||
       isAllowedUser(user, this.tenantId, this.definition?.assessorRoles || [])
     );
   }
