@@ -10,7 +10,7 @@ export interface Categories {
 }
 
 interface Category {
-  count: number;
+  count?: number;
   data: StateData;
 }
 

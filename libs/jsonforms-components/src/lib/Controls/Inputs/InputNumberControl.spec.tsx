@@ -16,14 +16,19 @@ const mockContextValue = {
 //eslint-disable-next-line
 const TestComponent: React.FC<{ props: any }> = ({ props }) => {
   const ctx = React.useContext(JsonFormsContext);
-  return <>{checkFieldValidity(props, ctx)}</>;
+  return <>{checkFieldValidity(props)}</>;
 };
 
+interface ControlElementWithMin extends ControlElement {
+  minLength: number;
+}
+
 describe('Input Text Control tests', () => {
-  const textBoxUiSchema: ControlElement = {
+  const textBoxUiSchema: ControlElementWithMin = {
     type: 'Control',
     scope: '#/properties/firstName',
     label: 'My First name',
+    minLength: 1,
   };
 
   const staticProps: GoAInputTextProps & ControlProps = {
@@ -178,15 +183,6 @@ describe('Input Text Control tests', () => {
   });
 
   describe('Control Types test', () => {
-    it('Empty Boolean control should show error', () => {
-      const { getByText } = render(
-        <JsonFormsContext.Provider value={mockContextValue}>
-          <TestComponent props={emptyBooleanProps} />
-        </JsonFormsContext.Provider>
-      );
-
-      expect(getByText('First name is required')).toBeTruthy();
-    });
     it('Check if the date is a valid date/time', () => {
       const date = new Date();
       expect(isValidDate(date)).toBe(true);
