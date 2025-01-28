@@ -71,7 +71,15 @@ const dataSchema = {
               type: 'object',
               properties: {
                 impact: {
-                  type: 'string',
+                  type: 'object',
+                  properties: {
+                    theImpact: {
+                      type: 'string',
+                    },
+                    theDamage: {
+                      type: 'string',
+                    },
+                  },
                 },
               },
             },
@@ -106,7 +114,11 @@ const listLayout = {
               elements: [
                 {
                   type: 'Control',
-                  scope: '#/properties/impacts/properties/impact',
+                  scope: '#/properties/theImpact',
+                },
+                {
+                  type: 'Control',
+                  scope: '#/properties/theDamage',
                 },
               ],
             },
@@ -136,7 +148,8 @@ const initialData = {
       description: 'The rain in spain',
       impacts: [
         {
-          item: 'More rain in spain',
+          theImpact: 'More rain in spain',
+          theTime: 'today',
         },
       ],
     },
