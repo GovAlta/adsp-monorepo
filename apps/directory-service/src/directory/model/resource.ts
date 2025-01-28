@@ -23,7 +23,7 @@ export class ResourceType {
   ) {
     this.type = type;
     this.matcher = new RegExp(matcher);
-    this.nameGetter = property(namePath);
+    this.nameGetter = namePath ? property(namePath) : () => undefined;;
     this.descriptionGetter = descriptionPath ? property(descriptionPath) : () => undefined;
     this.eventResourceIdGetter = deleteEvent?.resourceIdPath ? property(deleteEvent?.resourceIdPath) : () => undefined;
     this.deleteEventNamespace = deleteEvent?.namespace;

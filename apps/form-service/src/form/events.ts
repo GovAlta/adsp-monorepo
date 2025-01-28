@@ -1,6 +1,6 @@
 import { AdspId, DomainEvent, DomainEventDefinition, Stream, User } from '@abgov/adsp-service-sdk';
 import { FormEntity, FormSubmissionEntity } from './model';
-import { FormResponse, mapForm } from './mapper';
+import { mapForm } from './mapper';
 import { SUBMITTED_FORM } from './pdf';
 import { FormServiceRoles } from './roles';
 import { SUPPORT_COMMENT_TOPIC_TYPE_ID } from './comment';
@@ -182,7 +182,7 @@ export const SubmissionDispositionedDefinition: DomainEventDefinition = {
   },
 };
 
-function getCorrelationId(form: FormResponse) {
+function getCorrelationId(form: ReturnType<typeof mapForm>) {
   return form.urn;
 }
 
