@@ -223,7 +223,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     errors,
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
-  const required = (schema.items as Record<string, string>)?.required;
+  const required = (schema.items as Record<string, Array<string>>)?.required;
 
   return (
     <NonEmptyCellStyle>
@@ -290,6 +290,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     ) as { message: string };
                     if (
                       error?.message.includes('must NOT have fewer') &&
+                      required.find((r) => r === schemaName) &&
                       (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
                     ) {
                       error.message = `${capitalizeFirstLetter(schemaName)} is required`;
