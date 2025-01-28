@@ -36,6 +36,13 @@ components:
                 type: string
         _embedded:
           type: object
+    TagSpecification:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: string
     ResourceSpecification:
       type: object
       properties:
@@ -53,7 +60,7 @@ components:
           type: string
           enum: [tag-resource]
         tag:
-          $ref: "#/components/schemas/Tag"
+          $ref: "#/components/schemas/TagSpecification"
         resource:
           $ref: "#/components/schemas/ResourceSpecification"
       required: [operation, tag, resource]
@@ -64,7 +71,7 @@ components:
           type: string
           enum: [untag-resource]
         tag:
-          $ref: "#/components/schemas/Tag"
+          $ref: "#/components/schemas/TagSpecification"
         resource:
           $ref: "#/components/schemas/ResourceSpecification"
       required: [operation, tag, resource]

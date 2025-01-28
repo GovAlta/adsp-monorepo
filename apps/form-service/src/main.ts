@@ -183,7 +183,7 @@ const initializeApp = async (): Promise<express.Application> => {
         {
           serviceId: adspId`urn:ads:platform:directory-service`,
           configuration: {
-            [`${serviceId}:v2`]: {
+            [`${serviceId}:v1`]: {
               resourceTypes: [
                 {
                   type: 'form',
