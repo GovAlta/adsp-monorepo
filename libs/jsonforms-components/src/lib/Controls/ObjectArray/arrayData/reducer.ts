@@ -16,7 +16,11 @@ export function objectListReducer(state: { categories: Categories }, action: Obj
       const { categories } = state;
       const { name, category } = action.payload as AddData;
       const newCategories = Object.assign({}, categories);
-      newCategories[name].data = category;
+      if (!newCategories[name]) {
+        newCategories[name] = { data: category };
+      } else {
+        newCategories[name].data = category;
+      }
       return { ...state, categories: newCategories };
     }
     case SET_DATA_ACTION: {
