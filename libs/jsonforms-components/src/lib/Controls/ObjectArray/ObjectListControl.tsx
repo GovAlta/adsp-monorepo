@@ -2,6 +2,7 @@ import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
 import React, { useState, useReducer, useEffect, useCallback } from 'react';
+import { checkFieldValidity, isEmptyBoolean, isEmptyNumber } from '../../util';
 import {
   ArrayLayoutProps,
   ControlElement,
@@ -199,6 +200,11 @@ interface NonEmptyRowComponentProps {
   openDeleteDialog(rowIndex: number): void;
 }
 
+function capitalizeFirstLetter(str: string) {
+  if (!str) return ''; // Handle empty strings
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
 export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   props: NonEmptyRowComponentProps & HandleChangeProps
 ) {
@@ -277,16 +283,21 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                   {Object.keys(properties).map((element, ix) => {
                     const dataObject = properties[element];
                     const schemaName = element;
+                    const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
                     const error = errors?.find(
                       // eslint-disable-next-line
                       (e: any) => e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}`
                     ) as { message: string };
+                    if (
+                      error?.message.includes('must NOT have fewer') &&
+                      (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
+                    ) {
+                      error.message = `${capitalizeFirstLetter(schemaName)} is required`;
+                    }
                     return (
                       <td key={ix}>
                         {isInReview ? (
-                          <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
-                            {data && data[num] ? (data[num][element] as unknown as string) : ''}
-                          </div>
+                          <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>{currentData}</div>
                         ) : (
                           <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
                             {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
@@ -295,7 +306,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                 type={dataObject.type === 'number' ? 'number' : 'text'}
                                 id={schemaName}
                                 name={schemaName}
-                                value={data && data[num] ? (data[num][element] as unknown as string) : ''}
+                                value={currentData}
                                 testId={`#/properties/${schemaName}-input-${i}`}
                                 onChange={(name: string, value: string) => {
                                   handleChange(rowPath, {
@@ -601,7 +612,11 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   return (
     <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
       <ToolBarHeader>
-        {isInReview && listTitle && <b>{listTitle}</b>}
+        {isInReview && listTitle && (
+          <b>
+            {listTitle} <span>{additionalProps.required && '(required)'}</span>
+          </b>
+        )}
         {!isInReview && listTitle && (
           <ObjectArrayTitle>
             {listTitle} <span>{additionalProps.required && '(required)'}</span>
