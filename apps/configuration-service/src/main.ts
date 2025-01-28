@@ -79,6 +79,7 @@ const initializeApp = async (): Promise<express.Application> => {
         ignoreServiceAud: true,
         values: [ServiceMetricsValueDefinition],
         serviceConfigurations: [
+          // Register cache service target for configuration.
           {
             serviceId: adspId`urn:ads:platform:cache-service`,
             configuration: {
@@ -116,6 +117,7 @@ const initializeApp = async (): Promise<express.Application> => {
               },
             },
           },
+          // Register directory service resource type for configuration.
           {
             serviceId: adspId`urn:ads:platform:directory-service`,
             configuration: {

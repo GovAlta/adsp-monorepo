@@ -13,7 +13,9 @@ export const FORM_UNLOCKED = 'form-unlocked';
 export const FORM_SET_TO_DRAFT = 'form-to-draft';
 export const FORM_SUBMITTED = 'form-submitted';
 export const FORM_ARCHIVED = 'form-archived';
+
 export const SUBMISSION_DISPOSITIONED = 'submission-dispositioned';
+export const SUBMISSION_DELETED = 'submission-deleted';
 
 const userInfoSchema = {
   type: 'object',
@@ -73,6 +75,7 @@ export const FormDeletedDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
+      urn: { type: 'string' },
       id: { type: 'string' },
       deletedBy: userInfoSchema,
     },
@@ -153,7 +156,7 @@ export const FormStatusArchivedDefinition: DomainEventDefinition = {
 
 export const SubmissionDispositionedDefinition: DomainEventDefinition = {
   name: SUBMISSION_DISPOSITIONED,
-  description: 'Signalled when a form submission is dispositioned',
+  description: 'Signalled when a form submission is dispositioned.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -182,8 +185,21 @@ export const SubmissionDispositionedDefinition: DomainEventDefinition = {
   },
 };
 
+export const SubmissionDeletedDefinition: DomainEventDefinition = {
+  name: SUBMISSION_DELETED,
+  description: 'Signalled when a form submission is deleted.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      urn: { type: 'string' },
+      deletedBy: userInfoSchema,
+    },
+  },
+};
+
 function getCorrelationId(form: ReturnType<typeof mapForm>) {
-  return form.urn;
+  return form?.urn;
 }
 
 export function formCreated(apiId: AdspId, user: User, form: FormEntity): DomainEvent {
@@ -217,6 +233,7 @@ export function formDeleted(apiId: AdspId, user: User, form: FormEntity): Domain
       definitionId: form.definition.id,
     },
     payload: {
+      urn: formResponse.urn,
       id: form.id,
       deletedBy: {
         id: user.id,
@@ -356,7 +373,7 @@ export function submissionDispositioned(apiId: AdspId, user: User, submission: F
     payload: {
       form: formResponse,
       submission: {
-        urn: `${formResponse.urn}/submissions/${submission.id}`,
+        urn: `${apiId}:/submissions/${submission.id}`,
         id: submission.id,
         disposition: {
           createdBy: {
@@ -366,6 +383,28 @@ export function submissionDispositioned(apiId: AdspId, user: User, submission: F
           status: submission.disposition.status,
           reason: submission.disposition.reason,
         },
+      },
+    },
+  };
+}
+
+export function submissionDeleted(apiId: AdspId, user: User, submission: FormSubmissionEntity): DomainEvent {
+  const form = submission.form;
+  const formResponse = form ? mapForm(apiId, form) : null;
+  return {
+    name: SUBMISSION_DELETED,
+    timestamp: new Date(),
+    tenantId: submission.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: submission.definition?.id,
+    },
+    payload: {
+      urn: `${apiId}:/submissions/${submission.id}`,
+      id: submission.id,
+      deletedBy: {
+        id: user.id,
+        name: user.name,
       },
     },
   };

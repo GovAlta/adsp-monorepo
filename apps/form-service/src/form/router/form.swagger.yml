@@ -726,3 +726,17 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/FormSubmission"
+  delete:
+    tags:
+      - Form Submission
+    description: Deletes a form submission.
+    responses:
+      200:
+        description: Successfully deleted the form submission.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean

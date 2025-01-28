@@ -33,20 +33,14 @@ import {
   formSetToDraft,
   formSubmitted,
   formUnlocked,
+  submissionDeleted,
   submissionDispositioned,
 } from '../events';
 import { mapForm, mapFormDefinition, mapFormSubmission, mapFormWithFormSubmission } from '../mapper';
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { ExportServiceRoles, FormServiceRoles } from '../roles';
-import {
-  Form,
-  FormCriteria,
-  FormDefinition,
-  FormStatus,
-  FormSubmissionCriteria,
-  Intake,
-} from '../types';
+import { Form, FormCriteria, FormDefinition, FormStatus, FormSubmissionCriteria, Intake } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -439,6 +433,40 @@ export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmi
 
       end();
       res.send(mapFormSubmission(apiId, formSubmission));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteFormSubmission(
+  apiId: AdspId,
+  eventService: EventService,
+  submissionRepository: FormSubmissionRepository
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'get-entity-time');
+      const { formId, submissionId } = req.params;
+      const user = req.user;
+      const tenant = req.tenant;
+
+      if (!isAllowedUser(user, tenant.id, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('delete form submission', user);
+      }
+
+      let deleted = false;
+      const formSubmission = await submissionRepository.get(tenant.id, submissionId, formId);
+      if (formSubmission) {
+        deleted = await submissionRepository.delete(formSubmission);
+      }
+
+      if (deleted) {
+        eventService.send(submissionDeleted(apiId, user, formSubmission));
+      }
+
+      end();
+      res.send({ deleted });
     } catch (err) {
       next(err);
     }
@@ -875,6 +903,13 @@ export function createFormRouter({
     assertAuthenticatedHandler,
     createValidationHandler(param('submissionId').isUUID()),
     getFormSubmission(apiId, submissionRepository)
+  );
+
+  router.delete(
+    '/submissions/:submissionId',
+    assertAuthenticatedHandler,
+    createValidationHandler(param('submissionId').isUUID()),
+    deleteFormSubmission(apiId, eventService, submissionRepository)
   );
 
   router.get(

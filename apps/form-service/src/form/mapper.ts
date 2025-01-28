@@ -77,7 +77,7 @@ export function mapFormWithFormSubmission(
 
 export function mapFormSubmission(apiId: AdspId, entity: FormSubmissionEntity) {
   return {
-    urn: `${apiId}:/forms/${entity.formId}/submissions/${entity.id}`,
+    urn: `${apiId}:/submissions/${entity.id}`,
     id: entity.id,
     formId: entity.formId,
     formDefinitionId: entity.formDefinitionId,
@@ -98,8 +98,8 @@ export function mapFormSubmission(apiId: AdspId, entity: FormSubmissionEntity) {
     updatedBy: { id: entity.updatedBy.id, name: entity.updatedBy.name },
     hash: entity.hash,
     _links: {
-      self: { href: `${apiId}:/forms/${entity.formId}/submissions/${entity.id}` },
-      alternate: { href: `${apiId}:/submissions/${entity.id}` },
+      self: { href: `${apiId}:/submissions/${entity.id}` },
+      alternate: { href: `${apiId}:/forms/${entity.formId}/submissions/${entity.id}` },
       form: { href: `${apiId}:/forms/${entity.formId}` },
       collection: { href: `${apiId}:/submissions` },
     },
