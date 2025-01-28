@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { FormSubmissionEntity } from './model';
-import { Form, FormDefinition, Intake } from './types';
+import { FormDefinition, Intake } from './types';
 import { FormEntityWithJobId } from './router';
 
 export function mapFormDefinition(entity: FormDefinition, intake?: Intake) {
@@ -24,28 +24,7 @@ export function mapFormDefinition(entity: FormDefinition, intake?: Intake) {
   };
 }
 
-export type FormResponse = Omit<Form, 'anonymousApplicant' | 'definition' | 'applicant'> & {
-  urn: string;
-  definition: { id: string; name: string };
-  applicant: { addressAs: string };
-  jobId?: string;
-};
-
-export type FormSubmissionResponse = Omit<
-  Form,
-  'anonymousApplicant' | 'definition' | 'applicant'
-> & {
-  urn: string;
-  definition: { id: string; name: string };
-  applicant: { addressAs: string };
-  submission: {
-    id: string;
-    urn: string;
-  };
-  jobId?: string;
-};
-
-export function mapForm(apiId: AdspId, entity: FormEntityWithJobId, includeData = false): FormResponse {
+export function mapForm(apiId: AdspId, entity: FormEntityWithJobId, includeData = false) {
   return {
     urn: `${apiId}:/forms/${entity.id}`,
     id: entity.id,
@@ -71,6 +50,12 @@ export function mapForm(apiId: AdspId, entity: FormEntityWithJobId, includeData 
       : null,
     data: includeData ? entity.data : undefined,
     files: includeData ? entity.files : undefined,
+    _links: {
+      self: { href: `${apiId}:/forms/${entity.id}` },
+      data: { href: `${apiId}:/forms/${entity.id}/data` },
+      submissions: entity.definition?.submissionRecords && { href: `${apiId}:/forms/${entity.id}/submissions` },
+      collection: { href: `${apiId}:/forms` },
+    },
   };
 }
 
@@ -79,35 +64,44 @@ export function mapFormWithFormSubmission(
   entity: FormEntityWithJobId,
   submissionEntity: FormSubmissionEntity,
   includeData = false
-): FormSubmissionResponse {
+) {
+  const result = mapForm(apiId, entity, includeData);
   return {
-    urn: `${apiId}:/forms/${entity.id}`,
-    id: entity.id,
-    jobId: entity?.jobId,
-    securityClassification: entity?.securityClassification,
-    definition: entity.definition
-      ? {
-          id: entity.definition.id,
-          name: entity.definition.name,
-        }
-      : null,
-    formDraftUrl: entity.formDraftUrl,
-    status: entity.status,
-    created: entity.created,
-    createdBy: entity.createdBy,
-    locked: entity.locked,
-    submitted: entity.submitted,
-    lastAccessed: entity.lastAccessed,
-    applicant: entity.applicant
-      ? {
-          addressAs: entity.applicant.addressAs,
-        }
-      : null,
-    data: includeData ? entity.data : undefined,
-    files: includeData ? entity.files : undefined,
+    ...result,
     submission: {
       id: submissionEntity.id,
       urn: submissionEntity.formSubmissionUrn,
+    },
+  };
+}
+
+export function mapFormSubmission(apiId: AdspId, entity: FormSubmissionEntity) {
+  return {
+    urn: `${apiId}:/forms/${entity.formId}/submissions/${entity.id}`,
+    id: entity.id,
+    formId: entity.formId,
+    formDefinitionId: entity.formDefinitionId,
+    formData: entity.formData,
+    formFiles: Object.entries(entity.formFiles || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
+    created: entity.created,
+    createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
+    securityClassification: entity.securityClassification,
+    disposition: entity.disposition
+      ? {
+          id: entity.disposition.id,
+          date: entity.disposition.date,
+          status: entity.disposition.status,
+          reason: entity.disposition.reason,
+        }
+      : null,
+    updated: entity.updated,
+    updatedBy: { id: entity.updatedBy.id, name: entity.updatedBy.name },
+    hash: entity.hash,
+    _links: {
+      self: { href: `${apiId}:/forms/${entity.formId}/submissions/${entity.id}` },
+      alternate: { href: `${apiId}:/submissions/${entity.id}` },
+      form: { href: `${apiId}:/forms/${entity.formId}` },
+      collection: { href: `${apiId}:/submissions` },
     },
   };
 }

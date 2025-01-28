@@ -53,8 +53,15 @@ export function getTag(apiId: AdspId, repository: DirectoryRepository): RequestH
       const tenantId = req.tenant?.id;
       const { tag } = req.params;
 
-      if (!isAllowedUser(user, tenantId, [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger])) {
-        throw new UnauthorizedUserError('get tags', user);
+      if (
+        !isAllowedUser(
+          user,
+          tenantId,
+          [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger, ServiceRoles.ResourceResolver],
+          true
+        )
+      ) {
+        throw new UnauthorizedUserError('get tag', user);
       }
 
       const { results } = await repository.getTags(1, null, {

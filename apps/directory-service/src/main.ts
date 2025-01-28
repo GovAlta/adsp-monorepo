@@ -130,6 +130,27 @@ const initializeApp = async (): Promise<express.Application> => {
       eventStreams: [EntryUpdatesStream],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [
+        // Directory service configuration for tagging of tags.
+        {
+          serviceId,
+          configuration: {
+            [`${serviceId}:resource-v1`]: {
+              resourceTypes: [
+                {
+                  type: 'tag',
+                  matcher: '^\\/tags\\/[0-9a-z-]{1,100}$',
+                  namePath: 'label',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: TagDeletedDefinition.name,
+                    resourceIdPath: 'tag.urn',
+                  },
+                },
+              ],
+            },
+          },
+        },
+        // Cache service configuration for resources and tags.
         {
           serviceId: adspId`urn:ads:platform:cache-service`,
           configuration: {
