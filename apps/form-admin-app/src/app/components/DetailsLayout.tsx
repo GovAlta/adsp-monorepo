@@ -12,19 +12,20 @@ const DetailsLayoutContainer = styled.div`
   right: 0;
   display: flex;
   flex-direction: column;
-  & > * {
-    flex: 1
-  }
   & > :first-child {
     background: var(--goa-color-greyscale-100);
     border-bottom: 1px solid var(--goa-color-greyscale-200);
     flex: 0;
+  }
+  & > :first-child [trailingicon='arrow-forward'] {
+    margin-left: auto;
   }
 `;
 
 interface DetailsLayoutProps {
   initialized: boolean;
   navButtons?: ReactNode;
+  nextTo?: string;
   header: ReactNode;
   children: ReactNode;
   actionsForm?: ReactNode;
@@ -33,6 +34,7 @@ interface DetailsLayoutProps {
 export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({
   initialized,
   navButtons,
+  nextTo,
   header,
   children,
   actionsForm,
@@ -42,11 +44,16 @@ export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({
   return (
     <DetailsLayoutContainer>
       <div>
-        <GoAButtonGroup alignment="start" mt="s" ml="s">
+        <GoAButtonGroup alignment="start" mt="s" ml="s" mr="s">
           <GoAButton type="secondary" leadingIcon="arrow-back" onClick={() => navigate(-1)}>
             Back
           </GoAButton>
           {navButtons}
+          {nextTo && (
+            <GoAButton type="secondary" trailingIcon="arrow-forward" onClick={() => navigate(nextTo)}>
+              Next
+            </GoAButton>
+          )}
         </GoAButtonGroup>
         {header}
       </div>

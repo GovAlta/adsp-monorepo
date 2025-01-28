@@ -36,7 +36,7 @@ export const FormSubmission = () => {
   const { submissionId } = useParams();
   const busy = useSelector(formBusySelector);
   const definition = useSelector(definitionSelector);
-  const submission = useSelector(submissionSelector);
+  const { submission, next } = useSelector(submissionSelector);
   const files = useSelector(submissionFilesSelector);
   const draft = useSelector(dispositionDraftSelector);
 
@@ -54,6 +54,7 @@ export const FormSubmission = () => {
           </GoAButton>
         )
       }
+      nextTo={next && `../submissions/${next}`}
       header={
         submission && (
           <PropertiesContainer>

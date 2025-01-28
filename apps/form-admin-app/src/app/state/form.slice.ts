@@ -990,26 +990,36 @@ export const submissionsSelector = createSelector(
 export const formSelector = createSelector(
   (state: AppState) => state.form.forms,
   (state: AppState) => state.form.selectedForm,
-  (forms, selected) => forms[selected]
+  (state: AppState) => state.form.results.forms,
+  (forms, selected, results) => {
+    const selectedIndex = results.indexOf(selected);
+    const next = selectedIndex >= 0 ? results[selectedIndex + 1] : undefined;
+    return { form: forms[selected], next };
+  }
 );
 
 export const formFilesSelector = createSelector(
   formSelector,
   (state: AppState) => state.file.metadata,
-  (form, metadata) =>
+  ({ form }, metadata) =>
     Object.entries(form?.files || {}).reduce((files, [key, urn]) => ({ ...files, [key]: metadata[urn] }), {})
 );
 
 export const submissionSelector = createSelector(
   (state: AppState) => state.form.submissions,
   (state: AppState) => state.form.selectedSubmission,
-  (submissions, selected) => submissions[selected]
+  (state: AppState) => state.form.results.submissions,
+  (submissions, selected, results) => {
+    const selectedIndex = results.indexOf(selected);
+    const next = selectedIndex >= 0 ? results[selectedIndex + 1] : undefined;
+    return { submission: submissions[selected], next };
+  }
 );
 
 export const submissionFilesSelector = createSelector(
   (state: AppState) => state.file.metadata,
   submissionSelector,
-  (metadata, submission) =>
+  (metadata, { submission }) =>
     Object.entries(submission?.formFiles || {}).reduce((files, [key, urn]) => ({ ...files, [key]: metadata[urn] }), {})
 );
 
