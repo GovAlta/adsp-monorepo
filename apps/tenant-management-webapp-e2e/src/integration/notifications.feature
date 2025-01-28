@@ -197,8 +197,7 @@ Feature: Notifications
     And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "EMPTY"
     Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "EMPTY"
 
-  # CS-3900
-  @TEST_CS-1339 @REQ_CS-1308 @REQ_CS-1233 @regression @ignore
+  @TEST_CS-1339 @REQ_CS-1308 @REQ_CS-1233 @regression
   Scenario: As a tenant admin, I can configure what channels are supported by a notification type, so that I can support multiple channels of notifications.
     Given a tenant admin user is on notification types page
     # Add a notification type
