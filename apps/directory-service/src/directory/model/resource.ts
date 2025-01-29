@@ -23,7 +23,7 @@ export class ResourceType {
   ) {
     this.type = type;
     this.matcher = new RegExp(matcher);
-    this.nameGetter = namePath ? property(namePath) : () => undefined;;
+    this.nameGetter = namePath ? property(namePath) : () => undefined;
     this.descriptionGetter = descriptionPath ? property(descriptionPath) : () => undefined;
     this.eventResourceIdGetter = deleteEvent?.resourceIdPath ? property(deleteEvent?.resourceIdPath) : () => undefined;
     this.deleteEventNamespace = deleteEvent?.namespace;
@@ -63,10 +63,10 @@ export class ResourceType {
 
       const name = this.nameGetter(data) || resource.name;
       const description = this.descriptionGetter(data) || resource.description;
-      if (name !== resource.name || description !== resource.description) {
+      if (name !== resource.name || description !== resource.description || this.type !== resource.type) {
         resource = sync
           ? await this.repository.saveResource({ ...resource, name, description, type: this.type })
-          : { ...resource, name, description };
+          : { ...resource, name, description, type: this.type };
       }
 
       return { ...resource, data };

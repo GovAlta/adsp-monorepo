@@ -3,29 +3,22 @@ import {
   GoAButton,
   GoAButtonGroup,
   GoACallout,
-  GoAChip,
   GoADropdown,
   GoADropdownItem,
   GoAFormItem,
-  GoAIconButton,
-  GoASkeleton,
   GoATable,
 } from '@abgov/react-components-new';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   AppDispatch,
-  AppState,
   formBusySelector,
   definitionsSelector,
   directoryBusySelector,
   FormDefinition,
   loadDefinitions,
   nextSelector,
-  resourceTagsSelector,
-  Tag,
   tagResource,
-  untagResource,
   userSelector,
   getTags,
   tagsSelector,
@@ -36,47 +29,25 @@ import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
 import { RowSkeleton } from '../components/RowSkeleton';
+import { Tags } from './Tags';
 
 const FeatureBadge: FunctionComponent<{ feature: string; hasFeature?: boolean }> = ({ feature, hasFeature }) => {
   return hasFeature && <GoABadge type="information" content={feature} mr="xs" mb="xs" />;
 };
 
-const TagBadge: FunctionComponent<{ tag: Tag; onDelete: () => void }> = ({ tag, onDelete }) => {
-  return <GoAChip content={tag.label} deletable={true} onClick={onDelete} mr="xs" mb="xs" />;
-};
-
 interface FormDefinitionRowProps {
   definition: FormDefinition;
-  loadingTags: boolean;
   navigate: NavigateFunction;
   onTag: () => void;
-  onUntag: (tag: Tag) => void;
 }
 
-export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({
-  definition,
-  loadingTags,
-  navigate,
-  onTag,
-  onUntag,
-}) => {
-  const tags = useSelector((state: AppState) => resourceTagsSelector(state, definition.urn));
-
+export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({ definition, navigate, onTag }) => {
   return (
     <tr key={definition.id}>
       <td>{definition.name}</td>
-      {loadingTags ? (
-        <td>
-          <GoASkeleton type="text-small" />
-        </td>
-      ) : (
-        <td>
-          {tags?.map((tag) => (
-            <TagBadge key={tag.value} tag={tag} onDelete={() => onUntag(tag)} />
-          ))}
-          <GoAIconButton icon="add-circle" variant="color" onClick={onTag} />
-        </td>
-      )}
+      <td>
+        <Tags urn={definition.urn} onTag={onTag} />
+      </td>
       <td>
         <FeatureBadge feature="Anonymous applicant" hasFeature={definition.anonymousApply} />
         <FeatureBadge feature="Applicant questions" hasFeature={definition.supportTopic} />
@@ -133,6 +104,7 @@ export const FormsDefinitions = () => {
                 value={searchTag}
                 onChange={(_: string, value: string) => setSearchTag(value)}
               >
+                <GoADropdownItem value="" label="<No tag filter>" />
                 {tags.map(({ value, label }) => (
                   <GoADropdownItem key={value} value={value} label={label} />
                 ))}
@@ -177,9 +149,7 @@ export const FormsDefinitions = () => {
                 key={definition.id}
                 navigate={navigate}
                 definition={definition}
-                loadingTags={directoryBusy.loadingResourceTags[definition.urn]}
                 onTag={() => setShowTagDefinition(definition)}
-                onUntag={(tag) => dispatch(untagResource({ urn: definition.urn, tag }))}
               />
             ))}
             <RowSkeleton columns={4} show={busy.loading} />
@@ -200,17 +170,17 @@ export const FormsDefinitions = () => {
             )}
           </tbody>
         </GoATable>
-        <AddTagModal
-          open={!!showTagDefinition}
-          resource={showTagDefinition}
-          tagging={directoryBusy.executing}
-          onClose={() => setShowTagDefinition(null)}
-          onTag={async (urn, label) => {
-            await dispatch(tagResource({ urn, label }));
-            setShowTagDefinition(null);
-          }}
-        />
       </ContentContainer>
+      <AddTagModal
+        open={!!showTagDefinition}
+        resource={showTagDefinition}
+        tagging={directoryBusy.executing}
+        onClose={() => setShowTagDefinition(null)}
+        onTag={async (urn, label) => {
+          await dispatch(tagResource({ urn, label }));
+          setShowTagDefinition(null);
+        }}
+      />
     </SearchLayout>
   );
 };

@@ -27,6 +27,9 @@ import {
   topicSelector,
   AppState,
   connectStream,
+  Resource,
+  directoryBusySelector,
+  tagResource,
 } from '../state';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
@@ -35,6 +38,8 @@ import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 import { RowSkeleton } from '../components/RowSkeleton';
+import { AddTagModal } from '../components/AddTagModal';
+import { Tags } from './Tags';
 
 interface FormRowProps {
   dispatch: AppDispatch;
@@ -42,9 +47,10 @@ interface FormRowProps {
   hasSupportTopic: boolean;
   form: ReturnType<typeof formsSelector>[0];
   dataValues: ReturnType<typeof selectedDataValuesSelector>;
+  onTag: () => void;
 }
 
-const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSupportTopic, form, dataValues }) => {
+const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSupportTopic, form, dataValues, onTag }) => {
   const topic = useSelector((state: AppState) => topicSelector(state, form.urn));
 
   useEffect(() => {
@@ -58,6 +64,9 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
       <td>{topic?.requiresAttention && <GoAIcon type="mail-unread" size="small" />}</td>
       <td>{form.created.toFormat('LLL d, yyyy')}</td>
       <td>{form.status}</td>
+      <td>
+        <Tags urn={form.urn} onTag={onTag} />
+      </td>
       {dataValues.map(({ path }) => (
         <DataValueCell key={path}>{form.values[path]}</DataValueCell>
       ))}
@@ -80,8 +89,10 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const [showTagForm, setShowTagForm] = useState<Pick<Resource, 'name' | 'urn'>>(null);
   const [showExport, setShowExport] = useState(false);
 
+  const directoryBusy = useSelector(directoryBusySelector);
   const canExport = useSelector(canExportSelector);
   const busy = useSelector(formBusySelector);
   const definition = useSelector(definitionSelector);
@@ -123,10 +134,10 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                   )
                 }
               >
+                <GoADropdownItem value="" label="<No status filter>" />
                 <GoADropdownItem value="submitted" label="Submitted" />
                 <GoADropdownItem value="draft" label="Draft" />
                 <GoADropdownItem value="archived" label="Archived" />
-                <GoADropdownItem value={null} label="All" />
               </GoADropdown>
             </GoAFormItem>
             {dataValues.map(({ name, path, type }) => (
@@ -181,6 +192,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               <th></th>
               <th>Created on</th>
               <th>Status</th>
+              <th>Tags</th>
               {dataValues.map(({ name, path }) => (
                 <th key={path}>{name}</th>
               ))}
@@ -196,9 +208,10 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 hasSupportTopic={definition?.supportTopic}
                 form={form}
                 dataValues={dataValues}
+                onTag={() => setShowTagForm({ name: '', urn: form.urn })}
               />
             ))}
-            <RowSkeleton columns={4 + dataValues.length} show={busy.loading} />
+            <RowSkeleton columns={5 + dataValues.length} show={busy.loading} />
             {next && (
               <tr>
                 <td colSpan={4 + dataValues.length}>
@@ -217,6 +230,16 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           </tbody>
         </GoATable>
       </ContentContainer>
+      <AddTagModal
+        open={!!showTagForm}
+        resource={showTagForm}
+        tagging={directoryBusy.executing}
+        onClose={() => setShowTagForm(null)}
+        onTag={async (urn, label) => {
+          await dispatch(tagResource({ urn, label }));
+          setShowTagForm(null);
+        }}
+      />
       <ExportModal
         open={showExport}
         heading="Export forms to file"
