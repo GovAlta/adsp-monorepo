@@ -203,6 +203,8 @@ export const onChangeForNumericControl = (props: EventChangeControlProps) => {
       }
       handleChange(path, newValue);
     }
+  } else {
+    handleChange(path, value);
   }
 };
 
