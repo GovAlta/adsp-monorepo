@@ -197,7 +197,7 @@ export const findForms = createAsyncThunk(
   'form/find-forms',
   async (
     { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormCriteria },
-    { getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue }
   ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
@@ -217,6 +217,10 @@ export const findForms = createAsyncThunk(
           }),
         },
       });
+
+      if (data.results?.length > 0) {
+        await dispatch(getResourcesTags(data.results.map(({ urn }) => urn)));
+      }
 
       return {
         ...data,
@@ -239,7 +243,7 @@ export const findSubmissions = createAsyncThunk(
   'form/find-submissions',
   async (
     { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormSubmissionCriteria },
-    { getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue }
   ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
@@ -260,6 +264,10 @@ export const findSubmissions = createAsyncThunk(
           }),
         },
       });
+
+      if (data.results?.length > 0) {
+        await dispatch(getResourcesTags(data.results.map(({ urn }) => urn)));
+      }
 
       return data;
     } catch (err) {
@@ -744,12 +752,8 @@ const formSlice = createSlice({
         state.selectedSubmission = meta.arg;
         state.dispositionDraft = initialFormState.dispositionDraft;
       })
-      .addCase(loadDefinitions.pending, (state, { meta }) => {
+      .addCase(loadDefinitions.pending, (state) => {
         state.busy.loading = true;
-        if (!meta.arg.after) {
-          state.results.definitions = [];
-          state.next.definitions = null;
-        }
       })
       .addCase(loadDefinitions.fulfilled, (state, { payload }) => {
         state.busy.loading = false;
