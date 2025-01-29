@@ -196,7 +196,7 @@ const initializeApp = async (): Promise<express.Application> => {
                 },
                 {
                   type: 'submission',
-                  matcher: '^\\/forms\\/[\\w]{8}(-[\\w]{4}){3}-[\\w]{12}\\/submissions\\/[\\w]{8}(-[\\w]{4}){3}-[\\w]{12}$',
+                  matcher: '^\\/submissions\\/[\\w]{8}(-[\\w]{4}){3}-[\\w]{12}$',
                   deleteEvent: {
                     namespace: serviceId.service,
                     name: SubmissionDeletedDefinition.name,

@@ -40,6 +40,7 @@ import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 import { RowSkeleton } from '../components/RowSkeleton';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
+import { TagSearchFilter } from './TagSearchFilter';
 
 interface FormRowProps {
   dispatch: AppDispatch;
@@ -120,10 +121,22 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
       searchForm={
         <form>
           <SearchFormItemsContainer>
+            <TagSearchFilter
+              value={criteria.tag || ''}
+              onChange={(value) =>
+                dispatch(
+                  formActions.setFormCriteria({
+                    ...criteria,
+                    tag: value,
+                  })
+                )
+              }
+            />
             <GoAFormItem label="Status" mr="m">
               <GoADropdown
                 relative={true}
                 name="form-status"
+                disabled={!!criteria.tag}
                 value={criteria.statusEquals}
                 onChange={(_, value: string) =>
                   dispatch(
@@ -146,6 +159,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 name={name}
                 path={path}
                 type={type}
+                disabled={!!criteria.tag}
                 value={criteria?.dataCriteria?.[path]?.toString() || ''}
                 onChange={(value) =>
                   dispatch(
@@ -163,7 +177,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           </SearchFormItemsContainer>
           <GoAButtonGroup alignment="end" mt="l">
             {canExport && (
-              <GoAButton type="tertiary" mr="xl" onClick={() => setShowExport(true)}>
+              <GoAButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
                 Export to file
               </GoAButton>
             )}
