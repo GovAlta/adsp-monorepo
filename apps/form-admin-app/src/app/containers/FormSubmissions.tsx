@@ -35,6 +35,7 @@ import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 import { RowSkeleton } from '../components/RowSkeleton';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
+import { TagSearchFilter } from './TagSearchFilter';
 
 interface FormSubmissionsProps {
   definitionId: string;
@@ -68,10 +69,22 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
       searchForm={
         <form>
           <SearchFormItemsContainer>
+            <TagSearchFilter
+              value={criteria.tag || ''}
+              onChange={(value) =>
+                dispatch(
+                  formActions.setSubmissionCriteria({
+                    ...criteria,
+                    tag: value,
+                  })
+                )
+              }
+            />
             <GoAFormItem label="Disposition" mr="m">
               <GoADropdown
                 relative={true}
                 name="submission-disposition"
+                disabled={!!criteria.tag}
                 value={
                   typeof criteria['dispositioned'] !== 'boolean'
                     ? ''
@@ -99,6 +112,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 name={name}
                 path={path}
                 type={type}
+                disabled={!!criteria.tag}
                 value={criteria?.dataCriteria?.[path]?.toString() || ''}
                 onChange={(value) =>
                   dispatch(
@@ -116,7 +130,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           </SearchFormItemsContainer>
           <GoAButtonGroup alignment="end" mt="l">
             {canExport && (
-              <GoAButton type="tertiary" mr="xl" onClick={() => setShowExport(true)}>
+              <GoAButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
                 Export to file
               </GoAButton>
             )}

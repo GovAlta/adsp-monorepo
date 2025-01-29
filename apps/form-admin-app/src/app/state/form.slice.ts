@@ -30,13 +30,15 @@ interface FormSubmissionCriteria {
   createdAfter?: string;
   createdBefore?: string;
   dataCriteria?: Record<string, unknown>;
+  tag?: string;
 }
 
 interface FormCriteria {
-  statusEquals: string;
+  statusEquals?: string;
   createdAfter?: string;
   createdBefore?: string;
   dataCriteria?: Record<string, unknown>;
+  tag?: string;
 }
 
 interface DataValue {
@@ -203,28 +205,42 @@ export const findForms = createAsyncThunk(
     const { directory } = state.config;
 
     try {
-      const accessToken = await getAccessToken();
-      const requestUrl = new URL('/form/v1/forms', directory[FORM_SERVICE_ID]);
-      const { data } = await axios.get<PagedResults<Form>>(requestUrl.href, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: {
-          top: 20,
-          after,
-          includeData: true,
-          criteria: JSON.stringify({
-            ...criteria,
-            definitionIdEquals: definitionId,
-          }),
-        },
-      });
+      let result: PagedResults<Form>;
+      if (criteria?.tag) {
+        const { results, page } = await dispatch(
+          getTaggedResources({ value: dashify(criteria.tag), after, includeRepresents: true, type: 'form' })
+        ).unwrap();
 
-      if (data.results?.length > 0) {
-        await dispatch(getResourcesTags(data.results.map(({ urn }) => urn)));
+        result = {
+          results: results.map((result) => result._embedded?.represents as Form).filter((result) => !!result),
+          page,
+        };
+      } else {
+        const accessToken = await getAccessToken();
+        const requestUrl = new URL('/form/v1/forms', directory[FORM_SERVICE_ID]);
+        const { data } = await axios.get<PagedResults<Form>>(requestUrl.href, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            top: 20,
+            after,
+            includeData: true,
+            criteria: JSON.stringify({
+              ...criteria,
+              definitionIdEquals: definitionId,
+            }),
+          },
+        });
+
+        result = data;
+      }
+
+      if (result.results?.length > 0) {
+        await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
       }
 
       return {
-        ...data,
-        results: data.results.map(({ status, ...result }) => ({ ...result, status: FormStatus[status] })),
+        ...result,
+        results: result.results.map(({ status, ...result }) => ({ ...result, status: FormStatus[status] })),
       };
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -249,27 +265,39 @@ export const findSubmissions = createAsyncThunk(
     const { directory } = state.config;
 
     try {
-      const accessToken = await getAccessToken();
-      const requestUrl = new URL('/form/v1/submissions', directory[FORM_SERVICE_ID]);
-      const { data } = await axios.get<
-        PagedResults<Omit<FormSubmission, 'created' | 'updated'> & { created: string; updated: string }>
-      >(requestUrl.href, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: {
-          top: 20,
-          after,
-          criteria: JSON.stringify({
-            ...criteria,
-            definitionIdEquals: definitionId,
-          }),
-        },
-      });
+      let result: PagedResults<FormSubmission>;
+      if (criteria?.tag) {
+        const { results, page } = await dispatch(
+          getTaggedResources({ value: dashify(criteria.tag), after, includeRepresents: true, type: 'submission' })
+        ).unwrap();
 
-      if (data.results?.length > 0) {
-        await dispatch(getResourcesTags(data.results.map(({ urn }) => urn)));
+        result = {
+          results: results.map((result) => result._embedded?.represents as FormSubmission).filter((result) => !!result),
+          page,
+        };
+      } else {
+        const accessToken = await getAccessToken();
+        const requestUrl = new URL('/form/v1/submissions', directory[FORM_SERVICE_ID]);
+        const { data } = await axios.get<PagedResults<FormSubmission>>(requestUrl.href, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            top: 20,
+            after,
+            criteria: JSON.stringify({
+              ...criteria,
+              definitionIdEquals: definitionId,
+            }),
+          },
+        });
+
+        result = data;
       }
 
-      return data;
+      if (result.results?.length > 0) {
+        await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
+      }
+
+      return result;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({

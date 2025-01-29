@@ -1,13 +1,4 @@
-import {
-  GoABadge,
-  GoAButton,
-  GoAButtonGroup,
-  GoACallout,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoATable,
-} from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoAButtonGroup, GoACallout, GoATable } from '@abgov/react-components-new';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -20,8 +11,6 @@ import {
   nextSelector,
   tagResource,
   userSelector,
-  getTags,
-  tagsSelector,
   Resource,
 } from '../state';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
@@ -30,6 +19,7 @@ import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
 import { RowSkeleton } from '../components/RowSkeleton';
 import { Tags } from './Tags';
+import { TagSearchFilter } from './TagSearchFilter';
 
 const FeatureBadge: FunctionComponent<{ feature: string; hasFeature?: boolean }> = ({ feature, hasFeature }) => {
   return hasFeature && <GoABadge type="information" content={feature} mr="xs" mb="xs" />;
@@ -76,7 +66,6 @@ export const FormsDefinitions = () => {
   const { user } = useSelector(userSelector);
 
   const directoryBusy = useSelector(directoryBusySelector);
-  const tags = useSelector(tagsSelector);
 
   const busy = useSelector(formBusySelector);
   const { definitions: next } = useSelector(nextSelector);
@@ -88,29 +77,13 @@ export const FormsDefinitions = () => {
     }
   }, [dispatch, user]);
 
-  useEffect(() => {
-    dispatch(getTags({}));
-  }, [dispatch]);
-
   return (
     <SearchLayout
       searchForm={
         user?.roles.includes('urn:ads:platform:form-service:form-admin') ? (
           <form>
-            <GoAFormItem label="Tag">
-              <GoADropdown
-                name="tag"
-                relative={true}
-                value={searchTag}
-                onChange={(_: string, value: string) => setSearchTag(value)}
-              >
-                <GoADropdownItem value="" label="<No tag filter>" />
-                {tags.map(({ value, label }) => (
-                  <GoADropdownItem key={value} value={value} label={label} />
-                ))}
-              </GoADropdown>
-            </GoAFormItem>
-            <GoAButtonGroup alignment="end">
+            <TagSearchFilter value={searchTag} onChange={(value) => setSearchTag(value)} />
+            <GoAButtonGroup alignment="end" mt="l">
               <GoAButton type="secondary" disabled={busy.loading} onClick={() => setSearchTag('')}>
                 Reset filter
               </GoAButton>
