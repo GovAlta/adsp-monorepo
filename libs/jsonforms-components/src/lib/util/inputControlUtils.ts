@@ -164,7 +164,7 @@ export const onChangeForInputControl = (props: EventChangeControlProps) => {
   const { controlProps } = props;
   const { handleChange, path } = controlProps;
 
-  handleChange(path, value);
+  handleChange(path, value === '' ? undefined : value);
 };
 
 /**
