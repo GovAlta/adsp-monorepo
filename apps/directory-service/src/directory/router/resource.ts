@@ -240,7 +240,13 @@ export function getTaggedResources(apiId: AdspId, repository: DirectoryRepositor
       const user = req.user;
       const tenantId = req.tenant?.id;
       const { tag } = req.params;
-      const { top: topValue, after, includeRepresents: includeRepresentsValue, criteria: criteriaValue } = req.query;
+      const {
+        top: topValue,
+        after,
+        includeRepresents: includeRepresentsValue,
+        criteria: criteriaValue,
+        ...query
+      } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
       const includeRepresents = includeRepresentsValue === 'true';
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
@@ -259,7 +265,7 @@ export function getTaggedResources(apiId: AdspId, repository: DirectoryRepositor
         for (const result of results) {
           const type = configuration.getResourceType(result.urn);
           if (type) {
-            const resolved = await type.resolve(user.token.bearer, result);
+            const resolved = await type.resolve(user.token.bearer, result, false, query);
             if (resolved) {
               result.data = resolved.data;
             }
