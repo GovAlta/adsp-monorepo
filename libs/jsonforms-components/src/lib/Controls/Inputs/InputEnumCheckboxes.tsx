@@ -31,7 +31,7 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
             text={enumValue}
             testId={`${enumValue}-checkbox`}
             onChange={(name: string, value: string) => {
-              handleChange(path, onChangeForCheckboxData(data, name, value));
+              handleChange(path, value === 'true' ? 'Yes' : 'No');
             }}
           />
         );
