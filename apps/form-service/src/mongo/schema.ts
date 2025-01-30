@@ -25,10 +25,14 @@ export const formSchema = new Schema(
       type: Boolean,
       default: false,
     },
-
+    // Applicant URN no longer stored here, except for in old form records.
+    // Instead this property is used for the uniqueness constraint on application user ID.
     applicantId: {
       type: String,
       required: true,
+    },
+    subscriberId: {
+      type: String,
     },
     created: {
       type: Date,

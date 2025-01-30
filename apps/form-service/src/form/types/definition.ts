@@ -4,6 +4,7 @@ export interface FormDefinition {
   name: string;
   description: string;
   anonymousApply: boolean;
+  oneFormPerApplicant?: boolean;
   applicantRoles: string[];
   assessorRoles: string[];
   clerkRoles: string[];
