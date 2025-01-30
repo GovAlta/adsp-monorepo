@@ -21,7 +21,7 @@ import {
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
 import { downloadFile, FileMetadata, findFile, loadFileMetadata } from './file.slice';
-import { getTaggedResources } from './directory.slice';
+import { getResourcesTags, getTaggedResources } from './directory.slice';
 
 export const FORM_FEATURE_KEY = 'form';
 
@@ -30,13 +30,15 @@ interface FormSubmissionCriteria {
   createdAfter?: string;
   createdBefore?: string;
   dataCriteria?: Record<string, unknown>;
+  tag?: string;
 }
 
 interface FormCriteria {
-  statusEquals: string;
+  statusEquals?: string;
   createdAfter?: string;
   createdBefore?: string;
   dataCriteria?: Record<string, unknown>;
+  tag?: string;
 }
 
 interface DataValue {
@@ -138,19 +140,23 @@ export const loadDefinitions = createAsyncThunk(
     const { directory } = state.config;
 
     try {
+      let result: PagedResults<FormDefinition>;
       if (tag) {
-        const { results, page } = await dispatch(getTaggedResources({ value: dashify(tag), after })).unwrap();
+        const { results, page } = await dispatch(
+          getTaggedResources({ value: dashify(tag), after, includeRepresents: true, type: 'configuration' })
+        ).unwrap();
 
         const definitions = [];
-        for (const result of results.filter(({ type }) => type === 'configuration')) {
-          const [_, definitionId] = result.urn.match(/form-service\/([a-zA-Z0-9-_ ]{1,50})$/);
-          if (definitionId) {
-            const definition = await dispatch(loadDefinition(definitionId)).unwrap();
-            definitions.push({ ...definition, urn: result.urn });
+        for (const { urn, _embedded } of results) {
+          // Note: Not all configuration resources are form definitions.
+          // Check the URN to confirm it's a form service namespace value.
+          const [_, definitionId] = urn.match(/form-service\/([a-zA-Z0-9-_ ]{1,50})$/);
+          if (definitionId && _embedded?.represents?.['latest']?.configuration) {
+            definitions.push({ ..._embedded?.represents['latest'].configuration, urn });
           }
         }
 
-        return {
+        result = {
           page,
           results: definitions,
         };
@@ -162,7 +168,7 @@ export const loadDefinitions = createAsyncThunk(
           params: { top: 50, after },
         });
 
-        return {
+        result = {
           ...data,
           results: data.results.map((result) => ({
             ...result,
@@ -170,6 +176,12 @@ export const loadDefinitions = createAsyncThunk(
           })),
         };
       }
+
+      if (result.results?.length > 0) {
+        await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
+      }
+
+      return result;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -187,30 +199,54 @@ export const findForms = createAsyncThunk(
   'form/find-forms',
   async (
     { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormCriteria },
-    { getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue }
   ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
 
     try {
-      const accessToken = await getAccessToken();
-      const requestUrl = new URL('/form/v1/forms', directory[FORM_SERVICE_ID]);
-      const { data } = await axios.get<PagedResults<Form>>(requestUrl.href, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: {
-          top: 20,
-          after,
-          includeData: true,
-          criteria: JSON.stringify({
-            ...criteria,
-            definitionIdEquals: definitionId,
-          }),
-        },
-      });
+      let result: PagedResults<Form>;
+      if (criteria?.tag) {
+        const { results, page } = await dispatch(
+          getTaggedResources({
+            value: dashify(criteria.tag),
+            after,
+            includeRepresents: true,
+            type: 'form',
+            params: { includeData: true },
+          })
+        ).unwrap();
+
+        result = {
+          results: results.map((result) => result._embedded?.represents as Form).filter((result) => !!result),
+          page,
+        };
+      } else {
+        const accessToken = await getAccessToken();
+        const requestUrl = new URL('/form/v1/forms', directory[FORM_SERVICE_ID]);
+        const { data } = await axios.get<PagedResults<Form>>(requestUrl.href, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            top: 20,
+            after,
+            includeData: true,
+            criteria: JSON.stringify({
+              ...criteria,
+              definitionIdEquals: definitionId,
+            }),
+          },
+        });
+
+        result = data;
+      }
+
+      if (result.results?.length > 0) {
+        await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
+      }
 
       return {
-        ...data,
-        results: data.results.map(({ status, ...result }) => ({ ...result, status: FormStatus[status] })),
+        ...result,
+        results: result.results.map(({ status, ...result }) => ({ ...result, status: FormStatus[status] })),
       };
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -229,29 +265,45 @@ export const findSubmissions = createAsyncThunk(
   'form/find-submissions',
   async (
     { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormSubmissionCriteria },
-    { getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue }
   ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
 
     try {
-      const accessToken = await getAccessToken();
-      const requestUrl = new URL('/form/v1/submissions', directory[FORM_SERVICE_ID]);
-      const { data } = await axios.get<
-        PagedResults<Omit<FormSubmission, 'created' | 'updated'> & { created: string; updated: string }>
-      >(requestUrl.href, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: {
-          top: 20,
-          after,
-          criteria: JSON.stringify({
-            ...criteria,
-            definitionIdEquals: definitionId,
-          }),
-        },
-      });
+      let result: PagedResults<FormSubmission>;
+      if (criteria?.tag) {
+        const { results, page } = await dispatch(
+          getTaggedResources({ value: dashify(criteria.tag), after, includeRepresents: true, type: 'submission' })
+        ).unwrap();
 
-      return data;
+        result = {
+          results: results.map((result) => result._embedded?.represents as FormSubmission).filter((result) => !!result),
+          page,
+        };
+      } else {
+        const accessToken = await getAccessToken();
+        const requestUrl = new URL('/form/v1/submissions', directory[FORM_SERVICE_ID]);
+        const { data } = await axios.get<PagedResults<FormSubmission>>(requestUrl.href, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            top: 20,
+            after,
+            criteria: JSON.stringify({
+              ...criteria,
+              definitionIdEquals: definitionId,
+            }),
+          },
+        });
+
+        result = data;
+      }
+
+      if (result.results?.length > 0) {
+        await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
+      }
+
+      return result;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -976,26 +1028,36 @@ export const submissionsSelector = createSelector(
 export const formSelector = createSelector(
   (state: AppState) => state.form.forms,
   (state: AppState) => state.form.selectedForm,
-  (forms, selected) => forms[selected]
+  (state: AppState) => state.form.results.forms,
+  (forms, selected, results) => {
+    const selectedIndex = results.indexOf(selected);
+    const next = selectedIndex >= 0 ? results[selectedIndex + 1] : undefined;
+    return { form: forms[selected], next };
+  }
 );
 
 export const formFilesSelector = createSelector(
   formSelector,
   (state: AppState) => state.file.metadata,
-  (form, metadata) =>
+  ({ form }, metadata) =>
     Object.entries(form?.files || {}).reduce((files, [key, urn]) => ({ ...files, [key]: metadata[urn] }), {})
 );
 
 export const submissionSelector = createSelector(
   (state: AppState) => state.form.submissions,
   (state: AppState) => state.form.selectedSubmission,
-  (submissions, selected) => submissions[selected]
+  (state: AppState) => state.form.results.submissions,
+  (submissions, selected, results) => {
+    const selectedIndex = results.indexOf(selected);
+    const next = selectedIndex >= 0 ? results[selectedIndex + 1] : undefined;
+    return { submission: submissions[selected], next };
+  }
 );
 
 export const submissionFilesSelector = createSelector(
   (state: AppState) => state.file.metadata,
   submissionSelector,
-  (metadata, submission) =>
+  (metadata, { submission }) =>
     Object.entries(submission?.formFiles || {}).reduce((files, [key, urn]) => ({ ...files, [key]: metadata[urn] }), {})
 );
 

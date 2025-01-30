@@ -42,7 +42,7 @@ export const Form = () => {
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
   const definition = useSelector(definitionSelector);
-  const form = useSelector(formSelector);
+  const { form, next } = useSelector(formSelector);
   const files = useSelector(formFilesSelector);
   const topic = useSelector((state: AppState) => topicSelector(state, form?.urn));
 
@@ -79,15 +79,16 @@ export const Form = () => {
               {form.createdBy.name}
             </GoAFormItem>
             <GoAFormItem mr="xl" mb="s" label="Created on">
-              {DateTime.fromISO(form.created).toFormat('LLL dd, yyyy')}
+              {DateTime.fromISO(form.created).toFormat('LLL d, yyyy')}
             </GoAFormItem>
             <GoAFormItem mr="xl" mb="s" label="Submitted on">
-              {form.submitted && DateTime.fromISO(form.submitted).toFormat('LLL dd, yyyy')}
+              {form.submitted && DateTime.fromISO(form.submitted).toFormat('LLL d, yyyy')}
             </GoAFormItem>
             <PdfDownload urn={form.urn} />
           </PropertiesContainer>
         )
       }
+      nextTo={next && `../forms/${next}`}
     >
       <Tabs>
         <Tab heading="Form">

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { ArrayLayoutProps, RankedTester, rankWith, uiTypeIs, and } from '@jsonforms/core';
+import { ArrayLayoutProps, RankedTester, rankWith, uiTypeIs, and, ControlProps } from '@jsonforms/core';
 import { withJsonFormsArrayLayoutProps } from '@jsonforms/react';
 import { ListWithDetailControl } from './ListWithDetailControl';
 import { DeleteDialog } from './DeleteDialog';
@@ -10,7 +10,7 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
   const [path, setPath] = useState<string>();
   const [name, setName] = useState<string>();
   const [rowData, setRowData] = useState<number>(0);
-  const { removeItems, visible } = props;
+  const { removeItems, visible, handleChange } = props as ArrayLayoutProps & ControlProps;
 
   const openDeleteDialog = useCallback(
     (p: string, rowIndex: number, name?: string) => {
@@ -27,7 +27,11 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
   const deleteConfirm = useCallback(() => {
     const p = path?.substring(0, path.lastIndexOf('.'));
     if (removeItems && p) {
-      removeItems(p, [rowData])();
+      if (props.data === 1) {
+        handleChange(p, null);
+      } else {
+        removeItems(p, [rowData])();
+      }
     }
     setOpen(false);
     // eslint-disable-next-line

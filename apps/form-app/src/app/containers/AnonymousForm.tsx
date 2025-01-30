@@ -1,9 +1,8 @@
-import { Container, Recaptcha } from '@core-services/app-common';
+import { Container, Grid, GridItem, Recaptcha } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { DraftFormWrapper } from '../components/DraftFormWrapper';
-import { LoadingIndicator } from '../components/LoadingIndicator';
 import { SubmittedForm } from '../components/SubmittedForm';
 import styled from 'styled-components';
 import {
@@ -66,9 +65,15 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
           ) : (
             <Navigate to=".." />
           )}
+          <Grid>
+            <GridItem md={1} />
+            <GridItem md={10}>
+              <Recaptcha siteKey={recaptchaKey} showBranding={true} />
+            </GridItem>
+            <GridItem md={1} />
+          </Grid>
         </Container>
       </div>
-      <Recaptcha siteKey={recaptchaKey} />
     </div>
   );
 };

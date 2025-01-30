@@ -42,6 +42,7 @@ const definitionsToTest: FormState = {
       applicantRoles: ['Admin'],
       clerkRoles: [],
       anonymousApply: false,
+      scheduledIntakes: false
     },
   },
   selected: null,
@@ -77,6 +78,8 @@ const loadedFormDefinition: FormDefinition = {
   applicantRoles: ['Admin'],
   clerkRoles: [],
   anonymousApply: false,
+  scheduledIntakes: false,
+  intake: undefined
 };
 const payload = {
   form: {

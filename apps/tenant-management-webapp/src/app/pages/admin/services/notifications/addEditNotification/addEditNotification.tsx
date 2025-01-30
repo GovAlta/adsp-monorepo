@@ -122,6 +122,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     const validations = {
       name: type.name,
     };
+
     if (!isEdit) {
       validations['duplicated'] = type.name;
     }
@@ -205,13 +206,16 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               };
               if (!isEdit) {
                 validators.remove('name');
-                validations['duplicated'] = value;
                 validators.checkAll(validations);
               }
               setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
             }}
             onBlur={() => {
-              validators.checkAll({ name: type.name, duplicated: type.name });
+              if (!isEdit) {
+                validators.checkAll({ name: type.name, duplicated: type.name });
+              } else {
+                validators.checkAll({ name: type.name });
+              }
             }}
           />
         </GoAFormItem>
@@ -236,7 +240,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 setType({ ...type, description: value });
               }
             }}
-            // eslint-disable-next-line
             onChange={(name, value) => {}}
           />
         </GoAFormItem>

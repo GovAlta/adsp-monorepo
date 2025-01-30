@@ -21,15 +21,21 @@ import {
   canExportSelector,
   exportSubmissions,
   submissionsExportSelector,
+  Resource,
+  directoryBusySelector,
+  tagResource,
 } from '../state';
 import { ContentContainer } from '../components/ContentContainer';
 import { SearchLayout } from '../components/SearchLayout';
 import { DataValueCell } from '../components/DataValueCell';
-import { Digest } from '../components/Digest';
+// import { Digest } from '../components/Digest';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 import { RowSkeleton } from '../components/RowSkeleton';
+import { AddTagModal } from '../components/AddTagModal';
+import { Tags } from './Tags';
+import { TagSearchFilter } from './TagSearchFilter';
 
 interface FormSubmissionsProps {
   definitionId: string;
@@ -39,8 +45,10 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const [showTagSubmission, setShowTagSubmission] = useState<Pick<Resource, 'name' | 'urn'>>(null);
   const [showExport, setShowExport] = useState(false);
 
+  const directoryBusy = useSelector(directoryBusySelector);
   const canExport = useSelector(canExportSelector);
   const busy = useSelector(formBusySelector);
   const submissions = useSelector(submissionsSelector);
@@ -61,13 +69,25 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
       searchForm={
         <form>
           <SearchFormItemsContainer>
+            <TagSearchFilter
+              value={criteria.tag || ''}
+              onChange={(value) =>
+                dispatch(
+                  formActions.setSubmissionCriteria({
+                    ...criteria,
+                    tag: value,
+                  })
+                )
+              }
+            />
             <GoAFormItem label="Disposition" mr="m">
               <GoADropdown
                 relative={true}
                 name="submission-disposition"
+                disabled={!!criteria.tag}
                 value={
                   typeof criteria['dispositioned'] !== 'boolean'
-                    ? 'all'
+                    ? ''
                     : criteria['dispositioned'] === true
                     ? 'dispositioned'
                     : 'not dispositioned'
@@ -76,14 +96,14 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                   dispatch(
                     formActions.setSubmissionCriteria({
                       ...criteria,
-                      dispositioned: values === 'all' ? undefined : values === 'dispositioned',
+                      dispositioned: values === '' ? undefined : values === 'dispositioned',
                     })
                   )
                 }
               >
+                <GoADropdownItem value="" label="<No disposition filter>" />
                 <GoADropdownItem value="not dispositioned" label="Not dispositioned" />
                 <GoADropdownItem value="dispositioned" label="Dispositioned" />
-                <GoADropdownItem value="all" label="All" />
               </GoADropdown>
             </GoAFormItem>
             {dataValues.map(({ name, path, type }) => (
@@ -92,6 +112,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 name={name}
                 path={path}
                 type={type}
+                disabled={!!criteria.tag}
                 value={criteria?.dataCriteria?.[path]?.toString() || ''}
                 onChange={(value) =>
                   dispatch(
@@ -109,7 +130,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           </SearchFormItemsContainer>
           <GoAButtonGroup alignment="end" mt="l">
             {canExport && (
-              <GoAButton type="tertiary" mr="xl" onClick={() => setShowExport(true)}>
+              <GoAButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
                 Export to file
               </GoAButton>
             )}
@@ -136,8 +157,8 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           <thead>
             <tr>
               <th>Submitted on</th>
-              <th>Digest</th>
               <th>Disposition</th>
+              <th>Tags</th>
               {dataValues.map(({ name, path }) => (
                 <th key={path}>{name}</th>
               ))}
@@ -147,11 +168,11 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           <tbody>
             {submissions.map((submission) => (
               <tr key={submission.urn}>
-                <td>{submission.created.toFormat('LLL dd, yyyy')}</td>
-                <td>
-                  <Digest value={submission.hash} />
-                </td>
+                <td>{submission.created.toFormat('LLL d, yyyy')}</td>
                 <td>{submission.disposition?.status}</td>
+                <td>
+                  <Tags urn={submission.urn} onTag={() => setShowTagSubmission({ name: '', urn: submission.urn })} />
+                </td>
                 {dataValues.map(({ path }) => (
                   <DataValueCell key={path}>{submission.values[path]}</DataValueCell>
                 ))}
@@ -183,6 +204,16 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           </tbody>
         </GoATable>
       </ContentContainer>
+      <AddTagModal
+        open={!!showTagSubmission}
+        resource={showTagSubmission}
+        tagging={directoryBusy.executing}
+        onClose={() => setShowTagSubmission(null)}
+        onTag={async (urn, label) => {
+          await dispatch(tagResource({ urn, label }));
+          setShowTagSubmission(null);
+        }}
+      />
       <ExportModal
         open={showExport}
         heading="Export submissions to file"

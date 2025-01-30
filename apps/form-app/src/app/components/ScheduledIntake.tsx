@@ -15,8 +15,7 @@ export const ScheduledIntake: FunctionComponent<ScheduledIntakeProps> = ({ defin
     children
   ) : definition.intake?.isUpcoming ? (
     <GoACallout mt="2xl" ml="2xl" mr="2xl" mb="2xl" type="information" heading="Upcoming intake">
-      This form will be available for applications on{' '}
-      {DateTime.fromISO(definition.intake.start).toFormat('LLLL dd, yyyy')}.
+      This form will be available for applications on {definition.intake.start.toFormat('LLLL d, yyyy')}.
     </GoACallout>
   ) : (
     <FormNotAvailable />

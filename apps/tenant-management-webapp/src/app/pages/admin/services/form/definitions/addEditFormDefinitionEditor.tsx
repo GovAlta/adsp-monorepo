@@ -422,6 +422,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       options={{
                         automaticLayout: true,
                         scrollBeyondLastLine: false,
+                        wordWrap: 'on',
                         tabSize: 2,
                         padding: {
                           top: 8,

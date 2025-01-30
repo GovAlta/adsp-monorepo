@@ -15,7 +15,9 @@ export const configurationSchema = {
                 properties: {
                   namespace: { type: 'string' },
                   name: { type: 'string' },
-                  resourceIdPath: { type: 'string' },
+                  resourceIdPath: {
+                    oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
+                  },
                 },
                 required: ['namespace', 'name', 'resourceIdPath'],
               },

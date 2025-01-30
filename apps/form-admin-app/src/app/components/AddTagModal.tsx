@@ -27,7 +27,7 @@ export const AddTagModal: FunctionComponent<AddTagModal> = ({ open, resource, ta
     <GoAModal heading="Add tag" open={open}>
       <form>
         <div>
-          Add a tag to "{resource?.name}". Enter the tag label that you want to use. A new tag will be created if
+          Add a tag{resource?.name && ` to "${resource?.name}"`}. Enter the tag label that you want to use. A new tag will be created if
           necessary.
         </div>
         <GoAFormItem label="Tag" mt="l" error={tagLabelError}>

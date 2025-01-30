@@ -20,11 +20,11 @@ class FormsPage {
   }
 
   formDateInput(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="date"]`);
+    return cy.xpath(`//goa-form-item[@label="${label} "]//goa-input[@type="date"]`);
   }
 
   formDropdown(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]//div[contains(@data-testid, "dropdown")]`);
+    return cy.xpath(`//goa-form-item[@label="${label} "]//div[contains(@data-testid, "dropdown")]`);
   }
 
   formNextButton() {
@@ -48,7 +48,7 @@ class FormsPage {
   }
 
   formListWithDetailDependantDateInput(label) {
-    return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label}"]//goa-input`);
+    return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label} "]//goa-input`);
   }
 
   formSuccessCallout() {

@@ -60,7 +60,7 @@ export const Landing: FunctionComponent = () => {
                   </GridItem>
                   <GridItem md={1} />
                   <GridItem md={4.5}>
-                    <DashBoardImg src={MakeFormAvailable} />
+                    <DashBoardImg src={MakeFormAvailable} alt="Make form available" />
                   </GridItem>
                 </Grid>
               </GridItem>
@@ -73,7 +73,7 @@ export const Landing: FunctionComponent = () => {
               <GridItem md={10}>
                 <Grid>
                   <GridItem md={4.5}>
-                    <DashBoardImg src={UseUIComponents} />
+                    <DashBoardImg src={UseUIComponents} alt="Use UI components" />
                   </GridItem>
                   <GridItem md={1} />
                   <GridItem md={6.5} className="center">
@@ -104,7 +104,7 @@ export const Landing: FunctionComponent = () => {
                   </GridItem>
                   <GridItem md={1} />
                   <GridItem md={4.5}>
-                    <DashBoardImg src={ComplexMultiStepForms} />
+                    <DashBoardImg src={ComplexMultiStepForms} alt="Complex multi-step forms" />
                   </GridItem>
                 </Grid>
               </GridItem>

@@ -1,4 +1,4 @@
-import { AdspId, ConfigurationService, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { DomainEvent, WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { TAGGED_RESOURCE } from '../events';
@@ -6,21 +6,23 @@ import { createDeleteJob } from './delete';
 import { createResolveJob } from './resolve';
 
 interface DirectoryJobProps {
-  serviceId: AdspId;
+  apiId: AdspId;
   logger: Logger;
+  tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
   eventService: EventService;
   queueService: WorkQueueService<DomainEvent>;
 }
 
 export function createDirectoryJobs({
-  serviceId,
+  apiId,
   logger,
+  tokenProvider,
   configurationService,
   eventService,
   queueService,
 }: DirectoryJobProps) {
-  const resolveJob = createResolveJob({ logger, configurationService, eventService });
+  const resolveJob = createResolveJob({ apiId, logger, tokenProvider, configurationService, eventService });
   const deleteJob = createDeleteJob({ logger, configurationService });
 
   queueService.getItems().subscribe(({ item, retryOnError, done }) => {
@@ -30,7 +32,7 @@ export function createDirectoryJobs({
         tenant: item.tenantId?.toString(),
       });
 
-      if (item.namespace === serviceId.service) {
+      if (item.namespace === apiId.service) {
         if (item.name === TAGGED_RESOURCE) {
           const { urn, isNew } = item.payload.resource as { urn: string; isNew: boolean };
           if (urn && isNew) {

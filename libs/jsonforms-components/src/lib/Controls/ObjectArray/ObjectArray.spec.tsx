@@ -109,6 +109,7 @@ describe('Object List component', () => {
     const props = {
       ...sharedProps,
       isValid: true,
+      errors: {},
       rowPath: 'comments.0',
       data: undefined,
       uischema: {
@@ -142,6 +143,7 @@ describe('Object List component', () => {
     const props = {
       ...sharedProps,
       isValid: true,
+      errors: {},
       rowPath: 'comments.0',
       data: undefined,
       uischema: {

@@ -104,6 +104,32 @@ Here are some out-of-the-box formats that not only render with the correct input
 }
     </code></pre></td>
   </tr>
+   <tr>
+    <td>
+        Limited text
+        with required validation
+    </td>
+    <td>
+    <pre><code>
+{
+  "firstName": {
+    "type": "string",
+    "minLength" : 1
+  },
+  "required" : [
+    "firstName"
+    ]
+}
+    </code></pre>
+    </td>
+       <td><pre><code>
+{
+  "type": "Control",
+  "scope": "#/properties/firstName"
+}
+    </code></pre></td>
+
+  </tr>
   <tr>
     <td>Text Box</td>
     <td><pre><code>
@@ -111,6 +137,33 @@ Here are some out-of-the-box formats that not only render with the correct input
   "reasonForApplying": {
     "type": "string"
   }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Control",
+  "scope": "#/properties/reasonForApplying"
+  "options": {
+  "multi": true,
+  "componentProps": {
+    "rows": 10,
+    "placeholder": "multi line input"
+    }
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td>Text Box with required validation</td>
+    <td><pre><code>
+{
+  "reasonForApplying": {
+    "type": "string",
+    "minLength" : 1
+  },
+  "required" : [
+     "reasonForApplying"
+  ]
 }
     </code></pre></td>
     <td><pre><code>
@@ -148,6 +201,37 @@ Here are some out-of-the-box formats that not only render with the correct input
   }
 }
     </code></pre></td>
+  </tr>
+  <tr>
+    <td>Checkbox with required validation</td>
+    <td><pre><code>
+{
+  "iDeclare": {
+    "type": "boolean",
+    "allOf": [
+      {
+        "enum": [
+          true
+        ]
+      }
+    ]
+  },
+  "required" : [
+    "ideclare"
+  ]
+}
+    </code></pre></td>
+    <td><pre>
+    <code>
+{
+  "type": "Control",
+  "scope": "#/properties/iDeclare"
+  "options":{
+    text: "I declare the information is correct to the best of my knowledge"
+  }
+}
+</code></pre></td>
+
   </tr>
 
 </table>

@@ -6,6 +6,8 @@ import {
   TaggedResourceDefinition,
   UntaggedResourceDefinition,
   ResourceResolutionFailedDefinition,
+  ResourceDeletedDefinition,
+  TagDeletedDefinition,
 } from './events';
 
 describe('events', () => {
@@ -44,5 +46,17 @@ describe('events', () => {
     const service = new AjvValidationService(logger as unknown as Logger);
     service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });
     service.validate('test', 'payload', ResourceResolutionFailedDefinition.payloadSchema);
+  });
+
+  it('resource-deleted is valid json schema', () => {
+    const service = new AjvValidationService(logger as unknown as Logger);
+    service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });
+    service.validate('test', 'payload', ResourceDeletedDefinition.payloadSchema);
+  });
+
+  it('tag-deleted valid json schema', () => {
+    const service = new AjvValidationService(logger as unknown as Logger);
+    service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });
+    service.validate('test', 'payload', TagDeletedDefinition.payloadSchema);
   });
 });

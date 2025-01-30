@@ -39,6 +39,7 @@ import {
   SUPPORT_COMMENT_TOPIC_TYPE_ID,
   FormExportFileType,
   FormQuestionUpdatesStream,
+  SubmissionDeletedDefinition,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -127,11 +128,13 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusArchivedDefinition,
         FormStatusSetToDraftDefinition,
         SubmissionDispositionedDefinition,
+        SubmissionDeletedDefinition,
       ],
       eventStreams: [SubmittedFormPdfUpdatesStream, FormQuestionUpdatesStream],
       notifications: [FormStatusNotificationType],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [
+        // Register comment service form support comment topic.
         {
           serviceId: adspId`urn:ads:platform:comment-service`,
           configuration: {
@@ -145,12 +148,14 @@ const initializeApp = async (): Promise<express.Application> => {
             },
           },
         },
+        // Register PDF service submitted form PDF template.
         {
           serviceId: adspId`urn:ads:platform:pdf-service`,
           configuration: {
             [SUBMITTED_FORM]: SubmittedFormPdfTemplate,
           },
         },
+        // Register calendar service scheduled form intake calendar.
         {
           serviceId: adspId`urn:ads:platform:calendar-service`,
           configuration: {
@@ -163,6 +168,7 @@ const initializeApp = async (): Promise<express.Application> => {
             },
           },
         },
+        // Register export service form and submission export source.
         {
           serviceId: adspId`urn:ads:platform:export-service`,
           configuration: {
@@ -170,6 +176,34 @@ const initializeApp = async (): Promise<express.Application> => {
               [`${serviceId}`]: {
                 exporterRoles: [`${serviceId}:${FormServiceRoles.Admin}`],
               },
+            },
+          },
+        },
+        // Register directory service resource types for forms and submissions.
+        {
+          serviceId: adspId`urn:ads:platform:directory-service`,
+          configuration: {
+            [`${serviceId}:v1`]: {
+              resourceTypes: [
+                {
+                  type: 'form',
+                  matcher: '^\\/forms\\/[\\w]{8}(-[\\w]{4}){3}-[\\w]{12}$',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: FormDeletedDefinition.name,
+                    resourceIdPath: 'urn',
+                  },
+                },
+                {
+                  type: 'submission',
+                  matcher: '^\\/submissions\\/[\\w]{8}(-[\\w]{4}){3}-[\\w]{12}$',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: SubmissionDeletedDefinition.name,
+                    resourceIdPath: 'urn',
+                  },
+                },
+              ],
             },
           },
         },

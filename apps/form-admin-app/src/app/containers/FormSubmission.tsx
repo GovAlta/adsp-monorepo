@@ -36,7 +36,7 @@ export const FormSubmission = () => {
   const { submissionId } = useParams();
   const busy = useSelector(formBusySelector);
   const definition = useSelector(definitionSelector);
-  const submission = useSelector(submissionSelector);
+  const { submission, next } = useSelector(submissionSelector);
   const files = useSelector(submissionFilesSelector);
   const draft = useSelector(dispositionDraftSelector);
 
@@ -54,6 +54,7 @@ export const FormSubmission = () => {
           </GoAButton>
         )
       }
+      nextTo={next && `../submissions/${next}`}
       header={
         submission && (
           <PropertiesContainer>
@@ -61,7 +62,7 @@ export const FormSubmission = () => {
               {submission.createdBy.name}
             </GoAFormItem>
             <GoAFormItem mr="xl" mb="s" label="Submitted on">
-              {DateTime.fromISO(submission.created).toFormat('LLL dd, yyyy')}
+              {DateTime.fromISO(submission.created).toFormat('LLL d, yyyy')}
             </GoAFormItem>
             <PdfDownload urn={submission.urn} />
           </PropertiesContainer>
@@ -78,7 +79,7 @@ export const FormSubmission = () => {
                 <span>{submission.disposition.reason}</span>
               </GoAFormItem>
               <GoAFormItem ml="xl" label="Dispositioned on">
-                <span>{DateTime.fromISO(submission.disposition.date).toFormat('LLL dd, yyyy')}</span>
+                <span>{DateTime.fromISO(submission.disposition.date).toFormat('LLL d, yyyy')}</span>
               </GoAFormItem>
             </PropertiesContainer>
           ) : (

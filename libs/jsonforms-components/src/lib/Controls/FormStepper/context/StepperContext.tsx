@@ -33,8 +33,9 @@ const createStepperContextInitData = (
   const valid = ajv.validate(schema, data || {});
 
   const categories = categorization.elements?.map((c, id) => {
-    const scopes = pickPropertyValues(c, 'scope');
-    const incompletePaths = getIncompletePaths(ajv, pickPropertyValues(c, 'scope'));
+    const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
+    // ListWithDetail path might have conflicts with others. The errors in ListWithDetail will still be caught in the ctx.core.errors
+    const incompletePaths = getIncompletePaths(ajv, scopes);
 
     return {
       id,

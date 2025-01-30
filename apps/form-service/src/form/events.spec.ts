@@ -10,6 +10,7 @@ import {
   FormStatusSubmittedDefinition,
   SubmissionDispositionedDefinition,
   formSchema,
+  SubmissionDeletedDefinition,
 } from './events';
 
 describe('events', () => {
@@ -66,6 +67,12 @@ describe('events', () => {
     const service = new AjvValidationService(logger as unknown as Logger);
     service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });
     service.validate('test', 'payload', SubmissionDispositionedDefinition.payloadSchema);
+  });
+
+  it('submission-deleted is valid json schema', () => {
+    const service = new AjvValidationService(logger as unknown as Logger);
+    service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });
+    service.validate('test', 'payload', SubmissionDeletedDefinition.payloadSchema);
   });
 
   it('form definition schema is valid json schema', () => {

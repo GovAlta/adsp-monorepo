@@ -124,9 +124,6 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           // maxLength={appliedUiSchemaOptions?.maxLength}
           name={appliedUiSchemaOptions?.name || `${id || label}-input`}
           testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-          // Don't use handleChange in the onChange event, use the keyPress or onBlur.
-          // If you use it onChange along with keyPress event it will cause a
-          // side effect that causes the validation to render when it shouldn't.
           onChange={(name: string, value: string) => {
             let formattedValue = value;
             if (schema && schema.title === sinTitle && value !== '') {
@@ -138,14 +135,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
               controlProps: props as ControlProps,
             });
           }}
-          onKeyPress={(name: string, value: string, key: string) => {
-            onKeyPressForTextControl({
-              name,
-              value: autoCapitalize ? value.toUpperCase() : value,
-              key,
-              controlProps: props as ControlProps,
-            });
-          }}
+          onKeyPress={(name: string, value: string, key: string) => {}}
           onBlur={(name: string, value: string) => {
             onBlurForTextControl({
               name,
