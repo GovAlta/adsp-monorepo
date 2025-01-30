@@ -139,6 +139,12 @@ export const EventDefinitionsList = styled(EventDefinitionsListComponent)`
     word-break: break-all;
   }
 
+  & td:nth-child(2) {
+    flex: 1;
+    word-wrap: break-word;
+    word-break: break-all;
+  }
+
   & td:last-child {
     width: 40px;
     white-space: nowrap;
