@@ -208,7 +208,13 @@ export const findForms = createAsyncThunk(
       let result: PagedResults<Form>;
       if (criteria?.tag) {
         const { results, page } = await dispatch(
-          getTaggedResources({ value: dashify(criteria.tag), after, includeRepresents: true, type: 'form' })
+          getTaggedResources({
+            value: dashify(criteria.tag),
+            after,
+            includeRepresents: true,
+            type: 'form',
+            params: { includeData: true },
+          })
         ).unwrap();
 
         result = {

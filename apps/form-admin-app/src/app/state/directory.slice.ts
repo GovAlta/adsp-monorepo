@@ -88,7 +88,8 @@ export const getTaggedResources = createAsyncThunk(
       after,
       includeRepresents,
       type,
-    }: { value: string; after?: string; includeRepresents?: boolean; type?: string },
+      params,
+    }: { value: string; after?: string; includeRepresents?: boolean; type?: string; params?: Record<string, unknown> },
     { getState, rejectWithValue }
   ) => {
     try {
@@ -102,6 +103,7 @@ export const getTaggedResources = createAsyncThunk(
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: {
+            ...params,
             top: 50,
             after,
             includeRepresents,

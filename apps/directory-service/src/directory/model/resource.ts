@@ -35,7 +35,12 @@ export class ResourceType {
     return this.matcher.test(urn.resource);
   }
 
-  public async resolve(token: string, resource: Resource, sync = false): Promise<Resource> {
+  public async resolve(
+    token: string,
+    resource: Resource,
+    sync = false,
+    params: Record<string, unknown> = null
+  ): Promise<Resource> {
     if (!this.matches(resource?.urn)) {
       throw new InvalidOperationError(`Resource type '${this.type}' not matched to resource: ${resource.urn}`);
     }
@@ -53,7 +58,7 @@ export class ResourceType {
 
       const { data } = await axios.get(resourceUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { tenantId: resource.tenantId?.toString() },
+        params: { ...params, tenantId: resource.tenantId?.toString() },
       });
 
       this.logger.debug(`Retrieved resource ${resource.urn} and resolving name and description...`, {
