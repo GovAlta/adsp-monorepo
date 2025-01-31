@@ -36,7 +36,7 @@ interface SerializableFormDefinition {
 }
 
 interface SerializableForm {
-  definition: { id: string };
+  definition: { id: string; name: string };
   id: string;
   urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
@@ -80,6 +80,9 @@ export interface FormState {
     creating: boolean;
     saving: boolean;
     submitting: boolean;
+  };
+  initialized: {
+    forms: boolean;
   };
 }
 
@@ -213,7 +216,7 @@ export const loadDefinition = createAsyncThunk(
 
 export const findUserForms = createAsyncThunk(
   'form/find-user-forms',
-  async ({ definitionId, after }: { definitionId: string; after?: string }, { getState, rejectWithValue }) => {
+  async ({ definitionId, after }: { definitionId?: string; after?: string }, { getState, rejectWithValue }) => {
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
@@ -498,6 +501,9 @@ const initialFormState: FormState = {
     saving: false,
     submitting: false,
   },
+  initialized: {
+    forms: false,
+  },
 };
 
 export const formSlice = createSlice({
@@ -517,8 +523,6 @@ export const formSlice = createSlice({
         state.selected = meta.arg;
         // Clear the form if the form definition is changing.
         if (state.form && state.form.definition.id !== meta.arg) {
-          state.forms = {};
-          state.results = [];
           state.next = null;
           state.form = null;
           state.data = {};
@@ -532,13 +536,6 @@ export const formSlice = createSlice({
       .addCase(loadDefinition.fulfilled, (state, { payload, meta }) => {
         state.busy.loading = false;
         state.definitions[meta.arg] = payload;
-
-        //Check form definition id case sensitivity, and use the definition id in the payload object,
-        //instead of using the value in querystring because if the case is not the same
-        //grabbing the object using the form definition id in the querystring as the key wont work.
-        if (payload && payload.id?.toLowerCase() === state.selected?.toLowerCase()) {
-          state.selected = payload.id;
-        }
       })
       .addCase(loadDefinition.rejected, (state) => {
         state.busy.loading = false;
@@ -580,6 +577,7 @@ export const formSlice = createSlice({
         state.forms = payload.results.reduce((forms, result) => ({ ...forms, [result.id]: result }), state.forms);
         state.results = [...(payload.page.after ? state.results : []), ...payload.results.map((result) => result.id)];
         state.next = payload.page.next;
+        state.initialized.forms = true;
       })
       .addCase(findUserForms.rejected, (state) => {
         state.busy.loading = false;
@@ -643,18 +641,28 @@ export const formsSelector = createSelector(
   (state: AppState) => state.form.next,
   (forms, results, next) => ({
     forms: results
-      .map((result) =>
-        forms[result]
-          ? {
-              ...forms[result],
-              status: FormStatus[forms[result].status],
-              created: forms[result].created && DateTime.fromISO(forms[result].created),
-              submitted: forms[result].submitted && DateTime.fromISO(forms[result].submitted),
-            }
-          : null
-      )
+      .map((result) => {
+        const form = forms[result];
+        const status = FormStatus[form.status];
+        return {
+          ...forms[result],
+          status,
+          created: form.created && DateTime.fromISO(form.created),
+          // Submitted can be set for draft forms if it was returned to draft.
+          submitted: status !== FormStatus.draft ? form.submitted && DateTime.fromISO(form.submitted) : undefined,
+        };
+      })
       .filter((result) => !!result)
-      .sort((a, b) => a.created.diff(b.created).as('seconds')),
+      .sort((a, b) => b.created.diff(a.created).as('seconds')),
+    next,
+  })
+);
+
+export const definitionFormsSelector = createSelector(
+  formsSelector,
+  (_, definitionId: string) => definitionId,
+  ({ forms, next }, definitionId) => ({
+    forms: forms.filter((form) => !definitionId || form.definition?.id === definitionId),
     next,
   })
 );
@@ -668,15 +676,18 @@ export const formSelector = createSelector(
           ...form,
           status: FormStatus[form.status],
           created: form.created && DateTime.fromISO(form.created),
-          submitted: form.submitted && DateTime.fromISO(form.submitted),
+          submitted:
+            FormStatus[form.status] !== FormStatus.draft
+              ? form.submitted && DateTime.fromISO(form.submitted)
+              : undefined,
         }
       : null
 );
 
 export const defaultUserFormSelector = createSelector(
   formsSelector,
-  (state: AppState) => state.form.busy.loading,
-  ({ forms }, loading) => {
+  (state: AppState) => state.form.initialized.forms,
+  ({ forms }, initialized) => {
     let form: ReturnType<typeof formsSelector>['forms'][0];
     if (forms.length === 1) {
       // If user only has one form, then that's the default form.
@@ -690,7 +701,7 @@ export const defaultUserFormSelector = createSelector(
     }
     return {
       form,
-      initialized: !loading,
+      initialized,
       empty: forms.length < 1,
     };
   }
@@ -715,12 +726,10 @@ export const isClerkSelector = createSelector(
 export const busySelector = (state: AppState) => state.form.busy;
 
 export const canCreateDraftSelector = createSelector(
-  (state: AppState) => state.form.busy.creating,
   isApplicantSelector,
   definitionSelector,
   defaultUserFormSelector,
-  (creating, isApplicant, { definition }, { form }) =>
-    !creating && isApplicant && (definition?.oneFormPerApplicant === false || !form)
+  (isApplicant, { definition }, { form }) => isApplicant && (definition?.oneFormPerApplicant === false || !form)
 );
 
 export const showSubmitSelector = createSelector(definitionSelector, ({ definition }) => {
