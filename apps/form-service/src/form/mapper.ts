@@ -9,6 +9,7 @@ export function mapFormDefinition(entity: FormDefinition, intake?: Intake) {
     name: entity.name,
     description: entity.description,
     anonymousApply: entity.anonymousApply,
+    oneFormPerApplicant: entity.oneFormPerApplicant,
     applicantRoles: entity.applicantRoles,
     assessorRoles: entity.assessorRoles,
     clerkRoles: entity.clerkRoles,

@@ -1,4 +1,5 @@
 import { GoABadge, GoAButton, GoAButtonGroup, GoACallout, GoATable } from '@abgov/react-components-new';
+import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -17,7 +18,6 @@ import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
-import { RowSkeleton } from '../components/RowSkeleton';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 
@@ -126,21 +126,12 @@ export const FormsDefinitions = () => {
               />
             ))}
             <RowSkeleton columns={4} show={busy.loading} />
-            {next && (
-              <tr>
-                <td colSpan={4}>
-                  <GoAButtonGroup alignment="center">
-                    <GoAButton
-                      type="tertiary"
-                      disabled={busy.loading}
-                      onClick={() => dispatch(loadDefinitions({ after: next }))}
-                    >
-                      Load more
-                    </GoAButton>
-                  </GoAButtonGroup>
-                </td>
-              </tr>
-            )}
+            <RowLoadMore
+              columns={4}
+              next={next}
+              loading={busy.loading}
+              onLoadMore={(after) => dispatch(loadDefinitions({ after }))}
+            />
           </tbody>
         </GoATable>
       </ContentContainer>
