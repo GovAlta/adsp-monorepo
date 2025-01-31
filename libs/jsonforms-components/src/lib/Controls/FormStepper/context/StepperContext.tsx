@@ -82,7 +82,8 @@ export const JsonFormsStepperContextProvider = ({
         return stepperState;
       },
       selectIsDisabled: () => {
-        return !stepperState.categories[stepperState.activeId]?.isEnabled;
+        const category = stepperState.categories?.[stepperState.activeId];
+        return category === undefined ? false : !category?.isEnabled;
       },
       selectIsActive: (id: number) => {
         return id === stepperState.activeId;
@@ -96,7 +97,7 @@ export const JsonFormsStepperContextProvider = ({
       goToPage: (id: number, updateCategoryId?: number) => {
         ajv.validate(schema, ctx.core?.data || {});
 
-        if (updateCategoryId !== undefined) {
+        if (updateCategoryId !== undefined && updateCategoryId < stepperState.categories.length) {
           stepperDispatch({
             type: 'update/category',
             payload: { errors: ctx?.core?.errors, id: updateCategoryId, ajv },
