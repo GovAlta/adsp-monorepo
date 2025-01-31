@@ -4,11 +4,11 @@ import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 're
 import {
   AppDispatch,
   definitionSelector,
-  findUserForm,
+  findUserForms,
   Form as FormObject,
   FormDefinition as FormDefinitionObject,
   selectedDefinition,
-  userFormSelector,
+  defaultUserFormSelector,
   tenantSelector,
   busySelector,
   createForm,
@@ -22,6 +22,7 @@ import { Form } from './Form';
 import { ContinueApplication } from '../components/ContinueApplication';
 import { StartApplication } from '../components/StartApplication';
 import { FormNotAvailable } from '../components/FormNoAvailable';
+import { Forms } from './Forms';
 
 interface FormDefinitionStart {
   definition: FormDefinitionObject;
@@ -35,12 +36,8 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
   const urlParams = new URLSearchParams(location.search);
   const AUTO_CREATE_PARAM = 'autoCreate';
 
-  const { initialized, form } = useSelector(userFormSelector);
+  const { initialized, form, empty } = useSelector(defaultUserFormSelector);
   const busy = useSelector(busySelector);
-
-  useEffect(() => {
-    dispatch(findUserForm(definition.id));
-  }, [dispatch, definition]);
 
   return definition.anonymousApply ? (
     <Navigate to="draft" />
@@ -48,7 +45,7 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
     initialized &&
       (form?.id ? (
         <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
-      ) : (
+      ) : empty ? (
         <StartApplication
           definition={definition}
           autoCreate={urlParams.has(AUTO_CREATE_PARAM, 'true')}
@@ -61,6 +58,8 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
             }
           }}
         />
+      ) : (
+        <Navigate to="forms" />
       ))
   );
 };
@@ -81,6 +80,12 @@ export const FormDefinition: FunctionComponent = () => {
     }
   }, [dispatch, definitionId, tenant]);
 
+  useEffect(() => {
+    if (definition && user) {
+      dispatch(findUserForms({ definitionId: definition.id }));
+    }
+  }, [dispatch, definition, user]);
+
   // Definition can be available even if there is no signed in user.
   // If definition is not available, then show the sign-in option as user might have access if they sign in.
   return (
@@ -91,6 +96,7 @@ export const FormDefinition: FunctionComponent = () => {
           <ScheduledIntake definition={definition}>
             <Routes>
               <Route path="/draft" element={<AnonymousForm />} />
+              <Route path="/forms" element={<Forms definition={definition} />} />{' '}
               <Route path="/:formId" element={<Form />} />
               <Route path="/" element={<FormDefinitionStart definition={definition} />} />
               <Route path="*" element={<Navigate to="/" />} />

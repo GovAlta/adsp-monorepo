@@ -58,6 +58,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
   const submitForm = submitFormFunction && submitFormFunction();
   const optionProps = (uischema.options as FormStepperOptionProps) || {};
   const [isOpen, setIsOpen] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
 
   const handleSubmit = () => {
     if (submitForm) {
@@ -75,12 +76,12 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
     <div data-testid="form-stepper-test-wrapper">
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-          {/* Need to force a refresh here, GoAFormStepper cant change dynamically unless completely re-rendered */}
-
           <GoAFormStepper
             testId={`form-stepper-headers-${uischema?.options?.testId}` || 'form-stepper-test'}
+            step={isSelected === false ? -1 : activeId + 1}
             key="stepper-form-stepper-wrapper"
             onChange={(step) => {
+              setIsSelected(true);
               goToPage(step - 1);
             }}
           >
@@ -133,6 +134,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                     if (element) {
                       element.scrollIntoView();
                     }
+
                     goToPage(activeId - 1, activeId);
                   }}
                   testId="prev-button"

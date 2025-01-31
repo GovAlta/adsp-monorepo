@@ -10,6 +10,7 @@ import {
   GoASpacer,
   GoATable,
 } from '@abgov/react-components-new';
+import { RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -29,7 +30,6 @@ import {
 import { ContentContainer } from '../components/ContentContainer';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import { ScheduleIntakeModal } from '../components/ScheduleIntakeModal';
-import { RowSkeleton } from '../components/RowSkeleton';
 
 const OverviewLayout = styled.div`
   position: absolute;

@@ -7,6 +7,7 @@ import {
   GoAIcon,
   GoATable,
 } from '@abgov/react-components-new';
+import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
@@ -37,7 +38,6 @@ import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
-import { RowSkeleton } from '../components/RowSkeleton';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
@@ -226,21 +226,12 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               />
             ))}
             <RowSkeleton columns={5 + dataValues.length} show={busy.loading} />
-            {next && (
-              <tr>
-                <td colSpan={4 + dataValues.length}>
-                  <GoAButtonGroup alignment="center">
-                    <GoAButton
-                      type="tertiary"
-                      disabled={busy.loading}
-                      onClick={() => dispatch(findForms({ definitionId, criteria, after: next }))}
-                    >
-                      Load more
-                    </GoAButton>
-                  </GoAButtonGroup>
-                </td>
-              </tr>
-            )}
+            <RowLoadMore
+              columns={4 + dataValues.length}
+              next={next}
+              loading={busy.loading}
+              onLoadMore={(after) => dispatch(findForms({ definitionId, criteria, after }))}
+            />
           </tbody>
         </GoATable>
       </ContentContainer>
