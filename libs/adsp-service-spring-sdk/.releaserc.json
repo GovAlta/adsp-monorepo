@@ -19,12 +19,12 @@
         "project": "adsp-service-spring-sdk"
       }
     ],
-    "@conveyal/maven-semantic-release",
     [
       "@semantic-release/github",
       {
         "releasedLabels": false,
-        "successComment": false
+        "successComment": false,
+        "assets": "dist/libs/adsp-service-spring-sdk/"
       }
     ]
   ]
