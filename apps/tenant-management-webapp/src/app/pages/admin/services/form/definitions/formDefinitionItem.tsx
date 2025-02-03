@@ -8,12 +8,17 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { selectFormAppLink } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { openEditorForDefinition } from '@store/form/action';
-interface PdfTemplateItemProps {
+interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
   onDelete?: (FormDefinition) => void;
+  onEditResourceTag?: (FormDefinition) => void;
 }
 
-export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItemProps): JSX.Element => {
+export const FormDefinitionItem = ({
+  formDefinition,
+  onDelete,
+  onEditResourceTag,
+}: FormDefinitionItemProps): JSX.Element => {
   const [showSchema, setShowSchema] = useState(false);
   const formDescription =
     formDefinition.description?.length > 80
@@ -46,7 +51,7 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
             />
             <GoAContextMenuIcon
               type="open"
-              title="Open Form"
+              title="Open form"
               onClick={() => {
                 if (isValidUrl(formLink)) {
                   window.open(formLink, '_blank');
@@ -58,7 +63,7 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
             />
             <GoAContextMenuIcon
               testId="form-definition-edit"
-              title="Edit"
+              title="Edit form"
               type="create"
               onClick={() => {
                 dispatch(openEditorForDefinition(formDefinition.id));
@@ -69,10 +74,16 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
               }}
             />
             <GoAContextMenuIcon
+              testId="form-definition-resource-tag-edit"
+              title="Add tag"
+              type="add-circle"
+              onClick={() => (onEditResourceTag ? onEditResourceTag(formDefinition) : null)}
+            />
+            <GoAContextMenuIcon
               testId={`form-definition-delete`}
               title="Delete"
               type="trash"
-              onClick={() => onDelete(formDefinition)}
+              onClick={() => (onDelete ? onDelete(formDefinition) : null)}
             />
           </GoAContextMenu>
         </td>

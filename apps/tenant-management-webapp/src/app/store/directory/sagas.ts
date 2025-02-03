@@ -14,14 +14,19 @@ import {
   FetchEntryDetailAction,
   fetchEntryDetailSuccess,
   FetchEntryDetailByURNsAction,
+  TagResourceAction,
+  FetchResourceTagsAction,
+  fetchResourceTagsSucess,
+  UnTagResourceAction,
 } from './actions';
 
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
 import { adspId } from '@lib/adspId';
-import { Service } from './models';
+import { Service, TagResourceRequest } from './models';
 import { toKebabName } from '@lib/kebabName';
 import { getAccessToken } from '@store/tenant/sagas';
+import { getResourceTagsApi, tagResourceApi, unTagResourceApi } from './api';
 
 export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
   const core = 'platform';
@@ -59,7 +64,7 @@ export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
         tenantDirectoryData = tenantDirectory;
       }
 
-      yield put(fetchDirectorySuccess({ directory: [...tenantDirectoryData, ...coreDirectory] }));
+      yield put(fetchDirectorySuccess({ directory: [...tenantDirectoryData, ...coreDirectory], resourceTags: [] }));
 
       yield put(
         UpdateIndicator({
@@ -257,5 +262,105 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
     }
   } catch (err) {
     yield put(ErrorNotification({ message: 'Failed to fetch metadata by urns', error: err }));
+  }
+}
+export function* tagResource({ tag }: TagResourceAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Add a tag...',
+    })
+  );
+
+  const state: RootState = yield select();
+  const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+
+  const token: string = yield call(getAccessToken);
+  if (baseUrl && token) {
+    try {
+      const tagResourceRequest = {
+        tag: {
+          label: tag.label,
+        },
+        resource: {
+          urn: tag.urn,
+        },
+      } as TagResourceRequest;
+      yield call(tagResourceApi, token, baseUrl, tagResourceRequest);
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: 'Failed to add tag', error: err }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
+  }
+}
+
+export function* unTagResource({ payload }: UnTagResourceAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'untag resource...',
+    })
+  );
+
+  const state: RootState = yield select();
+  const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+
+  const token: string = yield call(getAccessToken);
+  if (baseUrl && token) {
+    try {
+      yield call(unTagResourceApi, token, baseUrl, payload);
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: 'Failed to un tag a resource', error: err }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
+  }
+}
+export function* fetchResourceTags({ payload }: FetchResourceTagsAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Fetch resource tags...',
+    })
+  );
+
+  const state: RootState = yield select();
+  const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+
+  const token: string = yield call(getAccessToken);
+  if (baseUrl && token) {
+    try {
+      const { results } = yield call(getResourceTagsApi, token, baseUrl, payload);
+      yield put(fetchResourceTagsSucess(results));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: 'Failed to add tag', error: err }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
   }
 }

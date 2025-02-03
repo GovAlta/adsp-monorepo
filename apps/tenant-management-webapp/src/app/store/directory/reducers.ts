@@ -1,4 +1,4 @@
-import { ActionType } from './actions';
+import { ActionType, FETCH_RESOURCE_TAGS_ACTION_SUCCESS } from './actions';
 import { DIRECTORY_INIT, Directory } from './models';
 import {
   FETCH_DIRECTORY_SUCCESS,
@@ -14,8 +14,8 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       const directories = action.payload.directory;
       directories.forEach((dir) => {
         dir.isCore = dir.namespace.toLowerCase() === 'platform';
-        if (dir.service.indexOf(':') > -1) {
-          dir.api = dir.service.split(':')[1];
+        if (dir.service?.indexOf(':') > -1) {
+          dir.api = dir.service?.split(':')[1];
           dir.service = dir.service.split(':')[0];
         }
       });
@@ -61,6 +61,9 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
         isExist.loaded = action.payload?.loaded;
       }
       return { ...state, directory: [...directoryUpdateList] };
+    }
+    case FETCH_RESOURCE_TAGS_ACTION_SUCCESS: {
+      return { ...state, resourceTags: [...action.payload] };
     }
     default:
       return state;

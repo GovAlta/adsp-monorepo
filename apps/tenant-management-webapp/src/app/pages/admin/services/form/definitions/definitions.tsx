@@ -10,16 +10,21 @@ import {
   openEditorForDefinition,
 } from '@store/form/action';
 import { RootState } from '@store/index';
+import { ResourceTagResult, Service } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { PageIndicator } from '@components/Indicator';
 import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
-import { fetchDirectory } from '@store/directory/actions';
 import { LoadMoreWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
+import { ResourceTag } from '@store/directory/models';
+
+import { toKebabName } from '@lib/kebabName';
+import { fetchResourceTags, tagResource, unTagResource } from '@store/directory/actions';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -33,12 +38,16 @@ export const FormDefinitions = ({
   setOpenAddDefinition,
   showFormDefinitions,
 }: FormDefinitionsProps) => {
+  const CONFIGURATION_SERVICE = 'configuration-service';
+
   const navigate = useNavigate();
   const location = useLocation();
   const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
 
   const [showDefsFromState, setShowDefsFromState] = useState(isNavigatedFromEdit);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
+
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
 
@@ -57,6 +66,14 @@ export const FormDefinitions = ({
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const selectConfigurationHost = (state: RootState) => {
+    return (state?.directory?.directory?.filter(
+      (y) => y.service === CONFIGURATION_SERVICE && y.namespace?.toLowerCase() === 'platform' && y.urn.endsWith('v2')
+    )[0] ?? []) as Service;
+  };
+  const resourceConfiguration = useSelector(selectConfigurationHost);
+  const BASE_FORM_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
@@ -80,8 +97,6 @@ export const FormDefinitions = ({
     if (!showDefsFromState && !hasFormDefinitions) {
       dispatch(getFormDefinitions());
     }
-
-    dispatch(fetchDirectory());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -143,9 +158,13 @@ export const FormDefinitions = ({
         <>
           <FormDefinitionsTable
             definitions={formDefinitions}
-            onDelete={(currentTemplate) => {
+            onDelete={(formDefinition) => {
               setShowDeleteConfirmation(true);
-              setCurrentDefinition(currentTemplate);
+              setCurrentDefinition(formDefinition);
+            }}
+            onAddResourceTag={(formDefinition) => {
+              setShowAddRemoveResourceTagModal(true);
+              setCurrentDefinition(formDefinition);
             }}
           />
           {next && (
@@ -162,6 +181,26 @@ export const FormDefinitions = ({
           )}
         </>
       )}
+
+      <AddRemoveResourceTagModal
+        isAdd={true}
+        baseUrn={BASE_FORM_URN}
+        initialFormDefinition={currentDefinition}
+        open={showAddRemoveResourceTagModal}
+        onClose={() => {
+          setShowAddRemoveResourceTagModal(false);
+        }}
+        onDelete={(tag: ResourceTagResult) => {
+          tag.urn = `${BASE_FORM_URN}/${currentDefinition.id}`;
+          dispatch(unTagResource(tag));
+          setTimeout(() => {
+            dispatch(fetchResourceTags(`${BASE_FORM_URN}/${currentDefinition.id}`));
+          }, 100);
+        }}
+        onSave={(tag: ResourceTag) => {
+          dispatch(tagResource({ urn: tag.urn, label: tag.label }));
+        }}
+      ></AddRemoveResourceTagModal>
 
       <DeleteModal
         isOpen={showDeleteConfirmation}

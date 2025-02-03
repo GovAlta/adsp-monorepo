@@ -206,3 +206,24 @@ export interface SubmissionInfoItem {
     date?: string;
   };
 }
+
+export interface ResourceTag {
+  urn: string;
+  label: string;
+}
+
+export interface Resource {
+  urn: string;
+  name: string;
+  description: string;
+  type: string;
+  _embedded?: {
+    represents?: unknown;
+    tags?: Tag[];
+  };
+}
+
+export interface Tag {
+  value: string;
+  label: string;
+}

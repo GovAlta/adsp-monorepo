@@ -34,6 +34,9 @@ import {
   deleteEntryDirectory,
   fetchEntryDetail,
   fetchDirectoryByDetailURNs,
+  tagResource,
+  fetchResourceTags,
+  unTagResource,
 } from './directory/sagas';
 import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
@@ -53,6 +56,9 @@ import {
   DELETE_ENTRY,
   FETCH_ENTRY_DETAIL,
   FETCH_ENTRY_DETAIL_BY_URNS,
+  TAG_RESOURCE_ACTION,
+  FETCH_RESOURCE_TAGS_ACTION,
+  UNTAG_RESOURCE_ACTION,
 } from './directory/actions';
 import {
   DELETE_APPLICATION_ACTION,
@@ -89,6 +95,12 @@ export function* watchSagas() {
   yield takeEvery(DELETE_ENTRY, deleteEntryDirectory);
   yield takeEvery(FETCH_ENTRY_DETAIL, fetchEntryDetail);
   yield takeLeading(FETCH_ENTRY_DETAIL_BY_URNS, fetchDirectoryByDetailURNs);
+
+  //tag resources
+  yield takeEvery(TAG_RESOURCE_ACTION, tagResource);
+  yield takeEvery(UNTAG_RESOURCE_ACTION, unTagResource);
+  yield takeEvery(FETCH_RESOURCE_TAGS_ACTION, fetchResourceTags);
+
   // service status
   yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);
   yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);
