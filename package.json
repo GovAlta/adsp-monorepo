@@ -127,7 +127,7 @@
     "xss": "^1.0.10"
   },
   "devDependencies": {
-    "@abgov/maven-semantic-release": "^1.0.0",
+    "@abgov/maven-semantic-release": "^1.1.0",
     "@abgov/nx-adsp": "^8.1.0",
     "@abgov/nx-oc": "^8.1.0",
     "@abgov/nx-release": "^8.1.4",
