@@ -136,7 +136,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           />
         </GoAFormItem>
       </GoAGrid>
-      <GoAGrid minChildWidth="0ch" gap="s">
+      <GoAGrid minChildWidth="0ch" gap="s" mb="m">
         <GoAFormItem
           label="Date of birth"
           error={errors?.['dateOfBirth'] ?? ''}
