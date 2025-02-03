@@ -24,7 +24,7 @@ Note: in some UI schemas you will see "ComponentProps" in the options element. C
 
 ### Common data formats {#target-common-formats}
 
-Here are some out-of-the-box formats that not only render with the correct input widget, but ensure that the data provided by users is valid.
+Here are some out-of-the-box formats that not only render with the correct input widget, but ensure that the data provided by users is valid. NOTE: There is a known issue in jsonforms that allows an empty string to satisfy the required validation rule. To work around this, you should also add a minimum length of 1 to required string fields (see Limited text with required validation) below.
 
 <table>
   <tr>
