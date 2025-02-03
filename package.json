@@ -127,6 +127,7 @@
     "xss": "^1.0.10"
   },
   "devDependencies": {
+    "@abgov/maven-semantic-release": "^1.0.0",
     "@abgov/nx-adsp": "^8.1.0",
     "@abgov/nx-oc": "^8.1.0",
     "@abgov/nx-release": "^8.1.4",
@@ -138,7 +139,6 @@
     "@babel/core": "^7.14.5",
     "@babel/preset-react": "^7.14.5",
     "@badeball/cypress-cucumber-preprocessor": "^21.0.2",
-    "@conveyal/maven-semantic-release": "^5.0.0",
     "@cypress/browserify-preprocessor": "^3.0.2",
     "@cypress/xpath": "^2.0.3",
     "@fortawesome/fontawesome-svg-core": "^1.2.32",
