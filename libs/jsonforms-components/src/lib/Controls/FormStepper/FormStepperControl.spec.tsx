@@ -9,6 +9,7 @@ import { FormStepperOptionProps } from './FormStepperControl';
 import { getProperty } from './util/helpers';
 import { CategorizationStepperLayoutRendererProps } from './types';
 import { JsonFormsStepperContextProvider } from './context';
+import { categoriesAreValid } from './FormStepperTester';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -384,6 +385,34 @@ describe('Form Stepper Control', () => {
     });
   });
 
+  it('will render a "view" anchor using key', () => {
+    const newStepperProps = {
+      ...stepperBaseProps,
+      data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
+    };
+    const onSubmit = jest.fn();
+    // eslint-disable-next-line
+    newStepperProps.activeId = 2;
+    const { getByTestId } = render(
+      <ContextProvider submit={{ submitForm: onSubmit }}>
+        <JsonFormsStepperContextProvider
+          StepperProps={newStepperProps}
+          children={getForm(
+            {
+              name: { firstName: 'Bob', lastName: 'Bing' },
+              address: { street: 'Sesame', city: 'Seattle' },
+            },
+            categorization,
+            { readOnly: false }
+          )}
+        />
+      </ContextProvider>
+    );
+    const nameAnchor = getByTestId('Name-review-link');
+    fireEvent.keyDown(nameAnchor, { key: 'Enter', code: 13, charCode: 13 });
+    expect(mockDispatch.mock.calls[2][0].type === 'page/to/index');
+  });
+
   describe('submit tests', () => {
     it('will open a modal if no submit function is present', () => {
       const newStepperProps = {
@@ -448,10 +477,35 @@ describe('Form Stepper Control', () => {
 
   describe('test stepper helper', () => {
     const obj = { prop: 'test' };
-
     const result = getProperty(obj, 'props');
     const result2 = getProperty(obj, 'prop');
     expect(result).toBe(undefined);
     expect(result2).toBe('test');
+  });
+
+  describe('test the jsonforms stepper layout tester', () => {
+    // eslint-disable-next-line
+    const isCategoryLayout = categoriesAreValid({
+      type: 'Categorization',
+      // eslint-disable-next-line
+      elements: [
+        {
+          type: 'Category',
+          elements: [
+            {
+              type: 'Control',
+            },
+          ],
+        },
+      ],
+    } as UISchemaElement);
+
+    const isNotCategoryLayout = categoriesAreValid({
+      type: 'Categorization',
+      elements: [{ type: 'Control' }],
+      // eslint-disable-next-line
+    } as UISchemaElement);
+    expect(isCategoryLayout).toBe(true);
+    expect(isNotCategoryLayout).toBe(false);
   });
 });
