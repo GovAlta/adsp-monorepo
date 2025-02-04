@@ -2,7 +2,7 @@ import { rankWith, RankedTester, uiTypeIs, and, optionIs, UISchemaElement, isCat
 
 // Ensure that all children (Category) have valid elements or things tend
 // to blow up. If not, the the error control will report the problem.
-const categoriesAreValid = (uischema: UISchemaElement): boolean => {
+export const categoriesAreValid = (uischema: UISchemaElement): boolean => {
   let isValid = true;
   if ('type' in uischema && uischema.type === 'Categorization' && 'elements' in uischema) {
     (uischema.elements as UISchemaElement[]).forEach((e) => {
