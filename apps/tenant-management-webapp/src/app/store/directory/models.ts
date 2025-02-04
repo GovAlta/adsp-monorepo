@@ -5,6 +5,8 @@ export const AddModalType = 'directory-add-modal';
 export interface Directory {
   directory: Service[];
   resourceTags: ResourceTagResult[];
+  searchedTag?: ResourceTagResult;
+  searchedTagExists?: boolean;
 }
 
 export interface Service {
@@ -43,6 +45,7 @@ export const defaultService: Service = {
 export const DIRECTORY_INIT: Directory = {
   directory: [],
   resourceTags: [],
+  searchedTag: {} as ResourceTagResult,
 };
 
 export interface ResourceTag {

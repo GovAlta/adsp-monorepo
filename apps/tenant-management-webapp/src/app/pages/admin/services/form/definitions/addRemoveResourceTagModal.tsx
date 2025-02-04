@@ -1,15 +1,15 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
-import { useDebounce } from '@lib/useDebounce';
+import React, { FunctionComponent, useState, useEffect, useMemo } from 'react';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton, GoAChip } from '@abgov/react-components-new';
 import { FormDefinition } from '@store/form/model';
-import { Resource, ResourceTag, ResourceTagResult } from '@store/directory/models';
+import { ResourceTag, ResourceTagResult } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchResourceTags, FetchResourceTagsAction, unTagResource } from '@store/directory/actions';
+import { fetchResourceTags, fetchTagByTagName } from '@store/directory/actions';
 import { RootState } from '@store/index';
-
+import { debounce as _debounce } from 'lodash';
+import { throttle as _throttle } from 'lodash';
 interface AddRemoveResourceTagModalProps {
   baseUrn: string;
   open: boolean;
@@ -20,10 +20,10 @@ interface AddRemoveResourceTagModalProps {
   onSave: (tag: ResourceTag) => void;
 }
 
-const TagsChipComponent: FunctionComponent<{
+const TagChipComponent: FunctionComponent<{
   tag?: ResourceTagResult;
-  onDelete(tag: ResourceTagResult): void;
-}> = ({ tag, onDelete, currentDefinition, baseUrn }) => {
+  onDelete(tag: ResourceTagResult);
+}> = ({ tag, onDelete }) => {
   return (
     <GoAChip
       content={tag.label}
@@ -49,18 +49,37 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   const dispatch = useDispatch();
   const [tag, setTag] = useState<string>('');
 
-  const [saveButtonText, setSaveButtonText] = useState<string>('Add tag');
-  const debouncedTag = useDebounce(tag, 500);
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-  const mappedTags = useSelector((state: RootState) => {
+  const resourceTags = useSelector((state: RootState) => {
     return state?.directory?.resourceTags;
   });
 
+  const searchedTagExists = useSelector((state: RootState) => {
+    return state?.directory?.searchedTagExists;
+  });
+
+  const debouncedChangeHandler = useMemo(
+    () =>
+      _debounce(
+        async (input) => {
+          dispatch(fetchTagByTagName(input));
+          console.log('searchTagExists', searchedTagExists);
+          setTag(input);
+        },
+        1000,
+        { leading: false, trailing: true }
+      ),
+    [dispatch, searchedTagExists]
+  );
+
   useEffect(() => {
     setTag('');
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    return () => {
+      debouncedChangeHandler.cancel();
+    };
+  }, [debouncedChangeHandler]);
 
   useEffect(() => {
     if (baseUrn && initialFormDefinition.id.length > 0) {
@@ -74,10 +93,8 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
     wordMaxLengthCheck(50, 'Tag'),
     isNotEmptyCheck('Tag'),
     badCharsCheck
-  )
-    // .add('duplicate', 'name', duplicateNameCheck(templateIds, 'template'))
+  ).build();
 
-    .build();
   return (
     <GoAModal
       testId="add-resource-tag-model"
@@ -101,11 +118,11 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
             testId="resource-tag-save"
             disabled={tag.length === 0 ? true : false}
             onClick={() => {
-              onSave({ label: tag, urn: `${baseUrn}/${initialFormDefinition.id}` } as ResourceTag);
+              onSave({ label: toKebabName(tag), urn: `${baseUrn}/${initialFormDefinition.id}` } as ResourceTag);
               onClose();
             }}
           >
-            {saveButtonText}
+            {searchedTagExists ? 'Add tag' : 'Create and add tag'}
           </GoAButton>
         </GoAButtonGroup>
       }
@@ -125,15 +142,18 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
             };
 
             validators.checkAll(validations);
-            setTag(value.trim());
+
+            if (!validators.haveErrors()) {
+              debouncedChangeHandler(value);
+            }
           }}
         />
       </GoAFormItem>
 
-      {mappedTags
+      {resourceTags
         ?.sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()))
         .map((tag) => (
-          <TagsChipComponent key={tag.value} tag={tag} onDelete={onDelete} />
+          <TagChipComponent key={tag.value} tag={tag} onDelete={onDelete} />
         ))}
     </GoAModal>
   );

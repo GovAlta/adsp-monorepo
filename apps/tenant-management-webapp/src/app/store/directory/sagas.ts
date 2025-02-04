@@ -16,17 +16,20 @@ import {
   FetchEntryDetailByURNsAction,
   TagResourceAction,
   FetchResourceTagsAction,
-  fetchResourceTagsSucess,
+  fetchResourceTagsSuccess,
   UnTagResourceAction,
+  FetchTagByTagNameAction,
+  fetchTagByTagNameSuccess,
+  fetchTagByTagNameFailed,
 } from './actions';
 
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
 import { adspId } from '@lib/adspId';
-import { Service, TagResourceRequest } from './models';
+import { ResourceTagResult, Service, TagResourceRequest } from './models';
 import { toKebabName } from '@lib/kebabName';
 import { getAccessToken } from '@store/tenant/sagas';
-import { getResourceTagsApi, tagResourceApi, unTagResourceApi } from './api';
+import { getResourceTagsApi, getTagByNameApi, tagResourceApi, unTagResourceApi } from './api';
 
 export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
   const core = 'platform';
@@ -64,7 +67,12 @@ export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
         tenantDirectoryData = tenantDirectory;
       }
 
-      yield put(fetchDirectorySuccess({ directory: [...tenantDirectoryData, ...coreDirectory], resourceTags: [] }));
+      yield put(
+        fetchDirectorySuccess({
+          directory: [...tenantDirectoryData, ...coreDirectory],
+          resourceTags: [],
+        })
+      );
 
       yield put(
         UpdateIndicator({
@@ -348,19 +356,49 @@ export function* fetchResourceTags({ payload }: FetchResourceTagsAction): SagaIt
   if (baseUrl && token) {
     try {
       const { results } = yield call(getResourceTagsApi, token, baseUrl, payload);
-      yield put(fetchResourceTagsSucess(results));
+      yield put(fetchResourceTagsSuccess(results));
       yield put(
         UpdateIndicator({
           show: false,
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: 'Failed to add tag', error: err }));
+      yield put(ErrorNotification({ message: 'Failed to fetch resource tags', error: err }));
       yield put(
         UpdateIndicator({
           show: false,
         })
       );
     }
+  }
+}
+
+export function* fetchTagByTagName({ payload }: FetchTagByTagNameAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Get tag by tag name...',
+    })
+  );
+
+  const state: RootState = yield select();
+  const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+  const token: string = yield call(getAccessToken);
+
+  try {
+    const data = yield call(getTagByNameApi, token, baseUrl, payload);
+    yield put(fetchTagByTagNameSuccess(data));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
+  } catch (err) {
+    yield put(fetchTagByTagNameFailed(null));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   }
 }

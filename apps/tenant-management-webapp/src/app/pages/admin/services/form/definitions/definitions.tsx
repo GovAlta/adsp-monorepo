@@ -73,7 +73,7 @@ export const FormDefinitions = ({
     )[0] ?? []) as Service;
   };
   const resourceConfiguration = useSelector(selectConfigurationHost);
-  const BASE_FORM_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
+  const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
@@ -184,17 +184,17 @@ export const FormDefinitions = ({
 
       <AddRemoveResourceTagModal
         isAdd={true}
-        baseUrn={BASE_FORM_URN}
+        baseUrn={BASE_FORM_CONFIG_URN}
         initialFormDefinition={currentDefinition}
         open={showAddRemoveResourceTagModal}
         onClose={() => {
           setShowAddRemoveResourceTagModal(false);
         }}
         onDelete={(tag: ResourceTagResult) => {
-          tag.urn = `${BASE_FORM_URN}/${currentDefinition.id}`;
+          tag.urn = `${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`;
           dispatch(unTagResource(tag));
           setTimeout(() => {
-            dispatch(fetchResourceTags(`${BASE_FORM_URN}/${currentDefinition.id}`));
+            dispatch(fetchResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
           }, 100);
         }}
         onSave={(tag: ResourceTag) => {

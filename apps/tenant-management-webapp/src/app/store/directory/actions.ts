@@ -24,6 +24,10 @@ export const UNTAG_RESOURCE_ACTION_SUCCESS = 'tenant/directory-service/resource/
 export const FETCH_RESOURCE_TAGS_ACTION = 'tenant/directory-service/resource/fetch-resource-tags';
 export const FETCH_RESOURCE_TAGS_ACTION_SUCCESS = 'tenant/directory-service/resource/fetch-resource-tags/success';
 
+export const FETCH_TAG_BY_TAG_NAME_ACTION = 'tenant/directory-service/resource/fetch-tag-by-tag-name';
+export const FETCH_TAG_BY_TAG_NAME_ACTION_SUCCESS = 'tenant/directory-service/resource/fetch-tag-by-tag-name/success';
+export const FETCH_TAG_BY_TAG_NAME_ACTION_FAILED = 'tenant/directory-service/resource/fetch-tag-by-tag-name/failed';
+
 // =============
 // Actions Types
 // =============
@@ -42,7 +46,10 @@ export type ActionType =
   | TagResourceAction
   | UnTagResourceAction
   | FetchResourceTagsAction
-  | FetchResourceTagsSuccessAction;
+  | FetchResourceTagsSuccessAction
+  | FetchTagByTagNameAction
+  | FetchTagByTagNameActionSuccess
+  | FetchTagByTagNameActionFailed;
 
 export interface TagResourceAction {
   type: typeof TAG_RESOURCE_ACTION;
@@ -52,6 +59,20 @@ export interface TagResourceAction {
 export interface FetchResourceTagsAction {
   type: typeof FETCH_RESOURCE_TAGS_ACTION;
   payload: string;
+}
+
+export interface FetchTagByTagNameAction {
+  type: typeof FETCH_TAG_BY_TAG_NAME_ACTION;
+  payload: string;
+}
+export interface FetchTagByTagNameActionFailed {
+  type: typeof FETCH_TAG_BY_TAG_NAME_ACTION_FAILED;
+  payload: ResourceTagResult;
+}
+
+export interface FetchTagByTagNameActionSuccess {
+  type: typeof FETCH_TAG_BY_TAG_NAME_ACTION_SUCCESS;
+  payload: ResourceTagResult;
 }
 
 export interface FetchResourceTagsSuccessAction {
@@ -185,7 +206,22 @@ export const fetchResourceTags = (data: string): FetchResourceTagsAction => ({
   payload: data,
 });
 
-export const fetchResourceTagsSucess = (data: ResourceTagResult[]): FetchResourceTagsSuccessAction => ({
+export const fetchResourceTagsSuccess = (data: ResourceTagResult[]): FetchResourceTagsSuccessAction => ({
   type: FETCH_RESOURCE_TAGS_ACTION_SUCCESS,
+  payload: data,
+});
+
+export const fetchTagByTagName = (data: string): FetchTagByTagNameAction => ({
+  type: FETCH_TAG_BY_TAG_NAME_ACTION,
+  payload: data,
+});
+
+export const fetchTagByTagNameSuccess = (data: ResourceTagResult): FetchTagByTagNameActionSuccess => ({
+  type: FETCH_TAG_BY_TAG_NAME_ACTION_SUCCESS,
+  payload: data,
+});
+
+export const fetchTagByTagNameFailed = (data: ResourceTagResult): FetchTagByTagNameActionFailed => ({
+  type: FETCH_TAG_BY_TAG_NAME_ACTION_FAILED,
   payload: data,
 });

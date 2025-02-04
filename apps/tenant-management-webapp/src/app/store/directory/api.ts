@@ -35,13 +35,29 @@ export const unTagResourceApi = async (
   return data;
 };
 
-export const getResourceTagsApi = async (token: string, serviceUrl: string, resource: string): Promise<object> => {
+export const getResourceTagsApi = async (
+  token: string,
+  serviceUrl: string,
+  resource: string
+): Promise<ResourceTagResult> => {
   const { data } = await axios.get(
     new URL(`/resource/v1/resources/${encodeURIComponent(resource)}/tags?top=50}`, serviceUrl).href,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
   );
+
+  return data;
+};
+
+export const getTagByNameApi = async (
+  token: string,
+  serviceUrl: string,
+  tagName: string
+): Promise<ResourceTagResult> => {
+  const { data } = await axios.get(new URL(`/resource/v1/tags/${encodeURIComponent(tagName)}`, serviceUrl).href, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
   return data;
 };
