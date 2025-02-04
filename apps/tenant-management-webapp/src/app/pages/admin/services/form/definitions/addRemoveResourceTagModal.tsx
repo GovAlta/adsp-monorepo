@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchResourceTags, fetchTagByTagName } from '@store/directory/actions';
 import { RootState } from '@store/index';
 import { debounce as _debounce } from 'lodash';
-import { throttle as _throttle } from 'lodash';
+
 interface AddRemoveResourceTagModalProps {
   baseUrn: string;
   open: boolean;
@@ -57,18 +57,26 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
     return state?.directory?.searchedTagExists;
   });
 
+  const tagAlreadyAdded = () => {
+    return (
+      resourceTags?.filter((toFindTag) => {
+        return toFindTag.label === tag;
+      })?.length > 0
+    );
+  };
+
   const debouncedChangeHandler = useMemo(
     () =>
       _debounce(
         async (input) => {
-          dispatch(fetchTagByTagName(input));
-          console.log('searchTagExists', searchedTagExists);
+          dispatch(fetchTagByTagName(toKebabName(input)));
+
           setTag(input);
         },
-        1000,
+        800,
         { leading: false, trailing: true }
       ),
-    [dispatch, searchedTagExists]
+    [dispatch]
   );
 
   useEffect(() => {
@@ -116,7 +124,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
           <GoAButton
             type="primary"
             testId="resource-tag-save"
-            disabled={tag.length === 0 ? true : false}
+            disabled={tag.length === 0 || tagAlreadyAdded() ? true : false}
             onClick={() => {
               onSave({ label: toKebabName(tag), urn: `${baseUrn}/${initialFormDefinition.id}` } as ResourceTag);
               onClose();

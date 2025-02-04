@@ -394,7 +394,12 @@ export function* fetchTagByTagName({ payload }: FetchTagByTagNameAction): SagaIt
       })
     );
   } catch (err) {
-    yield put(fetchTagByTagNameFailed(null));
+    //Tag not found response
+    if (err?.response?.status === 404) {
+      yield put(fetchTagByTagNameFailed(null));
+    } else {
+      yield put(ErrorNotification({ message: 'Failed to fetch tag', error: err }));
+    }
     yield put(
       UpdateIndicator({
         show: false,
