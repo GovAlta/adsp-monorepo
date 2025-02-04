@@ -298,7 +298,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     return (
                       <td key={ix}>
                         {isInReview ? (
-                          <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>{currentData}</div>
+                          <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
+                            {typeof currentData === 'string' ? (
+                              currentData
+                            ) : (
+                              <pre>{JSON.stringify(currentData, null, 2)}</pre>
+                            )}
+                          </div>
                         ) : (
                           <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
                             {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
