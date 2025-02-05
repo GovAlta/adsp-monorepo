@@ -31,6 +31,8 @@ import {
   TaggedResourceDefinition,
   UntaggedResourceDefinition,
   ResourceResolutionFailedDefinition,
+  ResourceDeletedDefinition,
+  TagDeletedDefinition,
 } from './directory';
 import { createDirectoryQueueService } from './amqp';
 
@@ -103,6 +105,8 @@ const initializeApp = async (): Promise<express.Application> => {
         TaggedResourceDefinition,
         UntaggedResourceDefinition,
         ResourceResolutionFailedDefinition,
+        ResourceDeletedDefinition,
+        TagDeletedDefinition,
       ],
       configuration: {
         description: 'Resource types for resolving browse name and description for tagged resources.',
@@ -126,22 +130,67 @@ const initializeApp = async (): Promise<express.Application> => {
       eventStreams: [EntryUpdatesStream],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [
+        // Directory service configuration for tagging of tags.
+        {
+          serviceId,
+          configuration: {
+            [`${serviceId}:resource-v1`]: {
+              resourceTypes: [
+                {
+                  type: 'tag',
+                  matcher: '^\\/tags\\/[0-9a-z-]{1,100}$',
+                  namePath: 'label',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: TagDeletedDefinition.name,
+                    resourceIdPath: 'tag.urn',
+                  },
+                },
+              ],
+            },
+          },
+        },
+        // Cache service configuration for resources and tags.
         {
           serviceId: adspId`urn:ads:platform:cache-service`,
           configuration: {
             targets: {
               [`${serviceId}:resource-v1`]: {
-                ttl: 8 * 60 * 60,
+                ttl: 30 * 60,
                 invalidationEvents: [
                   {
                     namespace: serviceId.service,
                     name: TaggedResourceDefinition.name,
-                    resourceIdPath: 'tag._links.resources.href',
+                    resourceIdPath: [
+                      'tag._links.resources.href',
+                      'tag._links.collection.href',
+                      'resource._links.tags.href',
+                      'resource._links.collection.href',
+                    ],
                   },
                   {
                     namespace: serviceId.service,
                     name: UntaggedResourceDefinition.name,
-                    resourceIdPath: 'tag._links.resources.href',
+                    resourceIdPath: [
+                      'tag._links.resources.href',
+                      'tag._links.collection.href',
+                      'resource._links.tags.href',
+                      'resource._links.collection.href',
+                    ],
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: ResourceDeletedDefinition.name,
+                    resourceIdPath: [
+                      'resource._links.self.href',
+                      'resource._links.tags.href',
+                      'resource._links.collection.href',
+                    ],
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: TagDeletedDefinition.name,
+                    resourceIdPath: ['tag._links.self.href', 'tag._links.resources.href', 'tag._links.collection.href'],
                   },
                 ],
               },

@@ -33,8 +33,9 @@ const createStepperContextInitData = (
   const valid = ajv.validate(schema, data || {});
 
   const categories = categorization.elements?.map((c, id) => {
-    const scopes = pickPropertyValues(c, 'scope');
-    const incompletePaths = getIncompletePaths(ajv, pickPropertyValues(c, 'scope'));
+    const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
+    // ListWithDetail path might have conflicts with others. The errors in ListWithDetail will still be caught in the ctx.core.errors
+    const incompletePaths = getIncompletePaths(ajv, scopes);
 
     return {
       id,
@@ -81,7 +82,8 @@ export const JsonFormsStepperContextProvider = ({
         return stepperState;
       },
       selectIsDisabled: () => {
-        return !stepperState.categories[stepperState.activeId]?.isEnabled;
+        const category = stepperState.categories?.[stepperState.activeId];
+        return category === undefined ? false : !category?.isEnabled;
       },
       selectIsActive: (id: number) => {
         return id === stepperState.activeId;
@@ -95,7 +97,7 @@ export const JsonFormsStepperContextProvider = ({
       goToPage: (id: number, updateCategoryId?: number) => {
         ajv.validate(schema, ctx.core?.data || {});
 
-        if (updateCategoryId !== undefined) {
+        if (updateCategoryId !== undefined && updateCategoryId < stepperState.categories.length) {
           stepperDispatch({
             type: 'update/category',
             payload: { errors: ctx?.core?.errors, id: updateCategoryId, ajv },

@@ -20,10 +20,9 @@ https://form.adsp-uat.alberta.ca/afids/Farmers-Market-License-Application
 
 ### Users
 
-Currently only GoA personnel are able to log-in and use the _Form-App_, although ADSP will be implementing other, secure techniques to enable other Albertans to use the product, including
+Forms can be configured to allow only those people with GoA or Alberta.ca credentials to access and fill them in. This gives users the best experience, as they will be able to fill in the information over several sessions, as needed. In addition, they will be able to initiate online conversations with form administrators if they have questions.
 
-- use of My Alberta Digital ID
-- use of email and verification codes
+However, you can also configure a form to allow anonymous access. Anyone will be able to fill in and submit a form, without logging in. In this case, they will have to complete the form in one session, and they will not have access to the "chat" capability.
 
 ### Security
 

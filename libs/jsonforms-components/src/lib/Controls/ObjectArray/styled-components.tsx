@@ -16,6 +16,17 @@ export const ToolBarHeader = styled.div`
 
 export const ObjectArrayTitle = styled.h3`
   margin-bottom: var(--goa-space-l);
+
+  span {
+    color: #666666;
+    font-size: var(--goa-font-size-2);
+  }
+`;
+
+export const RequiredSpan = styled.span`
+  color: #666666;
+  font-weight: var(--goa-font-weight-regular);
+  font-size: var(--goa-font-size-2);
 `;
 
 export const TextCenter = styled.div`

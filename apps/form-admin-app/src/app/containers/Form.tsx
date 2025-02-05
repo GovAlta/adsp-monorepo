@@ -42,7 +42,7 @@ export const Form = () => {
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
   const definition = useSelector(definitionSelector);
-  const form = useSelector(formSelector);
+  const { form, next } = useSelector(formSelector);
   const files = useSelector(formFilesSelector);
   const topic = useSelector((state: AppState) => topicSelector(state, form?.urn));
 
@@ -88,6 +88,7 @@ export const Form = () => {
           </PropertiesContainer>
         )
       }
+      nextTo={next && `../forms/${next}`}
     >
       <Tabs>
         <Tab heading="Form">

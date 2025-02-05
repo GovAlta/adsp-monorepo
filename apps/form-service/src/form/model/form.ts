@@ -7,7 +7,7 @@ import { NotificationService, Subscriber } from '../../notification';
 import { QueueTaskService } from '../../task';
 import { FormDefinitionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
-import { FormServiceRoles } from '../roles';
+import { DirectoryServiceRoles, FormServiceRoles } from '../roles';
 import { Form, FormStatus, SecurityClassificationType } from '../types';
 import { FormSubmissionEntity } from './formSubmission';
 import { PdfService } from '../pdf';
@@ -102,7 +102,12 @@ export class FormEntity implements Form {
     // Admins, intake apps, clerks and assessors are allowed read of the form.
     // Applicants are allowed to read forms they created.
     return (
-      isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, FormServiceRoles.IntakeApp], true) ||
+      isAllowedUser(
+        user,
+        this.tenantId,
+        [FormServiceRoles.Admin, FormServiceRoles.IntakeApp, DirectoryServiceRoles.ResourceResolver],
+        true
+      ) ||
       isAllowedUser(user, this.tenantId, [
         ...(this.definition?.clerkRoles || []),
         ...(this.definition?.assessorRoles || []),

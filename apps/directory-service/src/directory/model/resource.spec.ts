@@ -32,6 +32,8 @@ describe('ResourceType', () => {
     getTaggedResources: jest.fn(),
     applyTag: jest.fn(),
     removeTag: jest.fn(),
+    deleteTag: jest.fn(),
+    getResources: jest.fn(),
     saveResource: jest.fn(),
     deleteResource: jest.fn(),
   };
@@ -41,6 +43,7 @@ describe('ResourceType', () => {
     axiosMock.isAxiosError.mockClear();
     directoryMock.getResourceUrl.mockClear();
     repositoryMock.deleteResource.mockClear();
+    repositoryMock.saveResource.mockClear();
   });
 
   it('can be created', () => {
@@ -82,7 +85,34 @@ describe('ResourceType', () => {
   });
 
   describe('resolve', () => {
-    it('can resolve resource', async () => {
+    it('can resolve resource and sync', async () => {
+      const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
+        type: 'test',
+        matcher: '^\\/tests',
+        namePath: 'testName',
+        descriptionPath: 'testDescription',
+      });
+
+      const resourceUrl = new URL('https://test-service.com/test/v1/tests/123');
+      directoryMock.getResourceUrl.mockResolvedValueOnce(resourceUrl);
+
+      const urn = adspId`urn:ads:platform:test-service:v1:/tests/123`;
+      const name = 'Test 123';
+      const description = 'This is a description.';
+      axiosMock.get.mockResolvedValueOnce({ data: { testName: name, testDescription: description } });
+      repositoryMock.saveResource.mockImplementationOnce((resource) => Promise.resolve(resource));
+
+      const result = await type.resolve('token', { tenantId, urn }, true);
+      expect(result.tenantId).toBe(tenantId);
+      expect(result.urn).toBe(urn);
+      expect(result.name).toBe(name);
+      expect(result.description).toBe(description);
+      expect(repositoryMock.saveResource).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId, urn, name, description, type: 'test' })
+      );
+    });
+
+    it('can resolve resource and not sync', async () => {
       const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
@@ -104,9 +134,7 @@ describe('ResourceType', () => {
       expect(result.urn).toBe(urn);
       expect(result.name).toBe(name);
       expect(result.description).toBe(description);
-      expect(repositoryMock.saveResource).toHaveBeenCalledWith(
-        expect.objectContaining({ tenantId, urn, name, description, type: 'test' })
-      );
+      expect(repositoryMock.saveResource).not.toHaveBeenCalled();
     });
 
     it('can default description getter', async () => {
@@ -189,7 +217,7 @@ describe('ResourceType', () => {
       await expect(type.resolve('token', null)).rejects.toThrow(Error);
     });
 
-    it('can delete not found resource', async () => {
+    it('can delete not found resource if sync true', async () => {
       const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',
@@ -214,7 +242,7 @@ describe('ResourceType', () => {
       expect(repositoryMock.deleteResource).toHaveBeenCalledWith(expect.objectContaining({ tenantId, urn }));
     });
 
-    it('can not delete on not found resource', async () => {
+    it('can not delete on not found resource if sync false', async () => {
       const type = new ResourceType(loggerMock, directoryMock, repositoryMock, {
         type: 'test',
         matcher: '^\\/tests',

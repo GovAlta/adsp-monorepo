@@ -23,7 +23,7 @@ export const configurationSchema = {
                 required: ['namespace', 'name', 'resourceIdPath'],
               },
             },
-            required: ['matcher', 'type', 'namePath'],
+            required: ['matcher', 'type'],
           },
         },
       },

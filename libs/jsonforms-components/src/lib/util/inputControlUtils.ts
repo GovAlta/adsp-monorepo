@@ -120,6 +120,7 @@ export const onBlurForDateControl = (props: EventBlurControlProps) => {
 
   if (isRequiredAndHasNoData(controlProps)) {
     value = standardizeDate(value) || '';
+
     handleChange(path, value);
   }
 };
@@ -134,7 +135,7 @@ export const onBlurForTimeControl = (props: EventBlurControlProps) => {
   const { handleChange, path } = controlProps;
 
   if (isRequiredAndHasNoData(controlProps)) {
-    handleChange(path, value);
+    handleChange(path, value === '' ? undefined : value);
   }
 };
 
@@ -150,7 +151,7 @@ export const onChangeForDateControl = (props: EventChangeControlProps) => {
   if (value && value !== null) {
     value = standardizeDate(value) || '';
     if (value !== data) {
-      handleChange(path, value);
+      handleChange(path, value === '' ? undefined : value);
     }
   }
 };
@@ -163,9 +164,8 @@ export const onChangeForInputControl = (props: EventChangeControlProps) => {
   const { value } = props;
   const { controlProps } = props;
   const { handleChange, path } = controlProps;
-  if (value && value !== null) {
-    handleChange(path, value);
-  }
+
+  handleChange(path, value === '' ? undefined : value);
 };
 
 /**
@@ -180,7 +180,7 @@ export const onChangeForDateTimeControl = (props: EventChangeControlProps) => {
   if (value && value !== null) {
     value = isValidDate(value) ? new Date(value)?.toISOString() : '';
     if (data !== value) {
-      handleChange(path, value);
+      handleChange(path, value === '' ? undefined : value);
     }
   }
 };
@@ -202,8 +202,10 @@ export const onChangeForNumericControl = (props: EventChangeControlProps) => {
       if (value !== '') {
         newValue = +value;
       }
-      handleChange(path, newValue);
+      handleChange(path, value === '' ? undefined : value);
     }
+  } else {
+    handleChange(path, value);
   }
 };
 

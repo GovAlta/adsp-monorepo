@@ -23,7 +23,7 @@ export class ResourceType {
   ) {
     this.type = type;
     this.matcher = new RegExp(matcher);
-    this.nameGetter = property(namePath);
+    this.nameGetter = namePath ? property(namePath) : () => undefined;
     this.descriptionGetter = descriptionPath ? property(descriptionPath) : () => undefined;
     this.eventResourceIdGetter = deleteEvent?.resourceIdPath ? property(deleteEvent?.resourceIdPath) : () => undefined;
     this.deleteEventNamespace = deleteEvent?.namespace;
@@ -35,7 +35,12 @@ export class ResourceType {
     return this.matcher.test(urn.resource);
   }
 
-  public async resolve(token: string, resource: Resource, deleteNotFound = false): Promise<Resource> {
+  public async resolve(
+    token: string,
+    resource: Resource,
+    sync = false,
+    params: Record<string, unknown> = null
+  ): Promise<Resource> {
     if (!this.matches(resource?.urn)) {
       throw new InvalidOperationError(`Resource type '${this.type}' not matched to resource: ${resource.urn}`);
     }
@@ -53,7 +58,7 @@ export class ResourceType {
 
       const { data } = await axios.get(resourceUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { tenantId: resource.tenantId?.toString() },
+        params: { ...params, tenantId: resource.tenantId?.toString() },
       });
 
       this.logger.debug(`Retrieved resource ${resource.urn} and resolving name and description...`, {
@@ -63,13 +68,15 @@ export class ResourceType {
 
       const name = this.nameGetter(data) || resource.name;
       const description = this.descriptionGetter(data) || resource.description;
-      if (name !== resource.name || description !== resource.description) {
-        resource = await this.repository.saveResource({ ...resource, name, description, type: this.type });
+      if (name !== resource.name || description !== resource.description || this.type !== resource.type) {
+        resource = sync
+          ? await this.repository.saveResource({ ...resource, name, description, type: this.type })
+          : { ...resource, name, description, type: this.type };
       }
 
       return { ...resource, data };
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 404 && deleteNotFound) {
+      if (axios.isAxiosError(err) && err.response?.status === 404 && sync) {
         // If there's a 404, then the resource doesn't exist. This can happen if the resource was deleted before being resolved.
         // Delete the missing resource for consistency.
         await this.repository.deleteResource(resource);

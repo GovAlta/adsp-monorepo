@@ -4,7 +4,7 @@ import { Model, model } from 'mongoose';
 import { Logger } from 'winston';
 import { FormCriteria, FormEntity, FormRepository } from '../form';
 import { FormDefinitionRepository } from '../form';
-import { NotificationService } from '../notification';
+import { NotificationService, Subscriber } from '../notification';
 import { formSchema } from './schema';
 import { FormDoc } from './types';
 
@@ -135,7 +135,12 @@ export class MongoFormRepository implements FormRepository {
       // NOTE: This is only set on insert (create).
       // The UUID is necessary due to backwards compatibility with a unique index on tenant, definition, and applicant IDs.
       // Setting form ID makes the unique context effectively tenant, definition, form IDs.
-      applicantId: entity.applicant?.urn.toString() || entity.id,
+      // Setting the applicant URN restricts to one per applicant.
+      applicantId:
+        entity.definition?.oneFormPerApplicant && entity.applicant
+          ? entity.applicant.urn.toString() // Creating user ID might be better, but that can be an intake service account.
+          : entity.id,
+      subscriberId: entity.applicant?.urn.toString(),
       status: entity.status,
       created: entity.created,
       createdBy: entity.createdBy,
@@ -156,11 +161,15 @@ export class MongoFormRepository implements FormRepository {
     const tenantId = AdspId.parse(doc.tenantId);
     const definition = await this.definitionRepository.getDefinition(tenantId, doc.definitionId);
 
-    // NOTE: The applicant ID is a UUID in case there's no associated Subscriber;
-    // this is necessary for backwards compatibility with index.
-    const applicant = AdspId.isAdspId(doc.applicantId)
-      ? await this.notificationService.getSubscriber(tenantId, AdspId.parse(doc.applicantId))
-      : null;
+    let applicant: Subscriber;
+    if (AdspId.isAdspId(doc.subscriberId)) {
+      applicant = await this.notificationService.getSubscriber(tenantId, AdspId.parse(doc.subscriberId));
+    } else if (AdspId.isAdspId(doc.applicantId)) {
+      // NOTE: The applicant ID is a UUID in case there's no associated Subscriber;
+      // this is necessary for backwards compatibility with index.
+      applicant = await this.notificationService.getSubscriber(tenantId, AdspId.parse(doc.applicantId));
+    }
+
     return new FormEntity(
       this,
       tenantId,

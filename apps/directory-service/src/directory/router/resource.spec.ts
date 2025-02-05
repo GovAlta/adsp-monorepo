@@ -1,9 +1,20 @@
 import { AdspId, adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { Request, Response } from 'express';
 import { ServiceRoles } from '../roles';
-import { createResourceRouter, getTaggedResources, getTags, tagOperation } from './resource';
+import {
+  createResourceRouter,
+  deleteResource,
+  deleteTag,
+  getResource,
+  getResources,
+  getResourceTags,
+  getTag,
+  getTaggedResources,
+  getTags,
+  tagOperation,
+} from './resource';
 
 describe('resource', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -35,6 +46,8 @@ describe('resource', () => {
     getTaggedResources: jest.fn(),
     applyTag: jest.fn(),
     removeTag: jest.fn(),
+    deleteTag: jest.fn(),
+    getResources: jest.fn(),
     saveResource: jest.fn(),
     deleteResource: jest.fn(),
   };
@@ -45,7 +58,10 @@ describe('resource', () => {
     repositoryMock.getTaggedResources.mockClear();
     repositoryMock.applyTag.mockClear();
     repositoryMock.removeTag.mockClear();
+    repositoryMock.deleteTag.mockClear();
     directoryMock.getResourceUrl.mockClear();
+    repositoryMock.getResources.mockClear();
+    repositoryMock.deleteResource.mockClear();
   });
 
   it('can create router', () => {
@@ -144,6 +160,157 @@ describe('resource', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('getTag', () => {
+    it('can create handler', () => {
+      const handler = getTag(apiId, repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get tag', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        params: { tag: 'test-label' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          label: 'Test label',
+          value: 'test-label',
+        },
+      ];
+      repositoryMock.getTags.mockResolvedValueOnce({ results, page });
+
+      const handler = getTag(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTags).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining(results[0]));
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [] },
+        params: { tag: 'test-label' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getTag(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can call next with not found', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        params: { tag: 'test-label' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [];
+      repositoryMock.getTags.mockResolvedValueOnce({ results, page });
+
+      const handler = getTag(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTags).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+      );
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteTag', () => {
+    it('can create handler', () => {
+      const handler = deleteTag(apiId, repositoryMock, eventServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can delete tag', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.DirectoryAdmin] },
+        params: { tag: 'test-label' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          label: 'Test label',
+          value: 'test-label',
+        },
+      ];
+      repositoryMock.getTags.mockResolvedValueOnce({ results, page });
+
+      const deleted = true;
+      repositoryMock.deleteTag.mockResolvedValueOnce(deleted);
+
+      const handler = deleteTag(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTags).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted }));
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [] },
+        params: { tag: 'test-label' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = deleteTag(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can return false for not found', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.DirectoryAdmin] },
+        params: { tag: 'test-label' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [];
+      repositoryMock.getTags.mockResolvedValueOnce({ results, page });
+
+      const handler = deleteTag(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTags).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
+      expect(next).not.toHaveBeenCalledWith();
     });
   });
 
@@ -339,6 +506,8 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
+      directoryMock.getResourceUrl.mockResolvedValueOnce(new URL('http://file-service/file/v1/files/123'));
+
       const handler = tagOperation(apiId, loggerMock, directoryMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -449,7 +618,7 @@ describe('resource', () => {
             value: 'test-tag',
           },
           resource: {
-            urn: 'urn:ads:platform:file-service:v1',
+            urn: 'urn:ads:platform:file-service:v1:/files/123',
           },
         },
       };
@@ -494,7 +663,7 @@ describe('resource', () => {
 
   describe('getTaggedResources', () => {
     it('can create handler', () => {
-      const handler = getTaggedResources(repositoryMock);
+      const handler = getTaggedResources(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -516,9 +685,9 @@ describe('resource', () => {
       const page = {};
       repositoryMock.getTaggedResources.mockResolvedValueOnce({ results, page });
 
-      const handler = getTaggedResources(repositoryMock);
+      const handler = getTaggedResources(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(repositoryMock.getTaggedResources).toHaveBeenCalledWith(tenantId, 'test-tag', 10, undefined);
+      expect(repositoryMock.getTaggedResources).toHaveBeenCalledWith(tenantId, 'test-tag', 10, undefined, null);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           results: expect.arrayContaining([
@@ -547,9 +716,46 @@ describe('resource', () => {
       const page = {};
       repositoryMock.getTaggedResources.mockResolvedValueOnce({ results, page });
 
-      const handler = getTaggedResources(repositoryMock);
+      const handler = getTaggedResources(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(repositoryMock.getTaggedResources).toHaveBeenCalledWith(tenantId, 'test-tag', 15, '123');
+      expect(repositoryMock.getTaggedResources).toHaveBeenCalledWith(tenantId, 'test-tag', 15, '123', null);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          results: expect.arrayContaining([
+            expect.objectContaining({ urn: 'urn:ads:platform:file-service:v1:/files/123' }),
+          ]),
+          page,
+        })
+      );
+    });
+
+    it('can get tagged resources with criteria', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        params: { tag: 'test-tag' },
+        query: { top: '15', after: '123', criteria: JSON.stringify({ typeEquals: 'test' }) },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      const page = {};
+      repositoryMock.getTaggedResources.mockResolvedValueOnce({ results, page });
+
+      const handler = getTaggedResources(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTaggedResources).toHaveBeenCalledWith(
+        tenantId,
+        'test-tag',
+        15,
+        '123',
+        expect.objectContaining({ typeEquals: 'test' })
+      );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           results: expect.arrayContaining([
@@ -570,7 +776,7 @@ describe('resource', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = getTaggedResources(repositoryMock);
+      const handler = getTaggedResources(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -615,9 +821,9 @@ describe('resource', () => {
       });
       req.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
-      const handler = getTaggedResources(repositoryMock);
+      const handler = getTaggedResources(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(repositoryMock.getTaggedResources).toHaveBeenCalledWith(tenantId, 'test-tag', 10, undefined);
+      expect(repositoryMock.getTaggedResources).toHaveBeenCalledWith(tenantId, 'test-tag', 10, undefined, null);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           results: expect.arrayContaining([
@@ -629,6 +835,486 @@ describe('resource', () => {
           page,
         })
       );
+    });
+  });
+
+  describe('getResources', () => {
+    it('can create handler', () => {
+      const handler = getResources(apiId, repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get resources', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        query: {},
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+
+      const handler = getResources(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        10,
+        undefined,
+        expect.objectContaining({ tenantIdEquals: tenantId })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page,
+          results: expect.arrayContaining([expect.objectContaining({ urn: results[0].urn.toString() })]),
+        })
+      );
+    });
+
+    it('can get resources and include tags', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        query: { includeTags: 'true' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+      repositoryMock.getTags.mockResolvedValueOnce({ results: [{ value: 'test-tag', label: 'test value' }] });
+
+      const handler = getResources(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        10,
+        undefined,
+        expect.objectContaining({ tenantIdEquals: tenantId })
+      );
+      expect(repositoryMock.getTags).toHaveBeenCalledWith(
+        10,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, resourceUrnEquals: results[0].urn })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page,
+          results: expect.arrayContaining([
+            expect.objectContaining({
+              urn: results[0].urn.toString(),
+              _embedded: expect.objectContaining({
+                tags: expect.arrayContaining([expect.objectContaining({ value: 'test-tag' })]),
+              }),
+            }),
+          ]),
+        })
+      );
+    });
+
+    it('can get resources with query params', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        query: { top: '42', after: '123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+
+      const handler = getResources(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        42,
+        '123',
+        expect.objectContaining({ tenantIdEquals: tenantId })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page,
+          results: expect.arrayContaining([expect.objectContaining({ urn: results[0].urn.toString() })]),
+        })
+      );
+    });
+
+    it('can get resources with criteria', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        query: { top: '42', after: '123', criteria: JSON.stringify({ typeEquals: 'test' }) },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+
+      const handler = getResources(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        42,
+        '123',
+        expect.objectContaining({ tenantIdEquals: tenantId, typeEquals: 'test' })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page,
+          results: expect.arrayContaining([expect.objectContaining({ urn: results[0].urn.toString() })]),
+        })
+      );
+    });
+
+    it('can get specific resources with criteria array', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        query: {
+          criteria: JSON.stringify([
+            'urn:ads:platform:file-service:v1:/files/123',
+            'urn:ads:platform:file-service:v1:/files/234',
+          ]),
+        },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results1 = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      const results2 = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/234`,
+        },
+      ];
+      repositoryMock.getResources
+        .mockResolvedValueOnce({ results: results1, page })
+        .mockResolvedValueOnce({ results: results2, page });
+
+      const handler = getResources(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: expect.objectContaining({ size: 2 }),
+          results: expect.arrayContaining([
+            expect.objectContaining({ urn: results1[0].urn.toString() }),
+            expect.objectContaining({ urn: results2[0].urn.toString() }),
+          ]),
+        })
+      );
+    });
+
+    it('can call next with invalid operation for non-urn in criteria array', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        query: {
+          criteria: JSON.stringify(['urn:ads:platform:file-service:v1:/files/123', 'invalid value']),
+        },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results1 = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      repositoryMock.getResources.mockResolvedValueOnce({ results: results1, page });
+
+      const handler = getResources(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+      );
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [] },
+        query: {},
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getResources(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('getResource', () => {
+    it('can create handler', () => {
+      const handler = getResource(apiId, repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get resource', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+
+      const handler = getResource(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ urn: results[0].urn.toString() }));
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getResource(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can call next with not found', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+
+      const handler = getResource(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+      );
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteResource', () => {
+    it('can create handler', () => {
+      const handler = deleteResource(apiId, repositoryMock, eventServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can delete resource', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.DirectoryAdmin] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          urn: adspId`urn:ads:platform:file-service:v1:/files/123`,
+        },
+      ];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+
+      const deleted = true;
+      repositoryMock.deleteResource.mockResolvedValueOnce(deleted);
+
+      const handler = deleteResource(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted }));
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = deleteResource(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can return false with not found', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.DirectoryAdmin] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [];
+      repositoryMock.getResources.mockResolvedValueOnce({ results, page });
+
+      const handler = deleteResource(apiId, repositoryMock, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getResources).toHaveBeenCalledWith(
+        1,
+        null,
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
+      expect(next).not.toHaveBeenCalledWith();
+    });
+  });
+
+  describe('getResourceTags', () => {
+    it('can create handler', () => {
+      const handler = getResourceTags(apiId, repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get tags', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+        query: {},
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          label: 'Test label',
+          value: 'test-label',
+        },
+      ];
+      repositoryMock.getTags.mockResolvedValueOnce({ results, page });
+
+      const handler = getResourceTags(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTags).toHaveBeenCalledWith(
+        10,
+        undefined,
+        expect.objectContaining({ tenantIdEquals: tenantId, resourceUrnEquals: expect.any(AdspId) })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page,
+          results: expect.arrayContaining([expect.objectContaining(results[0])]),
+        })
+      );
+    });
+
+    it('can get tags with query params', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.ResourceBrowser] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+        query: { top: '42', after: '123' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      const results = [
+        {
+          label: 'Test label',
+          value: 'test-label',
+        },
+      ];
+      repositoryMock.getTags.mockResolvedValueOnce({ results, page });
+
+      const handler = getResourceTags(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getTags).toHaveBeenCalledWith(
+        42,
+        '123',
+        expect.objectContaining({ tenantIdEquals: tenantId, resourceUrnEquals: expect.any(AdspId) })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page,
+          results: expect.arrayContaining([expect.objectContaining(results[0])]),
+        })
+      );
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [] },
+        params: { resource: 'urn:ads:platform:file-service:v1:/files/123' },
+        query: {},
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getResourceTags(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 });

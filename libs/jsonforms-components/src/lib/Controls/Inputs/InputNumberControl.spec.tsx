@@ -16,14 +16,19 @@ const mockContextValue = {
 //eslint-disable-next-line
 const TestComponent: React.FC<{ props: any }> = ({ props }) => {
   const ctx = React.useContext(JsonFormsContext);
-  return <>{checkFieldValidity(props, ctx)}</>;
+  return <>{checkFieldValidity(props)}</>;
 };
 
+interface ControlElementWithMin extends ControlElement {
+  minLength: number;
+}
+
 describe('Input Text Control tests', () => {
-  const textBoxUiSchema: ControlElement = {
+  const textBoxUiSchema: ControlElementWithMin = {
     type: 'Control',
     scope: '#/properties/firstName',
     label: 'My First name',
+    minLength: 1,
   };
 
   const staticProps: GoAInputTextProps & ControlProps = {

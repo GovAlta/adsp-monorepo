@@ -58,7 +58,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       if (id > lastId) {
         state.isOnReview = true;
         state.hasNextButton = false;
-        state.hasPrevButton = false;
+        state.hasPrevButton = true;
         return { ...state };
       } else {
         state.categories[id].isVisited = true;
@@ -77,6 +77,8 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       const errorsInCategory = getErrorsInScopes(errors, state.categories[id].scopes || []);
       state.categories[id].isCompleted = incompletePaths?.length === 0;
       state.categories[id].isValid = errorsInCategory.length === 0;
+      state.categories[id].isVisited = true;
+
       return { ...state };
     }
     case 'validate/form': {

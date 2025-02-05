@@ -4,7 +4,7 @@ import {
   FormDefinition,
   FormState,
   createForm,
-  findUserForm,
+  findUserForms,
   formActions,
   formReducer,
   loadDefinition,
@@ -17,7 +17,9 @@ import {
 const initialState: FormState = {
   definitions: {},
   selected: null,
-  userForm: null,
+  forms: {},
+  results: [],
+  next: null,
   form: null,
   data: {},
   files: {},
@@ -29,6 +31,9 @@ const initialState: FormState = {
     creating: false,
     saving: false,
     submitting: false,
+  },
+  initialized: {
+    forms: false,
   },
 };
 
@@ -42,14 +47,18 @@ const definitionsToTest: FormState = {
       applicantRoles: ['Admin'],
       clerkRoles: [],
       anonymousApply: false,
-      scheduledIntakes: false
+      scheduledIntakes: false,
+      oneFormPerApplicant: true,
     },
   },
   selected: null,
-  userForm: 'TEST',
+  forms: {},
+  results: [],
+  next: null,
   form: {
     definition: {
       id: 'TEST',
+      name: 'test',
     },
     created: null,
     submitted: null,
@@ -68,6 +77,9 @@ const definitionsToTest: FormState = {
     saving: false,
     submitting: false,
   },
+  initialized: {
+    forms: false,
+  },
 };
 
 const loadedFormDefinition: FormDefinition = {
@@ -79,12 +91,14 @@ const loadedFormDefinition: FormDefinition = {
   clerkRoles: [],
   anonymousApply: false,
   scheduledIntakes: false,
-  intake: undefined
+  intake: undefined,
+  oneFormPerApplicant: true,
 };
 const payload = {
   form: {
     definition: {
       id: 'TEST',
+      name: 'test',
     },
     created: null,
     submitted: null,
@@ -158,7 +172,6 @@ describe('form slice unit tests', () => {
             id: 'TEST2',
           },
         },
-        userForm: null,
         data: null,
         files: null,
         saved: null,
@@ -216,7 +229,6 @@ describe('form slice unit tests', () => {
       const action = { type: createForm.fulfilled, payload: 'TEST' };
       const form = formReducer(clonedDefinitionToTest, action);
       expect(form).not.toBeNull();
-      expect(form.userForm).toBe('TEST');
     });
 
     it('can return pending for create form', () => {
@@ -330,7 +342,7 @@ describe('form slice unit tests', () => {
       expect(form.files).not.toBeNull();
     });
 
-    it('can return fulfilled for find user form', () => {
+    it('can return fulfilled for find user forms', () => {
       const clonedDefinitionToTest: FormState = {
         ...definitionsToTest,
         form: {
@@ -346,17 +358,18 @@ describe('form slice unit tests', () => {
         },
       };
 
-      const action = { type: findUserForm.fulfilled, payload };
+      const result = { results: [{ id: 'abc-123' }], page: { next: 'test' } };
+      const action = { type: findUserForms.fulfilled, payload: result };
       const form = formReducer(clonedDefinitionToTest, action);
-      expect(form).not.toBeNull();
-      expect(form.data).not.toBeNull();
-      expect(form.files).not.toBeNull();
+      expect(form.busy.loading).toBe(false);
+      expect(form.results).toEqual(expect.arrayContaining(['abc-123']));
+      expect(form.forms).toEqual(expect.objectContaining({ 'abc-123': result.results[0] }));
+      expect(form.next).toBe('test');
     });
 
-    it('can return pending for find user form', () => {
+    it('can return pending for find user forms', () => {
       const clonedDefinitionToTest: FormState = {
         ...definitionsToTest,
-        userForm: null,
         form: {
           ...definitionsToTest.form,
           definition: {
@@ -370,17 +383,14 @@ describe('form slice unit tests', () => {
         },
       };
 
-      const action = { type: findUserForm.pending, payload };
+      const action = { type: findUserForms.pending, payload };
       const form = formReducer(clonedDefinitionToTest, action);
-      expect(form).not.toBeNull();
-      expect(form.data).not.toBeNull();
-      expect(form.files).not.toBeNull();
+      expect(form.busy.loading).toBe(true);
     });
 
-    it('can return rejected for find user form', () => {
+    it('can return rejected for find user forms', () => {
       const clonedDefinitionToTest: FormState = {
         ...definitionsToTest,
-        userForm: null,
         form: {
           ...definitionsToTest.form,
           definition: {
@@ -394,9 +404,8 @@ describe('form slice unit tests', () => {
         },
       };
 
-      const action = { type: findUserForm.rejected, payload };
+      const action = { type: findUserForms.rejected, payload };
       const form = formReducer(clonedDefinitionToTest, action);
-      expect(form).not.toBeNull();
       expect(form.busy.loading).toBe(false);
     });
 

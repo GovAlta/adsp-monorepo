@@ -3,7 +3,7 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 export interface InvalidationEvent {
   namespace: string;
   name: string;
-  resourceIdPath: string;
+  resourceIdPath: string | string[];
 }
 
 export interface Target {
