@@ -55,10 +55,10 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
   const topic = useSelector((state: AppState) => topicSelector(state, form.urn));
 
   useEffect(() => {
-    if (hasSupportTopic) {
+    if (hasSupportTopic && topic ===  undefined) {
       dispatch(loadTopic({ resourceId: form.urn, typeId: 'form-questions' }));
     }
-  }, [dispatch, hasSupportTopic, form]);
+  }, [dispatch, hasSupportTopic, form, topic]);
 
   return (
     <tr key={form.urn}>
@@ -107,8 +107,8 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
     if (forms.length < 1) {
       dispatch(findForms({ definitionId, criteria }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [definitionId, dispatch]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, definitionId]);
 
   useEffect(() => {
     if (definition?.supportTopic) {
@@ -122,7 +122,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
         <form>
           <SearchFormItemsContainer>
             <TagSearchFilter
-              value={criteria.tag || ''}
+              value={criteria.tag}
               onChange={(value) =>
                 dispatch(
                   formActions.setFormCriteria({

@@ -354,6 +354,8 @@ const commentSlice = createSlice({
           if (type) {
             state.topicTypes[type.id] = type;
           }
+        } else {
+          state.topics[meta.arg.resourceId] = null;
         }
       })
       .addCase(loadTopic.rejected, (state) => {

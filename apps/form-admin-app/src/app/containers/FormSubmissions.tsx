@@ -61,8 +61,8 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
     if (submissions.length < 1) {
       dispatch(findSubmissions({ definitionId, criteria }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [definitionId, dispatch]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, definitionId]);
 
   return (
     <SearchLayout
@@ -70,7 +70,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
         <form>
           <SearchFormItemsContainer>
             <TagSearchFilter
-              value={criteria.tag || ''}
+              value={criteria.tag}
               onChange={(value) =>
                 dispatch(
                   formActions.setSubmissionCriteria({

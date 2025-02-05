@@ -111,6 +111,21 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             the form, then submit once ready.
           </GoADetails>
         )}
+        {!definition.anonymousApply &&
+          (definition.oneFormPerApplicant ? (
+            <GoADetails heading="One form per applicant">
+              Applicants can create one form of this definition. In programs where people are expected to apply only
+              once, this configuration limits the the opportunity for duplicate submissions. However, programs should
+              still consider duplicates since this configuration cannot fully prevent them (for example, if both
+              parents apply for the same dependent child).
+            </GoADetails>
+          ) : (
+            <GoADetails heading="Multiple forms per applicant">
+              Applicants can create multiple forms of this definition. In programs where people can make multiple
+              distinct submissions, such as separate submissions for family members, this configuration allows them to
+              create, draft and submit the forms separately.
+            </GoADetails>
+          ))}
         {definition.supportTopic ? (
           <GoADetails heading="Applicant questions">
             Applicants can send questions regarding their form, which staff can review and respond to. Anonymous
