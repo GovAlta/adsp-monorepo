@@ -9,6 +9,7 @@ import { ResourceTag, ResourceTagResult } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
+import { AddRemoveResourceTagSpacing } from './style-components';
 
 interface AddRemoveResourceTagModalProps {
   baseResourceFormUrn: string;
@@ -137,6 +138,10 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
         </GoAButtonGroup>
       }
     >
+      <AddRemoveResourceTagSpacing>
+        Add a tag to "{initialFormDefinition.id}". Enter the tag label that you want to use. A new tag will be created
+        if necessary.
+      </AddRemoveResourceTagSpacing>
       <GoAFormItem error={errors['name']} label="Tag" mb={'m'}>
         <GoAInput
           type="text"
