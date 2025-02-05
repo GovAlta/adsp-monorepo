@@ -15,18 +15,6 @@ export const DELETE_ENTRY_SUCCESS = 'tenant/directory-service/entry/delete/succe
 export const FETCH_ENTRY_DETAIL = 'tenant/directory-service/entry/detail';
 export const FETCH_ENTRY_DETAIL_SUCCESS = 'tenant/directory-service/entry/detail/success';
 export const FETCH_ENTRY_DETAIL_BY_URNS = 'tenant/directory-service/urn/detail/';
-export const TAG_RESOURCE_ACTION = 'tenant/directory-service/resource/tag-resource';
-export const TAG_RESOURCE_ACTION_SUCCESS = 'tenant/directory-service/resource/tag-resource/success';
-
-export const UNTAG_RESOURCE_ACTION = 'tenant/directory-service/resource/untag-resource';
-export const UNTAG_RESOURCE_ACTION_SUCCESS = 'tenant/directory-service/resource/untag-resource/success';
-
-export const FETCH_RESOURCE_TAGS_ACTION = 'tenant/directory-service/resource/fetch-resource-tags';
-export const FETCH_RESOURCE_TAGS_ACTION_SUCCESS = 'tenant/directory-service/resource/fetch-resource-tags/success';
-
-export const FETCH_TAG_BY_TAG_NAME_ACTION = 'tenant/directory-service/resource/fetch-tag-by-tag-name';
-export const FETCH_TAG_BY_TAG_NAME_ACTION_SUCCESS = 'tenant/directory-service/resource/fetch-tag-by-tag-name/success';
-export const FETCH_TAG_BY_TAG_NAME_ACTION_FAILED = 'tenant/directory-service/resource/fetch-tag-by-tag-name/failed';
 
 // =============
 // Actions Types
@@ -42,48 +30,7 @@ export type ActionType =
   | UpdateEntrySuccessAction
   | DeleteEntryAction
   | FetchEntryDetailByURNsAction
-  | DeleteEntrySuccessAction
-  | TagResourceAction
-  | UnTagResourceAction
-  | FetchResourceTagsAction
-  | FetchResourceTagsSuccessAction
-  | FetchTagByTagNameAction
-  | FetchTagByTagNameActionSuccess
-  | FetchTagByTagNameActionFailed;
-
-export interface TagResourceAction {
-  type: typeof TAG_RESOURCE_ACTION;
-  tag: ResourceTag;
-}
-
-export interface FetchResourceTagsAction {
-  type: typeof FETCH_RESOURCE_TAGS_ACTION;
-  payload: string;
-}
-
-export interface FetchTagByTagNameAction {
-  type: typeof FETCH_TAG_BY_TAG_NAME_ACTION;
-  payload: string;
-}
-export interface FetchTagByTagNameActionFailed {
-  type: typeof FETCH_TAG_BY_TAG_NAME_ACTION_FAILED;
-  payload: ResourceTagResult;
-}
-
-export interface FetchTagByTagNameActionSuccess {
-  type: typeof FETCH_TAG_BY_TAG_NAME_ACTION_SUCCESS;
-  payload: ResourceTagResult;
-}
-
-export interface FetchResourceTagsSuccessAction {
-  type: typeof FETCH_RESOURCE_TAGS_ACTION_SUCCESS;
-  payload: ResourceTagResult[];
-}
-
-export interface UnTagResourceAction {
-  type: typeof UNTAG_RESOURCE_ACTION;
-  payload: ResourceTagResult;
-}
+  | DeleteEntrySuccessAction;
 
 export interface FetchDirectoryAction {
   type: typeof FETCH_DIRECTORY;
@@ -188,40 +135,5 @@ export const fetchEntryDetailSuccess = (data: Service): FetchEntryDetailSuccessA
 
 export const fetchDirectoryDetailByURNs = (data: string[]): FetchEntryDetailByURNsAction => ({
   type: FETCH_ENTRY_DETAIL_BY_URNS,
-  payload: data,
-});
-
-export const tagResource = (data: ResourceTag): TagResourceAction => ({
-  type: TAG_RESOURCE_ACTION,
-  tag: data,
-});
-
-export const unTagResource = (data: ResourceTagResult): UnTagResourceAction => ({
-  type: UNTAG_RESOURCE_ACTION,
-  payload: data,
-});
-
-export const fetchResourceTags = (data: string): FetchResourceTagsAction => ({
-  type: FETCH_RESOURCE_TAGS_ACTION,
-  payload: data,
-});
-
-export const fetchResourceTagsSuccess = (data: ResourceTagResult[]): FetchResourceTagsSuccessAction => ({
-  type: FETCH_RESOURCE_TAGS_ACTION_SUCCESS,
-  payload: data,
-});
-
-export const fetchTagByTagName = (data: string): FetchTagByTagNameAction => ({
-  type: FETCH_TAG_BY_TAG_NAME_ACTION,
-  payload: data,
-});
-
-export const fetchTagByTagNameSuccess = (data: ResourceTagResult): FetchTagByTagNameActionSuccess => ({
-  type: FETCH_TAG_BY_TAG_NAME_ACTION_SUCCESS,
-  payload: data,
-});
-
-export const fetchTagByTagNameFailed = (data: ResourceTagResult): FetchTagByTagNameActionFailed => ({
-  type: FETCH_TAG_BY_TAG_NAME_ACTION_FAILED,
   payload: data,
 });

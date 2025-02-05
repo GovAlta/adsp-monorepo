@@ -8,6 +8,9 @@ import {
   updateFormDefinition,
   deleteFormDefinition,
   openEditorForDefinition,
+  fetchFormResourceTags,
+  unTagFormResource,
+  tagFormResource,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagResult, Service } from '@store/directory/models';
@@ -24,7 +27,6 @@ import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
 
 import { toKebabName } from '@lib/kebabName';
-import { fetchResourceTags, tagResource, unTagResource } from '@store/directory/actions';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -191,13 +193,13 @@ export const FormDefinitions = ({
           }}
           onDelete={(tag: ResourceTagResult) => {
             tag.urn = `${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`;
-            dispatch(unTagResource(tag));
+            dispatch(unTagFormResource(tag));
             setTimeout(() => {
-              dispatch(fetchResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
+              dispatch(fetchFormResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
             }, 100);
           }}
           onSave={(tag: ResourceTag) => {
-            dispatch(tagResource({ urn: tag.urn, label: tag.label }));
+            dispatch(tagFormResource({ urn: tag.urn, label: tag.label }));
           }}
         ></AddRemoveResourceTagModal>
       )}

@@ -4,18 +4,18 @@ import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton, GoAChip } from '@abgov/react-components-new';
-import { FormDefinition } from '@store/form/model';
+import { FormDefinition, FormResourceTagResult } from '@store/form/model';
 import { ResourceTag, ResourceTagResult } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchResourceTags, fetchTagByTagName } from '@store/directory/actions';
 import { RootState } from '@store/index';
+import { fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
 
 interface AddRemoveResourceTagModalProps {
   baseResourceFormUrn: string;
   open: boolean;
   initialFormDefinition?: FormDefinition;
   onClose: () => void;
-  onDelete: (tag: ResourceTagResult) => void;
+  onDelete: (tag: FormResourceTagResult) => void;
   onSave: (tag: ResourceTag) => void;
 }
 
@@ -49,11 +49,11 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   const [tag, setTag] = useState<string>('');
 
   const resourceTags = useSelector((state: RootState) => {
-    return state?.directory?.resourceTags;
+    return state?.form.definitions[initialFormDefinition.id].resourceTags;
   });
 
   const searchedTagExists = useSelector((state: RootState) => {
-    return state?.directory?.searchedTagExists;
+    return state?.form?.searchedTagExists;
   });
 
   const tagAlreadyAdded = () => {
@@ -68,7 +68,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
     () =>
       _debounce(
         async (input) => {
-          dispatch(fetchTagByTagName(toKebabName(input)));
+          dispatch(fetchFormTagByTagName(toKebabName(input)));
 
           setTag(input);
         },
@@ -90,7 +90,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
 
   useEffect(() => {
     if (baseResourceFormUrn && initialFormDefinition.id.length > 0) {
-      dispatch(fetchResourceTags(`${baseResourceFormUrn}/${initialFormDefinition.id}`));
+      dispatch(fetchFormResourceTags(`${baseResourceFormUrn}/${initialFormDefinition.id}`));
     }
   }, [baseResourceFormUrn, dispatch, initialFormDefinition]);
 

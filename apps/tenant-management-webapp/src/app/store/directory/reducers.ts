@@ -1,4 +1,4 @@
-import { ActionType, FETCH_RESOURCE_TAGS_ACTION_SUCCESS } from './actions';
+import { ActionType } from './actions';
 import { DIRECTORY_INIT, Directory } from './models';
 import {
   FETCH_DIRECTORY_SUCCESS,
@@ -6,8 +6,6 @@ import {
   UPDATE_ENTRY_SUCCESS,
   DELETE_ENTRY_SUCCESS,
   FETCH_ENTRY_DETAIL_SUCCESS,
-  FETCH_TAG_BY_TAG_NAME_ACTION_SUCCESS,
-  FETCH_TAG_BY_TAG_NAME_ACTION_FAILED,
 } from './actions';
 
 export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
@@ -63,15 +61,6 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
         isExist.loaded = action.payload?.loaded;
       }
       return { ...state, directory: [...directoryUpdateList] };
-    }
-    case FETCH_RESOURCE_TAGS_ACTION_SUCCESS: {
-      return { ...state, resourceTags: [...action.payload] };
-    }
-    case FETCH_TAG_BY_TAG_NAME_ACTION_SUCCESS: {
-      return { ...state, searchedTag: action.payload, searchedTagExists: action.payload ? true : false };
-    }
-    case FETCH_TAG_BY_TAG_NAME_ACTION_FAILED: {
-      return { ...state, searchedTag: null, searchedTagExists: false };
     }
     default:
       return state;

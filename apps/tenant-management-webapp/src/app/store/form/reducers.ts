@@ -22,6 +22,9 @@ import {
   FETCH_FORM_METRICS_SUCCESS_ACTION,
   START_SOCKET_STREAM_SUCCESS_ACTION,
   EXPORT_FORM_INFO_SUCCESS_ACTION,
+  FETCH_FORM_RESOURCE_TAGS_ACTION_SUCCESS,
+  FETCH_FORM_TAG_BY_TAG_NAME_ACTION_SUCCESS,
+  FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED,
 } from './action';
 
 import { FormState } from './model';
@@ -250,6 +253,35 @@ export default function (state: FormState = defaultState, action: FormActionType
         ...state,
         metrics: action.payload,
       };
+    case FETCH_FORM_RESOURCE_TAGS_ACTION_SUCCESS: {
+      const { payload } = action;
+
+      return {
+        ...state,
+        definitions: {
+          ...state.definitions,
+          [payload.formDefinitionId]: {
+            ...state.definitions[payload.formDefinitionId],
+            resourceTags: [...payload.resourceTags],
+          },
+        },
+      };
+    }
+    case FETCH_FORM_TAG_BY_TAG_NAME_ACTION_SUCCESS: {
+      return {
+        ...state,
+        searchedTag: action.payload,
+        searchedTagExists: action.payload ? true : false,
+      };
+    }
+    case FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED: {
+      return {
+        ...state,
+        ...state,
+        searchedTag: null,
+        searchedTagExists: false,
+      };
+    }
     default:
       return state;
   }

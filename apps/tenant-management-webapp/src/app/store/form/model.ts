@@ -22,6 +22,19 @@ export interface FormDefinition {
   queueTaskToProcess: QueueTaskToProcess;
   supportTopic: boolean;
   securityClassification?: SecurityClassification;
+  resourceTags?: FormResourceTagResult[];
+}
+
+export interface FormResourceTagResponse {
+  formDefinitionId: string;
+  resourceTags: FormResourceTagResult[];
+}
+
+export interface FormResourceTagResult {
+  urn: string;
+  label: string;
+  value: string;
+  _links: Record<string, unknown>;
 }
 
 export interface Disposition {
@@ -105,6 +118,8 @@ export interface FormState {
   columns: ColumnOption[];
   metrics: FormMetrics;
   socket: Socket;
+  searchedTag?: FormResourceTagResult;
+  searchedTagExists?: boolean;
 }
 export interface FormExportResponse {
   id?: string;
@@ -205,25 +220,4 @@ export interface SubmissionInfoItem {
     reason?: string;
     date?: string;
   };
-}
-
-export interface ResourceTag {
-  urn: string;
-  label: string;
-}
-
-export interface Resource {
-  urn: string;
-  name: string;
-  description: string;
-  type: string;
-  _embedded?: {
-    represents?: unknown;
-    tags?: Tag[];
-  };
-}
-
-export interface Tag {
-  value: string;
-  label: string;
 }
