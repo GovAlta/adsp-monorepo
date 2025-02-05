@@ -176,16 +176,17 @@ export const loadDefinitions = createAsyncThunk(
 
         result = {
           ...data,
-          results: data.results.map((result) => ({
-            ...result,
-            // oneFormPerApplicant defaults to true if undefined / null.
-            oneFormPerApplicant: typeof result.oneFormPerApplicant !== 'boolean' || result.oneFormPerApplicant,
-            urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${result.id}`,
-          })),
         };
       }
 
       if (result.results?.length > 0) {
+        result.results = result.results.map((result) => ({
+          ...result,
+          // oneFormPerApplicant defaults to true if undefined / null.
+          oneFormPerApplicant: typeof result.oneFormPerApplicant !== 'boolean' || result.oneFormPerApplicant,
+          urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${result.id}`,
+        }));
+
         await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
       }
 
