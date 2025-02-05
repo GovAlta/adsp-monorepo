@@ -49,6 +49,8 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   const dispatch = useDispatch();
   const [tag, setTag] = useState<string>('');
 
+  const MAX_TAG_LENGTH = 50;
+
   const resourceTags = useSelector((state: RootState) => {
     return state?.form.definitions[initialFormDefinition.id].resourceTags;
   });
@@ -70,7 +72,6 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
       _debounce(
         async (input) => {
           dispatch(fetchFormTagByTagName(toKebabName(input)));
-
           setTag(input);
         },
         800,
@@ -98,11 +99,20 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   const { errors, validators } = useValidators(
     'name',
     'name',
-    wordMaxLengthCheck(50, 'Tag'),
+    wordMaxLengthCheck(MAX_TAG_LENGTH, 'Tag'),
     isNotEmptyCheck('Tag'),
     badCharsCheck
   ).build();
 
+  const isNotValid = () => {
+    if (tag.length === 0) return true;
+
+    if (validators.haveErrors()) return true;
+
+    if (tagAlreadyAdded()) return true;
+
+    return false;
+  };
   return (
     <GoAModal
       testId="add-resource-tag-model"
@@ -124,7 +134,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
           <GoAButton
             type="primary"
             testId="resource-tag-save"
-            disabled={tag.length === 0 || tagAlreadyAdded() ? true : false}
+            disabled={isNotValid()}
             onClick={() => {
               onSave({
                 label: toKebabName(tag),
@@ -149,7 +159,8 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
           value={tag}
           testId="add-resource-tag-name"
           aria-label="add-resource-tag-name"
-          width="100%"
+          width="50ch"
+          maxLength={MAX_TAG_LENGTH}
           onChange={(name, value) => {
             validators.remove('name');
             const validations = {
