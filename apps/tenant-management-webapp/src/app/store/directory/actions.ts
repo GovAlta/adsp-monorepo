@@ -1,4 +1,4 @@
-import { Directory, ResourceTag, ResourceTagResult, Service } from './models';
+import { Directory, Service } from './models';
 
 export const FETCH_DIRECTORY = 'tenant/directory-service/directory/fetch';
 export const FETCH_DIRECTORY_SUCCESS = 'tenant/directory-service/directory/fetch/success';
