@@ -5,7 +5,7 @@ import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton, GoAChip } from '@abgov/react-components-new';
 import { FormDefinition, FormResourceTagResult } from '@store/form/model';
-import { ResourceTag, ResourceTagResult } from '@store/directory/models';
+import { ResourceTag } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
@@ -21,8 +21,8 @@ interface AddRemoveResourceTagModalProps {
 }
 
 const TagChipComponent: FunctionComponent<{
-  tag?: ResourceTagResult;
-  onDelete(tag: ResourceTagResult);
+  tag?: FormResourceTagResult;
+  onDelete(tag: FormResourceTagResult);
 }> = ({ tag, onDelete }) => {
   return (
     <GoAChip
