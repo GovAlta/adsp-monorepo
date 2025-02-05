@@ -277,7 +277,6 @@ export default function (state: FormState = defaultState, action: FormActionType
     case FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED: {
       return {
         ...state,
-        ...state,
         searchedTag: null,
         searchedTagExists: false,
       };
