@@ -53,6 +53,7 @@ export interface FormDefinition {
   dispositionStates: DispositionState[];
   submissionRecords: boolean;
   anonymousApply: boolean;
+  oneFormPerApplicant: boolean;
   generatesPdf: boolean;
   scheduledIntakes: boolean;
   supportTopic: boolean;
