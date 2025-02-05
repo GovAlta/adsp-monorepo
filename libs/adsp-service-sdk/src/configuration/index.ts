@@ -24,7 +24,7 @@ declare global {
        *
        * @memberof Request
        */
-      getServiceConfiguration?: <C, R = [C, C]>(name?: string, tenantId?: AdspId) => Promise<R>;
+      getServiceConfiguration?: <C, R = [C, C, number?]>(name?: string, tenantId?: AdspId) => Promise<R>;
     }
   }
 }
