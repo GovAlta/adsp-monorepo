@@ -198,14 +198,14 @@ export const onChangeForNumericControl = (props: EventChangeControlProps) => {
     //Prevents handleChange from executing if the data has not changed
     //so the component will not re render.
     if (data !== +value) {
-      let newValue: string | number = '';
+      let newValue: number | undefined = undefined;
       if (value !== '') {
         newValue = +value;
       }
-      handleChange(path, value === '' ? undefined : value);
+      handleChange(path, newValue);
     }
   } else {
-    handleChange(path, value);
+    handleChange(path, value === '' ? undefined : value);
   }
 };
 
