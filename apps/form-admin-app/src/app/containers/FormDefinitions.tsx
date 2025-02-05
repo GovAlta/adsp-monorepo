@@ -13,6 +13,8 @@ import {
   tagResource,
   userSelector,
   Resource,
+  definitionCriteriaSelector,
+  formActions,
 } from '../state';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { AddTagModal } from '../components/AddTagModal';
@@ -40,6 +42,10 @@ export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({ d
       </td>
       <td>
         <FeatureBadge feature="Anonymous applicant" hasFeature={definition.anonymousApply} />
+        <FeatureBadge
+          feature="Multiple forms"
+          hasFeature={!definition.anonymousApply && !definition.oneFormPerApplicant}
+        />
         <FeatureBadge feature="Applicant questions" hasFeature={definition.supportTopic} />
         <FeatureBadge feature="Creates submissions" hasFeature={definition.submissionRecords} />
         <FeatureBadge feature="Creates PDF" hasFeature={definition.generatesPdf} />
@@ -61,20 +67,20 @@ export const FormsDefinitions = () => {
   const navigate = useNavigate();
 
   const [showTagDefinition, setShowTagDefinition] = useState<Pick<Resource, 'name' | 'urn'>>(null);
-  const [searchTag, setSearchTag] = useState('');
 
   const { user } = useSelector(userSelector);
-
   const directoryBusy = useSelector(directoryBusySelector);
 
   const busy = useSelector(formBusySelector);
+  const criteria = useSelector(definitionCriteriaSelector);
   const { definitions: next } = useSelector(nextSelector);
   const definitions = useSelector(definitionsSelector);
 
   useEffect(() => {
-    if (user?.roles.includes('urn:ads:platform:form-service:form-admin')) {
-      dispatch(loadDefinitions({}));
+    if (user?.roles.includes('urn:ads:platform:form-service:form-admin') && definitions.length < 1) {
+      dispatch(loadDefinitions({ tag: criteria.tag }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, user]);
 
   return (
@@ -82,15 +88,22 @@ export const FormsDefinitions = () => {
       searchForm={
         user?.roles.includes('urn:ads:platform:form-service:form-admin') ? (
           <form>
-            <TagSearchFilter value={searchTag} onChange={(value) => setSearchTag(value)} />
+            <TagSearchFilter
+              value={criteria.tag}
+              onChange={(value) => dispatch(formActions.setDefinitionCriteria({ tag: value }))}
+            />
             <GoAButtonGroup alignment="end" mt="l">
-              <GoAButton type="secondary" disabled={busy.loading} onClick={() => setSearchTag('')}>
+              <GoAButton
+                type="secondary"
+                disabled={busy.loading}
+                onClick={() => dispatch(formActions.setDefinitionCriteria({}))}
+              >
                 Reset filter
               </GoAButton>
               <GoAButton
                 type="primary"
                 disabled={busy.loading}
-                onClick={() => dispatch(loadDefinitions({ tag: searchTag }))}
+                onClick={() => dispatch(loadDefinitions({ tag: criteria.tag }))}
               >
                 Load definitions
               </GoAButton>
