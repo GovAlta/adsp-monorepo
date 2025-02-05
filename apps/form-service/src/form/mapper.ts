@@ -3,9 +3,10 @@ import { FormSubmissionEntity } from './model';
 import { FormDefinition, Intake } from './types';
 import { FormEntityWithJobId } from './router';
 
-export function mapFormDefinition(entity: FormDefinition, intake?: Intake) {
+export function mapFormDefinition(entity: FormDefinition, revision: number, intake?: Intake) {
   return {
     id: entity.id,
+    revision,
     name: entity.name,
     description: entity.description,
     anonymousApply: entity.anonymousApply,

@@ -213,9 +213,9 @@ const initializeApp = async (): Promise<express.Application> => {
         schema: configurationSchema,
         useNamespace: true,
       },
-      configurationConverter: (config: Record<string, FormDefinition> | FormDefinition, tenantId) => {
+      configurationConverter: (config: Record<string, FormDefinition> | FormDefinition, tenantId, revision) => {
         if (isFormDefinition(config)) {
-          return new FormDefinitionEntity(validationService, calendarService, tenantId, config);
+          return new FormDefinitionEntity(validationService, calendarService, tenantId, config, revision);
         } else {
           // For backwards compatibility, handle conversion of form definitions configured in a single document.
           return Object.entries(config).reduce(

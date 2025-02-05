@@ -35,7 +35,8 @@ export class FormDefinitionEntity implements FormDefinition {
     private validationService: ValidationService,
     private calendarService: CalendarService,
     public tenantId: AdspId,
-    definition: FormDefinition
+    definition: FormDefinition,
+    public revision?: number
   ) {
     this.id = definition.id;
     this.name = definition.name;
