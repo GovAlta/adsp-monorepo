@@ -49,7 +49,7 @@ describe('ConfigurationService', () => {
     const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
     const config = { value: 'this is config' };
-    cacheMock.mockReturnValueOnce(config);
+    cacheMock.mockReturnValueOnce({ configuration: config, revision: 0 });
     const [result] = await service.getConfiguration<{ value: string }>(
       adspId`urn:ads:platform:test`,
       'test',
@@ -64,7 +64,7 @@ describe('ConfigurationService', () => {
     // This should still be a cache hit to avoid extraneous API requests.
     const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
-    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce({ configuration: null });
     const [result] = await service.getConfiguration<{ value: string }>(
       adspId`urn:ads:platform:test`,
       'test',
@@ -235,7 +235,7 @@ describe('ConfigurationService', () => {
       const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
       const config = { value: 'this is config' };
-      cacheMock.mockReturnValueOnce(config);
+      cacheMock.mockReturnValueOnce({ configuration: config, revision: 0 });
       const [result] = await service.getServiceConfiguration<{ value: string }>(
         null,
         adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
@@ -248,7 +248,7 @@ describe('ConfigurationService', () => {
       const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock, true);
 
       const config = { value: 'this is config' };
-      cacheMock.mockReturnValueOnce(config);
+      cacheMock.mockReturnValueOnce({ configuration: config, revision: 0 });
       const [result] = await service.getServiceConfiguration<{ value: string }>(
         'test',
         adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
@@ -261,7 +261,7 @@ describe('ConfigurationService', () => {
       const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock, true);
 
       const config = { value: 'this is config' };
-      cacheMock.mockReturnValueOnce(config);
+      cacheMock.mockReturnValueOnce({ configuration: config, revision: 0 });
       await expect(
         service.getServiceConfiguration<{ value: string }>(
           null,

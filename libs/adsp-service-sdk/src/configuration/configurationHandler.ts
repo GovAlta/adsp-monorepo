@@ -17,7 +17,7 @@ export const createConfigurationHandler =
       return config;
     };
 
-    req.getServiceConfiguration = async <C, R = [C, C]>(name?: string, tenantId?: AdspId) => {
+    req.getServiceConfiguration = async <C, R = [C, C, number?]>(name?: string, tenantId?: AdspId) => {
       const end = startBenchmark(req, 'get-configuration-time');
       const config = await service.getServiceConfiguration<C, R>(name, tenantId || contextTenantId);
       end();
@@ -38,7 +38,7 @@ export const createTenantConfigurationHandler =
       return config;
     };
 
-    req.getServiceConfiguration = async <C, R = [C, C]>(name?: string) => {
+    req.getServiceConfiguration = async <C, R = [C, C, number?]>(name?: string) => {
       const end = startBenchmark(req, 'get-configuration-time');
       const config = await service.getServiceConfiguration<C, R>(name, tenantId);
       end();
