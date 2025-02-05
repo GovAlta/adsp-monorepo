@@ -181,40 +181,42 @@ export const FormDefinitions = ({
           )}
         </>
       )}
+      {showAddRemoveResourceTagModal && (
+        <AddRemoveResourceTagModal
+          baseResourceFormUrn={BASE_FORM_CONFIG_URN}
+          initialFormDefinition={currentDefinition}
+          open={showAddRemoveResourceTagModal}
+          onClose={() => {
+            setShowAddRemoveResourceTagModal(false);
+          }}
+          onDelete={(tag: ResourceTagResult) => {
+            tag.urn = `${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`;
+            dispatch(unTagResource(tag));
+            setTimeout(() => {
+              dispatch(fetchResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
+            }, 100);
+          }}
+          onSave={(tag: ResourceTag) => {
+            dispatch(tagResource({ urn: tag.urn, label: tag.label }));
+          }}
+        ></AddRemoveResourceTagModal>
+      )}
 
-      <AddRemoveResourceTagModal
-        isAdd={true}
-        baseUrn={BASE_FORM_CONFIG_URN}
-        initialFormDefinition={currentDefinition}
-        open={showAddRemoveResourceTagModal}
-        onClose={() => {
-          setShowAddRemoveResourceTagModal(false);
-        }}
-        onDelete={(tag: ResourceTagResult) => {
-          tag.urn = `${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`;
-          dispatch(unTagResource(tag));
-          setTimeout(() => {
-            dispatch(fetchResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
-          }, 100);
-        }}
-        onSave={(tag: ResourceTag) => {
-          dispatch(tagResource({ urn: tag.urn, label: tag.label }));
-        }}
-      ></AddRemoveResourceTagModal>
-
-      <DeleteModal
-        isOpen={showDeleteConfirmation}
-        title="Delete form definition"
-        content={
-          <div>
-            Are you sure you wish to delete <b>{currentDefinition?.name}</b>?
-          </div>
-        }
-        onCancel={() => setShowDeleteConfirmation(false)}
-        onDelete={() => {
-          dispatch(deleteFormDefinition(currentDefinition));
-        }}
-      />
+      {showDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete form definition"
+          content={
+            <div>
+              Are you sure you wish to delete <b>{currentDefinition?.name}</b>?
+            </div>
+          }
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            dispatch(deleteFormDefinition(currentDefinition));
+          }}
+        />
+      )}
     </section>
   );
 };

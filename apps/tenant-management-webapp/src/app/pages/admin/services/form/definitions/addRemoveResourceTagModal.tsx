@@ -1,4 +1,5 @@
 import React, { FunctionComponent, useState, useEffect, useMemo } from 'react';
+import { debounce as _debounce } from 'lodash';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
@@ -8,12 +9,10 @@ import { ResourceTag, ResourceTagResult } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchResourceTags, fetchTagByTagName } from '@store/directory/actions';
 import { RootState } from '@store/index';
-import { debounce as _debounce } from 'lodash';
 
 interface AddRemoveResourceTagModalProps {
-  baseUrn: string;
+  baseResourceFormUrn: string;
   open: boolean;
-  isAdd: boolean;
   initialFormDefinition?: FormDefinition;
   onClose: () => void;
   onDelete: (tag: ResourceTagResult) => void;
@@ -26,6 +25,7 @@ const TagChipComponent: FunctionComponent<{
 }> = ({ tag, onDelete }) => {
   return (
     <GoAChip
+      testId={`tag-label-${tag.label}`}
       content={tag.label}
       deletable={true}
       onClick={() => {
@@ -38,9 +38,8 @@ const TagChipComponent: FunctionComponent<{
 };
 
 export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagModalProps> = ({
-  isAdd,
   initialFormDefinition,
-  baseUrn,
+  baseResourceFormUrn,
   onClose,
   open,
   onSave,
@@ -90,10 +89,10 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   }, [debouncedChangeHandler]);
 
   useEffect(() => {
-    if (baseUrn && initialFormDefinition.id.length > 0) {
-      dispatch(fetchResourceTags(`${baseUrn}/${initialFormDefinition.id}`));
+    if (baseResourceFormUrn && initialFormDefinition.id.length > 0) {
+      dispatch(fetchResourceTags(`${baseResourceFormUrn}/${initialFormDefinition.id}`));
     }
-  }, [baseUrn, dispatch, initialFormDefinition]);
+  }, [baseResourceFormUrn, dispatch, initialFormDefinition]);
 
   const { errors, validators } = useValidators(
     'name',
@@ -107,26 +106,29 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
     <GoAModal
       testId="add-resource-tag-model"
       open={open}
-      heading={`${isAdd ? 'Add' : 'Edit'} tags`}
+      heading={`Add tags`}
       width="640px"
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
-            testId={`add-resource-tag-name-cancel-${isAdd ? 'Add' : 'Edit'}`}
+            testId={`add-resource-tag-name-cancel`}
             type="secondary"
             onClick={() => {
               validators.clear();
               onClose();
             }}
           >
-            Cancel
+            Close
           </GoAButton>
           <GoAButton
             type="primary"
             testId="resource-tag-save"
             disabled={tag.length === 0 || tagAlreadyAdded() ? true : false}
             onClick={() => {
-              onSave({ label: toKebabName(tag), urn: `${baseUrn}/${initialFormDefinition.id}` } as ResourceTag);
+              onSave({
+                label: toKebabName(tag),
+                urn: `${baseResourceFormUrn}/${initialFormDefinition.id}`,
+              } as ResourceTag);
               onClose();
             }}
           >
@@ -135,7 +137,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
         </GoAButtonGroup>
       }
     >
-      <GoAFormItem error={errors['name']} label="Tag" mb={'m'} requirement="required">
+      <GoAFormItem error={errors['name']} label="Tag" mb={'m'}>
         <GoAInput
           type="text"
           name="add-resource-tag-name"

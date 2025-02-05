@@ -37,6 +37,7 @@ import {
   tagResource,
   fetchResourceTags,
   unTagResource,
+  fetchTagByTagName,
 } from './directory/sagas';
 import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
@@ -59,6 +60,7 @@ import {
   TAG_RESOURCE_ACTION,
   FETCH_RESOURCE_TAGS_ACTION,
   UNTAG_RESOURCE_ACTION,
+  FETCH_TAG_BY_TAG_NAME_ACTION,
 } from './directory/actions';
 import {
   DELETE_APPLICATION_ACTION,
@@ -100,6 +102,7 @@ export function* watchSagas() {
   yield takeEvery(TAG_RESOURCE_ACTION, tagResource);
   yield takeEvery(UNTAG_RESOURCE_ACTION, unTagResource);
   yield takeEvery(FETCH_RESOURCE_TAGS_ACTION, fetchResourceTags);
+  yield takeEvery(FETCH_TAG_BY_TAG_NAME_ACTION, fetchTagByTagName);
 
   // service status
   yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);

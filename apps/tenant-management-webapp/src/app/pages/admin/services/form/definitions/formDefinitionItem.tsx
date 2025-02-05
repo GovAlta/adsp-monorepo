@@ -11,13 +11,13 @@ import { openEditorForDefinition } from '@store/form/action';
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
   onDelete?: (FormDefinition) => void;
-  onEditResourceTag?: (FormDefinition) => void;
+  onAddResourceTag?: (FormDefinition) => void;
 }
 
 export const FormDefinitionItem = ({
   formDefinition,
   onDelete,
-  onEditResourceTag,
+  onAddResourceTag,
 }: FormDefinitionItemProps): JSX.Element => {
   const [showSchema, setShowSchema] = useState(false);
   const formDescription =
@@ -77,7 +77,7 @@ export const FormDefinitionItem = ({
               testId="form-definition-resource-tag-edit"
               title="Add tag"
               type="add-circle"
-              onClick={() => (onEditResourceTag ? onEditResourceTag(formDefinition) : null)}
+              onClick={() => (onAddResourceTag ? onAddResourceTag(formDefinition) : null)}
             />
             <GoAContextMenuIcon
               testId={`form-definition-delete`}

@@ -45,7 +45,6 @@ export const defaultService: Service = {
 export const DIRECTORY_INIT: Directory = {
   directory: [],
   resourceTags: [],
-  searchedTag: {} as ResourceTagResult,
 };
 
 export interface ResourceTag {

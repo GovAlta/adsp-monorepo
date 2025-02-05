@@ -42,7 +42,7 @@ export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> =
                 key={templateName}
                 formDefinition={newTemplates[templateName]}
                 onDelete={onDelete}
-                onEditResourceTag={onAddResourceTag}
+                onAddResourceTag={onAddResourceTag}
               />
             );
           })}
