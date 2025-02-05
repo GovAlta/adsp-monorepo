@@ -159,7 +159,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
         );
       } else {
         // Cache an empty value to prevent API request every time.
-        this.#configuration.set(this.getCacheKey(namespace, name, tenantId), {});
+        this.#configuration.set(this.getCacheKey(namespace, name, tenantId), { configuration: null });
         this.logger.info(`Retrieved configuration for ${namespace}:${name} and received no value.`, {
           ...this.LOG_CONTEXT,
           tenant: tenantId?.toString(),
@@ -185,9 +185,9 @@ export class ConfigurationServiceImpl implements ConfigurationService {
   ): Promise<Revision<C>> {
     let configuration: C = null, revision: number;
     const cached = this.#configuration.get<Revision<C>>(this.getCacheKey(namespace, name, tenantId));
-    if (cached !== undefined) {
-      configuration = cached?.configuration || null;
-      revision = cached?.revision;
+    if (cached) {
+      configuration = cached.configuration;
+      revision = cached.revision;
 
       this.logger.debug(
         `Configuration (${tenantId?.toString() || 'core'}) ${namespace}:${name} retrieved from cache.`,

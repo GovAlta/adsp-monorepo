@@ -64,7 +64,7 @@ describe('ConfigurationService', () => {
     // This should still be a cache hit to avoid extraneous API requests.
     const service = new ConfigurationServiceImpl(serviceId, logger, directoryMock, tokenProviderMock);
 
-    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce({ configuration: null });
     const [result] = await service.getConfiguration<{ value: string }>(
       adspId`urn:ads:platform:test`,
       'test',
