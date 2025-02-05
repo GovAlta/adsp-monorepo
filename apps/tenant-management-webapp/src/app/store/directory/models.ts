@@ -5,6 +5,7 @@ export const AddModalType = 'directory-add-modal';
 export interface Directory {
   directory: Service[];
 }
+
 export interface Service {
   name?: string;
   namespace: string;
@@ -41,3 +42,47 @@ export const defaultService: Service = {
 export const DIRECTORY_INIT: Directory = {
   directory: [],
 };
+
+export interface ResourceTag {
+  urn: string;
+  label: string;
+}
+
+export interface Resource {
+  urn: string;
+  name: string;
+  description: string;
+  type: string;
+  _embedded?: {
+    represents?: unknown;
+    tags?: Tag[];
+  };
+}
+
+export interface Tag {
+  value: string;
+  label: string;
+}
+
+export interface ResourceRequest {
+  urn: string;
+  name?: string;
+  description?: string;
+  type?: string;
+  _embedded?: {
+    represents?: unknown;
+    tags?: Tag[];
+  };
+}
+
+export interface TagResourceRequest {
+  tag: Tag;
+  resource: ResourceRequest;
+}
+
+export interface ResourceTagResult {
+  urn: string;
+  label: string;
+  value: string;
+  _links: Record<string, unknown>;
+}

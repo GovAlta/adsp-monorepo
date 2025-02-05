@@ -59,7 +59,11 @@ export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
         tenantDirectoryData = tenantDirectory;
       }
 
-      yield put(fetchDirectorySuccess({ directory: [...tenantDirectoryData, ...coreDirectory] }));
+      yield put(
+        fetchDirectorySuccess({
+          directory: [...tenantDirectoryData, ...coreDirectory],
+        })
+      );
 
       yield put(
         UpdateIndicator({
