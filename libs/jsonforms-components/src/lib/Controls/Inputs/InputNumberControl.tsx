@@ -40,7 +40,6 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onKeyPress={(name: string, value: string, key: string) => {}}
       onBlur={(name: string, value: string) => {
         onBlurForNumericControl({
           name,
