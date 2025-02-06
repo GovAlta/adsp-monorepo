@@ -43,6 +43,7 @@ export interface Intake {
 export interface FormDefinition {
   urn: string;
   id: string;
+  revision: number;
   name: string;
   description: string;
   dataSchema: JsonSchema;

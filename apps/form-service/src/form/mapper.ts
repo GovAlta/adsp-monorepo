@@ -83,6 +83,7 @@ export function mapFormSubmission(apiId: AdspId, entity: FormSubmissionEntity) {
     id: entity.id,
     formId: entity.formId,
     formDefinitionId: entity.formDefinitionId,
+    formDefinitionRevision: entity.formDefinitionRevision,
     formData: entity.formData,
     formFiles: Object.entries(entity.formFiles || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
     created: entity.created,
