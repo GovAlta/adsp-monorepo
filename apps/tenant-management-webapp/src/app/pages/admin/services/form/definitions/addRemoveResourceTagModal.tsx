@@ -62,7 +62,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   const tagAlreadyAdded = () => {
     return (
       resourceTags?.filter((toFindTag) => {
-        return toFindTag.label === tag;
+        return toFindTag.value === toKebabName(tag.toLowerCase());
       })?.length > 0
     );
   };
@@ -71,7 +71,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
     () =>
       _debounce(
         async (input) => {
-          dispatch(fetchFormTagByTagName(toKebabName(input)));
+          dispatch(fetchFormTagByTagName(toKebabName(input.toLowerCase())));
           setTag(input);
         },
         800,
@@ -137,7 +137,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
             disabled={isNotValid()}
             onClick={() => {
               onSave({
-                label: toKebabName(tag),
+                label: tag,
                 urn: `${baseResourceFormUrn}/${initialFormDefinition.id}`,
               } as ResourceTag);
               onClose();
@@ -177,7 +177,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
       </GoAFormItem>
 
       {resourceTags
-        ?.sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()))
+        ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
         .map((tag) => (
           <TagChipComponent key={tag.value} tag={tag} onDelete={onDelete} />
         ))}
