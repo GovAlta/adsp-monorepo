@@ -1,25 +1,62 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormDefinition } from '@store/form/model';
-import { OverflowWrap, EntryDetail, TableDataName, TableDataId, TableDataDescription } from '../styled-components';
+import {
+  OverflowWrap,
+  EntryDetail,
+  TableDataName,
+  TableDataDescription,
+  DetailsTagSpacing,
+  DetailsTagWrapper,
+  DetailsTagHeading,
+  DetailsTagDefinitionIdHeading,
+} from '../styled-components';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { selectFormAppLink } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
-import { openEditorForDefinition } from '@store/form/action';
+import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
+import { GoABadge } from '@abgov/react-components-new';
+
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
+  baseResourceFormUrn: string;
   onDelete?: (FormDefinition) => void;
   onAddResourceTag?: (FormDefinition) => void;
 }
 
+const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinition }) => {
+  const resourceTags = useSelector((state: RootState) => {
+    return state?.form.definitions[formDefinition.id].resourceTags;
+  });
+
+  return (
+    <>
+      <DetailsTagDefinitionIdHeading>Definition ID</DetailsTagDefinitionIdHeading>
+      {formDefinition.id}
+
+      <DetailsTagHeading>Tags</DetailsTagHeading>
+      <DetailsTagWrapper>
+        {resourceTags
+          ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
+          .map((tag) => (
+            <DetailsTagSpacing>
+              <GoABadge type={'midtone'} content={tag.label} testId={tag.label}></GoABadge>
+            </DetailsTagSpacing>
+          ))}
+      </DetailsTagWrapper>
+    </>
+  );
+};
+
 export const FormDefinitionItem = ({
   formDefinition,
+  baseResourceFormUrn,
   onDelete,
   onAddResourceTag,
 }: FormDefinitionItemProps): JSX.Element => {
-  const [showSchema, setShowSchema] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const formDescription =
     formDefinition.description?.length > 80
       ? formDefinition.description?.substring(0, 80) + '...'
@@ -29,24 +66,36 @@ export const FormDefinitionItem = ({
 
   const formLink = useSelector((state: RootState) => selectFormAppLink(state, formDefinition?.id));
 
+  const resourceTags = useSelector((state: RootState) => {
+    return state?.form.definitions[formDefinition.id].resourceTags;
+  });
+
   return (
     <>
       <tr>
         <TableDataName data-testid="form-definitions-name">
           <OverflowWrap>{formDefinition.name}</OverflowWrap>
         </TableDataName>
-        <TableDataId data-testid="form-definitions-template-id">
-          <OverflowWrap>{formDefinition.id}</OverflowWrap>
-        </TableDataId>
         <TableDataDescription data-testid="form-definitions-description">
           <OverflowWrap>{formDescription}</OverflowWrap>
         </TableDataDescription>
         <td data-testid="form-definitions-action">
           <GoAContextMenu>
             <GoAContextMenuIcon
-              type={showSchema ? 'eye-off' : 'eye'}
+              type={showDetails ? 'eye-off' : 'eye'}
               title="Toggle details"
-              onClick={() => setShowSchema(!showSchema)}
+              onClick={() => {
+                if (!showDetails) {
+                  if (
+                    baseResourceFormUrn &&
+                    formDefinition.id.length > 0 &&
+                    (resourceTags === undefined || Object.keys(resourceTags)?.length === 0)
+                  ) {
+                    dispatch(fetchFormResourceTags(`${baseResourceFormUrn}/${formDefinition.id}`));
+                  }
+                }
+                setShowDetails(!showDetails);
+              }}
               testId="form-toggle-details-visibility"
             />
             <GoAContextMenuIcon
@@ -88,7 +137,7 @@ export const FormDefinitionItem = ({
           </GoAContextMenu>
         </td>
       </tr>
-      {showSchema && (
+      {showDetails && (
         <tr>
           <td
             colSpan={7}
@@ -97,7 +146,7 @@ export const FormDefinitionItem = ({
             }}
           >
             <EntryDetail data-testid="configuration-details">
-              {JSON.stringify(formDefinition.dataSchema, null, 2)}
+              <FormDefinitionDetails data-testid="form-definition-details" formDefinition={formDefinition} />
             </EntryDetail>
           </td>
         </tr>
