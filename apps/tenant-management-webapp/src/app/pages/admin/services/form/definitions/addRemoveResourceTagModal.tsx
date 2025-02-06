@@ -62,7 +62,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   const tagAlreadyAdded = () => {
     return (
       resourceTags?.filter((toFindTag) => {
-        return toFindTag.value === toKebabName(tag.toLowerCase());
+        return toFindTag.label.toLowerCase() === tag.toLowerCase();
       })?.length > 0
     );
   };
