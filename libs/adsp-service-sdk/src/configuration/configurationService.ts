@@ -45,6 +45,10 @@ interface Revision<C> {
   revision?: number;
 }
 
+function isRevision<C>(value: unknown): value is Revision<C> {
+  return typeof value?.['revision'] === 'number';
+}
+
 export class ConfigurationServiceImpl implements ConfigurationService {
   private readonly LOG_CONTEXT = { context: 'ConfigurationService' };
 
@@ -129,7 +133,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     });
 
     try {
-      let { data } = await axios.get(configUrl.href, {
+      const { data } = await axios.get<Revision<C> | C>(configUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           tenantId: tenantId?.toString(),
@@ -137,14 +141,15 @@ export class ConfigurationServiceImpl implements ConfigurationService {
         },
       });
 
-      let revision: number;
+      let value: unknown = data,
+        revision: number;
       // Active endpoint returns the revision instead of just the raw configuration value.
-      if (useActive) {
-        data = data?.configuration;
+      if (useActive && isRevision<C>(data)) {
+        value = data?.configuration;
         revision = data.revision;
       }
 
-      const configuration = (data ? this.#converter(data, tenantId, revision) : null) as C;
+      const configuration = (value ? this.#converter(value, tenantId, revision) : null) as C;
       if (configuration) {
         this.#configuration.set(this.getCacheKey(namespace, name, tenantId), {
           configuration,
@@ -183,7 +188,8 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     tenantId?: AdspId,
     useActive = false
   ): Promise<Revision<C>> {
-    let configuration: C = null, revision: number;
+    let configuration: C = null,
+      revision: number;
     const cached = this.#configuration.get<Revision<C>>(this.getCacheKey(namespace, name, tenantId));
     if (cached) {
       configuration = cached.configuration;

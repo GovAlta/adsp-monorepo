@@ -236,12 +236,13 @@ describe('ConfigurationService', () => {
 
       const config = { value: 'this is config' };
       cacheMock.mockReturnValueOnce({ configuration: config, revision: 0 });
-      const [result] = await service.getServiceConfiguration<{ value: string }>(
+      const [result, _, revision] = await service.getServiceConfiguration<{ value: string }>(
         null,
         adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
       );
 
       expect(result.value).toBe(config.value);
+      expect(revision).toBe(0);
     });
 
     it('can retrieve named configuration', async () => {
@@ -277,9 +278,9 @@ describe('ConfigurationService', () => {
       cacheMock.mockReturnValueOnce(undefined);
 
       const config = { value: 'this is config' };
-      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
+      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config, revision: 0 } }));
       const configOptions = { value: 'this is core' };
-      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: configOptions } }));
+      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: configOptions, revision: 0 } }));
 
       const [result, options] = await service.getServiceConfiguration<{ value: string }>(
         'test',
@@ -297,7 +298,7 @@ describe('ConfigurationService', () => {
       cacheMock.mockReturnValueOnce(undefined);
 
       axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: null }));
-      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: null } }));
+      axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: null, revision: 0 } }));
 
       const [result, options] = await service.getServiceConfiguration<{ value: string }>(
         'test',
