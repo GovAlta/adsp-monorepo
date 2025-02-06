@@ -159,7 +159,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
           value={tag}
           testId="add-resource-tag-name"
           aria-label="add-resource-tag-name"
-          width="53ch"
+          width="100%"
           maxLength={MAX_TAG_LENGTH}
           onChange={(name, value) => {
             validators.remove('name');
