@@ -10,6 +10,7 @@ import { FormDefinitionEntity } from './definition';
 export class FormSubmissionEntity implements FormSubmission {
   id: string;
   formDefinitionId: string;
+  formDefinitionRevision: number;
   formId: string;
   tenantId: AdspId;
   formData: Record<string, unknown>;
@@ -46,6 +47,8 @@ export class FormSubmissionEntity implements FormSubmission {
         formData: form.data,
         formFiles: form.files,
         formDefinitionId: form.definition.id,
+        // Revision is set only when submission is first created, and loaded from the stored record after.
+        formDefinitionRevision: form.definition.revision,
         formId: form.id,
         disposition: null,
         hash: form.hash,
@@ -73,6 +76,7 @@ export class FormSubmissionEntity implements FormSubmission {
     this.formData = formSubmission.formData || {};
     this.formFiles = formSubmission.formFiles || {};
     this.formDefinitionId = formSubmission.formDefinitionId;
+    this.formDefinitionRevision = formSubmission.formDefinitionRevision;
     this.formId = formSubmission.formId;
     this.tenantId = tenantId;
     this.submissionStatus = formSubmission.submissionStatus;
