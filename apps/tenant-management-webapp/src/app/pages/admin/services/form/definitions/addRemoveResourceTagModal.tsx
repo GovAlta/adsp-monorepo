@@ -137,7 +137,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
             disabled={isNotValid()}
             onClick={() => {
               onSave({
-                label: tag,
+                label: tag.trim(),
                 urn: `${baseResourceFormUrn}/${initialFormDefinition.id}`,
               } as ResourceTag);
               onClose();
