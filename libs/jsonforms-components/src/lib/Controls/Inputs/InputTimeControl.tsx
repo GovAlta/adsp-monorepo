@@ -28,11 +28,9 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       readonly={readOnly}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
-        onBlurForTimeControl({
-          name,
-          value,
-          controlProps: props as ControlProps,
-        });
+        if (value) {
+          handleChange(path, value);
+        }
       }}
       // Dont use handleChange in the onChange event, use the keyPress or onBlur.
       // If you use it onChange along with keyPress event it will cause a
