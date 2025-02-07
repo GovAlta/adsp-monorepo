@@ -8,6 +8,7 @@ import {
   DetailsTagWrapper,
   DetailsTagHeading,
   DetailsTagDefinitionIdHeading,
+  CenterPositionProgressIndicator,
 } from '../styled-components';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
@@ -16,7 +17,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
-import { GoABadge } from '@abgov/react-components-new';
+import { GoABadge, GoACircularProgress } from '@abgov/react-components-new';
 
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
@@ -34,13 +35,21 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
       {formDefinition.id}
 
       <DetailsTagHeading>Tags</DetailsTagHeading>
-      <DetailsTagWrapper>
-        {resourceTags
-          ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
-          .map((tag) => (
-            <GoABadge type={'midtone'} content={tag.label} testId={tag.label} mb="xs" mr="xs"></GoABadge>
-          ))}
-      </DetailsTagWrapper>
+      {resourceTags === undefined && (
+        <CenterPositionProgressIndicator>
+          <GoACircularProgress visible={true} size="small" />
+        </CenterPositionProgressIndicator>
+      )}
+
+      {resourceTags && resourceTags?.length > 0 && (
+        <DetailsTagWrapper>
+          {resourceTags
+            ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
+            .map((tag) => (
+              <GoABadge type={'midtone'} content={tag.label} testId={tag.label} mb="xs" mr="xs"></GoABadge>
+            ))}
+        </DetailsTagWrapper>
+      )}
     </>
   );
 };
