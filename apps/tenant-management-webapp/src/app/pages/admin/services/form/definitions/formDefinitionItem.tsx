@@ -5,7 +5,6 @@ import {
   EntryDetail,
   TableDataName,
   TableDataDescription,
-  DetailsTagSpacing,
   DetailsTagWrapper,
   DetailsTagHeading,
   DetailsTagDefinitionIdHeading,
@@ -14,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { selectFormAppLink } from '@store/form/selectors';
+import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
 import { GoABadge } from '@abgov/react-components-new';
@@ -27,9 +26,7 @@ interface FormDefinitionItemProps {
 }
 
 const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinition }) => {
-  const resourceTags = useSelector((state: RootState) => {
-    return state?.form.definitions[formDefinition.id].resourceTags;
-  });
+  const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
 
   return (
     <>
@@ -41,9 +38,7 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
         {resourceTags
           ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
           .map((tag) => (
-            <DetailsTagSpacing>
-              <GoABadge type={'midtone'} content={tag.label} testId={tag.label}></GoABadge>
-            </DetailsTagSpacing>
+            <GoABadge type={'midtone'} content={tag.label} testId={tag.label} mb="xs" mr="xs"></GoABadge>
           ))}
       </DetailsTagWrapper>
     </>
@@ -65,10 +60,7 @@ export const FormDefinitionItem = ({
   const dispatch = useDispatch();
 
   const formLink = useSelector((state: RootState) => selectFormAppLink(state, formDefinition?.id));
-
-  const resourceTags = useSelector((state: RootState) => {
-    return state?.form.definitions[formDefinition.id].resourceTags;
-  });
+  const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
 
   return (
     <>
@@ -86,11 +78,7 @@ export const FormDefinitionItem = ({
               title="Toggle details"
               onClick={() => {
                 if (!showDetails) {
-                  if (
-                    baseResourceFormUrn &&
-                    formDefinition.id.length > 0 &&
-                    (resourceTags === undefined || Object.keys(resourceTags)?.length === 0)
-                  ) {
+                  if (baseResourceFormUrn && formDefinition.id.length > 0 && resourceTags === undefined) {
                     dispatch(fetchFormResourceTags(`${baseResourceFormUrn}/${formDefinition.id}`));
                   }
                 }

@@ -20,6 +20,14 @@ export const selectFormAppLink = createSelector(
   }
 );
 
+export const selectFormResourceTags = createSelector(
+  (state: RootState) => state.form,
+  (_, formDefinitionId: string) => formDefinitionId,
+  (state, formDefinitionId) => {
+    return state.definitions[formDefinitionId].resourceTags;
+  }
+);
+
 export const selectDefaultFormUrl = createSelector(
   (state: RootState) => state.tenant,
   selectFormAppHost,

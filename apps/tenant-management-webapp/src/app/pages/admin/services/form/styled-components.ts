@@ -44,6 +44,11 @@ export const DispositionFormItem = styled.div`
   margin-right: 3px;
 `;
 
+export const CenterPositionProgressIndicator = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
 export const EntryDetail = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
@@ -447,11 +452,6 @@ export const DetailsTagWrapper = styled.div`
   width: 100%;
   flex-wrap: wrap;
   justify-content: space-start;
-`;
-
-export const DetailsTagSpacing = styled.div`
-  margin-bottom: var(--goa-space-xs);
-  margin-right: var(--goa-space-xs);
 `;
 
 export const TableDataScriptName = styled.td`
