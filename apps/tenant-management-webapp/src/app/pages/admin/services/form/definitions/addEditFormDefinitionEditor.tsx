@@ -535,6 +535,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           <GoACheckbox
                             name="support-topic"
                             key="support-topic"
+                            disabled={definition.anonymousApply}
                             checked={definition.supportTopic}
                             testId="support-topic"
                             onChange={() => {
