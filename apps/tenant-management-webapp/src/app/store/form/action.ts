@@ -1,6 +1,13 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { FormDefinition, FormMetrics, FormExportResponse, ColumnOption } from './model';
+import {
+  FormDefinition,
+  FormMetrics,
+  FormExportResponse,
+  FormResourceTagResult,
+  FormResourceTagResponse,
+} from './model';
 import { Socket } from 'socket.io-client';
+import { ResourceTag } from '@store/directory/models';
 
 export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
@@ -39,6 +46,19 @@ export const EXPORT_FORM_INFO_SUCCESS_ACTION = 'form/EXPORT_FORM_INFO_SUCCESS_AC
 
 export const START_SOCKET_STREAM_ACTION = 'form/START_SOCKET_STREAM_ACTION';
 export const START_SOCKET_STREAM_SUCCESS_ACTION = 'form/START_SOCKET_STREAM_SUCCESS_ACTION';
+
+export const TAG_FORM_RESOURCE_ACTION = 'form/resource/tag-resource';
+export const TAG__FORM_RESOURCE_ACTION_SUCCESS = 'form/resource/tag-resource/success';
+
+export const UNTAG_FORM_RESOURCE_ACTION = 'form/resource/untag-resource';
+export const UNTAG_FORM_RESOURCE_ACTION_SUCCESS = 'form/resource/untag-resource/success';
+
+export const FETCH_FORM_RESOURCE_TAGS_ACTION = 'form/resource/fetch-resource-tags';
+export const FETCH_FORM_RESOURCE_TAGS_ACTION_SUCCESS = 'form/resource/fetch-resource-tags/success';
+
+export const FETCH_FORM_TAG_BY_TAG_NAME_ACTION = 'form/resource/fetch-tag-by-tag-name';
+export const FETCH_FORM_TAG_BY_TAG_NAME_ACTION_SUCCESS = 'form/resource/fetch-tag-by-tag-name/success';
+export const FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED = 'form/resource/fetch-tag-by-tag-name/failed';
 
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
@@ -200,7 +220,48 @@ export type FormActionTypes =
   | ResolveDataSchemaSuccessAction
   | ResolveDataSchemaFailedAction
   | FetchFormMetricsAction
-  | FetchFormMetricsSuccessAction;
+  | FetchFormMetricsSuccessAction
+  | TagResourceAction
+  | UnTagResourceAction
+  | FetchResourceTagsAction
+  | FetchResourceTagsSuccessAction
+  | FetchTagByTagNameAction
+  | FetchTagByTagNameActionSuccess
+  | FetchTagByTagNameActionFailed;
+
+export interface TagResourceAction {
+  type: typeof TAG_FORM_RESOURCE_ACTION;
+  tag: ResourceTag;
+}
+
+export interface FetchResourceTagsAction {
+  type: typeof FETCH_FORM_RESOURCE_TAGS_ACTION;
+  payload: string;
+}
+
+export interface FetchTagByTagNameAction {
+  type: typeof FETCH_FORM_TAG_BY_TAG_NAME_ACTION;
+  payload: string;
+}
+export interface FetchTagByTagNameActionFailed {
+  type: typeof FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED;
+  payload: FormResourceTagResult;
+}
+
+export interface FetchTagByTagNameActionSuccess {
+  type: typeof FETCH_FORM_TAG_BY_TAG_NAME_ACTION_SUCCESS;
+  payload: FormResourceTagResult;
+}
+
+export interface FetchResourceTagsSuccessAction {
+  type: typeof FETCH_FORM_RESOURCE_TAGS_ACTION_SUCCESS;
+  payload: FormResourceTagResponse;
+}
+
+export interface UnTagResourceAction {
+  type: typeof UNTAG_FORM_RESOURCE_ACTION;
+  payload: FormResourceTagResult;
+}
 
 export const clearFormDefinitions = (): ClearFormDefinitions => ({
   type: CLEAR_FORM_DEFINITIONS_ACTION,
@@ -351,4 +412,39 @@ export const fetchFormMetrics = (): FetchFormMetricsAction => ({
 export const fetchFormMetricsSuccess = (metrics: FormMetrics): FetchFormMetricsSuccessAction => ({
   type: FETCH_FORM_METRICS_SUCCESS_ACTION,
   payload: metrics,
+});
+
+export const tagFormResource = (data: ResourceTag): TagResourceAction => ({
+  type: TAG_FORM_RESOURCE_ACTION,
+  tag: data,
+});
+
+export const unTagFormResource = (data: FormResourceTagResult): UnTagResourceAction => ({
+  type: UNTAG_FORM_RESOURCE_ACTION,
+  payload: data,
+});
+
+export const fetchFormResourceTags = (data: string): FetchResourceTagsAction => ({
+  type: FETCH_FORM_RESOURCE_TAGS_ACTION,
+  payload: data,
+});
+
+export const fetchFormResourceTagsSuccess = (data: FormResourceTagResponse): FetchResourceTagsSuccessAction => ({
+  type: FETCH_FORM_RESOURCE_TAGS_ACTION_SUCCESS,
+  payload: data,
+});
+
+export const fetchFormTagByTagName = (data: string): FetchTagByTagNameAction => ({
+  type: FETCH_FORM_TAG_BY_TAG_NAME_ACTION,
+  payload: data,
+});
+
+export const fetchFormTagByTagNameSuccess = (data: FormResourceTagResult): FetchTagByTagNameActionSuccess => ({
+  type: FETCH_FORM_TAG_BY_TAG_NAME_ACTION_SUCCESS,
+  payload: data,
+});
+
+export const fetchFormTagByTagNameFailed = (data: FormResourceTagResult): FetchTagByTagNameActionFailed => ({
+  type: FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED,
+  payload: data,
 });

@@ -86,6 +86,7 @@ describe('pdf', () => {
   const formSubmissionInfo: FormSubmission = {
     id: 'formSubmission-id',
     formDefinitionId: 'test-form-definition',
+    formDefinitionRevision: 0,
     formId: 'test-form',
     formData: {},
     formFiles: {},

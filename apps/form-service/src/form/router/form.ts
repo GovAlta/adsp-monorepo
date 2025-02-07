@@ -111,15 +111,29 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
-      const { data } = await axios.get<Results<{ latest: { configuration: FormDefinition } }>>(
-        new URL('v2/configuration/form-service', configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { top, after, tenantId: tenantId?.toString() },
-        }
-      );
+      const { data } = await axios.get<
+        Results<{
+          latest: { revision: number; configuration: FormDefinition };
+          active: { revision: number; configuration: FormDefinition };
+        }>
+      >(new URL('v2/configuration/form-service', configurationApiUrl).href, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          top,
+          after,
+          tenantId: tenantId?.toString(),
+          includeActive: true,
+        },
+      });
 
-      res.send({ ...data, results: data.results.map(({ latest }) => mapFormDefinition(latest.configuration)) });
+      res.send({
+        ...data,
+        results: data.results.map(({ latest, active }) =>
+          active
+            ? mapFormDefinition(active.configuration, active.revision)
+            : mapFormDefinition(latest.configuration, latest.revision)
+        ),
+      });
     } catch (err) {
       next(err);
     }
@@ -157,7 +171,7 @@ export function getFormDefinition(tenantService: TenantService, calendarService:
         intake = await calendarService.getScheduledIntake(definition);
       }
 
-      res.send(mapFormDefinition(definition, intake));
+      res.send(mapFormDefinition(definition, definition.revision, intake));
     } catch (err) {
       next(err);
     }

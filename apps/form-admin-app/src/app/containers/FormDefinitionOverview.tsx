@@ -90,6 +90,9 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             <GoAFormItem label="ID" mr="m">
               <span>{definition.id}</span>
             </GoAFormItem>
+            <GoAFormItem label="Rev" mr="m">
+              <span>{definition.revision}</span>
+            </GoAFormItem>
             <GoAFormItem label="Name" mr="m">
               <span>{definition.name}</span>
             </GoAFormItem>

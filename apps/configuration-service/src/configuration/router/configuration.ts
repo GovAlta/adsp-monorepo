@@ -213,8 +213,9 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
       const user = req.user;
       const tenantId = req.tenant?.id;
       const { namespace } = req.params;
-      const { top: topValue, after } = req.query;
+      const { top: topValue, after, includeActive: includeActiveValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
+      const includeActive = includeActiveValue === 'true';
 
       if (
         !isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin) &&
@@ -228,14 +229,24 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
         throw new UnauthorizedUserError('find configuration', user);
       }
 
-      const { results, page } = await repository.find(
+      const { results: entities, page } = await repository.find(
         { tenantIdEquals: tenantId, namespaceEquals: namespace },
         top,
         after as string
       );
 
+      const results = [];
+      for (const entity of entities) {
+        const result = mapConfiguration(apiId, entity);
+        if (includeActive) {
+          result.active = await entity.getActiveRevision();
+        }
+
+        results.push(result);
+      }
+
       res.send({
-        results: results.map((result) => mapConfiguration(apiId, result)),
+        results,
         page,
       });
     } catch (err) {
@@ -577,7 +588,8 @@ export function createConfigurationRouter({
         .isString()
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       query('top').optional().isInt({ min: 1, max: 1000 }),
-      query('after').optional().isString()
+      query('after').optional().isString(),
+      query('includeActive').optional().isBoolean()
     ),
     findConfiguration(apiId, configurationRepository)
   );
