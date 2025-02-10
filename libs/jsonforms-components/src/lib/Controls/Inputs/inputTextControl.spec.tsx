@@ -94,12 +94,14 @@ describe('Input Text Control tests', () => {
 
   describe('can create control', () => {
     it('can create control', () => {
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...staticProps} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('firstName-input')).toBeInTheDocument();
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      expect(firstNameInput).toBeInTheDocument();
     });
 
     it('can create base control', () => {
@@ -113,40 +115,43 @@ describe('Input Text Control tests', () => {
     it('can trigger keyPress event', async () => {
       const props = { ...staticProps };
 
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('firstName-input');
-      const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      const pressed = fireEvent.keyPress(firstNameInput, { key: 'z', code: 90, charCode: 90 });
       expect(pressed).toBe(true);
-      expect(component.getByTestId('firstName-input')).toBeInTheDocument();
+      expect(firstNameInput).toBeInTheDocument();
     });
 
     it('can trigger on Blur event', async () => {
       const props = { ...staticProps };
 
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('firstName-input');
-      const blurred = fireEvent.blur(input);
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      const blurred = fireEvent.blur(firstNameInput);
       expect(blurred).toBe(true);
     });
 
     it('should format sin', async () => {
       const props = { ...sinProps, handleChange: handleChangeMock };
-      const { getByTestId } = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = getByTestId('firstName-input');
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
       await fireEvent(
-        input,
+        firstNameInput,
         new CustomEvent('_change', {
           detail: { value: '123456789' },
         })
@@ -157,13 +162,14 @@ describe('Input Text Control tests', () => {
 
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('firstName-input');
-      const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      const pressed = fireEvent.keyPress(firstNameInput, { key: 'z', code: 90, charCode: 90 });
 
       handleChangeMock();
       expect(props.handleChange).toBeCalled();

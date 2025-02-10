@@ -51,12 +51,13 @@ describe('input number controls', () => {
   describe('time input control tests', () => {
     it('can render time input control', () => {
       const props = { ...staticProps };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoATimeInput {...props} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('myDateId-input')).toBeInTheDocument();
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+      expect(input).toBeInTheDocument();
     });
 
     it('can create base control', () => {
@@ -67,13 +68,13 @@ describe('input number controls', () => {
 
     it('can trigger time onKeyPress event', async () => {
       const props = { ...staticProps };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoATimeInput {...props} />
         </JsonFormsContext.Provider>
       );
 
-      const input = component.getByTestId('myDateId-input');
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
       const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
 
       expect(pressed).toBe(true);
@@ -81,12 +82,12 @@ describe('input number controls', () => {
 
     it('can trigger time onBlur event', async () => {
       const props = { ...staticProps };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoATimeInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('myDateId-input');
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
       const blurred = fireEvent.blur(input);
 
       expect(blurred).toBe(true);
@@ -94,14 +95,14 @@ describe('input number controls', () => {
 
     it('can trigger time control handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoATimeInput {...props} />
         </JsonFormsContext.Provider>
       );
       handleChangeMock();
 
-      const input = component.getByTestId('myDateId-input');
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
       const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
 
       expect(props.handleChange).toBeCalled();

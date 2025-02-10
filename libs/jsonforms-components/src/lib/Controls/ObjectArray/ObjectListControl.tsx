@@ -317,6 +317,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     {!isInReview && (
                       <GoAIconButton
                         icon="trash"
+                        testId="trash-icon-button"
                         aria-label={`remove-element-${num}`}
                         onClick={() => openDeleteDialog(num)}
                       ></GoAIconButton>

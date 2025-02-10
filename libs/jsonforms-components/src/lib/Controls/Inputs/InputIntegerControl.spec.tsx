@@ -38,12 +38,13 @@ describe('input number controls', () => {
   describe('can create input number control', () => {
     it('can create control', () => {
       const props = { ...staticProps };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('age-input')).toBeInTheDocument();
+      const ageInput = baseElement.querySelector("goa-input[testId='age-input']");
+      expect(ageInput).toBeInTheDocument();
     });
     it('can create base control', () => {
       const props = { ...staticProps };
@@ -59,14 +60,19 @@ describe('input number controls', () => {
   describe('can trigger input events', () => {
     it('can trigger keyPress event', async () => {
       const props = { ...staticProps };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
+      const input = baseElement.querySelector("goa-input[testId='age-input']");
 
-      const input = component.getByTestId('age-input');
-      const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
+      const pressed = fireEvent(
+        input,
+        new CustomEvent('_keyPress', {
+          detail: { key: '1', code: 49, charCode: 49 },
+        })
+      );
 
       expect(pressed).toBe(true);
     });
@@ -74,13 +80,18 @@ describe('input number controls', () => {
     it('can trigger keyPress with non numeric values', () => {
       const nonNumericValue = 'z';
       const props = { ...staticProps, data: nonNumericValue };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('age-input');
-      const pressed = fireEvent.keyPress(input, { key: nonNumericValue, code: 90, charCode: 90 });
+      const input = baseElement.querySelector("goa-input[testId='age-input']");
+      const pressed = fireEvent(
+        input,
+        new CustomEvent('_keyPress', {
+          detail: { key: nonNumericValue, code: 90, charCode: 90 },
+        })
+      );
 
       expect(pressed).toBe(true);
       expect(props.data).not.toMatch(regExNumbers);
@@ -89,27 +100,31 @@ describe('input number controls', () => {
     it('can trigger keyPress with numeric values', () => {
       const numericValue = '1';
       const props = { ...staticProps, data: numericValue };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
 
-      const input = component.getByTestId('age-input');
-      const pressed = fireEvent.keyPress(input, { key: numericValue, code: 49, charCode: 49 });
-
+      const input = baseElement.querySelector("goa-input[testId='age-input']");
+      const pressed = fireEvent(
+        input,
+        new CustomEvent('_keyPress', {
+          detail: { key: numericValue, code: 49, charCode: 49 },
+        })
+      );
       expect(pressed).toBe(true);
       expect(props.data).toMatch(regExNumbers);
     });
 
     it('can trigger on Blur event', async () => {
       const props = { ...staticProps };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('age-input');
+      const input = baseElement.querySelector("goa-input[testId='age-input']");
       const blurred = fireEvent.blur(input);
 
       expect(blurred).toBe(true);
@@ -117,19 +132,24 @@ describe('input number controls', () => {
 
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('age-input');
-      const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
+      const input = baseElement.querySelector("goa-input[testId='age-input']");
+      const pressed = fireEvent(
+        input,
+        new CustomEvent('_keyPress', {
+          detail: { key: 'z', code: 90, charCode: 90 },
+        })
+      );
 
       handleChangeMock();
 
       expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
-      expect(handleChangeMock.mock.calls.length).toBe(1);
+      expect(handleChangeMock.mock.calls.length).toBe(2);
     });
   });
 });

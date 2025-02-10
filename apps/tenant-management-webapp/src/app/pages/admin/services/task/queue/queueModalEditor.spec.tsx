@@ -16,7 +16,7 @@ jest.mock('react-router-dom', () => ({
   useRouteMatch: () => ({ url: '/task/edit/123:123' }),
 }));
 
-describe('ScriptEditor Component', () => {
+describe('Task Component', () => {
   const mockStore = configureStore([]);
   const store = mockStore({
     notifications: { notifications: [] },
@@ -35,12 +35,12 @@ describe('ScriptEditor Component', () => {
     session: SESSION_INIT,
   });
   test('Save button does not route', async () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <QueueModalEditor />
       </Provider>
     );
-    const saveButton = queryByTestId('queue-save');
+    const saveButton = baseElement.querySelector("goa-button[testId='queue-save']");
     fireEvent.click(saveButton);
     await waitFor(() => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires

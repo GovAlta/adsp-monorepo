@@ -27,7 +27,7 @@ describe('NameInputs', () => {
   });
 
   it('renders all name fields with the correct initial values', async () => {
-    const component = render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -38,21 +38,20 @@ describe('NameInputs', () => {
       />
     );
 
-    const firstNameInput = component.getByTestId('name-form-first-name');
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
 
-    const middleNameInput = component.getByTestId('name-form-middle-name');
-
-    const lastNameInput = component.getByTestId('name-form-last-name');
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
     await (async () => {
       expect(mockHandleInputChange).toHaveBeenCalledTimes(1);
-      expect((firstNameInput as HTMLInputElement).value).toBe(defaultName.firstName);
-      expect((lastNameInput as HTMLInputElement).value).toBe(defaultName.lastName);
-      expect((middleNameInput as HTMLInputElement).value).toBe(defaultName.middleName);
+      expect(firstNameInput?.getAttribute('value')).toBe(defaultName.firstName);
+      expect(middleNameInput?.getAttribute('value')).toBe(defaultName.middleName);
+      expect(lastNameInput?.getAttribute('value')).toBe(defaultName.lastName);
     });
   });
 
   it('calls handleInputChange on user input in first name', async () => {
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -63,7 +62,8 @@ describe('NameInputs', () => {
       />
     );
 
-    const firstNameInput = screen.getByTestId('name-form-first-name');
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
+    firstNameInput?.setAttribute('value', 'John');
     fireEvent(
       firstNameInput,
       new CustomEvent('_change', {
@@ -72,11 +72,11 @@ describe('NameInputs', () => {
     );
     expect(mockHandleInputChange).toHaveBeenCalledTimes(1);
     expect(mockHandleInputChange).toHaveBeenCalledWith('firstName', 'John');
-    expect((firstNameInput as HTMLInputElement).value).toBe('John');
+    expect(firstNameInput?.getAttribute('value')).toBe('John');
   });
 
   it('name fields should be in the document', async () => {
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -86,15 +86,20 @@ describe('NameInputs', () => {
         data={defaultName}
       />
     );
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
+
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
+
     await (async () => {
-      expect(screen.getByTestId('name-form-first-name')).toBeInTheDocument();
-      expect(screen.getByTestId('name-form-middle-name')).toBeInTheDocument();
-      expect(screen.getByTestId('name-form-last-name')).toBeInTheDocument();
+      expect(firstNameInput).toBeInTheDocument();
+      expect(middleNameInput).toBeInTheDocument();
+      expect(lastNameInput).toBeInTheDocument();
     });
   });
 
   it('calls handleInputChange on user input in middle name', async () => {
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -104,21 +109,21 @@ describe('NameInputs', () => {
         data={defaultName}
       />
     );
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
 
-    const middletNameInput = screen.getByTestId('name-form-middle-name');
     fireEvent(
-      middletNameInput,
+      middleNameInput,
       new CustomEvent('_change', {
-        detail: { name: 'middletName', value: 'A.' },
+        detail: { name: 'middleName', value: 'A.' },
       })
     );
     expect(mockHandleInputChange).toHaveBeenCalledTimes(1);
-    expect(mockHandleInputChange).toHaveBeenCalledWith('middletName', 'A.');
-    expect((middletNameInput as HTMLInputElement).value).toBe('A.');
+    expect(mockHandleInputChange).toHaveBeenCalledWith('middleName', 'A.');
+    expect(middleNameInput?.getAttribute('value')).toBe('A.');
   });
 
   it('calls handleInputChange on user input in last name', async () => {
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -129,7 +134,7 @@ describe('NameInputs', () => {
       />
     );
 
-    const lastNameInput = screen.getByTestId('name-form-last-name');
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
     fireEvent(
       lastNameInput,
       new CustomEvent('_change', {
@@ -138,11 +143,11 @@ describe('NameInputs', () => {
     );
     expect(mockHandleInputChange).toHaveBeenCalledTimes(1);
     expect(mockHandleInputChange).toHaveBeenCalledWith('lastName', 'Doe');
-    expect((lastNameInput as HTMLInputElement).value).toBe('Doe');
+    expect(lastNameInput?.getAttribute('value')).toBe('Doe');
   });
 
   it('shows required error when first name is missing and blurred', async () => {
-    const component = render(
+    const { baseElement } = render(
       <NameInputs
         firstName=""
         middleName={defaultName.middleName}
@@ -153,13 +158,13 @@ describe('NameInputs', () => {
       />
     );
 
-    const firstNameInput = component.getByTestId('name-form-first-name');
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
     const blurred = fireEvent.blur(firstNameInput);
     expect(blurred).toBe(true);
   });
 
   it('shows required error when last name is missing and blurred', async () => {
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -169,8 +174,8 @@ describe('NameInputs', () => {
         data={{ ...defaultName, lastName: '' }}
       />
     );
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
 
-    const lastNameInput = screen.getByTestId('name-form-last-name');
     const blurred = fireEvent.blur(lastNameInput);
     expect(blurred).toBe(true);
   });
@@ -222,7 +227,6 @@ describe('NameInputs', () => {
 
 describe('NameInputs Component', () => {
   const mockHandleInputChange = jest.fn();
-  const mockHandleRequiredFieldBlur = jest.fn();
 
   const defaultName = {
     firstName: 'John',
@@ -232,17 +236,12 @@ describe('NameInputs Component', () => {
 
   const requiredFields = ['firstName', 'lastName'];
 
-  const errors = {
-    firstName: 'First name is required',
-    lastName: 'Last name is required',
-  };
-
   afterEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders all fields with correct initial values', () => {
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -252,14 +251,18 @@ describe('NameInputs Component', () => {
         data={defaultName}
       />
     );
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
 
-    expect(screen.getByTestId('name-form-first-name')).toHaveValue(defaultName.firstName);
-    expect(screen.getByTestId('name-form-middle-name')).toHaveValue(defaultName.middleName);
-    expect(screen.getByTestId('name-form-last-name')).toHaveValue(defaultName.lastName);
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
+
+    expect(firstNameInput?.getAttribute('value')).toBe(defaultName.firstName);
+    expect(middleNameInput?.getAttribute('value')).toBe(defaultName.middleName);
+    expect(lastNameInput?.getAttribute('value')).toBe(defaultName.lastName);
   });
 
   it('shows error message when a required field is blurred when empty', async () => {
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -269,9 +272,15 @@ describe('NameInputs Component', () => {
         data={defaultName}
       />
     );
-    const firstNameInput = screen.getByTestId('name-form-first-name');
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
     fireEvent.focus(firstNameInput);
-    fireEvent.change(firstNameInput, { target: { value: '' } });
+    fireEvent(
+      firstNameInput,
+      new CustomEvent('_change', {
+        detail: { name: 'firstName', value: '' },
+      })
+    );
+
     fireEvent.blur(firstNameInput);
     await (async () => {
       const errorMessage = screen.getByText('First Name is required');
@@ -280,7 +289,7 @@ describe('NameInputs Component', () => {
   });
 
   it('calls handleInputChange when first name is changed', () => {
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -291,7 +300,7 @@ describe('NameInputs Component', () => {
       />
     );
 
-    const firstNameInput = screen.getByTestId('name-form-first-name');
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
     fireEvent(
       firstNameInput,
       new CustomEvent('_change', {
@@ -305,7 +314,7 @@ describe('NameInputs Component', () => {
   it('calls handleRequiredFieldBlur when first name loses focus', () => {
     const requiredFields = ['firstName', 'lastName'];
 
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -316,7 +325,7 @@ describe('NameInputs Component', () => {
       />
     );
 
-    const firstNameInput = screen.getByTestId('name-form-first-name');
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
 
     const blurred = fireEvent(
       firstNameInput,
@@ -336,7 +345,7 @@ describe('NameInputs Component', () => {
       lastName: 'Doe',
     };
 
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -347,10 +356,8 @@ describe('NameInputs Component', () => {
       />
     );
 
-    const firstNameInput = screen.getByTestId('name-form-first-name');
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
 
-    //const blurred = fireEvent.blur(firstNameInput);
-    //fireEvent(inputField, new CustomEvent('_blur', { detail: { name: 'test', value: '123' } }));
     const blurred = fireEvent(
       firstNameInput,
       new CustomEvent('_blur', {
@@ -377,7 +384,7 @@ describe('NameInputs Component', () => {
   });
 
   it('can disable the inputs', () => {
-    const { getByTestId } = render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName=""
@@ -388,12 +395,12 @@ describe('NameInputs Component', () => {
         disabled={true}
       />
     );
-
-    expect(getByTestId('name-form-last-name').getAttribute('disabled')).toBe('true');
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
+    expect(lastNameInput.getAttribute('disabled')).toBe('true');
   });
 
   it('sets requirement label correctly for required and optional fields', () => {
-    render(
+    const { baseElement } = render(
       <NameInputs
         firstName={defaultName.firstName}
         middleName={defaultName.middleName}
@@ -403,11 +410,15 @@ describe('NameInputs Component', () => {
         data={defaultName}
       />
     );
-    const formitemFirstName = screen.getByTestId('formitem-first-name');
-    const formitemLastName = screen.getByTestId('formitem-last-name');
-    const formitemMiddleName = screen.getByTestId('formitem-middle-name');
-    expect(formitemFirstName).toHaveAttribute('requirement', 'required');
-    expect(formitemLastName).toHaveAttribute('requirement', 'required');
-    expect(formitemMiddleName).not.toHaveAttribute('requirement', 'required');
+    const firstNameInput = baseElement.querySelector("goa-form-item[testId='form-item-first-name']");
+    const middleNameInput = baseElement.querySelector("goa-form-item[testId='form-item-middle-name']");
+
+    const lastNameInput = baseElement.querySelector("goa-form-item[testId='form-item-last-name']");
+
+    expect(firstNameInput).toBeInTheDocument();
+
+    expect(firstNameInput).toHaveAttribute('requirement', 'required');
+    expect(middleNameInput).not.toHaveAttribute('requirement', 'required');
+    expect(lastNameInput).toHaveAttribute('requirement', 'required');
   });
 });

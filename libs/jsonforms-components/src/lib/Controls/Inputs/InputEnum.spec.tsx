@@ -75,9 +75,10 @@ describe('EnumSelect component', () => {
   describe('can trigger input events', () => {
     it('triggers onChange event', () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(<EnumSelect {...props} />);
-      const dropdown = component.getByTestId('jsonforms-Enum-dropdown');
-      const dropdownInput = component.getByTestId('jsonforms-Enum-dropdown-input');
+      const { baseElement, ...component } = render(<EnumSelect {...props} />);
+
+      const dropdownInput = baseElement.querySelector("goa-input[name='dropdown-Enum']");
+
       fireEvent.click(dropdownInput);
       const dropdownOption = screen.getByTestId('jsonforms-Enum-dropdown-option1-label-option');
       fireEvent.click(dropdownOption);
@@ -108,7 +109,7 @@ describe('EnumSelect component', () => {
         uischema: { ...dropDownUiSchema, options: { register: { urn: 'mock-urn' } } },
         handleChange: handleChangeMock,
       };
-      const component = render(
+      const { baseElement, ...component } = render(
         <JsonFormRegisterProvider
           defaultRegisters={{
             registerData: [
@@ -123,8 +124,7 @@ describe('EnumSelect component', () => {
           <EnumSelect {...props} />)
         </JsonFormRegisterProvider>
       );
-
-      const dropdownInput = component.getByTestId('jsonforms-Enum-dropdown-input');
+      const dropdownInput = baseElement.querySelector("goa-input[testid='jsonforms-Enum-dropdown-input']");
       fireEvent.click(dropdownInput);
       const dropdownOption = screen.getByTestId('jsonforms-Enum-dropdown-item-option');
       fireEvent.click(dropdownOption);

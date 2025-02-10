@@ -66,12 +66,12 @@ describe('ScriptEditor Component', () => {
     session: SESSION_INIT,
   });
   test('Save button does not route', async () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <EditFileTypeDefinitionEditor />
       </Provider>
     );
-    const saveButton = queryByTestId('form-save');
+    const saveButton = baseElement.querySelector("goa-button[testId='form-save']");
     fireEvent.click(saveButton);
     await waitFor(() => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
