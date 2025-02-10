@@ -10,6 +10,7 @@ import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model
 import {
   createForm,
   createFormRouter,
+  deleteFormSubmission,
   findFormSubmissions,
   findSubmissions,
   getFormDefinitions,
@@ -185,6 +186,7 @@ describe('form router', () => {
   const formSubmissionInfo: FormSubmission = {
     id: 'formSubmission-id',
     formDefinitionId: 'test-form-definition',
+    formDefinitionRevision: 0,
     formId: 'test-form',
     formData: {},
     formFiles: {},
@@ -1670,6 +1672,82 @@ describe('form router', () => {
       formSubmissionMock.get.mockResolvedValueOnce(formSubmissionEntity);
 
       const handler = getFormSubmission(apiId, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('deleteFormSubmission', () => {
+    const user = {
+      tenantId,
+      id: 'tester',
+      roles: [FormServiceRoles.Admin],
+    };
+
+    it('can create handler getFormSubmission', () => {
+      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can delete form submission by id', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        body: { dispositionStatus: 'invalid status', dispositionReason: 'invalid data' },
+        params: { formId: 'test-form', submissionId: 'submissionId' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      formSubmissionMock.get.mockResolvedValueOnce(formSubmissionEntity);
+      formSubmissionMock.delete.mockResolvedValueOnce(true);
+
+      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+    });
+
+    it('can delete form submission by id and return false', async () => {
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        body: { dispositionStatus: 'invalid status', dispositionReason: 'invalid data' },
+        params: { formId: 'test-form', submissionId: 'submissionId' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      formSubmissionMock.get.mockResolvedValueOnce(null);
+
+      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
+    });
+
+    it('can call next with unauthorized', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [],
+      };
+      const req = {
+        user,
+        tenant: {
+          id: tenantId,
+        },
+        body: { dispositionStatus: 'invalid status', dispositionReason: 'invalid data' },
+        params: { formId: 'test-form', submissionId: 'submissionId' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();

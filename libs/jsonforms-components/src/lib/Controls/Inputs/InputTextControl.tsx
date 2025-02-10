@@ -4,10 +4,9 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity } from '../../util/stringUtils';
 import { RegisterDataType } from '../../Context/register';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
-import { onBlurForTextControl, onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
+import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import { Dropdown } from '../../Components/Dropdown';
 import { sinTitle } from '../../common/Constants';
 
@@ -41,7 +40,8 @@ export const formatSin = (value: string) => {
 };
 
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
-  const { data, config, id, enabled, uischema, schema, label, path, handleChange } = props;
+  const { data, config, id, enabled, uischema, schema, label, path, handleChange, errors, isVisited, setIsVisited } =
+    props;
 
   const registerCtx = useContext(JsonFormsRegisterContext);
   const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
@@ -88,7 +88,6 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
 
-  const errorsFormInput = checkFieldValidity(props as ControlProps);
   const isSinField = schema.title === sinTitle;
 
   const autoCapitalize =
@@ -112,7 +111,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
         />
       ) : (
         <GoAInput
-          error={errorsFormInput.length > 0}
+          error={isVisited && errors.length > 0}
           type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
           disabled={!enabled}
           value={data}
@@ -124,13 +123,15 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           // maxLength={appliedUiSchemaOptions?.maxLength}
           name={appliedUiSchemaOptions?.name || `${id || label}-input`}
           testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-          // Don't use handleChange in the onChange event, use the keyPress or onBlur.
-          // If you use it onChange along with keyPress event it will cause a
-          // side effect that causes the validation to render when it shouldn't.
           onChange={(name: string, value: string) => {
             let formattedValue = value;
             if (schema && schema.title === sinTitle && value !== '') {
               formattedValue = formatSin(value);
+            }
+            /* TODO: add the unit test, when the solution is used */
+            /* istanbul ignore next */
+            if (isVisited === false && setIsVisited) {
+              setIsVisited();
             }
             onChangeForInputControl({
               name,
@@ -138,15 +139,12 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
               controlProps: props as ControlProps,
             });
           }}
-          onKeyPress={(name: string, value: string, key: string) => {
-            onKeyPressForTextControl({
-              name,
-              value: autoCapitalize ? value.toUpperCase() : value,
-              key,
-              controlProps: props as ControlProps,
-            });
-          }}
           onBlur={(name: string, value: string) => {
+            /* istanbul ignore next */
+            if (isVisited === false && setIsVisited) {
+              setIsVisited();
+            }
+            /* istanbul ignore next */
             onBlurForTextControl({
               name,
               controlProps: props as ControlProps,

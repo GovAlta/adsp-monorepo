@@ -6,6 +6,7 @@ interface DataValueCriteriaItemProps {
   path: string;
   type: string | string[];
   value: string;
+  disabled?: boolean;
   onChange: (value: unknown) => void;
 }
 
@@ -16,6 +17,7 @@ export const DataValueCriteriaItem: FunctionComponent<DataValueCriteriaItemProps
   path,
   type,
   value,
+  disabled,
   onChange,
 }) => {
   return (
@@ -29,9 +31,16 @@ export const DataValueCriteriaItem: FunctionComponent<DataValueCriteriaItemProps
             }
             value={value}
             name={name}
+            disabled={disabled}
           />
         ) : (
-          <GoAInput type="text" onChange={(_, value: string) => onChange(value)} value={value} name={name} />
+          <GoAInput
+            type="text"
+            onChange={(_, value: string) => onChange(value)}
+            value={value}
+            name={name}
+            disabled={disabled}
+          />
         )}
       </GoAFormItem>
     )

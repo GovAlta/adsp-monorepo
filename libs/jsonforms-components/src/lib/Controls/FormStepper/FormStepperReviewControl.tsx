@@ -47,7 +47,9 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
             <GoAGrid minChildWidth="100%">
               {category.elements
                 .filter((field) => {
+                  // [TODO] we need to double check why we cannot hide the elements at the element level
                   const conditionProps = field.rule?.condition as SchemaBasedCondition;
+                  /* istanbul ignore next */
                   if (conditionProps && data) {
                     const canHideControlParts = conditionProps?.scope?.split('/');
                     const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts?.length - 1];

@@ -1,7 +1,5 @@
 package ca.ab.gov.alberta.adsp.sdk.access;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -24,6 +22,7 @@ import com.nimbusds.jwt.proc.JWTProcessor;
 import ca.ab.gov.alberta.adsp.sdk.AdspConfiguration;
 import ca.ab.gov.alberta.adsp.sdk.AdspId;
 import ca.ab.gov.alberta.adsp.sdk.metadata.ApiDocsMetadata;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -59,9 +58,9 @@ public class AccessSecurityConfiguration {
         .authorizeHttpRequests(
             authorize -> {
               if (this.docsMetadata != null) {
-                authorize = authorize.antMatchers(HttpMethod.GET, this.docsMetadata.getOpenApiPath()).permitAll();
+                authorize.requestMatchers(HttpMethod.GET, this.docsMetadata.getOpenApiPath()).permitAll();
               }
-              authorize.antMatchers(this.apiAntPatterns).authenticated();
+              authorize.requestMatchers(this.apiAntPatterns).authenticated();
             })
         .oauth2ResourceServer(
             oauth2 -> oauth2.authenticationManagerResolver(authenticationManagerResolver));

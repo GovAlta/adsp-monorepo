@@ -14,6 +14,7 @@ export class FormDefinitionEntity implements FormDefinition {
   name: string;
   description: string;
   anonymousApply: boolean;
+  oneFormPerApplicant: boolean;
   applicantRoles: string[];
   assessorRoles: string[];
   clerkRoles: string[];
@@ -34,12 +35,16 @@ export class FormDefinitionEntity implements FormDefinition {
     private validationService: ValidationService,
     private calendarService: CalendarService,
     public tenantId: AdspId,
-    definition: FormDefinition
+    definition: FormDefinition,
+    public revision?: number
   ) {
     this.id = definition.id;
     this.name = definition.name;
     this.description = definition.description;
     this.anonymousApply = definition.anonymousApply || false;
+    // Defaults to true if the configuration value is not set.
+    this.oneFormPerApplicant =
+      typeof definition.oneFormPerApplicant === 'boolean' ? definition.oneFormPerApplicant : true;
     this.applicantRoles = definition.applicantRoles || [];
     this.assessorRoles = definition.assessorRoles || [];
     this.clerkRoles = definition.clerkRoles || [];

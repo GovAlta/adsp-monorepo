@@ -1,11 +1,16 @@
-import type { DomainEvent, DomainEventDefinition, User, Stream } from '@abgov/adsp-service-sdk';
-import { Resource, Tag } from './types';
+import type { DomainEvent, DomainEventDefinition, User, Stream, AdspId } from '@abgov/adsp-service-sdk';
+import type { mapResource, mapTag } from './mapper';
 
 const ENTRY_UPDATED = 'entry-updated';
 const ENTRY_DELETED = 'entry-deleted';
 export const TAGGED_RESOURCE = 'tagged-resource';
 const UNTAGGED_RESOURCE = 'untagged-resource';
 const RESOURCE_RESOLUTION_FAILED = 'resource-resolution-failed';
+const RESOURCE_DELETED = 'resource-deleted';
+const TAG_DELETED = 'tag-deleted';
+
+type Tag = ReturnType<typeof mapTag>;
+type Resource = ReturnType<typeof mapResource>;
 
 export const EntryUpdatedDefinition: DomainEventDefinition = {
   name: ENTRY_UPDATED,
@@ -85,6 +90,7 @@ export const TaggedResourceDefinition: DomainEventDefinition = {
       tag: {
         type: 'object',
         properties: {
+          urn: { type: 'string' },
           label: { type: 'string' },
           value: { type: 'string' },
         },
@@ -117,11 +123,62 @@ export const UntaggedResourceDefinition: DomainEventDefinition = {
       tag: {
         type: 'object',
         properties: {
+          urn: { type: 'string' },
           label: { type: 'string' },
           value: { type: 'string' },
         },
       },
       updatedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
+export const ResourceDeletedDefinition: DomainEventDefinition = {
+  name: RESOURCE_DELETED,
+  description: 'Signalled when a resource is deleted.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      resource: {
+        type: 'object',
+        properties: {
+          urn: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+        },
+      },
+      deletedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
+export const TagDeletedDefinition: DomainEventDefinition = {
+  name: TAG_DELETED,
+  description: 'Signalled when a tag is deleted.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      tag: {
+        type: 'object',
+        properties: {
+          urn: { type: 'string' },
+          label: { type: 'string' },
+          value: { type: 'string' },
+        },
+      },
+      deletedBy: {
         type: 'object',
         properties: {
           id: { type: 'string' },
@@ -142,6 +199,8 @@ export const ResourceResolutionFailedDefinition: DomainEventDefinition = {
         type: 'object',
         properties: {
           urn: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
         },
       },
       type: { type: ['string', 'null'] },
@@ -202,26 +261,28 @@ export const entryDeleted = (
   },
 });
 
-export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, isNewResource: boolean): DomainEvent => ({
+export const taggedResource = (
+  tenantId: AdspId,
+  resource: Resource,
+  tag: Tag,
+  updatedBy: User,
+  isNewResource: boolean
+): DomainEvent => ({
   name: TAGGED_RESOURCE,
   timestamp: new Date(),
-  tenantId: resource.tenantId,
+  tenantId,
   correlationId: tag.value,
   context: {
     tag: tag.value,
-    resources: resource.urn.toString(),
+    resource: resource.urn.toString(),
+    resourceType: resource.type,
   },
   payload: {
     resource: {
-      urn: resource.urn.toString(),
-      name: resource.name,
-      description: resource.description,
+      ...resource,
       isNew: isNewResource,
     },
-    tag: {
-      label: tag.label,
-      value: tag.value,
-    },
+    tag,
     updatedBy: {
       id: updatedBy.id,
       name: updatedBy.name,
@@ -229,25 +290,19 @@ export const taggedResource = (resource: Resource, tag: Tag, updatedBy: User, is
   },
 });
 
-export const untaggedResource = (resource: Resource, tag: Tag, updatedBy: User): DomainEvent => ({
+export const untaggedResource = (tenantId: AdspId, resource: Resource, tag: Tag, updatedBy: User): DomainEvent => ({
   name: UNTAGGED_RESOURCE,
   timestamp: new Date(),
-  tenantId: resource.tenantId,
+  tenantId,
   correlationId: tag.value,
   context: {
     tag: tag.value,
-    resources: resource.urn.toString(),
+    resource: resource.urn.toString(),
+    resourceType: resource.type,
   },
   payload: {
-    resource: {
-      urn: resource.urn.toString(),
-      name: resource.name,
-      description: resource.description,
-    },
-    tag: {
-      label: tag.label,
-      value: tag.value,
-    },
+    resource,
+    tag,
     updatedBy: {
       id: updatedBy.id,
       name: updatedBy.name,
@@ -255,21 +310,53 @@ export const untaggedResource = (resource: Resource, tag: Tag, updatedBy: User):
   },
 });
 
-export const resourceResolutionFailed = (resource: Resource, type: string, error: string): DomainEvent => ({
+export const resourceResolutionFailed = (tenantId: AdspId, resource: Resource, error: string): DomainEvent => ({
   name: RESOURCE_RESOLUTION_FAILED,
   timestamp: new Date(),
-  tenantId: resource.tenantId,
-  correlationId: type,
+  tenantId,
+  correlationId: resource.type,
   context: {
-    resources: resource.urn.toString(),
-    type,
+    resource: resource.urn.toString(),
+    resourceType: resource.type,
   },
   payload: {
-    resource: {
-      urn: resource.urn.toString(),
-    },
-    type,
+    resource,
     error,
+  },
+});
+
+export const resourceDeleted = (tenantId: AdspId, resource: Resource, deletedBy: User): DomainEvent => ({
+  name: RESOURCE_DELETED,
+  timestamp: new Date(),
+  tenantId,
+  correlationId: resource.type,
+  context: {
+    resource: resource.urn.toString(),
+    resourceType: resource.type,
+  },
+  payload: {
+    resource,
+    deletedBy: {
+      id: deletedBy.id,
+      name: deletedBy.name,
+    },
+  },
+});
+
+export const tagDeleted = (tenantId: AdspId, tag: Tag, deletedBy: User): DomainEvent => ({
+  name: TAG_DELETED,
+  timestamp: new Date(),
+  tenantId,
+  correlationId: tag.value,
+  context: {
+    tag: tag.value,
+  },
+  payload: {
+    tag,
+    deletedBy: {
+      id: deletedBy.id,
+      name: deletedBy.name,
+    },
   },
 });
 

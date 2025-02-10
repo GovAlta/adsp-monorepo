@@ -4,7 +4,6 @@ import { AppState } from '../state';
 import { GoACallout } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
-import moment from 'moment';
 import { FunctionComponent, useEffect } from 'react';
 import styled from 'styled-components';
 import { Form, FormDefinition, metaDataSelector, AppDispatch, downloadFile, downloadFormPdf, store } from '../state';
@@ -106,7 +105,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
       <GridItem md={1} />
       <GridItem md={10}>
         <GoACallout type="success" heading="We're processing your application">
-          Your application was received on {moment(form.submitted).format('MMMM D, YYYY')} and we're working on it.
+          Your application was received on {form.submitted.toFormat('LLLL d, yyyy')} and we're working on it.
           {definition.generatesPdf && pdfFileExists && (
             <div>
               <DownloadLink

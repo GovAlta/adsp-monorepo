@@ -2,6 +2,7 @@ import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
 import React, { useState, useReducer, useEffect, useCallback } from 'react';
+import { isEmptyBoolean, isEmptyNumber } from '../../util';
 import {
   ArrayLayoutProps,
   ControlElement,
@@ -19,8 +20,23 @@ import { WithBasicDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid, GoAIconButton, GoAContainer, GoATable, GoAInput, GoAFormItem } from '@abgov/react-components-new';
-import { ToolBarHeader, ObjectArrayTitle, TextCenter, NonEmptyCellStyle, TableTHHeader } from './styled-components';
+import {
+  GoAGrid,
+  GoAIconButton,
+  GoAContainer,
+  GoATable,
+  GoAInput,
+  GoAFormItem,
+  GoACallout,
+} from '@abgov/react-components-new';
+import {
+  ToolBarHeader,
+  ObjectArrayTitle,
+  TextCenter,
+  NonEmptyCellStyle,
+  TableTHHeader,
+  RequiredSpan,
+} from './styled-components';
 import { convertToSentenceCase, Visible } from '../../util';
 import { GoAReviewRenderers } from '../../../index';
 import {
@@ -41,6 +57,7 @@ interface DataProperty {
   type: string;
   format?: string;
   maxLength?: number;
+  enum: string[];
 }
 interface DataObject {
   [key: string]: DataProperty;
@@ -56,31 +73,6 @@ interface HandleChangeProps {
 }
 
 export type ObjectArrayControlProps = ArrayLayoutProps & ArrayLayoutExtProps & ControlProps;
-
-// eslint-disable-next-line
-const extractScopesFromUISchema = (uischema: any): string[] => {
-  const scopes: string[] = [];
-
-  if (uischema?.elements) {
-    // eslint-disable-next-line
-    uischema?.elements?.forEach((element: any) => {
-      if (element?.elements) {
-        // eslint-disable-next-line
-        element?.elements?.forEach((internalElement: any) => {
-          if (internalElement?.scope) {
-            scopes.push(internalElement?.scope);
-          }
-        });
-      } else {
-        if (element?.scope) {
-          scopes.push(element?.scope);
-        }
-      }
-    });
-  }
-
-  return scopes;
-};
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -208,6 +200,11 @@ interface NonEmptyRowComponentProps {
   openDeleteDialog(rowIndex: number): void;
 }
 
+function capitalizeFirstLetter(str: string) {
+  if (!str) return ''; // Handle empty strings
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
 export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   props: NonEmptyRowComponentProps & HandleChangeProps
 ) {
@@ -226,6 +223,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     errors,
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
+  const required = (schema.items as Record<string, Array<string>>)?.required;
 
   return (
     <NonEmptyCellStyle>
@@ -254,7 +252,10 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 if (!isInReview) {
                   return (
                     <th key={index}>
-                      <p>{convertToSentenceCase(key)}</p>
+                      <p>
+                        {convertToSentenceCase(key)}
+                        {required?.includes(key) && <RequiredSpan>(required)</RequiredSpan>}
+                      </p>
                     </th>
                   );
                 }
@@ -282,32 +283,56 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                   {Object.keys(properties).map((element, ix) => {
                     const dataObject = properties[element];
                     const schemaName = element;
+                    const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
                     const error = errors?.find(
                       // eslint-disable-next-line
                       (e: any) => e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}`
                     ) as { message: string };
+                    if (
+                      error?.message.includes('must NOT have fewer') &&
+                      required.find((r) => r === schemaName) &&
+                      (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
+                    ) {
+                      error.message = `${capitalizeFirstLetter(schemaName)} is required`;
+                    }
                     return (
                       <td key={ix}>
                         {isInReview ? (
                           <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
-                            {data && data[num] ? (data[num][element] as unknown as string) : ''}
+                            {typeof currentData === 'string' ? (
+                              currentData
+                            ) : (
+                              <pre>{JSON.stringify(currentData, null, 2)}</pre>
+                            )}
                           </div>
                         ) : (
                           <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
-                            <GoAInput
-                              type={dataObject.type === 'number' ? 'number' : 'text'}
-                              id={schemaName}
-                              name={schemaName}
-                              value={data && data[num] ? (data[num][element] as unknown as string) : ''}
-                              testId={`#/properties/${schemaName}-input-${i}`}
-                              onChange={(name: string, value: string) => {
-                                handleChange(rowPath, {
-                                  [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
-                                });
-                              }}
-                              aria-label={schemaName}
-                              width="100%"
-                            />
+                            {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
+                              <GoAInput
+                                error={error?.message.length > 0}
+                                type={dataObject.type === 'number' ? 'number' : 'text'}
+                                id={schemaName}
+                                name={schemaName}
+                                value={currentData}
+                                testId={`#/properties/${schemaName}-input-${i}`}
+                                onChange={(name: string, value: string) => {
+                                  handleChange(rowPath, {
+                                    [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
+                                  });
+                                }}
+                                aria-label={schemaName}
+                                width="100%"
+                              />
+                            ) : (
+                              <GoACallout
+                                type="important"
+                                size="medium"
+                                testId="form-support-callout"
+                                heading="Not supported"
+                              >
+                                Only string and number are supported inside arrays
+                              </GoACallout>
+                            )}
                           </GoAFormItem>
                         )}
                       </td>
@@ -529,21 +554,26 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
       currentCategory.data = newCategoryData;
     }
 
-    if (currentCategory?.count > 0) currentCategory.count--;
-    const handleChangeData = Object.keys(newCategoryData).map((key) => {
+    if (currentCategory?.count && currentCategory?.count > 0) currentCategory.count--;
+    let handleChangeData: unknown[] | null = Object.keys(newCategoryData).map((key) => {
       return newCategoryData[key];
     });
+
+    if (handleChangeData.length === 0) {
+      handleChangeData = null;
+    }
 
     props.handleChange(path, handleChangeData);
     dispatch({ type: DELETE_ACTION, payload: { name: path, category: currentCategory } });
   };
 
-  const handleChangeWithData = (path: string, value: StateData) => {
+  //eslint-disable-next-line
+  const handleChangeWithData = (path: string, value: Record<string, any>) => {
     if (path) {
       const categories = registers.categories;
-      const currentCategory = categories[path].data;
+      const currentCategory = categories[path]?.data || {};
       const newData: StateData = {};
-      const allKeys = Object.keys(value).concat(Object.keys(currentCategory));
+      const allKeys = Object.keys(value).concat(Object.keys(currentCategory || []));
       const allKeysUnique = allKeys.filter((a, b) => allKeys.indexOf(a) === b);
 
       Object.keys(allKeysUnique).forEach((num) => {
@@ -556,7 +586,8 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
           });
         value[num] &&
           Object.keys(value[num]).forEach((path) => {
-            newData[num][path] = value[num][path] || (currentCategory[num] && currentCategory[num][path]);
+            newData[num][path] =
+              value[num][path] !== undefined ? value[num][path] : currentCategory[num] && currentCategory[num][path];
           });
       });
 
@@ -589,8 +620,16 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   return (
     <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
       <ToolBarHeader>
-        {isInReview && listTitle && <b>{listTitle}</b>}
-        {!isInReview && listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
+        {isInReview && listTitle && (
+          <b>
+            {listTitle} <span>{additionalProps.required && '(required)'}</span>
+          </b>
+        )}
+        {!isInReview && listTitle && (
+          <ObjectArrayTitle>
+            {listTitle} <span>{additionalProps.required && '(required)'}</span>
+          </ObjectArrayTitle>
+        )}
         {!isInReview && (
           <ObjectArrayToolBar
             errors={errors}

@@ -9,7 +9,7 @@ module.exports = {
     description: `ADSP's _File Service_ is one that you can use for storing and managing file-based data.
 From uploading end-user documentation to storing content for presentation, the service gives you massively scalable,
 secure, storage for your data. Based on Microsoft's Azure Blob Storage and, coupled with our
-[File Type collections](/adsp-monorepo/tutorials/file-service/file-types.html), the file service gives you full control
+[File Type collections](https://govalta.github.io/adsp-monorepo/tutorials/file-service/file-types.html), the file service gives you full control
 over who has access to your data, and who doesn't.
 
 The service provides APIs that allow you to:
@@ -21,7 +21,7 @@ The service provides APIs that allow you to:
 - Search for files
 - Download files as streams
 
-For more information see the [File Service tutorial](/adsp-monorepo/tutorials/file-service/introduction.html).`,
+For more information see the [File Service tutorial](https://govalta.github.io/adsp-monorepo/tutorials/file-service/introduction.html).`,
   },
   tags: [
     {

@@ -2,7 +2,7 @@ import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-
 import { InvalidValueError } from '@core-services/core-common';
 import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionRepository } from '../repository';
-import { FormServiceRoles } from '../roles';
+import { DirectoryServiceRoles, FormServiceRoles } from '../roles';
 import { FormDisposition, FormSubmission, SecurityClassificationType } from '../types';
 import { FormEntity } from './form';
 import { FormDefinitionEntity } from './definition';
@@ -10,6 +10,7 @@ import { FormDefinitionEntity } from './definition';
 export class FormSubmissionEntity implements FormSubmission {
   id: string;
   formDefinitionId: string;
+  formDefinitionRevision: number;
   formId: string;
   tenantId: AdspId;
   formData: Record<string, unknown>;
@@ -46,6 +47,8 @@ export class FormSubmissionEntity implements FormSubmission {
         formData: form.data,
         formFiles: form.files,
         formDefinitionId: form.definition.id,
+        // Revision is set only when submission is first created, and loaded from the stored record after.
+        formDefinitionRevision: form.definition.revision,
         formId: form.id,
         disposition: null,
         hash: form.hash,
@@ -73,6 +76,7 @@ export class FormSubmissionEntity implements FormSubmission {
     this.formData = formSubmission.formData || {};
     this.formFiles = formSubmission.formFiles || {};
     this.formDefinitionId = formSubmission.formDefinitionId;
+    this.formDefinitionRevision = formSubmission.formDefinitionRevision;
     this.formId = formSubmission.formId;
     this.tenantId = tenantId;
     this.submissionStatus = formSubmission.submissionStatus;
@@ -84,7 +88,7 @@ export class FormSubmissionEntity implements FormSubmission {
 
   canRead(user: User): boolean {
     return (
-      isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true) ||
+      isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, DirectoryServiceRoles.ResourceResolver], true) ||
       isAllowedUser(user, this.tenantId, this.definition?.assessorRoles || [])
     );
   }

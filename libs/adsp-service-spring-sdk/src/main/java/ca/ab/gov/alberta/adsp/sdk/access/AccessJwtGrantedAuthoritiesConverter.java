@@ -1,15 +1,15 @@
 package ca.ab.gov.alberta.adsp.sdk.access;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
-
-import com.nimbusds.jose.shaded.json.JSONArray;
-import com.nimbusds.jose.shaded.json.JSONObject;
 
 import ca.ab.gov.alberta.adsp.sdk.AdspId;
 import reactor.core.publisher.Flux;
@@ -33,27 +33,28 @@ class AccessJwtGrantedAuthoritiesConverter implements Converter<Jwt, Collection<
   public Collection<GrantedAuthority> convert(Jwt source) {
     Collection<GrantedAuthority> authorities = this.jwtConverter.convert(source);
     authorities.add((new AccessTenancyAuthority(this.issuer)));
-
-    JSONObject realmAccess = source.getClaim(REALM_ACCESS_ROLES_CLAIM);
+    
+    Map<String, List<String>> realmAccess = source.getClaim(REALM_ACCESS_ROLES_CLAIM);
     if (realmAccess != null) {
-        var realmRoles = (JSONArray) realmAccess.get("roles");
-        if (realmRoles != null) {
-          realmRoles.forEach(role -> authorities.add(new SimpleGrantedAuthority(ROLE_AUTHORITY_PREFIX + role)));
-        }
+    	List<String> realmRoles = realmAccess.get("roles");
+	    if (realmRoles != null) {
+	    	realmRoles.forEach(role -> authorities.add(new SimpleGrantedAuthority(ROLE_AUTHORITY_PREFIX + role)));
+	    }
     }
-
-    JSONObject clientAccesses = source.getClaim(RESOURCE_ACCESS_CLAIM);
+    
+    Map<String, Map<String, List<String>>> clientAccesses = source.getClaim(RESOURCE_ACCESS_CLAIM);
     if (clientAccesses != null) {
-        var keys = clientAccesses.keySet();
-        for (var key : keys) {
-          var clientAccess = (JSONObject) clientAccesses.get(key);
-          var clientRoles = (JSONArray) clientAccess.get("roles");
-          if (clientRoles != null) {
-            clientRoles.forEach(role -> authorities.add(
-                new SimpleGrantedAuthority(
-                    ROLE_AUTHORITY_PREFIX + (key.equals(this.serviceId) ? role : (key + ":" + role)))));
-          }
-        }
+    	var keys = clientAccesses.keySet();
+    	for (var key : keys) {
+    		Map<String, List<String>> clientAccess = clientAccesses.get(key);
+    		List<String> clientRoles = clientAccess.get("roles");
+    		
+    		if (clientRoles != null) {
+    			clientRoles.forEach(role -> authorities.add(
+    					new SimpleGrantedAuthority(
+    							ROLE_AUTHORITY_PREFIX + (key.equals(this.serviceId) ? role : (key + ":" + role)))));
+    		}
+    	}
     }
 
     return authorities;

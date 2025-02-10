@@ -175,7 +175,7 @@ export const NotificationStyles = styled.div`
   }
 
   .textAlignLastRight {
-    text-align-last: right;
+    display: contents;
   }
 
   .resetButton {

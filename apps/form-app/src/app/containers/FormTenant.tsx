@@ -17,6 +17,7 @@ import {
 import { FeedbackNotification } from './FeedbackNotification';
 import { FormDefinition } from './FormDefinition';
 import { useFeedbackLinkHandler } from '../util/feedbackUtils';
+import { Forms } from './Forms';
 
 const AccountActionsSpan = styled.span`
   .username {
@@ -90,9 +91,9 @@ export const FormTenant = () => {
         {userInitialized && (
           <section>
             <Routes>
-              <Route path={`/:definitionId/*`} element={<FormDefinition />} />
-              <Route path="/" element={<div>{tenant?.name || tenantName}</div>} />
-              <Route path="*" element={<Navigate to={`/${tenantName}`} replace />} />
+              <Route path="/forms" element={<Forms />} />
+              <Route path="/:definitionId/*" element={<FormDefinition />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </section>
         )}

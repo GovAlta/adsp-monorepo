@@ -1,24 +1,15 @@
-import {
-  GoAAppHeader,
-  GoAButton,
-  GoAMicrositeHeader,
-  GoASideMenu,
-  GoASideMenuHeading,
-} from '@abgov/react-components-new';
+import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components-new';
 import { useScripts } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes, useLocation, useParams, useNavigate, Navigate } from 'react-router-dom';
+import { Route, Routes, useParams, useNavigate, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   AppDispatch,
   configInitializedSelector,
   extensionsSelector,
   initializeTenant,
-  loginUser,
-  logoutUser,
   tenantSelector,
-  userSelector,
   feedbackSelector,
 } from '../state';
 import { useFeedbackLinkHandler } from '../util/feedbackUtils';
@@ -36,7 +27,6 @@ const TenantMainContainer = styled.div`
 
 export const FormAdminTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
-  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
   const tenant = useSelector(tenantSelector);
@@ -54,7 +44,6 @@ export const FormAdminTenant = () => {
   }, [feedback, navigate]);
 
   const configInitialized = useSelector(configInitializedSelector);
-  const { initialized: userInitialized, user } = useSelector(userSelector);
 
   useEffect(() => {
     if (configInitialized) {
@@ -66,37 +55,12 @@ export const FormAdminTenant = () => {
     <React.Fragment>
       <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form administration`}>
-        {userInitialized && (
-          <span>
-            <span>{user?.name}</span>
-            {user ? (
-              <GoAButton
-                mt="s"
-                mr="s"
-                type="tertiary"
-                onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
-              >
-                Sign out
-              </GoAButton>
-            ) : (
-              <GoAButton
-                mt="s"
-                mr="s"
-                type="tertiary"
-                onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
-              >
-                Sign in
-              </GoAButton>
-            )}
-          </span>
-        )}
+        <NavigationMenu type="menu" />
       </GoAAppHeader>
       <FeedbackNotification />
       <AuthorizeUser>
         <TenantMainContainer>
-          <nav>
-            <NavigationMenu />
-          </nav>
+          <NavigationMenu type="side"/>
           <main>
             <section>
               <Routes>

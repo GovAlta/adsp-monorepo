@@ -16,6 +16,7 @@ const TabContainer = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex: 1;
   & > .heading {
     flex: 0;
     border-bottom: 1px solid var(--goa-color-greyscale-100);

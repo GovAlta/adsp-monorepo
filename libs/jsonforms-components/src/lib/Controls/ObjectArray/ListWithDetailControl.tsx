@@ -483,7 +483,11 @@ export class ListWithDetailControl extends React.Component<ObjectArrayControlPro
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>
-          {listTitle && <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>}
+          {listTitle && (
+            <ObjectArrayTitle>
+              {listTitle} <span>{additionalProps.required && '(required)'}</span>
+            </ObjectArrayTitle>
+          )}
           <ObjectArrayToolBar
             errors={errors}
             label={label}

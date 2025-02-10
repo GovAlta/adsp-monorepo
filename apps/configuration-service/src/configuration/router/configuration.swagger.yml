@@ -86,6 +86,12 @@ components:
         required: false
         schema:
           type: string
+      - name: includeActive
+        description: Flag indicating if active revision is included.
+        in: query
+        required: false
+        schema:
+          type: boolean
     responses:
       200:
         description: Request completed successfully.
@@ -103,6 +109,8 @@ components:
                         type: string
                       name:
                         type: string
+                      active:
+                        $ref: "#/components/schemas/ConfigurationRevision"
                       latest:
                         $ref: "#/components/schemas/ConfigurationRevision"
                 page:

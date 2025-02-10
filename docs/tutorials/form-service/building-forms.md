@@ -32,6 +32,20 @@ Sometimes a specific answer to a question will influence the flow of the form. A
 
 Jsonforms automatically handles basic input validation, such as ensuring required fields are filled in, dates are formatted correctly, or that numbers are, indeed, numbers. More sophisticated validation is also possible; you can add [custom error messages](https://jsonforms.io/docs/validation/) or even [integrate a custom AJV validator](https://jsonforms.io/docs/validation/) to [harness the full power of AJV](https://ajv.js.org/), which gives you complete control over validation.
 
+#### Required Fields
+
+There is a known issue in jsonforms that allows an empty string to satisfy the required validation rule. To work around this, you should also add a minimum length of 1 to required string fields, e.g.
+
+```json
+{
+  "firstName": {
+    "type": "string",
+    "minLength": 1
+  },
+  "required": ["firstName"]
+}
+```
+
 ### Repeating Items
 
 You will sometimes need to capture [lists of information](/adsp-monorepo/tutorials/form-service/repeated-items.html) in a form. Lists contain a variable number of items, each containing the necessary details. For example, an application for a Farmers Market License may require list of vendors, each with contact information, a classification, and their expected yearly revenue. Users are able to add one item at a time and fill in the details as needed.

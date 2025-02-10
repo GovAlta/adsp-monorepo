@@ -6,6 +6,7 @@ export const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
 export const EXPORT_SERVICE_ID = 'urn:ads:platform:export-service';
 export const CALENDAR_SERVICE_ID = 'urn:ads:platform:calendar-service';
 export const DIRECTORY_SERVICE_ID = 'urn:ads:platform:directory-service';
+export const CACHE_SERVICE_ID = 'urn:ads:platform:cache-service';
 
 export interface PagedResults<T> {
   results: T[];
@@ -42,6 +43,7 @@ export interface Intake {
 export interface FormDefinition {
   urn: string;
   id: string;
+  revision: number;
   name: string;
   description: string;
   dataSchema: JsonSchema;
@@ -52,6 +54,7 @@ export interface FormDefinition {
   dispositionStates: DispositionState[];
   submissionRecords: boolean;
   anonymousApply: boolean;
+  oneFormPerApplicant: boolean;
   generatesPdf: boolean;
   scheduledIntakes: boolean;
   supportTopic: boolean;

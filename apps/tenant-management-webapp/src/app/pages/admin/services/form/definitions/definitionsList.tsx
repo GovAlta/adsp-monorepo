@@ -1,14 +1,22 @@
 import React, { FunctionComponent } from 'react';
 import DataTable from '@components/DataTable';
 import { FormDefinitionItem } from './formDefinitionItem';
-import { PdfTemplate } from '@store/pdf/model';
+import { FormDefinition } from '@store/form/model';
 
 export interface formDefinitionTableProps {
-  definitions: Record<string, PdfTemplate>;
-  onDelete?: (PdfTemplate) => void;
-  onEdit?: (PdfTemplate) => void;
+  definitions: Record<string, FormDefinition>;
+  baseResourceFormUrn: string;
+  onDelete?: (FormDefinition) => void;
+  onEdit?: (FormDefinition) => void;
+  onAddResourceTag?: (FormDefinition) => void;
 }
-export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> = ({ definitions, onDelete }) => {
+
+export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> = ({
+  definitions,
+  baseResourceFormUrn,
+  onDelete,
+  onAddResourceTag,
+}) => {
   const newTemplates = JSON.parse(JSON.stringify(definitions));
 
   return (
@@ -16,9 +24,6 @@ export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> =
       <thead data-testid="form-definitions-table-header">
         <tr>
           <th data-testid="form-definitions-table-header-name">Name</th>
-          <th id="form-definitions-template-id" data-testid="form-definitions-table-header-template-id">
-            Definition ID
-          </th>
           <th id="form-definitions-Description" data-testid="form-definitions-table-header-description">
             Description
           </th>
@@ -32,7 +37,13 @@ export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> =
           .sort()
           .map((templateName) => {
             return (
-              <FormDefinitionItem key={templateName} formDefinition={newTemplates[templateName]} onDelete={onDelete} />
+              <FormDefinitionItem
+                key={templateName}
+                baseResourceFormUrn={baseResourceFormUrn}
+                formDefinition={newTemplates[templateName]}
+                onDelete={onDelete}
+                onAddResourceTag={onAddResourceTag}
+              />
             );
           })}
       </tbody>

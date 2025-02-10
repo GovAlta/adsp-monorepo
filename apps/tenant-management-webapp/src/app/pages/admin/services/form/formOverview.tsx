@@ -4,6 +4,7 @@ import { GoAButton } from '@abgov/react-components-new';
 import { fetchFormMetrics } from '@store/form/action';
 import { useDispatch } from 'react-redux';
 import { FormMetrics } from './metrics';
+import { fetchDirectory } from '@store/directory/actions';
 
 interface FormOverviewProps {
   setOpenAddDefinition: (val: boolean) => void;
@@ -20,6 +21,7 @@ const FormOverview = ({ setOpenAddDefinition, setActiveIndex }: FormOverviewProp
     //  eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
+    dispatch(fetchDirectory());
     dispatch(fetchFormMetrics());
   }, [dispatch]);
 
@@ -39,17 +41,15 @@ const FormOverview = ({ setOpenAddDefinition, setActiveIndex }: FormOverviewProp
         </section>
       }
       addButton={
-        <>
-          <GoAButton
-            testId="add-definition"
-            onClick={() => {
-              setActiveIndex(1);
-              setOpenAddDefinition(true);
-            }}
-          >
-            Add definition
-          </GoAButton>
-        </>
+        <GoAButton
+          testId="add-definition"
+          onClick={() => {
+            setActiveIndex(1);
+            setOpenAddDefinition(true);
+          }}
+        >
+          Add definition
+        </GoAButton>
       }
       extra={<FormMetrics />}
     />

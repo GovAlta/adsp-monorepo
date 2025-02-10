@@ -134,10 +134,15 @@ export const EventDefinitionsList = styled(EventDefinitionsListComponent)`
   }
 
   & td:first-child {
-    width: 100px;
-    white-space: nowrap;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
+    width: 35%;
+    word-wrap: break-word;
+    word-break: break-all;
+  }
+
+  & td:nth-child(2) {
+    flex: 1;
+    word-wrap: break-word;
+    word-break: break-all;
   }
 
   & td:last-child {

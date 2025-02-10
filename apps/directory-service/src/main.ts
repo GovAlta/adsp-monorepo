@@ -6,7 +6,13 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+} from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -25,6 +31,8 @@ import {
   TaggedResourceDefinition,
   UntaggedResourceDefinition,
   ResourceResolutionFailedDefinition,
+  ResourceDeletedDefinition,
+  TagDeletedDefinition,
 } from './directory';
 import { createDirectoryQueueService } from './amqp';
 
@@ -60,6 +68,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantService,
     tokenProvider,
     configurationService,
+    configurationHandler,
     clearCached,
     metricsHandler,
     tenantHandler,
@@ -96,6 +105,8 @@ const initializeApp = async (): Promise<express.Application> => {
         TaggedResourceDefinition,
         UntaggedResourceDefinition,
         ResourceResolutionFailedDefinition,
+        ResourceDeletedDefinition,
+        TagDeletedDefinition,
       ],
       configuration: {
         description: 'Resource types for resolving browse name and description for tagged resources.',
@@ -107,7 +118,7 @@ const initializeApp = async (): Promise<express.Application> => {
         tenantId: AdspId
       ) =>
         new DirectoryConfiguration(
-          { logger, directory, tokenProvider, repository: repositories.directoryRepository },
+          { logger, directory, repository: repositories.directoryRepository },
           tenant,
           core,
           tenantId
@@ -118,6 +129,75 @@ const initializeApp = async (): Promise<express.Application> => {
       directoryUrl: new URL(environment.DIRECTORY_URL),
       eventStreams: [EntryUpdatesStream],
       values: [ServiceMetricsValueDefinition],
+      serviceConfigurations: [
+        // Directory service configuration for tagging of tags.
+        {
+          serviceId,
+          configuration: {
+            [`${serviceId}:resource-v1`]: {
+              resourceTypes: [
+                {
+                  type: 'tag',
+                  matcher: '^\\/tags\\/[0-9a-z-]{1,100}$',
+                  namePath: 'label',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: TagDeletedDefinition.name,
+                    resourceIdPath: 'tag.urn',
+                  },
+                },
+              ],
+            },
+          },
+        },
+        // Cache service configuration for resources and tags.
+        {
+          serviceId: adspId`urn:ads:platform:cache-service`,
+          configuration: {
+            targets: {
+              [`${serviceId}:resource-v1`]: {
+                ttl: 30 * 60,
+                invalidationEvents: [
+                  {
+                    namespace: serviceId.service,
+                    name: TaggedResourceDefinition.name,
+                    resourceIdPath: [
+                      'tag._links.resources.href',
+                      'tag._links.collection.href',
+                      'resource._links.tags.href',
+                      'resource._links.collection.href',
+                    ],
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: UntaggedResourceDefinition.name,
+                    resourceIdPath: [
+                      'tag._links.resources.href',
+                      'tag._links.collection.href',
+                      'resource._links.tags.href',
+                      'resource._links.collection.href',
+                    ],
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: ResourceDeletedDefinition.name,
+                    resourceIdPath: [
+                      'resource._links.self.href',
+                      'resource._links.tags.href',
+                      'resource._links.collection.href',
+                    ],
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: TagDeletedDefinition.name,
+                    resourceIdPath: ['tag._links.self.href', 'tag._links.resources.href', 'tag._links.collection.href'],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ],
     },
     { logger },
     {
@@ -157,12 +237,20 @@ const initializeApp = async (): Promise<express.Application> => {
   const queueService = await createDirectoryQueueService({ ...environment, logger });
 
   app.use('/directory', metricsHandler, passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }));
-  app.use('/resource', metricsHandler, passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
+  app.use(
+    '/resource',
+    metricsHandler,
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
+
   applyDirectoryMiddleware(app, {
     ...repositories,
     serviceId,
     logger,
     directory,
+    tokenProvider,
     tenantService,
     eventService,
     configurationService,
@@ -193,9 +281,11 @@ const initializeApp = async (): Promise<express.Application> => {
         health: { href: new URL('/health', rootUrl).href },
         api: [
           {
+            name: 'directory-v2',
             href: new URL('/directory/v2', rootUrl).href,
           },
           {
+            name: 'resource-v1',
             href: new URL('/resource/v1', rootUrl).href,
           },
         ],

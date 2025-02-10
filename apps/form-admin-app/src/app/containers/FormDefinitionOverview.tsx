@@ -10,6 +10,7 @@ import {
   GoASpacer,
   GoATable,
 } from '@abgov/react-components-new';
+import { RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -29,7 +30,6 @@ import {
 import { ContentContainer } from '../components/ContentContainer';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import { ScheduleIntakeModal } from '../components/ScheduleIntakeModal';
-import { RowSkeleton } from '../components/RowSkeleton';
 
 const OverviewLayout = styled.div`
   position: absolute;
@@ -90,6 +90,9 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             <GoAFormItem label="ID" mr="m">
               <span>{definition.id}</span>
             </GoAFormItem>
+            <GoAFormItem label="Rev" mr="m">
+              <span>{definition.revision}</span>
+            </GoAFormItem>
             <GoAFormItem label="Name" mr="m">
               <span>{definition.name}</span>
             </GoAFormItem>
@@ -111,6 +114,21 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             the form, then submit once ready.
           </GoADetails>
         )}
+        {!definition.anonymousApply &&
+          (definition.oneFormPerApplicant ? (
+            <GoADetails heading="One form per applicant">
+              Applicants can create one form of this definition. In programs where people are expected to apply only
+              once, this configuration limits the the opportunity for duplicate submissions. However, programs should
+              still consider duplicates since this configuration cannot fully prevent them (for example, if both
+              parents apply for the same dependent child).
+            </GoADetails>
+          ) : (
+            <GoADetails heading="Multiple forms per applicant">
+              Applicants can create multiple forms of this definition. In programs where people can make multiple
+              distinct submissions, such as separate submissions for family members, this configuration allows them to
+              create, draft and submit the forms separately.
+            </GoADetails>
+          ))}
         {definition.supportTopic ? (
           <GoADetails heading="Applicant questions">
             Applicants can send questions regarding their form, which staff can review and respond to. Anonymous
@@ -164,8 +182,8 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                         <GoABadge type="success" content={definition.intake.isUpcoming ? 'Upcoming' : 'Active'} />
                       )}
                     </td>
-                    <td>{event.start.toFormat('LLLL dd ttt')}</td>
-                    <td>{event.end.toFormat('LLLL dd ttt')}</td>
+                    <td>{event.start.toFormat('LLL d, yyyy ttt')}</td>
+                    <td>{event.end.toFormat('LLL d, yyyy ttt')}</td>
                     <td>
                       <GoAIconButton icon="trash" onClick={() => dispatch(deleteEvent(event.urn))} />
                     </td>

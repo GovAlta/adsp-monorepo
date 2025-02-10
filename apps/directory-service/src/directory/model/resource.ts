@@ -1,10 +1,10 @@
-import { AdspId, assertAdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, assertAdspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { DomainEvent, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { property } from 'lodash';
-import { Resource, ResourceTypeConfiguration } from '../types';
 import axios from 'axios';
 import { Logger } from 'winston';
 import { DirectoryRepository } from '../repository';
+import { Resource, ResourceTypeConfiguration } from '../types';
 
 export class ResourceType {
   public type: string;
@@ -18,13 +18,12 @@ export class ResourceType {
   constructor(
     private logger: Logger,
     private directory: ServiceDirectory,
-    private tokenProvider: TokenProvider,
     private repository: DirectoryRepository,
     { type, matcher, namePath, descriptionPath, deleteEvent }: ResourceTypeConfiguration
   ) {
     this.type = type;
     this.matcher = new RegExp(matcher);
-    this.nameGetter = property(namePath);
+    this.nameGetter = namePath ? property(namePath) : () => undefined;
     this.descriptionGetter = descriptionPath ? property(descriptionPath) : () => undefined;
     this.eventResourceIdGetter = deleteEvent?.resourceIdPath ? property(deleteEvent?.resourceIdPath) : () => undefined;
     this.deleteEventNamespace = deleteEvent?.namespace;
@@ -36,7 +35,12 @@ export class ResourceType {
     return this.matcher.test(urn.resource);
   }
 
-  public async resolve(resource: Resource): Promise<Resource> {
+  public async resolve(
+    token: string,
+    resource: Resource,
+    sync = false,
+    params: Record<string, unknown> = null
+  ): Promise<Resource> {
     if (!this.matches(resource?.urn)) {
       throw new InvalidOperationError(`Resource type '${this.type}' not matched to resource: ${resource.urn}`);
     }
@@ -47,8 +51,6 @@ export class ResourceType {
         throw new NotFoundError(`Failed to lookup URL for resource: ${resource.urn}.`);
       }
 
-      const token = await this.tokenProvider.getAccessToken();
-
       this.logger.debug(`Retrieving resource ${resource.urn} from: ${resourceUrl}...`, {
         context: 'ResourceType',
         tenant: resource.tenantId?.toString(),
@@ -56,7 +58,7 @@ export class ResourceType {
 
       const { data } = await axios.get(resourceUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { tenantId: resource.tenantId?.toString() },
+        params: { ...params, tenantId: resource.tenantId?.toString() },
       });
 
       this.logger.debug(`Retrieved resource ${resource.urn} and resolving name and description...`, {
@@ -66,22 +68,27 @@ export class ResourceType {
 
       const name = this.nameGetter(data) || resource.name;
       const description = this.descriptionGetter(data) || resource.description;
+      if (name !== resource.name || description !== resource.description || this.type !== resource.type) {
+        resource = sync
+          ? await this.repository.saveResource({ ...resource, name, description, type: this.type })
+          : { ...resource, name, description, type: this.type };
+      }
 
-      return await this.repository.saveResource({ ...resource, name, description, type: this.type });
+      return { ...resource, data };
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) {
+      if (axios.isAxiosError(err) && err.response?.status === 404 && sync) {
         // If there's a 404, then the resource doesn't exist. This can happen if the resource was deleted before being resolved.
         // Delete the missing resource for consistency.
         await this.repository.deleteResource(resource);
-        // undefined is returned.
+        // Undefined is returned after delete;
         return;
       } else {
         this.logger.warn(`Error encountered resolving resource ${resource.urn}: ${err}`, {
           context: 'ResourceType',
           tenant: resource.tenantId?.toString(),
         });
-
-        throw err;
+        // Original resource is returned.
+        return resource;
       }
     }
   }

@@ -33,21 +33,14 @@ import {
   formSetToDraft,
   formSubmitted,
   formUnlocked,
+  submissionDeleted,
   submissionDispositioned,
 } from '../events';
-import { mapForm, mapFormDefinition, mapFormWithFormSubmission } from '../mapper';
+import { mapForm, mapFormDefinition, mapFormSubmission, mapFormWithFormSubmission } from '../mapper';
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { ExportServiceRoles, FormServiceRoles } from '../roles';
-import {
-  Form,
-  FormCriteria,
-  FormDefinition,
-  FormStatus,
-  FormSubmission,
-  FormSubmissionCriteria,
-  Intake,
-} from '../types';
+import { Form, FormCriteria, FormDefinition, FormStatus, FormSubmissionCriteria, Intake } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -66,31 +59,6 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
     id: entity.id,
     data: entity.data,
     files: Object.entries(entity.files || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
-  };
-}
-
-export function mapFormSubmissionData(apiId: AdspId, entity: FormSubmissionEntity): FormSubmission & { urn: string } {
-  return {
-    urn: `${apiId}:/forms/${entity.formId}/submissions/${entity.id}`,
-    id: entity.id,
-    formId: entity.formId,
-    formDefinitionId: entity.formDefinitionId,
-    formData: entity.formData,
-    formFiles: Object.entries(entity.formFiles || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
-    created: entity.created,
-    createdBy: { id: entity.createdBy.id, name: entity.createdBy.name },
-    securityClassification: entity.securityClassification,
-    disposition: entity.disposition
-      ? {
-          id: entity.disposition.id,
-          date: entity.disposition.date,
-          status: entity.disposition.status,
-          reason: entity.disposition.reason,
-        }
-      : null,
-    updated: entity.updated,
-    updatedBy: { id: entity.updatedBy.id, name: entity.updatedBy.name },
-    hash: entity.hash,
   };
 }
 
@@ -143,15 +111,29 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
-      const { data } = await axios.get<Results<{ latest: { configuration: FormDefinition } }>>(
-        new URL('v2/configuration/form-service', configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { top, after, tenantId: tenantId?.toString() },
-        }
-      );
+      const { data } = await axios.get<
+        Results<{
+          latest: { revision: number; configuration: FormDefinition };
+          active: { revision: number; configuration: FormDefinition };
+        }>
+      >(new URL('v2/configuration/form-service', configurationApiUrl).href, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          top,
+          after,
+          tenantId: tenantId?.toString(),
+          includeActive: true,
+        },
+      });
 
-      res.send({ ...data, results: data.results.map(({ latest }) => mapFormDefinition(latest.configuration)) });
+      res.send({
+        ...data,
+        results: data.results.map(({ latest, active }) =>
+          active
+            ? mapFormDefinition(active.configuration, active.revision)
+            : mapFormDefinition(latest.configuration, latest.revision)
+        ),
+      });
     } catch (err) {
       next(err);
     }
@@ -189,7 +171,7 @@ export function getFormDefinition(tenantService: TenantService, calendarService:
         intake = await calendarService.getScheduledIntake(definition);
       }
 
-      res.send(mapFormDefinition(definition, intake));
+      res.send(mapFormDefinition(definition, definition.revision, intake));
     } catch (err) {
       next(err);
     }
@@ -274,7 +256,7 @@ export function findSubmissions(apiId: AdspId, repository: FormSubmissionReposit
       });
 
       res.send({
-        results: results.map((r) => mapFormSubmissionData(apiId, r)),
+        results: results.map((r) => mapFormSubmission(apiId, r)),
         page,
       });
 
@@ -319,7 +301,7 @@ export function findFormSubmissions(
       });
 
       res.send({
-        results: results.map((r) => mapFormSubmissionData(apiId, r)),
+        results: results.map((r) => mapFormSubmission(apiId, r)),
         page,
       });
 
@@ -464,7 +446,41 @@ export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmi
       }
 
       end();
-      res.send(mapFormSubmissionData(apiId, formSubmission));
+      res.send(mapFormSubmission(apiId, formSubmission));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteFormSubmission(
+  apiId: AdspId,
+  eventService: EventService,
+  submissionRepository: FormSubmissionRepository
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'get-entity-time');
+      const { formId, submissionId } = req.params;
+      const user = req.user;
+      const tenant = req.tenant;
+
+      if (!isAllowedUser(user, tenant.id, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('delete form submission', user);
+      }
+
+      let deleted = false;
+      const formSubmission = await submissionRepository.get(tenant.id, submissionId, formId);
+      if (formSubmission) {
+        deleted = await submissionRepository.delete(formSubmission);
+      }
+
+      if (deleted) {
+        eventService.send(submissionDeleted(apiId, user, formSubmission));
+      }
+
+      end();
+      res.send({ deleted });
     } catch (err) {
       next(err);
     }
@@ -502,7 +518,7 @@ export function updateFormSubmissionDisposition(
       const updated = await formSubmission.dispositionSubmission(user, dispositionStatus, dispositionReason);
       end();
 
-      res.send(mapFormSubmissionData(apiId, updated));
+      res.send(mapFormSubmission(apiId, updated));
       eventService.send(submissionDispositioned(apiId, user, updated));
 
       logger.info(
@@ -901,6 +917,13 @@ export function createFormRouter({
     assertAuthenticatedHandler,
     createValidationHandler(param('submissionId').isUUID()),
     getFormSubmission(apiId, submissionRepository)
+  );
+
+  router.delete(
+    '/submissions/:submissionId',
+    assertAuthenticatedHandler,
+    createValidationHandler(param('submissionId').isUUID()),
+    deleteFormSubmission(apiId, eventService, submissionRepository)
   );
 
   router.get(

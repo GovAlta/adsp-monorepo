@@ -422,6 +422,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       options={{
                         automaticLayout: true,
                         scrollBeyondLastLine: false,
+                        wordWrap: 'on',
                         tabSize: 2,
                         padding: {
                           top: 8,
@@ -534,6 +535,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           <GoACheckbox
                             name="support-topic"
                             key="support-topic"
+                            disabled={definition.anonymousApply}
                             checked={definition.supportTopic}
                             testId="support-topic"
                             onChange={() => {
