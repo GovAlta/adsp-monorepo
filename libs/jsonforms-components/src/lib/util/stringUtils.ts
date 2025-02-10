@@ -100,7 +100,6 @@ export const checkFieldValidity = (props: ControlProps): string => {
   }
 
   if (required) {
-    if (data === undefined) return '';
     if (schema) {
       if (isEmptyBoolean(schema, data)) {
         return `${labelToUpdate} is required`;

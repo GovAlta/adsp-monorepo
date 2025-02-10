@@ -67,7 +67,12 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   );
 };
 export const GoInputBaseReview = (props: ControlProps) => (
-  <GoAInputBaseControl {...props} input={GoABaseInputReviewComponent} isStepperReview={true} />
+  <GoAInputBaseControl
+    {...props}
+    input={GoABaseInputReviewComponent}
+    isStepperReview={true}
+    skipOnBlurValidation={true}
+  />
 );
 
 export const GoInputBaseReviewControl = withJsonFormsControlProps(GoInputBaseReview);

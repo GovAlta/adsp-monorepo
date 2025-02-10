@@ -4,18 +4,13 @@ import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity } from '../../util/stringUtils';
-import {
-  onBlurForNumericControl,
-  onChangeForNumericControl,
-  onKeyPressNumericControl,
-} from '../../util/inputControlUtils';
+import { onBlurForNumericControl, onChangeForNumericControl } from '../../util/inputControlUtils';
 
 export type GoAInputIntegerProps = CellProps & WithClassname & WithInputProps;
 
 export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
+  const { data, config, id, enabled, uischema, schema, label, isVisited, errors, setIsVisited } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
@@ -26,12 +21,11 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
-  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoAInput
       type="number"
-      error={errorsFormInput.length > 0}
+      error={isVisited && errors.length > 0}
       width={width}
       disabled={!enabled}
       readonly={readOnly}
@@ -42,8 +36,13 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       placeholder={placeholder}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onKeyPress={(name: string, value: string, key: string) => {}}
+      /* istanbul ignore next */
       onBlur={(name: string, value: string) => {
+        /* TODO: add the unit test, when the solution is used */
+        /* istanbul ignore next */
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
         onBlurForNumericControl({
           name,
           value,
@@ -51,6 +50,11 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
         });
       }}
       onChange={(name: string, value: string) => {
+        /* TODO: add the unit test, when the solution is used */
+        /* istanbul ignore next */
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
         onChangeForNumericControl({
           name,
           value,

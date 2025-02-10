@@ -97,18 +97,13 @@ export const JsonFormsStepperContextProvider = ({
       goToPage: (id: number, updateCategoryId?: number) => {
         ajv.validate(schema, ctx.core?.data || {});
 
-        if (updateCategoryId !== undefined && updateCategoryId < stepperState.categories.length) {
-          stepperDispatch({
-            type: 'update/category',
-            payload: { errors: ctx?.core?.errors, id: updateCategoryId, ajv },
-          });
-        }
-
         if (stepperState.isOnReview !== true) {
-          stepperDispatch({
-            type: 'update/category',
-            payload: { errors: ctx?.core?.errors, id: stepperState.activeId, ajv },
-          });
+          for (let i = 0; i < id; i++) {
+            stepperDispatch({
+              type: 'update/category',
+              payload: { errors: ctx?.core?.errors, id: i, ajv },
+            });
+          }
         }
 
         stepperDispatch({
