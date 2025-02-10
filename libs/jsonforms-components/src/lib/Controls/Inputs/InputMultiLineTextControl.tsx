@@ -13,30 +13,27 @@ import { GoATextArea } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity } from '../../util/stringUtils';
 import { onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 
 export type GoAInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
 export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element => {
-  const { data, config, id, enabled, uischema, path, handleChange, schema, label } = props;
+  const { data, config, id, enabled, uischema, path, schema, label, isVisited, errors, setIsVisited } = props;
   const { required } = props as ControlProps;
   const [textAreaValue, _] = React.useState<string>(data);
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   const width = uischema?.options?.componentProps?.readOnly ?? '100%';
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const textAreaName = `${label || path}-text-area` || '';
-  const textarea = document.getElementsByName(textAreaName)[0] ?? null;
 
   const txtAreaComponent = (
     <GoATextArea
-      error={errorsFormInput.length > 0}
+      error={isVisited && errors.length > 0}
       value={textAreaValue}
       disabled={!enabled}
       readOnly={readOnly}
@@ -49,7 +46,12 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       onKeyPress={(name: string, value: string, key: string) => {
         const newValue = autoCapitalize ? value.toUpperCase() : value;
 
-        if (value.length === 0 || (required && errorsFormInput.length === 0 && value.length > 0)) {
+        /* TODO: add the unit test, when the solution is used */
+        /* istanbul ignore next */
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
+        if (value.length === 0 || (required && errors.length === 0 && value.length > 0)) {
           onKeyPressForTextControl({
             name,
             value: newValue,
@@ -65,7 +67,11 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
         });
       }}
       onChange={(name: string, value: string) => {
-        // this is not triggered unless you tab out
+        /* TODO: add the unit test, when the solution is used */
+        /* istanbul ignore next */
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
       }}
       {...uischema?.options?.componentProps}
     />

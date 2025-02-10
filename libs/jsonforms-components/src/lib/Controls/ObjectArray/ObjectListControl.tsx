@@ -2,7 +2,7 @@ import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
 import React, { useState, useReducer, useEffect, useCallback } from 'react';
-import { checkFieldValidity, isEmptyBoolean, isEmptyNumber } from '../../util';
+import { isEmptyBoolean, isEmptyNumber } from '../../util';
 import {
   ArrayLayoutProps,
   ControlElement,

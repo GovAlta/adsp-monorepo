@@ -2,6 +2,8 @@ import { ControlProps } from '@jsonforms/core';
 
 export interface WithInputProps {
   label?: string;
+  isVisited?: boolean;
+  setIsVisited?: () => void;
 }
 
 /**

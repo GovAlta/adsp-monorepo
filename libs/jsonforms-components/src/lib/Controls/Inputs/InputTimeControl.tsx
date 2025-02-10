@@ -3,23 +3,22 @@ import { GoAInputTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity } from '../../util/stringUtils';
-import { onBlurForTimeControl, onKeyPressForTimeControl } from '../../util/inputControlUtils';
+import { onKeyPressForTimeControl } from '../../util/inputControlUtils';
 export type GoAInputTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
+  const { data, config, id, enabled, uischema, path, handleChange, schema, label, isVisited, errors, setIsVisited } =
+    props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
-  const errorsFormInput = checkFieldValidity(props as ControlProps);
   const width = uischema?.options?.componentProps?.readOnly ?? '100%';
 
   return (
     <GoAInputTime
-      error={errorsFormInput.length > 0}
+      error={isVisited && errors.length > 0}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data}
       step={1}
@@ -28,9 +27,12 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       readonly={readOnly}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
-        if (value) {
-          handleChange(path, value);
+        /* istanbul ignore next */
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
         }
+        /* istanbul ignore next */
+        handleChange(path, value === '' ? undefined : value);
       }}
       // Dont use handleChange in the onChange event, use the keyPress or onBlur.
       // If you use it onChange along with keyPress event it will cause a

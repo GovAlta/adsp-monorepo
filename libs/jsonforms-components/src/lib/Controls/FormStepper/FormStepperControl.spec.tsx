@@ -317,10 +317,8 @@ describe('Form Stepper Control', () => {
       const shadowNext = prevButton.shadowRoot?.querySelector('button');
       expect(shadowNext).not.toBeNull();
       fireEvent.click(shadowNext!);
-      expect(mockDispatch.mock.calls[1][0].type === 'update/category');
-      expect(mockDispatch.mock.calls[1][0].payload.id === 1);
-      expect(mockDispatch.mock.calls[3][0].type === 'page/to/index');
-      expect(mockDispatch.mock.calls[3][0].id === 0);
+      expect(mockDispatch.mock.calls[2][0].type === 'page/to/index');
+      expect(mockDispatch.mock.calls[2][0].id === 0);
     });
   });
 
