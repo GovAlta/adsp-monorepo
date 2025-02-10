@@ -69,9 +69,9 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
 
   return (
     <NameInputs
-      firstName={defaultName.firstName}
-      middleName={defaultName.middleName}
-      lastName={defaultName.lastName}
+      firstName={nameData.firstName}
+      middleName={nameData.middleName}
+      lastName={nameData.lastName}
       handleInputChange={handleInputChange}
       data={data}
       disabled={!enabled}
