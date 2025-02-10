@@ -4,7 +4,7 @@ import { GoAButton } from '@abgov/react-components-new';
 import { FetchNotificationMetrics } from '@store/notification/actions';
 import { NotificationMetrics } from './metrics';
 import { ContactInformation } from './contactInformation';
-import { EmailInformation } from './emailInformation/emailSection';
+import { EmailInformation } from './emailinformation/emailSection';
 import { BotNotifications } from './botNotifications';
 import { OverviewLayout } from '@components/Overview';
 

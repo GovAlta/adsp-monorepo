@@ -207,6 +207,27 @@ describe('AddressLookUpControl', () => {
         },
       })
     );
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', {
+        detail: {
+          key: 'ArrowUp',
+          code: 38,
+          charCode: 0,
+        },
+      })
+    );
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', {
+        detail: {
+          key: 'Enter',
+          code: 13,
+          charCode: 0,
+        },
+      })
+    );
     expect(inputField?.getAttribute('value')).toBe('');
   });
 

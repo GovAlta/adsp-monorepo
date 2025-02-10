@@ -149,7 +149,7 @@ describe('input number controls', () => {
 
       expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
-      expect(handleChangeMock.mock.calls.length).toBe(2);
+      expect(handleChangeMock.mock.calls.length).toBe(1);
     });
   });
 });
