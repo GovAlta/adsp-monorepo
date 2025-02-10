@@ -13,7 +13,7 @@ import {
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
 
-import { FormStepperSummaryH3, RightAlignmentDiv } from './styled-components';
+import { FormStepperSummaryH3, RightAlignmentDiv, PageRenderPadding, PageBorder } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
@@ -21,6 +21,7 @@ import { CategorizationStepperLayoutRendererProps } from './types';
 import { FormStepperReviewer } from './FormStepperReviewControl';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import { CategorizationElement } from './context/types';
+import { BackButton } from './BackButton';
 
 export interface FormStepperOptionProps {
   nextButtonLabel?: string;
@@ -59,6 +60,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
   const optionProps = (uischema.options as FormStepperOptionProps) || {};
   const [isOpen, setIsOpen] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
+  const [selectedPage, setSelectedPage] = useState(0);
 
   const handleSubmit = () => {
     if (submitForm) {
@@ -72,126 +74,187 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
     setIsOpen(false);
   };
 
+  // eslint-disable-next-line
+  const options = (uischema as any).options;
+
   return (
     <div data-testid="form-stepper-test-wrapper">
       <Visible visible={visible}>
-        <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-          <GoAFormStepper
-            testId={`form-stepper-headers-${uischema?.options?.testId}` || 'form-stepper-test'}
-            step={isSelected === false ? -1 : activeId + 1}
-            key="stepper-form-stepper-wrapper"
-            onChange={(step) => {
-              setIsSelected(true);
-              goToPage(step - 1);
-            }}
-          >
-            {categories?.map((c, index) => {
-              return (
-                <GoAFormStep
-                  data-testid={`stepper-tab-${index}`}
-                  key={`stepper-tab-${index}`}
-                  text={`${c.label}`}
-                  status={c.isVisited ? (c.isCompleted && c.isValid ? 'complete' : 'incomplete') : undefined}
-                />
-              );
-            })}
-            <GoAFormStep key={`stepper-tab-review`} text="Review" />
-          </GoAFormStepper>
+        {options?.variant === 'stepper' && (
+          <div id={`${path || `goa`}-form-stepper`} className="formStepper">
+            <GoAFormStepper
+              testId={`form-stepper-headers-${uischema?.options?.testId}` || 'form-stepper-test'}
+              step={isSelected === false ? -1 : activeId + 1}
+              key="stepper-form-stepper-wrapper"
+              onChange={(step) => {
+                setIsSelected(true);
+                goToPage(step - 1);
+              }}
+            >
+              {categories?.map((c, index) => {
+                return (
+                  <GoAFormStep
+                    data-testid={`stepper-tab-${index}`}
+                    key={`stepper-tab-${index}`}
+                    text={`${c.label}`}
+                    status={c.isVisited ? (c.isCompleted && c.isValid ? 'complete' : 'incomplete') : undefined}
+                  />
+                );
+              })}
+              <GoAFormStep key={`stepper-tab-review`} text="Review" />
+            </GoAFormStepper>
 
-          <GoAPages current={activeId + 1} mb="xl">
-            {categories?.map((category, index) => {
-              const props: StepProps = {
-                category: category.uischema as CategorizationElement,
-                categoryIndex: category.id,
-                visible: category?.visible as boolean,
-                enabled: category?.isEnabled as boolean,
-                path,
-                schema,
-                renderers,
-                cells,
-                data,
-              };
+            <GoAPages current={activeId + 1} mb="xl">
+              {categories?.map((category, index) => {
+                const props: StepProps = {
+                  category: category.uischema as CategorizationElement,
+                  categoryIndex: category.id,
+                  visible: category?.visible as boolean,
+                  enabled: category?.isEnabled as boolean,
+                  path,
+                  schema,
+                  renderers,
+                  cells,
+                  data,
+                };
 
-              return (
-                <div data-testid={`step_${index}-content`} key={`${category.label}`} style={{ marginTop: '1.5rem' }}>
-                  <RenderStepElements {...props} />
-                </div>
-              );
-            })}
-            <div data-testid="summary_step-content">
-              <FormStepperSummaryH3>{summaryLabel}</FormStepperSummaryH3>
-              <FormStepperReviewer {...{ ...props, navigationFunc: goToPage }} />
-            </div>
-          </GoAPages>
-          <GoAGrid minChildWidth="100px">
-            <div>
-              {hasPrevButton ? (
-                <GoAButton
-                  type={optionProps?.previousButtonType ? optionProps?.previousButtonType : 'secondary'}
-                  disabled={selectIsDisabled()}
-                  onClick={() => {
-                    const element = document.getElementById(`${path || `goa`}-form-stepper`);
-                    if (element) {
-                      element.scrollIntoView();
-                    }
+                return (
+                  <div data-testid={`step_${index}-content`} key={`${category.label}`} style={{ marginTop: '1.5rem' }}>
+                    <RenderStepElements {...props} />
+                  </div>
+                );
+              })}
+              <div data-testid="summary_step-content">
+                <FormStepperSummaryH3>{summaryLabel}</FormStepperSummaryH3>
+                <FormStepperReviewer {...{ ...props, navigationFunc: goToPage }} />
+              </div>
+            </GoAPages>
+            <GoAGrid minChildWidth="100px">
+              <div>
+                {hasPrevButton ? (
+                  <GoAButton
+                    type={optionProps?.previousButtonType ? optionProps?.previousButtonType : 'secondary'}
+                    disabled={selectIsDisabled()}
+                    onClick={() => {
+                      const element = document.getElementById(`${path || `goa`}-form-stepper`);
+                      if (element) {
+                        element.scrollIntoView();
+                      }
 
-                    goToPage(activeId - 1, activeId);
-                  }}
-                  testId="prev-button"
-                >
-                  {optionProps?.previousButtonLabel ? optionProps?.previousButtonLabel : 'Previous'}
-                </GoAButton>
-              ) : (
-                <div></div>
-              )}
-            </div>
-            {hasNextButton && (
-              <RightAlignmentDiv>
-                <GoAButton
-                  type={optionProps?.nextButtonType ? optionProps?.nextButtonType : 'primary'}
-                  disabled={selectIsDisabled()}
-                  onClick={() => {
-                    goToPage(activeId + 1, activeId);
-
-                    const element = document.getElementById(`${path || `goa`}-form-stepper`);
-                    if (element) {
-                      element.scrollIntoView();
-                    }
-                  }}
-                  testId="next-button"
-                >
-                  {optionProps?.nextButtonLabel ? optionProps?.nextButtonLabel : 'Next'}
-                </GoAButton>
-              </RightAlignmentDiv>
-            )}
-            {isOnReview && (
-              <RightAlignmentDiv>
-                <div>
-                  <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="stepper-submit-btn">
-                    Submit
+                      goToPage(activeId - 1, activeId);
+                    }}
+                    testId="prev-button"
+                  >
+                    {optionProps?.previousButtonLabel ? optionProps?.previousButtonLabel : 'Previous'}
                   </GoAButton>
-                </div>
-              </RightAlignmentDiv>
-            )}
-          </GoAGrid>
+                ) : (
+                  <div></div>
+                )}
+              </div>
+              {hasNextButton && (
+                <RightAlignmentDiv>
+                  <GoAButton
+                    type={optionProps?.nextButtonType ? optionProps?.nextButtonType : 'primary'}
+                    disabled={selectIsDisabled()}
+                    onClick={() => {
+                      goToPage(activeId + 1, activeId);
 
-          <GoAModal
-            testId="submit-confirmation"
-            open={isOpen}
-            heading={'Form Submitted'}
-            width="640px"
-            actions={
-              <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
-                  Close
-                </GoAButton>
-              </GoAButtonGroup>
-            }
-          >
-            <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
-          </GoAModal>
-        </div>
+                      const element = document.getElementById(`${path || `goa`}-form-stepper`);
+                      if (element) {
+                        element.scrollIntoView();
+                      }
+                    }}
+                    testId="next-button"
+                  >
+                    {optionProps?.nextButtonLabel ? optionProps?.nextButtonLabel : 'Next'}
+                  </GoAButton>
+                </RightAlignmentDiv>
+              )}
+              {isOnReview && (
+                <RightAlignmentDiv>
+                  <div>
+                    <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="stepper-submit-btn">
+                      Submit
+                    </GoAButton>
+                  </div>
+                </RightAlignmentDiv>
+              )}
+            </GoAGrid>
+          </div>
+        )}
+        {options?.variant === 'pages' && (
+          <div id={`${path || `goa`}-form-pages`}>
+            <PageBorder>
+              {categories?.map((category, index) => {
+                const props: StepProps = {
+                  category: category.uischema as CategorizationElement,
+                  categoryIndex: category.id,
+                  visible: category?.visible as boolean,
+                  enabled: category?.isEnabled as boolean,
+                  path,
+                  schema,
+                  renderers,
+                  cells,
+                  data,
+                };
+
+                if (index === selectedPage && !isOnReview) {
+                  return (
+                    <div
+                      data-testid={`step_${index}-content-pages`}
+                      key={`${category.label}`}
+                      style={{ marginTop: '1.5rem' }}
+                    >
+                      {index > 0 && (
+                        <BackButton testId="back-button" link={() => setSelectedPage(index - 1)} text="Back" />
+                      )}
+                      <PageRenderPadding>
+                        <RenderStepElements {...props} />
+                      </PageRenderPadding>
+                      <PageRenderPadding>
+                        {index !== categories.length - 1 ? (
+                          <GoAButton
+                            type="submit"
+                            onClick={() => setSelectedPage(index + 1)}
+                            disabled={!category.isValid}
+                            testId="pages-save-continue-btn"
+                          >
+                            Save and continue
+                          </GoAButton>
+                        ) : (
+                          <GoAButton
+                            type={'primary'}
+                            onClick={handleSubmit}
+                            disabled={!isValid}
+                            testId="pages-submit-btn"
+                          >
+                            Submit
+                          </GoAButton>
+                        )}
+                      </PageRenderPadding>
+                    </div>
+                  );
+                }
+              })}
+            </PageBorder>
+          </div>
+        )}
       </Visible>
+      <GoAModal
+        testId="submit-confirmation"
+        open={isOpen}
+        heading={'Form Submitted'}
+        width="640px"
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
+              Close
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      >
+        <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
+      </GoAModal>
     </div>
   );
 };
