@@ -34,7 +34,6 @@ const createStepperContextInitData = (
 
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
-    // ListWithDetail path might have conflicts with others. The errors in ListWithDetail will still be caught in the ctx.core.errors
     const incompletePaths = getIncompletePaths(ajv, scopes);
 
     return {
@@ -123,6 +122,17 @@ export const JsonFormsStepperContextProvider = ({
       });
     }
   }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
+
+  useEffect(() => {
+    const newState = createStepperContextInitData({ ...StepperProps, activeId: stepperState?.activeId });
+
+    if (JSON.stringify(newState) !== JSON.stringify(stepperState)) {
+      stepperDispatch({
+        type: 'update/uischema',
+        payload: { state: newState },
+      });
+    }
+  }, [StepperProps]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };
