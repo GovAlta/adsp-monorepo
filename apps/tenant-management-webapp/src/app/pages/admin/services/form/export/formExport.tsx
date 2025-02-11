@@ -220,6 +220,7 @@ export const FormExport = (): JSX.Element => {
             width="100%"
             testId="form-selection-dropdown"
             disabled={spinner}
+            relative={true}
           >
             {formList.map((item) => (
               <GoADropdownItem

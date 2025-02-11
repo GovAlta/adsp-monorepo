@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, fireEvent, waitFor, queryByTestId } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import { AddEditCommentTopicTypeEditor } from './addEditCommentTopicTypeEditor';
-import { ScriptItem } from '@store/script/models';
+
 import { Provider } from 'react-redux';
 import { SESSION_INIT } from '@store/session/models';
 import configureStore from 'redux-mock-store';
@@ -16,7 +16,7 @@ jest.mock('react-router-dom', () => ({
   useRouteMatch: () => ({ url: '/form/edit/A-really-really-long-formservice' }),
 }));
 
-describe('ScriptEditor Component', () => {
+describe('Comment Component', () => {
   const mockStore = configureStore([]);
   const store = mockStore({
     comment: {
@@ -47,12 +47,12 @@ describe('ScriptEditor Component', () => {
     session: SESSION_INIT,
   });
   test('Save button does not route', async () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <AddEditCommentTopicTypeEditor />
       </Provider>
     );
-    const saveButton = queryByTestId('comment-save');
+    const saveButton = baseElement.querySelector("goa-button[testId='comment-save']");
     fireEvent.click(saveButton);
     await waitFor(() => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires

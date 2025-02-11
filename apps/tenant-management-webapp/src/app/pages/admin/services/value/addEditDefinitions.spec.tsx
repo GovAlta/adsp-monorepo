@@ -12,10 +12,6 @@ const initialState = {
   },
 };
 
-const renderWithProvider = (ui, store) => {
-  return render(<Provider store={store}>{ui}</Provider>);
-};
-
 const initialValue: ValueDefinition = {
   namespace: '',
   name: '',
@@ -26,73 +22,78 @@ const initialValue: ValueDefinition = {
 
 test('renders component', () => {
   const store = mockStore(initialState);
-  renderWithProvider(
-    <AddEditValueDefinition
-      onSave={() => {}}
-      initialValue={initialValue}
-      open={true}
-      isEdit={false}
-      onClose={() => {}}
-      values={[]}
-    />,
-    store
+  const { baseElement } = render(
+    <Provider store={store}>
+      <AddEditValueDefinition
+        onSave={() => {}}
+        initialValue={initialValue}
+        open={true}
+        isEdit={false}
+        onClose={() => {}}
+        values={[]}
+      />
+    </Provider>
   );
-  expect(screen.getByTestId('definition-value')).toBeInTheDocument();
+
+  expect(baseElement.querySelector("goa-modal[testId='definition-value']")).toBeInTheDocument();
 });
 
 test('renders form fields', () => {
   const store = mockStore(initialState);
-  renderWithProvider(
-    <AddEditValueDefinition
-      onSave={() => {}}
-      initialValue={initialValue}
-      open={true}
-      isEdit={false}
-      onClose={() => {}}
-      values={[]}
-    />,
-    store
-  );
 
-  expect(screen.getByTestId('value-namespace')).toBeInTheDocument();
-  expect(screen.getByTestId('value-name')).toBeInTheDocument();
-  expect(screen.getByTestId('value-description')).toBeInTheDocument();
+  const { baseElement } = render(
+    <Provider store={store}>
+      <AddEditValueDefinition
+        onSave={() => {}}
+        initialValue={initialValue}
+        open={true}
+        isEdit={false}
+        onClose={() => {}}
+        values={[]}
+      />
+    </Provider>
+  );
+  expect(baseElement.querySelector("goa-input[testId='value-namespace']")).toBeInTheDocument();
+  expect(baseElement.querySelector("goa-input[testId='value-name']")).toBeInTheDocument();
+  expect(baseElement.querySelector("goa-textarea[testId='value-description']")).toBeInTheDocument();
   expect(screen.getByText('Loading...')).toBeInTheDocument();
 });
 
 test('disables namespace and name fields when isEdit is true', () => {
   const store = mockStore(initialState);
-  renderWithProvider(
-    <AddEditValueDefinition
-      onSave={() => {}}
-      initialValue={initialValue}
-      open={true}
-      isEdit={true}
-      onClose={() => {}}
-      values={[]}
-    />,
-    store
+  const { baseElement } = render(
+    <Provider store={store}>
+      <AddEditValueDefinition
+        onSave={() => {}}
+        initialValue={initialValue}
+        open={true}
+        isEdit={false}
+        onClose={() => {}}
+        values={[]}
+      />
+    </Provider>
   );
 
-  expect(screen.getByTestId('value-namespace')).toBeDisabled();
-  expect(screen.getByTestId('value-name')).toBeDisabled();
+  expect(baseElement.querySelector("goa-input[testId='value-namespace']")).toBeDisabled();
+  expect(baseElement.querySelector("goa-input[testId='value-name']")).toBeDisabled();
 });
 
 test('disables save button with validation errors', () => {
   const store = mockStore(initialState);
-  renderWithProvider(
-    <AddEditValueDefinition
-      onSave={() => {}}
-      initialValue={initialValue}
-      open={true}
-      isEdit={false}
-      onClose={() => {}}
-      values={[]}
-    />,
-    store
-  );
 
-  expect(screen.getByTestId('value-save')).toBeDisabled();
+  const { baseElement } = render(
+    <Provider store={store}>
+      <AddEditValueDefinition
+        onSave={() => {}}
+        initialValue={initialValue}
+        open={true}
+        isEdit={false}
+        onClose={() => {}}
+        values={[]}
+      />
+    </Provider>
+  );
+  expect(baseElement.querySelector("goa-button[testId='value-save']")).toBeDisabled();
 });
 
 test('shows spinner based on loading indicator', () => {
@@ -101,37 +102,40 @@ test('shows spinner based on loading indicator', () => {
       indicator: { show: true },
     },
   });
-
-  renderWithProvider(
-    <AddEditValueDefinition
-      onSave={() => {}}
-      initialValue={initialValue}
-      open={true}
-      isEdit={false}
-      onClose={() => {}}
-      values={[]}
-    />,
-    store
+  const { baseElement } = render(
+    <Provider store={store}>
+      <AddEditValueDefinition
+        onSave={() => {}}
+        initialValue={initialValue}
+        open={true}
+        isEdit={false}
+        onClose={() => {}}
+        values={[]}
+      />
+    </Provider>
   );
 
-  fireEvent.click(screen.getByTestId('value-save'));
-  expect(screen.getByTestId('value-save')).toHaveAttribute('disabled');
+  const saveButton = baseElement.querySelector("goa-button[testId='value-save']");
+  fireEvent.click(saveButton);
+
+  expect(saveButton.hasAttribute('disabled'));
 });
 
 test('shows validation errors', async () => {
   const store = mockStore(initialState);
-  renderWithProvider(
-    <AddEditValueDefinition
-      onSave={() => {}}
-      initialValue={initialValue}
-      open={true}
-      isEdit={false}
-      onClose={() => {}}
-      values={[]}
-    />,
-    store
+  const { baseElement } = render(
+    <Provider store={store}>
+      <AddEditValueDefinition
+        onSave={() => {}}
+        initialValue={initialValue}
+        open={true}
+        isEdit={false}
+        onClose={() => {}}
+        values={[]}
+      />
+    </Provider>
   );
-  const namespaceInput = screen.getByTestId('value-namespace');
+  const namespaceInput = baseElement.querySelector("goa-input[testId='value-namespace']");
   fireEvent(namespaceInput, new CustomEvent('_change', { detail: { value: 'platform' } }));
   await waitFor(() => {
     const formItem = namespaceInput.closest('goa-form-item');

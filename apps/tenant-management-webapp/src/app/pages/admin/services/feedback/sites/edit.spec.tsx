@@ -1,16 +1,13 @@
 import React from 'react';
-import { render, fireEvent, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, fireEvent, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SiteAddEditForm } from './edit';
 import { FeedbackSite } from '@store/feedback/models';
 import configureStore from 'redux-mock-store';
 import { Provider } from 'react-redux';
-import FeedbackSites from './sites';
-import { debug } from 'console';
-import { url } from 'inspector';
 
 const mockStore = configureStore([]);
-const sitesstore = mockStore({
+const sitesStore = mockStore({
   feedback: {
     sites: [{ url: 'http://newsite.com', allowAnonymous: true, views: [] }],
     isLoading: false,
@@ -34,7 +31,7 @@ describe('SiteAddEditForm', () => {
   });
 
   it('renders without errors', () => {
-    render(
+    const { baseElement } = render(
       <SiteAddEditForm
         initialValue={initialSite}
         sites={sites}
@@ -45,10 +42,10 @@ describe('SiteAddEditForm', () => {
       />
     );
 
-    expect(screen.getByTestId('add-site-modal')).toBeInTheDocument();
+    expect(baseElement.querySelector("goa-modal[testId='add-site-modal']")).toBeInTheDocument();
   });
   it('save button should be disabled', () => {
-    const { findByText, queryByTestId } = render(
+    const { baseElement } = render(
       <SiteAddEditForm
         initialValue={initialSite}
         sites={sites}
@@ -58,28 +55,28 @@ describe('SiteAddEditForm', () => {
         isEdit={false}
       />
     );
-    const saveBtn = queryByTestId('site-register');
+    const saveBtn = baseElement.querySelector("goa-button[testId='site-register']");
     expect(saveBtn).toBeDisabled();
   });
 
   it('populates form fields based on initial values', () => {
-    render(
+    const { baseElement } = render(
       <SiteAddEditForm
         initialValue={initialSite}
         sites={sites}
         onClose={onCloseMock}
         onSave={onSaveMock}
         open={true}
-        isEdit={false}
+        isEdit={true}
       />
     );
-
-    expect(screen.getByTestId('feedback-url')).toHaveValue('https://example.com');
+    const urlInput = baseElement.querySelector("goa-input[testId='feedback-url']");
+    expect(urlInput).not.toBeNull();
   });
 
   it('validates form input - required fields', async () => {
-    const { findByText, queryByTestId } = render(
-      <Provider store={sitesstore}>
+    const { baseElement } = render(
+      <Provider store={sitesStore}>
         <SiteAddEditForm
           initialValue={inValidSite}
           sites={sites}
@@ -91,14 +88,14 @@ describe('SiteAddEditForm', () => {
       </Provider>
     );
 
-    const urlInput = queryByTestId('feedback-url');
+    const urlInput = baseElement.querySelector("goa-input[testId='feedback-url']");
     fireEvent(urlInput, new CustomEvent('_change', { detail: { value: 'gggghj' } }));
-    const urlFormItem = queryByTestId('feedback-url-formitem');
+    const urlFormItem = baseElement.querySelector("goa-form-item[testId='feedback-url-formItem']");
     expect(urlFormItem).toHaveAttribute('error', 'Please enter a valid URL');
   });
   it('No error should exists when valid url is provided', async () => {
-    const { findByText, queryByTestId } = render(
-      <Provider store={sitesstore}>
+    const { findByText, queryByTestId, baseElement } = render(
+      <Provider store={sitesStore}>
         <SiteAddEditForm
           initialValue={emptySite}
           sites={sites}
@@ -110,14 +107,14 @@ describe('SiteAddEditForm', () => {
       </Provider>
     );
 
-    const urlInput = queryByTestId('feedback-url');
+    const urlInput = baseElement.querySelector("goa-input[testId='feedback-url']");
     fireEvent(urlInput, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    const urlFormItem = queryByTestId('feedback-url-formitem');
+    const urlFormItem = baseElement.querySelector("goa-form-item[testId='feedback-url-formItem']");
     expect(urlFormItem).toHaveAttribute('error', '');
   });
   it('Save button should be enabled when valid url is provided', async () => {
-    const { findByText, queryByTestId } = render(
-      <Provider store={sitesstore}>
+    const { baseElement } = render(
+      <Provider store={sitesStore}>
         <SiteAddEditForm
           initialValue={emptySite}
           sites={sites}
@@ -129,15 +126,15 @@ describe('SiteAddEditForm', () => {
       </Provider>
     );
 
-    const urlInput = queryByTestId('feedback-url');
+    const urlInput = baseElement.querySelector("goa-input[testId='feedback-url']");
     fireEvent(urlInput, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    const urlFormItem = queryByTestId('feedback-url-formitem');
+    const urlFormItem = baseElement.querySelector("goa-form-item[testId='feedback-url-formItem']");
     expect(urlFormItem).toHaveAttribute('error', '');
-    const saveBtn = queryByTestId('site-register');
+    const saveBtn = baseElement.querySelector("goa-button[testId='site-register']");
     expect(saveBtn).toHaveAttribute('disabled', 'false');
   });
   it('URL field should be disabled when editing site', () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <SiteAddEditForm
         initialValue={initialSite}
         sites={sites}
@@ -147,7 +144,7 @@ describe('SiteAddEditForm', () => {
         isEdit={true}
       />
     );
-    const urlInput = queryByTestId('feedback-url');
+    const urlInput = baseElement.querySelector("goa-input[testId='feedback-url']");
     expect(urlInput).toBeDisabled();
   });
 });

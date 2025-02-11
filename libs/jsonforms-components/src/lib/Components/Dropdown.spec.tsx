@@ -1,7 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Dropdown, isValidKey } from './Dropdown';
-import exp from 'constants';
-import { GoAInputProps } from '@abgov/react-components-new';
 
 describe('Dropdown Component', () => {
   it('render the dropdown component', () => {
@@ -66,7 +64,7 @@ describe('Dropdown Component', () => {
       },
     ];
     it('can trigger enter/tab/ecape keys', () => {
-      const component = render(
+      const { baseElement, ...component } = render(
         <Dropdown
           enabled={true}
           label="mock-test"
@@ -77,8 +75,8 @@ describe('Dropdown Component', () => {
           id="jsonforms-dropdown-mock-test"
         />
       );
+      const input = baseElement.querySelector("goa-input[testId='jsonforms-dropdown-mock-test-input']");
 
-      const input = component.getByTestId('jsonforms-dropdown-mock-test-input');
       input.focus();
       const dd = component.getAllByTestId('jsonforms-dropdown-mock-test-label-a-option')[0];
 
@@ -122,8 +120,8 @@ describe('Dropdown Component', () => {
         value: 'value-b',
       },
     ];
-    it('can trigger up/down arrrow keys', () => {
-      const component = render(
+    it('can trigger up/down arrow keys', () => {
+      const { baseElement, ...component } = render(
         <Dropdown
           enabled={true}
           label="mock-test"
@@ -134,8 +132,7 @@ describe('Dropdown Component', () => {
           id="jsonforms-dropdown-mock-test"
         />
       );
-
-      const input = component.getByTestId('jsonforms-dropdown-mock-test-input');
+      const input = baseElement.querySelector("goa-input[testId='jsonforms-dropdown-mock-test-input']");
       input.focus();
       const dd = component.getAllByTestId('jsonforms-dropdown-mock-test-label-a-option')[0];
 
@@ -255,7 +252,7 @@ describe('Dropdown Component', () => {
     });
 
     it('can press enter key for search', () => {
-      const component = render(
+      const { baseElement } = render(
         <Dropdown
           enabled={true}
           label="mock-test"
@@ -267,7 +264,7 @@ describe('Dropdown Component', () => {
         />
       );
 
-      const input = component.getByTestId('jsonforms-dropdown-mock-test-input');
+      const input = baseElement.querySelector("goa-input[testId='jsonforms-dropdown-mock-test-input']");
 
       input.focus();
 

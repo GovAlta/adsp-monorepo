@@ -25,11 +25,11 @@ describe('CoreFileTypeTableRow', () => {
   };
 
   it('should show and hide core roles with detailed role information on toggle', async () => {
-    render(<CoreFileTypeTableRow {...mockProps} />);
+    const { baseElement } = render(<CoreFileTypeTableRow {...mockProps} />);
 
     expect(screen.queryByText(/Read :/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Modify :/)).not.toBeInTheDocument();
-    const ToggleButton = screen.queryByTestId('configuration-toggle-details-visibility');
+    const ToggleButton = baseElement.querySelector("goa-icon-button[testId='configuration-toggle-details-visibility']");
     fireEvent(ToggleButton, new CustomEvent('_click'));
     const read = await screen.getByText('Read :');
     expect(read).toBeInTheDocument();

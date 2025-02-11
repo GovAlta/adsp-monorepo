@@ -23,14 +23,14 @@ describe('User IdP tab in the access service', () => {
       },
     });
 
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <TenantIdp />
       </Provider>
     );
 
-    const emailInput = await queryByTestId('user-search-email-input');
-    const emailSearchBtn = await queryByTestId('user-search-email-btn');
+    const emailInput = await baseElement.querySelector("goa-input[testId='user-search-email-input']");
+    const emailSearchBtn = await baseElement.querySelector("goa-button[testId='user-search-email-btn']");
 
     expect(emailInput).toBeTruthy();
     expect(emailSearchBtn).toBeTruthy();
@@ -53,14 +53,14 @@ describe('User IdP tab in the access service', () => {
       },
     });
 
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <TenantIdp />
       </Provider>
     );
-    const emailInput = await queryByTestId('user-search-email-input');
-    const emailSearchBtn = await queryByTestId('user-search-email-btn');
-    await fireEvent.change(emailInput, { target: { value: 'mock-test@gov.ab.ca' } });
+    const emailInput = await baseElement.querySelector("goa-input[testId='user-search-email-input']");
+    const emailSearchBtn = baseElement.querySelector("goa-button[testId='user-search-email-btn']");
+    await fireEvent(emailInput, new CustomEvent('_change', { detail: { value: 'mock-test@gov.ab.ca' } }));
     await fireEvent.click(emailSearchBtn);
   });
 });

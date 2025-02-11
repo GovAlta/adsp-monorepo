@@ -1,7 +1,6 @@
 import React from 'react';
-import { render, fireEvent, waitFor, queryByTestId } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import { TemplateEditor } from './TemplateEditor';
-import { ScriptItem } from '@store/script/models';
 import { Provider } from 'react-redux';
 import { SESSION_INIT } from '@store/session/models';
 import configureStore from 'redux-mock-store';
@@ -16,7 +15,7 @@ jest.mock('react-router-dom', () => ({
   useRouteMatch: () => ({ url: '/form/edit/A-really-really-long-formservice' }),
 }));
 
-describe('ScriptEditor Component', () => {
+describe('Pdf Component', () => {
   const mockStore = configureStore([]);
   const store = mockStore({
     pdf: {
@@ -79,14 +78,14 @@ describe('ScriptEditor Component', () => {
     },
     session: SESSION_INIT,
   });
-  test('Save button does not route', async () => {
+  it('Save button does not route', async () => {
     const mockErrors = { errors: null };
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <TemplateEditor {...mockErrors} />
       </Provider>
     );
-    const saveButton = queryByTestId('template-form-save');
+    const saveButton = baseElement.querySelector("goa-button[testId='template-form-save']");
     fireEvent.click(saveButton);
     await waitFor(() => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires

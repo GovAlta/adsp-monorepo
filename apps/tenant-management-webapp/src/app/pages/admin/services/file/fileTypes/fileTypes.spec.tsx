@@ -50,7 +50,7 @@ describe('File types tab', () => {
   });
 
   it('render file types', () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <MemoryRouter>
           <FileTypes activeEdit={true} openAddFileType={false} />
@@ -58,7 +58,7 @@ describe('File types tab', () => {
       </Provider>
     );
 
-    const addFileTypeButton = queryByTestId('add-file-type-btn');
+    const addFileTypeButton = baseElement.querySelector("goa-button[testId='add-file-type-btn']");
     expect(addFileTypeButton).not.toBeNull();
     const fileTypeTable = queryByTestId('file-types-table');
     expect(fileTypeTable).not.toBeNull();
@@ -73,13 +73,13 @@ describe('File types tab', () => {
       </Provider>
     );
 
-    const addFileTypeButton = queryByTestId('add-file-type-btn');
+    const addFileTypeButton = baseElement.querySelector("goa-button[testId='add-file-type-btn']");
     fireEvent(addFileTypeButton, new CustomEvent('_click'));
     const fileTypeModal = baseElement.querySelector('goa-modal');
 
     expect(fileTypeModal).not.toBeNull();
 
-    const nameInput = baseElement.querySelector("[data-testid='file-type-modal-name-input']");
+    const nameInput = baseElement.querySelector("[testid='file-type-modal-name-input']");
     expect(nameInput).not.toBeNull();
   });
 
@@ -92,17 +92,21 @@ describe('File types tab', () => {
       </Provider>
     );
 
-    const editActionBtn = queryByTestId('file-type-row-edit-btn-mock-file-type-b-id');
+    const editActionBtn = baseElement.querySelector(
+      "goa-icon-button[testId='file-type-row-edit-btn-mock-file-type-b-id']"
+    );
     fireEvent(editActionBtn, new CustomEvent('_click'));
     const fileTypeModal = baseElement.querySelector('goa-modal');
     expect(fileTypeModal).not.toBeNull();
-    const nameInput = baseElement.querySelector("[data-testid='file-type-modal-name-input']");
+    const nameInput = baseElement.querySelector("[testid='file-type-modal-name-input']");
     nameInput.textContent.includes('testRoleA');
     const actionContent = fileTypeModal.querySelector("[slot='actions']");
 
-    const cancelBtn = actionContent.querySelector("[data-testid='file-type-modal-cancel']");
+    const cancelBtn = actionContent.querySelector("[testid='file-type-modal-cancel']");
     fireEvent(cancelBtn, new CustomEvent('_click'));
-    const deleteActionBtnA = queryByTestId('file-type-row-delete-btn-mock-file-type-a-id');
+    const deleteActionBtnA = baseElement.querySelector(
+      "goa-icon-button[testId='file-type-row-delete-btn-mock-file-type-a-id']"
+    );
     fireEvent(deleteActionBtnA, new CustomEvent('_click'));
     const deleteModalTitle = fileTypeModal.querySelector("[slot='heading']");
     deleteModalTitle.textContent.includes('Delete file type');

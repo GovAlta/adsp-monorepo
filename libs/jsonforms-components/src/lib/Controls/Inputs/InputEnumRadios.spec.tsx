@@ -49,15 +49,16 @@ const dataSchema = {
 
 describe('Input Boolean Radio Control', () => {
   it('will render radio buttons', () => {
-    const renderer = render(getForm(dataSchema, uiSchema));
-    const radio = renderer.getByTestId('bob-jsonforms-radio');
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const radio = baseElement.querySelector("goa-radio-group[testId='bob-jsonforms-radio']");
+
     expect(radio).toBeInTheDocument();
   });
 
   it('will accept a yes click', () => {
     const data = { radio: false };
-    const renderer = render(getForm(dataSchema, uiSchema, data));
-    const radioGroup = renderer.getByTestId('bob-jsonforms-radio');
+    const { baseElement } = render(getForm(dataSchema, uiSchema, data));
+    const radioGroup = baseElement.querySelector("goa-radio-group[testId='bob-jsonforms-radio']");
     expect(radioGroup).toBeInTheDocument();
     expect(radioGroup.getAttribute('value')).toBeNull();
 

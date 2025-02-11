@@ -17,13 +17,13 @@ export const ConfigurationRevisions = (): JSX.Element => {
     return state?.session?.indicator;
   });
 
-  const filtteredServiceList = serviceList.filter((s) => s.includes(':'));
+  const flitteredServiceList = serviceList.filter((s) => s.includes(':'));
 
   return (
     <section>
       <GoAFormItem label="Select definition">
-        {indicator.show && filtteredServiceList?.length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
-        {filtteredServiceList?.length > 0 && (
+        {indicator.show && flitteredServiceList?.length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
+        {flitteredServiceList?.length > 0 && (
           <GoADropdown
             name="Configurations"
             value={selectedConfiguration}
@@ -35,8 +35,9 @@ export const ConfigurationRevisions = (): JSX.Element => {
             aria-label="select-configuration-dropdown"
             width="100%"
             testId="configuration-select-definition-dropdown"
+            relative={true}
           >
-            {filtteredServiceList.map((item) => (
+            {flitteredServiceList.map((item) => (
               <GoADropdownItem
                 name="Configurations"
                 key={item}

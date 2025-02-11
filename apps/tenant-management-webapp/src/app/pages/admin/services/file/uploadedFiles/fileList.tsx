@@ -212,6 +212,7 @@ const FileList = (): JSX.Element => {
             name="fileType"
             value={uploadFileType}
             width="100%"
+            relative={true}
             testId="file-type-name-dropdown-1"
             onChange={(name, values: string | string[]) => {
               setUploadFileType(values.toString());
@@ -251,6 +252,7 @@ const FileList = (): JSX.Element => {
               name="fileType"
               value={filterFileType}
               width="100%"
+              relative={true}
               testId="file-type-name-dropdown-2"
               onChange={(name, value: string | string[]) => {
                 setFilterFileType(value.toString());

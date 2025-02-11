@@ -2,15 +2,13 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
-import LogoutIcon from '@icons/log-out-outline.svg';
 
 import BetaBadge from '@icons/beta-badge.svg';
 import { RootState } from '@store/index';
-import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
-import { getIdpHint } from '@lib/keycloak';
+import { FetchTenant } from '@store/tenant/actions';
 
 import { serviceVariables } from '../../../featureFlag';
-import { GoASideMenu, GoASideMenuGroup, GoASideMenuHeading } from '@abgov/react-components-new';
+import { GoASideMenu, GoASideMenuHeading } from '@abgov/react-components-new';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';
@@ -103,17 +101,6 @@ const Sidebar = ({ type }: SidebarProps) => {
 
 export default Sidebar;
 
-const LogoutWrapper = styled.a`
-  display: flex;
-  cursor: pointer;
-`;
-
-const SignOutLink = styled.div`
-  display: block;
-  @media (min-width: 768px) {
-    display: none;
-  }
-`;
 const BetaBadgeStyle = styled.span`
   height: 20px;
 `;

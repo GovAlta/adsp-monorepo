@@ -77,125 +77,128 @@ const getForm = (formData: object) => {
 describe('Object Array Renderer', () => {
   it('can add a new item', () => {
     const data = { messages: [] };
-    const renderer = render(getForm(data));
+    const { baseElement } = render(getForm(data));
 
     // Add a message
-    const addButton = renderer.getByTestId('object-array-toolbar-Messages');
+    const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
     expect(addButton).toBeInTheDocument();
     const shadowAddBtn = addButton.shadowRoot?.querySelector('button');
     expect(shadowAddBtn).not.toBeNull();
-    fireEvent.click(shadowAddBtn!);
+    fireEvent(addButton, new CustomEvent('_click'));
 
     // populate Name
-    const name = renderer.getByTestId('#/properties/name-input');
-    expect(name).toBeInTheDocument();
-    fireEvent.change(name!, { target: { value: 'Bob' } });
-    expect(name).toHaveValue('Bob');
+    const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");
+    expect(nameInput).toBeInTheDocument();
+    fireEvent(nameInput, new CustomEvent('_change', { detail: { value: 'Bob' } }));
+    expect(nameInput).toHaveAttribute('value', 'Bob');
 
     // populate Message
-    const message = renderer.getByTestId('#/properties/message-input');
-    expect(message).toBeInTheDocument();
-    fireEvent.change(message!, { target: { value: 'The rain in Spain' } });
-    expect(message).toHaveValue('The rain in Spain');
+
+    const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
+    expect(messageInput).toBeInTheDocument();
+    fireEvent(messageInput, new CustomEvent('_change', { detail: { value: 'The rain in Spain' } }));
+    expect(messageInput).toHaveAttribute('value', 'The rain in Spain');
   });
 
   it('can open the delete dialog', () => {
     const data = { messages: [] };
-    const renderer = render(getForm(data));
+    const { baseElement } = render(getForm(data));
 
     // Add a message
-    const addButton = renderer.getByTestId('object-array-toolbar-Messages');
+    const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
     expect(addButton).toBeInTheDocument();
     const shadowAddBtn = addButton.shadowRoot?.querySelector('button');
     expect(shadowAddBtn).not.toBeNull();
-    fireEvent.click(shadowAddBtn!);
+    fireEvent(addButton, new CustomEvent('_click'));
 
     // Ensure delete modal is closed
-    const closedDeleteModal = renderer.getByTestId('object-array-modal');
+    const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
     expect(closedDeleteModal).toBeInTheDocument();
     expect(closedDeleteModal.getAttribute('open')).toBe('false');
 
     // Open the delete Dialog
-    const deleteBtn = renderer.container.querySelector('goa-icon-button');
+    const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
     expect(deleteBtn).toBeInTheDocument();
     expect(deleteBtn?.getAttribute('icon')).toBe('trash');
     const shadowDeleteBtn = deleteBtn!.shadowRoot?.querySelector('button');
     expect(shadowDeleteBtn).not.toBeNull();
-    fireEvent.click(shadowDeleteBtn!);
+    fireEvent(deleteBtn, new CustomEvent('_click'));
 
     // Ensure delete modal is now open
-    const openDeleteModal = renderer.getByTestId('object-array-modal');
-    expect(openDeleteModal).toBeInTheDocument();
-    expect(openDeleteModal.getAttribute('open')).toBe('true');
+    expect(closedDeleteModal).toBeInTheDocument();
+    expect(closedDeleteModal.getAttribute('open')).toBe('true');
   });
 
   it('can abort a delete', () => {
     const data = { messages: [] };
-    const renderer = render(getForm(data));
+    const { baseElement } = render(getForm(data));
 
     // Add a message
-    const addButton = renderer.getByTestId('object-array-toolbar-Messages');
+
+    const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
+
     expect(addButton).toBeInTheDocument();
     const shadowAddBtn = addButton.shadowRoot?.querySelector('button');
     expect(shadowAddBtn).not.toBeNull();
-    fireEvent.click(shadowAddBtn!);
-
+    fireEvent(addButton, new CustomEvent('_click'));
     // Open the delete dialog
-    const deleteBtn = renderer.container.querySelector('goa-icon-button');
+
+    const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
     expect(deleteBtn).toBeInTheDocument();
     const shadowDeleteBtn = deleteBtn!.shadowRoot?.querySelector('button');
     expect(shadowDeleteBtn).not.toBeNull();
-    fireEvent.click(shadowDeleteBtn!);
+    fireEvent(deleteBtn, new CustomEvent('_click'));
 
     // Click cancel
-    const cancel = renderer.getByTestId('object-array-modal-button');
+    const cancel = baseElement.querySelector("goa-button[testId='object-array-modal-button']");
     expect(cancel).toBeInTheDocument();
     const shadowCancel = cancel.shadowRoot?.querySelector('button');
     expect(shadowCancel).not.toBeNull();
-    fireEvent.click(shadowCancel!);
+    fireEvent(cancel, new CustomEvent('_click'));
 
     // Ensure modal is closed
-    const closedDeleteModal = renderer.getByTestId('object-array-modal');
+    const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
+
     expect(closedDeleteModal).toBeInTheDocument();
     expect(closedDeleteModal.getAttribute('open')).toBe('false');
 
     // Ensure item still exists
-    const name = renderer.getByTestId('#/properties/name-input');
-    expect(name).toBeInTheDocument();
+    const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");
+    expect(nameInput).toBeInTheDocument();
   });
 
   it('can do a delete', () => {
     const data = { messages: [] };
-    const renderer = render(getForm(data));
+    const { baseElement } = render(getForm(data));
 
     // Add a message
-    const addButton = renderer.getByTestId('object-array-toolbar-Messages');
+    const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
     expect(addButton).toBeInTheDocument();
     const shadowAddBtn = addButton.shadowRoot?.querySelector('button');
     expect(shadowAddBtn).not.toBeNull();
-    fireEvent.click(shadowAddBtn!);
+    fireEvent(addButton, new CustomEvent('_click'));
 
     // Open the delete dialog
-    const deleteBtn = renderer.container.querySelector('goa-icon-button');
+    const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
     expect(deleteBtn).toBeInTheDocument();
     const shadowDeleteBtn = deleteBtn!.shadowRoot?.querySelector('button');
     expect(shadowDeleteBtn).not.toBeNull();
-    fireEvent.click(shadowDeleteBtn!);
-
+    fireEvent(deleteBtn, new CustomEvent('_click'));
     // Click cancel
-    const confirm = renderer.getByTestId('object-array-confirm-button');
+
+    const confirm = baseElement.querySelector("goa-button[testId='object-array-confirm-button']");
     expect(confirm).toBeInTheDocument();
     const shadowConfirm = confirm.shadowRoot?.querySelector('button');
     expect(shadowConfirm).not.toBeNull();
-    fireEvent.click(shadowConfirm!);
+    fireEvent(confirm, new CustomEvent('_click'));
 
     // Ensure modal is closed
-    const closedDeleteModal = renderer.getByTestId('object-array-modal');
+    const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
     expect(closedDeleteModal).toBeInTheDocument();
     expect(closedDeleteModal.getAttribute('open')).toBe('false');
 
     // Ensure item no longer exists
-    const name = renderer.queryByTestId('#/properties/name-input');
-    expect(name).toBeNull();
+    const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");
+    expect(nameInput).toBeNull();
   });
 });

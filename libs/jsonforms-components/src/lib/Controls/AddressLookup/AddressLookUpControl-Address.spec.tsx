@@ -1,10 +1,10 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { AddressLookUpControl } from './AddressLookUpControl';
 import { fetchAddressSuggestions } from './utils';
 import { JsonFormContext } from '../../Context';
 import { Suggestion } from './types';
-import { ControlElement, JsonSchema4, JsonSchema7, TesterContext, UISchemaElement } from '@jsonforms/core';
+import { ControlElement, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import axios from 'axios';
 
 const mockHandleChange = jest.fn();
@@ -95,14 +95,12 @@ describe('AddressLookUpControl', () => {
     axios.get = jest.fn().mockImplementationOnce(() => {
       return Promise.resolve(mockResponse);
     });
-    const results = await fetchAddressSuggestions('test', '123', true);
-    console.log('results', results);
+    await fetchAddressSuggestions('test', '123', true);
   });
 
-  it('can filter addresss with mouse click with results', async () => {
-    renderComponent();
-    const inputField = screen.getByTestId('address-form-address1');
-
+  it('can filter address with mouse click with results', async () => {
+    const { baseElement } = renderComponent();
+    const inputField = baseElement.querySelector("goa-input[testId='address-form-address2']");
     fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'test', value: '123', key: '123' } }));
     fireEvent(
       inputField,
@@ -128,9 +126,9 @@ describe('AddressLookUpControl', () => {
   });
 
   it('can filter address with key presses ArrowDown with results', async () => {
-    renderComponent();
-    const inputField = screen.getByTestId('address-form-address1');
+    const { baseElement } = renderComponent();
 
+    const inputField = baseElement.querySelector("goa-input[testId='address-form-address2']");
     fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'addressLine1', value: '123', key: '123' } }));
     fireEvent(
       inputField,
@@ -160,9 +158,9 @@ describe('AddressLookUpControl', () => {
   });
 
   it('can filter address with key presses ArrowDown with results', async () => {
-    renderComponent();
-    const inputField = screen.getByTestId('address-form-address1');
+    const { baseElement } = renderComponent();
 
+    const inputField = baseElement.querySelector("goa-input[testId='address-form-address2']");
     fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'addressLine1', value: '123', key: '123' } }));
     fireEvent(
       inputField,

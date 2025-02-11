@@ -30,13 +30,13 @@ describe('Definitions Page', () => {
   });
 
   it('Render directory service', () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <DirectoryService />
       </Provider>
     );
 
-    const addButton = queryByTestId('add-directory-btn');
+    const addButton = baseElement.querySelector("goa-button[testId='add-directory-btn']");
     expect(addButton).not.toBeNull();
   });
 });

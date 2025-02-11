@@ -165,7 +165,7 @@ describe('Service statuses (2 of them)', () => {
     await waitFor(() => expect(getByText(moment(data[1].lastUpdated).calendar())).toBeTruthy());
   });
 
-  it('has notification signup display', async () => {
+  it('has notification signUp display', async () => {
     const { getByText } = render(
       <Provider store={store}>
         <ServiceStatuses />
@@ -175,14 +175,14 @@ describe('Service statuses (2 of them)', () => {
     await waitFor(() => expect(getByText('Sign up for notifications')).toBeTruthy());
   });
 
-  it('allows signup using email', async () => {
-    const { queryByTestId } = render(
+  it('allows signUp using email', async () => {
+    const { baseElement } = render(
       <Provider store={store}>
         <ServiceStatuses />
       </Provider>
     );
 
-    const email = await queryByTestId('email');
+    const email = baseElement.querySelector("goa-input[testId='email']");
 
     fireEvent(
       email,
@@ -190,7 +190,7 @@ describe('Service statuses (2 of them)', () => {
         detail: { value: 'bob@smith.com' },
       })
     );
-    const subscribeButton = await queryByTestId('subscribe');
+    const subscribeButton = baseElement.querySelector("goa-button[testId='subscribe']");
     fireEvent(subscribeButton, new CustomEvent('_click'));
     const actions = store.getActions();
 

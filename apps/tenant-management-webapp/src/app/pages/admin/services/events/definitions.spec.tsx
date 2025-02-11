@@ -33,40 +33,40 @@ describe('Definitions Page', () => {
   });
 
   it('renders', () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
     );
-    const addDefButton = queryByTestId('add-definition');
+    const addDefButton = baseElement.querySelector("goa-button[testId='add-definition']");
     expect(addDefButton).not.toBeNull();
   });
 
   it('allows for the definitions to be added', async () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
     );
-    const addDefButton = queryByTestId('add-definition');
+    const addDefButton = baseElement.querySelector("goa-button[testId='add-definition']");
     fireEvent(addDefButton, new CustomEvent('_click'));
-    const dialog = queryByTestId('definition-form');
+    const dialog = baseElement.querySelector("goa-modal[testId='definition-form']");
     await waitFor(() => {
       expect(dialog).not.toBeNull();
     });
   });
 
   it('deletes a definition', async () => {
-    const { queryByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
     );
-    const deleteBtn = queryByTestId('delete-details');
+    const deleteBtn = baseElement.querySelector("goa-icon-button[testId='delete-details']");
     fireEvent(deleteBtn, new CustomEvent('_click'));
     const confirmation = baseElement.querySelector('goa-modal');
     const actionContent = confirmation.querySelector("[slot='actions']");
-    const deleteConfirm = actionContent.querySelector("[data-testid='delete-confirm']");
+    const deleteConfirm = actionContent.querySelector("[testId='delete-confirm']");
 
     fireEvent(deleteConfirm, new CustomEvent('_click'));
     const actions = store.getActions();
@@ -75,29 +75,29 @@ describe('Definitions Page', () => {
   });
 
   it('cancels deleting a definition', async () => {
-    const { queryByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
     );
-    const deleteBtn = queryByTestId('delete-details');
+    const deleteBtn = baseElement.querySelector("goa-icon-button[testId='delete-details']");
 
     fireEvent(deleteBtn, new CustomEvent('_click'));
     const confirmation = baseElement.querySelector('goa-modal');
     const actionContent = confirmation.querySelector("[slot='actions']");
     await waitFor(() => {
-      expect(actionContent.querySelector("[data-testid='delete-cancel']")).toBeVisible();
+      expect(actionContent.querySelector("[testId='delete-cancel']")).toBeVisible();
     });
   });
 
   it('shows and hides the schema details', async () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
     );
 
-    const toggleDetails = queryByTestId('toggle-details-visibility');
+    const toggleDetails = baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility']");
 
     // init
     expect(queryByTestId('details')).toBeFalsy();
@@ -110,19 +110,20 @@ describe('Definitions Page', () => {
   });
 
   it('edits the definition', async () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
     );
-    const editBtn = queryByTestId('edit-details');
+
+    const editBtn = baseElement.querySelector("goa-icon-button[testId='edit-details']");
     fireEvent(editBtn, new CustomEvent('_click'));
     // fields
-    const namespace = queryByTestId('form-namespace');
-    const name = queryByTestId('form-name');
-    const description = queryByTestId('form-description');
-    const cancelBtn = queryByTestId('form-cancel');
-    const saveBtn = queryByTestId('form-save');
+    const namespace = baseElement.querySelector("goa-input[testId='form-namespace']");
+    const name = baseElement.querySelector("goa-input[testId='form-name']");
+    const description = baseElement.querySelector("goa-textarea[testId='form-description']");
+    const cancelBtn = baseElement.querySelector("goa-button[testId='form-cancel']");
+    const saveBtn = baseElement.querySelector("goa-button[testId='form-save']");
 
     expect(namespace).not.toBeNull();
     expect(name).not.toBeNull();
@@ -131,7 +132,13 @@ describe('Definitions Page', () => {
     expect(saveBtn).not.toBeNull();
 
     // fill
-    fireEvent.change(description, { target: { value: 'the updated description' } });
+
+    fireEvent(
+      description,
+      new CustomEvent('_change', {
+        detail: { value: 'description' },
+      })
+    );
     fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();
     const saveAction = actions.find((action) => action.type === UPDATE_EVENT_DEFINITION_ACTION);
@@ -140,13 +147,13 @@ describe('Definitions Page', () => {
   });
 
   it('cancels editing the definition', async () => {
-    const { queryByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
     );
 
-    const editBtn = queryByTestId('edit-details');
+    const editBtn = baseElement.querySelector("goa-icon-button[testId='edit-details']");
     fireEvent(editBtn, new CustomEvent('_click'));
     const confirmation = baseElement.querySelector('goa-modal');
     const actionContent = confirmation.querySelector("[slot='actions']");
@@ -160,19 +167,20 @@ describe('Definitions Page', () => {
   });
 
   it('creates a new definition', async () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
     );
-    const addBtn = queryByTestId('add-definition');
+    const addBtn = baseElement.querySelector("goa-button[testId='add-definition']");
     fireEvent(addBtn, new CustomEvent('_click'));
     // fields
-    const namespace = queryByTestId('form-namespace');
-    const name = queryByTestId('form-name');
-    const description = queryByTestId('form-description');
-    const cancelBtn = queryByTestId('form-cancel');
-    const saveBtn = queryByTestId('form-save');
+
+    const namespace = baseElement.querySelector("goa-input[testId='form-namespace']");
+    const name = baseElement.querySelector("goa-input[testId='form-name']");
+    const description = baseElement.querySelector("goa-textarea[testId='form-description']");
+    const cancelBtn = baseElement.querySelector("goa-button[testId='form-cancel']");
+    const saveBtn = baseElement.querySelector("goa-button[testId='form-save']");
 
     expect(namespace).toBeTruthy();
     expect(name).toBeTruthy();

@@ -43,7 +43,7 @@ export const EmailInformation: FunctionComponent = () => {
     <section>
       <ContactInfoCss>
         <NoPaddingH2>
-          <div className="left-float">Email Information</div>
+          <div className="left-float">Email information</div>
           {hasConfigurationAdminRole ? (
             <div data-testid="edit-email-info">
               <GoAContextMenuIcon

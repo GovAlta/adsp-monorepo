@@ -85,23 +85,25 @@ describe('Notification - Subscribers Tab', () => {
   });
 
   it('edits the subscriber', async () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <Subscribers />
       </Provider>
     );
-    const editBtn = queryByTestId('edit-subscription-item-61bd151b6d95d24f4cf632cf');
+    const editBtn = baseElement.querySelector(
+      "goa-icon-button[testId='edit-subscription-item-61bd151b6d95d24f4cf632cf']"
+    );
     await waitFor(() => {
       fireEvent.click(editBtn);
     });
 
     // fields
-    const name = queryByTestId('form-name');
-    const email = queryByTestId('form-email');
+    const name = baseElement.querySelector("goa-input[testId='form-name']");
+    const email = baseElement.querySelector("goa-input[testId='form-email']");
 
     expect(name).not.toBeNull();
     expect(email).not.toBeNull();
-    const saveBtn = queryByTestId('form-save');
+    const saveBtn = baseElement.querySelector("goa-button[testId='form-save']");
 
     // fill
     fireEvent(

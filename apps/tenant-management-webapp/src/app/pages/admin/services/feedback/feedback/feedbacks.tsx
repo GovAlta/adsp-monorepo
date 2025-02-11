@@ -144,6 +144,7 @@ export const FeedbacksList = (): JSX.Element => {
                 aria-label="select-site-dropdown"
                 width="100%"
                 testId="sites-dropdown"
+                relative={true}
               >
                 {sites.map((item) => (
                   <GoADropdownItem

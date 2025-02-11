@@ -39,8 +39,8 @@ describe('Input Boolean Control', () => {
   it('can render a checkbox', () => {
     const dataSchema = { type: 'object', properties: { isAlive: { type: 'boolean' } } };
     const uiSchema = { type: 'Control', scope: '#/properties/isAlive', options: { text: 'Check Me' } };
-    const renderer = render(getForm(dataSchema, uiSchema));
-    const checkbox = renderer.getByTestId('isAlive-checkbox-test-id');
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
     expect(checkbox).toBeInTheDocument();
     expect(checkbox.getAttribute('text')).toBe('Check Me');
   });
@@ -48,8 +48,8 @@ describe('Input Boolean Control', () => {
   it('can render a required checkbox', () => {
     const dataSchema = { type: 'object', properties: { isAlive: { type: 'boolean' } }, required: ['isAlive'] };
     const uiSchema = { type: 'Control', scope: '#/properties/isAlive', options: { text: 'Check Me' } };
-    const renderer = render(getForm(dataSchema, uiSchema));
-    const checkbox = renderer.getByTestId('isAlive-checkbox-test-id');
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
     expect(checkbox).toBeInTheDocument();
     expect(checkbox.getAttribute('text')).toBe('Check Me (required)');
   });
@@ -57,8 +57,8 @@ describe('Input Boolean Control', () => {
   it('will use a description if no label', () => {
     const dataSchema = { type: 'object', properties: { isAlive: { type: 'boolean', title: 'Bob' } } };
     const uiSchema = { type: 'Control', scope: '#/properties/isAlive' };
-    const renderer = render(getForm(dataSchema, uiSchema));
-    const checkbox = renderer.getByTestId('isAlive-checkbox-test-id');
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
     expect(checkbox).toBeInTheDocument();
     expect(checkbox.getAttribute('text')).toBe('Bob');
   });

@@ -49,16 +49,16 @@ describe('QueueTableItem Component', () => {
   });
 
   it('should have 3 action items', () => {
-    render(<QueueTableItem id="1" queue={queue} />);
-    expect(screen.getByTestId('task-app-open')).toBeInTheDocument();
-    expect(screen.getByTestId('queue-definition-edit')).toBeInTheDocument();
-    expect(screen.getByTestId('queue-definition-delete')).toBeInTheDocument();
+    const { baseElement } = render(<QueueTableItem id="1" queue={queue} />);
+    expect(baseElement.querySelector("goa-icon-button[testId='task-app-open']")).toBeInTheDocument();
+    expect(baseElement.querySelector("goa-icon-button[testId='queue-definition-edit']")).toBeInTheDocument();
+    expect(baseElement.querySelector("goa-icon-button[testId='queue-definition-delete']")).toBeInTheDocument();
   });
 
   it('should handle the "Open Task" action', async () => {
     window.open = jest.fn();
-    render(<QueueTableItem id="1" queue={queue} />);
-    const openButton = screen.getByTestId('task-app-open');
+    const { baseElement } = render(<QueueTableItem id="1" queue={queue} />);
+    const openButton = baseElement.querySelector("goa-icon-button[testId='task-app-open']");
     fireEvent(openButton, new CustomEvent('_click'));
     await waitFor(() => {
       expect(window.open).toHaveBeenCalledWith(`${taskAppUrl}/namespace1/Queue1`);
@@ -67,8 +67,8 @@ describe('QueueTableItem Component', () => {
 
   it('should handle the "Delete" action', () => {
     const onDeleteMock = jest.fn();
-    render(<QueueTableItem id="1" queue={queue} onDelete={onDeleteMock} />);
-    const deleteButton = screen.getByTestId('queue-definition-delete');
+    const { baseElement } = render(<QueueTableItem id="1" queue={queue} onDelete={onDeleteMock} />);
+    const deleteButton = baseElement.querySelector("goa-icon-button[testId='queue-definition-delete']");
     fireEvent(deleteButton, new CustomEvent('_click'));
   });
 });
