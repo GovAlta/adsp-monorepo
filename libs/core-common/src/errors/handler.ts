@@ -28,7 +28,13 @@ export const createErrorHandler =
     ) {
       ErrorResponseHelper(res, err);
     } else {
-      logger.warn(`Unexpected error encountered in handler for request ${req.path}. ${err}`);
-      res.sendStatus(500);
+      logger.warn(
+        `Unexpected error encountered in handler for request ${req.path} ${
+          res.statusCode ? `(status: ${res.statusCode})` : ''
+        }. ${err}`
+      );
+      if (!res.statusCode) {
+        res.sendStatus(500);
+      }
     }
   };

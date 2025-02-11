@@ -192,7 +192,8 @@ export function getConfigurationEntity(
       //if user is not logged in and is not authenticated we want
       //to do rate limiting for anonymous users.
       if (!req.isAuthenticated && !user) {
-        rateLimitHandler(req, res, handle);
+        // Note: this handler is actually awaitable (is async).
+        await rateLimitHandler(req, res, handle);
       } else {
         await handle();
       }
