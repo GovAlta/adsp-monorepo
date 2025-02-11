@@ -195,23 +195,23 @@ describe('Nested List Rendering', () => {
       ],
     };
 
-    // ----> this breaks: const renderer = render(getForm(initialData, categorized));
-    // const step0 = renderer.getByTestId('step_0-content');
-    // expect(step0).toBeInTheDocument();
-    // expect(step0).toBeVisible();
+    const renderer = render(getForm(initialData, categorized));
+    const step0 = renderer.getByTestId('step_0-content');
+    expect(step0).toBeInTheDocument();
+    expect(step0).toBeVisible();
 
-    // const roadmapBtn = renderer.getByTestId('object-array-toolbar-Roadmap');
-    // expect(roadmapBtn).toBeInTheDocument();
-    // expect(roadmapBtn).toBeVisible();
-    // const shadowRoadmapBtn = roadmapBtn.shadowRoot?.querySelector('button');
-    // expect(shadowRoadmapBtn).not.toBeNull();
-    // fireEvent.click(shadowRoadmapBtn!);
+    const roadmapBtn = renderer.getByTestId('object-array-toolbar-Roadmap');
+    expect(roadmapBtn).toBeInTheDocument();
+    expect(roadmapBtn).toBeVisible();
+    const shadowRoadmapBtn = roadmapBtn.shadowRoot?.querySelector('button');
+    expect(shadowRoadmapBtn).not.toBeNull();
+    fireEvent.click(shadowRoadmapBtn!);
 
-    // const impactBtn = renderer.getByTestId('object-array-toolbar-Impacts');
-    // expect(impactBtn).toBeInTheDocument();
-    // expect(impactBtn).toBeVisible();
-    // const shadowImpactBtn = impactBtn.shadowRoot?.querySelector('button');
-    // expect(shadowImpactBtn).not.toBeNull();
-    // fireEvent.click(shadowImpactBtn!);
+    const impactBtn = renderer.getByTestId('object-array-toolbar-Impacts');
+    expect(impactBtn).toBeInTheDocument();
+    expect(impactBtn).toBeVisible();
+    const shadowImpactBtn = impactBtn.shadowRoot?.querySelector('button');
+    expect(shadowImpactBtn).not.toBeNull();
+    fireEvent.click(shadowImpactBtn!);
   });
 });
