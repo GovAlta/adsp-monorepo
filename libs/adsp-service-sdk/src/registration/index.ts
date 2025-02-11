@@ -177,7 +177,15 @@ export interface ServiceRegistration {
    * @type {{ serviceId: AdspId; configuration: Record<string, unknown> }[]}
    * @memberof ServiceRegistration
    */
-  serviceConfigurations?: { serviceId: AdspId; configuration: Record<string, unknown> }[];
+  serviceConfigurations?: {
+    serviceId: AdspId;
+    configuration: Record<string, unknown> | NamedConfiguration[];
+  }[];
+}
+
+interface NamedConfiguration {
+  name: string;
+  configuration: Record<string, unknown>;
 }
 
 interface ServiceRegistrarOptions {
