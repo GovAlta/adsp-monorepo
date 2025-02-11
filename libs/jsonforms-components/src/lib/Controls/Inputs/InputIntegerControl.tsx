@@ -36,10 +36,7 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
       placeholder={placeholder}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      /* istanbul ignore next */
       onBlur={(name: string, value: string) => {
-        /* TODO: add the unit test, when the solution is used */
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
@@ -50,8 +47,6 @@ export const GoAInputInteger = (props: GoAInputIntegerProps): JSX.Element => {
         });
       }}
       onChange={(name: string, value: string) => {
-        /* TODO: add the unit test, when the solution is used */
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }

@@ -27,16 +27,11 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       readonly={readOnly}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
-        /* istanbul ignore next */
         handleChange(path, value === '' ? undefined : value);
       }}
-      // Dont use handleChange in the onChange event, use the keyPress or onBlur.
-      // If you use it onChange along with keyPress event it will cause a
-      // side effect that causes the validation to render when it shouldnt.
       onChange={(name: string, value: string) => {}}
       onKeyPress={(name: string, value: string, key: string) => {
         onKeyPressForTimeControl({

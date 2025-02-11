@@ -35,12 +35,9 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
-
-        /* istanbul ignore next */
         onBlurForNumericControl({
           name,
           value,
@@ -48,8 +45,6 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
         });
       }}
       onChange={(name: string, value: string) => {
-        /* TODO: add the unit test, when the solution is used */
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
