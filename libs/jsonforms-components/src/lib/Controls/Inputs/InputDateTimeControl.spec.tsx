@@ -76,6 +76,27 @@ describe('input date time controls', () => {
       expect(component.getByTestId('myDateId-input').getAttribute('error')).toBe('true');
     });
 
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: 'mytestInput' };
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateTimeInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      expect(component.getByTestId('-input').getAttribute('name')).toBe('mytestInput-input');
+    });
+
+    it('can create control with data', () => {
+      const props = { ...staticProps, data: '01/01/2025 01:01:00 AM' };
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateTimeInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      console.log('data', component.getByTestId('myDateId-input').outerHTML);
+      expect(component.getByTestId('myDateId-input').getAttribute('value')).toBe('2025-01-01T01:01');
+    });
+
     it('can trigger keyPress event', async () => {
       const props = { ...staticProps, uischema: uiSchema };
 

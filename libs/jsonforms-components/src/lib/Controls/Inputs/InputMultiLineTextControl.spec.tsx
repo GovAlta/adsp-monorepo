@@ -50,6 +50,12 @@ describe('Input Text Control tests', () => {
       expect(component.getByTestId('firstName-input').getAttribute('error')).toBe('true');
     });
 
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: '', path: 'mytestInput' };
+      const component = render(<MultiLineText {...props} />);
+      expect(component.getByTestId('-input').getAttribute('name')).toBe('mytestInput-text-area');
+    });
+
     it('can create base control for InputMultiLineTextControl', () => {
       const props = { ...staticProps };
       const baseControl = render(<MultiLineText {...props} />);

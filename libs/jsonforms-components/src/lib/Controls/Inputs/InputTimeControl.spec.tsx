@@ -77,6 +77,16 @@ describe('input number controls', () => {
       expect(component.getByTestId('myDateId-input').getAttribute('error')).toBe('true');
     });
 
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: 'mytestDate' };
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoATimeInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      expect(component.getByTestId('-input').getAttribute('name')).toBe('mytestDate-input');
+    });
+
     it('can trigger time onKeyPress event', async () => {
       const props = { ...staticProps };
       const component = render(

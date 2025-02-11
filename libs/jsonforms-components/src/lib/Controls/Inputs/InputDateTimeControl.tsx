@@ -13,7 +13,6 @@ import {
 export type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
-  // eslint-disable-next-line
   const { data, config, id, enabled, uischema, isVisited, errors, schema, label, setIsVisited } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };

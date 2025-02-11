@@ -68,6 +68,16 @@ describe('input number controls', () => {
       expect(component.getByTestId('age-input')).toBeInTheDocument();
     });
 
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: 'mytestInput' };
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
+      expect(component.getByTestId('-input').getAttribute('name')).toBe('mytestInput-input');
+    });
+
     it('can create base control', () => {
       const props = { ...staticProps };
       const baseControl = render(

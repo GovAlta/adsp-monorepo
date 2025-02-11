@@ -119,6 +119,16 @@ describe('Input Text Control tests', () => {
       expect(component.getByTestId('firstName-input').getAttribute('error')).toBe('true');
     });
 
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: 'mytestInput' };
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>
+      );
+      expect(component.getByTestId('-input').getAttribute('name')).toBe('mytestInput-input');
+    });
+
     it('can create base control', () => {
       const props = { ...staticProps };
       const baseControl = render(<GoAInputBaseControl {...props} input={GoAInputText} />);

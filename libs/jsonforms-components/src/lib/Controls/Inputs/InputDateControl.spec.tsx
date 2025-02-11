@@ -84,6 +84,16 @@ describe('input date controls', () => {
       expect(component.getByTestId('myDateId-input').getAttribute('error')).toBe('true');
     });
 
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: 'mytestInput' };
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      expect(component.getByTestId('-input').getAttribute('name')).toBe('mytestInput-input');
+    });
+
     it('calls onBlur for input date control', () => {
       const props = {
         ...staticProps,
