@@ -71,7 +71,7 @@ export const GoInputBaseReview = (props: ControlProps) => (
     {...props}
     input={GoABaseInputReviewComponent}
     isStepperReview={true}
-    skipOnBlurValidation={true}
+    skipInitialValidation={true}
   />
 );
 

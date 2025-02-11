@@ -203,4 +203,15 @@ describe('GoABaseInputReviewComponent', () => {
     const reviewControl = getByTestId('review-control-input-id');
     expect(reviewControl.textContent).toBe('');
   });
+
+  it('renders an empty string for null data with skip initial validation', () => {
+    const props = {
+      ...baseProps,
+      data: null,
+      skipInitialValidation: true,
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toBe('');
+  });
 });
