@@ -48,11 +48,10 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
         });
       }}
       onBlur={(name: string, value: string) => {
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
-        /* istanbul ignore next */
+
         onBlurForDateControl({
           name,
           value,

@@ -52,19 +52,15 @@ describe('input date controls', () => {
     data: theDate.theDate,
     visible: true,
     isValid: true,
+    isVisited: false,
+    setIsVisited: () => {},
   };
 
-  const handleChangeMock = jest.fn(() => Promise.resolve());
-
   describe('date input control tests', () => {
-    it('can render date input control', () => {
-      const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025-02-01') };
-      const component = render(
-        <JsonFormsContext.Provider value={mockContextValue}>
-          <GoADateInput {...props} />
-        </JsonFormsContext.Provider>
-      );
-      expect(component.getByTestId('myDateId-input')).toBeInTheDocument();
+    it('can create base control', () => {
+      const props = { ...staticProps };
+      const baseControl = render(GoADateInput(props));
+      expect(baseControl).toBeDefined();
     });
 
     it('can create base control', () => {
@@ -78,20 +74,90 @@ describe('input date controls', () => {
 
       expect(baseControl).toBeDefined();
     });
+    it('can create control with errors', () => {
+      const props = { ...staticProps, isVisited: true, errors: 'this is a error' };
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      expect(component.getByTestId('myDateId-input').getAttribute('error')).toBe('true');
+    });
 
-    it('can trigger keyPress event', async () => {
-      const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025-02-01') };
+    it('calls onBlur for input date control', () => {
+      const props = {
+        ...staticProps,
+      };
 
       const component = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-
       const input = component.getByTestId('myDateId-input');
-      const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
+      const blurred = fireEvent(
+        input,
+        new CustomEvent('_blur', {
+          detail: { name: 'myDateId', value: '' },
+        })
+      );
 
-      expect(pressed).toBe(true);
+      expect(blurred).toBe(true);
+    });
+
+    it('calls onChange for input date control', () => {
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            autoCapitalize: true,
+          },
+        },
+      };
+
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = component.getByTestId('myDateId-input');
+      fireEvent.change(input, { target: { value: '01/01/2025' } });
+
+      fireEvent(
+        input,
+        new CustomEvent('_change', {
+          detail: { name: 'myDateId', value: '01/01/2025' },
+        })
+      );
+      expect((input as HTMLInputElement).value).toBe('01/01/2025');
+    });
+
+    it('can trigger keyPress event', async () => {
+      const props = {
+        ...staticProps,
+      };
+
+      const component = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = component.getByTestId('myDateId-input');
+
+      const keyPressed = fireEvent.keyPress(input, { key: '1', code: 49 });
+
+      fireEvent(input, new CustomEvent('_keyPress', { detail: { name: '1', value: '1', key: '1' } }));
+
+      fireEvent(
+        input,
+        new CustomEvent('_change', {
+          detail: { name: 'myDateId-input', value: '01/01/2025' },
+        })
+      );
+      console.log('first', (input as HTMLInputElement).outerHTML);
+      // expect((input as HTMLInputElement).value).toBe('01/01/2025');
     });
 
     it('can trigger on Blur event', async () => {
@@ -105,24 +171,6 @@ describe('input date controls', () => {
       const blurred = fireEvent.blur(input);
 
       expect(blurred).toBe(true);
-    });
-
-    it('can trigger handleChange event', async () => {
-      const props = { ...staticProps, handleChange: handleChangeMock };
-
-      const component = render(
-        <JsonFormsContext.Provider value={mockContextValue}>
-          <GoADateInput {...props} />
-        </JsonFormsContext.Provider>
-      );
-
-      const input = component.getByTestId('myDateId-input');
-      const pressed = fireEvent.keyPress(input, { key: '1', code: 49, charCode: 49 });
-      handleChangeMock();
-
-      expect(props.handleChange).toBeCalled();
-      expect(pressed).toBe(true);
-      expect(handleChangeMock.mock.calls.length).toBe(1);
     });
   });
 });

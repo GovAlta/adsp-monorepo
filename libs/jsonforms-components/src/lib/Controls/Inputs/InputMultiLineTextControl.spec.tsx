@@ -31,6 +31,8 @@ describe('Input Text Control tests', () => {
     visible: true,
     isValid: true,
     required: false,
+    isVisited: false,
+    setIsVisited: () => {},
   };
 
   const handleChangeMock = jest.fn(() => Promise.resolve());
@@ -40,6 +42,12 @@ describe('Input Text Control tests', () => {
       const props = { ...staticProps };
       const component = render(<MultiLineText {...props} />);
       expect(component.getByTestId('firstName-input')).toBeInTheDocument();
+    });
+
+    it('can create control InputMultiLineTextControl with errors', () => {
+      const props = { ...staticProps, isVisited: true, errors: 'this is a error' };
+      const component = render(<MultiLineText {...props} />);
+      expect(component.getByTestId('firstName-input').getAttribute('error')).toBe('true');
     });
 
     it('can create base control for InputMultiLineTextControl', () => {
