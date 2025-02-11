@@ -405,7 +405,6 @@ describe('Form Stepper Control', () => {
       const shadowNext = nextButton.shadowRoot?.querySelector('button');
       expect(shadowNext).not.toBeNull();
       await fireEvent.click(shadowNext!);
-      console.log(mockDispatch.mock.calls);
       expect(mockDispatch.mock.calls[3].type === 'page/to/index');
       expect(mockDispatch.mock.calls[3].payload === 1);
 
