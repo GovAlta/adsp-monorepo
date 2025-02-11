@@ -146,18 +146,20 @@ describe('input date controls', () => {
       );
       const input = component.getByTestId('myDateId-input');
 
-      const keyPressed = fireEvent.keyPress(input, { key: '1', code: 49 });
+      fireEvent.keyPress(input, { key: '1', code: 49 });
 
       fireEvent(input, new CustomEvent('_keyPress', { detail: { name: '1', value: '1', key: '1' } }));
 
-      fireEvent(
+      fireEvent.change(input, { target: { value: '01/01/2025' } });
+
+      fireEvent.change(
         input,
         new CustomEvent('_change', {
           detail: { name: 'myDateId-input', value: '01/01/2025' },
         })
       );
-      console.log('first', (input as HTMLInputElement).outerHTML);
-      // expect((input as HTMLInputElement).value).toBe('01/01/2025');
+
+      expect((input as HTMLInputElement).value).toBe('01/01/2025');
     });
 
     it('can trigger on Blur event', async () => {
